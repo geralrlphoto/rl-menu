@@ -257,27 +257,22 @@ export default async function Home() {
     {
       key: 'prazos-albuns',
       title: ['PRAZOS', 'ÁLBUNS'],
-      subtitle: 'Próximos 14 dias',
-      empty: 'Sem prazos próximos',
-      items: prazosAlbuns.map(a => ({
-        main: a.nome,
-        sub: a.data ? (fmt(a.data) ?? '') : '',
-        tag: a.dias === 0 ? 'Hoje' : a.dias === 1 ? 'Amanhã' : `${a.dias}d`,
-        tagColor: a.dias <= 2 ? 'text-red-400' : a.dias <= 5 ? 'text-amber-400' : 'text-emerald-400/80',
-      })),
-      href: '/albuns-casamento',
-    },
-    {
-      key: 'para-aprovacao',
-      title: ['PARA', 'APROVAÇÃO'],
-      subtitle: `${albumsAprovacao.length} álbum${albumsAprovacao.length !== 1 ? 's' : ''}`,
-      empty: 'Nenhum álbum em aprovação',
-      items: albumsAprovacao.map(a => ({
-        main: a.nome,
-        sub: a.ref,
-        tag: null,
-        tagColor: '',
-      })),
+      subtitle: `${prazosAlbuns.length > 0 ? `${prazosAlbuns.length} prazo${prazosAlbuns.length !== 1 ? 's' : ''}` : 'Sem prazos'}${albumsAprovacao.length > 0 ? ` · ${albumsAprovacao.length} aprovação` : ''}`,
+      empty: 'Sem prazos ou aprovações',
+      items: [
+        ...prazosAlbuns.map(a => ({
+          main: a.nome,
+          sub: a.data ? (fmt(a.data) ?? '') : '',
+          tag: a.dias === 0 ? 'Hoje' : a.dias === 1 ? 'Amanhã' : `${a.dias}d`,
+          tagColor: a.dias <= 2 ? 'text-red-400' : a.dias <= 5 ? 'text-amber-400' : 'text-emerald-400/80',
+        })),
+        ...albumsAprovacao.map(a => ({
+          main: a.nome,
+          sub: a.ref,
+          tag: '✓ Aprov.',
+          tagColor: 'text-[#C9A84C]/60',
+        })),
+      ],
       href: '/albuns-casamento',
     },
     {
