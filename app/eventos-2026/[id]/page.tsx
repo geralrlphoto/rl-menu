@@ -790,7 +790,7 @@ export default function EventoPage() {
           <div className="pt-2 border-t border-white/[0.05]">
             <div className="flex items-center justify-between mb-3">
               <span className="text-[10px] tracking-[0.3em] text-white/25 uppercase">Fases de Pagamento</span>
-              <a href="/financas" className="text-[10px] text-white/20 hover:text-gold transition-colors tracking-wider">
+              <a href={`/financas?ref=${encodeURIComponent(e.referencia ?? '')}`} className="text-[10px] text-white/20 hover:text-gold transition-colors tracking-wider">
                 Ver todos os pagamentos ›
               </a>
             </div>

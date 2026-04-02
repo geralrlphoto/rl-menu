@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react'
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 
 type Pagamento = {
   id: string
@@ -160,13 +162,26 @@ function CheckCell({ value, field, rowId, onSaved }: {
 }
 
 // ── Página principal ───────────────────────────────────────────────────────────
-export default function FinancasPage() {
+function FinancasPageInner() {
   const [rows, setRows] = useState<Pagamento[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [adding, setAdding] = useState(false)
   const [error, setError] = useState('')
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [openingFicha, setOpeningFicha] = useState<string | null>(null)
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const refFilter = searchParams.get('ref') ?? ''
+
+  async function openFicha(referencia: string) {
+    if (!referencia) return
+    setOpeningFicha(referencia)
+    const d = await fetch(`/api/eventos-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json())
+    setOpeningFicha(null)
+    if (d.id) router.push(`/eventos-2026/${d.id}`)
+    else alert(`Evento com referência "${referencia}" não encontrado.`)
+  }
 
   const loadRows = useCallback(async (silent = false) => {
     if (!silent) setLoading(true)
@@ -180,6 +195,10 @@ export default function FinancasPage() {
   }, [])
 
   useEffect(() => { loadRows() }, [loadRows])
+
+  const filteredRows = refFilter
+    ? rows.filter(r => r.referencia?.toLowerCase() === refFilter.toLowerCase())
+    : rows
 
   function handleSaved(rowId: string, field: string, val: any) {
     setRows(prev => prev.map(r => r.id === rowId ? { ...r, [field]: val } : r))
@@ -230,8 +249,14 @@ export default function FinancasPage() {
 
       {!loading && !error && (
         <>
+          {refFilter && (
+            <div className="flex items-center gap-3 mb-4 px-4 py-2.5 bg-gold/5 border border-gold/20 rounded-xl">
+              <span className="text-[11px] tracking-widest text-gold/70 uppercase">Filtrado: {refFilter}</span>
+              <button onClick={() => router.push('/financas')} className="text-[10px] text-white/30 hover:text-white/60 ml-auto">✕ Limpar</button>
+            </div>
+          )}
           <p className="text-xs text-white/20 tracking-wider mb-4">
-            {rows.length} registos · <span className="text-white/15">clica em qualquer campo para editar</span>
+            {filteredRows.length} registos · <span className="text-white/15">clica em qualquer campo para editar</span>
           </p>
           <div className="overflow-x-auto rounded-2xl border border-white/[0.06]">
             <table className="w-full text-sm">
@@ -245,7 +270,7 @@ export default function FinancasPage() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row, i) => (
+                {filteredRows.map((row, i) => (
                   <tr key={row.id}
                     className={`border-b border-white/[0.04] hover:bg-white/[0.015] transition-colors ${i % 2 === 1 ? 'bg-white/[0.008]' : ''}`}>
 
@@ -253,9 +278,19 @@ export default function FinancasPage() {
                       <EditCell value={row.nome_noivos} field="nome_noivos" rowId={row.id}
                         onSaved={(f,v) => handleSaved(row.id, f, v)} />
                     </td>
-                    <td className="px-4 py-3 min-w-[130px]">
-                      <EditCell value={row.referencia} field="referencia" rowId={row.id}
-                        onSaved={(f,v) => handleSaved(row.id, f, v)} className="text-gold/60 text-xs tracking-wider" />
+                    <td className="px-4 py-3 min-w-[160px]">
+                      <div className="flex items-center gap-2">
+                        <EditCell value={row.referencia} field="referencia" rowId={row.id}
+                          onSaved={(f,v) => handleSaved(row.id, f, v)} className="text-gold/60 text-xs tracking-wider" />
+                        {row.referencia && (
+                          <button onClick={() => openFicha(row.referencia)}
+                            disabled={openingFicha === row.referencia}
+                            title="Abrir Ficha de Cliente"
+                            className="shrink-0 text-white/20 hover:text-gold transition-colors text-xs disabled:opacity-40">
+                            {openingFicha === row.referencia ? '...' : '↗'}
+                          </button>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-white/50 min-w-[140px]">
                       <EditCell value={row.data_casamento} field="data_casamento" rowId={row.id} type="date"
@@ -312,4 +347,8 @@ export default function FinancasPage() {
       )}
     </main>
   )
+}
+
+export default function FinancasPage() {
+  return <Suspense><FinancasPageInner /></Suspense>
 }
