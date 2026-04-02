@@ -357,7 +357,7 @@ export default async function Home() {
       </div>
 
       {/* ── Dashboard carousel ──────────────────────────────────────────────── */}
-      <div className="border-t border-[#C9A84C]/25 bg-[#0d0d0d]">
+      <div className="mt-8 border-t border-[#C9A84C]/25 bg-[#0d0d0d]">
         <DashboardCarousel cols={cols} />
       </div>
 
