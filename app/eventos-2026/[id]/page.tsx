@@ -104,9 +104,9 @@ function Section({ title, right, children }: { title: string; right?: React.Reac
 }
 
 // ─── Campo texto inline editável ───────────────────────────────────────────────
-function EditField({ label, value, field, eventId, type = 'text', large = false, suffix, onSaved }: {
+function EditField({ label, value, field, eventId, type = 'text', large = false, mono = false, suffix, onSaved }: {
   label: string; value: string | number | null; field: string; eventId: string
-  type?: 'text' | 'number' | 'email' | 'tel' | 'url' | 'date'; large?: boolean
+  type?: 'text' | 'number' | 'email' | 'tel' | 'url' | 'date'; large?: boolean; mono?: boolean
   suffix?: string
   onSaved: (field: string, val: any) => void
 }) {
@@ -149,7 +149,7 @@ function EditField({ label, value, field, eventId, type = 'text', large = false,
     <div className="flex flex-col gap-0.5 group/f">
       {label && <span className="text-[10px] tracking-[0.3em] text-white/25 uppercase">{label}</span>}
       <button onClick={() => setEditing(true)}
-        className={`text-left hover:bg-white/5 px-2 py-1 -mx-2 rounded-lg transition-colors flex items-center gap-2 ${large ? 'text-2xl font-light text-white' : 'text-sm text-white/80 hover:text-white'}`}>
+        className={`text-left hover:bg-white/5 px-2 py-1 -mx-2 rounded-lg transition-colors flex items-center gap-2 ${large ? 'text-2xl font-light text-white' : mono ? 'text-sm tracking-[0.3em] text-gold/70 uppercase font-medium font-mono' : 'text-sm text-white/80 hover:text-white'}`}>
         {displayVal
           ? <span>{displayVal}{suffix ? <span className="text-white/40 ml-1">{suffix}</span> : null}</span>
           : <span className={`italic ${large ? 'text-white/20' : 'text-white/20'}`}>Clica para editar</span>
@@ -659,7 +659,7 @@ export default function EventoPage() {
       <div className="mt-8 mb-2">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex-1 min-w-0">
-            <p className="text-sm tracking-[0.3em] text-gold/70 uppercase mb-1 font-medium">{e.referencia || 'Sem referência'}</p>
+            <EditField label="" value={e.referencia} field="referencia" eventId={e.id} onSaved={handleSaved} mono />
             <EditField label="" value={e.cliente} field="cliente" eventId={e.id} large onSaved={handleSaved} />
             <div className="flex gap-2 items-center mt-1 text-white/30 text-sm">
               <EditField label="" value={e.data_evento} field="data_evento" eventId={e.id} type="date" onSaved={handleSaved} />

@@ -23,6 +23,7 @@ function getProp(props: any, key: string, type: string): any {
 
 // Mapa: campo interno → { notionKey, notionType }
 const FIELD_MAP: Record<string, { key: string; type: string }> = {
+  referencia:       { key: 'REFERÊNCIA DO EVENTO',       type: 'title' },
   cliente:          { key: 'CLIENTE',                    type: 'text' },
   local:            { key: 'LOCAL',                      type: 'text' },
   fotografo:        { key: 'FOTOGRAFO',                  type: 'multi_select' },
@@ -66,6 +67,7 @@ const FIELD_MAP: Record<string, { key: string; type: string }> = {
 }
 
 function buildNotionValue(type: string, value: any): any {
+  if (type === 'title')        return { title: [{ text: { content: value ?? '' } }] }
   if (type === 'text')         return { rich_text: [{ text: { content: value ?? '' } }] }
   if (type === 'number')       return { number: value === '' || value === null ? null : Number(value) }
   if (type === 'email')        return { email: value || null }
@@ -184,6 +186,28 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     return NextResponse.json({ event })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
+
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  try {
+    const res = await fetch(`https://api.notion.com/v1/pages/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${NOTION_TOKEN}`,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ archived: true }),
+    })
+    if (!res.ok) {
+      const err = await res.json()
+      return NextResponse.json({ error: err.message }, { status: res.status })
+    }
+    return NextResponse.json({ ok: true })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }

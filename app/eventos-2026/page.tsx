@@ -70,6 +70,17 @@ export default function Eventos2026() {
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [tipoFilter, setTipoFilter] = useState('Todos')
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const router = useRouter()
+
+  async function handleDelete(e: React.MouseEvent, id: string) {
+    e.preventDefault(); e.stopPropagation()
+    if (!confirm('Eliminar este evento? Esta ação não pode ser desfeita.')) return
+    setDeletingId(id)
+    await fetch(`/api/eventos-notion/${id}`, { method: 'DELETE' })
+    setEvents(prev => prev.filter(ev => ev.id !== id))
+    setDeletingId(null)
+  }
 
   useEffect(() => {
     fetch('/api/eventos-notion')
@@ -203,7 +214,7 @@ export default function Eventos2026() {
                 {/* Lista de eventos do mês */}
                 <div className="flex flex-col gap-2">
                   {monthEvents.map(e => (
-                    <Link key={e.id} href={`/eventos-2026/${e.id}`} className="group flex items-center gap-5 px-5 py-4 bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] hover:border-gold/20 rounded-xl transition-all cursor-pointer">
+                    <Link key={e.id} href={`/eventos-2026/${e.id}`} className="group flex items-center gap-5 px-5 py-4 bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] hover:border-gold/20 rounded-xl transition-all cursor-pointer relative">
 
                       {/* Data */}
                       <div className="w-16 shrink-0 text-center">
@@ -249,6 +260,18 @@ export default function Eventos2026() {
                           {e.valor_liquido.toLocaleString('pt-PT')} €
                         </div>
                       )}
+
+                      {/* Botão eliminar */}
+                      <button
+                        onClick={ev => handleDelete(ev, e.id)}
+                        disabled={deletingId === e.id}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 p-1.5 rounded-lg hover:bg-red-500/15 text-white/20 hover:text-red-400 shrink-0"
+                      >
+                        {deletingId === e.id
+                          ? <span className="text-[10px] text-white/30">...</span>
+                          : <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                        }
+                      </button>
                     </Link>
                   ))}
                 </div>
