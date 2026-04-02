@@ -136,10 +136,13 @@ export default async function Home() {
 
   function parseVideoFormula(formula: string | null): number {
     if (!formula) return 999
-    // "🟩 Prazo Final: 09/01/2027 — 281 dias restantes"
+    // "Faltam 7 dias!" ou "Faltam 7 dia!"
+    const faltam = formula.match(/Faltam (\d+) dias?/)
+    if (faltam) return parseInt(faltam[1])
+    // "281 dias restantes"
     const restantes = formula.match(/(\d+) dias? restantes/)
     if (restantes) return parseInt(restantes[1])
-    // "🔴 ... — 5 dias em atraso"
+    // "5 dias em atraso"
     const atraso = formula.match(/(\d+) dias? em atraso/)
     if (atraso) return -parseInt(atraso[1])
     return 999
