@@ -305,11 +305,24 @@ export default async function Home() {
         <DashboardCarousel cols={cols} />
       </div>
 
-      {/* Footer */}
-      <div className="h-10 flex items-center justify-center border-t border-white/[0.06]">
-        <p className="text-[10px] tracking-[0.5em] text-white/15 uppercase">
-          RL <span className="text-[#C9A84C]/30">PHOTO</span>.VIDEO
-        </p>
+      {/* Footer marquee */}
+      <div className="h-10 border-t border-white/[0.06] overflow-hidden flex items-center">
+        <div className="flex animate-marquee whitespace-nowrap">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <span key={i} className="text-[10px] tracking-[0.5em] text-white/15 uppercase mx-10">
+              RL <span className="text-[#C9A84C]/30">PHOTO</span>.VIDEO
+              <span className="mx-10 text-[#C9A84C]/20">✦</span>
+            </span>
+          ))}
+        </div>
+        <div className="flex animate-marquee whitespace-nowrap" aria-hidden>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <span key={i} className="text-[10px] tracking-[0.5em] text-white/15 uppercase mx-10">
+              RL <span className="text-[#C9A84C]/30">PHOTO</span>.VIDEO
+              <span className="mx-10 text-[#C9A84C]/20">✦</span>
+            </span>
+          ))}
+        </div>
       </div>
 
     </main>
