@@ -76,16 +76,12 @@ export default async function Home() {
     'Content-Type': 'application/json',
   }
 
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'http://localhost:3001'
-
   const [
     { data: leadsHoje },
     { data: leadsPendentes },
     prazosRes,
     aprovacaoRes,
-    eventosRes,
+    videosRes,
   ] = await Promise.all([
     supabase.from('crm_contacts').select('nome, tipo_evento, como_chegou')
       .eq('data_entrada', todayStr).order('created_at', { ascending: false }),
@@ -113,8 +109,14 @@ export default async function Home() {
       }),
     }).then(r => r.json()).catch(() => ({ results: [] })),
 
-    fetch(`${baseUrl}/api/eventos-notion`, { cache: 'no-store' })
-      .then(r => r.json()).catch(() => ({ events: [] })),
+    fetch(`https://api.notion.com/v1/databases/${EVENTOS_DB}/query`, {
+      method: 'POST', headers: notionH, cache: 'no-store',
+      body: JSON.stringify({
+        filter: { property: 'ESTADO DO VIDEO', select: { does_not_equal: 'ENTREGUE' } },
+        sorts: [{ property: 'DATA DO EVENTO', direction: 'ascending' }],
+        page_size: 100,
+      }),
+    }).then(r => r.json()).catch(() => ({ results: [] })),
   ])
 
   // ── Parsear Notion ────────────────────────────────────────────────────────
@@ -148,11 +150,14 @@ export default async function Home() {
     return 999
   }
 
-  const videosAlerta = (eventosRes.events ?? [])
-    .filter((e: any) => (e.video_estado ?? '').toUpperCase() !== 'ENTREGUE')
-    .map((e: any) => {
-      const diasRestantes = parseVideoFormula(e.data_entrega_video_formula)
-      return { cliente: e.cliente || '—', referencia: e.referencia || '', diasRestantes, videoEstado: e.video_estado }
+  const videosAlerta = (videosRes.results ?? [])
+    .map((p: any) => {
+      const props = p.properties ?? {}
+      const cliente   = props['CLIENTE']?.rich_text?.[0]?.plain_text ?? '—'
+      const referencia = props['REFERÊNCIA DO EVENTO']?.title?.[0]?.plain_text ?? ''
+      const formula   = props['DATA ENTREGA VIDEO']?.formula?.string ?? null
+      const diasRestantes = parseVideoFormula(formula)
+      return { cliente, referencia, diasRestantes }
     })
     .filter((v: any) => v.diasRestantes <= 15)
 
