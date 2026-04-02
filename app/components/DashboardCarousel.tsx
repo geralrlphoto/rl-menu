@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 
 export type DashCol = {
   key: string
@@ -17,11 +17,30 @@ export function DashboardCarousel({ cols }: { cols: DashCol[] }) {
   const perPage = 4
   const totalPages = Math.ceil(cols.length / perPage)
   const visible = cols.slice(page * perPage, (page + 1) * perPage)
-  // Pad to always show 4 columns
   const padded = [...visible, ...Array(perPage - visible.length).fill(null)]
 
+  const wheelAccum = useRef(0)
+  const wheelTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    // Only handle horizontal scroll (or shift+scroll)
+    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : (e.shiftKey ? e.deltaY : 0)
+    if (delta === 0) return
+    e.preventDefault()
+    wheelAccum.current += delta
+    if (wheelTimer.current) clearTimeout(wheelTimer.current)
+    wheelTimer.current = setTimeout(() => { wheelAccum.current = 0 }, 300)
+    if (wheelAccum.current > 80) {
+      wheelAccum.current = 0
+      setPage(p => Math.min(p + 1, totalPages - 1))
+    } else if (wheelAccum.current < -80) {
+      wheelAccum.current = 0
+      setPage(p => Math.max(p - 1, 0))
+    }
+  }, [totalPages])
+
   return (
-    <div className="relative">
+    <div className="relative" onWheel={handleWheel}>
       {/* Seta esquerda */}
       {page > 0 && (
         <button
