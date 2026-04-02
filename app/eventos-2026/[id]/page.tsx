@@ -823,7 +823,7 @@ export default function EventoPage() {
 
                   // Último pagamento para data/método
                   const lastPag = pags[pags.length - 1]
-                  const metodos = [...new Set(pags.flatMap(p => p.metodo_pagamento))]
+                  const metodos = Array.from(new Set(pags.flatMap((p: any) => p.metodo_pagamento)))
 
                   const borderCls = liquidado ? 'bg-green-500/8 border-green-500/25'
                     : parcial ? 'bg-orange-500/5 border-orange-500/20'

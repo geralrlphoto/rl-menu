@@ -56,7 +56,7 @@ export function DashboardCarousel({ cols }: { cols: DashCol[] }) {
                 {col.items.length === 0 ? (
                   <p className="text-[11px] text-white/15 tracking-wider italic">{col.empty}</p>
                 ) : (
-                  col.items.map((item, k) => (
+                  col.items.map((item: { main: string; sub: string; tag: string | null; tagColor: string }, k: number) => (
                     <div key={k} className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <p className="text-[12px] text-white/75 truncate leading-snug">{item.main}</p>
