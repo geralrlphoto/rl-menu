@@ -76,12 +76,16 @@ export default async function Home() {
     'Content-Type': 'application/json',
   }
 
+  const baseUrl = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : 'http://localhost:3001'
+
   const [
     { data: leadsHoje },
     { data: leadsPendentes },
     prazosRes,
     aprovacaoRes,
-    videosRes,
+    eventosRes,
   ] = await Promise.all([
     supabase.from('crm_contacts').select('nome, tipo_evento, como_chegou')
       .eq('data_entrada', todayStr).order('created_at', { ascending: false }),
@@ -109,17 +113,8 @@ export default async function Home() {
       }),
     }).then(r => r.json()).catch(() => ({ results: [] })),
 
-    fetch(`https://api.notion.com/v1/databases/${EVENTOS_DB}/query`, {
-      method: 'POST', headers: notionH, cache: 'no-store',
-      body: JSON.stringify({
-        filter: { or: [
-          { property: 'ESTADO VÍDEO', select: { equals: 'Aguardar' } },
-          { property: 'ESTADO VÍDEO', select: { equals: 'Em Edição' } },
-        ]},
-        sorts: [{ property: 'DATA DO EVENTO', direction: 'ascending' }],
-        page_size: 100,
-      }),
-    }).then(r => r.json()).catch(() => ({ results: [] })),
+    fetch(`${baseUrl}/api/eventos-notion`, { cache: 'no-store' })
+      .then(r => r.json()).catch(() => ({ events: [] })),
   ])
 
   // ── Parsear Notion ────────────────────────────────────────────────────────
@@ -139,23 +134,18 @@ export default async function Home() {
     }
   })
 
-  const videosAlerta = (videosRes.results ?? []).map((p: any) => {
-    const props = p.properties ?? {}
-    const cliente     = props['CLIENTE']?.rich_text?.[0]?.plain_text ?? '—'
-    const referencia  = props['REFERÊNCIA DO EVENTO']?.title?.[0]?.plain_text ?? ''
-    const dataEvento  = props['DATA DO EVENTO']?.date?.start ?? null
-    const videoEstado = props['ESTADO VÍDEO']?.select?.name ?? null
-    // Calcular prazo real: data_evento + 180 dias úteis
-    let diasRestantes = 99
-    let prazoStr: string | null = null
-    if (dataEvento) {
-      const prazo = addWorkingDays(dataEvento, 180)
-      prazoStr = prazo.toISOString().split('T')[0]
-      const today = new Date(); today.setHours(0,0,0,0)
-      diasRestantes = Math.round((prazo.getTime() - today.getTime()) / 86400000)
-    }
-    return { cliente, referencia, dataEvento, videoEstado, diasRestantes, prazoStr }
-  }).filter(v => v.diasRestantes <= 15) // só os com ≤ 15 dias (inclui atrasados)
+  const videosAlerta = (eventosRes.events ?? [])
+    .filter((e: any) => e.video_estado === 'Aguardar' || e.video_estado === 'Em Edição')
+    .map((e: any) => {
+      let diasRestantes = 99
+      if (e.data_evento) {
+        const prazo = addWorkingDays(e.data_evento, 180)
+        const today = new Date(); today.setHours(0,0,0,0)
+        diasRestantes = Math.round((prazo.getTime() - today.getTime()) / 86400000)
+      }
+      return { cliente: e.cliente || '—', referencia: e.referencia || '', diasRestantes, videoEstado: e.video_estado }
+    })
+    .filter((v: any) => v.diasRestantes <= 15)
 
   // ── Colunas do carousel ───────────────────────────────────────────────────
   const cols: DashCol[] = [
