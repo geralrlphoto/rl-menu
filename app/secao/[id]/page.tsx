@@ -73,6 +73,15 @@ export default async function SecaoPage({ params }: Props) {
             </span>
             <span className="text-gold/50 group-hover:text-gold text-lg transition-colors">›</span>
           </Link>
+          <Link
+            href="/portal-cliente"
+            className="group flex items-center justify-between px-5 py-4 border border-white/10 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] hover:border-gold/40 transition-all duration-200 sm:col-span-2"
+          >
+            <span className="text-sm tracking-wider text-white/60 group-hover:text-white uppercase">
+              Portal do Cliente
+            </span>
+            <span className="text-gold/50 group-hover:text-gold text-lg transition-colors">›</span>
+          </Link>
         </div>
       )}
 

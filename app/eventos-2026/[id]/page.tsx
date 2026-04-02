@@ -541,9 +541,31 @@ export default function EventoPage() {
   const [valorVideografo, setValorVideografo] = useState<number>(0)
   const [valorEditorVideo, setValorEditorVideo] = useState<number>(0)
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
+  const [pagamentosRefreshing, setPagamentosRefreshing] = useState(false)
   const [fotosDataEntrada, setFotosDataEntrada] = useState<string | null>(null)
   const [albumDataPrevista, setAlbumDataPrevista] = useState<string | null>(null)
   const [albumNotionId, setAlbumNotionId] = useState<string | null>(null)
+  const [referenciaLoaded, setReferenciaLoaded] = useState<string | null>(null)
+
+  function loadPagamentos(ref: string, showRefresh = false) {
+    if (showRefresh) setPagamentosRefreshing(true)
+    fetch(`/api/pagamentos-by-ref?ref=${encodeURIComponent(ref)}`)
+      .then(r => r.json())
+      .then(p => {
+        if (p.payments) setPagamentos(p.payments)
+        if (showRefresh) setPagamentosRefreshing(false)
+      })
+      .catch(() => { if (showRefresh) setPagamentosRefreshing(false) })
+  }
+
+  // Poll payments every 30 seconds automatically
+  useEffect(() => {
+    if (!referenciaLoaded) return
+    const interval = setInterval(() => {
+      loadPagamentos(referenciaLoaded)
+    }, 30000)
+    return () => clearInterval(interval)
+  }, [referenciaLoaded])
 
   useEffect(() => {
     fetch(`/api/eventos-notion/${id}`)
@@ -555,10 +577,9 @@ export default function EventoPage() {
         setLoading(false)
 
         if (ev.referencia) {
+          setReferenciaLoaded(ev.referencia)
           // Carregar pagamentos
-          fetch(`/api/pagamentos-by-ref?ref=${encodeURIComponent(ev.referencia)}`)
-            .then(r => r.json())
-            .then(p => { if (p.payments) setPagamentos(p.payments) })
+          loadPagamentos(ev.referencia)
 
           // Carregar álbum associado → data prevista + sincronizar estado
           fetch(`/api/albuns-by-ref?ref=${encodeURIComponent(ev.referencia)}`)
@@ -789,7 +810,19 @@ export default function EventoPage() {
           {/* Fases de pagamento — dados reais do Notion */}
           <div className="pt-2 border-t border-white/[0.05]">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] tracking-[0.3em] text-white/25 uppercase">Fases de Pagamento</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] tracking-[0.3em] text-white/25 uppercase">Fases de Pagamento</span>
+                <button
+                  onClick={() => e.referencia && loadPagamentos(e.referencia, true)}
+                  title="Atualizar pagamentos"
+                  className="text-white/20 hover:text-gold transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={pagamentosRefreshing ? 'animate-spin' : ''}>
+                    <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                  </svg>
+                </button>
+              </div>
               <a href={`/financas?ref=${encodeURIComponent(e.referencia ?? '')}`} className="text-[10px] text-white/20 hover:text-gold transition-colors tracking-wider">
                 Ver todos os pagamentos ›
               </a>

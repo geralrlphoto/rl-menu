@@ -218,7 +218,7 @@ function FinancasPageInner() {
   }
 
   return (
-    <main className="min-h-screen px-4 py-12 max-w-[1400px] mx-auto">
+    <main className="min-h-screen px-3 py-6 sm:px-4 sm:py-12 max-w-[1400px] mx-auto">
       <Link href="/" className="inline-flex items-center gap-2 text-xs tracking-widest text-white/40 hover:text-gold transition-colors mb-10">
         ‹ VOLTAR AO MENU
       </Link>
@@ -226,7 +226,7 @@ function FinancasPageInner() {
       <header className="mb-8 flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs tracking-[0.4em] text-white/30 uppercase mb-1">RL PHOTO.VIDEO</p>
-          <h1 className="text-2xl font-light tracking-widest text-gold uppercase">Pagamentos Noivos</h1>
+          <h1 className="text-xl sm:text-2xl font-light tracking-widest text-gold uppercase">Pagamentos Noivos</h1>
           <div className="mt-3 h-px w-16 bg-gold/40" />
         </div>
         <div className="flex items-center gap-2">
@@ -258,7 +258,7 @@ function FinancasPageInner() {
           <p className="text-xs text-white/20 tracking-wider mb-4">
             {filteredRows.length} registos · <span className="text-white/15">clica em qualquer campo para editar</span>
           </p>
-          <div className="overflow-x-auto rounded-2xl border border-white/[0.06]">
+          <div className="overflow-x-auto -mx-3 sm:mx-0 rounded-2xl border border-white/[0.06]">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/[0.06]">

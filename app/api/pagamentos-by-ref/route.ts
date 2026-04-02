@@ -17,10 +17,26 @@ function getProp(props: any, key: string, type: string): any {
   return null
 }
 
+// Gera variantes da referência para lidar com inconsistências de formato
+// Ex: CAS_033_26_RL ↔ CAS_033_026_RL (ano com 2 ou 3 dígitos)
+function refVariants(ref: string): string[] {
+  const variants = new Set<string>([ref])
+  // _26_ → _026_
+  variants.add(ref.replace(/_(\d{2})_RL/, (_: string, yr: string) => `_0${yr}_RL`))
+  // _026_ → _26_
+  variants.add(ref.replace(/_0(\d{2})_RL/, (_: string, yr: string) => `_${yr}_RL`))
+  return Array.from(variants)
+}
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const ref = searchParams.get('ref')
   if (!ref) return NextResponse.json({ payments: [] })
+
+  const variants = refVariants(ref)
+  const filter = variants.length === 1
+    ? { property: 'REFERÊNCIA DO EVENTO', rich_text: { equals: variants[0] } }
+    : { or: variants.map(v => ({ property: 'REFERÊNCIA DO EVENTO', rich_text: { equals: v } })) }
 
   const res = await fetch(`https://api.notion.com/v1/databases/${DB_ID}/query`, {
     method: 'POST',
@@ -29,13 +45,7 @@ export async function GET(req: Request) {
       'Notion-Version': '2022-06-28',
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      filter: {
-        property: 'REFERÊNCIA DO EVENTO',
-        rich_text: { equals: ref },
-      },
-      page_size: 50,
-    }),
+    body: JSON.stringify({ filter, page_size: 50 }),
     cache: 'no-store',
   })
 

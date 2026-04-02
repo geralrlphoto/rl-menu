@@ -309,10 +309,9 @@ export default async function Home() {
         </div>
       </div>
 
-      {/* Grid principal */}
-      <div className="flex-1 flex items-center justify-center px-10 py-5">
+      {/* Grid principal — desktop */}
+      <div className="hidden sm:flex flex-1 items-center justify-center px-10 py-5">
         <div className="w-full max-w-6xl flex flex-col gap-2">
-
           <div className="grid grid-cols-3 gap-2">
             {allItems.slice(0, 3).map((item) => (
               <Link key={item.id} href={item.href}
@@ -330,7 +329,6 @@ export default async function Home() {
               </Link>
             ))}
           </div>
-
           <div className="grid gap-2"
             style={{ gridTemplateColumns: allItems.slice(3).length === 3 ? '1.2fr 0.9fr 1fr' : allItems.slice(3).length === 2 ? '3fr 2fr' : '1fr' }}>
             {allItems.slice(3).map((item) => (
@@ -349,12 +347,31 @@ export default async function Home() {
               </Link>
             ))}
           </div>
-
         </div>
       </div>
 
+      {/* Menu mobile — lista vertical com imagem */}
+      <div className="sm:hidden flex-1 flex flex-col px-4 py-5 gap-3">
+        {allItems.map((item) => (
+          <Link key={item.id} href={item.href}
+            className="relative overflow-hidden group rounded-2xl flex items-center gap-4 bg-white/[0.03] border border-white/[0.08] active:bg-white/[0.06] transition-colors"
+            style={{ height: '72px' }}>
+            {/* Imagem à esquerda */}
+            <div className="relative w-20 h-full shrink-0 overflow-hidden rounded-l-2xl">
+              <div className="absolute inset-0 bg-cover bg-center"
+                style={{ backgroundImage: `url(${item.img})` }} />
+              <div className="absolute inset-0 bg-black/40" />
+            </div>
+            {/* Nome */}
+            <span className="text-white font-semibold tracking-[0.12em] uppercase text-sm flex-1">{item.name}</span>
+            {/* Seta */}
+            <span className="text-[#C9A84C]/60 text-lg pr-4">›</span>
+          </Link>
+        ))}
+      </div>
+
       {/* ── Dashboard carousel ──────────────────────────────────────────────── */}
-      <div className="mt-[120px] border-t border-[#C9A84C]/25 bg-[#0d0d0d]">
+      <div className="border-t border-[#C9A84C]/25 bg-[#0d0d0d] sm:mt-[80px]">
         <DashboardCarousel cols={cols} />
       </div>
 

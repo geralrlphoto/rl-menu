@@ -112,13 +112,13 @@ export default function Eventos2026() {
     .slice(0, 3)
 
   return (
-    <main className="min-h-screen px-6 py-10 max-w-[1200px] mx-auto">
+    <main className="min-h-screen px-3 sm:px-6 py-6 sm:py-10 max-w-[1200px] mx-auto">
 
       {/* Header */}
       <div className="flex items-end justify-between mb-10">
         <div>
           <Link href="/" className="text-xs tracking-[0.3em] text-white/20 hover:text-gold transition-colors uppercase">‹ Menu</Link>
-          <h1 className="text-5xl font-extralight tracking-[0.2em] text-white uppercase mt-3">Eventos 2026</h1>
+          <h1 className="text-3xl sm:text-5xl font-extralight tracking-[0.15em] sm:tracking-[0.2em] text-white uppercase mt-3">Eventos 2026</h1>
           <p className="text-white/20 text-xs tracking-[0.3em] mt-2 uppercase">{events.length} eventos · {totalValor.toLocaleString('pt-PT')} € total</p>
         </div>
       </div>
@@ -167,13 +167,13 @@ export default function Eventos2026() {
       )}
 
       {/* Filtros */}
-      <div className="flex flex-wrap gap-3 mb-10">
+      <div className="flex flex-wrap gap-2 sm:gap-3 mb-6 sm:mb-10">
         <input
           type="text"
           placeholder="Pesquisar cliente ou local..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="bg-white/5 border border-white/8 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/40 w-72"
+          className="bg-white/5 border border-white/8 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/40 w-full sm:w-72"
         />
         <select
           value={tipoFilter}
@@ -214,7 +214,7 @@ export default function Eventos2026() {
                 {/* Lista de eventos do mês */}
                 <div className="flex flex-col gap-2">
                   {monthEvents.map(e => (
-                    <Link key={e.id} href={`/eventos-2026/${e.id}`} className="group flex items-center gap-5 px-5 py-4 bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] hover:border-gold/20 rounded-xl transition-all cursor-pointer relative">
+                    <Link key={e.id} href={`/eventos-2026/${e.id}`} className="group flex items-center gap-3 sm:gap-5 px-3 sm:px-5 py-3 sm:py-4 bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] hover:border-gold/20 rounded-xl transition-all cursor-pointer relative">
 
                       {/* Data */}
                       <div className="w-16 shrink-0 text-center">
@@ -231,7 +231,7 @@ export default function Eventos2026() {
                       </div>
 
                       {/* Tipo */}
-                      <div className="flex gap-1.5 shrink-0">
+                      <div className="hidden sm:flex gap-1.5 shrink-0">
                         {(e.tipo_evento ?? []).map(t => (
                           <span key={t} className={`text-[10px] px-2 py-0.5 rounded-full border ${tipoColor[t] ?? 'bg-white/10 text-white/40 border-white/20'}`}>
                             {t}
@@ -247,7 +247,7 @@ export default function Eventos2026() {
                       )}
 
                       {/* Fotos enviadas */}
-                      <div className="shrink-0">
+                      <div className="shrink-0 hidden sm:block">
                         {e.fotos_enviadas
                           ? <span className="text-[10px] text-green-400/70 tracking-wider">✓ ENTREGUE</span>
                           : <span className="text-[10px] text-white/15 tracking-wider">PENDENTE</span>
@@ -256,7 +256,7 @@ export default function Eventos2026() {
 
                       {/* Valor */}
                       {e.valor_liquido && (
-                        <div className="text-gold text-sm font-semibold shrink-0 w-20 text-right">
+                        <div className="hidden sm:block text-gold text-sm font-semibold shrink-0 w-20 text-right">
                           {e.valor_liquido.toLocaleString('pt-PT')} €
                         </div>
                       )}

@@ -296,18 +296,18 @@ export default function CRMPage() {
   const hasAlerts = leadsQuente.length > 0 || leadsMorno.length > 0 || leadsFrio.length > 0
 
   return (
-    <main className="min-h-screen px-6 py-10 max-w-[1400px] mx-auto">
+    <main className="min-h-screen px-3 sm:px-6 py-6 sm:py-10 max-w-[1400px] mx-auto">
 
       {/* ── HEADER ── */}
-      <div className="flex items-end justify-between mb-12">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8 sm:mb-12">
         <div>
           <Link href="/" className="text-xs tracking-[0.3em] text-white/20 hover:text-gold transition-colors uppercase">
             ‹ Menu
           </Link>
-          <h1 className="text-5xl font-extralight tracking-[0.2em] text-white uppercase mt-3">CRM</h1>
+          <h1 className="text-3xl sm:text-5xl font-extralight tracking-[0.15em] sm:tracking-[0.2em] text-white uppercase mt-3">CRM</h1>
           <p className="text-white/20 text-xs tracking-[0.3em] mt-2 uppercase">{contacts.length} Leads</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <div className="flex flex-col items-end gap-1">
             <button
               onClick={handleSync}
@@ -399,7 +399,7 @@ export default function CRMPage() {
           placeholder="Pesquisar..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="bg-white/5 border border-white/8 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/40 w-64 tracking-wide"
+          className="bg-white/5 border border-white/8 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/40 w-full sm:w-64 tracking-wide"
         />
         <select
           value={statusFilter}
