@@ -134,15 +134,21 @@ export default async function Home() {
     }
   })
 
+  function parseVideoFormula(formula: string | null): number {
+    if (!formula) return 999
+    // "🟩 Prazo Final: 09/01/2027 — 281 dias restantes"
+    const restantes = formula.match(/(\d+) dias? restantes/)
+    if (restantes) return parseInt(restantes[1])
+    // "🔴 ... — 5 dias em atraso"
+    const atraso = formula.match(/(\d+) dias? em atraso/)
+    if (atraso) return -parseInt(atraso[1])
+    return 999
+  }
+
   const videosAlerta = (eventosRes.events ?? [])
-    .filter((e: any) => e.video_estado === 'Aguardar' || e.video_estado === 'Em Edição')
+    .filter((e: any) => e.video_estado !== 'Entregue')
     .map((e: any) => {
-      let diasRestantes = 99
-      if (e.data_evento) {
-        const prazo = addWorkingDays(e.data_evento, 180)
-        const today = new Date(); today.setHours(0,0,0,0)
-        diasRestantes = Math.round((prazo.getTime() - today.getTime()) / 86400000)
-      }
+      const diasRestantes = parseVideoFormula(e.data_entrega_video_formula)
       return { cliente: e.cliente || '—', referencia: e.referencia || '', diasRestantes, videoEstado: e.video_estado }
     })
     .filter((v: any) => v.diasRestantes <= 15)

@@ -72,6 +72,7 @@ export async function GET() {
         data_entrega: getProp(p, 'DATA FINAL ENTREGA FOTOS', 'date'),
         fotos_enviadas: p['FOTOS EDITADAS ANVIADAS']?.checkbox ?? false,
         video_estado: getProp(p, 'ESTADO VÍDEO', 'select'),
+        data_entrega_video_formula: p['DATA ENTREGA VIDEO']?.formula?.string ?? null,
       }
     })
 
