@@ -92,8 +92,10 @@ export default async function Home() {
     videosRes,
     fotosRes,
   ] = await Promise.all([
-    supabase.from('crm_contacts').select('nome, tipo_evento, como_chegou, data_entrada')
-      .gte('data_entrada', ago10Str).order('data_entrada', { ascending: false }),
+    supabase.from('crm_contacts').select('nome, tipo_evento, como_chegou, data_entrada, status')
+      .gte('data_entrada', ago10Str)
+      .not('status', 'in', '("Fechou","NÃO FECHOU","Sem resposta","Encerrado","Cancelado")')
+      .order('data_entrada', { ascending: false }),
 
     fetch(`https://api.notion.com/v1/databases/${ALBUNS_DB}/query`, {
       method: 'POST', headers: notionH, cache: 'no-store',
