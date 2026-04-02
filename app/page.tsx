@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { DashboardCarousel, type DashCol } from '@/app/components/DashboardCarousel'
+import { LogoutButton } from '@/app/components/LogoutButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -246,10 +247,13 @@ export default async function Home() {
     <main className="min-h-screen bg-[#080808] flex flex-col">
 
       {/* Header */}
-      <div className="h-14 flex items-center justify-center border-b border-white/[0.06] shrink-0">
+      <div className="h-14 flex items-center justify-center border-b border-white/[0.06] shrink-0 relative">
         <h1 className="text-sm font-light tracking-[0.5em] text-white uppercase">
           RL <span className="text-[#C9A84C]">PHOTO</span>.VIDEO
         </h1>
+        <div className="absolute right-4">
+          <LogoutButton />
+        </div>
       </div>
 
       {/* Grid principal */}
