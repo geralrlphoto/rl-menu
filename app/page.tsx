@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { DashboardCarousel, type DashCol } from '@/app/components/DashboardCarousel'
-import { LogoutButton } from '@/app/components/LogoutButton'
+import { LogoutButton } from './components/LogoutButton'
 
 export const dynamic = 'force-dynamic'
 
