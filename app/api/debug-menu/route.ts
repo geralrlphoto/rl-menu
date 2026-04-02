@@ -12,5 +12,5 @@ export async function GET() {
   const supabase = createClient(url, key)
   const { data, error } = await supabase.from('menu_sections').select('*').order('order_index')
 
-  return NextResponse.json({ data, error, keyPrefix: key.slice(0, 20) })
+  return NextResponse.json({ data, error, urlFull: url, keyPrefix: key.slice(0, 20) })
 }
