@@ -149,7 +149,7 @@ export default async function Home() {
   }
 
   const videosAlerta = (eventosRes.events ?? [])
-    .filter((e: any) => e.video_estado !== 'Entregue')
+    .filter((e: any) => (e.video_estado ?? '').toUpperCase() !== 'ENTREGUE')
     .map((e: any) => {
       const diasRestantes = parseVideoFormula(e.data_entrega_video_formula)
       return { cliente: e.cliente || '—', referencia: e.referencia || '', diasRestantes, videoEstado: e.video_estado }

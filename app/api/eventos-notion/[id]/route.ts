@@ -61,7 +61,7 @@ const FIELD_MAP: Record<string, { key: string; type: string }> = {
   servico_extra:        { key: 'SERVIÇO EXTRA',              type: 'multi_select' },
   fotos_edicao_estado:  { key: 'FOTOS P/ EDIÇÃO',            type: 'select' },
   sel_fotos_estado:     { key: 'ESTADO SEL. FOTOS',          type: 'select' },
-  video_estado:         { key: 'ESTADO VÍDEO',               type: 'select' },
+  video_estado:         { key: 'ESTADO DO VIDEO',            type: 'select' },
   album_estado:         { key: 'ESTADO ÁLBUM',               type: 'select' },
 }
 
@@ -178,7 +178,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       backup_disco:         getProp(p, 'BACKUP DISCO', 'multi_select'),
       fotos_edicao_estado:  getProp(p, 'FOTOS P/ EDIÇÃO', 'select'),
       sel_fotos_estado:     getProp(p, 'ESTADO SEL. FOTOS', 'select'),
-      video_estado:         getProp(p, 'ESTADO VÍDEO', 'select'),
+      video_estado:         getProp(p, 'ESTADO DO VIDEO', 'select'),
       album_estado:         getProp(p, 'ESTADO ÁLBUM', 'select'),
       notion_url:           page.url,
     }
