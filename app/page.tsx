@@ -67,13 +67,6 @@ export default async function Home() {
   const in14Days = new Date(); in14Days.setDate(in14Days.getDate() + 14)
   const in14DaysStr = in14Days.toISOString().split('T')[0]
 
-  // Para vídeos: 180 dias úteis ≈ 252 dias de calendário
-  // Eventos com prazo de vídeo nos próximos 15 dias + já em atraso (até 60 dias atrás)
-  const videoRangeStart = new Date(); videoRangeStart.setDate(videoRangeStart.getDate() - 252 - 60)
-  const videoRangeEnd   = new Date(); videoRangeEnd.setDate(videoRangeEnd.getDate() - 252 + 15)
-  const videoStartStr = videoRangeStart.toISOString().split('T')[0]
-  const videoEndStr   = videoRangeEnd.toISOString().split('T')[0]
-
   const NOTION_TOKEN   = process.env.NOTION_TOKEN!
   const ALBUNS_DB      = '306220116d8a808e9fc0d77766504e52'
   const EVENTOS_DB     = '1ad220116d8a804b839ddc36f1e7ecf1'
@@ -119,16 +112,12 @@ export default async function Home() {
     fetch(`https://api.notion.com/v1/databases/${EVENTOS_DB}/query`, {
       method: 'POST', headers: notionH, cache: 'no-store',
       body: JSON.stringify({
-        filter: { and: [
-          { or: [
-            { property: 'ESTADO VÍDEO', select: { equals: 'Aguardar' } },
-            { property: 'ESTADO VÍDEO', select: { equals: 'Em Edição' } },
-          ]},
-          { property: 'DATA DO EVENTO', date: { on_or_after: videoStartStr } },
-          { property: 'DATA DO EVENTO', date: { on_or_before: videoEndStr } },
+        filter: { or: [
+          { property: 'ESTADO VÍDEO', select: { equals: 'Aguardar' } },
+          { property: 'ESTADO VÍDEO', select: { equals: 'Em Edição' } },
         ]},
         sorts: [{ property: 'DATA DO EVENTO', direction: 'ascending' }],
-        page_size: 20,
+        page_size: 100,
       }),
     }).then(r => r.json()).catch(() => ({ results: [] })),
   ])
