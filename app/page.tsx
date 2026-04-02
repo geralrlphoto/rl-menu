@@ -76,18 +76,21 @@ export default async function Home() {
     'Content-Type': 'application/json',
   }
 
+  // Range para prazos de fotos: eventos dos últimos 90 dias
+  const in15Days = new Date(); in15Days.setDate(in15Days.getDate() + 15)
+  const in15DaysStr = in15Days.toISOString().split('T')[0]
+  const ago90 = new Date(); ago90.setDate(ago90.getDate() - 90)
+  const ago90Str = ago90.toISOString().split('T')[0]
+
   const [
     { data: leadsHoje },
-    { data: leadsPendentes },
     prazosRes,
     aprovacaoRes,
     videosRes,
+    fotosRes,
   ] = await Promise.all([
     supabase.from('crm_contacts').select('nome, tipo_evento, como_chegou')
       .eq('data_entrada', todayStr).order('created_at', { ascending: false }),
-
-    supabase.from('crm_contacts').select('nome, tipo_evento, data_casamento')
-      .eq('status', 'Por Contactar').order('created_at', { ascending: false }).limit(8),
 
     fetch(`https://api.notion.com/v1/databases/${ALBUNS_DB}/query`, {
       method: 'POST', headers: notionH, cache: 'no-store',
@@ -115,6 +118,29 @@ export default async function Home() {
         filter: { property: 'ESTADO DO VIDEO', select: { does_not_equal: 'ENTREGUE' } },
         sorts: [{ property: 'DATA DO EVENTO', direction: 'ascending' }],
         page_size: 100,
+      }),
+    }).then(r => r.json()).catch(() => ({ results: [] })),
+
+    // Prazos fotos: eventos últimos 90 dias, ou com DATA ENTREGA FOTOS nos próximos 15 dias
+    fetch(`https://api.notion.com/v1/databases/${EVENTOS_DB}/query`, {
+      method: 'POST', headers: notionH, cache: 'no-store',
+      body: JSON.stringify({
+        filter: { or: [
+          // Sel. Fotos: eventos dos últimos 15-45 dias (prazo 30 dias a acabar)
+          { and: [
+            { property: 'DATA DO EVENTO', date: { on_or_after: ago90Str } },
+            { property: 'DATA DO EVENTO', date: { on_or_before: todayStr } },
+            { property: 'ESTADO SEL. FOTOS', select: { does_not_equal: 'Entregue' } },
+          ]},
+          // Fotos p/ edição: DATA ENTREGA FOTOS nos próximos 15 dias
+          { and: [
+            { property: 'DATA ENTREGA FOTOS', date: { on_or_after: todayStr } },
+            { property: 'DATA ENTREGA FOTOS', date: { on_or_before: in15DaysStr } },
+            { property: 'FOTOS P/ EDIÇÃO', select: { does_not_equal: 'Entregue' } },
+          ]},
+        ]},
+        sorts: [{ property: 'DATA DO EVENTO', direction: 'ascending' }],
+        page_size: 50,
       }),
     }).then(r => r.json()).catch(() => ({ results: [] })),
   ])
@@ -150,6 +176,31 @@ export default async function Home() {
     return 999
   }
 
+  const fotosAlerta = (fotosRes.results ?? []).map((p: any) => {
+    const props = p.properties ?? {}
+    const nome = props['CLIENTE']?.rich_text?.[0]?.plain_text ?? '—'
+    const ref  = props['REFERÊNCIA DO EVENTO']?.title?.[0]?.plain_text ?? ''
+    const dataEvento   = props['DATA DO EVENTO']?.date?.start ?? null
+    const dataEntrega  = props['DATA ENTREGA FOTOS']?.date?.start ?? null
+    const selEstado    = props['ESTADO SEL. FOTOS']?.select?.name ?? null
+    const fotosEstado  = props['FOTOS P/ EDIÇÃO']?.select?.name ?? null
+
+    // Prazo sel fotos = data_evento + 30 dias
+    let tipo = '', diasRestantes = 999, label = ''
+    if (dataEvento) {
+      const prazoSel = new Date(dataEvento + 'T00:00:00')
+      prazoSel.setDate(prazoSel.getDate() + 30)
+      const today = new Date(); today.setHours(0,0,0,0)
+      const d = Math.round((prazoSel.getTime() - today.getTime()) / 86400000)
+      if (d <= 15 && selEstado !== 'Entregue') { diasRestantes = d; tipo = 'sel'; label = 'Sel. Fotos' }
+    }
+    if (dataEntrega && fotosEstado !== 'Entregue') {
+      const d = daysUntil(dataEntrega)
+      if (d <= 15 && d < diasRestantes) { diasRestantes = d; tipo = 'fotos'; label = 'Fotos Edição' }
+    }
+    return { nome, ref, diasRestantes, label, tipo }
+  }).filter(f => f.diasRestantes <= 15)
+
   const videosAlerta = (videosRes.results ?? [])
     .map((p: any) => {
       const props = p.properties ?? {}
@@ -177,17 +228,17 @@ export default async function Home() {
       href: '/crm',
     },
     {
-      key: 'por-contactar',
-      title: ['POR', 'CONTACTAR'],
-      subtitle: `${leadsPendentes?.length ?? 0} pendente${(leadsPendentes?.length ?? 0) !== 1 ? 's' : ''}`,
-      empty: 'Sem leads pendentes',
-      items: (leadsPendentes ?? []).map(l => ({
-        main: l.nome || '—',
-        sub: l.tipo_evento ?? '',
-        tag: l.data_casamento ? fmt(l.data_casamento) : null,
-        tagColor: 'text-[#C9A84C]/70',
+      key: 'prazos-fotos',
+      title: ['PRAZOS', 'FOTOS'],
+      subtitle: fotosAlerta.length > 0 ? `${fotosAlerta.length} prazo${fotosAlerta.length !== 1 ? 's' : ''} urgente${fotosAlerta.length !== 1 ? 's' : ''}` : 'Sem prazos urgentes',
+      empty: 'Todos os prazos em dia',
+      items: fotosAlerta.map(f => ({
+        main: f.nome,
+        sub: `${f.label} · ${f.ref}`,
+        tag: f.diasRestantes < 0 ? `${Math.abs(f.diasRestantes)}d atraso` : f.diasRestantes === 0 ? 'Hoje' : `${f.diasRestantes}d`,
+        tagColor: f.diasRestantes < 0 ? 'text-red-500' : f.diasRestantes <= 3 ? 'text-red-400' : f.diasRestantes <= 7 ? 'text-amber-400' : 'text-emerald-400/80',
       })),
-      href: '/crm',
+      href: '/eventos-2026',
     },
     {
       key: 'prazos-albuns',
