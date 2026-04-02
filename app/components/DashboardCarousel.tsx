@@ -43,7 +43,7 @@ export function DashboardCarousel({ cols }: { cols: DashCol[] }) {
 
               {/* Título */}
               <div className="mb-1">
-                {col.title.map((line, j) => (
+                {col.title.map((line: string, j: number) => (
                   <p key={j} className="text-[22px] font-bold tracking-[0.08em] text-white uppercase leading-tight">{line}</p>
                 ))}
               </div>
