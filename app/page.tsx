@@ -82,15 +82,18 @@ export default async function Home() {
   const ago90 = new Date(); ago90.setDate(ago90.getDate() - 90)
   const ago90Str = ago90.toISOString().split('T')[0]
 
+  const ago10 = new Date(); ago10.setDate(ago10.getDate() - 10)
+  const ago10Str = ago10.toISOString().split('T')[0]
+
   const [
-    { data: leadsHoje },
+    { data: leadsAtivas },
     prazosRes,
     aprovacaoRes,
     videosRes,
     fotosRes,
   ] = await Promise.all([
-    supabase.from('crm_contacts').select('nome, tipo_evento, como_chegou')
-      .eq('data_entrada', todayStr).order('created_at', { ascending: false }),
+    supabase.from('crm_contacts').select('nome, tipo_evento, como_chegou, data_entrada')
+      .gte('data_entrada', ago10Str).order('data_entrada', { ascending: false }),
 
     fetch(`https://api.notion.com/v1/databases/${ALBUNS_DB}/query`, {
       method: 'POST', headers: notionH, cache: 'no-store',
@@ -212,18 +215,27 @@ export default async function Home() {
     })
     .filter((v: any) => v.diasRestantes <= 15)
 
+  // ── Temperatura das leads ─────────────────────────────────────────────────
+  function daysSince(d: string) {
+    const today = new Date(); today.setHours(0,0,0,0)
+    return Math.round((today.getTime() - new Date(d + 'T00:00:00').getTime()) / 86400000)
+  }
+  const leadsQuenteMorno = (leadsAtivas ?? []).filter(l => daysSince(l.data_entrada) <= 10)
+  const quente = leadsQuenteMorno.filter(l => daysSince(l.data_entrada) <= 3)
+  const morno  = leadsQuenteMorno.filter(l => daysSince(l.data_entrada) > 3)
+
   // ── Colunas do carousel ───────────────────────────────────────────────────
   const cols: DashCol[] = [
     {
-      key: 'leads-hoje',
-      title: ['LEADS', 'HOJE'],
-      subtitle: `${leadsHoje?.length ?? 0} novo${(leadsHoje?.length ?? 0) !== 1 ? 's' : ''} contacto${(leadsHoje?.length ?? 0) !== 1 ? 's' : ''}`,
-      empty: 'Nenhuma lead hoje',
-      items: (leadsHoje ?? []).map(l => ({
+      key: 'leads',
+      title: ['LEADS'],
+      subtitle: `${quente.length} quente${quente.length !== 1 ? 's' : ''} · ${morno.length} morno${morno.length !== 1 ? 's' : ''}`,
+      empty: 'Sem leads quentes ou mornas',
+      items: leadsQuenteMorno.map(l => ({
         main: l.nome || '—',
         sub: [l.tipo_evento, l.como_chegou].filter(Boolean).join(' · '),
-        tag: null,
-        tagColor: '',
+        tag: daysSince(l.data_entrada) <= 3 ? '🔥 Quente' : '🌡 Morno',
+        tagColor: daysSince(l.data_entrada) <= 3 ? 'text-red-400' : 'text-amber-400',
       })),
       href: '/crm',
     },
