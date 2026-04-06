@@ -15,6 +15,8 @@ type PortalSettings = {
   data?: string
   local?: string
   activeNavId?: string
+  heroImageUrl?: string
+  galleryUrls?: string[]  // up to 3
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -220,6 +222,69 @@ function SettingsPanel({
         <Field label="Local" k="local" placeholder="ex: HERDADE DE ALGERUZ" />
       </div>
 
+      {/* Photos */}
+      <div>
+        <p className="text-[10px] text-white/40 tracking-widest uppercase mb-3">Fotografias</p>
+        <div className="space-y-3">
+          {/* Hero image */}
+          <div>
+            <label className="block text-[10px] text-white/30 mb-1">Imagem de Fundo (Hero)</label>
+            <div className="flex gap-2 items-start">
+              <div className="flex-1">
+                <input
+                  value={form.heroImageUrl ?? ''}
+                  onChange={e => setForm(prev => ({ ...prev, heroImageUrl: e.target.value }))}
+                  placeholder="Cola aqui o URL da imagem..."
+                  className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
+                />
+              </div>
+              {form.heroImageUrl && (
+                <div className="shrink-0 w-14 h-10 rounded-lg bg-cover bg-center border border-white/10"
+                  style={{ backgroundImage: `url(${form.heroImageUrl})` }} />
+              )}
+              {form.heroImageUrl && (
+                <button onClick={() => setForm(prev => ({ ...prev, heroImageUrl: '' }))}
+                  className="shrink-0 text-white/25 hover:text-red-400 text-lg leading-none mt-1">×</button>
+              )}
+            </div>
+          </div>
+
+          {/* Gallery images */}
+          {[0, 1, 2].map(i => (
+            <div key={i}>
+              <label className="block text-[10px] text-white/30 mb-1">Galeria — Foto {i + 1}</label>
+              <div className="flex gap-2 items-start">
+                <div className="flex-1">
+                  <input
+                    value={form.galleryUrls?.[i] ?? ''}
+                    onChange={e => {
+                      const urls = [...(form.galleryUrls ?? ['', '', ''])]
+                      urls[i] = e.target.value
+                      setForm(prev => ({ ...prev, galleryUrls: urls }))
+                    }}
+                    placeholder="Cola aqui o URL da imagem..."
+                    className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
+                  />
+                </div>
+                {form.galleryUrls?.[i] && (
+                  <div className="shrink-0 w-14 h-10 rounded-lg bg-cover bg-center border border-white/10"
+                    style={{ backgroundImage: `url(${form.galleryUrls[i]})` }} />
+                )}
+                {form.galleryUrls?.[i] && (
+                  <button onClick={() => {
+                    const urls = [...(form.galleryUrls ?? ['', '', ''])]
+                    urls[i] = ''
+                    setForm(prev => ({ ...prev, galleryUrls: urls }))
+                  }}
+                    className="shrink-0 text-white/25 hover:text-red-400 text-lg leading-none mt-1">×</button>
+                )}
+              </div>
+            </div>
+          ))}
+          <p className="text-[10px] text-white/20">Podes usar URLs de qualquer imagem (Google Drive partilhado, Dropbox, etc.).</p>
+        </div>
+      </div>
+
       <div>
         <p className="text-[10px] text-white/40 tracking-widest uppercase mb-3">Menu de Navegação</p>
         <div className="rounded-xl border border-white/10 overflow-hidden divide-y divide-white/[0.04]">
@@ -295,8 +360,11 @@ export default function PortalClientePage() {
   )
 
   const images = findImages(blocks)
-  const heroImage = images[0] ?? null
-  const galleryImages = images.slice(0, 3)
+  const heroImage = settings.heroImageUrl || images[0] || null
+  const galleryImages = (() => {
+    const custom = (settings.galleryUrls ?? []).filter(Boolean)
+    return custom.length > 0 ? custom : images.slice(0, 3)
+  })()
   const navPages = findAllChildPages(blocks).filter(p => !settings.hiddenNav.includes(p.id))
   const { heading: welcomeHeading, paragraphs: welcomeParas } = findWelcomeText(blocks)
 
