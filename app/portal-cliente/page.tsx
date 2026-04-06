@@ -324,6 +324,9 @@ export default function PortalClientePage() {
   const [editing, setEditing] = useState(false)
   const [editingContent, setEditingContent] = useState(false)
   const [error, setError] = useState('')
+  // inline hero editing
+  const [heroEdit, setHeroEdit] = useState<{ field: 'noiva' | 'noivo' | 'hero' | null; value: string }>({ field: null, value: '' })
+  const [heroSaving, setHeroSaving] = useState(false)
 
   const loadBlocks = useCallback(async (bust = false) => {
     const url = bust ? `/api/portais-clientes?id=${PAGE_ID}&bust=1` : `/api/portais-clientes?id=${PAGE_ID}`
@@ -342,6 +345,25 @@ export default function PortalClientePage() {
     setEditing(false)
     setEditingContent(false)
     await loadBlocks(true)
+  }
+
+  async function saveHeroField() {
+    if (!heroEdit.field) return
+    setHeroSaving(true)
+    const patch: Partial<PortalSettings> =
+      heroEdit.field === 'noiva' ? { noiva: heroEdit.value } :
+      heroEdit.field === 'noivo' ? { noivo: heroEdit.value } :
+      { heroImageUrl: heroEdit.value }
+    const newSettings = { ...settings, ...patch }
+    await fetch('/api/portal-settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pageId: PAGE_ID, settings: newSettings, settingsBlockId }),
+    })
+    setSettings(newSettings)
+    setHeroEdit({ field: null, value: '' })
+    setHeroSaving(false)
+    fetch(`/api/portais-clientes?id=${PAGE_ID}&bust=1`)
   }
 
   if (loading) return (
@@ -424,6 +446,44 @@ export default function PortalClientePage() {
           <div className="absolute inset-0 bg-gradient-to-b from-[#1a1408] to-[#0a0a0a]" />
         )}
 
+        {/* Trocar foto button */}
+        {heroEdit.field === 'hero' ? (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div className="w-full max-w-md px-4">
+              <p className="text-[10px] text-gold/60 tracking-widest uppercase mb-2 text-center">URL da nova fotografia</p>
+              <input
+                autoFocus
+                value={heroEdit.value}
+                onChange={e => setHeroEdit(prev => ({ ...prev, value: e.target.value }))}
+                placeholder="https://..."
+                className="w-full bg-white/[0.08] border border-white/20 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-gold/50 mb-3 placeholder:text-white/25"
+              />
+              {heroEdit.value && (
+                <div className="w-full h-28 rounded-lg bg-cover bg-center mb-3 border border-white/10"
+                  style={{ backgroundImage: `url(${heroEdit.value})` }} />
+              )}
+              <div className="flex gap-2 justify-center">
+                <button onClick={() => setHeroEdit({ field: null, value: '' })}
+                  className="px-4 py-2 text-xs border border-white/15 rounded-lg text-white/50 hover:text-white/80">Cancelar</button>
+                <button onClick={saveHeroField} disabled={heroSaving}
+                  className="px-5 py-2 text-xs bg-gold/20 border border-gold/40 rounded-lg text-gold hover:bg-gold/30 disabled:opacity-50">
+                  {heroSaving ? 'A guardar...' : '✓ Guardar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setHeroEdit({ field: 'hero', value: heroImage ?? '' })}
+            className="absolute bottom-4 right-4 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/50 border border-white/15 text-[10px] text-white/50 hover:text-white hover:border-white/30 transition-all backdrop-blur-sm"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Trocar foto
+          </button>
+        )}
+
         <div className="relative z-10 text-center px-4 pt-20">
           {/* Portal label */}
           <div className="flex items-center justify-center gap-3 mb-4">
@@ -432,9 +492,51 @@ export default function PortalClientePage() {
             <Leaf flip />
           </div>
 
-          {/* Names */}
-          <h1 className="font-playfair text-5xl sm:text-7xl lg:text-8xl font-black text-white leading-none tracking-tight mb-4">
-            {settings.noiva || 'NOIVA'} <span className="text-gold font-cormorant italic font-normal">&</span> {settings.noivo || 'NOIVO'}
+          {/* Names — inline editable */}
+          <h1 className="font-playfair text-5xl sm:text-7xl lg:text-8xl font-black text-white leading-none tracking-tight mb-4 flex items-center justify-center gap-4 flex-wrap">
+            {heroEdit.field === 'noiva' ? (
+              <span className="flex items-center gap-2">
+                <input
+                  autoFocus
+                  value={heroEdit.value}
+                  onChange={e => setHeroEdit(prev => ({ ...prev, value: e.target.value }))}
+                  onKeyDown={e => { if (e.key === 'Enter') saveHeroField(); if (e.key === 'Escape') setHeroEdit({ field: null, value: '' }) }}
+                  className="bg-white/10 border-b-2 border-gold outline-none text-white font-playfair text-5xl sm:text-7xl lg:text-8xl font-black text-center w-40 sm:w-56"
+                />
+                <span className="flex flex-col gap-1">
+                  <button onClick={saveHeroField} disabled={heroSaving} className="text-[10px] bg-gold/30 border border-gold/50 text-gold px-2 py-0.5 rounded hover:bg-gold/50 disabled:opacity-50">✓</button>
+                  <button onClick={() => setHeroEdit({ field: null, value: '' })} className="text-[10px] border border-white/20 text-white/40 px-2 py-0.5 rounded hover:text-white/70">✕</button>
+                </span>
+              </span>
+            ) : (
+              <button onClick={() => setHeroEdit({ field: 'noiva', value: settings.noiva || '' })}
+                className="group relative hover:opacity-80 transition-opacity cursor-text">
+                {settings.noiva || 'NOIVA'}
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] text-gold/0 group-hover:text-gold/80 transition-colors tracking-widest uppercase whitespace-nowrap">✎ editar</span>
+              </button>
+            )}
+            <span className="text-gold font-cormorant italic font-normal">&</span>
+            {heroEdit.field === 'noivo' ? (
+              <span className="flex items-center gap-2">
+                <input
+                  autoFocus
+                  value={heroEdit.value}
+                  onChange={e => setHeroEdit(prev => ({ ...prev, value: e.target.value }))}
+                  onKeyDown={e => { if (e.key === 'Enter') saveHeroField(); if (e.key === 'Escape') setHeroEdit({ field: null, value: '' }) }}
+                  className="bg-white/10 border-b-2 border-gold outline-none text-white font-playfair text-5xl sm:text-7xl lg:text-8xl font-black text-center w-40 sm:w-56"
+                />
+                <span className="flex flex-col gap-1">
+                  <button onClick={saveHeroField} disabled={heroSaving} className="text-[10px] bg-gold/30 border border-gold/50 text-gold px-2 py-0.5 rounded hover:bg-gold/50 disabled:opacity-50">✓</button>
+                  <button onClick={() => setHeroEdit({ field: null, value: '' })} className="text-[10px] border border-white/20 text-white/40 px-2 py-0.5 rounded hover:text-white/70">✕</button>
+                </span>
+              </span>
+            ) : (
+              <button onClick={() => setHeroEdit({ field: 'noivo', value: settings.noivo || '' })}
+                className="group relative hover:opacity-80 transition-opacity cursor-text">
+                {settings.noivo || 'NOIVO'}
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] text-gold/0 group-hover:text-gold/80 transition-colors tracking-widest uppercase whitespace-nowrap">✎ editar</span>
+              </button>
+            )}
           </h1>
 
           {/* Date & venue */}
