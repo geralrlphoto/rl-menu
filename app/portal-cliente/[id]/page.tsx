@@ -14,6 +14,8 @@ export default function PortalSubPage() {
   const { id } = useParams<{ id: string }>()
   const searchParams = useSearchParams()
   const [blocks, setBlocks] = useState<Block[]>([])
+  const [settings, setSettings] = useState<{ hiddenNav: string[] }>({ hiddenNav: [] })
+  const [settingsBlockId, setSettingsBlockId] = useState<string | null>(null)
   const [title, setTitle] = useState(searchParams.get('title') ?? '')
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -25,7 +27,11 @@ export default function PortalSubPage() {
     const url = `/api/portais-clientes?id=${id}${bust ? '&bust=1' : ''}`
     const d = await fetch(url).then(r => r.json())
     if (d.error) setError(d.error)
-    else setBlocks(d.blocks ?? [])
+    else {
+      setBlocks(d.blocks ?? [])
+      setSettings(d.settings ?? { hiddenNav: [] })
+      setSettingsBlockId(d.settingsBlockId ?? null)
+    }
   }, [id])
 
   useEffect(() => {
@@ -101,8 +107,8 @@ export default function PortalSubPage() {
       {!loading && !error && (
         <div className="bg-white/[0.02] border border-white/[0.07] rounded-2xl p-5 sm:p-8">
           {editing && id
-            ? <BlockEditor blocks={blocks} pageId={id} onSaved={handleSaved} />
-            : <NotionBlocks blocks={blocks} />
+            ? <BlockEditor blocks={blocks} pageId={id} settings={settings} settingsBlockId={settingsBlockId} onSaved={handleSaved} />
+            : <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
           }
         </div>
       )}

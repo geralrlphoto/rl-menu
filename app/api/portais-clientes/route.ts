@@ -1,5 +1,23 @@
 import { NextResponse } from 'next/server'
 
+const SETTINGS_PREFIX = '__PORTAL_SETTINGS__:'
+
+function extractSettings(blocks: any[]) {
+  let settingsBlockId: string | null = null
+  let settings = { hiddenNav: [] as string[] }
+  const content = blocks.filter(b => {
+    if (b.type !== 'paragraph') return true
+    const text: string = b.paragraph?.rich_text?.[0]?.plain_text ?? ''
+    if (text.startsWith(SETTINGS_PREFIX)) {
+      settingsBlockId = b.id
+      try { settings = JSON.parse(text.slice(SETTINGS_PREFIX.length)) } catch {}
+      return false // remove from visible blocks
+    }
+    return true
+  })
+  return { content, settings, settingsBlockId }
+}
+
 const NOTION_TOKEN = process.env.NOTION_TOKEN!
 const PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
 
@@ -10,7 +28,7 @@ const notionHeaders = {
 
 // In-memory cache shared via globalThis so clear-cache route can access it
 declare global {
-  var notionBlocksCache: Map<string, { blocks: any[]; ts: number }> | undefined
+  var notionBlocksCache: Map<string, { blocks: any[]; settings: any; settingsBlockId: string | null; ts: number }> | undefined
 }
 if (!global.notionBlocksCache) global.notionBlocksCache = new Map()
 const cache = global.notionBlocksCache
@@ -52,12 +70,13 @@ export async function GET(req: Request) {
     // Serve from in-memory cache if fresh (unless busting)
     const cached = cache.get(id)
     if (!bust && cached && Date.now() - cached.ts < CACHE_TTL) {
-      return NextResponse.json({ blocks: cached.blocks, cached: true })
+      return NextResponse.json({ blocks: cached.blocks, settings: cached.settings, settingsBlockId: cached.settingsBlockId, cached: true })
     }
 
-    const blocks = await getBlocks(id)
-    cache.set(id, { blocks, ts: Date.now() })
-    return NextResponse.json({ blocks })
+    const raw = await getBlocks(id)
+    const { content: blocks, settings, settingsBlockId } = extractSettings(raw)
+    cache.set(id, { blocks, settings, settingsBlockId, ts: Date.now() })
+    return NextResponse.json({ blocks, settings, settingsBlockId })
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })
   }

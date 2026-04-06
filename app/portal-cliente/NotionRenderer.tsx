@@ -28,7 +28,7 @@ export function plainText(arr: any[]): string {
   return arr.map((t: any) => t.plain_text).join('')
 }
 
-export function NotionBlocks({ blocks, rootId }: { blocks: Block[], rootId?: string }) {
+export function NotionBlocks({ blocks, rootId, hiddenNav }: { blocks: Block[], rootId?: string, hiddenNav?: string[] }) {
   const elements: React.ReactNode[] = []
   let i = 0
 
@@ -49,7 +49,7 @@ export function NotionBlocks({ blocks, rootId }: { blocks: Block[], rootId?: str
               <span className="text-gold/50 mt-1.5 shrink-0 text-xs">•</span>
               <div className="text-sm text-white/60 leading-relaxed">
                 {richText(item.bulleted_list_item?.rich_text)}
-                {item.children && <div className="mt-1 pl-3"><NotionBlocks blocks={item.children} rootId={rootId} /></div>}
+                {item.children && <div className="mt-1 pl-3"><NotionBlocks blocks={item.children} rootId={rootId} hiddenNav={hiddenNav} /></div>}
               </div>
             </li>
           ))}
@@ -68,7 +68,7 @@ export function NotionBlocks({ blocks, rootId }: { blocks: Block[], rootId?: str
           {group.map(item => (
             <li key={item.id} className="text-sm text-white/60 leading-relaxed">
               {richText(item.numbered_list_item?.rich_text)}
-              {item.children && <div className="mt-1 pl-4"><NotionBlocks blocks={item.children} rootId={rootId} /></div>}
+              {item.children && <div className="mt-1 pl-4"><NotionBlocks blocks={item.children} rootId={rootId} hiddenNav={hiddenNav} /></div>}
             </li>
           ))}
         </ol>
@@ -136,7 +136,7 @@ export function NotionBlocks({ blocks, rootId }: { blocks: Block[], rootId?: str
             {plainText(data.rich_text) && (
               <p className="text-sm font-semibold text-white/85 mb-2">{richText(data.rich_text)}</p>
             )}
-            {b.children && <NotionBlocks blocks={b.children} rootId={rootId} />}
+            {b.children && <NotionBlocks blocks={b.children} rootId={rootId} hiddenNav={hiddenNav} />}
           </div>
         )
         break
@@ -145,7 +145,7 @@ export function NotionBlocks({ blocks, rootId }: { blocks: Block[], rootId?: str
         elements.push(
           <blockquote key={b.id} className="border-l-2 border-gold/40 pl-4 mb-3 italic text-sm text-white/50">
             {richText(data.rich_text)}
-            {b.children && <NotionBlocks blocks={b.children} rootId={rootId} />}
+            {b.children && <NotionBlocks blocks={b.children} rootId={rootId} hiddenNav={hiddenNav} />}
           </blockquote>
         )
         break
@@ -184,7 +184,7 @@ export function NotionBlocks({ blocks, rootId }: { blocks: Block[], rootId?: str
           <div key={b.id} className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             {b.children?.map((col: Block) => (
               <div key={col.id} className="min-w-0">
-                {col.children && <NotionBlocks blocks={col.children} rootId={rootId} />}
+                {col.children && <NotionBlocks blocks={col.children} rootId={rootId} hiddenNav={hiddenNav} />}
               </div>
             ))}
           </div>
@@ -199,13 +199,14 @@ export function NotionBlocks({ blocks, rootId }: { blocks: Block[], rootId?: str
             </summary>
             {b.children && (
               <div className="pl-5 pt-2">
-                <NotionBlocks blocks={b.children} rootId={rootId} />
+                <NotionBlocks blocks={b.children} rootId={rootId} hiddenNav={hiddenNav} />
               </div>
             )}
           </details>
         )
         break
       case 'child_page':
+        if (hiddenNav?.includes(b.id)) break // skip hidden nav items
         elements.push(
           <Link key={b.id} href={`/portal-cliente/${b.id}?title=${encodeURIComponent(data.title ?? '')}`}
             className="flex items-center gap-3 mb-2 px-4 py-3 bg-white/[0.03] border border-white/[0.07] hover:border-gold/30 hover:bg-white/[0.06] rounded-xl transition-all group">

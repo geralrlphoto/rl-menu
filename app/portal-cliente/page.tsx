@@ -9,6 +9,8 @@ const PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
 
 export default function PortalClientePage() {
   const [blocks, setBlocks] = useState<Block[]>([])
+  const [settings, setSettings] = useState<{ hiddenNav: string[] }>({ hiddenNav: [] })
+  const [settingsBlockId, setSettingsBlockId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -18,7 +20,11 @@ export default function PortalClientePage() {
     const url = bust ? `/api/portais-clientes?id=${PAGE_ID}&bust=1` : `/api/portais-clientes?id=${PAGE_ID}`
     const d = await fetch(url).then(r => r.json())
     if (d.error) setError(d.error)
-    else setBlocks(d.blocks ?? [])
+    else {
+      setBlocks(d.blocks ?? [])
+      setSettings(d.settings ?? { hiddenNav: [] })
+      setSettingsBlockId(d.settingsBlockId ?? null)
+    }
   }, [])
 
   useEffect(() => {
@@ -85,8 +91,8 @@ export default function PortalClientePage() {
       {!loading && !error && (
         <div className="bg-white/[0.02] border border-white/[0.07] rounded-2xl p-5 sm:p-8">
           {editing
-            ? <BlockEditor blocks={blocks} pageId={PAGE_ID} onSaved={handleSaved} />
-            : <NotionBlocks blocks={blocks} />
+            ? <BlockEditor blocks={blocks} pageId={PAGE_ID} settings={settings} settingsBlockId={settingsBlockId} onSaved={handleSaved} />
+            : <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
           }
         </div>
       )}

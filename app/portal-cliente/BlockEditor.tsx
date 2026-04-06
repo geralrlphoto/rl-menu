@@ -95,18 +95,38 @@ function textClass(type: string) {
   return 'text-sm text-white/70'
 }
 
+// Recursively find all child_page blocks
+function findNavPages(blocks: Block[]): Array<{ id: string; title: string }> {
+  const pages: Array<{ id: string; title: string }> = []
+  for (const b of blocks) {
+    if (b.type === 'child_page') {
+      pages.push({ id: b.id, title: b.child_page?.title ?? b.id })
+    }
+    if (b.children) pages.push(...findNavPages(b.children))
+  }
+  return pages
+}
+
 export default function BlockEditor({
   blocks,
   pageId,
+  settings,
+  settingsBlockId,
   onSaved,
 }: {
   blocks: Block[]
   pageId: string
+  settings: { hiddenNav: string[] }
+  settingsBlockId: string | null
   onSaved: () => void
 }) {
   const [items, setItems] = useState<EditItem[]>(() => blocksToItems(blocks))
+  const [hiddenNav, setHiddenNav] = useState<string[]>(settings.hiddenNav ?? [])
+  const [currentSettingsBlockId, setCurrentSettingsBlockId] = useState(settingsBlockId)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
+
+  const navPages = findNavPages(blocks)
 
   function update(key: string, patch: Partial<EditItem>) {
     setItems(prev => prev.map(it => it.key === key ? { ...it, ...patch } : it))
@@ -125,10 +145,17 @@ export default function BlockEditor({
     setItems(prev => prev.map(it => it.key === key ? { ...it, isDeleted: true } : it))
   }
 
+  function toggleNav(id: string) {
+    setHiddenNav(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    )
+  }
+
   async function handleSave() {
     setSaving(true)
     setSaveError('')
     try {
+      // Save content blocks
       for (const it of items) {
         if (it.rawBlock) continue
         if (it.isDeleted && !it.isNew) {
@@ -145,6 +172,14 @@ export default function BlockEditor({
           await fetch('/api/notion-block', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: it.id, type: it.type, text: it.text, checked: it.checked }) })
         }
       }
+      // Save nav settings
+      const navRes = await fetch('/api/portal-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pageId, settings: { hiddenNav }, settingsBlockId: currentSettingsBlockId }),
+      }).then(r => r.json())
+      if (navRes.settingsBlockId) setCurrentSettingsBlockId(navRes.settingsBlockId)
+
       await fetch(`/api/portais-clientes?id=${pageId}&bust=1`)
       onSaved()
     } catch {
@@ -179,6 +214,37 @@ export default function BlockEditor({
           {saving ? 'A guardar...' : '✓ Guardar'}
         </button>
       </div>
+
+      {/* Navigation toggles */}
+      {navPages.length > 0 && (
+        <div className="mb-6 rounded-xl border border-white/10 overflow-hidden">
+          <div className="px-4 py-2.5 bg-white/[0.03] border-b border-white/[0.06]">
+            <span className="text-xs text-white/50 tracking-widest uppercase">Gerir Menu de Navegação</span>
+          </div>
+          <div className="divide-y divide-white/[0.04]">
+            {navPages.map(page => {
+              const isHidden = hiddenNav.includes(page.id)
+              return (
+                <div key={page.id} className="flex items-center justify-between px-4 py-3">
+                  <span className={`text-sm tracking-wide uppercase ${isHidden ? 'text-white/25 line-through' : 'text-white/70'}`}>
+                    {page.title}
+                  </span>
+                  {/* Toggle switch */}
+                  <button
+                    onClick={() => toggleNav(page.id)}
+                    className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${isHidden ? 'bg-white/10' : 'bg-gold/50'}`}
+                  >
+                    <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all duration-200 ${isHidden ? 'left-0.5' : 'left-5'}`} />
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+          <div className="px-4 py-2 bg-white/[0.01]">
+            <p className="text-[10px] text-white/25">Desactivar oculta o botão para o cliente. Guardar para aplicar.</p>
+          </div>
+        </div>
+      )}
 
       {/* Blocks */}
       <div className="space-y-2">
