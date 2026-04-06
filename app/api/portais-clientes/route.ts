@@ -34,9 +34,11 @@ async function getBlocks(blockId: string): Promise<any[]> {
   return all
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const blocks = await getBlocks(PAGE_ID)
+    const { searchParams } = new URL(req.url)
+    const id = searchParams.get('id') || PAGE_ID
+    const blocks = await getBlocks(id)
     return NextResponse.json({ blocks })
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })
