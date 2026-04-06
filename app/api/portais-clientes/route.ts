@@ -8,8 +8,12 @@ const notionHeaders = {
   'Notion-Version': '2022-06-28',
 }
 
-// In-memory cache: pageId → { blocks, timestamp }
-const cache = new Map<string, { blocks: any[]; ts: number }>()
+// In-memory cache shared via globalThis so clear-cache route can access it
+declare global {
+  var notionBlocksCache: Map<string, { blocks: any[]; ts: number }> | undefined
+}
+if (!global.notionBlocksCache) global.notionBlocksCache = new Map()
+const cache = global.notionBlocksCache
 const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
 async function getBlocks(blockId: string): Promise<any[]> {
@@ -43,10 +47,11 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url)
     const id = searchParams.get('id') || PAGE_ID
+    const bust = searchParams.get('bust') === '1'
 
-    // Serve from in-memory cache if fresh
+    // Serve from in-memory cache if fresh (unless busting)
     const cached = cache.get(id)
-    if (cached && Date.now() - cached.ts < CACHE_TTL) {
+    if (!bust && cached && Date.now() - cached.ts < CACHE_TTL) {
       return NextResponse.json({ blocks: cached.blocks, cached: true })
     }
 
