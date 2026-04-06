@@ -12,7 +12,7 @@ export async function GET(req: Request) {
       'Authorization': `Bearer ${NOTION_TOKEN}`,
       'Notion-Version': '2022-06-28',
     },
-    cache: 'no-store',
+    next: { revalidate: 300 }, // cache 5 min
   })
 
   if (!res.ok) return NextResponse.json({ title: '' })
