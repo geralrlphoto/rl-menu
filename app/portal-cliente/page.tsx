@@ -152,6 +152,70 @@ function Leaf({ flip }: { flip?: boolean }) {
 
 // ─── settings edit panel ─────────────────────────────────────────────────────
 
+function PhotoField({
+  label,
+  value,
+  onChange,
+  onClear,
+}: {
+  label: string
+  value: string
+  onChange: (url: string) => void
+  onClear: () => void
+}) {
+  const [uploading, setUploading] = useState(false)
+
+  async function handleFile(file: File) {
+    setUploading(true)
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
+    const data = await res.json()
+    if (data.url) onChange(data.url)
+    setUploading(false)
+  }
+
+  return (
+    <div>
+      <label className="block text-[10px] text-white/30 mb-1">{label}</label>
+      <div className="flex gap-2 items-start">
+        <div className="flex-1 space-y-1.5">
+          {/* Upload button */}
+          <label className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-lg border border-dashed cursor-pointer transition-all
+            ${uploading ? 'border-gold/30 bg-gold/5 text-gold/50' : 'border-white/15 hover:border-gold/40 hover:bg-gold/5 text-white/35 hover:text-gold/70'}`}>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              disabled={uploading}
+              onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }}
+            />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+            </svg>
+            <span className="text-[11px] tracking-wide">{uploading ? 'A carregar...' : 'Carregar fotografia'}</span>
+          </label>
+          {/* URL input */}
+          <input
+            value={value}
+            onChange={e => onChange(e.target.value)}
+            placeholder="ou cola um URL..."
+            className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
+          />
+        </div>
+        {/* Preview + clear */}
+        {value && (
+          <div className="shrink-0 flex flex-col items-center gap-1">
+            <div className="w-14 h-14 rounded-lg bg-cover bg-center border border-white/10"
+              style={{ backgroundImage: `url(${value})` }} />
+            <button onClick={onClear} className="text-[10px] text-white/25 hover:text-red-400 transition-colors">remover</button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function SettingsPanel({
   settings, settingsBlockId, pageId, blocks, onSaved, onCancel,
 }: {
@@ -225,63 +289,30 @@ function SettingsPanel({
       {/* Photos */}
       <div>
         <p className="text-[10px] text-white/40 tracking-widest uppercase mb-3">Fotografias</p>
-        <div className="space-y-3">
-          {/* Hero image */}
-          <div>
-            <label className="block text-[10px] text-white/30 mb-1">Imagem de Fundo (Hero)</label>
-            <div className="flex gap-2 items-start">
-              <div className="flex-1">
-                <input
-                  value={form.heroImageUrl ?? ''}
-                  onChange={e => setForm(prev => ({ ...prev, heroImageUrl: e.target.value }))}
-                  placeholder="Cola aqui o URL da imagem..."
-                  className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
-                />
-              </div>
-              {form.heroImageUrl && (
-                <div className="shrink-0 w-14 h-10 rounded-lg bg-cover bg-center border border-white/10"
-                  style={{ backgroundImage: `url(${form.heroImageUrl})` }} />
-              )}
-              {form.heroImageUrl && (
-                <button onClick={() => setForm(prev => ({ ...prev, heroImageUrl: '' }))}
-                  className="shrink-0 text-white/25 hover:text-red-400 text-lg leading-none mt-1">×</button>
-              )}
-            </div>
-          </div>
-
-          {/* Gallery images */}
+        <div className="space-y-4">
+          <PhotoField
+            label="Imagem de Fundo (Hero)"
+            value={form.heroImageUrl ?? ''}
+            onChange={url => setForm(prev => ({ ...prev, heroImageUrl: url }))}
+            onClear={() => setForm(prev => ({ ...prev, heroImageUrl: '' }))}
+          />
           {[0, 1, 2].map(i => (
-            <div key={i}>
-              <label className="block text-[10px] text-white/30 mb-1">Galeria — Foto {i + 1}</label>
-              <div className="flex gap-2 items-start">
-                <div className="flex-1">
-                  <input
-                    value={form.galleryUrls?.[i] ?? ''}
-                    onChange={e => {
-                      const urls = [...(form.galleryUrls ?? ['', '', ''])]
-                      urls[i] = e.target.value
-                      setForm(prev => ({ ...prev, galleryUrls: urls }))
-                    }}
-                    placeholder="Cola aqui o URL da imagem..."
-                    className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
-                  />
-                </div>
-                {form.galleryUrls?.[i] && (
-                  <div className="shrink-0 w-14 h-10 rounded-lg bg-cover bg-center border border-white/10"
-                    style={{ backgroundImage: `url(${form.galleryUrls[i]})` }} />
-                )}
-                {form.galleryUrls?.[i] && (
-                  <button onClick={() => {
-                    const urls = [...(form.galleryUrls ?? ['', '', ''])]
-                    urls[i] = ''
-                    setForm(prev => ({ ...prev, galleryUrls: urls }))
-                  }}
-                    className="shrink-0 text-white/25 hover:text-red-400 text-lg leading-none mt-1">×</button>
-                )}
-              </div>
-            </div>
+            <PhotoField
+              key={i}
+              label={`Galeria — Foto ${i + 1}`}
+              value={form.galleryUrls?.[i] ?? ''}
+              onChange={url => {
+                const urls = [...(form.galleryUrls ?? ['', '', ''])]
+                urls[i] = url
+                setForm(prev => ({ ...prev, galleryUrls: urls }))
+              }}
+              onClear={() => {
+                const urls = [...(form.galleryUrls ?? ['', '', ''])]
+                urls[i] = ''
+                setForm(prev => ({ ...prev, galleryUrls: urls }))
+              }}
+            />
           ))}
-          <p className="text-[10px] text-white/20">Podes usar URLs de qualquer imagem (Google Drive partilhado, Dropbox, etc.).</p>
         </div>
       </div>
 
@@ -327,6 +358,7 @@ export default function PortalClientePage() {
   // inline hero editing
   const [heroEdit, setHeroEdit] = useState<{ field: 'noiva' | 'noivo' | 'hero' | null; value: string }>({ field: null, value: '' })
   const [heroSaving, setHeroSaving] = useState(false)
+  const [heroUploading, setHeroUploading] = useState(false)
 
   const loadBlocks = useCallback(async (bust = false) => {
     const url = bust ? `/api/portais-clientes?id=${PAGE_ID}&bust=1` : `/api/portais-clientes?id=${PAGE_ID}`
@@ -450,12 +482,31 @@ export default function PortalClientePage() {
         {heroEdit.field === 'hero' ? (
           <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/70 backdrop-blur-sm">
             <div className="w-full max-w-md px-4">
-              <p className="text-[10px] text-gold/60 tracking-widest uppercase mb-2 text-center">URL da nova fotografia</p>
+              <p className="text-[10px] text-gold/60 tracking-widest uppercase mb-3 text-center">Trocar fotografia de fundo</p>
+              {/* Upload */}
+              <label className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-dashed cursor-pointer transition-all mb-3
+                ${heroUploading ? 'border-gold/30 bg-gold/5 text-gold/50' : 'border-white/20 hover:border-gold/50 hover:bg-gold/5 text-white/40 hover:text-gold/80'}`}>
+                <input type="file" accept="image/*" className="hidden" disabled={heroUploading}
+                  onChange={async e => {
+                    const f = e.target.files?.[0]; if (!f) return
+                    setHeroUploading(true)
+                    const fd = new FormData(); fd.append('file', f)
+                    const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
+                    const data = await res.json()
+                    if (data.url) setHeroEdit(prev => ({ ...prev, value: data.url }))
+                    setHeroUploading(false)
+                    e.target.value = ''
+                  }} />
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                </svg>
+                <span className="text-sm">{heroUploading ? 'A carregar...' : 'Carregar do dispositivo'}</span>
+              </label>
+              {/* URL */}
               <input
-                autoFocus
                 value={heroEdit.value}
                 onChange={e => setHeroEdit(prev => ({ ...prev, value: e.target.value }))}
-                placeholder="https://..."
+                placeholder="ou cola um URL..."
                 className="w-full bg-white/[0.08] border border-white/20 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-gold/50 mb-3 placeholder:text-white/25"
               />
               {heroEdit.value && (
@@ -465,7 +516,7 @@ export default function PortalClientePage() {
               <div className="flex gap-2 justify-center">
                 <button onClick={() => setHeroEdit({ field: null, value: '' })}
                   className="px-4 py-2 text-xs border border-white/15 rounded-lg text-white/50 hover:text-white/80">Cancelar</button>
-                <button onClick={saveHeroField} disabled={heroSaving}
+                <button onClick={saveHeroField} disabled={heroSaving || heroUploading}
                   className="px-5 py-2 text-xs bg-gold/20 border border-gold/40 rounded-lg text-gold hover:bg-gold/30 disabled:opacity-50">
                   {heroSaving ? 'A guardar...' : '✓ Guardar'}
                 </button>
