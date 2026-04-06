@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN!
-const DB_ID = '25b220116d8a80d8b92eecc29b63f6d1'
+const DB_ID = '254220116d8a80d39b52df417c3ff01c'
 
 function getProp(props: any, key: string, type: string): any {
   const p = props[key]
@@ -12,8 +12,6 @@ function getProp(props: any, key: string, type: string): any {
     if (type === 'select') return p.select?.name ?? null
     if (type === 'status') return p.status?.name ?? null
     if (type === 'date')   return p.date?.start ?? null
-    if (type === 'email')  return p.email ?? null
-    if (type === 'phone')  return p.phone_number ?? null
   } catch { return null }
   return null
 }
@@ -25,7 +23,7 @@ export async function GET() {
   do {
     const body: any = {
       page_size: 100,
-      sorts: [{ property: 'Data do fecho', direction: 'ascending' }],
+      sorts: [{ property: 'Data do Casamento', direction: 'ascending' }],
     }
     if (cursor) body.start_cursor = cursor
 
@@ -55,14 +53,11 @@ export async function GET() {
     return {
       id:           page.id,
       notion_url:   page.url,
-      nome:         getProp(p, 'Nome do projeto', 'title'),
-      tipo_evento:  getProp(p, 'Tipo de Evento',  'select'),
-      status:       getProp(p, 'Status',           'status'),
-      data_fecho:   getProp(p, 'Data do fecho',    'date'),
-      local:        getProp(p, 'Local da Produção','text'),
-      email:        getProp(p, 'EMAIL',             'email'),
-      telefone:     getProp(p, 'Telefone',          'phone'),
-      responsavel:  getProp(p, 'Responsável',       'text'),
+      nome:         getProp(p, 'Nome dos Noivos',  'title'),
+      tipo_evento:  getProp(p, 'Tipo de Evento',   'select'),
+      status:       getProp(p, 'Status',            'status'),
+      data_casamento: getProp(p, 'Data do Casamento', 'date'),
+      local:        getProp(p, 'Local do Evento',   'text'),
     }
   })
 
