@@ -152,6 +152,21 @@ function Leaf({ flip }: { flip?: boolean }) {
 
 // ─── settings edit panel ─────────────────────────────────────────────────────
 
+function uploadWithProgress(file: File, onProgress: (pct: number) => void): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    const fd = new FormData()
+    fd.append('file', file)
+    xhr.upload.onprogress = e => { if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)) }
+    xhr.onload = () => {
+      try { resolve(JSON.parse(xhr.responseText).url ?? '') } catch { reject(new Error('Upload falhou')) }
+    }
+    xhr.onerror = () => reject(new Error('Erro de rede'))
+    xhr.open('POST', '/api/upload-image')
+    xhr.send(fd)
+  })
+}
+
 function PhotoField({
   label,
   value,
@@ -163,17 +178,19 @@ function PhotoField({
   onChange: (url: string) => void
   onClear: () => void
 }) {
-  const [uploading, setUploading] = useState(false)
+  const [progress, setProgress] = useState<number | null>(null)
 
   async function handleFile(file: File) {
-    setUploading(true)
-    const fd = new FormData()
-    fd.append('file', file)
-    const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
-    const data = await res.json()
-    if (data.url) onChange(data.url)
-    setUploading(false)
+    setProgress(0)
+    try {
+      const url = await uploadWithProgress(file, setProgress)
+      if (url) onChange(url)
+    } finally {
+      setProgress(null)
+    }
   }
+
+  const uploading = progress !== null
 
   return (
     <div>
@@ -181,8 +198,8 @@ function PhotoField({
       <div className="flex gap-2 items-start">
         <div className="flex-1 space-y-1.5">
           {/* Upload button */}
-          <label className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-lg border border-dashed cursor-pointer transition-all
-            ${uploading ? 'border-gold/30 bg-gold/5 text-gold/50' : 'border-white/15 hover:border-gold/40 hover:bg-gold/5 text-white/35 hover:text-gold/70'}`}>
+          <label className={`relative flex flex-col items-center justify-center w-full py-2.5 rounded-lg border border-dashed cursor-pointer transition-all overflow-hidden
+            ${uploading ? 'border-gold/40 bg-gold/5 text-gold/70' : 'border-white/15 hover:border-gold/40 hover:bg-gold/5 text-white/35 hover:text-gold/70'}`}>
             <input
               type="file"
               accept="image/*"
@@ -190,10 +207,25 @@ function PhotoField({
               disabled={uploading}
               onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }}
             />
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-            </svg>
-            <span className="text-[11px] tracking-wide">{uploading ? 'A carregar...' : 'Carregar fotografia'}</span>
+            {uploading ? (
+              <>
+                {/* Progress bar background */}
+                <div className="absolute inset-0 bg-gold/10 transition-all duration-200" style={{ width: `${progress}%` }} />
+                <div className="relative flex items-center gap-2">
+                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                  </svg>
+                  <span className="text-[11px] tracking-wide font-medium">{progress}%</span>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                </svg>
+                <span className="text-[11px] tracking-wide">Carregar fotografia</span>
+              </div>
+            )}
           </label>
           {/* URL input */}
           <input
@@ -358,7 +390,7 @@ export default function PortalClientePage() {
   // inline hero editing
   const [heroEdit, setHeroEdit] = useState<{ field: 'noiva' | 'noivo' | 'hero' | null; value: string }>({ field: null, value: '' })
   const [heroSaving, setHeroSaving] = useState(false)
-  const [heroUploading, setHeroUploading] = useState(false)
+  const [heroUploadProgress, setHeroUploadProgress] = useState<number | null>(null)
 
   const loadBlocks = useCallback(async (bust = false) => {
     const url = bust ? `/api/portais-clientes?id=${PAGE_ID}&bust=1` : `/api/portais-clientes?id=${PAGE_ID}`
@@ -484,23 +516,38 @@ export default function PortalClientePage() {
             <div className="w-full max-w-md px-4">
               <p className="text-[10px] text-gold/60 tracking-widest uppercase mb-3 text-center">Trocar fotografia de fundo</p>
               {/* Upload */}
-              <label className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-dashed cursor-pointer transition-all mb-3
-                ${heroUploading ? 'border-gold/30 bg-gold/5 text-gold/50' : 'border-white/20 hover:border-gold/50 hover:bg-gold/5 text-white/40 hover:text-gold/80'}`}>
-                <input type="file" accept="image/*" className="hidden" disabled={heroUploading}
+              <label className={`relative flex items-center justify-center w-full py-3 rounded-xl border border-dashed cursor-pointer transition-all mb-3 overflow-hidden
+                ${heroUploadProgress !== null ? 'border-gold/40 bg-gold/5 text-gold/70' : 'border-white/20 hover:border-gold/50 hover:bg-gold/5 text-white/40 hover:text-gold/80'}`}>
+                <input type="file" accept="image/*" className="hidden" disabled={heroUploadProgress !== null}
                   onChange={async e => {
                     const f = e.target.files?.[0]; if (!f) return
-                    setHeroUploading(true)
-                    const fd = new FormData(); fd.append('file', f)
-                    const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
-                    const data = await res.json()
-                    if (data.url) setHeroEdit(prev => ({ ...prev, value: data.url }))
-                    setHeroUploading(false)
+                    setHeroUploadProgress(0)
+                    try {
+                      const url = await uploadWithProgress(f, setHeroUploadProgress)
+                      if (url) setHeroEdit(prev => ({ ...prev, value: url }))
+                    } finally {
+                      setHeroUploadProgress(null)
+                    }
                     e.target.value = ''
                   }} />
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                </svg>
-                <span className="text-sm">{heroUploading ? 'A carregar...' : 'Carregar do dispositivo'}</span>
+                {heroUploadProgress !== null ? (
+                  <>
+                    <div className="absolute inset-0 bg-gold/10 transition-all duration-200" style={{ width: `${heroUploadProgress}%` }} />
+                    <div className="relative flex items-center gap-2">
+                      <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                      </svg>
+                      <span className="text-sm font-medium">{heroUploadProgress}%</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                    </svg>
+                    <span className="text-sm">Carregar do dispositivo</span>
+                  </div>
+                )}
               </label>
               {/* URL */}
               <input
@@ -516,7 +563,7 @@ export default function PortalClientePage() {
               <div className="flex gap-2 justify-center">
                 <button onClick={() => setHeroEdit({ field: null, value: '' })}
                   className="px-4 py-2 text-xs border border-white/15 rounded-lg text-white/50 hover:text-white/80">Cancelar</button>
-                <button onClick={saveHeroField} disabled={heroSaving || heroUploading}
+                <button onClick={saveHeroField} disabled={heroSaving || heroUploadProgress !== null}
                   className="px-5 py-2 text-xs bg-gold/20 border border-gold/40 rounded-lg text-gold hover:bg-gold/30 disabled:opacity-50">
                   {heroSaving ? 'A guardar...' : '✓ Guardar'}
                 </button>
