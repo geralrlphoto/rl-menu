@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 // Import the cache map from the parent route
 // We use a shared module-level store via a global variable
 declare global {
-  var notionBlocksCache: Map<string, { blocks: any[]; ts: number }> | undefined
+  var notionBlocksCache: Map<string, { blocks: any[]; settings: any; settingsBlockId: string | null; ts: number }> | undefined
 }
 
 export async function POST(req: Request) {
