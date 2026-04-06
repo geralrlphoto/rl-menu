@@ -7,6 +7,16 @@ import BlockEditor from './BlockEditor'
 
 const PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
 
+type PortalSettings = {
+  hiddenNav: string[]
+  noiva?: string
+  noivo?: string
+  dataFormatada?: string
+  data?: string
+  local?: string
+  activeNavId?: string
+}
+
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
 function findAllChildPages(blocks: Block[]): Array<{ id: string; title: string }> {
@@ -238,17 +248,6 @@ function SettingsPanel({
   )
 }
 
-// ─── types ────────────────────────────────────────────────────────────────────
-
-type PortalSettings = {
-  hiddenNav: string[]
-  noiva?: string
-  noivo?: string
-  dataFormatada?: string
-  data?: string
-  local?: string
-  activeNavId?: string
-}
 
 // ─── main page ────────────────────────────────────────────────────────────────
 
