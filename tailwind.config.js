@@ -12,6 +12,8 @@ module.exports = {
       },
       fontFamily: {
         sans: ['var(--font-inter)', 'sans-serif'],
+        playfair: ['var(--font-playfair)', 'Georgia', 'serif'],
+        cormorant: ['var(--font-cormorant)', 'Georgia', 'serif'],
       },
       animation: {
         marquee: 'marquee 30s linear infinite',

@@ -1,1 +1,1 @@
-{"version":"0.0.1","configurations":[{"name":"rl-menu","runtimeExecutable":"npm","runtimeArgs":["run","dev"],"port":3000}]}
+{"version":"0.0.1","configurations":[{"name":"rl-menu","runtimeExecutable":"npm","runtimeArgs":["run","dev","--","--port","3001"],"port":3001}]}
