@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { NotionBlocks, type Block } from '../NotionRenderer'
 
 export default function PortalSubPage() {
   const { id } = useParams<{ id: string }>()
+  const searchParams = useSearchParams()
   const [blocks, setBlocks] = useState<Block[]>([])
-  const [title, setTitle] = useState('')
+  const [title, setTitle] = useState(searchParams.get('title') ?? '')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -24,10 +25,12 @@ export default function PortalSubPage() {
       })
       .catch(() => { setError('Erro ao carregar'); setLoading(false) })
 
-    fetch(`/api/notion-page-title?id=${id}`)
-      .then(r => r.json())
-      .then(d => { if (d.title) setTitle(d.title) })
-      .catch(() => {})
+    if (!title) {
+      fetch(`/api/notion-page-title?id=${id}`)
+        .then(r => r.json())
+        .then(d => { if (d.title) setTitle(d.title) })
+        .catch(() => {})
+    }
   }, [id])
 
   return (

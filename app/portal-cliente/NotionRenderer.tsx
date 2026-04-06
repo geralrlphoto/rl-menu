@@ -207,7 +207,7 @@ export function NotionBlocks({ blocks, rootId }: { blocks: Block[], rootId?: str
         break
       case 'child_page':
         elements.push(
-          <Link key={b.id} href={`/portal-cliente/${b.id}`}
+          <Link key={b.id} href={`/portal-cliente/${b.id}?title=${encodeURIComponent(data.title ?? '')}`}
             className="flex items-center gap-3 mb-2 px-4 py-3 bg-white/[0.03] border border-white/[0.07] hover:border-gold/30 hover:bg-white/[0.06] rounded-xl transition-all group">
             <span className="text-white/30 text-base group-hover:text-gold/50 transition-colors">📄</span>
             <span className="text-sm text-white/70 group-hover:text-white transition-colors tracking-wide uppercase">{data.title}</span>
