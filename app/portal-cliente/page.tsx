@@ -22,6 +22,9 @@ type PortalSettings = {
   tasks?: Task[]
   referencia?: string
   valorTotal?: number
+  valorFoto?: number
+  valorVideo?: number
+  valorExtras?: number
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -352,6 +355,20 @@ function SettingsPanel({
             placeholder="ex: 1600"
             className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
           />
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          {([['Valor Fotografia (€)', 'valorFoto', 'ex: 750'], ['Valor Vídeo (€)', 'valorVideo', 'ex: 850'], ['Valor Extras (€)', 'valorExtras', 'ex: 0']] as const).map(([lbl, key, ph]) => (
+            <div key={key}>
+              <label className="block text-[10px] text-white/40 tracking-widest uppercase mb-1">{lbl}</label>
+              <input
+                type="number"
+                value={(form as any)[key] ?? ''}
+                onChange={e => setForm(prev => ({ ...prev, [key]: e.target.value ? Number(e.target.value) : undefined }))}
+                placeholder={ph}
+                className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
+              />
+            </div>
+          ))}
         </div>
       </div>
 
