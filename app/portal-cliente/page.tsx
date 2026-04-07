@@ -713,9 +713,9 @@ export default function PortalClientePage() {
       )}
 
       {/* ── WELCOME ── */}
-      <section className="py-12 sm:py-16 px-4 text-center max-w-2xl mx-auto">
+      <section className="py-12 sm:py-16 px-4 max-w-2xl mx-auto">
         {welcomeHeading && (
-          <h2 className="font-cormorant text-2xl sm:text-3xl text-gold italic mb-3 leading-relaxed">
+          <h2 className="font-cormorant text-2xl sm:text-3xl text-gold italic mb-3 leading-relaxed text-center">
             {welcomeHeading}
           </h2>
         )}
@@ -726,7 +726,7 @@ export default function PortalClientePage() {
           p.trim() === '' ? (
             <div key={i} className="h-3" />
           ) : (
-            <p key={i} className="text-sm sm:text-base text-white/50 leading-relaxed mb-3">{p}</p>
+            <p key={i} className="text-sm sm:text-base text-white/50 leading-relaxed mb-3 text-justify">{p}</p>
           )
         )}
 
