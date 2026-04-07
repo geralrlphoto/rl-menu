@@ -262,7 +262,7 @@ function SettingsPanel({
   settingsBlockId: string | null
   pageId: string
   blocks: Block[]
-  onSaved: (newSettingsBlockId?: string) => void
+  onSaved: (newSettings: PortalSettings, newSettingsBlockId?: string) => void
   onCancel: () => void
 }) {
   const [form, setForm] = useState({ ...settings })
@@ -290,10 +290,9 @@ function SettingsPanel({
       body: JSON.stringify({ pageId, settings: form, settingsBlockId }),
     })
     const saved = await res.json()
-    // Small delay so Notion has time to commit before we bust the cache
-    await new Promise(r => setTimeout(r, 800))
     setSaving(false)
-    onSaved(saved.settingsBlockId ?? settingsBlockId)
+    // Pass the saved form values directly — don't rely on Notion read-after-write
+    onSaved(form, saved.settingsBlockId ?? settingsBlockId ?? undefined)
   }
 
 
@@ -413,11 +412,18 @@ export default function PortalClientePage() {
 
   useEffect(() => { loadBlocks().finally(() => setLoading(false)) }, [loadBlocks])
 
-  async function handleSaved(newSettingsBlockId?: string) {
-    if (newSettingsBlockId) setSettingsBlockId(newSettingsBlockId)
-    setEditing(false)
-    setEditingContent(false)
-    await loadBlocks(true)
+  async function handleSaved(newSettings?: PortalSettings, newSettingsBlockId?: string) {
+    if (newSettings) {
+      // Settings panel: apply state directly, bust cache in background
+      setSettings(newSettings)
+      if (newSettingsBlockId) setSettingsBlockId(newSettingsBlockId)
+      setEditing(false)
+      fetch(`/api/portais-clientes?id=${PAGE_ID}&bust=1`) // background, no await
+    } else {
+      // Block editor: need fresh blocks from Notion
+      setEditingContent(false)
+      await loadBlocks(true)
+    }
   }
 
   async function saveHeroField() {
@@ -438,8 +444,6 @@ export default function PortalClientePage() {
     setSettings(newSettings)
     setHeroEdit({ field: null, value: '' })
     setHeroSaving(false)
-    // Delay before bust so Notion has time to commit
-    await new Promise(r => setTimeout(r, 800))
     fetch(`/api/portais-clientes?id=${PAGE_ID}&bust=1`)
   }
 
@@ -489,7 +493,7 @@ export default function PortalClientePage() {
       <button onClick={() => setEditingContent(false)} className="text-xs text-white/30 hover:text-white/60 mb-6 flex items-center gap-1">
         ‹ voltar ao portal
       </button>
-      <BlockEditor blocks={blocks} pageId={PAGE_ID} settings={settings} settingsBlockId={settingsBlockId} onSaved={handleSaved} />
+      <BlockEditor blocks={blocks} pageId={PAGE_ID} settings={settings} settingsBlockId={settingsBlockId} onSaved={() => handleSaved()} />
     </main>
   )
 
