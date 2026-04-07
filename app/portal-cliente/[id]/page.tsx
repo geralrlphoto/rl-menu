@@ -10,6 +10,149 @@ function notionUrl(id: string) {
   return `https://www.notion.so/${id.replace(/-/g, '')}`
 }
 
+// Collect all image blocks recursively, returning {id, url}
+function findImageBlocks(blocks: Block[]): Array<{ id: string; url: string }> {
+  const out: Array<{ id: string; url: string }> = []
+  for (const b of blocks) {
+    if (b.type === 'image') {
+      const url = b.image?.type === 'external' ? b.image.external?.url : b.image?.file?.url
+      if (url) out.push({ id: b.id, url })
+    }
+    if (b.children) out.push(...findImageBlocks(b.children))
+  }
+  return out
+}
+
+function uploadWithProgress(file: File, onProgress: (pct: number) => void): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    const fd = new FormData()
+    fd.append('file', file)
+    xhr.upload.onprogress = e => { if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)) }
+    xhr.onload = () => {
+      try { resolve(JSON.parse(xhr.responseText).url ?? '') } catch { reject(new Error('Upload falhou')) }
+    }
+    xhr.onerror = () => reject(new Error('Erro de rede'))
+    xhr.open('POST', '/api/upload-image')
+    xhr.send(fd)
+  })
+}
+
+function ImageEditor({ blocks, pageId, onDone }: { blocks: Block[]; pageId: string; onDone: () => void }) {
+  const images = findImageBlocks(blocks)
+  const [urls, setUrls] = useState<Record<string, string>>(() =>
+    Object.fromEntries(images.map(img => [img.id, img.url]))
+  )
+  const [progress, setProgress] = useState<Record<string, number | null>>({})
+  const [saving, setSaving] = useState<Record<string, boolean>>({})
+  const [saved, setSaved] = useState<Record<string, boolean>>({})
+
+  async function handleUpload(blockId: string, file: File) {
+    setProgress(p => ({ ...p, [blockId]: 0 }))
+    try {
+      const url = await uploadWithProgress(file, pct => setProgress(p => ({ ...p, [blockId]: pct })))
+      if (url) setUrls(u => ({ ...u, [blockId]: url }))
+    } finally {
+      setProgress(p => ({ ...p, [blockId]: null }))
+    }
+  }
+
+  async function handleSave(blockId: string) {
+    setSaving(s => ({ ...s, [blockId]: true }))
+    await fetch('/api/notion-block', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: blockId, type: 'image', imageUrl: urls[blockId] }),
+    })
+    setSaving(s => ({ ...s, [blockId]: false }))
+    setSaved(s => ({ ...s, [blockId]: true }))
+    setTimeout(() => setSaved(s => ({ ...s, [blockId]: false })), 2000)
+  }
+
+  if (images.length === 0) return (
+    <div className="text-center py-12 text-white/30 text-sm">Esta página não tem fotografias.</div>
+  )
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-2 pb-4 border-b border-gold/20">
+        <div className="w-2 h-2 rounded-full bg-gold animate-pulse" />
+        <span className="text-xs text-gold/70 tracking-widest uppercase mr-auto">Editar Fotografias</span>
+        <button onClick={onDone} className="px-4 py-1.5 text-xs bg-gold/20 border border-gold/40 rounded-lg text-gold hover:bg-gold/30">
+          ✓ Concluído
+        </button>
+      </div>
+
+      {images.map((img, i) => {
+        const pct = progress[img.id]
+        const isSaving = saving[img.id]
+        const isDone = saved[img.id]
+        const currentUrl = urls[img.id]
+
+        return (
+          <div key={img.id} className="rounded-xl border border-white/10 bg-white/[0.02] overflow-hidden">
+            <p className="text-[10px] text-white/30 tracking-widest uppercase px-4 pt-3 mb-2">Fotografia {i + 1}</p>
+
+            {/* Preview */}
+            <div className="relative mx-4 mb-3 rounded-lg overflow-hidden bg-black/20 aspect-video bg-cover bg-center"
+              style={{ backgroundImage: `url(${currentUrl})` }}>
+              {!currentUrl && <div className="absolute inset-0 flex items-center justify-center text-white/20 text-xs">sem imagem</div>}
+            </div>
+
+            <div className="px-4 pb-4 space-y-2">
+              {/* Upload */}
+              <label className={`relative flex items-center justify-center w-full py-2.5 rounded-lg border border-dashed cursor-pointer transition-all overflow-hidden
+                ${pct !== null && pct !== undefined ? 'border-gold/40 bg-gold/5 text-gold/70' : 'border-white/15 hover:border-gold/40 hover:bg-gold/5 text-white/35 hover:text-gold/70'}`}>
+                <input type="file" accept="image/*" className="hidden"
+                  disabled={pct !== null && pct !== undefined}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(img.id, f); e.target.value = '' }} />
+                {pct !== null && pct !== undefined ? (
+                  <>
+                    <div className="absolute inset-0 bg-gold/10 transition-all duration-200" style={{ width: `${pct}%` }} />
+                    <div className="relative flex items-center gap-2">
+                      <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                      </svg>
+                      <span className="text-[11px] font-medium">{pct}%</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                    </svg>
+                    <span className="text-[11px] tracking-wide">Carregar fotografia</span>
+                  </div>
+                )}
+              </label>
+
+              {/* URL input */}
+              <input
+                value={currentUrl}
+                onChange={e => setUrls(u => ({ ...u, [img.id]: e.target.value }))}
+                placeholder="ou cola um URL..."
+                className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
+              />
+
+              {/* Save button */}
+              <button
+                onClick={() => handleSave(img.id)}
+                disabled={isSaving || (pct !== null && pct !== undefined)}
+                className={`w-full py-2 rounded-lg text-xs font-medium transition-all border
+                  ${isDone
+                    ? 'border-green-500/40 bg-green-500/10 text-green-400'
+                    : 'border-gold/30 bg-gold/10 text-gold hover:bg-gold/20 disabled:opacity-40'}`}
+              >
+                {isDone ? '✓ Guardado!' : isSaving ? 'A guardar...' : 'Guardar foto'}
+              </button>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function PortalSubPage() {
   const { id } = useParams<{ id: string }>()
   const searchParams = useSearchParams()
@@ -20,6 +163,7 @@ export default function PortalSubPage() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [editing, setEditing] = useState(false)
+  const [editingPhotos, setEditingPhotos] = useState(false)
   const [error, setError] = useState('')
 
   const loadBlocks = useCallback(async (bust = false) => {
@@ -58,6 +202,15 @@ export default function PortalSubPage() {
     setRefreshing(false)
   }
 
+  async function handlePhotosDone() {
+    setEditingPhotos(false)
+    setRefreshing(true)
+    await loadBlocks(true)
+    setRefreshing(false)
+  }
+
+  const hasImages = findImageBlocks(blocks).length > 0
+
   return (
     <main className="min-h-screen px-3 sm:px-6 py-6 sm:py-10 max-w-[860px] mx-auto">
       <div className="flex items-center justify-between mb-8 gap-2 flex-wrap">
@@ -65,8 +218,7 @@ export default function PortalSubPage() {
           ‹ PORTAL DOS NOIVOS
         </Link>
         <div className="flex items-center gap-2">
-          {/* Refresh */}
-          {!editing && (
+          {!editing && !editingPhotos && (
             <button
               onClick={handleRefresh}
               disabled={refreshing}
@@ -79,8 +231,18 @@ export default function PortalSubPage() {
               {refreshing ? 'A atualizar...' : 'Atualizar'}
             </button>
           )}
-          {/* Edit toggle */}
-          {!editing && !loading && !error && (
+          {!editing && !editingPhotos && !loading && !error && hasImages && (
+            <button
+              onClick={() => setEditingPhotos(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white/80 border border-white/15 hover:border-white/30 transition-all"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Fotos
+            </button>
+          )}
+          {!editing && !editingPhotos && !loading && !error && (
             <button
               onClick={() => setEditing(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gold/60 hover:text-gold border border-gold/20 hover:border-gold/40 transition-all"
@@ -106,9 +268,11 @@ export default function PortalSubPage() {
       {error   && <div className="text-center py-24 text-red-400/60 text-sm">{error}</div>}
       {!loading && !error && (
         <div className="bg-white/[0.02] border border-white/[0.07] rounded-2xl p-5 sm:p-8">
-          {editing && id
-            ? <BlockEditor blocks={blocks} pageId={id} settings={settings} settingsBlockId={settingsBlockId} onSaved={handleSaved} />
-            : <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
+          {editingPhotos
+            ? <ImageEditor blocks={blocks} pageId={id!} onDone={handlePhotosDone} />
+            : editing && id
+              ? <BlockEditor blocks={blocks} pageId={id} settings={settings} settingsBlockId={settingsBlockId} onSaved={handleSaved} />
+              : <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
           }
         </div>
       )}

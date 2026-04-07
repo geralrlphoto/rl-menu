@@ -19,7 +19,20 @@ function makeBlockBody(type: string, text: string, checked?: boolean) {
 
 // PATCH — update existing block
 export async function PATCH(req: Request) {
-  const { id, type, text, checked } = await req.json()
+  const { id, type, text, checked, imageUrl } = await req.json()
+
+  // Image block update
+  if (type === 'image' && imageUrl) {
+    const res = await fetch(`https://api.notion.com/v1/blocks/${id}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ image: { type: 'external', external: { url: imageUrl } } }),
+    })
+    const data = await res.json()
+    if (!res.ok) return NextResponse.json({ error: data.message }, { status: res.status })
+    return NextResponse.json({ ok: true })
+  }
+
   const res = await fetch(`https://api.notion.com/v1/blocks/${id}`, {
     method: 'PATCH',
     headers,
