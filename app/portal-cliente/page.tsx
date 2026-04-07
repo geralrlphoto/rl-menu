@@ -44,10 +44,17 @@ function findImages(blocks: Block[]): string[] {
 
 function findWelcomeText(blocks: Block[]): { heading: string; paragraphs: string[] } {
   const heading = blocks.find(b => b.type === 'heading_2')
-  const paragraphs = blocks.filter(b => b.type === 'paragraph').slice(0, 3)
+  const paragraphs = blocks.filter(b => b.type === 'paragraph')
+  // Split each Notion paragraph on \n so inline line-breaks also become separate entries
+  const lines: string[] = []
+  for (const p of paragraphs) {
+    const text = plainText(p.paragraph?.rich_text ?? '')
+    if (!text) continue
+    text.split('\n').forEach(l => lines.push(l))
+  }
   return {
     heading: heading ? plainText(heading.heading_2?.rich_text ?? []) : '',
-    paragraphs: paragraphs.map(p => plainText(p.paragraph?.rich_text ?? [])).filter(Boolean),
+    paragraphs: lines,
   }
 }
 
@@ -709,9 +716,13 @@ export default function PortalClientePage() {
         <div className="flex justify-center mb-6">
           <span className="text-gold/40 text-xl">♡</span>
         </div>
-        {welcomeParas.map((p, i) => (
-          <p key={i} className="text-sm sm:text-base text-white/50 leading-relaxed mb-3">{p}</p>
-        ))}
+        {welcomeParas.map((p, i) =>
+          p.trim() === '' ? (
+            <div key={i} className="h-3" />
+          ) : (
+            <p key={i} className="text-sm sm:text-base text-white/50 leading-relaxed mb-3">{p}</p>
+          )
+        )}
 
         {/* Feature bullets */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8">
