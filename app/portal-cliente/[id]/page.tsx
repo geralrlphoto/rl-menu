@@ -515,7 +515,29 @@ export default function PortalSubPage() {
                       refreshing={pagRefreshing}
                     />
                   )}
-                  <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
+                  {(() => {
+                    const splitIdx = blocks.findIndex(b =>
+                      plainText((b[b.type]?.rich_text ?? [])).toLowerCase().includes('numerário contatar')
+                    )
+                    if (!isPaymentsPage || splitIdx === -1)
+                      return <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
+                    return (
+                      <>
+                        <NotionBlocks blocks={blocks.slice(0, splitIdx + 1)} hiddenNav={settings.hiddenNav} />
+                        <div className="my-5">
+                          <a
+                            href="https://tally.so"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gold text-black font-semibold text-sm tracking-wide hover:bg-gold/80 transition-all"
+                          >
+                            Registar Pagamento
+                          </a>
+                        </div>
+                        <NotionBlocks blocks={blocks.slice(splitIdx + 1)} hiddenNav={settings.hiddenNav} />
+                      </>
+                    )
+                  })()}
                 </>
               )
           }
