@@ -7,6 +7,8 @@ import BlockEditor from './BlockEditor'
 
 const PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
 
+type Task = { id: string; text: string; done: boolean }
+
 type PortalSettings = {
   hiddenNav: string[]
   noiva?: string
@@ -17,6 +19,7 @@ type PortalSettings = {
   activeNavId?: string
   heroImageUrl?: string
   galleryUrls?: string[]  // up to 3
+  tasks?: Task[]
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -390,6 +393,128 @@ function SettingsPanel({
 }
 
 
+// ─── tasks section ───────────────────────────────────────────────────────────
+
+function TasksSection({
+  tasks, pageId, settingsBlockId, settings, onSettingsChange,
+}: {
+  tasks: Task[]
+  pageId: string
+  settingsBlockId: string | null
+  settings: PortalSettings
+  onSettingsChange: (s: PortalSettings) => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [newTask, setNewTask] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [localTasks, setLocalTasks] = useState<Task[]>(tasks)
+
+  // Sync if parent tasks change (e.g. after reload)
+  useEffect(() => { setLocalTasks(tasks) }, [tasks])
+
+  async function persist(nextTasks: Task[]) {
+    const newSettings = { ...settings, tasks: nextTasks }
+    onSettingsChange(newSettings)
+    setSaving(true)
+    await fetch('/api/portal-settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pageId, settings: newSettings, settingsBlockId }),
+    })
+    setSaving(false)
+  }
+
+  function toggleDone(id: string) {
+    const next = localTasks.map(t => t.id === id ? { ...t, done: !t.done } : t)
+    setLocalTasks(next)
+    persist(next)
+  }
+
+  function addTask() {
+    if (!newTask.trim()) return
+    const next = [...localTasks, { id: Date.now().toString(), text: newTask.trim(), done: false }]
+    setLocalTasks(next)
+    setNewTask('')
+    persist(next)
+  }
+
+  function deleteTask(id: string) {
+    const next = localTasks.filter(t => t.id !== id)
+    setLocalTasks(next)
+    persist(next)
+  }
+
+  return (
+    <section className="px-4 pb-10 sm:pb-14">
+      <div className="max-w-2xl mx-auto rounded-2xl overflow-hidden border border-amber-700/30" style={{ background: 'linear-gradient(135deg, #1e1200 0%, #2a1a00 100%)' }}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-amber-700/20">
+          <div className="flex items-center gap-2.5">
+            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+            <h2 className="font-playfair text-amber-400 text-lg tracking-wide">Gestão de Tarefas</h2>
+          </div>
+          <div className="flex items-center gap-2">
+            {saving && <span className="text-[10px] text-amber-500/40 animate-pulse">A guardar...</span>}
+            <button
+              onClick={() => setEditing(e => !e)}
+              className="text-[11px] text-amber-500/60 hover:text-amber-400 transition-colors border border-amber-700/30 hover:border-amber-500/40 px-3 py-1 rounded-lg"
+            >
+              {editing ? '✓ Concluído' : '✎ Editar'}
+            </button>
+          </div>
+        </div>
+
+        {/* Task list */}
+        <div className="p-5 space-y-2.5">
+          {localTasks.length === 0 && !editing && (
+            <p className="text-sm text-amber-500/25 text-center py-6 italic">Sem tarefas de momento.</p>
+          )}
+
+          {localTasks.map(task => (
+            <div key={task.id} className="flex items-center gap-3 group">
+              <button
+                onClick={() => toggleDone(task.id)}
+                className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all
+                  ${task.done ? 'border-amber-500 bg-amber-500/25' : 'border-amber-700/50 hover:border-amber-500/70'}`}
+              >
+                {task.done && <span className="text-amber-400 text-[10px] font-bold">✓</span>}
+              </button>
+              <span className={`flex-1 text-sm leading-relaxed transition-all ${task.done ? 'line-through text-amber-500/30' : 'text-amber-100/80'}`}>
+                {task.text}
+              </span>
+              {editing && (
+                <button onClick={() => deleteTask(task.id)} className="text-amber-700/40 hover:text-red-400 transition-colors text-xl leading-none opacity-0 group-hover:opacity-100">
+                  ×
+                </button>
+              )}
+            </div>
+          ))}
+
+          {/* Add new task */}
+          {editing && (
+            <div className="flex gap-2 pt-4 mt-2 border-t border-amber-700/20">
+              <input
+                value={newTask}
+                onChange={e => setNewTask(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') addTask() }}
+                placeholder="Escreve uma nova tarefa..."
+                className="flex-1 bg-amber-500/5 border border-amber-700/30 rounded-xl px-3 py-2 text-sm text-amber-100/80 outline-none focus:border-amber-500/50 transition-colors placeholder:text-amber-500/20"
+              />
+              <button
+                onClick={addTask}
+                disabled={!newTask.trim()}
+                className="px-4 py-2 bg-amber-500/20 border border-amber-500/40 rounded-xl text-amber-400 text-lg hover:bg-amber-500/30 transition-all disabled:opacity-30"
+              >
+                +
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 // ─── main page ────────────────────────────────────────────────────────────────
 
 export default function PortalClientePage() {
@@ -738,6 +863,15 @@ export default function PortalClientePage() {
           </div>
         </section>
       )}
+
+      {/* ── TASKS ── */}
+      <TasksSection
+        tasks={settings.tasks ?? []}
+        pageId={PAGE_ID}
+        settingsBlockId={settingsBlockId}
+        settings={settings}
+        onSettingsChange={s => { setSettings(s); if (settingsBlockId) setSettingsBlockId(settingsBlockId) }}
+      />
 
       {/* ── WELCOME ── */}
       <section className="py-12 sm:py-16 px-4 max-w-2xl mx-auto">
