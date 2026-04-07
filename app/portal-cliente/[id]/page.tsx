@@ -38,7 +38,22 @@ function uploadWithProgress(file: File, onProgress: (pct: number) => void): Prom
   })
 }
 
-function ImageEditor({ blocks, pageId, onDone }: { blocks: Block[]; pageId: string; onDone: () => void }) {
+function patchBlockUrl(blocks: Block[], blockId: string, newUrl: string): Block[] {
+  return blocks.map(b => {
+    if (b.id === blockId && b.type === 'image') {
+      return { ...b, image: { type: 'external' as const, external: { url: newUrl } } }
+    }
+    if (b.children) return { ...b, children: patchBlockUrl(b.children, blockId, newUrl) }
+    return b
+  })
+}
+
+function ImageEditor({ blocks, pageId, onBlocksUpdated, onDone }: {
+  blocks: Block[]
+  pageId: string
+  onBlocksUpdated: (newBlocks: Block[]) => void
+  onDone: () => void
+}) {
   const images = findImageBlocks(blocks)
   const [urls, setUrls] = useState<Record<string, string>>(() =>
     Object.fromEntries(images.map(img => [img.id, img.url]))
@@ -46,6 +61,7 @@ function ImageEditor({ blocks, pageId, onDone }: { blocks: Block[]; pageId: stri
   const [progress, setProgress] = useState<Record<string, number | null>>({})
   const [saving, setSaving] = useState<Record<string, boolean>>({})
   const [saved, setSaved] = useState<Record<string, boolean>>({})
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   async function handleUpload(blockId: string, file: File) {
     setProgress(p => ({ ...p, [blockId]: 0 }))
@@ -58,15 +74,25 @@ function ImageEditor({ blocks, pageId, onDone }: { blocks: Block[]; pageId: stri
   }
 
   async function handleSave(blockId: string) {
+    const newUrl = urls[blockId]
+    if (!newUrl) return
     setSaving(s => ({ ...s, [blockId]: true }))
-    await fetch('/api/notion-block', {
+    setErrors(e => ({ ...e, [blockId]: '' }))
+    const res = await fetch('/api/notion-block', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: blockId, type: 'image', imageUrl: urls[blockId] }),
+      body: JSON.stringify({ id: blockId, type: 'image', imageUrl: newUrl }),
     })
+    const data = await res.json()
     setSaving(s => ({ ...s, [blockId]: false }))
+    if (!res.ok) {
+      setErrors(e => ({ ...e, [blockId]: data.error ?? 'Erro ao guardar' }))
+      return
+    }
+    // Update local blocks immediately — don't wait for Notion to propagate
+    onBlocksUpdated(patchBlockUrl(blocks, blockId, newUrl))
     setSaved(s => ({ ...s, [blockId]: true }))
-    setTimeout(() => setSaved(s => ({ ...s, [blockId]: false })), 2000)
+    setTimeout(() => setSaved(s => ({ ...s, [blockId]: false })), 2500)
   }
 
   if (images.length === 0) return (
@@ -145,6 +171,9 @@ function ImageEditor({ blocks, pageId, onDone }: { blocks: Block[]; pageId: stri
               >
                 {isDone ? '✓ Guardado!' : isSaving ? 'A guardar...' : 'Guardar foto'}
               </button>
+              {errors[img.id] && (
+                <p className="text-[11px] text-red-400/80 text-center">{errors[img.id]}</p>
+              )}
             </div>
           </div>
         )
@@ -202,11 +231,10 @@ export default function PortalSubPage() {
     setRefreshing(false)
   }
 
-  async function handlePhotosDone() {
+  function handlePhotosDone() {
     setEditingPhotos(false)
-    setRefreshing(true)
-    await loadBlocks(true)
-    setRefreshing(false)
+    // Bust cache in background — don't reload into state (would overwrite local updates)
+    fetch(`/api/portais-clientes?id=${id}&bust=1`)
   }
 
   const hasImages = findImageBlocks(blocks).length > 0
@@ -269,7 +297,7 @@ export default function PortalSubPage() {
       {!loading && !error && (
         <div className="bg-white/[0.02] border border-white/[0.07] rounded-2xl p-5 sm:p-8">
           {editingPhotos
-            ? <ImageEditor blocks={blocks} pageId={id!} onDone={handlePhotosDone} />
+            ? <ImageEditor blocks={blocks} pageId={id!} onBlocksUpdated={setBlocks} onDone={handlePhotosDone} />
             : editing && id
               ? <BlockEditor blocks={blocks} pageId={id} settings={settings} settingsBlockId={settingsBlockId} onSaved={handleSaved} />
               : <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
