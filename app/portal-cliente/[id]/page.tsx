@@ -362,24 +362,16 @@ export default function PortalSubPage() {
                   (b.type === 'heading_1' || b.type === 'heading_2' || b.type === 'heading_3') &&
                   plainText(b[b.type]?.rich_text ?? []).toLowerCase().includes('acesso a funcionalidades')
                 )
-                const backBtn = (
-                  <div className="my-6 flex justify-start">
-                    <Link href="/portal-cliente"
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gold/30 bg-gold/10 text-gold hover:bg-gold/20 transition-all text-sm tracking-wide">
-                      ‹ Voltar
-                    </Link>
-                  </div>
-                )
-                if (splitIdx === -1) return (
-                  <>
-                    <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
-                    {backBtn}
-                  </>
-                )
+                if (splitIdx === -1) return <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
                 return (
                   <>
                     <NotionBlocks blocks={blocks.slice(0, splitIdx)} hiddenNav={settings.hiddenNav} />
-                    {backBtn}
+                    <div className="my-6 flex justify-start">
+                      <Link href="/portal-cliente"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gold/30 bg-gold/10 text-gold hover:bg-gold/20 transition-all text-sm tracking-wide">
+                        ‹ Voltar
+                      </Link>
+                    </div>
                     <NotionBlocks blocks={blocks.slice(splitIdx)} hiddenNav={settings.hiddenNav} />
                   </>
                 )
