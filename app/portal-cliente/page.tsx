@@ -687,7 +687,7 @@ export default function PortalClientePage() {
         <div className="flex justify-center px-4 pb-6 pt-2">
           <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full border border-gold/40 bg-gold/10 backdrop-blur-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse shrink-0" />
-            <span className="font-cormorant text-gold text-base sm:text-lg italic tracking-wide">{welcomeRef}</span>
+            <span className="font-playfair text-gold text-base sm:text-lg tracking-wide">{welcomeRef}</span>
           </div>
         </div>
       )}
