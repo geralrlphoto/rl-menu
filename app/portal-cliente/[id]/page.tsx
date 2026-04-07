@@ -11,14 +11,20 @@ function notionUrl(id: string) {
 }
 
 // Collect all image blocks recursively, returning {id, url}
-function findImageBlocks(blocks: Block[]): Array<{ id: string; url: string }> {
-  const out: Array<{ id: string; url: string }> = []
-  for (const b of blocks) {
+function findImageBlocks(
+  blocks: Block[],
+  parentId: string | null = null
+): Array<{ id: string; url: string; parentId: string | null; imageType: string; prevSiblingId: string | null }> {
+  const out: Array<{ id: string; url: string; parentId: string | null; imageType: string; prevSiblingId: string | null }> = []
+  for (let i = 0; i < blocks.length; i++) {
+    const b = blocks[i]
+    const prevSiblingId = i > 0 ? blocks[i - 1].id : null
     if (b.type === 'image') {
-      const url = b.image?.type === 'external' ? b.image.external?.url : b.image?.file?.url
-      if (url) out.push({ id: b.id, url })
+      const imageType = b.image?.type ?? 'external'
+      const url = imageType === 'external' ? b.image?.external?.url : b.image?.file?.url
+      if (url) out.push({ id: b.id, url, parentId, imageType, prevSiblingId })
     }
-    if (b.children) out.push(...findImageBlocks(b.children))
+    if (b.children) out.push(...findImageBlocks(b.children, b.id))
   }
   return out
 }
@@ -76,23 +82,67 @@ function ImageEditor({ blocks, pageId, onBlocksUpdated, onDone }: {
   async function handleSave(blockId: string) {
     const newUrl = urls[blockId]
     if (!newUrl) return
+    const img = images.find(i => i.id === blockId)
+    if (!img) return
+
     setSaving(s => ({ ...s, [blockId]: true }))
     setErrors(e => ({ ...e, [blockId]: '' }))
-    const res = await fetch('/api/notion-block', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: blockId, type: 'image', imageUrl: newUrl }),
-    })
-    const data = await res.json()
-    setSaving(s => ({ ...s, [blockId]: false }))
-    if (!res.ok) {
-      setErrors(e => ({ ...e, [blockId]: data.error ?? 'Erro ao guardar' }))
-      return
+
+    let ok = false
+
+    if (img.imageType === 'external') {
+      // External image: simple PATCH
+      const res = await fetch('/api/notion-block', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: blockId, type: 'image', imageUrl: newUrl }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setSaving(s => ({ ...s, [blockId]: false }))
+        setErrors(e => ({ ...e, [blockId]: data.error ?? 'Erro ao guardar' }))
+        return
+      }
+      ok = true
+    } else {
+      // File-type image: Notion doesn't allow PATCH — delete + recreate
+      const parentId = img.parentId ?? pageId
+      const delRes = await fetch('/api/notion-block', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: blockId }),
+      })
+      if (!delRes.ok) {
+        const d = await delRes.json()
+        setSaving(s => ({ ...s, [blockId]: false }))
+        setErrors(e => ({ ...e, [blockId]: d.error ?? 'Erro ao apagar bloco antigo' }))
+        return
+      }
+      const postRes = await fetch('/api/notion-block', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          parentId,
+          type: 'image',
+          imageUrl: newUrl,
+          after: img.prevSiblingId ?? undefined,
+        }),
+      })
+      if (!postRes.ok) {
+        const d = await postRes.json()
+        setSaving(s => ({ ...s, [blockId]: false }))
+        setErrors(e => ({ ...e, [blockId]: d.error ?? 'Erro ao criar novo bloco' }))
+        return
+      }
+      ok = true
     }
-    // Update local blocks immediately — don't wait for Notion to propagate
-    onBlocksUpdated(patchBlockUrl(blocks, blockId, newUrl))
-    setSaved(s => ({ ...s, [blockId]: true }))
-    setTimeout(() => setSaved(s => ({ ...s, [blockId]: false })), 2500)
+
+    setSaving(s => ({ ...s, [blockId]: false }))
+    if (ok) {
+      onBlocksUpdated(patchBlockUrl(blocks, blockId, newUrl))
+      setSaved(s => ({ ...s, [blockId]: true }))
+      setTimeout(() => setSaved(s => ({ ...s, [blockId]: false })), 2500)
+    }
   }
 
   if (images.length === 0) return (

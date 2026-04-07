@@ -45,13 +45,22 @@ export async function PATCH(req: Request) {
 
 // POST — append new block to a parent
 export async function POST(req: Request) {
-  const { parentId, type, text, checked } = await req.json()
+  const { parentId, type, text, checked, imageUrl, after } = await req.json()
+
+  let blockBody: object
+  if (type === 'image' && imageUrl) {
+    blockBody = { object: 'block', type: 'image', image: { type: 'external', external: { url: imageUrl } } }
+  } else {
+    blockBody = { object: 'block', type, ...makeBlockBody(type, text, checked) }
+  }
+
+  const payload: Record<string, unknown> = { children: [blockBody] }
+  if (after) payload.after = after
+
   const res = await fetch(`https://api.notion.com/v1/blocks/${parentId}/children`, {
     method: 'PATCH',
     headers,
-    body: JSON.stringify({
-      children: [{ object: 'block', type, ...makeBlockBody(type, text, checked) }],
-    }),
+    body: JSON.stringify(payload),
   })
   const data = await res.json()
   if (!res.ok) return NextResponse.json({ error: data.message }, { status: res.status })
