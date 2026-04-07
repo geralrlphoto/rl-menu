@@ -366,7 +366,7 @@ export default function PortalSubPage() {
                 return (
                   <>
                     <NotionBlocks blocks={blocks.slice(0, splitIdx)} hiddenNav={settings.hiddenNav} />
-                    <div className="my-6 flex justify-center">
+                    <div className="my-6 flex justify-start">
                       <Link href="/portal-cliente"
                         className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gold/30 bg-gold/10 text-gold hover:bg-gold/20 transition-all text-sm tracking-wide">
                         ‹ Voltar
