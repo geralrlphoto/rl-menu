@@ -6,6 +6,8 @@ import { useParams, useSearchParams } from 'next/navigation'
 import { NotionBlocks, plainText, type Block } from '../NotionRenderer'
 import BlockEditor from '../BlockEditor'
 
+const PORTAL_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
+
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
 function findImageBlocks(
@@ -245,6 +247,106 @@ function ImageEditor({ blocks, pageId, onBlocksUpdated, onDone }: {
   )
 }
 
+// ─── payment phases ───────────────────────────────────────────────────────────
+
+type Pagamento = {
+  id: string
+  fase_pagamento: string[]
+  metodo_pagamento: string[]
+  valor_liquidado: number | null
+  data_pagamento: string | null
+}
+
+function PaymentPhasesSection({ referencia, valorTotal, pagamentos, onRefresh, refreshing }: {
+  referencia: string
+  valorTotal: number
+  pagamentos: Pagamento[]
+  onRefresh: () => void
+  refreshing: boolean
+}) {
+  const adj = 400
+  const remainder = Math.max(0, valorTotal - adj)
+  const faseValores: Record<string, number> = {
+    'ADJUDICAÇÃO': adj,
+    'REFORÇO':     Math.round(remainder * 0.8 * 100) / 100,
+    'FINAL':       Math.round(remainder * 0.2 * 100) / 100,
+  }
+  const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+  const fmtD = (d: string | null) => {
+    if (!d) return null
+    const dt = new Date(d.split('T')[0] + 'T00:00:00')
+    return `${String(dt.getDate()).padStart(2,'0')} ${MESES[dt.getMonth()]} ${dt.getFullYear()}`
+  }
+
+  return (
+    <div className="mb-6 pb-6 border-b border-white/[0.06]">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] tracking-[0.3em] text-white/25 uppercase">Fases de Pagamento</span>
+          <button onClick={onRefresh} title="Atualizar" className="text-white/20 hover:text-gold transition-colors">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={refreshing ? 'animate-spin' : ''}>
+              <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        {['ADJUDICAÇÃO','REFORÇO','FINAL'].map(label => {
+          const pags = pagamentos.filter(p => p.fase_pagamento.includes(label))
+          const totalPago = pags.reduce((s, p) => s + (p.valor_liquidado ?? 0), 0)
+          const valorFase = faseValores[label]
+          const falta = Math.max(0, valorFase - totalPago)
+          const liquidado = totalPago >= valorFase && valorFase > 0
+          const parcial = totalPago > 0 && !liquidado
+          const pct = valorFase > 0 ? Math.min(100, Math.round((totalPago / valorFase) * 100)) : 0
+          const lastPag = pags[pags.length - 1]
+          const metodos = Array.from(new Set(pags.flatMap(p => p.metodo_pagamento)))
+
+          const borderCls = liquidado ? 'bg-green-500/8 border-green-500/25'
+            : parcial ? 'bg-orange-500/5 border-orange-500/20'
+            : 'bg-white/[0.02] border-white/[0.06]'
+          const valorCls = liquidado ? 'text-green-400' : parcial ? 'text-orange-400' : 'text-white/50'
+          const statusLabel = liquidado ? 'LIQUIDADO' : parcial ? 'PARCIAL' : 'PENDENTE'
+          const statusCls = liquidado ? 'text-green-400/80 bg-green-500/10'
+            : parcial ? 'text-orange-400/80 bg-orange-500/10'
+            : 'text-white/20 bg-white/5'
+          const dotCls = liquidado ? 'bg-green-400' : parcial ? 'bg-orange-400' : 'bg-white/20'
+
+          return (
+            <div key={label} className={`flex flex-col gap-2.5 p-4 rounded-xl border transition-all ${borderCls}`}>
+              <span className="text-[9px] tracking-[0.35em] text-white/30 uppercase">{label}</span>
+              <span className={`text-lg font-semibold ${valorCls}`}>{valorFase.toLocaleString('pt-PT')} €</span>
+              <div className="h-1 rounded-full bg-white/8 overflow-hidden">
+                <div className={`h-full rounded-full transition-all ${liquidado ? 'bg-green-400' : parcial ? 'bg-orange-400' : 'bg-white/10'}`}
+                  style={{ width: `${pct}%` }} />
+              </div>
+              <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full w-fit ${statusCls}`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${dotCls}`} />
+                <span className="text-[9px] tracking-widest">{statusLabel}</span>
+              </div>
+              <div className="flex flex-col gap-0.5 pt-1 border-t border-white/[0.05]">
+                {totalPago > 0 && (
+                  <span className="text-[10px] text-white/40">
+                    Pago: <span className={`font-medium ${liquidado ? 'text-green-400' : 'text-orange-400'}`}>{totalPago.toLocaleString('pt-PT')} €</span>
+                  </span>
+                )}
+                {!liquidado && falta > 0 && (
+                  <span className="text-[10px] text-white/30">
+                    Falta: <span className="text-white/50 font-medium">{falta.toLocaleString('pt-PT')} €</span>
+                  </span>
+                )}
+                {lastPag?.data_pagamento && <span className="text-[10px] text-white/25">{fmtD(lastPag.data_pagamento)}</span>}
+                {metodos.length > 0 && <span className="text-[10px] text-white/20">{metodos.join(', ')}</span>}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 // ─── main page ────────────────────────────────────────────────────────────────
 
 export default function PortalSubPage() {
@@ -259,6 +361,48 @@ export default function PortalSubPage() {
   const [editing, setEditing] = useState(false)
   const [editingPhotos, setEditingPhotos] = useState(false)
   const [error, setError] = useState('')
+  const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
+  const [portalRef, setPortalRef] = useState('')
+  const [portalTotal, setPortalTotal] = useState(0)
+  const [pagRefreshing, setPagRefreshing] = useState(false)
+
+  const isPaymentsPage = title.toUpperCase().includes('PAGAMENTO')
+
+  const loadPagamentos = useCallback(async () => {
+    setPagRefreshing(true)
+    try {
+      const d = await fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}`).then(r => r.json())
+      const ps = d.settings ?? {}
+      let ref: string = ps.referencia ?? ''
+      const total: number = ps.valorTotal ?? 0
+
+      // Auto-extract reference from portal page blocks if not in settings
+      if (!ref) {
+        for (const b of (d.blocks ?? []) as Block[]) {
+          if (b.type === 'paragraph') {
+            const text = plainText(b.paragraph?.rich_text ?? [])
+            if (/^(referên|referência|referencia|ref\.?\s*:|ref\s+)/i.test(text.trim())) {
+              ref = text.replace(/^.*?:\s*/i, '').trim()
+              break
+            }
+          }
+        }
+      }
+
+      if (ref) {
+        setPortalRef(ref)
+        setPortalTotal(total)
+        const pd = await fetch(`/api/pagamentos-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json())
+        setPagamentos(pd.payments ?? [])
+      }
+    } finally {
+      setPagRefreshing(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (isPaymentsPage) loadPagamentos()
+  }, [isPaymentsPage, loadPagamentos])
 
   const loadBlocks = useCallback(async (bust = false) => {
     if (!id) return
@@ -362,6 +506,18 @@ export default function PortalSubPage() {
                       ‹ Voltar
                     </Link>
                   </div>
+                  {isPaymentsPage && pagRefreshing && !portalRef && (
+                    <div className="text-center py-6 text-white/20 text-xs tracking-widest uppercase mb-6">A carregar pagamentos...</div>
+                  )}
+                  {isPaymentsPage && portalRef && portalTotal > 0 && (
+                    <PaymentPhasesSection
+                      referencia={portalRef}
+                      valorTotal={portalTotal}
+                      pagamentos={pagamentos}
+                      onRefresh={loadPagamentos}
+                      refreshing={pagRefreshing}
+                    />
+                  )}
                   <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
                 </>
               )

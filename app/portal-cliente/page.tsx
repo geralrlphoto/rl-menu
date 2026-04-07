@@ -20,6 +20,8 @@ type PortalSettings = {
   heroImageUrl?: string
   galleryUrls?: string[]  // up to 3
   tasks?: Task[]
+  referencia?: string
+  valorTotal?: number
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -332,6 +334,25 @@ function SettingsPanel({
             </div>
           )
         })}
+        <div>
+          <label className="block text-[10px] text-white/40 tracking-widest uppercase mb-1">Referência do Evento</label>
+          <input
+            value={form.referencia ?? ''}
+            onChange={e => setForm(prev => ({ ...prev, referencia: e.target.value }))}
+            placeholder="ex: CAS_026_26_RL"
+            className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
+          />
+        </div>
+        <div>
+          <label className="block text-[10px] text-white/40 tracking-widest uppercase mb-1">Valor Total do Contrato (€)</label>
+          <input
+            type="number"
+            value={form.valorTotal ?? ''}
+            onChange={e => setForm(prev => ({ ...prev, valorTotal: e.target.value ? Number(e.target.value) : undefined }))}
+            placeholder="ex: 1600"
+            className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
+          />
+        </div>
       </div>
 
       {/* Photos */}
