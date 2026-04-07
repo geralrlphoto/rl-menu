@@ -265,11 +265,11 @@ function PaymentPhasesSection({ referencia, valorTotal, pagamentos, onRefresh, r
   refreshing: boolean
 }) {
   const adj = 400
-  const remainder = Math.max(0, valorTotal - adj)
+  const remainder = Math.max(0, (valorTotal || 0) - adj)
   const faseValores: Record<string, number> = {
-    'ADJUDICAÇÃO': adj,
-    'REFORÇO':     Math.round(remainder * 0.8 * 100) / 100,
-    'FINAL':       Math.round(remainder * 0.2 * 100) / 100,
+    'ADJUDICAÇÃO': valorTotal > 0 ? adj : 0,
+    'REFORÇO':     valorTotal > 0 ? Math.round(remainder * 0.8 * 100) / 100 : 0,
+    'FINAL':       valorTotal > 0 ? Math.round(remainder * 0.2 * 100) / 100 : 0,
   }
   const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
   const fmtD = (d: string | null) => {
@@ -506,10 +506,7 @@ export default function PortalSubPage() {
                       ‹ Voltar
                     </Link>
                   </div>
-                  {isPaymentsPage && pagRefreshing && !portalRef && (
-                    <div className="text-center py-6 text-white/20 text-xs tracking-widest uppercase mb-6">A carregar pagamentos...</div>
-                  )}
-                  {isPaymentsPage && portalRef && portalTotal > 0 && (
+                  {isPaymentsPage && (
                     <PaymentPhasesSection
                       referencia={portalRef}
                       valorTotal={portalTotal}
