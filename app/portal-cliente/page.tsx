@@ -296,17 +296,6 @@ function SettingsPanel({
     onSaved(saved.settingsBlockId ?? settingsBlockId)
   }
 
-  const Field = ({ label, k, placeholder }: { label: string; k: keyof PortalSettings; placeholder?: string }) => (
-    <div>
-      <label className="block text-[10px] text-white/40 tracking-widest uppercase mb-1">{label}</label>
-      <input
-        value={(form[k] as string) ?? ''}
-        onChange={e => setForm(prev => ({ ...prev, [k]: e.target.value }))}
-        placeholder={placeholder}
-        className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
-      />
-    </div>
-  )
 
   return (
     <div className="space-y-6">
@@ -320,11 +309,21 @@ function SettingsPanel({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Nome da Noiva" k="noiva" placeholder="ex: BRUNA" />
-        <Field label="Nome do Noivo" k="noivo" placeholder="ex: LUIS" />
-        <Field label="Data do Casamento" k="dataFormatada" placeholder="ex: 25 de setembro de 2026" />
-        <Field label="Data (para contagem)" k="data" placeholder="ex: 2026-09-25" />
-        <Field label="Local" k="local" placeholder="ex: HERDADE DE ALGERUZ" />
+        {(['noiva','noivo','dataFormatada','data','local'] as const).map((k, i) => {
+          const labels: Record<string, string> = { noiva: 'Nome da Noiva', noivo: 'Nome do Noivo', dataFormatada: 'Data do Casamento', data: 'Data (para contagem)', local: 'Local' }
+          const placeholders: Record<string, string> = { noiva: 'ex: BRUNA', noivo: 'ex: LUIS', dataFormatada: 'ex: 25 de setembro de 2026', data: 'ex: 2026-09-25', local: 'ex: HERDADE DE ALGERUZ' }
+          return (
+            <div key={k}>
+              <label className="block text-[10px] text-white/40 tracking-widest uppercase mb-1">{labels[k]}</label>
+              <input
+                value={(form[k] as string) ?? ''}
+                onChange={e => setForm(prev => ({ ...prev, [k]: e.target.value }))}
+                placeholder={placeholders[k]}
+                className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
+              />
+            </div>
+          )
+        })}
       </div>
 
       {/* Photos */}
