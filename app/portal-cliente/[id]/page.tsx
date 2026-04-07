@@ -77,21 +77,8 @@ function ImageEditor({ blocks, pageId, onBlocksUpdated, onDone }: {
     setTimeout(() => setStatus(s => ({ ...s, [id]: { state: 'idle', msg: '' } })), 3000)
   }
 
-  async function handleUpload(blockId: string, file: File) {
-    setStatus(s => ({ ...s, [blockId]: { state: 'idle', msg: '' } }))
-    setProgress(p => ({ ...p, [blockId]: 0 }))
-    try {
-      const url = await uploadWithProgress(file, pct => setProgress(p => ({ ...p, [blockId]: pct })))
-      setUrls(u => ({ ...u, [blockId]: url }))
-    } catch (err: any) {
-      setErr(blockId, `Upload falhou: ${err.message}. Tenta colar um URL directamente.`)
-    } finally {
-      setProgress(p => ({ ...p, [blockId]: null }))
-    }
-  }
-
-  async function handleSave(blockId: string) {
-    const newUrl = urls[blockId]?.trim()
+  async function handleSave(blockId: string, urlOverride?: string) {
+    const newUrl = (urlOverride ?? urls[blockId])?.trim()
     if (!newUrl) { setErr(blockId, 'Sem URL — carrega uma foto ou cola um URL.'); return }
 
     const img = images.find(x => x.id === blockId)
@@ -135,6 +122,21 @@ function ImageEditor({ blocks, pageId, onBlocksUpdated, onDone }: {
     setOk(blockId)
   }
 
+  async function handleUpload(blockId: string, file: File) {
+    setStatus(s => ({ ...s, [blockId]: { state: 'idle', msg: '' } }))
+    setProgress(p => ({ ...p, [blockId]: 0 }))
+    try {
+      const url = await uploadWithProgress(file, pct => setProgress(p => ({ ...p, [blockId]: pct })))
+      setUrls(u => ({ ...u, [blockId]: url }))
+      setProgress(p => ({ ...p, [blockId]: null }))
+      // Auto-save immediately after upload so photo persists when leaving editor
+      await handleSave(blockId, url)
+    } catch (err: any) {
+      setErr(blockId, `Upload falhou: ${err.message}. Tenta colar um URL directamente.`)
+      setProgress(p => ({ ...p, [blockId]: null }))
+    }
+  }
+
   if (images.length === 0) return (
     <div className="text-center py-12 text-white/30 text-sm">Esta página não tem fotografias.</div>
   )
@@ -175,7 +177,7 @@ function ImageEditor({ blocks, pageId, onBlocksUpdated, onDone }: {
             <div className="px-4 pb-4 space-y-2">
               {/* Upload */}
               <label className={`relative flex items-center justify-center w-full py-3 rounded-lg border border-dashed cursor-pointer transition-all overflow-hidden
-                ${uploading ? 'border-gold/40 bg-gold/5 text-gold/70' : 'border-white/15 hover:border-gold/40 hover:bg-gold/5 text-white/35 hover:text-gold/70'}`}>
+                ${uploading || saving ? 'border-gold/40 bg-gold/5 text-gold/70 cursor-not-allowed' : 'border-white/15 hover:border-gold/40 hover:bg-gold/5 text-white/35 hover:text-gold/70'}`}>
                 <input type="file" accept="image/*" className="hidden" disabled={uploading || saving}
                   onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(img.id, f); e.target.value = '' }} />
                 {uploading ? (
@@ -188,6 +190,13 @@ function ImageEditor({ blocks, pageId, onBlocksUpdated, onDone }: {
                       <span className="text-sm font-medium">{pct}%</span>
                     </div>
                   </>
+                ) : saving ? (
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                    </svg>
+                    <span className="text-sm font-medium">{st.msg}</span>
+                  </div>
                 ) : (
                   <div className="flex items-center gap-2">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
@@ -287,9 +296,10 @@ export default function PortalSubPage() {
     setRefreshing(false)
   }
 
-  function handlePhotosDone() {
+  async function handlePhotosDone() {
     setEditingPhotos(false)
-    fetch(`/api/portais-clientes?id=${id}&bust=1`)
+    // Reload fresh blocks from Notion after a short delay (eventual consistency)
+    setTimeout(() => loadBlocks(true), 1500)
   }
 
   const hasImages = findImageBlocks(blocks).length > 0

@@ -661,9 +661,16 @@ export default function PortalClientePage() {
           </h1>
 
           {/* Date & venue */}
-          <p className="font-cormorant text-white/60 text-base sm:text-lg italic tracking-wide">
-            ♡ {settings.dataFormatada || '—'}{settings.local ? ` · ${settings.local}` : ''}
-          </p>
+          <div className="flex flex-col items-center gap-1 mt-1">
+            {settings.local && (
+              <p className="font-cormorant text-white/60 text-base sm:text-lg italic tracking-wide">
+                {settings.local}
+              </p>
+            )}
+            <p className="font-cormorant text-white/50 text-sm sm:text-base italic tracking-wide">
+              ♡ {settings.dataFormatada || '—'}
+            </p>
+          </div>
         </div>
       </section>
 
