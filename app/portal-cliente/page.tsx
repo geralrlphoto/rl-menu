@@ -42,19 +42,25 @@ function findImages(blocks: Block[]): string[] {
   return urls
 }
 
-function findWelcomeText(blocks: Block[]): { heading: string; paragraphs: string[] } {
+function findWelcomeText(blocks: Block[]): { heading: string; paragraphs: string[]; reference: string } {
   const heading = blocks.find(b => b.type === 'heading_2')
   const paragraphs = blocks.filter(b => b.type === 'paragraph')
-  // Split each Notion paragraph on \n so inline line-breaks also become separate entries
+  let reference = ''
   const lines: string[] = []
   for (const p of paragraphs) {
     const text = plainText(p.paragraph?.rich_text ?? '')
     if (!text) continue
+    // Extract reference line (starts with "Referência" or "Referencia" or "REF")
+    if (/^(referên|referên|referência|referencia|ref\.?\s*:|ref\s+)/i.test(text.trim())) {
+      reference = text.trim()
+      continue
+    }
     text.split('\n').forEach(l => lines.push(l))
   }
   return {
     heading: heading ? plainText(heading.heading_2?.rich_text ?? []) : '',
     paragraphs: lines,
+    reference,
   }
 }
 
@@ -469,7 +475,7 @@ export default function PortalClientePage() {
     return custom.length > 0 ? custom : images.slice(0, 3)
   })()
   const navPages = findAllChildPages(blocks).filter(p => !settings.hiddenNav.includes(p.id))
-  const { heading: welcomeHeading, paragraphs: welcomeParas } = findWelcomeText(blocks)
+  const { heading: welcomeHeading, paragraphs: welcomeParas, reference: welcomeRef } = findWelcomeText(blocks)
 
   // ── edit modes ──────────────────────────────────────────────────────────────
   if (editing) return (
@@ -676,9 +682,19 @@ export default function PortalClientePage() {
         </section>
       )}
 
+      {/* ── REFERENCE BADGE ── */}
+      {welcomeRef && (
+        <div className="flex justify-center px-4 pb-6 pt-2">
+          <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full border border-gold/40 bg-gold/10 backdrop-blur-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse shrink-0" />
+            <span className="font-cormorant text-gold text-base sm:text-lg italic tracking-wide">{welcomeRef}</span>
+          </div>
+        </div>
+      )}
+
       {/* ── QUICK ACCESS ── */}
       {navPages.length > 0 && (
-        <section className="py-10 sm:py-14 px-4">
+        <section className="py-6 sm:py-10 px-4">
           <p className="text-[11px] tracking-[0.4em] text-white/30 uppercase text-center mb-8">Acesso Rápido</p>
           <div className="flex gap-3 overflow-x-auto pb-2 justify-start sm:justify-center snap-x snap-mandatory scrollbar-none">
             {navPages.map(page => {
