@@ -307,8 +307,9 @@ export default function PortalSubPage() {
   return (
     <main className="min-h-screen px-3 sm:px-6 py-6 sm:py-10 max-w-[860px] mx-auto">
       <div className="flex items-center justify-between mb-8 gap-2 flex-wrap">
-        <Link href="/portal-cliente" className="inline-flex items-center gap-2 text-xs tracking-widest text-white/40 hover:text-gold transition-colors">
-          ‹ PORTAL DOS NOIVOS
+        <Link href="/portal-cliente"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gold/30 bg-gold/10 text-gold hover:bg-gold/20 transition-all text-sm tracking-wide">
+          ‹ Voltar
         </Link>
         <div className="flex items-center gap-2">
           {!editing && !editingPhotos && (
@@ -357,17 +358,7 @@ export default function PortalSubPage() {
             ? <ImageEditor blocks={blocks} pageId={id!} onBlocksUpdated={setBlocks} onDone={handlePhotosDone} />
             : editing && id
               ? <BlockEditor blocks={blocks} pageId={id} settings={settings} settingsBlockId={settingsBlockId} onSaved={handleSaved} />
-              : (
-                <>
-                  <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
-                  <div className="mt-8 pt-6 border-t border-white/[0.06] flex justify-start">
-                    <Link href="/portal-cliente"
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gold/30 bg-gold/10 text-gold hover:bg-gold/20 transition-all text-sm tracking-wide">
-                      ‹ Voltar
-                    </Link>
-                  </div>
-                </>
-              )
+              : <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
           }
         </div>
       )}
