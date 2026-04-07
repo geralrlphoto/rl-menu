@@ -357,7 +357,17 @@ export default function PortalSubPage() {
             ? <ImageEditor blocks={blocks} pageId={id!} onBlocksUpdated={setBlocks} onDone={handlePhotosDone} />
             : editing && id
               ? <BlockEditor blocks={blocks} pageId={id} settings={settings} settingsBlockId={settingsBlockId} onSaved={handleSaved} />
-              : <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
+              : (
+                <>
+                  <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
+                  <div className="mt-8 pt-6 border-t border-white/[0.06] flex justify-center">
+                    <Link href="/portal-cliente"
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-gold/30 bg-gold/10 text-gold hover:bg-gold/20 transition-all text-sm tracking-wide">
+                      ‹ Voltar ao Portal do Cliente
+                    </Link>
+                  </div>
+                </>
+              )
           }
         </div>
       )}
