@@ -6,42 +6,23 @@ import { useParams, useSearchParams } from 'next/navigation'
 import { NotionBlocks, type Block } from '../NotionRenderer'
 import BlockEditor from '../BlockEditor'
 
-function notionUrl(id: string) {
-  return `https://www.notion.so/${id.replace(/-/g, '')}`
-}
+// ─── helpers ─────────────────────────────────────────────────────────────────
 
-// Collect all image blocks recursively, returning {id, url}
 function findImageBlocks(
   blocks: Block[],
   parentId: string | null = null
-): Array<{ id: string; url: string; parentId: string | null; imageType: string; prevSiblingId: string | null }> {
-  const out: Array<{ id: string; url: string; parentId: string | null; imageType: string; prevSiblingId: string | null }> = []
+): Array<{ id: string; url: string; parentId: string | null; prevSiblingId: string | null }> {
+  const out: Array<{ id: string; url: string; parentId: string | null; prevSiblingId: string | null }> = []
   for (let i = 0; i < blocks.length; i++) {
     const b = blocks[i]
     const prevSiblingId = i > 0 ? blocks[i - 1].id : null
     if (b.type === 'image') {
-      const imageType = b.image?.type ?? 'external'
-      const url = imageType === 'external' ? b.image?.external?.url : b.image?.file?.url
-      if (url) out.push({ id: b.id, url, parentId, imageType, prevSiblingId })
+      const src = b.image?.type === 'external' ? b.image?.external?.url : b.image?.file?.url
+      if (src) out.push({ id: b.id, url: src, parentId, prevSiblingId })
     }
     if (b.children) out.push(...findImageBlocks(b.children, b.id))
   }
   return out
-}
-
-function uploadWithProgress(file: File, onProgress: (pct: number) => void): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest()
-    const fd = new FormData()
-    fd.append('file', file)
-    xhr.upload.onprogress = e => { if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)) }
-    xhr.onload = () => {
-      try { resolve(JSON.parse(xhr.responseText).url ?? '') } catch { reject(new Error('Upload falhou')) }
-    }
-    xhr.onerror = () => reject(new Error('Erro de rede'))
-    xhr.open('POST', '/api/upload-image')
-    xhr.send(fd)
-  })
 }
 
 function patchBlockUrl(blocks: Block[], blockId: string, newUrl: string): Block[] {
@@ -54,6 +35,27 @@ function patchBlockUrl(blocks: Block[], blockId: string, newUrl: string): Block[
   })
 }
 
+function uploadWithProgress(file: File, onProgress: (pct: number) => void): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    const fd = new FormData()
+    fd.append('file', file)
+    xhr.upload.onprogress = e => { if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)) }
+    xhr.onload = () => {
+      try {
+        const data = JSON.parse(xhr.responseText)
+        if (data.url) resolve(data.url)
+        else reject(new Error(data.error ?? 'Upload falhou'))
+      } catch { reject(new Error('Resposta inválida')) }
+    }
+    xhr.onerror = () => reject(new Error('Erro de rede'))
+    xhr.open('POST', '/api/upload-image')
+    xhr.send(fd)
+  })
+}
+
+// ─── image editor ─────────────────────────────────────────────────────────────
+
 function ImageEditor({ blocks, pageId, onBlocksUpdated, onDone }: {
   blocks: Block[]
   pageId: string
@@ -65,84 +67,72 @@ function ImageEditor({ blocks, pageId, onBlocksUpdated, onDone }: {
     Object.fromEntries(images.map(img => [img.id, img.url]))
   )
   const [progress, setProgress] = useState<Record<string, number | null>>({})
-  const [saving, setSaving] = useState<Record<string, boolean>>({})
-  const [saved, setSaved] = useState<Record<string, boolean>>({})
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [status, setStatus] = useState<Record<string, { state: 'idle' | 'saving' | 'ok' | 'err'; msg: string }>>({})
+
+  function setErr(id: string, msg: string) {
+    setStatus(s => ({ ...s, [id]: { state: 'err', msg } }))
+  }
+  function setOk(id: string) {
+    setStatus(s => ({ ...s, [id]: { state: 'ok', msg: '✓ Guardado!' } }))
+    setTimeout(() => setStatus(s => ({ ...s, [id]: { state: 'idle', msg: '' } })), 3000)
+  }
 
   async function handleUpload(blockId: string, file: File) {
+    setStatus(s => ({ ...s, [blockId]: { state: 'idle', msg: '' } }))
     setProgress(p => ({ ...p, [blockId]: 0 }))
     try {
       const url = await uploadWithProgress(file, pct => setProgress(p => ({ ...p, [blockId]: pct })))
-      if (url) setUrls(u => ({ ...u, [blockId]: url }))
+      setUrls(u => ({ ...u, [blockId]: url }))
+    } catch (err: any) {
+      setErr(blockId, `Upload falhou: ${err.message}. Tenta colar um URL directamente.`)
     } finally {
       setProgress(p => ({ ...p, [blockId]: null }))
     }
   }
 
   async function handleSave(blockId: string) {
-    const newUrl = urls[blockId]
-    if (!newUrl) return
-    const img = images.find(i => i.id === blockId)
+    const newUrl = urls[blockId]?.trim()
+    if (!newUrl) { setErr(blockId, 'Sem URL — carrega uma foto ou cola um URL.'); return }
+
+    const img = images.find(x => x.id === blockId)
     if (!img) return
 
-    setSaving(s => ({ ...s, [blockId]: true }))
-    setErrors(e => ({ ...e, [blockId]: '' }))
+    setStatus(s => ({ ...s, [blockId]: { state: 'saving', msg: 'A apagar bloco antigo...' } }))
 
-    let ok = false
-
-    if (img.imageType === 'external') {
-      // External image: simple PATCH
-      const res = await fetch('/api/notion-block', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: blockId, type: 'image', imageUrl: newUrl }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        setSaving(s => ({ ...s, [blockId]: false }))
-        setErrors(e => ({ ...e, [blockId]: data.error ?? 'Erro ao guardar' }))
-        return
-      }
-      ok = true
-    } else {
-      // File-type image: Notion doesn't allow PATCH — delete + recreate
-      const parentId = img.parentId ?? pageId
-      const delRes = await fetch('/api/notion-block', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: blockId }),
-      })
-      if (!delRes.ok) {
-        const d = await delRes.json()
-        setSaving(s => ({ ...s, [blockId]: false }))
-        setErrors(e => ({ ...e, [blockId]: d.error ?? 'Erro ao apagar bloco antigo' }))
-        return
-      }
-      const postRes = await fetch('/api/notion-block', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          parentId,
-          type: 'image',
-          imageUrl: newUrl,
-          after: img.prevSiblingId ?? undefined,
-        }),
-      })
-      if (!postRes.ok) {
-        const d = await postRes.json()
-        setSaving(s => ({ ...s, [blockId]: false }))
-        setErrors(e => ({ ...e, [blockId]: d.error ?? 'Erro ao criar novo bloco' }))
-        return
-      }
-      ok = true
+    // Step 1: delete old block
+    const delRes = await fetch('/api/notion-block', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: blockId }),
+    })
+    if (!delRes.ok) {
+      const d = await delRes.json().catch(() => ({}))
+      setErr(blockId, `Erro ao apagar: ${d.error ?? delRes.status}`)
+      return
     }
 
-    setSaving(s => ({ ...s, [blockId]: false }))
-    if (ok) {
-      onBlocksUpdated(patchBlockUrl(blocks, blockId, newUrl))
-      setSaved(s => ({ ...s, [blockId]: true }))
-      setTimeout(() => setSaved(s => ({ ...s, [blockId]: false })), 2500)
+    setStatus(s => ({ ...s, [blockId]: { state: 'saving', msg: 'A criar nova imagem...' } }))
+
+    // Step 2: create new image block
+    const postRes = await fetch('/api/notion-block', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        parentId: img.parentId ?? pageId,
+        type: 'image',
+        imageUrl: newUrl,
+        after: img.prevSiblingId ?? undefined,
+      }),
+    })
+    if (!postRes.ok) {
+      const d = await postRes.json().catch(() => ({}))
+      setErr(blockId, `Erro ao criar: ${d.error ?? postRes.status}`)
+      return
     }
+
+    // Update local state immediately
+    onBlocksUpdated(patchBlockUrl(blocks, blockId, newUrl))
+    setOk(blockId)
   }
 
   if (images.length === 0) return (
@@ -161,35 +151,41 @@ function ImageEditor({ blocks, pageId, onBlocksUpdated, onDone }: {
 
       {images.map((img, i) => {
         const pct = progress[img.id]
-        const isSaving = saving[img.id]
-        const isDone = saved[img.id]
+        const st = status[img.id] ?? { state: 'idle', msg: '' }
         const currentUrl = urls[img.id]
+        const uploading = pct !== null && pct !== undefined
+        const saving = st.state === 'saving'
 
         return (
           <div key={img.id} className="rounded-xl border border-white/10 bg-white/[0.02] overflow-hidden">
-            <p className="text-[10px] text-white/30 tracking-widest uppercase px-4 pt-3 mb-2">Fotografia {i + 1}</p>
+            <p className="text-[10px] text-white/30 tracking-widest uppercase px-4 pt-3 mb-2">
+              Fotografia {i + 1}
+            </p>
 
             {/* Preview */}
-            <div className="relative mx-4 mb-3 rounded-lg overflow-hidden bg-black/20 aspect-video bg-cover bg-center"
-              style={{ backgroundImage: `url(${currentUrl})` }}>
-              {!currentUrl && <div className="absolute inset-0 flex items-center justify-center text-white/20 text-xs">sem imagem</div>}
-            </div>
+            {currentUrl ? (
+              <div className="mx-4 mb-3 rounded-lg aspect-video bg-cover bg-center border border-white/5"
+                style={{ backgroundImage: `url(${currentUrl})` }} />
+            ) : (
+              <div className="mx-4 mb-3 rounded-lg aspect-video bg-white/[0.03] flex items-center justify-center">
+                <span className="text-white/20 text-xs">sem imagem</span>
+              </div>
+            )}
 
             <div className="px-4 pb-4 space-y-2">
               {/* Upload */}
-              <label className={`relative flex items-center justify-center w-full py-2.5 rounded-lg border border-dashed cursor-pointer transition-all overflow-hidden
-                ${pct !== null && pct !== undefined ? 'border-gold/40 bg-gold/5 text-gold/70' : 'border-white/15 hover:border-gold/40 hover:bg-gold/5 text-white/35 hover:text-gold/70'}`}>
-                <input type="file" accept="image/*" className="hidden"
-                  disabled={pct !== null && pct !== undefined}
+              <label className={`relative flex items-center justify-center w-full py-3 rounded-lg border border-dashed cursor-pointer transition-all overflow-hidden
+                ${uploading ? 'border-gold/40 bg-gold/5 text-gold/70' : 'border-white/15 hover:border-gold/40 hover:bg-gold/5 text-white/35 hover:text-gold/70'}`}>
+                <input type="file" accept="image/*" className="hidden" disabled={uploading || saving}
                   onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(img.id, f); e.target.value = '' }} />
-                {pct !== null && pct !== undefined ? (
+                {uploading ? (
                   <>
-                    <div className="absolute inset-0 bg-gold/10 transition-all duration-200" style={{ width: `${pct}%` }} />
+                    <div className="absolute inset-0 bg-gold/10 transition-all duration-150" style={{ width: `${pct}%` }} />
                     <div className="relative flex items-center gap-2">
                       <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
                       </svg>
-                      <span className="text-[11px] font-medium">{pct}%</span>
+                      <span className="text-sm font-medium">{pct}%</span>
                     </div>
                   </>
                 ) : (
@@ -197,32 +193,40 @@ function ImageEditor({ blocks, pageId, onBlocksUpdated, onDone }: {
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                     </svg>
-                    <span className="text-[11px] tracking-wide">Carregar fotografia</span>
+                    <span className="text-sm">Carregar fotografia do dispositivo</span>
                   </div>
                 )}
               </label>
 
-              {/* URL input */}
+              {/* URL */}
               <input
-                value={currentUrl}
+                value={currentUrl ?? ''}
                 onChange={e => setUrls(u => ({ ...u, [img.id]: e.target.value }))}
-                placeholder="ou cola um URL..."
+                placeholder="ou cola um URL público aqui..."
                 className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
               />
 
-              {/* Save button */}
+              {/* Save */}
               <button
                 onClick={() => handleSave(img.id)}
-                disabled={isSaving || (pct !== null && pct !== undefined)}
-                className={`w-full py-2 rounded-lg text-xs font-medium transition-all border
-                  ${isDone
+                disabled={saving || uploading}
+                className={`w-full py-2.5 rounded-lg text-sm font-medium transition-all border
+                  ${st.state === 'ok'
                     ? 'border-green-500/40 bg-green-500/10 text-green-400'
+                    : st.state === 'err'
+                    ? 'border-red-500/30 bg-red-500/5 text-gold border-gold/30 hover:bg-gold/20'
                     : 'border-gold/30 bg-gold/10 text-gold hover:bg-gold/20 disabled:opacity-40'}`}
               >
-                {isDone ? '✓ Guardado!' : isSaving ? 'A guardar...' : 'Guardar foto'}
+                {st.state === 'saving' ? st.msg
+                  : st.state === 'ok' ? st.msg
+                  : 'Guardar foto'}
               </button>
-              {errors[img.id] && (
-                <p className="text-[11px] text-red-400/80 text-center">{errors[img.id]}</p>
+
+              {/* Error */}
+              {st.state === 'err' && (
+                <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2">
+                  <p className="text-xs text-red-400">{st.msg}</p>
+                </div>
               )}
             </div>
           </div>
@@ -231,6 +235,8 @@ function ImageEditor({ blocks, pageId, onBlocksUpdated, onDone }: {
     </div>
   )
 }
+
+// ─── main page ────────────────────────────────────────────────────────────────
 
 export default function PortalSubPage() {
   const { id } = useParams<{ id: string }>()
@@ -283,7 +289,6 @@ export default function PortalSubPage() {
 
   function handlePhotosDone() {
     setEditingPhotos(false)
-    // Bust cache in background — don't reload into state (would overwrite local updates)
     fetch(`/api/portais-clientes?id=${id}&bust=1`)
   }
 
@@ -297,12 +302,8 @@ export default function PortalSubPage() {
         </Link>
         <div className="flex items-center gap-2">
           {!editing && !editingPhotos && (
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              title="Atualizar conteúdo"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white/40 hover:text-white/70 border border-white/10 hover:border-white/20 transition-all"
-            >
+            <button onClick={handleRefresh} disabled={refreshing}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white/40 hover:text-white/70 border border-white/10 hover:border-white/20 transition-all">
               <svg className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
@@ -310,10 +311,8 @@ export default function PortalSubPage() {
             </button>
           )}
           {!editing && !editingPhotos && !loading && !error && hasImages && (
-            <button
-              onClick={() => setEditingPhotos(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white/80 border border-white/15 hover:border-white/30 transition-all"
-            >
+            <button onClick={() => setEditingPhotos(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white/80 border border-white/15 hover:border-white/30 transition-all">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
@@ -321,10 +320,8 @@ export default function PortalSubPage() {
             </button>
           )}
           {!editing && !editingPhotos && !loading && !error && (
-            <button
-              onClick={() => setEditing(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gold/60 hover:text-gold border border-gold/20 hover:border-gold/40 transition-all"
-            >
+            <button onClick={() => setEditing(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gold/60 hover:text-gold border border-gold/20 hover:border-gold/40 transition-all">
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
