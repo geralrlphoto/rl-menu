@@ -45,7 +45,7 @@ async function getBlocks(blockId: string): Promise<any[]> {
 
     const res = await fetch(url.toString(), {
       headers: notionHeaders,
-      next: { revalidate: 300 }, // Next.js cache: 5 min
+      cache: 'no-store', // our own globalThis cache handles TTL — no Next.js layer
     })
     if (!res.ok) break
     const data = await res.json()

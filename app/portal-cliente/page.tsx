@@ -262,7 +262,7 @@ function SettingsPanel({
   settingsBlockId: string | null
   pageId: string
   blocks: Block[]
-  onSaved: () => void
+  onSaved: (newSettingsBlockId?: string) => void
   onCancel: () => void
 }) {
   const [form, setForm] = useState({ ...settings })
@@ -284,14 +284,16 @@ function SettingsPanel({
 
   async function save() {
     setSaving(true)
-    await fetch('/api/portal-settings', {
+    const res = await fetch('/api/portal-settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pageId, settings: form, settingsBlockId }),
     })
-    await fetch(`/api/portais-clientes?id=${pageId}&bust=1`)
+    const saved = await res.json()
+    // Small delay so Notion has time to commit before we bust the cache
+    await new Promise(r => setTimeout(r, 800))
     setSaving(false)
-    onSaved()
+    onSaved(saved.settingsBlockId ?? settingsBlockId)
   }
 
   const Field = ({ label, k, placeholder }: { label: string; k: keyof PortalSettings; placeholder?: string }) => (
@@ -412,7 +414,8 @@ export default function PortalClientePage() {
 
   useEffect(() => { loadBlocks().finally(() => setLoading(false)) }, [loadBlocks])
 
-  async function handleSaved() {
+  async function handleSaved(newSettingsBlockId?: string) {
+    if (newSettingsBlockId) setSettingsBlockId(newSettingsBlockId)
     setEditing(false)
     setEditingContent(false)
     await loadBlocks(true)
@@ -426,14 +429,18 @@ export default function PortalClientePage() {
       heroEdit.field === 'noivo' ? { noivo: heroEdit.value } :
       { heroImageUrl: heroEdit.value }
     const newSettings = { ...settings, ...patch }
-    await fetch('/api/portal-settings', {
+    const res = await fetch('/api/portal-settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pageId: PAGE_ID, settings: newSettings, settingsBlockId }),
     })
+    const saved = await res.json()
+    if (saved.settingsBlockId) setSettingsBlockId(saved.settingsBlockId)
     setSettings(newSettings)
     setHeroEdit({ field: null, value: '' })
     setHeroSaving(false)
+    // Delay before bust so Notion has time to commit
+    await new Promise(r => setTimeout(r, 800))
     fetch(`/api/portais-clientes?id=${PAGE_ID}&bust=1`)
   }
 
