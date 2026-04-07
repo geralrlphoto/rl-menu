@@ -506,35 +506,42 @@ export default function PortalSubPage() {
                       ‹ Voltar
                     </Link>
                   </div>
-                  {isPaymentsPage && (
-                    <PaymentPhasesSection
-                      referencia={portalRef}
-                      valorTotal={portalTotal}
-                      pagamentos={pagamentos}
-                      onRefresh={loadPagamentos}
-                      refreshing={pagRefreshing}
-                    />
-                  )}
                   {(() => {
-                    const splitIdx = blocks.findIndex(b =>
+                    if (!isPaymentsPage) return <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
+                    const numerarioIdx = blocks.findIndex(b =>
                       plainText((b[b.type]?.rich_text ?? [])).toLowerCase().includes('numerário contatar')
                     )
-                    if (!isPaymentsPage || splitIdx === -1)
-                      return <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
+                    const carosIdx = blocks.findIndex(b =>
+                      plainText((b[b.type]?.rich_text ?? [])).toLowerCase().includes('caros noivos')
+                    )
+                    // split points found — render with injections
+                    const beforeNumerario = numerarioIdx !== -1 ? blocks.slice(0, numerarioIdx + 1) : blocks
+                    const afterNumerario  = numerarioIdx !== -1 ? blocks.slice(numerarioIdx + 1) : []
+                    const carosRelIdx = carosIdx !== -1 && numerarioIdx !== -1
+                      ? carosIdx - (numerarioIdx + 1)
+                      : -1
+                    const beforeCaros = carosRelIdx !== -1 ? afterNumerario.slice(0, carosRelIdx + 1) : afterNumerario
+                    const afterCaros  = carosRelIdx !== -1 ? afterNumerario.slice(carosRelIdx + 1) : []
                     return (
                       <>
-                        <NotionBlocks blocks={blocks.slice(0, splitIdx + 1)} hiddenNav={settings.hiddenNav} />
-                        <div className="my-5">
-                          <a
-                            href="https://tally.so"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gold text-black font-semibold text-sm tracking-wide hover:bg-gold/80 transition-all"
-                          >
-                            Registar Pagamento
-                          </a>
-                        </div>
-                        <NotionBlocks blocks={blocks.slice(splitIdx + 1)} hiddenNav={settings.hiddenNav} />
+                        <NotionBlocks blocks={beforeNumerario} hiddenNav={settings.hiddenNav} />
+                        {numerarioIdx !== -1 && (
+                          <div className="my-5">
+                            <a href="https://tally.so" target="_blank" rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gold text-black font-semibold text-sm tracking-wide hover:bg-gold/80 transition-all">
+                              Registar Pagamento
+                            </a>
+                          </div>
+                        )}
+                        <NotionBlocks blocks={beforeCaros} hiddenNav={settings.hiddenNav} />
+                        <PaymentPhasesSection
+                          referencia={portalRef}
+                          valorTotal={portalTotal}
+                          pagamentos={pagamentos}
+                          onRefresh={loadPagamentos}
+                          refreshing={pagRefreshing}
+                        />
+                        <NotionBlocks blocks={afterCaros} hiddenNav={settings.hiddenNav} />
                       </>
                     )
                   })()}
