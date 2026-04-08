@@ -366,10 +366,11 @@ function PaymentPhasesSection({ referencia, valorTotal, pagamentos, onRefresh, r
 
 // ─── contrato proposta section ────────────────────────────────────────────────
 
-function ContratoPropostaSection({ evento, blocks, settings }: {
+function ContratoPropostaSection({ evento, blocks, settings, contratoDisponivel }: {
   evento: any
   blocks: Block[]
   settings: { hiddenNav: string[] }
+  contratoDisponivel: boolean | null
 }) {
   const fotoItems: string[] = evento.servico_foto ?? []
   const videoItems: string[] = evento.servico_video ?? []
@@ -378,6 +379,29 @@ function ContratoPropostaSection({ evento, blocks, settings }: {
 
   return (
     <>
+      {/* Contrato status banner */}
+      <div className={`flex items-center gap-3 px-4 py-3 rounded-xl mb-6 border ${
+        contratoDisponivel
+          ? 'bg-green-500/10 border-green-500/30'
+          : 'bg-white/[0.02] border-white/[0.08]'
+      }`}>
+        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${contratoDisponivel ? 'bg-green-400' : 'bg-white/20'}`} />
+        <div className="flex-1">
+          <p className={`text-xs font-semibold tracking-wider ${contratoDisponivel ? 'text-green-400' : 'text-white/30'}`}>
+            {contratoDisponivel ? 'CONTRATO DISPONÍVEL' : 'CONTRATO INDISPONÍVEL'}
+          </p>
+          <p className="text-[10px] text-white/25 mt-0.5">
+            {contratoDisponivel
+              ? 'O vosso contrato de prestação de serviços está disponível para consulta.'
+              : 'O contrato ainda não foi disponibilizado. Será notificado quando estiver pronto.'}
+          </p>
+        </div>
+        {contratoDisponivel && (
+          <svg className="w-4 h-4 text-green-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+          </svg>
+        )}
+      </div>
       <NotionBlocks blocks={blocks.filter(b => b.type !== 'image')} hiddenNav={settings.hiddenNav} />
       <div className="mt-8 pt-6 border-t border-white/[0.06]">
         <div className="flex items-center gap-3 mb-6">
@@ -670,6 +694,7 @@ export default function PortalSubPage() {
   const [savingSlots, setSavingSlots] = useState(false)
 
   const [eventoData, setEventoData] = useState<any>(null)
+  const [contratoDisponivel, setContratoDisponivel] = useState<boolean | null>(null)
 
   const isPaymentsPage    = title.toUpperCase().includes('PAGAMENTO')
   const isGuiaPage        = title.toUpperCase().includes('GUIA') && !title.toUpperCase().includes('WEDDING')
@@ -696,6 +721,7 @@ export default function PortalSubPage() {
       const savedId = ps.preWeddingReservedSlotId ?? null
       const validId = savedId && slots.some((s: {id: string}) => s.id === savedId) ? savedId : null
       setReservedSlotId(validId)
+      setContratoDisponivel(ps.contratoDisponivel ?? false)
 
       // Auto-extract reference from portal page blocks if not in settings
       if (!ref) {
@@ -1036,7 +1062,35 @@ export default function PortalSubPage() {
                   </div>
                   {(() => {
                     if (isContratoPage && eventoData) {
-                      return <ContratoPropostaSection evento={eventoData} blocks={blocks} settings={settings} />
+                      return <ContratoPropostaSection evento={eventoData} blocks={blocks} settings={settings} contratoDisponivel={contratoDisponivel} />
+                    }
+                    if (isContratoPage) {
+                      // No evento linked yet — show status banner + blocks
+                      return (
+                        <>
+                          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl mb-6 border ${
+                            contratoDisponivel ? 'bg-green-500/10 border-green-500/30' : 'bg-white/[0.02] border-white/[0.08]'
+                          }`}>
+                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${contratoDisponivel ? 'bg-green-400' : 'bg-white/20'}`} />
+                            <div className="flex-1">
+                              <p className={`text-xs font-semibold tracking-wider ${contratoDisponivel ? 'text-green-400' : 'text-white/30'}`}>
+                                {contratoDisponivel ? 'CONTRATO DISPONÍVEL' : 'CONTRATO INDISPONÍVEL'}
+                              </p>
+                              <p className="text-[10px] text-white/25 mt-0.5">
+                                {contratoDisponivel
+                                  ? 'O vosso contrato de prestação de serviços está disponível para consulta.'
+                                  : 'O contrato ainda não foi disponibilizado. Será notificado quando estiver pronto.'}
+                              </p>
+                            </div>
+                            {contratoDisponivel && (
+                              <svg className="w-4 h-4 text-green-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+                              </svg>
+                            )}
+                          </div>
+                          <NotionBlocks blocks={blocks.filter(b => b.type !== 'image')} hiddenNav={settings.hiddenNav} />
+                        </>
+                      )
                     }
                     if (isPreWeddingPage) {
                       return (

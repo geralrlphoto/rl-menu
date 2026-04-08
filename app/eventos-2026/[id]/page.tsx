@@ -535,6 +535,68 @@ type Pagamento = {
 // ─── Portal do Cliente ────────────────────────────────────────────────────────
 const MESES_PW = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
 
+function ContratoStatusSection({ eventoId, referencia }: { eventoId: string; referencia: string }) {
+  const [disponivel, setDisponivel] = useState<boolean | null>(null)
+  const [portalPageId, setPortalPageId] = useState<string | null>(null)
+  const [settingsBlockId, setSettingsBlockId] = useState<string | null>(null)
+  const [portalSettings, setPortalSettings] = useState<any>(null)
+  const [toggling, setToggling] = useState(false)
+
+  useEffect(() => {
+    fetch(`/api/portal-by-ref?ref=${encodeURIComponent(referencia)}`)
+      .then(r => r.json())
+      .then(async d => {
+        if (!d.found) return
+        setPortalPageId(d.pageId)
+        const pd = await fetch(`/api/portais-clientes?id=${d.pageId}`).then(r => r.json())
+        const ps = pd.settings ?? {}
+        setPortalSettings(ps)
+        setSettingsBlockId(pd.settingsBlockId ?? null)
+        setDisponivel(ps.contratoDisponivel ?? false)
+      }).catch(() => {})
+  }, [referencia])
+
+  async function toggle() {
+    if (!portalPageId) return
+    setToggling(true)
+    const newVal = !disponivel
+    const newSettings = { ...portalSettings, contratoDisponivel: newVal, contratoUrl: `/eventos-2026/${eventoId}/contrato` }
+    await fetch('/api/portal-settings', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pageId: portalPageId, settings: newSettings, settingsBlockId }),
+    })
+    setDisponivel(newVal)
+    setPortalSettings(newSettings)
+    setToggling(false)
+  }
+
+  return (
+    <div className="pt-2 border-t border-white/[0.05]">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[10px] tracking-[0.3em] text-gold uppercase">Contrato de Prestação de Serviços</span>
+        <div className="flex items-center gap-2">
+          {portalPageId && disponivel !== null && (
+            <button onClick={toggle} disabled={toggling}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold tracking-wider border transition-all disabled:opacity-50
+                ${disponivel
+                  ? 'bg-green-500/10 border-green-500/30 text-green-400 hover:bg-green-500/20'
+                  : 'bg-white/[0.04] border-white/10 text-white/30 hover:border-white/20 hover:text-white/50'}`}>
+              {toggling ? '...' : disponivel ? '✓ Publicado no Portal' : 'Publicar no Portal'}
+            </button>
+          )}
+          <Link href={`/eventos-2026/${eventoId}/contrato`} target="_blank"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold/10 border border-gold/30 text-gold text-[10px] font-semibold tracking-wider hover:bg-gold/20 transition-all">
+            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Criar Contrato ↗
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function PortalSection({ referencia }: { referencia: string }) {
   const [status, setStatus] = useState<'loading' | 'found' | 'not_found' | 'error'>('loading')
   const [pageId, setPageId] = useState<string | null>(null)
@@ -1034,18 +1096,7 @@ export default function EventoPage() {
           </div>
 
           {/* Criar Contrato */}
-          <div className="pt-2 border-t border-white/[0.05]">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] tracking-[0.3em] text-gold uppercase">Contrato de Prestação de Serviços</span>
-              <Link href={`/eventos-2026/${e.id}/contrato`} target="_blank"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold/10 border border-gold/30 text-gold text-[10px] font-semibold tracking-wider hover:bg-gold/20 transition-all">
-                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Criar Contrato ↗
-              </Link>
-            </div>
-          </div>
+          {e.referencia && <ContratoStatusSection eventoId={e.id} referencia={e.referencia} />}
 
           {/* Contrato PDF */}
           <ContratoUpload eventId={e.id} contratoUrl={e.contratos} onSaved={handleSaved} />
