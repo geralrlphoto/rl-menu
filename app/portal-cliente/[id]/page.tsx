@@ -378,8 +378,7 @@ function ContratoPropostaSection({ evento, blocks, settings }: {
 
   return (
     <>
-      <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
-      <div className="mt-8 pt-6 border-t border-white/[0.06]">
+      <div className="mb-8 pb-6 border-b border-white/[0.06]">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-1 h-5 bg-gold rounded-full" />
           <span className="text-[11px] tracking-[0.4em] text-gold uppercase font-semibold">A Vossa Escolha</span>
@@ -450,6 +449,7 @@ function ContratoPropostaSection({ evento, blocks, settings }: {
           </div>
         )}
       </div>
+      <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
     </>
   )
 }
