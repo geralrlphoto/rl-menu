@@ -364,6 +364,96 @@ function PaymentPhasesSection({ referencia, valorTotal, pagamentos, onRefresh, r
   )
 }
 
+// ─── contrato proposta section ────────────────────────────────────────────────
+
+function ContratoPropostaSection({ evento, blocks, settings }: {
+  evento: any
+  blocks: Block[]
+  settings: { hiddenNav: string[] }
+}) {
+  const fotoItems: string[] = evento.servico_foto ?? []
+  const videoItems: string[] = evento.servico_video ?? []
+  const hasFoto  = fotoItems.length > 0
+  const hasVideo = videoItems.length > 0
+
+  return (
+    <>
+      <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
+      <div className="mt-8 pt-6 border-t border-white/[0.06]">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-1 h-5 bg-gold rounded-full" />
+          <span className="text-[11px] tracking-[0.4em] text-gold uppercase font-semibold">A Vossa Escolha</span>
+          {evento.proposta && (
+            <span className="ml-auto text-[9px] tracking-widest text-white/30 uppercase bg-white/[0.04] border border-white/[0.08] px-3 py-1 rounded-full">
+              {evento.proposta}
+            </span>
+          )}
+        </div>
+
+        <div className={`grid gap-4 ${hasFoto && hasVideo ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+          {hasFoto && (
+            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] overflow-hidden">
+              <div className="px-4 py-3 border-b border-white/[0.06] flex items-center gap-2">
+                <svg className="w-4 h-4 text-gold/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                </svg>
+                <span className="text-[10px] tracking-[0.3em] text-white/50 uppercase font-semibold">Serviço de Fotografia</span>
+              </div>
+              <ul className="p-4 space-y-2">
+                {fotoItems.map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 py-1.5 border-b border-white/[0.04] last:border-0">
+                    <div className="w-1.5 h-1.5 rounded-full bg-gold/50 flex-shrink-0" />
+                    <span className="text-sm text-white/70 tracking-wide">{item}</span>
+                  </li>
+                ))}
+              </ul>
+              {evento.valor_foto && (
+                <div className="px-4 py-3 border-t border-white/[0.06] flex items-center justify-between">
+                  <span className="text-[10px] text-white/25 tracking-widest uppercase">Valor</span>
+                  <span className="text-sm font-semibold text-gold">{(evento.valor_foto as number).toLocaleString('pt-PT')} €</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {hasVideo && (
+            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] overflow-hidden">
+              <div className="px-4 py-3 border-b border-white/[0.06] flex items-center gap-2">
+                <svg className="w-4 h-4 text-gold/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+                <span className="text-[10px] tracking-[0.3em] text-white/50 uppercase font-semibold">Serviço de Vídeo</span>
+              </div>
+              <ul className="p-4 space-y-2">
+                {videoItems.map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 py-1.5 border-b border-white/[0.04] last:border-0">
+                    <div className="w-1.5 h-1.5 rounded-full bg-gold/50 flex-shrink-0" />
+                    <span className="text-sm text-white/70 tracking-wide">{item}</span>
+                  </li>
+                ))}
+              </ul>
+              {evento.valor_video && (
+                <div className="px-4 py-3 border-t border-white/[0.06] flex items-center justify-between">
+                  <span className="text-[10px] text-white/25 tracking-widest uppercase">Valor</span>
+                  <span className="text-sm font-semibold text-gold">{(evento.valor_video as number).toLocaleString('pt-PT')} €</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {evento.valor_liquido && (
+          <div className="mt-4 flex items-center justify-between px-4 py-3 rounded-xl bg-gold/5 border border-gold/20">
+            <span className="text-[10px] tracking-widest text-gold/60 uppercase">Total do Serviço</span>
+            <span className="text-gold font-bold text-lg">{(evento.valor_liquido as number).toLocaleString('pt-PT')} €</span>
+          </div>
+        )}
+      </div>
+    </>
+  )
+}
+
 // ─── pre-wedding calendar ─────────────────────────────────────────────────────
 
 type PreWeddingSlot = { id: string; date: string; time: string; local: string }
@@ -579,9 +669,12 @@ export default function PortalSubPage() {
   const [preWeddingForm, setPreWeddingForm] = useState<Array<{id:string;date:string;time:string;local:string}>>([])
   const [savingSlots, setSavingSlots] = useState(false)
 
+  const [eventoData, setEventoData] = useState<any>(null)
+
   const isPaymentsPage    = title.toUpperCase().includes('PAGAMENTO')
   const isGuiaPage        = title.toUpperCase().includes('GUIA') && !title.toUpperCase().includes('WEDDING')
   const isPreWeddingPage  = title.toUpperCase().includes('WEDDING')
+  const isContratoPage    = title.toUpperCase().includes('CONTRATO')
 
   const loadPagamentos = useCallback(async () => {
     setPagRefreshing(true)
@@ -620,8 +713,12 @@ export default function PortalSubPage() {
       if (ref) {
         setPortalRef(ref)
         setPortalTotal(total)
-        const pd = await fetch(`/api/pagamentos-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json())
+        const [pd, ed] = await Promise.all([
+          fetch(`/api/pagamentos-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json()),
+          fetch(`/api/evento-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json()),
+        ])
         setPagamentos(pd.payments ?? [])
+        if (ed.found) setEventoData(ed.evento)
       }
     } finally {
       setPagRefreshing(false)
@@ -938,6 +1035,9 @@ export default function PortalSubPage() {
                     </Link>
                   </div>
                   {(() => {
+                    if (isContratoPage && eventoData) {
+                      return <ContratoPropostaSection evento={eventoData} blocks={blocks} settings={settings} />
+                    }
                     if (isPreWeddingPage) {
                       return (
                         <PreWeddingSection
