@@ -76,7 +76,9 @@ export async function GET(req: Request) {
     const raw = await getBlocks(id)
     const { content: blocks, settings, settingsBlockId } = extractSettings(raw)
     cache.set(id, { blocks, settings, settingsBlockId, ts: Date.now() })
-    return NextResponse.json({ blocks, settings, settingsBlockId })
+    return NextResponse.json({ blocks, settings, settingsBlockId }, {
+      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
+    })
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })
   }

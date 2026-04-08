@@ -46,7 +46,9 @@ export async function POST(req: Request) {
     }
     // Bust in-memory cache so next read gets fresh data
     global.notionBlocksCache?.delete(pageId)
-    return NextResponse.json({ ok: true, settingsBlockId })
+    return NextResponse.json({ ok: true, settingsBlockId }, {
+      headers: { 'Cache-Control': 'no-store' }
+    })
   } else {
     // Create new block at the beginning of the page
     const res = await fetch(`https://api.notion.com/v1/blocks/${pageId}/children`, {
@@ -60,6 +62,8 @@ export async function POST(req: Request) {
     }
     global.notionBlocksCache?.delete(pageId)
     const data = await res.json()
-    return NextResponse.json({ ok: true, settingsBlockId: data.results?.[0]?.id })
+    return NextResponse.json({ ok: true, settingsBlockId: data.results?.[0]?.id }, {
+      headers: { 'Cache-Control': 'no-store' }
+    })
   }
 }
