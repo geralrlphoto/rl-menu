@@ -544,7 +544,7 @@ function ContratoStatusSection({ eventoId }: { eventoId: string }) {
   const [toggling, setToggling] = useState(false)
 
   useEffect(() => {
-    fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}`)
+    fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}&bust=1`)
       .then(r => r.json())
       .then(d => {
         const ps = d.settings ?? {}
