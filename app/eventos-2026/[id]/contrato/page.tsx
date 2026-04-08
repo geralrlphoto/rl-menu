@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
@@ -22,12 +22,12 @@ function fmtVal(v: number | null | undefined) {
 }
 
 // Inline editable field
-function F({ field, draft, editing, onChange, type = 'text', placeholder }: {
-  field: string; draft: any; editing: boolean; onChange: (f: string, v: any) => void
+function F({ field, draft, editing, readonlyMode, onChange, type = 'text', placeholder }: {
+  field: string; draft: any; editing: boolean; readonlyMode?: boolean; onChange: (f: string, v: any) => void
   type?: 'text' | 'number' | 'date' | 'email' | 'tel'; placeholder?: string
 }) {
   const val = draft[field]
-  if (!editing) {
+  if (!editing || readonlyMode) {
     if (type === 'number') return <span>{fmtVal(val)}</span>
     if (type === 'date') return <span>{formatDate(val)}</span>
     return <span>{fmt(val)}</span>
@@ -56,6 +56,8 @@ function Clausula({ n, title, children }: { n: string; title: string; children: 
 
 export default function ContratoPage() {
   const { id } = useParams<{ id: string }>()
+  const searchParams = useSearchParams()
+  const readonly = searchParams.get('readonly') === '1'
   const [evento, setEvento] = useState<any>(null)
   const [draft, setDraft] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -114,14 +116,16 @@ export default function ContratoPage() {
     <main className="min-h-screen bg-white text-black">
       {/* Toolbar */}
       <div className="print:hidden sticky top-0 z-50 bg-zinc-900 border-b border-white/10 px-6 py-3 flex items-center gap-3">
-        <Link href={`/eventos-2026/${id}`}
-          className="text-xs text-white/50 hover:text-white/80 transition-colors">
-          ‹ Voltar
-        </Link>
+        {!readonly && (
+          <Link href={`/eventos-2026/${id}`}
+            className="text-xs text-white/50 hover:text-white/80 transition-colors">
+            ‹ Voltar
+          </Link>
+        )}
         <div className="flex-1" />
-        <span className="text-xs text-white/30 tracking-widest uppercase">{e.referencia} — {e.cliente}</span>
-        {saved && <span className="text-xs text-green-400 font-semibold">✓ Guardado</span>}
-        {editing ? (
+        {!readonly && <span className="text-xs text-white/30 tracking-widest uppercase">{e.referencia} — {e.cliente}</span>}
+        {!readonly && saved && <span className="text-xs text-green-400 font-semibold">✓ Guardado</span>}
+        {!readonly && editing ? (
           <>
             <button onClick={() => { setDraft(evento); setEditing(false) }}
               className="px-3 py-2 rounded-lg border border-white/20 text-white/50 text-xs hover:text-white/80 transition-all">
@@ -134,25 +138,27 @@ export default function ContratoPage() {
           </>
         ) : (
           <>
-            <button onClick={() => setEditing(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-amber-500/40 text-amber-400 text-xs hover:bg-amber-500/10 transition-all">
-              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Editar
-            </button>
+            {!readonly && (
+              <button onClick={() => setEditing(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-amber-500/40 text-amber-400 text-xs hover:bg-amber-500/10 transition-all">
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Editar
+              </button>
+            )}
             <button onClick={() => window.print()}
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 text-black text-xs font-bold tracking-wider hover:bg-amber-400 transition-all">
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
               </svg>
-              Imprimir / Guardar PDF
+              {readonly ? 'Imprimir / Guardar PDF' : 'Imprimir / Guardar PDF'}
             </button>
           </>
         )}
       </div>
 
-      {editing && (
+      {!readonly && editing && (
         <div className="print:hidden bg-amber-50 border-b border-amber-200 px-6 py-2 text-xs text-amber-700 text-center">
           Modo de edição ativo — os campos com fundo amarelo são editáveis. Clica em <strong>Guardar</strong> para salvar no Notion.
         </div>
@@ -200,15 +206,15 @@ export default function ContratoPage() {
             <div>
               <p className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-1">Segunda Outorgante (Contratante)</p>
               <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
-                <div><span className="text-zinc-400 text-xs block mb-0.5">Nome (Noiva)</span><strong><F field="nome_noiva" draft={e} editing={editing} onChange={change} placeholder="Nome da noiva" /></strong></div>
-                <div><span className="text-zinc-400 text-xs block mb-0.5">Nome (Noivo)</span><strong><F field="nome_noivo" draft={e} editing={editing} onChange={change} placeholder="Nome do noivo" /></strong></div>
-                <div><span className="text-zinc-400 text-xs block mb-0.5">C.C. (Noiva)</span><F field="cc_noiva" draft={e} editing={editing} onChange={change} placeholder="N.º Cartão Cidadão" /></div>
-                <div><span className="text-zinc-400 text-xs block mb-0.5">C.C. (Noivo)</span><F field="cc_noivo" draft={e} editing={editing} onChange={change} placeholder="N.º Cartão Cidadão" /></div>
-                <div><span className="text-zinc-400 text-xs block mb-0.5">NIF (Noiva)</span><F field="nif_noiva" draft={e} editing={editing} onChange={change} placeholder="NIF" /></div>
-                <div><span className="text-zinc-400 text-xs block mb-0.5">NIF (Noivo)</span><F field="nif_noivo" draft={e} editing={editing} onChange={change} placeholder="NIF" /></div>
-                <div className="col-span-2"><span className="text-zinc-400 text-xs block mb-0.5">Morada</span><F field="morada_noiva" draft={e} editing={editing} onChange={change} placeholder="Morada" /></div>
-                <div><span className="text-zinc-400 text-xs block mb-0.5">E-mail</span><F field="email_noiva" draft={e} editing={editing} onChange={change} type="email" placeholder="E-mail" /></div>
-                <div><span className="text-zinc-400 text-xs block mb-0.5">Telefone</span><F field="tel_noiva" draft={e} editing={editing} onChange={change} type="tel" placeholder="Telefone" /></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">Nome (Noiva)</span><strong><F field="nome_noiva" draft={e} editing={editing} readonlyMode={readonly} onChange={change} placeholder="Nome da noiva" /></strong></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">Nome (Noivo)</span><strong><F field="nome_noivo" draft={e} editing={editing} readonlyMode={readonly} onChange={change} placeholder="Nome do noivo" /></strong></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">C.C. (Noiva)</span><F field="cc_noiva" draft={e} editing={editing} readonlyMode={readonly} onChange={change} placeholder="N.º Cartão Cidadão" /></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">C.C. (Noivo)</span><F field="cc_noivo" draft={e} editing={editing} readonlyMode={readonly} onChange={change} placeholder="N.º Cartão Cidadão" /></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">NIF (Noiva)</span><F field="nif_noiva" draft={e} editing={editing} readonlyMode={readonly} onChange={change} placeholder="NIF" /></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">NIF (Noivo)</span><F field="nif_noivo" draft={e} editing={editing} readonlyMode={readonly} onChange={change} placeholder="NIF" /></div>
+                <div className="col-span-2"><span className="text-zinc-400 text-xs block mb-0.5">Morada</span><F field="morada_noiva" draft={e} editing={editing} readonlyMode={readonly} onChange={change} placeholder="Morada" /></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">E-mail</span><F field="email_noiva" draft={e} editing={editing} readonlyMode={readonly} onChange={change} type="email" placeholder="E-mail" /></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">Telefone</span><F field="tel_noiva" draft={e} editing={editing} readonlyMode={readonly} onChange={change} type="tel" placeholder="Telefone" /></div>
               </div>
               <p className="text-sm mt-3">doravante designados como <strong>CONTRATANTE</strong>.</p>
             </div>
@@ -230,11 +236,11 @@ export default function ContratoPage() {
             </div>
             <div>
               <span className="text-zinc-400 text-xs block mb-0.5">Data do Evento</span>
-              <strong><F field="data_evento" draft={e} editing={editing} onChange={change} type="date" /></strong>
+              <strong><F field="data_evento" draft={e} editing={editing} readonlyMode={readonly} onChange={change} type="date" /></strong>
             </div>
             <div className="col-span-2">
               <span className="text-zinc-400 text-xs block mb-0.5">Local</span>
-              <strong><F field="local" draft={e} editing={editing} onChange={change} placeholder="Local do evento" /></strong>
+              <strong><F field="local" draft={e} editing={editing} readonlyMode={readonly} onChange={change} placeholder="Local do evento" /></strong>
             </div>
           </div>
         </section>
@@ -258,7 +264,7 @@ export default function ContratoPage() {
                 </ul>
                 <div className="border-t border-zinc-100 px-4 py-2 flex justify-between items-center text-sm">
                   <span className="text-zinc-400">Valor</span>
-                  <strong><F field="valor_foto" draft={e} editing={editing} onChange={change} type="number" placeholder="0" /></strong>
+                  <strong><F field="valor_foto" draft={e} editing={editing} readonlyMode={readonly} onChange={change} type="number" placeholder="0" /></strong>
                 </div>
               </div>
             )}
@@ -272,7 +278,7 @@ export default function ContratoPage() {
                 </ul>
                 <div className="border-t border-zinc-100 px-4 py-2 flex justify-between items-center text-sm">
                   <span className="text-zinc-400">Valor</span>
-                  <strong><F field="valor_video" draft={e} editing={editing} onChange={change} type="number" placeholder="0" /></strong>
+                  <strong><F field="valor_video" draft={e} editing={editing} readonlyMode={readonly} onChange={change} type="number" placeholder="0" /></strong>
                 </div>
               </div>
             )}
@@ -287,7 +293,7 @@ export default function ContratoPage() {
               </ul>
               <div className="border-t border-zinc-100 px-4 py-2 flex justify-between items-center text-sm">
                 <span className="text-zinc-400">Valor extras</span>
-                <strong><F field="valor_extras" draft={e} editing={editing} onChange={change} type="number" placeholder="0" /></strong>
+                <strong><F field="valor_extras" draft={e} editing={editing} readonlyMode={readonly} onChange={change} type="number" placeholder="0" /></strong>
               </div>
             </div>
           )}
@@ -299,7 +305,7 @@ export default function ContratoPage() {
                 <span className="text-xs tracking-widest uppercase font-bold">Valor Total do Serviço</span>
                 <span className="text-lg font-black">
                   {editing
-                    ? <F field="valor_liquido" draft={e} editing={editing} onChange={change} type="number" placeholder="0" />
+                    ? <F field="valor_liquido" draft={e} editing={editing} readonlyMode={readonly} onChange={change} type="number" placeholder="0" />
                     : fmtVal(total)
                   }
                 </span>
