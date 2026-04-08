@@ -1324,23 +1324,22 @@ function PortalSubPageContent() {
                     }
                     if (isBriefingPage) {
                       const BRIEFING_SECTIONS = [
-                        { key: 'NOIVO',    icon: '🤵', color: 'from-zinc-900 to-zinc-800' },
-                        { key: 'NOIVA',    icon: '👰', color: 'from-zinc-900 to-zinc-800' },
-                        { key: 'CERIMÓNIA', icon: '💍', color: 'from-zinc-900 to-zinc-800' },
-                        { key: 'QUINTA',   icon: '🏛️', color: 'from-zinc-900 to-zinc-800' },
+                        { key: 'NOIVO' },
+                        { key: 'NOIVA' },
+                        { key: 'CERIMÓNIA' },
+                        { key: 'QUINTA' },
                       ]
                       return (
                         <>
                           <div className="grid grid-cols-2 gap-3 mb-6">
-                            {BRIEFING_SECTIONS.map(({ key, icon }) => {
+                            {BRIEFING_SECTIONS.map(({ key }) => {
                               const url = briefingLinks[key]
                               const inner = (
-                                <div className={`flex flex-col items-center justify-center gap-3 px-4 py-8 rounded-2xl border transition-all
+                                <div className={`flex flex-col items-center justify-center gap-2 px-4 py-8 rounded-2xl border transition-all
                                   ${url
                                     ? 'border-gold/30 bg-gold/5 hover:bg-gold/10 hover:border-gold/50 cursor-pointer'
                                     : 'border-white/[0.07] bg-white/[0.02] opacity-50 cursor-default'
                                   }`}>
-                                  <span className="text-3xl">{icon}</span>
                                   <span className="text-xs font-bold tracking-[0.25em] text-white/70 uppercase">{key}</span>
                                   {url && <span className="text-[9px] text-gold/50 tracking-widest">Abrir →</span>}
                                 </div>
