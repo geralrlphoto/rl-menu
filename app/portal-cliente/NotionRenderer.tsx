@@ -10,7 +10,7 @@ export type Block = {
   [key: string]: any
 }
 
-export function richText(arr: any[]): React.ReactNode {
+export function richText(arr: any[], backUrl?: string): React.ReactNode {
   if (!arr?.length) return null
   return arr.map((t: any, i: number) => {
     let node: React.ReactNode = t.plain_text
@@ -18,7 +18,13 @@ export function richText(arr: any[]): React.ReactNode {
     if (t.annotations?.italic)        node = <em key={i} className="italic">{node}</em>
     if (t.annotations?.strikethrough) node = <s key={i}>{node}</s>
     if (t.annotations?.code)          node = <code key={i} className="bg-white/10 px-1 rounded text-xs font-mono">{node}</code>
-    if (t.href)                        node = <a key={i} href={t.href} target="_blank" rel="noopener noreferrer" className="text-gold/80 hover:text-gold underline underline-offset-2">{node}</a>
+    if (t.href) {
+      const href = (backUrl && t.href === '/portal-cliente') ? backUrl : t.href
+      const isInternal = href.startsWith('/')
+      node = isInternal
+        ? <a key={i} href={href} className="text-gold/80 hover:text-gold underline underline-offset-2">{node}</a>
+        : <a key={i} href={href} target="_blank" rel="noopener noreferrer" className="text-gold/80 hover:text-gold underline underline-offset-2">{node}</a>
+    }
     return <span key={i}>{node}</span>
   })
 }
@@ -28,7 +34,10 @@ export function plainText(arr: any[]): string {
   return arr.map((t: any) => t.plain_text).join('')
 }
 
-export function NotionBlocks({ blocks, rootId, hiddenNav }: { blocks: Block[], rootId?: string, hiddenNav?: string[] }) {
+export function NotionBlocks({ blocks, rootId, hiddenNav, backUrl }: { blocks: Block[], rootId?: string, hiddenNav?: string[], backUrl?: string }) {
+  const rt = (arr: any[]) => richText(arr, backUrl)
+  const NB = (props: { blocks: Block[], rootId?: string }) =>
+    <NotionBlocks blocks={props.blocks} rootId={props.rootId ?? rootId} hiddenNav={hiddenNav} backUrl={backUrl} />
   const elements: React.ReactNode[] = []
   let i = 0
 
@@ -48,8 +57,8 @@ export function NotionBlocks({ blocks, rootId, hiddenNav }: { blocks: Block[], r
             <li key={item.id} className="flex gap-2 items-start">
               <span className="text-gold/50 mt-1.5 shrink-0 text-xs">•</span>
               <div className="text-sm text-white/60 leading-relaxed">
-                {richText(item.bulleted_list_item?.rich_text)}
-                {item.children && <div className="mt-1 pl-3"><NotionBlocks blocks={item.children} rootId={rootId} hiddenNav={hiddenNav} /></div>}
+                {rt(item.bulleted_list_item?.rich_text)}
+                {item.children && <div className="mt-1 pl-3"><NB blocks={item.children} /></div>}
               </div>
             </li>
           ))}
@@ -67,8 +76,8 @@ export function NotionBlocks({ blocks, rootId, hiddenNav }: { blocks: Block[], r
         <ol key={`ol-${b.id}`} className="mb-3 space-y-1.5 pl-1 list-decimal list-inside">
           {group.map(item => (
             <li key={item.id} className="text-sm text-white/60 leading-relaxed">
-              {richText(item.numbered_list_item?.rich_text)}
-              {item.children && <div className="mt-1 pl-4"><NotionBlocks blocks={item.children} rootId={rootId} hiddenNav={hiddenNav} /></div>}
+              {rt(item.numbered_list_item?.rich_text)}
+              {item.children && <div className="mt-1 pl-4"><NB blocks={item.children} /></div>}
             </li>
           ))}
         </ol>
@@ -80,21 +89,21 @@ export function NotionBlocks({ blocks, rootId, hiddenNav }: { blocks: Block[], r
       case 'heading_1':
         elements.push(
           <h1 key={b.id} className="text-xl sm:text-2xl font-bold text-white tracking-wide mt-8 mb-3">
-            {richText(data.rich_text)}
+            {rt(data.rich_text)}
           </h1>
         )
         break
       case 'heading_2':
         elements.push(
           <h2 key={b.id} className="text-lg font-semibold text-white/90 tracking-wide mt-6 mb-2 pb-1 border-b border-white/[0.06]">
-            {richText(data.rich_text)}
+            {rt(data.rich_text)}
           </h2>
         )
         break
       case 'heading_3':
         elements.push(
           <h3 key={b.id} className="text-base font-semibold text-white/75 tracking-wide mt-4 mb-1.5">
-            {richText(data.rich_text)}
+            {rt(data.rich_text)}
           </h3>
         )
         break
@@ -102,7 +111,7 @@ export function NotionBlocks({ blocks, rootId, hiddenNav }: { blocks: Block[], r
         const text = plainText(data.rich_text)
         elements.push(
           text
-            ? <p key={b.id} className="text-sm text-white/60 leading-relaxed mb-3">{richText(data.rich_text)}</p>
+            ? <p key={b.id} className="text-sm text-white/60 leading-relaxed mb-3">{rt(data.rich_text)}</p>
             : <div key={b.id} className="h-2" />
         )
         break
@@ -114,7 +123,7 @@ export function NotionBlocks({ blocks, rootId, hiddenNav }: { blocks: Block[], r
               {data.checked && <span className="text-gold text-[9px] font-bold">✓</span>}
             </div>
             <span className={`text-sm leading-relaxed ${data.checked ? 'line-through text-white/25' : 'text-white/65'}`}>
-              {richText(data.rich_text)}
+              {rt(data.rich_text)}
             </span>
           </div>
         )
@@ -134,9 +143,9 @@ export function NotionBlocks({ blocks, rootId, hiddenNav }: { blocks: Block[], r
         elements.push(
           <div key={b.id} className={`rounded-xl border px-4 py-3 mb-3 ${cls}`}>
             {plainText(data.rich_text) && (
-              <p className="text-sm font-semibold text-white/85 mb-2">{richText(data.rich_text)}</p>
+              <p className="text-sm font-semibold text-white/85 mb-2">{rt(data.rich_text)}</p>
             )}
-            {b.children && <NotionBlocks blocks={b.children} rootId={rootId} hiddenNav={hiddenNav} />}
+            {b.children && <NB blocks={b.children} />}
           </div>
         )
         break
@@ -144,8 +153,8 @@ export function NotionBlocks({ blocks, rootId, hiddenNav }: { blocks: Block[], r
       case 'quote':
         elements.push(
           <blockquote key={b.id} className="border-l-2 border-gold/40 pl-4 mb-3 italic text-sm text-white/50">
-            {richText(data.rich_text)}
-            {b.children && <NotionBlocks blocks={b.children} rootId={rootId} hiddenNav={hiddenNav} />}
+            {rt(data.rich_text)}
+            {b.children && <NB blocks={b.children} />}
           </blockquote>
         )
         break
@@ -184,7 +193,7 @@ export function NotionBlocks({ blocks, rootId, hiddenNav }: { blocks: Block[], r
           <div key={b.id} className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             {b.children?.map((col: Block) => (
               <div key={col.id} className="min-w-0">
-                {col.children && <NotionBlocks blocks={col.children} rootId={rootId} hiddenNav={hiddenNav} />}
+                {col.children && <NB blocks={col.children} />}
               </div>
             ))}
           </div>
@@ -195,11 +204,11 @@ export function NotionBlocks({ blocks, rootId, hiddenNav }: { blocks: Block[], r
           <details key={b.id} className="mb-3 group">
             <summary className="cursor-pointer text-sm font-semibold text-white/80 hover:text-white transition-colors py-1 flex items-center gap-2 list-none">
               <span className="text-gold/50 text-xs group-open:rotate-90 transition-transform inline-block">▶</span>
-              {richText(data.rich_text)}
+              {rt(data.rich_text)}
             </summary>
             {b.children && (
               <div className="pl-5 pt-2">
-                <NotionBlocks blocks={b.children} rootId={rootId} hiddenNav={hiddenNav} />
+                <NB blocks={b.children} />
               </div>
             )}
           </details>
@@ -226,7 +235,7 @@ export function NotionBlocks({ blocks, rootId, hiddenNav }: { blocks: Block[], r
                     {row.table_row?.cells?.map((cell: any[], ci: number) => (
                       ri === 0
                         ? <th key={ci} className="px-4 py-2.5 text-left text-[10px] tracking-widest text-white/40 uppercase font-semibold whitespace-nowrap">{plainText(cell)}</th>
-                        : <td key={ci} className="px-4 py-2.5 text-white/60">{richText(cell)}</td>
+                        : <td key={ci} className="px-4 py-2.5 text-white/60">{rt(cell)}</td>
                     ))}
                   </tr>
                 ))}
