@@ -13,7 +13,7 @@ function getProp(props: any, key: string, type: string): any {
     if (type === 'select') return p.select?.name ?? null
     if (type === 'status') return p.status?.name ?? null
     if (type === 'multi_select') return p.multi_select?.map((s: any) => s.name) ?? []
-    if (type === 'number') return p.number ?? null
+    if (type === 'number') return p.number ?? p.formula?.number ?? null
     if (type === 'email') return p.email ?? null
     if (type === 'phone') return p.phone_number ?? null
   } catch { return null }

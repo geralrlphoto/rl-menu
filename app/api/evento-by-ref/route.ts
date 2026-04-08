@@ -15,7 +15,7 @@ function getProp(props: any, key: string, type: string): any {
     if (type === 'text')         return p.rich_text?.map((t: any) => t.plain_text).join('') ?? ''
     if (type === 'select')       return p.select?.name ?? null
     if (type === 'multi_select') return p.multi_select?.map((s: any) => s.name) ?? []
-    if (type === 'number')       return p.number ?? null
+    if (type === 'number')       return p.number ?? p.formula?.number ?? null
     if (type === 'date')         return p.date?.start ?? null
   } catch { return null }
   return null
