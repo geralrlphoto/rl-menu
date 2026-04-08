@@ -268,7 +268,8 @@ export default function ContratoPage() {
           )}
 
           {(() => {
-            const total = e.valor_liquido ?? ((e.valor_foto ?? 0) + (e.valor_video ?? 0) + (e.valor_extras ?? 0)) || null
+            const soma = (e.valor_foto ?? 0) + (e.valor_video ?? 0) + (e.valor_extras ?? 0)
+            const total = e.valor_liquido ?? (soma > 0 ? soma : null)
             return total ? (
               <div className="mt-4 flex items-center justify-between px-4 py-3 bg-black text-white rounded-lg">
                 <span className="text-xs tracking-widest uppercase font-bold">Valor Total do Serviço</span>
