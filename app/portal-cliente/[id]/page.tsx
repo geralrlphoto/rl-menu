@@ -386,6 +386,7 @@ export default function PortalSubPage() {
   const [portalExtras, setPortalExtras] = useState<number | null>(null)
   const [pagRefreshing, setPagRefreshing] = useState(false)
   const [guiaLinks, setGuiaLinks] = useState<{blogUrl?:string,fotosConvidadosUrl?:string,dadosContratoUrl?:string,pagamentosRegistoUrl?:string}>({})
+  const [parceirosLinks, setParceirosLinks] = useState<string[]>([])
 
   const isPaymentsPage = title.toUpperCase().includes('PAGAMENTO')
   const isGuiaPage    = title.toUpperCase().includes('GUIA')
@@ -401,6 +402,7 @@ export default function PortalSubPage() {
       setPortalVideo(ps.valorVideo ?? null)
       setPortalExtras(ps.valorExtras ?? null)
       setGuiaLinks(ps.guiaLinks ?? {})
+      setParceirosLinks(ps.parceirosLinks ?? [])
 
       // Auto-extract reference from portal page blocks if not in settings
       if (!ref) {
@@ -603,7 +605,48 @@ export default function PortalSubPage() {
                               )
                             })}
                           </div>
-                          <NotionBlocks blocks={blocks.slice(colListIdx + 1)} hiddenNav={settings.hiddenNav} />
+                          {(() => {
+                            const afterSections = blocks.slice(colListIdx + 1)
+                            // find the parceiros column_list (has only image children)
+                            const parcIdx = afterSections.findIndex(b =>
+                              b.type === 'column_list' &&
+                              b.children?.every((col: Block) =>
+                                col.children?.every((c: Block) => c.type === 'image')
+                              ) &&
+                              (b.children?.flatMap((col: Block) => col.children ?? []).length ?? 0) >= 4
+                            )
+                            if (parcIdx === -1) return <NotionBlocks blocks={afterSections} hiddenNav={settings.hiddenNav} />
+                            // extract all images in column order
+                            const parcImgs: string[] = []
+                            for (const col of (afterSections[parcIdx].children ?? []) as Block[]) {
+                              for (const img of (col.children ?? []) as Block[]) {
+                                const url = img.image?.type === 'external' ? img.image.external?.url : img.image?.file?.url
+                                if (url) parcImgs.push(url)
+                              }
+                            }
+                            return (
+                              <>
+                                <NotionBlocks blocks={afterSections.slice(0, parcIdx)} hiddenNav={settings.hiddenNav} />
+                                <div className="grid grid-cols-2 gap-3 my-4">
+                                  {parcImgs.map((imgUrl, idx) => {
+                                    const href = parceirosLinks[idx]
+                                    const content = (
+                                      // eslint-disable-next-line @next/next/no-img-element
+                                      <img src={imgUrl} alt={`Parceiro ${idx+1}`} className="w-full object-contain rounded-xl" />
+                                    )
+                                    return href ? (
+                                      <a key={idx} href={href} target="_blank" rel="noopener noreferrer" className="block hover:opacity-80 transition-opacity">
+                                        {content}
+                                      </a>
+                                    ) : (
+                                      <div key={idx}>{content}</div>
+                                    )
+                                  })}
+                                </div>
+                                <NotionBlocks blocks={afterSections.slice(parcIdx + 1)} hiddenNav={settings.hiddenNav} />
+                              </>
+                            )
+                          })()}
                         </>
                       )
                     }

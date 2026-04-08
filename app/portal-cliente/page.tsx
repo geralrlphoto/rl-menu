@@ -31,6 +31,7 @@ type PortalSettings = {
     dadosContratoUrl?: string
     pagamentosRegistoUrl?: string
   }
+  parceirosLinks?: string[]
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -393,6 +394,28 @@ function SettingsPanel({
                   value={form.guiaLinks?.[key] ?? ''}
                   onChange={e => setForm(prev => ({ ...prev, guiaLinks: { ...prev.guiaLinks, [key]: e.target.value } }))}
                   placeholder={ph}
+                  className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Parceiros Links */}
+        <div className="pt-3 border-t border-white/[0.06]">
+          <p className="text-[10px] text-white/40 tracking-widest uppercase mb-3">Links Parceiros de Confiança</p>
+          <div className="space-y-2">
+            {[1,2,3,4,5,6].map(n => (
+              <div key={n}>
+                <label className="block text-[10px] text-white/40 tracking-widest uppercase mb-1">Parceiro {n}</label>
+                <input
+                  value={form.parceirosLinks?.[n-1] ?? ''}
+                  onChange={e => setForm(prev => {
+                    const arr = [...(prev.parceirosLinks ?? ['','','','','',''])]
+                    arr[n-1] = e.target.value
+                    return { ...prev, parceirosLinks: arr }
+                  })}
+                  placeholder="https://..."
                   className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
                 />
               </div>
