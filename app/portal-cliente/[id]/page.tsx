@@ -547,34 +547,47 @@ export default function PortalSubPage() {
                             </a>
                           </div>
                         )}
-                        <NotionBlocks blocks={afterNumerario} hiddenNav={settings.hiddenNav} />
-                        <div className="mb-6 pb-6 border-b border-white/[0.06]">
-                          <span className="text-[10px] tracking-[0.3em] text-gold uppercase block mb-3">Financeiro</span>
-                          <div className="grid grid-cols-3 gap-3 mb-4">
-                            {([['VALOR FOTOGRAFIA', portalFoto], ['VALOR VÍDEO', portalVideo], ['VALOR EXTRAS', portalExtras]] as [string, number | null][]).map(([lbl, val]) => (
-                              <div key={lbl} className="flex flex-col gap-1 px-3 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-                                <span className="text-[9px] tracking-[0.3em] text-white/25 uppercase">{lbl}</span>
-                                <span className="text-base font-semibold text-white/70">{val !== null ? `${val.toLocaleString('pt-PT')} €` : '—'}</span>
+                        {(() => {
+                          const valorIdx = afterNumerario.findIndex(b =>
+                            plainText((b[b.type]?.rich_text ?? [])).toLowerCase().includes('valor do serviço') ||
+                            plainText((b[b.type]?.rich_text ?? [])).toLowerCase().includes('valor de serviço')
+                          )
+                          const beforeValor = valorIdx !== -1 ? afterNumerario.slice(0, valorIdx + 1) : afterNumerario
+                          const afterValor  = valorIdx !== -1 ? afterNumerario.slice(valorIdx + 1) : []
+                          return (
+                            <>
+                              <NotionBlocks blocks={beforeValor} hiddenNav={settings.hiddenNav} />
+                              <div className="mb-6 pb-6 border-b border-white/[0.06]">
+                                <span className="text-[10px] tracking-[0.3em] text-gold uppercase block mb-3">Financeiro</span>
+                                <div className="grid grid-cols-3 gap-3 mb-4">
+                                  {([['VALOR FOTOGRAFIA', portalFoto], ['VALOR VÍDEO', portalVideo], ['VALOR EXTRAS', portalExtras]] as [string, number | null][]).map(([lbl, val]) => (
+                                    <div key={lbl} className="flex flex-col gap-1 px-3 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                                      <span className="text-[9px] tracking-[0.3em] text-white/25 uppercase">{lbl}</span>
+                                      <span className="text-base font-semibold text-white/70">{val !== null ? `${val.toLocaleString('pt-PT')} €` : '—'}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="flex items-center justify-between px-4 py-3 bg-gold/5 border border-gold/20 rounded-xl">
+                                  <div>
+                                    <span className="text-xs tracking-widest text-gold/60 uppercase block">Total do Serviço</span>
+                                    <span className="text-[10px] text-white/20">(Fotografia + Vídeo)</span>
+                                  </div>
+                                  <span className="text-gold font-bold text-lg">
+                                    {((portalFoto ?? 0) + (portalVideo ?? 0)).toLocaleString('pt-PT')} €
+                                  </span>
+                                </div>
                               </div>
-                            ))}
-                          </div>
-                          <div className="flex items-center justify-between px-4 py-3 bg-gold/5 border border-gold/20 rounded-xl">
-                            <div>
-                              <span className="text-xs tracking-widest text-gold/60 uppercase block">Total do Serviço</span>
-                              <span className="text-[10px] text-white/20">(Fotografia + Vídeo)</span>
-                            </div>
-                            <span className="text-gold font-bold text-lg">
-                              {((portalFoto ?? 0) + (portalVideo ?? 0)).toLocaleString('pt-PT')} €
-                            </span>
-                          </div>
-                        </div>
-                        <PaymentPhasesSection
-                          referencia={portalRef}
-                          valorTotal={portalTotal}
-                          pagamentos={pagamentos}
-                          onRefresh={loadPagamentos}
-                          refreshing={pagRefreshing}
-                        />
+                              <PaymentPhasesSection
+                                referencia={portalRef}
+                                valorTotal={portalTotal}
+                                pagamentos={pagamentos}
+                                onRefresh={loadPagamentos}
+                                refreshing={pagRefreshing}
+                              />
+                              <NotionBlocks blocks={afterValor} hiddenNav={settings.hiddenNav} />
+                            </>
+                          )
+                        })()}
                       </>
                     )
                   })()}
