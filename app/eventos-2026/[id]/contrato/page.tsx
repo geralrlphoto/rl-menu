@@ -267,12 +267,15 @@ export default function ContratoPage() {
             </div>
           )}
 
-          {e.valor_liquido && (
-            <div className="mt-4 flex items-center justify-between px-4 py-3 bg-black text-white rounded-lg">
-              <span className="text-xs tracking-widest uppercase font-bold">Total do Contrato</span>
-              <span className="text-lg font-black">{fmtVal(e.valor_liquido)}</span>
-            </div>
-          )}
+          {(() => {
+            const total = e.valor_liquido ?? ((e.valor_foto ?? 0) + (e.valor_video ?? 0) + (e.valor_extras ?? 0)) || null
+            return total ? (
+              <div className="mt-4 flex items-center justify-between px-4 py-3 bg-black text-white rounded-lg">
+                <span className="text-xs tracking-widest uppercase font-bold">Valor Total do Serviço</span>
+                <span className="text-lg font-black">{fmtVal(total)}</span>
+              </div>
+            ) : null
+          })()}
         </section>
 
         {/* Cláusulas */}
