@@ -723,7 +723,7 @@ export default function PortalClientePage() {
     const custom = (settings.galleryUrls ?? []).filter(Boolean)
     return custom.length > 0 ? custom : images.slice(0, 3)
   })()
-  const navPages = findAllChildPages(blocks).filter(p => !settings.hiddenNav.includes(p.id))
+  const navPages = findAllChildPages(blocks).filter(p => !(settings.hiddenNav ?? []).includes(p.id))
   const { heading: welcomeHeading, paragraphs: welcomeParas, reference: welcomeRef } = findWelcomeText(blocks)
 
   // ── edit modes ──────────────────────────────────────────────────────────────
