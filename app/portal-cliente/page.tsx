@@ -926,7 +926,7 @@ export default function PortalClientePage() {
       {/* ── COUNTDOWN ── */}
       {settings.data && (
         <section className="py-10 sm:py-14 border-y border-white/[0.05] bg-[#0d0d0d]">
-          <p className="font-cormorant text-gold text-xl sm:text-2xl italic text-center mb-6 tracking-wide">Contagem regressiva</p>
+          <p className="font-playfair font-black text-gold text-xl sm:text-2xl text-center mb-6 tracking-tight">Contagem Regressiva</p>
           <div className="flex items-center justify-center gap-4">
             <Leaf />
             <Countdown targetDate={settings.data} />
@@ -951,7 +951,7 @@ export default function PortalClientePage() {
       {/* ── QUICK ACCESS ── */}
       {navPages.length > 0 && (
         <section className="py-6 sm:py-10 px-4">
-          <p className="text-[11px] tracking-[0.4em] text-white/30 uppercase text-center mb-8">Acesso Rápido</p>
+          <p className="font-playfair font-black text-white/50 text-lg sm:text-xl text-center mb-8 tracking-tight">Acesso Rápido</p>
           <div className="flex gap-3 overflow-x-auto pb-2 justify-start sm:justify-center snap-x snap-mandatory scrollbar-none">
             {navPages.map(page => {
               const isActive = settings.activeNavId === page.id
@@ -1000,7 +1000,7 @@ export default function PortalClientePage() {
       {/* ── WELCOME ── */}
       <section className="py-12 sm:py-16 px-4 max-w-2xl mx-auto">
         {welcomeHeading && (
-          <h2 className="font-cormorant text-2xl sm:text-3xl text-gold italic mb-3 leading-relaxed text-center">
+          <h2 className="font-playfair font-black text-2xl sm:text-3xl text-gold mb-3 leading-tight tracking-tight text-center">
             {welcomeHeading}
           </h2>
         )}
@@ -1031,7 +1031,7 @@ export default function PortalClientePage() {
       {/* ── CARDS ── */}
       {navPages.length > 0 && (
         <section className="py-10 sm:py-14 px-4 bg-[#0d0d0d] border-t border-white/[0.04]">
-          <p className="text-[11px] tracking-[0.4em] text-white/30 uppercase text-center mb-8">O que encontram aqui</p>
+          <p className="font-playfair font-black text-white/50 text-lg sm:text-xl text-center mb-8 tracking-tight">O que encontram aqui</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-2xl mx-auto">
             {navPages.slice(0, 6).map(page => (
               <Link key={page.id} href={`/portal-cliente/${page.id}?title=${encodeURIComponent(page.title)}`}
