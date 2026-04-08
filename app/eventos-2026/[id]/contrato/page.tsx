@@ -96,9 +96,10 @@ export default function ContratoPage() {
             <p className="text-xs text-zinc-500 mt-1">Fotografia & Vídeo de Casamentos</p>
           </div>
           <div className="text-right text-xs text-zinc-500 space-y-0.5">
-            <p>NIF: 309 268 834</p>
+            <p>NIF: 238 076 415</p>
+            <p>CAE: 74200</p>
             <p>geral.rlphoto@gmail.com</p>
-            <p>+351 915 892 757</p>
+            <p>+351 916 162 728</p>
           </div>
         </div>
 
@@ -118,9 +119,11 @@ export default function ContratoPage() {
             <div>
               <p className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-1">Primeira Outorgante (Prestador de Serviços)</p>
               <p className="text-sm leading-relaxed">
-                <strong>RL PHOTO.VIDEO</strong>, contribuinte n.º <strong>309 268 834</strong>, com sede em Portugal,
-                contacto <strong>+351 915 892 757</strong> e e-mail <strong>geral.rlphoto@gmail.com</strong>,
-                doravante designada como <strong>PRESTADOR</strong>.
+                <strong>Liliana Sofia Fernandes Barreto Gonçalves</strong>, a exercer sob a marca <strong>RL Photo — Fotografia &amp; Vídeo</strong>,
+                contribuinte n.º <strong>238 076 415</strong>, CAE <strong>74200</strong> (Atividades Fotográficas/Vídeo),
+                com sede em <strong>Centro Comercial Os Mochos, Loja 124, 2955-185 Pinhal Novo</strong>,
+                e-mail <strong>geral.rlphoto@gmail.com</strong>, telefone <strong>+351 916 162 728</strong>,
+                doravante designada como <strong>CONTRATADA</strong>.
               </p>
             </div>
 
@@ -408,8 +411,9 @@ export default function ContratoPage() {
           <div className="grid grid-cols-2 gap-16">
             <div>
               <div className="border-b border-zinc-400 mb-3 h-12" />
-              <p className="text-xs text-zinc-500 text-center">O PRESTADOR DE SERVIÇOS</p>
-              <p className="text-xs font-bold text-center mt-1">RL PHOTO.VIDEO</p>
+              <p className="text-xs text-zinc-500 text-center">A CONTRATADA</p>
+              <p className="text-xs font-bold text-center mt-1">Liliana Sofia F. B. Gonçalves</p>
+              <p className="text-[10px] text-zinc-400 text-center">RL PHOTO.VIDEO</p>
             </div>
             <div>
               <div className="border-b border-zinc-400 mb-3 h-12" />
