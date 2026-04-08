@@ -403,7 +403,7 @@ export default function ContratoPage() {
           <p className="text-sm text-zinc-600 mb-8">
             O presente contrato é celebrado em duplicado, ficando um exemplar na posse de cada uma das partes, e entra em vigor na data da sua assinatura.
           </p>
-          <p className="text-sm mb-10">Assinado em ______________________________, aos {hoje}.</p>
+          <p className="text-sm mb-10">Palmela, {hoje}.</p>
 
           <div className="grid grid-cols-2 gap-16">
             <div>
