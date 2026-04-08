@@ -397,19 +397,14 @@ function ContratoPropostaSection({ evento, blocks, settings, contratoDisponivel,
               : 'O contrato ainda não foi disponibilizado. Será notificado quando estiver pronto.'}
           </p>
         </div>
-        {contratoDisponivel && contratoUrl && (
-          <a href={`${contratoUrl}?readonly=1`} target="_blank" rel="noopener noreferrer"
+        {contratoDisponivel && (
+          <a href={`${contratoUrl ?? `/eventos-2026/${evento.id}/contrato`}?readonly=1`} target="_blank" rel="noopener noreferrer"
             className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-green-500/15 border border-green-500/30 text-green-400 text-xs font-semibold hover:bg-green-500/25 transition-all">
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             Ver Contrato ↗
           </a>
-        )}
-        {contratoDisponivel && !contratoUrl && (
-          <svg className="w-4 h-4 text-green-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
-          </svg>
         )}
       </div>
       <NotionBlocks blocks={blocks.filter(b => b.type !== 'image')} hiddenNav={settings.hiddenNav} />
