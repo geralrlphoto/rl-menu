@@ -39,6 +39,7 @@ type PortalSettings = {
   pageTitles?: Record<string, string>
   calloutLinks?: Record<string, Record<string, string>>
   briefingLinks?: Record<string, string>
+  pageHeaders?: Record<string, string>
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────

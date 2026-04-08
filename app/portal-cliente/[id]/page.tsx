@@ -703,6 +703,8 @@ function PortalSubPageContent() {
   const [calloutLinksForm, setCalloutLinksForm] = useState<Record<string, string>>({})
   const [savingCalloutLinks, setSavingCalloutLinks] = useState(false)
   const [briefingLinks, setBriefingLinks] = useState<Record<string, string>>({})
+  const [pageHeaders, setPageHeaders] = useState<Record<string, string>>({})
+  const [uploadingPageHeader, setUploadingPageHeader] = useState(false)
   const [editingBriefing, setEditingBriefing] = useState(false)
   const [briefingForm, setBriefingForm] = useState<Record<string, string>>({})
   const [savingBriefing, setSavingBriefing] = useState(false)
@@ -741,6 +743,7 @@ function PortalSubPageContent() {
       if (id && pt[id as string]) setTitle(pt[id as string])
       setCalloutLinks(ps.calloutLinks ?? {})
       setBriefingLinks(ps.briefingLinks ?? {})
+      setPageHeaders(ps.pageHeaders ?? {})
 
       // Auto-extract reference from portal page blocks if not in settings
       if (!ref) {
@@ -835,6 +838,21 @@ function PortalSubPageContent() {
     setTitle(titleInput.trim())
     setEditingTitle(false)
     setSavingTitle(false)
+  }
+
+  async function handleUploadPageHeader(file: File) {
+    if (!id) return
+    setUploadingPageHeader(true)
+    try {
+      const url = await uploadWithProgress(file, () => {})
+      const newPH = { ...pageHeaders, [id as string]: url }
+      await fetch('/api/portais-clientes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: { ...portalSettingsObj, pageHeaders: newPH }, settingsBlockId: portalSettingsBlockId }),
+      })
+      setPageHeaders(newPH)
+    } finally { setUploadingPageHeader(false) }
   }
 
   async function handleSaveCalloutLinks() {
@@ -968,10 +986,12 @@ function PortalSubPageContent() {
               </button>
             </div>
           </div>
-        ) : subpageHeaderUrl ? (
-          <div className="relative w-full h-48 sm:h-64 rounded-2xl overflow-hidden mb-6">
+        ) : (() => {
+          const effectiveHeader = (id && pageHeaders[id as string]) || subpageHeaderUrl
+          return effectiveHeader ? (
+          <div className="relative w-full h-48 sm:h-64 rounded-2xl overflow-hidden mb-6 group/header">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={subpageHeaderUrl} alt="" className="w-full h-full object-cover" />
+            <img src={effectiveHeader} alt="" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
             <div className="absolute bottom-0 left-0 p-5 flex items-end gap-3">
               <div>
@@ -987,8 +1007,24 @@ function PortalSubPageContent() {
                 </svg>
               </button>
             </div>
+            {/* Change photo button */}
+            <label className="absolute top-3 right-3 opacity-0 group-hover/header:opacity-100 transition-opacity cursor-pointer">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/60 border border-white/20 text-white/70 text-xs hover:text-white transition-colors">
+                {uploadingPageHeader ? 'A carregar...' : (
+                  <>
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Trocar foto
+                  </>
+                )}
+              </div>
+              <input type="file" accept="image/*" className="hidden" disabled={uploadingPageHeader}
+                onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadPageHeader(f) }} />
+            </label>
           </div>
-        ) : (
+          ) : null
+        })() || (
           <>
             <p className="text-xs tracking-[0.4em] text-white/30 uppercase mb-1">RL PHOTO.VIDEO</p>
             <div className="flex items-center gap-2">
