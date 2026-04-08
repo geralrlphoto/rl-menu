@@ -1293,7 +1293,7 @@ function PortalSubPageContent() {
                                     <span className="text-[10px] text-white/20">(Fotografia + Vídeo)</span>
                                   </div>
                                   <span className="text-gold font-bold text-lg">
-                                    {(eventoData?.valor_liquido || portalTotal ?? 0).toLocaleString('pt-PT')} €
+                                    {(eventoData?.valor_liquido || portalTotal || 0).toLocaleString('pt-PT')} €
                                   </span>
                                 </div>
                               </div>
