@@ -36,6 +36,7 @@ type PortalSettings = {
   preWeddingSlots?: Array<{ id: string; date: string; time: string; local: string }>
   preWeddingReservedSlotId?: string
   preWeddingReservedAt?: string
+  pageTitles?: Record<string, string>
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -955,8 +956,9 @@ export default function PortalClientePage() {
           <div className="flex gap-3 overflow-x-auto pb-2 justify-start sm:justify-center snap-x snap-mandatory scrollbar-none">
             {navPages.map(page => {
               const isActive = settings.activeNavId === page.id
+              const displayTitle = settings.pageTitles?.[page.id] ?? page.title
               return (
-                <Link key={page.id} href={`/portal-cliente/${page.id}?title=${encodeURIComponent(page.title)}`}
+                <Link key={page.id} href={`/portal-cliente/${page.id}?title=${encodeURIComponent(displayTitle)}`}
                   className={`snap-start shrink-0 flex flex-col items-center gap-2 px-4 py-4 rounded-2xl border transition-all min-w-[80px] group
                     ${isActive
                       ? 'bg-gold/15 border-gold/50 text-gold'
@@ -964,10 +966,10 @@ export default function PortalClientePage() {
                     }`}
                 >
                   <span className={isActive ? 'text-gold' : 'text-white/40 group-hover:text-gold/60 transition-colors'}>
-                    {getNavIcon(page.title)}
+                    {getNavIcon(displayTitle)}
                   </span>
                   <span className="text-[9px] tracking-widest uppercase text-center leading-tight max-w-[70px]">
-                    {page.title.replace(/\s*\(\d+\)\s*$/, '')}
+                    {displayTitle.replace(/\s*\(\d+\)\s*$/, '')}
                   </span>
                   {isActive && <span className="w-1 h-1 rounded-full bg-gold" />}
                 </Link>
@@ -1033,20 +1035,23 @@ export default function PortalClientePage() {
         <section className="py-10 sm:py-14 px-4 bg-[#0d0d0d] border-t border-white/[0.04]">
           <p className="font-playfair font-black text-white/50 text-lg sm:text-xl text-center mb-8 tracking-tight">O que encontram aqui</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-2xl mx-auto">
-            {navPages.slice(0, 6).map(page => (
-              <Link key={page.id} href={`/portal-cliente/${page.id}?title=${encodeURIComponent(page.title)}`}
-                className="group flex flex-col gap-3 p-4 rounded-xl border border-white/[0.07] bg-white/[0.02] hover:border-gold/30 hover:bg-gold/5 transition-all">
-                <span className="text-gold/40 group-hover:text-gold/70 transition-colors">
-                  {getNavIcon(page.title)}
-                </span>
-                <div>
-                  <p className="text-xs font-semibold text-white/70 tracking-wide uppercase leading-tight mb-1">
-                    {page.title.replace(/\s*\(\d+\)\s*$/, '')}
-                  </p>
-                  <p className="text-[10px] text-white/25">Ver detalhes →</p>
-                </div>
-              </Link>
-            ))}
+            {navPages.slice(0, 6).map(page => {
+              const displayTitle = settings.pageTitles?.[page.id] ?? page.title
+              return (
+                <Link key={page.id} href={`/portal-cliente/${page.id}?title=${encodeURIComponent(displayTitle)}`}
+                  className="group flex flex-col gap-3 p-4 rounded-xl border border-white/[0.07] bg-white/[0.02] hover:border-gold/30 hover:bg-gold/5 transition-all">
+                  <span className="text-gold/40 group-hover:text-gold/70 transition-colors">
+                    {getNavIcon(displayTitle)}
+                  </span>
+                  <div>
+                    <p className="text-xs font-semibold text-white/70 tracking-wide uppercase leading-tight mb-1">
+                      {displayTitle.replace(/\s*\(\d+\)\s*$/, '')}
+                    </p>
+                    <p className="text-[10px] text-white/25">Ver detalhes →</p>
+                  </div>
+                </Link>
+              )
+            })}
           </div>
         </section>
       )}

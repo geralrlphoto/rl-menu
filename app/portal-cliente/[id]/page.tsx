@@ -691,6 +691,11 @@ function PortalSubPageContent() {
   const [eventoData, setEventoData] = useState<any>(null)
   const [contratoDisponivel, setContratoDisponivel] = useState<boolean | null>(null)
   const [contratoUrl, setContratoUrl] = useState<string | null>(null)
+  const [portalSettingsObj, setPortalSettingsObj] = useState<any>({})
+  const [pageTitles, setPageTitles] = useState<Record<string, string>>({})
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [titleInput, setTitleInput] = useState('')
+  const [savingTitle, setSavingTitle] = useState(false)
 
   const isPaymentsPage    = title.toUpperCase().includes('PAGAMENTO')
   const isGuiaPage        = title.toUpperCase().includes('GUIA') && !title.toUpperCase().includes('WEDDING')
@@ -719,6 +724,10 @@ function PortalSubPageContent() {
       setReservedSlotId(validId)
       setContratoDisponivel(ps.contratoDisponivel ?? false)
       setContratoUrl(ps.contratoUrl ?? null)
+      setPortalSettingsObj(ps)
+      const pt = ps.pageTitles ?? {}
+      setPageTitles(pt)
+      if (id && pt[id as string]) setTitle(pt[id as string])
 
       // Auto-extract reference from portal page blocks if not in settings
       if (!ref) {
@@ -800,6 +809,21 @@ function PortalSubPageContent() {
     setTimeout(() => loadBlocks(true), 1500)
   }
 
+  async function handleSaveTitle() {
+    if (!id || !titleInput.trim()) return
+    setSavingTitle(true)
+    const newPt = { ...pageTitles, [id as string]: titleInput.trim() }
+    await fetch('/api/portais-clientes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: { ...portalSettingsObj, pageTitles: newPt }, settingsBlockId: portalSettingsBlockId }),
+    })
+    setPageTitles(newPt)
+    setTitle(titleInput.trim())
+    setEditingTitle(false)
+    setSavingTitle(false)
+  }
+
   const hasImages = findImageBlocks(blocks).length > 0
 
   return (
@@ -855,24 +879,62 @@ function PortalSubPageContent() {
       </div>
 
       <header className="mb-8">
-        {subpageHeaderUrl ? (
+        {editingTitle ? (
+          <div className="flex flex-col gap-3 max-w-sm">
+            <p className="text-xs tracking-[0.4em] text-white/30 uppercase mb-1">RL PHOTO.VIDEO</p>
+            <input
+              autoFocus
+              value={titleInput}
+              onChange={e => setTitleInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleSaveTitle(); if (e.key === 'Escape') setEditingTitle(false) }}
+              className="bg-white/[0.06] border border-gold/30 rounded-lg px-3 py-2 text-sm text-white tracking-widest uppercase outline-none focus:border-gold/60"
+              placeholder={title}
+            />
+            <div className="flex gap-2">
+              <button onClick={handleSaveTitle} disabled={savingTitle}
+                className="px-4 py-1.5 rounded-lg text-xs bg-gold/20 text-gold border border-gold/30 hover:bg-gold/30 transition-all disabled:opacity-50">
+                {savingTitle ? 'A guardar...' : 'Guardar'}
+              </button>
+              <button onClick={() => setEditingTitle(false)}
+                className="px-4 py-1.5 rounded-lg text-xs text-white/40 border border-white/10 hover:border-white/20 transition-all">
+                Cancelar
+              </button>
+            </div>
+          </div>
+        ) : subpageHeaderUrl ? (
           <div className="relative w-full h-48 sm:h-64 rounded-2xl overflow-hidden mb-6">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={subpageHeaderUrl} alt="" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-            <div className="absolute bottom-0 left-0 p-5">
-              <p className="text-[10px] tracking-[0.4em] text-white/50 uppercase mb-1">RL PHOTO.VIDEO</p>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-widest text-white uppercase drop-shadow-lg">
-                {title || '...'}
-              </h1>
+            <div className="absolute bottom-0 left-0 p-5 flex items-end gap-3">
+              <div>
+                <p className="text-[10px] tracking-[0.4em] text-white/50 uppercase mb-1">RL PHOTO.VIDEO</p>
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-widest text-white uppercase drop-shadow-lg">
+                  {title || '...'}
+                </h1>
+              </div>
+              <button onClick={() => { setTitleInput(title); setEditingTitle(true) }}
+                className="mb-1 text-white/30 hover:text-white/70 transition-colors">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
             </div>
           </div>
         ) : (
           <>
             <p className="text-xs tracking-[0.4em] text-white/30 uppercase mb-1">RL PHOTO.VIDEO</p>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-widest text-gold uppercase">
-              {title || '...'}
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-widest text-gold uppercase">
+                {title || '...'}
+              </h1>
+              <button onClick={() => { setTitleInput(title); setEditingTitle(true) }}
+                className="text-white/20 hover:text-gold/60 transition-colors mt-0.5">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
             <div className="mt-3 h-px w-16 bg-gold/40" />
           </>
         )}
