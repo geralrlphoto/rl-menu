@@ -705,9 +705,9 @@ function PortalSubPageContent() {
   const [briefingLinks, setBriefingLinks] = useState<Record<string, string>>({})
   const [pageHeaders, setPageHeaders] = useState<Record<string, string>>({})
   const [uploadingPageHeader, setUploadingPageHeader] = useState(false)
-  const [briefingInfo, setBriefingInfo] = useState<Record<string, { nome?: string; local?: string; hora?: string }>>({})
+  const [briefingInfo, setBriefingInfo] = useState<Record<string, { nome?: string; local?: string; hora?: string; contato?: string; nomeFamiliar?: string; contatoFamiliar?: string }>>({})
   const [editingBriefingInfo, setEditingBriefingInfo] = useState(false)
-  const [briefingInfoForm, setBriefingInfoForm] = useState<{ nome: string; local: string; hora: string }>({ nome: '', local: '', hora: '' })
+  const [briefingInfoForm, setBriefingInfoForm] = useState<{ nome: string; local: string; hora: string; contato: string; nomeFamiliar: string; contatoFamiliar: string }>({ nome: '', local: '', hora: '', contato: '', nomeFamiliar: '', contatoFamiliar: '' })
   const [savingBriefingInfo, setSavingBriefingInfo] = useState(false)
   const [editingBriefing, setEditingBriefing] = useState(false)
   const [briefingForm, setBriefingForm] = useState<Record<string, string>>({})
@@ -1413,7 +1413,7 @@ function PortalSubPageContent() {
                               {!editingBriefingInfo && (
                                 <button
                                   onClick={() => {
-                                    setBriefingInfoForm({ nome: info.nome ?? '', local: info.local ?? '', hora: info.hora ?? '' })
+                                    setBriefingInfoForm({ nome: info.nome ?? '', local: info.local ?? '', hora: info.hora ?? '', contato: info.contato ?? '', nomeFamiliar: info.nomeFamiliar ?? '', contatoFamiliar: info.contatoFamiliar ?? '' })
                                     setEditingBriefingInfo(true)
                                   }}
                                   className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors text-white/30 hover:text-white/70"
@@ -1449,6 +1449,27 @@ function PortalSubPageContent() {
                                     placeholder="ex: 09:00"
                                     className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
                                 </div>
+                                <div>
+                                  <label className="block text-[9px] text-white/30 tracking-widest uppercase mb-1">Contato</label>
+                                  <input type="text" value={briefingInfoForm.contato}
+                                    onChange={e => setBriefingInfoForm(f => ({ ...f, contato: e.target.value }))}
+                                    placeholder="ex: +351 912 345 678"
+                                    className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
+                                </div>
+                                <div>
+                                  <label className="block text-[9px] text-white/30 tracking-widest uppercase mb-1">Nome Familiar</label>
+                                  <input type="text" value={briefingInfoForm.nomeFamiliar}
+                                    onChange={e => setBriefingInfoForm(f => ({ ...f, nomeFamiliar: e.target.value }))}
+                                    placeholder="ex: Ana Silva"
+                                    className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
+                                </div>
+                                <div>
+                                  <label className="block text-[9px] text-white/30 tracking-widest uppercase mb-1">Contato Familiar</label>
+                                  <input type="text" value={briefingInfoForm.contatoFamiliar}
+                                    onChange={e => setBriefingInfoForm(f => ({ ...f, contatoFamiliar: e.target.value }))}
+                                    placeholder="ex: +351 912 345 679"
+                                    className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
+                                </div>
                                 <div className="flex gap-2 pt-1">
                                   <button onClick={handleSaveBriefingInfo} disabled={savingBriefingInfo}
                                     className="flex-1 py-2 rounded-xl bg-gold text-black font-semibold text-xs tracking-widest hover:bg-gold/80 transition-all disabled:opacity-50">
@@ -1466,6 +1487,9 @@ function PortalSubPageContent() {
                                   { label: title.toUpperCase().includes('NOIVA') ? 'Nome Noiva' : title.toUpperCase().includes('CERIM') ? 'Local Cerimónia' : title.toUpperCase().includes('QUINTA') ? 'Nome Quinta' : 'Nome Noivo', value: info.nome },
                                   { label: 'Local Preparação', value: info.local },
                                   { label: 'Hora de Início', value: info.hora },
+                                  { label: 'Contato', value: info.contato },
+                                  { label: 'Nome Familiar', value: info.nomeFamiliar },
+                                  { label: 'Contato Familiar', value: info.contatoFamiliar },
                                 ].map(({ label, value }) => (
                                   <div key={label} className="flex items-center justify-between px-4 py-2.5 bg-white/[0.02] border border-white/[0.06] rounded-xl">
                                     <span className="text-[10px] tracking-widest text-white/35 uppercase">{label}</span>
