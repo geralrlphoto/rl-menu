@@ -705,13 +705,16 @@ function PortalSubPageContent() {
   const [briefingLinks, setBriefingLinks] = useState<Record<string, string>>({})
   const [pageHeaders, setPageHeaders] = useState<Record<string, string>>({})
   const [uploadingPageHeader, setUploadingPageHeader] = useState(false)
-  const [briefingInfo, setBriefingInfo] = useState<Record<string, { fields?: Array<{ label: string; value: string }>; infoGeral?: string }>>({})
+  const [briefingInfo, setBriefingInfo] = useState<Record<string, { fields?: Array<{ label: string; value: string }>; infoGeral?: string; equipa?: Array<{ role: string; name: string }> }>>({})
   const [editingBriefingInfo, setEditingBriefingInfo] = useState(false)
   const [briefingFieldsForm, setBriefingFieldsForm] = useState<Array<{ label: string; value: string }>>([])
   const [editingInfoGeral, setEditingInfoGeral] = useState(false)
   const [infoGeralForm, setInfoGeralForm] = useState('')
   const [savingInfoGeral, setSavingInfoGeral] = useState(false)
   const [savingBriefingInfo, setSavingBriefingInfo] = useState(false)
+  const [editingEquipa, setEditingEquipa] = useState(false)
+  const [equipaForm, setEquipaForm] = useState<Array<{ role: string; name: string }>>([])
+  const [savingEquipa, setSavingEquipa] = useState(false)
   const [editingBriefing, setEditingBriefing] = useState(false)
   const [briefingForm, setBriefingForm] = useState<Record<string, string>>({})
   const [savingBriefing, setSavingBriefing] = useState(false)
@@ -891,6 +894,21 @@ function PortalSubPageContent() {
     setBriefingInfo(newBI)
     setEditingInfoGeral(false)
     setSavingInfoGeral(false)
+  }
+
+  async function handleSaveEquipa() {
+    if (!id) return
+    setSavingEquipa(true)
+    const existing = briefingInfo[id as string] ?? {}
+    const newBI = { ...briefingInfo, [id as string]: { ...existing, equipa: equipaForm } }
+    await fetch('/api/portais-clientes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: { ...portalSettingsObj, briefingInfo: newBI }, settingsBlockId: portalSettingsBlockId }),
+    })
+    setBriefingInfo(newBI)
+    setEditingEquipa(false)
+    setSavingEquipa(false)
   }
 
   async function handleSaveCalloutLinks() {
@@ -1566,6 +1584,73 @@ function PortalSubPageContent() {
                               </div>
                             )}
                           </div>
+                          {/* Equipa section */}
+                          {(() => {
+                            const ROLES = ['Fotógrafo', 'Videógrafo', 'Assistente', 'Editor']
+                            const equipa = info.equipa ?? []
+                            return (
+                              <div className="mb-6 pb-6 border-b border-white/[0.06]">
+                                <div className="flex items-center justify-between mb-3">
+                                  <span className="text-[10px] tracking-[0.3em] text-gold uppercase">Equipa</span>
+                                  {!editingEquipa && (
+                                    <button onClick={() => { setEquipaForm(equipa.length ? equipa.map(e => ({ ...e })) : [{ role: 'Fotógrafo', name: '' }]); setEditingEquipa(true) }}
+                                      className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors text-white/30 hover:text-white/70"
+                                      title="Editar equipa">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                      </svg>
+                                    </button>
+                                  )}
+                                </div>
+                                {editingEquipa ? (
+                                  <div className="space-y-2">
+                                    {equipaForm.map((member, idx) => (
+                                      <div key={idx} className="flex gap-2 items-center">
+                                        <select value={member.role}
+                                          onChange={e => setEquipaForm(f => f.map((x, i) => i === idx ? { ...x, role: e.target.value } : x))}
+                                          className="bg-white/[0.04] border border-white/10 rounded-lg px-2 py-2 text-xs text-white/70 outline-none focus:border-gold/40 transition-colors shrink-0">
+                                          {ROLES.map(r => <option key={r} value={r} className="bg-neutral-900">{r}</option>)}
+                                        </select>
+                                        <input type="text" value={member.name}
+                                          onChange={e => setEquipaForm(f => f.map((x, i) => i === idx ? { ...x, name: e.target.value } : x))}
+                                          placeholder="Nome do profissional"
+                                          className="flex-1 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
+                                        <button onClick={() => setEquipaForm(f => f.filter((_, i) => i !== idx))}
+                                          className="p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-white/[0.04] transition-colors shrink-0">
+                                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                        </button>
+                                      </div>
+                                    ))}
+                                    <button onClick={() => setEquipaForm(f => [...f, { role: 'Fotógrafo', name: '' }])}
+                                      className="w-full py-2 rounded-xl border border-dashed border-gold/20 text-gold/40 hover:text-gold/70 hover:border-gold/40 text-xs tracking-widest transition-all">
+                                      + Adicionar Membro
+                                    </button>
+                                    <div className="flex gap-2 pt-1">
+                                      <button onClick={handleSaveEquipa} disabled={savingEquipa}
+                                        className="flex-1 py-2 rounded-xl bg-gold text-black font-semibold text-xs tracking-widest hover:bg-gold/80 transition-all disabled:opacity-50">
+                                        {savingEquipa ? 'A guardar...' : 'Guardar'}
+                                      </button>
+                                      <button onClick={() => setEditingEquipa(false)}
+                                        className="flex-1 py-2 rounded-xl border border-white/10 text-white/50 text-xs tracking-widest hover:bg-white/[0.04] transition-all">
+                                        Cancelar
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : equipa.length > 0 ? (
+                                  <div className="space-y-2">
+                                    {equipa.map((member, idx) => (
+                                      <div key={idx} className="flex items-center justify-between px-4 py-2.5 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+                                        <span className="text-[10px] tracking-widest text-white/35 uppercase">{member.role}</span>
+                                        <span className="text-sm text-white/70 font-medium">{member.name || <span className="text-white/20 text-xs italic">—</span>}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-xs text-white/20 italic px-1">Sem equipa definida.</p>
+                                )}
+                              </div>
+                            )
+                          })()}
                           <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
                         </>
                       )

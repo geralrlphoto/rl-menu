@@ -40,7 +40,7 @@ type PortalSettings = {
   calloutLinks?: Record<string, Record<string, string>>
   briefingLinks?: Record<string, string>
   pageHeaders?: Record<string, string>
-  briefingInfo?: Record<string, { fields?: Array<{ label: string; value: string }>; infoGeral?: string }>
+  briefingInfo?: Record<string, { fields?: Array<{ label: string; value: string }>; infoGeral?: string; equipa?: Array<{ role: string; name: string }> }>
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
