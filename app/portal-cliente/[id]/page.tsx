@@ -377,6 +377,7 @@ function ContratoPropostaSection({ evento, blocks, settings, contratoDisponivel,
   const videoItems: string[] = evento.servico_video ?? []
   const hasFoto  = fotoItems.length > 0
   const hasVideo = videoItems.length > 0
+  const contratoHref = (contratoUrl ?? '/eventos-2026/' + evento.id + '/contrato') + '?readonly=1'
 
   return (
     <>
@@ -397,13 +398,13 @@ function ContratoPropostaSection({ evento, blocks, settings, contratoDisponivel,
               <div className="w-2 h-2 rounded-full bg-green-400" />
               <p className="text-xs font-semibold tracking-wider text-green-400">CONTRATO DISPONÍVEL</p>
             </div>
-            <a href={`${contratoUrl ?? `/eventos-2026/${evento.id}/contrato`}?readonly=1`} target="_blank" rel="noopener noreferrer"
+            <a href={contratoHref} target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/10 text-white/50 text-[10px] hover:text-white/80 transition-all">
               Abrir em nova aba ↗
             </a>
           </div>
           <iframe
-            src={`${contratoUrl ?? `/eventos-2026/${evento.id}/contrato`}?readonly=1`}
+            src={contratoHref}
             className="w-full rounded-xl border border-white/10"
             style={{ height: '80vh', minHeight: '600px' }}
             title="Contrato de Prestação de Serviços"
