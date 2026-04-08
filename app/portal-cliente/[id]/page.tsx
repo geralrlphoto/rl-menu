@@ -1266,7 +1266,7 @@ function PortalSubPageContent() {
                             plainText((b[b.type]?.rich_text ?? [])).toLowerCase().includes('valor do serviço') ||
                             plainText((b[b.type]?.rich_text ?? [])).toLowerCase().includes('valor de serviço')
                           )
-                          const beforeValor = valorIdx !== -1 ? afterNumerario.slice(0, valorIdx + 1) : afterNumerario
+                          const beforeValor = valorIdx !== -1 ? afterNumerario.slice(0, valorIdx) : afterNumerario
                           const afterValor  = valorIdx !== -1 ? afterNumerario.slice(valorIdx + 1) : []
                           return (
                             <>
