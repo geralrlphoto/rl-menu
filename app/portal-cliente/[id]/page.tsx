@@ -1276,7 +1276,6 @@ function PortalSubPageContent() {
                                 <div className="flex items-center justify-between px-4 py-3 bg-gold/5 border border-gold/20 rounded-xl">
                                   <div>
                                     <span className="text-xs tracking-widest text-gold/60 uppercase block">Total do Serviço</span>
-                                    <span className="text-[10px] text-white/20">(Fotografia + Vídeo)</span>
                                   </div>
                                   <span className="text-gold font-bold text-lg">
                                     {(eventoData ? (eventoData.valor_foto ?? 0) + (eventoData.valor_video ?? 0) : portalTotal || 0).toLocaleString('pt-PT')} €
