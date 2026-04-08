@@ -1453,6 +1453,18 @@ function PortalSubPageContent() {
                               <div className="space-y-3">
                                 {briefingFieldsForm.map((field, idx) => (
                                   <div key={idx} className="flex gap-2 items-start">
+                                    <div className="flex flex-col gap-0.5 shrink-0 mt-1">
+                                      <button onClick={() => setBriefingFieldsForm(f => { const a = [...f]; if (idx === 0) return a; [a[idx-1], a[idx]] = [a[idx], a[idx-1]]; return a })}
+                                        disabled={idx === 0}
+                                        className="p-1 rounded text-white/20 hover:text-white/60 disabled:opacity-20 disabled:cursor-default transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+                                      </button>
+                                      <button onClick={() => setBriefingFieldsForm(f => { const a = [...f]; if (idx === a.length - 1) return a; [a[idx], a[idx+1]] = [a[idx+1], a[idx]]; return a })}
+                                        disabled={idx === briefingFieldsForm.length - 1}
+                                        className="p-1 rounded text-white/20 hover:text-white/60 disabled:opacity-20 disabled:cursor-default transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                                      </button>
+                                    </div>
                                     <div className="flex-1 space-y-1">
                                       <input type="text" value={field.label}
                                         onChange={e => setBriefingFieldsForm(f => f.map((x, i) => i === idx ? { ...x, label: e.target.value } : x))}
