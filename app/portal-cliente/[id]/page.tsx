@@ -910,15 +910,6 @@ function PortalSubPageContent() {
               Parceiros
             </button>
           )}
-          {!editing && !editingPhotos && !loading && !error && isBriefingPage && (
-            <button onClick={() => { setBriefingForm({ ...briefingLinks }); setEditingBriefing(true) }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white/80 border border-white/15 hover:border-white/30 transition-all">
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
-              </svg>
-              Secções
-            </button>
-          )}
           {!editing && !editingPhotos && !loading && !error && (() => {
             const calloutCards = findCalloutCards(blocks)
             return calloutCards.length > 0 && (
@@ -1323,45 +1314,33 @@ function PortalSubPageContent() {
                       )
                     }
                     if (isBriefingPage) {
-                      const BRIEFING_SECTIONS = [
-                        { key: 'NOIVO' },
-                        { key: 'NOIVA' },
-                        { key: 'CERIMÓNIA' },
-                        { key: 'QUINTA' },
-                      ]
+                      const childPages = blocks.filter(b => b.type === 'child_page')
+                      const otherBlocks = blocks.filter(b => b.type !== 'child_page')
                       return (
                         <>
-                          <div className="grid grid-cols-2 gap-3 mb-6">
-                            {BRIEFING_SECTIONS.map(({ key }) => {
-                              const url = briefingLinks[key]
-                              const inner = (
-                                <div className={`relative flex flex-col items-center justify-center gap-2 px-4 py-8 rounded-2xl border transition-all duration-300 overflow-hidden
-                                  ${url
-                                    ? 'border-gold/40 bg-black cursor-pointer group hover:border-gold/80'
-                                    : 'border-white/[0.07] bg-white/[0.02] opacity-40 cursor-default'
-                                  }`}
-                                  style={url ? { boxShadow: '0 0 18px 2px rgba(212,175,55,0.18), inset 0 0 30px 0 rgba(212,175,55,0.04)' } : {}}>
-                                  {url && (
-                                    <span className="absolute inset-0 rounded-2xl pointer-events-none transition-all duration-300 group-hover:opacity-100 opacity-0"
-                                      style={{ boxShadow: '0 0 32px 6px rgba(212,175,55,0.28), inset 0 0 40px 0 rgba(212,175,55,0.08)' }} />
-                                  )}
-                                  <span className={`text-xs font-bold tracking-[0.3em] uppercase transition-all duration-300 ${url ? 'text-gold group-hover:text-white' : 'text-white/40'}`}
-                                    style={url ? { textShadow: '0 0 12px rgba(212,175,55,0.8), 0 0 24px rgba(212,175,55,0.4)' } : {}}>
-                                    {key}
-                                  </span>
-                                  {url && <span className="text-[9px] text-gold/50 tracking-widest group-hover:text-gold/80 transition-colors">Abrir →</span>}
-                                </div>
-                              )
-                              return url ? (
-                                <a key={key} href={url} target={url.startsWith('http') ? '_blank' : '_self'} rel="noopener noreferrer">
-                                  {inner}
-                                </a>
-                              ) : (
-                                <div key={key}>{inner}</div>
-                              )
-                            })}
-                          </div>
-                          <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
+                          {childPages.length > 0 && (
+                            <div className="grid grid-cols-2 gap-3 mb-6">
+                              {childPages.map(cp => {
+                                const pageTitle = cp.child_page?.title ?? ''
+                                const href = `/portal-cliente/${cp.id}?title=${encodeURIComponent(pageTitle)}`
+                                return (
+                                  <Link key={cp.id} href={href}>
+                                    <div className="relative flex flex-col items-center justify-center gap-2 px-4 py-8 rounded-2xl border border-gold/40 bg-black cursor-pointer group hover:border-gold/80 transition-all duration-300 overflow-hidden"
+                                      style={{ boxShadow: '0 0 18px 2px rgba(212,175,55,0.18), inset 0 0 30px 0 rgba(212,175,55,0.04)' }}>
+                                      <span className="absolute inset-0 rounded-2xl pointer-events-none transition-all duration-300 group-hover:opacity-100 opacity-0"
+                                        style={{ boxShadow: '0 0 32px 6px rgba(212,175,55,0.28), inset 0 0 40px 0 rgba(212,175,55,0.08)' }} />
+                                      <span className="text-xs font-bold tracking-[0.3em] uppercase text-gold group-hover:text-white transition-all duration-300"
+                                        style={{ textShadow: '0 0 12px rgba(212,175,55,0.8), 0 0 24px rgba(212,175,55,0.4)' }}>
+                                        {pageTitle}
+                                      </span>
+                                      <span className="text-[9px] text-gold/50 tracking-widest group-hover:text-gold/80 transition-colors">Abrir →</span>
+                                    </div>
+                                  </Link>
+                                )
+                              })}
+                            </div>
+                          )}
+                          <NotionBlocks blocks={otherBlocks} hiddenNav={settings.hiddenNav} />
                         </>
                       )
                     }
