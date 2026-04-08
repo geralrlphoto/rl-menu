@@ -381,32 +381,35 @@ function ContratoPropostaSection({ evento, blocks, settings, contratoDisponivel,
   return (
     <>
       {/* Contrato status banner */}
-      <div className={`flex items-center gap-3 px-4 py-3 rounded-xl mb-6 border ${
-        contratoDisponivel
-          ? 'bg-green-500/10 border-green-500/30'
-          : 'bg-white/[0.02] border-white/[0.08]'
-      }`}>
-        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${contratoDisponivel ? 'bg-green-400' : 'bg-white/20'}`} />
-        <div className="flex-1">
-          <p className={`text-xs font-semibold tracking-wider ${contratoDisponivel ? 'text-green-400' : 'text-white/30'}`}>
-            {contratoDisponivel ? 'CONTRATO DISPONÍVEL' : 'CONTRATO INDISPONÍVEL'}
-          </p>
-          <p className="text-[10px] text-white/25 mt-0.5">
-            {contratoDisponivel
-              ? 'O vosso contrato de prestação de serviços está disponível para consulta.'
-              : 'O contrato ainda não foi disponibilizado. Será notificado quando estiver pronto.'}
-          </p>
+      {!contratoDisponivel && (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-6 border bg-white/[0.02] border-white/[0.08]">
+          <div className="w-2 h-2 rounded-full flex-shrink-0 bg-white/20" />
+          <div className="flex-1">
+            <p className="text-xs font-semibold tracking-wider text-white/30">CONTRATO INDISPONÍVEL</p>
+            <p className="text-[10px] text-white/25 mt-0.5">O contrato ainda não foi disponibilizado. Será notificado quando estiver pronto.</p>
+          </div>
         </div>
-        {contratoDisponivel && (
-          <a href={`${contratoUrl ?? `/eventos-2026/${evento.id}/contrato`}?readonly=1`} target="_blank" rel="noopener noreferrer"
-            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-green-500/15 border border-green-500/30 text-green-400 text-xs font-semibold hover:bg-green-500/25 transition-all">
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Ver Contrato ↗
-          </a>
-        )}
-      </div>
+      )}
+      {contratoDisponivel && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-400" />
+              <p className="text-xs font-semibold tracking-wider text-green-400">CONTRATO DISPONÍVEL</p>
+            </div>
+            <a href={`${contratoUrl ?? `/eventos-2026/${evento.id}/contrato`}?readonly=1`} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/10 text-white/50 text-[10px] hover:text-white/80 transition-all">
+              Abrir em nova aba ↗
+            </a>
+          </div>
+          <iframe
+            src={`${contratoUrl ?? `/eventos-2026/${evento.id}/contrato`}?readonly=1`}
+            className="w-full rounded-xl border border-white/10"
+            style={{ height: '80vh', minHeight: '600px' }}
+            title="Contrato de Prestação de Serviços"
+          />
+        </div>
+      )}
       <NotionBlocks blocks={blocks.filter(b => b.type !== 'image')} hiddenNav={settings.hiddenNav} />
       <div className="mt-8 pt-6 border-t border-white/[0.06]">
         <div className="flex items-center gap-3 mb-6">
@@ -1081,30 +1084,32 @@ export default function PortalSubPage() {
                       // No evento linked yet — show status banner + blocks
                       return (
                         <>
-                          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl mb-6 border ${
-                            contratoDisponivel ? 'bg-green-500/10 border-green-500/30' : 'bg-white/[0.02] border-white/[0.08]'
-                          }`}>
-                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${contratoDisponivel ? 'bg-green-400' : 'bg-white/20'}`} />
-                            <div className="flex-1">
-                              <p className={`text-xs font-semibold tracking-wider ${contratoDisponivel ? 'text-green-400' : 'text-white/30'}`}>
-                                {contratoDisponivel ? 'CONTRATO DISPONÍVEL' : 'CONTRATO INDISPONÍVEL'}
-                              </p>
-                              <p className="text-[10px] text-white/25 mt-0.5">
-                                {contratoDisponivel
-                                  ? 'O vosso contrato de prestação de serviços está disponível para consulta.'
-                                  : 'O contrato ainda não foi disponibilizado. Será notificado quando estiver pronto.'}
-                              </p>
+                          {!contratoDisponivel && (
+                            <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-6 border bg-white/[0.02] border-white/[0.08]">
+                              <div className="w-2 h-2 rounded-full flex-shrink-0 bg-white/20" />
+                              <p className="text-xs font-semibold tracking-wider text-white/30">CONTRATO INDISPONÍVEL</p>
                             </div>
-                            {contratoDisponivel && contratoUrl && (
-                              <a href={`${contratoUrl}?readonly=1`} target="_blank" rel="noopener noreferrer"
-                                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-green-500/15 border border-green-500/30 text-green-400 text-xs font-semibold hover:bg-green-500/25 transition-all">
-                                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                Ver Contrato ↗
-                              </a>
-                            )}
-                          </div>
+                          )}
+                          {contratoDisponivel && contratoUrl && (
+                            <div className="mb-6">
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-2 h-2 rounded-full bg-green-400" />
+                                  <p className="text-xs font-semibold tracking-wider text-green-400">CONTRATO DISPONÍVEL</p>
+                                </div>
+                                <a href={`${contratoUrl}?readonly=1`} target="_blank" rel="noopener noreferrer"
+                                  className="px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/10 text-white/50 text-[10px] hover:text-white/80 transition-all">
+                                  Abrir em nova aba ↗
+                                </a>
+                              </div>
+                              <iframe
+                                src={`${contratoUrl}?readonly=1`}
+                                className="w-full rounded-xl border border-white/10"
+                                style={{ height: '80vh', minHeight: '600px' }}
+                                title="Contrato de Prestação de Serviços"
+                              />
+                            </div>
+                          )}
                           <NotionBlocks blocks={blocks.filter(b => b.type !== 'image')} hiddenNav={settings.hiddenNav} />
                         </>
                       )
