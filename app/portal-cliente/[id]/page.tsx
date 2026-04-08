@@ -705,9 +705,9 @@ function PortalSubPageContent() {
   const [briefingLinks, setBriefingLinks] = useState<Record<string, string>>({})
   const [pageHeaders, setPageHeaders] = useState<Record<string, string>>({})
   const [uploadingPageHeader, setUploadingPageHeader] = useState(false)
-  const [briefingInfo, setBriefingInfo] = useState<Record<string, { nome?: string; local?: string; hora?: string; contato?: string; nomeFamiliar?: string; contatoFamiliar?: string; infoGeral?: string }>>({})
+  const [briefingInfo, setBriefingInfo] = useState<Record<string, { fields?: Array<{ label: string; value: string }>; infoGeral?: string }>>({})
   const [editingBriefingInfo, setEditingBriefingInfo] = useState(false)
-  const [briefingInfoForm, setBriefingInfoForm] = useState<{ nome: string; local: string; hora: string; contato: string; nomeFamiliar: string; contatoFamiliar: string; infoGeral: string }>({ nome: '', local: '', hora: '', contato: '', nomeFamiliar: '', contatoFamiliar: '', infoGeral: '' })
+  const [briefingFieldsForm, setBriefingFieldsForm] = useState<Array<{ label: string; value: string }>>([])
   const [editingInfoGeral, setEditingInfoGeral] = useState(false)
   const [infoGeralForm, setInfoGeralForm] = useState('')
   const [savingInfoGeral, setSavingInfoGeral] = useState(false)
@@ -867,7 +867,7 @@ function PortalSubPageContent() {
     if (!id) return
     setSavingBriefingInfo(true)
     const existing = briefingInfo[id as string] ?? {}
-    const newBI = { ...briefingInfo, [id as string]: { ...existing, ...briefingInfoForm } }
+    const newBI = { ...briefingInfo, [id as string]: { ...existing, fields: briefingFieldsForm } }
     await fetch('/api/portais-clientes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1423,6 +1423,15 @@ function PortalSubPageContent() {
                     const isBriefingChildPage = fromTitle?.toUpperCase().includes('BRIEFING')
                     if (isBriefingChildPage) {
                       const info = briefingInfo[id as string] ?? {}
+                      const defaultFields = [
+                        { label: 'Nome', value: '' },
+                        { label: 'Local Preparação', value: '' },
+                        { label: 'Hora de Início', value: '' },
+                        { label: 'Contato', value: '' },
+                        { label: 'Nome Familiar', value: '' },
+                        { label: 'Contato Familiar', value: '' },
+                      ]
+                      const fields = info.fields ?? defaultFields
                       return (
                         <>
                           {/* Briefing info section */}
@@ -1431,10 +1440,7 @@ function PortalSubPageContent() {
                               <span className="text-[10px] tracking-[0.3em] text-gold uppercase">Informação</span>
                               {!editingBriefingInfo && (
                                 <button
-                                  onClick={() => {
-                                    setBriefingInfoForm({ nome: info.nome ?? '', local: info.local ?? '', hora: info.hora ?? '', contato: info.contato ?? '', nomeFamiliar: info.nomeFamiliar ?? '', contatoFamiliar: info.contatoFamiliar ?? '', infoGeral: info.infoGeral ?? '' })
-                                    setEditingBriefingInfo(true)
-                                  }}
+                                  onClick={() => { setBriefingFieldsForm(fields.map(f => ({ ...f }))); setEditingBriefingInfo(true) }}
                                   className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors text-white/30 hover:text-white/70"
                                   title="Editar informação">
                                   <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1445,50 +1451,28 @@ function PortalSubPageContent() {
                             </div>
                             {editingBriefingInfo ? (
                               <div className="space-y-3">
-                                <div>
-                                  <label className="block text-[9px] text-white/30 tracking-widest uppercase mb-1">
-                                    {title.toUpperCase().includes('NOIVA') ? 'Nome Noiva' : title.toUpperCase().includes('CERIM') ? 'Local Cerimónia' : title.toUpperCase().includes('QUINTA') ? 'Nome Quinta' : 'Nome Noivo'}
-                                  </label>
-                                  <input type="text" value={briefingInfoForm.nome}
-                                    onChange={e => setBriefingInfoForm(f => ({ ...f, nome: e.target.value }))}
-                                    placeholder={title.toUpperCase().includes('NOIVA') ? 'ex: Maria' : title.toUpperCase().includes('CERIM') ? 'ex: Igreja de S. Domingos' : title.toUpperCase().includes('QUINTA') ? 'ex: Quinta da Ribeira' : 'ex: João'}
-                                    className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
-                                </div>
-                                <div>
-                                  <label className="block text-[9px] text-white/30 tracking-widest uppercase mb-1">Local Preparação</label>
-                                  <input type="text" value={briefingInfoForm.local}
-                                    onChange={e => setBriefingInfoForm(f => ({ ...f, local: e.target.value }))}
-                                    placeholder="ex: Hotel Ritz, Lisboa"
-                                    className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
-                                </div>
-                                <div>
-                                  <label className="block text-[9px] text-white/30 tracking-widest uppercase mb-1">Hora de Início</label>
-                                  <input type="text" value={briefingInfoForm.hora}
-                                    onChange={e => setBriefingInfoForm(f => ({ ...f, hora: e.target.value }))}
-                                    placeholder="ex: 09:00"
-                                    className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
-                                </div>
-                                <div>
-                                  <label className="block text-[9px] text-white/30 tracking-widest uppercase mb-1">Contato</label>
-                                  <input type="text" value={briefingInfoForm.contato}
-                                    onChange={e => setBriefingInfoForm(f => ({ ...f, contato: e.target.value }))}
-                                    placeholder="ex: +351 912 345 678"
-                                    className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
-                                </div>
-                                <div>
-                                  <label className="block text-[9px] text-white/30 tracking-widest uppercase mb-1">Nome Familiar</label>
-                                  <input type="text" value={briefingInfoForm.nomeFamiliar}
-                                    onChange={e => setBriefingInfoForm(f => ({ ...f, nomeFamiliar: e.target.value }))}
-                                    placeholder="ex: Ana Silva"
-                                    className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
-                                </div>
-                                <div>
-                                  <label className="block text-[9px] text-white/30 tracking-widest uppercase mb-1">Contato Familiar</label>
-                                  <input type="text" value={briefingInfoForm.contatoFamiliar}
-                                    onChange={e => setBriefingInfoForm(f => ({ ...f, contatoFamiliar: e.target.value }))}
-                                    placeholder="ex: +351 912 345 679"
-                                    className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
-                                </div>
+                                {briefingFieldsForm.map((field, idx) => (
+                                  <div key={idx} className="flex gap-2 items-start">
+                                    <div className="flex-1 space-y-1">
+                                      <input type="text" value={field.label}
+                                        onChange={e => setBriefingFieldsForm(f => f.map((x, i) => i === idx ? { ...x, label: e.target.value } : x))}
+                                        placeholder="Nome do campo"
+                                        className="w-full bg-white/[0.03] border border-white/[0.07] rounded-lg px-2.5 py-1.5 text-[10px] text-white/50 tracking-widest uppercase outline-none focus:border-gold/30 transition-colors placeholder:text-white/15" />
+                                      <input type="text" value={field.value}
+                                        onChange={e => setBriefingFieldsForm(f => f.map((x, i) => i === idx ? { ...x, value: e.target.value } : x))}
+                                        placeholder="Valor"
+                                        className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
+                                    </div>
+                                    <button onClick={() => setBriefingFieldsForm(f => f.filter((_, i) => i !== idx))}
+                                      className="mt-1 p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-white/[0.04] transition-colors shrink-0">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    </button>
+                                  </div>
+                                ))}
+                                <button onClick={() => setBriefingFieldsForm(f => [...f, { label: '', value: '' }])}
+                                  className="w-full py-2 rounded-xl border border-dashed border-gold/20 text-gold/40 hover:text-gold/70 hover:border-gold/40 text-xs tracking-widest transition-all">
+                                  + Adicionar Campo
+                                </button>
                                 <div className="flex gap-2 pt-1">
                                   <button onClick={handleSaveBriefingInfo} disabled={savingBriefingInfo}
                                     className="flex-1 py-2 rounded-xl bg-gold text-black font-semibold text-xs tracking-widest hover:bg-gold/80 transition-all disabled:opacity-50">
@@ -1502,15 +1486,8 @@ function PortalSubPageContent() {
                               </div>
                             ) : (
                               <div className="space-y-2">
-                                {[
-                                  { label: title.toUpperCase().includes('NOIVA') ? 'Nome Noiva' : title.toUpperCase().includes('CERIM') ? 'Local Cerimónia' : title.toUpperCase().includes('QUINTA') ? 'Nome Quinta' : 'Nome Noivo', value: info.nome },
-                                  { label: 'Local Preparação', value: info.local },
-                                  { label: 'Hora de Início', value: info.hora },
-                                  { label: 'Contato', value: info.contato },
-                                  { label: 'Nome Familiar', value: info.nomeFamiliar },
-                                  { label: 'Contato Familiar', value: info.contatoFamiliar },
-                                ].map(({ label, value }) => (
-                                  <div key={label} className="flex items-center justify-between px-4 py-2.5 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+                                {fields.map(({ label, value }, idx) => (
+                                  <div key={idx} className="flex items-center justify-between px-4 py-2.5 bg-white/[0.02] border border-white/[0.06] rounded-xl">
                                     <span className="text-[10px] tracking-widest text-white/35 uppercase">{label}</span>
                                     <span className="text-sm text-white/70 font-medium">{value || <span className="text-white/20 text-xs italic">—</span>}</span>
                                   </div>
