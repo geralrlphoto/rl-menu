@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
 import { NotionBlocks, plainText, type Block } from '../NotionRenderer'
@@ -668,7 +668,7 @@ function PreWeddingSection({ slots, reservedSlotId, reservingSlotId, showReserve
 
 // ─── main page ────────────────────────────────────────────────────────────────
 
-export default function PortalSubPage() {
+function PortalSubPageContent() {
   const { id } = useParams<{ id: string }>()
   const searchParams = useSearchParams()
   const [blocks, setBlocks] = useState<Block[]>([])
@@ -1325,5 +1325,13 @@ export default function PortalSubPage() {
         </div>
       )}
     </main>
+  )
+}
+
+export default function PortalSubPage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-zinc-950 flex items-center justify-center"><span className="text-white/30 text-xs tracking-widest animate-pulse">A carregar...</span></main>}>
+      <PortalSubPageContent />
+    </Suspense>
   )
 }
