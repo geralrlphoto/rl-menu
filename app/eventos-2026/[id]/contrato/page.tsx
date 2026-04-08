@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, Suspense } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
@@ -54,7 +54,7 @@ function Clausula({ n, title, children }: { n: string; title: string; children: 
   )
 }
 
-export default function ContratoPage() {
+function ContratoPageContent() {
   const { id } = useParams<{ id: string }>()
   const searchParams = useSearchParams()
   const readonly = searchParams.get('readonly') === '1'
@@ -471,5 +471,13 @@ export default function ContratoPage() {
         }
       `}</style>
     </main>
+  )
+}
+
+export default function ContratoPage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen flex items-center justify-center bg-white"><span className="text-zinc-400 text-xs tracking-widest">A carregar...</span></main>}>
+      <ContratoPageContent />
+    </Suspense>
   )
 }
