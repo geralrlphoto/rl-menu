@@ -20,6 +20,46 @@ function getProp(props: any, key: string, type: string): any {
   return null
 }
 
+export async function POST(req: Request) {
+  try {
+    const body = await req.json()
+    const { referencia, cliente, data_evento, local, tipo_evento, tipo_servico, fotografo, videografo, valor_foto, valor_video, valor_liquido } = body
+
+    const properties: any = {
+      'REFERÊNCIA DO EVENTO': { title: [{ text: { content: referencia ?? '' } }] },
+      'CLIENTE':              { rich_text: [{ text: { content: cliente ?? '' } }] },
+    }
+    if (data_evento)   properties['DATA DO EVENTO']          = { date: { start: data_evento } }
+    if (local)         properties['LOCAL']                   = { rich_text: [{ text: { content: local } }] }
+    if (tipo_evento?.length)  properties['TIPO DE EVENTO']   = { multi_select: tipo_evento.map((n: string) => ({ name: n })) }
+    if (tipo_servico?.length) properties['TIPO DE SERVIÇO']  = { multi_select: tipo_servico.map((n: string) => ({ name: n })) }
+    if (fotografo?.length)    properties['FOTOGRAFO']        = { multi_select: fotografo.map((n: string) => ({ name: n })) }
+    if (videografo?.length)   properties['VÍDEOGRAFO ']      = { multi_select: videografo.map((n: string) => ({ name: n })) }
+    if (valor_foto != null)   properties['VALOR SERVIÇO FOTO']       = { number: Number(valor_foto) }
+    if (valor_video != null)  properties['VALOR DO SERVIÇO VÍDEO']   = { number: Number(valor_video) }
+    if (valor_liquido != null) properties['VALOR LIQUIDO A RECEBER'] = { number: Number(valor_liquido) }
+
+    const res = await fetch('https://api.notion.com/v1/pages', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${NOTION_TOKEN}`,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ parent: { database_id: EVENTOS_DB }, properties }),
+    })
+
+    if (!res.ok) {
+      const err = await res.json()
+      return NextResponse.json({ error: err.message }, { status: res.status })
+    }
+    const page = await res.json()
+    return NextResponse.json({ id: page.id })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
+
 export async function GET() {
   try {
     const allPages: any[] = []

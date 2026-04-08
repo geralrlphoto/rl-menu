@@ -64,6 +64,167 @@ function groupByMonth(events: Evento[]) {
   return groups
 }
 
+const TIPOS_EVENTO   = ['CASAMENTO','BATIZADO','ANIVERSÁRIO','SESSÃO FOTO','CORPORATIVO']
+const TIPOS_SERVICO  = ['FOTOGRAFIA','VÍDEO','FOTOGRAFIA + VÍDEO']
+
+type NovoEventoForm = {
+  referencia: string; cliente: string; data_evento: string; local: string
+  tipo_evento: string[]; tipo_servico: string[]
+  fotografo: string; videografo: string
+  valor_foto: string; valor_video: string; valor_liquido: string
+}
+
+function NovoEventoModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const [form, setForm] = useState<NovoEventoForm>({
+    referencia: '', cliente: '', data_evento: '', local: '',
+    tipo_evento: [], tipo_servico: [],
+    fotografo: '', videografo: '',
+    valor_foto: '', valor_video: '', valor_liquido: '',
+  })
+  const [saving, setSaving] = useState(false)
+  const [err, setErr] = useState('')
+
+  function set(k: keyof NovoEventoForm, v: string | string[]) {
+    setForm(f => ({ ...f, [k]: v }))
+  }
+  function toggleArr(k: 'tipo_evento' | 'tipo_servico', val: string) {
+    setForm(f => {
+      const arr = f[k] as string[]
+      return { ...f, [k]: arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val] }
+    })
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!form.referencia.trim()) { setErr('Referência obrigatória'); return }
+    if (!form.data_evento) { setErr('Data do evento obrigatória'); return }
+    setSaving(true); setErr('')
+    try {
+      const body: any = {
+        referencia: form.referencia.trim(),
+        cliente:    form.cliente.trim(),
+        data_evento: form.data_evento,
+        local:       form.local.trim(),
+        tipo_evento: form.tipo_evento,
+        tipo_servico: form.tipo_servico,
+        fotografo:  form.fotografo ? [form.fotografo] : [],
+        videografo: form.videografo ? [form.videografo] : [],
+      }
+      if (form.valor_foto)    body.valor_foto    = parseFloat(form.valor_foto)
+      if (form.valor_video)   body.valor_video   = parseFloat(form.valor_video)
+      if (form.valor_liquido) body.valor_liquido = parseFloat(form.valor_liquido)
+
+      const res = await fetch('/api/eventos-notion', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      }).then(r => r.json())
+      if (res.error) { setErr(res.error); return }
+      onCreated()
+      onClose()
+    } finally { setSaving(false) }
+  }
+
+  const inp = "w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
+  const lbl = "block text-[9px] text-white/30 tracking-widest uppercase mb-1"
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4" onClick={onClose}>
+      <div className="w-full max-w-lg bg-[#111] border border-white/[0.1] rounded-2xl p-6 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-sm font-bold tracking-[0.2em] text-gold uppercase">Novo Evento</h2>
+          <button onClick={onClose} className="text-white/30 hover:text-white/70 text-xl transition-colors">✕</button>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={lbl}>Referência *</label>
+              <input value={form.referencia} onChange={e => set('referencia', e.target.value)}
+                placeholder="CAS_001_26_RL" className={inp} />
+            </div>
+            <div>
+              <label className={lbl}>Data do Evento *</label>
+              <input type="date" value={form.data_evento} onChange={e => set('data_evento', e.target.value)} className={inp} />
+            </div>
+          </div>
+          <div>
+            <label className={lbl}>Cliente</label>
+            <input value={form.cliente} onChange={e => set('cliente', e.target.value)}
+              placeholder="Nome do cliente" className={inp} />
+          </div>
+          <div>
+            <label className={lbl}>Local</label>
+            <input value={form.local} onChange={e => set('local', e.target.value)}
+              placeholder="Local do evento" className={inp} />
+          </div>
+          <div>
+            <label className={lbl}>Tipo de Evento</label>
+            <div className="flex flex-wrap gap-2">
+              {TIPOS_EVENTO.map(t => (
+                <button type="button" key={t} onClick={() => toggleArr('tipo_evento', t)}
+                  className={`px-3 py-1 rounded-full text-[10px] font-medium tracking-wide border transition-all
+                    ${form.tipo_evento.includes(t) ? 'bg-gold/20 border-gold/50 text-gold' : 'bg-white/[0.03] border-white/10 text-white/40 hover:border-white/25'}`}>
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className={lbl}>Tipo de Serviço</label>
+            <div className="flex flex-wrap gap-2">
+              {TIPOS_SERVICO.map(t => (
+                <button type="button" key={t} onClick={() => toggleArr('tipo_servico', t)}
+                  className={`px-3 py-1 rounded-full text-[10px] font-medium tracking-wide border transition-all
+                    ${form.tipo_servico.includes(t) ? 'bg-gold/20 border-gold/50 text-gold' : 'bg-white/[0.03] border-white/10 text-white/40 hover:border-white/25'}`}>
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={lbl}>Fotógrafo</label>
+              <input value={form.fotografo} onChange={e => set('fotografo', e.target.value)}
+                placeholder="Nome" className={inp} />
+            </div>
+            <div>
+              <label className={lbl}>Videógrafo</label>
+              <input value={form.videografo} onChange={e => set('videografo', e.target.value)}
+                placeholder="Nome" className={inp} />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className={lbl}>Valor Foto (€)</label>
+              <input type="number" value={form.valor_foto} onChange={e => set('valor_foto', e.target.value)}
+                placeholder="0" className={inp} />
+            </div>
+            <div>
+              <label className={lbl}>Valor Vídeo (€)</label>
+              <input type="number" value={form.valor_video} onChange={e => set('valor_video', e.target.value)}
+                placeholder="0" className={inp} />
+            </div>
+            <div>
+              <label className={lbl}>Valor Líquido (€)</label>
+              <input type="number" value={form.valor_liquido} onChange={e => set('valor_liquido', e.target.value)}
+                placeholder="0" className={inp} />
+            </div>
+          </div>
+          {err && <p className="text-xs text-red-400 bg-red-500/10 rounded-lg px-3 py-2">{err}</p>}
+          <div className="flex justify-end gap-2 pt-2">
+            <button type="button" onClick={onClose}
+              className="px-4 py-2 rounded-xl text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">
+              Cancelar
+            </button>
+            <button type="submit" disabled={saving}
+              className="px-6 py-2 rounded-xl text-xs bg-gold text-black font-bold tracking-wide hover:bg-gold/80 transition-all disabled:opacity-50">
+              {saving ? 'A criar...' : 'Criar Evento'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 export default function Eventos2026() {
   const [events, setEvents] = useState<Evento[]>([])
   const [loading, setLoading] = useState(true)
@@ -71,6 +232,7 @@ export default function Eventos2026() {
   const [search, setSearch] = useState('')
   const [tipoFilter, setTipoFilter] = useState('Todos')
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [showNovoEvento, setShowNovoEvento] = useState(false)
   const router = useRouter()
 
   async function handleDelete(e: React.MouseEvent, id: string) {
@@ -82,7 +244,8 @@ export default function Eventos2026() {
     setDeletingId(null)
   }
 
-  useEffect(() => {
+  function loadEvents() {
+    setLoading(true)
     fetch('/api/eventos-notion')
       .then(r => r.json())
       .then(d => {
@@ -91,7 +254,9 @@ export default function Eventos2026() {
         setLoading(false)
       })
       .catch(() => { setError('Erro de ligação'); setLoading(false) })
-  }, [])
+  }
+
+  useEffect(() => { loadEvents() }, [])
 
   const filtered = events.filter(e => {
     const matchSearch = !search ||
@@ -121,7 +286,17 @@ export default function Eventos2026() {
           <h1 className="text-3xl sm:text-5xl font-extralight tracking-[0.15em] sm:tracking-[0.2em] text-white uppercase mt-3">Eventos 2026</h1>
           <p className="text-white/20 text-xs tracking-[0.3em] mt-2 uppercase">{events.length} eventos · {totalValor.toLocaleString('pt-PT')} € total</p>
         </div>
+        <button onClick={() => setShowNovoEvento(true)}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black font-bold text-xs tracking-widest hover:bg-gold/80 transition-all uppercase">
+          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
+          </svg>
+          Novo Evento
+        </button>
       </div>
+      {showNovoEvento && (
+        <NovoEventoModal onClose={() => setShowNovoEvento(false)} onCreated={loadEvents} />
+      )}
 
       {/* Próximos eventos */}
       {!loading && !error && upcoming.length > 0 && (
