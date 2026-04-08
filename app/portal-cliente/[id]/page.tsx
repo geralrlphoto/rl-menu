@@ -1249,7 +1249,7 @@ function PortalSubPageContent() {
               : (
                 <>
                   <div className="mb-6">
-                    <Link href="/portal-cliente"
+                    <Link href={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : '/portal-cliente'}
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gold/30 bg-gold/10 text-gold hover:bg-gold/20 transition-all text-sm tracking-wide">
                       ‹ Voltar
                     </Link>
