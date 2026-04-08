@@ -283,20 +283,6 @@ function PaymentPhasesSection({ referencia, valorTotal, pagamentos, onRefresh, r
 
   return (
     <div className="mb-6 pb-6 border-b border-white/[0.06]">
-      {/* Valor total */}
-      {valorTotal > 0 && (
-        <div className="flex items-center justify-between mb-5 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.07]">
-          <span className="text-[10px] tracking-[0.3em] text-white/30 uppercase">Valor Total do Serviço</span>
-          <div className="flex items-center gap-4">
-            {totalPagoGeral > 0 && faltaGeral > 0 && (
-              <span className="text-[10px] text-white/30">
-                Falta: <span className="text-white/50 font-medium">{faltaGeral.toLocaleString('pt-PT')} €</span>
-              </span>
-            )}
-            <span className="text-base font-semibold text-gold">{valorTotal.toLocaleString('pt-PT')} €</span>
-          </div>
-        </div>
-      )}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="text-[10px] tracking-[0.3em] text-white/25 uppercase">Fases de Pagamento</span>
