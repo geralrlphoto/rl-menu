@@ -1416,8 +1416,27 @@ function PortalSubPageContent() {
                       )
                       return (
                         <>
-                          <NotionBlocks blocks={otherBlocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
-                          {cardsGrid}
+                          {(() => {
+                            const briefingGeralIdx = otherBlocks.findIndex(b =>
+                              ['heading_1','heading_2','heading_3'].includes(b.type) &&
+                              plainText(b[b.type]?.rich_text ?? []).toUpperCase().includes('BRIEFING GERAL')
+                            )
+                            if (briefingGeralIdx === -1) {
+                              return (
+                                <>
+                                  <NotionBlocks blocks={otherBlocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+                                  {cardsGrid}
+                                </>
+                              )
+                            }
+                            return (
+                              <>
+                                <NotionBlocks blocks={otherBlocks.slice(0, briefingGeralIdx + 1)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+                                {cardsGrid}
+                                <NotionBlocks blocks={otherBlocks.slice(briefingGeralIdx + 1)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+                              </>
+                            )
+                          })()}
                         </>
                       )
                     }
