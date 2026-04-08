@@ -31,7 +31,7 @@ type PortalSettings = {
     dadosContratoUrl?: string
     pagamentosRegistoUrl?: string
   }
-  parceirosLinks?: string[]
+  parceiros?: Array<{ imageUrl: string; url?: string }>
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -401,25 +401,44 @@ function SettingsPanel({
           </div>
         </div>
 
-        {/* Parceiros Links */}
+        {/* Parceiros */}
         <div className="pt-3 border-t border-white/[0.06]">
-          <p className="text-[10px] text-white/40 tracking-widest uppercase mb-3">Links Parceiros de Confiança</p>
-          <div className="space-y-2">
-            {[1,2,3,4,5,6].map(n => (
-              <div key={n}>
-                <label className="block text-[10px] text-white/40 tracking-widest uppercase mb-1">Parceiro {n}</label>
-                <input
-                  value={form.parceirosLinks?.[n-1] ?? ''}
-                  onChange={e => setForm(prev => {
-                    const arr = [...(prev.parceirosLinks ?? ['','','','','',''])]
-                    arr[n-1] = e.target.value
-                    return { ...prev, parceirosLinks: arr }
-                  })}
-                  placeholder="https://..."
-                  className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
-                />
+          <p className="text-[10px] text-white/40 tracking-widest uppercase mb-3">Parceiros de Confiança</p>
+          <div className="space-y-3">
+            {(form.parceiros ?? []).map((p, i) => (
+              <div key={i} className="flex gap-2 items-start p-2 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                <div className="flex-1 space-y-2">
+                  <PhotoField
+                    label={`Parceiro ${i+1} — Imagem`}
+                    value={p.imageUrl}
+                    onChange={url => setForm(prev => {
+                      const arr = [...(prev.parceiros ?? [])]
+                      arr[i] = { ...arr[i], imageUrl: url }
+                      return { ...prev, parceiros: arr }
+                    })}
+                  />
+                  <input
+                    value={p.url ?? ''}
+                    onChange={e => setForm(prev => {
+                      const arr = [...(prev.parceiros ?? [])]
+                      arr[i] = { ...arr[i], url: e.target.value }
+                      return { ...prev, parceiros: arr }
+                    })}
+                    placeholder="URL do site do parceiro"
+                    className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
+                  />
+                </div>
+                <button
+                  onClick={() => setForm(prev => ({ ...prev, parceiros: (prev.parceiros ?? []).filter((_,j) => j !== i) }))}
+                  className="mt-1 text-white/20 hover:text-red-400 transition-colors text-lg leading-none"
+                  title="Remover"
+                >✕</button>
               </div>
             ))}
+            <button
+              onClick={() => setForm(prev => ({ ...prev, parceiros: [...(prev.parceiros ?? []), { imageUrl: '', url: '' }] }))}
+              className="w-full py-2 rounded-xl border border-dashed border-gold/20 text-gold/40 hover:text-gold/70 hover:border-gold/40 text-xs tracking-widest transition-all"
+            >+ ADICIONAR PARCEIRO</button>
           </div>
         </div>
       </div>

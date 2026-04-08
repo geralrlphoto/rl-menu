@@ -386,7 +386,11 @@ export default function PortalSubPage() {
   const [portalExtras, setPortalExtras] = useState<number | null>(null)
   const [pagRefreshing, setPagRefreshing] = useState(false)
   const [guiaLinks, setGuiaLinks] = useState<{blogUrl?:string,fotosConvidadosUrl?:string,dadosContratoUrl?:string,pagamentosRegistoUrl?:string}>({})
-  const [parceirosLinks, setParceirosLinks] = useState<string[]>([])
+  const [parceiros, setParceiros] = useState<Array<{imageUrl:string;url?:string}>>([])
+  const [portalSettingsBlockId, setPortalSettingsBlockId] = useState<string|null>(null)
+  const [editingParceiros, setEditingParceiros] = useState(false)
+  const [parceirosForm, setParceirosForm] = useState<Array<{imageUrl:string;url?:string}>>([])
+  const [savingParceiros, setSavingParceiros] = useState(false)
 
   const isPaymentsPage = title.toUpperCase().includes('PAGAMENTO')
   const isGuiaPage    = title.toUpperCase().includes('GUIA')
@@ -402,7 +406,8 @@ export default function PortalSubPage() {
       setPortalVideo(ps.valorVideo ?? null)
       setPortalExtras(ps.valorExtras ?? null)
       setGuiaLinks(ps.guiaLinks ?? {})
-      setParceirosLinks(ps.parceirosLinks ?? [])
+      setParceiros(ps.parceiros ?? [])
+      setPortalSettingsBlockId(d.settingsBlockId ?? null)
 
       // Auto-extract reference from portal page blocks if not in settings
       if (!ref) {
@@ -498,6 +503,15 @@ export default function PortalSubPage() {
               Fotos
             </button>
           )}
+          {!editing && !editingPhotos && !loading && !error && isGuiaPage && (
+            <button onClick={() => { setParceirosForm(parceiros.length > 0 ? parceiros : []); setEditingParceiros(true) }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white/80 border border-white/15 hover:border-white/30 transition-all">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Parceiros
+            </button>
+          )}
           {!editing && !editingPhotos && !loading && !error && (
             <button onClick={() => setEditing(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gold/60 hover:text-gold border border-gold/20 hover:border-gold/40 transition-all">
@@ -524,6 +538,67 @@ export default function PortalSubPage() {
         <div className="bg-white/[0.02] border border-white/[0.07] rounded-2xl p-5 sm:p-8">
           {editingPhotos
             ? <ImageEditor blocks={blocks} pageId={id!} onBlocksUpdated={setBlocks} onDone={handlePhotosDone} />
+            : editingParceiros
+              ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] tracking-[0.3em] text-gold uppercase">Gerir Parceiros</span>
+                    <div className="flex gap-2">
+                      <button onClick={() => setEditingParceiros(false)}
+                        className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">
+                        Cancelar
+                      </button>
+                      <button
+                        disabled={savingParceiros}
+                        onClick={async () => {
+                          setSavingParceiros(true)
+                          try {
+                            const d = await fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}`).then(r => r.json())
+                            const ps = d.settings ?? {}
+                            const sbId = d.settingsBlockId ?? null
+                            const newSettings = { ...ps, parceiros: parceirosForm }
+                            await fetch('/api/portal-settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: newSettings, settingsBlockId: sbId }) })
+                            setParceiros(parceirosForm)
+                            setEditingParceiros(false)
+                          } finally { setSavingParceiros(false) }
+                        }}
+                        className="px-4 py-1.5 rounded-lg text-xs bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-50">
+                        {savingParceiros ? 'A guardar...' : 'Guardar'}
+                      </button>
+                    </div>
+                  </div>
+                  {parceirosForm.map((p, i) => (
+                    <div key={i} className="flex gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                      <div className="flex-1 space-y-2">
+                        <label className="block text-[10px] text-white/30 tracking-widest uppercase">Parceiro {i+1}</label>
+                        <input
+                          value={p.imageUrl}
+                          onChange={e => setParceirosForm(prev => { const a=[...prev]; a[i]={...a[i],imageUrl:e.target.value}; return a })}
+                          placeholder="URL da imagem"
+                          className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
+                        />
+                        <input
+                          value={p.url ?? ''}
+                          onChange={e => setParceirosForm(prev => { const a=[...prev]; a[i]={...a[i],url:e.target.value}; return a })}
+                          placeholder="URL do site (https://...)"
+                          className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
+                        />
+                        {p.imageUrl && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={p.imageUrl} alt="" className="w-full max-h-32 object-contain rounded-lg opacity-60" />
+                        )}
+                      </div>
+                      <button onClick={() => setParceirosForm(prev => prev.filter((_,j) => j!==i))}
+                        className="text-white/20 hover:text-red-400 transition-colors text-lg mt-1">✕</button>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => setParceirosForm(prev => [...prev, { imageUrl: '', url: '' }])}
+                    className="w-full py-3 rounded-xl border border-dashed border-gold/20 text-gold/40 hover:text-gold/70 hover:border-gold/40 text-xs tracking-widest transition-all">
+                    + ADICIONAR PARCEIRO
+                  </button>
+                </div>
+              )
             : editing && id
               ? <BlockEditor blocks={blocks} pageId={id} settings={settings} settingsBlockId={settingsBlockId} onSaved={handleSaved} />
               : (
@@ -615,35 +690,40 @@ export default function PortalSubPage() {
                               ) &&
                               (b.children?.flatMap((col: Block) => col.children ?? []).length ?? 0) >= 4
                             )
-                            if (parcIdx === -1) return <NotionBlocks blocks={afterSections} hiddenNav={settings.hiddenNav} />
-                            // extract all images in column order
-                            const parcImgs: string[] = []
-                            for (const col of (afterSections[parcIdx].children ?? []) as Block[]) {
-                              for (const img of (col.children ?? []) as Block[]) {
-                                const url = img.image?.type === 'external' ? img.image.external?.url : img.image?.file?.url
-                                if (url) parcImgs.push(url)
+                            // Use settings parceiros if available, else fall back to Notion blocks
+                            const parcList = parceiros.length > 0 ? parceiros : (() => {
+                              if (parcIdx === -1) return null
+                              const imgs: Array<{imageUrl:string;url?:string}> = []
+                              for (const col of (afterSections[parcIdx].children ?? []) as Block[]) {
+                                for (const img of (col.children ?? []) as Block[]) {
+                                  const u = img.image?.type === 'external' ? img.image.external?.url : img.image?.file?.url
+                                  if (u) imgs.push({ imageUrl: u })
+                                }
                               }
-                            }
+                              return imgs
+                            })()
+                            const parcSectionEnd = parceiros.length > 0 ? (parcIdx !== -1 ? parcIdx : afterSections.length - 1) : parcIdx
                             return (
                               <>
-                                <NotionBlocks blocks={afterSections.slice(0, parcIdx)} hiddenNav={settings.hiddenNav} />
-                                <div className="grid grid-cols-2 gap-3 my-4">
-                                  {parcImgs.map((imgUrl, idx) => {
-                                    const href = parceirosLinks[idx]
-                                    const content = (
-                                      // eslint-disable-next-line @next/next/no-img-element
-                                      <img src={imgUrl} alt={`Parceiro ${idx+1}`} className="w-full object-contain rounded-xl" />
-                                    )
-                                    return href ? (
-                                      <a key={idx} href={href} target="_blank" rel="noopener noreferrer" className="block hover:opacity-80 transition-opacity">
-                                        {content}
-                                      </a>
-                                    ) : (
-                                      <div key={idx}>{content}</div>
-                                    )
-                                  })}
-                                </div>
-                                <NotionBlocks blocks={afterSections.slice(parcIdx + 1)} hiddenNav={settings.hiddenNav} />
+                                <NotionBlocks blocks={afterSections.slice(0, parcSectionEnd !== -1 ? parcSectionEnd : afterSections.length)} hiddenNav={settings.hiddenNav} />
+                                {parcList && parcList.length > 0 && (
+                                  <div className="grid grid-cols-2 gap-3 my-4">
+                                    {parcList.map((p, idx) => {
+                                      const content = (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img src={p.imageUrl} alt={`Parceiro ${idx+1}`} className="w-full object-contain rounded-xl" />
+                                      )
+                                      return p.url ? (
+                                        <a key={idx} href={p.url} target="_blank" rel="noopener noreferrer" className="block hover:opacity-80 transition-opacity">
+                                          {content}
+                                        </a>
+                                      ) : (
+                                        <div key={idx}>{content}</div>
+                                      )
+                                    })}
+                                  </div>
+                                )}
+                                {parcSectionEnd !== -1 && <NotionBlocks blocks={afterSections.slice(parcSectionEnd + 1)} hiddenNav={settings.hiddenNav} />}
                               </>
                             )
                           })()}
