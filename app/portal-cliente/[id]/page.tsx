@@ -1392,30 +1392,30 @@ function PortalSubPageContent() {
                     if (isBriefingPage) {
                       const childPages = blocks.filter(b => b.type === 'child_page')
                       const otherBlocks = blocks.filter(b => b.type !== 'child_page')
+                      const cardsGrid = childPages.length > 0 && (
+                        <div className="grid grid-cols-2 gap-3 mt-6">
+                          {childPages.map(cp => {
+                            const pageTitle = cp.child_page?.title ?? ''
+                            const href = `/portal-cliente/${cp.id}?title=${encodeURIComponent(pageTitle)}&from=${id}&fromTitle=${encodeURIComponent(title)}`
+                            return (
+                              <Link key={cp.id} href={href}>
+                                <div className="relative flex flex-col items-center justify-center gap-2 px-4 py-8 rounded-2xl border border-gold/40 bg-black cursor-pointer group hover:border-gold/80 transition-all duration-300 overflow-hidden"
+                                  style={{ boxShadow: '0 0 18px 2px rgba(212,175,55,0.18), inset 0 0 30px 0 rgba(212,175,55,0.04)' }}>
+                                  <span className="absolute inset-0 rounded-2xl pointer-events-none transition-all duration-300 group-hover:opacity-100 opacity-0"
+                                    style={{ boxShadow: '0 0 32px 6px rgba(212,175,55,0.28), inset 0 0 40px 0 rgba(212,175,55,0.08)' }} />
+                                  <span className="text-xs font-bold tracking-[0.3em] uppercase text-gold group-hover:text-white transition-all duration-300"
+                                    style={{ textShadow: '0 0 12px rgba(212,175,55,0.8), 0 0 24px rgba(212,175,55,0.4)' }}>
+                                    {pageTitle}
+                                  </span>
+                                  <span className="text-[9px] text-gold/50 tracking-widest group-hover:text-gold/80 transition-colors">Abrir →</span>
+                                </div>
+                              </Link>
+                            )
+                          })}
+                        </div>
+                      )
                       return (
                         <>
-                          {childPages.length > 0 && (
-                            <div className="grid grid-cols-2 gap-3 mb-6">
-                              {childPages.map(cp => {
-                                const pageTitle = cp.child_page?.title ?? ''
-                                const href = `/portal-cliente/${cp.id}?title=${encodeURIComponent(pageTitle)}&from=${id}&fromTitle=${encodeURIComponent(title)}`
-                                return (
-                                  <Link key={cp.id} href={href}>
-                                    <div className="relative flex flex-col items-center justify-center gap-2 px-4 py-8 rounded-2xl border border-gold/40 bg-black cursor-pointer group hover:border-gold/80 transition-all duration-300 overflow-hidden"
-                                      style={{ boxShadow: '0 0 18px 2px rgba(212,175,55,0.18), inset 0 0 30px 0 rgba(212,175,55,0.04)' }}>
-                                      <span className="absolute inset-0 rounded-2xl pointer-events-none transition-all duration-300 group-hover:opacity-100 opacity-0"
-                                        style={{ boxShadow: '0 0 32px 6px rgba(212,175,55,0.28), inset 0 0 40px 0 rgba(212,175,55,0.08)' }} />
-                                      <span className="text-xs font-bold tracking-[0.3em] uppercase text-gold group-hover:text-white transition-all duration-300"
-                                        style={{ textShadow: '0 0 12px rgba(212,175,55,0.8), 0 0 24px rgba(212,175,55,0.4)' }}>
-                                        {pageTitle}
-                                      </span>
-                                      <span className="text-[9px] text-gold/50 tracking-widest group-hover:text-gold/80 transition-colors">Abrir →</span>
-                                    </div>
-                                  </Link>
-                                )
-                              })}
-                            </div>
-                          )}
                           {(() => {
                             const infoB = briefingInfo[id as string] ?? {}
                             const briefingGeralIdx = otherBlocks.findIndex(b =>
@@ -1478,6 +1478,7 @@ function PortalSubPageContent() {
                               </>
                             )
                           })()}
+                          {cardsGrid}
                         </>
                       )
                     }
