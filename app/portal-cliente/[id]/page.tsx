@@ -704,7 +704,7 @@ export default function PortalSubPage() {
   const loadPagamentos = useCallback(async () => {
     setPagRefreshing(true)
     try {
-      const d = await fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}`).then(r => r.json())
+      const d = await fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}&bust=1`).then(r => r.json())
       const ps = d.settings ?? {}
       let ref: string = ps.referencia ?? ''
       const total: number = ps.valorTotal ?? 0

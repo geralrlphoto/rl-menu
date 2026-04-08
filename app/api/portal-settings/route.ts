@@ -23,6 +23,10 @@ export function isSettingsBlock(text: string): boolean {
   return text.startsWith(SETTINGS_PREFIX)
 }
 
+declare global {
+  var notionBlocksCache: Map<string, any> | undefined
+}
+
 // POST — save settings (update existing block or create new one)
 export async function POST(req: Request) {
   const { pageId, settings, settingsBlockId } = await req.json()
@@ -40,6 +44,8 @@ export async function POST(req: Request) {
       const d = await res.json()
       return NextResponse.json({ error: d.message }, { status: res.status })
     }
+    // Bust in-memory cache so next read gets fresh data
+    global.notionBlocksCache?.delete(pageId)
     return NextResponse.json({ ok: true, settingsBlockId })
   } else {
     // Create new block at the beginning of the page
@@ -52,6 +58,7 @@ export async function POST(req: Request) {
       const d = await res.json()
       return NextResponse.json({ error: d.message }, { status: res.status })
     }
+    global.notionBlocksCache?.delete(pageId)
     const data = await res.json()
     return NextResponse.json({ ok: true, settingsBlockId: data.results?.[0]?.id })
   }
