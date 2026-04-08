@@ -585,7 +585,7 @@ export default function PortalSubPage() {
                                   </div>
                                   {imgUrl && (
                                     // eslint-disable-next-line @next/next/no-img-element
-                                    <img src={imgUrl} alt={titleText} className="w-full aspect-[4/3] object-cover" />
+                                    <img src={imgUrl} alt={titleText} className="w-full object-contain" />
                                   )}
                                   <div className="p-3">
                                     {meta.url ? (
