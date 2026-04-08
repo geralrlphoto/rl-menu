@@ -1287,14 +1287,6 @@ function PortalSubPageContent() {
                               <NotionBlocks blocks={beforeValor} hiddenNav={settings.hiddenNav} />
                               <div className="mb-6 pb-6 border-b border-white/[0.06]">
                                 <span className="text-[10px] tracking-[0.3em] text-gold uppercase block mb-3">Financeiro</span>
-                                <div className="grid grid-cols-3 gap-3 mb-4">
-                                  {([['VALOR FOTOGRAFIA', portalFoto], ['VALOR VÍDEO', portalVideo], ['VALOR EXTRAS', portalExtras]] as [string, number | null][]).map(([lbl, val]) => (
-                                    <div key={lbl} className="flex flex-col gap-1 px-3 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-                                      <span className="text-[9px] tracking-[0.3em] text-white/25 uppercase">{lbl}</span>
-                                      <span className="text-base font-semibold text-white/70">{val !== null ? `${val.toLocaleString('pt-PT')} €` : '—'}</span>
-                                    </div>
-                                  ))}
-                                </div>
                                 <div className="flex items-center justify-between px-4 py-3 bg-gold/5 border border-gold/20 rounded-xl">
                                   <div>
                                     <span className="text-xs tracking-widest text-gold/60 uppercase block">Total do Serviço</span>
