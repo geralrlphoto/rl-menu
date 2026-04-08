@@ -335,7 +335,7 @@ export default async function Home() {
       subtitle: pwItems.length > 0 ? `${pwItems.length} reserva${pwItems.length !== 1 ? 's' : ''}` : 'Sem reservas',
       empty: 'Sem reservas recentes',
       items: pwItems,
-      href: '/portal-cliente',
+      href: '/pre-wedding',
     },
     {
       key: 'videos-prazo',
