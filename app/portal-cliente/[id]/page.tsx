@@ -705,6 +705,10 @@ function PortalSubPageContent() {
   const [briefingLinks, setBriefingLinks] = useState<Record<string, string>>({})
   const [pageHeaders, setPageHeaders] = useState<Record<string, string>>({})
   const [uploadingPageHeader, setUploadingPageHeader] = useState(false)
+  const [briefingInfo, setBriefingInfo] = useState<Record<string, { nome?: string; local?: string; hora?: string }>>({})
+  const [editingBriefingInfo, setEditingBriefingInfo] = useState(false)
+  const [briefingInfoForm, setBriefingInfoForm] = useState<{ nome: string; local: string; hora: string }>({ nome: '', local: '', hora: '' })
+  const [savingBriefingInfo, setSavingBriefingInfo] = useState(false)
   const [editingBriefing, setEditingBriefing] = useState(false)
   const [briefingForm, setBriefingForm] = useState<Record<string, string>>({})
   const [savingBriefing, setSavingBriefing] = useState(false)
@@ -744,6 +748,7 @@ function PortalSubPageContent() {
       setCalloutLinks(ps.calloutLinks ?? {})
       setBriefingLinks(ps.briefingLinks ?? {})
       setPageHeaders(ps.pageHeaders ?? {})
+      setBriefingInfo(ps.briefingInfo ?? {})
 
       // Auto-extract reference from portal page blocks if not in settings
       if (!ref) {
@@ -853,6 +858,20 @@ function PortalSubPageContent() {
       })
       setPageHeaders(newPH)
     } finally { setUploadingPageHeader(false) }
+  }
+
+  async function handleSaveBriefingInfo() {
+    if (!id) return
+    setSavingBriefingInfo(true)
+    const newBI = { ...briefingInfo, [id as string]: briefingInfoForm }
+    await fetch('/api/portais-clientes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: { ...portalSettingsObj, briefingInfo: newBI }, settingsBlockId: portalSettingsBlockId }),
+    })
+    setBriefingInfo(newBI)
+    setEditingBriefingInfo(false)
+    setSavingBriefingInfo(false)
   }
 
   async function handleSaveCalloutLinks() {
@@ -1379,6 +1398,84 @@ function PortalSubPageContent() {
                             </div>
                           )}
                           <NotionBlocks blocks={otherBlocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+                        </>
+                      )
+                    }
+                    const isBriefingChildPage = fromTitle?.toUpperCase().includes('BRIEFING')
+                    if (isBriefingChildPage) {
+                      const info = briefingInfo[id as string] ?? {}
+                      return (
+                        <>
+                          {/* Briefing info section */}
+                          <div className="mb-6 pb-6 border-b border-white/[0.06]">
+                            <div className="flex items-center justify-between mb-3">
+                              <span className="text-[10px] tracking-[0.3em] text-gold uppercase">Informação</span>
+                              {!editingBriefingInfo && (
+                                <button
+                                  onClick={() => {
+                                    setBriefingInfoForm({ nome: info.nome ?? '', local: info.local ?? '', hora: info.hora ?? '' })
+                                    setEditingBriefingInfo(true)
+                                  }}
+                                  className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors text-white/30 hover:text-white/70"
+                                  title="Editar informação">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
+                            {editingBriefingInfo ? (
+                              <div className="space-y-3">
+                                <div>
+                                  <label className="block text-[9px] text-white/30 tracking-widest uppercase mb-1">
+                                    {title.toUpperCase().includes('NOIVA') ? 'Nome Noiva' : title.toUpperCase().includes('CERIM') ? 'Local Cerimónia' : title.toUpperCase().includes('QUINTA') ? 'Nome Quinta' : 'Nome Noivo'}
+                                  </label>
+                                  <input type="text" value={briefingInfoForm.nome}
+                                    onChange={e => setBriefingInfoForm(f => ({ ...f, nome: e.target.value }))}
+                                    placeholder={title.toUpperCase().includes('NOIVA') ? 'ex: Maria' : title.toUpperCase().includes('CERIM') ? 'ex: Igreja de S. Domingos' : title.toUpperCase().includes('QUINTA') ? 'ex: Quinta da Ribeira' : 'ex: João'}
+                                    className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
+                                </div>
+                                <div>
+                                  <label className="block text-[9px] text-white/30 tracking-widest uppercase mb-1">Local Preparação</label>
+                                  <input type="text" value={briefingInfoForm.local}
+                                    onChange={e => setBriefingInfoForm(f => ({ ...f, local: e.target.value }))}
+                                    placeholder="ex: Hotel Ritz, Lisboa"
+                                    className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
+                                </div>
+                                <div>
+                                  <label className="block text-[9px] text-white/30 tracking-widest uppercase mb-1">Hora de Início</label>
+                                  <input type="text" value={briefingInfoForm.hora}
+                                    onChange={e => setBriefingInfoForm(f => ({ ...f, hora: e.target.value }))}
+                                    placeholder="ex: 09:00"
+                                    className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
+                                </div>
+                                <div className="flex gap-2 pt-1">
+                                  <button onClick={handleSaveBriefingInfo} disabled={savingBriefingInfo}
+                                    className="flex-1 py-2 rounded-xl bg-gold text-black font-semibold text-xs tracking-widest hover:bg-gold/80 transition-all disabled:opacity-50">
+                                    {savingBriefingInfo ? 'A guardar...' : 'Guardar'}
+                                  </button>
+                                  <button onClick={() => setEditingBriefingInfo(false)}
+                                    className="flex-1 py-2 rounded-xl border border-white/10 text-white/50 text-xs tracking-widest hover:bg-white/[0.04] transition-all">
+                                    Cancelar
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                {[
+                                  { label: title.toUpperCase().includes('NOIVA') ? 'Nome Noiva' : title.toUpperCase().includes('CERIM') ? 'Local Cerimónia' : title.toUpperCase().includes('QUINTA') ? 'Nome Quinta' : 'Nome Noivo', value: info.nome },
+                                  { label: 'Local Preparação', value: info.local },
+                                  { label: 'Hora de Início', value: info.hora },
+                                ].map(({ label, value }) => (
+                                  <div key={label} className="flex items-center justify-between px-4 py-2.5 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+                                    <span className="text-[10px] tracking-widest text-white/35 uppercase">{label}</span>
+                                    <span className="text-sm text-white/70 font-medium">{value || <span className="text-white/20 text-xs italic">—</span>}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
                         </>
                       )
                     }
