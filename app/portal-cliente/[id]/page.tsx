@@ -1293,13 +1293,13 @@ function PortalSubPageContent() {
                                     <span className="text-[10px] text-white/20">(Fotografia + Vídeo)</span>
                                   </div>
                                   <span className="text-gold font-bold text-lg">
-                                    {((portalFoto ?? 0) + (portalVideo ?? 0)).toLocaleString('pt-PT')} €
+                                    {(eventoData?.valor_liquido || portalTotal ?? 0).toLocaleString('pt-PT')} €
                                   </span>
                                 </div>
                               </div>
                               <PaymentPhasesSection
                                 referencia={portalRef}
-                                valorTotal={portalTotal}
+                                valorTotal={eventoData?.valor_liquido || portalTotal}
                                 pagamentos={pagamentos}
                                 onRefresh={loadPagamentos}
                                 refreshing={pagRefreshing}
