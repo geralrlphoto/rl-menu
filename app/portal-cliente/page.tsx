@@ -35,6 +35,7 @@ type PortalSettings = {
   subpageHeaderUrl?: string
   preWeddingSlots?: Array<{ id: string; date: string; time: string; local: string }>
   preWeddingReservedSlotId?: string
+  preWeddingReservedAt?: string
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────

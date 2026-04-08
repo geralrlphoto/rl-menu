@@ -242,12 +242,33 @@ export default async function Home() {
   const noiva: string  = ps.noiva  ?? ''
   const noivo: string  = ps.noivo  ?? ''
   const pwSlots: any[] = ps.preWeddingSlots ?? []
-  const pwReservedId: string | null = ps.preWeddingReservedSlotId ?? null
+  const pwReservedId: string | null   = ps.preWeddingReservedSlotId ?? null
+  const pwReservedAt: string | null   = ps.preWeddingReservedAt ?? null
   const pwReservedSlot = pwReservedId ? pwSlots.find((s: any) => s.id === pwReservedId) : null
   const coupleNames = [noiva, noivo].filter(Boolean).join(' & ') || 'Casal'
+
   function fmtPwDate(date: string, time: string, local: string) {
     const [, m, d] = date.split('-').map(Number)
     return `${String(d).padStart(2,'0')} ${MESES[m-1]}${time ? ` · ${time}` : ''}${local ? ` · ${local}` : ''}`
+  }
+
+  // Show if: reserved ≤5 days ago, OR pre-wedding date ≤15 days away
+  const pwItems: { main: string; sub: string; tag: string | null; tagColor: string }[] = []
+  if (pwReservedSlot) {
+    const reservedDaysAgo  = pwReservedAt
+      ? Math.round((Date.now() - new Date(pwReservedAt).getTime()) / 86400000)
+      : 0
+    const daysToEvent = daysUntil(pwReservedSlot.date)
+    const show = reservedDaysAgo <= 5 || daysToEvent <= 15
+    if (show) {
+      const isUrgent = daysToEvent <= 15
+      pwItems.push({
+        main: coupleNames,
+        sub: fmtPwDate(pwReservedSlot.date, pwReservedSlot.time, pwReservedSlot.local),
+        tag: isUrgent ? `${daysToEvent}d` : '✓ Reservado',
+        tagColor: isUrgent ? 'text-red-400' : 'text-emerald-400',
+      })
+    }
   }
 
   // ── Temperatura das leads ─────────────────────────────────────────────────
@@ -311,14 +332,9 @@ export default async function Home() {
     {
       key: 'pre-wedding',
       title: ['PRÉ', 'WEDDING'],
-      subtitle: pwReservedSlot ? '1 reserva confirmada' : 'Sem reservas',
-      empty: 'Sem reservas de pré-wedding',
-      items: pwReservedSlot ? [{
-        main: coupleNames,
-        sub: fmtPwDate(pwReservedSlot.date, pwReservedSlot.time, pwReservedSlot.local),
-        tag: '✓ Reservado',
-        tagColor: 'text-emerald-400',
-      }] : [],
+      subtitle: pwItems.length > 0 ? `${pwItems.length} reserva${pwItems.length !== 1 ? 's' : ''}` : 'Sem reservas',
+      empty: 'Sem reservas recentes',
+      items: pwItems,
       href: '/portal-cliente',
     },
     {

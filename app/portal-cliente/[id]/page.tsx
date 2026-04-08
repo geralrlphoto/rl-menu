@@ -954,7 +954,7 @@ export default function PortalSubPage() {
                               const d = await fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}`).then(r => r.json())
                               const ps = d.settings ?? {}
                               const sbId = d.settingsBlockId ?? null
-                              await fetch('/api/portal-settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: { ...ps, preWeddingReservedSlotId: slotId }, settingsBlockId: sbId }) })
+                              await fetch('/api/portal-settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: { ...ps, preWeddingReservedSlotId: slotId, preWeddingReservedAt: new Date().toISOString() }, settingsBlockId: sbId }) })
                               setReservedSlotId(slotId)
                             } finally { setReservingSlotId(null) }
                           }}
