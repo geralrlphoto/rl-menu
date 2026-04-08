@@ -26,7 +26,7 @@ export function isSettingsBlock(text: string): boolean {
 }
 
 declare global {
-  var notionBlocksCache: Map<string, any> | undefined
+  var notionBlocksCache: Map<string, { blocks: any[]; settings: any; settingsBlockId: string | null; ts: number }> | undefined
 }
 
 // POST — save settings (update existing block or create new one)
