@@ -700,11 +700,16 @@ function PortalSubPageContent() {
   const [editingCalloutLinks, setEditingCalloutLinks] = useState(false)
   const [calloutLinksForm, setCalloutLinksForm] = useState<Record<string, string>>({})
   const [savingCalloutLinks, setSavingCalloutLinks] = useState(false)
+  const [briefingLinks, setBriefingLinks] = useState<Record<string, string>>({})
+  const [editingBriefing, setEditingBriefing] = useState(false)
+  const [briefingForm, setBriefingForm] = useState<Record<string, string>>({})
+  const [savingBriefing, setSavingBriefing] = useState(false)
 
   const isPaymentsPage    = title.toUpperCase().includes('PAGAMENTO')
   const isGuiaPage        = title.toUpperCase().includes('GUIA') && !title.toUpperCase().includes('WEDDING')
   const isPreWeddingPage  = title.toUpperCase().includes('WEDDING')
   const isContratoPage    = title.toUpperCase().includes('CONTRATO')
+  const isBriefingPage    = title.toUpperCase().includes('BRIEFING')
 
   const loadPagamentos = useCallback(async () => {
     setPagRefreshing(true)
@@ -733,6 +738,7 @@ function PortalSubPageContent() {
       setPageTitles(pt)
       if (id && pt[id as string]) setTitle(pt[id as string])
       setCalloutLinks(ps.calloutLinks ?? {})
+      setBriefingLinks(ps.briefingLinks ?? {})
 
       // Auto-extract reference from portal page blocks if not in settings
       if (!ref) {
@@ -843,6 +849,19 @@ function PortalSubPageContent() {
     setSavingCalloutLinks(false)
   }
 
+  async function handleSaveBriefing() {
+    setSavingBriefing(true)
+    const newBL = { ...briefingLinks, ...briefingForm }
+    await fetch('/api/portais-clientes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: { ...portalSettingsObj, briefingLinks: newBL }, settingsBlockId: portalSettingsBlockId }),
+    })
+    setBriefingLinks(newBL)
+    setEditingBriefing(false)
+    setSavingBriefing(false)
+  }
+
   // Find all callout blocks (with images) across blocks tree
   function findCalloutCards(bks: Block[]): Block[] {
     const out: Block[] = []
@@ -889,6 +908,15 @@ function PortalSubPageContent() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
               Parceiros
+            </button>
+          )}
+          {!editing && !editingPhotos && !loading && !error && isBriefingPage && (
+            <button onClick={() => { setBriefingForm({ ...briefingLinks }); setEditingBriefing(true) }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white/80 border border-white/15 hover:border-white/30 transition-all">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+              </svg>
+              Secções
             </button>
           )}
           {!editing && !editingPhotos && !loading && !error && (() => {
@@ -1088,6 +1116,36 @@ function PortalSubPageContent() {
                   </button>
                 </div>
               )
+            : editingBriefing
+              ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] tracking-[0.3em] text-gold uppercase">Secções do Briefing</span>
+                    <div className="flex gap-2">
+                      <button onClick={() => setEditingBriefing(false)}
+                        className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">
+                        Cancelar
+                      </button>
+                      <button onClick={handleSaveBriefing} disabled={savingBriefing}
+                        className="px-4 py-1.5 rounded-lg text-xs bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-50">
+                        {savingBriefing ? 'A guardar...' : 'Guardar'}
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-white/30 tracking-wide">Cola o URL da sub-página do portal ou link externo para cada secção.</p>
+                  {(['NOIVO', 'NOIVA', 'CERIMÓNIA', 'QUINTA'] as const).map(section => (
+                    <div key={section} className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-2">
+                      <label className="block text-[10px] text-white/40 tracking-widest uppercase">{section}</label>
+                      <input
+                        value={briefingForm[section] ?? ''}
+                        onChange={e => setBriefingForm(prev => ({ ...prev, [section]: e.target.value }))}
+                        placeholder="https://... ou /portal-cliente/..."
+                        className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )
             : editingCalloutLinks
               ? (
                 <div className="space-y-4">
@@ -1262,6 +1320,42 @@ function PortalSubPageContent() {
                             } finally { setReservingSlotId(null) }
                           }}
                         />
+                      )
+                    }
+                    if (isBriefingPage) {
+                      const BRIEFING_SECTIONS = [
+                        { key: 'NOIVO',    icon: '🤵', color: 'from-zinc-900 to-zinc-800' },
+                        { key: 'NOIVA',    icon: '👰', color: 'from-zinc-900 to-zinc-800' },
+                        { key: 'CERIMÓNIA', icon: '💍', color: 'from-zinc-900 to-zinc-800' },
+                        { key: 'QUINTA',   icon: '🏛️', color: 'from-zinc-900 to-zinc-800' },
+                      ]
+                      return (
+                        <>
+                          <div className="grid grid-cols-2 gap-3 mb-6">
+                            {BRIEFING_SECTIONS.map(({ key, icon }) => {
+                              const url = briefingLinks[key]
+                              const inner = (
+                                <div className={`flex flex-col items-center justify-center gap-3 px-4 py-8 rounded-2xl border transition-all
+                                  ${url
+                                    ? 'border-gold/30 bg-gold/5 hover:bg-gold/10 hover:border-gold/50 cursor-pointer'
+                                    : 'border-white/[0.07] bg-white/[0.02] opacity-50 cursor-default'
+                                  }`}>
+                                  <span className="text-3xl">{icon}</span>
+                                  <span className="text-xs font-bold tracking-[0.25em] text-white/70 uppercase">{key}</span>
+                                  {url && <span className="text-[9px] text-gold/50 tracking-widest">Abrir →</span>}
+                                </div>
+                              )
+                              return url ? (
+                                <a key={key} href={url} target={url.startsWith('http') ? '_blank' : '_self'} rel="noopener noreferrer">
+                                  {inner}
+                                </a>
+                              ) : (
+                                <div key={key}>{inner}</div>
+                              )
+                            })}
+                          </div>
+                          <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
+                        </>
                       )
                     }
                     if (isGuiaPage) {
