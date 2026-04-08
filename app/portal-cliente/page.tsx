@@ -416,6 +416,11 @@ function SettingsPanel({
                       arr[i] = { ...arr[i], imageUrl: url }
                       return { ...prev, parceiros: arr }
                     })}
+                    onClear={() => setForm(prev => {
+                      const arr = [...(prev.parceiros ?? [])]
+                      arr[i] = { ...arr[i], imageUrl: '' }
+                      return { ...prev, parceiros: arr }
+                    })}
                   />
                   <input
                     value={p.url ?? ''}
