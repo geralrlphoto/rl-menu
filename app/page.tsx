@@ -276,6 +276,14 @@ export default async function Home() {
       href: '/albuns-casamento',
     },
     {
+      key: 'pre-wedding',
+      title: ['PRÉ', 'WEDDING'],
+      subtitle: 'Em breve',
+      empty: 'Sem informação de pré-weddings',
+      items: [],
+      href: '/eventos-2026',
+    },
+    {
       key: 'videos-prazo',
       title: ['VÍDEOS', 'PRAZO'],
       subtitle: videosAlerta.length > 0
