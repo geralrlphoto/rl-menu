@@ -364,6 +364,170 @@ function PaymentPhasesSection({ referencia, valorTotal, pagamentos, onRefresh, r
   )
 }
 
+// ─── pre-wedding calendar ─────────────────────────────────────────────────────
+
+type PreWeddingSlot = { id: string; date: string; time: string; local: string }
+
+function PreWeddingSection({ slots, blocks, settings }: {
+  slots: PreWeddingSlot[]
+  blocks: Block[]
+  settings: { hiddenNav: string[] }
+}) {
+  const MESES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+  const DIAS_ABBR  = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
+
+  const today = new Date()
+  const [year, setYear]   = useState(today.getFullYear())
+  const [month, setMonth] = useState(today.getMonth())
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+
+  const slotsOnDate = (dateStr: string) => slots.filter(s => s.date === dateStr)
+  const hasSlots    = (dateStr: string) => slotsOnDate(dateStr).length > 0
+
+  function calDays(): Array<{ dateStr: string | null; day: number | null }> {
+    const firstDow = new Date(year, month, 1).getDay()
+    const daysInMonth = new Date(year, month + 1, 0).getDate()
+    const cells: Array<{ dateStr: string | null; day: number | null }> = []
+    for (let i = 0; i < firstDow; i++) cells.push({ dateStr: null, day: null })
+    for (let d = 1; d <= daysInMonth; d++) {
+      const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+      cells.push({ dateStr: ds, day: d })
+    }
+    return cells
+  }
+
+  function prevMonth() {
+    if (month === 0) { setMonth(11); setYear(y => y - 1) }
+    else setMonth(m => m - 1)
+    setSelectedDate(null)
+  }
+  function nextMonth() {
+    if (month === 11) { setMonth(0); setYear(y => y + 1) }
+    else setMonth(m => m + 1)
+    setSelectedDate(null)
+  }
+
+  const cells = calDays()
+  const selectedSlots = selectedDate ? slotsOnDate(selectedDate) : []
+  const hasAnySlot = slots.length > 0
+
+  const fmtDate = (ds: string) => {
+    const [y, m, d] = ds.split('-').map(Number)
+    return `${String(d).padStart(2,'0')} ${MESES_FULL[m-1]} ${y}`
+  }
+
+  return (
+    <>
+      <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
+      <div className="mt-8 pt-6 border-t border-white/[0.06]">
+        {/* Section header */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-1 h-5 bg-gold rounded-full" />
+          <span className="text-[11px] tracking-[0.4em] text-gold uppercase font-semibold">Marcar Pré-Wedding</span>
+        </div>
+
+        {!hasAnySlot ? (
+          <div className="flex flex-col items-center justify-center py-10 rounded-2xl border border-white/[0.06] bg-white/[0.01] text-center">
+            <svg className="w-8 h-8 text-white/15 mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+            </svg>
+            <p className="text-xs text-white/25 tracking-wide">Ainda não há datas disponíveis.</p>
+            <p className="text-[10px] text-white/15 mt-1">Em breve serão disponibilizadas datas para o pré-wedding.</p>
+          </div>
+        ) : (
+          <>
+            {/* Calendar */}
+            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] overflow-hidden mb-4">
+              {/* Month navigation */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
+                <button onClick={prevMonth}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/10 text-white/40 hover:text-white/80 transition-all">
+                  ‹
+                </button>
+                <span className="text-xs tracking-[0.2em] text-white/60 uppercase font-medium">
+                  {MESES_FULL[month]} {year}
+                </span>
+                <button onClick={nextMonth}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/10 text-white/40 hover:text-white/80 transition-all">
+                  ›
+                </button>
+              </div>
+              {/* Day headers */}
+              <div className="grid grid-cols-7 border-b border-white/[0.04]">
+                {DIAS_ABBR.map(d => (
+                  <div key={d} className="py-2 text-center text-[9px] tracking-widest text-white/20 uppercase">{d}</div>
+                ))}
+              </div>
+              {/* Day cells */}
+              <div className="grid grid-cols-7 p-2 gap-1">
+                {cells.map((cell, idx) => {
+                  if (!cell.dateStr) return <div key={idx} />
+                  const active = hasSlots(cell.dateStr)
+                  const selected = selectedDate === cell.dateStr
+                  return (
+                    <button
+                      key={cell.dateStr}
+                      onClick={() => active ? setSelectedDate(selected ? null : cell.dateStr) : undefined}
+                      disabled={!active}
+                      className={`relative aspect-square flex flex-col items-center justify-center rounded-xl text-xs font-medium transition-all
+                        ${active
+                          ? selected
+                            ? 'bg-gold text-black font-bold'
+                            : 'bg-gold/15 border border-gold/30 text-gold hover:bg-gold/25 cursor-pointer'
+                          : 'text-white/20 cursor-default'
+                        }`}
+                    >
+                      {cell.day}
+                      {active && !selected && (
+                        <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-gold/60" />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Selected day slots */}
+            {selectedDate && selectedSlots.length > 0 && (
+              <div className="rounded-2xl border border-gold/20 bg-gold/5 p-4 space-y-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
+                  <span className="text-[10px] tracking-[0.3em] text-gold uppercase">Disponível — {fmtDate(selectedDate)}</span>
+                </div>
+                {selectedSlots.map(slot => (
+                  <div key={slot.id} className="flex items-center gap-4 px-4 py-3 rounded-xl bg-black/30 border border-white/[0.06]">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-3.5 h-3.5 text-gold/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-sm font-semibold text-white/80">{slot.time}</span>
+                    </div>
+                    {slot.local && (
+                      <div className="flex items-center gap-2">
+                        <svg className="w-3.5 h-3.5 text-gold/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                        </svg>
+                        <span className="text-sm text-white/60">{slot.local}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Hint */}
+            {!selectedDate && (
+              <p className="text-center text-[10px] text-white/20 tracking-wide mt-2">
+                Seleciona um dia marcado a dourado para ver a disponibilidade
+              </p>
+            )}
+          </>
+        )}
+      </div>
+    </>
+  )
+}
+
 // ─── main page ────────────────────────────────────────────────────────────────
 
 export default function PortalSubPage() {
@@ -392,9 +556,14 @@ export default function PortalSubPage() {
   const [parceirosForm, setParceirosForm] = useState<Array<{imageUrl:string;url?:string}>>([])
   const [savingParceiros, setSavingParceiros] = useState(false)
   const [subpageHeaderUrl, setSubpageHeaderUrl] = useState('')
+  const [preWeddingSlots, setPreWeddingSlots] = useState<Array<{id:string;date:string;time:string;local:string}>>([])
+  const [editingPreWedding, setEditingPreWedding] = useState(false)
+  const [preWeddingForm, setPreWeddingForm] = useState<Array<{id:string;date:string;time:string;local:string}>>([])
+  const [savingSlots, setSavingSlots] = useState(false)
 
-  const isPaymentsPage = title.toUpperCase().includes('PAGAMENTO')
-  const isGuiaPage    = title.toUpperCase().includes('GUIA')
+  const isPaymentsPage    = title.toUpperCase().includes('PAGAMENTO')
+  const isGuiaPage        = title.toUpperCase().includes('GUIA') && !title.toUpperCase().includes('WEDDING')
+  const isPreWeddingPage  = title.toUpperCase().includes('WEDDING')
 
   const loadPagamentos = useCallback(async () => {
     setPagRefreshing(true)
@@ -410,6 +579,7 @@ export default function PortalSubPage() {
       setParceiros(ps.parceiros ?? [])
       setPortalSettingsBlockId(d.settingsBlockId ?? null)
       setSubpageHeaderUrl(ps.subpageHeaderUrl ?? '')
+      setPreWeddingSlots(ps.preWeddingSlots ?? [])
 
       // Auto-extract reference from portal page blocks if not in settings
       if (!ref) {
@@ -512,6 +682,15 @@ export default function PortalSubPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
               Parceiros
+            </button>
+          )}
+          {!editing && !editingPhotos && !loading && !error && isPreWeddingPage && (
+            <button onClick={() => { setPreWeddingForm(preWeddingSlots.map(s => ({...s}))); setEditingPreWedding(true) }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white/80 border border-white/15 hover:border-white/30 transition-all">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+              </svg>
+              Agenda
             </button>
           )}
           {!editing && !editingPhotos && !loading && !error && (
@@ -652,6 +831,79 @@ export default function PortalSubPage() {
                   </button>
                 </div>
               )
+            : editingPreWedding
+              ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] tracking-[0.3em] text-gold uppercase">Gerir Disponibilidade Pré-Wedding</span>
+                    <div className="flex gap-2">
+                      <button onClick={() => setEditingPreWedding(false)}
+                        className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">
+                        Cancelar
+                      </button>
+                      <button
+                        disabled={savingSlots}
+                        onClick={async () => {
+                          setSavingSlots(true)
+                          try {
+                            const d = await fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}`).then(r => r.json())
+                            const ps = d.settings ?? {}
+                            const sbId = d.settingsBlockId ?? null
+                            const newSettings = { ...ps, preWeddingSlots: preWeddingForm }
+                            await fetch('/api/portal-settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: newSettings, settingsBlockId: sbId }) })
+                            setPreWeddingSlots(preWeddingForm)
+                            setEditingPreWedding(false)
+                          } finally { setSavingSlots(false) }
+                        }}
+                        className="px-4 py-1.5 rounded-lg text-xs bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-50">
+                        {savingSlots ? 'A guardar...' : 'Guardar'}
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-white/30 tracking-wide mb-4">Adiciona os dias e horários que disponibilizas para o pré-wedding. Apenas tu vês este painel.</p>
+                  {preWeddingForm.map((slot, i) => (
+                    <div key={slot.id} className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-white/30 tracking-widest uppercase">Slot {i+1}</span>
+                        <button onClick={() => setPreWeddingForm(prev => prev.filter(s => s.id !== slot.id))}
+                          className="text-white/20 hover:text-red-400 transition-colors text-sm">✕ Remover</button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="col-span-1">
+                          <label className="block text-[9px] text-white/25 tracking-widest uppercase mb-1">Data</label>
+                          <input type="date"
+                            value={slot.date}
+                            onChange={e => setPreWeddingForm(prev => prev.map(s => s.id===slot.id ? {...s, date: e.target.value} : s))}
+                            className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-2 py-2 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors"
+                          />
+                        </div>
+                        <div className="col-span-1">
+                          <label className="block text-[9px] text-white/25 tracking-widest uppercase mb-1">Hora</label>
+                          <input type="time"
+                            value={slot.time}
+                            onChange={e => setPreWeddingForm(prev => prev.map(s => s.id===slot.id ? {...s, time: e.target.value} : s))}
+                            className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-2 py-2 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors"
+                          />
+                        </div>
+                        <div className="col-span-1">
+                          <label className="block text-[9px] text-white/25 tracking-widest uppercase mb-1">Local</label>
+                          <input type="text"
+                            value={slot.local}
+                            onChange={e => setPreWeddingForm(prev => prev.map(s => s.id===slot.id ? {...s, local: e.target.value} : s))}
+                            placeholder="ex: Sintra"
+                            className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-2 py-2 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => setPreWeddingForm(prev => [...prev, { id: `slot-${Date.now()}`, date: '', time: '', local: '' }])}
+                    className="w-full py-3 rounded-xl border border-dashed border-gold/20 text-gold/40 hover:text-gold/70 hover:border-gold/40 text-xs tracking-widest transition-all">
+                    + ADICIONAR SLOT
+                  </button>
+                </div>
+              )
             : editing && id
               ? <BlockEditor blocks={blocks} pageId={id} settings={settings} settingsBlockId={settingsBlockId} onSaved={handleSaved} />
               : (
@@ -663,6 +915,9 @@ export default function PortalSubPage() {
                     </Link>
                   </div>
                   {(() => {
+                    if (isPreWeddingPage) {
+                      return <PreWeddingSection slots={preWeddingSlots} blocks={blocks} settings={settings} />
+                    }
                     if (isGuiaPage) {
                       // ── GUIA DOS NOIVOS: the 4 sections live inside a column_list ──
                       // Structure: column_list → [column[BLOG, FOTOS], column[DADOS, PAGAMENTOS]]

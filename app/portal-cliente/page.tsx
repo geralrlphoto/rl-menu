@@ -33,6 +33,7 @@ type PortalSettings = {
   }
   parceiros?: Array<{ imageUrl: string; url?: string }>
   subpageHeaderUrl?: string
+  preWeddingSlots?: Array<{ id: string; date: string; time: string; local: string }>
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
