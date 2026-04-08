@@ -1416,11 +1416,14 @@ function PortalSubPageContent() {
                               })}
                             </div>
                           )}
-                          {/* Informação Geral on BRIEFING parent page */}
                           {(() => {
                             const infoB = briefingInfo[id as string] ?? {}
-                            return (
-                              <div className="mb-6 pb-6 border-b border-white/[0.06]">
+                            const briefingGeralIdx = otherBlocks.findIndex(b =>
+                              ['heading_1','heading_2','heading_3'].includes(b.type) &&
+                              plainText(b[b.type]?.rich_text ?? []).toUpperCase().includes('BRIEFING GERAL')
+                            )
+                            const infoGeralBox = (
+                              <div className="my-4 pb-4 border-b border-white/[0.06]">
                                 <div className="flex items-center justify-between mb-3">
                                   <span className="text-[10px] tracking-[0.3em] text-gold uppercase">Informação Geral</span>
                                   {!editingInfoGeral && (
@@ -1459,8 +1462,22 @@ function PortalSubPageContent() {
                                 )}
                               </div>
                             )
+                            if (briefingGeralIdx === -1) {
+                              return (
+                                <>
+                                  <NotionBlocks blocks={otherBlocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+                                  {infoGeralBox}
+                                </>
+                              )
+                            }
+                            return (
+                              <>
+                                <NotionBlocks blocks={otherBlocks.slice(0, briefingGeralIdx + 1)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+                                {infoGeralBox}
+                                <NotionBlocks blocks={otherBlocks.slice(briefingGeralIdx + 1)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+                              </>
+                            )
                           })()}
-                          <NotionBlocks blocks={otherBlocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
                         </>
                       )
                     }
