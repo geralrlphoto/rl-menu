@@ -1,7 +1,6 @@
 'use client'
 
-import React from 'react'
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 
@@ -17,9 +16,31 @@ function fmt(v: string | null | undefined) {
   return v && v.trim() ? v.trim() : '____________________________'
 }
 
-function fmtVal(v: number | null) {
+function fmtVal(v: number | null | undefined) {
   if (!v) return '______ €'
   return v.toLocaleString('pt-PT', { minimumFractionDigits: 2 }) + ' €'
+}
+
+// Inline editable field
+function F({ field, draft, editing, onChange, type = 'text', placeholder }: {
+  field: string; draft: any; editing: boolean; onChange: (f: string, v: any) => void
+  type?: 'text' | 'number' | 'date' | 'email' | 'tel'; placeholder?: string
+}) {
+  const val = draft[field]
+  if (!editing) {
+    if (type === 'number') return <span>{fmtVal(val)}</span>
+    if (type === 'date') return <span>{formatDate(val)}</span>
+    return <span>{fmt(val)}</span>
+  }
+  return (
+    <input
+      type={type}
+      value={val ?? ''}
+      onChange={e => onChange(field, type === 'number' ? (e.target.value === '' ? null : Number(e.target.value)) : e.target.value)}
+      placeholder={placeholder ?? field}
+      className="border-b border-zinc-400 bg-yellow-50 outline-none px-1 py-0.5 text-sm w-full min-w-[120px] focus:border-amber-500"
+    />
+  )
 }
 
 function Clausula({ n, title, children }: { n: string; title: string; children: React.ReactNode }) {
@@ -36,55 +57,106 @@ function Clausula({ n, title, children }: { n: string; title: string; children: 
 export default function ContratoPage() {
   const { id } = useParams<{ id: string }>()
   const [evento, setEvento] = useState<any>(null)
+  const [draft, setDraft] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
 
   useEffect(() => {
     if (!id) return
     fetch(`/api/eventos-notion/${id}`)
       .then(r => r.json())
-      .then(d => { if (d.event) setEvento(d.event) })
+      .then(d => { if (d.event) { setEvento(d.event); setDraft(d.event) } })
       .finally(() => setLoading(false))
   }, [id])
 
+  function change(field: string, value: any) {
+    setDraft((prev: any) => ({ ...prev, [field]: value }))
+  }
+
+  async function handleSave() {
+    setSaving(true)
+    const fields = ['nome_noiva','nome_noivo','cc_noiva','cc_noivo','nif_noiva','nif_noivo',
+      'morada_noiva','morada_noivo','email_noiva','email_noivo','tel_noiva','tel_noivo',
+      'data_evento','local','proposta','valor_foto','valor_video','valor_extras','valor_liquido']
+    const payload: any = {}
+    for (const f of fields) payload[f] = draft[f] ?? null
+    await fetch(`/api/eventos-notion/${id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    setEvento(draft)
+    setSaving(false)
+    setEditing(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 3000)
+  }
+
   if (loading) return (
-    <main className="min-h-screen flex items-center justify-center">
-      <span className="text-white/20 text-xs tracking-widest">A carregar...</span>
+    <main className="min-h-screen flex items-center justify-center bg-white">
+      <span className="text-zinc-400 text-xs tracking-widest">A carregar...</span>
+    </main>
+  )
+  if (!draft) return (
+    <main className="min-h-screen flex items-center justify-center bg-white">
+      <span className="text-red-400 text-sm">Evento não encontrado.</span>
     </main>
   )
 
-  if (!evento) return (
-    <main className="min-h-screen flex items-center justify-center">
-      <span className="text-red-400/60 text-sm">Evento não encontrado.</span>
-    </main>
-  )
-
-  const e = evento
+  const e = draft
   const hoje = formatDate(new Date().toISOString().split('T')[0])
-  const totalServicos = (e.valor_foto ?? 0) + (e.valor_video ?? 0) + (e.valor_extras ?? 0)
-
-  const servicosFoto: string[] = e.servico_foto ?? []
-  const servicosVideo: string[] = e.servico_video ?? []
-  const servicosExtra: string[] = e.servico_extra ?? []
+  const servicosFoto: string[] = evento.servico_foto ?? []
+  const servicosVideo: string[] = evento.servico_video ?? []
+  const servicosExtra: string[] = evento.servico_extra ?? []
 
   return (
     <main className="min-h-screen bg-white text-black">
-      {/* Toolbar — não imprime */}
-      <div className="print:hidden sticky top-0 z-50 bg-zinc-900 border-b border-white/10 px-6 py-3 flex items-center gap-4">
+      {/* Toolbar */}
+      <div className="print:hidden sticky top-0 z-50 bg-zinc-900 border-b border-white/10 px-6 py-3 flex items-center gap-3">
         <Link href={`/eventos-2026/${id}`}
-          className="flex items-center gap-2 text-xs text-white/50 hover:text-white/80 transition-colors">
+          className="text-xs text-white/50 hover:text-white/80 transition-colors">
           ‹ Voltar
         </Link>
         <div className="flex-1" />
         <span className="text-xs text-white/30 tracking-widest uppercase">{e.referencia} — {e.cliente}</span>
-        <button
-          onClick={() => window.print()}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 text-black text-xs font-bold tracking-wider hover:bg-amber-400 transition-all">
-          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-          </svg>
-          Imprimir / Guardar PDF
-        </button>
+        {saved && <span className="text-xs text-green-400 font-semibold">✓ Guardado</span>}
+        {editing ? (
+          <>
+            <button onClick={() => { setDraft(evento); setEditing(false) }}
+              className="px-3 py-2 rounded-lg border border-white/20 text-white/50 text-xs hover:text-white/80 transition-all">
+              Cancelar
+            </button>
+            <button onClick={handleSave} disabled={saving}
+              className="px-4 py-2 rounded-lg bg-green-500 text-white text-xs font-bold tracking-wider hover:bg-green-400 transition-all disabled:opacity-50">
+              {saving ? 'A guardar...' : '✓ Guardar'}
+            </button>
+          </>
+        ) : (
+          <>
+            <button onClick={() => setEditing(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-amber-500/40 text-amber-400 text-xs hover:bg-amber-500/10 transition-all">
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Editar
+            </button>
+            <button onClick={() => window.print()}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 text-black text-xs font-bold tracking-wider hover:bg-amber-400 transition-all">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+              Imprimir / Guardar PDF
+            </button>
+          </>
+        )}
       </div>
+
+      {editing && (
+        <div className="print:hidden bg-amber-50 border-b border-amber-200 px-6 py-2 text-xs text-amber-700 text-center">
+          Modo de edição ativo — os campos com fundo amarelo são editáveis. Clica em <strong>Guardar</strong> para salvar no Notion.
+        </div>
+      )}
 
       {/* Documento */}
       <div className="max-w-[800px] mx-auto px-10 py-12 print:px-8 print:py-8">
@@ -93,7 +165,7 @@ export default function ContratoPage() {
         <div className="flex items-start justify-between mb-10 pb-6 border-b-2 border-black">
           <div>
             <h1 className="text-2xl font-black tracking-[0.15em] uppercase">RL PHOTO.VIDEO</h1>
-            <p className="text-xs text-zinc-500 mt-1">Fotografia & Vídeo de Casamentos</p>
+            <p className="text-xs text-zinc-500 mt-1">Fotografia &amp; Vídeo de Casamentos</p>
           </div>
           <div className="text-right text-xs text-zinc-500 space-y-0.5">
             <p>NIF: 238 076 415</p>
@@ -109,15 +181,14 @@ export default function ContratoPage() {
           <p className="text-xs text-zinc-400 tracking-widest uppercase">Referência: {e.referencia}</p>
         </div>
 
-        {/* Identificação das partes */}
+        {/* 1. Identificação das partes */}
         <section className="mb-8">
           <h3 className="text-[10px] font-black tracking-[0.3em] uppercase border-b border-zinc-200 pb-2 mb-4">
             1. Identificação das Partes
           </h3>
-
           <div className="space-y-5">
             <div>
-              <p className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-1">Primeira Outorgante (Prestador de Serviços)</p>
+              <p className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-1">Primeira Outorgante (Contratada)</p>
               <p className="text-sm leading-relaxed">
                 <strong>Liliana Sofia Fernandes Barreto Gonçalves</strong>, a exercer sob a marca <strong>RL Photo — Fotografia &amp; Vídeo</strong>,
                 contribuinte n.º <strong>238 076 415</strong>, CAE <strong>74200</strong> (Atividades Fotográficas/Vídeo),
@@ -126,106 +197,69 @@ export default function ContratoPage() {
                 doravante designada como <strong>CONTRATADA</strong>.
               </p>
             </div>
-
             <div>
-              <p className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-1">Segunda Outorgante (Cliente)</p>
-              <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm leading-relaxed">
-                <div>
-                  <span className="text-zinc-400 text-xs">Nome (Noiva): </span>
-                  <strong>{fmt(e.nome_noiva)}</strong>
-                </div>
-                <div>
-                  <span className="text-zinc-400 text-xs">Nome (Noivo): </span>
-                  <strong>{fmt(e.nome_noivo)}</strong>
-                </div>
-                <div>
-                  <span className="text-zinc-400 text-xs">C.C. (Noiva): </span>
-                  {fmt(e.cc_noiva)}
-                </div>
-                <div>
-                  <span className="text-zinc-400 text-xs">C.C. (Noivo): </span>
-                  {fmt(e.cc_noivo)}
-                </div>
-                <div>
-                  <span className="text-zinc-400 text-xs">NIF (Noiva): </span>
-                  {fmt(e.nif_noiva)}
-                </div>
-                <div>
-                  <span className="text-zinc-400 text-xs">NIF (Noivo): </span>
-                  {fmt(e.nif_noivo)}
-                </div>
-                <div className="col-span-2">
-                  <span className="text-zinc-400 text-xs">Morada: </span>
-                  {fmt(e.morada_noiva || e.morada_noivo)}
-                </div>
-                <div>
-                  <span className="text-zinc-400 text-xs">E-mail: </span>
-                  {fmt(e.email_noiva || e.email_noivo)}
-                </div>
-                <div>
-                  <span className="text-zinc-400 text-xs">Telefone: </span>
-                  {fmt(e.tel_noiva || e.tel_noivo)}
-                </div>
+              <p className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-1">Segunda Outorgante (Contratante)</p>
+              <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                <div><span className="text-zinc-400 text-xs block mb-0.5">Nome (Noiva)</span><strong><F field="nome_noiva" draft={e} editing={editing} onChange={change} placeholder="Nome da noiva" /></strong></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">Nome (Noivo)</span><strong><F field="nome_noivo" draft={e} editing={editing} onChange={change} placeholder="Nome do noivo" /></strong></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">C.C. (Noiva)</span><F field="cc_noiva" draft={e} editing={editing} onChange={change} placeholder="N.º Cartão Cidadão" /></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">C.C. (Noivo)</span><F field="cc_noivo" draft={e} editing={editing} onChange={change} placeholder="N.º Cartão Cidadão" /></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">NIF (Noiva)</span><F field="nif_noiva" draft={e} editing={editing} onChange={change} placeholder="NIF" /></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">NIF (Noivo)</span><F field="nif_noivo" draft={e} editing={editing} onChange={change} placeholder="NIF" /></div>
+                <div className="col-span-2"><span className="text-zinc-400 text-xs block mb-0.5">Morada</span><F field="morada_noiva" draft={e} editing={editing} onChange={change} placeholder="Morada" /></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">E-mail</span><F field="email_noiva" draft={e} editing={editing} onChange={change} type="email" placeholder="E-mail" /></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">Telefone</span><F field="tel_noiva" draft={e} editing={editing} onChange={change} type="tel" placeholder="Telefone" /></div>
               </div>
-              <p className="text-sm mt-2">doravante designados como <strong>CLIENTE</strong>.</p>
+              <p className="text-sm mt-3">doravante designados como <strong>CONTRATANTE</strong>.</p>
             </div>
           </div>
         </section>
 
-        {/* Objeto do contrato */}
+        {/* 2. Objeto */}
         <section className="mb-8">
           <h3 className="text-[10px] font-black tracking-[0.3em] uppercase border-b border-zinc-200 pb-2 mb-4">
             2. Objeto do Contrato
           </h3>
           <p className="text-sm leading-relaxed mb-4">
-            O presente contrato tem por objeto a prestação de serviços de fotografia e/ou vídeo pelo PRESTADOR ao CLIENTE,
-            para o seguinte evento:
+            O presente contrato tem por objeto a prestação de serviços de fotografia e/ou vídeo pelo CONTRATADO ao CONTRATANTE, para o seguinte evento:
           </p>
           <div className="bg-zinc-50 rounded-lg p-4 grid grid-cols-2 gap-3 text-sm">
             <div>
-              <span className="text-zinc-400 text-xs block">Tipo de Evento</span>
+              <span className="text-zinc-400 text-xs block mb-0.5">Tipo de Evento</span>
               <strong>{e.tipo_evento?.join(', ') || '____________________________'}</strong>
             </div>
             <div>
-              <span className="text-zinc-400 text-xs block">Data do Evento</span>
-              <strong>{formatDate(e.data_evento)}</strong>
+              <span className="text-zinc-400 text-xs block mb-0.5">Data do Evento</span>
+              <strong><F field="data_evento" draft={e} editing={editing} onChange={change} type="date" /></strong>
             </div>
             <div className="col-span-2">
-              <span className="text-zinc-400 text-xs block">Local</span>
-              <strong>{fmt(e.local)}</strong>
+              <span className="text-zinc-400 text-xs block mb-0.5">Local</span>
+              <strong><F field="local" draft={e} editing={editing} onChange={change} placeholder="Local do evento" /></strong>
             </div>
           </div>
         </section>
 
-        {/* Serviços */}
+        {/* 3. Serviços */}
         <section className="mb-8">
           <h3 className="text-[10px] font-black tracking-[0.3em] uppercase border-b border-zinc-200 pb-2 mb-4">
             3. Serviços Contratados
           </h3>
-
           {e.proposta && (
-            <p className="text-sm mb-4">
-              Pacote escolhido: <strong className="uppercase">{e.proposta}</strong>
-            </p>
+            <p className="text-sm mb-4">Pacote escolhido: <strong className="uppercase">{e.proposta}</strong></p>
           )}
-
           <div className={`grid gap-4 ${servicosFoto.length > 0 && servicosVideo.length > 0 ? 'grid-cols-2' : 'grid-cols-1'}`}>
             {servicosFoto.length > 0 && (
               <div className="border border-zinc-200 rounded-lg overflow-hidden">
                 <div className="bg-zinc-100 px-4 py-2 text-[10px] font-bold tracking-widest uppercase">Fotografia</div>
                 <ul className="p-4 space-y-1.5">
                   {servicosFoto.map((s: string, i: number) => (
-                    <li key={i} className="text-sm flex items-start gap-2">
-                      <span className="text-zinc-400 mt-1">•</span>{s}
-                    </li>
+                    <li key={i} className="text-sm flex items-start gap-2"><span className="text-zinc-400 mt-1">•</span>{s}</li>
                   ))}
                 </ul>
-                {e.valor_foto && (
-                  <div className="border-t border-zinc-100 px-4 py-2 flex justify-between text-sm">
-                    <span className="text-zinc-400">Valor</span>
-                    <strong>{fmtVal(e.valor_foto)}</strong>
-                  </div>
-                )}
+                <div className="border-t border-zinc-100 px-4 py-2 flex justify-between items-center text-sm">
+                  <span className="text-zinc-400">Valor</span>
+                  <strong><F field="valor_foto" draft={e} editing={editing} onChange={change} type="number" placeholder="0" /></strong>
+                </div>
               </div>
             )}
             {servicosVideo.length > 0 && (
@@ -233,47 +267,42 @@ export default function ContratoPage() {
                 <div className="bg-zinc-100 px-4 py-2 text-[10px] font-bold tracking-widest uppercase">Vídeo</div>
                 <ul className="p-4 space-y-1.5">
                   {servicosVideo.map((s: string, i: number) => (
-                    <li key={i} className="text-sm flex items-start gap-2">
-                      <span className="text-zinc-400 mt-1">•</span>{s}
-                    </li>
+                    <li key={i} className="text-sm flex items-start gap-2"><span className="text-zinc-400 mt-1">•</span>{s}</li>
                   ))}
                 </ul>
-                {e.valor_video && (
-                  <div className="border-t border-zinc-100 px-4 py-2 flex justify-between text-sm">
-                    <span className="text-zinc-400">Valor</span>
-                    <strong>{fmtVal(e.valor_video)}</strong>
-                  </div>
-                )}
+                <div className="border-t border-zinc-100 px-4 py-2 flex justify-between items-center text-sm">
+                  <span className="text-zinc-400">Valor</span>
+                  <strong><F field="valor_video" draft={e} editing={editing} onChange={change} type="number" placeholder="0" /></strong>
+                </div>
               </div>
             )}
           </div>
-
           {servicosExtra.length > 0 && (
             <div className="mt-4 border border-zinc-200 rounded-lg overflow-hidden">
               <div className="bg-zinc-100 px-4 py-2 text-[10px] font-bold tracking-widest uppercase">Serviços Extra</div>
               <ul className="p-4 grid grid-cols-2 gap-1.5">
                 {servicosExtra.map((s: string, i: number) => (
-                  <li key={i} className="text-sm flex items-start gap-2">
-                    <span className="text-zinc-400 mt-1">•</span>{s}
-                  </li>
+                  <li key={i} className="text-sm flex items-start gap-2"><span className="text-zinc-400 mt-1">•</span>{s}</li>
                 ))}
               </ul>
-              {e.valor_extras && (
-                <div className="border-t border-zinc-100 px-4 py-2 flex justify-between text-sm">
-                  <span className="text-zinc-400">Valor extras</span>
-                  <strong>{fmtVal(e.valor_extras)}</strong>
-                </div>
-              )}
+              <div className="border-t border-zinc-100 px-4 py-2 flex justify-between items-center text-sm">
+                <span className="text-zinc-400">Valor extras</span>
+                <strong><F field="valor_extras" draft={e} editing={editing} onChange={change} type="number" placeholder="0" /></strong>
+              </div>
             </div>
           )}
-
           {(() => {
             const soma = (e.valor_foto ?? 0) + (e.valor_video ?? 0) + (e.valor_extras ?? 0)
             const total = e.valor_liquido ?? (soma > 0 ? soma : null)
             return total ? (
               <div className="mt-4 flex items-center justify-between px-4 py-3 bg-black text-white rounded-lg">
                 <span className="text-xs tracking-widest uppercase font-bold">Valor Total do Serviço</span>
-                <span className="text-lg font-black">{fmtVal(total)}</span>
+                <span className="text-lg font-black">
+                  {editing
+                    ? <F field="valor_liquido" draft={e} editing={editing} onChange={change} type="number" placeholder="0" />
+                    : fmtVal(total)
+                  }
+                </span>
               </div>
             ) : null
           })()}
@@ -405,13 +434,12 @@ export default function ContratoPage() {
         {/* Assinaturas */}
         <section className="mb-8">
           <h3 className="text-[10px] font-black tracking-[0.3em] uppercase border-b border-zinc-200 pb-2 mb-6">
-            6. Assinaturas
+            Assinaturas
           </h3>
           <p className="text-sm text-zinc-600 mb-8">
             O presente contrato é celebrado em duplicado, ficando um exemplar na posse de cada uma das partes, e entra em vigor na data da sua assinatura.
           </p>
           <p className="text-sm mb-10">Palmela, {hoje}.</p>
-
           <div className="grid grid-cols-2 gap-16">
             <div>
               <div className="border-b border-zinc-400 mb-3 h-12" />
@@ -421,7 +449,7 @@ export default function ContratoPage() {
             </div>
             <div>
               <div className="border-b border-zinc-400 mb-3 h-12" />
-              <p className="text-xs text-zinc-500 text-center">O CLIENTE</p>
+              <p className="text-xs text-zinc-500 text-center">O CONTRATANTE</p>
               <p className="text-xs font-bold text-center mt-1">{e.nome_noiva && e.nome_noivo ? `${e.nome_noiva} & ${e.nome_noivo}` : e.cliente || '____________________________'}</p>
             </div>
           </div>
