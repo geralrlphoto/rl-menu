@@ -290,16 +290,16 @@ function SettingsPanel({
   onSaved: (newSettings: PortalSettings, newSettingsBlockId?: string) => void
   onCancel: () => void
 }) {
-  const [form, setForm] = useState({ ...settings })
+  const [form, setForm] = useState({ hiddenNav: [] as string[], ...settings })
   const [saving, setSaving] = useState(false)
   const navPages = findAllChildPages(blocks)
 
   function toggleNav(id: string) {
     setForm(prev => ({
       ...prev,
-      hiddenNav: prev.hiddenNav.includes(id)
-        ? prev.hiddenNav.filter(x => x !== id)
-        : [...prev.hiddenNav, id],
+      hiddenNav: (prev.hiddenNav ?? []).includes(id)
+        ? (prev.hiddenNav ?? []).filter(x => x !== id)
+        : [...(prev.hiddenNav ?? []), id],
     }))
   }
 
