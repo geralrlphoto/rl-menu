@@ -385,8 +385,10 @@ export default function PortalSubPage() {
   const [portalVideo, setPortalVideo] = useState<number | null>(null)
   const [portalExtras, setPortalExtras] = useState<number | null>(null)
   const [pagRefreshing, setPagRefreshing] = useState(false)
+  const [guiaLinks, setGuiaLinks] = useState<{blogUrl?:string,fotosConvidadosUrl?:string,dadosContratoUrl?:string,pagamentosRegistoUrl?:string}>({})
 
   const isPaymentsPage = title.toUpperCase().includes('PAGAMENTO')
+  const isGuiaPage    = title.toUpperCase().includes('GUIA')
 
   const loadPagamentos = useCallback(async () => {
     setPagRefreshing(true)
@@ -398,6 +400,7 @@ export default function PortalSubPage() {
       setPortalFoto(ps.valorFoto ?? null)
       setPortalVideo(ps.valorVideo ?? null)
       setPortalExtras(ps.valorExtras ?? null)
+      setGuiaLinks(ps.guiaLinks ?? {})
 
       // Auto-extract reference from portal page blocks if not in settings
       if (!ref) {
@@ -424,8 +427,8 @@ export default function PortalSubPage() {
   }, [])
 
   useEffect(() => {
-    if (isPaymentsPage) loadPagamentos()
-  }, [isPaymentsPage, loadPagamentos])
+    if (isPaymentsPage || isGuiaPage) loadPagamentos()
+  }, [isPaymentsPage, isGuiaPage, loadPagamentos])
 
   const loadBlocks = useCallback(async (bust = false) => {
     if (!id) return
@@ -530,6 +533,80 @@ export default function PortalSubPage() {
                     </Link>
                   </div>
                   {(() => {
+                    if (isGuiaPage) {
+                      // ── GUIA DOS NOIVOS: the 4 sections live inside a column_list ──
+                      // Structure: column_list → [column[BLOG, FOTOS], column[DADOS, PAGAMENTOS]]
+                      // Each section is a callout with title in rich_text + image in children
+                      const SECTION_META: Record<string, { icon: string; label: string; url: string | undefined }> = {
+                        'BLOG':                     { icon: '✍️', label: 'Ver Blog',             url: guiaLinks.blogUrl },
+                        'FOTOS CONVIDADOS':          { icon: '📷', label: 'Solicitar Fotos',      url: guiaLinks.fotosConvidadosUrl },
+                        'DADOS PARA CONTRATO - CPS': { icon: '📋', label: 'Preencher Dados',      url: guiaLinks.dadosContratoUrl },
+                        'PAGAMENTOS/REGISTO':        { icon: '💳', label: 'Registar Pagamento',   url: guiaLinks.pagamentosRegistoUrl },
+                      }
+                      // find the column_list that contains the 4 section callouts
+                      const colListIdx = blocks.findIndex(b =>
+                        b.type === 'column_list' &&
+                        b.children?.some((col: Block) =>
+                          col.children?.some((child: Block) =>
+                            child.type === 'callout' &&
+                            Object.keys(SECTION_META).includes(plainText(child.callout?.rich_text ?? []).trim().toUpperCase())
+                          )
+                        )
+                      )
+                      if (colListIdx === -1) return <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
+                      const colList = blocks[colListIdx]
+                      // collect all callout children from all columns
+                      const sectionCallouts: Block[] = []
+                      for (const col of (colList.children ?? []) as Block[]) {
+                        for (const child of (col.children ?? []) as Block[]) {
+                          const t = plainText(child.callout?.rich_text ?? []).trim().toUpperCase()
+                          if (child.type === 'callout' && SECTION_META[t]) sectionCallouts.push(child)
+                        }
+                      }
+                      const getImgUrl = (b: Block) => {
+                        const imgChild = (b.children ?? []).find((c: Block) => c.type === 'image')
+                        if (!imgChild) return null
+                        return imgChild.image?.type === 'external' ? imgChild.image.external?.url : imgChild.image?.file?.url
+                      }
+                      return (
+                        <>
+                          <NotionBlocks blocks={blocks.slice(0, colListIdx)} hiddenNav={settings.hiddenNav} />
+                          <div className="grid grid-cols-2 gap-3 my-4">
+                            {sectionCallouts.map(callout => {
+                              const titleText = plainText(callout.callout?.rich_text ?? []).trim().toUpperCase()
+                              const meta = SECTION_META[titleText]
+                              if (!meta) return null
+                              const imgUrl = getImgUrl(callout)
+                              return (
+                                <div key={titleText} className="flex flex-col rounded-2xl overflow-hidden border border-white/[0.08] bg-white/[0.02]">
+                                  <div className="flex items-center gap-2 px-3 pt-3 pb-2">
+                                    <span className="text-lg">{meta.icon}</span>
+                                    <span className="text-[10px] font-bold tracking-widest text-white/60 uppercase">{titleText}</span>
+                                  </div>
+                                  {imgUrl && (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={imgUrl} alt={titleText} className="w-full aspect-[4/3] object-cover" />
+                                  )}
+                                  <div className="p-3">
+                                    {meta.url ? (
+                                      <a href={meta.url} target="_blank" rel="noopener noreferrer"
+                                        className="block w-full text-center px-4 py-2.5 rounded-xl bg-gold text-black font-semibold text-xs tracking-wide hover:bg-gold/80 transition-all">
+                                        {meta.label}
+                                      </a>
+                                    ) : (
+                                      <div className="block w-full text-center px-4 py-2.5 rounded-xl border border-gold/20 text-gold/40 text-xs tracking-wide">
+                                        {meta.label}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                          <NotionBlocks blocks={blocks.slice(colListIdx + 1)} hiddenNav={settings.hiddenNav} />
+                        </>
+                      )
+                    }
                     if (!isPaymentsPage) return <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
                     const numerarioIdx = blocks.findIndex(b =>
                       plainText((b[b.type]?.rich_text ?? [])).toLowerCase().includes('numerário contatar')

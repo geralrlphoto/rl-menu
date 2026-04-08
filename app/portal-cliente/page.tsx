@@ -25,6 +25,12 @@ type PortalSettings = {
   valorFoto?: number
   valorVideo?: number
   valorExtras?: number
+  guiaLinks?: {
+    blogUrl?: string
+    fotosConvidadosUrl?: string
+    dadosContratoUrl?: string
+    pagamentosRegistoUrl?: string
+  }
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -369,6 +375,29 @@ function SettingsPanel({
               />
             </div>
           ))}
+        </div>
+
+        {/* Guia Links */}
+        <div className="pt-3 border-t border-white/[0.06]">
+          <p className="text-[10px] text-white/40 tracking-widest uppercase mb-3">Links do Guia dos Noivos</p>
+          <div className="space-y-2">
+            {([
+              ['Blog', 'blogUrl', 'https://...'],
+              ['Fotos Convidados', 'fotosConvidadosUrl', 'https://tally.so/...'],
+              ['Dados para Contrato', 'dadosContratoUrl', 'https://tally.so/...'],
+              ['Pagamentos / Registo', 'pagamentosRegistoUrl', 'https://tally.so/...'],
+            ] as const).map(([lbl, key, ph]) => (
+              <div key={key}>
+                <label className="block text-[10px] text-white/40 tracking-widest uppercase mb-1">{lbl}</label>
+                <input
+                  value={form.guiaLinks?.[key] ?? ''}
+                  onChange={e => setForm(prev => ({ ...prev, guiaLinks: { ...prev.guiaLinks, [key]: e.target.value } }))}
+                  placeholder={ph}
+                  className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
