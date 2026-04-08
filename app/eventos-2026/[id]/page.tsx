@@ -532,6 +532,71 @@ type Pagamento = {
   data_pagamento: string | null
 }
 
+// ─── Portal do Cliente ────────────────────────────────────────────────────────
+function PortalSection({ referencia }: { referencia: string }) {
+  const [status, setStatus] = useState<'loading' | 'found' | 'not_found' | 'error'>('loading')
+  const [pageId, setPageId] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch(`/api/portal-by-ref?ref=${encodeURIComponent(referencia)}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.found) { setPageId(d.pageId); setStatus('found') }
+        else setStatus('not_found')
+      })
+      .catch(() => setStatus('error'))
+  }, [referencia])
+
+  return (
+    <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 mb-5">
+      <h2 className="text-[10px] tracking-[0.35em] text-gold uppercase mb-4">Portal do Cliente</h2>
+      {status === 'loading' && (
+        <p className="text-xs text-white/20 animate-pulse">A verificar portal...</p>
+      )}
+      {status === 'found' && pageId && (
+        <div className="flex flex-col sm:flex-row gap-3">
+          <a
+            href={`/portal-cliente?highlight=${pageId}`}
+            target="_blank" rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black font-bold text-xs tracking-widest hover:bg-gold/80 transition-all uppercase">
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+            Ver Portal do Cliente
+          </a>
+          <a
+            href={`/portal-cliente/${pageId}?title=Portal`}
+            target="_blank" rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-white/15 text-white/50 font-medium text-xs tracking-widest hover:border-white/30 hover:text-white/80 transition-all uppercase">
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+            </svg>
+            Abrir Subpágina ↗
+          </a>
+        </div>
+      )}
+      {status === 'not_found' && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <p className="text-xs text-white/30">Nenhum portal encontrado com a referência <span className="text-gold/60 font-mono">{referencia}</span></p>
+          <a
+            href="/portal-cliente"
+            target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gold/30 text-gold/70 font-medium text-xs tracking-widest hover:bg-gold/10 transition-all uppercase whitespace-nowrap">
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
+            </svg>
+            Criar Portal do Cliente
+          </a>
+        </div>
+      )}
+      {status === 'error' && (
+        <p className="text-xs text-red-400/50">Erro ao verificar portal.</p>
+      )}
+    </div>
+  )
+}
+
 // ─── Página principal ──────────────────────────────────────────────────────────
 export default function EventoPage() {
   const { id } = useParams<{ id: string }>()
@@ -713,6 +778,9 @@ export default function EventoPage() {
       </div>
 
       <div className="h-px bg-gold/15 my-7" />
+
+      {/* ── Portal do Cliente ── */}
+      {e.referencia && <PortalSection referencia={e.referencia} />}
 
       <div className="flex flex-col gap-5">
 
