@@ -751,7 +751,13 @@ export default function PortalSubPage() {
           fetch(`/api/evento-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json()),
         ])
         setPagamentos(pd.payments ?? [])
-        if (ed.found) setEventoData(ed.evento)
+        if (ed.found) {
+          setEventoData(ed.evento)
+          // If contract is published but contratoUrl wasn't saved yet, derive it from the event id
+          if ((ps.contratoDisponivel ?? false) && !ps.contratoUrl) {
+            setContratoUrl(`/eventos-2026/${ed.evento.id}/contrato`)
+          }
+        }
       }
     } finally {
       setPagRefreshing(false)
