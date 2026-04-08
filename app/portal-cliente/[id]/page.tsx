@@ -661,6 +661,8 @@ function PortalSubPageContent() {
   const [settings, setSettings] = useState<{ hiddenNav: string[] }>({ hiddenNav: [] })
   const [settingsBlockId, setSettingsBlockId] = useState<string | null>(null)
   const [title, setTitle] = useState(searchParams.get('title') ?? '')
+  const fromId = searchParams.get('from')
+  const fromTitle = searchParams.get('fromTitle')
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -1007,6 +1009,14 @@ function PortalSubPageContent() {
 
       {loading && <div className="text-center py-24 text-white/20 text-xs tracking-widest uppercase">A carregar...</div>}
       {error   && <div className="text-center py-24 text-red-400/60 text-sm">{error}</div>}
+      {!loading && !error && fromId && (
+        <div className="mb-4">
+          <Link href={`/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}`}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-white/40 hover:text-gold hover:border-gold/30 transition-all text-sm tracking-wide">
+            ‹ Voltar
+          </Link>
+        </div>
+      )}
       {!loading && !error && (
         <div className="bg-white/[0.02] border border-white/[0.07] rounded-2xl p-5 sm:p-8">
           {editingPhotos
@@ -1322,7 +1332,7 @@ function PortalSubPageContent() {
                             <div className="grid grid-cols-2 gap-3 mb-6">
                               {childPages.map(cp => {
                                 const pageTitle = cp.child_page?.title ?? ''
-                                const href = `/portal-cliente/${cp.id}?title=${encodeURIComponent(pageTitle)}`
+                                const href = `/portal-cliente/${cp.id}?title=${encodeURIComponent(pageTitle)}&from=${id}&fromTitle=${encodeURIComponent(title)}`
                                 return (
                                   <Link key={cp.id} href={href}>
                                     <div className="relative flex flex-col items-center justify-center gap-2 px-4 py-8 rounded-2xl border border-gold/40 bg-black cursor-pointer group hover:border-gold/80 transition-all duration-300 overflow-hidden"
