@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, Suspense } from 'react'
+import React, { useEffect, useState, useCallback, Suspense } from 'react'
 import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
 import { NotionBlocks, plainText, type Block } from '../NotionRenderer'
@@ -696,6 +696,10 @@ function PortalSubPageContent() {
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleInput, setTitleInput] = useState('')
   const [savingTitle, setSavingTitle] = useState(false)
+  const [calloutLinks, setCalloutLinks] = useState<Record<string, Record<string, string>>>({})
+  const [editingCalloutLinks, setEditingCalloutLinks] = useState(false)
+  const [calloutLinksForm, setCalloutLinksForm] = useState<Record<string, string>>({})
+  const [savingCalloutLinks, setSavingCalloutLinks] = useState(false)
 
   const isPaymentsPage    = title.toUpperCase().includes('PAGAMENTO')
   const isGuiaPage        = title.toUpperCase().includes('GUIA') && !title.toUpperCase().includes('WEDDING')
@@ -728,6 +732,7 @@ function PortalSubPageContent() {
       const pt = ps.pageTitles ?? {}
       setPageTitles(pt)
       if (id && pt[id as string]) setTitle(pt[id as string])
+      setCalloutLinks(ps.calloutLinks ?? {})
 
       // Auto-extract reference from portal page blocks if not in settings
       if (!ref) {
@@ -824,6 +829,35 @@ function PortalSubPageContent() {
     setSavingTitle(false)
   }
 
+  async function handleSaveCalloutLinks() {
+    if (!id) return
+    setSavingCalloutLinks(true)
+    const newCL = { ...calloutLinks, [id as string]: calloutLinksForm }
+    await fetch('/api/portais-clientes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: { ...portalSettingsObj, calloutLinks: newCL }, settingsBlockId: portalSettingsBlockId }),
+    })
+    setCalloutLinks(newCL)
+    setEditingCalloutLinks(false)
+    setSavingCalloutLinks(false)
+  }
+
+  // Find all callout blocks (with images) across blocks tree
+  function findCalloutCards(bks: Block[]): Block[] {
+    const out: Block[] = []
+    for (const b of bks) {
+      if (b.type === 'callout') {
+        const hasImg = (b.children ?? []).some((c: Block) => c.type === 'image')
+        if (hasImg) out.push(b)
+      }
+      if (b.type === 'column_list' || b.type === 'column') {
+        out.push(...findCalloutCards(b.children ?? []))
+      }
+    }
+    return out
+  }
+
   const hasImages = findImageBlocks(blocks).length > 0
 
   return (
@@ -857,6 +891,18 @@ function PortalSubPageContent() {
               Parceiros
             </button>
           )}
+          {!editing && !editingPhotos && !loading && !error && (() => {
+            const calloutCards = findCalloutCards(blocks)
+            return calloutCards.length > 0 && (
+              <button onClick={() => { setCalloutLinksForm({ ...(calloutLinks[id as string] ?? {}) }); setEditingCalloutLinks(true) }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white/80 border border-white/15 hover:border-white/30 transition-all">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+                </svg>
+                Links
+              </button>
+            )
+          })()}
           {!editing && !editingPhotos && !loading && !error && isPreWeddingPage && (
             <button onClick={() => { setPreWeddingForm(preWeddingSlots.map(s => ({...s}))); setEditingPreWedding(true) }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white/80 border border-white/15 hover:border-white/30 transition-all">
@@ -1040,6 +1086,38 @@ function PortalSubPageContent() {
                     className="w-full py-3 rounded-xl border border-dashed border-gold/20 text-gold/40 hover:text-gold/70 hover:border-gold/40 text-xs tracking-widest transition-all">
                     + ADICIONAR PARCEIRO
                   </button>
+                </div>
+              )
+            : editingCalloutLinks
+              ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] tracking-[0.3em] text-gold uppercase">Gerir Links dos Cards</span>
+                    <div className="flex gap-2">
+                      <button onClick={() => setEditingCalloutLinks(false)}
+                        className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">
+                        Cancelar
+                      </button>
+                      <button onClick={handleSaveCalloutLinks} disabled={savingCalloutLinks}
+                        className="px-4 py-1.5 rounded-lg text-xs bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-50">
+                        {savingCalloutLinks ? 'A guardar...' : 'Guardar'}
+                      </button>
+                    </div>
+                  </div>
+                  {findCalloutCards(blocks).map(callout => {
+                    const cardTitle = plainText(callout.callout?.rich_text ?? []).trim()
+                    return (
+                      <div key={cardTitle} className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-2">
+                        <label className="block text-[10px] text-white/40 tracking-widest uppercase">{cardTitle}</label>
+                        <input
+                          value={calloutLinksForm[cardTitle] ?? ''}
+                          onChange={e => setCalloutLinksForm(prev => ({ ...prev, [cardTitle]: e.target.value }))}
+                          placeholder="https://..."
+                          className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
+                        />
+                      </div>
+                    )
+                  })}
                 </div>
               )
             : editingPreWedding
@@ -1306,7 +1384,71 @@ function PortalSubPageContent() {
                         </>
                       )
                     }
-                    if (!isPaymentsPage) return <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
+                    if (!isPaymentsPage) {
+                      // Check if page has callout cards — render them with URL buttons
+                      const pageCalloutLinks = calloutLinks[id as string] ?? {}
+                      const calloutCards = findCalloutCards(blocks)
+                      if (calloutCards.length === 0) return <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
+
+                      // Build a flat list: non-callout blocks + callout cards
+                      const getImgUrl = (b: Block) => {
+                        const imgChild = (b.children ?? []).find((c: Block) => c.type === 'image')
+                        if (!imgChild) return null
+                        return imgChild.image?.type === 'external' ? imgChild.image.external?.url : imgChild.image?.file?.url
+                      }
+
+                      // Render blocks, replacing column_list that contain callouts with card grid
+                      const renderedSections: React.ReactNode[] = []
+                      let i = 0
+                      while (i < blocks.length) {
+                        const b = blocks[i]
+                        const cardsInBlock = b.type === 'column_list'
+                          ? (b.children ?? []).flatMap((col: Block) =>
+                              (col.children ?? []).filter((c: Block) =>
+                                c.type === 'callout' && (c.children ?? []).some((ch: Block) => ch.type === 'image')
+                              )
+                            )
+                          : b.type === 'callout' && (b.children ?? []).some((c: Block) => c.type === 'image')
+                            ? [b] : []
+
+                        if (cardsInBlock.length > 0) {
+                          renderedSections.push(
+                            <div key={`cards-${i}`} className="grid grid-cols-2 gap-3 my-4">
+                              {cardsInBlock.map((callout: Block) => {
+                                const cardTitle = plainText(callout.callout?.rich_text ?? []).trim()
+                                const imgUrl = getImgUrl(callout)
+                                const url = pageCalloutLinks[cardTitle]
+                                return (
+                                  <div key={cardTitle} className="flex flex-col rounded-2xl overflow-hidden border border-white/[0.08] bg-white/[0.02]">
+                                    <div className="px-3 pt-3 pb-2">
+                                      <span className="text-[10px] font-bold tracking-widest text-white/60 uppercase">{cardTitle}</span>
+                                    </div>
+                                    {imgUrl && (
+                                      // eslint-disable-next-line @next/next/no-img-element
+                                      <img src={imgUrl} alt={cardTitle} className="w-full object-contain" />
+                                    )}
+                                    {url && (
+                                      <div className="p-3">
+                                        <a href={url} target="_blank" rel="noopener noreferrer"
+                                          className="block w-full text-center px-4 py-2.5 rounded-xl bg-gold text-black font-semibold text-xs tracking-wide hover:bg-gold/80 transition-all">
+                                          Abrir ↗
+                                        </a>
+                                      </div>
+                                    )}
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )
+                        } else {
+                          renderedSections.push(
+                            <NotionBlocks key={`block-${i}`} blocks={[b]} hiddenNav={settings.hiddenNav} />
+                          )
+                        }
+                        i++
+                      }
+                      return <>{renderedSections}</>
+                    }
                     const numerarioIdx = blocks.findIndex(b =>
                       plainText((b[b.type]?.rich_text ?? [])).toLowerCase().includes('numerário contatar')
                     )

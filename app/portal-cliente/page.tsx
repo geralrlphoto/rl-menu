@@ -37,6 +37,7 @@ type PortalSettings = {
   preWeddingReservedSlotId?: string
   preWeddingReservedAt?: string
   pageTitles?: Record<string, string>
+  calloutLinks?: Record<string, Record<string, string>>
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
