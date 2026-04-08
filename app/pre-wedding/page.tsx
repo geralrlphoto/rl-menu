@@ -48,6 +48,8 @@ export default function PreWeddingPage() {
   const [settingsBlockId, setSettingsBlockId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
+  const [editingBooking, setEditingBooking] = useState(false)
+  const [bookingForm, setBookingForm] = useState<Slot | null>(null)
   const [slotsForm, setSlotsForm] = useState<Slot[]>([])
   const [saving, setSaving] = useState(false)
   const [saveOk, setSaveOk] = useState(false)
@@ -108,6 +110,30 @@ export default function PreWeddingPage() {
       setSaveOk(true)
       setTimeout(() => setSaveOk(false), 2000)
       setEditing(false)
+      await load()
+    } finally { setSaving(false) }
+  }
+
+  async function handleSaveBookingEdit() {
+    if (!bookingForm || !booking) return
+    setSaving(true)
+    try {
+      const d = await fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}`).then(r => r.json())
+      const ps = d.settings ?? {}
+      // Update the slot in the slots array
+      const updatedSlots = (ps.preWeddingSlots ?? []).map((s: Slot) =>
+        s.id === bookingForm.id ? bookingForm : s
+      )
+      await fetch('/api/portal-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pageId: PORTAL_PAGE_ID,
+          settings: { ...ps, preWeddingSlots: updatedSlots },
+          settingsBlockId: d.settingsBlockId ?? null,
+        }),
+      })
+      setEditingBooking(false)
       await load()
     } finally { setSaving(false) }
   }
@@ -246,12 +272,54 @@ export default function PreWeddingPage() {
                     <span className="text-[10px] text-white/20">Reservado há {dsa}d</span>
                   </div>
                 </div>
-                <div className="mt-4 pt-4 border-t border-white/[0.06] flex justify-end">
-                  <button onClick={handleCancelReservation} disabled={saving}
-                    className="px-3 py-1.5 rounded-lg text-[10px] text-red-400/60 hover:text-red-400 border border-red-400/20 hover:border-red-400/40 transition-all tracking-widest uppercase disabled:opacity-40">
-                    Cancelar Reserva
-                  </button>
-                </div>
+                {editingBooking && bookingForm ? (
+                  <div className="mt-4 pt-4 border-t border-white/[0.06] space-y-3">
+                    <p className="text-[10px] text-gold/60 tracking-widest uppercase mb-3">Editar Reserva</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="block text-[9px] text-white/25 tracking-widest uppercase mb-1">Data</label>
+                        <input type="date" value={bookingForm.date}
+                          onChange={e => setBookingForm(f => f ? { ...f, date: e.target.value } : f)}
+                          className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-2 py-2 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors" />
+                      </div>
+                      <div>
+                        <label className="block text-[9px] text-white/25 tracking-widest uppercase mb-1">Hora</label>
+                        <input type="time" value={bookingForm.time}
+                          onChange={e => setBookingForm(f => f ? { ...f, time: e.target.value } : f)}
+                          className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-2 py-2 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors" />
+                      </div>
+                      <div>
+                        <label className="block text-[9px] text-white/25 tracking-widest uppercase mb-1">Local</label>
+                        <input type="text" value={bookingForm.local}
+                          onChange={e => setBookingForm(f => f ? { ...f, local: e.target.value } : f)}
+                          placeholder="ex: Sintra"
+                          className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-2 py-2 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-1">
+                      <button onClick={() => setEditingBooking(false)}
+                        className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">
+                        Cancelar
+                      </button>
+                      <button onClick={handleSaveBookingEdit} disabled={saving}
+                        className="px-4 py-1.5 rounded-lg text-xs bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-50">
+                        {saving ? 'A guardar...' : 'Guardar'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-4 pt-4 border-t border-white/[0.06] flex items-center justify-between">
+                    <button onClick={() => { setBookingForm({ ...booking.slot }); setEditingBooking(true) }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] text-white/40 hover:text-white/70 border border-white/10 hover:border-white/25 transition-all tracking-widest uppercase">
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                      Editar
+                    </button>
+                    <button onClick={handleCancelReservation} disabled={saving}
+                      className="px-3 py-1.5 rounded-lg text-[10px] text-red-400/60 hover:text-red-400 border border-red-400/20 hover:border-red-400/40 transition-all tracking-widest uppercase disabled:opacity-40">
+                      Cancelar Reserva
+                    </button>
+                  </div>
+                )}
               </div>
             )
           })() : (
