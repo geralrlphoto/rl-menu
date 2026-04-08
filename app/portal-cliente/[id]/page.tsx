@@ -368,8 +368,9 @@ function PaymentPhasesSection({ referencia, valorTotal, pagamentos, onRefresh, r
 
 type PreWeddingSlot = { id: string; date: string; time: string; local: string }
 
-function PreWeddingSection({ slots, blocks, settings }: {
+function PreWeddingSection({ slots, reservationUrl, blocks, settings }: {
   slots: PreWeddingSlot[]
+  reservationUrl: string
   blocks: Block[]
   settings: { hiddenNav: string[] }
 }) {
@@ -377,12 +378,11 @@ function PreWeddingSection({ slots, blocks, settings }: {
   const DIAS_ABBR  = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
 
   const today = new Date()
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`
   const [year, setYear]   = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
-  const [selectedDate, setSelectedDate] = useState<string | null>(null)
 
-  const slotsOnDate = (dateStr: string) => slots.filter(s => s.date === dateStr)
-  const hasSlots    = (dateStr: string) => slotsOnDate(dateStr).length > 0
+  const hasSlotDate = (dateStr: string) => slots.some(s => s.date === dateStr)
 
   function calDays(): Array<{ dateStr: string | null; day: number | null }> {
     const firstDow = new Date(year, month, 1).getDay()
@@ -397,24 +397,29 @@ function PreWeddingSection({ slots, blocks, settings }: {
   }
 
   function prevMonth() {
-    if (month === 0) { setMonth(11); setYear(y => y - 1) }
-    else setMonth(m => m - 1)
-    setSelectedDate(null)
+    if (month === 0) { setMonth(11); setYear(y => y - 1) } else setMonth(m => m - 1)
   }
   function nextMonth() {
-    if (month === 11) { setMonth(0); setYear(y => y + 1) }
-    else setMonth(m => m + 1)
-    setSelectedDate(null)
+    if (month === 11) { setMonth(0); setYear(y => y + 1) } else setMonth(m => m + 1)
+  }
+
+  // All upcoming slots sorted
+  const upcomingSlots = [...slots]
+    .filter(s => s.date >= todayStr)
+    .sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.time.localeCompare(b.time))
+
+  const fmtSlotDate = (ds: string) => {
+    const [y, m, d] = ds.split('-').map(Number)
+    const dt = new Date(y, m - 1, d)
+    return {
+      day: String(d).padStart(2, '0'),
+      month: MESES_FULL[m - 1].slice(0, 3).toUpperCase(),
+      weekday: DIAS_ABBR[dt.getDay()],
+      full: `${String(d).padStart(2,'0')} ${MESES_FULL[m-1]} ${y}`,
+    }
   }
 
   const cells = calDays()
-  const selectedSlots = selectedDate ? slotsOnDate(selectedDate) : []
-  const hasAnySlot = slots.length > 0
-
-  const fmtDate = (ds: string) => {
-    const [y, m, d] = ds.split('-').map(Number)
-    return `${String(d).padStart(2,'0')} ${MESES_FULL[m-1]} ${y}`
-  }
 
   return (
     <>
@@ -426,7 +431,7 @@ function PreWeddingSection({ slots, blocks, settings }: {
           <span className="text-[11px] tracking-[0.4em] text-gold uppercase font-semibold">Marcar Pré-Wedding</span>
         </div>
 
-        {!hasAnySlot ? (
+        {upcomingSlots.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 rounded-2xl border border-white/[0.06] bg-white/[0.01] text-center">
             <svg className="w-8 h-8 text-white/15 mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
@@ -436,91 +441,74 @@ function PreWeddingSection({ slots, blocks, settings }: {
           </div>
         ) : (
           <>
-            {/* Calendar */}
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] overflow-hidden mb-4">
-              {/* Month navigation */}
+            {/* Calendar overview */}
+            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] overflow-hidden mb-6">
               <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
-                <button onClick={prevMonth}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/10 text-white/40 hover:text-white/80 transition-all">
-                  ‹
-                </button>
-                <span className="text-xs tracking-[0.2em] text-white/60 uppercase font-medium">
-                  {MESES_FULL[month]} {year}
-                </span>
-                <button onClick={nextMonth}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/10 text-white/40 hover:text-white/80 transition-all">
-                  ›
-                </button>
+                <button onClick={prevMonth} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/10 text-white/40 hover:text-white/80 transition-all text-lg">‹</button>
+                <span className="text-xs tracking-[0.2em] text-white/60 uppercase font-medium">{MESES_FULL[month]} {year}</span>
+                <button onClick={nextMonth} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/10 text-white/40 hover:text-white/80 transition-all text-lg">›</button>
               </div>
-              {/* Day headers */}
               <div className="grid grid-cols-7 border-b border-white/[0.04]">
                 {DIAS_ABBR.map(d => (
                   <div key={d} className="py-2 text-center text-[9px] tracking-widest text-white/20 uppercase">{d}</div>
                 ))}
               </div>
-              {/* Day cells */}
               <div className="grid grid-cols-7 p-2 gap-1">
                 {cells.map((cell, idx) => {
                   if (!cell.dateStr) return <div key={idx} />
-                  const active = hasSlots(cell.dateStr)
-                  const selected = selectedDate === cell.dateStr
+                  const active = hasSlotDate(cell.dateStr)
+                  const isPast = cell.dateStr < todayStr
                   return (
-                    <button
-                      key={cell.dateStr}
-                      onClick={() => active ? setSelectedDate(selected ? null : cell.dateStr) : undefined}
-                      disabled={!active}
-                      className={`relative aspect-square flex flex-col items-center justify-center rounded-xl text-xs font-medium transition-all
-                        ${active
-                          ? selected
-                            ? 'bg-gold text-black font-bold'
-                            : 'bg-gold/15 border border-gold/30 text-gold hover:bg-gold/25 cursor-pointer'
-                          : 'text-white/20 cursor-default'
-                        }`}
+                    <div key={cell.dateStr}
+                      className={`relative aspect-square flex flex-col items-center justify-center rounded-xl text-xs font-medium
+                        ${active ? 'bg-gold/15 border border-gold/30 text-gold font-bold'
+                          : isPast ? 'text-white/10' : 'text-white/25'}`}
                     >
                       {cell.day}
-                      {active && !selected && (
-                        <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-gold/60" />
-                      )}
-                    </button>
+                      {active && <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-gold" />}
+                    </div>
                   )
                 })}
               </div>
             </div>
 
-            {/* Selected day slots */}
-            {selectedDate && selectedSlots.length > 0 && (
-              <div className="rounded-2xl border border-gold/20 bg-gold/5 p-4 space-y-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
-                  <span className="text-[10px] tracking-[0.3em] text-gold uppercase">Disponível — {fmtDate(selectedDate)}</span>
-                </div>
-                {selectedSlots.map(slot => (
-                  <div key={slot.id} className="flex items-center gap-4 px-4 py-3 rounded-xl bg-black/30 border border-white/[0.06]">
-                    <div className="flex items-center gap-2">
-                      <svg className="w-3.5 h-3.5 text-gold/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span className="text-sm font-semibold text-white/80">{slot.time}</span>
+            {/* Slots list with Reservar buttons */}
+            <div className="space-y-3">
+              <p className="text-[10px] tracking-[0.3em] text-white/25 uppercase mb-4">Datas Disponíveis</p>
+              {upcomingSlots.map(slot => {
+                const d = fmtSlotDate(slot.date)
+                return (
+                  <div key={slot.id} className="flex items-center gap-4 px-4 py-4 rounded-2xl bg-white/[0.02] border border-white/[0.07] hover:border-gold/20 transition-all">
+                    {/* Date badge */}
+                    <div className="flex-shrink-0 flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-gold/10 border border-gold/20">
+                      <span className="text-base font-bold text-gold leading-none">{d.day}</span>
+                      <span className="text-[9px] tracking-wider text-gold/60 uppercase">{d.month}</span>
                     </div>
-                    {slot.local && (
-                      <div className="flex items-center gap-2">
-                        <svg className="w-3.5 h-3.5 text-gold/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                        </svg>
-                        <span className="text-sm text-white/60">{slot.local}</span>
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] text-white/30 uppercase tracking-widest">{d.weekday}</p>
+                      <div className="flex items-center gap-3 mt-0.5">
+                        <span className="text-sm font-semibold text-white/80">{slot.time}</span>
+                        {slot.local && (
+                          <span className="text-xs text-white/40 truncate">📍 {slot.local}</span>
+                        )}
                       </div>
+                    </div>
+                    {/* Reservar button */}
+                    {reservationUrl ? (
+                      <a href={reservationUrl} target="_blank" rel="noopener noreferrer"
+                        className="flex-shrink-0 px-4 py-2 rounded-xl bg-gold text-black text-xs font-bold tracking-wide hover:bg-gold/80 transition-all">
+                        Reservar
+                      </a>
+                    ) : (
+                      <span className="flex-shrink-0 px-4 py-2 rounded-xl border border-gold/20 text-gold/30 text-xs tracking-wide">
+                        Reservar
+                      </span>
                     )}
                   </div>
-                ))}
-              </div>
-            )}
-
-            {/* Hint */}
-            {!selectedDate && (
-              <p className="text-center text-[10px] text-white/20 tracking-wide mt-2">
-                Seleciona um dia marcado a dourado para ver a disponibilidade
-              </p>
-            )}
+                )
+              })}
+            </div>
           </>
         )}
       </div>
@@ -557,8 +545,10 @@ export default function PortalSubPage() {
   const [savingParceiros, setSavingParceiros] = useState(false)
   const [subpageHeaderUrl, setSubpageHeaderUrl] = useState('')
   const [preWeddingSlots, setPreWeddingSlots] = useState<Array<{id:string;date:string;time:string;local:string}>>([])
+  const [preWeddingReservationUrl, setPreWeddingReservationUrl] = useState('')
   const [editingPreWedding, setEditingPreWedding] = useState(false)
   const [preWeddingForm, setPreWeddingForm] = useState<Array<{id:string;date:string;time:string;local:string}>>([])
+  const [reservationUrlForm, setReservationUrlForm] = useState('')
   const [savingSlots, setSavingSlots] = useState(false)
 
   const isPaymentsPage    = title.toUpperCase().includes('PAGAMENTO')
@@ -580,6 +570,7 @@ export default function PortalSubPage() {
       setPortalSettingsBlockId(d.settingsBlockId ?? null)
       setSubpageHeaderUrl(ps.subpageHeaderUrl ?? '')
       setPreWeddingSlots(ps.preWeddingSlots ?? [])
+      setPreWeddingReservationUrl(ps.preWeddingReservationUrl ?? '')
 
       // Auto-extract reference from portal page blocks if not in settings
       if (!ref) {
@@ -685,7 +676,7 @@ export default function PortalSubPage() {
             </button>
           )}
           {!editing && !editingPhotos && !loading && !error && isPreWeddingPage && (
-            <button onClick={() => { setPreWeddingForm(preWeddingSlots.map(s => ({...s}))); setEditingPreWedding(true) }}
+            <button onClick={() => { setPreWeddingForm(preWeddingSlots.map(s => ({...s}))); setReservationUrlForm(preWeddingReservationUrl); setEditingPreWedding(true) }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white/80 border border-white/15 hover:border-white/30 transition-all">
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
@@ -849,9 +840,10 @@ export default function PortalSubPage() {
                             const d = await fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}`).then(r => r.json())
                             const ps = d.settings ?? {}
                             const sbId = d.settingsBlockId ?? null
-                            const newSettings = { ...ps, preWeddingSlots: preWeddingForm }
+                            const newSettings = { ...ps, preWeddingSlots: preWeddingForm, preWeddingReservationUrl: reservationUrlForm }
                             await fetch('/api/portal-settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: newSettings, settingsBlockId: sbId }) })
                             setPreWeddingSlots(preWeddingForm)
+                            setPreWeddingReservationUrl(reservationUrlForm)
                             setEditingPreWedding(false)
                           } finally { setSavingSlots(false) }
                         }}
@@ -861,6 +853,16 @@ export default function PortalSubPage() {
                     </div>
                   </div>
                   <p className="text-[10px] text-white/30 tracking-wide mb-4">Adiciona os dias e horários que disponibilizas para o pré-wedding. Apenas tu vês este painel.</p>
+                  <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] mb-2">
+                    <label className="block text-[9px] text-white/25 tracking-widest uppercase mb-2">URL do botão Reservar (WhatsApp, Tally, etc.)</label>
+                    <input
+                      type="text"
+                      value={reservationUrlForm}
+                      onChange={e => setReservationUrlForm(e.target.value)}
+                      placeholder="https://wa.me/351... ou https://tally.so/..."
+                      className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15"
+                    />
+                  </div>
                   {preWeddingForm.map((slot, i) => (
                     <div key={slot.id} className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-3">
                       <div className="flex items-center justify-between">
@@ -916,7 +918,7 @@ export default function PortalSubPage() {
                   </div>
                   {(() => {
                     if (isPreWeddingPage) {
-                      return <PreWeddingSection slots={preWeddingSlots} blocks={blocks} settings={settings} />
+                      return <PreWeddingSection slots={preWeddingSlots} reservationUrl={preWeddingReservationUrl} blocks={blocks} settings={settings} />
                     }
                     if (isGuiaPage) {
                       // ── GUIA DOS NOIVOS: the 4 sections live inside a column_list ──
