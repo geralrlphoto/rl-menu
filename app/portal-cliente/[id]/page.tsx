@@ -597,8 +597,12 @@ export default function PortalSubPage() {
       setParceiros(ps.parceiros ?? [])
       setPortalSettingsBlockId(d.settingsBlockId ?? null)
       setSubpageHeaderUrl(ps.subpageHeaderUrl ?? '')
-      setPreWeddingSlots(ps.preWeddingSlots ?? [])
-      setReservedSlotId(ps.preWeddingReservedSlotId ?? null)
+      const slots = ps.preWeddingSlots ?? []
+      setPreWeddingSlots(slots)
+      // Only treat as reserved if the ID still exists in current slots
+      const savedId = ps.preWeddingReservedSlotId ?? null
+      const validId = savedId && slots.some((s: {id: string}) => s.id === savedId) ? savedId : null
+      setReservedSlotId(validId)
 
       // Auto-extract reference from portal page blocks if not in settings
       if (!ref) {
