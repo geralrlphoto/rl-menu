@@ -19,6 +19,20 @@ const sectionImages: Record<string, string> = {
 }
 const fallbackImage = 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=1200&q=80'
 
+const PORTAL_PAGE_ID   = '311220116d8a80d29468e817ae7bb79f'
+const SETTINGS_PREFIX  = '__PORTAL_SETTINGS__:'
+
+function parsePortalSettings(blocks: any[]): any {
+  for (const b of blocks) {
+    const rt = b?.paragraph?.rich_text ?? b?.code?.rich_text ?? []
+    const text: string = rt[0]?.plain_text ?? ''
+    if (text.startsWith(SETTINGS_PREFIX)) {
+      try { return JSON.parse(text.slice(SETTINGS_PREFIX.length)) } catch { return {} }
+    }
+  }
+  return {}
+}
+
 const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
 function fmt(d: string | null) {
   if (!d) return null
@@ -91,6 +105,7 @@ export default async function Home() {
     aprovacaoRes,
     videosRes,
     fotosRes,
+    portalRes,
   ] = await Promise.all([
     supabase.from('crm_contacts').select('nome, tipo_evento, como_chegou, data_entrada, status')
       .gte('data_entrada', ago10Str)
@@ -147,6 +162,11 @@ export default async function Home() {
         sorts: [{ property: 'DATA DO EVENTO', direction: 'ascending' }],
         page_size: 50,
       }),
+    }).then(r => r.json()).catch(() => ({ results: [] })),
+
+    // Portal settings — reservas pré-wedding
+    fetch(`https://api.notion.com/v1/blocks/${PORTAL_PAGE_ID}/children?page_size=100`, {
+      headers: notionH, cache: 'no-store',
     }).then(r => r.json()).catch(() => ({ results: [] })),
   ])
 
@@ -217,6 +237,19 @@ export default async function Home() {
     })
     .filter((v: any) => v.diasRestantes <= 15)
 
+  // ── Pré-wedding reservas ──────────────────────────────────────────────────
+  const ps = parsePortalSettings(portalRes.results ?? [])
+  const noiva: string  = ps.noiva  ?? ''
+  const noivo: string  = ps.noivo  ?? ''
+  const pwSlots: any[] = ps.preWeddingSlots ?? []
+  const pwReservedId: string | null = ps.preWeddingReservedSlotId ?? null
+  const pwReservedSlot = pwReservedId ? pwSlots.find((s: any) => s.id === pwReservedId) : null
+  const coupleNames = [noiva, noivo].filter(Boolean).join(' & ') || 'Casal'
+  function fmtPwDate(date: string, time: string, local: string) {
+    const [, m, d] = date.split('-').map(Number)
+    return `${String(d).padStart(2,'0')} ${MESES[m-1]}${time ? ` · ${time}` : ''}${local ? ` · ${local}` : ''}`
+  }
+
   // ── Temperatura das leads ─────────────────────────────────────────────────
   function daysSince(d: string) {
     const today = new Date(); today.setHours(0,0,0,0)
@@ -278,10 +311,15 @@ export default async function Home() {
     {
       key: 'pre-wedding',
       title: ['PRÉ', 'WEDDING'],
-      subtitle: 'Em breve',
-      empty: 'Sem informação de pré-weddings',
-      items: [],
-      href: '/eventos-2026',
+      subtitle: pwReservedSlot ? '1 reserva confirmada' : 'Sem reservas',
+      empty: 'Sem reservas de pré-wedding',
+      items: pwReservedSlot ? [{
+        main: coupleNames,
+        sub: fmtPwDate(pwReservedSlot.date, pwReservedSlot.time, pwReservedSlot.local),
+        tag: '✓ Reservado',
+        tagColor: 'text-emerald-400',
+      }] : [],
+      href: '/portal-cliente',
     },
     {
       key: 'videos-prazo',
