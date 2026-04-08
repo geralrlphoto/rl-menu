@@ -20,17 +20,21 @@ async function getBlocks(pageId: string): Promise<any[]> {
 }
 
 function extractRef(blocks: any[]): string | null {
+  let textRef: string | null = null
   for (const b of blocks) {
     if (b.type !== 'paragraph') continue
     const text: string = b.paragraph?.rich_text?.[0]?.plain_text ?? ''
     if (text.startsWith(SETTINGS_PREFIX)) {
       try {
         const ps = JSON.parse(text.slice(SETTINGS_PREFIX.length))
-        return ps.referencia ?? null
-      } catch { return null }
+        if (ps.referencia) return ps.referencia
+      } catch { /* continue */ }
     }
+    // Also check plain text paragraphs like "Referência: CAS_026_26_RL"
+    const match = text.match(/^refer[eê]ncia\s*:\s*(.+)$/i)
+    if (match && !textRef) textRef = match[1].trim()
   }
-  return null
+  return textRef
 }
 
 export async function GET(req: NextRequest) {
