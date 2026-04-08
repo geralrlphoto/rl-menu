@@ -568,28 +568,63 @@ export default function PortalSubPage() {
                     </div>
                   </div>
                   {parceirosForm.map((p, i) => (
-                    <div key={i} className="flex gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-                      <div className="flex-1 space-y-2">
-                        <label className="block text-[10px] text-white/30 tracking-widest uppercase">Parceiro {i+1}</label>
-                        <input
-                          value={p.imageUrl}
-                          onChange={e => setParceirosForm(prev => { const a=[...prev]; a[i]={...a[i],imageUrl:e.target.value}; return a })}
-                          placeholder="URL da imagem"
-                          className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
-                        />
-                        <input
-                          value={p.url ?? ''}
-                          onChange={e => setParceirosForm(prev => { const a=[...prev]; a[i]={...a[i],url:e.target.value}; return a })}
-                          placeholder="URL do site (https://...)"
-                          className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
-                        />
-                        {p.imageUrl && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={p.imageUrl} alt="" className="w-full max-h-32 object-contain rounded-lg opacity-60" />
-                        )}
+                    <div key={i} className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-white/30 tracking-widest uppercase">Parceiro {i+1}</span>
+                        <button onClick={() => setParceirosForm(prev => prev.filter((_,j) => j!==i))}
+                          className="text-white/20 hover:text-red-400 transition-colors text-sm">✕ Remover</button>
                       </div>
-                      <button onClick={() => setParceirosForm(prev => prev.filter((_,j) => j!==i))}
-                        className="text-white/20 hover:text-red-400 transition-colors text-lg mt-1">✕</button>
+                      {/* Image upload */}
+                      <div>
+                        {p.imageUrl
+                          ? (
+                            <div className="relative group">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={p.imageUrl} alt="" className="w-full max-h-40 object-contain rounded-xl bg-white/[0.03]" />
+                              <label className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl cursor-pointer">
+                                <span className="text-xs text-white font-semibold tracking-widest">TROCAR FOTO</span>
+                                <input type="file" accept="image/*" className="hidden"
+                                  onChange={async e => {
+                                    const file = e.target.files?.[0]; if (!file) return
+                                    setParceirosForm(prev => { const a=[...prev]; a[i]={...a[i],imageUrl:'uploading'}; return a })
+                                    const fd = new FormData(); fd.append('file', file)
+                                    const res = await fetch('/api/upload-image', { method:'POST', body: fd }).then(r => r.json())
+                                    if (res.url) setParceirosForm(prev => { const a=[...prev]; a[i]={...a[i],imageUrl:res.url}; return a })
+                                  }}
+                                />
+                              </label>
+                              {p.imageUrl === 'uploading' && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/70 rounded-xl">
+                                  <span className="text-xs text-white/60 animate-pulse">A carregar...</span>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <label className="flex flex-col items-center justify-center w-full h-28 rounded-xl border border-dashed border-white/10 hover:border-gold/30 bg-white/[0.02] cursor-pointer transition-all group">
+                              <svg className="w-6 h-6 text-white/20 group-hover:text-gold/40 mb-1 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                              </svg>
+                              <span className="text-[10px] text-white/20 group-hover:text-gold/40 tracking-widest transition-colors">CARREGAR FOTO</span>
+                              <input type="file" accept="image/*" className="hidden"
+                                onChange={async e => {
+                                  const file = e.target.files?.[0]; if (!file) return
+                                  setParceirosForm(prev => { const a=[...prev]; a[i]={...a[i],imageUrl:'uploading'}; return a })
+                                  const fd = new FormData(); fd.append('file', file)
+                                  const res = await fetch('/api/upload-image', { method:'POST', body: fd }).then(r => r.json())
+                                  if (res.url) setParceirosForm(prev => { const a=[...prev]; a[i]={...a[i],imageUrl:res.url}; return a })
+                                }}
+                              />
+                            </label>
+                          )
+                        }
+                      </div>
+                      {/* URL do site */}
+                      <input
+                        value={p.url ?? ''}
+                        onChange={e => setParceirosForm(prev => { const a=[...prev]; a[i]={...a[i],url:e.target.value}; return a })}
+                        placeholder="URL do site do parceiro (https://...)"
+                        className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
+                      />
                     </div>
                   ))}
                   <button
