@@ -1335,13 +1335,21 @@ function PortalSubPageContent() {
                             {BRIEFING_SECTIONS.map(({ key }) => {
                               const url = briefingLinks[key]
                               const inner = (
-                                <div className={`flex flex-col items-center justify-center gap-2 px-4 py-8 rounded-2xl border transition-all
+                                <div className={`relative flex flex-col items-center justify-center gap-2 px-4 py-8 rounded-2xl border transition-all duration-300 overflow-hidden
                                   ${url
-                                    ? 'border-gold/30 bg-gold/5 hover:bg-gold/10 hover:border-gold/50 cursor-pointer'
-                                    : 'border-white/[0.07] bg-white/[0.02] opacity-50 cursor-default'
-                                  }`}>
-                                  <span className="text-xs font-bold tracking-[0.25em] text-white/70 uppercase">{key}</span>
-                                  {url && <span className="text-[9px] text-gold/50 tracking-widest">Abrir →</span>}
+                                    ? 'border-gold/40 bg-black cursor-pointer group hover:border-gold/80'
+                                    : 'border-white/[0.07] bg-white/[0.02] opacity-40 cursor-default'
+                                  }`}
+                                  style={url ? { boxShadow: '0 0 18px 2px rgba(212,175,55,0.18), inset 0 0 30px 0 rgba(212,175,55,0.04)' } : {}}>
+                                  {url && (
+                                    <span className="absolute inset-0 rounded-2xl pointer-events-none transition-all duration-300 group-hover:opacity-100 opacity-0"
+                                      style={{ boxShadow: '0 0 32px 6px rgba(212,175,55,0.28), inset 0 0 40px 0 rgba(212,175,55,0.08)' }} />
+                                  )}
+                                  <span className={`text-xs font-bold tracking-[0.3em] uppercase transition-all duration-300 ${url ? 'text-gold group-hover:text-white' : 'text-white/40'}`}
+                                    style={url ? { textShadow: '0 0 12px rgba(212,175,55,0.8), 0 0 24px rgba(212,175,55,0.4)' } : {}}>
+                                    {key}
+                                  </span>
+                                  {url && <span className="text-[9px] text-gold/50 tracking-widest group-hover:text-gold/80 transition-colors">Abrir →</span>}
                                 </div>
                               )
                               return url ? (
