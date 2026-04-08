@@ -391,6 +391,7 @@ export default function PortalSubPage() {
   const [editingParceiros, setEditingParceiros] = useState(false)
   const [parceirosForm, setParceirosForm] = useState<Array<{imageUrl:string;url?:string}>>([])
   const [savingParceiros, setSavingParceiros] = useState(false)
+  const [subpageHeaderUrl, setSubpageHeaderUrl] = useState('')
 
   const isPaymentsPage = title.toUpperCase().includes('PAGAMENTO')
   const isGuiaPage    = title.toUpperCase().includes('GUIA')
@@ -408,6 +409,7 @@ export default function PortalSubPage() {
       setGuiaLinks(ps.guiaLinks ?? {})
       setParceiros(ps.parceiros ?? [])
       setPortalSettingsBlockId(d.settingsBlockId ?? null)
+      setSubpageHeaderUrl(ps.subpageHeaderUrl ?? '')
 
       // Auto-extract reference from portal page blocks if not in settings
       if (!ref) {
@@ -434,8 +436,8 @@ export default function PortalSubPage() {
   }, [])
 
   useEffect(() => {
-    if (isPaymentsPage || isGuiaPage) loadPagamentos()
-  }, [isPaymentsPage, isGuiaPage, loadPagamentos])
+    loadPagamentos()
+  }, [loadPagamentos])
 
   const loadBlocks = useCallback(async (bust = false) => {
     if (!id) return
@@ -525,11 +527,27 @@ export default function PortalSubPage() {
       </div>
 
       <header className="mb-8">
-        <p className="text-xs tracking-[0.4em] text-white/30 uppercase mb-1">RL PHOTO.VIDEO</p>
-        <h1 className="text-xl sm:text-2xl font-bold tracking-widest text-gold uppercase">
-          {title || '...'}
-        </h1>
-        <div className="mt-3 h-px w-16 bg-gold/40" />
+        {subpageHeaderUrl ? (
+          <div className="relative w-full h-48 sm:h-64 rounded-2xl overflow-hidden mb-6">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={subpageHeaderUrl} alt="" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+            <div className="absolute bottom-0 left-0 p-5">
+              <p className="text-[10px] tracking-[0.4em] text-white/50 uppercase mb-1">RL PHOTO.VIDEO</p>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-widest text-white uppercase drop-shadow-lg">
+                {title || '...'}
+              </h1>
+            </div>
+          </div>
+        ) : (
+          <>
+            <p className="text-xs tracking-[0.4em] text-white/30 uppercase mb-1">RL PHOTO.VIDEO</p>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-widest text-gold uppercase">
+              {title || '...'}
+            </h1>
+            <div className="mt-3 h-px w-16 bg-gold/40" />
+          </>
+        )}
       </header>
 
       {loading && <div className="text-center py-24 text-white/20 text-xs tracking-widest uppercase">A carregar...</div>}

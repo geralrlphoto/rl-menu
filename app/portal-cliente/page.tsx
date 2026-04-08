@@ -32,6 +32,7 @@ type PortalSettings = {
     pagamentosRegistoUrl?: string
   }
   parceiros?: Array<{ imageUrl: string; url?: string }>
+  subpageHeaderUrl?: string
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -452,6 +453,12 @@ function SettingsPanel({
       <div>
         <p className="text-[10px] text-white/40 tracking-widest uppercase mb-3">Fotografias</p>
         <div className="space-y-4">
+          <PhotoField
+            label="Cabeçalho das Sub-páginas (todas)"
+            value={form.subpageHeaderUrl ?? ''}
+            onChange={url => setForm(prev => ({ ...prev, subpageHeaderUrl: url }))}
+            onClear={() => setForm(prev => ({ ...prev, subpageHeaderUrl: '' }))}
+          />
           <PhotoField
             label="Imagem de Fundo (Hero)"
             value={form.heroImageUrl ?? ''}
