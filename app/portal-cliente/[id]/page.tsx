@@ -366,8 +366,10 @@ function PaymentPhasesSection({ referencia, valorTotal, pagamentos, onRefresh, r
 
 // ─── contrato proposta section ────────────────────────────────────────────────
 
-function ContratoPropostaSection({ evento }: {
+function ContratoPropostaSection({ evento, blocks, settings }: {
   evento: any
+  blocks: Block[]
+  settings: { hiddenNav: string[] }
 }) {
   const fotoItems: string[] = evento.servico_foto ?? []
   const videoItems: string[] = evento.servico_video ?? []
@@ -447,6 +449,7 @@ function ContratoPropostaSection({ evento }: {
           </div>
         )}
       </div>
+      <NotionBlocks blocks={blocks.filter(b => b.type !== 'image')} hiddenNav={settings.hiddenNav} />
     </>
   )
 }
@@ -1033,7 +1036,7 @@ export default function PortalSubPage() {
                   </div>
                   {(() => {
                     if (isContratoPage && eventoData) {
-                      return <ContratoPropostaSection evento={eventoData} />
+                      return <ContratoPropostaSection evento={eventoData} blocks={blocks} settings={settings} />
                     }
                     if (isPreWeddingPage) {
                       return (
