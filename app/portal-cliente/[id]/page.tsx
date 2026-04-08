@@ -397,7 +397,7 @@ function ContratoPropostaSection({ evento, blocks, settings, contratoDisponivel,
           />
         </div>
       )}
-      <NotionBlocks blocks={blocks.filter(b => b.type !== 'image')} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+      <NotionBlocks blocks={blocks.filter(b => b.type !== 'image')} hiddenNav={settings.hiddenNav} />
       <div className="mt-8 pt-6 border-t border-white/[0.06]">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-1 h-5 bg-gold rounded-full" />
@@ -535,7 +535,7 @@ function PreWeddingSection({ slots, reservedSlotId, reservingSlotId, showReserve
 
   return (
     <>
-      <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+      <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
       <div className="mt-8 pt-6 border-t border-white/[0.06]">
         {/* Section header */}
         <div className="flex items-center gap-3 mb-6">
