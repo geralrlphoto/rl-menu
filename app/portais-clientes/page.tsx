@@ -123,44 +123,33 @@ export default async function PortaisClientesPage() {
         {portals.length === 0 ? (
           <p className="text-white/20 text-sm tracking-widest text-center py-16">SEM PORTAIS CRIADOS</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
+          <div className="flex flex-col gap-3 max-w-2xl mx-auto">
             {portals.map((portal) => (
               <Link
                 key={portal.referencia}
                 href={`/portal-cliente/ref/${encodeURIComponent(portal.referencia)}`}
-                className="group relative flex flex-col justify-between gap-6 p-6 rounded-2xl bg-[#0d0d0d] border border-white/[0.07] hover:border-[#C9A84C]/30 transition-all duration-500 overflow-hidden"
+                className="group relative flex items-center justify-between gap-4 px-8 py-6 rounded-2xl bg-[#0d0d0d] border border-white/[0.07] hover:border-[#C9A84C]/25 transition-all duration-500 overflow-hidden"
               >
-                {/* Subtle gradient on hover */}
-                <div className="absolute inset-0 bg-gradient-to-br from-[#C9A84C]/0 to-[#C9A84C]/0 group-hover:from-[#C9A84C]/[0.03] group-hover:to-transparent transition-all duration-500 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#C9A84C]/0 group-hover:from-[#C9A84C]/[0.03] to-transparent transition-all duration-500 pointer-events-none" />
 
-                {/* Top: ref + arrow */}
-                <div className="flex items-start justify-between gap-2">
-                  <span className="text-[9px] tracking-[0.3em] uppercase text-white/25 font-mono">
-                    {portal.referencia}
-                  </span>
-                  <svg className="w-3.5 h-3.5 text-white/15 group-hover:text-[#C9A84C]/50 transition-all duration-300 shrink-0 mt-0.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10"/>
-                  </svg>
-                </div>
-
-                {/* Bottom: names + date */}
-                <div className="flex flex-col gap-1">
-                  {/* Gold divider */}
-                  <div className="w-6 h-px bg-[#C9A84C]/30 mb-3 group-hover:w-10 group-hover:bg-[#C9A84C]/50 transition-all duration-500" />
-
+                <div className="relative flex flex-col gap-1">
                   {(portal.noiva || portal.noivo) ? (
-                    <p className="font-playfair font-bold text-xl text-white/80 group-hover:text-white transition-colors leading-tight">
+                    <p className="font-playfair font-black text-2xl sm:text-3xl text-white tracking-tight leading-none uppercase">
                       {[portal.noiva, portal.noivo].filter(Boolean).join(' & ')}
                     </p>
                   ) : (
-                    <p className="font-playfair text-white/20 text-lg italic">Sem nome</p>
+                    <p className="font-mono text-white/30 text-sm tracking-widest uppercase">{portal.referencia}</p>
                   )}
                   {portal.data && (
-                    <p className="font-cormorant italic text-[#C9A84C]/50 text-sm tracking-wide group-hover:text-[#C9A84C]/70 transition-colors">
-                      ♡ {formatDate(portal.data)}
+                    <p className="text-[#C9A84C]/60 text-sm tracking-wide group-hover:text-[#C9A84C]/80 transition-colors">
+                      {formatDate(portal.data)} ♡
                     </p>
                   )}
                 </div>
+
+                <svg className="relative w-4 h-4 text-white/20 group-hover:text-[#C9A84C]/50 transition-all duration-300 shrink-0 group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
+                </svg>
               </Link>
             ))}
           </div>
