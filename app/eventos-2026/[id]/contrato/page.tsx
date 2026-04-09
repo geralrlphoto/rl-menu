@@ -85,13 +85,14 @@ function ContratoPageContent() {
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [clausulas, setClausulas] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (!id) return
     Promise.all([
       fetch(`/api/eventos-notion/${id}`).then(r => r.json()),
-      fetch(`/api/contrato-clausulas?eventoId=${id}`).then(r => r.json()),
+      fetch(`/api/contrato-clausulas?eventoId=${id}`).then(r => r.json()).catch(() => ({ clausulas: null })),
     ]).then(([d, cd]) => {
       if (d.event) { setEvento(d.event); setDraft(d.event) }
       const custom = cd.clausulas ?? {}
@@ -105,6 +106,7 @@ function ContratoPageContent() {
 
   async function handleSave() {
     setSaving(true)
+    setSaveError(null)
     const fields = ['nome_noiva','nome_noivo','cc_noiva','cc_noivo','nif_noiva','nif_noivo',
       'morada_noiva','morada_noivo','email_noiva','email_noivo','tel_noiva','tel_noivo',
       'data_evento','local','proposta','valor_foto','valor_video','valor_extras','valor_liquido']
@@ -116,11 +118,17 @@ function ContratoPageContent() {
     })
     setEvento(draft)
 
-    await fetch('/api/contrato-clausulas', {
+    const clausulasRes = await fetch('/api/contrato-clausulas', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ eventoId: id, clausulas }),
     })
+    const clausulasData = await clausulasRes.json()
+    if (!clausulasRes.ok || clausulasData.error) {
+      setSaveError(`Erro ao guardar cláusulas no Supabase: ${clausulasData.error ?? clausulasRes.status}. Cria a tabela "contrato_clausulas" no Supabase.`)
+      setSaving(false)
+      return
+    }
 
     setSaving(false)
     setEditing(false)
@@ -158,6 +166,7 @@ function ContratoPageContent() {
         <div className="flex-1" />
         {!readonly && <span className="text-xs text-white/30 tracking-widest uppercase">{e.referencia} — {e.cliente}</span>}
         {!readonly && saved && <span className="text-xs text-green-400 font-semibold">✓ Guardado</span>}
+        {!readonly && saveError && <span className="text-xs text-red-400 max-w-xs truncate" title={saveError}>⚠ {saveError}</span>}
         {!readonly && editing ? (
           <>
             <button onClick={() => { setDraft(evento); setEditing(false) }}
