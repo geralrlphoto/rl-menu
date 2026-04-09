@@ -468,6 +468,7 @@ function SettingsPanel({ settings, referencia, blocks, onSaved, onCancel }: {
           <div className="space-y-2">
             {([
               ['Blog', 'blogUrl', 'https://...'],
+              ['Formulário Seleção de Fotos', 'fotosSelecaoUrl', 'https://tally.so/...'],
               ['Fotos Convidados', 'fotosConvidadosUrl', 'https://tally.so/...'],
               ['Dados para Contrato', 'dadosContratoUrl', 'https://tally.so/...'],
               ['Pagamentos / Registo', 'pagamentosRegistoUrl', 'https://tally.so/...'],
