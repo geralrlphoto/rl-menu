@@ -70,48 +70,50 @@ export default async function PortaisClientesPage() {
         </div>
       </section>
 
-      {/* Lista de portais — estilo Quick Access */}
-      <section className="py-6 sm:py-10 px-4">
-        <p className="font-playfair font-black text-white/50 text-lg sm:text-xl text-center mb-8 tracking-tight">Portais</p>
+      {/* Lista de portais */}
+      <section className="py-10 sm:py-16 px-4">
 
         {portals.length === 0 ? (
           <p className="text-white/20 text-sm tracking-widest text-center py-16">SEM PORTAIS CRIADOS</p>
         ) : (
-          <div className="flex flex-col gap-3 max-w-xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
             {portals.map((portal) => (
               <Link
                 key={portal.referencia}
                 href={`/portal-cliente/ref/${encodeURIComponent(portal.referencia)}`}
-                className="snap-start shrink-0 flex items-center justify-between gap-4 px-5 py-4 rounded-2xl border bg-black border-white/40 text-white/60 hover:border-white/70 transition-all duration-300 group"
-                style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}
+                className="group relative flex flex-col justify-between gap-6 p-6 rounded-2xl bg-[#0d0d0d] border border-white/[0.07] hover:border-[#C9A84C]/30 transition-all duration-500 overflow-hidden"
               >
-                <div className="flex flex-col gap-0.5">
-                  <span
-                    className="text-[9px] tracking-widest uppercase text-white/60 group-hover:text-white transition-colors"
-                    style={{ textShadow: '0 0 8px rgba(255,255,255,0.9), 0 0 16px rgba(255,255,255,0.5)' }}
-                  >
-                    {portal.referencia ?? '—'}
+                {/* Subtle gradient on hover */}
+                <div className="absolute inset-0 bg-gradient-to-br from-[#C9A84C]/0 to-[#C9A84C]/0 group-hover:from-[#C9A84C]/[0.03] group-hover:to-transparent transition-all duration-500 pointer-events-none" />
+
+                {/* Top: ref + arrow */}
+                <div className="flex items-start justify-between gap-2">
+                  <span className="text-[9px] tracking-[0.3em] uppercase text-white/25 font-mono">
+                    {portal.referencia}
                   </span>
-                  {(portal.noiva || portal.noivo) && (
-                    <span
-                      className="font-playfair text-lg sm:text-xl font-bold text-white group-hover:text-white transition-colors"
-                      style={{ textShadow: '0 0 8px rgba(255,255,255,0.5)' }}
-                    >
+                  <svg className="w-3.5 h-3.5 text-white/15 group-hover:text-[#C9A84C]/50 transition-all duration-300 shrink-0 mt-0.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10"/>
+                  </svg>
+                </div>
+
+                {/* Bottom: names + date */}
+                <div className="flex flex-col gap-1">
+                  {/* Gold divider */}
+                  <div className="w-6 h-px bg-[#C9A84C]/30 mb-3 group-hover:w-10 group-hover:bg-[#C9A84C]/50 transition-all duration-500" />
+
+                  {(portal.noiva || portal.noivo) ? (
+                    <p className="font-playfair font-bold text-xl text-white/80 group-hover:text-white transition-colors leading-tight">
                       {[portal.noiva, portal.noivo].filter(Boolean).join(' & ')}
-                    </span>
+                    </p>
+                  ) : (
+                    <p className="font-playfair text-white/20 text-lg italic">Sem nome</p>
                   )}
                   {portal.data && (
-                    <span className="font-cormorant italic text-white/30 text-sm tracking-wide">
+                    <p className="font-cormorant italic text-[#C9A84C]/50 text-sm tracking-wide group-hover:text-[#C9A84C]/70 transition-colors">
                       ♡ {formatDate(portal.data)}
-                    </span>
+                    </p>
                   )}
                 </div>
-                <span
-                  className="text-white/60 group-hover:text-white text-xl transition-colors shrink-0"
-                  style={{ filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.9))' }}
-                >
-                  ›
-                </span>
               </Link>
             ))}
           </div>
