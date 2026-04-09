@@ -122,29 +122,29 @@ export default async function PortaisClientesPage() {
         {portals.length === 0 ? (
           <p className="text-white/20 text-sm tracking-widest text-center py-16">SEM PORTAIS CRIADOS</p>
         ) : (
-          <div className="flex flex-col gap-2 max-w-md mx-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 max-w-5xl mx-auto">
             {portals.map((portal) => (
               <Link
                 key={portal.referencia}
                 href={`/portal-cliente/ref/${encodeURIComponent(portal.referencia)}`}
-                className="group flex items-center justify-between gap-3 px-5 py-3.5 rounded-xl bg-black border border-white/40 hover:border-white/70 transition-all duration-300"
+                className="group flex flex-col justify-between gap-2 px-4 py-4 rounded-xl bg-black border border-white/40 hover:border-white/70 transition-all duration-300"
                 style={{ boxShadow: '0 0 14px 3px rgba(255,255,255,0.12), 0 0 5px 1px rgba(255,255,255,0.18), inset 0 0 16px 0 rgba(255,255,255,0.04)' }}
               >
-                <div className="flex flex-col gap-0">
+                <div className="flex flex-col gap-0.5">
                   {(portal.noiva || portal.noivo) ? (
-                    <span className="font-playfair font-bold text-base text-white leading-tight">
+                    <span className="font-playfair font-bold text-sm text-white leading-snug">
                       {[portal.noiva, portal.noivo].filter(Boolean).join(' & ')}
                     </span>
                   ) : (
-                    <span className="font-mono text-white/25 text-xs tracking-widest uppercase">{portal.referencia}</span>
+                    <span className="font-mono text-white/25 text-[10px] tracking-widest uppercase">{portal.referencia}</span>
                   )}
                   {portal.data && (
-                    <span className="font-cormorant italic text-white/35 text-sm">
+                    <span className="font-cormorant italic text-white/35 text-xs">
                       ♡ {formatDate(portal.data)}
                     </span>
                   )}
                 </div>
-                <span className="text-white/40 group-hover:text-white/80 transition-colors text-lg shrink-0">›</span>
+                <span className="text-white/30 group-hover:text-white/70 transition-colors text-sm self-end">›</span>
               </Link>
             ))}
           </div>
