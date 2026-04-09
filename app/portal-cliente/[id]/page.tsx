@@ -1265,18 +1265,6 @@ function PortalSubPageContent() {
                       </div>
                     )
                   })}
-                  {isFotografiasPage && (
-                    <div className="p-3 rounded-xl bg-white/[0.02] border border-white/20 space-y-2">
-                      <label className="block text-[10px] text-white/60 tracking-widest uppercase">Ver Mais — Link Galeria</label>
-                      <input
-                        value={fotosVerMaisUrlForm}
-                        onChange={e => setFotosVerMaisUrlForm(e.target.value)}
-                        placeholder="https://..."
-                        className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-white/40 transition-colors placeholder:text-white/20"
-                      />
-                      <p className="text-[9px] text-white/25 tracking-wide">Quando preenchido aparece o botão VER MAIS na página</p>
-                    </div>
-                  )}
                 </div>
               )
             : editingPreWedding
@@ -1811,23 +1799,16 @@ function PortalSubPageContent() {
                     }
                     if (isFotografiasPage) {
                       const fotosUrl = guiaLinks.fotosSelecaoUrl || 'https://tally.so/r/448PrO'
-                      const fotosVerMaisUrl = guiaLinks.fotosVerMaisUrl ?? ''
+                      const pageCalloutLinks = calloutLinks[id as string] ?? {}
+                      const calloutCards = findCalloutCards(blocks)
+                      const getImgUrl = (b: Block) => {
+                        const imgChild = (b.children ?? []).find((c: Block) => c.type === 'image')
+                        if (!imgChild) return null
+                        return imgChild.image?.type === 'external' ? imgChild.image.external?.url : imgChild.image?.file?.url
+                      }
+                      const backUrl = fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined
                       return (
                         <>
-                          {/* ── VER MAIS ── */}
-                          {fotosVerMaisUrl && (
-                            <div className="mb-6 rounded-2xl border border-white/40 bg-black overflow-hidden"
-                              style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}>
-                              <div className="px-6 py-5 flex items-center justify-between">
-                                <span className="text-sm text-white/50 tracking-wide">Fotografias disponíveis para visualizar</span>
-                                <a href={fotosVerMaisUrl} target="_blank" rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/40 bg-white/5 text-white text-sm font-bold tracking-[0.2em] uppercase hover:bg-white/10 transition-all"
-                                  style={{ boxShadow: '0 0 12px 2px rgba(255,255,255,0.15)' }}>
-                                  VER MAIS →
-                                </a>
-                              </div>
-                            </div>
-                          )}
                           {/* ── ENVIAR FOTOS ── */}
                           <div className="mb-8 rounded-2xl border border-white/40 bg-black overflow-hidden"
                             style={{ boxShadow: '0 0 24px 4px rgba(255,255,255,0.12), 0 0 8px 2px rgba(255,255,255,0.18), inset 0 0 30px 0 rgba(255,255,255,0.04)' }}>
@@ -1846,7 +1827,66 @@ function PortalSubPageContent() {
                               </a>
                             </div>
                           </div>
-                          <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
+                          {/* ── BLOCKS com cards VER MAIS por card ── */}
+                          {(() => {
+                            if (calloutCards.length === 0) return <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={backUrl} />
+                            const renderedSections: React.ReactNode[] = []
+                            let i = 0
+                            while (i < blocks.length) {
+                              const b = blocks[i]
+                              const cardsInBlock = b.type === 'column_list'
+                                ? (b.children ?? []).flatMap((col: Block) =>
+                                    (col.children ?? []).filter((c: Block) =>
+                                      c.type === 'callout' && (c.children ?? []).some((ch: Block) => ch.type === 'image')
+                                    )
+                                  )
+                                : b.type === 'callout' && (b.children ?? []).some((c: Block) => c.type === 'image')
+                                  ? [b] : []
+                              if (cardsInBlock.length > 0) {
+                                renderedSections.push(
+                                  <div key={`cards-${i}`} className="grid grid-cols-2 gap-3 my-4">
+                                    {cardsInBlock.map((callout: Block) => {
+                                      const cardTitle = plainText(callout.callout?.rich_text ?? []).trim()
+                                      const imgUrl = getImgUrl(callout)
+                                      const url = pageCalloutLinks[cardTitle]
+                                      return (
+                                        <div key={cardTitle} className="flex flex-col rounded-2xl overflow-hidden border border-white/[0.08] bg-white/[0.02]">
+                                          <div className="px-3 pt-3 pb-2">
+                                            <span className="text-[10px] font-bold tracking-widest text-white/60 uppercase">{cardTitle}</span>
+                                          </div>
+                                          {imgUrl && (
+                                            // eslint-disable-next-line @next/next/no-img-element
+                                            <img src={imgUrl} alt={cardTitle} className="w-full object-contain" />
+                                          )}
+                                          {url ? (
+                                            <div className="p-3">
+                                              <a href={url} target="_blank" rel="noopener noreferrer"
+                                                className="block w-full text-center px-4 py-2.5 rounded-xl border border-white/30 bg-white/5 text-white font-semibold text-xs tracking-widest uppercase hover:bg-white/10 transition-all"
+                                                style={{ boxShadow: '0 0 8px 1px rgba(255,255,255,0.1)' }}>
+                                                VER MAIS →
+                                              </a>
+                                            </div>
+                                          ) : (
+                                            <div className="p-3">
+                                              <span className="block w-full text-center px-4 py-2.5 rounded-xl bg-red-900/30 border border-red-500/20 text-red-400/60 font-semibold text-xs tracking-widest uppercase">
+                                                EM BREVE
+                                              </span>
+                                            </div>
+                                          )}
+                                        </div>
+                                      )
+                                    })}
+                                  </div>
+                                )
+                              } else {
+                                renderedSections.push(
+                                  <NotionBlocks key={`block-${i}`} blocks={[b]} hiddenNav={settings.hiddenNav} backUrl={backUrl} />
+                                )
+                              }
+                              i++
+                            }
+                            return <>{renderedSections}</>
+                          })()}
                         </>
                       )
                     }
