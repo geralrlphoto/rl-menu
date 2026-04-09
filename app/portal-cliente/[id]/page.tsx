@@ -720,6 +720,7 @@ function PortalSubPageContent() {
   const [editingBriefing, setEditingBriefing] = useState(false)
   const [briefingForm, setBriefingForm] = useState<Record<string, string>>({})
   const [savingBriefing, setSavingBriefing] = useState(false)
+  const [cronogramaStatus, setCronogramaStatus] = useState<Record<string, boolean>>({})
 
   const isPaymentsPage    = title.toUpperCase().includes('PAGAMENTO')
   const isGuiaPage        = title.toUpperCase().includes('GUIA') && !title.toUpperCase().includes('WEDDING')
@@ -727,7 +728,8 @@ function PortalSubPageContent() {
   const isContratoPage    = title.toUpperCase().includes('CONTRATO')
   const isBriefingPage    = title.toUpperCase().includes('BRIEFING')
   const isFotografiasPage = title.toUpperCase().includes('FOTOGRAF')
-  const isSatisfacaoPage  = title.toUpperCase().includes('SAT.') || title.toUpperCase().includes('SATISF')
+  const isSatisfacaoPage   = title.toUpperCase().includes('SAT.') || title.toUpperCase().includes('SATISF')
+  const isCronogramaPage   = title.toUpperCase().includes('CRONOGRAMA')
 
   const loadPagamentos = useCallback(async () => {
     setPagRefreshing(true)
@@ -782,6 +784,7 @@ function PortalSubPageContent() {
       setBriefingLinks(ps.briefingLinks ?? {})
       setPageHeaders(ps.pageHeaders ?? {})
       setBriefingInfo(ps.briefingInfo ?? {})
+      setCronogramaStatus(ps.cronogramaStatus ?? {})
 
       if (ref) {
         setPortalRef(ref)
@@ -932,6 +935,12 @@ function PortalSubPageContent() {
     setGuiaLinks(newGuiaLinks)
     setEditingCalloutLinks(false)
     setSavingCalloutLinks(false)
+  }
+
+  async function toggleCronogramaSection(blockId: string) {
+    const newStatus = { ...cronogramaStatus, [blockId]: !cronogramaStatus[blockId] }
+    setCronogramaStatus(newStatus)
+    await savePortalSettings({ ...portalSettingsObj, cronogramaStatus: newStatus })
   }
 
   async function handleSaveBriefing() {
@@ -1387,6 +1396,46 @@ function PortalSubPageContent() {
                           )}
                           <NotionBlocks blocks={blocks.filter(b => b.type !== 'image')} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
                         </>
+                      )
+                    }
+                    if (isCronogramaPage) {
+                      const backUrlCron = fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined
+                      return (
+                        <div className="space-y-2">
+                          {blocks.map((b) => {
+                            const done = !!cronogramaStatus[b.id]
+                            return (
+                              <div key={b.id} className="relative rounded-xl overflow-hidden transition-all duration-300"
+                                style={done ? {
+                                  border: '1px solid rgba(74,222,128,0.5)',
+                                  boxShadow: '0 0 16px 3px rgba(74,222,128,0.2), 0 0 6px 1px rgba(74,222,128,0.3), inset 0 0 20px 0 rgba(74,222,128,0.05)',
+                                  background: 'rgba(0,0,0,1)',
+                                } : {
+                                  border: '1px solid rgba(255,255,255,0.06)',
+                                  background: 'rgba(255,255,255,0.01)',
+                                }}>
+                                <div className="flex items-start gap-2 pr-2">
+                                  <div className="flex-1 min-w-0">
+                                    <NotionBlocks blocks={[b]} hiddenNav={settings.hiddenNav} backUrl={backUrlCron} />
+                                  </div>
+                                  <button
+                                    onClick={() => toggleCronogramaSection(b.id)}
+                                    className={`flex-shrink-0 mt-2 flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold tracking-widest uppercase transition-all ${
+                                      done
+                                        ? 'border border-green-400/50 text-green-400 bg-green-400/10 hover:bg-green-400/20'
+                                        : 'border border-white/10 text-white/20 hover:text-white/50 hover:border-white/25'
+                                    }`}>
+                                    {done ? (
+                                      <><svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>Concluído</>
+                                    ) : (
+                                      <><span className="w-2.5 h-2.5 rounded-full border border-white/20 inline-block" />Pendente</>
+                                    )}
+                                  </button>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
                       )
                     }
                     if (isSatisfacaoPage) {
