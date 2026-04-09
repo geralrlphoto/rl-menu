@@ -271,15 +271,15 @@ function EntregasSection({ referencia }: { referencia: string }) {
 
   return (
     <section className="px-4 pb-10 sm:pb-14">
-      <div className="max-w-2xl mx-auto rounded-2xl overflow-hidden border border-gold/40 bg-black"
-        style={{ boxShadow: '0 0 18px 2px rgba(212,175,55,0.18), inset 0 0 30px 0 rgba(212,175,55,0.04)' }}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gold/20">
+      <div className="max-w-2xl mx-auto rounded-2xl overflow-hidden border border-white/40 bg-black"
+        style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08]">
           <div className="flex items-center gap-2.5">
-            <span className="w-2 h-2 rounded-full bg-gold animate-pulse shrink-0" />
-            <h2 className="font-playfair font-black text-xl sm:text-2xl tracking-wide text-gold"
-              style={{ textShadow: '0 0 12px rgba(212,175,55,0.8), 0 0 24px rgba(212,175,55,0.4)' }}>Estado das Entregas</h2>
+            <span className="w-2 h-2 rounded-full bg-white/50 animate-pulse shrink-0" />
+            <h2 className="font-playfair font-black text-xl sm:text-2xl tracking-wide text-white"
+              style={{ textShadow: '0 0 14px rgba(255,255,255,0.9), 0 0 28px rgba(255,255,255,0.5)' }}>Estado das Entregas</h2>
           </div>
-          <span className="text-[9px] tracking-[0.3em] text-gold/50 uppercase">Data de Entrega</span>
+          <span className="text-[9px] tracking-[0.3em] text-white/30 uppercase">Data de Entrega</span>
         </div>
         <div className="p-5 flex flex-col gap-2">
           {rows.map(({ label, estado, dateStr }) => {
@@ -603,13 +603,13 @@ function TasksSection({ tasks, referencia, settings, onSettingsChange }: {
 
   return (
     <section className="px-4 pb-10 sm:pb-14">
-      <div className="max-w-2xl mx-auto rounded-2xl overflow-hidden border border-gold/40 bg-black"
-        style={{ boxShadow: '0 0 18px 2px rgba(212,175,55,0.18), inset 0 0 30px 0 rgba(212,175,55,0.04)' }}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gold/20">
+      <div className="max-w-2xl mx-auto rounded-2xl overflow-hidden border border-white/40 bg-black"
+        style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08]">
           <div className="flex items-center gap-2.5">
-            <span className="w-2 h-2 rounded-full bg-gold animate-pulse shrink-0" />
-            <h2 className="font-playfair font-black text-xl sm:text-2xl tracking-wide text-gold"
-              style={{ textShadow: '0 0 12px rgba(212,175,55,0.8), 0 0 24px rgba(212,175,55,0.4)' }}>Gestão de Tarefas</h2>
+            <span className="w-2 h-2 rounded-full bg-white/50 animate-pulse shrink-0" />
+            <h2 className="font-playfair font-black text-xl sm:text-2xl tracking-wide text-white"
+              style={{ textShadow: '0 0 14px rgba(255,255,255,0.9), 0 0 28px rgba(255,255,255,0.5)' }}>Gestão de Tarefas</h2>
           </div>
           <div className="flex items-center gap-2">
             {saving && <span className="text-[10px] text-gold/40 animate-pulse">A guardar...</span>}
