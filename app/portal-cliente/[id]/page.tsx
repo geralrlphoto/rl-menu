@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, Suspense } from 'react'
 import Link from 'next/link'
-import { useParams, useSearchParams, useRouter } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { NotionBlocks, plainText, type Block } from '../NotionRenderer'
 import BlockEditor from '../BlockEditor'
 
@@ -657,12 +657,6 @@ function PreWeddingSection({ slots, reservedSlotId, reservingSlotId, showReserve
 function PortalSubPageContent() {
   const { id } = useParams<{ id: string }>()
   const searchParams = useSearchParams()
-  const router = useRouter()
-
-  // If this is the main portal page, redirect to /portal-cliente
-  useEffect(() => {
-    if (id === PORTAL_PAGE_ID) router.replace('/portal-cliente')
-  }, [id, router])
   const [blocks, setBlocks] = useState<Block[]>([])
   const [settings, setSettings] = useState<{ hiddenNav: string[] }>({ hiddenNav: [] })
   const [settingsBlockId, setSettingsBlockId] = useState<string | null>(null)

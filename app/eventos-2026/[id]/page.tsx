@@ -642,29 +642,25 @@ function ContratoStatusSection({ eventoId }: { eventoId: string }) {
   )
 }
 
-function PortalSection({ referencia }: { referencia: string }) {
+function PortalSection({ evento }: { evento: Evento }) {
+  const referencia = evento.referencia!
   const [status, setStatus] = useState<'loading' | 'found' | 'not_found' | 'error'>('loading')
-  const [pageId, setPageId] = useState<string | null>(null)
+  const [creating, setCreating] = useState(false)
   const [pwBooking, setPwBooking] = useState<{ coupleNames: string; date: string; time: string; local: string; reservedAt: string | null } | null>(null)
 
   useEffect(() => {
-    fetch(`/api/portal-by-ref?ref=${encodeURIComponent(referencia)}`)
+    fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`)
       .then(r => r.json())
-      .then(async d => {
-        if (!d.found) { setStatus('not_found'); return }
-        setPageId(d.pageId)
+      .then(d => {
+        if (!d.portal) { setStatus('not_found'); return }
         setStatus('found')
-        // Also fetch portal settings for pre-wedding booking
-        const ps_data = await fetch(`/api/portais-clientes?id=${d.pageId}`).then(r => r.json())
-        const ps = ps_data.settings ?? {}
+        const ps = d.portal.settings ?? {}
         const slots: any[] = ps.preWeddingSlots ?? []
         const reservedId: string | null = ps.preWeddingReservedSlotId ?? null
         const slot = reservedId ? slots.find((s: any) => s.id === reservedId) : null
         if (slot) {
-          const noiva: string = ps.noiva ?? ''
-          const noivo: string = ps.noivo ?? ''
           setPwBooking({
-            coupleNames: [noiva, noivo].filter(Boolean).join(' & ') || 'Casal',
+            coupleNames: [ps.noiva, ps.noivo].filter(Boolean).join(' & ') || 'Casal',
             date: slot.date,
             time: slot.time,
             local: slot.local,
@@ -674,6 +670,29 @@ function PortalSection({ referencia }: { referencia: string }) {
       })
       .catch(() => setStatus('error'))
   }, [referencia])
+
+  async function handleCriarPortal() {
+    setCreating(true)
+    try {
+      const res = await fetch('/api/portais', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          referencia,
+          noiva: evento.nome_noiva ?? '',
+          noivo: evento.nome_noivo ?? '',
+          data: evento.data_evento ?? null,
+          local: evento.local ?? '',
+          valorFoto: evento.valor_foto ?? null,
+          valorVideo: evento.valor_video ?? null,
+          valorExtras: evento.valor_extras ?? null,
+        }),
+      })
+      if (res.ok) setStatus('found')
+    } finally {
+      setCreating(false)
+    }
+  }
 
   function fmtPwDate(ds: string) {
     const [y, m, d] = ds.split('-').map(Number)
@@ -690,9 +709,8 @@ function PortalSection({ referencia }: { referencia: string }) {
       {status === 'loading' && (
         <p className="text-xs text-white/20 animate-pulse">A verificar portal...</p>
       )}
-      {status === 'found' && pageId && (
+      {status === 'found' && (
         <div className="flex flex-col gap-4">
-          {/* Pre-wedding booking info */}
           {pwBooking && (
             <div className={`flex items-center gap-4 px-4 py-3 rounded-xl border ${dtu !== null && dtu <= 15 ? 'border-red-500/30 bg-red-500/5' : 'border-emerald-500/25 bg-emerald-500/5'}`}>
               <svg className={`w-4 h-4 flex-shrink-0 ${dtu !== null && dtu <= 15 ? 'text-red-400' : 'text-emerald-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -711,36 +729,28 @@ function PortalSection({ referencia }: { referencia: string }) {
               </span>
             </div>
           )}
-          {/* Buttons */}
           <div className="flex flex-col sm:flex-row gap-3">
-            <a href={`/portal-cliente`} target="_blank" rel="noopener noreferrer"
+            <a href={`/portal-cliente/ref/${encodeURIComponent(referencia)}`} target="_blank" rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black font-bold text-xs tracking-widest hover:bg-gold/80 transition-all uppercase">
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
               </svg>
-              Ver Portal do Cliente
-            </a>
-            <a href={`/portal-cliente/${pageId}?title=Portal`} target="_blank" rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-white/15 text-white/50 font-medium text-xs tracking-widest hover:border-white/30 hover:text-white/80 transition-all uppercase">
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-              </svg>
-              Abrir Subpágina ↗
+              Ver Portal do Cliente ↗
             </a>
           </div>
         </div>
       )}
       {status === 'not_found' && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <p className="text-xs text-white/30">Nenhum portal encontrado com a referência <span className="text-gold/60 font-mono">{referencia}</span></p>
-          <a href="/portal-cliente" target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gold/30 text-gold/70 font-medium text-xs tracking-widest hover:bg-gold/10 transition-all uppercase whitespace-nowrap">
+          <p className="text-xs text-white/30">Nenhum portal com a referência <span className="text-gold/60 font-mono">{referencia}</span></p>
+          <button onClick={handleCriarPortal} disabled={creating}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gold/30 text-gold/70 font-medium text-xs tracking-widest hover:bg-gold/10 transition-all uppercase whitespace-nowrap disabled:opacity-50">
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
             </svg>
-            Criar Portal do Cliente
-          </a>
+            {creating ? 'A criar...' : 'Criar Portal do Cliente'}
+          </button>
         </div>
       )}
       {status === 'error' && (
@@ -852,6 +862,24 @@ export default function EventoPage() {
   function handleSaved(field: string, val: any) {
     setEvento(prev => prev ? { ...prev, [field]: val } : prev)
 
+    // Auto-sync portal settings when key fields change
+    const portalFields: Record<string, string> = {
+      nome_noiva: 'noiva',
+      nome_noivo: 'noivo',
+      data_evento: 'data',
+      local: 'local',
+      valor_foto: 'valorFoto',
+      valor_video: 'valorVideo',
+      valor_extras: 'valorExtras',
+    }
+    if (field in portalFields && evento?.referencia) {
+      fetch('/api/portais', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referencia: evento.referencia, updates: { [portalFields[field]]: val } }),
+      }).catch(() => {})
+    }
+
     // Sincronizar album_estado → álbuns de casamento
     if (field === 'album_estado' && albumNotionId) {
       const toAlbumStatus: Record<string, string> = {
@@ -933,7 +961,7 @@ export default function EventoPage() {
       <div className="h-px bg-gold/15 my-7" />
 
       {/* ── Portal do Cliente ── */}
-      {e.referencia && <PortalSection referencia={e.referencia} />}
+      {e.referencia && <PortalSection evento={e} />}
 
       <div className="flex flex-col gap-5">
 

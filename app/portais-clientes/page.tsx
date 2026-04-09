@@ -1,14 +1,7 @@
 import Link from 'next/link'
+import { createClient } from '@supabase/supabase-js'
 
-export const revalidate = 60
-
-const NOTION_TOKEN = process.env.NOTION_TOKEN!
-const MAIN_PORTAL_ID = '311220116d8a80d29468e817ae7bb79f'
-const SETTINGS_PREFIX = '__PORTAL_SETTINGS__:'
-const notionH = {
-  'Authorization': `Bearer ${NOTION_TOKEN}`,
-  'Notion-Version': '2022-06-28',
-}
+export const revalidate = 30
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 
@@ -20,64 +13,15 @@ function formatDate(d: string | null | undefined) {
   } catch { return d }
 }
 
-async function getBlocks(pageId: string): Promise<any[]> {
-  const res = await fetch(`https://api.notion.com/v1/blocks/${pageId}/children?page_size=100`, {
-    headers: notionH, cache: 'no-store',
-  })
-  if (!res.ok) return []
-  const data = await res.json()
-  return data.results ?? []
-}
-
-function extractSettings(blocks: any[]): Record<string, any> | null {
-  for (const b of blocks) {
-    if (b.type !== 'paragraph') continue
-    const text: string = b.paragraph?.rich_text?.[0]?.plain_text ?? ''
-    if (text.startsWith(SETTINGS_PREFIX)) {
-      try { return JSON.parse(text.slice(SETTINGS_PREFIX.length)) } catch { /* continue */ }
-    }
-  }
-  return null
-}
-
-type Portal = {
-  pageId: string
-  referencia: string | null
-  noiva: string | null
-  noivo: string | null
-  data: string | null
-}
+type Portal = { referencia: string; noiva: string | null; noivo: string | null; data: string | null }
 
 export default async function PortaisClientesPage() {
-  const topBlocks = await getBlocks(MAIN_PORTAL_ID)
-  const childPages = topBlocks.filter((b: any) => b.type === 'child_page')
-
-  const allPages = [
-    { id: MAIN_PORTAL_ID },
-    ...childPages.map((b: any) => ({ id: b.id })),
-  ]
-
-  const portals: Portal[] = (await Promise.all(
-    allPages.map(async (p) => {
-      const blocks = await getBlocks(p.id)
-      const settings = extractSettings(blocks)
-      if (!settings) return null
-      return {
-        pageId: p.id,
-        referencia: settings.referencia ?? null,
-        noiva: settings.noiva ?? null,
-        noivo: settings.noivo ?? null,
-        data: settings.data ?? null,
-      } as Portal
-    })
-  )).filter(Boolean) as Portal[]
-
-  portals.sort((a, b) => {
-    if (!a.referencia && !b.referencia) return 0
-    if (!a.referencia) return 1
-    if (!b.referencia) return -1
-    return a.referencia.localeCompare(b.referencia)
-  })
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+  const { data } = await supabase.from('portais').select('referencia,noiva,noivo,data').order('referencia')
+  const portals: Portal[] = data ?? []
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
@@ -130,7 +74,7 @@ export default async function PortaisClientesPage() {
             {portals.map((portal) => (
               <Link
                 key={portal.pageId}
-                href={`/portal-cliente/${portal.pageId}`}
+                href={`/portal-cliente/ref/${encodeURIComponent(portal.referencia)}`}
                 className="snap-start shrink-0 flex items-center justify-between gap-4 px-5 py-4 rounded-2xl border bg-black border-white/40 text-white/60 hover:border-white/70 transition-all duration-300 group"
                 style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}
               >
