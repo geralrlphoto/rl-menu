@@ -676,7 +676,7 @@ function PortalSubPageContent() {
   const [portalVideo, setPortalVideo] = useState<number | null>(null)
   const [portalExtras, setPortalExtras] = useState<number | null>(null)
   const [pagRefreshing, setPagRefreshing] = useState(false)
-  const [guiaLinks, setGuiaLinks] = useState<{blogUrl?:string,fotosConvidadosUrl?:string,dadosContratoUrl?:string,pagamentosRegistoUrl?:string}>({})
+  const [guiaLinks, setGuiaLinks] = useState<{blogUrl?:string,fotosSelecaoUrl?:string,fotosVerMaisUrl?:string,fotosConvidadosUrl?:string,dadosContratoUrl?:string,pagamentosRegistoUrl?:string}>({})
   const [parceiros, setParceiros] = useState<Array<{imageUrl:string;url?:string}>>([])
   const [portalSettingsBlockId, setPortalSettingsBlockId] = useState<string|null>(null)
   const [editingParceiros, setEditingParceiros] = useState(false)
@@ -1807,8 +1807,8 @@ function PortalSubPageContent() {
                       )
                     }
                     if (isFotografiasPage) {
-                      const fotosUrl = (guiaLinks as any).fotosSelecaoUrl || 'https://tally.so/r/448PrO'
-                      const fotosVerMaisUrl = (guiaLinks as any).fotosVerMaisUrl ?? ''
+                      const fotosUrl = guiaLinks.fotosSelecaoUrl || 'https://tally.so/r/448PrO'
+                      const fotosVerMaisUrl = guiaLinks.fotosVerMaisUrl ?? ''
                       return (
                         <>
                           {/* ── VER MAIS ── */}

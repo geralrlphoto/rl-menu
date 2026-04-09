@@ -27,6 +27,8 @@ type PortalSettings = {
   valorExtras?: number
   guiaLinks?: {
     blogUrl?: string
+    fotosSelecaoUrl?: string
+    fotosVerMaisUrl?: string
     fotosConvidadosUrl?: string
     dadosContratoUrl?: string
     pagamentosRegistoUrl?: string
