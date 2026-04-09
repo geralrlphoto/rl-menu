@@ -1403,6 +1403,13 @@ function PortalSubPageContent() {
                       return (
                         <div className="space-y-2">
                           {blocks.map((b) => {
+                            if (b.type !== 'callout') {
+                              return (
+                                <div key={b.id}>
+                                  <NotionBlocks blocks={[b]} hiddenNav={settings.hiddenNav} backUrl={backUrlCron} neutralCallout />
+                                </div>
+                              )
+                            }
                             const done = !!cronogramaStatus[b.id]
                             return (
                               <div key={b.id} className="relative rounded-2xl overflow-hidden transition-all duration-300"
