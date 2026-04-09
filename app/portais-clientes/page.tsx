@@ -46,6 +46,7 @@ type Portal = {
   noiva: string | null
   noivo: string | null
   data: string | null
+  heroImageUrl?: string | null
 }
 
 export default async function PortaisClientesPage() {
@@ -53,8 +54,8 @@ export default async function PortaisClientesPage() {
   const childPages = topBlocks.filter((b: any) => b.type === 'child_page')
 
   const allPages = [
-    { id: MAIN_PORTAL_ID, title: 'Portal Principal' },
-    ...childPages.map((b: any) => ({ id: b.id, title: b.child_page?.title ?? '' })),
+    { id: MAIN_PORTAL_ID },
+    ...childPages.map((b: any) => ({ id: b.id })),
   ]
 
   const portals: Portal[] = (await Promise.all(
@@ -68,6 +69,7 @@ export default async function PortaisClientesPage() {
         noiva: settings.noiva ?? null,
         noivo: settings.noivo ?? null,
         data: settings.data ?? settings.dataFormatada ?? null,
+        heroImageUrl: settings.heroImageUrl ?? null,
       } as Portal
     })
   )).filter(Boolean) as Portal[]
@@ -80,52 +82,75 @@ export default async function PortaisClientesPage() {
   })
 
   return (
-    <main className="min-h-screen px-4 py-12 max-w-4xl mx-auto">
-      <Link
-        href="/"
-        className="inline-flex items-center gap-2 text-xs tracking-widest text-white/40 hover:text-gold transition-colors mb-10"
-      >
-        ‹ VOLTAR AO MENU
-      </Link>
+    <div className="min-h-screen bg-[#0a0a0a]">
 
-      <header className="mb-10">
-        <p className="text-xs tracking-[0.4em] text-white/30 uppercase mb-1">RL PHOTO.VIDEO</p>
-        <h1 className="text-2xl font-light tracking-widest text-gold uppercase">
-          Portal do Cliente
-        </h1>
-        <div className="mt-3 h-px w-16 bg-gold/40" />
-      </header>
+      {/* Admin bar */}
+      <div className="fixed top-0 left-0 right-0 z-50 flex items-center px-4 py-2 bg-black/80 backdrop-blur-sm border-b border-white/5">
+        <Link href="/" className="text-[10px] tracking-widest text-white/25 hover:text-white/50 transition-colors uppercase">
+          ‹ Menu
+        </Link>
+      </div>
 
-      {portals.length === 0 ? (
-        <p className="text-white/20 text-sm tracking-widest text-center py-16">SEM PORTAIS CRIADOS</p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {portals.map((portal) => (
-            <Link
-              key={portal.pageId}
-              href={`/portal-cliente/${portal.pageId}`}
-              className="group flex flex-col gap-1.5 px-5 py-4 border border-gold/30 rounded-xl bg-gold/5 hover:bg-gold/10 hover:border-gold/60 transition-all duration-200"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <span className="text-xs tracking-widest text-gold/70 group-hover:text-gold uppercase font-mono">
-                  {portal.referencia ?? '—'}
-                </span>
-                <span className="text-gold/50 group-hover:text-gold text-lg transition-colors shrink-0">›</span>
-              </div>
-              {(portal.noiva || portal.noivo) && (
-                <p className="text-sm text-white/80 group-hover:text-white tracking-wide">
-                  {[portal.noiva, portal.noivo].filter(Boolean).join(' & ')}
-                </p>
-              )}
-              {portal.data && (
-                <p className="text-xs text-white/30 tracking-wider">
-                  {formatDate(portal.data)}
-                </p>
-              )}
-            </Link>
-          ))}
+      {/* Header */}
+      <div className="pt-20 pb-10 px-4 text-center">
+        <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase mb-3">RL PHOTO.VIDEO</p>
+        <h1 className="font-playfair text-3xl sm:text-4xl font-bold text-white mb-2">Portal do Cliente</h1>
+        <div className="flex items-center justify-center gap-3 mt-4">
+          <div className="h-px w-12 bg-gold/30" />
+          <div className="w-1 h-1 rounded-full bg-gold/50" />
+          <div className="h-px w-12 bg-gold/30" />
         </div>
-      )}
-    </main>
+        <p className="text-xs text-white/30 tracking-widest mt-4 uppercase">Seleciona o teu portal</p>
+      </div>
+
+      {/* Portal cards */}
+      <div className="px-4 pb-16 max-w-2xl mx-auto">
+        {portals.length === 0 ? (
+          <p className="text-white/20 text-sm tracking-widest text-center py-16">SEM PORTAIS CRIADOS</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {portals.map((portal) => (
+              <Link
+                key={portal.pageId}
+                href={`/portal-cliente/${portal.pageId}`}
+                className="group relative overflow-hidden rounded-2xl border border-white/10 hover:border-gold/40 transition-all duration-300"
+                style={{ background: 'linear-gradient(135deg, #111 0%, #0a0a0a 100%)' }}
+              >
+                {/* Hero image if available */}
+                {portal.heroImageUrl && (
+                  <div className="absolute inset-0 bg-cover bg-center opacity-20 group-hover:opacity-30 transition-opacity duration-300"
+                    style={{ backgroundImage: `url(${portal.heroImageUrl})` }} />
+                )}
+                <div className="relative p-5 flex flex-col gap-2">
+                  {/* Reference */}
+                  <span className="text-[10px] tracking-[0.3em] text-gold/60 group-hover:text-gold uppercase font-mono transition-colors">
+                    {portal.referencia ?? '—'}
+                  </span>
+                  {/* Names */}
+                  {(portal.noiva || portal.noivo) && (
+                    <p className="font-playfair text-lg text-white/90 group-hover:text-white transition-colors leading-tight">
+                      {[portal.noiva, portal.noivo].filter(Boolean).join(' & ')}
+                    </p>
+                  )}
+                  {/* Date */}
+                  {portal.data && (
+                    <p className="text-[11px] text-white/30 tracking-wider">
+                      {formatDate(portal.data)}
+                    </p>
+                  )}
+                  {/* Arrow */}
+                  <div className="flex justify-end mt-1">
+                    <span className="text-gold/30 group-hover:text-gold text-xl transition-all group-hover:translate-x-1 duration-200">›</span>
+                  </div>
+                </div>
+                {/* Neon border glow on hover */}
+                <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                  style={{ boxShadow: 'inset 0 0 20px 0 rgba(212,175,55,0.06)' }} />
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
