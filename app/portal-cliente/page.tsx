@@ -43,6 +43,7 @@ type PortalSettings = {
   briefingLinks?: Record<string, string>
   pageHeaders?: Record<string, string>
   briefingInfo?: Record<string, { fields?: Array<{ label: string; value: string }>; infoGeral?: string; equipa?: Array<{ role: string; name: string }> }>
+  portalPassword?: string
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -576,6 +577,18 @@ function SettingsPanel({
       </div>
 
       <div>
+        <p className="text-[10px] text-white/40 tracking-widest uppercase mb-2">Password do Portal</p>
+        <input
+          type="text"
+          value={(form as any).portalPassword ?? ''}
+          onChange={e => setForm(prev => ({ ...prev, portalPassword: e.target.value } as any))}
+          placeholder="Deixar vazio = sem password"
+          className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
+        />
+        <p className="text-[9px] text-white/20 mt-1 tracking-wide">A password é pedida ao abrir o portal</p>
+      </div>
+
+      <div>
         <p className="text-[10px] text-white/40 tracking-widest uppercase mb-3">Menu de Navegação</p>
         <div className="rounded-xl border border-white/10 overflow-hidden divide-y divide-white/[0.04]">
           {navPages.map(page => {
@@ -742,6 +755,12 @@ export default function PortalClientePage() {
   const [heroEdit, setHeroEdit] = useState<{ field: 'noiva' | 'noivo' | 'hero' | null; value: string }>({ field: null, value: '' })
   const [heroSaving, setHeroSaving] = useState(false)
   const [heroUploadProgress, setHeroUploadProgress] = useState<number | null>(null)
+  // password gate
+  const [hasPassword, setHasPassword] = useState(false)
+  const [authenticated, setAuthenticated] = useState(false)
+  const [passwordInput, setPasswordInput] = useState('')
+  const [passwordError, setPasswordError] = useState(false)
+  const [checkingPassword, setCheckingPassword] = useState(false)
 
   const loadBlocks = useCallback(async (bust = false) => {
     const url = bust ? `/api/portais-clientes?id=${PAGE_ID}&bust=1` : `/api/portais-clientes?id=${PAGE_ID}`
@@ -751,8 +770,40 @@ export default function PortalClientePage() {
       setBlocks(d.blocks ?? [])
       setSettings(d.settings ?? { hiddenNav: [] })
       setSettingsBlockId(d.settingsBlockId ?? null)
+      const hp = d.hasPassword ?? false
+      setHasPassword(hp)
+      if (hp) {
+        const stored = sessionStorage.getItem('portalAuth_MAIN')
+        if (stored === 'true') setAuthenticated(true)
+      } else {
+        setAuthenticated(true)
+      }
     }
   }, [])
+
+  async function handlePasswordSubmit() {
+    if (!passwordInput.trim()) return
+    setCheckingPassword(true)
+    setPasswordError(false)
+    try {
+      const res = await fetch('/api/portais-clientes-auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pageId: PAGE_ID, password: passwordInput }),
+      })
+      const d = await res.json()
+      if (d.ok) {
+        sessionStorage.setItem('portalAuth_MAIN', 'true')
+        setAuthenticated(true)
+      } else {
+        setPasswordError(true)
+      }
+    } catch {
+      setPasswordError(true)
+    } finally {
+      setCheckingPassword(false)
+    }
+  }
 
   useEffect(() => { loadBlocks().finally(() => setLoading(false)) }, [loadBlocks])
 
@@ -819,6 +870,38 @@ export default function PortalClientePage() {
   if (error) return (
     <div className="min-h-screen flex items-center justify-center">
       <p className="text-red-400/60 text-sm">{error}</p>
+    </div>
+  )
+
+  if (hasPassword && !authenticated) return (
+    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4">
+      <div className="w-full max-w-sm space-y-8 text-center">
+        <div>
+          <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase mb-3">RL PHOTO.VIDEO</p>
+          <h1 className="font-playfair font-black text-4xl text-white mb-2">Portal Privado</h1>
+          <p className="font-cormorant italic text-white/30 text-base">Introduz a password para continuar</p>
+        </div>
+        <div className="space-y-3">
+          <input
+            autoFocus
+            type="password"
+            value={passwordInput}
+            onChange={e => { setPasswordInput(e.target.value); setPasswordError(false) }}
+            onKeyDown={e => e.key === 'Enter' && handlePasswordSubmit()}
+            placeholder="••••••••"
+            className={`w-full bg-white/[0.04] border rounded-xl px-4 py-3.5 text-white text-center text-lg tracking-widest outline-none transition-all ${passwordError ? 'border-red-500/50 bg-red-500/5' : 'border-white/10 focus:border-white/30'}`}
+          />
+          {passwordError && <p className="text-xs text-red-400/70 tracking-widest">Password incorreta</p>}
+          <button
+            onClick={handlePasswordSubmit}
+            disabled={checkingPassword || !passwordInput.trim()}
+            className="w-full py-3.5 rounded-xl bg-white text-black font-bold text-sm tracking-widest uppercase hover:bg-white/90 transition-all disabled:opacity-40"
+          >
+            {checkingPassword ? 'A verificar...' : 'Entrar'}
+          </button>
+        </div>
+        <span className="text-white/10 text-2xl block">♡</span>
+      </div>
     </div>
   )
 
