@@ -667,6 +667,12 @@ function PortalSubPageContent() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [editing, setEditing] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    const key = refParam ? `portalAdmin_${refParam}` : null
+    if (key && sessionStorage.getItem(key) === 'true') setIsAdmin(true)
+  }, [refParam])
   const [editingPhotos, setEditingPhotos] = useState(false)
   const [error, setError] = useState('')
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
@@ -973,7 +979,7 @@ function PortalSubPageContent() {
     <main className="min-h-screen px-3 sm:px-6 py-6 sm:py-10 max-w-[860px] mx-auto">
       <div className="flex items-center justify-end mb-8 gap-2 flex-wrap">
         <div className="flex items-center gap-2">
-          {!editing && !editingPhotos && (
+          {isAdmin && !editing && !editingPhotos && (
             <button onClick={handleRefresh} disabled={refreshing}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white/40 hover:text-white/70 border border-white/10 hover:border-white/20 transition-all">
               <svg className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -991,7 +997,7 @@ function PortalSubPageContent() {
               Fotos
             </button>
           )}
-          {!editing && !editingPhotos && !loading && !error && isGuiaPage && (
+          {isAdmin && !editing && !editingPhotos && !loading && !error && isGuiaPage && (
             <button onClick={() => { setParceirosForm(parceiros.length > 0 ? parceiros : []); setEditingParceiros(true) }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white/80 border border-white/15 hover:border-white/30 transition-all">
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -1000,7 +1006,7 @@ function PortalSubPageContent() {
               Parceiros
             </button>
           )}
-          {!editing && !editingPhotos && !loading && !error && (() => {
+          {isAdmin && !editing && !editingPhotos && !loading && !error && (() => {
             const calloutCards = findCalloutCards(blocks)
             return calloutCards.length > 0 && (
               <button onClick={() => { setCalloutLinksForm({ ...(calloutLinks[id as string] ?? {}) }); setFotosVerMaisUrlForm(guiaLinks.fotosVerMaisUrl ?? ''); setEditingCalloutLinks(true) }}
@@ -1012,7 +1018,7 @@ function PortalSubPageContent() {
               </button>
             )
           })()}
-          {!editing && !editingPhotos && !loading && !error && isPreWeddingPage && (
+          {isAdmin && !editing && !editingPhotos && !loading && !error && isPreWeddingPage && (
             <button onClick={() => { setPreWeddingForm(preWeddingSlots.map(s => ({...s}))); setEditingPreWedding(true) }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white/80 border border-white/15 hover:border-white/30 transition-all">
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -1021,7 +1027,7 @@ function PortalSubPageContent() {
               Agenda
             </button>
           )}
-          {!editing && !editingPhotos && !loading && !error && (
+          {isAdmin && !editing && !editingPhotos && !loading && !error && (
             <button onClick={() => setEditing(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gold/60 hover:text-gold border border-gold/20 hover:border-gold/40 transition-all">
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
