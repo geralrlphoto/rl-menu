@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 import NovoPortalButton from './NovoPortalButton'
 import CopiarLinkButton from './CopiarLinkButton'
+import AdminPortalLink from './AdminPortalLink'
 
 export const revalidate = 30
 
@@ -126,9 +127,9 @@ export default async function PortaisClientesPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 max-w-5xl mx-auto">
             {portals.map((portal) => (
               <div key={portal.referencia} className="flex flex-col gap-1">
-                <Link
-                  href={`/portal-cliente/ref/${encodeURIComponent(portal.referencia)}`}
-                  className="group flex flex-col gap-1.5 px-4 py-4 rounded-xl bg-black border border-white/40 hover:border-white/70 transition-all duration-300"
+                <AdminPortalLink
+                  referencia={portal.referencia}
+                  className="group flex flex-col gap-1.5 px-4 py-4 rounded-xl bg-black border border-white/40 hover:border-white/70 transition-all duration-300 text-left w-full"
                   style={{ boxShadow: '0 0 14px 3px rgba(255,255,255,0.12), 0 0 5px 1px rgba(255,255,255,0.18), inset 0 0 16px 0 rgba(255,255,255,0.04)' }}
                 >
                   <div className="flex flex-col gap-0.5 flex-1">
@@ -146,7 +147,7 @@ export default async function PortaisClientesPage() {
                     )}
                   </div>
                   <span className="text-white/30 group-hover:text-white/70 transition-colors text-xs self-end">Abrir ›</span>
-                </Link>
+                </AdminPortalLink>
                 <CopiarLinkButton referencia={portal.referencia} />
               </div>
             ))}

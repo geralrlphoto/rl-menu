@@ -687,6 +687,7 @@ export default function PortalRefPage() {
   const [passwordInput, setPasswordInput] = useState('')
   const [passwordError, setPasswordError] = useState(false)
   const [checkingPassword, setCheckingPassword] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   const loadBlocks = useCallback(async (bust = false) => {
     const url = bust ? `/api/portais-clientes?id=${PAGE_ID}&bust=1` : `/api/portais-clientes?id=${PAGE_ID}`
@@ -710,7 +711,10 @@ export default function PortalRefPage() {
 
   useEffect(() => {
     Promise.all([loadBlocks(), loadSettings()]).finally(() => setLoading(false))
-  }, [loadBlocks, loadSettings])
+    // Check admin session
+    const adminFlag = sessionStorage.getItem(`portalAdmin_${referencia}`)
+    if (adminFlag === 'true') setIsAdmin(true)
+  }, [loadBlocks, loadSettings, referencia])
 
   async function saveSettings(newSettings: PortalSettings) {
     await fetch('/api/portais', {
@@ -859,20 +863,22 @@ export default function PortalRefPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
 
-      {/* Admin bar */}
-      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-2 bg-black/80 backdrop-blur-sm border-b border-white/5">
-        <Link href="/portais-clientes" className="text-[10px] tracking-widest text-white/25 hover:text-white/50 transition-colors uppercase">
-          ‹ Portais
-        </Link>
-        <div className="flex gap-2">
-          <button onClick={() => setEditingContent(true)} className="text-[10px] px-2.5 py-1 border border-white/10 rounded text-white/30 hover:text-white/60 hover:border-white/20 transition-all uppercase tracking-wider">
-            Editar Conteúdo
-          </button>
-          <button onClick={() => setEditing(true)} className="text-[10px] px-2.5 py-1 border border-gold/20 rounded text-gold/50 hover:text-gold hover:border-gold/40 transition-all uppercase tracking-wider">
-            ✎ Configurar
-          </button>
+      {/* Admin bar — only visible to admin */}
+      {isAdmin && (
+        <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-2 bg-black/80 backdrop-blur-sm border-b border-white/5">
+          <Link href="/portais-clientes" className="text-[10px] tracking-widest text-white/25 hover:text-white/50 transition-colors uppercase">
+            ‹ Portais
+          </Link>
+          <div className="flex gap-2">
+            <button onClick={() => setEditingContent(true)} className="text-[10px] px-2.5 py-1 border border-white/10 rounded text-white/30 hover:text-white/60 hover:border-white/20 transition-all uppercase tracking-wider">
+              Editar Conteúdo
+            </button>
+            <button onClick={() => setEditing(true)} className="text-[10px] px-2.5 py-1 border border-gold/20 rounded text-gold/50 hover:text-gold hover:border-gold/40 transition-all uppercase tracking-wider">
+              ✎ Configurar
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── HERO ── */}
       <section className="relative min-h-[70vh] sm:min-h-[80vh] flex items-end justify-center pb-12 overflow-hidden">
