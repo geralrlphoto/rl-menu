@@ -1401,8 +1401,8 @@ function PortalSubPageContent() {
                                 Dar Satisfação
                               </h2>
                               <a href="https://tally.so/r/pbKJry" target="_blank" rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-white/40 bg-white/5 text-white text-sm font-semibold tracking-[0.2em] uppercase hover:bg-white/10 transition-all"
-                                style={{ boxShadow: '0 0 12px 2px rgba(255,255,255,0.15)' }}>
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-white/40 bg-white/5 text-white text-xs font-semibold tracking-[0.15em] uppercase hover:bg-white/10 transition-all"
+                                style={{ boxShadow: '0 0 10px 2px rgba(255,255,255,0.12)' }}>
                                 DAR SATISFAÇÃO →
                               </a>
                             </div>
