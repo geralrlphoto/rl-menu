@@ -1808,8 +1808,23 @@ function PortalSubPageContent() {
                     }
                     if (isFotografiasPage) {
                       const fotosUrl = (guiaLinks as any).fotosSelecaoUrl || 'https://tally.so/r/448PrO'
+                      const fotosVerMaisUrl = (guiaLinks as any).fotosVerMaisUrl ?? ''
                       return (
                         <>
+                          {/* ── VER MAIS ── */}
+                          {fotosVerMaisUrl && (
+                            <div className="mb-6 rounded-2xl border border-white/40 bg-black overflow-hidden"
+                              style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}>
+                              <div className="px-6 py-5 flex items-center justify-between">
+                                <span className="text-sm text-white/50 tracking-wide">Fotografias disponíveis para visualizar</span>
+                                <a href={fotosVerMaisUrl} target="_blank" rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/40 bg-white/5 text-white text-sm font-bold tracking-[0.2em] uppercase hover:bg-white/10 transition-all"
+                                  style={{ boxShadow: '0 0 12px 2px rgba(255,255,255,0.15)' }}>
+                                  VER MAIS →
+                                </a>
+                              </div>
+                            </div>
+                          )}
                           {/* ── ENVIAR FOTOS ── */}
                           <div className="mb-8 rounded-2xl border border-white/40 bg-black overflow-hidden"
                             style={{ boxShadow: '0 0 24px 4px rgba(255,255,255,0.12), 0 0 8px 2px rgba(255,255,255,0.18), inset 0 0 30px 0 rgba(255,255,255,0.04)' }}>
