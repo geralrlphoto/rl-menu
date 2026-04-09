@@ -1433,7 +1433,7 @@ function PortalSubPageContent() {
                                       : 'border border-red-500/40 text-red-400/70 bg-red-500/5 hover:bg-red-500/15'
                                   }`}>
                                   {done
-                                    ? <><svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>OK</>
+                                    ? <><svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>Concluído</>
                                     : <>○ Pendente</>
                                   }
                                 </button>
