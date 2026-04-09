@@ -1410,11 +1410,7 @@ function PortalSubPageContent() {
                                   border: '1px solid rgba(74,222,128,0.5)',
                                   boxShadow: '0 0 18px 4px rgba(74,222,128,0.2), 0 0 6px 1px rgba(74,222,128,0.3), inset 0 0 20px 0 rgba(74,222,128,0.06)',
                                   background: 'rgba(0,0,0,0.95)',
-                                } : {
-                                  border: '1px solid rgba(239,68,68,0.45)',
-                                  boxShadow: '0 0 18px 4px rgba(239,68,68,0.15), 0 0 6px 1px rgba(239,68,68,0.25), inset 0 0 20px 0 rgba(239,68,68,0.04)',
-                                  background: 'rgba(0,0,0,0.95)',
-                                }}>
+                                } : {}}>
                                 <div className="pr-28">
                                   <NotionBlocks blocks={[b]} hiddenNav={settings.hiddenNav} backUrl={backUrlCron} neutralCallout />
                                 </div>
