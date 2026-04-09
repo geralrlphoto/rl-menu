@@ -966,18 +966,18 @@ export default function PortalClientePage() {
               return (
                 <Link key={page.id} href={`/portal-cliente/${page.id}?title=${encodeURIComponent(displayTitle)}`}
                   className={`snap-start shrink-0 flex flex-col items-center gap-2 px-4 py-4 rounded-2xl border transition-all duration-300 min-w-[80px] group
-                    ${isActive ? 'bg-gold/15 border-gold/50 text-gold' : 'bg-black border-white/20 text-white/60 hover:border-white/50'}`}
+                    ${isActive ? 'bg-gold/15 border-gold/50 text-gold' : 'bg-black border-white/40 text-white/60 hover:border-white/70'}`}
                   style={isActive
                     ? { boxShadow: '0 0 14px 2px rgba(212,175,55,0.25)' }
-                    : { boxShadow: '0 0 10px 1px rgba(255,255,255,0.08), inset 0 0 12px 0 rgba(255,255,255,0.03)' }
+                    : { boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }
                   }
                 >
-                  <span className={isActive ? 'text-gold' : 'text-white/50 group-hover:text-white transition-colors'}
-                    style={isActive ? undefined : { filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.4))' }}>
+                  <span className={isActive ? 'text-gold' : 'text-white/80 group-hover:text-white transition-colors'}
+                    style={isActive ? undefined : { filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.9)) drop-shadow(0 0 12px rgba(255,255,255,0.5))' }}>
                     {getNavIcon(displayTitle)}
                   </span>
                   <span className="text-[9px] tracking-widest uppercase text-center leading-tight max-w-[70px]"
-                    style={isActive ? undefined : { textShadow: '0 0 8px rgba(255,255,255,0.5)' }}>
+                    style={isActive ? undefined : { textShadow: '0 0 8px rgba(255,255,255,0.9), 0 0 16px rgba(255,255,255,0.5)' }}>
                     {displayTitle.replace(/\s*\(\d+\)\s*$/, '')}
                   </span>
                   {isActive && <span className="w-1 h-1 rounded-full bg-gold" />}
