@@ -1076,15 +1076,17 @@ function PortalSubPageContent() {
                   {title || '...'}
                 </h1>
               </div>
-              <button onClick={() => { setTitleInput(title); setEditingTitle(true) }}
-                className="mb-1 text-white/30 hover:text-white/70 transition-colors">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
+              {isAdmin && (
+                <button onClick={() => { setTitleInput(title); setEditingTitle(true) }}
+                  className="mb-1 text-white/30 hover:text-white/70 transition-colors">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              )}
             </div>
             {/* Change photo button */}
-            <label className="absolute top-3 right-3 opacity-0 group-hover/header:opacity-100 transition-opacity cursor-pointer">
+            {isAdmin && <label className="absolute top-3 right-3 opacity-0 group-hover/header:opacity-100 transition-opacity cursor-pointer">
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/60 border border-white/20 text-white/70 text-xs hover:text-white transition-colors">
                 {uploadingPageHeader ? 'A carregar...' : (
                   <>
@@ -1097,7 +1099,7 @@ function PortalSubPageContent() {
               </div>
               <input type="file" accept="image/*" className="hidden" disabled={uploadingPageHeader}
                 onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadPageHeader(f) }} />
-            </label>
+            </label>}
           </div>
           ) : null
         })() || (
@@ -1107,12 +1109,14 @@ function PortalSubPageContent() {
               <h1 className="text-xl sm:text-2xl font-bold tracking-widest text-gold uppercase">
                 {title || '...'}
               </h1>
-              <button onClick={() => { setTitleInput(title); setEditingTitle(true) }}
-                className="text-white/20 hover:text-gold/60 transition-colors mt-0.5">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
+              {isAdmin && (
+                <button onClick={() => { setTitleInput(title); setEditingTitle(true) }}
+                  className="text-white/20 hover:text-gold/60 transition-colors mt-0.5">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              )}
             </div>
             <div className="mt-3 h-px w-16 bg-gold/40" />
           </>
