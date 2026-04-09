@@ -1441,33 +1441,11 @@ function PortalSubPageContent() {
                       return (
                         <>
                           {(() => {
-                            const briefingGeralIdx = otherBlocks.findIndex(b =>
-                              ['heading_1','heading_2','heading_3'].includes(b.type) &&
-                              plainText(b[b.type]?.rich_text ?? []).toUpperCase().includes('BRIEFING GERAL')
-                            )
-                            if (briefingGeralIdx === -1) {
-                              return (
-                                <>
-                                  <NotionBlocks blocks={otherBlocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
-                                  {cardsGrid}
-                                </>
-                              )
-                            }
-                            return (
-                              <>
-                                <NotionBlocks blocks={otherBlocks.slice(0, briefingGeralIdx + 1)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
-                                {cardsGrid}
-                                <NotionBlocks blocks={otherBlocks.slice(briefingGeralIdx + 1)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
-                              </>
-                            )
-                          })()}
-                          {/* Equipa section on BRIEFING parent */}
-                          {(() => {
                             const ROLES = ['Fotógrafo', 'Videógrafo', 'Assistente', 'Editor']
                             const equipaBI = briefingInfo[id as string] ?? {}
                             const equipa = equipaBI.equipa ?? []
-                            return (
-                              <div className="mt-6 pb-6 border-b border-white/[0.06]">
+                            const equipaBox = (
+                              <div className="mb-6 pb-6 border-b border-white/[0.06]">
                                 <div className="flex items-center justify-between mb-3">
                                   <span className="text-[10px] tracking-[0.3em] text-gold uppercase">Equipa</span>
                                   {!editingEquipa && (
@@ -1526,6 +1504,28 @@ function PortalSubPageContent() {
                                   <p className="text-xs text-white/20 italic px-1">Sem equipa definida.</p>
                                 )}
                               </div>
+                            )
+                            const briefingGeralIdx = otherBlocks.findIndex(b =>
+                              ['heading_1','heading_2','heading_3'].includes(b.type) &&
+                              plainText(b[b.type]?.rich_text ?? []).toUpperCase().includes('BRIEFING GERAL')
+                            )
+                            if (briefingGeralIdx === -1) {
+                              return (
+                                <>
+                                  {equipaBox}
+                                  <NotionBlocks blocks={otherBlocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+                                  {cardsGrid}
+                                </>
+                              )
+                            }
+                            return (
+                              <>
+                                <NotionBlocks blocks={otherBlocks.slice(0, briefingGeralIdx)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+                                {equipaBox}
+                                <NotionBlocks blocks={[otherBlocks[briefingGeralIdx]]} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+                                {cardsGrid}
+                                <NotionBlocks blocks={otherBlocks.slice(briefingGeralIdx + 1)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+                              </>
                             )
                           })()}
                         </>
