@@ -1393,16 +1393,13 @@ function PortalSubPageContent() {
                       return (
                         <>
                           <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
-                          <div className="mt-6 rounded-2xl border border-white/40 bg-black overflow-hidden"
-                            style={{ boxShadow: '0 0 24px 4px rgba(255,255,255,0.12), 0 0 8px 2px rgba(255,255,255,0.18), inset 0 0 30px 0 rgba(255,255,255,0.04)' }}>
-                            <div className="px-6 py-6 flex flex-col items-center text-center gap-4">
-                              <h2 className="text-base sm:text-lg font-bold tracking-[0.3em] uppercase text-white"
-                                style={{ textShadow: '0 0 14px rgba(255,255,255,0.9), 0 0 28px rgba(255,255,255,0.5)' }}>
-                                Dar Satisfação
-                              </h2>
+                          <div className="mt-6 rounded-xl border border-white/40 bg-black overflow-hidden"
+                            style={{ boxShadow: '0 0 14px 3px rgba(255,255,255,0.12), inset 0 0 16px 0 rgba(255,255,255,0.03)' }}>
+                            <div className="px-5 py-4 flex items-center justify-between gap-4">
+                              <span className="text-xs font-bold tracking-[0.25em] uppercase text-white/70">Dar Satisfação</span>
                               <a href="https://tally.so/r/pbKJry" target="_blank" rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-white/40 bg-white/5 text-white text-xs font-semibold tracking-[0.15em] uppercase hover:bg-white/10 transition-all"
-                                style={{ boxShadow: '0 0 10px 2px rgba(255,255,255,0.12)' }}>
+                                className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/40 bg-white/5 text-white text-[10px] font-bold tracking-widest uppercase hover:bg-white/10 transition-all"
+                                style={{ boxShadow: '0 0 8px 1px rgba(255,255,255,0.1)' }}>
                                 DAR SATISFAÇÃO →
                               </a>
                             </div>
