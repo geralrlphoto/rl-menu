@@ -1409,7 +1409,13 @@ function PortalSubPageContent() {
                     }
                     if (isBriefingPage) {
                       const childPages = blocks.filter(b => b.type === 'child_page')
-                      const otherBlocks = blocks.filter(b => b.type !== 'child_page')
+                      const otherBlocks = blocks.filter(b =>
+                        b.type !== 'child_page' &&
+                        !(b.type === 'callout' && (b.children ?? []).some((c: Block) => c.type === 'image')) &&
+                        !(b.type === 'column_list' && (b.children ?? []).some((col: Block) =>
+                          (col.children ?? []).some((c: Block) => c.type === 'callout' && (c.children ?? []).some((ch: Block) => ch.type === 'image'))
+                        ))
+                      )
                       const cardsGrid = childPages.length > 0 && (
                         <div className="grid grid-cols-2 gap-3 mt-6">
                           {childPages.map(cp => {
