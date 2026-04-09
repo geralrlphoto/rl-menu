@@ -542,6 +542,7 @@ function ContratoStatusSection({ eventoId }: { eventoId: string }) {
   const [settingsBlockId, setSettingsBlockId] = useState<string | null>(null)
   const [portalSettings, setPortalSettings] = useState<any>(null)
   const [toggling, setToggling] = useState(false)
+  const [previewing, setPreviewing] = useState(false)
 
   useEffect(() => {
     fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}&bust=1`)
@@ -554,7 +555,12 @@ function ContratoStatusSection({ eventoId }: { eventoId: string }) {
       }).catch(() => {})
   }, [])
 
-  async function handleCriarContrato() {
+  function handleVerContrato() {
+    window.open(`/eventos-2026/${eventoId}/contrato`, '_blank')
+    setPreviewing(true)
+  }
+
+  async function handlePublicarNoPortal() {
     setToggling(true)
     try {
       const newSettings = { ...(portalSettings ?? {}), contratoDisponivel: true, contratoUrl: `/eventos-2026/${eventoId}/contrato` }
@@ -564,11 +570,11 @@ function ContratoStatusSection({ eventoId }: { eventoId: string }) {
       })
       const data = await res.json()
       setDisponivel(true)
+      setPreviewing(false)
       setPortalSettings(newSettings)
       if (data.settingsBlockId) setSettingsBlockId(data.settingsBlockId)
     } finally {
       setToggling(false)
-      window.open(`/eventos-2026/${eventoId}/contrato`, '_blank')
     }
   }
 
@@ -606,13 +612,28 @@ function ContratoStatusSection({ eventoId }: { eventoId: string }) {
               </svg>
               Ver Contrato ↗
             </a>
+          ) : previewing ? (
+            <div className="flex items-center gap-2">
+              <button onClick={() => window.open(`/eventos-2026/${eventoId}/contrato`, '_blank')}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/10 text-white/50 text-[10px] font-semibold tracking-wider hover:bg-white/[0.07] transition-all">
+                Rever ↗
+              </button>
+              <button onClick={handlePublicarNoPortal} disabled={toggling}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-500/15 border border-green-500/40 text-green-400 text-[10px] font-semibold tracking-wider hover:bg-green-500/25 transition-all disabled:opacity-50">
+                {toggling ? 'A publicar...' : '✓ Publicar no Portal'}
+              </button>
+              <button onClick={() => setPreviewing(false)}
+                className="px-2 py-1.5 rounded-lg text-white/20 hover:text-white/50 text-[10px] transition-all">
+                ✕
+              </button>
+            </div>
           ) : (
-            <button onClick={handleCriarContrato} disabled={toggling}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold/10 border border-gold/30 text-gold text-[10px] font-semibold tracking-wider hover:bg-gold/20 transition-all disabled:opacity-50">
+            <button onClick={handleVerContrato}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold/10 border border-gold/30 text-gold text-[10px] font-semibold tracking-wider hover:bg-gold/20 transition-all">
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              {toggling ? 'A publicar...' : 'Criar Contrato ↗'}
+              Criar Contrato ↗
             </button>
           )}
         </div>
