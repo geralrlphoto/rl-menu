@@ -729,20 +729,43 @@ function PortalSubPageContent() {
   const loadPagamentos = useCallback(async () => {
     setPagRefreshing(true)
     try {
-      const d = await fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}&bust=1`).then(r => r.json())
-      const ps = d.settings ?? {}
-      let ref: string = ps.referencia ?? ''
+      let ps: Record<string, any> = {}
+      let settingsBlockIdVal: string | null = null
+
+      if (refParam) {
+        // Ref-based portal: load settings from Supabase
+        const d = await fetch(`/api/portais?ref=${encodeURIComponent(refParam)}`).then(r => r.json())
+        ps = d.portal?.settings ?? {}
+      } else {
+        // Main portal: load settings from Notion
+        const d = await fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}&bust=1`).then(r => r.json())
+        ps = d.settings ?? {}
+        settingsBlockIdVal = d.settingsBlockId ?? null
+        // Auto-extract reference from portal page blocks if not in settings
+        if (!ps.referencia) {
+          for (const b of (d.blocks ?? []) as Block[]) {
+            if (b.type === 'paragraph') {
+              const text = plainText(b.paragraph?.rich_text ?? [])
+              if (/^(referên|referência|referencia|ref\.?\s*:|ref\s+)/i.test(text.trim())) {
+                ps.referencia = text.replace(/^.*?:\s*/i, '').trim()
+                break
+              }
+            }
+          }
+        }
+      }
+
+      const ref: string = ps.referencia ?? refParam ?? ''
       const total: number = ps.valorTotal ?? 0
       setPortalFoto(ps.valorFoto ?? null)
       setPortalVideo(ps.valorVideo ?? null)
       setPortalExtras(ps.valorExtras ?? null)
       setGuiaLinks(ps.guiaLinks ?? {})
       setParceiros(ps.parceiros ?? [])
-      setPortalSettingsBlockId(d.settingsBlockId ?? null)
+      setPortalSettingsBlockId(settingsBlockIdVal)
       setSubpageHeaderUrl(ps.subpageHeaderUrl ?? '')
       const slots = ps.preWeddingSlots ?? []
       setPreWeddingSlots(slots)
-      // Only treat as reserved if the ID still exists in current slots
       const savedId = ps.preWeddingReservedSlotId ?? null
       const validId = savedId && slots.some((s: {id: string}) => s.id === savedId) ? savedId : null
       setReservedSlotId(validId)
@@ -757,19 +780,6 @@ function PortalSubPageContent() {
       setPageHeaders(ps.pageHeaders ?? {})
       setBriefingInfo(ps.briefingInfo ?? {})
 
-      // Auto-extract reference from portal page blocks if not in settings
-      if (!ref) {
-        for (const b of (d.blocks ?? []) as Block[]) {
-          if (b.type === 'paragraph') {
-            const text = plainText(b.paragraph?.rich_text ?? [])
-            if (/^(referên|referência|referencia|ref\.?\s*:|ref\s+)/i.test(text.trim())) {
-              ref = text.replace(/^.*?:\s*/i, '').trim()
-              break
-            }
-          }
-        }
-      }
-
       if (ref) {
         setPortalRef(ref)
         setPortalTotal(total)
@@ -780,7 +790,6 @@ function PortalSubPageContent() {
         setPagamentos(pd.payments ?? [])
         if (ed.found) {
           setEventoData(ed.evento)
-          // If contract is published but contratoUrl wasn't saved yet, derive it from the event id
           if ((ps.contratoDisponivel ?? false) && !ps.contratoUrl) {
             setContratoUrl(`/eventos-2026/${ed.evento.id}/contrato`)
           }
@@ -789,7 +798,7 @@ function PortalSubPageContent() {
     } finally {
       setPagRefreshing(false)
     }
-  }, [])
+  }, [refParam])
 
   useEffect(() => {
     loadPagamentos()
