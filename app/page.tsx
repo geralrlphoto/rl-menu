@@ -106,6 +106,7 @@ export default async function Home() {
     videosRes,
     fotosRes,
     portalRes,
+    { data: refPortais },
   ] = await Promise.all([
     supabase.from('crm_contacts').select('nome, tipo_evento, como_chegou, data_entrada, status')
       .gte('data_entrada', ago10Str)
@@ -168,6 +169,9 @@ export default async function Home() {
     fetch(`https://api.notion.com/v1/blocks/${PORTAL_PAGE_ID}/children?page_size=100`, {
       headers: notionH, cache: 'no-store',
     }).then(r => r.json()).catch(() => ({ results: [] })),
+
+    // Ref portais — reservas pré-wedding (Supabase)
+    supabase.from('portais').select('referencia, settings, noiva, noivo'),
   ])
 
   // ── Parsear Notion ────────────────────────────────────────────────────────
@@ -269,6 +273,32 @@ export default async function Home() {
         tagColor: isUrgent ? 'text-red-400' : 'text-emerald-400',
       })
     }
+  }
+
+  // Ref portais (Supabase) — pré-wedding reservas
+  for (const portal of refPortais ?? []) {
+    const rps = portal.settings ?? {}
+    const rSlots: any[] = rps.preWeddingSlots ?? []
+    const rReservedId: string | null = rps.preWeddingReservedSlotId ?? null
+    const rReservedAt: string | null = rps.preWeddingReservedAt ?? null
+    const rSlot = rReservedId ? rSlots.find((s: any) => s.id === rReservedId) : null
+    if (!rSlot) continue
+    const reservedDaysAgo = rReservedAt
+      ? Math.round((Date.now() - new Date(rReservedAt).getTime()) / 86400000)
+      : 0
+    const daysToEvent = daysUntil(rSlot.date)
+    const show = reservedDaysAgo <= 5 || daysToEvent <= 15
+    if (!show) continue
+    const isUrgent = daysToEvent <= 15
+    const rNoiva: string = rps.noiva ?? portal.noiva ?? ''
+    const rNoivo: string = rps.noivo ?? portal.noivo ?? ''
+    const rNames = [rNoiva, rNoivo].filter(Boolean).join(' & ') || portal.referencia
+    pwItems.push({
+      main: rNames,
+      sub: fmtPwDate(rSlot.date, rSlot.time, rSlot.local),
+      tag: isUrgent ? `${daysToEvent}d` : '✓ Reservado',
+      tagColor: isUrgent ? 'text-red-400' : 'text-emerald-400',
+    })
   }
 
   // ── Temperatura das leads ─────────────────────────────────────────────────
