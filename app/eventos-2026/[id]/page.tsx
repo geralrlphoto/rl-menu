@@ -647,6 +647,10 @@ function PortalSection({ evento }: { evento: Evento }) {
   const [status, setStatus] = useState<'loading' | 'found' | 'not_found' | 'error'>('loading')
   const [creating, setCreating] = useState(false)
   const [pwBooking, setPwBooking] = useState<{ coupleNames: string; date: string; time: string; local: string; reservedAt: string | null } | null>(null)
+  const [portalSettings, setPortalSettings] = useState<any>({})
+  const [editingPw, setEditingPw] = useState(false)
+  const [pwForm, setPwForm] = useState({ date: '', time: '', local: '' })
+  const [savingPw, setSavingPw] = useState(false)
 
   useEffect(() => {
     fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`)
@@ -655,6 +659,7 @@ function PortalSection({ evento }: { evento: Evento }) {
         if (!d.portal) { setStatus('not_found'); return }
         setStatus('found')
         const ps = d.portal.settings ?? {}
+        setPortalSettings(ps)
         const slots: any[] = ps.preWeddingSlots ?? []
         const reservedId: string | null = ps.preWeddingReservedSlotId ?? null
         const slot = reservedId ? slots.find((s: any) => s.id === reservedId) : null
@@ -670,6 +675,43 @@ function PortalSection({ evento }: { evento: Evento }) {
       })
       .catch(() => setStatus('error'))
   }, [referencia])
+
+  async function saveSettings(newSettings: any) {
+    await fetch('/api/portais', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referencia, settings: newSettings }),
+    })
+    setPortalSettings(newSettings)
+  }
+
+  async function handleSavePw() {
+    setSavingPw(true)
+    try {
+      const slots: any[] = portalSettings.preWeddingSlots ?? []
+      const reservedId = portalSettings.preWeddingReservedSlotId
+      const newSlots = slots.map((s: any) =>
+        s.id === reservedId ? { ...s, date: pwForm.date, time: pwForm.time, local: pwForm.local } : s
+      )
+      const newSettings = { ...portalSettings, preWeddingSlots: newSlots }
+      await saveSettings(newSettings)
+      setPwBooking(b => b ? { ...b, date: pwForm.date, time: pwForm.time, local: pwForm.local } : b)
+      setEditingPw(false)
+    } finally { setSavingPw(false) }
+  }
+
+  async function handleCancelReservation() {
+    if (!confirm('Cancelar a reserva do Pré-Wedding? O cliente poderá escolher uma nova data.')) return
+    setSavingPw(true)
+    try {
+      const newSettings = { ...portalSettings }
+      delete newSettings.preWeddingReservedSlotId
+      delete newSettings.preWeddingReservedAt
+      await saveSettings(newSettings)
+      setPwBooking(null)
+      setEditingPw(false)
+    } finally { setSavingPw(false) }
+  }
 
   async function handleCriarPortal() {
     setCreating(true)
@@ -714,7 +756,7 @@ function PortalSection({ evento }: { evento: Evento }) {
       )}
       {status === 'found' && (
         <div className="flex flex-col gap-4">
-          {pwBooking && (
+          {pwBooking && !editingPw && (
             <div className={`flex items-center gap-4 px-4 py-3 rounded-xl border ${dtu !== null && dtu <= 15 ? 'border-red-500/30 bg-red-500/5' : 'border-emerald-500/25 bg-emerald-500/5'}`}>
               <svg className={`w-4 h-4 flex-shrink-0 ${dtu !== null && dtu <= 15 ? 'text-red-400' : 'text-emerald-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
@@ -727,11 +769,62 @@ function PortalSection({ evento }: { evento: Evento }) {
                   {pwBooking.local && <span className="text-xs text-white/30">📍 {pwBooking.local}</span>}
                 </div>
               </div>
-              <span className={`flex-shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full tracking-widest ${dtu !== null && dtu <= 15 ? 'bg-red-500/15 text-red-400' : 'bg-emerald-500/15 text-emerald-400'}`}>
-                {dtu === 0 ? 'HOJE' : dtu !== null && dtu < 0 ? 'PASSOU' : dtu !== null && dtu <= 15 ? `${dtu}d` : '✓'}
-              </span>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full tracking-widest ${dtu !== null && dtu <= 15 ? 'bg-red-500/15 text-red-400' : 'bg-emerald-500/15 text-emerald-400'}`}>
+                  {dtu === 0 ? 'HOJE' : dtu !== null && dtu < 0 ? 'PASSOU' : dtu !== null && dtu <= 15 ? `${dtu}d` : '✓'}
+                </span>
+                <button onClick={() => { setPwForm({ date: pwBooking.date, time: pwBooking.time, local: pwBooking.local }); setEditingPw(true) }}
+                  className="p-1.5 rounded-lg text-white/25 hover:text-white/60 hover:bg-white/[0.06] transition-all" title="Editar">
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              </div>
             </div>
           )}
+
+          {editingPw && (
+            <div className="border border-white/10 bg-white/[0.02] rounded-xl p-4 space-y-3">
+              <p className="text-[9px] tracking-[0.3em] text-gold/70 uppercase mb-2">Editar Pré-Wedding Marcado</p>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="block text-[9px] text-white/25 tracking-widest uppercase mb-1">Data</label>
+                  <input type="date" value={pwForm.date}
+                    onChange={e => setPwForm(f => ({ ...f, date: e.target.value }))}
+                    className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-2 py-2 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors" />
+                </div>
+                <div>
+                  <label className="block text-[9px] text-white/25 tracking-widest uppercase mb-1">Hora</label>
+                  <input type="time" value={pwForm.time}
+                    onChange={e => setPwForm(f => ({ ...f, time: e.target.value }))}
+                    className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-2 py-2 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors" />
+                </div>
+                <div>
+                  <label className="block text-[9px] text-white/25 tracking-widest uppercase mb-1">Local</label>
+                  <input type="text" value={pwForm.local} placeholder="ex: Sintra"
+                    onChange={e => setPwForm(f => ({ ...f, local: e.target.value }))}
+                    className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-2 py-2 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
+                </div>
+              </div>
+              <div className="flex items-center justify-between pt-1">
+                <button onClick={handleCancelReservation} disabled={savingPw}
+                  className="text-[10px] text-red-400/60 hover:text-red-400 transition-colors tracking-widest disabled:opacity-40">
+                  ✕ Cancelar reserva
+                </button>
+                <div className="flex gap-2">
+                  <button onClick={() => setEditingPw(false)} disabled={savingPw}
+                    className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">
+                    Cancelar
+                  </button>
+                  <button onClick={handleSavePw} disabled={savingPw || !pwForm.date}
+                    className="px-4 py-1.5 rounded-lg text-xs bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-50">
+                    {savingPw ? 'A guardar...' : 'Guardar'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-col sm:flex-row gap-3">
             <a href={`/portal-cliente/ref/${encodeURIComponent(referencia)}`} target="_blank" rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black font-bold text-xs tracking-widest hover:bg-gold/80 transition-all uppercase">
