@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
+import NovoPortalButton from './NovoPortalButton'
 
 export const revalidate = 30
 
@@ -31,6 +32,7 @@ export default async function PortaisClientesPage() {
         <Link href="/" className="text-[10px] tracking-widest text-white/25 hover:text-white/50 transition-colors uppercase">
           ‹ Menu
         </Link>
+        <NovoPortalButton />
       </div>
 
       {/* Hero — igual ao portal-cliente sem foto */}
@@ -73,7 +75,7 @@ export default async function PortaisClientesPage() {
           <div className="flex flex-col gap-3 max-w-xl mx-auto">
             {portals.map((portal) => (
               <Link
-                key={portal.pageId}
+                key={portal.referencia}
                 href={`/portal-cliente/ref/${encodeURIComponent(portal.referencia)}`}
                 className="snap-start shrink-0 flex items-center justify-between gap-4 px-5 py-4 rounded-2xl border bg-black border-white/40 text-white/60 hover:border-white/70 transition-all duration-300 group"
                 style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}

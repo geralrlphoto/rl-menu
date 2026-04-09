@@ -53,6 +53,8 @@ export async function GET(req: NextRequest) {
       valor_foto:   getProp(p, 'VALOR SERVIÇO FOTO', 'number'),
       valor_video:  getProp(p, 'VALOR DO SERVIÇO VÍDEO', 'number'),
       valor_liquido:getProp(p, 'VALOR LIQUIDO A RECEBER', 'number'),
+      nome_noiva:   getProp(p, 'Nome da Noiva', 'text'),
+      nome_noivo:   getProp(p, 'nome do noivo', 'text'),
     },
   })
 }
