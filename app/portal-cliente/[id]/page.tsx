@@ -1412,7 +1412,7 @@ function PortalSubPageContent() {
                                   background: 'rgba(0,0,0,0.95)',
                                 } : {}}>
                                 <div className="pr-28">
-                                  <NotionBlocks blocks={[b]} hiddenNav={settings.hiddenNav} backUrl={backUrlCron} />
+                                  <NotionBlocks blocks={[b]} hiddenNav={settings.hiddenNav} backUrl={backUrlCron} neutralCallout />
                                 </div>
                                 <button
                                   onClick={() => toggleCronogramaSection(b.id)}

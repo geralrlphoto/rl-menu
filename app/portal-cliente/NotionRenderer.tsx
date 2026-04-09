@@ -34,10 +34,10 @@ export function plainText(arr: any[]): string {
   return arr.map((t: any) => t.plain_text).join('')
 }
 
-export function NotionBlocks({ blocks, rootId, hiddenNav, backUrl }: { blocks: Block[], rootId?: string, hiddenNav?: string[], backUrl?: string }) {
+export function NotionBlocks({ blocks, rootId, hiddenNav, backUrl, neutralCallout }: { blocks: Block[], rootId?: string, hiddenNav?: string[], backUrl?: string, neutralCallout?: boolean }) {
   const rt = (arr: any[]) => richText(arr, backUrl)
   const NB = (props: { blocks: Block[], rootId?: string }) =>
-    <NotionBlocks blocks={props.blocks} rootId={props.rootId ?? rootId} hiddenNav={hiddenNav} backUrl={backUrl} />
+    <NotionBlocks blocks={props.blocks} rootId={props.rootId ?? rootId} hiddenNav={hiddenNav} backUrl={backUrl} neutralCallout={neutralCallout} />
   const elements: React.ReactNode[] = []
   let i = 0
 
@@ -139,7 +139,7 @@ export function NotionBlocks({ blocks, rootId, hiddenNav, backUrl }: { blocks: B
           gray_background:   'bg-white/5 border-white/10',
           default:           'bg-white/[0.04] border-white/10',
         }
-        const cls = colorMap[data.color] ?? colorMap.default
+        const cls = neutralCallout ? 'bg-transparent border-transparent' : (colorMap[data.color] ?? colorMap.default)
         elements.push(
           <div key={b.id} className={`rounded-xl border px-4 py-3 mb-3 ${cls}`}>
             {plainText(data.rich_text) && (
