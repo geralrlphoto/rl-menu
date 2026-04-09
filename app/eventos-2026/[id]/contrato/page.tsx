@@ -86,42 +86,17 @@ function ContratoPageContent() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [clausulas, setClausulas] = useState<Record<string, string>>({})
-  const [portalPageId, setPortalPageId] = useState<string | null>(null)
-  const [portalSettingsBlockId, setPortalSettingsBlockId] = useState<string | null>(null)
-  const [portalSettingsObj, setPortalSettingsObj] = useState<any>(null)
 
   useEffect(() => {
     if (!id) return
-    fetch(`/api/eventos-notion/${id}`)
-      .then(r => r.json())
-      .then(async d => {
-        if (d.event) {
-          setEvento(d.event)
-          setDraft(d.event)
-          const referencia = d.event.referencia
-          if (referencia) {
-            try {
-              const pd = await fetch(`/api/portal-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json())
-              if (pd.found && pd.pageId) {
-                setPortalPageId(pd.pageId)
-                const ps_data = await fetch(`/api/portais-clientes?id=${pd.pageId}`).then(r => r.json())
-                const ps = ps_data.settings ?? {}
-                setPortalSettingsBlockId(ps_data.settingsBlockId ?? null)
-                setPortalSettingsObj(ps)
-                const custom = ps.contratoClausulas?.[id] ?? {}
-                setClausulas({ ...DEFAULT_CLAUSULAS, ...custom })
-              } else {
-                setClausulas({ ...DEFAULT_CLAUSULAS })
-              }
-            } catch {
-              setClausulas({ ...DEFAULT_CLAUSULAS })
-            }
-          } else {
-            setClausulas({ ...DEFAULT_CLAUSULAS })
-          }
-        }
-      })
-      .finally(() => setLoading(false))
+    Promise.all([
+      fetch(`/api/eventos-notion/${id}`).then(r => r.json()),
+      fetch(`/api/contrato-clausulas?eventoId=${id}`).then(r => r.json()),
+    ]).then(([d, cd]) => {
+      if (d.event) { setEvento(d.event); setDraft(d.event) }
+      const custom = cd.clausulas ?? {}
+      setClausulas({ ...DEFAULT_CLAUSULAS, ...custom })
+    }).finally(() => setLoading(false))
   }, [id])
 
   function change(field: string, value: any) {
@@ -141,23 +116,11 @@ function ContratoPageContent() {
     })
     setEvento(draft)
 
-    if (portalPageId && portalSettingsObj) {
-      const newPS = {
-        ...portalSettingsObj,
-        contratoClausulas: {
-          ...(portalSettingsObj.contratoClausulas ?? {}),
-          [id as string]: clausulas,
-        }
-      }
-      const res2 = await fetch('/api/portais-clientes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pageId: portalPageId, settings: newPS, settingsBlockId: portalSettingsBlockId }),
-      })
-      const d2 = await res2.json()
-      if (d2.settingsBlockId) setPortalSettingsBlockId(d2.settingsBlockId)
-      setPortalSettingsObj(newPS)
-    }
+    await fetch('/api/contrato-clausulas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ eventoId: id, clausulas }),
+    })
 
     setSaving(false)
     setEditing(false)
