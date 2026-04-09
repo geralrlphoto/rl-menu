@@ -756,6 +756,20 @@ export default function PortalClientePage() {
 
   useEffect(() => { loadBlocks().finally(() => setLoading(false)) }, [loadBlocks])
 
+  function syncPhotosToAllPortals(s: PortalSettings) {
+    const photoSettings: Record<string, any> = {}
+    if (s.heroImageUrl !== undefined) photoSettings.heroImageUrl = s.heroImageUrl
+    if (s.galleryUrls !== undefined) photoSettings.galleryUrls = s.galleryUrls
+    if (s.subpageHeaderUrl !== undefined) photoSettings.subpageHeaderUrl = s.subpageHeaderUrl
+    if (Object.keys(photoSettings).length > 0) {
+      fetch('/api/portais', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photoSettings }),
+      })
+    }
+  }
+
   async function handleSaved(newSettings?: PortalSettings, newSettingsBlockId?: string) {
     if (newSettings) {
       // Settings panel: apply state directly, bust cache in background
@@ -763,6 +777,7 @@ export default function PortalClientePage() {
       if (newSettingsBlockId) setSettingsBlockId(newSettingsBlockId)
       setEditing(false)
       fetch(`/api/portais-clientes?id=${PAGE_ID}&bust=1`) // background, no await
+      syncPhotosToAllPortals(newSettings)
     } else {
       // Block editor: need fresh blocks from Notion
       setEditingContent(false)
@@ -789,6 +804,7 @@ export default function PortalClientePage() {
     setHeroEdit({ field: null, value: '' })
     setHeroSaving(false)
     fetch(`/api/portais-clientes?id=${PAGE_ID}&bust=1`)
+    syncPhotosToAllPortals(newSettings)
   }
 
   if (loading) return (
