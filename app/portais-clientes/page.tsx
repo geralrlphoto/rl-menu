@@ -118,38 +118,38 @@ export default async function PortaisClientesPage() {
       </section>
 
       {/* Lista de portais */}
-      <section className="py-10 sm:py-16 px-4">
+      <section className="py-6 px-4 max-w-lg mx-auto w-full">
 
         {portals.length === 0 ? (
           <p className="text-white/20 text-sm tracking-widest text-center py-16">SEM PORTAIS CRIADOS</p>
         ) : (
-          <div className="flex flex-col gap-3 max-w-2xl mx-auto">
+          <div className="flex flex-col divide-y divide-white/[0.06]">
             {portals.map((portal) => (
               <Link
                 key={portal.referencia}
                 href={`/portal-cliente/ref/${encodeURIComponent(portal.referencia)}`}
-                className="group relative flex items-center justify-between gap-4 px-8 py-6 rounded-2xl bg-[#0d0d0d] border border-white/[0.07] hover:border-[#C9A84C]/25 transition-all duration-500 overflow-hidden"
+                className="group flex flex-col items-center text-center gap-1 py-8 transition-all duration-300"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-[#C9A84C]/0 group-hover:from-[#C9A84C]/[0.03] to-transparent transition-all duration-500 pointer-events-none" />
+                <p className="text-[9px] tracking-[0.35em] text-white/20 uppercase font-mono mb-1 group-hover:text-white/35 transition-colors">
+                  {portal.referencia}
+                </p>
 
-                <div className="relative flex flex-col gap-1">
-                  {(portal.noiva || portal.noivo) ? (
-                    <p className="font-playfair font-black text-2xl sm:text-3xl text-white tracking-tight leading-none uppercase">
-                      {[portal.noiva, portal.noivo].filter(Boolean).join(' & ')}
-                    </p>
-                  ) : (
-                    <p className="font-mono text-white/30 text-sm tracking-widest uppercase">{portal.referencia}</p>
-                  )}
-                  {portal.data && (
-                    <p className="text-[#C9A84C]/60 text-sm tracking-wide group-hover:text-[#C9A84C]/80 transition-colors">
-                      {formatDate(portal.data)} ♡
-                    </p>
-                  )}
-                </div>
+                {(portal.noiva || portal.noivo) ? (
+                  <p className="font-playfair font-black text-3xl sm:text-4xl text-white group-hover:text-white/90 transition-colors tracking-tight leading-none">
+                    {[portal.noiva, portal.noivo].filter(Boolean).join(' & ')}
+                  </p>
+                ) : (
+                  <p className="font-playfair text-white/20 text-2xl italic">—</p>
+                )}
 
-                <svg className="relative w-4 h-4 text-white/20 group-hover:text-[#C9A84C]/50 transition-all duration-300 shrink-0 group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
-                </svg>
+                {portal.data && (
+                  <p className="font-cormorant italic text-[#C9A84C]/55 text-base tracking-wide mt-0.5 group-hover:text-[#C9A84C]/80 transition-colors">
+                    {formatDate(portal.data)} ♡
+                  </p>
+                )}
+
+                {/* hover underline */}
+                <div className="h-px w-0 group-hover:w-12 bg-[#C9A84C]/40 transition-all duration-500 mt-2" />
               </Link>
             ))}
           </div>
