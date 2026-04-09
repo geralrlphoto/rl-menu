@@ -1807,7 +1807,7 @@ function PortalSubPageContent() {
                       )
                     }
                     if (isFotografiasPage) {
-                      const fotosUrl = (guiaLinks as any).fotosSelecaoUrl ?? ''
+                      const fotosUrl = (guiaLinks as any).fotosSelecaoUrl || 'https://tally.so/r/448PrO'
                       return (
                         <>
                           {/* ── ENVIAR FOTOS ── */}
@@ -1821,15 +1821,11 @@ function PortalSubPageContent() {
                               <p className="text-sm text-white/55 leading-relaxed mb-5">
                                 Noivos, este formulário é para vocês nos enviarem a vossa escolha através dele e outra forma não é considerado entregue.
                               </p>
-                              {fotosUrl ? (
-                                <a href={fotosUrl} target="_blank" rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/40 bg-white/5 text-white text-sm font-semibold tracking-wide hover:bg-white/10 transition-all"
-                                  style={{ boxShadow: '0 0 12px 2px rgba(255,255,255,0.15)' }}>
-                                  Enviar as minhas fotos →
-                                </a>
-                              ) : (
-                                <p className="text-[10px] text-white/20 italic tracking-widest">Link do formulário não configurado ainda.</p>
-                              )}
+                              <a href={fotosUrl} target="_blank" rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/40 bg-white/5 text-white text-sm font-semibold tracking-wide hover:bg-white/10 transition-all"
+                                style={{ boxShadow: '0 0 12px 2px rgba(255,255,255,0.15)' }}>
+                                Enviar as minhas fotos →
+                              </a>
                             </div>
                           </div>
                           <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
