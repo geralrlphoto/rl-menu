@@ -1414,19 +1414,13 @@ function PortalSubPageContent() {
                                 <div className="pr-28">
                                   <NotionBlocks blocks={[b]} hiddenNav={settings.hiddenNav} backUrl={backUrlCron} neutralCallout />
                                 </div>
-                                <button
-                                  onClick={() => toggleCronogramaSection(b.id)}
-                                  className={`absolute top-1/2 -translate-y-1/2 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold tracking-widest uppercase transition-all ${
-                                    done
-                                      ? 'border border-green-400/50 text-green-400 bg-green-400/10 hover:bg-green-400/20'
-                                      : 'border border-white/15 text-white/30 bg-black/30 hover:text-white/60 hover:border-white/30'
-                                  }`}>
-                                  {done ? (
-                                    <><svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>OK</>
-                                  ) : (
-                                    <>○ Pendente</>
-                                  )}
-                                </button>
+                                {done && (
+                                  <button
+                                    onClick={() => toggleCronogramaSection(b.id)}
+                                    className="absolute top-1/2 -translate-y-1/2 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold tracking-widest uppercase border border-green-400/50 text-green-400 bg-green-400/10 hover:bg-green-400/20 transition-all">
+                                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>OK
+                                  </button>
+                                )}
                               </div>
                             )
                           })}
