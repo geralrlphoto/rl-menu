@@ -1390,9 +1390,13 @@ function PortalSubPageContent() {
                       )
                     }
                     if (isSatisfacaoPage) {
+                      const backUrlSat = fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined
+                      const firstImgIdx = blocks.findIndex(b => b.type === 'image')
+                      const textBlocks = firstImgIdx !== -1 ? blocks.slice(0, firstImgIdx) : blocks
+                      const afterTextBlocks = firstImgIdx !== -1 ? blocks.slice(firstImgIdx) : []
                       return (
                         <>
-                          <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
+                          <NotionBlocks blocks={textBlocks} hiddenNav={settings.hiddenNav} backUrl={backUrlSat} />
                           <div className="mt-6 rounded-xl border border-white/40 bg-black overflow-hidden"
                             style={{ boxShadow: '0 0 14px 3px rgba(255,255,255,0.12), inset 0 0 16px 0 rgba(255,255,255,0.03)' }}>
                             <div className="px-5 py-4 flex items-center justify-between gap-4">
@@ -1403,6 +1407,9 @@ function PortalSubPageContent() {
                               </a>
                             </div>
                           </div>
+                          {afterTextBlocks.length > 0 && (
+                            <NotionBlocks blocks={afterTextBlocks} hiddenNav={settings.hiddenNav} backUrl={backUrlSat} />
+                          )}
                         </>
                       )
                     }
