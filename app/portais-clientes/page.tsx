@@ -14,15 +14,20 @@ function formatDate(d: string | null | undefined) {
   } catch { return d }
 }
 
-type Portal = { referencia: string; noiva: string | null; noivo: string | null; data: string | null }
+type Portal = { referencia: string; noiva: string | null; noivo: string | null; data: string | null; settings?: any }
 
 export default async function PortaisClientesPage() {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
-  const { data } = await supabase.from('portais').select('referencia,noiva,noivo,data').order('referencia')
-  const portals: Portal[] = data ?? []
+  const { data } = await supabase.from('portais').select('referencia,noiva,noivo,data,settings').order('referencia')
+  const portals: Portal[] = (data ?? []).map(p => ({
+    ...p,
+    noiva: p.noiva || p.settings?.noiva || null,
+    noivo: p.noivo || p.settings?.noivo || null,
+    data:  p.data  || p.settings?.data  || null,
+  }))
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
