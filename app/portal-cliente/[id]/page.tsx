@@ -703,6 +703,7 @@ function PortalSubPageContent() {
   const [editingCalloutLinks, setEditingCalloutLinks] = useState(false)
   const [calloutLinksForm, setCalloutLinksForm] = useState<Record<string, string>>({})
   const [savingCalloutLinks, setSavingCalloutLinks] = useState(false)
+  const [fotosVerMaisUrlForm, setFotosVerMaisUrlForm] = useState('')
   const [briefingLinks, setBriefingLinks] = useState<Record<string, string>>({})
   const [pageHeaders, setPageHeaders] = useState<Record<string, string>>({})
   const [uploadingPageHeader, setUploadingPageHeader] = useState(false)
@@ -847,15 +848,27 @@ function PortalSubPageContent() {
     setTimeout(() => loadBlocks(true), 1500)
   }
 
+  async function savePortalSettings(newSettings: Record<string, any>) {
+    if (refParam) {
+      await fetch('/api/portais', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referencia: refParam, updates: { settings: newSettings } }),
+      })
+    } else {
+      await fetch('/api/portais-clientes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: newSettings, settingsBlockId: portalSettingsBlockId }),
+      })
+    }
+  }
+
   async function handleSaveTitle() {
     if (!id || !titleInput.trim()) return
     setSavingTitle(true)
     const newPt = { ...pageTitles, [id as string]: titleInput.trim() }
-    await fetch('/api/portais-clientes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: { ...portalSettingsObj, pageTitles: newPt }, settingsBlockId: portalSettingsBlockId }),
-    })
+    await savePortalSettings({ ...portalSettingsObj, pageTitles: newPt })
     setPageTitles(newPt)
     setTitle(titleInput.trim())
     setEditingTitle(false)
@@ -868,11 +881,7 @@ function PortalSubPageContent() {
     try {
       const url = await uploadWithProgress(file, () => {})
       const newPH = { ...pageHeaders, [id as string]: url }
-      await fetch('/api/portais-clientes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: { ...portalSettingsObj, pageHeaders: newPH }, settingsBlockId: portalSettingsBlockId }),
-      })
+      await savePortalSettings({ ...portalSettingsObj, pageHeaders: newPH })
       setPageHeaders(newPH)
     } finally { setUploadingPageHeader(false) }
   }
@@ -882,11 +891,7 @@ function PortalSubPageContent() {
     setSavingBriefingInfo(true)
     const existing = briefingInfo[id as string] ?? {}
     const newBI = { ...briefingInfo, [id as string]: { ...existing, fields: briefingFieldsForm } }
-    await fetch('/api/portais-clientes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: { ...portalSettingsObj, briefingInfo: newBI }, settingsBlockId: portalSettingsBlockId }),
-    })
+    await savePortalSettings({ ...portalSettingsObj, briefingInfo: newBI })
     setBriefingInfo(newBI)
     setEditingBriefingInfo(false)
     setSavingBriefingInfo(false)
@@ -897,11 +902,7 @@ function PortalSubPageContent() {
     setSavingInfoGeral(true)
     const existing = briefingInfo[id as string] ?? {}
     const newBI = { ...briefingInfo, [id as string]: { ...existing, infoGeral: infoGeralForm } }
-    await fetch('/api/portais-clientes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: { ...portalSettingsObj, briefingInfo: newBI }, settingsBlockId: portalSettingsBlockId }),
-    })
+    await savePortalSettings({ ...portalSettingsObj, briefingInfo: newBI })
     setBriefingInfo(newBI)
     setEditingInfoGeral(false)
     setSavingInfoGeral(false)
@@ -912,11 +913,7 @@ function PortalSubPageContent() {
     setSavingEquipa(true)
     const existing = briefingInfo[id as string] ?? {}
     const newBI = { ...briefingInfo, [id as string]: { ...existing, equipa: equipaForm } }
-    await fetch('/api/portais-clientes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: { ...portalSettingsObj, briefingInfo: newBI }, settingsBlockId: portalSettingsBlockId }),
-    })
+    await savePortalSettings({ ...portalSettingsObj, briefingInfo: newBI })
     setBriefingInfo(newBI)
     setEditingEquipa(false)
     setSavingEquipa(false)
@@ -926,12 +923,12 @@ function PortalSubPageContent() {
     if (!id) return
     setSavingCalloutLinks(true)
     const newCL = { ...calloutLinks, [id as string]: calloutLinksForm }
-    await fetch('/api/portais-clientes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: { ...portalSettingsObj, calloutLinks: newCL }, settingsBlockId: portalSettingsBlockId }),
-    })
+    const newGuiaLinks = isFotografiasPage
+      ? { ...guiaLinks, fotosVerMaisUrl: fotosVerMaisUrlForm.trim() }
+      : guiaLinks
+    await savePortalSettings({ ...portalSettingsObj, calloutLinks: newCL, guiaLinks: newGuiaLinks })
     setCalloutLinks(newCL)
+    setGuiaLinks(newGuiaLinks)
     setEditingCalloutLinks(false)
     setSavingCalloutLinks(false)
   }
@@ -939,11 +936,7 @@ function PortalSubPageContent() {
   async function handleSaveBriefing() {
     setSavingBriefing(true)
     const newBL = { ...briefingLinks, ...briefingForm }
-    await fetch('/api/portais-clientes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: { ...portalSettingsObj, briefingLinks: newBL }, settingsBlockId: portalSettingsBlockId }),
-    })
+    await savePortalSettings({ ...portalSettingsObj, briefingLinks: newBL })
     setBriefingLinks(newBL)
     setEditingBriefing(false)
     setSavingBriefing(false)
@@ -1000,7 +993,7 @@ function PortalSubPageContent() {
           {!editing && !editingPhotos && !loading && !error && (() => {
             const calloutCards = findCalloutCards(blocks)
             return calloutCards.length > 0 && (
-              <button onClick={() => { setCalloutLinksForm({ ...(calloutLinks[id as string] ?? {}) }); setEditingCalloutLinks(true) }}
+              <button onClick={() => { setCalloutLinksForm({ ...(calloutLinks[id as string] ?? {}) }); setFotosVerMaisUrlForm(guiaLinks.fotosVerMaisUrl ?? ''); setEditingCalloutLinks(true) }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white/80 border border-white/15 hover:border-white/30 transition-all">
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
@@ -1272,6 +1265,18 @@ function PortalSubPageContent() {
                       </div>
                     )
                   })}
+                  {isFotografiasPage && (
+                    <div className="p-3 rounded-xl bg-white/[0.02] border border-white/20 space-y-2">
+                      <label className="block text-[10px] text-white/60 tracking-widest uppercase">Ver Mais — Link Galeria</label>
+                      <input
+                        value={fotosVerMaisUrlForm}
+                        onChange={e => setFotosVerMaisUrlForm(e.target.value)}
+                        placeholder="https://..."
+                        className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-white/40 transition-colors placeholder:text-white/20"
+                      />
+                      <p className="text-[9px] text-white/25 tracking-wide">Quando preenchido aparece o botão VER MAIS na página</p>
+                    </div>
+                  )}
                 </div>
               )
             : editingPreWedding
@@ -1408,10 +1413,8 @@ function PortalSubPageContent() {
                             if (reservedSlotId) { setShowReservedWarning(true); setTimeout(() => setShowReservedWarning(false), 4000); return }
                             setReservingSlotId(slotId)
                             try {
-                              const d = await fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}`).then(r => r.json())
-                              const ps = d.settings ?? {}
-                              const sbId = d.settingsBlockId ?? null
-                              await fetch('/api/portal-settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: { ...ps, preWeddingReservedSlotId: slotId, preWeddingReservedAt: new Date().toISOString() }, settingsBlockId: sbId }) })
+                              const newSettings = { ...portalSettingsObj, preWeddingReservedSlotId: slotId, preWeddingReservedAt: new Date().toISOString() }
+                              await savePortalSettings(newSettings)
                               setReservedSlotId(slotId)
                             } finally { setReservingSlotId(null) }
                           }}
