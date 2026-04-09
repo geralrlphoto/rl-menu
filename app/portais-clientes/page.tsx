@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 import NovoPortalButton from './NovoPortalButton'
-import NormalizarSubpaginasButton from './NormalizarSubpaginasButton'
 
 export const revalidate = 30
 
@@ -37,7 +36,6 @@ export default async function PortaisClientesPage() {
           <Link href="/portal-cliente" className="text-[10px] tracking-widest text-white/40 hover:text-white/70 transition-colors uppercase border border-white/10 hover:border-white/25 px-3 py-1.5 rounded-lg">
             Portal Principal
           </Link>
-          <NormalizarSubpaginasButton />
           <NovoPortalButton />
         </div>
       </div>
