@@ -57,7 +57,7 @@ export default async function PortaisClientesPage() {
           <p className="text-[10px] tracking-[0.4em] text-white/30 uppercase mb-4">RL PHOTO.VIDEO</p>
           <h1 className="font-playfair font-black text-5xl sm:text-7xl lg:text-8xl text-white tracking-tight leading-none mb-4">
             Portal<br />
-            <span className="text-[#C9A84C] font-cormorant italic font-normal">do Cliente</span>
+            <span className="text-white">do Cliente</span>
           </h1>
           <p className="font-cormorant text-white/40 text-base sm:text-lg italic tracking-wide">
             ♡ Seleciona o teu portal
