@@ -1869,7 +1869,7 @@ function PortalSubPageContent() {
                                           ) : (
                                             <div className="p-3">
                                               <span className="block w-full text-center px-4 py-2.5 rounded-xl bg-red-900/30 border border-red-500/20 text-red-400/60 font-semibold text-xs tracking-widest uppercase">
-                                                EM BREVE
+                                                AGUARDAR
                                               </span>
                                             </div>
                                           )}
