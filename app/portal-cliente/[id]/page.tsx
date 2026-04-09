@@ -663,6 +663,7 @@ function PortalSubPageContent() {
   const [title, setTitle] = useState(searchParams.get('title') ?? '')
   const fromId = searchParams.get('from')
   const fromTitle = searchParams.get('fromTitle')
+  const portalRef = searchParams.get('portalRef')
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -1341,7 +1342,7 @@ function PortalSubPageContent() {
               : (
                 <>
                   <div className="mb-6">
-                    <Link href={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : '/portal-cliente'}
+                    <Link href={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${portalRef ? `&portalRef=${encodeURIComponent(portalRef)}` : ''}` : portalRef ? `/portal-cliente/ref/${encodeURIComponent(portalRef)}` : '/portal-cliente'}
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gold/30 bg-gold/10 text-gold hover:bg-gold/20 transition-all text-sm tracking-wide">
                       ‹ Voltar
                     </Link>
@@ -1380,7 +1381,7 @@ function PortalSubPageContent() {
                               />
                             </div>
                           )}
-                          <NotionBlocks blocks={blocks.filter(b => b.type !== 'image')} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+                          <NotionBlocks blocks={blocks.filter(b => b.type !== 'image')} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${portalRef ? `&portalRef=${encodeURIComponent(portalRef)}` : ''}` : portalRef ? `/portal-cliente/ref/${encodeURIComponent(portalRef)}` : undefined} />
                         </>
                       )
                     }
@@ -1434,7 +1435,7 @@ function PortalSubPageContent() {
                         <div className="grid grid-cols-2 gap-3 mt-6">
                           {childPages.map(cp => {
                             const pageTitle = cp.child_page?.title ?? ''
-                            const href = `/portal-cliente/${cp.id}?title=${encodeURIComponent(pageTitle)}&from=${id}&fromTitle=${encodeURIComponent(title)}`
+                            const href = `/portal-cliente/${cp.id}?title=${encodeURIComponent(pageTitle)}&from=${id}&fromTitle=${encodeURIComponent(title)}${portalRef ? `&portalRef=${encodeURIComponent(portalRef)}` : ''}`
                             return (
                               <Link key={cp.id} href={href}>
                                 <div className="relative flex flex-col items-center justify-center gap-2 px-4 py-8 rounded-2xl border border-gold/40 bg-black cursor-pointer group hover:border-gold/80 transition-all duration-300 overflow-hidden"
@@ -1527,18 +1528,18 @@ function PortalSubPageContent() {
                               return (
                                 <>
                                   {equipaBox}
-                                  <NotionBlocks blocks={otherBlocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+                                  <NotionBlocks blocks={otherBlocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${portalRef ? `&portalRef=${encodeURIComponent(portalRef)}` : ''}` : portalRef ? `/portal-cliente/ref/${encodeURIComponent(portalRef)}` : undefined} />
                                   {cardsGrid}
                                 </>
                               )
                             }
                             return (
                               <>
-                                <NotionBlocks blocks={otherBlocks.slice(0, briefingGeralIdx)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+                                <NotionBlocks blocks={otherBlocks.slice(0, briefingGeralIdx)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${portalRef ? `&portalRef=${encodeURIComponent(portalRef)}` : ''}` : portalRef ? `/portal-cliente/ref/${encodeURIComponent(portalRef)}` : undefined} />
                                 {equipaBox}
-                                <NotionBlocks blocks={[otherBlocks[briefingGeralIdx]]} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+                                <NotionBlocks blocks={[otherBlocks[briefingGeralIdx]]} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${portalRef ? `&portalRef=${encodeURIComponent(portalRef)}` : ''}` : portalRef ? `/portal-cliente/ref/${encodeURIComponent(portalRef)}` : undefined} />
                                 {cardsGrid}
-                                <NotionBlocks blocks={otherBlocks.slice(briefingGeralIdx + 1)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+                                <NotionBlocks blocks={otherBlocks.slice(briefingGeralIdx + 1)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${portalRef ? `&portalRef=${encodeURIComponent(portalRef)}` : ''}` : portalRef ? `/portal-cliente/ref/${encodeURIComponent(portalRef)}` : undefined} />
                               </>
                             )
                           })()}
@@ -1671,7 +1672,7 @@ function PortalSubPageContent() {
                               </div>
                             )}
                           </div>
-                          <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+                          <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${portalRef ? `&portalRef=${encodeURIComponent(portalRef)}` : ''}` : portalRef ? `/portal-cliente/ref/${encodeURIComponent(portalRef)}` : undefined} />
                         </>
                       )
                     }
@@ -1695,7 +1696,7 @@ function PortalSubPageContent() {
                           )
                         )
                       )
-                      if (colListIdx === -1) return <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+                      if (colListIdx === -1) return <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${portalRef ? `&portalRef=${encodeURIComponent(portalRef)}` : ''}` : portalRef ? `/portal-cliente/ref/${encodeURIComponent(portalRef)}` : undefined} />
                       const colList = blocks[colListIdx]
                       // collect all callout children from all columns
                       const sectionCallouts: Block[] = []
@@ -1712,7 +1713,7 @@ function PortalSubPageContent() {
                       }
                       return (
                         <>
-                          <NotionBlocks blocks={blocks.slice(0, colListIdx)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+                          <NotionBlocks blocks={blocks.slice(0, colListIdx)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${portalRef ? `&portalRef=${encodeURIComponent(portalRef)}` : ''}` : portalRef ? `/portal-cliente/ref/${encodeURIComponent(portalRef)}` : undefined} />
                           <div className="grid grid-cols-2 gap-3 my-4">
                             {sectionCallouts.map(callout => {
                               const titleText = plainText(callout.callout?.rich_text ?? []).trim().toUpperCase()
@@ -1770,7 +1771,7 @@ function PortalSubPageContent() {
                             const parcSectionEnd = parceiros.length > 0 ? (parcIdx !== -1 ? parcIdx : afterSections.length - 1) : parcIdx
                             return (
                               <>
-                                <NotionBlocks blocks={afterSections.slice(0, parcSectionEnd !== -1 ? parcSectionEnd : afterSections.length)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+                                <NotionBlocks blocks={afterSections.slice(0, parcSectionEnd !== -1 ? parcSectionEnd : afterSections.length)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${portalRef ? `&portalRef=${encodeURIComponent(portalRef)}` : ''}` : portalRef ? `/portal-cliente/ref/${encodeURIComponent(portalRef)}` : undefined} />
                                 {parcList && parcList.length > 0 && (
                                   <div className="grid grid-cols-2 gap-3 my-4">
                                     {parcList.map((p, idx) => {
@@ -1788,7 +1789,7 @@ function PortalSubPageContent() {
                                     })}
                                   </div>
                                 )}
-                                {parcSectionEnd !== -1 && <NotionBlocks blocks={afterSections.slice(parcSectionEnd + 1)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />}
+                                {parcSectionEnd !== -1 && <NotionBlocks blocks={afterSections.slice(parcSectionEnd + 1)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${portalRef ? `&portalRef=${encodeURIComponent(portalRef)}` : ''}` : portalRef ? `/portal-cliente/ref/${encodeURIComponent(portalRef)}` : undefined} />}
                               </>
                             )
                           })()}
@@ -1799,7 +1800,7 @@ function PortalSubPageContent() {
                       // Check if page has callout cards — render them with URL buttons
                       const pageCalloutLinks = calloutLinks[id as string] ?? {}
                       const calloutCards = findCalloutCards(blocks)
-                      if (calloutCards.length === 0) return <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+                      if (calloutCards.length === 0) return <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${portalRef ? `&portalRef=${encodeURIComponent(portalRef)}` : ''}` : portalRef ? `/portal-cliente/ref/${encodeURIComponent(portalRef)}` : undefined} />
 
                       // Build a flat list: non-callout blocks + callout cards
                       const getImgUrl = (b: Block) => {
@@ -1853,7 +1854,7 @@ function PortalSubPageContent() {
                           )
                         } else {
                           renderedSections.push(
-                            <NotionBlocks key={`block-${i}`} blocks={[b]} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+                            <NotionBlocks key={`block-${i}`} blocks={[b]} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${portalRef ? `&portalRef=${encodeURIComponent(portalRef)}` : ''}` : portalRef ? `/portal-cliente/ref/${encodeURIComponent(portalRef)}` : undefined} />
                           )
                         }
                         i++
@@ -1867,7 +1868,7 @@ function PortalSubPageContent() {
                     const afterNumerario  = numerarioIdx !== -1 ? blocks.slice(numerarioIdx + 1) : []
                     return (
                       <>
-                        <NotionBlocks blocks={beforeNumerario} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+                        <NotionBlocks blocks={beforeNumerario} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${portalRef ? `&portalRef=${encodeURIComponent(portalRef)}` : ''}` : portalRef ? `/portal-cliente/ref/${encodeURIComponent(portalRef)}` : undefined} />
                         {numerarioIdx !== -1 && (
                           <div className="my-5">
                             <a href="https://tally.so" target="_blank" rel="noopener noreferrer"
@@ -1885,7 +1886,7 @@ function PortalSubPageContent() {
                           const afterValor  = valorIdx !== -1 ? afterNumerario.slice(valorIdx + 1) : []
                           return (
                             <>
-                              <NotionBlocks blocks={beforeValor} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+                              <NotionBlocks blocks={beforeValor} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${portalRef ? `&portalRef=${encodeURIComponent(portalRef)}` : ''}` : portalRef ? `/portal-cliente/ref/${encodeURIComponent(portalRef)}` : undefined} />
                               <div className="mb-6 pb-6 border-b border-white/[0.06]">
                                 <span className="text-[10px] tracking-[0.3em] text-gold uppercase block mb-3">Financeiro</span>
                                 <div className="flex items-center justify-between px-4 py-3 bg-gold/5 border border-gold/20 rounded-xl">
@@ -1904,7 +1905,7 @@ function PortalSubPageContent() {
                                 onRefresh={loadPagamentos}
                                 refreshing={pagRefreshing}
                               />
-                              <NotionBlocks blocks={afterValor} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}` : undefined} />
+                              <NotionBlocks blocks={afterValor} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${portalRef ? `&portalRef=${encodeURIComponent(portalRef)}` : ''}` : portalRef ? `/portal-cliente/ref/${encodeURIComponent(portalRef)}` : undefined} />
                             </>
                           )
                         })()}

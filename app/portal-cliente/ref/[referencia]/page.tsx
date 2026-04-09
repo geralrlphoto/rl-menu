@@ -826,7 +826,7 @@ export default function PortalRefPage() {
               const isActive = settings.activeNavId === page.id
               const displayTitle = settings.pageTitles?.[page.id] ?? page.title
               return (
-                <Link key={page.id} href={`/portal-cliente/${page.id}?title=${encodeURIComponent(displayTitle)}`}
+                <Link key={page.id} href={`/portal-cliente/${page.id}?title=${encodeURIComponent(displayTitle)}&portalRef=${encodeURIComponent(referencia)}`}
                   className={`snap-start shrink-0 flex flex-col items-center gap-2 px-4 py-4 rounded-2xl border transition-all duration-300 min-w-[80px] group
                     ${isActive ? 'bg-gold/15 border-gold/50 text-gold' : 'bg-black border-white/40 text-white/60 hover:border-white/70'}`}
                   style={isActive
@@ -905,7 +905,7 @@ export default function PortalRefPage() {
             {navPages.slice(0, 6).map(page => {
               const displayTitle = settings.pageTitles?.[page.id] ?? page.title
               return (
-                <Link key={page.id} href={`/portal-cliente/${page.id}?title=${encodeURIComponent(displayTitle)}`}
+                <Link key={page.id} href={`/portal-cliente/${page.id}?title=${encodeURIComponent(displayTitle)}&portalRef=${encodeURIComponent(referencia)}`}
                   className="group flex flex-col gap-3 p-4 rounded-xl border border-white/[0.07] bg-white/[0.02] hover:border-gold/30 hover:bg-gold/5 transition-all">
                   <span className="text-gold/40 group-hover:text-gold/70 transition-colors">
                     {getNavIcon(displayTitle)}
