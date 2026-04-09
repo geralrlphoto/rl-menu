@@ -1409,8 +1409,22 @@ function PortalSubPageContent() {
                     }
                     if (isBriefingPage) {
                       const childPages = blocks.filter(b => b.type === 'child_page')
-                      const otherBlocks = blocks.filter(b =>
-                        b.type !== 'child_page' &&
+                      // Find range of "Acesso" section to hide from site
+                      const allOther = blocks.filter(b => b.type !== 'child_page')
+                      const aceIdx = allOther.findIndex(b =>
+                        ['heading_1','heading_2','heading_3','paragraph'].includes(b.type) &&
+                        plainText(b[b.type]?.rich_text ?? []).toUpperCase().includes('ACESSO')
+                      )
+                      const aceEnd = aceIdx !== -1
+                        ? (() => {
+                            let i = aceIdx + 1
+                            while (i < allOther.length && (allOther[i].type === 'callout' || allOther[i].type === 'paragraph')) i++
+                            return i
+                          })()
+                        : -1
+                      const aceHidden = new Set(aceIdx !== -1 ? allOther.slice(aceIdx, aceEnd).map(b => b.id) : [])
+                      const otherBlocks = allOther.filter(b =>
+                        !aceHidden.has(b.id) &&
                         !(b.type === 'callout' && (b.children ?? []).some((c: Block) => c.type === 'image')) &&
                         !(b.type === 'column_list' && (b.children ?? []).some((col: Block) =>
                           (col.children ?? []).some((c: Block) => c.type === 'callout' && (c.children ?? []).some((ch: Block) => ch.type === 'image'))
