@@ -5,6 +5,7 @@ import NovoPortalButton from './NovoPortalButton'
 export const revalidate = 30
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+const EVENTOS_DB = '1ad220116d8a804b839ddc36f1e7ecf1'
 
 function formatDate(d: string | null | undefined) {
   if (!d) return null
@@ -12,6 +13,13 @@ function formatDate(d: string | null | undefined) {
     const dt = new Date(d + 'T00:00:00')
     return `${String(dt.getDate()).padStart(2,'0')} de ${MESES[dt.getMonth()]} de ${dt.getFullYear()}`
   } catch { return d }
+}
+
+function getText(props: any, key: string) {
+  return props[key]?.rich_text?.map((t: any) => t.plain_text).join('') || null
+}
+function getTitle(props: any, key: string) {
+  return props[key]?.title?.map((t: any) => t.plain_text).join('') || null
 }
 
 type Portal = { referencia: string; noiva: string | null; noivo: string | null; data: string | null; settings?: any }
@@ -28,6 +36,40 @@ export default async function PortaisClientesPage() {
     noivo: p.noivo || p.settings?.noivo || null,
     data:  p.data  || p.settings?.data  || null,
   }))
+
+  // For portals missing names, fetch from Notion Eventos 2026
+  const missing = portals.filter(p => !p.noiva && !p.noivo)
+  if (missing.length > 0 && process.env.NOTION_TOKEN) {
+    try {
+      const orFilter = missing.map(p => ({
+        property: 'REFERÊNCIA DO EVENTO', title: { equals: p.referencia }
+      }))
+      const res = await fetch(`https://api.notion.com/v1/databases/${EVENTOS_DB}/query`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${process.env.NOTION_TOKEN}`,
+          'Notion-Version': '2022-06-28',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          filter: orFilter.length === 1 ? orFilter[0] : { or: orFilter },
+          page_size: 50,
+        }),
+        cache: 'no-store',
+      })
+      if (res.ok) {
+        const nd = await res.json()
+        for (const page of nd.results ?? []) {
+          const ref = getTitle(page.properties, 'REFERÊNCIA DO EVENTO')
+          const portal = portals.find(p => p.referencia === ref)
+          if (portal) {
+            portal.noiva = getText(page.properties, 'Nome da Noiva') || portal.noiva
+            portal.noivo = getText(page.properties, 'nome do noivo') || portal.noivo
+          }
+        }
+      }
+    } catch { /* silently ignore */ }
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
