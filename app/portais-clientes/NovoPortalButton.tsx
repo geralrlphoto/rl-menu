@@ -3,6 +3,20 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
+const TEMPLATE_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
+
+// Keywords that identify each of the 11 desired sub-pages
+const DESIRED_KEYWORDS = [
+  'SOBRE', 'ATEND', 'CONTRATO', 'PAGAMENTO',
+  'GUIA', 'FOTOGRAF', 'FILME', 'VIDEO',
+  'BRIEFING', 'SAT', 'ÁREA', 'AREA', 'CRONOGRAMA',
+]
+
+function isDesiredSubpage(title: string): boolean {
+  const t = title.toUpperCase()
+  return DESIRED_KEYWORDS.some(kw => t.includes(kw))
+}
+
 export default function NovoPortalButton() {
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -41,6 +55,7 @@ export default function NovoPortalButton() {
   async function handleCriar() {
     setStep('creating')
     try {
+      // 1. Create portal in Supabase
       const res = await fetch('/api/portais', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -55,6 +70,29 @@ export default function NovoPortalButton() {
         }),
       })
       if (!res.ok) throw new Error('Erro ao criar portal')
+
+      // 2. Fetch template blocks to compute hiddenNav
+      const templateData = await fetch(`/api/portais-clientes?id=${TEMPLATE_PAGE_ID}`).then(r => r.json())
+      const allChildPages: Array<{ id: string; title: string }> = (templateData.blocks ?? [])
+        .filter((b: any) => b.type === 'child_page')
+        .map((b: any) => ({ id: b.id, title: b.child_page?.title ?? '' }))
+
+      const hiddenNav = allChildPages
+        .filter(p => !isDesiredSubpage(p.title))
+        .map(p => p.id)
+
+      // 3. If there are pages to hide, patch the portal settings
+      if (hiddenNav.length > 0) {
+        await fetch('/api/portais', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            referencia: evento.referencia,
+            updates: { settings: { hiddenNav } },
+          }),
+        })
+      }
+
       reset()
       router.push(`/portal-cliente/ref/${encodeURIComponent(evento.referencia)}`)
     } catch {
@@ -155,8 +193,9 @@ export default function NovoPortalButton() {
 
             {/* Step: creating */}
             {step === 'creating' && (
-              <div className="text-center py-8">
+              <div className="text-center py-8 space-y-2">
                 <p className="text-white/40 text-sm animate-pulse tracking-widest">A criar portal...</p>
+                <p className="text-white/20 text-xs tracking-widest">A configurar sub-páginas</p>
               </div>
             )}
           </div>
