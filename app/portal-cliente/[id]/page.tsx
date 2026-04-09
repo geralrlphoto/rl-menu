@@ -1398,8 +1398,7 @@ function PortalSubPageContent() {
                             <div className="px-5 py-4 flex items-center justify-between gap-4">
                               <span className="text-xs font-bold tracking-[0.25em] uppercase text-white/70">Dar Satisfação</span>
                               <a href="https://tally.so/r/pbKJry" target="_blank" rel="noopener noreferrer"
-                                className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/40 bg-white/5 text-white text-[10px] font-bold tracking-widest uppercase hover:bg-white/10 transition-all"
-                                style={{ boxShadow: '0 0 8px 1px rgba(255,255,255,0.1)' }}>
+                                className="flex-shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-white/20 bg-white/[0.03] text-white/50 text-xs font-medium hover:text-white/80 hover:border-white/40 transition-all">
                                 DAR SATISFAÇÃO →
                               </a>
                             </div>
