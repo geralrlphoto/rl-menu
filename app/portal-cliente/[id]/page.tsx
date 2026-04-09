@@ -1400,49 +1400,33 @@ function PortalSubPageContent() {
                     }
                     if (isCronogramaPage) {
                       const backUrlCron = fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined
-                      // Agrupar blocos por secção — cada heading inicia nova secção
-                      const isHeading = (b: Block) => ['heading_1','heading_2','heading_3'].includes(b.type)
-                      type Section = { id: string; blocks: Block[] }
-                      const sections: Section[] = []
-                      for (const b of blocks) {
-                        if (isHeading(b) || sections.length === 0) {
-                          sections.push({ id: b.id, blocks: [b] })
-                        } else {
-                          sections[sections.length - 1].blocks.push(b)
-                        }
-                      }
                       return (
-                        <div className="space-y-3">
-                          {sections.map((section) => {
-                            const done = !!cronogramaStatus[section.id]
+                        <div className="space-y-2">
+                          {blocks.map((b) => {
+                            const done = !!cronogramaStatus[b.id]
                             return (
-                              <div key={section.id} className="rounded-2xl overflow-hidden transition-all duration-300"
+                              <div key={b.id} className="relative rounded-2xl overflow-hidden transition-all duration-300"
                                 style={done ? {
                                   border: '1px solid rgba(74,222,128,0.5)',
                                   boxShadow: '0 0 18px 4px rgba(74,222,128,0.2), 0 0 6px 1px rgba(74,222,128,0.3), inset 0 0 20px 0 rgba(74,222,128,0.06)',
-                                  background: 'rgba(0,0,0,1)',
-                                } : {
-                                  border: '1px solid rgba(255,255,255,0.07)',
-                                  background: 'rgba(255,255,255,0.015)',
-                                }}>
-                                <div className="flex items-start justify-between gap-2 px-1 pt-1">
-                                  <div className="flex-1 min-w-0">
-                                    <NotionBlocks blocks={section.blocks} hiddenNav={settings.hiddenNav} backUrl={backUrlCron} />
-                                  </div>
-                                  <button
-                                    onClick={() => toggleCronogramaSection(section.id)}
-                                    className={`flex-shrink-0 mt-3 mr-2 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold tracking-widest uppercase transition-all ${
-                                      done
-                                        ? 'border border-green-400/50 text-green-400 bg-green-400/10 hover:bg-green-400/20'
-                                        : 'border border-white/15 text-white/30 hover:text-white/60 hover:border-white/30'
-                                    }`}>
-                                    {done ? (
-                                      <><svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>Concluído</>
-                                    ) : (
-                                      <>○ Pendente</>
-                                    )}
-                                  </button>
+                                  background: 'rgba(0,0,0,0.95)',
+                                } : {}}>
+                                <div className="pr-28">
+                                  <NotionBlocks blocks={[b]} hiddenNav={settings.hiddenNav} backUrl={backUrlCron} />
                                 </div>
+                                <button
+                                  onClick={() => toggleCronogramaSection(b.id)}
+                                  className={`absolute top-1/2 -translate-y-1/2 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold tracking-widest uppercase transition-all ${
+                                    done
+                                      ? 'border border-green-400/50 text-green-400 bg-green-400/10 hover:bg-green-400/20'
+                                      : 'border border-white/15 text-white/30 bg-black/30 hover:text-white/60 hover:border-white/30'
+                                  }`}>
+                                  {done ? (
+                                    <><svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>OK</>
+                                  ) : (
+                                    <>○ Pendente</>
+                                  )}
+                                </button>
                               </div>
                             )
                           })}
