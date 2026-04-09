@@ -727,6 +727,7 @@ function PortalSubPageContent() {
   const isContratoPage    = title.toUpperCase().includes('CONTRATO')
   const isBriefingPage    = title.toUpperCase().includes('BRIEFING')
   const isFotografiasPage = title.toUpperCase().includes('FOTOGRAF')
+  const isSatisfacaoPage  = title.toUpperCase().includes('SAT.') || title.toUpperCase().includes('SATISF')
 
   const loadPagamentos = useCallback(async () => {
     setPagRefreshing(true)
@@ -1385,6 +1386,27 @@ function PortalSubPageContent() {
                             </div>
                           )}
                           <NotionBlocks blocks={blocks.filter(b => b.type !== 'image')} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
+                        </>
+                      )
+                    }
+                    if (isSatisfacaoPage) {
+                      return (
+                        <>
+                          <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
+                          <div className="mt-6 rounded-2xl border border-white/40 bg-black overflow-hidden"
+                            style={{ boxShadow: '0 0 24px 4px rgba(255,255,255,0.12), 0 0 8px 2px rgba(255,255,255,0.18), inset 0 0 30px 0 rgba(255,255,255,0.04)' }}>
+                            <div className="px-6 py-6 flex flex-col items-center text-center gap-4">
+                              <h2 className="text-base sm:text-lg font-bold tracking-[0.3em] uppercase text-white"
+                                style={{ textShadow: '0 0 14px rgba(255,255,255,0.9), 0 0 28px rgba(255,255,255,0.5)' }}>
+                                Dar Satisfação
+                              </h2>
+                              <a href="https://tally.so/r/pbKJry" target="_blank" rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-white/40 bg-white/5 text-white text-sm font-semibold tracking-[0.2em] uppercase hover:bg-white/10 transition-all"
+                                style={{ boxShadow: '0 0 12px 2px rgba(255,255,255,0.15)' }}>
+                                DAR SATISFAÇÃO →
+                              </a>
+                            </div>
+                          </div>
                         </>
                       )
                     }
