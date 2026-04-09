@@ -53,8 +53,13 @@ export async function GET(req: NextRequest) {
       valor_foto:   getProp(p, 'VALOR SERVIÇO FOTO', 'number'),
       valor_video:  getProp(p, 'VALOR DO SERVIÇO VÍDEO', 'number'),
       valor_liquido:getProp(p, 'VALOR LIQUIDO A RECEBER', 'number'),
-      nome_noiva:   getProp(p, 'Nome da Noiva', 'text'),
-      nome_noivo:   getProp(p, 'nome do noivo', 'text'),
+      nome_noiva:        getProp(p, 'Nome da Noiva', 'text'),
+      nome_noivo:        getProp(p, 'nome do noivo', 'text'),
+      sel_fotos_estado:  getProp(p, 'ESTADO SEL. FOTOS', 'select'),
+      video_estado:      getProp(p, 'ESTADO DO VIDEO', 'select'),
+      fotos_edicao_estado: getProp(p, 'FOTOS P/ EDIÇÃO', 'select'),
+      album_estado:      getProp(p, 'ESTADO ÁLBUM', 'select'),
+      data_entrega:      getProp(p, 'DATA FINAL ENTREGA FOTOS', 'date'),
     },
   })
 }

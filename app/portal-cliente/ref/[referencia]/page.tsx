@@ -186,6 +186,122 @@ function Leaf({ flip }: { flip?: boolean }) {
   )
 }
 
+// ─── date helpers ─────────────────────────────────────────────────────────────
+
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+
+function formatDate(dateStr: string): string {
+  try {
+    const dt = new Date(dateStr + 'T00:00:00')
+    return `${String(dt.getDate()).padStart(2,'0')} ${MESES[dt.getMonth()]} ${dt.getFullYear()}`
+  } catch { return dateStr }
+}
+
+function addCalendarDays(dateStr: string, days: number): string {
+  const d = new Date(dateStr + 'T00:00:00')
+  d.setDate(d.getDate() + days)
+  return d.toISOString().split('T')[0]
+}
+
+function addWorkingDays(dateStr: string, days: number): string {
+  const d = new Date(dateStr + 'T00:00:00')
+  let count = 0
+  while (count < days) {
+    d.setDate(d.getDate() + 1)
+    if (d.getDay() !== 0 && d.getDay() !== 6) count++
+  }
+  return d.toISOString().split('T')[0]
+}
+
+function estadoCfg(val: string) {
+  const blue  = ['Em Edição', 'Enviado']
+  const green = ['Entregue', 'Aprovado']
+  if (green.includes(val)) return { box: 'bg-green-500/10 border-green-500/25', dot: 'bg-green-400', lbl: 'text-green-300/70', date: 'text-green-200/80', badge: 'bg-green-500/15 border-green-500/30 text-green-100/90' }
+  if (blue.includes(val))  return { box: 'bg-blue-500/10 border-blue-500/25',   dot: 'bg-blue-400',  lbl: 'text-blue-300/70',  date: 'text-blue-200/80',  badge: 'bg-blue-500/15 border-blue-500/30 text-blue-100/90'   }
+  return                          { box: 'bg-yellow-500/10 border-yellow-500/25', dot: 'bg-yellow-400', lbl: 'text-yellow-300/70', date: 'text-yellow-200/80', badge: 'bg-yellow-500/15 border-yellow-500/30 text-yellow-100/90' }
+}
+
+// ─── entregas section ──────────────────────────────────────────────────────────
+
+function EntregasSection({ referencia }: { referencia: string }) {
+  const [data, setData] = useState<null | {
+    data_evento: string | null
+    sel_fotos_estado: string | null
+    video_estado: string | null
+    fotos_edicao_estado: string | null
+    album_estado: string | null
+    fotosDataEntrada: string | null
+    albumDataPrevista: string | null
+  }>(null)
+
+  useEffect(() => {
+    if (!referencia) return
+    Promise.all([
+      fetch(`/api/evento-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()),
+      fetch(`/api/fotos-selecao-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()),
+      fetch(`/api/albuns-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()),
+    ]).then(([ev, fs, al]) => {
+      const evento = ev.evento ?? {}
+      setData({
+        data_evento:         evento.data_evento ?? null,
+        sel_fotos_estado:    evento.sel_fotos_estado ?? null,
+        video_estado:        evento.video_estado ?? null,
+        fotos_edicao_estado: evento.fotos_edicao_estado ?? null,
+        album_estado:        evento.album_estado ?? null,
+        fotosDataEntrada:    fs.row?.data_entrada ?? null,
+        albumDataPrevista:   al.data_prevista_entrega ?? null,
+      })
+    })
+  }, [referencia])
+
+  if (!data) return null
+
+  const prazoSelFotos = data.data_evento ? addCalendarDays(data.data_evento, 30) : null
+  const prazoVideo    = data.data_evento ? addWorkingDays(data.data_evento, 180) : null
+  const fotosEdDate   = data.fotosDataEntrada ? addWorkingDays(data.fotosDataEntrada, 30) : null
+
+  const rows = [
+    prazoSelFotos ? { label: 'Prazo Seleção de Fotos (30 dias)', estado: data.sel_fotos_estado, dateStr: prazoSelFotos } : null,
+    prazoVideo    ? { label: 'Prazo Entrega Vídeo (180 dias úteis)', estado: data.video_estado, dateStr: prazoVideo } : null,
+    { label: 'Fotos para Edição', estado: data.fotos_edicao_estado, dateStr: fotosEdDate },
+    { label: 'Álbum', estado: data.album_estado, dateStr: data.albumDataPrevista },
+  ].filter(Boolean) as Array<{ label: string; estado: string | null; dateStr: string | null }>
+
+  if (rows.length === 0) return null
+
+  return (
+    <section className="px-4 pb-10 sm:pb-14">
+      <div className="max-w-2xl mx-auto rounded-2xl overflow-hidden border border-gold/40 bg-black"
+        style={{ boxShadow: '0 0 18px 2px rgba(212,175,55,0.18), inset 0 0 30px 0 rgba(212,175,55,0.04)' }}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gold/20">
+          <div className="flex items-center gap-2.5">
+            <span className="w-2 h-2 rounded-full bg-gold animate-pulse shrink-0" />
+            <h2 className="font-playfair font-black text-xl sm:text-2xl tracking-wide text-gold"
+              style={{ textShadow: '0 0 12px rgba(212,175,55,0.8), 0 0 24px rgba(212,175,55,0.4)' }}>Estado das Entregas</h2>
+          </div>
+          <span className="text-[9px] tracking-[0.3em] text-gold/50 uppercase">Data de Entrega</span>
+        </div>
+        <div className="p-5 flex flex-col gap-2">
+          {rows.map(({ label, estado, dateStr }) => {
+            const val = estado ?? 'Aguardar'
+            const cfg = estadoCfg(val)
+            return (
+              <div key={label} className={`grid grid-cols-[1.2rem_1fr_auto] items-center gap-3 px-4 py-3 rounded-xl border ${cfg.box}`}>
+                <div className={`w-2 h-2 rounded-full justify-self-center ${cfg.dot}`} />
+                <span className={`text-[10px] tracking-widest uppercase leading-tight ${cfg.lbl}`}>{label}</span>
+                <div className="flex flex-col items-end gap-0.5">
+                  <span className={`text-[10px] px-2 py-0.5 rounded border ${cfg.badge}`}>{val}</span>
+                  {dateStr && <span className={`text-[9px] ${cfg.date}`}>{formatDate(dateStr)}</span>}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 // ─── upload helper ────────────────────────────────────────────────────────────
 
 function uploadWithProgress(file: File, onProgress: (pct: number) => void): Promise<string> {
@@ -867,6 +983,9 @@ export default function PortalRefPage() {
         settings={settings}
         onSettingsChange={s => setSettings(s)}
       />
+
+      {/* ── ENTREGAS ── */}
+      <EntregasSection referencia={settings.referencia || referencia} />
 
       {/* ── WELCOME ── */}
       <section className="py-12 sm:py-16 px-4 max-w-2xl mx-auto">

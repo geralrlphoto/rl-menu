@@ -136,6 +136,84 @@ const ChecklistIcon   = () => ico('M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 0
 const FolderIcon      = () => ico('M3 7a2 2 0 012-2h4l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z')
 const InfoIcon        = () => ico('M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z')
 
+// ─── date helpers ────────────────────────────────────────────────────────────
+
+const MESES_PC = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+function formatDatePC(dateStr: string) {
+  try { const dt = new Date(dateStr + 'T00:00:00'); return `${String(dt.getDate()).padStart(2,'0')} ${MESES_PC[dt.getMonth()]} ${dt.getFullYear()}` } catch { return dateStr }
+}
+function addCalendarDaysPC(dateStr: string, days: number) {
+  const d = new Date(dateStr + 'T00:00:00'); d.setDate(d.getDate() + days); return d.toISOString().split('T')[0]
+}
+function addWorkingDaysPC(dateStr: string, days: number) {
+  const d = new Date(dateStr + 'T00:00:00'); let c = 0
+  while (c < days) { d.setDate(d.getDate() + 1); if (d.getDay() !== 0 && d.getDay() !== 6) c++ }
+  return d.toISOString().split('T')[0]
+}
+function estadoCfgPC(val: string) {
+  const blue = ['Em Edição','Enviado'], green = ['Entregue','Aprovado']
+  if (green.includes(val)) return { box: 'bg-green-500/10 border-green-500/25', dot: 'bg-green-400', lbl: 'text-green-300/70', date: 'text-green-200/80', badge: 'bg-green-500/15 border-green-500/30 text-green-100/90' }
+  if (blue.includes(val))  return { box: 'bg-blue-500/10 border-blue-500/25',   dot: 'bg-blue-400',  lbl: 'text-blue-300/70',  date: 'text-blue-200/80',  badge: 'bg-blue-500/15 border-blue-500/30 text-blue-100/90'   }
+  return                          { box: 'bg-yellow-500/10 border-yellow-500/25', dot: 'bg-yellow-400', lbl: 'text-yellow-300/70', date: 'text-yellow-200/80', badge: 'bg-yellow-500/15 border-yellow-500/30 text-yellow-100/90' }
+}
+
+function EntregasSectionPC({ referencia }: { referencia: string }) {
+  const [data, setData] = useState<null | { data_evento: string | null; sel_fotos_estado: string | null; video_estado: string | null; fotos_edicao_estado: string | null; album_estado: string | null; fotosDataEntrada: string | null; albumDataPrevista: string | null }>(null)
+  useEffect(() => {
+    if (!referencia) return
+    Promise.all([
+      fetch(`/api/evento-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()),
+      fetch(`/api/fotos-selecao-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()),
+      fetch(`/api/albuns-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()),
+    ]).then(([ev, fs, al]) => {
+      const e = ev.evento ?? {}
+      setData({ data_evento: e.data_evento ?? null, sel_fotos_estado: e.sel_fotos_estado ?? null, video_estado: e.video_estado ?? null, fotos_edicao_estado: e.fotos_edicao_estado ?? null, album_estado: e.album_estado ?? null, fotosDataEntrada: fs.row?.data_entrada ?? null, albumDataPrevista: al.data_prevista_entrega ?? null })
+    })
+  }, [referencia])
+  if (!data) return null
+  const prazoSel  = data.data_evento ? addCalendarDaysPC(data.data_evento, 30) : null
+  const prazoVid  = data.data_evento ? addWorkingDaysPC(data.data_evento, 180) : null
+  const fotosDate = data.fotosDataEntrada ? addWorkingDaysPC(data.fotosDataEntrada, 30) : null
+  const rows = [
+    prazoSel ? { label: 'Prazo Seleção de Fotos (30 dias)', estado: data.sel_fotos_estado, dateStr: prazoSel } : null,
+    prazoVid  ? { label: 'Prazo Entrega Vídeo (180 dias úteis)', estado: data.video_estado, dateStr: prazoVid } : null,
+    { label: 'Fotos para Edição', estado: data.fotos_edicao_estado, dateStr: fotosDate },
+    { label: 'Álbum', estado: data.album_estado, dateStr: data.albumDataPrevista },
+  ].filter(Boolean) as Array<{ label: string; estado: string | null; dateStr: string | null }>
+  if (rows.length === 0) return null
+  return (
+    <section className="px-4 pb-10 sm:pb-14">
+      <div className="max-w-2xl mx-auto rounded-2xl overflow-hidden border border-gold/40 bg-black"
+        style={{ boxShadow: '0 0 18px 2px rgba(212,175,55,0.18), inset 0 0 30px 0 rgba(212,175,55,0.04)' }}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gold/20">
+          <div className="flex items-center gap-2.5">
+            <span className="w-2 h-2 rounded-full bg-gold animate-pulse shrink-0" />
+            <h2 className="font-playfair font-black text-xl sm:text-2xl tracking-wide text-gold"
+              style={{ textShadow: '0 0 12px rgba(212,175,55,0.8), 0 0 24px rgba(212,175,55,0.4)' }}>Estado das Entregas</h2>
+          </div>
+          <span className="text-[9px] tracking-[0.3em] text-gold/50 uppercase">Data de Entrega</span>
+        </div>
+        <div className="p-5 flex flex-col gap-2">
+          {rows.map(({ label, estado, dateStr }) => {
+            const val = estado ?? 'Aguardar'
+            const cfg = estadoCfgPC(val)
+            return (
+              <div key={label} className={`grid grid-cols-[1.2rem_1fr_auto] items-center gap-3 px-4 py-3 rounded-xl border ${cfg.box}`}>
+                <div className={`w-2 h-2 rounded-full justify-self-center ${cfg.dot}`} />
+                <span className={`text-[10px] tracking-widest uppercase leading-tight ${cfg.lbl}`}>{label}</span>
+                <div className="flex flex-col items-end gap-0.5">
+                  <span className={`text-[10px] px-2 py-0.5 rounded border ${cfg.badge}`}>{val}</span>
+                  {dateStr && <span className={`text-[9px] ${cfg.date}`}>{formatDatePC(dateStr)}</span>}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 // ─── countdown ───────────────────────────────────────────────────────────────
 
 function Countdown({ targetDate }: { targetDate: string }) {
@@ -1007,6 +1085,9 @@ export default function PortalClientePage() {
         settings={settings}
         onSettingsChange={s => { setSettings(s); if (settingsBlockId) setSettingsBlockId(settingsBlockId) }}
       />
+
+      {/* ── ENTREGAS ── */}
+      {settings.referencia && <EntregasSectionPC referencia={settings.referencia} />}
 
       {/* ── WELCOME ── */}
       <section className="py-12 sm:py-16 px-4 max-w-2xl mx-auto">
