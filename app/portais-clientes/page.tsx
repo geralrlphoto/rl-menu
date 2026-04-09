@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 import NovoPortalButton from './NovoPortalButton'
+import CopiarLinkButton from './CopiarLinkButton'
 
 export const revalidate = 30
 
@@ -144,7 +145,10 @@ export default async function PortaisClientesPage() {
                     </span>
                   )}
                 </div>
-                <span className="text-white/30 group-hover:text-white/70 transition-colors text-sm self-end">›</span>
+                <div className="flex items-center justify-between mt-1">
+                  <CopiarLinkButton referencia={portal.referencia} />
+                  <span className="text-white/30 group-hover:text-white/70 transition-colors text-sm">›</span>
+                </div>
               </Link>
             ))}
           </div>
