@@ -988,7 +988,7 @@ function PortalSubPageContent() {
               {refreshing ? 'A atualizar...' : 'Atualizar'}
             </button>
           )}
-          {!editing && !editingPhotos && !loading && !error && hasImages && (
+          {isAdmin && !editing && !editingPhotos && !loading && !error && hasImages && (
             <button onClick={() => setEditingPhotos(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white/80 border border-white/15 hover:border-white/30 transition-all">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5">
