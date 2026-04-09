@@ -32,7 +32,12 @@ export default async function PortaisClientesPage() {
         <Link href="/" className="text-[10px] tracking-widest text-white/25 hover:text-white/50 transition-colors uppercase">
           ‹ Menu
         </Link>
-        <NovoPortalButton />
+        <div className="flex items-center gap-2">
+          <Link href="/portal-cliente" className="text-[10px] tracking-widest text-white/40 hover:text-white/70 transition-colors uppercase border border-white/10 hover:border-white/25 px-3 py-1.5 rounded-lg">
+            Portal Principal
+          </Link>
+          <NovoPortalButton />
+        </div>
       </div>
 
       {/* Hero — igual ao portal-cliente sem foto */}
