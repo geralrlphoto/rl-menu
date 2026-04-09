@@ -112,10 +112,14 @@ export async function PUT(req: NextRequest) {
   }
 }
 
-// PATCH { referencia, updates: { noiva?, noivo?, data?, local?, valorFoto?, valorVideo?, settings? } }
+// PATCH { referencia, updates?: { noiva?, noivo?, data?, local?, valorFoto?, valorVideo?, settings? }, settings?: object }
+// Also accepts top-level `settings` to replace full settings object directly
 export async function PATCH(req: NextRequest) {
   try {
-    const { referencia, updates } = await req.json()
+    const body = await req.json()
+    const { referencia, updates: _updates, settings: topSettings } = body
+    // Allow passing settings directly at top level (shorthand for updates.settings)
+    const updates = _updates ?? (topSettings ? { settings: topSettings } : {})
     if (!referencia) return NextResponse.json({ error: 'referencia required' }, { status: 400 })
 
     const db = supabase()
