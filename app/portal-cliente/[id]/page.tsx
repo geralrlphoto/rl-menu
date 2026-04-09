@@ -1824,7 +1824,7 @@ function PortalSubPageContent() {
                               <a href={fotosUrl} target="_blank" rel="noopener noreferrer"
                                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/40 bg-white/5 text-white text-sm font-semibold tracking-wide hover:bg-white/10 transition-all"
                                 style={{ boxShadow: '0 0 12px 2px rgba(255,255,255,0.15)' }}>
-                                Enviar as minhas fotos →
+                                ENVIAR SELECÇÃO →
                               </a>
                             </div>
                           </div>
