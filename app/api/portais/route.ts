@@ -26,11 +26,26 @@ export async function GET(req: NextRequest) {
   if (ref) {
     const { data, error } = await db.from('portais').select('*').ilike('referencia', ref).maybeSingle()
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (data?.settings) {
+      const hasPassword = !!(data.settings.portalPassword)
+      const settings = { ...data.settings }
+      delete settings.portalPassword
+      return NextResponse.json({ portal: { ...data, settings, hasPassword } })
+    }
     return NextResponse.json({ portal: data })
   }
   const { data, error } = await db.from('portais').select('*').order('referencia')
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ portais: data ?? [] })
+  const portais = (data ?? []).map(portal => {
+    if (portal.settings) {
+      const hasPassword = !!(portal.settings.portalPassword)
+      const settings = { ...portal.settings }
+      delete settings.portalPassword
+      return { ...portal, settings, hasPassword }
+    }
+    return portal
+  })
+  return NextResponse.json({ portais })
 }
 
 // POST { referencia, noiva, noivo, data, local, valorFoto?, valorVideo?, valorExtras? }
