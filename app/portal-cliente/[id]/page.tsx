@@ -1933,12 +1933,19 @@ function PortalSubPageContent() {
                                       // eslint-disable-next-line @next/next/no-img-element
                                       <img src={imgUrl} alt={cardTitle} className="w-full object-contain" />
                                     )}
-                                    {url && (
+                                    {url ? (
                                       <div className="p-3">
                                         <a href={url} target="_blank" rel="noopener noreferrer"
-                                          className="block w-full text-center px-4 py-2.5 rounded-xl bg-gold text-black font-semibold text-xs tracking-wide hover:bg-gold/80 transition-all">
-                                          Abrir ↗
+                                          className="block w-full text-center px-4 py-2.5 rounded-xl border border-white/30 bg-white/5 text-white font-semibold text-xs tracking-widest uppercase hover:bg-white/10 transition-all"
+                                          style={{ boxShadow: '0 0 8px 1px rgba(255,255,255,0.1)' }}>
+                                          VER MAIS →
                                         </a>
+                                      </div>
+                                    ) : (
+                                      <div className="p-3">
+                                        <span className="block w-full text-center px-4 py-2.5 rounded-xl bg-red-900/30 border border-red-500/20 text-red-400/60 font-semibold text-xs tracking-widest uppercase">
+                                          AGUARDAR
+                                        </span>
                                       </div>
                                     )}
                                   </div>
