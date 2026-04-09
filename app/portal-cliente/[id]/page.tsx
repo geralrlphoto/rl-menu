@@ -1410,17 +1410,26 @@ function PortalSubPageContent() {
                                   border: '1px solid rgba(74,222,128,0.5)',
                                   boxShadow: '0 0 18px 4px rgba(74,222,128,0.2), 0 0 6px 1px rgba(74,222,128,0.3), inset 0 0 20px 0 rgba(74,222,128,0.06)',
                                   background: 'rgba(0,0,0,0.95)',
-                                } : {}}>
+                                } : {
+                                  border: '1px solid rgba(239,68,68,0.45)',
+                                  boxShadow: '0 0 18px 4px rgba(239,68,68,0.15), 0 0 6px 1px rgba(239,68,68,0.25), inset 0 0 20px 0 rgba(239,68,68,0.04)',
+                                  background: 'rgba(0,0,0,0.95)',
+                                }}>
                                 <div className="pr-28">
                                   <NotionBlocks blocks={[b]} hiddenNav={settings.hiddenNav} backUrl={backUrlCron} neutralCallout />
                                 </div>
-                                {done && (
-                                  <button
-                                    onClick={() => toggleCronogramaSection(b.id)}
-                                    className="absolute top-1/2 -translate-y-1/2 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold tracking-widest uppercase border border-green-400/50 text-green-400 bg-green-400/10 hover:bg-green-400/20 transition-all">
-                                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>OK
-                                  </button>
-                                )}
+                                <button
+                                  onClick={() => toggleCronogramaSection(b.id)}
+                                  className={`absolute top-1/2 -translate-y-1/2 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold tracking-widest uppercase transition-all ${
+                                    done
+                                      ? 'border border-green-400/50 text-green-400 bg-green-400/10 hover:bg-green-400/20'
+                                      : 'border border-red-500/40 text-red-400/70 bg-red-500/5 hover:bg-red-500/15'
+                                  }`}>
+                                  {done
+                                    ? <><svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>OK</>
+                                    : <>○ Pendente</>
+                                  }
+                                </button>
                               </div>
                             )
                           })}
