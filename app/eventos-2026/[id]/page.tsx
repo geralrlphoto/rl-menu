@@ -688,7 +688,10 @@ function PortalSection({ evento }: { evento: Evento }) {
           valorExtras: evento.valor_extras ?? null,
         }),
       })
-      if (res.ok) setStatus('found')
+      if (res.ok) {
+        setStatus('found')
+        window.open(`/portal-cliente/ref/${encodeURIComponent(referencia)}`, '_blank')
+      }
     } finally {
       setCreating(false)
     }
