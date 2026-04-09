@@ -890,7 +890,7 @@ export default function PortalRefPage() {
           <div className="absolute inset-0 bg-gradient-to-b from-[#1a1408] to-[#0a0a0a]" />
         )}
 
-        {heroEdit.field === 'hero' ? (
+        {isAdmin && heroEdit.field === 'hero' ? (
           <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/70 backdrop-blur-sm">
             <div className="w-full max-w-md px-4">
               <p className="text-[10px] text-gold/60 tracking-widest uppercase mb-3 text-center">Trocar fotografia de fundo</p>
@@ -941,7 +941,7 @@ export default function PortalRefPage() {
               </div>
             </div>
           </div>
-        ) : (
+        ) : isAdmin ? (
           <button onClick={() => setHeroEdit({ field: 'hero', value: heroImage ?? '' })}
             className="absolute bottom-4 right-4 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/50 border border-white/15 text-[10px] text-white/50 hover:text-white hover:border-white/30 transition-all backdrop-blur-sm">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5">
@@ -949,7 +949,7 @@ export default function PortalRefPage() {
             </svg>
             Trocar foto
           </button>
-        )}
+        ) : null}
 
         <div className="relative z-10 text-center px-4 pt-20">
           <div className="flex items-center justify-center gap-3 mb-4">
@@ -959,7 +959,7 @@ export default function PortalRefPage() {
           </div>
 
           <h1 className="font-playfair text-5xl sm:text-7xl lg:text-8xl font-black text-white leading-none tracking-tight mb-4 flex items-center justify-center gap-4 flex-wrap">
-            {heroEdit.field === 'noiva' ? (
+            {isAdmin && heroEdit.field === 'noiva' ? (
               <span className="flex items-center gap-2">
                 <input autoFocus value={heroEdit.value} onChange={e => setHeroEdit(prev => ({ ...prev, value: e.target.value }))}
                   onKeyDown={e => { if (e.key === 'Enter') saveHeroField(); if (e.key === 'Escape') setHeroEdit({ field: null, value: '' }) }}
@@ -969,15 +969,17 @@ export default function PortalRefPage() {
                   <button onClick={() => setHeroEdit({ field: null, value: '' })} className="text-[10px] border border-white/20 text-white/40 px-2 py-0.5 rounded hover:text-white/70">✕</button>
                 </span>
               </span>
-            ) : (
+            ) : isAdmin ? (
               <button onClick={() => setHeroEdit({ field: 'noiva', value: settings.noiva || '' })}
                 className="group relative hover:opacity-80 transition-opacity cursor-text">
                 {settings.noiva || 'NOIVA'}
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] text-gold/0 group-hover:text-gold/80 transition-colors tracking-widest uppercase whitespace-nowrap">✎ editar</span>
               </button>
+            ) : (
+              <span>{settings.noiva || 'NOIVA'}</span>
             )}
             <span className="text-gold font-cormorant italic font-normal">&</span>
-            {heroEdit.field === 'noivo' ? (
+            {isAdmin && heroEdit.field === 'noivo' ? (
               <span className="flex items-center gap-2">
                 <input autoFocus value={heroEdit.value} onChange={e => setHeroEdit(prev => ({ ...prev, value: e.target.value }))}
                   onKeyDown={e => { if (e.key === 'Enter') saveHeroField(); if (e.key === 'Escape') setHeroEdit({ field: null, value: '' }) }}
@@ -987,12 +989,14 @@ export default function PortalRefPage() {
                   <button onClick={() => setHeroEdit({ field: null, value: '' })} className="text-[10px] border border-white/20 text-white/40 px-2 py-0.5 rounded hover:text-white/70">✕</button>
                 </span>
               </span>
-            ) : (
+            ) : isAdmin ? (
               <button onClick={() => setHeroEdit({ field: 'noivo', value: settings.noivo || '' })}
                 className="group relative hover:opacity-80 transition-opacity cursor-text">
                 {settings.noivo || 'NOIVO'}
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] text-gold/0 group-hover:text-gold/80 transition-colors tracking-widest uppercase whitespace-nowrap">✎ editar</span>
               </button>
+            ) : (
+              <span>{settings.noivo || 'NOIVO'}</span>
             )}
           </h1>
 
@@ -1075,13 +1079,15 @@ export default function PortalRefPage() {
         </section>
       )}
 
-      {/* ── TASKS ── */}
-      <TasksSection
-        tasks={settings.tasks ?? []}
-        referencia={referencia}
-        settings={settings}
-        onSettingsChange={s => setSettings(s)}
-      />
+      {/* ── TASKS — admin only ── */}
+      {isAdmin && (
+        <TasksSection
+          tasks={settings.tasks ?? []}
+          referencia={referencia}
+          settings={settings}
+          onSettingsChange={s => setSettings(s)}
+        />
+      )}
 
       {/* ── ENTREGAS ── */}
       <EntregasSection referencia={settings.referencia || referencia} />
