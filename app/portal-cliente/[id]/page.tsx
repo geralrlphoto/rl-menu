@@ -1819,7 +1819,7 @@ function PortalSubPageContent() {
                                 Enviar Fotos
                               </h2>
                               <p className="text-sm text-white/55 leading-relaxed mb-5">
-                                Noivos, este formulário é para vocês nos enviarem a vossa escolha através dele e outra forma não é considerado entregue.
+                                Noivos, este formulário é para vocês nos enviarem a vossa escolha através dele, de outra forma não é considerado entregue.
                               </p>
                               <a href={fotosUrl} target="_blank" rel="noopener noreferrer"
                                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/40 bg-white/5 text-white text-sm font-semibold tracking-wide hover:bg-white/10 transition-all"
