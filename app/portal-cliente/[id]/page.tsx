@@ -1439,15 +1439,15 @@ function PortalSubPageContent() {
                             const href = `/portal-cliente/${cp.id}?title=${encodeURIComponent(pageTitle)}&from=${id}&fromTitle=${encodeURIComponent(title)}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}`
                             return (
                               <Link key={cp.id} href={href}>
-                                <div className="relative flex flex-col items-center justify-center gap-2 px-4 py-8 rounded-2xl border border-gold/40 bg-black cursor-pointer group hover:border-gold/80 transition-all duration-300 overflow-hidden"
-                                  style={{ boxShadow: '0 0 18px 2px rgba(212,175,55,0.18), inset 0 0 30px 0 rgba(212,175,55,0.04)' }}>
+                                <div className="relative flex flex-col items-center justify-center gap-2 px-4 py-8 rounded-2xl border border-white/40 bg-black cursor-pointer group hover:border-white/70 transition-all duration-300 overflow-hidden"
+                                  style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}>
                                   <span className="absolute inset-0 rounded-2xl pointer-events-none transition-all duration-300 group-hover:opacity-100 opacity-0"
-                                    style={{ boxShadow: '0 0 32px 6px rgba(212,175,55,0.28), inset 0 0 40px 0 rgba(212,175,55,0.08)' }} />
-                                  <span className="text-xs font-bold tracking-[0.3em] uppercase text-gold group-hover:text-white transition-all duration-300"
-                                    style={{ textShadow: '0 0 12px rgba(212,175,55,0.8), 0 0 24px rgba(212,175,55,0.4)' }}>
+                                    style={{ boxShadow: '0 0 32px 6px rgba(255,255,255,0.28), inset 0 0 40px 0 rgba(255,255,255,0.08)' }} />
+                                  <span className="text-xs font-bold tracking-[0.3em] uppercase text-white group-hover:text-white transition-all duration-300"
+                                    style={{ textShadow: '0 0 14px rgba(255,255,255,0.9), 0 0 28px rgba(255,255,255,0.5)' }}>
                                     {pageTitle}
                                   </span>
-                                  <span className="text-[9px] text-gold/50 tracking-widest group-hover:text-gold/80 transition-colors">Abrir →</span>
+                                  <span className="text-[9px] text-white/50 tracking-widest group-hover:text-white/80 transition-colors">Abrir →</span>
                                 </div>
                               </Link>
                             )
@@ -1463,7 +1463,7 @@ function PortalSubPageContent() {
                             const equipaBox = (
                               <div className="mb-6 pb-6 border-b border-white/[0.06]">
                                 <div className="flex items-center justify-between mb-3">
-                                  <span className="text-[10px] tracking-[0.3em] text-gold uppercase">Equipa</span>
+                                  <span className="text-[10px] tracking-[0.3em] text-white/60 uppercase">Equipa</span>
                                   {!editingEquipa && (
                                     <button onClick={() => { setEquipaForm(equipa.length ? equipa.map(e => ({ ...e })) : [{ role: 'Fotógrafo', name: '' }]); setEditingEquipa(true) }}
                                       className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors text-white/30 hover:text-white/70">
@@ -1493,7 +1493,7 @@ function PortalSubPageContent() {
                                       </div>
                                     ))}
                                     <button onClick={() => setEquipaForm(f => [...f, { role: 'Fotógrafo', name: '' }])}
-                                      className="w-full py-2 rounded-xl border border-dashed border-gold/20 text-gold/40 hover:text-gold/70 hover:border-gold/40 text-xs tracking-widest transition-all">
+                                      className="w-full py-2 rounded-xl border border-dashed border-white/20 text-white/30 hover:text-white/60 hover:border-white/40 text-xs tracking-widest transition-all">
                                       + Adicionar Membro
                                     </button>
                                     <div className="flex gap-2 pt-1">
@@ -1564,7 +1564,7 @@ function PortalSubPageContent() {
                           {/* Briefing info section */}
                           <div className="mb-6 pb-6 border-b border-white/[0.06]">
                             <div className="flex items-center justify-between mb-3">
-                              <span className="text-[10px] tracking-[0.3em] text-gold uppercase">Informação</span>
+                              <span className="text-[10px] tracking-[0.3em] text-white/60 uppercase">Informação</span>
                               {!editingBriefingInfo && (
                                 <button
                                   onClick={() => { setBriefingFieldsForm(fields.map(f => ({ ...f }))); setEditingBriefingInfo(true) }}
@@ -1609,7 +1609,7 @@ function PortalSubPageContent() {
                                   </div>
                                 ))}
                                 <button onClick={() => setBriefingFieldsForm(f => [...f, { label: '', value: '' }])}
-                                  className="w-full py-2 rounded-xl border border-dashed border-gold/20 text-gold/40 hover:text-gold/70 hover:border-gold/40 text-xs tracking-widest transition-all">
+                                  className="w-full py-2 rounded-xl border border-dashed border-white/20 text-white/30 hover:text-white/60 hover:border-white/40 text-xs tracking-widest transition-all">
                                   + Adicionar Campo
                                 </button>
                                 <div className="flex gap-2 pt-1">
@@ -1637,7 +1637,7 @@ function PortalSubPageContent() {
                           {/* Informação Geral section */}
                           <div className="mb-6 pb-6 border-b border-white/[0.06]">
                             <div className="flex items-center justify-between mb-3">
-                              <span className="text-[10px] tracking-[0.3em] text-gold uppercase">Informação Geral</span>
+                              <span className="text-[10px] tracking-[0.3em] text-white/60 uppercase">Informação Geral</span>
                               {!editingInfoGeral && (
                                 <button onClick={() => { setInfoGeralForm(info.infoGeral ?? ''); setEditingInfoGeral(true) }}
                                   className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors text-white/30 hover:text-white/70"
