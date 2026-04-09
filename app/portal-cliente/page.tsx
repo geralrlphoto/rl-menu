@@ -575,12 +575,14 @@ function TasksSection({
 
   return (
     <section className="px-4 pb-10 sm:pb-14">
-      <div className="max-w-2xl mx-auto rounded-2xl overflow-hidden border border-gold/30" style={{ background: 'linear-gradient(135deg, #1a1400 0%, #221b00 100%)' }}>
+      <div className="max-w-2xl mx-auto rounded-2xl overflow-hidden border border-gold/40 bg-black"
+        style={{ boxShadow: '0 0 18px 2px rgba(212,175,55,0.18), inset 0 0 30px 0 rgba(212,175,55,0.04)' }}>
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gold/20">
           <div className="flex items-center gap-2.5">
             <span className="w-2 h-2 rounded-full bg-gold animate-pulse shrink-0" />
-            <h2 className="font-playfair font-black text-gold text-xl sm:text-2xl tracking-wide">Gestão de Tarefas</h2>
+            <h2 className="font-playfair font-black text-xl sm:text-2xl tracking-wide text-gold"
+              style={{ textShadow: '0 0 12px rgba(212,175,55,0.8), 0 0 24px rgba(212,175,55,0.4)' }}>Gestão de Tarefas</h2>
           </div>
           <div className="flex items-center gap-2">
             {saving && <span className="text-[10px] text-gold/40 animate-pulse">A guardar...</span>}
