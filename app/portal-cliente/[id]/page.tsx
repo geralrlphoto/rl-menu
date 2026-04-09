@@ -1144,11 +1144,9 @@ function PortalSubPageContent() {
                         onClick={async () => {
                           setSavingParceiros(true)
                           try {
-                            const d = await fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}`).then(r => r.json())
-                            const ps = d.settings ?? {}
-                            const sbId = d.settingsBlockId ?? null
-                            const newSettings = { ...ps, parceiros: parceirosForm }
-                            await fetch('/api/portal-settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: newSettings, settingsBlockId: sbId }) })
+                            const newSettings = { ...portalSettingsObj, parceiros: parceirosForm }
+                            await savePortalSettings(newSettings)
+                            setPortalSettingsObj(newSettings)
                             setParceiros(parceirosForm)
                             setEditingParceiros(false)
                           } finally { setSavingParceiros(false) }
@@ -1302,11 +1300,9 @@ function PortalSubPageContent() {
                         onClick={async () => {
                           setSavingSlots(true)
                           try {
-                            const d = await fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}`).then(r => r.json())
-                            const ps = d.settings ?? {}
-                            const sbId = d.settingsBlockId ?? null
-                            const newSettings = { ...ps, preWeddingSlots: preWeddingForm }
-                            await fetch('/api/portal-settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: newSettings, settingsBlockId: sbId }) })
+                            const newSettings = { ...portalSettingsObj, preWeddingSlots: preWeddingForm }
+                            await savePortalSettings(newSettings)
+                            setPortalSettingsObj(newSettings)
                             setPreWeddingSlots(preWeddingForm)
                             setEditingPreWedding(false)
                           } finally { setSavingSlots(false) }
