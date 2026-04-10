@@ -560,7 +560,7 @@ export default function FreelancerViewPage() {
   const [edicao, setEdicao]         = useState<Edicao[]>([])
   const [album, setAlbum]           = useState<Album[]>([])
   const [loading, setLoading]       = useState(false)
-  const [tab, setTab]               = useState<'casamentos'|'edicao'|'album'>('casamentos')
+  const [tab, setTab]               = useState<'casamentos'|'edicao'|'album'|null>(null)
   const [ficha, setFicha]           = useState<Casamento | null>(null)
 
   // Block browser back button
@@ -656,7 +656,14 @@ export default function FreelancerViewPage() {
         </div>
       )}
 
-      {!loading && (
+      {!loading && tab === null && (
+        <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
+          <div className="h-px w-8 bg-white/10 mx-auto mb-2" />
+          <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase">Seleciona uma secção acima</p>
+        </div>
+      )}
+
+      {!loading && tab !== null && (
         <div>
 
           {/* ── Tab: Casamentos ── */}
