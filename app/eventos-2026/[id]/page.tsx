@@ -1588,11 +1588,6 @@ export default function EventoPage() {
                 estado={portalSelecaoEstado} referencia={e.referencia}
                 stateKey="selecao_fotos_noivos_estado"
                 onSaved={(_key, val) => setPortalSelecaoEstado(val)} />
-              <PortalEstadoRow label="Prazo Entrega Fotos Noivos (40 dias)"
-                dateStr={fotosDataEntrada ? addCalendarDays(fotosDataEntrada, 40) : null}
-                estado={prazoFotosNoivosEstado} referencia={e.referencia}
-                stateKey="prazo_fotos_noivos_estado"
-                onSaved={(_key, val) => setPrazoFotosNoivosEstado(val)} />
             </>}
           </div>
 
