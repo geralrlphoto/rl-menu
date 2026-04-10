@@ -116,3 +116,46 @@ export async function PATCH(req: NextRequest) {
 
   return NextResponse.json({ ok: true, fotografo: newFoto, videografo: newVideo })
 }
+
+export async function POST(req: NextRequest) {
+  const body = await req.json()
+  const { referencia, briefing_url, evento_id, local, data_casamento } = body
+
+  if (!briefing_url) return NextResponse.json({ error: 'briefing_url required' }, { status: 400 })
+  if (!referencia && !evento_id) return NextResponse.json({ error: 'referencia or evento_id required' }, { status: 400 })
+
+  const supabase = db()
+
+  // Resolve evento_id from referencia if not provided
+  let resolvedEventoId = evento_id ?? null
+  if (!resolvedEventoId && referencia) {
+    const { data: eq } = await supabase
+      .from('evento_equipa')
+      .select('evento_id')
+      .eq('referencia', referencia)
+      .maybeSingle()
+    resolvedEventoId = eq?.evento_id ?? null
+  }
+
+  // Upsert evento_equipa with briefing_url
+  if (resolvedEventoId) {
+    await supabase.from('evento_equipa')
+      .upsert({ evento_id: resolvedEventoId, briefing_url }, { onConflict: 'evento_id' })
+
+    // Update all freelancer_casamentos tied to this evento_id
+    await supabase.from('freelancer_casamentos')
+      .update({ briefing_url })
+      .eq('evento_id', resolvedEventoId)
+  }
+
+  // Also match Notion-imported records (evento_id IS NULL) by local + data_casamento
+  if (local && data_casamento) {
+    await supabase.from('freelancer_casamentos')
+      .update({ briefing_url })
+      .eq('local', local)
+      .eq('data_casamento', data_casamento)
+      .is('evento_id', null)
+  }
+
+  return NextResponse.json({ ok: true })
+}

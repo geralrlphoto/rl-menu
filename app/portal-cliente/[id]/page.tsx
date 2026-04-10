@@ -673,10 +673,19 @@ function PortalSubPageContent() {
     const key = refParam ? `portalAdmin_${refParam}` : null
     if (key && sessionStorage.getItem(key) === 'true') setIsAdmin(true)
   }, [refParam])
+
   const [editingPhotos, setEditingPhotos] = useState(false)
   const [error, setError] = useState('')
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
   const [portalRef, setPortalRef] = useState('')
+
+  // Also check admin when portalRef state loads (for portals without URL refParam)
+  useEffect(() => {
+    if (portalRef && !refParam) {
+      const key = `portalAdmin_${portalRef}`
+      if (sessionStorage.getItem(key) === 'true') setIsAdmin(true)
+    }
+  }, [portalRef, refParam])
   const [portalTotal, setPortalTotal] = useState(0)
   const [portalFoto, setPortalFoto] = useState<number | null>(null)
   const [portalVideo, setPortalVideo] = useState<number | null>(null)
@@ -726,6 +735,8 @@ function PortalSubPageContent() {
   const [editingBriefing, setEditingBriefing] = useState(false)
   const [briefingForm, setBriefingForm] = useState<Record<string, string>>({})
   const [savingBriefing, setSavingBriefing] = useState(false)
+  const [sendingBriefing, setSendingBriefing] = useState(false)
+  const [briefingSent, setBriefingSent] = useState(false)
   const [cronogramaStatus, setCronogramaStatus] = useState<Record<string, boolean>>({})
 
   const isPaymentsPage    = title.toUpperCase().includes('PAGAMENTO')
@@ -956,6 +967,32 @@ function PortalSubPageContent() {
     setBriefingLinks(newBL)
     setEditingBriefing(false)
     setSavingBriefing(false)
+  }
+
+  async function handleEnviarBriefing() {
+    const ref = portalRef || refParam
+    if (!ref) return
+    setSendingBriefing(true)
+    try {
+      // Get evento info (id, local, data) from referencia
+      const ev = await fetch(`/api/evento-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json())
+      const briefing_url = typeof window !== 'undefined' ? window.location.href : ''
+      await fetch('/api/evento-equipa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          referencia: ref,
+          briefing_url,
+          evento_id: ev?.evento?.id ?? ev?.id ?? null,
+          local: ev?.evento?.local ?? ev?.local ?? null,
+          data_casamento: ev?.evento?.data_evento ?? ev?.data_evento ?? null,
+        }),
+      })
+      setBriefingSent(true)
+      setTimeout(() => setBriefingSent(false), 3000)
+    } finally {
+      setSendingBriefing(false)
+    }
   }
 
   // Find all callout blocks (with images) across blocks tree
@@ -1606,6 +1643,36 @@ function PortalSubPageContent() {
                                 )}
                               </div>
                             )
+                            const enviarBriefingBtn = (portalRef || refParam) ? (
+                              <div className="mb-5 flex justify-end">
+                                <button
+                                  onClick={handleEnviarBriefing}
+                                  disabled={sendingBriefing || briefingSent}
+                                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold tracking-widest uppercase transition-all ${
+                                    briefingSent
+                                      ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 cursor-default'
+                                      : 'bg-white/[0.06] border border-white/20 text-white/70 hover:bg-white/[0.12] hover:border-white/40 hover:text-white disabled:opacity-50'
+                                  }`}
+                                >
+                                  {briefingSent ? (
+                                    <>
+                                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                      Briefing Enviado
+                                    </>
+                                  ) : sendingBriefing ? (
+                                    <>
+                                      <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                      A enviar...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                                      Enviar Briefing
+                                    </>
+                                  )}
+                                </button>
+                              </div>
+                            ) : null
                             const briefingGeralIdx = otherBlocks.findIndex(b =>
                               ['heading_1','heading_2','heading_3'].includes(b.type) &&
                               plainText(b[b.type]?.rich_text ?? []).toUpperCase().includes('BRIEFING GERAL')
@@ -1613,6 +1680,7 @@ function PortalSubPageContent() {
                             if (briefingGeralIdx === -1) {
                               return (
                                 <>
+                                  {enviarBriefingBtn}
                                   {equipaBox}
                                   <NotionBlocks blocks={otherBlocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
                                   {cardsGrid}
@@ -1622,6 +1690,7 @@ function PortalSubPageContent() {
                             return (
                               <>
                                 <NotionBlocks blocks={otherBlocks.slice(0, briefingGeralIdx)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
+                                {enviarBriefingBtn}
                                 {equipaBox}
                                 <NotionBlocks blocks={[otherBlocks[briefingGeralIdx]]} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
                                 {cardsGrid}
