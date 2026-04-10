@@ -606,7 +606,8 @@ export default function FreelancerViewPage() {
 
       {/* Tab Navigation */}
       {!loading && (
-        <div className="flex items-center gap-2 mb-8 border-b border-white/[0.06] pb-0">
+        <div className="flex items-center gap-1.5 mb-8 p-1.5 rounded-2xl border border-white/30 bg-black"
+          style={{ boxShadow: '0 0 18px 3px rgba(255,255,255,0.10), 0 0 6px 1px rgba(255,255,255,0.15), inset 0 0 18px 0 rgba(255,255,255,0.03)' }}>
           {[
             { key: 'casamentos', label: 'Casamentos', count: casamentos.length },
             { key: 'edicao',     label: 'Edição de Fotos', count: edicao.length },
@@ -615,20 +616,17 @@ export default function FreelancerViewPage() {
             <button
               key={t.key}
               onClick={() => setTab(t.key as typeof tab)}
-              className={`relative pb-3 text-[9px] tracking-[0.3em] uppercase font-semibold transition-all flex items-center gap-1.5 ${
+              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[9px] tracking-[0.25em] uppercase font-semibold transition-all ${
                 tab === t.key
-                  ? 'text-gold'
-                  : 'text-white/25 hover:text-white/50'
+                  ? 'bg-white/10 text-white border border-white/20'
+                  : 'text-white/30 hover:text-white/55 border border-transparent'
               }`}
             >
               {t.label}
               {t.count > 0 && (
                 <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold transition-all ${
-                  tab === t.key ? 'bg-gold/20 text-gold' : 'bg-white/[0.06] text-white/25'
+                  tab === t.key ? 'bg-white/15 text-white/80' : 'bg-white/[0.06] text-white/25'
                 }`}>{t.count}</span>
-              )}
-              {tab === t.key && (
-                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gold rounded-full" />
               )}
             </button>
           ))}
