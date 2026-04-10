@@ -288,7 +288,6 @@ function EdicaoModal({ e, onClose }: { e: Edicao; onClose: () => void }) {
 const STATUS_EDICAO_ORDER = ['NOVO TRABALHO', 'EM EDIÇÃO', 'CONCLUÍDO']
 
 function EdicaoCard({ e }: { e: Edicao }) {
-  const [openEdicao, setOpenEdicao]   = useState(false)
   const [openSelecao, setOpenSelecao] = useState(false)
   const hasCounts = FOTO_FIELDS.some(f => e[f.key] != null)
   return (
@@ -307,18 +306,13 @@ function EdicaoCard({ e }: { e: Edicao }) {
             ))}
           </div>
         )}
-        <div className="flex items-center gap-1.5 pt-1">
+        <div className="pt-1">
           <button onClick={() => setOpenSelecao(true)}
-            className="text-[9px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-lg border border-white/15 text-white/40 hover:text-white hover:border-white/30 transition-all">
-            Ver Seleção
-          </button>
-          <button onClick={() => setOpenEdicao(true)}
             className="text-[9px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-lg border border-gold/30 bg-gold/5 text-gold/70 hover:text-gold hover:border-gold/50 hover:bg-gold/10 transition-all">
-            Ver Mais
+            Ver Seleção
           </button>
         </div>
       </div>
-      {openEdicao  && <EdicaoModal  e={e}      onClose={() => setOpenEdicao(false)} />}
       {openSelecao && <SelecaoModal nome={e.nome} onClose={() => setOpenSelecao(false)} />}
     </>
   )
