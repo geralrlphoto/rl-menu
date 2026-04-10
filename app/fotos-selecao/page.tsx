@@ -148,10 +148,80 @@ function printFicha(row: FotoSelecao) {
   w.document.close()
 }
 
+const EDITORS = ['Alexandre Capão', 'Patrício Ferreira']
+
 // ── Modal Ficha ───────────────────────────────────────────────────────────────
 function FichaModal({ row, onClose, onSaved }: {
   row: FotoSelecao; onClose: () => void; onSaved: (field: string, val: any) => void
 }) {
+  const [editor, setEditor]               = useState<string | null>(null)
+  const [editorLoading, setEditorLoading] = useState(true)
+  const [editorSaving, setEditorSaving]   = useState(false)
+  const [editorFeedback, setEditorFeedback] = useState('')
+
+  useEffect(() => {
+    fetch(`/api/fotos-selecao-editor?notion_page_id=${row.id}`)
+      .then(r => r.json())
+      .then(d => { setEditor(d.editor ?? null); setEditorLoading(false) })
+      .catch(() => setEditorLoading(false))
+  }, [row.id])
+
+  async function handleEditorChange(name: string) {
+    const next = name || null
+    setEditorSaving(true)
+    setEditorFeedback('')
+
+    // 1. Persist editor selection
+    await fetch('/api/fotos-selecao-editor', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notion_page_id: row.id, editor: next }),
+    })
+
+    // 2. Auto-create freelancer_edicao entry for the selected editor
+    if (next) {
+      try {
+        const { freelancers } = await fetch('/api/freelancers').then(r => r.json())
+        const fl = (freelancers ?? []).find((f: any) =>
+          f.nome.trim().toLowerCase() === next.trim().toLowerCase()
+        )
+        if (fl) {
+          await fetch('/api/freelancer-edicao', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              freelancer_id: fl.id,
+              nome: row.nome_noivos || 'Sem nome',
+              status: 'NOVO TRABALHO',
+              local: null,
+              data_casamento: row.date ?? null,
+              data_entrega: null,
+              data_final_entrega: null,
+              sessao_noivos: parseInt(row.sessao_noivos) || null,
+              fotos_noiva:   parseInt(row.fotos_noiva)   || null,
+              fotos_noivo:   parseInt(row.fotos_noivo)   || null,
+              convidados:    parseInt(row.convidados)    || null,
+              cerimonia:     parseInt(row.cerimonia)     || null,
+              bolo_bouquet:  parseInt(row.bolo_bouquet)  || null,
+              sala_animacao: parseInt(row.sala_animacao) || null,
+              fotos_album:   parseInt(row.fotos_album)   || null,
+              detalhes: null,
+            }),
+          })
+          setEditorFeedback(`✓ Enviado para ${fl.nome}`)
+        } else {
+          setEditorFeedback('⚠ Editor não encontrado nos freelancers')
+        }
+      } catch {
+        setEditorFeedback('⚠ Erro ao criar entrada')
+      }
+    }
+
+    setEditor(next)
+    setEditorSaving(false)
+    if (next) setTimeout(() => setEditorFeedback(''), 4000)
+  }
+
   function Field({ label, children }: { label: string; children: React.ReactNode }) {
     return (
       <div className="flex flex-col gap-1.5">
@@ -211,6 +281,38 @@ function FichaModal({ row, onClose, onSaved }: {
               <span className="text-[8px] tracking-[0.3em] text-white/25 uppercase block mb-1">Data de Entrada</span>
               <EditCell value={row.data_entrada} field="data_entrada" rowId={row.id} type="date" onSaved={onSaved} placeholder="—" />
             </div>
+          </div>
+
+          {/* Editor de Fotos */}
+          <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[8px] tracking-[0.3em] text-white/25 uppercase">Editor de Fotos</span>
+              {editorFeedback && (
+                <span className={`text-[10px] tracking-wide ${editorFeedback.startsWith('✓') ? 'text-emerald-400' : 'text-amber-400'}`}>
+                  {editorFeedback}
+                </span>
+              )}
+            </div>
+            {editorLoading ? (
+              <div className="text-white/20 text-xs italic">A carregar...</div>
+            ) : (
+              <select
+                value={editor ?? ''}
+                onChange={e => handleEditorChange(e.target.value)}
+                disabled={editorSaving}
+                className="w-full bg-zinc-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 focus:outline-none focus:border-gold/40 transition-colors disabled:opacity-40 [color-scheme:dark]"
+              >
+                <option value="">— Sem editor —</option>
+                {EDITORS.map(name => (
+                  <option key={name} value={name}>{name}</option>
+                ))}
+              </select>
+            )}
+            {editor && !editorSaving && (
+              <p className="text-[10px] text-gold/50 mt-1.5 tracking-wide">
+                Atribuído a <span className="text-gold/80">{editor}</span>
+              </p>
+            )}
           </div>
 
           {/* Contagens — grid 4 col */}
