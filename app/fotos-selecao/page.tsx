@@ -333,13 +333,21 @@ function FichaModal({ row, onClose, onSaved }: {
   )
 }
 
+const STATUS_EDICAO_STYLE: Record<string, string> = {
+  'NOVO TRABALHO': 'bg-blue-500/15 text-blue-400 border-blue-500/25',
+  'EM EDIÇÃO':     'bg-yellow-500/15 text-yellow-400 border-yellow-500/25',
+  'CONCLUÍDO':     'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
+}
+
 // ── Card individual ───────────────────────────────────────────────────────────
-function SelecaoCard({ row, onOpen, onDelete, confirmDelete, setConfirmDelete }: {
+function SelecaoCard({ row, onOpen, onDelete, confirmDelete, setConfirmDelete, editor, edicaoStatus }: {
   row: FotoSelecao
   onOpen: () => void
   onDelete: () => void
   confirmDelete: boolean
   setConfirmDelete: (v: boolean) => void
+  editor?: string | null
+  edicaoStatus?: string | null
 }) {
   return (
     <div
@@ -349,18 +357,30 @@ function SelecaoCard({ row, onOpen, onDelete, confirmDelete, setConfirmDelete }:
       {/* Barra dourada lateral */}
       <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gold/40" />
 
-      <div className="pl-5 pr-4 py-4 flex items-center gap-4">
-        {/* Nome + ref + data */}
+      <div className="pl-5 pr-4 py-3 flex items-center gap-4">
+        {/* Nome + ref + data + badges */}
         <div className="flex-1 min-w-0">
           <p className="text-sm font-light tracking-wider text-white/90 truncate uppercase">
             {row.nome_noivos || <span className="text-white/25 italic text-xs">Sem nome</span>}
           </p>
-          <div className="flex items-center gap-3 mt-0.5">
+          <div className="flex items-center flex-wrap gap-2 mt-1">
             {row.referencia && (
               <span className="text-[10px] text-gold/50 tracking-widest font-mono">{row.referencia}</span>
             )}
             {row.date && (
               <span className="text-[10px] text-white/25 tracking-wider">{fmt(row.date)}</span>
+            )}
+            {/* Editor badge */}
+            {editor && (
+              <span className="text-[9px] px-2 py-0.5 rounded-full border border-white/10 bg-white/[0.03] text-white/40 tracking-wide">
+                ✎ {editor}
+              </span>
+            )}
+            {/* Estado edição badge */}
+            {edicaoStatus && (
+              <span className={`text-[9px] px-2 py-0.5 rounded-full border tracking-widest uppercase font-medium ${STATUS_EDICAO_STYLE[edicaoStatus] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
+                {edicaoStatus}
+              </span>
             )}
           </div>
         </div>
@@ -407,6 +427,47 @@ function FotosSelecaoPageInner() {
   const [search, setSearch]         = useState(searchParams.get('ref') ?? '')
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [fichaOpen, setFichaOpen]   = useState<FotoSelecao | null>(null)
+  // editor + estado por notion_page_id
+  const [editorMap, setEditorMap]   = useState<Record<string, string>>({})
+  const [statusMap, setStatusMap]   = useState<Record<string, string>>({})
+
+  const loadEditorStatuses = useCallback(async (loadedRows: FotoSelecao[]) => {
+    try {
+      // 1. Todos os assignments de editor
+      const { editors } = await fetch('/api/fotos-selecao-editor').then(r => r.json())
+      const assignments: { notion_page_id: string; editor: string }[] = editors ?? []
+      const newEditorMap: Record<string, string> = {}
+      for (const a of assignments) { if (a.editor) newEditorMap[a.notion_page_id] = a.editor }
+      setEditorMap(newEditorMap)
+
+      // 2. Freelancers + edicao para os editores atribuídos
+      const uniqueEditors = [...new Set(Object.values(newEditorMap))]
+      if (!uniqueEditors.length) return
+
+      const { freelancers } = await fetch('/api/freelancers').then(r => r.json())
+      const edicaoByNome: Record<string, string> = {} // nome lowercase → status
+
+      await Promise.all(uniqueEditors.map(async editorName => {
+        const fl = (freelancers ?? []).find((f: any) =>
+          f.nome.trim().toLowerCase() === editorName.trim().toLowerCase()
+        )
+        if (!fl) return
+        const { edicao } = await fetch(`/api/freelancer-edicao?freelancer_id=${fl.id}`).then(r => r.json())
+        for (const e of (edicao ?? [])) {
+          edicaoByNome[e.nome?.toLowerCase().trim()] = e.status
+        }
+      }))
+
+      // 3. Mapear notion_page_id → status via nome dos noivos
+      const newStatusMap: Record<string, string> = {}
+      for (const row of loadedRows) {
+        if (!newEditorMap[row.id]) continue
+        const key = (row.nome_noivos ?? '').toLowerCase().trim()
+        if (edicaoByNome[key]) newStatusMap[row.id] = edicaoByNome[key]
+      }
+      setStatusMap(newStatusMap)
+    } catch { /* silently ignore */ }
+  }, [])
 
   const loadRows = useCallback(async (silent = false) => {
     if (!silent) setLoading(true); else setRefreshing(true)
@@ -414,9 +475,10 @@ function FotosSelecaoPageInner() {
       const d = await fetch('/api/fotos-selecao').then(r => r.json())
       if (d.error) { setError(d.error); return }
       setRows(d.rows)
+      loadEditorStatuses(d.rows)
     } catch { setError('Erro de ligação') }
     finally { setLoading(false); setRefreshing(false) }
-  }, [])
+  }, [loadEditorStatuses])
 
   useEffect(() => { loadRows() }, [loadRows])
 
@@ -492,6 +554,8 @@ function FotosSelecaoPageInner() {
               <SelecaoCard
                 key={row.id}
                 row={row}
+                editor={editorMap[row.id]}
+                edicaoStatus={statusMap[row.id]}
                 onOpen={() => setFichaOpen(row)}
                 onDelete={() => deleteRow(row.id)}
                 confirmDelete={confirmDelete === row.id}

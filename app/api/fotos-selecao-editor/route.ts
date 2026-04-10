@@ -10,7 +10,12 @@ function db() {
 
 export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get('notion_page_id')
-  if (!id) return NextResponse.json({ error: 'notion_page_id required' }, { status: 400 })
+  if (!id) {
+    // Return all assignments
+    const { data, error } = await db().from('fotos_selecao_editor').select('notion_page_id, editor')
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ editors: data ?? [] })
+  }
   const { data, error } = await db()
     .from('fotos_selecao_editor')
     .select('editor')
