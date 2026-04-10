@@ -514,6 +514,14 @@ function AlbumTab({ freelancerId, album, onRefresh }: { freelancerId: string; al
   const [form, setForm] = useState<Partial<Album>>({})
   const [saving, setSaving] = useState(false)
   const [changingId, setChangingId] = useState<string | null>(null)
+  const [selecaoList, setSelecaoList] = useState<{ nome_noivos: string; referencia: string; date: string | null }[]>([])
+
+  useEffect(() => {
+    fetch('/api/fotos-selecao')
+      .then(r => r.json())
+      .then(d => setSelecaoList((d.rows ?? []).filter((r: any) => r.referencia)))
+      .catch(() => {})
+  }, [])
 
   async function save() {
     setSaving(true)
@@ -552,7 +560,7 @@ function AlbumTab({ freelancerId, album, onRefresh }: { freelancerId: string; al
         </button>
       </div>
 
-      {showAdd && <AlbumForm form={form} setForm={setForm} saving={saving} onSave={save} onCancel={() => setShowAdd(false)} />}
+      {showAdd && <AlbumForm form={form} setForm={setForm} saving={saving} onSave={save} onCancel={() => setShowAdd(false)} selecaoList={selecaoList} />}
 
       {/* Kanban — scroll horizontal em mobile */}
       <div className="flex gap-3 overflow-x-auto pb-2">
@@ -570,7 +578,7 @@ function AlbumTab({ freelancerId, album, onRefresh }: { freelancerId: string; al
               {items.map(item => (
                 editing?.id === item.id ? (
                   <AlbumForm key={item.id} form={form} setForm={setForm} saving={saving} onSave={save}
-                    onCancel={() => setEditing(null)} onDelete={() => del(item.id)} />
+                    onCancel={() => setEditing(null)} onDelete={() => del(item.id)} selecaoList={selecaoList} />
                 ) : (
                   <div key={item.id} className="p-3 rounded-xl border border-white/[0.06] bg-white/[0.02] space-y-2 group">
                     <div className="flex items-start justify-between gap-2">
@@ -583,9 +591,10 @@ function AlbumTab({ freelancerId, album, onRefresh }: { freelancerId: string; al
                     {item.data_casamento && <p className="text-[10px] text-white/30">{fmtDate(item.data_casamento).split(' · ')[0]}</p>}
                     {item.local && <p className="text-[10px] text-white/25">📍 {item.local}</p>}
                     {item.data_entrega && <p className="text-[10px] text-white/25">Entrega: {fmtDate(item.data_entrega).split(' · ')[0]}</p>}
-                    {item.referencia_album && (
-                      <p className="text-[10px] font-mono text-gold/60 bg-gold/5 border border-gold/15 px-2 py-0.5 rounded w-fit">{item.referencia_album}</p>
-                    )}
+                    {item.referencia_album
+                      ? <p className="text-[9px] font-mono text-emerald-400/70 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded w-fit">🔗 {item.referencia_album}</p>
+                      : <p className="text-[9px] text-red-400/60 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded w-fit">⚠ sem referência — sync desativado</p>
+                    }
                     {item.fotos_album && (
                       <div className="border-t border-white/[0.04] pt-1.5">
                         <p className="text-[9px] text-white/25 uppercase tracking-widest mb-1">Fotos Álbum</p>
@@ -621,13 +630,38 @@ function AlbumTab({ freelancerId, album, onRefresh }: { freelancerId: string; al
   )
 }
 
-function AlbumForm({ form, setForm, saving, onSave, onCancel, onDelete }: any) {
+function AlbumForm({ form, setForm, saving, onSave, onCancel, onDelete, selecaoList = [] }: any) {
+  function handleSelecao(referencia: string) {
+    const rec = selecaoList.find((r: any) => r.referencia === referencia)
+    if (!rec) return
+    setForm((f: any) => ({
+      ...f,
+      nome: rec.nome_noivos,
+      referencia_album: rec.referencia,
+      data_casamento: rec.date ?? f.data_casamento,
+    }))
+  }
+
   return (
     <div className="bg-white/[0.02] border border-gold/20 rounded-xl p-4 space-y-3">
       <div className="grid grid-cols-2 gap-2">
         <div className="col-span-2">
-          <label className={labelCls}>Nome / Casal *</label>
-          <input value={form.nome ?? ''} onChange={e => setForm((f: any) => ({ ...f, nome: e.target.value }))} placeholder="Ex: Ana & João" className={inputCls} />
+          <label className={labelCls}>Casamento <span className="text-white/20 normal-case tracking-normal">(seleciona da Seleção de Fotos)</span></label>
+          <select
+            value={form.referencia_album ?? ''}
+            onChange={e => handleSelecao(e.target.value)}
+            className={inputCls + ' cursor-pointer'}
+          >
+            <option value="">— escolher casamento —</option>
+            {selecaoList.map((r: any) => (
+              <option key={r.referencia} value={r.referencia}>
+                {r.nome_noivos} · {r.referencia}{r.date ? ` · ${r.date}` : ''}
+              </option>
+            ))}
+          </select>
+          {form.referencia_album && (
+            <p className="text-[9px] font-mono text-emerald-400/70 mt-1">🔗 {form.referencia_album} — {form.nome}</p>
+          )}
         </div>
         <div>
           <label className={labelCls}>Data Casamento</label>
@@ -640,10 +674,6 @@ function AlbumForm({ form, setForm, saving, onSave, onCancel, onDelete }: any) {
         <div className="col-span-2">
           <label className={labelCls}>Local</label>
           <input value={form.local ?? ''} onChange={e => setForm((f: any) => ({ ...f, local: e.target.value }))} placeholder="Quinta da..." className={inputCls} />
-        </div>
-        <div className="col-span-2">
-          <label className={labelCls}>Referência do Álbum</label>
-          <input value={form.referencia_album ?? ''} onChange={e => setForm((f: any) => ({ ...f, referencia_album: e.target.value }))} placeholder="Ex: ALB-001" className={inputCls} />
         </div>
         <div className="col-span-2">
           <label className={labelCls}>Fotos para Álbum</label>
