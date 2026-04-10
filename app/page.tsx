@@ -74,6 +74,8 @@ export default async function Home() {
     })),
     { id: 'crm', name: 'CRM', href: '/crm',
       img: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=1200&q=80' },
+    { id: 'freelancers', name: 'FREELANCERS', href: '/freelancers',
+      img: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&q=80' },
   ]
 
   // ── Datas de referência ───────────────────────────────────────────────────
