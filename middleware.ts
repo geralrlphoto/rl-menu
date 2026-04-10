@@ -5,7 +5,20 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Allow login page and auth API
-  if (pathname.startsWith('/login') || pathname.startsWith('/api/auth') || pathname.startsWith('/api/eventos-notion') || pathname.startsWith('/api/debug-page') || pathname.startsWith('/api/setup-fotos-estados')) {
+  if (
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/api/eventos-notion') ||
+    pathname.startsWith('/api/debug-page') ||
+    pathname.startsWith('/api/setup-fotos-estados') ||
+    pathname.startsWith('/api/freelancer-auth') ||
+    pathname.startsWith('/api/freelancers') ||
+    pathname.startsWith('/api/freelancer-') ||
+    pathname.startsWith('/api/portais') ||
+    pathname.startsWith('/api/fotos-selecao') ||
+    pathname.startsWith('/portal-cliente') ||
+    pathname.startsWith('/freelancer-view')
+  ) {
     return NextResponse.next()
   }
 
