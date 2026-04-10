@@ -676,6 +676,14 @@ function EdicaoTab({ freelancerId, edicao, onRefresh }: { freelancerId: string; 
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState<Partial<Edicao>>({})
   const [saving, setSaving] = useState(false)
+  const [selecaoList, setSelecaoList] = useState<{ nome_noivos: string; referencia: string; date: string | null }[]>([])
+
+  useEffect(() => {
+    fetch('/api/fotos-selecao')
+      .then(r => r.json())
+      .then(d => setSelecaoList((d.rows ?? []).filter((r: any) => r.referencia)))
+      .catch(() => {})
+  }, [])
 
   async function save() {
     setSaving(true)
@@ -712,7 +720,7 @@ function EdicaoTab({ freelancerId, edicao, onRefresh }: { freelancerId: string; 
         </button>
       </div>
 
-      {showAdd && <EdicaoForm form={form} setForm={setForm} saving={saving} onSave={save} onCancel={() => setShowAdd(false)} />}
+      {showAdd && <EdicaoForm form={form} setForm={setForm} saving={saving} onSave={save} onCancel={() => setShowAdd(false)} selecaoList={selecaoList} />}
 
       {/* Kanban columns */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -727,7 +735,7 @@ function EdicaoTab({ freelancerId, edicao, onRefresh }: { freelancerId: string; 
               {jobs.map(job => (
                 editing?.id === job.id ? (
                   <EdicaoForm key={job.id} form={form} setForm={setForm} saving={saving} onSave={save}
-                    onCancel={() => setEditing(null)} onDelete={() => del(job.id)} />
+                    onCancel={() => setEditing(null)} onDelete={() => del(job.id)} selecaoList={selecaoList} />
                 ) : (
                   <div key={job.id} className="p-3 rounded-xl border border-white/[0.06] bg-white/[0.02] space-y-2 group">
                     <div className="flex items-start justify-between gap-2">
@@ -787,19 +795,45 @@ function EdicaoTab({ freelancerId, edicao, onRefresh }: { freelancerId: string; 
   )
 }
 
-function EdicaoForm({ form, setForm, saving, onSave, onCancel, onDelete }: any) {
+function EdicaoForm({ form, setForm, saving, onSave, onCancel, onDelete, selecaoList = [] }: any) {
   const numInput = (field: string, label: string) => (
     <div>
       <label className={labelCls}>{label}</label>
       <input type="number" value={form[field] ?? ''} onChange={e => setForm((f: any) => ({ ...f, [field]: e.target.value ? parseInt(e.target.value) : null }))} className={inputCls} />
     </div>
   )
+
+  function handleSelecao(referencia: string) {
+    const rec = selecaoList.find((r: any) => r.referencia === referencia)
+    if (!rec) return
+    setForm((f: any) => ({
+      ...f,
+      nome: rec.nome_noivos,
+      referencia: rec.referencia,
+      data_casamento: rec.date ?? f.data_casamento,
+    }))
+  }
+
   return (
     <div className="bg-white/[0.02] border border-gold/20 rounded-xl p-4 space-y-3 col-span-full sm:col-span-3">
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-        <div className="col-span-2 sm:col-span-2">
-          <label className={labelCls}>Nome *</label>
-          <input value={form.nome ?? ''} onChange={e => setForm((f: any) => ({ ...f, nome: e.target.value }))} placeholder="Nome do casal / casamento" className={inputCls} />
+        <div className="col-span-2 sm:col-span-3">
+          <label className={labelCls}>Casamento <span className="text-white/20 normal-case tracking-normal">(seleciona da Seleção de Fotos)</span></label>
+          <select
+            value={form.referencia ?? ''}
+            onChange={e => handleSelecao(e.target.value)}
+            className={inputCls + ' cursor-pointer'}
+          >
+            <option value="">— escolher casamento —</option>
+            {selecaoList.map((r: any) => (
+              <option key={r.referencia} value={r.referencia}>
+                {r.nome_noivos} · {r.referencia}{r.date ? ` · ${r.date}` : ''}
+              </option>
+            ))}
+          </select>
+          {form.referencia && (
+            <p className="text-[9px] font-mono text-emerald-400/70 mt-1">🔗 {form.referencia} — {form.nome}</p>
+          )}
         </div>
         <div>
           <label className={labelCls}>Estado</label>
@@ -822,10 +856,6 @@ function EdicaoForm({ form, setForm, saving, onSave, onCancel, onDelete }: any) 
         <div>
           <label className={labelCls}>Data Final Entrega</label>
           <input type="date" value={form.data_final_entrega ?? ''} onChange={e => setForm((f: any) => ({ ...f, data_final_entrega: e.target.value }))} className={inputCls} />
-        </div>
-        <div className="col-span-2 sm:col-span-3">
-          <label className={labelCls}>Referência Portal <span className="text-white/20 normal-case tracking-normal">(liga ao portal do cliente)</span></label>
-          <input value={form.referencia ?? ''} onChange={e => setForm((f: any) => ({ ...f, referencia: e.target.value.toUpperCase() }))} placeholder="ex: CAS_034_26_KP" className={inputCls + ' font-mono'} />
         </div>
       </div>
       <p className="text-[9px] text-white/25 tracking-widest uppercase pt-1">Contagem de fotos</p>
