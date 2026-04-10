@@ -631,6 +631,16 @@ export default function FreelancerViewPage() {
       {!loading && (
         <div className="flex items-center gap-1.5 mb-8 p-1.5 rounded-2xl border border-white/30 bg-black"
           style={{ boxShadow: '0 0 18px 3px rgba(255,255,255,0.10), 0 0 6px 1px rgba(255,255,255,0.15), inset 0 0 18px 0 rgba(255,255,255,0.03)' }}>
+          <button
+            onClick={() => setTab(null)}
+            className={`flex items-center justify-center px-3 py-2.5 rounded-xl text-[9px] tracking-[0.25em] uppercase font-semibold transition-all ${
+              tab === null
+                ? 'bg-white/10 text-white border border-white/20'
+                : 'text-white/30 hover:text-white/55 border border-transparent'
+            }`}
+          >
+            ⌂
+          </button>
           {[
             { key: 'casamentos', label: 'Casamentos', count: casamentos.length },
             { key: 'edicao',     label: 'Edição de Fotos', count: edicao.length },
