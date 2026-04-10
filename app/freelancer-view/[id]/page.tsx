@@ -20,7 +20,13 @@ function daysUntil(d: string | null) {
 
 type Freelancer = { id: string; nome: string; status: string | null }
 type Casamento  = { id: string; local: string; data_casamento: string | null; equipa_foto: string[] | null; videografo: string | null; briefing_url: string | null; data_confirmada: boolean | null }
-type Edicao     = { id: string; nome: string; status: string; data_casamento: string | null }
+type Edicao     = {
+  id: string; nome: string; status: string; data_casamento: string | null
+  data_entrega: string | null; data_final_entrega: string | null; local: string | null
+  convidados: number | null; cerimonia: number | null; detalhes: number | null
+  sala_animacao: number | null; fotos_album: number | null; bolo_bouquet: number | null
+  sessao_noivos: number | null; fotos_noiva: number | null; fotos_noivo: number | null
+}
 type Album      = { id: string; nome: string; status: string; data_casamento: string | null; referencia_album: string | null }
 
 const STATUS_EDICAO_STYLE: Record<string, string> = {
@@ -91,6 +97,84 @@ function PasswordGate({ id, onAuth }: { id: string; onAuth: () => void }) {
           </button>
         </form>
       </div>
+    </div>
+  )
+}
+
+// ── Edicao Card (expansível) ──────────────────────────────────────────────────
+const FOTO_FIELDS: { key: keyof Edicao; label: string }[] = [
+  { key: 'convidados',    label: 'Convidados' },
+  { key: 'cerimonia',     label: 'Cerimónia' },
+  { key: 'detalhes',      label: 'Detalhes' },
+  { key: 'sala_animacao', label: 'Sala/Animação' },
+  { key: 'fotos_album',   label: 'Álbum' },
+  { key: 'bolo_bouquet',  label: 'Bolo/Bouquet' },
+  { key: 'sessao_noivos', label: 'Sessão Noivos' },
+  { key: 'fotos_noiva',   label: 'Fotos Noiva' },
+  { key: 'fotos_noivo',   label: 'Fotos Noivo' },
+]
+
+function EdicaoCard({ e }: { e: Edicao }) {
+  const [open, setOpen] = useState(false)
+  const hasCounts = FOTO_FIELDS.some(f => e[f.key] != null)
+
+  return (
+    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
+      {/* Header — clicável */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-white/[0.02] transition-colors"
+      >
+        <div className="flex-1 min-w-0">
+          <p className="text-sm text-white/80">{e.nome}</p>
+          <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+            {e.data_casamento && <p className="text-[10px] text-white/30">{fmtDate(e.data_casamento).split(' · ')[0]}</p>}
+            {e.local && <p className="text-[10px] text-white/25">📍 {e.local}</p>}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className={`text-[9px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium ${STATUS_EDICAO_STYLE[e.status] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
+            {e.status}
+          </span>
+          <span className="text-white/20 text-xs">{open ? '▲' : '▼'}</span>
+        </div>
+      </button>
+
+      {/* Detalhes expandidos */}
+      {open && (
+        <div className="px-4 pb-4 border-t border-white/[0.05] pt-3 space-y-3">
+          {/* Datas de entrega */}
+          <div className="flex flex-wrap gap-4">
+            {e.data_entrega && (
+              <div>
+                <p className="text-[8px] tracking-[0.3em] text-white/20 uppercase mb-0.5">Data Entrega</p>
+                <p className="text-xs text-white/60">{fmtDate(e.data_entrega).split(' · ')[0]}</p>
+              </div>
+            )}
+            {e.data_final_entrega && (
+              <div>
+                <p className="text-[8px] tracking-[0.3em] text-white/20 uppercase mb-0.5">Entrega Final</p>
+                <p className="text-xs text-white/60">{fmtDate(e.data_final_entrega).split(' · ')[0]}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Contagem de fotos */}
+          {hasCounts && (
+            <div>
+              <p className="text-[8px] tracking-[0.3em] text-white/20 uppercase mb-2">Contagem de Fotos</p>
+              <div className="grid grid-cols-3 gap-2">
+                {FOTO_FIELDS.filter(f => e[f.key] != null).map(({ key, label }) => (
+                  <div key={key} className="bg-white/[0.03] border border-white/[0.05] rounded-xl px-3 py-2">
+                    <p className="text-[8px] tracking-[0.2em] text-white/25 uppercase mb-0.5">{label}</p>
+                    <p className="text-lg font-light text-white/80">{e[key] as number}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -242,17 +326,7 @@ export default function FreelancerViewPage() {
             <section>
               <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-4">Edição de Fotos ({edicao.length})</p>
               <div className="space-y-2">
-                {edicao.map(e => (
-                  <div key={e.id} className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-white/[0.06] bg-white/[0.02]">
-                    <div>
-                      <p className="text-sm text-white/80">{e.nome}</p>
-                      {e.data_casamento && <p className="text-[10px] text-white/30 mt-0.5">{fmtDate(e.data_casamento).split(' · ')[0]}</p>}
-                    </div>
-                    <span className={`text-[9px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium shrink-0 ${STATUS_EDICAO_STYLE[e.status] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
-                      {e.status}
-                    </span>
-                  </div>
-                ))}
+                {edicao.map(e => <EdicaoCard key={e.id} e={e} />)}
               </div>
             </section>
           )}
