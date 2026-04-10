@@ -21,6 +21,7 @@ type Edicao = {
   convidados: number | null; cerimonia: number | null; detalhes: number | null
   sala_animacao: number | null; fotos_album: number | null; bolo_bouquet: number | null
   sessao_noivos: number | null; fotos_noiva: number | null; fotos_noivo: number | null
+  referencia: string | null
 }
 type Album = {
   id: string; freelancer_id: string; nome: string; status: string
@@ -810,6 +811,10 @@ function EdicaoForm({ form, setForm, saving, onSave, onCancel, onDelete }: any) 
         <div>
           <label className={labelCls}>Data Final Entrega</label>
           <input type="date" value={form.data_final_entrega ?? ''} onChange={e => setForm((f: any) => ({ ...f, data_final_entrega: e.target.value }))} className={inputCls} />
+        </div>
+        <div className="col-span-2 sm:col-span-3">
+          <label className={labelCls}>Referência Portal <span className="text-white/20 normal-case tracking-normal">(liga ao portal do cliente)</span></label>
+          <input value={form.referencia ?? ''} onChange={e => setForm((f: any) => ({ ...f, referencia: e.target.value.toUpperCase() }))} placeholder="ex: CAS_034_26_KP" className={inputCls + ' font-mono'} />
         </div>
       </div>
       <p className="text-[9px] text-white/25 tracking-widest uppercase pt-1">Contagem de fotos</p>

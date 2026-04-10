@@ -154,35 +154,60 @@ function addWorkingDaysPC(dateStr: string, days: number) {
   return d.toISOString().split('T')[0]
 }
 function estadoCfgPC(val: string) {
-  const blue = ['Em Edição','Enviado'], green = ['Entregue','Aprovado']
-  if (green.includes(val)) return { box: 'bg-green-500/10 border-green-500/25', dot: 'bg-green-400', lbl: 'text-green-300/70', date: 'text-green-200/80', badge: 'bg-green-500/15 border-green-500/30 text-green-100/90' }
-  if (blue.includes(val))  return { box: 'bg-blue-500/10 border-blue-500/25',   dot: 'bg-blue-400',  lbl: 'text-blue-300/70',  date: 'text-blue-200/80',  badge: 'bg-blue-500/15 border-blue-500/30 text-blue-100/90'   }
-  return                          { box: 'bg-yellow-500/10 border-yellow-500/25', dot: 'bg-yellow-400', lbl: 'text-yellow-300/70', date: 'text-yellow-200/80', badge: 'bg-yellow-500/15 border-yellow-500/30 text-yellow-100/90' }
+  const blue   = ['Em Edição','Enviado'], green = ['Entregue','Aprovado'], purple = ['Concluído']
+  if (green.includes(val))  return { box: 'bg-green-500/10 border-green-500/25',   dot: 'bg-green-400',  lbl: 'text-green-300/70',  date: 'text-green-200/80',  badge: 'bg-green-500/15 border-green-500/30 text-green-100/90'   }
+  if (blue.includes(val))   return { box: 'bg-blue-500/10 border-blue-500/25',     dot: 'bg-blue-400',   lbl: 'text-blue-300/70',   date: 'text-blue-200/80',   badge: 'bg-blue-500/15 border-blue-500/30 text-blue-100/90'     }
+  if (purple.includes(val)) return { box: 'bg-purple-500/10 border-purple-500/25', dot: 'bg-purple-400', lbl: 'text-purple-300/70', date: 'text-purple-200/80', badge: 'bg-purple-500/15 border-purple-500/30 text-purple-100/90' }
+  return                           { box: 'bg-yellow-500/10 border-yellow-500/25', dot: 'bg-yellow-400', lbl: 'text-yellow-300/70', date: 'text-yellow-200/80', badge: 'bg-yellow-500/15 border-yellow-500/30 text-yellow-100/90' }
 }
 
+const SELECAO_ESTADOS_PC = ['Aguardar', 'Em Edição', 'Concluído', 'Entregue']
+
 function EntregasSectionPC({ referencia }: { referencia: string }) {
-  const [data, setData] = useState<null | { data_evento: string | null; sel_fotos_estado: string | null; video_estado: string | null; fotos_edicao_estado: string | null; album_estado: string | null; fotosDataEntrada: string | null; albumDataPrevista: string | null }>(null)
+  const [data, setData] = useState<null | { data_evento: string | null; sel_fotos_estado: string | null; video_estado: string | null; fotos_edicao_estado: string | null; album_estado: string | null; fotosDataEntrada: string | null; albumDataPrevista: string | null; selecao_fotos_noivos_estado: string | null }>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [savingSelecao, setSavingSelecao] = useState(false)
+
+  useEffect(() => {
+    setIsAdmin(sessionStorage.getItem(`portalAdmin_${referencia}`) === 'true')
+  }, [referencia])
+
   useEffect(() => {
     if (!referencia) return
     Promise.all([
       fetch(`/api/evento-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()),
       fetch(`/api/fotos-selecao-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()),
       fetch(`/api/albuns-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()),
-    ]).then(([ev, fs, al]) => {
+      fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`).then(r => r.json()),
+    ]).then(([ev, fs, al, pt]) => {
       const e = ev.evento ?? {}
-      setData({ data_evento: e.data_evento ?? null, sel_fotos_estado: e.sel_fotos_estado ?? null, video_estado: e.video_estado ?? null, fotos_edicao_estado: e.fotos_edicao_estado ?? null, album_estado: e.album_estado ?? null, fotosDataEntrada: fs.row?.data_entrada ?? null, albumDataPrevista: al.data_prevista_entrega ?? null })
+      setData({ data_evento: e.data_evento ?? null, sel_fotos_estado: e.sel_fotos_estado ?? null, video_estado: e.video_estado ?? null, fotos_edicao_estado: e.fotos_edicao_estado ?? null, album_estado: e.album_estado ?? null, fotosDataEntrada: fs.row?.data_entrada ?? null, albumDataPrevista: al.data_prevista_entrega ?? null, selecao_fotos_noivos_estado: pt.portal?.settings?.selecao_fotos_noivos_estado ?? 'Aguardar' })
     })
   }, [referencia])
+
+  async function handleSelecaoEstado(val: string) {
+    if (!data) return
+    setSavingSelecao(true)
+    await fetch('/api/portais', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referencia, updates: { settings: { selecao_fotos_noivos_estado: val } } }),
+    })
+    setData(d => d ? { ...d, selecao_fotos_noivos_estado: val } : d)
+    setSavingSelecao(false)
+  }
+
   if (!data) return null
   const prazoSel  = data.data_evento ? addCalendarDaysPC(data.data_evento, 30) : null
   const prazoVid  = data.data_evento ? addWorkingDaysPC(data.data_evento, 180) : null
   const fotosDate = data.fotosDataEntrada ? addWorkingDaysPC(data.fotosDataEntrada, 30) : null
   const rows = [
-    prazoSel ? { label: 'Prazo Seleção de Fotos (30 dias)', estado: data.sel_fotos_estado, dateStr: prazoSel } : null,
-    prazoVid  ? { label: 'Prazo Entrega Vídeo (180 dias úteis)', estado: data.video_estado, dateStr: prazoVid } : null,
-    { label: 'Fotos para Edição', estado: data.fotos_edicao_estado, dateStr: fotosDate },
-    { label: 'Álbum', estado: data.album_estado, dateStr: data.albumDataPrevista },
-  ].filter(Boolean) as Array<{ label: string; estado: string | null; dateStr: string | null }>
+    prazoSel ? { label: 'Prazo Seleção de Fotos (30 dias)', estado: data.sel_fotos_estado, dateStr: prazoSel, editable: false } : null,
+    prazoVid  ? { label: 'Prazo Entrega Vídeo (180 dias úteis)', estado: data.video_estado, dateStr: prazoVid, editable: false } : null,
+    { label: 'Fotos para Edição', estado: data.fotos_edicao_estado, dateStr: fotosDate, editable: false },
+    { label: 'Álbum', estado: data.album_estado, dateStr: data.albumDataPrevista, editable: false },
+    { label: 'Seleção Fotos Noivos', estado: data.selecao_fotos_noivos_estado, dateStr: null, editable: true },
+  ].filter(Boolean) as Array<{ label: string; estado: string | null; dateStr: string | null; editable: boolean }>
   if (rows.length === 0) return null
   return (
     <section className="px-4 pb-10 sm:pb-14">
@@ -197,7 +222,7 @@ function EntregasSectionPC({ referencia }: { referencia: string }) {
           <span className="text-[9px] tracking-[0.3em] text-white/30 uppercase">Data de Entrega</span>
         </div>
         <div className="p-5 flex flex-col gap-2">
-          {rows.map(({ label, estado, dateStr }) => {
+          {rows.map(({ label, estado, dateStr, editable }) => {
             const val = estado ?? 'Aguardar'
             const cfg = estadoCfgPC(val)
             return (
@@ -205,7 +230,18 @@ function EntregasSectionPC({ referencia }: { referencia: string }) {
                 <div className={`w-2 h-2 rounded-full justify-self-center ${cfg.dot}`} />
                 <span className={`text-[10px] tracking-widest uppercase leading-tight ${cfg.lbl}`}>{label}</span>
                 <div className="flex flex-col items-end gap-0.5">
-                  <span className={`text-[10px] px-2 py-0.5 rounded border ${cfg.badge}`}>{val}</span>
+                  {editable && isAdmin ? (
+                    <select
+                      value={val}
+                      onChange={e => handleSelecaoEstado(e.target.value)}
+                      disabled={savingSelecao}
+                      className={`text-[10px] px-2 py-0.5 rounded border outline-none cursor-pointer disabled:opacity-50 [color-scheme:dark] ${cfg.badge}`}
+                    >
+                      {SELECAO_ESTADOS_PC.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  ) : (
+                    <span className={`text-[10px] px-2 py-0.5 rounded border ${cfg.badge}`}>{val}</span>
+                  )}
                   {dateStr && <span className={`text-[9px] ${cfg.date}`}>{formatDatePC(dateStr)}</span>}
                 </div>
               </div>

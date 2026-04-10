@@ -23,8 +23,32 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const { id, ...fields } = await req.json()
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
-  const { error } = await db().from('freelancer_edicao').update({ ...fields, updated_at: new Date().toISOString() }).eq('id', id)
+
+  const supabase = db()
+  const { error } = await supabase.from('freelancer_edicao').update({ ...fields, updated_at: new Date().toISOString() }).eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Sync status to portal when freelancer changes their editing state
+  if (fields.status) {
+    const statusMap: Record<string, string> = {
+      'NOVO TRABALHO': 'Aguardar',
+      'EM EDIÇÃO':     'Em Edição',
+      'CONCLUÍDO':     'Concluído',
+    }
+    const portalEstado = statusMap[fields.status]
+    if (portalEstado) {
+      const { data: rec } = await supabase.from('freelancer_edicao').select('referencia').eq('id', id).single()
+      if (rec?.referencia) {
+        const { data: portal } = await supabase.from('portais').select('settings').ilike('referencia', rec.referencia).maybeSingle()
+        if (portal) {
+          await supabase.from('portais')
+            .update({ settings: { ...(portal.settings ?? {}), selecao_fotos_noivos_estado: portalEstado } })
+            .ilike('referencia', rec.referencia)
+        }
+      }
+    }
+  }
+
   return NextResponse.json({ ok: true })
 }
 
