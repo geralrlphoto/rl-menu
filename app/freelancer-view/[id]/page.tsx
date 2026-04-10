@@ -360,6 +360,7 @@ export default function FreelancerViewPage() {
   const [album, setAlbum]           = useState<Album[]>([])
   const [loading, setLoading]       = useState(false)
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
+  const [tab, setTab]               = useState<'casamentos'|'edicao'|'album'>('casamentos')
 
   // Check session
   useEffect(() => {
@@ -411,7 +412,7 @@ export default function FreelancerViewPage() {
   return (
     <main className="min-h-screen px-4 py-10 max-w-2xl mx-auto">
       {/* Header */}
-      <div className="mb-10">
+      <div className="mb-8">
         <p className="text-[9px] tracking-[0.5em] text-white/20 uppercase mb-3">RL PHOTO.VIDEO · Área do Freelancer</p>
         {loading ? (
           <p className="text-white/20 text-xs tracking-widest uppercase">A carregar...</p>
@@ -428,133 +429,179 @@ export default function FreelancerViewPage() {
         )}
       </div>
 
+      {/* Tab Navigation */}
       {!loading && (
-        <div className="space-y-10">
+        <div className="flex items-center gap-2 mb-8 border-b border-white/[0.06] pb-0">
+          {[
+            { key: 'casamentos', label: 'Casamentos', count: casamentos.length },
+            { key: 'edicao',     label: 'Edição de Fotos', count: edicao.length },
+            ...(isFotografo ? [{ key: 'album', label: 'Edição de Álbum', count: album.length }] : []),
+          ].map(t => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key as typeof tab)}
+              className={`relative pb-3 text-[9px] tracking-[0.3em] uppercase font-semibold transition-all flex items-center gap-1.5 ${
+                tab === t.key
+                  ? 'text-gold'
+                  : 'text-white/25 hover:text-white/50'
+              }`}
+            >
+              {t.label}
+              {t.count > 0 && (
+                <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold transition-all ${
+                  tab === t.key ? 'bg-gold/20 text-gold' : 'bg-white/[0.06] text-white/25'
+                }`}>{t.count}</span>
+              )}
+              {tab === t.key && (
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gold rounded-full" />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
 
-          {/* ── Próximos Casamentos ── */}
-          <section>
-            <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-4">Próximos Casamentos ({upcoming.length})</p>
-            {upcoming.length === 0 ? (
-              <p className="text-white/15 text-xs tracking-widest">Sem casamentos futuros.</p>
-            ) : (
-              <div className="space-y-3">
-                {upcoming.map(c => {
-                  const days = daysUntil(c.data_casamento)
-                  return (
-                    <div key={c.id} className="bg-white/[0.02] border border-white/[0.07] rounded-2xl p-5 space-y-3">
-                      <div className="flex items-start justify-between gap-3 flex-wrap">
+      {!loading && (
+        <div>
+
+          {/* ── Tab: Casamentos ── */}
+          {tab === 'casamentos' && (
+            <div className="space-y-10">
+              {/* Próximos */}
+              <section>
+                <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-4">Próximos Casamentos ({upcoming.length})</p>
+                {upcoming.length === 0 ? (
+                  <p className="text-white/15 text-xs tracking-widest">Sem casamentos futuros.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {upcoming.map(c => {
+                      const days = daysUntil(c.data_casamento)
+                      return (
+                        <div key={c.id} className="bg-white/[0.02] border border-white/[0.07] rounded-2xl p-5 space-y-3">
+                          <div className="flex items-start justify-between gap-3 flex-wrap">
+                            <div>
+                              <p className="text-base font-light tracking-wider text-white uppercase">{c.local || '—'}</p>
+                              <p className="text-xs text-white/40 mt-0.5">{fmtDate(c.data_casamento)}</p>
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {days !== null && (
+                                <span className={`text-[10px] px-2.5 py-1 rounded-full border tracking-widest font-medium ${days <= 7 ? 'bg-red-500/15 text-red-400 border-red-500/30' : days <= 30 ? 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30' : 'bg-white/5 text-white/30 border-white/10'}`}>
+                                  {days === 0 ? 'HOJE' : `${days}d`}
+                                </span>
+                              )}
+                              {c.data_confirmada ? (
+                                <span className="text-[10px] px-2.5 py-1 rounded-full border bg-emerald-500/15 text-emerald-400 border-emerald-500/30 tracking-widest">
+                                  ✓ Confirmado
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => handleConfirmar(c.id)}
+                                  disabled={confirmingId === c.id}
+                                  className="text-[10px] px-2.5 py-1 rounded-full border border-gold/30 bg-gold/10 text-gold tracking-widest hover:bg-gold/20 transition-all disabled:opacity-40 uppercase"
+                                >
+                                  {confirmingId === c.id ? '...' : 'Confirmar Data'}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                          {(c.equipa_foto?.length || c.videografo) && (
+                            <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/[0.05]">
+                              {c.equipa_foto?.map((m,i) => (
+                                <span key={i} className="text-[9px] px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-400/70 border border-yellow-500/20">📷 {m}</span>
+                              ))}
+                              {c.videografo && (
+                                <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400/70 border border-emerald-500/20">🎥 {c.videografo}</span>
+                              )}
+                            </div>
+                          )}
+                          {c.briefing_url && (
+                            <a href={c.briefing_url} target="_blank" rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 text-[10px] px-3 py-1.5 rounded-xl border border-white/10 text-white/40 hover:text-white hover:border-white/30 transition-all tracking-widest uppercase">
+                              Ver Briefing ›
+                            </a>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </section>
+
+              {/* Casamentos Passados */}
+              {past.length > 0 && (
+                <section>
+                  <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-4">Casamentos Anteriores ({past.length})</p>
+                  <div className="space-y-2">
+                    {past.map(c => (
+                      <div key={c.id} className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-white/[0.04] bg-white/[0.01] opacity-60">
                         <div>
-                          <p className="text-base font-light tracking-wider text-white uppercase">{c.local || '—'}</p>
-                          <p className="text-xs text-white/40 mt-0.5">{fmtDate(c.data_casamento)}</p>
+                          <p className="text-sm text-white/60">{c.local || '—'}</p>
+                          <p className="text-[10px] text-white/25 mt-0.5">{fmtDate(c.data_casamento).split(' · ')[0]}</p>
                         </div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {days !== null && (
-                            <span className={`text-[10px] px-2.5 py-1 rounded-full border tracking-widest font-medium ${days <= 7 ? 'bg-red-500/15 text-red-400 border-red-500/30' : days <= 30 ? 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30' : 'bg-white/5 text-white/30 border-white/10'}`}>
-                              {days === 0 ? 'HOJE' : `${days}d`}
-                            </span>
-                          )}
-                          {c.data_confirmada ? (
-                            <span className="text-[10px] px-2.5 py-1 rounded-full border bg-emerald-500/15 text-emerald-400 border-emerald-500/30 tracking-widest">
-                              ✓ Confirmado
-                            </span>
-                          ) : (
-                            <button
-                              onClick={() => handleConfirmar(c.id)}
-                              disabled={confirmingId === c.id}
-                              className="text-[10px] px-2.5 py-1 rounded-full border border-gold/30 bg-gold/10 text-gold tracking-widest hover:bg-gold/20 transition-all disabled:opacity-40 uppercase"
-                            >
-                              {confirmingId === c.id ? '...' : 'Confirmar Data'}
-                            </button>
-                          )}
-                        </div>
+                        {c.data_confirmada && (
+                          <span className="text-[9px] text-emerald-400/50">✓</span>
+                        )}
                       </div>
-                      {(c.equipa_foto?.length || c.videografo) && (
-                        <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/[0.05]">
-                          {c.equipa_foto?.map((m,i) => (
-                            <span key={i} className="text-[9px] px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-400/70 border border-yellow-500/20">📷 {m}</span>
-                          ))}
-                          {c.videografo && (
-                            <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400/70 border border-emerald-500/20">🎥 {c.videografo}</span>
-                          )}
-                        </div>
-                      )}
-                      {c.briefing_url && (
-                        <a href={c.briefing_url} target="_blank" rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-[10px] px-3 py-1.5 rounded-xl border border-white/10 text-white/40 hover:text-white hover:border-white/30 transition-all tracking-widest uppercase">
-                          Ver Briefing ›
-                        </a>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </section>
+                    ))}
+                  </div>
+                </section>
+              )}
 
-          {/* ── Edição de Fotos — kanban read-only ── */}
-          {edicao.length > 0 && (
+              {casamentos.length === 0 && (
+                <p className="text-white/15 text-xs tracking-widest">Sem casamentos atribuídos.</p>
+              )}
+            </div>
+          )}
+
+          {/* ── Tab: Edição de Fotos ── */}
+          {tab === 'edicao' && (
             <section>
-              <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-4">Edição de Fotos ({edicao.length})</p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {STATUS_EDICAO_ORDER.map(status => {
-                  const jobs = edicao.filter(e => e.status === status)
-                  return (
-                    <div key={status} className="space-y-2">
-                      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[9px] font-bold tracking-widest uppercase ${STATUS_EDICAO_STYLE[status] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
-                        <span>{status}</span>
-                        <span className="ml-auto opacity-60">({jobs.length})</span>
+              {edicao.length === 0 ? (
+                <p className="text-white/15 text-xs tracking-widest">Sem trabalhos de edição atribuídos.</p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {STATUS_EDICAO_ORDER.map(status => {
+                    const jobs = edicao.filter(e => e.status === status)
+                    return (
+                      <div key={status} className="space-y-2">
+                        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[9px] font-bold tracking-widest uppercase ${STATUS_EDICAO_STYLE[status] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
+                          <span>{status}</span>
+                          <span className="ml-auto opacity-60">({jobs.length})</span>
+                        </div>
+                        {jobs.map(e => <EdicaoCard key={e.id} e={e} onStatusChange={(id, s) => setEdicao(prev => prev.map(x => x.id === id ? { ...x, status: s } : x))} />)}
+                        {jobs.length === 0 && (
+                          <p className="text-[9px] text-white/15 text-center py-4 tracking-widest">—</p>
+                        )}
                       </div>
-                      {jobs.map(e => <EdicaoCard key={e.id} e={e} onStatusChange={(id, s) => setEdicao(prev => prev.map(x => x.id === id ? { ...x, status: s } : x))} />)}
-                      {jobs.length === 0 && (
-                        <p className="text-[9px] text-white/15 text-center py-4 tracking-widest">—</p>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
+                    )
+                  })}
+                </div>
+              )}
             </section>
           )}
 
-          {/* ── Edição de Álbum (fotografos) ── */}
-          {isFotografo && album.length > 0 && (
+          {/* ── Tab: Edição de Álbum ── */}
+          {tab === 'album' && (
             <section>
-              <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-4">Edição de Álbum ({album.length})</p>
-              <div className="space-y-2">
-                {album.map(a => (
-                  <div key={a.id} className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-white/[0.06] bg-white/[0.02]">
-                    <div>
-                      <p className="text-sm text-white/80">{a.nome}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        {a.data_casamento && <p className="text-[10px] text-white/30">{fmtDate(a.data_casamento).split(' · ')[0]}</p>}
-                        {a.referencia_album && <span className="text-[9px] text-gold/50 font-mono">{a.referencia_album}</span>}
+              {album.length === 0 ? (
+                <p className="text-white/15 text-xs tracking-widest">Sem álbuns atribuídos.</p>
+              ) : (
+                <div className="space-y-2">
+                  {album.map(a => (
+                    <div key={a.id} className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-white/[0.06] bg-white/[0.02]">
+                      <div>
+                        <p className="text-sm text-white/80">{a.nome}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {a.data_casamento && <p className="text-[10px] text-white/30">{fmtDate(a.data_casamento).split(' · ')[0]}</p>}
+                          {a.referencia_album && <span className="text-[9px] text-gold/50 font-mono">{a.referencia_album}</span>}
+                        </div>
                       </div>
+                      <span className={`text-[9px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium shrink-0 ${STATUS_ALBUM_STYLE[a.status] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
+                        {a.status}
+                      </span>
                     </div>
-                    <span className={`text-[9px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium shrink-0 ${STATUS_ALBUM_STYLE[a.status] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
-                      {a.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* ── Casamentos Passados ── */}
-          {past.length > 0 && (
-            <section>
-              <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-4">Casamentos Anteriores ({past.length})</p>
-              <div className="space-y-2">
-                {past.map(c => (
-                  <div key={c.id} className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-white/[0.04] bg-white/[0.01] opacity-60">
-                    <div>
-                      <p className="text-sm text-white/60">{c.local || '—'}</p>
-                      <p className="text-[10px] text-white/25 mt-0.5">{fmtDate(c.data_casamento).split(' · ')[0]}</p>
-                    </div>
-                    {c.data_confirmada && (
-                      <span className="text-[9px] text-emerald-400/50">✓</span>
-                    )}
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </section>
           )}
 
