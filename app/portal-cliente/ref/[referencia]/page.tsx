@@ -296,7 +296,7 @@ function EntregasSection({ referencia }: { referencia: string }) {
     { label: 'Fotos para Edição', estado: data.fotos_edicao_estado, dateStr: fotosEdDate, editable: false, stateKey: '' },
     { label: 'Álbum', estado: data.album_estado, dateStr: data.albumDataPrevista, editable: false, stateKey: '' },
     { label: 'Seleção Fotos Noivos', estado: data.selecao_fotos_noivos_estado, dateStr: null, editable: true, stateKey: 'selecao_fotos_noivos_estado' },
-    data.fotosDataEntrada ? { label: 'Prazo Entrega Fotos Noivos (40 dias)', estado: data.prazo_fotos_noivos_estado, dateStr: addCalendarDays(data.fotosDataEntrada, 40), editable: true, stateKey: 'prazo_fotos_noivos_estado' } : null,
+    { label: 'Prazo Entrega Fotos Noivos (40 dias)', estado: data.prazo_fotos_noivos_estado, dateStr: data.fotosDataEntrada ? addCalendarDays(data.fotosDataEntrada, 40) : null, editable: true, stateKey: 'prazo_fotos_noivos_estado' },
   ].filter(Boolean) as Array<{ label: string; estado: string | null; dateStr: string | null; editable: boolean; stateKey: string }>
 
   if (rows.length === 0) return null
