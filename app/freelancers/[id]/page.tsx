@@ -111,13 +111,14 @@ export default function FreelancerDetailPage() {
     .sort((a,b) => (a.data_casamento ?? '') < (b.data_casamento ?? '') ? -1 : 1)[0] ?? null
   const dtu = upcoming ? daysUntil(upcoming.data_casamento) : null
 
-  const tabs = [
+  const isVideografo = freelancer?.status === 'VIDEOGRAFO'
+  const tabs: { key: 'casamentos'|'edicao'|'valores'|'info'|'notas'; label: string }[] = [
     { key: 'casamentos', label: `Casamentos (${casamentos.length})` },
-    { key: 'edicao',     label: `Edição Fotos (${edicao.length})` },
+    ...(!isVideografo ? [{ key: 'edicao' as const, label: `Edição Fotos (${edicao.length})` }] : []),
     { key: 'valores',    label: 'Valores' },
     { key: 'info',       label: 'Info' },
     { key: 'notas',      label: 'Notas' },
-  ] as const
+  ]
 
   return (
     <main className="min-h-screen px-4 sm:px-8 py-8 max-w-[1000px] mx-auto">
