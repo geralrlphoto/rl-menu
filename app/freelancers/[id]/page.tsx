@@ -485,11 +485,23 @@ function CasamentoForm({ form, setForm, saving, onSave, onCancel, onDelete }: an
 
 // ─── Edição Álbum Tab ─────────────────────────────────────────────────────────
 
+const STATUS_ALBUM = ['AGUARDAR', 'EM EDIÇÃO', 'EM APROVAÇÃO', 'APROVADO', 'ENTREGUE'] as const
+type StatusAlbum = typeof STATUS_ALBUM[number]
+
+const ALBUM_STYLE: Record<StatusAlbum, { col: string; badge: string }> = {
+  'AGUARDAR':      { col: 'border-white/20 text-white/40',                                badge: 'bg-white/[0.06] text-white/50 border-white/20' },
+  'EM EDIÇÃO':     { col: 'border-yellow-500/30 text-yellow-400',                          badge: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30' },
+  'EM APROVAÇÃO':  { col: 'border-blue-500/30 text-blue-400',                              badge: 'bg-blue-500/15 text-blue-400 border-blue-500/30' },
+  'APROVADO':      { col: 'border-emerald-500/30 text-emerald-400',                        badge: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
+  'ENTREGUE':      { col: 'border-purple-500/30 text-purple-400',                          badge: 'bg-purple-500/15 text-purple-400 border-purple-500/30' },
+}
+
 function AlbumTab({ freelancerId, album, onRefresh }: { freelancerId: string; album: Album[]; onRefresh: () => void }) {
   const [editing, setEditing] = useState<Album | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState<Partial<Album>>({})
   const [saving, setSaving] = useState(false)
+  const [changingId, setChangingId] = useState<string | null>(null)
 
   async function save() {
     setSaving(true)
@@ -498,7 +510,7 @@ function AlbumTab({ freelancerId, album, onRefresh }: { freelancerId: string; al
         await fetch('/api/freelancer-album', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editing.id, ...form }) })
         setEditing(null)
       } else {
-        await fetch('/api/freelancer-album', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ freelancer_id: freelancerId, status: 'NOVO TRABALHO', ...form }) })
+        await fetch('/api/freelancer-album', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ freelancer_id: freelancerId, status: 'AGUARDAR', ...form }) })
         setShowAdd(false)
       }
       setForm({})
@@ -513,16 +525,16 @@ function AlbumTab({ freelancerId, album, onRefresh }: { freelancerId: string; al
   }
 
   async function changeStatus(item: Album, newStatus: string) {
+    setChangingId(item.id)
     await fetch('/api/freelancer-album', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: item.id, status: newStatus }) })
+    setChangingId(null)
     onRefresh()
   }
-
-  const STATUS_ALBUM = ['NOVO TRABALHO', 'EM EDIÇÃO', 'CONCLUÍDO']
 
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <button onClick={() => { setShowAdd(true); setEditing(null); setForm({ status: 'NOVO TRABALHO' }) }}
+        <button onClick={() => { setShowAdd(true); setEditing(null); setForm({ status: 'AGUARDAR' }) }}
           className="px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-xs font-semibold tracking-widest hover:bg-gold/20 transition-all uppercase">
           + Adicionar
         </button>
@@ -530,15 +542,19 @@ function AlbumTab({ freelancerId, album, onRefresh }: { freelancerId: string; al
 
       {showAdd && <AlbumForm form={form} setForm={setForm} saving={saving} onSave={save} onCancel={() => setShowAdd(false)} />}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Kanban — scroll horizontal em mobile */}
+      <div className="flex gap-3 overflow-x-auto pb-2">
         {STATUS_ALBUM.map(status => {
           const items = album.filter(a => a.status === status)
+          const style = ALBUM_STYLE[status]
           return (
-            <div key={status} className="space-y-2">
-              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[9px] font-bold tracking-widest uppercase ${STATUS_STYLE[status]}`}>
+            <div key={status} className="flex-shrink-0 w-[220px] space-y-2">
+              {/* Column header */}
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[9px] font-bold tracking-widest uppercase bg-white/[0.02] ${style.col}`}>
                 <span>{status}</span>
-                <span className="ml-auto opacity-60">({items.length})</span>
+                <span className="ml-auto opacity-50">({items.length})</span>
               </div>
+              {/* Cards */}
               {items.map(item => (
                 editing?.id === item.id ? (
                   <AlbumForm key={item.id} form={form} setForm={setForm} saving={saving} onSave={save}
@@ -556,13 +572,17 @@ function AlbumTab({ freelancerId, album, onRefresh }: { freelancerId: string; al
                     {item.local && <p className="text-[10px] text-white/25">📍 {item.local}</p>}
                     {item.data_entrega && <p className="text-[10px] text-white/25">Entrega: {fmtDate(item.data_entrega).split(' · ')[0]}</p>}
                     {item.notas && <p className="text-[10px] text-white/30 italic border-t border-white/[0.04] pt-1.5">{item.notas}</p>}
-                    <div className="flex gap-1 pt-1">
-                      {STATUS_ALBUM.filter(s => s !== status).map(s => (
-                        <button key={s} onClick={() => changeStatus(item, s)}
-                          className={`flex-1 py-1 rounded text-[9px] font-semibold tracking-wide border transition-all ${STATUS_STYLE[s]} opacity-40 hover:opacity-100`}>
-                          → {s.split(' ')[s.split(' ').length - 1]}
-                        </button>
-                      ))}
+                    {/* Status dropdown */}
+                    <div className="pt-1 border-t border-white/[0.04]">
+                      <select
+                        value={item.status}
+                        disabled={changingId === item.id}
+                        onChange={e => changeStatus(item, e.target.value)}
+                        className={`w-full text-[9px] font-bold tracking-widest uppercase px-2 py-1.5 rounded-lg border cursor-pointer outline-none transition-all bg-black/40 ${style.badge} disabled:opacity-50`}>
+                        {STATUS_ALBUM.map(s => (
+                          <option key={s} value={s} className="bg-neutral-900 text-white">{s}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                 )
