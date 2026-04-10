@@ -176,24 +176,30 @@ function EdicaoModal({ e, onClose }: { e: Edicao; onClose: () => void }) {
   )
 }
 
+const STATUS_EDICAO_ORDER = ['NOVO TRABALHO', 'EM EDIÇÃO', 'CONCLUÍDO']
+
 function EdicaoCard({ e }: { e: Edicao }) {
   const [open, setOpen] = useState(false)
+  const hasCounts = FOTO_FIELDS.some(f => e[f.key] != null)
   return (
     <>
-      <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-white/[0.06] bg-white/[0.02]">
-        <div className="flex-1 min-w-0">
-          <p className="text-sm text-white/80">{e.nome}</p>
-          <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-            {e.data_casamento && <p className="text-[10px] text-white/30">{fmtDate(e.data_casamento).split(' · ')[0]}</p>}
-            {e.local && <p className="text-[10px] text-white/25">📍 {e.local}</p>}
+      <div className="p-3 rounded-xl border border-white/[0.06] bg-white/[0.02] space-y-2">
+        <p className="text-xs font-semibold text-white/80 leading-tight">{e.nome}</p>
+        {e.data_casamento && <p className="text-[10px] text-white/30">{fmtDate(e.data_casamento).split(' · ')[0]}</p>}
+        {e.local && <p className="text-[10px] text-white/25">📍 {e.local}</p>}
+        {e.data_entrega && <p className="text-[10px] text-white/25">Entrega: {fmtDate(e.data_entrega).split(' · ')[0]}</p>}
+        {hasCounts && (
+          <div className="flex flex-wrap gap-1 pt-1 border-t border-white/[0.04]">
+            {FOTO_FIELDS.filter(f => e[f.key] != null).map(({ key, label }) => (
+              <span key={key} className="text-[9px] bg-white/[0.04] text-white/35 px-1.5 py-0.5 rounded">
+                {label.split('/')[0].trim().slice(0,3)}: {e[key] as number}
+              </span>
+            ))}
           </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <span className={`text-[9px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium ${STATUS_EDICAO_STYLE[e.status] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
-            {e.status}
-          </span>
+        )}
+        <div className="pt-1">
           <button onClick={() => setOpen(true)}
-            className="text-[10px] tracking-[0.2em] uppercase px-3 py-1.5 rounded-xl border border-gold/30 bg-gold/5 text-gold/70 hover:text-gold hover:border-gold/60 hover:bg-gold/10 transition-all">
+            className="text-[9px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-lg border border-gold/30 bg-gold/5 text-gold/70 hover:text-gold hover:border-gold/50 hover:bg-gold/10 transition-all">
             Ver Mais
           </button>
         </div>
@@ -345,12 +351,26 @@ export default function FreelancerViewPage() {
             )}
           </section>
 
-          {/* ── Edição de Fotos ── */}
+          {/* ── Edição de Fotos — kanban read-only ── */}
           {edicao.length > 0 && (
             <section>
               <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-4">Edição de Fotos ({edicao.length})</p>
-              <div className="space-y-2">
-                {edicao.map(e => <EdicaoCard key={e.id} e={e} />)}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {STATUS_EDICAO_ORDER.map(status => {
+                  const jobs = edicao.filter(e => e.status === status)
+                  return (
+                    <div key={status} className="space-y-2">
+                      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[9px] font-bold tracking-widest uppercase ${STATUS_EDICAO_STYLE[status] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
+                        <span>{status}</span>
+                        <span className="ml-auto opacity-60">({jobs.length})</span>
+                      </div>
+                      {jobs.map(e => <EdicaoCard key={e.id} e={e} />)}
+                      {jobs.length === 0 && (
+                        <p className="text-[9px] text-white/15 text-center py-4 tracking-widest">—</p>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             </section>
           )}
