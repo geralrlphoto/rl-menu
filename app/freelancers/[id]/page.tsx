@@ -24,7 +24,8 @@ type Edicao = {
 }
 type Album = {
   id: string; freelancer_id: string; nome: string; status: string
-  local: string | null; data_casamento: string | null; data_entrega: string | null; notas: string | null
+  local: string | null; data_casamento: string | null; data_entrega: string | null
+  notas: string | null; fotos_urls: string[] | null
 }
 type Valor = {
   id: string; freelancer_id: string; servico: string; total_unidade: number
@@ -571,7 +572,22 @@ function AlbumTab({ freelancerId, album, onRefresh }: { freelancerId: string; al
                     {item.data_casamento && <p className="text-[10px] text-white/30">{fmtDate(item.data_casamento).split(' · ')[0]}</p>}
                     {item.local && <p className="text-[10px] text-white/25">📍 {item.local}</p>}
                     {item.data_entrega && <p className="text-[10px] text-white/25">Entrega: {fmtDate(item.data_entrega).split(' · ')[0]}</p>}
-                    {item.notas && <p className="text-[10px] text-white/30 italic border-t border-white/[0.04] pt-1.5">{item.notas}</p>}
+                    {item.notas && <p className="text-[10px] text-white/30 italic">{item.notas}</p>}
+                    {item.fotos_urls && item.fotos_urls.length > 0 && (
+                      <div className="grid grid-cols-3 gap-1 border-t border-white/[0.04] pt-1.5">
+                        {item.fotos_urls.slice(0, 6).map((url, i) => (
+                          <a key={i} href={url} target="_blank" rel="noopener noreferrer"
+                            className="aspect-square rounded overflow-hidden border border-white/10 block">
+                            <img src={url} alt="" className="w-full h-full object-cover hover:opacity-80 transition-opacity" />
+                          </a>
+                        ))}
+                        {item.fotos_urls.length > 6 && (
+                          <div className="aspect-square rounded bg-white/[0.04] border border-white/10 flex items-center justify-center text-[9px] text-white/30">
+                            +{item.fotos_urls.length - 6}
+                          </div>
+                        )}
+                      </div>
+                    )}
                     {/* Status dropdown */}
                     <div className="pt-1 border-t border-white/[0.04]">
                       <select
@@ -596,6 +612,27 @@ function AlbumTab({ freelancerId, album, onRefresh }: { freelancerId: string; al
 }
 
 function AlbumForm({ form, setForm, saving, onSave, onCancel, onDelete }: any) {
+  const [uploading, setUploading] = useState(false)
+  const fotos: string[] = form.fotos_urls ?? []
+
+  async function handleFiles(files: FileList | null) {
+    if (!files || files.length === 0) return
+    setUploading(true)
+    const newUrls: string[] = []
+    for (const file of Array.from(files)) {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/upload-image', { method: 'POST', body: fd }).then(r => r.json())
+      if (res.url) newUrls.push(res.url)
+    }
+    setForm((f: any) => ({ ...f, fotos_urls: [...(f.fotos_urls ?? []), ...newUrls] }))
+    setUploading(false)
+  }
+
+  function removePhoto(url: string) {
+    setForm((f: any) => ({ ...f, fotos_urls: (f.fotos_urls ?? []).filter((u: string) => u !== url) }))
+  }
+
   return (
     <div className="bg-white/[0.02] border border-gold/20 rounded-xl p-4 space-y-3">
       <div className="grid grid-cols-2 gap-2">
@@ -619,14 +656,48 @@ function AlbumForm({ form, setForm, saving, onSave, onCancel, onDelete }: any) {
           <label className={labelCls}>Notas</label>
           <textarea value={form.notas ?? ''} onChange={e => setForm((f: any) => ({ ...f, notas: e.target.value }))} placeholder="Observações..." rows={2} className={inputCls + ' resize-none'} />
         </div>
+
+        {/* Fotos para Álbum */}
+        <div className="col-span-2">
+          <label className={labelCls}>Fotos para Álbum</label>
+          {/* Thumbnails */}
+          {fotos.length > 0 && (
+            <div className="grid grid-cols-4 gap-1.5 mb-2">
+              {fotos.map((url, i) => (
+                <div key={i} className="relative group aspect-square rounded-lg overflow-hidden border border-white/10">
+                  <img src={url} alt="" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(url)}
+                    className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity text-red-400 text-lg">
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Upload button */}
+          <label className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-lg border border-dashed cursor-pointer transition-all ${uploading ? 'border-white/10 text-white/20' : 'border-white/20 text-white/40 hover:border-gold/40 hover:text-gold/60'}`}>
+            <svg className={`w-4 h-4 ${uploading ? 'animate-spin' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              {uploading
+                ? <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" strokeLinecap="round" strokeLinejoin="round"/>
+                : <><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></>
+              }
+            </svg>
+            <span className="text-xs tracking-widest uppercase">{uploading ? 'A enviar...' : 'Adicionar Fotos'}</span>
+            <input type="file" accept="image/*" multiple className="hidden" disabled={uploading}
+              onChange={e => handleFiles(e.target.files)} />
+          </label>
+        </div>
       </div>
+
       <div className="flex items-center justify-between pt-1">
         {onDelete ? (
           <button onClick={onDelete} className="text-[10px] text-red-400/60 hover:text-red-400 transition-colors tracking-widest">✕ Remover</button>
         ) : <span />}
         <div className="flex gap-2">
           <button onClick={onCancel} className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
-          <button onClick={onSave} disabled={saving || !form.nome} className="px-4 py-1.5 rounded-lg text-xs bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-50">
+          <button onClick={onSave} disabled={saving || uploading || !form.nome} className="px-4 py-1.5 rounded-lg text-xs bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-50">
             {saving ? 'A guardar...' : 'Guardar'}
           </button>
         </div>
