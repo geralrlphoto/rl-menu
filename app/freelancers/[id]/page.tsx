@@ -121,13 +121,13 @@ export default function FreelancerDetailPage() {
 
   const isVideografo = freelancer?.status === 'VIDEOGRAFO'
   const isFotografo  = freelancer?.status === 'FOTOGRAFO'
-  const tabs: { key: 'casamentos'|'edicao'|'album'|'valores'|'info'|'notas'; label: string }[] = [
-    { key: 'casamentos', label: `Casamentos (${casamentos.length})` },
-    ...(!isVideografo ? [{ key: 'edicao' as const, label: `Edição Fotos (${edicao.length})` }] : []),
-    ...(isFotografo ? [{ key: 'album' as const, label: `Edição Álbum (${album.length})` }] : []),
-    { key: 'valores',    label: 'Valores' },
-    { key: 'info',       label: 'Info' },
-    { key: 'notas',      label: 'Notas' },
+  const tabs: { key: 'casamentos'|'edicao'|'album'|'valores'|'info'|'notas'; label: string; count?: number }[] = [
+    { key: 'casamentos', label: 'Casamentos', count: casamentos.length },
+    ...(!isVideografo ? [{ key: 'edicao' as const, label: 'Edição Fotos', count: edicao.length }] : []),
+    ...(isFotografo ? [{ key: 'album' as const, label: 'Edição Álbum', count: album.length }] : []),
+    { key: 'valores', label: 'Valores' },
+    { key: 'info',    label: 'Info' },
+    { key: 'notas',   label: 'Notas' },
   ]
 
   return (
@@ -168,11 +168,21 @@ export default function FreelancerDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 border-b border-white/[0.06] pb-0">
+      <div className="flex items-center gap-1.5 mb-6 p-1.5 rounded-2xl border border-white/30 bg-black"
+        style={{ boxShadow: '0 0 18px 3px rgba(255,255,255,0.10), 0 0 6px 1px rgba(255,255,255,0.15), inset 0 0 18px 0 rgba(255,255,255,0.03)' }}>
         {tabs.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
-            className={`px-4 py-2 text-[10px] tracking-widest uppercase transition-all border-b-2 -mb-px ${tab === t.key ? 'text-gold border-gold' : 'text-white/30 border-transparent hover:text-white/60'}`}>
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[9px] tracking-[0.25em] uppercase font-semibold transition-all ${
+              tab === t.key
+                ? 'bg-white/10 text-white border border-white/20'
+                : 'text-white/30 hover:text-white/55 border border-transparent'
+            }`}>
             {t.label}
+            {t.count != null && t.count > 0 && (
+              <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold transition-all ${
+                tab === t.key ? 'bg-white/15 text-white/80' : 'bg-white/[0.06] text-white/25'
+              }`}>{t.count}</span>
+            )}
           </button>
         ))}
       </div>
