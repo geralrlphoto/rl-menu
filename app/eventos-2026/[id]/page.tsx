@@ -211,6 +211,147 @@ function EditMultiField({ label, value, field, eventId, onSaved }: {
   )
 }
 
+// ─── Dropdown multi-select com opções fixas ────────────────────────────────────
+function EditDropdownMulti({ label, value, field, eventId, options, onSaved }: {
+  label: string; value: string[]; field: string; eventId: string
+  options: string[]; onSaved: (field: string, val: any) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [draft, setDraft] = useState<string[]>(value ?? [])
+  const [saving, setSaving] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => { setDraft(value ?? []) }, [value])
+
+  useEffect(() => {
+    if (!open) return
+    function onClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) handleClose()
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [open, draft])
+
+  async function handleClose() {
+    setOpen(false)
+    if (JSON.stringify(draft) === JSON.stringify(value ?? [])) return
+    setSaving(true)
+    const payload: any = {}; payload[field] = draft
+    await fetch(`/api/eventos-notion/${eventId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    onSaved(field, draft); setSaving(false)
+  }
+
+  function toggle(opt: string) {
+    setDraft(d => d.includes(opt) ? d.filter(x => x !== opt) : [...d, opt])
+  }
+
+  return (
+    <div className="flex flex-col gap-0.5 group/f" ref={ref}>
+      <span className="text-[10px] tracking-[0.3em] text-white/25 uppercase">{label}</span>
+      <div className="relative">
+        <button onClick={() => setOpen(o => !o)}
+          className="w-full text-left text-sm text-white/80 hover:text-white px-2 py-1 -mx-2 rounded-lg hover:bg-white/5 transition-colors flex items-center gap-2 min-h-[28px]">
+          {draft.length > 0
+            ? <span className="flex flex-wrap gap-1">{draft.map(v => (
+                <span key={v} className="text-[10px] px-1.5 py-0.5 rounded-md bg-gold/10 text-gold/80 border border-gold/20">{v}</span>
+              ))}</span>
+            : <span className="text-white/20 italic text-sm">Clica para editar</span>}
+          {saving
+            ? <span className="text-[9px] text-white/20 ml-auto">...</span>
+            : <span className="text-[9px] text-white/15 ml-auto opacity-0 group-hover/f:opacity-100 transition-opacity">✎</span>}
+        </button>
+        {open && (
+          <div className="absolute left-0 top-full mt-1 z-50 bg-[#111] border border-white/10 rounded-xl shadow-2xl py-1 min-w-[200px]">
+            {options.map(opt => (
+              <button key={opt} onClick={() => toggle(opt)}
+                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-white/[0.05] transition-colors text-left">
+                <span className={`w-3.5 h-3.5 rounded flex-shrink-0 border flex items-center justify-center transition-colors ${draft.includes(opt) ? 'bg-gold border-gold' : 'border-white/20'}`}>
+                  {draft.includes(opt) && <svg className="w-2 h-2 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>}
+                </span>
+                <span className="text-xs text-white/70">{opt}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Dropdown single-select com opções fixas ───────────────────────────────────
+function EditDropdownSingle({ label, value, field, eventId, options, onSaved }: {
+  label: string; value: string[]; field: string; eventId: string
+  options: string[]; onSaved: (field: string, val: any) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [draft, setDraft] = useState<string[]>(value ?? [])
+  const [saving, setSaving] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => { setDraft(value ?? []) }, [value])
+
+  useEffect(() => {
+    if (!open) return
+    function onClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) handleClose()
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [open, draft])
+
+  async function handleClose() {
+    setOpen(false)
+    if (JSON.stringify(draft) === JSON.stringify(value ?? [])) return
+    setSaving(true)
+    const payload: any = {}; payload[field] = draft
+    await fetch(`/api/eventos-notion/${eventId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    onSaved(field, draft); setSaving(false)
+  }
+
+  function select(opt: string) {
+    const next = draft.includes(opt) ? draft.filter(x => x !== opt) : [...draft, opt]
+    setDraft(next)
+  }
+
+  return (
+    <div className="flex flex-col gap-0.5 group/f" ref={ref}>
+      <span className="text-[10px] tracking-[0.3em] text-white/25 uppercase">{label}</span>
+      <div className="relative">
+        <button onClick={() => setOpen(o => !o)}
+          className="w-full text-left text-sm text-white/80 hover:text-white px-2 py-1 -mx-2 rounded-lg hover:bg-white/5 transition-colors flex items-center gap-2 min-h-[28px]">
+          {draft.length > 0
+            ? <span className="flex flex-wrap gap-1">{draft.map(v => (
+                <span key={v} className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400/80 border border-emerald-500/20">{v}</span>
+              ))}</span>
+            : <span className="text-white/20 italic text-sm">Clica para editar</span>}
+          {saving
+            ? <span className="text-[9px] text-white/20 ml-auto">...</span>
+            : <span className="text-[9px] text-white/15 ml-auto opacity-0 group-hover/f:opacity-100 transition-opacity">✎</span>}
+        </button>
+        {open && (
+          <div className="absolute left-0 top-full mt-1 z-50 bg-[#111] border border-white/10 rounded-xl shadow-2xl py-1 min-w-[180px]">
+            {options.map(opt => (
+              <button key={opt} onClick={() => select(opt)}
+                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-white/[0.05] transition-colors text-left">
+                <span className={`w-3.5 h-3.5 rounded-full flex-shrink-0 border flex items-center justify-center transition-colors ${draft.includes(opt) ? 'bg-emerald-500 border-emerald-500' : 'border-white/20'}`}>
+                  {draft.includes(opt) && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                </span>
+                <span className="text-xs text-white/70">{opt}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── Select dropdown editável ──────────────────────────────────────────────────
 function EditSelect({ label, value, field, eventId, options, onSaved }: {
   label: string; value: string | null; field: string; eventId: string
@@ -1325,8 +1466,12 @@ export default function EventoPage() {
         {/* ── Equipa ── */}
         <Section title="Equipa">
           <div className="grid grid-cols-2 gap-4">
-            <EditMultiField label="Fotógrafo" value={e.fotografo ?? []} field="fotografo" eventId={e.id} onSaved={handleSaved} />
-            <EditMultiField label="Videógrafo" value={e.videografo ?? []} field="videografo" eventId={e.id} onSaved={handleSaved} />
+            <EditDropdownMulti label="Fotógrafo" value={e.fotografo ?? []} field="fotografo" eventId={e.id}
+              options={['ALEXANDRE CAPÃO','PATRICIO FERREIRA','SONIA CARVALHO','RUI GARRIDO','BRUNO DE CARVALHO','PEDRO MARTINS']}
+              onSaved={handleSaved} />
+            <EditDropdownSingle label="Videógrafo" value={e.videografo ?? []} field="videografo" eventId={e.id}
+              options={['RUI GONÇALVES','LUIS SOARES']}
+              onSaved={handleSaved} />
             <EditField label="Editor de Fotos" value={e.editor_fotos} field="editor_fotos" eventId={e.id} onSaved={handleSaved} />
             <EditField label="Agendamento Email" value={e.agendamento_email} field="agendamento_email" eventId={e.id} onSaved={handleSaved} />
           </div>
