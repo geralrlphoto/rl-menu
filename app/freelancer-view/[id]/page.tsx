@@ -506,14 +506,11 @@ function EdicaoCard({ e, onStatusChange }: { e: Edicao; onStatusChange: (id: str
         <div className="pt-1 border-t border-white/[0.04]">
           <div className="relative">
             <select
-              value={status === 'NOVO TRABALHO' ? '' : status}
+              value={status === 'NOVO TRABALHO' ? 'EM EDIÇÃO' : status}
               onChange={ev => handleStatus(ev.target.value)}
               disabled={saving}
               className={`appearance-none w-full text-[9px] tracking-widest uppercase font-bold px-2.5 py-1.5 pr-6 rounded-lg border outline-none cursor-pointer transition-all disabled:opacity-40 [color-scheme:dark] ${statusStyle}`}
             >
-              {status === 'NOVO TRABALHO' && (
-                <option value="" disabled className="bg-zinc-900 text-white/40">NOVO TRABALHO</option>
-              )}
               <option value="EM EDIÇÃO" className="bg-zinc-900 text-white">EM EDIÇÃO</option>
               <option value="CONCLUÍDO" className="bg-zinc-900 text-white">CONCLUÍDO</option>
             </select>
