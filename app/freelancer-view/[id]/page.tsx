@@ -503,18 +503,19 @@ function EdicaoCard({ e, onStatusChange }: { e: Edicao; onStatusChange: (id: str
           </div>
         )}
         {/* Estado dropdown */}
-        <div className="pt-1 border-t border-white/[0.04]">
+        <div className="pt-2 border-t border-white/[0.04]">
           <div className="relative">
             <select
               value={status === 'NOVO TRABALHO' ? 'EM EDIÇÃO' : status}
               onChange={ev => handleStatus(ev.target.value)}
               disabled={saving}
-              className={`appearance-none w-full text-[9px] tracking-widest uppercase font-bold px-2.5 py-1.5 pr-6 rounded-lg border outline-none cursor-pointer transition-all disabled:opacity-40 [color-scheme:dark] ${statusStyle}`}
+              style={{ boxShadow: '0 0 14px 2px rgba(255,255,255,0.10), 0 0 5px 1px rgba(255,255,255,0.12), inset 0 0 12px 0 rgba(255,255,255,0.03)' }}
+              className="appearance-none w-full text-[11px] tracking-[0.2em] uppercase font-semibold px-3 py-2.5 pr-7 rounded-xl border border-white/20 bg-white/[0.05] text-white outline-none cursor-pointer transition-all disabled:opacity-40 hover:border-white/40 hover:bg-white/[0.08] [color-scheme:dark]"
             >
               <option value="EM EDIÇÃO" className="bg-zinc-900 text-white">EM EDIÇÃO</option>
               <option value="CONCLUÍDO" className="bg-zinc-900 text-white">CONCLUÍDO</option>
             </select>
-            <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] opacity-60">▾</span>
+            <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-white/50">▾</span>
           </div>
         </div>
         <div>
