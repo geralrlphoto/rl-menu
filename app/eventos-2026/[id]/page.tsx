@@ -591,6 +591,42 @@ function estadoCfg(val: string) {
 }
 
 // ─── Linha de estado com dropdown e prazo opcional ─────────────────────────────
+// ─── Linha de estado ligada ao portal (Supabase) ──────────────────────────────
+function PortalEstadoRow({ label, dateStr, estado, referencia, stateKey, onSaved }: {
+  label: string; dateStr?: string | null
+  estado: string | null; referencia: string; stateKey: string
+  onSaved: (key: string, val: string) => void
+}) {
+  const OPTIONS = ['Aguardar', 'Em Edição', 'Concluído', 'Entregue']
+  const val = estado ?? 'Aguardar'
+  const cfg = estadoCfg(val)
+
+  async function onChange(v: string) {
+    onSaved(stateKey, v)
+    await fetch('/api/portais', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referencia, updates: { settings: { [stateKey]: v } } }),
+    })
+  }
+
+  return (
+    <div className={`grid grid-cols-[1.5rem_1fr_10rem_8rem] items-center gap-4 px-4 py-3 rounded-xl border transition-all ${cfg.box}`}>
+      <div className={`w-2 h-2 rounded-full justify-self-center ${cfg.dot}`} />
+      <span className={`text-[10px] tracking-widest uppercase leading-tight ${cfg.lbl}`}>{label}</span>
+      <div className="relative">
+        <select value={val} onChange={e => onChange(e.target.value)}
+          className={`appearance-none border rounded-lg px-3 py-1.5 text-xs focus:outline-none transition-colors cursor-pointer pr-6 w-full ${cfg.sel}`}>
+          {OPTIONS.map(o => <option key={o} value={o} className="bg-zinc-900 text-white">{o}</option>)}
+        </select>
+        <span className={`pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] ${cfg.arr}`}>▾</span>
+      </div>
+      <span className={`text-sm font-medium text-right ${dateStr ? cfg.date : 'text-white/10'}`}>
+        {dateStr ? formatDate(dateStr) : '—'}
+      </span>
+    </div>
+  )
+}
+
 function EstadoRow({ label, dateStr, estado, options, field, eventId, onSaved, href }: {
   label: string; dateStr?: string | null
   estado: string | null; options: string[]; field: string; eventId: string
@@ -1106,6 +1142,8 @@ export default function EventoPage() {
   const [albumDataPrevista, setAlbumDataPrevista] = useState<string | null>(null)
   const [albumNotionId, setAlbumNotionId] = useState<string | null>(null)
   const [referenciaLoaded, setReferenciaLoaded] = useState<string | null>(null)
+  const [portalSelecaoEstado, setPortalSelecaoEstado] = useState<string>('Aguardar')
+  const [prazoFotosNoivosEstado, setPrazoFotosNoivosEstado] = useState<string>('Aguardar')
 
   function loadPagamentos(ref: string, showRefresh = false) {
     if (showRefresh) setPagamentosRefreshing(true)
@@ -1186,6 +1224,16 @@ export default function EventoPage() {
                 })
               }
             })
+
+          // Carregar estado do portal (Seleção Fotos Noivos + Prazo Fotos Noivos)
+          fetch(`/api/portais?ref=${encodeURIComponent(ev.referencia)}`)
+            .then(r => r.json())
+            .then(p => {
+              const s = p?.portal?.settings ?? p?.settings ?? {}
+              if (s.selecao_fotos_noivos_estado) setPortalSelecaoEstado(s.selecao_fotos_noivos_estado)
+              if (s.prazo_fotos_noivos_estado)   setPrazoFotosNoivosEstado(s.prazo_fotos_noivos_estado)
+            })
+            .catch(() => {})
         }
       })
       .catch(() => { setError('Erro de ligação'); setLoading(false) })
@@ -1534,6 +1582,17 @@ export default function EventoPage() {
               estado={e.album_estado} options={['Aguardar','Em Edição','Em Aprovação','Aprovado','Entregue']}
               field="album_estado" eventId={e.id} onSaved={handleSaved}
               href={`/albuns-casamento?ref=${encodeURIComponent(e.referencia)}`} />
+            {e.referencia && <>
+              <PortalEstadoRow label="Seleção Fotos Noivos"
+                estado={portalSelecaoEstado} referencia={e.referencia}
+                stateKey="selecao_fotos_noivos_estado"
+                onSaved={(_key, val) => setPortalSelecaoEstado(val)} />
+              <PortalEstadoRow label="Prazo Entrega Fotos Noivos (40 dias)"
+                dateStr={fotosDataEntrada ? addCalendarDays(fotosDataEntrada, 40) : null}
+                estado={prazoFotosNoivosEstado} referencia={e.referencia}
+                stateKey="prazo_fotos_noivos_estado"
+                onSaved={(_key, val) => setPrazoFotosNoivosEstado(val)} />
+            </>}
           </div>
 
           {/* Link rápido → Seleção dos Noivos */}

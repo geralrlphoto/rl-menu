@@ -175,10 +175,10 @@ function EntregasSectionPC({ referencia }: { referencia: string }) {
   useEffect(() => {
     if (!referencia) return
     Promise.all([
-      fetch(`/api/evento-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()),
-      fetch(`/api/fotos-selecao-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()),
-      fetch(`/api/albuns-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()),
-      fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`).then(r => r.json()),
+      fetch(`/api/evento-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()).catch(() => ({})),
+      fetch(`/api/fotos-selecao-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()).catch(() => ({})),
+      fetch(`/api/albuns-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()).catch(() => ({})),
+      fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`).then(r => r.json()).catch(() => ({})),
     ]).then(([ev, fs, al, pt]) => {
       const e = ev.evento ?? {}
       setData({ data_evento: e.data_evento ?? null, sel_fotos_estado: e.sel_fotos_estado ?? null, video_estado: e.video_estado ?? null, fotos_edicao_estado: e.fotos_edicao_estado ?? null, album_estado: e.album_estado ?? null, fotosDataEntrada: fs.row?.data_entrada ?? null, albumDataPrevista: al.data_prevista_entrega ?? null, selecao_fotos_noivos_estado: pt.portal?.settings?.selecao_fotos_noivos_estado ?? 'Aguardar', prazo_fotos_noivos_estado: pt.portal?.settings?.prazo_fotos_noivos_estado ?? 'Aguardar' })

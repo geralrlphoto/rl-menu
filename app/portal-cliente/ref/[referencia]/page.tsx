@@ -252,10 +252,10 @@ function EntregasSection({ referencia }: { referencia: string }) {
   useEffect(() => {
     if (!referencia) return
     Promise.all([
-      fetch(`/api/evento-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()),
-      fetch(`/api/fotos-selecao-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()),
-      fetch(`/api/albuns-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()),
-      fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`).then(r => r.json()),
+      fetch(`/api/evento-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()).catch(() => ({})),
+      fetch(`/api/fotos-selecao-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()).catch(() => ({})),
+      fetch(`/api/albuns-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()).catch(() => ({})),
+      fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`).then(r => r.json()).catch(() => ({})),
     ]).then(([ev, fs, al, pt]) => {
       const evento = ev.evento ?? {}
       setData({
