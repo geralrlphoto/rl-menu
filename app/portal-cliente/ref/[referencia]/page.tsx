@@ -701,7 +701,9 @@ export default function PortalRefPage() {
     if (d.portal?.settings) setSettings(d.portal.settings)
     const hp = d.portal?.hasPassword ?? false
     setHasPassword(hp)
-    if (hp) {
+    const adminFlag = sessionStorage.getItem(`portalAdmin_${referencia}`)
+    const isAdminSession = adminFlag === 'true'
+    if (hp && !isAdminSession) {
       const stored = sessionStorage.getItem(`portalAuth_${referencia}`)
       if (stored === 'true') setAuthenticated(true)
     } else {
