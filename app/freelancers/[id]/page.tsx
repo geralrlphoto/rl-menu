@@ -25,7 +25,7 @@ type Edicao = {
 type Album = {
   id: string; freelancer_id: string; nome: string; status: string
   local: string | null; data_casamento: string | null; data_entrega: string | null
-  notas: string | null; fotos_album: string | null
+  fotos_album: string | null; texto_album: string | null; referencia_album: string | null
 }
 type Valor = {
   id: string; freelancer_id: string; servico: string; total_unidade: number
@@ -572,13 +572,21 @@ function AlbumTab({ freelancerId, album, onRefresh }: { freelancerId: string; al
                     {item.data_casamento && <p className="text-[10px] text-white/30">{fmtDate(item.data_casamento).split(' · ')[0]}</p>}
                     {item.local && <p className="text-[10px] text-white/25">📍 {item.local}</p>}
                     {item.data_entrega && <p className="text-[10px] text-white/25">Entrega: {fmtDate(item.data_entrega).split(' · ')[0]}</p>}
+                    {item.referencia_album && (
+                      <p className="text-[10px] font-mono text-gold/60 bg-gold/5 border border-gold/15 px-2 py-0.5 rounded w-fit">{item.referencia_album}</p>
+                    )}
                     {item.fotos_album && (
                       <div className="border-t border-white/[0.04] pt-1.5">
                         <p className="text-[9px] text-white/25 uppercase tracking-widest mb-1">Fotos Álbum</p>
                         <p className="text-[10px] text-white/50 whitespace-pre-wrap leading-relaxed">{item.fotos_album}</p>
                       </div>
                     )}
-                    {item.notas && <p className="text-[10px] text-white/30 italic border-t border-white/[0.04] pt-1.5">{item.notas}</p>}
+                    {item.texto_album && (
+                      <div className="border-t border-white/[0.04] pt-1.5">
+                        <p className="text-[9px] text-white/25 uppercase tracking-widest mb-1">Texto Álbum</p>
+                        <p className="text-[10px] text-white/50 whitespace-pre-wrap leading-relaxed">{item.texto_album}</p>
+                      </div>
+                    )}
                     {/* Status dropdown */}
                     <div className="pt-1 border-t border-white/[0.04]">
                       <select
@@ -623,12 +631,16 @@ function AlbumForm({ form, setForm, saving, onSave, onCancel, onDelete }: any) {
           <input value={form.local ?? ''} onChange={e => setForm((f: any) => ({ ...f, local: e.target.value }))} placeholder="Quinta da..." className={inputCls} />
         </div>
         <div className="col-span-2">
+          <label className={labelCls}>Referência do Álbum</label>
+          <input value={form.referencia_album ?? ''} onChange={e => setForm((f: any) => ({ ...f, referencia_album: e.target.value }))} placeholder="Ex: ALB-001" className={inputCls} />
+        </div>
+        <div className="col-span-2">
           <label className={labelCls}>Fotos para Álbum</label>
           <textarea value={form.fotos_album ?? ''} onChange={e => setForm((f: any) => ({ ...f, fotos_album: e.target.value }))} placeholder="Escreve aqui as fotos para álbum..." rows={4} className={inputCls + ' resize-none'} />
         </div>
         <div className="col-span-2">
-          <label className={labelCls}>Notas</label>
-          <textarea value={form.notas ?? ''} onChange={e => setForm((f: any) => ({ ...f, notas: e.target.value }))} placeholder="Observações..." rows={2} className={inputCls + ' resize-none'} />
+          <label className={labelCls}>Texto para Álbum</label>
+          <textarea value={form.texto_album ?? ''} onChange={e => setForm((f: any) => ({ ...f, texto_album: e.target.value }))} placeholder="Texto descritivo para o álbum..." rows={4} className={inputCls + ' resize-none'} />
         </div>
       </div>
       <div className="flex items-center justify-between pt-1">
