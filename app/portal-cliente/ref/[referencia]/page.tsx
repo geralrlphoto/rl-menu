@@ -240,6 +240,7 @@ function EntregasSection({ referencia }: { referencia: string }) {
     fotosDataEntrada: string | null
     albumDataPrevista: string | null
     selecao_fotos_noivos_estado: string | null
+    prazo_fotos_noivos_estado: string | null
   }>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [savingSelecao, setSavingSelecao] = useState(false)
@@ -266,19 +267,20 @@ function EntregasSection({ referencia }: { referencia: string }) {
         fotosDataEntrada:            fs.row?.data_entrada ?? null,
         albumDataPrevista:           al.data_prevista_entrega ?? null,
         selecao_fotos_noivos_estado: pt.portal?.settings?.selecao_fotos_noivos_estado ?? 'Aguardar',
+        prazo_fotos_noivos_estado:   pt.portal?.settings?.prazo_fotos_noivos_estado   ?? 'Aguardar',
       })
     })
   }, [referencia])
 
-  async function handleSelecaoEstado(val: string) {
+  async function handleEstado(key: string, val: string) {
     if (!data) return
     setSavingSelecao(true)
     await fetch('/api/portais', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ referencia, updates: { settings: { selecao_fotos_noivos_estado: val } } }),
+      body: JSON.stringify({ referencia, updates: { settings: { [key]: val } } }),
     })
-    setData(d => d ? { ...d, selecao_fotos_noivos_estado: val } : d)
+    setData(d => d ? { ...d, [key]: val } : d)
     setSavingSelecao(false)
   }
 
@@ -289,12 +291,13 @@ function EntregasSection({ referencia }: { referencia: string }) {
   const fotosEdDate   = data.fotosDataEntrada ? addWorkingDays(data.fotosDataEntrada, 30) : null
 
   const rows = [
-    prazoSelFotos ? { label: 'Prazo Seleção de Fotos (30 dias)', estado: data.sel_fotos_estado, dateStr: prazoSelFotos, editable: false } : null,
-    prazoVideo    ? { label: 'Prazo Entrega Vídeo (180 dias úteis)', estado: data.video_estado, dateStr: prazoVideo, editable: false } : null,
-    { label: 'Fotos para Edição', estado: data.fotos_edicao_estado, dateStr: fotosEdDate, editable: false },
-    { label: 'Álbum', estado: data.album_estado, dateStr: data.albumDataPrevista, editable: false },
-    { label: 'Seleção Fotos Noivos (40 dias)', estado: data.selecao_fotos_noivos_estado, dateStr: data.fotosDataEntrada ? addCalendarDays(data.fotosDataEntrada, 40) : null, editable: true },
-  ].filter(Boolean) as Array<{ label: string; estado: string | null; dateStr: string | null; editable: boolean }>
+    prazoSelFotos ? { label: 'Prazo Seleção de Fotos (30 dias)', estado: data.sel_fotos_estado, dateStr: prazoSelFotos, editable: false, stateKey: '' } : null,
+    prazoVideo    ? { label: 'Prazo Entrega Vídeo (180 dias úteis)', estado: data.video_estado, dateStr: prazoVideo, editable: false, stateKey: '' } : null,
+    { label: 'Fotos para Edição', estado: data.fotos_edicao_estado, dateStr: fotosEdDate, editable: false, stateKey: '' },
+    { label: 'Álbum', estado: data.album_estado, dateStr: data.albumDataPrevista, editable: false, stateKey: '' },
+    { label: 'Seleção Fotos Noivos', estado: data.selecao_fotos_noivos_estado, dateStr: null, editable: true, stateKey: 'selecao_fotos_noivos_estado' },
+    data.fotosDataEntrada ? { label: 'Prazo Entrega Fotos Noivos (40 dias)', estado: data.prazo_fotos_noivos_estado, dateStr: addCalendarDays(data.fotosDataEntrada, 40), editable: true, stateKey: 'prazo_fotos_noivos_estado' } : null,
+  ].filter(Boolean) as Array<{ label: string; estado: string | null; dateStr: string | null; editable: boolean; stateKey: string }>
 
   if (rows.length === 0) return null
 
@@ -311,7 +314,7 @@ function EntregasSection({ referencia }: { referencia: string }) {
           <span className="text-[9px] tracking-[0.3em] text-white/30 uppercase">Data de Entrega</span>
         </div>
         <div className="p-5 flex flex-col gap-2">
-          {rows.map(({ label, estado, dateStr, editable }) => {
+          {rows.map(({ label, estado, dateStr, editable, stateKey }) => {
             const val = estado ?? 'Aguardar'
             const cfg = estadoCfg(val)
             return (
@@ -322,7 +325,7 @@ function EntregasSection({ referencia }: { referencia: string }) {
                   {editable && isAdmin ? (
                     <select
                       value={val}
-                      onChange={e => handleSelecaoEstado(e.target.value)}
+                      onChange={e => handleEstado(stateKey, e.target.value)}
                       disabled={savingSelecao}
                       className={`text-[10px] px-2 py-0.5 rounded border outline-none cursor-pointer disabled:opacity-50 [color-scheme:dark] ${cfg.badge}`}
                     >
