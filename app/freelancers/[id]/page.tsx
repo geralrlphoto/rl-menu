@@ -9,6 +9,7 @@ import { useParams } from 'next/navigation'
 type Freelancer = {
   id: string; nome: string; status: string | null; contato: string | null
   email: string | null; nome_sos: string | null; contato_sos: string | null; notas: string | null
+  password: string | null
 }
 type Casamento = {
   id: string; freelancer_id: string; local: string; data_casamento: string | null
@@ -65,6 +66,26 @@ const STATUS_STYLE: Record<string, string> = {
 
 const inputCls = "w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15"
 const labelCls = "block text-[9px] text-white/25 tracking-widest uppercase mb-1"
+
+// ─── Password Display ─────────────────────────────────────────────────────────
+
+function PasswordDisplay({ password }: { password: string | null }) {
+  const [show, setShow] = useState(false)
+  return (
+    <div className="flex items-center gap-2 mt-2">
+      <span className="text-[9px] tracking-widest text-white/25 uppercase">Password:</span>
+      <span className={`text-xs font-mono ${show ? 'text-white/70' : 'text-white/20'} transition-colors`}>
+        {show ? (password ?? '—') : '••••••••'}
+      </span>
+      <button onClick={() => setShow(v => !v)} className="text-white/20 hover:text-white/60 transition-colors">
+        {show
+          ? <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          : <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        }
+      </button>
+    </div>
+  )
+}
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
@@ -151,6 +172,7 @@ export default function FreelancerDetailPage() {
               {freelancer.email && <a href={`mailto:${freelancer.email}`} className="text-xs text-white/40 hover:text-white/70 transition-colors">✉ {freelancer.email}</a>}
               {freelancer.nome_sos && <span className="text-xs text-white/25">SOS: {freelancer.nome_sos}{freelancer.contato_sos ? ` · ${freelancer.contato_sos}` : ''}</span>}
             </div>
+            <PasswordDisplay password={freelancer.password} />
           </div>
           {upcoming && (
             <div className={`flex-shrink-0 flex items-center gap-3 px-4 py-3 rounded-xl border ${dtu !== null && dtu <= 15 ? 'border-red-500/30 bg-red-500/5' : 'border-emerald-500/20 bg-emerald-500/5'}`}>
