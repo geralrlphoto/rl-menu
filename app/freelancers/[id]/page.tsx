@@ -167,7 +167,7 @@ export default function FreelancerDetailPage() {
       </div>
 
       {/* Tab content */}
-      {tab === 'casamentos' && <CasamentosTab freelancerId={id} casamentos={casamentos} onRefresh={load} />}
+      {tab === 'casamentos' && <CasamentosTab freelancerId={id} casamentos={casamentos} onRefresh={load} freelancerStatus={freelancer?.status ?? null} />}
       {tab === 'edicao'     && <EdicaoTab freelancerId={id} edicao={edicao} onRefresh={load} />}
       {tab === 'valores'    && <ValoresTab freelancerId={id} valores={valores} onRefresh={load} />}
       {tab === 'info'       && <InfoTab freelancerId={id} info={info} onRefresh={load} />}
@@ -178,7 +178,7 @@ export default function FreelancerDetailPage() {
 
 // ─── Casamentos Tab ───────────────────────────────────────────────────────────
 
-function CasamentosTab({ freelancerId, casamentos, onRefresh }: { freelancerId: string; casamentos: Casamento[]; onRefresh: () => void }) {
+function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus }: { freelancerId: string; casamentos: Casamento[]; onRefresh: () => void; freelancerStatus: string | null }) {
   const [editing, setEditing] = useState<Casamento | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState<Partial<Casamento>>({})
@@ -282,6 +282,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh }: { freelancerId: 
       {ficha && (
         <CasamentoFicha
           casamento={ficha}
+          isVideografo={freelancerStatus === 'VIDEOGRAFO'}
           onClose={() => setFicha(null)}
           onConfirm={() => { onRefresh() }}
           onEdit={() => {
@@ -296,7 +297,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh }: { freelancerId: 
   )
 }
 
-function CasamentoFicha({ casamento: c, onClose, onEdit, onConfirm }: { casamento: Casamento; onClose: () => void; onEdit: () => void; onConfirm?: () => void }) {
+function CasamentoFicha({ casamento: c, onClose, onEdit, onConfirm, isVideografo }: { casamento: Casamento; onClose: () => void; onEdit: () => void; onConfirm?: () => void; isVideografo?: boolean }) {
   const dtu = daysUntil(c.data_casamento)
   const isUrgent = dtu !== null && dtu >= 0 && dtu <= 15
   const isPast = dtu !== null && dtu < 0
@@ -391,6 +392,18 @@ function CasamentoFicha({ casamento: c, onClose, onEdit, onConfirm }: { casament
               <p className="text-xs text-white/20 italic">Sem briefing</p>
             )}
           </div>
+
+          {/* Relatório — só para videógrafos */}
+          {isVideografo && (
+            <div>
+              <p className="text-[9px] tracking-[0.3em] text-white/25 uppercase mb-2">Relatório</p>
+              <a href="https://tally.so/r/np88GE" target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold tracking-widest uppercase hover:bg-emerald-500/20 transition-all">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Relatório
+              </a>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
