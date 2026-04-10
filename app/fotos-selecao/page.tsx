@@ -377,7 +377,7 @@ function SelecaoCard({ row, onOpen, onDelete, confirmDelete, setConfirmDelete }:
         <div className="shrink-0 flex items-center gap-2" onClick={e => e.stopPropagation()}>
           {/* VER MAIS — sempre visível */}
           <button onClick={onOpen}
-            className="text-[10px] tracking-[0.2em] uppercase px-3 py-1.5 rounded-xl border border-white/10 bg-white/[0.03] text-white/40 hover:text-white hover:border-white/25 hover:bg-white/[0.07] transition-all">
+            className="text-[10px] tracking-[0.2em] uppercase px-3 py-1.5 rounded-xl border border-gold/30 bg-gold/5 text-gold/70 hover:text-gold hover:border-gold/60 hover:bg-gold/10 transition-all">
             Ver Mais
           </button>
 
