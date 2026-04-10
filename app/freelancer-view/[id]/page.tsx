@@ -527,9 +527,11 @@ export default function FreelancerViewPage() {
               </section>
 
               {/* Casamentos Passados */}
-              {past.length > 0 && (
-                <section>
-                  <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-4">Casamentos Anteriores ({past.length})</p>
+              <section>
+                <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-4">Casamentos Anteriores ({past.length})</p>
+                {past.length === 0 ? (
+                  <p className="text-white/15 text-xs tracking-widest">Sem casamentos anteriores.</p>
+                ) : (
                   <div className="space-y-2">
                     {past.map(c => (
                       <div key={c.id} className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-white/[0.04] bg-white/[0.01] opacity-60">
@@ -543,12 +545,8 @@ export default function FreelancerViewPage() {
                       </div>
                     ))}
                   </div>
-                </section>
-              )}
-
-              {casamentos.length === 0 && (
-                <p className="text-white/15 text-xs tracking-widest">Sem casamentos atribuídos.</p>
-              )}
+                )}
+              </section>
             </div>
           )}
 
