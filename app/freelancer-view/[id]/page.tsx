@@ -101,7 +101,7 @@ function PasswordGate({ id, onAuth }: { id: string; onAuth: () => void }) {
   )
 }
 
-// ── Edicao Card (expansível) ──────────────────────────────────────────────────
+// ── Edicao Modal ──────────────────────────────────────────────────────────────
 const FOTO_FIELDS: { key: keyof Edicao; label: string }[] = [
   { key: 'convidados',    label: 'Convidados' },
   { key: 'cerimonia',     label: 'Cerimónia' },
@@ -114,17 +114,73 @@ const FOTO_FIELDS: { key: keyof Edicao; label: string }[] = [
   { key: 'fotos_noivo',   label: 'Fotos Noivo' },
 ]
 
+function EdicaoModal({ e, onClose }: { e: Edicao; onClose: () => void }) {
+  const hasCounts = FOTO_FIELDS.some(f => e[f.key] != null)
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/85 backdrop-blur-md" />
+      <div className="relative z-10 bg-[#111] border border-white/[0.08] rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden"
+        onClick={e => e.stopPropagation()}>
+        <div className="h-0.5 w-full bg-gold/60" />
+        {/* Header */}
+        <div className="px-7 pt-6 pb-5 border-b border-white/[0.05] flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase mb-1">Edição de Fotos</p>
+            <h2 className="text-xl font-light tracking-[0.1em] text-white uppercase">{e.nome}</h2>
+            <div className="flex items-center gap-3 mt-1 flex-wrap">
+              {e.data_casamento && <p className="text-xs text-white/35">{fmtDate(e.data_casamento).split(' · ')[0]}</p>}
+              {e.local && <p className="text-xs text-white/25">📍 {e.local}</p>}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className={`text-[9px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium ${STATUS_EDICAO_STYLE[e.status] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
+              {e.status}
+            </span>
+            <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white hover:border-white/30 transition-all text-sm">✕</button>
+          </div>
+        </div>
+        {/* Body */}
+        <div className="px-7 py-5 space-y-5">
+          {/* Datas */}
+          {(e.data_entrega || e.data_final_entrega) && (
+            <div className="grid grid-cols-2 gap-3">
+              {e.data_entrega && (
+                <div className="bg-white/[0.03] border border-white/[0.05] rounded-2xl px-4 py-3">
+                  <p className="text-[8px] tracking-[0.3em] text-white/20 uppercase mb-1">Data Entrega</p>
+                  <p className="text-sm text-white/70">{fmtDate(e.data_entrega).split(' · ')[0]}</p>
+                </div>
+              )}
+              {e.data_final_entrega && (
+                <div className="bg-white/[0.03] border border-white/[0.05] rounded-2xl px-4 py-3">
+                  <p className="text-[8px] tracking-[0.3em] text-white/20 uppercase mb-1">Entrega Final</p>
+                  <p className="text-sm text-white/70">{fmtDate(e.data_final_entrega).split(' · ')[0]}</p>
+                </div>
+              )}
+            </div>
+          )}
+          {/* Contagem de fotos */}
+          <div>
+            <p className="text-[9px] tracking-[0.35em] text-white/20 uppercase mb-3">Contagem de Fotos</p>
+            <div className="grid grid-cols-3 gap-2">
+              {FOTO_FIELDS.map(({ key, label }) => (
+                <div key={key} className="bg-white/[0.03] border border-white/[0.05] rounded-xl px-3 py-2.5">
+                  <p className="text-[8px] tracking-[0.2em] text-white/20 uppercase mb-1">{label}</p>
+                  <p className="text-xl font-light text-white/80">{e[key] != null ? String(e[key]) : <span className="text-white/15 text-sm">—</span>}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function EdicaoCard({ e }: { e: Edicao }) {
   const [open, setOpen] = useState(false)
-  const hasCounts = FOTO_FIELDS.some(f => e[f.key] != null)
-
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
-      {/* Header — clicável */}
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-white/[0.02] transition-colors"
-      >
+    <>
+      <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-white/[0.06] bg-white/[0.02]">
         <div className="flex-1 min-w-0">
           <p className="text-sm text-white/80">{e.nome}</p>
           <div className="flex items-center gap-3 mt-0.5 flex-wrap">
@@ -136,46 +192,14 @@ function EdicaoCard({ e }: { e: Edicao }) {
           <span className={`text-[9px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium ${STATUS_EDICAO_STYLE[e.status] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
             {e.status}
           </span>
-          <span className="text-white/20 text-xs">{open ? '▲' : '▼'}</span>
+          <button onClick={() => setOpen(true)}
+            className="text-[10px] tracking-[0.2em] uppercase px-3 py-1.5 rounded-xl border border-gold/30 bg-gold/5 text-gold/70 hover:text-gold hover:border-gold/60 hover:bg-gold/10 transition-all">
+            Ver Mais
+          </button>
         </div>
-      </button>
-
-      {/* Detalhes expandidos */}
-      {open && (
-        <div className="px-4 pb-4 border-t border-white/[0.05] pt-3 space-y-3">
-          {/* Datas de entrega */}
-          <div className="flex flex-wrap gap-4">
-            {e.data_entrega && (
-              <div>
-                <p className="text-[8px] tracking-[0.3em] text-white/20 uppercase mb-0.5">Data Entrega</p>
-                <p className="text-xs text-white/60">{fmtDate(e.data_entrega).split(' · ')[0]}</p>
-              </div>
-            )}
-            {e.data_final_entrega && (
-              <div>
-                <p className="text-[8px] tracking-[0.3em] text-white/20 uppercase mb-0.5">Entrega Final</p>
-                <p className="text-xs text-white/60">{fmtDate(e.data_final_entrega).split(' · ')[0]}</p>
-              </div>
-            )}
-          </div>
-
-          {/* Contagem de fotos */}
-          {hasCounts && (
-            <div>
-              <p className="text-[8px] tracking-[0.3em] text-white/20 uppercase mb-2">Contagem de Fotos</p>
-              <div className="grid grid-cols-3 gap-2">
-                {FOTO_FIELDS.filter(f => e[f.key] != null).map(({ key, label }) => (
-                  <div key={key} className="bg-white/[0.03] border border-white/[0.05] rounded-xl px-3 py-2">
-                    <p className="text-[8px] tracking-[0.2em] text-white/25 uppercase mb-0.5">{label}</p>
-                    <p className="text-lg font-light text-white/80">{e[key] as number}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+      </div>
+      {open && <EdicaoModal e={e} onClose={() => setOpen(false)} />}
+    </>
   )
 }
 
