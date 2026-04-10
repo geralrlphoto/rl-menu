@@ -171,6 +171,9 @@ function FichaModal({ row, onClose, onSaved }: {
     setEditorSaving(true)
     setEditorFeedback('')
 
+    // Helper: parse string to int, returns null if empty/NaN
+    const n = (v: string | null) => { const x = parseInt(v ?? ''); return isNaN(x) ? null : x }
+
     // 1. Persist editor selection
     await fetch('/api/fotos-selecao-editor', {
       method: 'PATCH',
@@ -190,22 +193,22 @@ function FichaModal({ row, onClose, onSaved }: {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              freelancer_id: fl.id,
-              nome: row.nome_noivos || 'Sem nome',
-              status: 'NOVO TRABALHO',
-              local: null,
+              freelancer_id:  fl.id,
+              nome:           row.nome_noivos || 'Sem nome',
+              status:         'NOVO TRABALHO',
+              local:          null,
               data_casamento: row.date ?? null,
-              data_entrega: null,
+              data_entrega:   null,
               data_final_entrega: null,
-              sessao_noivos: parseInt(row.sessao_noivos) || null,
-              fotos_noiva:   parseInt(row.fotos_noiva)   || null,
-              fotos_noivo:   parseInt(row.fotos_noivo)   || null,
-              convidados:    parseInt(row.convidados)    || null,
-              cerimonia:     parseInt(row.cerimonia)     || null,
-              bolo_bouquet:  parseInt(row.bolo_bouquet)  || null,
-              sala_animacao: parseInt(row.sala_animacao) || null,
-              fotos_album:   parseInt(row.fotos_album)   || null,
-              detalhes: null,
+              sessao_noivos: n(row.sessao_noivos),
+              fotos_noiva:   n(row.fotos_noiva),
+              fotos_noivo:   n(row.fotos_noivo),
+              convidados:    n(row.convidados),
+              cerimonia:     n(row.cerimonia),
+              bolo_bouquet:  n(row.bolo_bouquet),
+              sala_animacao: n(row.sala_animacao),
+              fotos_album:   n(row.fotos_album),
+              detalhes:      null,
             }),
           })
           setEditorFeedback(`✓ Enviado para ${fl.nome}`)
