@@ -285,6 +285,126 @@ function EdicaoModal({ e, onClose }: { e: Edicao; onClose: () => void }) {
   )
 }
 
+// ── Casamento Ficha (read-only) ───────────────────────────────────────────────
+function CasamentoFicha({ c, onClose, onConfirm, isVideografo }: {
+  c: Casamento; onClose: () => void; onConfirm: (id: string) => void; isVideografo: boolean
+}) {
+  const dtu = daysUntil(c.data_casamento)
+  const isUrgent = dtu !== null && dtu >= 0 && dtu <= 15
+  const isPast   = dtu !== null && dtu < 0
+  const [confirming, setConfirming] = useState(false)
+  const [confirmed, setConfirmed]   = useState(c.data_confirmada ?? false)
+
+  async function handleConfirmar() {
+    setConfirming(true)
+    await fetch('/api/freelancer-casamentos', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: c.id, data_confirmada: true }),
+    })
+    setConfirmed(true)
+    setConfirming(false)
+    onConfirm(c.id)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+      <div className="relative w-full max-w-md bg-[#0e0e0e] border border-white/10 rounded-2xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+
+        {/* Header */}
+        <div className={`px-6 py-5 border-b border-white/[0.06] ${isUrgent ? 'bg-red-500/8' : isPast ? 'bg-white/[0.02]' : 'bg-gold/[0.04]'}`}>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className={`flex-shrink-0 flex flex-col items-center justify-center w-14 h-14 rounded-xl border ${isUrgent ? 'bg-red-500/15 border-red-500/30' : isPast ? 'bg-white/[0.04] border-white/[0.08]' : 'bg-gold/10 border-gold/25'}`}>
+                {c.data_casamento ? (
+                  <>
+                    <span className={`text-xl font-bold leading-none ${isUrgent ? 'text-red-400' : isPast ? 'text-white/30' : 'text-gold'}`}>
+                      {c.data_casamento.split('-')[2]}
+                    </span>
+                    <span className={`text-[9px] uppercase tracking-wide font-semibold ${isUrgent ? 'text-red-400/60' : isPast ? 'text-white/20' : 'text-gold/60'}`}>
+                      {MESES[parseInt(c.data_casamento.split('-')[1])-1]}
+                    </span>
+                  </>
+                ) : <span className="text-white/20 text-sm">—</span>}
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-white uppercase tracking-wide leading-tight">{c.local || '—'}</h2>
+                {c.data_casamento && (
+                  <p className={`text-xs mt-0.5 ${isUrgent ? 'text-red-400/70' : isPast ? 'text-white/30' : 'text-white/45'}`}>{fmtDate(c.data_casamento)}</p>
+                )}
+                {dtu !== null && dtu >= 0 && (
+                  <span className={`inline-block mt-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${isUrgent ? 'bg-red-500/20 text-red-400' : 'bg-white/[0.08] text-white/40'}`}>
+                    {dtu === 0 ? 'HOJE' : `${dtu} dias`}
+                  </span>
+                )}
+              </div>
+            </div>
+            <button onClick={onClose} className="flex-shrink-0 p-1.5 rounded-lg text-white/25 hover:text-white/60 hover:bg-white/[0.06] transition-all">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-5 space-y-4">
+          <div>
+            <p className="text-[9px] tracking-[0.3em] text-white/25 uppercase mb-2">Equipa Fotografia</p>
+            {c.equipa_foto && c.equipa_foto.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {c.equipa_foto.map((name, i) => (
+                  <span key={i} className="text-xs px-2.5 py-1 rounded-full bg-white/[0.06] border border-white/[0.08] text-white/70">{name}</span>
+                ))}
+              </div>
+            ) : <p className="text-xs text-white/20 italic">Não definida</p>}
+          </div>
+          <div>
+            <p className="text-[9px] tracking-[0.3em] text-white/25 uppercase mb-2">Videógrafo</p>
+            <p className="text-sm text-white/70">{c.videografo || <span className="text-white/20 italic">Não definido</span>}</p>
+          </div>
+          <div>
+            <p className="text-[9px] tracking-[0.3em] text-white/25 uppercase mb-2">Briefing</p>
+            {c.briefing_url ? (
+              <a href={c.briefing_url} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs text-gold/70 hover:text-gold transition-colors border border-gold/20 px-3 py-1.5 rounded-lg hover:bg-gold/5">
+                Abrir Briefing ↗
+              </a>
+            ) : <p className="text-xs text-white/20 italic">Sem briefing</p>}
+          </div>
+          {isVideografo && (
+            <div>
+              <p className="text-[9px] tracking-[0.3em] text-white/25 uppercase mb-2">Relatório</p>
+              <a href="https://tally.so/r/np88GE" target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold tracking-widest uppercase hover:bg-emerald-500/20 transition-all">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Relatório
+              </a>
+            </div>
+          )}
+        </div>
+
+        {/* Footer — só confirmar, sem editar */}
+        {!isPast && (
+          <div className="px-6 pb-5">
+            {confirmed ? (
+              <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold tracking-widest uppercase cursor-default">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                Data Confirmada
+              </div>
+            ) : (
+              <button onClick={handleConfirmar} disabled={confirming}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-xs font-semibold tracking-widest uppercase hover:bg-gold/20 transition-all disabled:opacity-50">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                {confirming ? 'A confirmar...' : 'Confirmar Data'}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 const STATUS_EDICAO_ORDER = ['NOVO TRABALHO', 'EM EDIÇÃO', 'CONCLUÍDO']
 
 function EdicaoCard({ e, onStatusChange }: { e: Edicao; onStatusChange: (id: string, status: string) => void }) {
@@ -359,8 +479,8 @@ export default function FreelancerViewPage() {
   const [edicao, setEdicao]         = useState<Edicao[]>([])
   const [album, setAlbum]           = useState<Album[]>([])
   const [loading, setLoading]       = useState(false)
-  const [confirmingId, setConfirmingId] = useState<string | null>(null)
   const [tab, setTab]               = useState<'casamentos'|'edicao'|'album'>('casamentos')
+  const [ficha, setFicha]           = useState<Casamento | null>(null)
 
   // Check session
   useEffect(() => {
@@ -386,17 +506,6 @@ export default function FreelancerViewPage() {
   }, [id])
 
   useEffect(() => { if (authed) loadData() }, [authed, loadData])
-
-  async function handleConfirmar(casamentoId: string) {
-    setConfirmingId(casamentoId)
-    await fetch('/api/freelancer-casamentos', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: casamentoId, data_confirmada: true }),
-    })
-    setCasamentos(prev => prev.map(c => c.id === casamentoId ? { ...c, data_confirmada: true } : c))
-    setConfirmingId(null)
-  }
 
   if (checkingAuth) return null
   if (!authed) return <PasswordGate id={id} onAuth={() => { setAuthed(true) }} />
@@ -475,12 +584,24 @@ export default function FreelancerViewPage() {
                   <div className="space-y-3">
                     {upcoming.map(c => {
                       const days = daysUntil(c.data_casamento)
+                      const isUrgent = days !== null && days <= 7
                       return (
-                        <div key={c.id} className="bg-white/[0.02] border border-white/[0.07] rounded-2xl p-5 space-y-3">
+                        <div key={c.id} onClick={() => setFicha(c)}
+                          className={`cursor-pointer bg-white/[0.02] border rounded-2xl p-5 space-y-3 hover:border-white/20 transition-all ${isUrgent ? 'border-red-500/25' : 'border-white/[0.07]'}`}>
                           <div className="flex items-start justify-between gap-3 flex-wrap">
-                            <div>
-                              <p className="text-base font-light tracking-wider text-white uppercase">{c.local || '—'}</p>
-                              <p className="text-xs text-white/40 mt-0.5">{fmtDate(c.data_casamento)}</p>
+                            <div className="flex items-center gap-3">
+                              <div className={`flex-shrink-0 flex flex-col items-center justify-center w-12 h-12 rounded-xl border text-center ${isUrgent ? 'bg-red-500/15 border-red-500/30' : 'bg-gold/10 border-gold/25'}`}>
+                                {c.data_casamento ? (
+                                  <>
+                                    <span className={`text-base font-bold leading-none ${isUrgent ? 'text-red-400' : 'text-gold'}`}>{c.data_casamento.split('-')[2]}</span>
+                                    <span className={`text-[8px] uppercase tracking-wide font-semibold ${isUrgent ? 'text-red-400/60' : 'text-gold/60'}`}>{MESES[parseInt(c.data_casamento.split('-')[1])-1]}</span>
+                                  </>
+                                ) : <span className="text-white/20 text-xs">—</span>}
+                              </div>
+                              <div>
+                                <p className="text-base font-light tracking-wider text-white uppercase">{c.local || '—'}</p>
+                                <p className="text-xs text-white/40 mt-0.5">{fmtDate(c.data_casamento)}</p>
+                              </div>
                             </div>
                             <div className="flex items-center gap-2 flex-wrap">
                               {days !== null && (
@@ -488,37 +609,13 @@ export default function FreelancerViewPage() {
                                   {days === 0 ? 'HOJE' : `${days}d`}
                                 </span>
                               )}
-                              {c.data_confirmada ? (
+                              {c.data_confirmada && (
                                 <span className="text-[10px] px-2.5 py-1 rounded-full border bg-emerald-500/15 text-emerald-400 border-emerald-500/30 tracking-widest">
                                   ✓ Confirmado
                                 </span>
-                              ) : (
-                                <button
-                                  onClick={() => handleConfirmar(c.id)}
-                                  disabled={confirmingId === c.id}
-                                  className="text-[10px] px-2.5 py-1 rounded-full border border-gold/30 bg-gold/10 text-gold tracking-widest hover:bg-gold/20 transition-all disabled:opacity-40 uppercase"
-                                >
-                                  {confirmingId === c.id ? '...' : 'Confirmar Data'}
-                                </button>
                               )}
                             </div>
                           </div>
-                          {(c.equipa_foto?.length || c.videografo) && (
-                            <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/[0.05]">
-                              {c.equipa_foto?.map((m,i) => (
-                                <span key={i} className="text-[9px] px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-400/70 border border-yellow-500/20">📷 {m}</span>
-                              ))}
-                              {c.videografo && (
-                                <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400/70 border border-emerald-500/20">🎥 {c.videografo}</span>
-                              )}
-                            </div>
-                          )}
-                          {c.briefing_url && (
-                            <a href={c.briefing_url} target="_blank" rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 text-[10px] px-3 py-1.5 rounded-xl border border-white/10 text-white/40 hover:text-white hover:border-white/30 transition-all tracking-widest uppercase">
-                              Ver Briefing ›
-                            </a>
-                          )}
                         </div>
                       )
                     })}
@@ -534,7 +631,8 @@ export default function FreelancerViewPage() {
                 ) : (
                   <div className="space-y-2">
                     {past.map(c => (
-                      <div key={c.id} className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-white/[0.04] bg-white/[0.01] opacity-60">
+                      <div key={c.id} onClick={() => setFicha(c)}
+                        className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-white/[0.04] bg-white/[0.01] opacity-60 cursor-pointer hover:opacity-80 hover:border-white/[0.10] transition-all">
                         <div>
                           <p className="text-sm text-white/60">{c.local || '—'}</p>
                           <p className="text-[10px] text-white/25 mt-0.5">{fmtDate(c.data_casamento).split(' · ')[0]}</p>
@@ -548,6 +646,19 @@ export default function FreelancerViewPage() {
                 )}
               </section>
             </div>
+          )}
+
+          {/* Ficha modal */}
+          {ficha && (
+            <CasamentoFicha
+              c={ficha}
+              isVideografo={freelancer?.status === 'VIDEOGRAFO'}
+              onClose={() => setFicha(null)}
+              onConfirm={(id) => {
+                setCasamentos(prev => prev.map(c => c.id === id ? { ...c, data_confirmada: true } : c))
+                setFicha(prev => prev?.id === id ? { ...prev, data_confirmada: true } : prev)
+              }}
+            />
           )}
 
           {/* ── Tab: Edição de Fotos ── */}
