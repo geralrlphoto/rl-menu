@@ -211,6 +211,101 @@ function EditMultiField({ label, value, field, eventId, onSaved }: {
   )
 }
 
+// ─── Equipa field — salva no Supabase, NÃO no Notion ──────────────────────────
+function EditEquipaField({ label, field, multi, eventoId, referencia, local, dataCasamento, initialValue, options }: {
+  label: string; field: 'fotografo' | 'videografo'; multi: boolean
+  eventoId: string; referencia: string; local: string; dataCasamento: string
+  initialValue: string[]; options: string[]
+}) {
+  const [value, setValue] = useState<string[]>(initialValue)
+  const [open, setOpen]   = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [loaded, setLoaded] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  // Load from Supabase on mount — prefer over Notion value
+  useEffect(() => {
+    fetch(`/api/evento-equipa?evento_id=${eventoId}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.equipa) setValue(d.equipa[field] ?? initialValue)
+        else setValue(initialValue)
+        setLoaded(true)
+      })
+      .catch(() => setLoaded(true))
+  }, [eventoId, field])
+
+  useEffect(() => {
+    if (!open || !loaded) return
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) handleClose()
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open, loaded, value])
+
+  async function handleClose() {
+    setOpen(false)
+    setSaving(true)
+    await fetch('/api/evento-equipa', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        evento_id: eventoId, referencia, local,
+        data_casamento: dataCasamento || null,
+        [field]: value,
+      }),
+    })
+    setSaving(false)
+  }
+
+  function toggle(opt: string) {
+    if (multi) {
+      setValue(v => v.includes(opt) ? v.filter(x => x !== opt) : [...v, opt])
+    } else {
+      setValue(v => v.includes(opt) ? v.filter(x => x !== opt) : [opt])
+    }
+  }
+
+  const tagCls = multi
+    ? 'text-[10px] px-1.5 py-0.5 rounded-md bg-gold/10 text-gold/80 border border-gold/20'
+    : 'text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400/80 border border-emerald-500/20'
+
+  return (
+    <div className="flex flex-col gap-0.5 group/f" ref={ref}>
+      <span className="text-[10px] tracking-[0.3em] text-white/25 uppercase">{label}</span>
+      <div className="relative">
+        <button onClick={() => setOpen(o => !o)}
+          className="w-full text-left px-2 py-1 -mx-2 rounded-lg hover:bg-white/5 transition-colors flex items-center gap-2 min-h-[28px]">
+          {value.length > 0
+            ? <span className="flex flex-wrap gap-1">{value.map(v => (
+                <span key={v} className={tagCls}>{v}</span>
+              ))}</span>
+            : <span className="text-white/20 italic text-sm">Clica para editar</span>}
+          {saving
+            ? <span className="text-[9px] text-white/20 ml-auto">...</span>
+            : <span className="text-[9px] text-white/15 ml-auto opacity-0 group-hover/f:opacity-100 transition-opacity">✎</span>}
+        </button>
+        {open && (
+          <div className="absolute left-0 top-full mt-1 z-50 bg-[#111] border border-white/10 rounded-xl shadow-2xl py-1 min-w-[200px]">
+            {options.map(opt => (
+              <button key={opt} onClick={() => toggle(opt)}
+                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-white/[0.05] transition-colors text-left">
+                <span className={`w-3.5 h-3.5 flex-shrink-0 border flex items-center justify-center transition-colors ${multi ? 'rounded' : 'rounded-full'} ${value.includes(opt) ? (multi ? 'bg-gold border-gold' : 'bg-emerald-500 border-emerald-500') : 'border-white/20'}`}>
+                  {value.includes(opt) && (multi
+                    ? <svg className="w-2 h-2 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    : <span className="w-1.5 h-1.5 rounded-full bg-white" />)}
+                </span>
+                <span className="text-xs text-white/70">{opt}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── Dropdown multi-select com opções fixas ────────────────────────────────────
 function EditDropdownMulti({ label, value, field, eventId, options, onSaved }: {
   label: string; value: string[]; field: string; eventId: string
@@ -1466,12 +1561,14 @@ export default function EventoPage() {
         {/* ── Equipa ── */}
         <Section title="Equipa">
           <div className="grid grid-cols-2 gap-4">
-            <EditDropdownMulti label="Fotógrafo" value={e.fotografo ?? []} field="fotografo" eventId={e.id}
-              options={['ALEXANDRE CAPÃO','PATRICIO FERREIRA','SONIA CARVALHO','RUI GARRIDO','BRUNO DE CARVALHO','PEDRO MARTINS']}
-              onSaved={handleSaved} />
-            <EditDropdownSingle label="Videógrafo" value={e.videografo ?? []} field="videografo" eventId={e.id}
-              options={['RUI GONÇALVES','LUIS SOARES']}
-              onSaved={handleSaved} />
+            <EditEquipaField label="Fotógrafo" field="fotografo" multi={true}
+              eventoId={e.id} referencia={e.referencia ?? ''} local={e.local ?? ''} dataCasamento={e.data_evento ?? ''}
+              initialValue={e.fotografo ?? []}
+              options={['ALEXANDRE CAPÃO','PATRICIO FERREIRA','SONIA CARVALHO','RUI GARRIDO','BRUNO DE CARVALHO','PEDRO MARTINS']} />
+            <EditEquipaField label="Videógrafo" field="videografo" multi={false}
+              eventoId={e.id} referencia={e.referencia ?? ''} local={e.local ?? ''} dataCasamento={e.data_evento ?? ''}
+              initialValue={e.videografo ?? []}
+              options={['RUI GONÇALVES','LUIS SOARES']} />
             <EditField label="Editor de Fotos" value={e.editor_fotos} field="editor_fotos" eventId={e.id} onSaved={handleSaved} />
             <EditField label="Agendamento Email" value={e.agendamento_email} field="agendamento_email" eventId={e.id} onSaved={handleSaved} />
           </div>
