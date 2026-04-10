@@ -181,7 +181,7 @@ function FichaModal({ row, onClose, onSaved }: {
       body: JSON.stringify({ notion_page_id: row.id, editor: next }),
     })
 
-    // 2. Auto-create freelancer_edicao entry for the selected editor
+    // 2. Upsert freelancer_edicao entry for the selected editor
     if (next) {
       try {
         const { freelancers } = await fetch('/api/freelancers').then(r => r.json())
@@ -189,29 +189,50 @@ function FichaModal({ row, onClose, onSaved }: {
           f.nome.trim().toLowerCase() === next.trim().toLowerCase()
         )
         if (fl) {
-          await fetch('/api/freelancer-edicao', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              freelancer_id:  fl.id,
-              nome:           row.nome_noivos || 'Sem nome',
-              status:         'NOVO TRABALHO',
-              local:          null,
-              data_casamento: row.date ?? null,
-              data_entrega:   null,
-              data_final_entrega: null,
-              sessao_noivos: n(row.sessao_noivos),
-              fotos_noiva:   n(row.fotos_noiva),
-              fotos_noivo:   n(row.fotos_noivo),
-              convidados:    n(row.convidados),
-              cerimonia:     n(row.cerimonia),
-              bolo_bouquet:  n(row.bolo_bouquet),
-              sala_animacao: n(row.sala_animacao),
-              fotos_album:   n(row.fotos_album),
-              detalhes:      null,
-            }),
-          })
-          setEditorFeedback(`✓ Enviado para ${fl.nome}`)
+          const counts = {
+            sessao_noivos: n(row.sessao_noivos),
+            fotos_noiva:   n(row.fotos_noiva),
+            fotos_noivo:   n(row.fotos_noivo),
+            convidados:    n(row.convidados),
+            cerimonia:     n(row.cerimonia),
+            bolo_bouquet:  n(row.bolo_bouquet),
+            sala_animacao: n(row.sala_animacao),
+            fotos_album:   n(row.fotos_album),
+          }
+
+          // Check if entry already exists for this freelancer + event (by nome + data)
+          const existingRes = await fetch(`/api/freelancer-edicao?freelancer_id=${fl.id}`).then(r => r.json())
+          const existing = (existingRes.edicao ?? []).find((e: any) =>
+            e.nome === (row.nome_noivos || 'Sem nome') || e.data_casamento === (row.date ?? null)
+          )
+
+          if (existing) {
+            // Update existing entry with latest counts
+            await fetch('/api/freelancer-edicao', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: existing.id, ...counts }),
+            })
+            setEditorFeedback(`✓ Atualizado em ${fl.nome}`)
+          } else {
+            // Create new entry
+            await fetch('/api/freelancer-edicao', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                freelancer_id:  fl.id,
+                nome:           row.nome_noivos || 'Sem nome',
+                status:         'NOVO TRABALHO',
+                local:          null,
+                data_casamento: row.date ?? null,
+                data_entrega:   null,
+                data_final_entrega: null,
+                detalhes:       null,
+                ...counts,
+              }),
+            })
+            setEditorFeedback(`✓ Enviado para ${fl.nome}`)
+          }
         } else {
           setEditorFeedback('⚠ Editor não encontrado nos freelancers')
         }

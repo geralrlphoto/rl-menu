@@ -8,7 +8,11 @@ function getProp(props: any, key: string, type: string): any {
   if (!p) return null
   try {
     if (type === 'title') return p.title?.map((t: any) => t.plain_text).join('') ?? ''
-    if (type === 'text')  return p.rich_text?.map((t: any) => t.plain_text).join('') ?? ''
+    if (type === 'text') {
+      // Support both Rich Text and Number Notion property types
+      if (p.type === 'number' || p.number !== undefined) return p.number !== null && p.number !== undefined ? String(p.number) : ''
+      return p.rich_text?.map((t: any) => t.plain_text).join('') ?? ''
+    }
     if (type === 'date')  return p.date?.start ? p.date.start.split('T')[0] : null
   } catch { return null }
   return null
