@@ -93,6 +93,8 @@ export default function NovoPortalButton() {
         })
       }
 
+      // Mark as admin so edit controls appear immediately after redirect
+      sessionStorage.setItem(`portalAdmin_${evento.referencia}`, 'true')
       reset()
       router.push(`/portal-cliente/ref/${encodeURIComponent(evento.referencia)}`)
     } catch {

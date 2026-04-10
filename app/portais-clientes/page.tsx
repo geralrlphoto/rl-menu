@@ -4,7 +4,7 @@ import NovoPortalButton from './NovoPortalButton'
 import CopiarLinkButton from './CopiarLinkButton'
 import AdminPortalLink from './AdminPortalLink'
 
-export const revalidate = 30
+export const revalidate = 0
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 const EVENTOS_DB = '1ad220116d8a804b839ddc36f1e7ecf1'
