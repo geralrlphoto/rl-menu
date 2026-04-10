@@ -740,6 +740,10 @@ function EdicaoTab({ freelancerId, edicao, onRefresh }: { freelancerId: string; 
                     {job.data_casamento && <p className="text-[10px] text-white/30">{fmtDate(job.data_casamento).split(' · ')[0]}</p>}
                     {job.local && <p className="text-[10px] text-white/25">📍 {job.local}</p>}
                     {job.data_entrega && <p className="text-[10px] text-white/25">Entrega: {fmtDate(job.data_entrega).split(' · ')[0]}</p>}
+                    {job.referencia
+                      ? <p className="text-[9px] font-mono text-emerald-400/70 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded w-fit">🔗 {job.referencia}</p>
+                      : <p className="text-[9px] text-red-400/60 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded w-fit">⚠ sem referência — sync desativado</p>
+                    }
                     {/* Foto counts */}
                     {[['Convidados', job.convidados],['Cerimónia', job.cerimonia],['Detalhes', job.detalhes],['Sala', job.sala_animacao],['Álbum', job.fotos_album],['Bolo/Bouquet', job.bolo_bouquet],['Noivos', job.sessao_noivos],['Noiva', job.fotos_noiva],['Noivo', job.fotos_noivo]].some(([,v]) => v) && (
                       <div className="flex flex-wrap gap-1 pt-1 border-t border-white/[0.04]">
