@@ -737,14 +737,22 @@ function EdicaoTab({ freelancerId, edicao, onRefresh }: { freelancerId: string; 
                         ))}
                       </div>
                     )}
-                    {/* Move status buttons */}
-                    <div className="flex gap-1 pt-1">
+                    {/* Move status buttons + Ver Seleção */}
+                    <div className="flex flex-wrap gap-1 pt-1 items-center">
                       {STATUS_EDICAO.filter(s => s !== status).map(s => (
                         <button key={s} onClick={() => changeStatus(job, s)}
                           className="text-[8px] px-2 py-0.5 rounded border border-white/10 text-white/25 hover:text-white/60 hover:border-white/25 transition-all tracking-wide">
                           → {s.split(' ')[0]}
                         </button>
                       ))}
+                      <a
+                        href={`/fotos-selecao?ref=${encodeURIComponent(job.nome)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-auto text-[8px] px-2 py-0.5 rounded border border-gold/25 text-gold/50 hover:text-gold hover:border-gold/60 transition-all tracking-wide uppercase"
+                      >
+                        Ver Seleção
+                      </a>
                     </div>
                   </div>
                 )
