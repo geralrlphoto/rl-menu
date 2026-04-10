@@ -152,9 +152,9 @@ export default function FreelancersPage() {
                       </div>
                     ) : (
                       <div className="flex items-center gap-4 px-4 py-3 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12] transition-all group">
-                        <div className="flex-1 min-w-0">
+                        <Link href={`/freelancers/${f.id}`} className="flex-1 min-w-0 cursor-pointer">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-semibold text-white/85">{f.nome}</span>
+                            <span className="text-sm font-semibold text-white/85 group-hover:text-white transition-colors">{f.nome}</span>
                             {f.status && (
                               <span className={`text-[9px] px-2 py-0.5 rounded-full border tracking-widest uppercase font-semibold ${statusStyle(f.status).badge}`}>
                                 {f.status}
@@ -163,14 +163,14 @@ export default function FreelancersPage() {
                           </div>
                           <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1">
                             {f.contato && (
-                              <a href={`tel:${f.contato}`} className="text-xs text-white/40 hover:text-white/70 transition-colors">
+                              <span className="text-xs text-white/40">
                                 📞 {f.contato}
-                              </a>
+                              </span>
                             )}
                             {f.email && (
-                              <a href={`mailto:${f.email}`} className="text-xs text-white/40 hover:text-white/70 transition-colors truncate max-w-[200px]">
+                              <span className="text-xs text-white/40 truncate max-w-[200px]">
                                 ✉ {f.email}
-                              </a>
+                              </span>
                             )}
                             {f.nome_sos && (
                               <span className="text-xs text-white/25">
@@ -178,7 +178,7 @@ export default function FreelancersPage() {
                               </span>
                             )}
                           </div>
-                        </div>
+                        </Link>
                         <button onClick={() => startEdit(f)}
                           className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-white/25 hover:text-white/60 hover:bg-white/[0.06] transition-all flex-shrink-0">
                           <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
