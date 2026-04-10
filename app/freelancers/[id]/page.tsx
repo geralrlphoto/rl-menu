@@ -182,6 +182,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh }: { freelancerId: 
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState<Partial<Casamento>>({})
   const [saving, setSaving] = useState(false)
+  const [ficha, setFicha] = useState<Casamento | null>(null)
 
   const emptyForm = { freelancer_id: freelancerId, local: '', data_casamento: '', equipa_foto: [], videografo: '', briefing_url: '', order_index: casamentos.length }
 
@@ -233,7 +234,8 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh }: { freelancerId: 
           <CasamentoForm key={c.id} form={form} setForm={setForm} saving={saving} onSave={save}
             onCancel={() => setEditing(null)} onDelete={() => del(c.id)} />
         ) : (
-          <div key={c.id} className={`flex items-center gap-4 px-4 py-3 rounded-xl border transition-all group ${isUrgent ? 'border-red-500/25 bg-red-500/5' : isPast ? 'border-white/[0.04] bg-white/[0.01] opacity-60' : 'border-white/[0.06] bg-white/[0.02]'}`}>
+          <div key={c.id} onClick={() => setFicha(c)}
+            className={`flex items-center gap-4 px-4 py-3 rounded-xl border transition-all group cursor-pointer hover:border-white/20 ${isUrgent ? 'border-red-500/25 bg-red-500/5' : isPast ? 'border-white/[0.04] bg-white/[0.01] opacity-60' : 'border-white/[0.06] bg-white/[0.02]'}`}>
             <div className={`flex-shrink-0 flex flex-col items-center justify-center w-12 h-12 rounded-xl border text-center ${isUrgent ? 'bg-red-500/15 border-red-500/30' : isPast ? 'bg-white/[0.03] border-white/[0.06]' : 'bg-gold/8 border-gold/20'}`}>
               {c.data_casamento ? (
                 <>
@@ -247,11 +249,10 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh }: { freelancerId: 
               ) : <span className="text-white/20 text-xs">—</span>}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white/85 truncate">{c.local}</p>
+              <p className="text-sm font-semibold text-white/85 truncate group-hover:text-white transition-colors">{c.local}</p>
               <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
                 {c.data_casamento && <span className="text-[10px] text-white/35">{fmtDate(c.data_casamento)}</span>}
                 {c.videografo && <span className="text-[10px] text-white/30">🎥 {c.videografo}</span>}
-                {c.briefing_url && <a href={c.briefing_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-gold/50 hover:text-gold transition-colors">Briefing ↗</a>}
               </div>
               {c.equipa_foto && c.equipa_foto.length > 0 && (
                 <p className="text-[10px] text-white/25 mt-0.5">📷 {c.equipa_foto.join(', ')}</p>
@@ -262,13 +263,118 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh }: { freelancerId: 
                 {dtu === 0 ? 'HOJE' : `${dtu}d`}
               </span>
             )}
-            <button onClick={() => { setEditing(c); setForm({ local: c.local, data_casamento: c.data_casamento ?? '', equipa_foto: c.equipa_foto ?? [], videografo: c.videografo ?? '', briefing_url: c.briefing_url ?? '' }); setShowAdd(false) }}
-              className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-white/25 hover:text-white/60 hover:bg-white/[0.06] transition-all flex-shrink-0">
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-            </button>
           </div>
         )
       })}
+
+      {ficha && (
+        <CasamentoFicha
+          casamento={ficha}
+          onClose={() => setFicha(null)}
+          onEdit={() => {
+            setEditing(ficha)
+            setForm({ local: ficha.local, data_casamento: ficha.data_casamento ?? '', equipa_foto: ficha.equipa_foto ?? [], videografo: ficha.videografo ?? '', briefing_url: ficha.briefing_url ?? '' })
+            setShowAdd(false)
+            setFicha(null)
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+function CasamentoFicha({ casamento: c, onClose, onEdit }: { casamento: Casamento; onClose: () => void; onEdit: () => void }) {
+  const dtu = daysUntil(c.data_casamento)
+  const isUrgent = dtu !== null && dtu >= 0 && dtu <= 15
+  const isPast = dtu !== null && dtu < 0
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+      <div className="relative w-full max-w-md bg-[#0e0e0e] border border-white/10 rounded-2xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+
+        {/* Header strip */}
+        <div className={`px-6 py-5 border-b border-white/[0.06] ${isUrgent ? 'bg-red-500/8' : isPast ? 'bg-white/[0.02]' : 'bg-gold/[0.04]'}`}>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className={`flex-shrink-0 flex flex-col items-center justify-center w-14 h-14 rounded-xl border ${isUrgent ? 'bg-red-500/15 border-red-500/30' : isPast ? 'bg-white/[0.04] border-white/[0.08]' : 'bg-gold/10 border-gold/25'}`}>
+                {c.data_casamento ? (
+                  <>
+                    <span className={`text-xl font-bold leading-none ${isUrgent ? 'text-red-400' : isPast ? 'text-white/30' : 'text-gold'}`}>
+                      {c.data_casamento.split('-')[2]}
+                    </span>
+                    <span className={`text-[9px] uppercase tracking-wide font-semibold ${isUrgent ? 'text-red-400/60' : isPast ? 'text-white/20' : 'text-gold/60'}`}>
+                      {MESES[parseInt(c.data_casamento.split('-')[1])-1]}
+                    </span>
+                  </>
+                ) : <span className="text-white/20 text-sm">—</span>}
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-white uppercase tracking-wide leading-tight">{c.local || '—'}</h2>
+                {c.data_casamento && (
+                  <p className={`text-xs mt-0.5 ${isUrgent ? 'text-red-400/70' : isPast ? 'text-white/30' : 'text-white/45'}`}>{fmtDate(c.data_casamento)}</p>
+                )}
+                {dtu !== null && dtu >= 0 && (
+                  <span className={`inline-block mt-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${isUrgent ? 'bg-red-500/20 text-red-400' : 'bg-white/[0.08] text-white/40'}`}>
+                    {dtu === 0 ? 'HOJE' : `${dtu} dias`}
+                  </span>
+                )}
+              </div>
+            </div>
+            <button onClick={onClose} className="flex-shrink-0 p-1.5 rounded-lg text-white/25 hover:text-white/60 hover:bg-white/[0.06] transition-all">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-5 space-y-4">
+
+          {/* Equipa Foto */}
+          <div>
+            <p className="text-[9px] tracking-[0.3em] text-white/25 uppercase mb-2">Equipa Fotografia</p>
+            {c.equipa_foto && c.equipa_foto.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {c.equipa_foto.map((name, i) => (
+                  <span key={i} className="text-xs px-2.5 py-1 rounded-full bg-white/[0.06] border border-white/[0.08] text-white/70">
+                    {name}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-white/20 italic">Não definida</p>
+            )}
+          </div>
+
+          {/* Videógrafo */}
+          <div>
+            <p className="text-[9px] tracking-[0.3em] text-white/25 uppercase mb-2">Videógrafo</p>
+            <p className="text-sm text-white/70">{c.videografo || <span className="text-white/20 italic">Não definido</span>}</p>
+          </div>
+
+          {/* Briefing */}
+          <div>
+            <p className="text-[9px] tracking-[0.3em] text-white/25 uppercase mb-2">Briefing</p>
+            {c.briefing_url ? (
+              <a href={c.briefing_url} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs text-gold/70 hover:text-gold transition-colors border border-gold/20 px-3 py-1.5 rounded-lg hover:bg-gold/5">
+                Abrir Briefing ↗
+              </a>
+            ) : (
+              <p className="text-xs text-white/20 italic">Sem briefing</p>
+            )}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 pb-5 flex justify-end">
+          <button onClick={onEdit}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/[0.05] border border-white/10 text-white/50 text-xs font-semibold tracking-widest hover:bg-white/[0.08] hover:text-white/80 transition-all uppercase">
+            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            Editar
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
