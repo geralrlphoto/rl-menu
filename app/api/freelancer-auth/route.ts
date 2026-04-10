@@ -15,5 +15,7 @@ export async function POST(req: NextRequest) {
   if (error) return NextResponse.json({ ok: false, reason: 'db_error', detail: error.message })
   if (!data) return NextResponse.json({ ok: false, reason: 'not_found' })
   if (!data.password) return NextResponse.json({ ok: false, reason: 'no_password' })
-  return NextResponse.json({ ok: data.password.trim() === password.trim() })
+  const stored = data.password.trim().toLowerCase()
+  const entered = password.trim().toLowerCase()
+  return NextResponse.json({ ok: stored === entered })
 }

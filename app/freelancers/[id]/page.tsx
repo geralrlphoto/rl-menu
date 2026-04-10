@@ -69,20 +69,50 @@ const labelCls = "block text-[9px] text-white/25 tracking-widest uppercase mb-1"
 
 // ─── Password Display ─────────────────────────────────────────────────────────
 
-function PasswordDisplay({ password }: { password: string | null }) {
-  const [show, setShow] = useState(false)
+function PasswordDisplay({ password, freelancerId }: { password: string | null; freelancerId: string }) {
+  const [show, setShow]       = useState(false)
+  const [test, setTest]       = useState('')
+  const [result, setResult]   = useState<null | boolean>(null)
+  const [testing, setTesting] = useState(false)
+
+  async function handleTest() {
+    if (!test.trim()) return
+    setTesting(true); setResult(null)
+    const d = await fetch('/api/freelancer-auth', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: freelancerId, password: test }),
+    }).then(r => r.json())
+    setResult(d.ok)
+    setTesting(false)
+  }
+
   return (
-    <div className="flex items-center gap-2 mt-2">
-      <span className="text-[9px] tracking-widest text-white/25 uppercase">Password:</span>
-      <span className={`text-xs font-mono ${show ? 'text-white/70' : 'text-white/20'} transition-colors`}>
-        {show ? (password ?? '—') : '••••••••'}
-      </span>
-      <button onClick={() => setShow(v => !v)} className="text-white/20 hover:text-white/60 transition-colors">
-        {show
-          ? <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-          : <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-        }
-      </button>
+    <div className="mt-3 space-y-2">
+      <div className="flex items-center gap-2">
+        <span className="text-[9px] tracking-widest text-white/25 uppercase">Password:</span>
+        <span className={`text-xs font-mono ${show ? 'text-white/70' : 'text-white/20'} transition-colors`}>
+          {show ? (password ?? '—') : '••••••••'}
+        </span>
+        <button onClick={() => setShow(v => !v)} className="text-white/20 hover:text-white/60 transition-colors">
+          {show
+            ? <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            : <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          }
+        </button>
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          value={test} onChange={e => { setTest(e.target.value); setResult(null) }}
+          placeholder="Testar password..."
+          className="text-xs bg-white/[0.04] border border-white/10 rounded-lg px-2.5 py-1.5 text-white/70 outline-none focus:border-gold/30 w-40 placeholder:text-white/15"
+        />
+        <button onClick={handleTest} disabled={testing || !test.trim()}
+          className="text-[9px] px-2.5 py-1.5 rounded-lg border border-white/15 text-white/40 hover:text-white/70 hover:border-white/30 transition-all disabled:opacity-30 uppercase tracking-widest">
+          {testing ? '...' : 'Testar'}
+        </button>
+        {result === true  && <span className="text-[10px] text-emerald-400">✓ Correta</span>}
+        {result === false && <span className="text-[10px] text-red-400">✗ Errada</span>}
+      </div>
     </div>
   )
 }
@@ -172,7 +202,7 @@ export default function FreelancerDetailPage() {
               {freelancer.email && <a href={`mailto:${freelancer.email}`} className="text-xs text-white/40 hover:text-white/70 transition-colors">✉ {freelancer.email}</a>}
               {freelancer.nome_sos && <span className="text-xs text-white/25">SOS: {freelancer.nome_sos}{freelancer.contato_sos ? ` · ${freelancer.contato_sos}` : ''}</span>}
             </div>
-            <PasswordDisplay password={freelancer.password} />
+            <PasswordDisplay password={freelancer.password} freelancerId={freelancer.id} />
           </div>
           {upcoming && (
             <div className={`flex-shrink-0 flex items-center gap-3 px-4 py-3 rounded-xl border ${dtu !== null && dtu <= 15 ? 'border-red-500/30 bg-red-500/5' : 'border-emerald-500/20 bg-emerald-500/5'}`}>
