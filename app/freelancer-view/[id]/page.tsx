@@ -285,6 +285,57 @@ function EdicaoModal({ e, onClose }: { e: Edicao; onClose: () => void }) {
   )
 }
 
+// ── Briefing Modal ────────────────────────────────────────────────────────────
+function BriefingModal({ url, onClose }: { url: string; onClose: () => void }) {
+  const [loaded, setLoaded] = useState(false)
+  const [error, setError]   = useState(false)
+
+  return (
+    <div className="fixed inset-0 z-[60] flex flex-col" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/90 backdrop-blur-md" />
+      {/* Header bar */}
+      <div className="relative z-10 flex items-center justify-between px-4 py-3 bg-[#0e0e0e] border-b border-white/[0.07] flex-shrink-0" onClick={e => e.stopPropagation()}>
+        <p className="text-[9px] tracking-[0.4em] text-white/30 uppercase">Briefing</p>
+        <div className="flex items-center gap-2">
+          <a href={url} target="_blank" rel="noopener noreferrer"
+            className="text-[9px] px-3 py-1.5 rounded-lg border border-white/10 text-white/30 hover:text-white/60 hover:border-white/25 transition-all tracking-widest uppercase">
+            Abrir no Browser ↗
+          </a>
+          <button onClick={onClose}
+            className="p-1.5 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/[0.06] transition-all">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>
+      {/* iframe */}
+      <div className="relative z-10 flex-1 overflow-hidden" onClick={e => e.stopPropagation()}>
+        {!loaded && !error && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-6 h-6 border border-gold/30 border-t-gold/80 rounded-full animate-spin" />
+          </div>
+        )}
+        {error && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-4 text-center">
+            <p className="text-white/30 text-sm tracking-widest">Não foi possível carregar o briefing aqui.</p>
+            <a href={url} target="_blank" rel="noopener noreferrer"
+              className="px-5 py-2.5 rounded-xl bg-gold/10 border border-gold/30 text-gold text-xs font-semibold tracking-widest uppercase hover:bg-gold/20 transition-all">
+              Abrir no Browser ↗
+            </a>
+          </div>
+        )}
+        <iframe
+          src={url}
+          className={`w-full h-full border-none transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+          onLoad={() => setLoaded(true)}
+          onError={() => setError(true)}
+          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+          title="Briefing"
+        />
+      </div>
+    </div>
+  )
+}
+
 // ── Casamento Ficha (read-only) ───────────────────────────────────────────────
 function CasamentoFicha({ c, onClose, onConfirm, isVideografo }: {
   c: Casamento; onClose: () => void; onConfirm: (id: string) => void; isVideografo: boolean
@@ -292,8 +343,9 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo }: {
   const dtu = daysUntil(c.data_casamento)
   const isUrgent = dtu !== null && dtu >= 0 && dtu <= 15
   const isPast   = dtu !== null && dtu < 0
-  const [confirming, setConfirming] = useState(false)
-  const [confirmed, setConfirmed]   = useState(c.data_confirmada ?? false)
+  const [confirming, setConfirming]   = useState(false)
+  const [confirmed, setConfirmed]     = useState(c.data_confirmada ?? false)
+  const [briefingOpen, setBriefingOpen] = useState(false)
 
   async function handleConfirmar() {
     setConfirming(true)
@@ -308,6 +360,7 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo }: {
   }
 
   return (
+    <>
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       <div className="relative w-full max-w-md bg-[#0e0e0e] border border-white/10 rounded-2xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
@@ -365,10 +418,11 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo }: {
           <div>
             <p className="text-[9px] tracking-[0.3em] text-white/25 uppercase mb-2">Briefing</p>
             {c.briefing_url ? (
-              <a href={c.briefing_url} target="_blank" rel="noopener noreferrer"
+              <button onClick={() => setBriefingOpen(true)}
                 className="inline-flex items-center gap-1.5 text-xs text-gold/70 hover:text-gold transition-colors border border-gold/20 px-3 py-1.5 rounded-lg hover:bg-gold/5">
-                Abrir Briefing ↗
-              </a>
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Ver Briefing
+              </button>
             ) : <p className="text-xs text-white/20 italic">Sem briefing</p>}
           </div>
           {isVideografo && (
@@ -402,6 +456,10 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo }: {
         )}
       </div>
     </div>
+    {briefingOpen && c.briefing_url && (
+      <BriefingModal url={c.briefing_url} onClose={() => setBriefingOpen(false)} />
+    )}
+    </>
   )
 }
 
