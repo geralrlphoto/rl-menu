@@ -748,19 +748,26 @@ function EdicaoTab({ freelancerId, edicao, onRefresh }: { freelancerId: string; 
                         ))}
                       </div>
                     )}
-                    {/* Move status buttons + Ver Seleção */}
-                    <div className="flex flex-wrap gap-1 pt-1 items-center">
-                      {STATUS_EDICAO.filter(s => s !== status).map(s => (
-                        <button key={s} onClick={() => changeStatus(job, s)}
-                          className="text-[8px] px-2 py-0.5 rounded border border-white/10 text-white/25 hover:text-white/60 hover:border-white/25 transition-all tracking-wide">
-                          → {s.split(' ')[0]}
-                        </button>
-                      ))}
+                    {/* Estado dropdown + Ver Seleção */}
+                    <div className="flex flex-col gap-2 pt-1">
+                      <div className="relative">
+                        <select
+                          value={job.status}
+                          onChange={ev => changeStatus(job, ev.target.value)}
+                          style={{ boxShadow: '0 0 14px 2px rgba(255,255,255,0.10), 0 0 5px 1px rgba(255,255,255,0.12), inset 0 0 12px 0 rgba(255,255,255,0.03)' }}
+                          className="appearance-none w-full text-[10px] tracking-[0.2em] uppercase font-semibold px-3 py-2 pr-7 rounded-xl border border-white/20 bg-white/[0.05] text-white outline-none cursor-pointer transition-all hover:border-white/40 hover:bg-white/[0.08] [color-scheme:dark]"
+                        >
+                          {STATUS_EDICAO.map(s => (
+                            <option key={s} value={s} className="bg-zinc-900 text-white">{s}</option>
+                          ))}
+                        </select>
+                        <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-white/50">▾</span>
+                      </div>
                       <a
                         href={`/fotos-selecao?ref=${encodeURIComponent(job.nome)}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="ml-auto text-[8px] px-2 py-0.5 rounded border border-gold/25 text-gold/50 hover:text-gold hover:border-gold/60 transition-all tracking-wide uppercase"
+                        className="text-[9px] px-3 py-1.5 rounded-lg border border-gold/30 bg-gold/5 text-gold/70 hover:text-gold hover:border-gold/50 hover:bg-gold/10 transition-all tracking-widest uppercase text-center"
                       >
                         Ver Seleção
                       </a>
