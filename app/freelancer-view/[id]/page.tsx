@@ -101,6 +101,115 @@ function PasswordGate({ id, onAuth }: { id: string; onAuth: () => void }) {
   )
 }
 
+const MESES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+function fmtFull(d: string | null) {
+  if (!d) return '—'
+  try { const dt = new Date(d+'T00:00:00'); return `${String(dt.getDate()).padStart(2,'0')} de ${MESES_FULL[dt.getMonth()]} de ${dt.getFullYear()}` } catch { return d }
+}
+
+type FotoSelecao = {
+  id: string; nome_noivos: string; referencia: string; date: string | null
+  data_entrada: string | null; sessao_noivos: string; fotos_noiva: string
+  fotos_noivo: string; convidados: string; cerimonia: string
+  bolo_bouquet: string; sala_animacao: string; fotos_album: string; detalhes: string
+}
+
+const SELECAO_SECTIONS = [
+  { label: 'Sessão Noivos',   field: 'sessao_noivos'  as keyof FotoSelecao },
+  { label: 'Fotos da Noiva',  field: 'fotos_noiva'    as keyof FotoSelecao },
+  { label: 'Fotos do Noivo',  field: 'fotos_noivo'    as keyof FotoSelecao },
+  { label: 'Convidados',      field: 'convidados'     as keyof FotoSelecao },
+  { label: 'Cerimónia',       field: 'cerimonia'      as keyof FotoSelecao },
+  { label: 'Bolo e Bouquet',  field: 'bolo_bouquet'   as keyof FotoSelecao },
+  { label: 'Sala e Animação', field: 'sala_animacao'  as keyof FotoSelecao },
+  { label: 'Fotos p/Álbum',   field: 'fotos_album'    as keyof FotoSelecao },
+]
+
+// ── Seleção Modal (read-only) ─────────────────────────────────────────────────
+function SelecaoModal({ nome, onClose }: { nome: string; onClose: () => void }) {
+  const [record, setRecord] = useState<FotoSelecao | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [notFound, setNotFound] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/fotos-selecao')
+      .then(r => r.json())
+      .then(d => {
+        const rows: FotoSelecao[] = d.rows ?? []
+        const match = rows.find(r =>
+          r.nome_noivos?.toLowerCase().trim() === nome.toLowerCase().trim()
+        )
+        if (match) setRecord(match)
+        else setNotFound(true)
+        setLoading(false)
+      })
+      .catch(() => { setNotFound(true); setLoading(false) })
+  }, [nome])
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/90 backdrop-blur-md" />
+      <div className="relative z-10 bg-[#111] border border-white/[0.08] rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden"
+        onClick={e => e.stopPropagation()}>
+        <div className="h-0.5 w-full bg-gold/60" />
+        {/* Header */}
+        <div className="px-8 pt-7 pb-5 border-b border-white/[0.05] flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[9px] tracking-[0.5em] text-white/20 uppercase mb-2">Seleção de Fotos</p>
+            <h2 className="text-2xl font-light tracking-[0.15em] text-white uppercase">{nome}</h2>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white hover:border-white/30 transition-all text-sm mt-1">✕</button>
+        </div>
+        {/* Body */}
+        <div className="px-8 py-6 max-h-[65vh] overflow-y-auto">
+          {loading && (
+            <div className="flex items-center justify-center py-16">
+              <div className="w-5 h-5 border border-gold/30 border-t-gold/80 rounded-full animate-spin" />
+            </div>
+          )}
+          {notFound && (
+            <p className="text-white/30 text-sm text-center py-12 tracking-widest">Seleção de fotos não encontrada.</p>
+          )}
+          {record && (
+            <div className="space-y-6">
+              {/* Datas */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3">
+                  <span className="text-[8px] tracking-[0.3em] text-white/25 uppercase block mb-1">Data do Evento</span>
+                  <p className="text-sm text-white/70">{fmtFull(record.date)}</p>
+                </div>
+                <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3">
+                  <span className="text-[8px] tracking-[0.3em] text-white/25 uppercase block mb-1">Data de Entrada</span>
+                  <p className="text-sm text-white/70">{fmtFull(record.data_entrada)}</p>
+                </div>
+              </div>
+              {/* Contagens */}
+              <div>
+                <p className="text-[9px] tracking-[0.35em] text-white/20 uppercase mb-3">Contagem de Fotos</p>
+                <div className="grid grid-cols-4 gap-2">
+                  {SELECAO_SECTIONS.map(({ label, field }) => (
+                    <div key={field} className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3">
+                      <span className="text-[8px] tracking-[0.2em] text-white/25 uppercase block mb-1">{label}</span>
+                      <p className="text-xl font-light text-white/80">{record[field] || <span className="text-white/20 text-sm">—</span>}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Detalhes */}
+              {record.detalhes && (
+                <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
+                  <span className="text-[8px] tracking-[0.3em] text-white/25 uppercase block mb-2">Detalhes</span>
+                  <p className="text-sm text-white/60 leading-relaxed">{record.detalhes}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Edicao Modal ──────────────────────────────────────────────────────────────
 const FOTO_FIELDS: { key: keyof Edicao; label: string }[] = [
   { key: 'convidados',    label: 'Convidados' },
@@ -179,7 +288,8 @@ function EdicaoModal({ e, onClose }: { e: Edicao; onClose: () => void }) {
 const STATUS_EDICAO_ORDER = ['NOVO TRABALHO', 'EM EDIÇÃO', 'CONCLUÍDO']
 
 function EdicaoCard({ e }: { e: Edicao }) {
-  const [open, setOpen] = useState(false)
+  const [openEdicao, setOpenEdicao]   = useState(false)
+  const [openSelecao, setOpenSelecao] = useState(false)
   const hasCounts = FOTO_FIELDS.some(f => e[f.key] != null)
   return (
     <>
@@ -198,20 +308,18 @@ function EdicaoCard({ e }: { e: Edicao }) {
           </div>
         )}
         <div className="flex items-center gap-1.5 pt-1">
-          <a
-            href={`/fotos-selecao?ref=${encodeURIComponent(e.nome)}`}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button onClick={() => setOpenSelecao(true)}
             className="text-[9px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-lg border border-white/15 text-white/40 hover:text-white hover:border-white/30 transition-all">
             Ver Seleção
-          </a>
-          <button onClick={() => setOpen(true)}
+          </button>
+          <button onClick={() => setOpenEdicao(true)}
             className="text-[9px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-lg border border-gold/30 bg-gold/5 text-gold/70 hover:text-gold hover:border-gold/50 hover:bg-gold/10 transition-all">
             Ver Mais
           </button>
         </div>
       </div>
-      {open && <EdicaoModal e={e} onClose={() => setOpen(false)} />}
+      {openEdicao  && <EdicaoModal  e={e}      onClose={() => setOpenEdicao(false)} />}
+      {openSelecao && <SelecaoModal nome={e.nome} onClose={() => setOpenSelecao(false)} />}
     </>
   )
 }
