@@ -63,7 +63,13 @@ function PasswordGate({ id, onAuth }: { id: string; onAuth: () => void }) {
       sessionStorage.setItem(`freelancerAuth_${id}`, 'true')
       onAuth()
     } else {
-      setError('Password incorreta. Tenta novamente.')
+      const msgs: Record<string, string> = {
+        not_found:     'Freelancer não encontrado. Verifica o link.',
+        no_password:   'Ainda não tens password definida. Contacta o administrador.',
+        db_error:      'Erro de ligação. Tenta novamente.',
+        missing_fields:'Preenche a password.',
+      }
+      setError(msgs[d.reason] ?? 'Password incorreta. Tenta novamente.')
       setPw('')
     }
   }

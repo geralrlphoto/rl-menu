@@ -10,8 +10,10 @@ function db() {
 
 export async function POST(req: NextRequest) {
   const { id, password } = await req.json()
-  if (!id || !password) return NextResponse.json({ ok: false })
-  const { data } = await db().from('freelancers').select('password').eq('id', id).single()
-  if (!data?.password) return NextResponse.json({ ok: false, reason: 'no_password' })
+  if (!id || !password) return NextResponse.json({ ok: false, reason: 'missing_fields' })
+  const { data, error } = await db().from('freelancers').select('id, password').eq('id', id).single()
+  if (error) return NextResponse.json({ ok: false, reason: 'db_error', detail: error.message })
+  if (!data) return NextResponse.json({ ok: false, reason: 'not_found' })
+  if (!data.password) return NextResponse.json({ ok: false, reason: 'no_password' })
   return NextResponse.json({ ok: data.password.trim() === password.trim() })
 }
