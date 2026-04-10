@@ -13,5 +13,5 @@ export async function POST(req: NextRequest) {
   if (!id || !password) return NextResponse.json({ ok: false })
   const { data } = await db().from('freelancers').select('password').eq('id', id).single()
   if (!data?.password) return NextResponse.json({ ok: false, reason: 'no_password' })
-  return NextResponse.json({ ok: data.password === password })
+  return NextResponse.json({ ok: data.password.trim() === password.trim() })
 }
