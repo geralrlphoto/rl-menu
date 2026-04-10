@@ -47,6 +47,7 @@ function PasswordGate({ id, onAuth }: { id: string; onAuth: () => void }) {
   const [pw, setPw]       = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showPw, setShowPw]   = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -78,14 +79,27 @@ function PasswordGate({ id, onAuth }: { id: string; onAuth: () => void }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-2">Password de Acesso</label>
-            <input
-              type="password"
-              value={pw}
-              onChange={e => setPw(e.target.value)}
-              autoFocus
-              placeholder="••••••••"
-              className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-gold/40 transition-colors placeholder:text-white/15"
-            />
+            <div className="relative">
+              <input
+                type={showPw ? 'text' : 'password'}
+                value={pw}
+                onChange={e => setPw(e.target.value)}
+                autoFocus
+                placeholder="••••••••"
+                className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3 pr-11 text-white text-sm outline-none focus:border-gold/40 transition-colors placeholder:text-white/15"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPw(v => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/60 transition-colors p-1"
+              >
+                {showPw ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                )}
+              </button>
+            </div>
           </div>
           {error && <p className="text-xs text-red-400/80">{error}</p>}
           <button
