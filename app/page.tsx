@@ -65,18 +65,26 @@ export default async function Home() {
     .select('*')
     .order('order_index')
 
+  const ROUTE_OVERRIDES: Record<string, string> = {
+    'FREELANCERS': '/freelancers',
+  }
+
   const allItems = [
     ...(sections ?? []).map(s => ({
       id: s.id,
       name: s.name,
-      href: `/secao/${s.id}`,
+      href: ROUTE_OVERRIDES[s.name?.toUpperCase()] ?? `/secao/${s.id}`,
       img: sectionImages[s.name] ?? fallbackImage,
     })),
     { id: 'crm', name: 'CRM', href: '/crm',
       img: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=1200&q=80' },
-    { id: 'freelancers', name: 'FREELANCERS', href: '/freelancers',
-      img: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&q=80' },
   ]
+
+  // Add FREELANCERS if not already in sections
+  if (!(sections ?? []).some(s => s.name?.toUpperCase() === 'FREELANCERS')) {
+    allItems.push({ id: 'freelancers', name: 'FREELANCERS', href: '/freelancers',
+      img: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&q=80' })
+  }
 
   // ── Datas de referência ───────────────────────────────────────────────────
   const todayStr = new Date().toISOString().split('T')[0]
