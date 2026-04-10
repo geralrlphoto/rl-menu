@@ -104,13 +104,15 @@ export default async function SecaoPage({ params }: Props) {
       {pages && pages.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {pages.map((page) => {
-            const isFinancas    = page.title?.toUpperCase().includes('FINANÇ')
-            const isFotosSel    = page.title?.toUpperCase().includes('SELEÇÃO') || page.title?.toUpperCase().includes('SELECAO')
-            const isInternal    = page.title === 'CRM' || page.title === 'EVENTOS 2026' || isFinancas || isFotosSel
-            const internalHref  = page.title === 'CRM' ? '/crm'
+            const isFinancas      = page.title?.toUpperCase().includes('FINANÇ')
+            const isFotosSel      = page.title?.toUpperCase().includes('SELEÇÃO') || page.title?.toUpperCase().includes('SELECAO')
+            const isFreelancers   = page.title?.toUpperCase().includes('FREELANC')
+            const isInternal      = page.title === 'CRM' || page.title === 'EVENTOS 2026' || isFinancas || isFotosSel || isFreelancers
+            const internalHref    = page.title === 'CRM' ? '/crm'
               : page.title === 'EVENTOS 2026' ? '/eventos-2026'
               : isFinancas ? '/financas'
               : isFotosSel ? '/fotos-selecao'
+              : isFreelancers ? '/freelancers'
               : '/'
             return isInternal ? (
               <Link
