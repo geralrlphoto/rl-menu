@@ -65,15 +65,17 @@ export default async function Home() {
     .select('*')
     .order('order_index')
 
-  const ROUTE_OVERRIDES: Record<string, string> = {
-    'FREELANCERS': '/freelancers',
+  function sectionHref(name: string, id: string): string {
+    const n = name?.trim().toUpperCase()
+    if (n?.includes('FREELANC')) return '/freelancers'
+    return `/secao/${id}`
   }
 
   const allItems = [
     ...(sections ?? []).map(s => ({
       id: s.id,
       name: s.name,
-      href: ROUTE_OVERRIDES[s.name?.toUpperCase()] ?? `/secao/${s.id}`,
+      href: sectionHref(s.name, s.id),
       img: sectionImages[s.name] ?? fallbackImage,
     })),
     { id: 'crm', name: 'CRM', href: '/crm',
@@ -81,7 +83,7 @@ export default async function Home() {
   ]
 
   // Add FREELANCERS if not already in sections
-  if (!(sections ?? []).some(s => s.name?.toUpperCase() === 'FREELANCERS')) {
+  if (!(sections ?? []).some(s => s.name?.trim().toUpperCase().includes('FREELANC'))) {
     allItems.push({ id: 'freelancers', name: 'FREELANCERS', href: '/freelancers',
       img: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&q=80' })
   }
