@@ -293,7 +293,7 @@ function EntregasSection({ referencia }: { referencia: string }) {
     prazoVideo    ? { label: 'Prazo Entrega Vídeo (180 dias úteis)', estado: data.video_estado, dateStr: prazoVideo, editable: false } : null,
     { label: 'Fotos para Edição', estado: data.fotos_edicao_estado, dateStr: fotosEdDate, editable: false },
     { label: 'Álbum', estado: data.album_estado, dateStr: data.albumDataPrevista, editable: false },
-    { label: 'Seleção Fotos Noivos', estado: data.selecao_fotos_noivos_estado, dateStr: null, editable: true },
+    { label: 'Seleção Fotos Noivos (40 dias)', estado: data.selecao_fotos_noivos_estado, dateStr: data.fotosDataEntrada ? addCalendarDays(data.fotosDataEntrada, 40) : null, editable: true },
   ].filter(Boolean) as Array<{ label: string; estado: string | null; dateStr: string | null; editable: boolean }>
 
   if (rows.length === 0) return null
