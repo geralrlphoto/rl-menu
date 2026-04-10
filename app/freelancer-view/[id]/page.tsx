@@ -287,9 +287,27 @@ function EdicaoModal({ e, onClose }: { e: Edicao; onClose: () => void }) {
 
 const STATUS_EDICAO_ORDER = ['NOVO TRABALHO', 'EM EDIÇÃO', 'CONCLUÍDO']
 
-function EdicaoCard({ e }: { e: Edicao }) {
+function EdicaoCard({ e, onStatusChange }: { e: Edicao; onStatusChange: (id: string, status: string) => void }) {
   const [openSelecao, setOpenSelecao] = useState(false)
+  const [status, setStatus]           = useState(e.status)
+  const [saving, setSaving]           = useState(false)
   const hasCounts = FOTO_FIELDS.some(f => e[f.key] != null)
+
+  async function handleStatus(newStatus: string) {
+    if (newStatus === status) return
+    setSaving(true)
+    await fetch('/api/freelancer-edicao', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: e.id, status: newStatus }),
+    })
+    setStatus(newStatus)
+    onStatusChange(e.id, newStatus)
+    setSaving(false)
+  }
+
+  const statusStyle = STATUS_EDICAO_STYLE[status] ?? 'bg-white/5 text-white/30 border-white/10'
+
   return (
     <>
       <div className="p-3 rounded-xl border border-white/[0.06] bg-white/[0.02] space-y-2">
@@ -306,7 +324,20 @@ function EdicaoCard({ e }: { e: Edicao }) {
             ))}
           </div>
         )}
-        <div className="pt-1">
+        {/* Estado dropdown */}
+        <div className="pt-1 border-t border-white/[0.04]">
+          <select
+            value={status}
+            onChange={e => handleStatus(e.target.value)}
+            disabled={saving}
+            className={`w-full text-[9px] tracking-widest uppercase font-bold px-2.5 py-1.5 rounded-lg border outline-none cursor-pointer transition-all disabled:opacity-40 [color-scheme:dark] ${statusStyle}`}
+          >
+            {STATUS_EDICAO_ORDER.map(s => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </div>
+        <div>
           <button onClick={() => setOpenSelecao(true)}
             className="text-[9px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-lg border border-gold/30 bg-gold/5 text-gold/70 hover:text-gold hover:border-gold/50 hover:bg-gold/10 transition-all">
             Ver Seleção
@@ -473,7 +504,7 @@ export default function FreelancerViewPage() {
                         <span>{status}</span>
                         <span className="ml-auto opacity-60">({jobs.length})</span>
                       </div>
-                      {jobs.map(e => <EdicaoCard key={e.id} e={e} />)}
+                      {jobs.map(e => <EdicaoCard key={e.id} e={e} onStatusChange={(id, s) => setEdicao(prev => prev.map(x => x.id === id ? { ...x, status: s } : x))} />)}
                       {jobs.length === 0 && (
                         <p className="text-[9px] text-white/15 text-center py-4 tracking-widest">—</p>
                       )}
