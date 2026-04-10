@@ -206,7 +206,7 @@ function EntregasSectionPC({ referencia }: { referencia: string }) {
     prazoVid  ? { label: 'Prazo Entrega Vídeo (180 dias úteis)', estado: data.video_estado, dateStr: prazoVid, editable: false, stateKey: '' } : null,
     { label: 'Fotos para Edição', estado: data.fotos_edicao_estado, dateStr: fotosDate, editable: false, stateKey: '' },
     { label: 'Álbum', estado: data.album_estado, dateStr: data.albumDataPrevista, editable: false, stateKey: '' },
-    { label: 'Seleção Fotos Noivos', estado: data.selecao_fotos_noivos_estado, dateStr: null, editable: true, stateKey: 'selecao_fotos_noivos_estado' },
+    { label: 'Seleção Fotos Noivos', estado: data.selecao_fotos_noivos_estado, dateStr: data.fotosDataEntrada ? addCalendarDaysPC(data.fotosDataEntrada, 40) : null, editable: true, stateKey: 'selecao_fotos_noivos_estado' },
     { label: 'Prazo Entrega Fotos Noivos (40 dias)', estado: data.prazo_fotos_noivos_estado, dateStr: data.fotosDataEntrada ? addCalendarDaysPC(data.fotosDataEntrada, 40) : null, editable: true, stateKey: 'prazo_fotos_noivos_estado' },
   ].filter(Boolean) as Array<{ label: string; estado: string | null; dateStr: string | null; editable: boolean; stateKey: string }>
   if (rows.length === 0) return null

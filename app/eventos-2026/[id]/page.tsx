@@ -1584,6 +1584,7 @@ export default function EventoPage() {
               href={`/albuns-casamento?ref=${encodeURIComponent(e.referencia)}`} />
             {e.referencia && <>
               <PortalEstadoRow label="Seleção Fotos Noivos"
+                dateStr={fotosDataEntrada ? addCalendarDays(fotosDataEntrada, 40) : null}
                 estado={portalSelecaoEstado} referencia={e.referencia}
                 stateKey="selecao_fotos_noivos_estado"
                 onSaved={(_key, val) => setPortalSelecaoEstado(val)} />
