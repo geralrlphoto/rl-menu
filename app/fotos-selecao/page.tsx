@@ -350,7 +350,10 @@ function SelecaoCard({ row, onOpen, onDelete, confirmDelete, setConfirmDelete }:
   setConfirmDelete: (v: boolean) => void
 }) {
   return (
-    <div className="group relative bg-white/[0.02] hover:bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.12] rounded-2xl overflow-hidden transition-all duration-300">
+    <div
+      className="group relative bg-white/[0.02] hover:bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.12] rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer"
+      onClick={onOpen}
+    >
       {/* Barra dourada lateral */}
       <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gold/40" />
 
@@ -371,11 +374,13 @@ function SelecaoCard({ row, onOpen, onDelete, confirmDelete, setConfirmDelete }:
         </div>
 
         {/* Ações */}
-        <div className="shrink-0 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="shrink-0 flex items-center gap-2" onClick={e => e.stopPropagation()}>
+          {/* VER MAIS — sempre visível */}
           <button onClick={onOpen}
-            className="w-8 h-8 flex items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/50 hover:text-white hover:border-white/25 hover:bg-white/10 transition-all text-sm">
-            👁
+            className="text-[10px] tracking-[0.2em] uppercase px-3 py-1.5 rounded-xl border border-white/10 bg-white/[0.03] text-white/40 hover:text-white hover:border-white/25 hover:bg-white/[0.07] transition-all">
+            Ver Mais
           </button>
+
           {confirmDelete ? (
             <div className="flex items-center gap-1">
               <button onClick={onDelete}
@@ -389,7 +394,7 @@ function SelecaoCard({ row, onOpen, onDelete, confirmDelete, setConfirmDelete }:
             </div>
           ) : (
             <button onClick={() => setConfirmDelete(true)}
-              className="w-8 h-8 flex items-center justify-center rounded-xl text-white/15 hover:text-red-400 transition-colors text-sm">
+              className="w-7 h-7 flex items-center justify-center rounded-xl text-white/15 hover:text-red-400 transition-colors text-sm opacity-0 group-hover:opacity-100">
               🗑
             </button>
           )}
