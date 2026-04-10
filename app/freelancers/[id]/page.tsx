@@ -12,7 +12,8 @@ type Freelancer = {
 }
 type Casamento = {
   id: string; freelancer_id: string; local: string; data_casamento: string | null
-  equipa_foto: string[] | null; videografo: string | null; briefing_url: string | null; order_index: number
+  equipa_foto: string[] | null; videografo: string | null; briefing_url: string | null
+  data_confirmada: boolean | null; order_index: number
 }
 type Edicao = {
   id: string; freelancer_id: string; nome: string; status: string; local: string | null
@@ -258,11 +259,22 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh }: { freelancerId: 
                 <p className="text-[10px] text-white/25 mt-0.5">📷 {c.equipa_foto.join(', ')}</p>
               )}
             </div>
-            {dtu !== null && dtu >= 0 && (
-              <span className={`flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${isUrgent ? 'bg-red-500/15 text-red-400' : 'bg-white/[0.06] text-white/30'}`}>
-                {dtu === 0 ? 'HOJE' : `${dtu}d`}
-              </span>
-            )}
+            <div className="flex flex-col items-end gap-1 flex-shrink-0">
+              {dtu !== null && dtu >= 0 && (
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isUrgent ? 'bg-red-500/15 text-red-400' : 'bg-white/[0.06] text-white/30'}`}>
+                  {dtu === 0 ? 'HOJE' : `${dtu}d`}
+                </span>
+              )}
+              {c.data_confirmada ? (
+                <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 tracking-widest uppercase">
+                  ✓ Confirmado
+                </span>
+              ) : !isPast ? (
+                <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-400/70 border border-orange-500/20 tracking-widest uppercase">
+                  Pendente
+                </span>
+              ) : null}
+            </div>
           </div>
         )
       })}
@@ -271,6 +283,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh }: { freelancerId: 
         <CasamentoFicha
           casamento={ficha}
           onClose={() => setFicha(null)}
+          onConfirm={() => { onRefresh() }}
           onEdit={() => {
             setEditing(ficha)
             setForm({ local: ficha.local, data_casamento: ficha.data_casamento ?? '', equipa_foto: ficha.equipa_foto ?? [], videografo: ficha.videografo ?? '', briefing_url: ficha.briefing_url ?? '' })
@@ -283,10 +296,24 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh }: { freelancerId: 
   )
 }
 
-function CasamentoFicha({ casamento: c, onClose, onEdit }: { casamento: Casamento; onClose: () => void; onEdit: () => void }) {
+function CasamentoFicha({ casamento: c, onClose, onEdit, onConfirm }: { casamento: Casamento; onClose: () => void; onEdit: () => void; onConfirm?: () => void }) {
   const dtu = daysUntil(c.data_casamento)
   const isUrgent = dtu !== null && dtu >= 0 && dtu <= 15
   const isPast = dtu !== null && dtu < 0
+  const [confirming, setConfirming] = useState(false)
+  const [confirmed, setConfirmed] = useState(c.data_confirmada ?? false)
+
+  async function handleConfirmar() {
+    setConfirming(true)
+    await fetch('/api/freelancer-casamentos', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: c.id, data_confirmada: true }),
+    })
+    setConfirmed(true)
+    setConfirming(false)
+    onConfirm?.()
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -367,9 +394,24 @@ function CasamentoFicha({ casamento: c, onClose, onEdit }: { casamento: Casament
         </div>
 
         {/* Footer */}
-        <div className="px-6 pb-5 flex justify-end">
+        <div className="px-6 pb-5 flex items-center justify-between gap-3">
+          {/* Confirmar Data */}
+          {!isPast && (
+            confirmed ? (
+              <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold tracking-widest uppercase cursor-default">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                Data Confirmada
+              </div>
+            ) : (
+              <button onClick={handleConfirmar} disabled={confirming}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-xs font-semibold tracking-widest uppercase hover:bg-gold/20 transition-all disabled:opacity-50">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                {confirming ? 'A confirmar...' : 'Confirmar Data'}
+              </button>
+            )
+          )}
           <button onClick={onEdit}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/[0.05] border border-white/10 text-white/50 text-xs font-semibold tracking-widest hover:bg-white/[0.08] hover:text-white/80 transition-all uppercase">
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/[0.05] border border-white/10 text-white/50 text-xs font-semibold tracking-widest hover:bg-white/[0.08] hover:text-white/80 transition-all uppercase ml-auto">
             <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
             Editar
           </button>
