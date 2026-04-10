@@ -22,6 +22,10 @@ type Edicao = {
   sala_animacao: number | null; fotos_album: number | null; bolo_bouquet: number | null
   sessao_noivos: number | null; fotos_noiva: number | null; fotos_noivo: number | null
 }
+type Album = {
+  id: string; freelancer_id: string; nome: string; status: string
+  local: string | null; data_casamento: string | null; data_entrega: string | null; notas: string | null
+}
 type Valor = {
   id: string; freelancer_id: string; servico: string; total_unidade: number
   valor_servico: number; kms: number; valor_ao_km: number; order_index: number
@@ -64,21 +68,23 @@ const labelCls = "block text-[9px] text-white/25 tracking-widest uppercase mb-1"
 
 export default function FreelancerDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const [tab, setTab] = useState<'casamentos'|'edicao'|'valores'|'info'|'notas'>('casamentos')
+  const [tab, setTab] = useState<'casamentos'|'edicao'|'album'|'valores'|'info'|'notas'>('casamentos')
 
   const [freelancer, setFreelancer] = useState<Freelancer | null>(null)
   const [casamentos, setCasamentos] = useState<Casamento[]>([])
   const [edicao, setEdicao] = useState<Edicao[]>([])
+  const [album, setAlbum] = useState<Album[]>([])
   const [valores, setValores] = useState<Valor[]>([])
   const [info, setInfo] = useState<Info[]>([])
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(async () => {
     setLoading(true)
-    const [fRes, cRes, eRes, vRes, iRes] = await Promise.all([
+    const [fRes, cRes, eRes, aRes, vRes, iRes] = await Promise.all([
       fetch(`/api/freelancers`).then(r => r.json()),
       fetch(`/api/freelancer-casamentos?freelancer_id=${id}`).then(r => r.json()),
       fetch(`/api/freelancer-edicao?freelancer_id=${id}`).then(r => r.json()),
+      fetch(`/api/freelancer-album?freelancer_id=${id}`).then(r => r.json()),
       fetch(`/api/freelancer-valores?freelancer_id=${id}`).then(r => r.json()),
       fetch(`/api/freelancer-info?freelancer_id=${id}`).then(r => r.json()),
     ])
@@ -86,6 +92,7 @@ export default function FreelancerDetailPage() {
     setFreelancer(f)
     setCasamentos(cRes.casamentos ?? [])
     setEdicao(eRes.edicao ?? [])
+    setAlbum(aRes.album ?? [])
     setValores(vRes.valores ?? [])
     setInfo(iRes.info ?? [])
     setLoading(false)
@@ -112,9 +119,11 @@ export default function FreelancerDetailPage() {
   const dtu = upcoming ? daysUntil(upcoming.data_casamento) : null
 
   const isVideografo = freelancer?.status === 'VIDEOGRAFO'
-  const tabs: { key: 'casamentos'|'edicao'|'valores'|'info'|'notas'; label: string }[] = [
+  const isFotografo  = freelancer?.status === 'FOTOGRAFO'
+  const tabs: { key: 'casamentos'|'edicao'|'album'|'valores'|'info'|'notas'; label: string }[] = [
     { key: 'casamentos', label: `Casamentos (${casamentos.length})` },
     ...(!isVideografo ? [{ key: 'edicao' as const, label: `Edição Fotos (${edicao.length})` }] : []),
+    ...(isFotografo ? [{ key: 'album' as const, label: `Edição Álbum (${album.length})` }] : []),
     { key: 'valores',    label: 'Valores' },
     { key: 'info',       label: 'Info' },
     { key: 'notas',      label: 'Notas' },
@@ -170,6 +179,7 @@ export default function FreelancerDetailPage() {
       {/* Tab content */}
       {tab === 'casamentos' && <CasamentosTab freelancerId={id} casamentos={casamentos} onRefresh={load} freelancerStatus={freelancer?.status ?? null} />}
       {tab === 'edicao'     && <EdicaoTab freelancerId={id} edicao={edicao} onRefresh={load} />}
+      {tab === 'album'      && <AlbumTab freelancerId={id} album={album} onRefresh={load} />}
       {tab === 'valores'    && <ValoresTab freelancerId={id} valores={valores} onRefresh={load} />}
       {tab === 'info'       && <InfoTab freelancerId={id} info={info} onRefresh={load} />}
       {tab === 'notas'      && <NotasTab freelancer={freelancer} onRefresh={load} />}
@@ -465,6 +475,138 @@ function CasamentoForm({ form, setForm, saving, onSave, onCancel, onDelete }: an
         <div className="flex gap-2">
           <button onClick={onCancel} className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
           <button onClick={onSave} disabled={saving || !form.local} className="px-4 py-1.5 rounded-lg text-xs bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-50">
+            {saving ? 'A guardar...' : 'Guardar'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Edição Álbum Tab ─────────────────────────────────────────────────────────
+
+function AlbumTab({ freelancerId, album, onRefresh }: { freelancerId: string; album: Album[]; onRefresh: () => void }) {
+  const [editing, setEditing] = useState<Album | null>(null)
+  const [showAdd, setShowAdd] = useState(false)
+  const [form, setForm] = useState<Partial<Album>>({})
+  const [saving, setSaving] = useState(false)
+
+  async function save() {
+    setSaving(true)
+    try {
+      if (editing) {
+        await fetch('/api/freelancer-album', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editing.id, ...form }) })
+        setEditing(null)
+      } else {
+        await fetch('/api/freelancer-album', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ freelancer_id: freelancerId, status: 'NOVO TRABALHO', ...form }) })
+        setShowAdd(false)
+      }
+      setForm({})
+      onRefresh()
+    } finally { setSaving(false) }
+  }
+
+  async function del(id: string) {
+    if (!confirm('Remover álbum?')) return
+    await fetch(`/api/freelancer-album?id=${id}`, { method: 'DELETE' })
+    onRefresh()
+  }
+
+  async function changeStatus(item: Album, newStatus: string) {
+    await fetch('/api/freelancer-album', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: item.id, status: newStatus }) })
+    onRefresh()
+  }
+
+  const STATUS_ALBUM = ['NOVO TRABALHO', 'EM EDIÇÃO', 'CONCLUÍDO']
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <button onClick={() => { setShowAdd(true); setEditing(null); setForm({ status: 'NOVO TRABALHO' }) }}
+          className="px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-xs font-semibold tracking-widest hover:bg-gold/20 transition-all uppercase">
+          + Adicionar
+        </button>
+      </div>
+
+      {showAdd && <AlbumForm form={form} setForm={setForm} saving={saving} onSave={save} onCancel={() => setShowAdd(false)} />}
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {STATUS_ALBUM.map(status => {
+          const items = album.filter(a => a.status === status)
+          return (
+            <div key={status} className="space-y-2">
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[9px] font-bold tracking-widest uppercase ${STATUS_STYLE[status]}`}>
+                <span>{status}</span>
+                <span className="ml-auto opacity-60">({items.length})</span>
+              </div>
+              {items.map(item => (
+                editing?.id === item.id ? (
+                  <AlbumForm key={item.id} form={form} setForm={setForm} saving={saving} onSave={save}
+                    onCancel={() => setEditing(null)} onDelete={() => del(item.id)} />
+                ) : (
+                  <div key={item.id} className="p-3 rounded-xl border border-white/[0.06] bg-white/[0.02] space-y-2 group">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-xs font-semibold text-white/80 leading-tight">{item.nome}</p>
+                      <button onClick={() => { setEditing(item); setForm({ ...item }); setShowAdd(false) }}
+                        className="opacity-0 group-hover:opacity-100 p-1 rounded text-white/25 hover:text-white/60 flex-shrink-0 transition-all">
+                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                      </button>
+                    </div>
+                    {item.data_casamento && <p className="text-[10px] text-white/30">{fmtDate(item.data_casamento).split(' · ')[0]}</p>}
+                    {item.local && <p className="text-[10px] text-white/25">📍 {item.local}</p>}
+                    {item.data_entrega && <p className="text-[10px] text-white/25">Entrega: {fmtDate(item.data_entrega).split(' · ')[0]}</p>}
+                    {item.notas && <p className="text-[10px] text-white/30 italic border-t border-white/[0.04] pt-1.5">{item.notas}</p>}
+                    <div className="flex gap-1 pt-1">
+                      {STATUS_ALBUM.filter(s => s !== status).map(s => (
+                        <button key={s} onClick={() => changeStatus(item, s)}
+                          className={`flex-1 py-1 rounded text-[9px] font-semibold tracking-wide border transition-all ${STATUS_STYLE[s]} opacity-40 hover:opacity-100`}>
+                          → {s.split(' ')[s.split(' ').length - 1]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )
+              ))}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function AlbumForm({ form, setForm, saving, onSave, onCancel, onDelete }: any) {
+  return (
+    <div className="bg-white/[0.02] border border-gold/20 rounded-xl p-4 space-y-3">
+      <div className="grid grid-cols-2 gap-2">
+        <div className="col-span-2">
+          <label className={labelCls}>Nome / Casal *</label>
+          <input value={form.nome ?? ''} onChange={e => setForm((f: any) => ({ ...f, nome: e.target.value }))} placeholder="Ex: Ana & João" className={inputCls} />
+        </div>
+        <div>
+          <label className={labelCls}>Data Casamento</label>
+          <input type="date" value={form.data_casamento ?? ''} onChange={e => setForm((f: any) => ({ ...f, data_casamento: e.target.value }))} className={inputCls} />
+        </div>
+        <div>
+          <label className={labelCls}>Data Entrega</label>
+          <input type="date" value={form.data_entrega ?? ''} onChange={e => setForm((f: any) => ({ ...f, data_entrega: e.target.value }))} className={inputCls} />
+        </div>
+        <div className="col-span-2">
+          <label className={labelCls}>Local</label>
+          <input value={form.local ?? ''} onChange={e => setForm((f: any) => ({ ...f, local: e.target.value }))} placeholder="Quinta da..." className={inputCls} />
+        </div>
+        <div className="col-span-2">
+          <label className={labelCls}>Notas</label>
+          <textarea value={form.notas ?? ''} onChange={e => setForm((f: any) => ({ ...f, notas: e.target.value }))} placeholder="Observações..." rows={2} className={inputCls + ' resize-none'} />
+        </div>
+      </div>
+      <div className="flex items-center justify-between pt-1">
+        {onDelete ? (
+          <button onClick={onDelete} className="text-[10px] text-red-400/60 hover:text-red-400 transition-colors tracking-widest">✕ Remover</button>
+        ) : <span />}
+        <div className="flex gap-2">
+          <button onClick={onCancel} className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
+          <button onClick={onSave} disabled={saving || !form.nome} className="px-4 py-1.5 rounded-lg text-xs bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-50">
             {saving ? 'A guardar...' : 'Guardar'}
           </button>
         </div>
