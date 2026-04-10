@@ -111,7 +111,7 @@ export function NotionBlocks({ blocks, rootId, hiddenNav, backUrl, neutralCallou
         const text = plainText(data.rich_text)
         elements.push(
           text
-            ? <p key={b.id} className="text-sm text-white/60 leading-relaxed mb-3">{rt(data.rich_text)}</p>
+            ? <p key={b.id} className="text-base text-white/90 leading-relaxed mb-3">{rt(data.rich_text)}</p>
             : <div key={b.id} className="h-2" />
         )
         break
