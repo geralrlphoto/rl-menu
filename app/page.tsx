@@ -65,28 +65,16 @@ export default async function Home() {
     .select('*')
     .order('order_index')
 
-  function sectionHref(name: string, id: string): string {
-    const n = name?.trim().toUpperCase()
-    if (n?.includes('FREELANC')) return '/freelancers'
-    return `/secao/${id}`
-  }
-
   const allItems = [
     ...(sections ?? []).map(s => ({
       id: s.id,
       name: s.name,
-      href: sectionHref(s.name, s.id),
+      href: `/secao/${s.id}`,
       img: sectionImages[s.name] ?? fallbackImage,
     })),
     { id: 'crm', name: 'CRM', href: '/crm',
       img: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=1200&q=80' },
   ]
-
-  // Add FREELANCERS if not already in sections
-  if (!(sections ?? []).some(s => s.name?.trim().toUpperCase().includes('FREELANC'))) {
-    allItems.push({ id: 'freelancers', name: 'FREELANCERS', href: '/freelancers',
-      img: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&q=80' })
-  }
 
   // ── Datas de referência ───────────────────────────────────────────────────
   const todayStr = new Date().toISOString().split('T')[0]
