@@ -197,7 +197,14 @@ function EdicaoCard({ e }: { e: Edicao }) {
             ))}
           </div>
         )}
-        <div className="pt-1">
+        <div className="flex items-center gap-1.5 pt-1">
+          <a
+            href={`/fotos-selecao?ref=${encodeURIComponent(e.nome)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[9px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-lg border border-white/15 text-white/40 hover:text-white hover:border-white/30 transition-all">
+            Ver Seleção
+          </a>
           <button onClick={() => setOpen(true)}
             className="text-[9px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-lg border border-gold/30 bg-gold/5 text-gold/70 hover:text-gold hover:border-gold/50 hover:bg-gold/10 transition-all">
             Ver Mais
