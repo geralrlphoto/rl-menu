@@ -540,6 +540,14 @@ export default function FreelancerViewPage() {
   const [tab, setTab]               = useState<'casamentos'|'edicao'|'album'>('casamentos')
   const [ficha, setFicha]           = useState<Casamento | null>(null)
 
+  // Block browser back button
+  useEffect(() => {
+    history.pushState(null, '', window.location.href)
+    const block = () => { history.pushState(null, '', window.location.href) }
+    window.addEventListener('popstate', block)
+    return () => window.removeEventListener('popstate', block)
+  }, [])
+
   // Check session
   useEffect(() => {
     const ok = sessionStorage.getItem(`freelancerAuth_${id}`) === 'true'
