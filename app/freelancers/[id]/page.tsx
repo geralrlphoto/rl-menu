@@ -9,7 +9,7 @@ import { useParams } from 'next/navigation'
 type Freelancer = {
   id: string; nome: string; status: string | null; contato: string | null
   email: string | null; nome_sos: string | null; contato_sos: string | null; notas: string | null
-  password: string | null
+  password: string | null; intro_casamentos: string | null
 }
 type Casamento = {
   id: string; freelancer_id: string; local: string; data_casamento: string | null
@@ -253,12 +253,27 @@ export default function FreelancerDetailPage() {
 
 // ─── Casamentos Tab ───────────────────────────────────────────────────────────
 
+const DEFAULT_INTRO = `Aqui encontras todos os eventos que te foram atribuídos ao longo do ano. Sempre que um novo evento for adicionado, deverás confirmar a tua disponibilidade.\n\nA 3 dias do evento tens acesso ao briefing com toda a informação necessária para o dia — percurso, contactos, detalhes da cerimónia e muito mais.`
+
 function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, freelancer }: { freelancerId: string; casamentos: Casamento[]; onRefresh: () => void; freelancerStatus: string | null; freelancer: Freelancer | null }) {
   const [editing, setEditing] = useState<Casamento | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState<Partial<Casamento>>({})
   const [saving, setSaving] = useState(false)
   const [ficha, setFicha] = useState<Casamento | null>(null)
+  const [editingIntro, setEditingIntro] = useState(false)
+  const [introValue, setIntroValue] = useState(freelancer?.intro_casamentos ?? DEFAULT_INTRO)
+  const [savingIntro, setSavingIntro] = useState(false)
+
+  async function saveIntro() {
+    if (!freelancer) return
+    setSavingIntro(true)
+    await fetch('/api/freelancers', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: freelancer.id, intro_casamentos: introValue }) })
+    setSavingIntro(false)
+    setEditingIntro(false)
+    onRefresh()
+  }
+
   const emptyForm = { freelancer_id: freelancerId, local: '', data_casamento: '', equipa_foto: [], videografo: '', briefing_url: '', order_index: casamentos.length }
 
   async function save() {
@@ -286,6 +301,36 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
 
   return (
     <div className="space-y-3">
+
+      {/* ── Texto Intro (editável) ── */}
+      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] px-5 py-4 space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-[9px] tracking-[0.35em] text-white/30 uppercase">Texto Intro — Secção Casamentos</p>
+          {!editingIntro && (
+            <button onClick={() => setEditingIntro(true)}
+              className="px-3 py-1 rounded-lg text-[10px] border border-white/10 text-white/40 hover:text-white/70 hover:border-white/20 transition-all tracking-widest uppercase">
+              Editar
+            </button>
+          )}
+        </div>
+        {editingIntro ? (
+          <div className="space-y-3">
+            <textarea value={introValue} onChange={e => setIntroValue(e.target.value)} rows={5}
+              className="w-full bg-white/[0.04] border border-white/15 rounded-xl px-4 py-3 text-sm text-white/80 outline-none focus:border-white/30 transition-colors resize-none leading-relaxed" />
+            <div className="flex justify-end gap-2">
+              <button onClick={() => { setEditingIntro(false); setIntroValue(freelancer?.intro_casamentos ?? DEFAULT_INTRO) }}
+                className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
+              <button onClick={saveIntro} disabled={savingIntro}
+                className="px-4 py-1.5 rounded-lg text-xs border border-white/20 text-white font-semibold hover:bg-white/10 transition-all disabled:opacity-50"
+                style={{ boxShadow: '0 0 8px rgba(255,255,255,0.15)' }}>
+                {savingIntro ? 'A guardar...' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-white/60 leading-relaxed whitespace-pre-wrap">{introValue}</p>
+        )}
+      </div>
 
       <div className="flex justify-end">
         <button onClick={() => { setShowAdd(true); setEditing(null); setForm({}) }}
