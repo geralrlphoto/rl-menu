@@ -301,8 +301,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
     <div className="space-y-3">
 
       {/* ── Intro editável ── */}
-      <div className="relative group rounded-2xl border border-white/[0.06] bg-white/[0.02] px-5 py-4"
-        style={{ boxShadow: '0 0 18px 3px rgba(255,255,255,0.04), inset 0 0 18px 0 rgba(255,255,255,0.02)' }}>
+      <div className="relative rounded-2xl border border-gold/30 bg-gold/5 px-5 py-4">
         {editingIntro ? (
           <div className="space-y-3">
             <textarea value={introValue} onChange={e => setIntroValue(e.target.value)} rows={5} autoFocus
@@ -318,12 +317,13 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
           </div>
         ) : (
           <>
+            <p className="text-[9px] tracking-[0.3em] text-gold/50 uppercase mb-2">Texto Intro — visível pelo freelancer</p>
             {introValue
-              ? <p className="text-lg text-white leading-relaxed whitespace-pre-wrap pr-16">{introValue}</p>
-              : <p className="text-sm text-white/25 italic">Sem texto de introdução.</p>
+              ? <p className="text-sm text-white/80 leading-relaxed whitespace-pre-wrap pr-16">{introValue}</p>
+              : <p className="text-sm text-white/30 italic">Sem texto. Clica em Editar para adicionar.</p>
             }
             <button onClick={() => setEditingIntro(true)}
-              className="absolute top-3 right-3 px-2.5 py-1 rounded-lg text-[9px] tracking-widest uppercase border border-white/15 text-white/40 hover:text-white/70 hover:border-white/30 bg-black/40 transition-all">
+              className="absolute top-3 right-3 px-3 py-1.5 rounded-lg text-[9px] tracking-widest uppercase bg-gold/10 border border-gold/30 text-gold/70 hover:text-gold hover:bg-gold/20 transition-all">
               Editar
             </button>
           </>
