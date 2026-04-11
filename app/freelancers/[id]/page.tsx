@@ -241,7 +241,7 @@ export default function FreelancerDetailPage() {
       </div>
 
       {/* Tab content */}
-      {tab === 'casamentos' && <CasamentosTab freelancerId={id} casamentos={casamentos} onRefresh={load} freelancerStatus={freelancer?.status ?? null} />}
+      {tab === 'casamentos' && <CasamentosTab freelancerId={id} casamentos={casamentos} onRefresh={load} freelancerStatus={freelancer?.status ?? null} freelancer={freelancer} />}
       {tab === 'edicao'     && <EdicaoTab freelancerId={id} edicao={edicao} onRefresh={load} />}
       {tab === 'album'      && <AlbumTab freelancerId={id} album={album} onRefresh={load} />}
       {tab === 'valores'    && <ValoresTab freelancerId={id} valores={valores} onRefresh={load} />}
@@ -253,12 +253,24 @@ export default function FreelancerDetailPage() {
 
 // ─── Casamentos Tab ───────────────────────────────────────────────────────────
 
-function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus }: { freelancerId: string; casamentos: Casamento[]; onRefresh: () => void; freelancerStatus: string | null }) {
+function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, freelancer }: { freelancerId: string; casamentos: Casamento[]; onRefresh: () => void; freelancerStatus: string | null; freelancer: Freelancer | null }) {
   const [editing, setEditing] = useState<Casamento | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState<Partial<Casamento>>({})
   const [saving, setSaving] = useState(false)
   const [ficha, setFicha] = useState<Casamento | null>(null)
+  const [editingIntro, setEditingIntro] = useState(false)
+  const [introValue, setIntroValue] = useState(freelancer?.intro_casamentos ?? '')
+  const [savingIntro, setSavingIntro] = useState(false)
+
+  async function saveIntro() {
+    if (!freelancer) return
+    setSavingIntro(true)
+    await fetch('/api/freelancers', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: freelancer.id, intro_casamentos: introValue }) })
+    setSavingIntro(false)
+    setEditingIntro(false)
+    onRefresh()
+  }
 
   const emptyForm = { freelancer_id: freelancerId, local: '', data_casamento: '', equipa_foto: [], videografo: '', briefing_url: '', order_index: casamentos.length }
 
@@ -287,6 +299,36 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus }
 
   return (
     <div className="space-y-3">
+
+      {/* ── Intro editável ── */}
+      <div className="relative group rounded-2xl border border-white/[0.06] bg-white/[0.02] px-5 py-4"
+        style={{ boxShadow: '0 0 18px 3px rgba(255,255,255,0.04), inset 0 0 18px 0 rgba(255,255,255,0.02)' }}>
+        {editingIntro ? (
+          <div className="space-y-3">
+            <textarea value={introValue} onChange={e => setIntroValue(e.target.value)} rows={5} autoFocus
+              className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3 text-lg text-white outline-none focus:border-gold/40 transition-colors resize-none leading-relaxed" />
+            <div className="flex justify-end gap-2">
+              <button onClick={() => { setEditingIntro(false); setIntroValue(freelancer?.intro_casamentos ?? '') }}
+                className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
+              <button onClick={saveIntro} disabled={savingIntro}
+                className="px-4 py-1.5 rounded-lg text-xs bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-50">
+                {savingIntro ? 'A guardar...' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <p className="text-lg text-white leading-relaxed whitespace-pre-wrap">
+              {introValue || <span className="text-white/20 italic">Sem texto — clica no ✏️ para adicionar</span>}
+            </p>
+            <button onClick={() => setEditingIntro(true)}
+              className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-white/25 hover:text-white/60 hover:bg-white/[0.06] transition-all">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            </button>
+          </>
+        )}
+      </div>
+
       <div className="flex justify-end">
         <button onClick={() => { setShowAdd(true); setEditing(null); setForm({}) }}
           className="px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-xs font-semibold tracking-widest hover:bg-gold/20 transition-all uppercase">
