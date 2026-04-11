@@ -259,8 +259,9 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
   const [form, setForm] = useState<Partial<Casamento>>({})
   const [saving, setSaving] = useState(false)
   const [ficha, setFicha] = useState<Casamento | null>(null)
+  const DEFAULT_INTRO = `Aqui encontras todos os eventos que te foram atribuídos ao longo do ano. Sempre que um novo evento for adicionado, deverás confirmar a tua disponibilidade.\n\nA 3 dias do evento tens acesso ao briefing com toda a informação necessária para o dia — percurso, contactos, detalhes da cerimónia e muito mais.`
   const [editingIntro, setEditingIntro] = useState(false)
-  const [introValue, setIntroValue] = useState(freelancer?.intro_casamentos ?? '')
+  const [introValue, setIntroValue] = useState(freelancer?.intro_casamentos ?? DEFAULT_INTRO)
   const [savingIntro, setSavingIntro] = useState(false)
 
   async function saveIntro() {
@@ -307,7 +308,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
             <textarea value={introValue} onChange={e => setIntroValue(e.target.value)} rows={5} autoFocus
               className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3 text-lg text-white outline-none focus:border-gold/40 transition-colors resize-none leading-relaxed" />
             <div className="flex justify-end gap-2">
-              <button onClick={() => { setEditingIntro(false); setIntroValue(freelancer?.intro_casamentos ?? '') }}
+              <button onClick={() => { setEditingIntro(false); setIntroValue(freelancer?.intro_casamentos ?? DEFAULT_INTRO) }}
                 className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
               <button onClick={saveIntro} disabled={savingIntro}
                 className="px-4 py-1.5 rounded-lg text-xs bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-50">
