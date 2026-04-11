@@ -683,10 +683,10 @@ export default function FreelancerViewPage() {
               <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-5 py-4 space-y-2"
                 style={{ boxShadow: '0 0 18px 3px rgba(255,255,255,0.04), inset 0 0 18px 0 rgba(255,255,255,0.02)' }}>
                 <p className="text-[9px] tracking-[0.35em] text-white/25 uppercase mb-1">A tua agenda</p>
-                <p className="text-xs text-white/50 leading-relaxed">
+                <p className="text-lg text-white/50 leading-relaxed">
                   Aqui encontras todos os eventos que te foram atribuídos ao longo do ano. Sempre que um novo evento for adicionado, deverás confirmar a tua disponibilidade.
                 </p>
-                <p className="text-xs text-white/35 leading-relaxed">
+                <p className="text-lg text-white/35 leading-relaxed">
                   A <span className="text-white/55">3 dias</span> do evento tens acesso ao briefing com toda a informação necessária para o dia — percurso, contactos, detalhes da cerimónia e muito mais.
                 </p>
               </div>
