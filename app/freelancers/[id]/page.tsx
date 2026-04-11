@@ -301,36 +301,6 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
   return (
     <div className="space-y-3">
 
-      {/* ── Intro editável ── */}
-      <div className="relative rounded-2xl border border-gold/30 bg-gold/5 px-5 py-4">
-        {editingIntro ? (
-          <div className="space-y-3">
-            <textarea value={introValue} onChange={e => setIntroValue(e.target.value)} rows={5} autoFocus
-              className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3 text-lg text-white outline-none focus:border-gold/40 transition-colors resize-none leading-relaxed" />
-            <div className="flex justify-end gap-2">
-              <button onClick={() => { setEditingIntro(false); setIntroValue(freelancer?.intro_casamentos ?? DEFAULT_INTRO) }}
-                className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
-              <button onClick={saveIntro} disabled={savingIntro}
-                className="px-4 py-1.5 rounded-lg text-xs bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-50">
-                {savingIntro ? 'A guardar...' : 'Guardar'}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <>
-            <p className="text-[9px] tracking-[0.3em] text-gold/50 uppercase mb-2">Texto Intro — visível pelo freelancer</p>
-            {introValue
-              ? <p className="text-sm text-white/80 leading-relaxed whitespace-pre-wrap pr-16">{introValue}</p>
-              : <p className="text-sm text-white/30 italic">Sem texto. Clica em Editar para adicionar.</p>
-            }
-            <button onClick={() => setEditingIntro(true)}
-              className="absolute top-3 right-3 px-3 py-1.5 rounded-lg text-[9px] tracking-widest uppercase bg-gold/10 border border-gold/30 text-gold/70 hover:text-gold hover:bg-gold/20 transition-all">
-              Editar
-            </button>
-          </>
-        )}
-      </div>
-
       <div className="flex justify-end">
         <button onClick={() => { setShowAdd(true); setEditing(null); setForm({}) }}
           className="px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-xs font-semibold tracking-widest hover:bg-gold/20 transition-all uppercase">
