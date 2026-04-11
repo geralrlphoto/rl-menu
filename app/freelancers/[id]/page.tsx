@@ -318,9 +318,10 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
           </div>
         ) : (
           <>
-            <p className="text-lg text-white leading-relaxed whitespace-pre-wrap">
-              {introValue || <span className="text-white/20 italic">Sem texto — clica no ✏️ para adicionar</span>}
-            </p>
+            {introValue
+              ? <p className="text-lg text-white leading-relaxed whitespace-pre-wrap pr-8">{introValue}</p>
+              : <p className="text-sm text-white/25 italic">Sem texto — passa o rato e clica no ✏️ para adicionar</p>
+            }
             <button onClick={() => setEditingIntro(true)}
               className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-white/25 hover:text-white/60 hover:bg-white/[0.06] transition-all">
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
