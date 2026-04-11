@@ -19,7 +19,7 @@ function daysUntil(d: string | null) {
 }
 
 type Freelancer = { id: string; nome: string; status: string | null; intro_casamentos: string | null }
-type Casamento  = { id: string; local: string; data_casamento: string | null; equipa_foto: string[] | null; videografo: string | null; briefing_url: string | null; data_confirmada: boolean | null }
+type Casamento  = { id: string; local: string; data_casamento: string | null; equipa_foto: string[] | null; videografo: string | null; briefing_url: string | null; data_confirmada: boolean | null; indisponivel: boolean | null }
 type Edicao     = {
   id: string; nome: string; status: string; data_casamento: string | null
   data_entrega: string | null; data_final_entrega: string | null; local: string | null
@@ -363,19 +363,35 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo }: {
   const dtu = daysUntil(c.data_casamento)
   const isUrgent = dtu !== null && dtu >= 0 && dtu <= 15
   const isPast   = dtu !== null && dtu < 0
-  const [confirming, setConfirming]   = useState(false)
-  const [confirmed, setConfirmed]     = useState(c.data_confirmada ?? false)
-  const [briefingOpen, setBriefingOpen] = useState(false)
+  const [confirming, setConfirming]         = useState(false)
+  const [confirmed, setConfirmed]           = useState(c.data_confirmada ?? false)
+  const [indisponivel, setIndisponivel]     = useState(c.indisponivel ?? false)
+  const [markingIndisp, setMarkingIndisp]   = useState(false)
+  const [briefingOpen, setBriefingOpen]     = useState(false)
 
   async function handleConfirmar() {
     setConfirming(true)
     await fetch('/api/freelancer-casamentos', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: c.id, data_confirmada: true }),
+      body: JSON.stringify({ id: c.id, data_confirmada: true, indisponivel: false }),
     })
     setConfirmed(true)
+    setIndisponivel(false)
     setConfirming(false)
+    onConfirm(c.id)
+  }
+
+  async function handleIndisponivel() {
+    setMarkingIndisp(true)
+    await fetch('/api/freelancer-casamentos', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: c.id, indisponivel: true, data_confirmada: false }),
+    })
+    setIndisponivel(true)
+    setConfirmed(false)
+    setMarkingIndisp(false)
     onConfirm(c.id)
   }
 
@@ -457,20 +473,44 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo }: {
           )}
         </div>
 
-        {/* Footer — só confirmar, sem editar */}
+        {/* Footer — confirmar / indisponível */}
         {!isPast && (
           <div className="px-6 pb-5">
             {confirmed ? (
-              <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold tracking-widest uppercase cursor-default">
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                Data Confirmada
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold tracking-widest uppercase cursor-default">
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  Confirmado
+                </div>
+                <button onClick={handleIndisponivel} disabled={markingIndisp}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-white/30 text-xs font-semibold tracking-widest uppercase hover:border-red-500/30 hover:text-red-400 transition-all disabled:opacity-50">
+                  Indisponível
+                </button>
+              </div>
+            ) : indisponivel ? (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-semibold tracking-widest uppercase cursor-default">
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                  Indisponível
+                </div>
+                <button onClick={handleConfirmar} disabled={confirming}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-white/30 text-xs font-semibold tracking-widest uppercase hover:border-emerald-500/30 hover:text-emerald-400 transition-all disabled:opacity-50">
+                  Confirmar
+                </button>
               </div>
             ) : (
-              <button onClick={handleConfirmar} disabled={confirming}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-xs font-semibold tracking-widest uppercase hover:bg-gold/20 transition-all disabled:opacity-50">
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                {confirming ? 'A confirmar...' : 'Confirmar Data'}
-              </button>
+              <div className="flex items-center gap-3">
+                <button onClick={handleConfirmar} disabled={confirming}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-xs font-semibold tracking-widest uppercase hover:bg-gold/20 transition-all disabled:opacity-50">
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  {confirming ? 'A confirmar...' : 'Confirmar Data'}
+                </button>
+                <button onClick={handleIndisponivel} disabled={markingIndisp}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-red-500/20 text-red-400/60 text-xs font-semibold tracking-widest uppercase hover:bg-red-500/10 hover:border-red-500/40 hover:text-red-400 transition-all disabled:opacity-50">
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                  {markingIndisp ? 'A guardar...' : 'Indisponível'}
+                </button>
+              </div>
             )}
           </div>
         )}
@@ -727,6 +767,11 @@ export default function FreelancerViewPage() {
                               {c.data_confirmada && (
                                 <span className="text-[10px] px-2.5 py-1 rounded-full border bg-emerald-500/15 text-emerald-400 border-emerald-500/30 tracking-widest">
                                   ✓ Confirmado
+                                </span>
+                              )}
+                              {c.indisponivel && !c.data_confirmada && (
+                                <span className="text-[10px] px-2.5 py-1 rounded-full border bg-red-500/15 text-red-400 border-red-500/30 tracking-widest">
+                                  Indisponível
                                 </span>
                               )}
                             </div>
