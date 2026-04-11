@@ -9,7 +9,7 @@ import { useParams } from 'next/navigation'
 type Freelancer = {
   id: string; nome: string; status: string | null; contato: string | null
   email: string | null; nome_sos: string | null; contato_sos: string | null; notas: string | null
-  password: string | null
+  password: string | null; intro_casamentos: string | null
 }
 type Casamento = {
   id: string; freelancer_id: string; local: string; data_casamento: string | null
@@ -1195,6 +1195,9 @@ function NotasTab({ freelancer, onRefresh }: { freelancer: Freelancer; onRefresh
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState(freelancer.notas ?? '')
   const [saving, setSaving] = useState(false)
+  const [editingIntro, setEditingIntro] = useState(false)
+  const [introValue, setIntroValue] = useState(freelancer.intro_casamentos ?? '')
+  const [savingIntro, setSavingIntro] = useState(false)
 
   async function save() {
     setSaving(true)
@@ -1205,8 +1208,58 @@ function NotasTab({ freelancer, onRefresh }: { freelancer: Freelancer; onRefresh
     } finally { setSaving(false) }
   }
 
+  async function saveIntro() {
+    setSavingIntro(true)
+    try {
+      await fetch('/api/freelancers', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: freelancer.id, intro_casamentos: introValue }) })
+      setEditingIntro(false)
+      onRefresh()
+    } finally { setSavingIntro(false) }
+  }
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-6">
+
+      {/* ── Intro Casamentos ── */}
+      <div className="space-y-2">
+        <p className="text-[9px] tracking-[0.35em] text-white/30 uppercase">Texto Intro — Secção Casamentos</p>
+        {editingIntro ? (
+          <div className="space-y-3">
+            <textarea value={introValue} onChange={e => setIntroValue(e.target.value)} rows={6}
+              placeholder="Texto visível pelo freelancer na secção Casamentos..."
+              className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15 resize-none leading-relaxed" />
+            <div className="flex justify-end gap-2">
+              <button onClick={() => { setEditingIntro(false); setIntroValue(freelancer.intro_casamentos ?? '') }}
+                className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
+              <button onClick={saveIntro} disabled={savingIntro}
+                className="px-4 py-1.5 rounded-lg text-xs bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-50">
+                {savingIntro ? 'A guardar...' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="relative group">
+            {introValue ? (
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl px-4 py-4 text-sm text-white/70 leading-relaxed whitespace-pre-wrap">{introValue}</div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 rounded-xl border border-dashed border-white/[0.08] text-center">
+                <p className="text-white/20 text-xs tracking-widest">Sem texto. Clica em editar para adicionar.</p>
+              </div>
+            )}
+            <button onClick={() => setEditingIntro(true)}
+              className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-white/25 hover:text-white/60 hover:bg-white/[0.06] transition-all">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="h-px bg-white/[0.05]" />
+
+      {/* ── Notas Internas ── */}
+      <div className="space-y-2">
+        <p className="text-[9px] tracking-[0.35em] text-white/30 uppercase">Notas Internas</p>
+        <div className="space-y-3">
       {editing ? (
         <div className="space-y-3">
           <textarea value={value} onChange={e => setValue(e.target.value)} rows={10}
@@ -1238,6 +1291,7 @@ function NotasTab({ freelancer, onRefresh }: { freelancer: Freelancer; onRefresh
           </button>
         </div>
       )}
+      </div>
     </div>
   )
 }

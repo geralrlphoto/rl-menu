@@ -18,7 +18,7 @@ function daysUntil(d: string | null) {
   return Math.round((new Date(d+'T00:00:00').getTime() - today.getTime()) / 86400000)
 }
 
-type Freelancer = { id: string; nome: string; status: string | null }
+type Freelancer = { id: string; nome: string; status: string | null; intro_casamentos: string | null }
 type Casamento  = { id: string; local: string; data_casamento: string | null; equipa_foto: string[] | null; videografo: string | null; briefing_url: string | null; data_confirmada: boolean | null }
 type Edicao     = {
   id: string; nome: string; status: string; data_casamento: string | null
@@ -680,16 +680,12 @@ export default function FreelancerViewPage() {
           {tab === 'casamentos' && (
             <div className="space-y-10">
               {/* Intro */}
-              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-5 py-4 space-y-2"
-                style={{ boxShadow: '0 0 18px 3px rgba(255,255,255,0.04), inset 0 0 18px 0 rgba(255,255,255,0.02)' }}>
-                <p className="text-[9px] tracking-[0.35em] text-white/25 uppercase mb-1">A tua agenda</p>
-                <p className="text-lg text-white leading-relaxed">
-                  Aqui encontras todos os eventos que te foram atribuídos ao longo do ano. Sempre que um novo evento for adicionado, deverás confirmar a tua disponibilidade.
-                </p>
-                <p className="text-lg text-white leading-relaxed">
-                  A <span className="text-white">3 dias</span> do evento tens acesso ao briefing com toda a informação necessária para o dia — percurso, contactos, detalhes da cerimónia e muito mais.
-                </p>
-              </div>
+              {freelancer?.intro_casamentos && (
+                <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-5 py-4"
+                  style={{ boxShadow: '0 0 18px 3px rgba(255,255,255,0.04), inset 0 0 18px 0 rgba(255,255,255,0.02)' }}>
+                  <p className="text-lg text-white leading-relaxed whitespace-pre-wrap">{freelancer.intro_casamentos}</p>
+                </div>
+              )}
               {/* Próximos */}
               <section>
                 <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-4">Próximos Casamentos ({upcoming.length})</p>
