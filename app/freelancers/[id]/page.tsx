@@ -1288,6 +1288,7 @@ function NotasTab({ freelancer, onRefresh }: { freelancer: Freelancer; onRefresh
         </div>
       )}
       </div>
+      </div>
     </div>
   )
 }
