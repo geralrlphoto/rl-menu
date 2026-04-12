@@ -28,13 +28,6 @@ const STATUS_TO_ADMIN: Record<string, string> = {
   'APROVADO':      'APROVADO',
   'ENTREGUE':      'ENTREGUE',
 }
-const STATUS_TO_NOTION: Record<string, string> = {
-  'AGUARDAR':      'Aguardar',
-  'EM EDIÇÃO':     'Em Edição',
-  'EM APROVAÇÃO':  'Em Aprovação',
-  'APROVADO':      'Aprovado',
-  'ENTREGUE':      'Entregue',
-}
 
 export async function PATCH(req: NextRequest) {
   const { id, ...fields } = await req.json()
@@ -63,7 +56,6 @@ export async function PATCH(req: NextRequest) {
     const ref = record?.referencia_album
     if (ref) {
       const adminStatus = STATUS_TO_ADMIN[newStatus]
-      const notionStatus = STATUS_TO_NOTION[newStatus]
 
       // Update albuns_casamento
       if (adminStatus) {
@@ -73,43 +65,6 @@ export async function PATCH(req: NextRequest) {
           .eq('ref_evento', ref)
       }
 
-      // Sync album_estado to Notion evento
-      if (notionStatus) {
-        try {
-          const token = process.env.NOTION_TOKEN!
-          const EVENTOS_DB = '1ad220116d8a804b839ddc36f1e7ecf1'
-          const notionHeaders = {
-            'Authorization': `Bearer ${token}`,
-            'Notion-Version': '2022-06-28',
-            'Content-Type': 'application/json',
-          }
-          // Find the evento page by ref
-          const searchRes = await fetch(`https://api.notion.com/v1/databases/${EVENTOS_DB}/query`, {
-            method: 'POST',
-            headers: notionHeaders,
-            body: JSON.stringify({
-              filter: { property: 'REFERÊNCIA DO EVENTO', title: { equals: ref } },
-              page_size: 1,
-            }),
-            cache: 'no-store',
-          })
-          const searchData = await searchRes.json()
-          const pageId = searchData.results?.[0]?.id
-          if (pageId) {
-            await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
-              method: 'PATCH',
-              headers: notionHeaders,
-              body: JSON.stringify({
-                properties: {
-                  'ESTADO ÁLBUM': { select: { name: notionStatus } },
-                },
-              }),
-            })
-          }
-        } catch {
-          // Non-critical — don't fail the whole request
-        }
-      }
     }
   }
 
