@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 // ─── Serviços extra ────────────────────────────────────────────────────────────
@@ -1131,6 +1131,9 @@ function PortalSection({ evento }: { evento: Evento }) {
 // ─── Página principal ──────────────────────────────────────────────────────────
 export default function EventoPage() {
   const { id } = useParams<{ id: string }>()
+  const router = useRouter()
+  const [navRef, setNavRef] = useState('')
+  const [navLoading, setNavLoading] = useState(false)
   const [evento, setEvento] = useState<Evento | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -1343,6 +1346,39 @@ export default function EventoPage() {
 
       {/* ── Header editável ── */}
       <div className="mt-8 mb-2">
+        {/* Dropdown de navegação rápida */}
+        <div className="mb-4 flex items-center gap-2">
+          <select
+            value={navRef}
+            onChange={async e => {
+              const ref = e.target.value
+              if (!ref) return
+              setNavRef(ref)
+              setNavLoading(true)
+              const res = await fetch(`/api/eventos-by-ref?ref=${encodeURIComponent(ref)}`)
+              const data = await res.json()
+              setNavLoading(false)
+              if (data.id) {
+                router.push(`/eventos-2026/${data.id}`)
+              } else {
+                setNavRef('')
+                alert(`Evento ${ref} não encontrado`)
+              }
+            }}
+            className="bg-white/[0.04] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/50 focus:outline-none focus:border-gold/30 transition-colors appearance-none cursor-pointer"
+            style={{ minWidth: 180 }}
+          >
+            <option value="">Navegar para...</option>
+            {Array.from({ length: 150 }, (_, i) => {
+              const n = String(i + 1).padStart(4, '0')
+              return `CAS_${n}_26_RL`
+            }).map(ref => (
+              <option key={ref} value={ref}>{ref}</option>
+            ))}
+          </select>
+          {navLoading && <span className="text-xs text-white/30 animate-pulse">A carregar...</span>}
+        </div>
+
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex-1 min-w-0">
             <EditField label="" value={e.referencia} field="referencia" eventId={e.id} onSaved={handleSaved} mono />
