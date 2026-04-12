@@ -912,7 +912,7 @@ export default function FreelancerViewPage() {
           {[
             { key: 'casamentos', label: 'Casamentos', count: casamentos.length },
             { key: 'edicao',     label: 'Edição de Fotos', count: edicao.length },
-            ...(isFotografo ? [{ key: 'album', label: 'Edição de Álbum', count: album.length }] : []),
+            ...(album.length > 0 ? [{ key: 'album', label: 'Edição de Álbum', count: album.length }] : []),
           ].map(t => (
             <button
               key={t.key}
