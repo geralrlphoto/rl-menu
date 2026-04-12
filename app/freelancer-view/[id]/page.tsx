@@ -1102,38 +1102,55 @@ export default function FreelancerViewPage() {
 
           {/* ── Tab: Edição de Álbum ── */}
           {tab === 'album' && (
-            <section>
+            <section className="space-y-4">
               {album.length === 0 ? (
                 <p className="text-white/15 text-xs tracking-widest">Sem álbuns atribuídos.</p>
               ) : (
-                <div className="space-y-2">
-                  {album.map(a => (
-                    <div key={a.id} className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-white/[0.06] bg-white/[0.02]">
-                      <div>
-                        <p className="text-sm text-white/80">{a.nome}</p>
-                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                          {a.data_casamento && <p className="text-[10px] text-white/30">{fmtDate(a.data_casamento).split(' · ')[0]}</p>}
-                          {a.referencia_album && <span className="text-[9px] text-gold/50 font-mono">{a.referencia_album}</span>}
-                        </div>
-                        <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-                          {a.data_entrega_fotos && (
-                            <span className="text-[9px] text-white/30">Entrada: {fmtDate(a.data_entrega_fotos).split(' · ')[0]}</span>
-                          )}
-                          {a.data_entrega_fotos && (
-                            <span className="text-[9px] text-white/30">Limite: {fmtDate(addDaysStr(a.data_entrega_fotos, 35)).split(' · ')[0]}</span>
-                          )}
-                        </div>
+                ALBUM_STATUS_OPTIONS.map(statusLabel => {
+                  const items = album.filter(a => a.status === statusLabel)
+                  return (
+                    <div key={statusLabel}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`text-[9px] px-2 py-0.5 rounded border tracking-widest font-semibold uppercase ${STATUS_ALBUM_STYLE[statusLabel] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
+                          {statusLabel}
+                        </span>
+                        <span className="text-[9px] text-white/20">({items.length})</span>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button onClick={() => setAlbumInfo(a)}
-                          className="text-[10px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-xl border border-gold/30 bg-gold/5 text-gold/70 hover:text-gold hover:border-gold/60 hover:bg-gold/10 transition-all">
-                          Ver Mais
-                        </button>
-                        <AlbumStatusSelect albumId={a.id} status={a.status} onChanged={s => setAlbum(prev => prev.map(x => x.id === a.id ? { ...x, status: s } : x))} />
-                      </div>
+                      {items.length === 0 ? (
+                        <p className="text-[10px] text-white/10 italic pl-1">—</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {items.map(a => (
+                            <div key={a.id} className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-white/[0.06] bg-white/[0.02]">
+                              <div>
+                                <p className="text-sm text-white/80">{a.nome}</p>
+                                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                  {a.data_casamento && <p className="text-[10px] text-white/30">{fmtDate(a.data_casamento).split(' · ')[0]}</p>}
+                                  {a.referencia_album && <span className="text-[9px] text-gold/50 font-mono">{a.referencia_album}</span>}
+                                </div>
+                                <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                                  {a.data_entrega_fotos && (
+                                    <span className="text-[9px] text-white/30">Entrada: {fmtDate(a.data_entrega_fotos).split(' · ')[0]}</span>
+                                  )}
+                                  {a.data_entrega_fotos && (
+                                    <span className="text-[9px] text-white/30">Limite: {fmtDate(addDaysStr(a.data_entrega_fotos, 35)).split(' · ')[0]}</span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <button onClick={() => setAlbumInfo(a)}
+                                  className="text-[10px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-xl border border-gold/30 bg-gold/5 text-gold/70 hover:text-gold hover:border-gold/60 hover:bg-gold/10 transition-all">
+                                  Ver Mais
+                                </button>
+                                <AlbumStatusSelect albumId={a.id} status={a.status} onChanged={s => setAlbum(prev => prev.map(x => x.id === a.id ? { ...x, status: s } : x))} />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
+                  )
+                })
               )}
             </section>
           )}
