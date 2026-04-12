@@ -1383,9 +1383,19 @@ export default function EventoPage() {
               {Array.from({ length: 150 }, (_, i) => {
                 const n = String(i + 1).padStart(3, '0')
                 const ref = `CAS_${n}_26_RL`
+                const isMine = ref === e.referencia
+                const isTaken = usedRefs.has(ref) && !isMine
                 return (
-                  <option key={ref} value={ref} style={{ background: '#1a1610', color: 'rgba(255,255,255,0.7)' }}>
-                    {ref}
+                  <option
+                    key={ref}
+                    value={ref}
+                    disabled={isTaken}
+                    style={{
+                      background: '#1a1610',
+                      color: isTaken ? '#cc3333' : isMine ? '#c9a96e' : 'rgba(255,255,255,0.7)',
+                    }}
+                  >
+                    {ref}{isTaken ? ' — Referência já utilizada' : ''}
                   </option>
                 )
               })}
