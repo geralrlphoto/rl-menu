@@ -149,20 +149,23 @@ function printFicha(row: FotoSelecao) {
 }
 
 const EDITORS = ['Alexandre Capão', 'Patrício Ferreira']
+const ALBUM_EDITORS = ['Alexandre Capão', 'Patrício Ferreira', 'Sónia Carvalho', 'Rui Garrido', 'Bruno de Carvalho', 'Pedro Martins', 'Leandro Valente']
 
 // ── Modal Ficha ───────────────────────────────────────────────────────────────
 function FichaModal({ row, onClose, onSaved }: {
   row: FotoSelecao; onClose: () => void; onSaved: (field: string, val: any) => void
 }) {
-  const [editor, setEditor]               = useState<string | null>(null)
-  const [editorLoading, setEditorLoading] = useState(true)
-  const [editorSaving, setEditorSaving]   = useState(false)
-  const [editorFeedback, setEditorFeedback] = useState('')
+  const [editor, setEditor]                   = useState<string | null>(null)
+  const [editorAlbum, setEditorAlbum]         = useState<string | null>(null)
+  const [editorLoading, setEditorLoading]     = useState(true)
+  const [editorSaving, setEditorSaving]       = useState(false)
+  const [editorAlbumSaving, setEditorAlbumSaving] = useState(false)
+  const [editorFeedback, setEditorFeedback]   = useState('')
 
   useEffect(() => {
     fetch(`/api/fotos-selecao-editor?notion_page_id=${row.id}`)
       .then(r => r.json())
-      .then(d => { setEditor(d.editor ?? null); setEditorLoading(false) })
+      .then(d => { setEditor(d.editor ?? null); setEditorAlbum(d.editor_album ?? null); setEditorLoading(false) })
       .catch(() => setEditorLoading(false))
   }, [row.id])
 
@@ -215,6 +218,18 @@ function FichaModal({ row, onClose, onSaved }: {
     setEditor(next)
     setEditorSaving(false)
     if (next) setTimeout(() => setEditorFeedback(''), 4000)
+  }
+
+  async function handleEditorAlbumChange(name: string) {
+    const next = name || null
+    setEditorAlbumSaving(true)
+    await fetch('/api/fotos-selecao-editor', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notion_page_id: row.id, editor_album: next }),
+    })
+    setEditorAlbum(next)
+    setEditorAlbumSaving(false)
   }
 
   function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -295,17 +310,43 @@ function FichaModal({ row, onClose, onSaved }: {
                 value={editor ?? ''}
                 onChange={e => handleEditorChange(e.target.value)}
                 disabled={editorSaving}
-                className="w-full bg-zinc-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 focus:outline-none focus:border-gold/40 transition-colors disabled:opacity-40 [color-scheme:dark]"
+                className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold/40 transition-colors disabled:opacity-40 [color-scheme:dark]"
               >
-                <option value="">— Sem editor —</option>
+                <option value="" style={{ backgroundColor: '#1a1a1a', color: 'white' }}>— Sem editor —</option>
                 {EDITORS.map(name => (
-                  <option key={name} value={name}>{name}</option>
+                  <option key={name} value={name} style={{ backgroundColor: '#1a1a1a', color: 'white' }}>{name}</option>
                 ))}
               </select>
             )}
             {editor && !editorSaving && (
               <p className="text-[10px] text-gold/50 mt-1.5 tracking-wide">
                 Atribuído a <span className="text-gold/80">{editor}</span>
+              </p>
+            )}
+          </div>
+
+          {/* Editor Álbum */}
+          <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
+            <span className="text-[8px] tracking-[0.3em] text-white/25 uppercase block mb-2">Editor Álbum</span>
+            {editorLoading ? (
+              <div className="text-white/20 text-xs italic">A carregar...</div>
+            ) : (
+              <select
+                value={editorAlbum ?? ''}
+                onChange={e => handleEditorAlbumChange(e.target.value)}
+                disabled={editorAlbumSaving}
+                className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold/40 transition-colors disabled:opacity-40 [color-scheme:dark]"
+                style={{ colorScheme: 'dark' }}
+              >
+                <option value="" style={{ backgroundColor: '#1a1a1a', color: 'white' }}>— Sem editor álbum —</option>
+                {ALBUM_EDITORS.map(name => (
+                  <option key={name} value={name} style={{ backgroundColor: '#1a1a1a', color: 'white' }}>{name}</option>
+                ))}
+              </select>
+            )}
+            {editorAlbum && !editorAlbumSaving && (
+              <p className="text-[10px] text-gold/50 mt-1.5 tracking-wide">
+                Atribuído a <span className="text-gold/80">{editorAlbum}</span>
               </p>
             )}
           </div>
