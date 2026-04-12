@@ -387,8 +387,8 @@ function SelecaoModal({ nome, onClose }: { nome: string; onClose: () => void }) 
               <div className="w-5 h-5 border border-gold/30 border-t-gold/80 rounded-full animate-spin" />
             </div>
           )}
-          {/* Data de Entrada — always visible */}
-          <div className="grid grid-cols-2 gap-3 mb-6">
+          {/* Datas — always visible */}
+          <div className="grid grid-cols-3 gap-3 mb-6">
             <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3">
               <span className="text-[8px] tracking-[0.3em] text-white uppercase block mb-1">Data do Evento</span>
               <p className="text-sm text-white">{record ? fmtFull(record.date) : '—'}</p>
@@ -396,6 +396,10 @@ function SelecaoModal({ nome, onClose }: { nome: string; onClose: () => void }) 
             <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3">
               <span className="text-[8px] tracking-[0.3em] text-white uppercase block mb-1">Data de Entrada</span>
               <p className="text-sm text-white">{record ? fmtFull(record.data_entrada) : '—'}</p>
+            </div>
+            <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3">
+              <span className="text-[8px] tracking-[0.3em] text-white uppercase block mb-1">Data de Entrega de Fotos</span>
+              <p className="text-sm text-white">{record?.data_entrada ? fmtFull(addDaysStr(record.data_entrada, 35)) : '—'}</p>
             </div>
           </div>
           {notFound && (
