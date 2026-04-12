@@ -1374,19 +1374,17 @@ export default function EventoPage() {
               {Array.from({ length: 150 }, (_, i) => {
                 const n = String(i + 1).padStart(3, '0')
                 const ref = `CAS_${n}_26_RL`
-                const isCurrent = ref === e.referencia
-                const isTaken = usedRefs.has(ref) && !isCurrent
+                const isSelected = ref === navRef
                 return (
                   <option
                     key={ref}
                     value={ref}
-                    disabled={isTaken}
                     style={{
                       background: '#1a1610',
-                      color: isTaken ? '#cc3333' : isCurrent ? '#c9a96e' : 'rgba(255,255,255,0.7)',
+                      color: isSelected ? '#cc3333' : 'rgba(255,255,255,0.7)',
                     }}
                   >
-                    {ref}{isTaken ? ' ✕' : ''}
+                    {ref}
                   </option>
                 )
               })}
