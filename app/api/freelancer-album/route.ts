@@ -103,7 +103,7 @@ export async function PATCH(req: NextRequest) {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              from: 'RL Photo.Video <noreply@rlphotovideo.pt>',
+              from: 'RL Photo.Video <geral@rlphotovideo.pt>',
               to: [emailNoiva],
               subject: 'O seu álbum está pronto para aprovação',
               html: `

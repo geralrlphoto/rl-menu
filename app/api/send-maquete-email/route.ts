@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL Photo.Video <noreply@rlphotovideo.pt>',
+      from: 'RL Photo.Video <geral@rlphotovideo.pt>',
       to: [email_noiva],
       subject: 'A vossa maquete do álbum está pronta',
       html: `
