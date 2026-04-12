@@ -1205,6 +1205,7 @@ export default function EventoPage() {
         setLoading(false)
 
         if (ev.referencia) {
+          setNavRef(ev.referencia)
           setReferenciaLoaded(ev.referencia)
           // Carregar pagamentos
           loadPagamentos(ev.referencia)
