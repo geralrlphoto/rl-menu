@@ -73,6 +73,15 @@ function AlbumStatusSelect({ albumId, status, onChanged }: { albumId: string; st
     setSaving(false)
   }
 
+  // APROVADO só pode ser definido pelo cliente — mostra badge fixo
+  if (status === 'APROVADO') {
+    return (
+      <span className={`text-[9px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium ${cls}`}>
+        APROVADO ✓
+      </span>
+    )
+  }
+
   return (
     <select
       value={status}
