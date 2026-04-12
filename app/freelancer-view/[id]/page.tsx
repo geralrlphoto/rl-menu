@@ -656,7 +656,7 @@ export default function FreelancerViewPage() {
     <main className="min-h-screen px-4 py-10 max-w-2xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <p className="text-[9px] tracking-[0.5em] text-white/20 uppercase mb-3">RL PHOTO.VIDEO · Área do Freelancer</p>
+        <p className="text-[16px] text-white font-semibold mb-3">RL PHOTO.VIDEO · Área do Freelancer</p>
         {loading ? (
           <p className="text-white/20 text-xs tracking-widest uppercase">A carregar...</p>
         ) : (
