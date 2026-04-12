@@ -1145,6 +1145,7 @@ export default function EventoPage() {
   const [portalSelecaoEstado, setPortalSelecaoEstado] = useState<string>('Aguardar')
   const [prazoFotosNoivosEstado, setPrazoFotosNoivosEstado] = useState<string>('Aguardar')
   const [maqueteEnviada, setMaqueteEnviada] = useState(false)
+  const [selecaoEnviada, setSelecaoEnviada] = useState(false)
 
   function loadPagamentos(ref: string, showRefresh = false) {
     if (showRefresh) setPagamentosRefreshing(true)
@@ -1234,6 +1235,7 @@ export default function EventoPage() {
               if (s.selecao_fotos_noivos_estado) setPortalSelecaoEstado(s.selecao_fotos_noivos_estado)
               if (s.prazo_fotos_noivos_estado)   setPrazoFotosNoivosEstado(s.prazo_fotos_noivos_estado)
               if (s.maquete_enviada)             setMaqueteEnviada(true)
+              if (s.selecao_enviada)             setSelecaoEnviada(true)
             })
             .catch(() => {})
         }
@@ -1641,37 +1643,78 @@ export default function EventoPage() {
 
         {/* ── Ações Admin ── */}
         <Section title="Ações">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm text-white/70">Enviar Maquete</p>
-              <p className="text-xs text-white/30 mt-0.5">{maqueteEnviada ? 'Enviada' : 'Pendente'}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              {maqueteEnviada && (
+          <div className="flex flex-col gap-4">
+
+            {/* Fotos p/ Seleção */}
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm text-white/70">Fotos p/ Seleção</p>
+                <p className="text-xs text-white/30 mt-0.5">{selecaoEnviada ? 'Enviada' : 'Pendente'}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {selecaoEnviada && (
+                  <button
+                    onClick={async () => {
+                      if (!evento?.referencia) return
+                      await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { selecao_enviada: false } } }) })
+                      setSelecaoEnviada(false)
+                    }}
+                    className="w-6 h-6 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-all text-xs"
+                    title="Repor como Pendente"
+                  >✕</button>
+                )}
                 <button
                   onClick={async () => {
                     if (!evento?.referencia) return
-                    await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { maquete_enviada: false } } }) })
-                    setMaqueteEnviada(false)
+                    await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { selecao_enviada: true } } }) })
+                    setSelecaoEnviada(true)
+                    if (evento.email_noiva) {
+                      await fetch('/api/send-selecao-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email_noiva: evento.email_noiva, nome_noiva: evento.nome_noiva, nome_noivo: evento.nome_noivo }) })
+                    }
                   }}
-                  className="w-6 h-6 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-all text-xs"
-                  title="Repor como Pendente"
-                >✕</button>
-              )}
-              <button
-                onClick={async () => {
-                  if (!evento?.referencia) return
-                  await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { maquete_enviada: true } } }) })
-                  setMaqueteEnviada(true)
-                  if (evento.email_noiva) {
-                    await fetch('/api/send-maquete-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email_noiva: evento.email_noiva, nome_noiva: evento.nome_noiva, nome_noivo: evento.nome_noivo }) })
-                  }
-                }}
-                className={`px-5 py-2.5 rounded-xl text-xs font-semibold tracking-[0.2em] uppercase border transition-all ${maqueteEnviada ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/30'}`}
-              >
-                {maqueteEnviada ? '✓ Enviada' : 'Enviar Maquete'}
-              </button>
+                  className={`px-5 py-2.5 rounded-xl text-xs font-semibold tracking-[0.2em] uppercase border transition-all ${selecaoEnviada ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/30'}`}
+                >
+                  {selecaoEnviada ? '✓ Enviada' : 'Fotos p/ Seleção'}
+                </button>
+              </div>
             </div>
+
+            <div className="h-px bg-white/5" />
+
+            {/* Enviar Maquete */}
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm text-white/70">Enviar Maquete</p>
+                <p className="text-xs text-white/30 mt-0.5">{maqueteEnviada ? 'Enviada' : 'Pendente'}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {maqueteEnviada && (
+                  <button
+                    onClick={async () => {
+                      if (!evento?.referencia) return
+                      await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { maquete_enviada: false } } }) })
+                      setMaqueteEnviada(false)
+                    }}
+                    className="w-6 h-6 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-all text-xs"
+                    title="Repor como Pendente"
+                  >✕</button>
+                )}
+                <button
+                  onClick={async () => {
+                    if (!evento?.referencia) return
+                    await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { maquete_enviada: true } } }) })
+                    setMaqueteEnviada(true)
+                    if (evento.email_noiva) {
+                      await fetch('/api/send-maquete-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email_noiva: evento.email_noiva, nome_noiva: evento.nome_noiva, nome_noivo: evento.nome_noivo }) })
+                    }
+                  }}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-semibold tracking-[0.2em] uppercase border transition-all ${maqueteEnviada ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/30'}`}
+                >
+                  {maqueteEnviada ? '✓ Enviada' : 'Enviar Maquete'}
+                </button>
+              </div>
+            </div>
+
           </div>
         </Section>
 
