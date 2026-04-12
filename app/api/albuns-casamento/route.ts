@@ -95,5 +95,14 @@ export async function PATCH(req: NextRequest) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Sync status to freelancer_album when approving
+  if (status === 'APROVADO' && data?.ref_evento) {
+    await supabase
+      .from('freelancer_album')
+      .update({ status: 'APROVADO' })
+      .eq('referencia_album', data.ref_evento)
+  }
+
   return NextResponse.json({ row: data })
 }
