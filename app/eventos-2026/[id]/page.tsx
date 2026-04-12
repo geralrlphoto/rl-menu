@@ -1153,7 +1153,8 @@ export default function EventoPage() {
     selecao: '', prewedding: '', fotos_finais: '', galerias: '', maquete: '',
   })
   const [videoPreWeddingEnviada, setVideoPreWeddingEnviada] = useState<string | null>(null)
-  const [videoActionUrls, setVideoActionUrls] = useState<Record<string, string>>({ video_prewedding: '' })
+  const [weddingFilmEnviada, setWeddingFilmEnviada] = useState<string | null>(null)
+  const [videoActionUrls, setVideoActionUrls] = useState<Record<string, string>>({ video_prewedding: '', wedding_film: '' })
 
   function loadPagamentos(ref: string, showRefresh = false) {
     if (showRefresh) setPagamentosRefreshing(true)
@@ -1248,7 +1249,8 @@ export default function EventoPage() {
               if (s.fotos_finais_enviada)     setFotosFinaisEnviada(s.fotos_finais_enviada)
               if (s.galerias_enviada)         setGaleriasEnviada(s.galerias_enviada)
               if (s.video_prewedding_enviada) setVideoPreWeddingEnviada(s.video_prewedding_enviada)
-              setVideoActionUrls({ video_prewedding: s.video_prewedding_url ?? '' })
+              if (s.wedding_film_enviada)     setWeddingFilmEnviada(s.wedding_film_enviada)
+              setVideoActionUrls({ video_prewedding: s.video_prewedding_url ?? '', wedding_film: s.wedding_film_url ?? '' })
               // Auto-populate URLs from portal calloutLinks (FOTOGRAFIAS page cards)
               const calloutLinks = s.calloutLinks ?? {}
               let fl: Record<string, string> = {}
@@ -1768,6 +1770,7 @@ export default function EventoPage() {
           <div className="flex flex-col gap-4">
             {[
               { label: 'Vídeo Pré-Wedding', state: videoPreWeddingEnviada, setState: setVideoPreWeddingEnviada, key: 'video_prewedding_enviada', urlKey: 'video_prewedding', api: '/api/send-video-prewedding-email' },
+              { label: 'Wedding Film', state: weddingFilmEnviada, setState: setWeddingFilmEnviada, key: 'wedding_film_enviada', urlKey: 'wedding_film', api: '/api/send-wedding-film-email' },
             ].map(({ label, state, setState, key, urlKey, api }) => {
               const url = videoActionUrls[urlKey] ?? ''
               const hasUrl = url.trim().length > 0
