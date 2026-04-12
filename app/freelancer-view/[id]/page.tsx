@@ -487,8 +487,8 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo }: {
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                   Confirmado
                 </div>
-                <button onClick={handleIndisponivel} disabled={markingIndisp}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-white/30 text-xs font-semibold tracking-widest uppercase hover:border-red-500/30 hover:text-red-400 transition-all disabled:opacity-50">
+                <button disabled
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-white/20 text-xs font-semibold tracking-widest uppercase opacity-40 cursor-not-allowed">
                   Indisponível
                 </button>
               </div>
@@ -498,8 +498,8 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo }: {
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                   Indisponível
                 </div>
-                <button onClick={handleConfirmar} disabled={confirming}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-white/30 text-xs font-semibold tracking-widest uppercase hover:border-emerald-500/30 hover:text-emerald-400 transition-all disabled:opacity-50">
+                <button disabled
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-white/20 text-xs font-semibold tracking-widest uppercase opacity-40 cursor-not-allowed">
                   Confirmar
                 </button>
               </div>
