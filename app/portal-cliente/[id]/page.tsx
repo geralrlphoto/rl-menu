@@ -247,6 +247,153 @@ function ImageEditor({ blocks, pageId, onBlocksUpdated, onDone }: {
   )
 }
 
+// ─── maquete album section ────────────────────────────────────────────────────
+
+const MESES_AL = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+function fmtAl(d: string | null) {
+  if (!d) return '—'
+  const dt = new Date(d.split('T')[0] + 'T00:00:00')
+  if (isNaN(dt.getTime())) return '—'
+  return `${String(dt.getDate()).padStart(2,'0')} ${MESES_AL[dt.getMonth()]} ${dt.getFullYear()}`
+}
+
+const STATUS_LABEL_AL: Record<string, string> = {
+  'NOVO ÁLBUM':    'Aguardar',
+  'EM EDIÇÃO':     'Em Edição',
+  'PARA APROVAÇÃO':'Em Aprovação',
+  'APROVADO':      'Aprovado',
+  'ENTREGUE':      'Entregue',
+}
+
+function MaqueteAlbumSection({ portalRef, imgUrl }: { portalRef: string; imgUrl: string | null }) {
+  const [open, setOpen]       = useState(false)
+  const [album, setAlbum]     = useState<any>(null)
+  const [saving, setSaving]   = useState(false)
+  const [feedback, setFeedback] = useState('')
+
+  useEffect(() => {
+    if (!portalRef) return
+    fetch(`/api/albuns-by-ref?ref=${encodeURIComponent(portalRef)}`)
+      .then(r => r.json())
+      .then(d => setAlbum(d))
+      .catch(() => {})
+  }, [portalRef])
+
+  async function handleAprovar() {
+    if (!album?.id) return
+    setSaving(true)
+    setFeedback('')
+    const res = await fetch('/api/albuns-casamento', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: album.id, status: 'APROVADO' }),
+    }).then(r => r.json())
+    if (res.row) {
+      setAlbum((a: any) => ({ ...a, status: 'APROVADO', data_aprovacao: res.row.data_aprovacao, data_prevista_entrega: res.row.data_prevista_entrega }))
+      setFeedback('✓ Álbum aprovado com sucesso!')
+      setTimeout(() => setFeedback(''), 5000)
+    }
+    setSaving(false)
+  }
+
+  const labelStatus = album ? (STATUS_LABEL_AL[album.status] ?? album.status ?? 'Aguardar') : 'Aguardar'
+  const isAprovado  = album?.status === 'APROVADO' || album?.status === 'ENTREGUE'
+
+  return (
+    <div className="mt-3 rounded-2xl border border-white/40 bg-black overflow-hidden"
+      style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}>
+
+      {/* Header row */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
+        <span className="text-[10px] tracking-[0.35em] text-white/50 uppercase font-bold">Maquete Álbum</span>
+        <div className="flex items-center gap-2">
+          {album && (
+            <span className={`text-[9px] px-2 py-0.5 rounded border tracking-widest ${isAprovado ? 'bg-green-500/15 border-green-500/30 text-green-300' : 'bg-yellow-500/10 border-yellow-500/25 text-yellow-300/70'}`}>
+              {labelStatus}
+            </span>
+          )}
+          <button onClick={() => setOpen(o => !o)}
+            className="text-[10px] tracking-[0.2em] uppercase px-3 py-1.5 rounded-xl border border-white/40 bg-white/5 text-white font-semibold hover:bg-white/10 transition-all"
+            style={{ boxShadow: '0 0 10px 2px rgba(255,255,255,0.15)' }}>
+            {open ? 'FECHAR' : 'VER MAIS →'}
+          </button>
+        </div>
+      </div>
+
+      {/* Inline panel */}
+      {open && (
+        <div className="p-4 flex flex-col gap-4">
+          {/* Image */}
+          {imgUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={imgUrl} alt="Maquete Álbum" className="w-full rounded-xl object-contain border border-white/10" />
+          )}
+
+          {/* Album info */}
+          {album?.id ? (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 flex flex-col gap-1">
+                <span className="text-[8px] tracking-[0.3em] text-white/25 uppercase">Fotos p/Álbum</span>
+                <span className="text-lg font-semibold text-white">{album.num_fotografias ?? '—'}</span>
+              </div>
+              <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 flex flex-col gap-1">
+                <span className="text-[8px] tracking-[0.3em] text-white/25 uppercase">Estado</span>
+                <span className={`text-sm font-medium ${isAprovado ? 'text-green-300' : 'text-yellow-300/70'}`}>{labelStatus}</span>
+              </div>
+              {album.data_entrega_fotos && (
+                <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 flex flex-col gap-1">
+                  <span className="text-[8px] tracking-[0.3em] text-white/25 uppercase">Entrada de Fotos</span>
+                  <span className="text-sm text-white/70">{fmtAl(album.data_entrega_fotos)}</span>
+                </div>
+              )}
+              {album.data_aprovacao && (
+                <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 flex flex-col gap-1">
+                  <span className="text-[8px] tracking-[0.3em] text-white/25 uppercase">Data Aprovação</span>
+                  <span className="text-sm text-white/70">{fmtAl(album.data_aprovacao)}</span>
+                </div>
+              )}
+              {album.data_prevista_entrega && (
+                <div className="col-span-2 bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 flex flex-col gap-1">
+                  <span className="text-[8px] tracking-[0.3em] text-white/25 uppercase">Data Prevista Entrega</span>
+                  <span className="text-sm text-white/70">{fmtAl(album.data_prevista_entrega)}</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-white/30 italic text-center py-2">A preparar o seu álbum...</p>
+          )}
+
+          {/* Feedback */}
+          {feedback && (
+            <p className="text-sm text-green-400 text-center tracking-wide">{feedback}</p>
+          )}
+
+          {/* Action buttons */}
+          {album?.id && !isAprovado && (
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <button onClick={handleAprovar} disabled={saving}
+                className="py-3 rounded-xl border border-green-500/40 bg-green-500/10 text-green-300 font-bold text-xs tracking-widest uppercase hover:bg-green-500/20 transition-all disabled:opacity-50"
+                style={{ boxShadow: '0 0 12px 2px rgba(74,222,128,0.12)' }}>
+                {saving ? '...' : '✓ APROVADO'}
+              </button>
+              <a href={`/portal-cliente/album-alteracao?ref=${encodeURIComponent(portalRef)}`}
+                className="py-3 rounded-xl border border-white/30 bg-white/5 text-white/70 font-bold text-xs tracking-widest uppercase hover:bg-white/10 transition-all text-center"
+                style={{ boxShadow: '0 0 10px 2px rgba(255,255,255,0.08)' }}>
+                ✎ FAZER ALTERAÇÃO
+              </a>
+            </div>
+          )}
+          {isAprovado && (
+            <div className="py-3 rounded-xl border border-green-500/30 bg-green-500/8 text-center">
+              <span className="text-green-300 text-xs tracking-widest font-bold uppercase">✓ Álbum Aprovado</span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── payment phases ───────────────────────────────────────────────────────────
 
 type Pagamento = {
@@ -2042,6 +2189,12 @@ function PortalSubPageContent() {
                             }
                             return <>{renderedSections}</>
                           })()}
+                          {/* ── MAQUETE ÁLBUM — regra obrigatória em todas as páginas FOTOGRAFIAS ── */}
+                          {(portalRef || refParam) && (
+                            <div className="mt-6">
+                              <MaqueteAlbumSection portalRef={portalRef || refParam || ''} imgUrl={null} />
+                            </div>
+                          )}
                         </>
                       )
                     }

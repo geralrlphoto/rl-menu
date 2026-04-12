@@ -1,54 +1,35 @@
 import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
-const NOTION_TOKEN = process.env.NOTION_TOKEN!
-
-const FIELD_MAP: Record<string, { key: string; type: string }> = {
-  nome_noivos:   { key: 'NOME DOS NOIVOS',      type: 'title' },
-  referencia:    { key: 'REFERÊNCIA DO EVENTO',  type: 'text' },
-  date:          { key: 'Date',                  type: 'date' },
-  data_entrada:  { key: 'Data  de Entrada',      type: 'date' },
-  sessao_noivos: { key: 'SESSÃO NOIVOS',         type: 'text' },
-  fotos_noiva:   { key: 'FOTOS DA NOIVA',        type: 'text' },
-  fotos_noivo:   { key: 'FOTOS DO NOIVO',        type: 'text' },
-  convidados:    { key: 'CONVIDADOS',            type: 'text' },
-  cerimonia:     { key: 'CERIMÓNIA',             type: 'text' },
-  bolo_bouquet:  { key: 'BOLO E BOUQUET',        type: 'text' },
-  sala_animacao: { key: 'SALA E ANIMAÇÃO',       type: 'text' },
-  fotos_album:   { key: 'FOTOS P/ÁLBUM',         type: 'text' },
-  detalhes:      { key: 'DETALHES',              type: 'text' },
-}
-
-function buildValue(type: string, value: any) {
-  if (type === 'title') return { title: [{ text: { content: value ?? '' } }] }
-  if (type === 'text')  return { rich_text: [{ text: { content: value ?? '' } }] }
-  if (type === 'date')  return value ? { date: { start: value } } : { date: null }
-  return {}
+function db() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const body = await req.json()
-  const properties: any = {}
-  for (const [field, value] of Object.entries(body)) {
-    const map = FIELD_MAP[field]
-    if (map) properties[map.key] = buildValue(map.type, value)
+
+  const allowed = [
+    'nome_noivos', 'referencia', 'date', 'data_entrada',
+    'sessao_noivos', 'fotos_noiva', 'fotos_noivo', 'convidados',
+    'cerimonia', 'bolo_bouquet', 'sala_animacao', 'fotos_album', 'detalhes',
+  ]
+  const updates: Record<string, any> = {}
+  for (const key of allowed) {
+    if (key in body) updates[key] = body[key] ?? null
   }
-  const res = await fetch(`https://api.notion.com/v1/pages/${id}`, {
-    method: 'PATCH',
-    headers: { 'Authorization': `Bearer ${NOTION_TOKEN}`, 'Notion-Version': '2022-06-28', 'Content-Type': 'application/json' },
-    body: JSON.stringify({ properties }),
-  })
-  if (!res.ok) { const err = await res.json(); return NextResponse.json({ error: err.message }, { status: res.status }) }
+
+  const { error } = await db().from('fotos_selecao').update(updates).eq('id', id)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const res = await fetch(`https://api.notion.com/v1/pages/${id}`, {
-    method: 'PATCH',
-    headers: { 'Authorization': `Bearer ${NOTION_TOKEN}`, 'Notion-Version': '2022-06-28', 'Content-Type': 'application/json' },
-    body: JSON.stringify({ archived: true }),
-  })
-  if (!res.ok) { const err = await res.json(); return NextResponse.json({ error: err.message }, { status: res.status }) }
+  const { error } = await db().from('fotos_selecao').delete().eq('id', id)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }

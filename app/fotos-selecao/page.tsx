@@ -151,6 +151,16 @@ function printFicha(row: FotoSelecao) {
 const EDITORS = ['Alexandre Capão', 'Patricio Ferreira', 'Sónia Carvalho', 'Rui Garrido', 'Bruno de Carvalho', 'Pedro Martins', 'Leandro Valente']
 const ALBUM_EDITORS = ['Alexandre Capão', 'Patricio Ferreira', 'Sónia Carvalho', 'Rui Garrido', 'Bruno de Carvalho', 'Pedro Martins', 'Leandro Valente']
 
+const NAME_NORMALIZE: Record<string, string> = {
+  'Patrício Ferreira': 'Patricio Ferreira',
+  'patricio ferreira': 'Patricio Ferreira',
+  'patrício ferreira': 'Patricio Ferreira',
+}
+function normalizeName(name: string | null | undefined): string | null {
+  if (!name) return null
+  return NAME_NORMALIZE[name.trim()] ?? name.trim()
+}
+
 // ── Modal Ficha ───────────────────────────────────────────────────────────────
 function FichaModal({ row, onClose, onSaved }: {
   row: FotoSelecao; onClose: () => void; onSaved: (field: string, val: any) => void
@@ -165,7 +175,7 @@ function FichaModal({ row, onClose, onSaved }: {
   useEffect(() => {
     fetch(`/api/fotos-selecao-editor?notion_page_id=${row.id}`)
       .then(r => r.json())
-      .then(d => { setEditor(d.editor ?? null); setEditorAlbum(d.editor_album ?? null); setEditorLoading(false) })
+      .then(d => { setEditor(normalizeName(d.editor)); setEditorAlbum(normalizeName(d.editor_album)); setEditorLoading(false) })
       .catch(() => setEditorLoading(false))
   }, [row.id])
 
@@ -477,18 +487,14 @@ function SelecaoCard({ row, onOpen, onDelete, confirmDelete, setConfirmDelete, e
             {row.date && (
               <span className="text-[10px] text-white/25 tracking-wider">{fmt(row.date)}</span>
             )}
-            {/* Editor badge */}
-            {editor && (
-              <span className="text-[9px] px-2 py-0.5 rounded-full border border-white/10 bg-white/[0.03] text-white/40 tracking-wide">
-                ✎ {editor}
-              </span>
-            )}
-            {/* Editor Álbum badge */}
-            {editorAlbum && (
-              <span className="text-[9px] px-2 py-0.5 rounded-full border border-gold/20 bg-gold/[0.04] text-gold/50 tracking-wide">
-                ◈ {editorAlbum}
-              </span>
-            )}
+            {/* Editor badge — sempre visível */}
+            <span className={`text-[9px] px-2 py-0.5 rounded-full border tracking-wide ${editor ? 'border-white/15 bg-white/[0.04] text-white/50' : 'border-white/[0.06] bg-transparent text-white/15 italic'}`}>
+              ✎ {editor ?? 'sem editor fotos'}
+            </span>
+            {/* Editor Álbum badge — sempre visível */}
+            <span className={`text-[9px] px-2 py-0.5 rounded-full border tracking-wide ${editorAlbum ? 'border-gold/25 bg-gold/[0.05] text-gold/60' : 'border-white/[0.06] bg-transparent text-white/15 italic'}`}>
+              ◈ {editorAlbum ?? 'sem editor álbum'}
+            </span>
             {/* Estado edição badge */}
             {edicaoStatus && (
               <span className={`text-[9px] px-2 py-0.5 rounded-full border tracking-widest uppercase font-medium ${STATUS_EDICAO_STYLE[edicaoStatus] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
@@ -553,8 +559,8 @@ function FotosSelecaoPageInner() {
       const newEditorMap: Record<string, string> = {}
       const newEditorAlbumMap: Record<string, string> = {}
       for (const a of assignments) {
-        if (a.editor)       newEditorMap[a.notion_page_id]      = a.editor
-        if (a.editor_album) newEditorAlbumMap[a.notion_page_id] = a.editor_album
+        if (a.editor)       newEditorMap[a.notion_page_id]      = normalizeName(a.editor) ?? a.editor
+        if (a.editor_album) newEditorAlbumMap[a.notion_page_id] = normalizeName(a.editor_album) ?? a.editor_album
       }
       setEditorMap(newEditorMap)
       setEditorAlbumMap(newEditorAlbumMap)

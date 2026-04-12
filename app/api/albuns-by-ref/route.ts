@@ -17,15 +17,19 @@ export async function GET(req: Request) {
 
   const { data } = await db()
     .from('albuns_casamento')
-    .select('id, data_prevista_entrega, status')
+    .select('id, nome, status, num_fotografias, data_entrega_fotos, data_aprovacao, data_prevista_entrega')
     .eq('ref_evento', ref)
     .maybeSingle()
 
-  if (!data) return NextResponse.json({ id: null, data_prevista_entrega: null, status: null })
+  if (!data) return NextResponse.json({ id: null, status: null, nome: null, num_fotografias: null, data_entrega_fotos: null, data_aprovacao: null, data_prevista_entrega: null })
 
   return NextResponse.json({
-    id: data.id,
+    id:                  data.id,
+    nome:                data.nome ?? null,
+    status:              data.status ?? null,
+    num_fotografias:     data.num_fotografias ?? null,
+    data_entrega_fotos:  data.data_entrega_fotos ?? null,
+    data_aprovacao:      data.data_aprovacao ?? null,
     data_prevista_entrega: data.data_prevista_entrega ?? null,
-    status: data.status ?? null,
   })
 }

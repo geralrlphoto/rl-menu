@@ -66,3 +66,34 @@ export async function POST(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ row: data })
 }
+
+export async function PATCH(req: NextRequest) {
+  const body = await req.json().catch(() => ({}))
+  const { id, status, data_aprovacao, data_prevista_entrega } = body
+  if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+
+  const supabase = db()
+  const updates: Record<string, any> = {}
+  if (status !== undefined) updates.status = status
+  if (data_aprovacao !== undefined) updates.data_aprovacao = data_aprovacao
+  if (data_prevista_entrega !== undefined) updates.data_prevista_entrega = data_prevista_entrega
+
+  // Auto-set dates when approving
+  if (status === 'APROVADO' && !data_aprovacao) {
+    const today = new Date().toISOString().split('T')[0]
+    updates.data_aprovacao = today
+    const d = new Date(today)
+    d.setDate(d.getDate() + 35)
+    updates.data_prevista_entrega = d.toISOString().split('T')[0]
+  }
+
+  const { data, error } = await supabase
+    .from('albuns_casamento')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ row: data })
+}
