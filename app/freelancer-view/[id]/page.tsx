@@ -387,6 +387,12 @@ function SelecaoModal({ nome, onClose }: { nome: string; onClose: () => void }) 
               <div className="w-5 h-5 border border-gold/30 border-t-gold/80 rounded-full animate-spin" />
             </div>
           )}
+          {/* Nome dos Noivos — always visible */}
+          <div className="bg-gold/5 border border-gold/20 rounded-2xl p-4 mb-4">
+            <span className="text-[9px] tracking-[0.4em] text-gold/40 uppercase block mb-1.5">Nome dos Noivos</span>
+            <span className="text-sm text-white/80">{record?.nome_noivos || '—'}</span>
+          </div>
+
           {/* Datas — always visible */}
           <div className="grid grid-cols-3 gap-3 mb-6">
             <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3">
