@@ -1149,6 +1149,9 @@ export default function EventoPage() {
   const [preWeddingEnviada, setPreWeddingEnviada] = useState<string | null>(null)
   const [fotosFinaisEnviada, setFotosFinaisEnviada] = useState<string | null>(null)
   const [galeriasEnviada, setGaleriasEnviada] = useState<string | null>(null)
+  const [actionUrls, setActionUrls] = useState<Record<string, string>>({
+    selecao: '', prewedding: '', fotos_finais: '', galerias: '', maquete: '',
+  })
 
   function loadPagamentos(ref: string, showRefresh = false) {
     if (showRefresh) setPagamentosRefreshing(true)
@@ -1242,6 +1245,13 @@ export default function EventoPage() {
               if (s.prewedding_enviada)   setPreWeddingEnviada(s.prewedding_enviada)
               if (s.fotos_finais_enviada) setFotosFinaisEnviada(s.fotos_finais_enviada)
               if (s.galerias_enviada)     setGaleriasEnviada(s.galerias_enviada)
+              setActionUrls({
+                selecao:      s.selecao_url      ?? '',
+                prewedding:   s.prewedding_url   ?? '',
+                fotos_finais: s.fotos_finais_url ?? '',
+                galerias:     s.galerias_url     ?? '',
+                maquete:      s.maquete_url      ?? '',
+              })
             })
             .catch(() => {})
         }
@@ -1653,14 +1663,18 @@ export default function EventoPage() {
           <h2 className="text-[10px] tracking-[0.35em] uppercase" style={{ color: 'rgba(99,165,255,0.8)' }}>Ações Fotografia</h2>
           <div className="flex flex-col gap-4">
             {[
-              { label: 'Fotos p/ Seleção',  state: selecaoEnviada,      setState: setSelecaoEnviada,      key: 'selecao_enviada',      api: '/api/send-selecao-email' },
-              { label: 'Fotos Pré-Wedding', state: preWeddingEnviada,   setState: setPreWeddingEnviada,   key: 'prewedding_enviada',   api: '/api/send-prewedding-email' },
-              { label: 'Fotos Finais',      state: fotosFinaisEnviada,  setState: setFotosFinaisEnviada,  key: 'fotos_finais_enviada', api: '/api/send-fotos-finais-email' },
-              { label: 'Galerias Online',   state: galeriasEnviada,     setState: setGaleriasEnviada,     key: 'galerias_enviada',     api: '/api/send-galerias-email' },
-              { label: 'Enviar Maquete',    state: maqueteEnviada,      setState: setMaqueteEnviada,      key: 'maquete_enviada',      api: '/api/send-maquete-email' },
-            ].map(({ label, state, setState, key, api }, i, arr) => (
+              { label: 'Fotos p/ Seleção',  state: selecaoEnviada,      setState: setSelecaoEnviada,      key: 'selecao_enviada',      urlKey: 'selecao',      api: '/api/send-selecao-email' },
+              { label: 'Fotos Pré-Wedding', state: preWeddingEnviada,   setState: setPreWeddingEnviada,   key: 'prewedding_enviada',   urlKey: 'prewedding',   api: '/api/send-prewedding-email' },
+              { label: 'Fotos Finais',      state: fotosFinaisEnviada,  setState: setFotosFinaisEnviada,  key: 'fotos_finais_enviada', urlKey: 'fotos_finais', api: '/api/send-fotos-finais-email' },
+              { label: 'Galerias Online',   state: galeriasEnviada,     setState: setGaleriasEnviada,     key: 'galerias_enviada',     urlKey: 'galerias',     api: '/api/send-galerias-email' },
+              { label: 'Enviar Maquete',    state: maqueteEnviada,      setState: setMaqueteEnviada,      key: 'maquete_enviada',      urlKey: 'maquete',      api: '/api/send-maquete-email' },
+            ].map(({ label, state, setState, key, urlKey, api }, i, arr) => {
+              const url = actionUrls[urlKey] ?? ''
+              const hasUrl = url.trim().length > 0
+              return (
               <div key={key}>
-                <div className="flex items-center justify-between gap-4">
+                {/* Row: label + date + send button */}
+                <div className="flex items-center justify-between gap-3 mb-2">
                   <div>
                     <p className="text-sm text-white/70">{label}</p>
                     <p className="text-xs mt-0.5 font-mono">
@@ -1683,24 +1697,54 @@ export default function EventoPage() {
                       >✕</button>
                     )}
                     <button
+                      disabled={!hasUrl}
                       onClick={async () => {
-                        if (!evento?.referencia) return
+                        if (!evento?.referencia || !hasUrl) return
                         const today = new Date().toISOString().split('T')[0]
-                        await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [key]: today } } }) })
+                        await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [key]: today, [`${urlKey}_url`]: url } } }) })
                         setState(today)
                         if (evento.email_noiva) {
-                          await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email_noiva: evento.email_noiva, nome_noiva: evento.nome_noiva, nome_noivo: evento.nome_noivo }) })
+                          await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email_noiva: evento.email_noiva, nome_noiva: evento.nome_noiva, nome_noivo: evento.nome_noivo, url }) })
                         }
                       }}
-                      className={`px-5 py-2.5 rounded-xl text-xs font-semibold tracking-[0.2em] uppercase border transition-all ${state ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/30'}`}
+                      className={`px-5 py-2.5 rounded-xl text-xs font-semibold tracking-[0.2em] uppercase border transition-all ${
+                        state ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                        : hasUrl ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/30'
+                        : 'bg-white/[0.03] text-white/20 border-white/10 cursor-not-allowed'
+                      }`}
                     >
-                      {state ? '✓ Enviado' : label}
+                      {state ? '✓ Enviado' : !hasUrl ? '🔒 Bloqueado' : label}
                     </button>
                   </div>
                 </div>
+                {/* URL input */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="url"
+                    placeholder="Cole aqui o URL para desbloquear..."
+                    value={url}
+                    onChange={e => setActionUrls(prev => ({ ...prev, [urlKey]: e.target.value }))}
+                    onBlur={async () => {
+                      if (!evento?.referencia) return
+                      await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [`${urlKey}_url`]: url } } }) })
+                    }}
+                    className="flex-1 bg-white/[0.03] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/60 placeholder-white/20 focus:outline-none focus:border-blue-400/40 transition-colors"
+                  />
+                  {url && (
+                    <button
+                      onClick={async () => {
+                        if (!evento?.referencia) return
+                        const newUrls = { ...actionUrls, [urlKey]: '' }
+                        setActionUrls(newUrls)
+                        await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [`${urlKey}_url`]: '' } } }) })
+                      }}
+                      className="text-white/20 hover:text-white/50 transition-colors text-xs"
+                    >✕</button>
+                  )}
+                </div>
                 {i < arr.length - 1 && <div className="h-px bg-white/5 mt-4" />}
               </div>
-            ))}
+            )})}
           </div>
         </div>
 

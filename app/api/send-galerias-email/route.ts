@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
-  const { email_noiva, nome_noiva, nome_noivo } = await req.json().catch(() => ({}))
+  const { email_noiva, nome_noiva, nome_noivo, url } = await req.json().catch(() => ({}))
 
   if (!email_noiva) {
     return NextResponse.json({ error: 'email_noiva required' }, { status: 400 })
@@ -74,6 +74,8 @@ export async function POST(req: NextRequest) {
                   </td>
                 </tr>
               </table>
+
+              ${url ? `<table cellpadding="0" cellspacing="0" style="margin:-16px auto 32px;"><tr><td style="text-align:center;"><a href="${url}" style="font-size:13px;font-style:italic;color:#c9a96e;text-decoration:none;border-bottom:1px solid #7a6340;letter-spacing:0.02em;padding-bottom:2px;">Aceder diretamente &rarr;</a></td></tr></table>` : ''}
 
               <!-- Footer -->
               <p style="margin:0;font-size:9px;letter-spacing:0.35em;color:#5a4f3a;text-transform:uppercase;">
