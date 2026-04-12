@@ -49,7 +49,7 @@ const STATUS_ALBUM_STYLE: Record<string, string> = {
 }
 
 // ── Album Status Select ───────────────────────────────────────────────────────
-const ALBUM_STATUS_OPTIONS = ['AGUARDAR','EM EDIÇÃO','EM APROVAÇÃO','APROVADO','ENTREGUE']
+const ALBUM_STATUS_OPTIONS = ['AGUARDAR','EM EDIÇÃO','EM APROVAÇÃO','ENTREGUE']
 const ALBUM_STATUS_SELECT_STYLE: Record<string, string> = {
   'AGUARDAR':      'bg-white/10 text-white/50 border-white/20',
   'EM EDIÇÃO':     'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
