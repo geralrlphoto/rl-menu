@@ -242,7 +242,8 @@ function FichaModal({ row, onClose, onSaved }: {
             <p className="text-[9px] tracking-[0.35em] text-white/20 uppercase mb-3">Datas</p>
             <div className="grid grid-cols-3 gap-3">
               {[
-                { label: 'Entrega de Fotos',     field: 'data_entrega_fotos',    value: row.data_entrega_fotos },
+                { label: 'Entrada de Fotos',      field: 'data_entrega_fotos',    value: row.data_entrega_fotos },
+                { label: 'Data de Entrega',       field: null,                    value: row.data_entrega_fotos ? addDays(row.data_entrega_fotos, 30) : null },
                 { label: 'Prazo Maquete',         field: 'prazo_maquete',         value: row.prazo_maquete },
                 { label: 'Prazo Final Maquete',   field: null,                    value: row.prazo_final_maquete },
                 { label: 'Data Aprovação Álbum',  field: 'data_aprovacao',        value: row.data_aprovacao },

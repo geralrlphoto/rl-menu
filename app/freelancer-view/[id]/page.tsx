@@ -6,6 +6,12 @@ import { useParams } from 'next/navigation'
 const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
 const DIAS  = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
 
+function addDaysStr(dateStr: string, days: number): string {
+  const d = new Date(dateStr + 'T12:00:00')
+  d.setDate(d.getDate() + days)
+  return d.toISOString().split('T')[0]
+}
+
 function fmtDate(d: string | null) {
   if (!d) return '—'
   const [y,m,dd] = d.split('-').map(Number)
@@ -196,7 +202,8 @@ function AlbumInfoModal({ refEvento, nome, onClose }: { refEvento: string | null
             <div>
               <p className="text-[9px] tracking-[0.35em] text-white/20 uppercase mb-3">Datas</p>
               <div className="grid grid-cols-3 gap-3">
-                <DateBox label="Entrega de Fotos"     value={data.data_entrega_fotos} />
+                <DateBox label="Entrada de Fotos"     value={data.data_entrega_fotos} />
+                <DateBox label="Data de Entrega"       value={data.data_entrega_fotos ? addDaysStr(data.data_entrega_fotos, 30) : null} />
                 <DateBox label="Prazo Maquete"         value={data.prazo_maquete} />
                 <DateBox label="Prazo Final Maquete"   value={data.prazo_final_maquete} />
                 <DateBox label="Data Aprovação Álbum" value={data.data_aprovacao} />
