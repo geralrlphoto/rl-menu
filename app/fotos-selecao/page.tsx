@@ -231,7 +231,7 @@ function FichaModal({ row, onClose, onSaved }: {
       body: JSON.stringify({ notion_page_id: row.id, editor_album: next }),
     })
 
-    // 2. If editor selected, create album in Notion (if not already exists)
+    // 2. If editor selected, create/update album in Supabase
     if (next) {
       await fetch('/api/albuns-casamento', {
         method: 'POST',
@@ -239,6 +239,7 @@ function FichaModal({ row, onClose, onSaved }: {
         body: JSON.stringify({
           nome: row.nome_noivos || 'Sem nome',
           ref_evento: row.referencia || null,
+          num_fotografias: row.fotos_album || null,
           check_existing: true,
         }),
       })

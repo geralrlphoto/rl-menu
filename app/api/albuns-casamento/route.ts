@@ -21,11 +21,11 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
-  const { nome, ref_evento, check_existing } = body
+  const { nome, ref_evento, num_fotografias, check_existing } = body
 
   const supabase = db()
 
-  // Check for existing entry if requested
+  // Check for existing entry — if found, update num_fotografias and return
   if (check_existing && ref_evento) {
     const { data: existing } = await supabase
       .from('albuns_casamento')
@@ -33,6 +33,11 @@ export async function POST(req: NextRequest) {
       .eq('ref_evento', ref_evento)
       .maybeSingle()
     if (existing) {
+      if (num_fotografias) {
+        await supabase.from('albuns_casamento')
+          .update({ num_fotografias })
+          .eq('id', existing.id)
+      }
       const { data: row } = await supabase
         .from('albuns_casamento')
         .select('*')
@@ -48,6 +53,7 @@ export async function POST(req: NextRequest) {
       nome: nome || 'Novo Álbum',
       status: 'NOVO ÁLBUM',
       ref_evento: ref_evento ?? null,
+      num_fotografias: num_fotografias ?? null,
     })
     .select()
     .single()
