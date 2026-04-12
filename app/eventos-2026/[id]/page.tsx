@@ -1152,6 +1152,8 @@ export default function EventoPage() {
   const [actionUrls, setActionUrls] = useState<Record<string, string>>({
     selecao: '', prewedding: '', fotos_finais: '', galerias: '', maquete: '',
   })
+  const [videoPreWeddingEnviada, setVideoPreWeddingEnviada] = useState<string | null>(null)
+  const [videoActionUrls, setVideoActionUrls] = useState<Record<string, string>>({ video_prewedding: '' })
 
   function loadPagamentos(ref: string, showRefresh = false) {
     if (showRefresh) setPagamentosRefreshing(true)
@@ -1240,11 +1242,13 @@ export default function EventoPage() {
               const s = p?.portal?.settings ?? p?.settings ?? {}
               if (s.selecao_fotos_noivos_estado) setPortalSelecaoEstado(s.selecao_fotos_noivos_estado)
               if (s.prazo_fotos_noivos_estado)   setPrazoFotosNoivosEstado(s.prazo_fotos_noivos_estado)
-              if (s.maquete_enviada)      setMaqueteEnviada(s.maquete_enviada)
-              if (s.selecao_enviada)      setSelecaoEnviada(s.selecao_enviada)
-              if (s.prewedding_enviada)   setPreWeddingEnviada(s.prewedding_enviada)
-              if (s.fotos_finais_enviada) setFotosFinaisEnviada(s.fotos_finais_enviada)
-              if (s.galerias_enviada)     setGaleriasEnviada(s.galerias_enviada)
+              if (s.maquete_enviada)          setMaqueteEnviada(s.maquete_enviada)
+              if (s.selecao_enviada)          setSelecaoEnviada(s.selecao_enviada)
+              if (s.prewedding_enviada)       setPreWeddingEnviada(s.prewedding_enviada)
+              if (s.fotos_finais_enviada)     setFotosFinaisEnviada(s.fotos_finais_enviada)
+              if (s.galerias_enviada)         setGaleriasEnviada(s.galerias_enviada)
+              if (s.video_prewedding_enviada) setVideoPreWeddingEnviada(s.video_prewedding_enviada)
+              setVideoActionUrls({ video_prewedding: s.video_prewedding_url ?? '' })
               // Auto-populate URLs from portal calloutLinks (FOTOGRAFIAS page cards)
               const calloutLinks = s.calloutLinks ?? {}
               let fl: Record<string, string> = {}
@@ -1754,6 +1758,90 @@ export default function EventoPage() {
                 {i < arr.length - 1 && <div className="h-px bg-white/5 mt-4" />}
               </div>
             )})}
+          </div>
+        </div>
+
+        {/* ── Ações Vídeo ── */}
+        <div className="rounded-2xl p-6 flex flex-col gap-4"
+          style={{ background: 'rgba(180,140,40,0.04)', border: '1px solid rgba(180,140,40,0.2)', boxShadow: '0 0 24px rgba(180,140,40,0.07), 0 0 6px rgba(180,140,40,0.05)' }}>
+          <h2 className="text-[10px] tracking-[0.35em] uppercase" style={{ color: 'rgba(200,165,80,0.75)' }}>Ações Vídeo</h2>
+          <div className="flex flex-col gap-4">
+            {[
+              { label: 'Vídeo Pré-Wedding', state: videoPreWeddingEnviada, setState: setVideoPreWeddingEnviada, key: 'video_prewedding_enviada', urlKey: 'video_prewedding', api: '/api/send-video-prewedding-email' },
+            ].map(({ label, state, setState, key, urlKey, api }) => {
+              const url = videoActionUrls[urlKey] ?? ''
+              const hasUrl = url.trim().length > 0
+              return (
+                <div key={key}>
+                  <div className="flex items-center justify-between gap-3 mb-2">
+                    <div>
+                      <p className="text-sm text-white/70">{label}</p>
+                      <p className="text-xs mt-0.5 font-mono">
+                        {state
+                          ? <span className="text-green-400/70">{new Date(state).toLocaleDateString('pt-PT')}</span>
+                          : <span className="text-white/25">Pendente</span>
+                        }
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {state && (
+                        <button
+                          onClick={async () => {
+                            if (!evento?.referencia) return
+                            await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [key]: null } } }) })
+                            setState(null)
+                          }}
+                          className="w-6 h-6 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-all text-xs"
+                          title="Repor como Pendente"
+                        >✕</button>
+                      )}
+                      <button
+                        disabled={!hasUrl}
+                        onClick={async () => {
+                          if (!evento?.referencia || !hasUrl) return
+                          const today = new Date().toISOString().split('T')[0]
+                          await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [key]: today, [`${urlKey}_url`]: url } } }) })
+                          setState(today)
+                          if (evento.email_noiva) {
+                            await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email_noiva: evento.email_noiva, nome_noiva: evento.nome_noiva, nome_noivo: evento.nome_noivo, url }) })
+                          }
+                        }}
+                        className={`px-5 py-2.5 rounded-xl text-xs font-semibold tracking-[0.2em] uppercase border transition-all ${
+                          state ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                          : hasUrl ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/30'
+                          : 'bg-white/[0.03] text-white/20 border-white/10 cursor-not-allowed'
+                        }`}
+                      >
+                        {state ? '✓ Enviado' : !hasUrl ? '🔒 Bloqueado' : label}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="url"
+                      placeholder="Cole aqui o URL para desbloquear..."
+                      value={url}
+                      onChange={e => setVideoActionUrls(prev => ({ ...prev, [urlKey]: e.target.value }))}
+                      onBlur={async () => {
+                        if (!evento?.referencia) return
+                        await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [`${urlKey}_url`]: url } } }) })
+                      }}
+                      className="flex-1 bg-white/[0.03] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/60 placeholder-white/20 focus:outline-none focus:border-yellow-400/30 transition-colors"
+                    />
+                    {url && (
+                      <button
+                        onClick={async () => {
+                          if (!evento?.referencia) return
+                          setVideoActionUrls(prev => ({ ...prev, [urlKey]: '' }))
+                          await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [`${urlKey}_url`]: '' } } }) })
+                        }}
+                        className="text-white/20 hover:text-white/50 transition-colors text-xs"
+                      >✕</button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
 
