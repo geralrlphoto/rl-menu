@@ -43,6 +43,17 @@ const STATUS_ALBUM_STYLE: Record<string, string> = {
 }
 
 // ── Album Info Modal ──────────────────────────────────────────────────────────
+function albumStatusCfg(s: string | null) {
+  switch (s) {
+    case 'EM EDIÇÃO':      return { bg: 'bg-blue-500/15',    border: 'border-blue-500/40',    text: 'text-blue-300',    dot: 'bg-blue-400',    bar: 'bg-blue-500' }
+    case 'PARA APROVAÇÃO': return { bg: 'bg-amber-500/15',   border: 'border-amber-500/40',   text: 'text-amber-300',   dot: 'bg-amber-400',   bar: 'bg-amber-500' }
+    case 'ALTERAÇÕES':     return { bg: 'bg-red-500/15',     border: 'border-red-500/40',     text: 'text-red-300',     dot: 'bg-red-400',     bar: 'bg-red-500' }
+    case 'APROVADO':       return { bg: 'bg-emerald-500/15', border: 'border-emerald-500/40', text: 'text-emerald-300', dot: 'bg-emerald-400', bar: 'bg-emerald-500' }
+    case 'ENTREGUE':       return { bg: 'bg-purple-500/15',  border: 'border-purple-500/40',  text: 'text-purple-300',  dot: 'bg-purple-400',  bar: 'bg-purple-500' }
+    default:               return { bg: 'bg-white/5',        border: 'border-white/15',       text: 'text-white/40',    dot: 'bg-white/25',    bar: 'bg-white/20' }
+  }
+}
+
 function AlbumInfoModal({ refEvento, nome, onClose }: { refEvento: string | null; nome: string; onClose: () => void }) {
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -65,75 +76,123 @@ function AlbumInfoModal({ refEvento, nome, onClose }: { refEvento: string | null
 
   const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
   function fmt(d: string | null) {
-    if (!d) return null
+    if (!d) return '—'
     const dt = new Date(d.split('T')[0] + 'T00:00:00')
-    if (isNaN(dt.getTime())) return null
+    if (isNaN(dt.getTime())) return '—'
     return `${String(dt.getDate()).padStart(2,'0')} ${MESES[dt.getMonth()]} ${dt.getFullYear()}`
   }
 
-  function Row({ label, value }: { label: string; value: string | null }) {
-    if (!value) return null
+  const cfg = albumStatusCfg(data?.status)
+
+  function DateBox({ label, value }: { label: string; value: string | null }) {
     return (
-      <div className="flex flex-col gap-0.5">
-        <span className="text-[8px] tracking-[0.3em] text-white/25 uppercase">{label}</span>
-        <span className="text-sm text-white">{value}</span>
+      <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3">
+        <span className="text-[8px] tracking-[0.3em] text-white/25 uppercase block mb-1">{label}</span>
+        <span className="text-sm text-white/80">{fmt(value)}</span>
+      </div>
+    )
+  }
+
+  function Field({ label, value }: { label: string; value: string | null }) {
+    return (
+      <div className="flex flex-col gap-1.5">
+        <span className="text-[9px] tracking-[0.35em] text-white/25 uppercase">{label}</span>
+        <span className="text-sm text-white/80">{value || '—'}</span>
       </div>
     )
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
-      <div className="relative z-10 bg-[#111] border border-white/[0.08] rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden"
+      <div className="absolute inset-0 bg-black/85 backdrop-blur-md" />
+      <div className="relative z-10 bg-[#111] border border-white/[0.08] rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden"
         onClick={e => e.stopPropagation()}>
-        <div className="h-0.5 w-full bg-gold/60" />
-        <div className="px-7 pt-6 pb-5 border-b border-white/[0.05] flex items-start justify-between gap-4">
-          <div>
-            <p className="text-[9px] tracking-[0.5em] text-white/20 uppercase mb-1.5">Álbum de Casamento</p>
-            <h2 className="text-xl font-light tracking-[0.12em] text-white uppercase">{nome || '—'}</h2>
-            {data?.ref_evento && <p className="text-[10px] text-gold/40 mt-0.5 tracking-widest font-mono">{data.ref_evento}</p>}
+
+        {/* Barra de cor no topo */}
+        <div className={`h-0.5 w-full ${data ? cfg.bar : 'bg-gold/60'}`} />
+
+        {/* Header */}
+        <div className="px-8 pt-7 pb-5 border-b border-white/[0.05]">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[9px] tracking-[0.5em] text-white/20 uppercase mb-2">Álbum de Casamento</p>
+              <h2 className="text-2xl font-light tracking-[0.15em] text-white uppercase">{data?.nome || nome || '—'}</h2>
+              {data?.ref_album && <p className="text-xs text-white/30 mt-1 tracking-widest">{data.ref_album}</p>}
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {data?.status && (
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border ${cfg.bg} ${cfg.border}`}>
+                  <div className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                  <span className={`text-xs font-semibold tracking-widest uppercase ${cfg.text}`}>{data.status}</span>
+                </div>
+              )}
+              <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white hover:border-white/30 transition-all text-sm">✕</button>
+            </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white hover:border-white/30 transition-all text-sm shrink-0">✕</button>
         </div>
-        <div className="px-7 py-5 max-h-[60vh] overflow-y-auto">
+
+        {/* Corpo */}
+        <div className="px-8 py-6 flex flex-col gap-6 max-h-[60vh] overflow-y-auto">
           {loading ? (
             <p className="text-white/20 text-xs tracking-widest">A carregar...</p>
           ) : !data ? (
             <p className="text-white/20 text-xs tracking-widest">Sem informação disponível.</p>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {data.num_fotografias && (
-                <div className="bg-gold/5 border border-gold/20 rounded-2xl px-4 py-3">
-                  <span className="text-[8px] tracking-[0.3em] text-gold/40 uppercase block mb-0.5">N.º de Fotografias</span>
-                  <span className="text-2xl font-light text-gold">{data.num_fotografias}</span>
-                </div>
-              )}
-              <div className="grid grid-cols-2 gap-3">
-                <Row label="Estado" value={data.status} />
-                <Row label="Opção" value={data.opcao} />
-                <Row label="Design" value={data.design} />
-                <Row label="REF. Álbum" value={data.ref_album} />
+          ) : (<>
+
+            {/* REF. EVENTO */}
+            {data.ref_evento && (
+              <div className="bg-gold/5 border border-gold/20 rounded-2xl p-4">
+                <span className="text-[9px] tracking-[0.4em] text-gold/40 uppercase block mb-1.5">Referência do Evento</span>
+                <span className="text-sm text-white/80">{data.ref_evento}</span>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Row label="Entrega de Fotos" value={fmt(data.data_entrega_fotos)} />
-                <Row label="Prazo Maquete" value={fmt(data.prazo_maquete)} />
-                <Row label="Data Aprovação" value={fmt(data.data_aprovacao)} />
-                <Row label="Data Prevista Entrega" value={fmt(data.data_prevista_entrega)} />
-              </div>
-              {data.texto_album && (
-                <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl px-4 py-3">
-                  <span className="text-[8px] tracking-[0.3em] text-white/25 uppercase block mb-1.5">Texto para Álbum</span>
-                  <p className="text-sm text-white/70 leading-relaxed">{data.texto_album}</p>
-                </div>
-              )}
-              {data.texto_caixa && (
-                <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl px-4 py-3">
-                  <span className="text-[8px] tracking-[0.3em] text-white/25 uppercase block mb-1.5">Texto para Caixa</span>
-                  <p className="text-sm text-white/70 leading-relaxed">{data.texto_caixa}</p>
-                </div>
-              )}
+            )}
+
+            {/* Nome + REF Álbum */}
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Nome" value={data.nome} />
+              <Field label="REF. Álbum" value={data.ref_album} />
             </div>
-          )}
+
+            {/* Datas */}
+            <div>
+              <p className="text-[9px] tracking-[0.35em] text-white/20 uppercase mb-3">Datas</p>
+              <div className="grid grid-cols-3 gap-3">
+                <DateBox label="Entrega de Fotos"     value={data.data_entrega_fotos} />
+                <DateBox label="Prazo Maquete"         value={data.prazo_maquete} />
+                <DateBox label="Prazo Final Maquete"   value={data.prazo_final_maquete} />
+                <DateBox label="Data de Aprovação"     value={data.data_aprovacao} />
+                <DateBox label="Prazo Álbum"           value={data.prazo_album} />
+                <DateBox label="Data Prevista Entrega" value={data.data_prevista_entrega} />
+                <DateBox label="Entrega de Álbum"      value={data.entrega_album} />
+              </div>
+            </div>
+
+            {/* Opção + Design */}
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Opção (Caixa)" value={data.opcao} />
+              <Field label="Design" value={data.design} />
+            </div>
+
+            {/* Fotografias */}
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="N.º de Fotografias" value={data.num_fotografias} />
+              <Field label="Número de Fotografias" value={data.numero_fotografias} />
+            </div>
+
+            {/* Textos */}
+            {data.texto_album && (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[9px] tracking-[0.35em] text-white/25 uppercase">Texto para Álbum</span>
+                <p className="text-sm text-white/80 leading-relaxed">{data.texto_album}</p>
+              </div>
+            )}
+            {data.texto_caixa && (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[9px] tracking-[0.35em] text-white/25 uppercase">Texto para Caixa</span>
+                <p className="text-sm text-white/80 leading-relaxed">{data.texto_caixa}</p>
+              </div>
+            )}
+          </>)}
         </div>
       </div>
     </div>
