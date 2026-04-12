@@ -240,6 +240,7 @@ function FichaModal({ row, onClose, onSaved }: {
           nome: row.nome_noivos || 'Sem nome',
           ref_evento: row.referencia || null,
           num_fotografias: row.fotos_album || null,
+          data_entrega_fotos: row.data_entrada || null,
           check_existing: true,
         }),
       })
