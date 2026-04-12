@@ -1366,25 +1366,35 @@ export default function EventoPage() {
           <div className="flex items-center gap-2">
             <select
               value={navRef}
+              disabled={!!navRef}
               onChange={ev => setNavRef(ev.target.value)}
-              className="border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-gold/30 transition-colors cursor-pointer"
-              style={{ minWidth: 200, background: '#1a1610', color: 'rgba(255,255,255,0.5)' }}
+              className="border rounded-lg px-3 py-1.5 text-xs focus:outline-none transition-colors cursor-pointer"
+              style={{
+                minWidth: 200,
+                background: '#1a1610',
+                color: navRef ? '#cc3333' : 'rgba(255,255,255,0.5)',
+                borderColor: navRef ? 'rgba(204,51,51,0.4)' : 'rgba(255,255,255,0.1)',
+                opacity: 1,
+              }}
             >
               <option value="" style={{ background: '#1a1610' }}>Selecionar referência...</option>
               {Array.from({ length: 150 }, (_, i) => {
                 const n = String(i + 1).padStart(3, '0')
                 const ref = `CAS_${n}_26_RL`
                 return (
-                  <option
-                    key={ref}
-                    value={ref}
-                    style={{ background: '#1a1610', color: 'rgba(255,255,255,0.7)' }}
-                  >
+                  <option key={ref} value={ref} style={{ background: '#1a1610', color: 'rgba(255,255,255,0.7)' }}>
                     {ref}
                   </option>
                 )
               })}
             </select>
+            {navRef && (
+              <button
+                onClick={() => setNavRef('')}
+                className="w-6 h-6 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-all text-xs"
+                title="Desbloquear"
+              >✕</button>
+            )}
           </div>
         </div>
 
