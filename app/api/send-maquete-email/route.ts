@@ -19,16 +19,75 @@ export async function POST(req: NextRequest) {
       from: 'RL Photo.Video <geral@rlphotovideo.pt>',
       to: [email_noiva],
       subject: 'A vossa maquete do álbum está pronta',
-      html: `
-        <div style="font-family: Georgia, serif; max-width: 520px; margin: 0 auto; padding: 48px 32px; background: #000; color: #fff;">
-          <p style="font-size: 10px; letter-spacing: 0.5em; color: #888; text-transform: uppercase; margin: 0 0 32px;">RL PHOTO.VIDEO</p>
-          <h1 style="font-size: 22px; font-weight: 300; letter-spacing: 0.15em; text-transform: uppercase; margin: 0 0 28px; color: #fff;">Maquete do Álbum</h1>
-          <p style="font-size: 15px; color: #bbb; line-height: 1.8; margin: 0 0 16px;">Olá ${nomes},</p>
-          <p style="font-size: 15px; color: #bbb; line-height: 1.8; margin: 0 0 16px;">Espero que esteja tudo bem.</p>
-          <p style="font-size: 15px; color: #bbb; line-height: 1.8; margin: 0 0 32px;">A vossa maquete do álbum já está pronta para aprovação, consultem o vosso portal — <strong style="color: #fff;">FOTOGRAFIAS → VER MAQUETE</strong></p>
-          <p style="font-size: 10px; color: #555; letter-spacing: 0.3em; text-transform: uppercase; margin: 48px 0 0;">RL Photo.Video · rlphotovideo.pt</p>
-        </div>
-      `,
+      html: `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0e0b06;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0e0b06;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;border:1px solid #7a6340;background:#110e08;">
+          <tr>
+            <td style="padding:56px 48px 48px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
+
+              <!-- Greeting -->
+              <p style="margin:0 0 24px;font-size:17px;font-style:italic;color:#c9a96e;letter-spacing:0.02em;">
+                Olá, ${nomes}!
+              </p>
+
+              <!-- Main heading -->
+              <h1 style="margin:0;font-size:40px;font-weight:400;color:#ffffff;line-height:1.15;letter-spacing:-0.01em;">
+                A vossa maquete
+              </h1>
+              <h1 style="margin:0 0 20px;font-size:40px;font-weight:400;font-style:italic;color:#c9a96e;line-height:1.15;">
+                está pronta.
+              </h1>
+
+              <!-- Subtitle -->
+              <p style="margin:0 0 32px;font-size:14px;color:#b0a080;letter-spacing:0.01em;">
+                Esperamos que esteja tudo bem convosco.
+              </p>
+
+              <!-- Divider -->
+              <div style="margin:0 0 32px;color:#7a6340;font-size:14px;letter-spacing:0.3em;">
+                &#8212;&nbsp;&nbsp;·&nbsp;◆&nbsp;·&nbsp;&nbsp;&#8212;
+              </div>
+
+              <!-- Body text -->
+              <p style="margin:0 0 14px;font-size:15px;color:#d4c9b0;line-height:1.7;text-align:center;">
+                O vosso <strong style="color:#ffffff;">álbum está pronto para aprovação</strong>.
+              </p>
+              <p style="margin:0 0 36px;font-size:15px;color:#d4c9b0;line-height:1.7;text-align:center;">
+                Consultem o vosso portal para ver a maquete.
+              </p>
+
+              <!-- CTA Box -->
+              <table cellpadding="0" cellspacing="0" style="margin:0 auto 48px;border:1px solid #7a6340;width:100%;max-width:360px;">
+                <tr>
+                  <td style="padding:24px 32px;text-align:center;">
+                    <p style="margin:0 0 10px;font-size:9px;letter-spacing:0.4em;color:#8a7450;text-transform:uppercase;">
+                      NO VOSSO PORTAL
+                    </p>
+                    <p style="margin:0;font-size:22px;font-style:italic;color:#c9a96e;letter-spacing:0.02em;">
+                      Fotografias &rarr; Ver Maquete
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Footer -->
+              <p style="margin:0;font-size:9px;letter-spacing:0.35em;color:#5a4f3a;text-transform:uppercase;">
+                RL PHOTO &middot; VIDEO
+              </p>
+
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`,
     }),
   })
 
