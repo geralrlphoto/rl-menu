@@ -1148,6 +1148,7 @@ export default function EventoPage() {
   const [selecaoEnviada, setSelecaoEnviada] = useState<string | null>(null)
   const [preWeddingEnviada, setPreWeddingEnviada] = useState<string | null>(null)
   const [fotosFinaisEnviada, setFotosFinaisEnviada] = useState<string | null>(null)
+  const [galeriasEnviada, setGaleriasEnviada] = useState<string | null>(null)
 
   function loadPagamentos(ref: string, showRefresh = false) {
     if (showRefresh) setPagamentosRefreshing(true)
@@ -1240,6 +1241,7 @@ export default function EventoPage() {
               if (s.selecao_enviada)      setSelecaoEnviada(s.selecao_enviada)
               if (s.prewedding_enviada)   setPreWeddingEnviada(s.prewedding_enviada)
               if (s.fotos_finais_enviada) setFotosFinaisEnviada(s.fotos_finais_enviada)
+              if (s.galerias_enviada)     setGaleriasEnviada(s.galerias_enviada)
             })
             .catch(() => {})
         }
@@ -1652,6 +1654,7 @@ export default function EventoPage() {
               { label: 'Fotos p/ Seleção',  state: selecaoEnviada,      setState: setSelecaoEnviada,      key: 'selecao_enviada',      api: '/api/send-selecao-email' },
               { label: 'Fotos Pré-Wedding', state: preWeddingEnviada,   setState: setPreWeddingEnviada,   key: 'prewedding_enviada',   api: '/api/send-prewedding-email' },
               { label: 'Fotos Finais',      state: fotosFinaisEnviada,  setState: setFotosFinaisEnviada,  key: 'fotos_finais_enviada', api: '/api/send-fotos-finais-email' },
+              { label: 'Galerias Online',   state: galeriasEnviada,     setState: setGaleriasEnviada,     key: 'galerias_enviada',     api: '/api/send-galerias-email' },
               { label: 'Enviar Maquete',    state: maqueteEnviada,      setState: setMaqueteEnviada,      key: 'maquete_enviada',      api: '/api/send-maquete-email' },
             ].map(({ label, state, setState, key, api }, i, arr) => (
               <div key={key}>
