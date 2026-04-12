@@ -213,10 +213,7 @@ function AlbumInfoModal({ refEvento, nome, onClose }: { refEvento: string | null
             </div>
 
             {/* Fotografias */}
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="N.º de Fotografias" value={data.num_fotografias} />
-              <Field label="Número de Fotografias" value={data.numero_fotografias} />
-            </div>
+            <Field label="N.º de Fotografias" value={data.num_fotografias} />
 
             {/* Textos */}
             {data.texto_album && (

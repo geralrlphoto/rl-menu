@@ -276,14 +276,9 @@ function FichaModal({ row, onClose, onSaved }: {
           </div>
 
           {/* Fotografias */}
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="N.º de Fotografias">
-              <EditCell value={row.num_fotografias} field="num_fotografias" rowId={row.id} onSaved={onSaved} placeholder="—" />
-            </Field>
-            <Field label="Número de Fotografias">
-              <EditCell value={row.numero_fotografias} field="numero_fotografias" rowId={row.id} onSaved={onSaved} placeholder="—" />
-            </Field>
-          </div>
+          <Field label="N.º de Fotografias">
+            <EditCell value={row.num_fotografias} field="num_fotografias" rowId={row.id} onSaved={onSaved} placeholder="—" />
+          </Field>
 
           {/* Textos */}
           <Field label="Texto para Álbum">
