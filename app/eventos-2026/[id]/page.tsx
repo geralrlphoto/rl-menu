@@ -1366,21 +1366,7 @@ export default function EventoPage() {
           <div className="flex items-center gap-2">
             <select
               value={navRef}
-              onChange={async ev => {
-                const ref = ev.target.value
-                if (!ref) return
-                const taken = usedRefs.has(ref) && ref !== e.referencia
-                if (taken) return
-                setNavRef(ref)
-                setNavLoading(true)
-                await fetch(`/api/eventos-notion/${e.id}`, {
-                  method: 'PATCH',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ referencia: ref }),
-                })
-                setEvento(prev => prev ? { ...prev, referencia: ref } : prev)
-                setNavLoading(false)
-              }}
+              onChange={ev => setNavRef(ev.target.value)}
               className="border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-gold/30 transition-colors cursor-pointer"
               style={{ minWidth: 200, background: '#1a1610', color: 'rgba(255,255,255,0.5)' }}
             >
@@ -1405,7 +1391,6 @@ export default function EventoPage() {
                 )
               })}
             </select>
-            {navLoading && <span className="text-xs text-white/30 animate-pulse">A guardar...</span>}
           </div>
         </div>
 
