@@ -661,12 +661,34 @@ export default function FreelancerViewPage() {
           <p className="text-white/20 text-xs tracking-widest uppercase">A carregar...</p>
         ) : (
           <>
-            <h1 className="text-3xl font-light tracking-[0.15em] text-white uppercase">{freelancer?.nome ?? '—'}</h1>
-            {freelancer?.status && (
-              <span className="inline-block mt-2 text-[9px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-semibold bg-gold/10 text-gold border-gold/30">
-                {freelancer.status}
-              </span>
-            )}
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h1 className="text-3xl font-light tracking-[0.15em] text-white uppercase">{freelancer?.nome ?? '—'}</h1>
+                {freelancer?.status && (
+                  <span className="inline-block mt-2 text-[9px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-semibold bg-gold/10 text-gold border-gold/30">
+                    {freelancer.status}
+                  </span>
+                )}
+              </div>
+              {upcoming[0] && (() => {
+                const next = upcoming[0]
+                const dtu = daysUntil(next.data_casamento)
+                const isUrgent = dtu !== null && dtu <= 15
+                return (
+                  <div className={`flex-shrink-0 flex items-center gap-3 px-4 py-3 rounded-xl border ${isUrgent ? 'border-red-500/30 bg-red-500/5' : 'border-gold/20 bg-gold/[0.04]'}`}>
+                    <div className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl border ${isUrgent ? 'bg-red-500/15 border-red-500/30' : 'bg-gold/10 border-gold/25'}`}>
+                      <span className={`text-lg font-bold leading-none ${isUrgent ? 'text-red-400' : 'text-gold'}`}>{dtu === 0 ? '!' : dtu}</span>
+                      <span className={`text-[8px] uppercase tracking-wide ${isUrgent ? 'text-red-400/60' : 'text-gold/60'}`}>{dtu === 0 ? 'HOJE' : 'd'}</span>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-white/25 uppercase tracking-widest mb-0.5">Próximo</p>
+                      <p className="text-sm font-semibold text-white/80 max-w-[150px] truncate">{next.local}</p>
+                      <p className="text-[10px] text-white/35">{fmtDate(next.data_casamento).split(' · ')[0]}</p>
+                    </div>
+                  </div>
+                )
+              })()}
+            </div>
             <div className="mt-4 h-px w-12 bg-gold/50" />
           </>
         )}
