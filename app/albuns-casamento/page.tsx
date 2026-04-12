@@ -245,7 +245,7 @@ function FichaModal({ row, onClose, onSaved }: {
                 { label: 'Entrega de Fotos',     field: 'data_entrega_fotos',    value: row.data_entrega_fotos },
                 { label: 'Prazo Maquete',         field: 'prazo_maquete',         value: row.prazo_maquete },
                 { label: 'Prazo Final Maquete',   field: null,                    value: row.prazo_final_maquete },
-                { label: 'Data de Aprovação',     field: 'data_aprovacao',        value: row.data_aprovacao },
+                { label: 'Data Aprovação Álbum',  field: 'data_aprovacao',        value: row.data_aprovacao },
                 { label: 'Prazo Álbum',           field: 'prazo_album',           value: row.prazo_album },
                 { label: 'Data Prevista Entrega', field: 'data_prevista_entrega', value: row.data_prevista_entrega },
                 { label: 'Entrega de Álbum',      field: null,                    value: row.entrega_album },

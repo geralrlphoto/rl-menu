@@ -199,7 +199,7 @@ function AlbumInfoModal({ refEvento, nome, onClose }: { refEvento: string | null
                 <DateBox label="Entrega de Fotos"     value={data.data_entrega_fotos} />
                 <DateBox label="Prazo Maquete"         value={data.prazo_maquete} />
                 <DateBox label="Prazo Final Maquete"   value={data.prazo_final_maquete} />
-                <DateBox label="Data de Aprovação"     value={data.data_aprovacao} />
+                <DateBox label="Data Aprovação Álbum" value={data.data_aprovacao} />
                 <DateBox label="Prazo Álbum"           value={data.prazo_album} />
                 <DateBox label="Data Prevista Entrega" value={data.data_prevista_entrega} />
                 <DateBox label="Entrega de Álbum"      value={data.entrega_album} />
