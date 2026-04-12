@@ -210,10 +210,8 @@ function AlbumInfoModal({ refEvento, nome, dataCasamento, onClose }: { refEvento
             <div>
               <p className="text-[9px] tracking-[0.35em] text-white/20 uppercase mb-3">Datas Álbum</p>
               <div className="grid grid-cols-3 gap-3">
-                <DateBox label="Prazo Final Maquete"   value={data.prazo_final_maquete} />
                 <DateBox label="Data Aprovação"        value={data.data_aprovacao} />
                 <DateBox label="Data Prevista Entrega" value={data.data_prevista_entrega} />
-                <DateBox label="Entrega de Álbum"      value={data.entrega_album} />
               </div>
             </div>
 
