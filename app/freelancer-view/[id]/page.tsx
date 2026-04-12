@@ -50,7 +50,7 @@ const STATUS_ALBUM_STYLE: Record<string, string> = {
 }
 
 // ── Album Status Select ───────────────────────────────────────────────────────
-const ALBUM_STATUS_OPTIONS  = ['AGUARDAR','EM EDIÇÃO','EM APROVAÇÃO','ENTREGUE'] // freelancer não pode selecionar APROVADO
+const ALBUM_STATUS_OPTIONS  = ['AGUARDAR','EM EDIÇÃO','EM APROVAÇÃO'] // freelancer não pode selecionar APROVADO nem ENTREGUE
 const ALBUM_STATUS_SECTIONS = ['AGUARDAR','EM EDIÇÃO','EM APROVAÇÃO','APROVADO','ENTREGUE']
 const ALBUM_STATUS_SELECT_STYLE: Record<string, string> = {
   'AGUARDAR':      'bg-white/10 text-white/50 border-white/20',
@@ -74,11 +74,18 @@ function AlbumStatusSelect({ albumId, status, onChanged }: { albumId: string; st
     setSaving(false)
   }
 
-  // APROVADO só pode ser definido pelo cliente — mostra badge fixo
+  // APROVADO e ENTREGUE só podem ser definidos pelo cliente/admin — mostra badge fixo
   if (status === 'APROVADO') {
     return (
       <span className={`text-[9px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium ${cls}`}>
         APROVADO ✓
+      </span>
+    )
+  }
+  if (status === 'ENTREGUE') {
+    return (
+      <span className={`text-[9px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium ${cls}`}>
+        ENTREGUE ✓
       </span>
     )
   }

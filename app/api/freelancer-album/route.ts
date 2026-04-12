@@ -33,9 +33,12 @@ export async function PATCH(req: NextRequest) {
   const { id, ...fields } = await req.json()
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
-  // APROVADO só pode ser definido pelo cliente via portal — bloqueado aqui
+  // APROVADO e ENTREGUE só podem ser definidos pelo cliente/admin — bloqueado aqui
   if (fields.status === 'APROVADO') {
     return NextResponse.json({ error: 'Status APROVADO só pode ser definido pelo cliente.' }, { status: 403 })
+  }
+  if (fields.status === 'ENTREGUE') {
+    return NextResponse.json({ error: 'Status ENTREGUE só pode ser definido pelo admin.' }, { status: 403 })
   }
 
   const supabase = db()
