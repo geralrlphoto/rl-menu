@@ -1368,7 +1368,18 @@ export default function EventoPage() {
             <select
               value={navRef}
               disabled={!!navRef}
-              onChange={ev => { if (ev.target.value) setNavRef(ev.target.value) }}
+              onChange={async ev => {
+                const ref = ev.target.value
+                if (!ref) return
+                setNavRef(ref)
+                await fetch(`/api/eventos-notion/${e.id}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ referencia: ref }),
+                })
+                setEvento(prev => prev ? { ...prev, referencia: ref } : prev)
+                setReferenciaLoaded(ref)
+              }}
               className="border rounded-lg px-3 py-1.5 text-xs focus:outline-none transition-colors cursor-pointer"
               style={{
                 minWidth: 200,
