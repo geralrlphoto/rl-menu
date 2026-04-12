@@ -49,7 +49,8 @@ const STATUS_ALBUM_STYLE: Record<string, string> = {
 }
 
 // ── Album Status Select ───────────────────────────────────────────────────────
-const ALBUM_STATUS_OPTIONS = ['AGUARDAR','EM EDIÇÃO','EM APROVAÇÃO','ENTREGUE']
+const ALBUM_STATUS_OPTIONS  = ['AGUARDAR','EM EDIÇÃO','EM APROVAÇÃO','ENTREGUE'] // freelancer não pode selecionar APROVADO
+const ALBUM_STATUS_SECTIONS = ['AGUARDAR','EM EDIÇÃO','EM APROVAÇÃO','APROVADO','ENTREGUE']
 const ALBUM_STATUS_SELECT_STYLE: Record<string, string> = {
   'AGUARDAR':      'bg-white/10 text-white/50 border-white/20',
   'EM EDIÇÃO':     'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
@@ -1106,7 +1107,7 @@ export default function FreelancerViewPage() {
               {album.length === 0 ? (
                 <p className="text-white/15 text-xs tracking-widest">Sem álbuns atribuídos.</p>
               ) : (
-                ALBUM_STATUS_OPTIONS.map(statusLabel => {
+                ALBUM_STATUS_SECTIONS.map(statusLabel => {
                   const items = album.filter(a => a.status === statusLabel)
                   return (
                     <div key={statusLabel}>
