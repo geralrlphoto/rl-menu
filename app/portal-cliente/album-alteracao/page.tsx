@@ -24,7 +24,7 @@ function SectionLabel({ number, label }: { number: string; label: string }) {
     <div className="flex items-center gap-3 px-5 py-4 border-b border-white/[0.08]">
       <span className="text-[9px] font-mono text-white/40 tracking-widest">{number}</span>
       <div className="w-px h-3 bg-white/20" />
-      <span className="text-[9px] tracking-[0.4em] text-white uppercase">{label}</span>
+      <span className="text-[16px] tracking-[0.2em] text-white uppercase">{label}</span>
     </div>
   )
 }
