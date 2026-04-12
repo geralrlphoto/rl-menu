@@ -222,6 +222,7 @@ function FichaModal({ row, onClose, onSaved }: {
 
   async function handleEditorAlbumChange(name: string) {
     const next = name || null
+    const prev = editorAlbum
     setEditorAlbumSaving(true)
 
     // 1. Save editor_album assignment
@@ -231,29 +232,48 @@ function FichaModal({ row, onClose, onSaved }: {
       body: JSON.stringify({ notion_page_id: row.id, editor_album: next }),
     })
 
-    // 2. Create/update album entry in albuns_casamento
-    if (next) {
-      await fetch('/api/albuns-casamento', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nome: row.nome_noivos || 'Sem nome',
-          ref_evento: row.referencia || null,
-          num_fotografias: row.fotos_album || null,
-          data_entrega_fotos: row.data_entrada || null,
-          check_existing: true,
-        }),
-      })
+    try {
+      const { freelancers } = await fetch('/api/freelancers').then(r => r.json())
 
-      // 3. Create freelancer_album entry so it appears in the editor's portal
-      try {
-        const { freelancers } = await fetch('/api/freelancers').then(r => r.json())
+      // 2. Remove freelancer_album from the PREVIOUS editor (avoid duplicates)
+      if (prev && prev !== next) {
+        const prevFl = (freelancers ?? []).find((f: any) =>
+          f.nome.trim().toLowerCase() === prev.trim().toLowerCase()
+        )
+        if (prevFl) {
+          const prevRes = await fetch(`/api/freelancer-album?freelancer_id=${prevFl.id}`).then(r => r.json())
+          const toDelete = (prevRes.album ?? []).find((a: any) =>
+            a.referencia_album === (row.referencia || null) ||
+            a.nome === (row.nome_noivos || 'Sem nome')
+          )
+          if (toDelete) {
+            await fetch(`/api/freelancer-album?id=${toDelete.id}`, { method: 'DELETE' })
+          }
+        }
+      }
+
+      // 3. Create/update album entry in albuns_casamento
+      if (next) {
+        await fetch('/api/albuns-casamento', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nome: row.nome_noivos || 'Sem nome',
+            ref_evento: row.referencia || null,
+            num_fotografias: row.fotos_album || null,
+            data_entrega_fotos: row.data_entrada || null,
+            check_existing: true,
+          }),
+        })
+
+        // 4. Create freelancer_album for the NEW editor (if not already exists)
         const fl = (freelancers ?? []).find((f: any) =>
           f.nome.trim().toLowerCase() === next.trim().toLowerCase()
         )
         if (fl) {
           const existingRes = await fetch(`/api/freelancer-album?freelancer_id=${fl.id}`).then(r => r.json())
           const already = (existingRes.album ?? []).find((a: any) =>
+            a.referencia_album === (row.referencia || null) ||
             a.nome === (row.nome_noivos || 'Sem nome')
           )
           if (!already) {
@@ -270,8 +290,8 @@ function FichaModal({ row, onClose, onSaved }: {
             })
           }
         }
-      } catch { /* silently ignore */ }
-    }
+      }
+    } catch { /* silently ignore */ }
 
     setEditorAlbum(next)
     setEditorAlbumSaving(false)
