@@ -8,6 +8,27 @@ function db() {
   )
 }
 
+// GET /api/album-alteracoes?refs=CAS_001,CAS_002
+// Returns latest alteration per ref_evento
+export async function GET(req: NextRequest) {
+  const refs = req.nextUrl.searchParams.get('refs')
+  if (!refs) return NextResponse.json({ alteracoes: [] })
+  const refList = refs.split(',').map(r => r.trim()).filter(Boolean)
+  const { data, error } = await db()
+    .from('album_alteracoes')
+    .select('*')
+    .in('ref_evento', refList)
+    .order('created_at', { ascending: false })
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Keep only the most recent per ref
+  const latest: Record<string, any> = {}
+  for (const row of (data ?? [])) {
+    if (!latest[row.ref_evento]) latest[row.ref_evento] = row
+  }
+  return NextResponse.json({ alteracoes: Object.values(latest) })
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
   const { ref_evento, paginas_alterar, tipos_alteracao, observacoes } = body

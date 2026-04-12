@@ -33,7 +33,8 @@ type Edicao     = {
   sala_animacao: number | null; fotos_album: number | null; bolo_bouquet: number | null
   sessao_noivos: number | null; fotos_noiva: number | null; fotos_noivo: number | null
 }
-type Album      = { id: string; nome: string; status: string; data_casamento: string | null; referencia_album: string | null; data_entrega_fotos?: string | null }
+type Alteracao  = { id: string; ref_evento: string; paginas_alterar: string | null; tipos_alteracao: string[] | null; observacoes: string | null; created_at: string }
+type Album      = { id: string; nome: string; status: string; data_casamento: string | null; referencia_album: string | null; data_entrega_fotos?: string | null; alteracao?: Alteracao | null }
 
 const STATUS_EDICAO_STYLE: Record<string, string> = {
   'NOVO TRABALHO': 'bg-blue-500/15 text-blue-400 border-blue-500/30',
@@ -865,7 +866,23 @@ export default function FreelancerViewPage() {
       )
       return { ...a, data_entrega_fotos: match?.data_entrega_fotos ?? null }
     })
-    setAlbum(enriched)
+    // Fetch alteration requests for albums that have referencia_album
+    const refs = (aRes.album ?? [])
+      .map((a: Album) => a.referencia_album)
+      .filter(Boolean)
+    let alteracaoMap: Record<string, Alteracao> = {}
+    if (refs.length > 0) {
+      const altRes = await fetch(`/api/album-alteracoes?refs=${refs.join(',')}`).then(r => r.json()).catch(() => ({ alteracoes: [] }))
+      for (const alt of (altRes.alteracoes ?? [])) {
+        alteracaoMap[alt.ref_evento] = alt
+      }
+    }
+
+    const enrichedWithAlt = enriched.map((a: Album) => ({
+      ...a,
+      alteracao: a.referencia_album ? (alteracaoMap[a.referencia_album] ?? null) : null,
+    }))
+    setAlbum(enrichedWithAlt)
     setLoading(false)
   }, [id])
 
@@ -1131,7 +1148,26 @@ export default function FreelancerViewPage() {
                       ) : (
                         <div className="space-y-2">
                           {items.map(a => (
-                            <div key={a.id} className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-white/[0.06] bg-white/[0.02]">
+                            <div key={a.id} className={`rounded-xl border overflow-hidden ${a.alteracao ? 'border-orange-500/40 bg-orange-500/[0.04]' : 'border-white/[0.06] bg-white/[0.02]'}`}>
+                              {/* Alteration banner */}
+                              {a.alteracao && (
+                                <div className="px-4 py-2.5 bg-orange-500/10 border-b border-orange-500/30 flex items-start gap-2">
+                                  <span className="text-orange-400 text-xs mt-0.5">✎</span>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-[9px] tracking-[0.3em] uppercase font-semibold text-orange-400">Alterações Solicitadas pelo Cliente</p>
+                                    {a.alteracao.tipos_alteracao && a.alteracao.tipos_alteracao.length > 0 && (
+                                      <p className="text-[9px] text-orange-300/70 mt-0.5">{a.alteracao.tipos_alteracao.join(' · ')}</p>
+                                    )}
+                                    {a.alteracao.paginas_alterar && (
+                                      <p className="text-[9px] text-orange-300/50 mt-0.5">Páginas: {a.alteracao.paginas_alterar}</p>
+                                    )}
+                                    {a.alteracao.observacoes && (
+                                      <p className="text-[9px] text-orange-300/50 mt-0.5 truncate max-w-[220px]">"{a.alteracao.observacoes}"</p>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                              <div className="flex items-center justify-between gap-3 px-4 py-3">
                               <div>
                                 <p className="text-sm text-white/80">{a.nome}</p>
                                 <div className="flex items-center gap-2 mt-0.5 flex-wrap">
@@ -1153,6 +1189,7 @@ export default function FreelancerViewPage() {
                                   Ver Mais
                                 </button>
                                 <AlbumStatusSelect albumId={a.id} status={a.status} onChanged={s => setAlbum(prev => prev.map(x => x.id === a.id ? { ...x, status: s } : x))} />
+                              </div>
                               </div>
                             </div>
                           ))}
