@@ -195,22 +195,22 @@ function SelecaoModal({ nome, onClose }: { nome: string; onClose: () => void }) 
               {/* Datas */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3">
-                  <span className="text-[8px] tracking-[0.3em] text-white/25 uppercase block mb-1">Data do Evento</span>
-                  <p className="text-sm text-white/70">{fmtFull(record.date)}</p>
+                  <span className="text-[8px] tracking-[0.3em] text-white uppercase block mb-1">Data do Evento</span>
+                  <p className="text-sm text-white">{fmtFull(record.date)}</p>
                 </div>
                 <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3">
-                  <span className="text-[8px] tracking-[0.3em] text-white/25 uppercase block mb-1">Data de Entrada</span>
-                  <p className="text-sm text-white/70">{fmtFull(record.data_entrada)}</p>
+                  <span className="text-[8px] tracking-[0.3em] text-white uppercase block mb-1">Data de Entrada</span>
+                  <p className="text-sm text-white">{fmtFull(record.data_entrada)}</p>
                 </div>
               </div>
               {/* Contagens */}
               <div>
-                <p className="text-[9px] tracking-[0.35em] text-white/20 uppercase mb-3">Contagem de Fotos</p>
+                <p className="text-[9px] tracking-[0.35em] text-white uppercase mb-3">Contagem de Fotos</p>
                 <div className="grid grid-cols-4 gap-2">
                   {SELECAO_SECTIONS.map(({ label, field }) => (
                     <div key={field} className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3">
-                      <span className="text-[8px] tracking-[0.2em] text-white/25 uppercase block mb-1">{label}</span>
-                      <p className="text-xl font-light text-white/80">{record[field] || <span className="text-white/20 text-sm">—</span>}</p>
+                      <span className="text-[8px] tracking-[0.2em] text-white uppercase block mb-1">{label}</span>
+                      <p className="text-xl font-light text-white">{record[field] || <span className="text-white/30 text-sm">—</span>}</p>
                     </div>
                   ))}
                 </div>
@@ -218,8 +218,8 @@ function SelecaoModal({ nome, onClose }: { nome: string; onClose: () => void }) 
               {/* Detalhes */}
               {record.detalhes && (
                 <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
-                  <span className="text-[8px] tracking-[0.3em] text-white/25 uppercase block mb-2">Detalhes</span>
-                  <p className="text-sm text-white/60 leading-relaxed">{record.detalhes}</p>
+                  <span className="text-[8px] tracking-[0.3em] text-white uppercase block mb-2">Detalhes</span>
+                  <p className="text-sm text-white leading-relaxed">{record.detalhes}</p>
                 </div>
               )}
             </div>
@@ -254,11 +254,11 @@ function EdicaoModal({ e, onClose }: { e: Edicao; onClose: () => void }) {
         {/* Header */}
         <div className="px-7 pt-6 pb-5 border-b border-white/[0.05] flex items-start justify-between gap-4">
           <div>
-            <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase mb-1">Edição de Fotos</p>
+            <p className="text-[9px] tracking-[0.4em] text-white uppercase mb-1">Edição de Fotos</p>
             <h2 className="text-xl font-light tracking-[0.1em] text-white uppercase">{e.nome}</h2>
             <div className="flex items-center gap-3 mt-1 flex-wrap">
-              {e.data_casamento && <p className="text-xs text-white/35">{fmtDate(e.data_casamento).split(' · ')[0]}</p>}
-              {e.local && <p className="text-xs text-white/25">📍 {e.local}</p>}
+              {e.data_casamento && <p className="text-xs text-white">{fmtDate(e.data_casamento).split(' · ')[0]}</p>}
+              {e.local && <p className="text-xs text-white">📍 {e.local}</p>}
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -275,26 +275,26 @@ function EdicaoModal({ e, onClose }: { e: Edicao; onClose: () => void }) {
             <div className="grid grid-cols-2 gap-3">
               {e.data_entrega && (
                 <div className="bg-white/[0.03] border border-white/[0.05] rounded-2xl px-4 py-3">
-                  <p className="text-[8px] tracking-[0.3em] text-white/20 uppercase mb-1">Data Entrega</p>
-                  <p className="text-sm text-white/70">{fmtDate(e.data_entrega).split(' · ')[0]}</p>
+                  <p className="text-[8px] tracking-[0.3em] text-white uppercase mb-1">Data Entrega</p>
+                  <p className="text-sm text-white">{fmtDate(e.data_entrega).split(' · ')[0]}</p>
                 </div>
               )}
               {e.data_final_entrega && (
                 <div className="bg-white/[0.03] border border-white/[0.05] rounded-2xl px-4 py-3">
-                  <p className="text-[8px] tracking-[0.3em] text-white/20 uppercase mb-1">Entrega Final</p>
-                  <p className="text-sm text-white/70">{fmtDate(e.data_final_entrega).split(' · ')[0]}</p>
+                  <p className="text-[8px] tracking-[0.3em] text-white uppercase mb-1">Entrega Final</p>
+                  <p className="text-sm text-white">{fmtDate(e.data_final_entrega).split(' · ')[0]}</p>
                 </div>
               )}
             </div>
           )}
           {/* Contagem de fotos */}
           <div>
-            <p className="text-[9px] tracking-[0.35em] text-white/20 uppercase mb-3">Contagem de Fotos</p>
+            <p className="text-[9px] tracking-[0.35em] text-white uppercase mb-3">Contagem de Fotos</p>
             <div className="grid grid-cols-3 gap-2">
               {FOTO_FIELDS.map(({ key, label }) => (
                 <div key={key} className="bg-white/[0.03] border border-white/[0.05] rounded-xl px-3 py-2.5">
-                  <p className="text-[8px] tracking-[0.2em] text-white/20 uppercase mb-1">{label}</p>
-                  <p className="text-xl font-light text-white/80">{e[key] != null ? String(e[key]) : <span className="text-white/15 text-sm">—</span>}</p>
+                  <p className="text-[8px] tracking-[0.2em] text-white uppercase mb-1">{label}</p>
+                  <p className="text-xl font-light text-white">{e[key] != null ? String(e[key]) : <span className="text-white/30 text-sm">—</span>}</p>
                 </div>
               ))}
             </div>
