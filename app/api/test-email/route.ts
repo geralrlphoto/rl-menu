@@ -9,7 +9,7 @@ export async function GET() {
     },
     body: JSON.stringify({
       from: 'onboarding@resend.dev',
-      to: ['ruimngpro@gmail.com'],
+      to: ['geral.rlphoto@gmail.com'],
       subject: 'RL PHOTO.VIDEO · Teste de Email',
       html: `
         <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 24px; background: #000; color: #fff;">
