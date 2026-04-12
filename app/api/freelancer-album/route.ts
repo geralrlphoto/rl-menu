@@ -59,9 +59,21 @@ export async function PATCH(req: NextRequest) {
 
       // Update albuns_casamento
       if (adminStatus) {
+        const adminUpdate: Record<string, any> = { status: adminStatus }
+
+        // When approved: record approval date and calculate delivery date (+35 days)
+        if (newStatus === 'APROVADO') {
+          const today = new Date()
+          const delivery = new Date(today)
+          delivery.setDate(delivery.getDate() + 35)
+          const toISO = (d: Date) => d.toISOString().split('T')[0]
+          adminUpdate.data_aprovacao = toISO(today)
+          adminUpdate.data_prevista_entrega = toISO(delivery)
+        }
+
         await supabase
           .from('albuns_casamento')
-          .update({ status: adminStatus })
+          .update(adminUpdate)
           .eq('ref_evento', ref)
       }
 
