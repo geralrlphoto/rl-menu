@@ -109,9 +109,43 @@ export async function PATCH(req: NextRequest) {
 
   // ── Sync videografo change on all existing casamentos for this event ────────
   if (videografo !== undefined && JSON.stringify(newVideo) !== JSON.stringify(oldVideo)) {
+    // Update videografo field on all existing photographer casamentos for this event
     await supabase.from('freelancer_casamentos')
       .update({ videografo: newVideo[0] ?? null })
       .eq('evento_id', evento_id)
+
+    // Remove old videografo's own casamento record
+    if (oldVideo[0]) {
+      const { data: oldVfl } = await supabase
+        .from('freelancers').select('id').ilike('nome', oldVideo[0]).maybeSingle()
+      if (oldVfl) {
+        await supabase.from('freelancer_casamentos')
+          .delete().eq('freelancer_id', oldVfl.id).eq('evento_id', evento_id)
+      }
+    }
+
+    // Create new videografo's own casamento record so it appears in their portal
+    if (newVideo[0]) {
+      const { data: newVfl } = await supabase
+        .from('freelancers').select('id').ilike('nome', newVideo[0]).maybeSingle()
+      if (newVfl) {
+        const { data: exists } = await supabase
+          .from('freelancer_casamentos').select('id')
+          .eq('freelancer_id', newVfl.id).eq('evento_id', evento_id).maybeSingle()
+        if (!exists) {
+          await supabase.from('freelancer_casamentos').insert({
+            freelancer_id: newVfl.id,
+            evento_id,
+            local: local ?? '',
+            data_casamento: data_casamento || null,
+            equipa_foto: newFoto,
+            videografo: newVideo[0],
+            briefing_url: null,
+            order_index: 999,
+          })
+        }
+      }
+    }
   }
 
   return NextResponse.json({ ok: true, fotografo: newFoto, videografo: newVideo })
