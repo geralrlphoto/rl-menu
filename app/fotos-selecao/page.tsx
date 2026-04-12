@@ -231,7 +231,7 @@ function FichaModal({ row, onClose, onSaved }: {
       body: JSON.stringify({ notion_page_id: row.id, editor_album: next }),
     })
 
-    // 2. If editor selected, create/update album in Supabase
+    // 2. Create/update album entry in albuns_casamento
     if (next) {
       await fetch('/api/albuns-casamento', {
         method: 'POST',
@@ -243,6 +243,33 @@ function FichaModal({ row, onClose, onSaved }: {
           check_existing: true,
         }),
       })
+
+      // 3. Create freelancer_album entry so it appears in the editor's portal
+      try {
+        const { freelancers } = await fetch('/api/freelancers').then(r => r.json())
+        const fl = (freelancers ?? []).find((f: any) =>
+          f.nome.trim().toLowerCase() === next.trim().toLowerCase()
+        )
+        if (fl) {
+          const existingRes = await fetch(`/api/freelancer-album?freelancer_id=${fl.id}`).then(r => r.json())
+          const already = (existingRes.album ?? []).find((a: any) =>
+            a.nome === (row.nome_noivos || 'Sem nome')
+          )
+          if (!already) {
+            await fetch('/api/freelancer-album', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                freelancer_id: fl.id,
+                nome: row.nome_noivos || 'Sem nome',
+                status: 'AGUARDAR',
+                data_casamento: row.date ?? null,
+                referencia_album: row.referencia || null,
+              }),
+            })
+          }
+        }
+      } catch { /* silently ignore */ }
     }
 
     setEditorAlbum(next)
