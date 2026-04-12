@@ -216,8 +216,16 @@ function addWorkingDays(dateStr: string, days: number): string {
   return d.toISOString().split('T')[0]
 }
 
+const ALBUM_STATUS_LABEL: Record<string, string> = {
+  'NOVO ÁLBUM':    'Aguardar',
+  'EM EDIÇÃO':     'Em Edição',
+  'PARA APROVAÇÃO':'Em Aprovação',
+  'APROVADO':      'Aprovado',
+  'ENTREGUE':      'Entregue',
+}
+
 function estadoCfg(val: string) {
-  const blue   = ['Em Edição', 'Enviado']
+  const blue   = ['Em Edição', 'Enviado', 'Em Aprovação']
   const green  = ['Entregue', 'Aprovado']
   const purple = ['Concluído']
   if (green.includes(val))  return { box: 'bg-green-500/10 border-green-500/25',   dot: 'bg-green-400',  lbl: 'text-green-300/70',  date: 'text-green-200/80',  badge: 'bg-green-500/15 border-green-500/30 text-green-100/90'   }
@@ -263,7 +271,7 @@ function EntregasSection({ referencia }: { referencia: string }) {
         sel_fotos_estado:            evento.sel_fotos_estado ?? null,
         video_estado:                evento.video_estado ?? null,
         fotos_edicao_estado:         evento.fotos_edicao_estado ?? null,
-        album_estado:                evento.album_estado ?? null,
+        album_estado:                ALBUM_STATUS_LABEL[al.status] ?? al.status ?? null,
         fotosDataEntrada:            fs.row?.data_entrada ?? null,
         albumDataPrevista:           al.data_prevista_entrega ?? null,
         selecao_fotos_noivos_estado: pt.portal?.settings?.selecao_fotos_noivos_estado ?? 'Aguardar',
