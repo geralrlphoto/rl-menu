@@ -65,6 +65,8 @@ const STATUS_STYLE: Record<string, string> = {
 }
 
 const inputCls = "w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15 [color-scheme:dark]"
+const selectCls = "w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-gold/40 transition-colors cursor-pointer [color-scheme:dark]"
+const optStyle = { backgroundColor: '#1a1a1a', color: 'white' }
 const labelCls = "block text-[9px] text-white/25 tracking-widest uppercase mb-1"
 
 // ─── Password Display ─────────────────────────────────────────────────────────
@@ -747,11 +749,11 @@ function AlbumForm({ form, setForm, saving, onSave, onCancel, onDelete, selecaoL
           <select
             value={form.referencia_album ?? ''}
             onChange={e => handleSelecao(e.target.value)}
-            className={inputCls + ' cursor-pointer'}
+            className={selectCls}
           >
-            <option value="">— escolher casamento —</option>
+            <option value="" style={optStyle}>— escolher casamento —</option>
             {selecaoList.map((r: any) => (
-              <option key={r.referencia} value={r.referencia}>
+              <option key={r.referencia} value={r.referencia} style={optStyle}>
                 {r.nome_noivos} · {r.referencia}{r.date ? ` · ${r.date}` : ''}
               </option>
             ))}
@@ -949,11 +951,11 @@ function EdicaoForm({ form, setForm, saving, onSave, onCancel, onDelete, selecao
           <select
             value={form.referencia ?? ''}
             onChange={e => handleSelecao(e.target.value)}
-            className={inputCls + ' cursor-pointer'}
+            className={selectCls}
           >
-            <option value="">— escolher casamento —</option>
+            <option value="" style={optStyle}>— escolher casamento —</option>
             {selecaoList.map((r: any) => (
-              <option key={r.referencia} value={r.referencia}>
+              <option key={r.referencia} value={r.referencia} style={optStyle}>
                 {r.nome_noivos} · {r.referencia}{r.date ? ` · ${r.date}` : ''}
               </option>
             ))}
