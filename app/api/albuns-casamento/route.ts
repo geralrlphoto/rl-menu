@@ -104,5 +104,10 @@ export async function PATCH(req: NextRequest) {
       .eq('referencia_album', data.ref_evento)
   }
 
+  // When delivered: clean up alteration requests
+  if (status === 'ENTREGUE' && data?.ref_evento) {
+    await supabase.from('album_alteracoes').delete().eq('ref_evento', data.ref_evento)
+  }
+
   return NextResponse.json({ row: data })
 }

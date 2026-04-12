@@ -82,6 +82,10 @@ export async function PATCH(req: NextRequest) {
           .eq('ref_evento', ref)
       }
 
+      // When delivered: clean up alteration requests
+      if (newStatus === 'ENTREGUE') {
+        await supabase.from('album_alteracoes').delete().eq('ref_evento', ref)
+      }
     }
   }
 
