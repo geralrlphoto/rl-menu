@@ -216,6 +216,33 @@ export default function ClientePage() {
           />
         </div>
 
+        {/* Ações Admin */}
+        <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-4">
+          <h2 className="text-xs tracking-[0.3em] text-gold uppercase mb-1">Ações</h2>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm text-white/70">Enviar Maquete</p>
+              <p className="text-xs text-white/30 mt-0.5">
+                {form.maquete_enviada === 'true' || form.maquete_enviada === true ? 'Enviada' : 'Pendente'}
+              </p>
+            </div>
+            <button
+              onClick={async () => {
+                await supabase.from('crm_contacts').update({ maquete_enviada: true }).eq('id', id)
+                setForm(f => ({ ...f, maquete_enviada: 'true' }))
+                setOriginal(f => ({ ...f, maquete_enviada: 'true' }))
+              }}
+              className={`px-5 py-2.5 rounded-xl text-xs font-semibold tracking-[0.2em] uppercase border transition-all ${
+                form.maquete_enviada === 'true' || form.maquete_enviada === true
+                  ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                  : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/30'
+              }`}
+            >
+              {form.maquete_enviada === 'true' || form.maquete_enviada === true ? '✓ Enviada' : 'Enviar Maquete'}
+            </button>
+          </div>
+        </div>
+
         {/* Notas */}
         <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-4">
           <h2 className="text-xs tracking-[0.3em] text-gold uppercase mb-1">Notas Internas</h2>
