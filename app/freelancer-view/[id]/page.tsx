@@ -743,7 +743,7 @@ function EdicaoCard({ e, onStatusChange }: { e: Edicao; onStatusChange: (id: str
         <div>
           <button onClick={() => setOpenSelecao(true)}
             className="text-[9px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-lg border border-gold/30 bg-gold/5 text-gold/70 hover:text-gold hover:border-gold/50 hover:bg-gold/10 transition-all">
-            Ver Seleção
+            Ver Mais
           </button>
         </div>
       </div>
@@ -1057,7 +1057,7 @@ export default function FreelancerViewPage() {
                       <div className="flex items-center gap-2 shrink-0">
                         <button onClick={() => setAlbumInfo(a)}
                           className="text-[10px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-xl border border-gold/30 bg-gold/5 text-gold/70 hover:text-gold hover:border-gold/60 hover:bg-gold/10 transition-all">
-                          + Info
+                          Ver Mais
                         </button>
                         <span className={`text-[9px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium ${STATUS_ALBUM_STYLE[a.status] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
                           {a.status}
