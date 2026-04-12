@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
-  const { ref_evento, paginas_alterar, tipos_alteracao, observacoes } = body
+  const { ref_evento, paginas_alterar, tipos_alteracao, observacoes, foto_url } = body
 
   if (!ref_evento) return NextResponse.json({ error: 'ref_evento required' }, { status: 400 })
 
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
   // Save alteration request
   const { error: insertError } = await supabase
     .from('album_alteracoes')
-    .insert({ ref_evento, paginas_alterar, tipos_alteracao, observacoes })
+    .insert({ ref_evento, paginas_alterar, tipos_alteracao, observacoes, foto_url: foto_url ?? null })
 
   if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 })
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useState, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 
 const TIPOS = [
@@ -18,12 +18,33 @@ function Content() {
   const [paginas, setPaginas] = useState('')
   const [tipos, setTipos] = useState<string[]>([])
   const [observacoes, setObservacoes] = useState('')
+  const [foto, setFoto] = useState<File | null>(null)
+  const [fotoPreview, setFotoPreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   function toggleTipo(t: string) {
     setTipos(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])
+  }
+
+  function handleFotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null
+    setFoto(file)
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = ev => setFotoPreview(ev.target?.result as string)
+      reader.readAsDataURL(file)
+    } else {
+      setFotoPreview(null)
+    }
+  }
+
+  function removeFoto() {
+    setFoto(null)
+    setFotoPreview(null)
+    if (fileRef.current) fileRef.current.value = ''
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -35,10 +56,21 @@ function Content() {
     setError(null)
 
     try {
+      // Upload photo first if provided
+      let foto_url: string | null = null
+      if (foto) {
+        const fd = new FormData()
+        fd.append('file', foto)
+        const upRes = await fetch('/api/upload-image', { method: 'POST', body: fd })
+        const upJson = await upRes.json()
+        if (!upRes.ok) throw new Error(upJson.error ?? 'Erro ao carregar foto')
+        foto_url = upJson.url
+      }
+
       const res = await fetch('/api/album-alteracoes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ref_evento: ref, paginas_alterar: paginas, tipos_alteracao: tipos, observacoes }),
+        body: JSON.stringify({ ref_evento: ref, paginas_alterar: paginas, tipos_alteracao: tipos, observacoes, foto_url }),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error ?? 'Erro desconhecido')
@@ -146,6 +178,51 @@ function Content() {
           />
         </div>
 
+        {/* 4. Foto de referência */}
+        <div className="flex flex-col gap-3">
+          <label className="text-[9px] tracking-[0.4em] text-white/30 uppercase">
+            Foto de Referência <span className="text-white/20">(opcional)</span>
+          </label>
+
+          {fotoPreview ? (
+            <div className="relative">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={fotoPreview}
+                alt="Pré-visualização"
+                className="w-full max-h-60 object-cover border border-white/10"
+              />
+              <button
+                type="button"
+                onClick={removeFoto}
+                className="absolute top-2 right-2 w-7 h-7 bg-black/70 border border-white/20 text-white/60 hover:text-white flex items-center justify-center text-sm transition-colors"
+              >
+                ✕
+              </button>
+              <p className="text-[9px] text-white/25 mt-1.5 truncate">{foto?.name}</p>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="border border-dashed border-white/15 px-4 py-6 text-center hover:border-white/30 transition-colors group"
+            >
+              <p className="text-[10px] tracking-[0.3em] uppercase text-white/25 group-hover:text-white/40 transition-colors">
+                ＋ Adicionar Foto
+              </p>
+              <p className="text-[9px] text-white/15 mt-1">JPG, PNG ou HEIC · máx. 10MB</p>
+            </button>
+          )}
+
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFotoChange}
+            className="hidden"
+          />
+        </div>
+
         {/* Error */}
         {error && (
           <p className="text-[10px] text-red-400/70 tracking-wide text-center">{error}</p>
@@ -157,7 +234,7 @@ function Content() {
           disabled={loading}
           className="border border-white/30 bg-white/[0.04] text-white text-[10px] tracking-[0.4em] uppercase px-6 py-4 hover:bg-white/[0.08] hover:border-white/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {loading ? 'A enviar...' : 'Enviar Pedido de Alteração'}
+          {loading ? (foto && !done ? 'A carregar foto...' : 'A enviar...') : 'Enviar Pedido de Alteração'}
         </button>
 
       </form>

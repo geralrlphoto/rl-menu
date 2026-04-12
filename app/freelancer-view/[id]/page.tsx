@@ -33,7 +33,7 @@ type Edicao     = {
   sala_animacao: number | null; fotos_album: number | null; bolo_bouquet: number | null
   sessao_noivos: number | null; fotos_noiva: number | null; fotos_noivo: number | null
 }
-type Alteracao  = { id: string; ref_evento: string; paginas_alterar: string | null; tipos_alteracao: string[] | null; observacoes: string | null; created_at: string }
+type Alteracao  = { id: string; ref_evento: string; paginas_alterar: string | null; tipos_alteracao: string[] | null; observacoes: string | null; foto_url: string | null; created_at: string }
 type Album      = { id: string; nome: string; status: string; data_casamento: string | null; referencia_album: string | null; data_entrega_fotos?: string | null; alteracao?: Alteracao | null }
 
 const STATUS_EDICAO_STYLE: Record<string, string> = {
@@ -1151,19 +1151,47 @@ export default function FreelancerViewPage() {
                             <div key={a.id} className={`rounded-xl border overflow-hidden ${a.alteracao ? 'border-orange-500/40 bg-orange-500/[0.04]' : 'border-white/[0.06] bg-white/[0.02]'}`}>
                               {/* Alteration banner */}
                               {a.alteracao && (
-                                <div className="px-4 py-2.5 bg-orange-500/10 border-b border-orange-500/30 flex items-start gap-2">
-                                  <span className="text-orange-400 text-xs mt-0.5">✎</span>
-                                  <div className="flex-1 min-w-0">
+                                <div className="bg-orange-500/10 border-b border-orange-500/30">
+                                  {/* Header row */}
+                                  <div className="px-4 pt-3 pb-2 flex items-center gap-2">
+                                    <span className="text-orange-400 text-xs">✎</span>
                                     <p className="text-[9px] tracking-[0.3em] uppercase font-semibold text-orange-400">Alterações Solicitadas pelo Cliente</p>
-                                    {a.alteracao.tipos_alteracao && a.alteracao.tipos_alteracao.length > 0 && (
-                                      <p className="text-[9px] text-orange-300/70 mt-0.5">{a.alteracao.tipos_alteracao.join(' · ')}</p>
+                                  </div>
+                                  {/* Details */}
+                                  <div className="px-4 pb-3 flex gap-3">
+                                    {/* Photo thumbnail */}
+                                    {a.alteracao.foto_url && (
+                                      <a href={a.alteracao.foto_url} target="_blank" rel="noreferrer" className="flex-shrink-0">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
+                                          src={a.alteracao.foto_url}
+                                          alt="Referência do cliente"
+                                          className="w-20 h-20 object-cover border border-orange-500/30 hover:border-orange-400/60 transition-colors"
+                                        />
+                                        <p className="text-[8px] text-orange-300/40 mt-1 text-center tracking-wide">ver foto</p>
+                                      </a>
                                     )}
-                                    {a.alteracao.paginas_alterar && (
-                                      <p className="text-[9px] text-orange-300/50 mt-0.5">Páginas: {a.alteracao.paginas_alterar}</p>
-                                    )}
-                                    {a.alteracao.observacoes && (
-                                      <p className="text-[9px] text-orange-300/50 mt-0.5 truncate max-w-[220px]">"{a.alteracao.observacoes}"</p>
-                                    )}
+                                    {/* Text details */}
+                                    <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                                      {a.alteracao.tipos_alteracao && a.alteracao.tipos_alteracao.length > 0 && (
+                                        <div>
+                                          <p className="text-[8px] text-orange-300/40 tracking-widest uppercase mb-0.5">Tipo</p>
+                                          <p className="text-[9px] text-orange-300/80">{a.alteracao.tipos_alteracao.join(' · ')}</p>
+                                        </div>
+                                      )}
+                                      {a.alteracao.paginas_alterar && (
+                                        <div>
+                                          <p className="text-[8px] text-orange-300/40 tracking-widest uppercase mb-0.5">Páginas</p>
+                                          <p className="text-[9px] text-orange-300/80">{a.alteracao.paginas_alterar}</p>
+                                        </div>
+                                      )}
+                                      {a.alteracao.observacoes && (
+                                        <div>
+                                          <p className="text-[8px] text-orange-300/40 tracking-widest uppercase mb-0.5">Observações</p>
+                                          <p className="text-[9px] text-orange-300/70 leading-relaxed">{a.alteracao.observacoes}</p>
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               )}
