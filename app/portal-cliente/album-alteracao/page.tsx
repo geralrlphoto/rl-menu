@@ -11,6 +11,24 @@ const TIPOS = [
   'Outro',
 ]
 
+function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`border border-white/15 bg-white/[0.03] shadow-[0_0_20px_rgba(255,255,255,0.03)] ${className}`}>
+      {children}
+    </div>
+  )
+}
+
+function SectionLabel({ number, label }: { number: string; label: string }) {
+  return (
+    <div className="flex items-center gap-3 px-5 py-4 border-b border-white/[0.08]">
+      <span className="text-[9px] font-mono text-white/20 tracking-widest">{number}</span>
+      <div className="w-px h-3 bg-white/15" />
+      <span className="text-[9px] tracking-[0.4em] text-white/40 uppercase">{label}</span>
+    </div>
+  )
+}
+
 function Content() {
   const searchParams = useSearchParams()
   const ref = searchParams.get('ref') ?? ''
@@ -56,7 +74,6 @@ function Content() {
     setError(null)
 
     try {
-      // Upload photo first if provided
       let foto_url: string | null = null
       if (foto) {
         const fd = new FormData()
@@ -84,73 +101,78 @@ function Content() {
 
   if (done) {
     return (
-      <main className="min-h-screen bg-black flex flex-col items-center justify-center px-6 text-center gap-6">
-        <div className="w-0.5 h-12 bg-white/20 mb-2" />
+      <main className="min-h-screen bg-black flex flex-col items-center justify-center px-6 text-center gap-5">
+        <div className="w-px h-16 bg-gradient-to-b from-transparent to-white/20" />
         <p className="text-[9px] tracking-[0.5em] text-white/20 uppercase">RL PHOTO.VIDEO</p>
-        <div className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center mx-auto">
-          <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-        <h1 className="text-xl font-light tracking-[0.3em] text-white uppercase">Pedido Enviado</h1>
-        <p className="text-sm text-white/40 max-w-sm leading-relaxed">
-          O seu pedido de alteração foi registado. A nossa equipa irá iniciar as alterações em breve.
-        </p>
-        {ref && <p className="text-[10px] text-white/20 tracking-widest font-mono">{ref}</p>}
-        <div className="w-0.5 h-12 bg-white/20 mt-2" />
+        <Card className="w-full max-w-sm px-8 py-10 flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border border-white/20 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.05)]">
+            <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h1 className="text-lg font-light tracking-[0.3em] text-white uppercase">Pedido Enviado</h1>
+          <p className="text-xs text-white/30 leading-relaxed text-center">
+            O seu pedido foi registado. A nossa equipa irá iniciar as alterações em breve.
+          </p>
+          {ref && <p className="text-[9px] text-white/15 tracking-widest font-mono mt-1">{ref}</p>}
+        </Card>
+        <div className="w-px h-16 bg-gradient-to-b from-white/20 to-transparent" />
       </main>
     )
   }
 
   return (
-    <main className="min-h-screen bg-black flex flex-col items-center px-6 py-16">
+    <main className="min-h-screen bg-black flex flex-col items-center px-5 py-14">
+
       {/* Header */}
-      <div className="flex flex-col items-center text-center gap-4 mb-10">
-        <div className="w-0.5 h-10 bg-white/20" />
+      <div className="w-full max-w-md flex flex-col items-center text-center gap-3 mb-10">
+        <div className="w-px h-10 bg-gradient-to-b from-transparent to-white/20" />
         <p className="text-[9px] tracking-[0.5em] text-white/20 uppercase">RL PHOTO.VIDEO</p>
         <h1 className="text-2xl font-light tracking-[0.3em] text-white uppercase">Fazer Alteração</h1>
-        <p className="text-xs text-white/30 max-w-xs leading-relaxed">
-          Descreva as alterações que pretende realizar ao seu álbum.
+        <p className="text-[10px] text-white/25 tracking-wider">
+          Descreva as alterações ao seu álbum
         </p>
-        {ref && <p className="text-[10px] text-white/20 tracking-widest font-mono">{ref}</p>}
+        {ref && (
+          <span className="text-[9px] text-white/15 font-mono tracking-widest border border-white/[0.08] px-3 py-1">
+            {ref}
+          </span>
+        )}
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="w-full max-w-md flex flex-col gap-8">
+      <form onSubmit={handleSubmit} className="w-full max-w-md flex flex-col gap-4">
 
-        {/* 1. Páginas */}
-        <div className="flex flex-col gap-3">
-          <label className="text-[9px] tracking-[0.4em] text-white/30 uppercase">
-            Páginas a Alterar
-          </label>
-          <input
-            type="text"
-            value={paginas}
-            onChange={e => setPaginas(e.target.value)}
-            placeholder="ex: páginas 3, 7, 12–15"
-            className="bg-transparent border border-white/10 rounded-none px-4 py-3 text-sm text-white/70 placeholder:text-white/20 focus:outline-none focus:border-white/30 transition-colors"
-          />
-        </div>
+        {/* Card 1 — Páginas */}
+        <Card>
+          <SectionLabel number="01" label="Páginas a Alterar" />
+          <div className="px-5 py-4">
+            <input
+              type="text"
+              value={paginas}
+              onChange={e => setPaginas(e.target.value)}
+              placeholder="ex: páginas 3, 7, 12–15"
+              className="w-full bg-transparent text-sm text-white/70 placeholder:text-white/20 focus:outline-none border-b border-white/10 focus:border-white/25 pb-2 transition-colors"
+            />
+          </div>
+        </Card>
 
-        {/* 2. Tipo de alteração */}
-        <div className="flex flex-col gap-3">
-          <label className="text-[9px] tracking-[0.4em] text-white/30 uppercase">
-            Tipo de Alteração <span className="text-white/20">(selecione todos os que se aplicam)</span>
-          </label>
-          <div className="flex flex-col gap-2">
+        {/* Card 2 — Tipo */}
+        <Card>
+          <SectionLabel number="02" label="Tipo de Alteração" />
+          <div className="px-5 py-4 flex flex-col gap-2">
             {TIPOS.map(t => (
               <button
                 key={t}
                 type="button"
                 onClick={() => toggleTipo(t)}
-                className={`flex items-center gap-3 px-4 py-3 border text-left transition-all ${
+                className={`flex items-center gap-3 px-4 py-3 border transition-all text-left ${
                   tipos.includes(t)
-                    ? 'border-white/40 bg-white/[0.06] text-white'
-                    : 'border-white/[0.08] bg-transparent text-white/35 hover:border-white/20 hover:text-white/50'
+                    ? 'border-white/30 bg-white/[0.06] shadow-[0_0_12px_rgba(255,255,255,0.04)]'
+                    : 'border-white/[0.07] hover:border-white/15'
                 }`}
               >
                 <span className={`w-4 h-4 border flex-shrink-0 flex items-center justify-center transition-all ${
-                  tipos.includes(t) ? 'border-white/50 bg-white/10' : 'border-white/15'
+                  tipos.includes(t) ? 'border-white/40 bg-white/10' : 'border-white/15'
                 }`}>
                   {tipos.includes(t) && (
                     <svg className="w-2.5 h-2.5 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -158,88 +180,83 @@ function Content() {
                     </svg>
                   )}
                 </span>
-                <span className="text-xs tracking-wider">{t}</span>
+                <span className={`text-xs tracking-wide transition-colors ${tipos.includes(t) ? 'text-white/80' : 'text-white/30'}`}>
+                  {t}
+                </span>
               </button>
             ))}
           </div>
-        </div>
+        </Card>
 
-        {/* 3. Observações */}
-        <div className="flex flex-col gap-3">
-          <label className="text-[9px] tracking-[0.4em] text-white/30 uppercase">
-            Observações Adicionais
-          </label>
-          <textarea
-            value={observacoes}
-            onChange={e => setObservacoes(e.target.value)}
-            placeholder="Descreva em detalhe as alterações pretendidas..."
-            rows={5}
-            className="bg-transparent border border-white/10 rounded-none px-4 py-3 text-sm text-white/70 placeholder:text-white/20 focus:outline-none focus:border-white/30 transition-colors resize-none"
-          />
-        </div>
+        {/* Card 3 — Observações */}
+        <Card>
+          <SectionLabel number="03" label="Observações Adicionais" />
+          <div className="px-5 py-4">
+            <textarea
+              value={observacoes}
+              onChange={e => setObservacoes(e.target.value)}
+              placeholder="Descreva em detalhe as alterações pretendidas..."
+              rows={4}
+              className="w-full bg-transparent text-sm text-white/70 placeholder:text-white/20 focus:outline-none resize-none leading-relaxed"
+            />
+          </div>
+        </Card>
 
-        {/* 4. Foto de referência */}
-        <div className="flex flex-col gap-3">
-          <label className="text-[9px] tracking-[0.4em] text-white/30 uppercase">
-            Foto de Referência <span className="text-white/20">(opcional)</span>
-          </label>
-
-          {fotoPreview ? (
-            <div className="relative">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={fotoPreview}
-                alt="Pré-visualização"
-                className="w-full max-h-60 object-cover border border-white/10"
-              />
+        {/* Card 4 — Foto */}
+        <Card>
+          <SectionLabel number="04" label="Foto de Referência · Opcional" />
+          <div className="px-5 py-4">
+            {fotoPreview ? (
+              <div className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={fotoPreview}
+                  alt="Pré-visualização"
+                  className="w-full max-h-56 object-cover border border-white/10"
+                />
+                <button
+                  type="button"
+                  onClick={removeFoto}
+                  className="absolute top-2 right-2 w-7 h-7 bg-black/80 border border-white/20 text-white/50 hover:text-white/80 flex items-center justify-center text-xs transition-colors"
+                >
+                  ✕
+                </button>
+                <p className="text-[9px] text-white/20 mt-2 truncate font-mono">{foto?.name}</p>
+              </div>
+            ) : (
               <button
                 type="button"
-                onClick={removeFoto}
-                className="absolute top-2 right-2 w-7 h-7 bg-black/70 border border-white/20 text-white/60 hover:text-white flex items-center justify-center text-sm transition-colors"
+                onClick={() => fileRef.current?.click()}
+                className="w-full border border-dashed border-white/10 py-8 flex flex-col items-center gap-2 hover:border-white/25 hover:bg-white/[0.02] transition-all group"
               >
-                ✕
+                <svg className="w-5 h-5 text-white/20 group-hover:text-white/35 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <p className="text-[9px] tracking-[0.35em] uppercase text-white/25 group-hover:text-white/40 transition-colors">Adicionar Foto</p>
+                <p className="text-[8px] text-white/15">JPG, PNG ou HEIC · máx. 10MB</p>
               </button>
-              <p className="text-[9px] text-white/25 mt-1.5 truncate">{foto?.name}</p>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              className="border border-dashed border-white/15 px-4 py-6 text-center hover:border-white/30 transition-colors group"
-            >
-              <p className="text-[10px] tracking-[0.3em] uppercase text-white/25 group-hover:text-white/40 transition-colors">
-                ＋ Adicionar Foto
-              </p>
-              <p className="text-[9px] text-white/15 mt-1">JPG, PNG ou HEIC · máx. 10MB</p>
-            </button>
-          )}
-
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFotoChange}
-            className="hidden"
-          />
-        </div>
+            )}
+            <input ref={fileRef} type="file" accept="image/*" onChange={handleFotoChange} className="hidden" />
+          </div>
+        </Card>
 
         {/* Error */}
         {error && (
-          <p className="text-[10px] text-red-400/70 tracking-wide text-center">{error}</p>
+          <p className="text-[10px] text-red-400/60 tracking-wide text-center px-2">{error}</p>
         )}
 
         {/* Submit */}
         <button
           type="submit"
           disabled={loading}
-          className="border border-white/30 bg-white/[0.04] text-white text-[10px] tracking-[0.4em] uppercase px-6 py-4 hover:bg-white/[0.08] hover:border-white/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-full border border-white/25 bg-white/[0.04] text-white/80 text-[10px] tracking-[0.4em] uppercase py-4 hover:bg-white/[0.07] hover:border-white/40 hover:text-white hover:shadow-[0_0_20px_rgba(255,255,255,0.05)] transition-all disabled:opacity-30 disabled:cursor-not-allowed mt-1"
         >
-          {loading ? (foto && !done ? 'A carregar foto...' : 'A enviar...') : 'Enviar Pedido de Alteração'}
+          {loading ? 'A enviar...' : 'Enviar Pedido de Alteração'}
         </button>
 
       </form>
 
-      <div className="w-0.5 h-10 bg-white/20 mt-12" />
+      <div className="w-px h-12 bg-gradient-to-b from-white/15 to-transparent mt-12" />
     </main>
   )
 }
