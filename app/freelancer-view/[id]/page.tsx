@@ -404,7 +404,7 @@ function SelecaoModal({ nome, onClose }: { nome: string; onClose: () => void }) 
               <p className="text-sm text-white">{record ? fmtFull(record.data_entrada) : '—'}</p>
             </div>
             <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3">
-              <span className="text-[8px] tracking-[0.3em] text-white uppercase block mb-1">Data de Entrega de Fotos</span>
+              <span className="text-[8px] tracking-[0.3em] text-white uppercase block mb-1">Data Limite p/ Entrega</span>
               <p className="text-sm text-white">{record?.data_entrada ? fmtFull(addDaysStr(record.data_entrada, 35)) : '—'}</p>
             </div>
           </div>
