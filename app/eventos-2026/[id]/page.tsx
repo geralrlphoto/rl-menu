@@ -1347,36 +1347,39 @@ export default function EventoPage() {
       {/* ── Header editável ── */}
       <div className="mt-8 mb-2">
         {/* Dropdown de navegação rápida */}
-        <div className="mb-4 flex items-center gap-2">
-          <select
-            value={navRef}
-            onChange={async e => {
-              const ref = e.target.value
-              if (!ref) return
-              setNavRef(ref)
-              setNavLoading(true)
-              const res = await fetch(`/api/eventos-by-ref?ref=${encodeURIComponent(ref)}`)
-              const data = await res.json()
-              setNavLoading(false)
-              if (data.id) {
-                router.push(`/eventos-2026/${data.id}`)
-              } else {
-                setNavRef('')
-                alert(`Evento ${ref} não encontrado`)
-              }
-            }}
-            className="bg-white/[0.04] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/50 focus:outline-none focus:border-gold/30 transition-colors appearance-none cursor-pointer"
-            style={{ minWidth: 180 }}
-          >
-            <option value="">Navegar para...</option>
-            {Array.from({ length: 150 }, (_, i) => {
-              const n = String(i + 1).padStart(4, '0')
-              return `CAS_${n}_26_RL`
-            }).map(ref => (
-              <option key={ref} value={ref}>{ref}</option>
-            ))}
-          </select>
-          {navLoading && <span className="text-xs text-white/30 animate-pulse">A carregar...</span>}
+        <div className="mb-4 flex flex-col gap-1.5">
+          <label className="text-[9px] tracking-[0.35em] uppercase text-gold/50">Atribuir Referência</label>
+          <div className="flex items-center gap-2">
+            <select
+              value={navRef}
+              onChange={async e => {
+                const ref = e.target.value
+                if (!ref) return
+                setNavRef(ref)
+                setNavLoading(true)
+                const res = await fetch(`/api/eventos-by-ref?ref=${encodeURIComponent(ref)}`)
+                const data = await res.json()
+                setNavLoading(false)
+                if (data.id) {
+                  router.push(`/eventos-2026/${data.id}`)
+                } else {
+                  setNavRef('')
+                  alert(`Evento ${ref} não encontrado`)
+                }
+              }}
+              className="border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-gold/30 transition-colors cursor-pointer"
+              style={{ minWidth: 200, background: '#1a1610', color: 'rgba(255,255,255,0.5)' }}
+            >
+              <option value="" style={{ background: '#1a1610' }}>Selecionar referência...</option>
+              {Array.from({ length: 150 }, (_, i) => {
+                const n = String(i + 1).padStart(3, '0')
+                return `CAS_${n}_26_RL`
+              }).map(ref => (
+                <option key={ref} value={ref} style={{ background: '#1a1610', color: 'rgba(255,255,255,0.7)' }}>{ref}</option>
+              ))}
+            </select>
+            {navLoading && <span className="text-xs text-white/30 animate-pulse">A carregar...</span>}
+          </div>
         </div>
 
         <div className="flex items-start justify-between gap-4 flex-wrap">
