@@ -923,6 +923,7 @@ function PortalSection({ evento }: { evento: Evento }) {
   const [editingPw, setEditingPw] = useState(false)
   const [pwForm, setPwForm] = useState({ date: '', time: '', local: '' })
   const [savingPw, setSavingPw] = useState(false)
+  const [portalPassword, setPortalPassword] = useState<string | null>(null)
 
   useEffect(() => {
     fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`)
@@ -932,6 +933,11 @@ function PortalSection({ evento }: { evento: Evento }) {
         setStatus('found')
         const ps = d.portal.settings ?? {}
         setPortalSettings(ps)
+        // Carregar password admin
+        fetch(`/api/portais-password?ref=${encodeURIComponent(referencia)}`)
+          .then(r => r.json())
+          .then(p => { if (p.password) setPortalPassword(p.password) })
+          .catch(() => {})
         const slots: any[] = ps.preWeddingSlots ?? []
         const reservedId: string | null = ps.preWeddingReservedSlotId ?? null
         const slot = reservedId ? slots.find((s: any) => s.id === reservedId) : null
@@ -1118,6 +1124,12 @@ function PortalSection({ evento }: { evento: Evento }) {
               Editar como Admin ↗
             </button>
           </div>
+          {portalPassword && (
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-[9px] tracking-[0.3em] text-white/25 uppercase">Password</span>
+              <span className="text-xs font-mono text-gold/70 bg-white/[0.03] border border-white/10 rounded px-2 py-0.5">{portalPassword}</span>
+            </div>
+          )}
         </div>
       )}
       {status === 'not_found' && (
