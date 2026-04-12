@@ -107,15 +107,17 @@ export async function PATCH(req: NextRequest) {
     }
   }
 
-  // ── Sync videografo change on all existing casamentos for this event ────────
-  if (videografo !== undefined && JSON.stringify(newVideo) !== JSON.stringify(oldVideo)) {
+  // ── Sync videografo on all existing casamentos + ensure videografo has own record ──
+  if (videografo !== undefined) {
+    const videoChanged = JSON.stringify(newVideo) !== JSON.stringify(oldVideo)
+
     // Update videografo field on all existing photographer casamentos for this event
     await supabase.from('freelancer_casamentos')
       .update({ videografo: newVideo[0] ?? null })
       .eq('evento_id', evento_id)
 
-    // Remove old videografo's own casamento record
-    if (oldVideo[0]) {
+    // If videografo changed, remove old videografo's own casamento record
+    if (videoChanged && oldVideo[0]) {
       const { data: oldVfl } = await supabase
         .from('freelancers').select('id').ilike('nome', oldVideo[0]).maybeSingle()
       if (oldVfl) {
@@ -124,7 +126,7 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
-    // Create new videografo's own casamento record so it appears in their portal
+    // Ensure current videografo has their own casamento record (create if missing)
     if (newVideo[0]) {
       const { data: newVfl } = await supabase
         .from('freelancers').select('id').ilike('nome', newVideo[0]).maybeSingle()
