@@ -765,7 +765,7 @@ export default function FreelancerViewPage() {
                             </div>
                             <div className="flex items-center gap-2 flex-wrap">
                               {days !== null && (
-                                <span className={`text-[10px] px-2.5 py-1 rounded-full border tracking-widest font-medium ${days <= 7 ? 'bg-red-500/15 text-red-400 border-red-500/30' : days <= 30 ? 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30' : 'bg-white/5 text-white/30 border-white/10'}`}>
+                                <span className={`text-[10px] px-2.5 py-1 rounded-full border tracking-widest font-medium ${days <= 7 ? 'bg-red-500/15 text-red-400 border-red-500/30' : days <= 30 ? 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30' : 'bg-gold/10 text-gold border-gold/25'}`}>
                                   {days === 0 ? 'HOJE' : `${days}d`}
                                 </span>
                               )}
