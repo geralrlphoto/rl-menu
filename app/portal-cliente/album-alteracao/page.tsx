@@ -13,7 +13,7 @@ const TIPOS = [
 
 function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`border border-white/15 bg-white/[0.03] ${className}`}>
+    <div className={`border border-white/20 bg-white/[0.03] shadow-[0_0_18px_rgba(255,255,255,0.06),inset_0_0_18px_rgba(255,255,255,0.02)] ${className}`}>
       {children}
     </div>
   )
@@ -151,7 +151,7 @@ function Content() {
               value={paginas}
               onChange={e => setPaginas(e.target.value)}
               placeholder="ex: páginas 3, 7, 12–15"
-              className="w-full bg-transparent text-sm text-white placeholder:text-white/25 focus:outline-none border-b border-white/15 focus:border-white/40 pb-2 transition-colors"
+              className="w-full bg-transparent text-[16px] text-white placeholder:text-white/25 focus:outline-none border-b border-white/15 focus:border-white/40 pb-2 transition-colors"
             />
           </div>
         </Card>
@@ -180,7 +180,7 @@ function Content() {
                     </svg>
                   )}
                 </span>
-                <span className={`text-xs tracking-wide transition-colors ${tipos.includes(t) ? 'text-white' : 'text-white/50'}`}>
+                <span className={`text-[16px] tracking-wide transition-colors ${tipos.includes(t) ? 'text-white' : 'text-white/50'}`}>
                   {t}
                 </span>
               </button>
@@ -197,7 +197,7 @@ function Content() {
               onChange={e => setObservacoes(e.target.value)}
               placeholder="Descreva em detalhe as alterações pretendidas..."
               rows={4}
-              className="w-full bg-transparent text-sm text-white placeholder:text-white/25 focus:outline-none resize-none leading-relaxed"
+              className="w-full bg-transparent text-[16px] text-white placeholder:text-white/25 focus:outline-none resize-none leading-relaxed"
             />
           </div>
         </Card>
