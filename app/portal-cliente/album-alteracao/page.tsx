@@ -13,7 +13,7 @@ const TIPOS = [
 
 function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`border border-white/20 bg-white/[0.03] shadow-[0_0_18px_rgba(255,255,255,0.06),inset_0_0_18px_rgba(255,255,255,0.02)] ${className}`}>
+    <div className={`border border-white/30 bg-white/[0.03] shadow-[0_0_25px_rgba(255,255,255,0.12),0_0_8px_rgba(255,255,255,0.08)] ${className}`}>
       {children}
     </div>
   )
