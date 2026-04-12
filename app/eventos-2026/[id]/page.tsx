@@ -923,7 +923,9 @@ function PortalSection({ evento }: { evento: Evento }) {
   const [editingPw, setEditingPw] = useState(false)
   const [pwForm, setPwForm] = useState({ date: '', time: '', local: '' })
   const [savingPw, setSavingPw] = useState(false)
-  const [portalPassword, setPortalPassword] = useState<string | null>(null)
+  const [portalPassword, setPortalPassword] = useState<string>('')
+  const [savingPassword, setSavingPassword] = useState(false)
+  const [passwordSaved, setPasswordSaved] = useState(false)
 
   useEffect(() => {
     fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`)
@@ -938,6 +940,7 @@ function PortalSection({ evento }: { evento: Evento }) {
           .then(r => r.json())
           .then(p => { if (p.password) setPortalPassword(p.password) })
           .catch(() => {})
+
         const slots: any[] = ps.preWeddingSlots ?? []
         const reservedId: string | null = ps.preWeddingReservedSlotId ?? null
         const slot = reservedId ? slots.find((s: any) => s.id === reservedId) : null
@@ -1124,12 +1127,33 @@ function PortalSection({ evento }: { evento: Evento }) {
               Editar como Admin ↗
             </button>
           </div>
-          {portalPassword && (
-            <div className="flex items-center gap-2 mt-2">
-              <span className="text-[9px] tracking-[0.3em] text-white/25 uppercase">Password</span>
-              <span className="text-xs font-mono text-gold/70 bg-white/[0.03] border border-white/10 rounded px-2 py-0.5">{portalPassword}</span>
-            </div>
-          )}
+          <div className="flex items-center gap-2 mt-3">
+            <span className="text-[9px] tracking-[0.3em] text-white/25 uppercase shrink-0">Password</span>
+            <input
+              type="text"
+              value={portalPassword}
+              onChange={e => { setPortalPassword(e.target.value); setPasswordSaved(false) }}
+              placeholder="Definir password..."
+              className="bg-white/[0.03] border border-white/10 rounded-lg px-3 py-1.5 text-xs font-mono text-gold/70 placeholder-white/20 focus:outline-none focus:border-gold/30 transition-colors w-40"
+            />
+            <button
+              onClick={async () => {
+                setSavingPassword(true)
+                await fetch('/api/portais', {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ referencia, updates: { settings: { portalPassword: portalPassword.trim() || null } } }),
+                })
+                setSavingPassword(false)
+                setPasswordSaved(true)
+                setTimeout(() => setPasswordSaved(false), 2000)
+              }}
+              disabled={savingPassword}
+              className="px-3 py-1.5 rounded-lg border border-white/10 text-xs text-white/40 hover:text-white/70 hover:border-white/25 transition-all disabled:opacity-40"
+            >
+              {savingPassword ? '...' : passwordSaved ? '✓' : 'Guardar'}
+            </button>
+          </div>
         </div>
       )}
       {status === 'not_found' && (
