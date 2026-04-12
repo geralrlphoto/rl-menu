@@ -72,17 +72,39 @@ export async function GET() {
   }
 }
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
+    const body = await req.json().catch(() => ({}))
+    const { nome, ref_evento, check_existing } = body
+
+    // If check_existing, query Notion first to avoid duplicates
+    if (check_existing && ref_evento) {
+      const checkRes = await fetch(`https://api.notion.com/v1/databases/${DB_ID}/query`, {
+        method: 'POST',
+        headers: HEADERS,
+        body: JSON.stringify({
+          filter: { property: 'REF. EVENTO', rich_text: { equals: ref_evento } },
+          page_size: 1,
+        }),
+        cache: 'no-store',
+      })
+      const checkData = await checkRes.json()
+      if (checkData.results?.length > 0) {
+        return NextResponse.json({ row: parseRow(checkData.results[0]), already_exists: true })
+      }
+    }
+
+    const properties: any = {
+      Nome: { title: [{ text: { content: nome || 'Novo Álbum' } }] },
+    }
+    if (ref_evento) {
+      properties['REF. EVENTO'] = { rich_text: [{ text: { content: ref_evento } }] }
+    }
+
     const res = await fetch('https://api.notion.com/v1/pages', {
       method: 'POST',
       headers: HEADERS,
-      body: JSON.stringify({
-        parent: { database_id: DB_ID },
-        properties: {
-          Nome: { title: [{ text: { content: 'Novo Álbum' } }] },
-        },
-      }),
+      body: JSON.stringify({ parent: { database_id: DB_ID }, properties }),
     })
     if (!res.ok) {
       const err = await res.json()

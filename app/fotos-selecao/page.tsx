@@ -223,11 +223,27 @@ function FichaModal({ row, onClose, onSaved }: {
   async function handleEditorAlbumChange(name: string) {
     const next = name || null
     setEditorAlbumSaving(true)
+
+    // 1. Save editor_album assignment
     await fetch('/api/fotos-selecao-editor', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ notion_page_id: row.id, editor_album: next }),
     })
+
+    // 2. If editor selected, create album in Notion (if not already exists)
+    if (next) {
+      await fetch('/api/albuns-casamento', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: row.nome_noivos || 'Sem nome',
+          ref_evento: row.referencia || null,
+          check_existing: true,
+        }),
+      })
+    }
+
     setEditorAlbum(next)
     setEditorAlbumSaving(false)
   }
