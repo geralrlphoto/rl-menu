@@ -892,6 +892,7 @@ function PortalSubPageContent() {
   const isContratoPage    = title.toUpperCase().includes('CONTRATO')
   const isBriefingPage    = title.toUpperCase().includes('BRIEFING')
   const isFotografiasPage = title.toUpperCase().includes('FOTOGRAF')
+  const isFilmePage       = title.toUpperCase().includes('FILME') || title.toUpperCase().includes('NOSSO FILME')
   const isSatisfacaoPage   = title.toUpperCase().includes('SAT.') || title.toUpperCase().includes('SATISF')
   const isCronogramaPage   = title.toUpperCase().includes('CRONOGRAMA')
 
@@ -2238,7 +2239,14 @@ function PortalSubPageContent() {
                               {cardsInBlock.map((callout: Block) => {
                                 const cardTitle = plainText(callout.callout?.rich_text ?? []).trim()
                                 const imgUrl = getImgUrl(callout)
-                                const url = pageCalloutLinks[cardTitle]
+                                const _ct = cardTitle.toUpperCase()
+                                const videoActionFallback = isFilmePage ? (
+                                  _ct.includes('WEDDING FILM') ? (portalSettingsObj?.wedding_film_url ?? '') :
+                                  _ct.includes('PRÉ-WEDDING') || _ct.includes('PRE-WEDDING') ? (portalSettingsObj?.video_prewedding_url ?? '') :
+                                  _ct.includes('SAME DAY') ? (portalSettingsObj?.same_day_edit_url ?? '') :
+                                  _ct.includes('TEASER') || _ct.includes('TRAILER') ? (portalSettingsObj?.teaser_url ?? '') : ''
+                                ) : ''
+                                const url = pageCalloutLinks[cardTitle] || videoActionFallback || ''
                                 return (
                                   <div key={cardTitle} className="flex flex-col rounded-2xl overflow-hidden border border-white/40 bg-black"
                                     style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}>
