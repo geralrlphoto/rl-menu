@@ -42,6 +42,45 @@ const STATUS_ALBUM_STYLE: Record<string, string> = {
   'ENTREGUE':      'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
 }
 
+// ── Album Status Select ───────────────────────────────────────────────────────
+const ALBUM_STATUS_OPTIONS = ['AGUARDAR','EM EDIÇÃO','EM APROVAÇÃO','APROVADO','ENTREGUE']
+const ALBUM_STATUS_SELECT_STYLE: Record<string, string> = {
+  'AGUARDAR':      'bg-white/10 text-white/50 border-white/20',
+  'EM EDIÇÃO':     'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
+  'EM APROVAÇÃO':  'bg-blue-500/15 text-blue-400 border-blue-500/30',
+  'APROVADO':      'bg-purple-500/15 text-purple-400 border-purple-500/30',
+  'ENTREGUE':      'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+}
+function AlbumStatusSelect({ albumId, status, onChanged }: { albumId: string; status: string; onChanged: (s: string) => void }) {
+  const [saving, setSaving] = useState(false)
+  const cls = ALBUM_STATUS_SELECT_STYLE[status] ?? 'bg-white/5 text-white/30 border-white/10'
+
+  async function handleChange(v: string) {
+    setSaving(true)
+    await fetch('/api/freelancer-album', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: albumId, status: v }),
+    })
+    onChanged(v)
+    setSaving(false)
+  }
+
+  return (
+    <select
+      value={status}
+      onChange={e => handleChange(e.target.value)}
+      disabled={saving}
+      className={`text-[9px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium appearance-none cursor-pointer focus:outline-none transition-all disabled:opacity-50 ${cls} [color-scheme:dark]`}
+      style={{ backgroundColor: 'transparent' }}
+    >
+      {ALBUM_STATUS_OPTIONS.map(o => (
+        <option key={o} value={o} style={{ backgroundColor: '#1a1a1a', color: 'white' }}>{o}</option>
+      ))}
+    </select>
+  )
+}
+
 // ── Album Info Modal ──────────────────────────────────────────────────────────
 function albumStatusCfg(s: string | null) {
   switch (s) {
@@ -1059,9 +1098,7 @@ export default function FreelancerViewPage() {
                           className="text-[10px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-xl border border-gold/30 bg-gold/5 text-gold/70 hover:text-gold hover:border-gold/60 hover:bg-gold/10 transition-all">
                           Ver Mais
                         </button>
-                        <span className={`text-[9px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium ${STATUS_ALBUM_STYLE[a.status] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
-                          {a.status}
-                        </span>
+                        <AlbumStatusSelect albumId={a.id} status={a.status} onChanged={s => setAlbum(prev => prev.map(x => x.id === a.id ? { ...x, status: s } : x))} />
                       </div>
                     </div>
                   ))}
