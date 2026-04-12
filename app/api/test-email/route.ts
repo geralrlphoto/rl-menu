@@ -22,6 +22,7 @@ export async function GET() {
   })
 
   const data = await res.json()
-  if (!res.ok) return NextResponse.json({ error: data }, { status: 500 })
+  const keyPreview = process.env.RESEND_API_KEY ? process.env.RESEND_API_KEY.slice(0, 8) + '...' : 'MISSING'
+  if (!res.ok) return NextResponse.json({ error: data, key_preview: keyPreview }, { status: 500 })
   return NextResponse.json({ ok: true, id: data.id })
 }
