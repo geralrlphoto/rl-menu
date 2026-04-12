@@ -33,7 +33,7 @@ type Edicao     = {
   sala_animacao: number | null; fotos_album: number | null; bolo_bouquet: number | null
   sessao_noivos: number | null; fotos_noiva: number | null; fotos_noivo: number | null
 }
-type Album      = { id: string; nome: string; status: string; data_casamento: string | null; referencia_album: string | null }
+type Album      = { id: string; nome: string; status: string; data_casamento: string | null; referencia_album: string | null; data_entrega_fotos?: string | null }
 
 const STATUS_EDICAO_STYLE: Record<string, string> = {
   'NOVO TRABALHO': 'bg-blue-500/15 text-blue-400 border-blue-500/30',
@@ -839,17 +839,27 @@ export default function FreelancerViewPage() {
 
   const loadData = useCallback(async () => {
     setLoading(true)
-    const [fRes, cRes, eRes, aRes] = await Promise.all([
+    const [fRes, cRes, eRes, aRes, alRes] = await Promise.all([
       fetch(`/api/freelancers`).then(r => r.json()),
       fetch(`/api/freelancer-casamentos?freelancer_id=${id}`).then(r => r.json()),
       fetch(`/api/freelancer-edicao?freelancer_id=${id}`).then(r => r.json()),
       fetch(`/api/freelancer-album?freelancer_id=${id}`).then(r => r.json()),
+      fetch(`/api/albuns-casamento`).then(r => r.json()).catch(() => ({ rows: [] })),
     ])
     const f = (fRes.freelancers ?? []).find((x: Freelancer) => x.id === id) ?? null
     setFreelancer(f)
     setCasamentos(cRes.casamentos ?? [])
     setEdicao(eRes.edicao ?? [])
-    setAlbum(aRes.album ?? [])
+    // Enrich album with data_entrega_fotos from albuns_casamento
+    const alRows: any[] = alRes.rows ?? []
+    const enriched = (aRes.album ?? []).map((a: Album) => {
+      const match = alRows.find((r: any) =>
+        (a.referencia_album && r.ref_evento === a.referencia_album) ||
+        r.nome?.toLowerCase().trim() === a.nome?.toLowerCase().trim()
+      )
+      return { ...a, data_entrega_fotos: match?.data_entrega_fotos ?? null }
+    })
+    setAlbum(enriched)
     setLoading(false)
   }, [id])
 
@@ -1105,9 +1115,17 @@ export default function FreelancerViewPage() {
                     <div key={a.id} className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-white/[0.06] bg-white/[0.02]">
                       <div>
                         <p className="text-sm text-white/80">{a.nome}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                           {a.data_casamento && <p className="text-[10px] text-white/30">{fmtDate(a.data_casamento).split(' · ')[0]}</p>}
                           {a.referencia_album && <span className="text-[9px] text-gold/50 font-mono">{a.referencia_album}</span>}
+                        </div>
+                        <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                          {a.data_entrega_fotos && (
+                            <span className="text-[9px] text-white/30">Entrada: {fmtDate(a.data_entrega_fotos).split(' · ')[0]}</span>
+                          )}
+                          {a.data_entrega_fotos && (
+                            <span className="text-[9px] text-white/30">Limite: {fmtDate(addDaysStr(a.data_entrega_fotos, 35)).split(' · ')[0]}</span>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
