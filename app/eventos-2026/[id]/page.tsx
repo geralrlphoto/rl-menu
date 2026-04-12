@@ -1245,12 +1245,21 @@ export default function EventoPage() {
               if (s.prewedding_enviada)   setPreWeddingEnviada(s.prewedding_enviada)
               if (s.fotos_finais_enviada) setFotosFinaisEnviada(s.fotos_finais_enviada)
               if (s.galerias_enviada)     setGaleriasEnviada(s.galerias_enviada)
+              // Auto-populate URLs from portal calloutLinks (FOTOGRAFIAS page cards)
+              const calloutLinks = s.calloutLinks ?? {}
+              let fl: Record<string, string> = {}
+              for (const links of Object.values(calloutLinks)) {
+                const l = links as Record<string, string>
+                if (l['Galeria Fotos p/ Seleção'] || l['Fotos Pré-Wedding'] || l['Fotos Editadas']) {
+                  fl = l; break
+                }
+              }
               setActionUrls({
-                selecao:      s.selecao_url      ?? '',
-                prewedding:   s.prewedding_url   ?? '',
-                fotos_finais: s.fotos_finais_url ?? '',
-                galerias:     s.galerias_url     ?? '',
-                maquete:      s.maquete_url      ?? '',
+                selecao:      s.selecao_url      ?? fl['Galeria Fotos p/ Seleção'] ?? '',
+                prewedding:   s.prewedding_url   ?? fl['Fotos Pré-Wedding']        ?? '',
+                fotos_finais: s.fotos_finais_url ?? fl['Fotos Editadas']            ?? '',
+                galerias:     s.galerias_url     ?? fl['Galeria On-line']           ?? '',
+                maquete:      s.maquete_url      ?? fl['Maquete Album']             ?? '',
               })
             })
             .catch(() => {})
