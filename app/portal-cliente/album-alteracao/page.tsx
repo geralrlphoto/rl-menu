@@ -13,7 +13,7 @@ const TIPOS = [
 
 function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`border border-black/10 bg-white shadow-sm ${className}`}>
+    <div className={`border border-white/15 bg-white/[0.03] ${className}`}>
       {children}
     </div>
   )
@@ -21,10 +21,10 @@ function Card({ children, className = '' }: { children: React.ReactNode; classNa
 
 function SectionLabel({ number, label }: { number: string; label: string }) {
   return (
-    <div className="flex items-center gap-3 px-5 py-4 border-b border-black/[0.07]">
-      <span className="text-[9px] font-mono text-black/25 tracking-widest">{number}</span>
-      <div className="w-px h-3 bg-black/15" />
-      <span className="text-[9px] tracking-[0.4em] text-black/40 uppercase">{label}</span>
+    <div className="flex items-center gap-3 px-5 py-4 border-b border-white/[0.08]">
+      <span className="text-[9px] font-mono text-white/40 tracking-widest">{number}</span>
+      <div className="w-px h-3 bg-white/20" />
+      <span className="text-[9px] tracking-[0.4em] text-white uppercase">{label}</span>
     </div>
   )
 }
@@ -101,39 +101,39 @@ function Content() {
 
   if (done) {
     return (
-      <main className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center gap-5">
-        <div className="w-px h-16 bg-gradient-to-b from-transparent to-black/10" />
-        <p className="text-[9px] tracking-[0.5em] text-black/30 uppercase">RL PHOTO.VIDEO</p>
+      <main className="min-h-screen bg-black flex flex-col items-center justify-center px-6 text-center gap-5">
+        <div className="w-px h-16 bg-gradient-to-b from-transparent to-white/20" />
+        <p className="text-[9px] tracking-[0.5em] text-white/40 uppercase">RL PHOTO.VIDEO</p>
         <Card className="w-full max-w-sm px-8 py-10 flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border border-black/15 flex items-center justify-center">
-            <svg className="w-4 h-4 text-black/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-10 h-10 border border-white/20 flex items-center justify-center">
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h1 className="text-lg font-light tracking-[0.3em] text-black uppercase">Pedido Enviado</h1>
-          <p className="text-xs text-black/40 leading-relaxed text-center">
+          <h1 className="text-lg font-light tracking-[0.3em] text-white uppercase">Pedido Enviado</h1>
+          <p className="text-xs text-white/60 leading-relaxed text-center">
             O seu pedido foi registado. A nossa equipa irá iniciar as alterações em breve.
           </p>
-          {ref && <p className="text-[9px] text-black/20 tracking-widest font-mono mt-1">{ref}</p>}
+          {ref && <p className="text-[9px] text-white/30 tracking-widest font-mono mt-1">{ref}</p>}
         </Card>
-        <div className="w-px h-16 bg-gradient-to-b from-black/10 to-transparent" />
+        <div className="w-px h-16 bg-gradient-to-b from-white/20 to-transparent" />
       </main>
     )
   }
 
   return (
-    <main className="min-h-screen bg-white flex flex-col items-center px-5 py-14">
+    <main className="min-h-screen bg-black flex flex-col items-center px-5 py-14">
 
       {/* Header */}
       <div className="w-full max-w-md flex flex-col items-center text-center gap-3 mb-10">
-        <div className="w-px h-10 bg-gradient-to-b from-transparent to-black/15" />
-        <p className="text-[9px] tracking-[0.5em] text-black/30 uppercase">RL PHOTO.VIDEO</p>
-        <h1 className="text-2xl font-light tracking-[0.3em] text-black uppercase">Fazer Alteração</h1>
-        <p className="text-[10px] text-black/35 tracking-wider">
+        <div className="w-px h-10 bg-gradient-to-b from-transparent to-white/20" />
+        <p className="text-[9px] tracking-[0.5em] text-white/40 uppercase">RL PHOTO.VIDEO</p>
+        <h1 className="text-2xl font-light tracking-[0.3em] text-white uppercase">Fazer Alteração</h1>
+        <p className="text-[10px] text-white/60 tracking-wider">
           Descreva as alterações ao seu álbum
         </p>
         {ref && (
-          <span className="text-[9px] text-black/25 font-mono tracking-widest border border-black/10 px-3 py-1">
+          <span className="text-[9px] text-white/40 font-mono tracking-widest border border-white/15 px-3 py-1">
             {ref}
           </span>
         )}
@@ -151,7 +151,7 @@ function Content() {
               value={paginas}
               onChange={e => setPaginas(e.target.value)}
               placeholder="ex: páginas 3, 7, 12–15"
-              className="w-full bg-transparent text-sm text-black/70 placeholder:text-black/20 focus:outline-none border-b border-black/10 focus:border-black/30 pb-2 transition-colors"
+              className="w-full bg-transparent text-sm text-white placeholder:text-white/25 focus:outline-none border-b border-white/15 focus:border-white/40 pb-2 transition-colors"
             />
           </div>
         </Card>
@@ -167,20 +167,20 @@ function Content() {
                 onClick={() => toggleTipo(t)}
                 className={`flex items-center gap-3 px-4 py-3 border transition-all text-left ${
                   tipos.includes(t)
-                    ? 'border-black/25 bg-black/[0.04]'
-                    : 'border-black/[0.08] hover:border-black/15'
+                    ? 'border-white/35 bg-white/[0.07]'
+                    : 'border-white/[0.08] hover:border-white/20'
                 }`}
               >
                 <span className={`w-4 h-4 border flex-shrink-0 flex items-center justify-center transition-all ${
-                  tipos.includes(t) ? 'border-black/40 bg-black/[0.06]' : 'border-black/15'
+                  tipos.includes(t) ? 'border-white/50 bg-white/10' : 'border-white/20'
                 }`}>
                   {tipos.includes(t) && (
-                    <svg className="w-2.5 h-2.5 text-black/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                     </svg>
                   )}
                 </span>
-                <span className={`text-xs tracking-wide transition-colors ${tipos.includes(t) ? 'text-black/80' : 'text-black/35'}`}>
+                <span className={`text-xs tracking-wide transition-colors ${tipos.includes(t) ? 'text-white' : 'text-white/50'}`}>
                   {t}
                 </span>
               </button>
@@ -197,7 +197,7 @@ function Content() {
               onChange={e => setObservacoes(e.target.value)}
               placeholder="Descreva em detalhe as alterações pretendidas..."
               rows={4}
-              className="w-full bg-transparent text-sm text-black/70 placeholder:text-black/20 focus:outline-none resize-none leading-relaxed"
+              className="w-full bg-transparent text-sm text-white placeholder:text-white/25 focus:outline-none resize-none leading-relaxed"
             />
           </div>
         </Card>
@@ -212,28 +212,28 @@ function Content() {
                 <img
                   src={fotoPreview}
                   alt="Pré-visualização"
-                  className="w-full max-h-56 object-cover border border-black/10"
+                  className="w-full max-h-56 object-cover border border-white/10"
                 />
                 <button
                   type="button"
                   onClick={removeFoto}
-                  className="absolute top-2 right-2 w-7 h-7 bg-white/90 border border-black/15 text-black/50 hover:text-black/80 flex items-center justify-center text-xs transition-colors"
+                  className="absolute top-2 right-2 w-7 h-7 bg-black/80 border border-white/20 text-white/60 hover:text-white flex items-center justify-center text-xs transition-colors"
                 >
                   ✕
                 </button>
-                <p className="text-[9px] text-black/25 mt-2 truncate font-mono">{foto?.name}</p>
+                <p className="text-[9px] text-white/30 mt-2 truncate font-mono">{foto?.name}</p>
               </div>
             ) : (
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
-                className="w-full border border-dashed border-black/12 py-8 flex flex-col items-center gap-2 hover:border-black/25 hover:bg-black/[0.02] transition-all group"
+                className="w-full border border-dashed border-white/15 py-8 flex flex-col items-center gap-2 hover:border-white/30 hover:bg-white/[0.02] transition-all group"
               >
-                <svg className="w-5 h-5 text-black/20 group-hover:text-black/35 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-white/30 group-hover:text-white/50 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <p className="text-[9px] tracking-[0.35em] uppercase text-black/25 group-hover:text-black/40 transition-colors">Adicionar Foto</p>
-                <p className="text-[8px] text-black/18">JPG, PNG ou HEIC · máx. 10MB</p>
+                <p className="text-[9px] tracking-[0.35em] uppercase text-white/40 group-hover:text-white/60 transition-colors">Adicionar Foto</p>
+                <p className="text-[8px] text-white/25">JPG, PNG ou HEIC · máx. 10MB</p>
               </button>
             )}
             <input ref={fileRef} type="file" accept="image/*" onChange={handleFotoChange} className="hidden" />
@@ -242,21 +242,21 @@ function Content() {
 
         {/* Error */}
         {error && (
-          <p className="text-[10px] text-red-500/70 tracking-wide text-center px-2">{error}</p>
+          <p className="text-[10px] text-red-400/70 tracking-wide text-center px-2">{error}</p>
         )}
 
         {/* Submit */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full border border-black/20 bg-black text-white text-[10px] tracking-[0.4em] uppercase py-4 hover:bg-black/80 transition-all disabled:opacity-30 disabled:cursor-not-allowed mt-1"
+          className="w-full border border-white/25 bg-white/[0.05] text-white text-[10px] tracking-[0.4em] uppercase py-4 hover:bg-white/[0.10] hover:border-white/40 transition-all disabled:opacity-30 disabled:cursor-not-allowed mt-1"
         >
           {loading ? 'A enviar...' : 'Enviar Pedido de Alteração'}
         </button>
 
       </form>
 
-      <div className="w-px h-12 bg-gradient-to-b from-black/10 to-transparent mt-12" />
+      <div className="w-px h-12 bg-gradient-to-b from-white/15 to-transparent mt-12" />
     </main>
   )
 }
