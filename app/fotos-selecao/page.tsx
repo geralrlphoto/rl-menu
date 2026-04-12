@@ -446,13 +446,14 @@ const STATUS_EDICAO_STYLE: Record<string, string> = {
 }
 
 // ── Card individual ───────────────────────────────────────────────────────────
-function SelecaoCard({ row, onOpen, onDelete, confirmDelete, setConfirmDelete, editor, edicaoStatus }: {
+function SelecaoCard({ row, onOpen, onDelete, confirmDelete, setConfirmDelete, editor, editorAlbum, edicaoStatus }: {
   row: FotoSelecao
   onOpen: () => void
   onDelete: () => void
   confirmDelete: boolean
   setConfirmDelete: (v: boolean) => void
   editor?: string | null
+  editorAlbum?: string | null
   edicaoStatus?: string | null
 }) {
   return (
@@ -480,6 +481,12 @@ function SelecaoCard({ row, onOpen, onDelete, confirmDelete, setConfirmDelete, e
             {editor && (
               <span className="text-[9px] px-2 py-0.5 rounded-full border border-white/10 bg-white/[0.03] text-white/40 tracking-wide">
                 ✎ {editor}
+              </span>
+            )}
+            {/* Editor Álbum badge */}
+            {editorAlbum && (
+              <span className="text-[9px] px-2 py-0.5 rounded-full border border-gold/20 bg-gold/[0.04] text-gold/50 tracking-wide">
+                ◈ {editorAlbum}
               </span>
             )}
             {/* Estado edição badge */}
@@ -534,17 +541,23 @@ function FotosSelecaoPageInner() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [fichaOpen, setFichaOpen]   = useState<FotoSelecao | null>(null)
   // editor + estado por notion_page_id
-  const [editorMap, setEditorMap]   = useState<Record<string, string>>({})
-  const [statusMap, setStatusMap]   = useState<Record<string, string>>({})
+  const [editorMap, setEditorMap]         = useState<Record<string, string>>({})
+  const [editorAlbumMap, setEditorAlbumMap] = useState<Record<string, string>>({})
+  const [statusMap, setStatusMap]         = useState<Record<string, string>>({})
 
   const loadEditorStatuses = useCallback(async (loadedRows: FotoSelecao[]) => {
     try {
-      // 1. Todos os assignments de editor
+      // 1. Todos os assignments de editor e editor_album
       const { editors } = await fetch('/api/fotos-selecao-editor').then(r => r.json())
-      const assignments: { notion_page_id: string; editor: string }[] = editors ?? []
+      const assignments: { notion_page_id: string; editor: string; editor_album: string }[] = editors ?? []
       const newEditorMap: Record<string, string> = {}
-      for (const a of assignments) { if (a.editor) newEditorMap[a.notion_page_id] = a.editor }
+      const newEditorAlbumMap: Record<string, string> = {}
+      for (const a of assignments) {
+        if (a.editor)       newEditorMap[a.notion_page_id]      = a.editor
+        if (a.editor_album) newEditorAlbumMap[a.notion_page_id] = a.editor_album
+      }
       setEditorMap(newEditorMap)
+      setEditorAlbumMap(newEditorAlbumMap)
 
       // 2. Freelancers + edicao para os editores atribuídos
       const uniqueEditors = [...new Set(Object.values(newEditorMap))]
@@ -686,6 +699,7 @@ function FotosSelecaoPageInner() {
                 key={row.id}
                 row={row}
                 editor={editorMap[row.id]}
+                editorAlbum={editorAlbumMap[row.id]}
                 edicaoStatus={statusMap[row.id]}
                 onOpen={() => setFichaOpen(row)}
                 onDelete={() => deleteRow(row.id)}
