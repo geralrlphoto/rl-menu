@@ -1147,6 +1147,7 @@ export default function EventoPage() {
   const [maqueteEnviada, setMaqueteEnviada] = useState<string | null>(null)
   const [selecaoEnviada, setSelecaoEnviada] = useState<string | null>(null)
   const [preWeddingEnviada, setPreWeddingEnviada] = useState<string | null>(null)
+  const [fotosFinaisEnviada, setFotosFinaisEnviada] = useState<string | null>(null)
 
   function loadPagamentos(ref: string, showRefresh = false) {
     if (showRefresh) setPagamentosRefreshing(true)
@@ -1235,9 +1236,10 @@ export default function EventoPage() {
               const s = p?.portal?.settings ?? p?.settings ?? {}
               if (s.selecao_fotos_noivos_estado) setPortalSelecaoEstado(s.selecao_fotos_noivos_estado)
               if (s.prazo_fotos_noivos_estado)   setPrazoFotosNoivosEstado(s.prazo_fotos_noivos_estado)
-              if (s.maquete_enviada)    setMaqueteEnviada(s.maquete_enviada)
-              if (s.selecao_enviada)    setSelecaoEnviada(s.selecao_enviada)
-              if (s.prewedding_enviada) setPreWeddingEnviada(s.prewedding_enviada)
+              if (s.maquete_enviada)      setMaqueteEnviada(s.maquete_enviada)
+              if (s.selecao_enviada)      setSelecaoEnviada(s.selecao_enviada)
+              if (s.prewedding_enviada)   setPreWeddingEnviada(s.prewedding_enviada)
+              if (s.fotos_finais_enviada) setFotosFinaisEnviada(s.fotos_finais_enviada)
             })
             .catch(() => {})
         }
@@ -1647,9 +1649,10 @@ export default function EventoPage() {
         <Section title="Ações">
           <div className="flex flex-col gap-4">
             {[
-              { label: 'Fotos p/ Seleção',  state: selecaoEnviada,    setState: setSelecaoEnviada,    key: 'selecao_enviada',    api: '/api/send-selecao-email' },
-              { label: 'Fotos Pré-Wedding', state: preWeddingEnviada, setState: setPreWeddingEnviada, key: 'prewedding_enviada', api: '/api/send-prewedding-email' },
-              { label: 'Enviar Maquete',    state: maqueteEnviada,    setState: setMaqueteEnviada,    key: 'maquete_enviada',    api: '/api/send-maquete-email' },
+              { label: 'Fotos p/ Seleção',  state: selecaoEnviada,      setState: setSelecaoEnviada,      key: 'selecao_enviada',      api: '/api/send-selecao-email' },
+              { label: 'Fotos Pré-Wedding', state: preWeddingEnviada,   setState: setPreWeddingEnviada,   key: 'prewedding_enviada',   api: '/api/send-prewedding-email' },
+              { label: 'Fotos Finais',      state: fotosFinaisEnviada,  setState: setFotosFinaisEnviada,  key: 'fotos_finais_enviada', api: '/api/send-fotos-finais-email' },
+              { label: 'Enviar Maquete',    state: maqueteEnviada,      setState: setMaqueteEnviada,      key: 'maquete_enviada',      api: '/api/send-maquete-email' },
             ].map(({ label, state, setState, key, api }, i, arr) => (
               <div key={key}>
                 <div className="flex items-center justify-between gap-4">
