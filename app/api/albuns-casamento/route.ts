@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
       .maybeSingle()
     if (existing) {
       const updateFields: Record<string, any> = {}
+      if (nome) updateFields.nome = nome
       if (num_fotografias) updateFields.num_fotografias = num_fotografias
       if (data_entrega_fotos) updateFields.data_entrega_fotos = data_entrega_fotos
       if (Object.keys(updateFields).length > 0) {

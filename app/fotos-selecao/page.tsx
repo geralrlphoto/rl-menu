@@ -589,7 +589,32 @@ function FotosSelecaoPageInner() {
   useEffect(() => { loadRows() }, [loadRows])
 
   function handleSaved(rowId: string, field: string, val: any) {
-    setRows(prev => prev.map(r => r.id === rowId ? { ...r, [field]: val } : r))
+    setRows(prev => {
+      const updated = prev.map(r => r.id === rowId ? { ...r, [field]: val } : r)
+      // Sync to albuns_casamento for relevant fields
+      const row = updated.find(r => r.id === rowId)
+      if (row && row.referencia) {
+        const syncFields: Record<string, string> = {
+          fotos_album:  'num_fotografias',
+          data_entrada: 'data_entrega_fotos',
+          nome_noivos:  'nome',
+        }
+        if (syncFields[field]) {
+          const body: any = { ref_evento: row.referencia, check_existing: true }
+          body[syncFields[field]] = val || null
+          // Also always keep num_fotografias and data_entrega_fotos in sync
+          if (field !== 'fotos_album')    body.num_fotografias   = row.fotos_album   || null
+          if (field !== 'data_entrada')   body.data_entrega_fotos= row.data_entrada  || null
+          if (field !== 'nome_noivos')    body.nome              = row.nome_noivos   || 'Sem nome'
+          fetch('/api/albuns-casamento', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          }).catch(() => {})
+        }
+      }
+      return updated
+    })
     setFichaOpen(prev => prev?.id === rowId ? { ...prev, [field]: val } : prev)
   }
 
