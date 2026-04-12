@@ -53,10 +53,13 @@ export async function POST(req: NextRequest) {
               </div>
 
               <p style="margin:0 0 14px;font-size:15px;color:#d4c9b0;line-height:1.7;text-align:center;">
-                A vossa <strong style="color:#ffffff;">sessão pré-wedding</strong> já está editada<br>e disponível para visualizar.
+                O <strong style="color:#ffffff;">vídeo da vossa sessão pré-wedding</strong><br>já está editado e pronto a ver.
+              </p>
+              <p style="margin:0 0 14px;font-size:15px;color:#d4c9b0;line-height:1.7;text-align:center;">
+                Ponham o som alto e <strong style="color:#ffffff;">aproveitem</strong>.
               </p>
               <p style="margin:0 0 36px;font-size:15px;color:#d4c9b0;line-height:1.7;text-align:center;">
-                Acedam ao vosso <strong style="color:#ffffff;">Portal dos Noivos</strong><br>para verem o resultado.
+                Acedam ao vosso <strong style="color:#ffffff;">Portal dos Noivos</strong>.
               </p>
 
               <table cellpadding="0" cellspacing="0" style="margin:0 auto 48px;border:1px solid #7a6340;width:100%;max-width:380px;">
