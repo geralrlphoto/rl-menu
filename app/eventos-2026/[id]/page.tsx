@@ -1647,8 +1647,10 @@ export default function EventoPage() {
           </div>
         </Section>
 
-        {/* ── Ações Admin ── */}
-        <Section title="Ações">
+        {/* ── Ações Fotografia ── */}
+        <div className="rounded-2xl p-6 flex flex-col gap-4"
+          style={{ background: 'rgba(56,130,246,0.04)', border: '1px solid rgba(56,130,246,0.18)', boxShadow: '0 0 24px rgba(56,130,246,0.08), 0 0 6px rgba(56,130,246,0.06)' }}>
+          <h2 className="text-[10px] tracking-[0.35em] uppercase" style={{ color: 'rgba(99,165,255,0.8)' }}>Ações Fotografia</h2>
           <div className="flex flex-col gap-4">
             {[
               { label: 'Fotos p/ Seleção',  state: selecaoEnviada,      setState: setSelecaoEnviada,      key: 'selecao_enviada',      api: '/api/send-selecao-email' },
@@ -1700,7 +1702,7 @@ export default function EventoPage() {
               </div>
             ))}
           </div>
-        </Section>
+        </div>
 
         {/* ── Dados dos Noivos ── */}
         <Section title="Dados dos Noivos">
