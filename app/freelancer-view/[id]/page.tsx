@@ -178,24 +178,25 @@ function AlbumInfoModal({ refEvento, nome, dataCasamento, onClose }: { refEvento
 
         {/* Corpo */}
         <div className="px-8 py-6 flex flex-col gap-6 max-h-[60vh] overflow-y-auto">
+
+          {/* Nome dos Noivos — always visible */}
+          <div className="bg-gold/5 border border-gold/20 rounded-2xl p-4">
+            <span className="text-[9px] tracking-[0.4em] text-gold/40 uppercase block mb-1.5">Nome dos Noivos</span>
+            <span className="text-sm text-white/80">{data?.nome || nome || '—'}</span>
+          </div>
+
+          {/* Datas principais — always visible */}
+          <div className="grid grid-cols-3 gap-3">
+            <DateBox label="Data do Evento"         value={dataCasamento} />
+            <DateBox label="Data de Entrada"        value={data?.data_entrega_fotos ?? null} />
+            <DateBox label="Data Limite p/ Entrega" value={data?.data_entrega_fotos ? addDaysStr(data.data_entrega_fotos, 35) : null} />
+          </div>
+
           {loading ? (
             <p className="text-white/20 text-xs tracking-widest">A carregar...</p>
           ) : !data ? (
-            <p className="text-white/20 text-xs tracking-widest">Sem informação disponível.</p>
+            <p className="text-white/20 text-xs tracking-widest">Sem informação adicional disponível.</p>
           ) : (<>
-
-            {/* Nome dos Noivos */}
-            <div className="bg-gold/5 border border-gold/20 rounded-2xl p-4">
-              <span className="text-[9px] tracking-[0.4em] text-gold/40 uppercase block mb-1.5">Nome dos Noivos</span>
-              <span className="text-sm text-white/80">{data.nome || nome || '—'}</span>
-            </div>
-
-            {/* Datas principais */}
-            <div className="grid grid-cols-3 gap-3">
-              <DateBox label="Data do Evento"         value={dataCasamento} />
-              <DateBox label="Data de Entrada"        value={data.data_entrega_fotos} />
-              <DateBox label="Data Limite p/ Entrega" value={data.data_entrega_fotos ? addDaysStr(data.data_entrega_fotos, 35) : null} />
-            </div>
 
             {/* Fotos p/Álbum */}
             {data.num_fotografias && (
