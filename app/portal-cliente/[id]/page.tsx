@@ -2149,7 +2149,14 @@ function PortalSubPageContent() {
                                     {cardsInBlock.map((callout: Block) => {
                                       const cardTitle = plainText(callout.callout?.rich_text ?? []).trim()
                                       const imgUrl = getImgUrl(callout)
-                                      const url = pageCalloutLinks[cardTitle]
+                                      const actionUrlMap: Record<string, string> = {
+                                        'Galeria Fotos p/ Seleção': portalSettingsObj?.selecao_url ?? '',
+                                        'Fotos Pré-Wedding':        portalSettingsObj?.prewedding_url ?? '',
+                                        'Fotos Editadas':           portalSettingsObj?.fotos_finais_url ?? '',
+                                        'Galeria On-line':          portalSettingsObj?.galerias_url ?? '',
+                                        'Maquete Album':            portalSettingsObj?.maquete_url ?? '',
+                                      }
+                                      const url = pageCalloutLinks[cardTitle] || actionUrlMap[cardTitle] || ''
                                       return (
                                         <div key={cardTitle} className="flex flex-col rounded-2xl overflow-hidden border border-white/40 bg-black"
                                           style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}>
