@@ -89,6 +89,36 @@ export async function PATCH(req: NextRequest) {
       if (newStatus === 'ENTREGUE') {
         await supabase.from('album_alteracoes').delete().eq('ref_evento', ref)
       }
+
+      // When EM APROVAÇÃO: email the bride
+      if (newStatus === 'EM APROVAÇÃO') {
+        const eventoRes = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://rl-menu-lake.vercel.app'}/api/evento-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json()).catch(() => null)
+        const emailNoiva = eventoRes?.evento?.email_noiva
+        const nomeNoiva  = eventoRes?.evento?.nome_noiva ?? 'Cliente'
+        if (emailNoiva) {
+          await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              from: 'RL Photo.Video <noreply@rlphotovideo.pt>',
+              to: [emailNoiva],
+              subject: 'O seu álbum está pronto para aprovação',
+              html: `
+                <div style="font-family: Georgia, serif; max-width: 520px; margin: 0 auto; padding: 48px 32px; background: #000; color: #fff;">
+                  <p style="font-size: 10px; letter-spacing: 0.5em; color: #888; text-transform: uppercase; margin: 0 0 32px;">RL PHOTO.VIDEO</p>
+                  <h1 style="font-size: 24px; font-weight: 300; letter-spacing: 0.15em; text-transform: uppercase; margin: 0 0 24px; color: #fff;">Álbum para Aprovação</h1>
+                  <p style="font-size: 15px; color: #bbb; line-height: 1.7; margin: 0 0 16px;">Olá ${nomeNoiva},</p>
+                  <p style="font-size: 15px; color: #bbb; line-height: 1.7; margin: 0 0 32px;">O seu álbum de casamento está pronto e aguarda a sua aprovação. Por favor aceda ao seu portal para visualizar e aprovar.</p>
+                  <p style="font-size: 10px; color: #555; letter-spacing: 0.3em; text-transform: uppercase; margin: 48px 0 0;">RL Photo.Video · rlphotovideo.pt</p>
+                </div>
+              `,
+            }),
+          }).catch(() => null)
+        }
+      }
     }
   }
 

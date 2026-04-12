@@ -13,6 +13,7 @@ function getProp(props: any, key: string, type: string): any {
   try {
     if (type === 'title')        return p.title?.map((t: any) => t.plain_text).join('') ?? ''
     if (type === 'text')         return p.rich_text?.map((t: any) => t.plain_text).join('') ?? ''
+    if (type === 'email')        return p.email ?? null
     if (type === 'select')       return p.select?.name ?? null
     if (type === 'multi_select') return p.multi_select?.map((s: any) => s.name) ?? []
     if (type === 'number')       return p.number ?? p.formula?.number ?? null
@@ -54,6 +55,7 @@ export async function GET(req: NextRequest) {
       valor_video:  getProp(p, 'VALOR DO SERVIÇO VÍDEO', 'number'),
       valor_liquido:getProp(p, 'VALOR LIQUIDO A RECEBER', 'number'),
       nome_noiva:        getProp(p, 'Nome da Noiva', 'text'),
+      email_noiva:       getProp(p, 'E-mail da noiva', 'email'),
       nome_noivo:        getProp(p, 'nome do noivo', 'text'),
       sel_fotos_estado:  getProp(p, 'ESTADO SEL. FOTOS', 'select'),
       video_estado:      getProp(p, 'ESTADO DO VIDEO', 'select'),
