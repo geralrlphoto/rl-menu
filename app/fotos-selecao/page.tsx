@@ -148,8 +148,8 @@ function printFicha(row: FotoSelecao) {
   w.document.close()
 }
 
-const EDITORS = ['Alexandre Capão', 'Patrício Ferreira', 'Sónia Carvalho', 'Rui Garrido', 'Bruno de Carvalho', 'Pedro Martins', 'Leandro Valente']
-const ALBUM_EDITORS = ['Alexandre Capão', 'Patrício Ferreira', 'Sónia Carvalho', 'Rui Garrido', 'Bruno de Carvalho', 'Pedro Martins', 'Leandro Valente']
+const EDITORS = ['Alexandre Capão', 'Patricio Ferreira', 'Sónia Carvalho', 'Rui Garrido', 'Bruno de Carvalho', 'Pedro Martins', 'Leandro Valente']
+const ALBUM_EDITORS = ['Alexandre Capão', 'Patricio Ferreira', 'Sónia Carvalho', 'Rui Garrido', 'Bruno de Carvalho', 'Pedro Martins', 'Leandro Valente']
 
 // ── Modal Ficha ───────────────────────────────────────────────────────────────
 function FichaModal({ row, onClose, onSaved }: {
