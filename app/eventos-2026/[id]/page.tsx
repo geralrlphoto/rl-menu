@@ -1374,15 +1374,11 @@ export default function EventoPage() {
               {Array.from({ length: 150 }, (_, i) => {
                 const n = String(i + 1).padStart(3, '0')
                 const ref = `CAS_${n}_26_RL`
-                const isSelected = ref === navRef
                 return (
                   <option
                     key={ref}
                     value={ref}
-                    style={{
-                      background: '#1a1610',
-                      color: isSelected ? '#cc3333' : 'rgba(255,255,255,0.7)',
-                    }}
+                    style={{ background: '#1a1610', color: 'rgba(255,255,255,0.7)' }}
                   >
                     {ref}
                   </option>
