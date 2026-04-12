@@ -425,10 +425,10 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo }: {
               <div>
                 <h2 className="text-base font-bold text-white uppercase tracking-wide leading-tight">{c.local || '—'}</h2>
                 {c.data_casamento && (
-                  <p className={`text-xs mt-0.5 ${isUrgent ? 'text-red-400/70' : isPast ? 'text-white/30' : 'text-white/45'}`}>{fmtDate(c.data_casamento)}</p>
+                  <p className={`text-xs mt-0.5 ${isUrgent ? 'text-red-400/70' : isPast ? 'text-white/50' : 'text-white'}`}>{fmtDate(c.data_casamento)}</p>
                 )}
                 {dtu !== null && dtu >= 0 && (
-                  <span className={`inline-block mt-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${isUrgent ? 'bg-red-500/20 text-red-400' : 'bg-white/[0.08] text-white/40'}`}>
+                  <span className={`inline-block mt-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${isUrgent ? 'bg-red-500/20 text-red-400' : 'bg-gold/10 text-gold border border-gold/25'}`}>
                     {dtu === 0 ? 'HOJE' : `${dtu} dias`}
                   </span>
                 )}
@@ -443,21 +443,21 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo }: {
         {/* Body */}
         <div className="px-6 py-5 space-y-4">
           <div>
-            <p className="text-[9px] tracking-[0.3em] text-white/25 uppercase mb-2">Equipa Fotografia</p>
+            <p className="text-[9px] tracking-[0.3em] text-white uppercase mb-2">Equipa Fotografia</p>
             {c.equipa_foto && c.equipa_foto.length > 0 ? (
               <div className="flex flex-wrap gap-1.5">
                 {c.equipa_foto.map((name, i) => (
-                  <span key={i} className="text-xs px-2.5 py-1 rounded-full bg-white/[0.06] border border-white/[0.08] text-white/70">{name}</span>
+                  <span key={i} className="text-xs px-2.5 py-1 rounded-full bg-white/[0.06] border border-white/[0.08] text-white">{name}</span>
                 ))}
               </div>
             ) : <p className="text-xs text-white/20 italic">Não definida</p>}
           </div>
           <div>
-            <p className="text-[9px] tracking-[0.3em] text-white/25 uppercase mb-2">Videógrafo</p>
-            <p className="text-sm text-white/70">{c.videografo || <span className="text-white/20 italic">Não definido</span>}</p>
+            <p className="text-[9px] tracking-[0.3em] text-white uppercase mb-2">Videógrafo</p>
+            <p className="text-sm text-white">{c.videografo || <span className="text-white/40 italic">Não definido</span>}</p>
           </div>
           <div>
-            <p className="text-[9px] tracking-[0.3em] text-white/25 uppercase mb-2">Briefing</p>
+            <p className="text-[9px] tracking-[0.3em] text-white uppercase mb-2">Briefing</p>
             {c.briefing_url ? (
               <button onClick={() => setBriefingOpen(true)}
                 className="inline-flex items-center gap-1.5 text-xs text-gold/70 hover:text-gold transition-colors border border-gold/20 px-3 py-1.5 rounded-lg hover:bg-gold/5">
@@ -468,7 +468,7 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo }: {
           </div>
           {isVideografo && (
             <div>
-              <p className="text-[9px] tracking-[0.3em] text-white/25 uppercase mb-2">Relatório</p>
+              <p className="text-[9px] tracking-[0.3em] text-white uppercase mb-2">Relatório</p>
               <a href="https://tally.so/r/np88GE" target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold tracking-widest uppercase hover:bg-emerald-500/20 transition-all">
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -782,7 +782,7 @@ export default function FreelancerViewPage() {
                               </div>
                               <div>
                                 <p className="text-base font-light tracking-wider text-white uppercase">{c.local || '—'}</p>
-                                <p className="text-xs text-white/40 mt-0.5">{fmtDate(c.data_casamento)}</p>
+                                <p className="text-xs text-white mt-0.5">{fmtDate(c.data_casamento)}</p>
                               </div>
                             </div>
                             <div className="flex items-center gap-2 flex-wrap">
