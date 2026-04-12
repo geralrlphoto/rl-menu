@@ -19,7 +19,7 @@ function daysUntil(d: string | null) {
 }
 
 type Freelancer = { id: string; nome: string; status: string | null; intro_casamentos: string | null }
-type Casamento  = { id: string; local: string; data_casamento: string | null; equipa_foto: string[] | null; videografo: string | null; briefing_url: string | null; data_confirmada: boolean | null; indisponivel: boolean | null }
+type Casamento  = { id: string; local: string; data_casamento: string | null; equipa_foto: string[] | null; videografo: string | null; briefing_url: string | null; data_confirmada: boolean | null; indisponivel: boolean | null; data_confirmada_videografo: boolean | null; indisponivel_videografo: boolean | null }
 type Edicao     = {
   id: string; nome: string; status: string; data_casamento: string | null
   data_entrega: string | null; data_final_entrega: string | null; local: string | null
@@ -363,9 +363,14 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo }: {
   const dtu = daysUntil(c.data_casamento)
   const isUrgent = dtu !== null && dtu >= 0 && dtu <= 15
   const isPast   = dtu !== null && dtu < 0
+  const confirmedField    = isVideografo ? 'data_confirmada_videografo' : 'data_confirmada'
+  const indispField       = isVideografo ? 'indisponivel_videografo'    : 'indisponivel'
+  const confirmedInit     = isVideografo ? (c.data_confirmada_videografo ?? false) : (c.data_confirmada ?? false)
+  const indispInit        = isVideografo ? (c.indisponivel_videografo ?? false)    : (c.indisponivel ?? false)
+
   const [confirming, setConfirming]         = useState(false)
-  const [confirmed, setConfirmed]           = useState(c.data_confirmada ?? false)
-  const [indisponivel, setIndisponivel]     = useState(c.indisponivel ?? false)
+  const [confirmed, setConfirmed]           = useState(confirmedInit)
+  const [indisponivel, setIndisponivel]     = useState(indispInit)
   const [markingIndisp, setMarkingIndisp]   = useState(false)
   const [briefingOpen, setBriefingOpen]     = useState(false)
 
@@ -374,7 +379,7 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo }: {
     await fetch('/api/freelancer-casamentos', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: c.id, data_confirmada: true, indisponivel: false }),
+      body: JSON.stringify({ id: c.id, [confirmedField]: true, [indispField]: false }),
     })
     setConfirmed(true)
     setIndisponivel(false)
@@ -387,7 +392,7 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo }: {
     await fetch('/api/freelancer-casamentos', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: c.id, indisponivel: true, data_confirmada: false }),
+      body: JSON.stringify({ id: c.id, [indispField]: true, [confirmedField]: false }),
     })
     setIndisponivel(true)
     setConfirmed(false)
@@ -764,12 +769,12 @@ export default function FreelancerViewPage() {
                                   {days === 0 ? 'HOJE' : `${days}d`}
                                 </span>
                               )}
-                              {c.data_confirmada && (
+                              {(freelancer?.status === 'VIDEOGRAFO' ? c.data_confirmada_videografo : c.data_confirmada) && (
                                 <span className="text-[10px] px-2.5 py-1 rounded-full border bg-emerald-500/15 text-emerald-400 border-emerald-500/30 tracking-widest">
                                   ✓ Confirmado
                                 </span>
                               )}
-                              {c.indisponivel && !c.data_confirmada && (
+                              {(freelancer?.status === 'VIDEOGRAFO' ? (c.indisponivel_videografo && !c.data_confirmada_videografo) : (c.indisponivel && !c.data_confirmada)) && (
                                 <span className="text-[10px] px-2.5 py-1 rounded-full border bg-red-500/15 text-red-400 border-red-500/30 tracking-widest">
                                   Indisponível
                                 </span>
@@ -815,8 +820,13 @@ export default function FreelancerViewPage() {
               isVideografo={freelancer?.status === 'VIDEOGRAFO'}
               onClose={() => setFicha(null)}
               onConfirm={(id) => {
-                setCasamentos(prev => prev.map(c => c.id === id ? { ...c, data_confirmada: true } : c))
-                setFicha(prev => prev?.id === id ? { ...prev, data_confirmada: true } : prev)
+                const isVid = freelancer?.status === 'VIDEOGRAFO'
+                setCasamentos(prev => prev.map(c => c.id === id
+                  ? isVid ? { ...c, data_confirmada_videografo: true } : { ...c, data_confirmada: true }
+                  : c))
+                setFicha(prev => prev?.id === id
+                  ? isVid ? { ...prev, data_confirmada_videografo: true } : { ...prev, data_confirmada: true }
+                  : prev)
               }}
             />
           )}
