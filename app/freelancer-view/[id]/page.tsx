@@ -728,7 +728,7 @@ export default function FreelancerViewPage() {
               {/* Intro */}
               {(freelancer?.intro_casamentos || true) && (
                 <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] px-5 py-4 space-y-1">
-                  <p className="text-[9px] tracking-[0.35em] text-white/25 uppercase">A Tua Agenda</p>
+                  <p className="text-[16px] text-white font-semibold">A Tua Agenda</p>
                   <p className="text-[15px] text-white/75 leading-relaxed whitespace-pre-wrap">
                     {freelancer?.intro_casamentos || `Aqui encontras todos os eventos que te foram atribuídos ao longo do ano. Sempre que um novo evento for adicionado, deverás confirmar a tua disponibilidade.\n\nA 3 dias do evento tens acesso ao briefing com toda a informação necessária para o dia — percurso, contactos, detalhes da cerimónia e muito mais.`}
                   </p>
@@ -737,7 +737,7 @@ export default function FreelancerViewPage() {
 
               {/* Próximos */}
               <section>
-                <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-4">Próximos Casamentos ({upcoming.length})</p>
+                <p className="text-[16px] text-white font-semibold mb-4">Próximos Casamentos ({upcoming.length})</p>
                 {upcoming.length === 0 ? (
                   <p className="text-white/15 text-xs tracking-widest">Sem casamentos futuros.</p>
                 ) : (
@@ -790,7 +790,7 @@ export default function FreelancerViewPage() {
 
               {/* Casamentos Passados */}
               <section>
-                <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-4">Casamentos Anteriores ({past.length})</p>
+                <p className="text-[16px] text-white font-semibold mb-4">Casamentos Anteriores ({past.length})</p>
                 {past.length === 0 ? (
                   <p className="text-white/15 text-xs tracking-widest">Sem casamentos anteriores.</p>
                 ) : (
