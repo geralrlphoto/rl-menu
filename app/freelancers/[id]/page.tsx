@@ -64,7 +64,7 @@ const STATUS_STYLE: Record<string, string> = {
   'CONCLUÍDO':     'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
 }
 
-const inputCls = "w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15"
+const inputCls = "w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15 [color-scheme:dark]"
 const labelCls = "block text-[9px] text-white/25 tracking-widest uppercase mb-1"
 
 // ─── Password Display ─────────────────────────────────────────────────────────
