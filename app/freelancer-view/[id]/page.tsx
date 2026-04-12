@@ -99,7 +99,7 @@ function albumStatusCfg(s: string | null) {
   }
 }
 
-function AlbumInfoModal({ refEvento, nome, onClose }: { refEvento: string | null; nome: string; onClose: () => void }) {
+function AlbumInfoModal({ refEvento, nome, dataCasamento, onClose }: { refEvento: string | null; nome: string; dataCasamento: string | null; onClose: () => void }) {
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
@@ -184,29 +184,34 @@ function AlbumInfoModal({ refEvento, nome, onClose }: { refEvento: string | null
             <p className="text-white/20 text-xs tracking-widest">Sem informação disponível.</p>
           ) : (<>
 
-            {/* REF. EVENTO */}
-            {data.ref_evento && (
-              <div className="bg-gold/5 border border-gold/20 rounded-2xl p-4">
-                <span className="text-[9px] tracking-[0.4em] text-gold/40 uppercase block mb-1.5">Referência do Evento</span>
-                <span className="text-sm text-white/80">{data.ref_evento}</span>
+            {/* Nome dos Noivos */}
+            <div className="bg-gold/5 border border-gold/20 rounded-2xl p-4">
+              <span className="text-[9px] tracking-[0.4em] text-gold/40 uppercase block mb-1.5">Nome dos Noivos</span>
+              <span className="text-sm text-white/80">{data.nome || nome || '—'}</span>
+            </div>
+
+            {/* Datas principais */}
+            <div className="grid grid-cols-3 gap-3">
+              <DateBox label="Data do Evento"         value={dataCasamento} />
+              <DateBox label="Data de Entrada"        value={data.data_entrega_fotos} />
+              <DateBox label="Data Limite p/ Entrega" value={data.data_entrega_fotos ? addDaysStr(data.data_entrega_fotos, 35) : null} />
+            </div>
+
+            {/* Fotos p/Álbum */}
+            {data.num_fotografias && (
+              <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 flex items-center justify-between">
+                <span className="text-[9px] tracking-[0.35em] text-white/25 uppercase">Fotos p/ Álbum</span>
+                <span className="text-2xl font-light text-white/80">{data.num_fotografias}</span>
               </div>
             )}
 
-            {/* Nome + REF Álbum */}
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="Nome" value={data.nome} />
-              <Field label="REF. Álbum" value={data.ref_album} />
-            </div>
-
-            {/* Datas */}
+            {/* Datas álbum */}
             <div>
-              <p className="text-[9px] tracking-[0.35em] text-white/20 uppercase mb-3">Datas</p>
+              <p className="text-[9px] tracking-[0.35em] text-white/20 uppercase mb-3">Datas Álbum</p>
               <div className="grid grid-cols-3 gap-3">
-                <DateBox label="Entrada de Fotos"     value={data.data_entrega_fotos} />
-                <DateBox label="Data de Entrega"       value={data.data_entrega_fotos ? addDaysStr(data.data_entrega_fotos, 30) : null} />
                 <DateBox label="Prazo Maquete"         value={data.prazo_maquete} />
                 <DateBox label="Prazo Final Maquete"   value={data.prazo_final_maquete} />
-                <DateBox label="Data Aprovação Álbum" value={data.data_aprovacao} />
+                <DateBox label="Data Aprovação"        value={data.data_aprovacao} />
                 <DateBox label="Prazo Álbum"           value={data.prazo_album} />
                 <DateBox label="Data Prevista Entrega" value={data.data_prevista_entrega} />
                 <DateBox label="Entrega de Álbum"      value={data.entrega_album} />
@@ -218,9 +223,6 @@ function AlbumInfoModal({ refEvento, nome, onClose }: { refEvento: string | null
               <Field label="Opção (Caixa)" value={data.opcao} />
               <Field label="Design" value={data.design} />
             </div>
-
-            {/* Fotografias */}
-            <Field label="N.º de Fotografias" value={data.num_fotografias} />
 
             {/* Textos */}
             {data.texto_album && (
@@ -1128,6 +1130,7 @@ export default function FreelancerViewPage() {
         <AlbumInfoModal
           refEvento={albumInfo.referencia_album}
           nome={albumInfo.nome}
+          dataCasamento={albumInfo.data_casamento}
           onClose={() => setAlbumInfo(null)}
         />
       )}
