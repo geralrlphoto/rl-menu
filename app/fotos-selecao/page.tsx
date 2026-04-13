@@ -148,8 +148,9 @@ function printFicha(row: FotoSelecao) {
   w.document.close()
 }
 
-const EDITORS = ['Alexandre Capão', 'Patricio Ferreira', 'Sónia Carvalho', 'Rui Garrido', 'Bruno de Carvalho', 'Pedro Martins', 'Leandro Valente']
-const ALBUM_EDITORS = ['Alexandre Capão', 'Patricio Ferreira', 'Sónia Carvalho', 'Rui Garrido', 'Bruno de Carvalho', 'Pedro Martins', 'Leandro Valente']
+// Listas carregadas dinamicamente — ver FichaModal
+const EDITORS: string[] = []
+const ALBUM_EDITORS: string[] = []
 
 const NAME_NORMALIZE: Record<string, string> = {
   'Patrício Ferreira': 'Patricio Ferreira',
@@ -171,6 +172,7 @@ function FichaModal({ row, onClose, onSaved }: {
   const [editorSaving, setEditorSaving]       = useState(false)
   const [editorAlbumSaving, setEditorAlbumSaving] = useState(false)
   const [editorFeedback, setEditorFeedback]   = useState('')
+  const [editorOptions, setEditorOptions]     = useState<string[]>([])
   const [notifEditorEnviada, setNotifEditorEnviada]   = useState<string | null>(null)
   const [notifAlbumEnviada, setNotifAlbumEnviada]     = useState<string | null>(null)
   const [sendingNotifEditor, setSendingNotifEditor]   = useState(false)
@@ -179,11 +181,11 @@ function FichaModal({ row, onClose, onSaved }: {
   const [notifAlbumErro, setNotifAlbumErro]           = useState<string | null>(null)
 
   useEffect(() => {
+    // Load editor assignment + notification dates
     fetch(`/api/fotos-selecao-editor?notion_page_id=${row.id}`)
       .then(r => r.json())
       .then(d => { setEditor(normalizeName(d.editor)); setEditorAlbum(normalizeName(d.editor_album)); setEditorLoading(false) })
       .catch(() => setEditorLoading(false))
-    // Load notification dates from portais
     if (row.referencia) {
       fetch(`/api/portais?ref=${encodeURIComponent(row.referencia)}`)
         .then(r => r.json())
@@ -194,6 +196,17 @@ function FichaModal({ row, onClose, onSaved }: {
         })
         .catch(() => {})
     }
+    // Load freelancers dinamicamente (FOTOGRAFO + ASSISTENTE)
+    fetch('/api/freelancers')
+      .then(r => r.json())
+      .then(d => {
+        const names = (d.freelancers ?? [])
+          .filter((f: any) => f.status === 'FOTOGRAFO' || f.status === 'ASSISTENTE')
+          .map((f: any) => f.nome as string)
+          .sort()
+        setEditorOptions(names)
+      })
+      .catch(() => {})
   }, [row.id, row.referencia])
 
   async function handleEditorChange(name: string) {
@@ -405,7 +418,7 @@ function FichaModal({ row, onClose, onSaved }: {
                 className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold/40 transition-colors disabled:opacity-40 [color-scheme:dark]"
               >
                 <option value="" style={{ backgroundColor: '#1a1a1a', color: 'white' }}>— Sem editor —</option>
-                {EDITORS.map(name => (
+                {editorOptions.map(name => (
                   <option key={name} value={name} style={{ backgroundColor: '#1a1a1a', color: 'white' }}>{name}</option>
                 ))}
               </select>
@@ -481,7 +494,7 @@ function FichaModal({ row, onClose, onSaved }: {
                 style={{ colorScheme: 'dark' }}
               >
                 <option value="" style={{ backgroundColor: '#1a1a1a', color: 'white' }}>— Sem editor álbum —</option>
-                {ALBUM_EDITORS.map(name => (
+                {editorOptions.map(name => (
                   <option key={name} value={name} style={{ backgroundColor: '#1a1a1a', color: 'white' }}>{name}</option>
                 ))}
               </select>
