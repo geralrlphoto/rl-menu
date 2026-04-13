@@ -171,13 +171,30 @@ function FichaModal({ row, onClose, onSaved }: {
   const [editorSaving, setEditorSaving]       = useState(false)
   const [editorAlbumSaving, setEditorAlbumSaving] = useState(false)
   const [editorFeedback, setEditorFeedback]   = useState('')
+  const [notifEditorEnviada, setNotifEditorEnviada]   = useState<string | null>(null)
+  const [notifAlbumEnviada, setNotifAlbumEnviada]     = useState<string | null>(null)
+  const [sendingNotifEditor, setSendingNotifEditor]   = useState(false)
+  const [sendingNotifAlbum, setSendingNotifAlbum]     = useState(false)
+  const [notifEditorErro, setNotifEditorErro]         = useState<string | null>(null)
+  const [notifAlbumErro, setNotifAlbumErro]           = useState<string | null>(null)
 
   useEffect(() => {
     fetch(`/api/fotos-selecao-editor?notion_page_id=${row.id}`)
       .then(r => r.json())
       .then(d => { setEditor(normalizeName(d.editor)); setEditorAlbum(normalizeName(d.editor_album)); setEditorLoading(false) })
       .catch(() => setEditorLoading(false))
-  }, [row.id])
+    // Load notification dates from portais
+    if (row.referencia) {
+      fetch(`/api/portais?ref=${encodeURIComponent(row.referencia)}`)
+        .then(r => r.json())
+        .then(d => {
+          const s = d.portal?.settings ?? {}
+          if (s.notif_editor_fotos_enviada) setNotifEditorEnviada(s.notif_editor_fotos_enviada)
+          if (s.notif_editor_album_enviada) setNotifAlbumEnviada(s.notif_editor_album_enviada)
+        })
+        .catch(() => {})
+    }
+  }, [row.id, row.referencia])
 
   async function handleEditorChange(name: string) {
     const next = name || null
@@ -398,6 +415,56 @@ function FichaModal({ row, onClose, onSaved }: {
                 Atribuído a <span className="text-gold/80">{editor}</span>
               </p>
             )}
+            {/* Notificação Editor Fotos */}
+            {editor && (
+              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/[0.05]">
+                <div className="flex-1 text-[10px] font-mono">
+                  {notifEditorEnviada
+                    ? <span className="text-green-400/70">{new Date(notifEditorEnviada).toLocaleDateString('pt-PT')}</span>
+                    : <span className="text-white/20">Pendente</span>}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {notifEditorEnviada && (
+                    <button onClick={async () => {
+                      if (!row.referencia) return
+                      await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: row.referencia, updates: { settings: { notif_editor_fotos_enviada: null } } }) })
+                      setNotifEditorEnviada(null)
+                    }} className="w-6 h-6 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-all text-xs" title="Repor">✕</button>
+                  )}
+                  <button
+                    disabled={sendingNotifEditor}
+                    onClick={async () => {
+                      if (!editor || sendingNotifEditor) return
+                      setSendingNotifEditor(true)
+                      setNotifEditorErro(null)
+                      const today = new Date().toISOString().split('T')[0]
+                      const res = await fetch('/api/send-freelancer-notification', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ nomes: [editor], tipo: 'editor_fotos', referencia: row.referencia, data_evento: row.date, local: '', nome_noiva: row.nome_noivos, nome_noivo: '' }),
+                      })
+                      const data = await res.json()
+                      if (res.ok && data.ok) {
+                        if (row.referencia) await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: row.referencia, updates: { settings: { notif_editor_fotos_enviada: today } } }) })
+                        setNotifEditorEnviada(today)
+                      } else {
+                        setNotifEditorErro(data.error ?? 'Erro')
+                      }
+                      setSendingNotifEditor(false)
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold tracking-[0.15em] uppercase border transition-all ${
+                      notifEditorEnviada ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                      : sendingNotifEditor ? 'bg-purple-500/10 text-purple-300/50 border-purple-500/20 cursor-not-allowed'
+                      : notifEditorErro ? 'bg-red-500/15 text-red-300 border-red-500/25'
+                      : 'bg-purple-500/15 text-purple-300 border-purple-500/25 hover:bg-purple-500/25'
+                    }`}
+                  >
+                    {sendingNotifEditor ? '...' : notifEditorEnviada ? '✓ Enviado' : notifEditorErro ? '⚠ Sem email' : 'Notificar'}
+                  </button>
+                </div>
+              </div>
+            )}
+            {notifEditorErro && <p className="text-[9px] text-red-400/70 mt-1">Sem email — adiciona nas Equipas de Trabalho</p>}
           </div>
 
           {/* Editor Álbum */}
@@ -424,6 +491,56 @@ function FichaModal({ row, onClose, onSaved }: {
                 Atribuído a <span className="text-gold/80">{editorAlbum}</span>
               </p>
             )}
+            {/* Notificação Editor Álbum */}
+            {editorAlbum && (
+              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/[0.05]">
+                <div className="flex-1 text-[10px] font-mono">
+                  {notifAlbumEnviada
+                    ? <span className="text-green-400/70">{new Date(notifAlbumEnviada).toLocaleDateString('pt-PT')}</span>
+                    : <span className="text-white/20">Pendente</span>}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {notifAlbumEnviada && (
+                    <button onClick={async () => {
+                      if (!row.referencia) return
+                      await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: row.referencia, updates: { settings: { notif_editor_album_enviada: null } } }) })
+                      setNotifAlbumEnviada(null)
+                    }} className="w-6 h-6 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-all text-xs" title="Repor">✕</button>
+                  )}
+                  <button
+                    disabled={sendingNotifAlbum}
+                    onClick={async () => {
+                      if (!editorAlbum || sendingNotifAlbum) return
+                      setSendingNotifAlbum(true)
+                      setNotifAlbumErro(null)
+                      const today = new Date().toISOString().split('T')[0]
+                      const res = await fetch('/api/send-freelancer-notification', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ nomes: [editorAlbum], tipo: 'editor_album', referencia: row.referencia, data_evento: row.date, local: '', nome_noiva: row.nome_noivos, nome_noivo: '' }),
+                      })
+                      const data = await res.json()
+                      if (res.ok && data.ok) {
+                        if (row.referencia) await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: row.referencia, updates: { settings: { notif_editor_album_enviada: today } } }) })
+                        setNotifAlbumEnviada(today)
+                      } else {
+                        setNotifAlbumErro(data.error ?? 'Erro')
+                      }
+                      setSendingNotifAlbum(false)
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold tracking-[0.15em] uppercase border transition-all ${
+                      notifAlbumEnviada ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                      : sendingNotifAlbum ? 'bg-purple-500/10 text-purple-300/50 border-purple-500/20 cursor-not-allowed'
+                      : notifAlbumErro ? 'bg-red-500/15 text-red-300 border-red-500/25'
+                      : 'bg-purple-500/15 text-purple-300 border-purple-500/25 hover:bg-purple-500/25'
+                    }`}
+                  >
+                    {sendingNotifAlbum ? '...' : notifAlbumEnviada ? '✓ Enviado' : notifAlbumErro ? '⚠ Sem email' : 'Notificar'}
+                  </button>
+                </div>
+              </div>
+            )}
+            {notifAlbumErro && <p className="text-[9px] text-red-400/70 mt-1">Sem email — adiciona nas Equipas de Trabalho</p>}
           </div>
 
           {/* Contagens — grid 4 col */}
