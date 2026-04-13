@@ -1,13 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
 // Tally webhook — Registo de Pagamento (https://tally.so/r/A72PQB)
 // On submission:
-//   1. Envia email de comprovativo ao CLIENTE (se tiver email)
-//   2. Envia notificação ao ADMIN (Rui)
+//   1. Guarda em Supabase (pagamentos_noivos)
+//   2. Envia email de comprovativo ao CLIENTE (se tiver email)
+//   3. Envia notificação ao ADMIN (Rui)
 
 const ADMIN_EMAIL = 'geral.rlphoto@gmail.com'
 const RESEND_KEY  = process.env.RESEND_API_KEY!
 const SITE_URL    = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://rl-menu-lake.vercel.app'
+
+function db() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 // ─── Helper: extrair campo pelo label ─────────────────────────────────────────
 function getField(fields: any[], ...labels: string[]): string | null {
@@ -297,7 +306,23 @@ export async function POST(req: NextRequest) {
 
     console.log('[webhook-tally-pagamento] Recebido:', paymentData)
 
-    // ── 1. Email ao CLIENTE (se tiver email) ────────────────────────────────
+    // ── 1. Guardar em Supabase ───────────────────────────────────────────────
+    const valorNumerico = valor ? parseFloat(valor.replace(/[^0-9.,]/g, '').replace(',', '.')) : null
+    db().from('pagamentos_noivos').insert({
+      tally_response_id: body.data?.responseId ?? null,
+      nome_noivos,
+      referencia:       referencia ?? null,
+      data_pagamento:   data_pagamento ?? null,
+      metodo_pagamento: forma_pagamento ? [forma_pagamento] : [],
+      valor_liquidado:  isNaN(valorNumerico!) ? null : valorNumerico,
+      email_cliente:    email_cliente ?? null,
+      notas:            notas ?? null,
+    }).then(({ error }) => {
+      if (error) console.error('[webhook-tally-pagamento] Supabase error:', error)
+      else console.log('[webhook-tally-pagamento] Supabase guardado')
+    })
+
+    // ── 2. Email ao CLIENTE (se tiver email) ────────────────────────────────
     if (email_cliente) {
       const htmlCliente = buildComprovatvoClienteEmail(paymentData)
       const sent = await sendEmail(

@@ -1,7 +1,15 @@
 import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN!
 const DB_ID = '2d9220116d8a80a1b6d1fb127c5d7fdd'
+
+function db() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 function getProp(props: any, key: string, type: string): any {
   const p = props[key]
@@ -104,6 +112,15 @@ export async function POST() {
       valor_liquidado:  null,
       atualizado:       false,
     }
+
+    // Guardar também em Supabase (non-blocking)
+    db().from('pagamentos_noivos').insert({
+      notion_id:    page.id,
+      nome_noivos:  row.nome_noivos,
+    }).then(({ error }) => {
+      if (error) console.error('[pagamentos-noivos] Supabase error:', error)
+    })
+
     return NextResponse.json({ row })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
