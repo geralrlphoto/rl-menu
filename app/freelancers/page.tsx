@@ -58,9 +58,11 @@ export default function FreelancersPage() {
   const [form, setForm] = useState<FormData>(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [pwEditId, setPwEditId] = useState<string | null>(null)
-  const [pwDraft, setPwDraft]   = useState('')
-  const [pwSaving, setPwSaving] = useState(false)
+  const [pwEditId, setPwEditId]     = useState<string | null>(null)
+  const [pwDraft, setPwDraft]       = useState('')
+  const [pwSaving, setPwSaving]     = useState(false)
+  const [removendoId, setRemovendo] = useState<string | null>(null)
+  const [removidoIds, setRemovidoIds] = useState<Set<string>>(new Set())
 
   async function load() {
     setLoading(true)
@@ -111,6 +113,40 @@ export default function FreelancersPage() {
     setPwEditId(null)
     setPwDraft('')
     setPwSaving(false)
+  }
+
+  function statusToFuncao(status: string | null): string {
+    if (status === 'EDITORES') return 'EDITOR'
+    return status ?? 'OUTRO'
+  }
+
+  async function handleRemoverDaEquipa(f: Freelancer) {
+    if (!confirm(`Mover "${f.nome}" de volta para Novos Freelancers?`)) return
+    setRemovendo(f.id)
+    try {
+      // 1. Criar nos Novos Freelancers (Notion)
+      await fetch('/api/freelancers-novos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: f.nome,
+          funcao: statusToFuncao(f.status),
+          telefone: f.contato ?? '',
+          tipo_eventos: [],
+          zona: '',
+          avaliacao: [],
+        }),
+      })
+      // 2. Remover da equipa (Supabase)
+      await fetch(`/api/freelancers?id=${f.id}`, { method: 'DELETE' })
+      setRemovidoIds(prev => new Set([...prev, f.id]))
+      setTimeout(() => {
+        setList(prev => prev.filter(x => x.id !== f.id))
+        setRemovidoIds(prev => { const s = new Set(prev); s.delete(f.id); return s })
+      }, 1200)
+    } finally {
+      setRemovendo(null)
+    }
   }
 
   // Group by status
@@ -217,6 +253,18 @@ export default function FreelancersPage() {
                               className="text-[9px] px-2.5 py-1 rounded-lg border border-white/10 text-white/30 hover:text-white/60 hover:border-white/25 transition-all tracking-widest uppercase">
                               🔑 Password
                             </button>
+                            {removidoIds.has(f.id) ? (
+                              <span className="text-[9px] px-2.5 py-1 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 tracking-widest uppercase">
+                                ✓ Movido
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => handleRemoverDaEquipa(f)}
+                                disabled={removendoId === f.id}
+                                className="text-[9px] px-2.5 py-1 rounded-lg border border-orange-500/25 bg-orange-500/5 text-orange-400/70 hover:text-orange-400 hover:border-orange-500/40 hover:bg-orange-500/10 transition-all tracking-widest uppercase disabled:opacity-40">
+                                {removendoId === f.id ? '...' : '← Novos'}
+                              </button>
+                            )}
                             <button onClick={() => startEdit(f)}
                               className="p-1.5 rounded-lg text-white/25 hover:text-white/60 hover:bg-white/[0.06] transition-all">
                               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
