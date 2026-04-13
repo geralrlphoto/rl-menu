@@ -127,7 +127,8 @@ export async function POST(req: NextRequest) {
     const dataFormatada = data_evento
       ? new Date(data_evento + 'T12:00:00').toLocaleDateString('pt-PT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
       : null
-    const html = `<!DOCTYPE html>
+
+    const buildPreWeddingHtml = (saudacao: string, rodape: string) => `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#0e0b07;">
@@ -145,13 +146,13 @@ export async function POST(req: NextRequest) {
           <table cellpadding="0" cellspacing="0" style="margin:0 auto 20px;width:52px;height:52px;border-radius:50%;border:1.5px solid #c9a96e;"><tr><td align="center" valign="middle">
             <span style="font-size:22px;color:#c9a96e;">&#10003;</span>
           </td></tr></table>
-          <p style="margin:0 0 4px;font-size:28px;font-style:italic;font-weight:300;color:#c9a96e;line-height:1.2;">Olá, Rui!</p>
+          <p style="margin:0 0 4px;font-size:28px;font-style:italic;font-weight:300;color:#c9a96e;line-height:1.2;">${saudacao}</p>
           <p style="margin:0;font-size:38px;font-weight:400;color:#f0e8d8;line-height:1.1;">Pré-wedding</p>
           <p style="margin:0 0 24px;font-size:38px;font-weight:400;font-style:italic;color:#c9a96e;line-height:1.2;">reservado.</p>
           <div style="margin:0 0 24px;color:#6a5430;font-size:12px;letter-spacing:0.35em;">&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</div>
           <table cellpadding="0" cellspacing="0" style="margin:0 auto 28px;border:0.5px solid #6a5430;width:100%;max-width:400px;background:rgba(201,169,110,0.04);">
             <tr><td style="padding:24px 32px;text-align:center;">
-              <p style="margin:0 0 4px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;">Reservado por</p>
+              <p style="margin:0 0 4px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;">Noivos</p>
               <p style="margin:0 0 20px;font-size:22px;font-style:italic;font-weight:400;color:#c9a96e;line-height:1.2;">${nome_noivos ?? 'Noivos'}</p>
               ${referencia ? `<p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Referência</p>
               <p style="margin:0 0 16px;font-size:13px;letter-spacing:0.1em;color:#b8a070;">${referencia}</p>` : ''}
@@ -161,9 +162,7 @@ export async function POST(req: NextRequest) {
               <p style="margin:0;font-size:13px;color:#d4c9b0;">${local}</p>` : ''}
             </td></tr>
           </table>
-          <p style="margin:0;font-size:15px;color:#a09070;line-height:1.8;">
-            Consulta o <strong style="color:#c9b88a;font-weight:500;">painel de administração</strong><br>para veres todos os detalhes.
-          </p>
+          <p style="margin:0;font-size:15px;color:#a09070;line-height:1.8;">${rodape}</p>
         </td></tr>
         <tr><td style="padding:0;"><table width="100%" cellpadding="0" cellspacing="0"><tr>
           <td style="width:50px;height:50px;border-bottom:0.5px solid #3a2a12;border-left:0.5px solid #3a2a12;"></td>
@@ -177,20 +176,38 @@ export async function POST(req: NextRequest) {
   </table>
 </body>
 </html>`
-    const toList = emailNoivaFinal ? [ADMIN_EMAIL, emailNoivaFinal] : [ADMIN_EMAIL]
-    const res = await fetch('https://api.resend.com/emails', {
+
+    const htmlAdmin  = buildPreWeddingHtml('Olá, Rui!', 'Consulta o <strong style="color:#c9b88a;font-weight:500;">painel de administração</strong><br>para veres todos os detalhes.')
+    const htmlNoivos = buildPreWeddingHtml('Olá, Noivos!', 'A vossa sessão está <strong style="color:#c9b88a;font-weight:500;">confirmada.</strong><br>Entraremos em contacto com mais detalhes.')
+
+    // Email para o admin
+    await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: 'RL Photo.Video <geral@rlphotovideo.pt>',
-        to: toList,
+        to: [ADMIN_EMAIL],
         subject: `📅 Pré-wedding reservado — ${nome_noivos ?? referencia ?? ''}`,
-        html,
+        html: htmlAdmin,
       }),
     })
-    const data = await res.json()
-    if (!res.ok) return NextResponse.json({ ok: false, error: data.message }, { status: 500 })
-    return NextResponse.json({ ok: true, id: data.id })
+
+    // Email para a noiva (se tiver email)
+    if (emailNoivaFinal) {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+          to: [emailNoivaFinal],
+          subject: `📅 Pré-wedding reservado — ${nome_noivos ?? ''}`,
+          html: htmlNoivos,
+        }),
+      })
+      if (!res.ok) console.error('[prewedding_reserva] Erro email noiva:', await res.text())
+    }
+
+    return NextResponse.json({ ok: true, emailNoiva: emailNoivaFinal ?? 'sem email' })
   }
 
   // ── Album aprovado ────────────────────────────────────────────────────────
