@@ -822,7 +822,7 @@ const MESES_PW = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','N
 
 const PORTAL_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
 
-function ContratoStatusSection({ eventoId }: { eventoId: string }) {
+function ContratoStatusSection({ eventoId, referencia }: { eventoId: string; referencia?: string }) {
   const [disponivel, setDisponivel] = useState<boolean | null>(null)
   const [settingsBlockId, setSettingsBlockId] = useState<string | null>(null)
   const [portalSettings, setPortalSettings] = useState<any>(null)
@@ -830,15 +830,25 @@ function ContratoStatusSection({ eventoId }: { eventoId: string }) {
   const [previewing, setPreviewing] = useState(false)
 
   useEffect(() => {
-    fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}&bust=1`)
-      .then(r => r.json())
-      .then(d => {
-        const ps = d.settings ?? {}
-        setPortalSettings(ps)
-        setSettingsBlockId(d.settingsBlockId ?? null)
-        setDisponivel(ps.contratoDisponivel ?? false)
-      }).catch(() => {})
-  }, [])
+    // For ref-based portals, read from Supabase; also check Notion for legacy
+    const promises: Promise<any>[] = [
+      fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}&bust=1`).then(r => r.json()).catch(() => ({})),
+    ]
+    if (referencia) {
+      promises.push(
+        fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`).then(r => r.json()).catch(() => ({}))
+      )
+    }
+    Promise.all(promises).then(([notionData, supabaseData]) => {
+      const notionPs = notionData?.settings ?? {}
+      const supabasePs = supabaseData?.portal?.settings ?? {}
+      // Merge: Supabase takes priority (ref-based portals), Notion as fallback
+      const ps = { ...notionPs, ...supabasePs }
+      setPortalSettings(ps)
+      setSettingsBlockId(notionData?.settingsBlockId ?? null)
+      setDisponivel(ps.contratoDisponivel ?? false)
+    })
+  }, [referencia])
 
   function handleVerContrato() {
     window.open(`/eventos-2026/${eventoId}/contrato`, '_blank')
@@ -848,12 +858,21 @@ function ContratoStatusSection({ eventoId }: { eventoId: string }) {
   async function handlePublicarNoPortal() {
     setToggling(true)
     try {
-      const newSettings = { ...(portalSettings ?? {}), contratoDisponivel: true, contratoUrl: `/eventos-2026/${eventoId}/contrato` }
+      const contratoUrl = `/eventos-2026/${eventoId}/contrato`
+      const newSettings = { ...(portalSettings ?? {}), contratoDisponivel: true, contratoUrl }
+      // Save to Notion (legacy portal)
       const res = await fetch('/api/portal-settings', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: newSettings, settingsBlockId }),
       })
       const data = await res.json()
+      // Save to Supabase (ref-based portal) — essential for CAS_xxx portals
+      if (referencia) {
+        await fetch('/api/portais', {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ referencia, updates: { settings: { contratoDisponivel: true, contratoUrl } } }),
+        })
+      }
       setDisponivel(true)
       setPreviewing(false)
       setPortalSettings(newSettings)
@@ -867,10 +886,18 @@ function ContratoStatusSection({ eventoId }: { eventoId: string }) {
     setToggling(true)
     try {
       const newSettings = { ...(portalSettings ?? {}), contratoDisponivel: false }
+      // Remove from Notion (legacy portal)
       await fetch('/api/portal-settings', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: newSettings, settingsBlockId }),
       })
+      // Remove from Supabase (ref-based portal)
+      if (referencia) {
+        await fetch('/api/portais', {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ referencia, updates: { settings: { contratoDisponivel: false } } }),
+        })
+      }
       setDisponivel(false)
       setPortalSettings(newSettings)
     } finally {
@@ -1739,7 +1766,7 @@ export default function EventoPage() {
           </div>
 
           {/* Criar Contrato */}
-          <ContratoStatusSection eventoId={e.id} />
+          <ContratoStatusSection eventoId={e.id} referencia={e.referencia ?? undefined} />
 
           {/* Contrato PDF */}
           <ContratoUpload eventId={e.id} contratoUrl={e.contratos} onSaved={handleSaved} />
