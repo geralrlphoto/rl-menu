@@ -262,7 +262,7 @@ export default function FreelancersPage() {
                                 onClick={() => handleRemoverDaEquipa(f)}
                                 disabled={removendoId === f.id}
                                 className="text-[9px] px-2.5 py-1 rounded-lg border border-orange-500/25 bg-orange-500/5 text-orange-400/70 hover:text-orange-400 hover:border-orange-500/40 hover:bg-orange-500/10 transition-all tracking-widest uppercase disabled:opacity-40">
-                                {removendoId === f.id ? '...' : '← Novos'}
+                                {removendoId === f.id ? '...' : '− Equipa'}
                               </button>
                             )}
                             <button onClick={() => startEdit(f)}
