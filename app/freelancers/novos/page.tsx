@@ -256,7 +256,7 @@ export default function NovosFreelancersPage() {
       <div className="flex gap-2 flex-wrap mb-4">
         {tabs.map(tab => {
           const count = countByTab(tab)
-          if (count === 0 && tab !== 'TODOS') return null
+          if (count === 0 && tab !== 'TODOS' && !FUNCAO_OPTIONS.includes(tab)) return null
           const style = tab === 'TODOS'
             ? activeTab === 'TODOS' ? 'border-gold/40 text-gold bg-gold/10' : 'border-white/10 text-white/30 hover:text-white/60 bg-white/[0.02]'
             : activeTab === tab ? funcaoStyle(tab).tab : 'border-white/10 text-white/30 hover:text-white/60 bg-white/[0.02]'
