@@ -603,10 +603,11 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo, freelancerNome }:
 
   async function handleConfirmar() {
     setConfirming(true)
+    const tsField = isVideografo ? 'confirmado_videografo_em' : 'confirmado_em'
     await fetch('/api/freelancer-casamentos', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: c.id, [confirmedField]: true, [indispField]: false }),
+      body: JSON.stringify({ id: c.id, [confirmedField]: true, [indispField]: false, [tsField]: new Date().toISOString() }),
     })
     setConfirmed(true)
     setIndisponivel(false)
@@ -622,10 +623,11 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo, freelancerNome }:
 
   async function handleIndisponivel() {
     setMarkingIndisp(true)
+    const tsField = isVideografo ? 'indisponivel_videografo_em' : 'indisponivel_em'
     await fetch('/api/freelancer-casamentos', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: c.id, [indispField]: true, [confirmedField]: false }),
+      body: JSON.stringify({ id: c.id, [indispField]: true, [confirmedField]: false, [tsField]: new Date().toISOString() }),
     })
     setIndisponivel(true)
     setConfirmed(false)

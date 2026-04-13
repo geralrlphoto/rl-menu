@@ -98,7 +98,6 @@ export default async function CalendarioPage() {
   }
 
   // ── 3. Team confirmations (freelancer_casamentos) ─────────────────────────
-  // Fetch confirmed + unavailable, join with freelancers for the name
   const { data: confirmacoes } = await supabase
     .from('freelancer_casamentos')
     .select(`
@@ -110,6 +109,10 @@ export default async function CalendarioPage() {
       indisponivel,
       data_confirmada_videografo,
       indisponivel_videografo,
+      confirmado_em,
+      indisponivel_em,
+      confirmado_videografo_em,
+      indisponivel_videografo_em,
       freelancer_id,
       freelancers!inner ( nome )
     `)
@@ -117,24 +120,52 @@ export default async function CalendarioPage() {
 
   const teamEntries: TeamEntry[] = (confirmacoes ?? [])
     .filter(c => c.data_casamento)
-    .map(c => {
+    .flatMap(c => {
       const nome = (c.freelancers as any)?.nome ?? 'Freelancer'
-      // determine status — confirmado has priority over indisponivel
-      const status: TeamEntry['status'] =
-        c.data_confirmada ? 'confirmado' :
-        c.indisponivel    ? 'indisponivel' :
-        c.data_confirmada_videografo ? 'confirmado' :
-        'indisponivel'
+      const entries: TeamEntry[] = []
 
-      return {
-        id:          String(c.id),
-        freelancer_nome: nome,
-        data_evento: c.data_casamento as string,
-        local:       c.local ?? null,
-        evento_id:   c.evento_id ?? null,
-        status,
-        tipo:        'confirmacao' as const,
+      // fotógrafo confirmado
+      if (c.data_confirmada || c.indisponivel) {
+        const tsRaw: string | null = c.data_confirmada
+          ? (c as any).confirmado_em ?? null
+          : (c as any).indisponivel_em ?? null
+        // Use timestamp date if available, otherwise fall back to event date
+        const calDate = tsRaw
+          ? tsRaw.split('T')[0]
+          : c.data_casamento as string
+        entries.push({
+          id:              `${c.id}_foto`,
+          freelancer_nome: nome,
+          data_evento:     c.data_casamento as string,
+          data_calendar:   calDate,
+          local:           c.local ?? null,
+          evento_id:       c.evento_id ?? null,
+          status:          c.data_confirmada ? 'confirmado' : 'indisponivel',
+          tipo:            'confirmacao' as const,
+        })
       }
+
+      // videógrafo confirmado
+      if (c.data_confirmada_videografo || c.indisponivel_videografo) {
+        const tsRaw: string | null = c.data_confirmada_videografo
+          ? (c as any).confirmado_videografo_em ?? null
+          : (c as any).indisponivel_videografo_em ?? null
+        const calDate = tsRaw
+          ? tsRaw.split('T')[0]
+          : c.data_casamento as string
+        entries.push({
+          id:              `${c.id}_video`,
+          freelancer_nome: nome,
+          data_evento:     c.data_casamento as string,
+          data_calendar:   calDate,
+          local:           c.local ?? null,
+          evento_id:       c.evento_id ?? null,
+          status:          c.data_confirmada_videografo ? 'confirmado' : 'indisponivel',
+          tipo:            'confirmacao' as const,
+        })
+      }
+
+      return entries
     })
 
   // ── 4. Editing activity logs (FUTURE) ─────────────────────────────────────

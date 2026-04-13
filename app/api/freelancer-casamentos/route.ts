@@ -21,10 +21,26 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const { id, ...fields } = await req.json()
+  const { id, confirmado_em, indisponivel_em, confirmado_videografo_em, indisponivel_videografo_em, ...fields } = await req.json()
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
-  const { error } = await db().from('freelancer_casamentos').update(fields).eq('id', id)
+
+  const supabase = db()
+
+  // 1 — save core fields (always works)
+  const { error } = await supabase.from('freelancer_casamentos').update(fields).eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // 2 — save timestamps separately (silently ignored if columns don't exist yet)
+  const tsFields: Record<string, string> = {}
+  if (confirmado_em)              tsFields.confirmado_em              = confirmado_em
+  if (indisponivel_em)            tsFields.indisponivel_em            = indisponivel_em
+  if (confirmado_videografo_em)   tsFields.confirmado_videografo_em   = confirmado_videografo_em
+  if (indisponivel_videografo_em) tsFields.indisponivel_videografo_em = indisponivel_videografo_em
+
+  if (Object.keys(tsFields).length > 0) {
+    await supabase.from('freelancer_casamentos').update(tsFields).eq('id', id).then(() => {}).catch(() => {})
+  }
+
   return NextResponse.json({ ok: true })
 }
 

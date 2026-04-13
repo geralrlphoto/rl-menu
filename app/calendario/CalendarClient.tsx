@@ -26,7 +26,8 @@ export type PreWeddingEvent = {
 export type TeamEntry = {
   id: string
   freelancer_nome: string
-  data_evento: string          // YYYY-MM-DD — the event date
+  data_evento: string          // YYYY-MM-DD — the wedding/event date
+  data_calendar: string        // YYYY-MM-DD — the date shown on calendar (confirmation date when available)
   local: string | null
   evento_id: string | null
   status: 'confirmado' | 'indisponivel'
@@ -107,7 +108,7 @@ export default function CalendarClient({
     // team entries: count unique dates with at least 1 confirmed (not indisponivel)
     const te = teamEntries.filter(t => {
       if (t.status !== 'confirmado') return false
-      const d = new Date(t.data_evento + 'T00:00:00')
+      const d = new Date(t.data_calendar + 'T00:00:00')
       return d.getFullYear() === viewYear && d.getMonth() === i
     }).length
     return ev + pw + te
@@ -199,7 +200,7 @@ export default function CalendarClient({
 
               const dayEvents = isCurrentMonth ? events.filter(e => startsOn(e.data_evento, viewYear, viewMonth, day)) : []
               const dayPws    = isCurrentMonth ? preWeddings.filter(p => startsOn(p.data_evento, viewYear, viewMonth, day)) : []
-              const dayTeam   = isCurrentMonth ? teamEntries.filter(t => startsOn(t.data_evento, viewYear, viewMonth, day)) : []
+              const dayTeam   = isCurrentMonth ? teamEntries.filter(t => startsOn(t.data_calendar, viewYear, viewMonth, day)) : []
 
               const isToday = isCurrentMonth
                 && day === today.getDate()
@@ -407,6 +408,7 @@ export default function CalendarClient({
                     {isIndis ? '✕ Indisponível' : '✓ Confirmado'}
                   </div>
                   <div className="space-y-2 mb-6">
+                    <Row label="Confirmou em">{fmtDate(t.data_calendar)}</Row>
                     <Row label="Data evento">{fmtDate(t.data_evento)}</Row>
                     {t.local && <Row label="Local">{t.local}</Row>}
                   </div>
