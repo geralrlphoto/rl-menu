@@ -1,5 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
-import CalendarClient, { type CalEvent, type PreWeddingEvent } from './CalendarClient'
+import CalendarClient, {
+  type CalEvent,
+  type PreWeddingEvent,
+  type TeamEntry,
+} from './CalendarClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,7 +49,6 @@ export default async function CalendarioPage() {
       body: JSON.stringify(body),
       cache: 'no-store',
     })
-
     if (!res.ok) break
     const data = await res.json()
     allPages.push(...data.results)
@@ -68,35 +71,91 @@ export default async function CalendarioPage() {
     })
     .filter(e => e.data_evento !== null)
 
-  // ── 2. Fetch pre-wedding reservations from Supabase portais ──────────────
+  // ── 2. Pre-wedding reservations ───────────────────────────────────────────
   const { data: portais } = await supabase
     .from('portais')
     .select('referencia, noiva, noivo, settings')
 
   const preWeddings: PreWeddingEvent[] = []
-
   for (const portal of portais ?? []) {
     const s = portal.settings ?? {}
-    const slots: any[]           = s.preWeddingSlots ?? []
+    const slots: any[]              = s.preWeddingSlots ?? []
     const reservedId: string | null = s.preWeddingReservedSlotId ?? null
     if (!reservedId) continue
-
     const slot = slots.find((sl: any) => sl.id === reservedId)
     if (!slot?.date) continue
-
     const noiva: string = s.noiva ?? portal.noiva ?? ''
     const noivo: string = s.noivo ?? portal.noivo ?? ''
     const nomes = [noiva, noivo].filter(Boolean).join(' & ') || portal.referencia
-
     preWeddings.push({
       id:          `pw_${portal.referencia}`,
       referencia:  portal.referencia,
       nomes,
-      data_evento: slot.date,          // 'YYYY-MM-DD'
+      data_evento: slot.date,
       hora:        slot.time ?? null,
       local:       slot.local ?? null,
     })
   }
 
-  return <CalendarClient events={events} preWeddings={preWeddings} />
+  // ── 3. Team confirmations (freelancer_casamentos) ─────────────────────────
+  // Fetch confirmed + unavailable, join with freelancers for the name
+  const { data: confirmacoes } = await supabase
+    .from('freelancer_casamentos')
+    .select(`
+      id,
+      data_casamento,
+      local,
+      evento_id,
+      data_confirmada,
+      indisponivel,
+      data_confirmada_videografo,
+      indisponivel_videografo,
+      freelancer_id,
+      freelancers!inner ( nome )
+    `)
+    .or('data_confirmada.eq.true,indisponivel.eq.true,data_confirmada_videografo.eq.true,indisponivel_videografo.eq.true')
+
+  const teamEntries: TeamEntry[] = (confirmacoes ?? [])
+    .filter(c => c.data_casamento)
+    .map(c => {
+      const nome = (c.freelancers as any)?.nome ?? 'Freelancer'
+      // determine status — confirmado has priority over indisponivel
+      const status: TeamEntry['status'] =
+        c.data_confirmada ? 'confirmado' :
+        c.indisponivel    ? 'indisponivel' :
+        c.data_confirmada_videografo ? 'confirmado' :
+        'indisponivel'
+
+      return {
+        id:          String(c.id),
+        freelancer_nome: nome,
+        data_evento: c.data_casamento as string,
+        local:       c.local ?? null,
+        evento_id:   c.evento_id ?? null,
+        status,
+        tipo:        'confirmacao' as const,
+      }
+    })
+
+  // ── 4. Editing activity logs (FUTURE) ─────────────────────────────────────
+  // When "Edição de Fotos / Álbum / Vídeo" features are built, create a
+  // `freelancer_activity_log` table with columns:
+  //   id, created_at, freelancer_id, freelancer_nome, data_evento,
+  //   local, evento_id, tipo ('edicao_fotos'|'edicao_album'|'edicao_video'),
+  //   status ('iniciado'|'concluido')
+  // Then uncomment and add these to teamEntries:
+  //
+  // const { data: editLogs } = await supabase
+  //   .from('freelancer_activity_log')
+  //   .select('*')
+  // const editEntries: TeamEntry[] = (editLogs ?? []).map(...)
+  // teamEntries.push(...editEntries)
+
+  return (
+    <CalendarClient
+      events={events}
+      preWeddings={preWeddings}
+      teamEntries={teamEntries}
+    />
+  )
 }

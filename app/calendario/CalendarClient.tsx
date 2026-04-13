@@ -23,9 +23,20 @@ export type PreWeddingEvent = {
   local: string | null
 }
 
+export type TeamEntry = {
+  id: string
+  freelancer_nome: string
+  data_evento: string          // YYYY-MM-DD — the event date
+  local: string | null
+  evento_id: string | null
+  status: 'confirmado' | 'indisponivel'
+  tipo: 'confirmacao' | 'edicao_fotos' | 'edicao_album' | 'edicao_video'
+}
+
 type SelectedItem =
   | { kind: 'event'; data: CalEvent }
   | { kind: 'pw'; data: PreWeddingEvent }
+  | { kind: 'team'; data: TeamEntry }
 
 const MESES = [
   'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
@@ -33,18 +44,35 @@ const MESES = [
 ]
 const DIAS_SEMANA = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
 
+const TIPO_LABELS: Record<TeamEntry['tipo'], string> = {
+  confirmacao:   '✓',
+  edicao_fotos:  '🖼',
+  edicao_album:  '📘',
+  edicao_video:  '🎬',
+}
+
+const TIPO_COLORS: Record<TeamEntry['tipo'], { bg: string; border: string; text: string }> = {
+  confirmacao:  { bg: 'rgba(74,222,128,0.12)', border: 'rgba(74,222,128,0.28)', text: '#4ADE80' },
+  edicao_fotos: { bg: 'rgba(251,146,60,0.12)', border: 'rgba(251,146,60,0.28)', text: '#FB923C' },
+  edicao_album: { bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.28)', text: '#A78BFA' },
+  edicao_video: { bg: 'rgba(96,165,250,0.12)', border: 'rgba(96,165,250,0.28)', text: '#60A5FA' },
+}
+
 function startsOn(dateStr: string | null | undefined, year: number, month: number, day: number) {
   if (!dateStr) return false
-  const d = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-  return dateStr.startsWith(d)
+  return dateStr.startsWith(
+    `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+  )
 }
 
 export default function CalendarClient({
   events,
   preWeddings,
+  teamEntries,
 }: {
   events: CalEvent[]
   preWeddings: PreWeddingEvent[]
+  teamEntries: TeamEntry[]
 }) {
   const today = new Date()
   const [viewYear, setViewYear]   = useState(today.getFullYear())
@@ -65,7 +93,7 @@ export default function CalendarClient({
     else setViewMonth(m => m + 1)
   }
 
-  // Month strip — count both types
+  // Month strip — count all types
   const monthCounts = Array.from({ length: 12 }, (_, i) => {
     const ev = events.filter(e => {
       if (!e.data_evento) return false
@@ -76,7 +104,13 @@ export default function CalendarClient({
       const d = new Date(p.data_evento + 'T00:00:00')
       return d.getFullYear() === viewYear && d.getMonth() === i
     }).length
-    return ev + pw
+    // team entries: count unique dates with at least 1 confirmed (not indisponivel)
+    const te = teamEntries.filter(t => {
+      if (t.status !== 'confirmado') return false
+      const d = new Date(t.data_evento + 'T00:00:00')
+      return d.getFullYear() === viewYear && d.getMonth() === i
+    }).length
+    return ev + pw + te
   })
 
   return (
@@ -139,7 +173,6 @@ export default function CalendarClient({
 
         {/* Calendar grid */}
         <div className="border border-white/[0.06] rounded-xl overflow-hidden">
-          {/* Day headers */}
           <div className="grid grid-cols-7 border-b border-white/[0.06]">
             {DIAS_SEMANA.map(d => (
               <div key={d} className="py-2 text-center text-[10px] tracking-[0.2em] text-white/25 uppercase font-medium">
@@ -148,7 +181,6 @@ export default function CalendarClient({
             ))}
           </div>
 
-          {/* Cells */}
           <div className="grid grid-cols-7">
             {Array.from({ length: totalCells }, (_, i) => {
               const col = i % 7
@@ -165,12 +197,9 @@ export default function CalendarClient({
                 day = i - firstDay + 1
               }
 
-              const dayEvents = isCurrentMonth
-                ? events.filter(e => startsOn(e.data_evento, viewYear, viewMonth, day))
-                : []
-              const dayPws = isCurrentMonth
-                ? preWeddings.filter(p => startsOn(p.data_evento, viewYear, viewMonth, day))
-                : []
+              const dayEvents = isCurrentMonth ? events.filter(e => startsOn(e.data_evento, viewYear, viewMonth, day)) : []
+              const dayPws    = isCurrentMonth ? preWeddings.filter(p => startsOn(p.data_evento, viewYear, viewMonth, day)) : []
+              const dayTeam   = isCurrentMonth ? teamEntries.filter(t => startsOn(t.data_evento, viewYear, viewMonth, day)) : []
 
               const isToday = isCurrentMonth
                 && day === today.getDate()
@@ -179,14 +208,23 @@ export default function CalendarClient({
               const isSunday  = col === 0
               const isLastRow = i >= totalCells - 7
               const isLastCol = col === 6
-              const totalItems = dayEvents.length + dayPws.length
+
+              // max visible items
+              const MAX = 4
+              const allItems = [
+                ...dayEvents.map(e => ({ kind: 'event' as const, e })),
+                ...dayPws.map(p => ({ kind: 'pw' as const, p })),
+                ...dayTeam.map(t => ({ kind: 'team' as const, t })),
+              ]
+              const visible  = allItems.slice(0, MAX)
+              const overflow = allItems.length - MAX
 
               return (
                 <div key={i}
-                  className={`relative min-h-[90px] p-1.5 flex flex-col
+                  className={`relative min-h-[96px] p-1.5 flex flex-col
                     ${!isLastRow ? 'border-b border-white/[0.04]' : ''}
                     ${!isLastCol ? 'border-r border-white/[0.04]' : ''}
-                    ${isCurrentMonth ? 'bg-transparent' : 'bg-white/[0.01]'}
+                    ${isCurrentMonth ? '' : 'bg-white/[0.01]'}
                   `}>
                   {/* Day number */}
                   <div className={`w-6 h-6 flex items-center justify-center rounded-full text-xs mb-1 flex-shrink-0
@@ -198,29 +236,50 @@ export default function CalendarClient({
                     {day}
                   </div>
 
-                  <div className="flex flex-col gap-0.5 overflow-hidden">
-                    {/* Wedding events — gold */}
-                    {dayEvents.slice(0, 2).map(ev => (
-                      <button key={ev.id} onClick={() => setSelected({ kind: 'event', data: ev })}
-                        className="text-left w-full">
-                        <div className="px-1.5 py-0.5 rounded text-[10px] leading-tight bg-[#C9A84C]/15 border border-[#C9A84C]/20 hover:bg-[#C9A84C]/25 transition-colors truncate text-[#C9A84C]">
-                          {ev.cliente || ev.referencia}
-                        </div>
-                      </button>
-                    ))}
+                  <div className="flex flex-col gap-0.5 overflow-hidden flex-1">
+                    {visible.map((item, idx) => {
+                      if (item.kind === 'event') {
+                        const ev = item.e
+                        return (
+                          <button key={`ev-${ev.id}`} onClick={() => setSelected({ kind: 'event', data: ev })} className="text-left w-full">
+                            <div className="px-1.5 py-0.5 rounded text-[10px] leading-tight truncate"
+                              style={{ background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.25)', color: '#C9A84C' }}>
+                              {ev.cliente || ev.referencia}
+                            </div>
+                          </button>
+                        )
+                      }
+                      if (item.kind === 'pw') {
+                        const pw = item.p
+                        return (
+                          <button key={`pw-${pw.id}`} onClick={() => setSelected({ kind: 'pw', data: pw })} className="text-left w-full">
+                            <div className="px-1.5 py-0.5 rounded text-[10px] leading-tight truncate"
+                              style={{ background: 'rgba(79,195,195,0.10)', border: '1px solid rgba(79,195,195,0.25)', color: '#4FC3C3' }}>
+                              📷 {pw.nomes}
+                            </div>
+                          </button>
+                        )
+                      }
+                      // team entry
+                      const t = item.t
+                      const col = TIPO_COLORS[t.tipo]
+                      const isIndis = t.status === 'indisponivel'
+                      return (
+                        <button key={`te-${t.id}`} onClick={() => setSelected({ kind: 'team', data: t })} className="text-left w-full">
+                          <div className="px-1.5 py-0.5 rounded text-[10px] leading-tight truncate"
+                            style={{
+                              background: isIndis ? 'rgba(239,68,68,0.10)' : col.bg,
+                              border: `1px solid ${isIndis ? 'rgba(239,68,68,0.25)' : col.border}`,
+                              color: isIndis ? '#F87171' : col.text,
+                            }}>
+                            {isIndis ? '✕' : TIPO_LABELS[t.tipo]} {t.freelancer_nome.split(' ')[0]}
+                          </div>
+                        </button>
+                      )
+                    })}
 
-                    {/* Pre-wedding events — teal */}
-                    {dayPws.slice(0, dayEvents.length >= 2 ? 1 : 2).map(pw => (
-                      <button key={pw.id} onClick={() => setSelected({ kind: 'pw', data: pw })}
-                        className="text-left w-full">
-                        <div className="px-1.5 py-0.5 rounded text-[10px] leading-tight bg-[#4FC3C3]/10 border border-[#4FC3C3]/25 hover:bg-[#4FC3C3]/20 transition-colors truncate text-[#4FC3C3]">
-                          📷 {pw.nomes}
-                        </div>
-                      </button>
-                    ))}
-
-                    {totalItems > 3 && (
-                      <div className="text-[9px] text-white/30 px-1">+{totalItems - 3}</div>
+                    {overflow > 0 && (
+                      <div className="text-[9px] text-white/30 px-1">+{overflow} mais</div>
                     )}
                   </div>
                 </div>
@@ -230,21 +289,40 @@ export default function CalendarClient({
         </div>
 
         {/* Legend */}
-        <div className="mt-4 flex flex-wrap items-center gap-4 text-[10px] text-white/25 tracking-wider">
+        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-[10px] text-white/30 tracking-wider">
           <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-[#C9A84C]" />
-            Hoje
+            <span className="w-3 h-3 rounded bg-[#C9A84C]" />Hoje
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-[#C9A84C]/15 border border-[#C9A84C]/20" />
-            Casamento / Evento
+            <span className="w-3 h-3 rounded" style={{ background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.25)' }} />
+            Casamento
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-[#4FC3C3]/10 border border-[#4FC3C3]/25" />
+            <span className="w-3 h-3 rounded" style={{ background: 'rgba(79,195,195,0.10)', border: '1px solid rgba(79,195,195,0.25)' }} />
             Pré-Wedding
           </span>
-          <span className="ml-auto">
-            {events.length} eventos · {preWeddings.length} pré-weddings
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded" style={{ background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.28)' }} />
+            ✓ Confirmado
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded" style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.25)' }} />
+            ✕ Indisponível
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded" style={{ background: 'rgba(251,146,60,0.12)', border: '1px solid rgba(251,146,60,0.28)' }} />
+            🖼 Ed. Fotos
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded" style={{ background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.28)' }} />
+            📘 Ed. Álbum
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded" style={{ background: 'rgba(96,165,250,0.12)', border: '1px solid rgba(96,165,250,0.28)' }} />
+            🎬 Ed. Vídeo
+          </span>
+          <span className="ml-auto text-white/20">
+            {events.length} eventos · {preWeddings.length} pré-weddings · {teamEntries.filter(t => t.status === 'confirmado').length} confirmações
           </span>
         </div>
       </div>
@@ -254,66 +332,95 @@ export default function CalendarClient({
         <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-4"
           onClick={() => setSelected(null)}>
           <div className="w-full max-w-md bg-[#111] rounded-2xl p-6"
-            style={{ border: `1px solid ${selected.kind === 'pw' ? 'rgba(79,195,195,0.25)' : 'rgba(201,168,76,0.2)'}` }}
+            style={{
+              border: `1px solid ${
+                selected.kind === 'pw'   ? 'rgba(79,195,195,0.25)' :
+                selected.kind === 'team' ? (
+                  selected.data.status === 'indisponivel'
+                    ? 'rgba(239,68,68,0.25)'
+                    : TIPO_COLORS[selected.data.tipo].border
+                ) : 'rgba(201,168,76,0.2)'
+              }`
+            }}
             onClick={e => e.stopPropagation()}>
 
-            {selected.kind === 'event' ? (
+            {selected.kind === 'event' && (
               <>
-                <div className="text-[10px] tracking-[0.4em] text-[#C9A84C]/50 uppercase mb-1">
-                  {selected.data.referencia}
-                </div>
-                <h2 className="text-xl font-light text-white tracking-wide mb-4">
-                  {selected.data.cliente || '—'}
-                </h2>
+                <div className="text-[10px] tracking-[0.4em] text-[#C9A84C]/50 uppercase mb-1">{selected.data.referencia}</div>
+                <h2 className="text-xl font-light text-white tracking-wide mb-4">{selected.data.cliente || '—'}</h2>
                 <div className="space-y-2 mb-6">
-                  {selected.data.data_evento && (
-                    <Row label="Data">
-                      {new Date(selected.data.data_evento + 'T00:00:00').toLocaleDateString('pt-PT', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
-                    </Row>
-                  )}
+                  {selected.data.data_evento && <Row label="Data">{fmtDate(selected.data.data_evento)}</Row>}
                   {selected.data.local && <Row label="Local">{selected.data.local}</Row>}
                   {selected.data.tipo_evento?.length > 0 && <Row label="Tipo">{selected.data.tipo_evento.join(', ')}</Row>}
                   {selected.data.fotografo?.length > 0 && <Row label="Foto">{selected.data.fotografo.join(', ')}</Row>}
                   {selected.data.videografo?.length > 0 && <Row label="Vídeo">{selected.data.videografo.join(', ')}</Row>}
                 </div>
-                <div className="flex gap-3">
+                <ModalActions>
                   <Link href={`/eventos-2026/${selected.data.id}`}
-                    className="flex-1 text-center py-2.5 bg-[#C9A84C]/10 border border-[#C9A84C]/30 rounded-xl text-sm text-[#C9A84C] tracking-wider hover:bg-[#C9A84C]/20 transition-colors">
+                    className="flex-1 text-center py-2.5 rounded-xl text-sm tracking-wider transition-colors"
+                    style={{ background: 'rgba(201,168,76,0.10)', border: '1px solid rgba(201,168,76,0.30)', color: '#C9A84C' }}>
                     Ver Evento
                   </Link>
-                  <button onClick={() => setSelected(null)}
-                    className="px-4 py-2.5 border border-white/10 rounded-xl text-sm text-white/40 hover:text-white/70 transition-colors">
-                    Fechar
-                  </button>
-                </div>
+                  <CloseBtn onClose={() => setSelected(null)} />
+                </ModalActions>
               </>
-            ) : (
+            )}
+
+            {selected.kind === 'pw' && (
               <>
-                <div className="text-[10px] tracking-[0.4em] text-[#4FC3C3]/50 uppercase mb-1">
-                  PRÉ-WEDDING · {selected.data.referencia}
-                </div>
-                <h2 className="text-xl font-light text-white tracking-wide mb-4">
-                  {selected.data.nomes}
-                </h2>
+                <div className="text-[10px] tracking-[0.4em] text-[#4FC3C3]/50 uppercase mb-1">PRÉ-WEDDING · {selected.data.referencia}</div>
+                <h2 className="text-xl font-light text-white tracking-wide mb-4">{selected.data.nomes}</h2>
                 <div className="space-y-2 mb-6">
-                  <Row label="Data">
-                    {new Date(selected.data.data_evento + 'T00:00:00').toLocaleDateString('pt-PT', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
-                  </Row>
+                  <Row label="Data">{fmtDate(selected.data.data_evento)}</Row>
                   {selected.data.hora && <Row label="Hora">{selected.data.hora}</Row>}
                   {selected.data.local && <Row label="Local">{selected.data.local}</Row>}
                 </div>
-                <div className="flex gap-3">
-                  <Link href={`/pre-wedding`}
-                    className="flex-1 text-center py-2.5 bg-[#4FC3C3]/10 border border-[#4FC3C3]/30 rounded-xl text-sm text-[#4FC3C3] tracking-wider hover:bg-[#4FC3C3]/20 transition-colors">
+                <ModalActions>
+                  <Link href="/pre-wedding"
+                    className="flex-1 text-center py-2.5 rounded-xl text-sm tracking-wider transition-colors"
+                    style={{ background: 'rgba(79,195,195,0.10)', border: '1px solid rgba(79,195,195,0.30)', color: '#4FC3C3' }}>
                     Ver Pré-Wedding
                   </Link>
-                  <button onClick={() => setSelected(null)}
-                    className="px-4 py-2.5 border border-white/10 rounded-xl text-sm text-white/40 hover:text-white/70 transition-colors">
-                    Fechar
-                  </button>
-                </div>
+                  <CloseBtn onClose={() => setSelected(null)} />
+                </ModalActions>
               </>
             )}
+
+            {selected.kind === 'team' && (() => {
+              const t = selected.data
+              const isIndis = t.status === 'indisponivel'
+              const c = isIndis
+                ? { text: '#F87171', border: 'rgba(239,68,68,0.30)', bg: 'rgba(239,68,68,0.10)' }
+                : { text: TIPO_COLORS[t.tipo].text, border: TIPO_COLORS[t.tipo].border, bg: TIPO_COLORS[t.tipo].bg }
+              const tipoLabel = t.tipo === 'confirmacao' ? 'CONFIRMAÇÃO DE PRESENÇA'
+                : t.tipo === 'edicao_fotos'  ? 'EDIÇÃO DE FOTOS'
+                : t.tipo === 'edicao_album'  ? 'EDIÇÃO DE ÁLBUM'
+                : 'EDIÇÃO DE VÍDEO'
+              return (
+                <>
+                  <div className="text-[10px] tracking-[0.4em] uppercase mb-1" style={{ color: c.text + '80' }}>
+                    {tipoLabel}
+                  </div>
+                  <h2 className="text-xl font-light text-white tracking-wide mb-1">{t.freelancer_nome}</h2>
+                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs mb-4"
+                    style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.text }}>
+                    {isIndis ? '✕ Indisponível' : '✓ Confirmado'}
+                  </div>
+                  <div className="space-y-2 mb-6">
+                    <Row label="Data evento">{fmtDate(t.data_evento)}</Row>
+                    {t.local && <Row label="Local">{t.local}</Row>}
+                  </div>
+                  <ModalActions>
+                    <Link href="/freelancers"
+                      className="flex-1 text-center py-2.5 rounded-xl text-sm tracking-wider transition-colors"
+                      style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.text }}>
+                      Ver Equipa
+                    </Link>
+                    <CloseBtn onClose={() => setSelected(null)} />
+                  </ModalActions>
+                </>
+              )
+            })()}
           </div>
         </div>
       )}
@@ -321,11 +428,30 @@ export default function CalendarClient({
   )
 }
 
+function fmtDate(d: string) {
+  return new Date(d + 'T00:00:00').toLocaleDateString('pt-PT', {
+    weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
+  })
+}
+
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-start gap-3">
-      <span className="text-[10px] tracking-[0.3em] text-white/30 uppercase w-16 pt-0.5 flex-shrink-0">{label}</span>
+      <span className="text-[10px] tracking-[0.3em] text-white/30 uppercase w-20 pt-0.5 flex-shrink-0">{label}</span>
       <span className="text-sm text-white/70">{children}</span>
     </div>
+  )
+}
+
+function ModalActions({ children }: { children: React.ReactNode }) {
+  return <div className="flex gap-3">{children}</div>
+}
+
+function CloseBtn({ onClose }: { onClose: () => void }) {
+  return (
+    <button onClick={onClose}
+      className="px-4 py-2.5 border border-white/10 rounded-xl text-sm text-white/40 hover:text-white/70 transition-colors">
+      Fechar
+    </button>
   )
 }
