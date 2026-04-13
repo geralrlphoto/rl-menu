@@ -288,7 +288,7 @@ export async function POST(req: NextRequest) {
     const nome_noivos     = getField(fields, 'Nome dos Noivos', 'NOME DOS NOIVOS', 'Nome', 'NOME') ?? 'Noivos'
     const referencia      = getField(fields, 'Referência', 'REFERÊNCIA', 'Referencia', 'REFERENCIA', 'Referência do Evento', 'REFERÊNCIA DO EVENTO')
     const email_cliente   = getField(fields, 'Email', 'EMAIL', 'E-mail', 'E-MAIL', 'Email do Cliente', 'EMAIL DO CLIENTE')
-    const valor           = getField(fields, 'Valor', 'VALOR', 'Valor Pago', 'VALOR PAGO', 'Montante', 'MONTANTE')
+    const valor           = getField(fields, 'Valor a Liquidar', 'VALOR A LIQUIDAR', 'Valor', 'VALOR', 'Valor Pago', 'VALOR PAGO', 'Montante', 'MONTANTE')
     const forma_pagamento = getField(fields, 'Forma de Pagamento', 'FORMA DE PAGAMENTO', 'Método de Pagamento', 'MÉTODO DE PAGAMENTO')
     const data_pagamento  = getField(fields, 'Data', 'DATA', 'Data de Pagamento', 'DATA DE PAGAMENTO')
     const notas           = getField(fields, 'Notas', 'NOTAS', 'Observações', 'OBSERVAÇÕES', 'Nota', 'NOTA')
