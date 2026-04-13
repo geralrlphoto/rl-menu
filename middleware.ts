@@ -22,6 +22,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/api/send-admin-notification') ||
     pathname.startsWith('/api/webhook-tally-pagamento') ||
     pathname.startsWith('/api/evento-by-ref') ||
+    pathname.startsWith('/api/webhook-tally-cps') ||
     pathname.startsWith('/portal-cliente') ||
     pathname.startsWith('/freelancer-view')
   ) {
