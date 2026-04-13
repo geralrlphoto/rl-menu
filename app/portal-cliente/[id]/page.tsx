@@ -938,7 +938,12 @@ function PortalSubPageContent() {
       setPortalFoto(ps.valorFoto ?? null)
       setPortalVideo(ps.valorVideo ?? null)
       setPortalExtras(ps.valorExtras ?? null)
-      setGuiaLinks({ ...DEFAULT_GUIA_LINKS, ...(ps.guiaLinks ?? {}) })
+      const loadedGuiaLinks = { ...(ps.guiaLinks ?? {}) }
+      // Migrate old payment URL to correct one
+      if (loadedGuiaLinks.pagamentosRegistoUrl === 'https://tally.so/r/81Gxyo') {
+        loadedGuiaLinks.pagamentosRegistoUrl = 'https://tally.so/r/A72PQB'
+      }
+      setGuiaLinks({ ...DEFAULT_GUIA_LINKS, ...loadedGuiaLinks })
       setParceiros(ps.parceiros ?? [])
       setPortalSettingsBlockId(settingsBlockIdVal)
       setSubpageHeaderUrl(ps.subpageHeaderUrl ?? '')
