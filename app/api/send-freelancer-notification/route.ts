@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   // Fetch all freelancers and match by name case-insensitively
   const { data: allFreelancers, error } = await supabase()
     .from('freelancers')
-    .select('nome, email')
+    .select('id, nome, email')
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
@@ -48,81 +48,69 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         from: 'RL Photo.Video <geral@rlphotovideo.pt>',
         to: [freelancer.email!],
-        subject: `Notificação de Serviço — ${referencia ?? 'Novo Evento'}`,
+        subject: `Tens novidades no portal — ${referencia ?? 'Novo Evento'}`,
         html: `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#0e0b06;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0e0b06;padding:40px 16px;">
+<body style="margin:0;padding:0;background:#1a1510;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#1a1510;padding:40px 16px;">
     <tr>
       <td align="center">
-        <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;border:1px solid #7a6340;background:#110e08;">
+        <table width="540" cellpadding="0" cellspacing="0" style="max-width:540px;width:100%;border:1px solid #5a4a2a;background:#130f0a;">
           <tr>
-            <td style="padding:56px 48px 48px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
+            <td style="padding:56px 48px 52px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
 
-              <!-- Logo -->
-              <div style="margin:0 0 28px;display:inline-block;width:64px;height:64px;border-radius:50%;border:1px solid #7a6340;line-height:64px;text-align:center;">
-                <span style="font-size:20px;font-style:italic;color:#c9a96e;">RL</span>
+              <!-- Logo circular -->
+              <div style="margin:0 auto 32px;width:72px;height:72px;border-radius:50%;border:1px solid #7a6340;display:table;text-align:center;">
+                <div style="display:table-cell;vertical-align:middle;">
+                  <span style="font-size:11px;letter-spacing:0.15em;color:#c9a96e;font-style:italic;">RL</span><br>
+                  <span style="font-size:7px;letter-spacing:0.12em;color:#8a7450;text-transform:uppercase;">PHOTO<br>VIDEO</span>
+                </div>
               </div>
 
-              <p style="margin:0 0 20px;font-size:9px;letter-spacing:0.4em;color:#8a7450;text-transform:uppercase;">
-                NOTIFICAÇÃO DE SERVIÇO
+              <!-- EQUIPA RL -->
+              <p style="margin:0 0 28px;font-size:9px;letter-spacing:0.45em;color:#8a7450;text-transform:uppercase;">
+                EQUIPA RL
               </p>
 
-              <h1 style="margin:0;font-size:36px;font-weight:400;color:#ffffff;line-height:1.1;">
-                Olá,
-              </h1>
-              <h1 style="margin:0 0 16px;font-size:36px;font-weight:400;font-style:italic;color:#c9a96e;line-height:1.2;">
-                ${freelancer.nome.split(' ')[0]}
-              </h1>
-              <p style="margin:0 0 28px;font-size:15px;font-style:italic;color:#c9a96e;letter-spacing:0.02em;">
-                tens um novo serviço atribuído.
+              <!-- Olá! -->
+              <p style="margin:0;font-size:42px;font-weight:400;font-style:italic;color:#c9a96e;line-height:1.1;letter-spacing:-0.01em;">
+                Olá!
               </p>
 
-              <div style="margin:0 0 32px;color:#7a6340;font-size:14px;letter-spacing:0.3em;">
-                &#8212;&nbsp;&nbsp;·&nbsp;◆&nbsp;·&nbsp;&nbsp;&#8212;
+              <!-- Tens novidades no portal. -->
+              <p style="margin:0 0 4px;font-size:38px;font-weight:700;color:#ffffff;line-height:1.15;letter-spacing:-0.01em;">
+                Tens
+              </p>
+              <p style="margin:0;font-size:38px;font-weight:400;font-style:italic;color:#c9a96e;line-height:1.2;">
+                novidades
+              </p>
+              <p style="margin:0 0 32px;font-size:38px;font-weight:400;font-style:italic;color:#c9a96e;line-height:1.2;">
+                no portal.
+              </p>
+
+              <!-- Divider -->
+              <div style="margin:0 0 32px;color:#7a6340;font-size:13px;letter-spacing:0.3em;">
+                &#8212;&nbsp;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&nbsp;&#8212;
               </div>
 
-              <!-- Details table -->
-              <table cellpadding="0" cellspacing="0" style="margin:0 auto 32px;border:1px solid #7a6340;width:100%;max-width:380px;">
-                <tr>
-                  <td style="padding:24px 28px;">
-                    ${referencia ? `
-                    <p style="margin:0 0 16px;text-align:left;">
-                      <span style="font-size:9px;letter-spacing:0.35em;color:#8a7450;text-transform:uppercase;display:block;margin-bottom:4px;">Referência</span>
-                      <span style="font-size:15px;font-family:monospace;color:#c9a96e;letter-spacing:0.1em;">${referencia}</span>
-                    </p>` : ''}
-                    <p style="margin:0 0 16px;text-align:left;">
-                      <span style="font-size:9px;letter-spacing:0.35em;color:#8a7450;text-transform:uppercase;display:block;margin-bottom:4px;">Casal</span>
-                      <span style="font-size:15px;color:#ffffff;">${nomesCasal}</span>
-                    </p>
-                    <p style="margin:0 0 16px;text-align:left;">
-                      <span style="font-size:9px;letter-spacing:0.35em;color:#8a7450;text-transform:uppercase;display:block;margin-bottom:4px;">Data do Evento</span>
-                      <span style="font-size:14px;color:#d4c9b0;">${dataFormatada}</span>
-                    </p>
-                    ${local ? `
-                    <p style="margin:0 0 16px;text-align:left;">
-                      <span style="font-size:9px;letter-spacing:0.35em;color:#8a7450;text-transform:uppercase;display:block;margin-bottom:4px;">Local</span>
-                      <span style="font-size:14px;color:#d4c9b0;">${local}</span>
-                    </p>` : ''}
-                    <p style="margin:0;text-align:left;">
-                      <span style="font-size:9px;letter-spacing:0.35em;color:#8a7450;text-transform:uppercase;display:block;margin-bottom:4px;">Função</span>
-                      <span style="font-size:14px;color:#c9a96e;font-style:italic;">${tipoLabel}</span>
-                    </p>
-                  </td>
-                </tr>
-              </table>
-
-              <p style="margin:0 0 32px;font-size:13px;color:#8a7450;line-height:1.7;text-align:center;">
-                Mais detalhes serão partilhados em breve.<br>
-                Qualquer dúvida, entra em contacto connosco.
+              <!-- Body text -->
+              <p style="margin:0 0 40px;font-size:15px;color:#c9b88a;line-height:1.75;text-align:center;font-family:Georgia,'Times New Roman',serif;">
+                Existem <strong>atualizações importantes</strong><br>
+                que precisam da tua atenção.<br>
+                Consulta o teu portal para ficares<br>
+                a par de <strong>tudo o que é necessário</strong>.
               </p>
 
-              <p style="margin:0 0 4px;font-size:9px;letter-spacing:0.35em;color:#5a4f3a;text-transform:uppercase;">
+              <!-- Button -->
+              <a href="https://rl-menu-lake.vercel.app/freelancer-view/${freelancer.id}"
+                style="display:inline-block;padding:16px 48px;border:1px solid #c9a96e;color:#c9a96e;font-family:Georgia,'Times New Roman',serif;font-size:16px;font-style:italic;letter-spacing:0.05em;text-decoration:none;">
+                Consultar Portal
+              </a>
+
+              <!-- Footer -->
+              <p style="margin:48px 0 0;font-size:9px;letter-spacing:0.4em;color:#5a4a30;text-transform:uppercase;">
                 RL PHOTO &middot; VIDEO
-              </p>
-              <p style="margin:0;font-size:9px;letter-spacing:0.2em;color:#4a4030;text-transform:uppercase;">
-                Wedding Moments
               </p>
 
             </td>
