@@ -114,12 +114,10 @@ export async function POST(req: NextRequest) {
     }
 
     // ── 1. Supabase ───────────────────────────────────────────────────────────
-    const row: any = { ...mapped }
-    if (body.data?.responseId) row.id = body.data.responseId
-
+    // Let Supabase auto-generate the UUID (Tally responseId is not a valid UUID)
     const { data: saved, error } = await db()
       .from('fotos_selecao')
-      .upsert(row, { onConflict: row.id ? 'id' : undefined } as any)
+      .insert(mapped)
       .select()
       .single()
 
