@@ -133,11 +133,17 @@ export default function FreelancersPage() {
           <h1 className="text-xl font-bold tracking-widest text-gold uppercase mt-1">Equipas de Trabalho</h1>
           <div className="mt-2 h-px w-12 bg-gold/40" />
         </div>
-        <button
-          onClick={() => { setShowAdd(true); setEditingId(null); setForm(EMPTY_FORM) }}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-xs font-semibold tracking-widest hover:bg-gold/20 transition-all uppercase">
-          + Adicionar
-        </button>
+        <div className="flex items-center gap-3">
+          <Link href="/freelancers/novos"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-white/40 text-xs font-semibold tracking-widest hover:bg-white/[0.06] hover:text-white/70 transition-all uppercase">
+            Novos Freelancers
+          </Link>
+          <button
+            onClick={() => { setShowAdd(true); setEditingId(null); setForm(EMPTY_FORM) }}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-xs font-semibold tracking-widest hover:bg-gold/20 transition-all uppercase">
+            + Adicionar
+          </button>
+        </div>
       </div>
 
       {/* Add form */}
