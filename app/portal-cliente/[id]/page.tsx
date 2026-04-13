@@ -1687,6 +1687,22 @@ function PortalSubPageContent() {
                               const newSettings = { ...portalSettingsObj, preWeddingReservedSlotId: slotId, preWeddingReservedAt: new Date().toISOString() }
                               await savePortalSettings(newSettings)
                               setReservedSlotId(slotId)
+                              // Notificação ao admin
+                              const slot = preWeddingSlots.find(s => s.id === slotId)
+                              const nomeNoivos = portalSettingsObj.noiva && portalSettingsObj.noivo
+                                ? `${portalSettingsObj.noiva} & ${portalSettingsObj.noivo}`
+                                : portalSettingsObj.noiva ?? portalSettingsObj.noivo ?? refParam ?? 'Noivos'
+                              fetch('/api/send-admin-notification', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  tipo: 'prewedding_reserva',
+                                  nome_noivos: nomeNoivos,
+                                  referencia: refParam ?? portalSettingsObj.referencia ?? null,
+                                  data_evento: slot?.date ?? null,
+                                  local: slot ? `${slot.time}${slot.local ? ' · ' + slot.local : ''}` : null,
+                                }),
+                              }).catch(() => {})
                             } finally { setReservingSlotId(null) }
                           }}
                         />
