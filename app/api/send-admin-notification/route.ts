@@ -1,8 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const ADMIN_EMAIL = 'geral.rlphoto@gmail.com'
-const IMG_BASE = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
-const ADMIN_URL = 'https://rl-menu-lake.vercel.app'
+const ADMIN_EMAIL  = 'geral.rlphoto@gmail.com'
+const IMG_BASE     = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
+const ADMIN_URL    = 'https://rl-menu-lake.vercel.app'
+const NOTION_TOKEN = process.env.NOTION_TOKEN!
+const EVENTOS_DB   = '1ad220116d8a804b839ddc36f1e7ecf1'
+
+// Busca email_noiva diretamente no Notion pelo campo "E-mail da noiva"
+async function getEmailNoivaFromNotion(referencia: string): Promise<string | null> {
+  try {
+    const res = await fetch(`https://api.notion.com/v1/databases/${EVENTOS_DB}/query`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${NOTION_TOKEN}`,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        filter: { property: 'REFERÊNCIA DO EVENTO', title: { equals: referencia } },
+        page_size: 1,
+      }),
+      cache: 'no-store',
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+    const page = data.results?.[0]
+    if (!page) return null
+    return page.properties?.['E-mail da noiva']?.email ?? null
+  } catch {
+    return null
+  }
+}
 
 function buildAlbumAprovadoEmail(nome_noivos: string, referencia: string): string {
   return `<!DOCTYPE html>
@@ -90,17 +118,11 @@ export async function POST(req: NextRequest) {
 
   // ── Pré-wedding reservado ─────────────────────────────────────────────────
   if (tipo === 'prewedding_reserva') {
-    // Buscar email da noiva na ficha Notion se não vier no payload
+    // Buscar email da noiva diretamente na ficha Notion
     let emailNoivaFinal = email_noiva ?? null
     if (!emailNoivaFinal && referencia) {
-      try {
-        const eventoRes = await fetch(`${ADMIN_URL}/api/evento-by-ref?ref=${encodeURIComponent(referencia)}`, { cache: 'no-store' })
-        const eventoData = await eventoRes.json()
-        emailNoivaFinal = eventoData?.evento?.email_noiva ?? null
-        console.log('[prewedding_reserva] email_noiva da ficha Notion:', emailNoivaFinal)
-      } catch (e) {
-        console.error('[prewedding_reserva] Erro ao buscar ficha:', e)
-      }
+      emailNoivaFinal = await getEmailNoivaFromNotion(referencia)
+      console.log('[prewedding_reserva] email_noiva da ficha Notion:', emailNoivaFinal)
     }
     const dataFormatada = data_evento
       ? new Date(data_evento + 'T12:00:00').toLocaleDateString('pt-PT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
