@@ -1207,6 +1207,7 @@ export default function EventoPage() {
   const [weddingFilmEnviada, setWeddingFilmEnviada] = useState<string | null>(null)
   const [sameDayEditEnviada, setSameDayEditEnviada] = useState<string | null>(null)
   const [teaserEnviada, setTeaserEnviada] = useState<string | null>(null)
+  const [portalEnviada, setPortalEnviada] = useState<string | null>(null)
   const [videoActionUrls, setVideoActionUrls] = useState<Record<string, string>>({ video_prewedding: '', wedding_film: '', same_day_edit: '', teaser: '' })
 
   function loadPagamentos(ref: string, showRefresh = false) {
@@ -1319,6 +1320,7 @@ export default function EventoPage() {
               if (s.wedding_film_enviada)     setWeddingFilmEnviada(s.wedding_film_enviada)
               if (s.same_day_edit_enviada)    setSameDayEditEnviada(s.same_day_edit_enviada)
               if (s.teaser_enviada)           setTeaserEnviada(s.teaser_enviada)
+              if (s.portal_enviada)           setPortalEnviada(s.portal_enviada)
               setVideoActionUrls({ video_prewedding: s.video_prewedding_url ?? '', wedding_film: s.wedding_film_url ?? '', same_day_edit: s.same_day_edit_url ?? '', teaser: s.teaser_url ?? '' })
               // Auto-populate URLs from portal calloutLinks (FOTOGRAFIAS page cards)
               const calloutLinks = s.calloutLinks ?? {}
@@ -1976,6 +1978,71 @@ export default function EventoPage() {
                 </div>
               )
             })}
+          </div>
+        </div>
+
+        {/* ── Outras Ações ── */}
+        <div className="rounded-2xl p-6 flex flex-col gap-4"
+          style={{ background: 'rgba(40,180,100,0.03)', border: '1px solid rgba(40,180,100,0.18)', boxShadow: '0 0 24px rgba(40,180,100,0.07), 0 0 6px rgba(40,180,100,0.05)' }}>
+          <h2 className="text-[10px] tracking-[0.35em] uppercase" style={{ color: 'rgba(80,200,130,0.75)' }}>Outras Ações</h2>
+          <div className="flex flex-col gap-2">
+            {/* Enviar Portal */}
+            <div>
+              <div className="flex items-center justify-between gap-3 mb-0">
+                <div>
+                  <p className="text-sm text-white/70">Enviar Portal</p>
+                  <p className="text-xs mt-0.5 font-mono">
+                    {portalEnviada
+                      ? <span className="text-green-400/70">{new Date(portalEnviada).toLocaleDateString('pt-PT')}</span>
+                      : <span className="text-white/25">Pendente</span>
+                    }
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {portalEnviada && (
+                    <button
+                      onClick={async () => {
+                        if (!evento?.referencia) return
+                        await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { portal_enviada: null } } }) })
+                        setPortalEnviada(null)
+                      }}
+                      className="w-6 h-6 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-all text-xs"
+                      title="Repor como Pendente"
+                    >✕</button>
+                  )}
+                  <button
+                    onClick={async () => {
+                      if (!evento?.referencia || !evento?.email_noiva) return
+                      const today = new Date().toISOString().split('T')[0]
+                      await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { portal_enviada: today } } }) })
+                      setPortalEnviada(today)
+                      const pwRes = await fetch(`/api/portais-password?ref=${encodeURIComponent(evento.referencia)}`)
+                      const pwData = await pwRes.json()
+                      await fetch('/api/send-portal-email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          email_noiva: evento.email_noiva,
+                          nome_noiva: evento.nome_noiva,
+                          nome_noivo: evento.nome_noivo,
+                          referencia: evento.referencia,
+                          password: pwData.password ?? '',
+                          portal_url: `https://rl-menu-lake.vercel.app/portal-cliente/ref/${encodeURIComponent(evento.referencia)}`,
+                        }),
+                      })
+                    }}
+                    className={`px-5 py-2.5 rounded-xl text-xs font-semibold tracking-[0.2em] uppercase border transition-all ${
+                      portalEnviada ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                      : !evento?.email_noiva ? 'bg-white/[0.03] text-white/20 border-white/10 cursor-not-allowed'
+                      : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25 hover:bg-emerald-500/25'
+                    }`}
+                    disabled={!evento?.email_noiva}
+                  >
+                    {portalEnviada ? '✓ Enviado' : 'Enviar Portal'}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
