@@ -98,45 +98,46 @@ export default async function CalendarioPage() {
   }
 
   // ── 3. Team confirmations (freelancer_casamentos) ─────────────────────────
-  const { data: confirmacoes } = await supabase
-    .from('freelancer_casamentos')
-    .select(`
-      id,
-      data_casamento,
-      local,
-      evento_id,
-      data_confirmada,
-      indisponivel,
-      data_confirmada_videografo,
-      indisponivel_videografo,
-      confirmado_em,
-      indisponivel_em,
-      confirmado_videografo_em,
-      indisponivel_videografo_em,
-      freelancer_id,
-      freelancers!inner ( nome )
-    `)
-    .or('data_confirmada.eq.true,indisponivel.eq.true,data_confirmada_videografo.eq.true,indisponivel_videografo.eq.true')
+  // Use direct REST fetch to bypass any JS-client schema-cache issues with new columns
+  const supabaseUrl  = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const serviceKey   = process.env.SUPABASE_SERVICE_ROLE_KEY!
+  const fcRes = await fetch(
+    `${supabaseUrl}/rest/v1/freelancer_casamentos` +
+    `?select=id,data_casamento,local,evento_id,data_confirmada,indisponivel,` +
+    `data_confirmada_videografo,indisponivel_videografo,` +
+    `confirmado_em,indisponivel_em,confirmado_videografo_em,indisponivel_videografo_em,` +
+    `freelancer_id,freelancers!inner(nome)` +
+    `&or=(data_confirmada.eq.true,indisponivel.eq.true,data_confirmada_videografo.eq.true,indisponivel_videografo.eq.true)`,
+    {
+      headers: {
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
+        Accept: 'application/json',
+      },
+      cache: 'no-store',
+    }
+  )
+  const confirmacoes: any[] = fcRes.ok ? await fcRes.json() : []
 
-  const teamEntries: TeamEntry[] = (confirmacoes ?? [])
-    .filter(c => c.data_casamento)
-    .flatMap(c => {
-      const nome = (c.freelancers as any)?.nome ?? 'Freelancer'
+  const teamEntries: TeamEntry[] = confirmacoes
+    .filter((c: any) => c.data_casamento)
+    .flatMap((c: any) => {
+      const nome = c.freelancers?.nome ?? 'Freelancer'
       const entries: TeamEntry[] = []
 
       // fotógrafo confirmado
       if (c.data_confirmada || c.indisponivel) {
         const tsRaw: string | null = c.data_confirmada
-          ? (c as any).confirmado_em ?? null
-          : (c as any).indisponivel_em ?? null
+          ? c.confirmado_em ?? null
+          : c.indisponivel_em ?? null
         // Use timestamp date if available, otherwise fall back to event date
         const calDate = tsRaw
           ? tsRaw.split('T')[0]
-          : c.data_casamento as string
+          : c.data_casamento
         entries.push({
           id:              `${c.id}_foto`,
           freelancer_nome: nome,
-          data_evento:     c.data_casamento as string,
+          data_evento:     c.data_casamento,
           data_calendar:   calDate,
           local:           c.local ?? null,
           evento_id:       c.evento_id ?? null,
@@ -148,15 +149,15 @@ export default async function CalendarioPage() {
       // videógrafo confirmado
       if (c.data_confirmada_videografo || c.indisponivel_videografo) {
         const tsRaw: string | null = c.data_confirmada_videografo
-          ? (c as any).confirmado_videografo_em ?? null
-          : (c as any).indisponivel_videografo_em ?? null
+          ? c.confirmado_videografo_em ?? null
+          : c.indisponivel_videografo_em ?? null
         const calDate = tsRaw
           ? tsRaw.split('T')[0]
-          : c.data_casamento as string
+          : c.data_casamento
         entries.push({
           id:              `${c.id}_video`,
           freelancer_nome: nome,
-          data_evento:     c.data_casamento as string,
+          data_evento:     c.data_casamento,
           data_calendar:   calDate,
           local:           c.local ?? null,
           evento_id:       c.evento_id ?? null,
