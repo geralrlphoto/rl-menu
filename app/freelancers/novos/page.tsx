@@ -173,6 +173,8 @@ export default function NovosFreelancersPage() {
   const [editingId, setEditingId]   = useState<string | null>(null)
   const [showAdd, setShowAdd]       = useState(false)
   const [saving, setSaving]         = useState(false)
+  const [juntandoId, setJuntandoId] = useState<string | null>(null)
+  const [juntadoIds, setJuntadoIds] = useState<Set<string>>(new Set())
 
   function load() {
     setLoading(true)
@@ -225,6 +227,48 @@ export default function NovosFreelancersPage() {
       method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }),
     })
     setList(prev => prev.filter(f => f.id !== id))
+  }
+
+  // Mapeamento funcao → status da equipa (EDITORES é o nome na equipa)
+  function funcaoToStatus(funcao: string | null): string {
+    if (funcao === 'EDITOR') return 'EDITORES'
+    if (funcao === 'DRONE') return 'OUTRO'
+    return funcao ?? 'OUTRO'
+  }
+
+  async function handleJuntarEquipa(f: NovoFreelancer) {
+    if (!confirm(`Juntar "${f.nome}" à equipa de trabalho?`)) return
+    setJuntandoId(f.id)
+    try {
+      // 1. Criar na equipa de trabalho (Supabase)
+      const res = await fetch('/api/freelancers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: f.nome,
+          status: funcaoToStatus(f.funcao),
+          contato: f.telefone ?? '',
+          email: '',
+          nome_sos: '',
+          contato_sos: '',
+          order_index: 999,
+        }),
+      })
+      if (!res.ok) { alert('Erro ao adicionar à equipa.'); return }
+      // 2. Arquivar dos Novos (Notion)
+      await fetch('/api/freelancers-novos', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: f.id }),
+      })
+      setJuntadoIds(prev => new Set([...prev, f.id]))
+      setTimeout(() => {
+        setList(prev => prev.filter(x => x.id !== f.id))
+        setJuntadoIds(prev => { const s = new Set(prev); s.delete(f.id); return s })
+      }, 1200)
+    } finally {
+      setJuntandoId(null)
+    }
   }
 
   return (
@@ -334,6 +378,18 @@ export default function NovosFreelancersPage() {
                     </button>
                     {/* Ações */}
                     <div className="flex gap-1 flex-shrink-0">
+                      {juntadoIds.has(f.id) ? (
+                        <span className="px-3 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-[10px] tracking-wider font-semibold">
+                          ✓ Adicionado
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleJuntarEquipa(f)}
+                          disabled={juntandoId === f.id}
+                          className="px-2.5 py-1.5 rounded-lg border border-gold/30 bg-gold/5 text-gold hover:bg-gold/15 hover:border-gold/50 transition-all text-[10px] tracking-wider disabled:opacity-50 whitespace-nowrap">
+                          {juntandoId === f.id ? '...' : '+ Equipa'}
+                        </button>
+                      )}
                       <button onClick={() => setEditingId(f.id)}
                         className="px-2.5 py-1.5 rounded-lg border border-white/10 text-white/30 hover:text-white/60 hover:border-white/25 transition-all text-[10px] tracking-wider">
                         Editar
