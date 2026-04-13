@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const ADMIN_EMAIL = 'geral.rlphotovideo@gmail.com'
+const ADMIN_EMAIL = 'geral.rlphoto@gmail.com'
 const IMG_BASE = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
 const ADMIN_URL = 'https://rl-menu-lake.vercel.app'
 
