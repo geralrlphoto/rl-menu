@@ -2304,7 +2304,7 @@ function PortalSubPageContent() {
                         <NotionBlocks blocks={beforeNumerario} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
                         {numerarioIdx !== -1 && (
                           <div className="my-5">
-                            <a href="https://tally.so" target="_blank" rel="noopener noreferrer"
+                            <a href={guiaLinks.pagamentosRegistoUrl ?? 'https://tally.so/r/81Gxyo'} target="_blank" rel="noopener noreferrer"
                               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gold text-black font-semibold text-sm tracking-wide hover:bg-gold/80 transition-all">
                               Registar Pagamento
                             </a>
