@@ -25,7 +25,7 @@ function daysUntil(d: string | null) {
 }
 
 type Freelancer = { id: string; nome: string; status: string | null; intro_casamentos: string | null }
-type Casamento  = { id: string; local: string; data_casamento: string | null; equipa_foto: string[] | null; videografo: string | null; briefing_url: string | null; data_confirmada: boolean | null; indisponivel: boolean | null; data_confirmada_videografo: boolean | null; indisponivel_videografo: boolean | null }
+type Casamento  = { id: string; local: string; data_casamento: string | null; referencia?: string | null; equipa_foto: string[] | null; videografo: string | null; briefing_url: string | null; data_confirmada: boolean | null; indisponivel: boolean | null; data_confirmada_videografo: boolean | null; indisponivel_videografo: boolean | null }
 type Edicao     = {
   id: string; nome: string; status: string; data_casamento: string | null
   data_entrega: string | null; data_final_entrega: string | null; local: string | null
@@ -584,8 +584,8 @@ function BriefingModal({ url, onClose }: { url: string; onClose: () => void }) {
 }
 
 // ── Casamento Ficha (read-only) ───────────────────────────────────────────────
-function CasamentoFicha({ c, onClose, onConfirm, isVideografo }: {
-  c: Casamento; onClose: () => void; onConfirm: (id: string) => void; isVideografo: boolean
+function CasamentoFicha({ c, onClose, onConfirm, isVideografo, freelancerNome }: {
+  c: Casamento; onClose: () => void; onConfirm: (id: string) => void; isVideografo: boolean; freelancerNome: string
 }) {
   const dtu = daysUntil(c.data_casamento)
   const isUrgent = dtu !== null && dtu >= 0 && dtu <= 15
@@ -612,6 +612,12 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo }: {
     setIndisponivel(false)
     setConfirming(false)
     onConfirm(c.id)
+    // Notificar admin
+    fetch('/api/send-admin-notification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tipo: 'confirmou', freelancer_nome: freelancerNome, referencia: c.referencia ?? null, data_evento: c.data_casamento, local: c.local }),
+    }).catch(() => {})
   }
 
   async function handleIndisponivel() {
@@ -625,6 +631,12 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo }: {
     setConfirmed(false)
     setMarkingIndisp(false)
     onConfirm(c.id)
+    // Notificar admin
+    fetch('/api/send-admin-notification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tipo: 'indisponivel', freelancer_nome: freelancerNome, referencia: c.referencia ?? null, data_evento: c.data_casamento, local: c.local }),
+    }).catch(() => {})
   }
 
   return (
@@ -1094,6 +1106,7 @@ export default function FreelancerViewPage() {
             <CasamentoFicha
               c={ficha}
               isVideografo={freelancer?.status === 'VIDEOGRAFO'}
+              freelancerNome={freelancer?.nome ?? ''}
               onClose={() => setFicha(null)}
               onConfirm={(id) => {
                 const isVid = freelancer?.status === 'VIDEOGRAFO'
