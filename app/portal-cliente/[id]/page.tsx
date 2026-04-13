@@ -838,7 +838,15 @@ function PortalSubPageContent() {
   const [portalVideo, setPortalVideo] = useState<number | null>(null)
   const [portalExtras, setPortalExtras] = useState<number | null>(null)
   const [pagRefreshing, setPagRefreshing] = useState(false)
-  const [guiaLinks, setGuiaLinks] = useState<{blogUrl?:string,fotosSelecaoUrl?:string,fotosVerMaisUrl?:string,fotosConvidadosUrl?:string,dadosContratoUrl?:string,pagamentosRegistoUrl?:string}>({})
+  const DEFAULT_GUIA_LINKS = {
+    blogUrl: 'https://rlphotovideo.pt/blog-list1',
+    fotosSelecaoUrl: 'https://tally.so/r/448PrO',
+    fotosVerMaisUrl: '',
+    fotosConvidadosUrl: 'https://tally.so/r/w56N86',
+    dadosContratoUrl: 'https://tally.so/r/3XXZIV',
+    pagamentosRegistoUrl: 'https://tally.so/r/81Gxyo',
+  }
+  const [guiaLinks, setGuiaLinks] = useState<{blogUrl?:string,fotosSelecaoUrl?:string,fotosVerMaisUrl?:string,fotosConvidadosUrl?:string,dadosContratoUrl?:string,pagamentosRegistoUrl?:string}>(DEFAULT_GUIA_LINKS)
   const [parceiros, setParceiros] = useState<Array<{imageUrl:string;url?:string}>>([])
   const [portalSettingsBlockId, setPortalSettingsBlockId] = useState<string|null>(null)
   const [editingParceiros, setEditingParceiros] = useState(false)
@@ -930,7 +938,7 @@ function PortalSubPageContent() {
       setPortalFoto(ps.valorFoto ?? null)
       setPortalVideo(ps.valorVideo ?? null)
       setPortalExtras(ps.valorExtras ?? null)
-      setGuiaLinks(ps.guiaLinks ?? {})
+      setGuiaLinks({ ...DEFAULT_GUIA_LINKS, ...(ps.guiaLinks ?? {}) })
       setParceiros(ps.parceiros ?? [])
       setPortalSettingsBlockId(settingsBlockIdVal)
       setSubpageHeaderUrl(ps.subpageHeaderUrl ?? '')

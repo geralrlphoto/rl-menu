@@ -9,14 +9,33 @@ function db() {
 }
 
 export async function GET(req: NextRequest) {
+  const ref       = req.nextUrl.searchParams.get('ref')
   const evento_id = req.nextUrl.searchParams.get('evento_id')
-  if (!evento_id) return NextResponse.json({ error: 'evento_id required' }, { status: 400 })
 
-  const { data, error } = await db()
-    .from('evento_equipa')
-    .select('*')
-    .eq('evento_id', evento_id)
-    .maybeSingle()
+  if (!ref && !evento_id) return NextResponse.json({ error: 'ref or evento_id required' }, { status: 400 })
+
+  const supabase = db()
+  let data: any = null
+  let error: any = null
+
+  if (ref) {
+    // Primary: fetch by referencia (Notion-independent)
+    const result = await supabase
+      .from('evento_equipa')
+      .select('*')
+      .eq('referencia', ref)
+      .maybeSingle()
+    data = result.data
+    error = result.error
+  } else {
+    const result = await supabase
+      .from('evento_equipa')
+      .select('*')
+      .eq('evento_id', evento_id!)
+      .maybeSingle()
+    data = result.data
+    error = result.error
+  }
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ equipa: data ?? null })
@@ -26,33 +45,49 @@ export async function PATCH(req: NextRequest) {
   const body = await req.json()
   const { evento_id, referencia, local, data_casamento, fotografo, videografo } = body
 
-  if (!evento_id) return NextResponse.json({ error: 'evento_id required' }, { status: 400 })
+  if (!evento_id && !referencia) return NextResponse.json({ error: 'evento_id or referencia required' }, { status: 400 })
 
   const supabase = db()
 
-  // Get existing record to detect changes
-  const { data: existing } = await supabase
-    .from('evento_equipa')
-    .select('*')
-    .eq('evento_id', evento_id)
-    .maybeSingle()
+  // Get existing record — prefer referencia lookup (Notion-independent)
+  let existing: any = null
+  if (referencia) {
+    const { data } = await supabase.from('evento_equipa').select('*').eq('referencia', referencia).maybeSingle()
+    existing = data
+  }
+  if (!existing && evento_id) {
+    const { data } = await supabase.from('evento_equipa').select('*').eq('evento_id', evento_id).maybeSingle()
+    existing = data
+  }
 
   const oldFoto: string[] = existing?.fotografo ?? []
   const oldVideo: string[] = existing?.videografo ?? []
   const newFoto: string[] = fotografo !== undefined ? fotografo : oldFoto
   const newVideo: string[] = videografo !== undefined ? videografo : oldVideo
 
-  // Upsert evento_equipa
-  const upsertData: any = { evento_id }
+  // Build upsert payload
+  const upsertData: any = {}
+  if (evento_id) upsertData.evento_id = evento_id
   if (referencia !== undefined) upsertData.referencia = referencia
   if (local !== undefined) upsertData.local = local
   if (data_casamento !== undefined) upsertData.data_casamento = data_casamento || null
   if (fotografo !== undefined) upsertData.fotografo = newFoto
   if (videografo !== undefined) upsertData.videografo = newVideo
 
-  const { error: upsertError } = await supabase
-    .from('evento_equipa')
-    .upsert(upsertData, { onConflict: 'evento_id' })
+  let upsertError: any = null
+  if (existing) {
+    // Update existing record
+    const key = existing.evento_id ? { evento_id: existing.evento_id } : { referencia: existing.referencia }
+    const col = Object.keys(key)[0] as string
+    const val = Object.values(key)[0] as string
+    const { error } = await supabase.from('evento_equipa').update(upsertData).eq(col, val)
+    upsertError = error
+  } else {
+    // Insert new record — use referencia as anchor if no evento_id
+    if (!upsertData.evento_id) upsertData.evento_id = `ref_${referencia}`
+    const { error } = await supabase.from('evento_equipa').insert(upsertData)
+    upsertError = error
+  }
 
   if (upsertError) return NextResponse.json({ error: upsertError.message }, { status: 500 })
 

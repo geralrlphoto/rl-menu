@@ -412,7 +412,15 @@ function SettingsPanel({
   onSaved: (newSettings: PortalSettings, newSettingsBlockId?: string) => void
   onCancel: () => void
 }) {
-  const [form, setForm] = useState({ hiddenNav: [] as string[], ...settings })
+  const DEFAULT_GUIA_LINKS = {
+    blogUrl: 'https://rlphotovideo.pt/blog-list1',
+    fotosSelecaoUrl: 'https://tally.so/r/448PrO',
+    fotosVerMaisUrl: '',
+    fotosConvidadosUrl: 'https://tally.so/r/w56N86',
+    dadosContratoUrl: 'https://tally.so/r/3XXZIV',
+    pagamentosRegistoUrl: 'https://tally.so/r/81Gxyo',
+  }
+  const [form, setForm] = useState({ hiddenNav: [] as string[], ...settings, guiaLinks: { ...DEFAULT_GUIA_LINKS, ...(settings.guiaLinks ?? {}) } })
   const [saving, setSaving] = useState(false)
   const navPages = findAllChildPages(blocks)
 
@@ -942,10 +950,19 @@ export default function PortalClientePage() {
   )
 
   const images = findImages(blocks)
-  const heroImage = settings.heroImageUrl || images[0] || null
+  const DEFAULT_HERO_IMAGE = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/1776042124014-05s55nxzmc4v.png'
+  const heroImage = settings.heroImageUrl || images[0] || DEFAULT_HERO_IMAGE
+  const DEFAULT_GALLERY_IMAGES = [
+    'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/default-gallery-1.jpg',
+    'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/default-gallery-2.jpg',
+    'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/default-gallery-3.jpg',
+  ]
   const galleryImages = (() => {
-    const custom = (settings.galleryUrls ?? []).filter(Boolean)
-    return custom.length > 0 ? custom : images.slice(0, 3)
+    const saved = settings.galleryUrls ?? []
+    // merge: use saved value per slot if set, otherwise use default
+    const merged = DEFAULT_GALLERY_IMAGES.map((def, i) => saved[i] || def)
+    const notionFallback = images.slice(0, 3)
+    return merged.some(Boolean) ? merged.filter(Boolean) : notionFallback
   })()
   const navPages = findAllChildPages(blocks).filter(p => !(settings.hiddenNav ?? []).includes(p.id))
   const { heading: welcomeHeading, paragraphs: welcomeParas, reference: welcomeRef } = findWelcomeText(blocks)

@@ -124,14 +124,13 @@ export async function PATCH(req: NextRequest) {
 
     const db = supabase()
 
-    // Get current row
+    // Get current row (may not exist for references without portal yet)
     const { data: current, error: fetchErr } = await db
       .from('portais').select('*').ilike('referencia', referencia).maybeSingle()
     if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 500 })
-    if (!current) return NextResponse.json({ found: false })
 
     const patch: Record<string, any> = { updated_at: new Date().toISOString() }
-    const settingsPatch: Record<string, any> = { ...(current.settings ?? {}) }
+    const settingsPatch: Record<string, any> = { ...(current?.settings ?? {}) }
 
     if (updates.noiva !== undefined) { patch.noiva = updates.noiva; settingsPatch.noiva = updates.noiva }
     if (updates.noivo !== undefined) { patch.noivo = updates.noivo; settingsPatch.noivo = updates.noivo }
@@ -149,8 +148,15 @@ export async function PATCH(req: NextRequest) {
 
     patch.settings = settingsPatch
 
-    const { error } = await db.from('portais').update(patch).ilike('referencia', referencia)
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (current) {
+      // Update existing row
+      const { error } = await db.from('portais').update(patch).ilike('referencia', referencia)
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    } else {
+      // No portal yet — create minimal row so settings can be stored
+      const { error } = await db.from('portais').insert({ referencia, ...patch })
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    }
 
     return NextResponse.json({ ok: true })
   } catch (err: any) {
