@@ -418,7 +418,7 @@ function SettingsPanel({
     fotosVerMaisUrl: '',
     fotosConvidadosUrl: 'https://tally.so/r/w56N86',
     dadosContratoUrl: 'https://tally.so/r/3XXZIV',
-    pagamentosRegistoUrl: 'https://tally.so/r/81Gxyo',
+    pagamentosRegistoUrl: 'https://tally.so/r/A72PQB',
   }
   const [form, setForm] = useState({ hiddenNav: [] as string[], ...settings, guiaLinks: { ...DEFAULT_GUIA_LINKS, ...(settings.guiaLinks ?? {}) } })
   const [saving, setSaving] = useState(false)
