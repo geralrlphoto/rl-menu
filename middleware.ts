@@ -18,6 +18,8 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/api/portais') ||
     pathname.startsWith('/api/fotos-selecao') ||
     pathname.startsWith('/api/webhook-tally-selecao') ||
+    pathname.startsWith('/api/albuns-casamento') ||
+    pathname.startsWith('/api/send-admin-notification') ||
     pathname.startsWith('/portal-cliente') ||
     pathname.startsWith('/freelancer-view')
   ) {
