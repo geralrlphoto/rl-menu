@@ -86,7 +86,7 @@ function buildAlbumAprovadoEmail(nome_noivos: string, referencia: string): strin
 }
 
 export async function POST(req: NextRequest) {
-  const { tipo, freelancer_nome, nome_noivos, referencia, data_evento, local } = await req.json().catch(() => ({}))
+  const { tipo, freelancer_nome, nome_noivos, referencia, data_evento, local, email_noiva } = await req.json().catch(() => ({}))
 
   // ── Pré-wedding reservado ─────────────────────────────────────────────────
   if (tipo === 'prewedding_reserva') {
@@ -143,12 +143,13 @@ export async function POST(req: NextRequest) {
   </table>
 </body>
 </html>`
+    const toList = email_noiva ? [ADMIN_EMAIL, email_noiva] : [ADMIN_EMAIL]
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: 'RL Photo.Video <geral@rlphotovideo.pt>',
-        to: [ADMIN_EMAIL],
+        to: toList,
         subject: `📅 Pré-wedding reservado — ${nome_noivos ?? referencia ?? ''}`,
         html,
       }),

@@ -1701,6 +1701,7 @@ function PortalSubPageContent() {
                                   referencia: refParam ?? portalSettingsObj.referencia ?? null,
                                   data_evento: slot?.date ?? null,
                                   local: slot ? `${slot.time}${slot.local ? ' · ' + slot.local : ''}` : null,
+                                  email_noiva: portalSettingsObj.emailNoiva ?? null,
                                 }),
                               }).catch(() => {})
                             } finally { setReservingSlotId(null) }
