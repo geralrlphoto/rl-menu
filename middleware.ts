@@ -17,6 +17,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/api/freelancer-') ||
     pathname.startsWith('/api/portais') ||
     pathname.startsWith('/api/fotos-selecao') ||
+    pathname.startsWith('/api/webhook-tally-selecao') ||
     pathname.startsWith('/portal-cliente') ||
     pathname.startsWith('/freelancer-view')
   ) {
