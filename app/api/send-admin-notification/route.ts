@@ -90,6 +90,18 @@ export async function POST(req: NextRequest) {
 
   // ── Pré-wedding reservado ─────────────────────────────────────────────────
   if (tipo === 'prewedding_reserva') {
+    // Buscar email da noiva na ficha Notion se não vier no payload
+    let emailNoivaFinal = email_noiva ?? null
+    if (!emailNoivaFinal && referencia) {
+      try {
+        const eventoRes = await fetch(`${ADMIN_URL}/api/evento-by-ref?ref=${encodeURIComponent(referencia)}`, { cache: 'no-store' })
+        const eventoData = await eventoRes.json()
+        emailNoivaFinal = eventoData?.evento?.email_noiva ?? null
+        console.log('[prewedding_reserva] email_noiva da ficha Notion:', emailNoivaFinal)
+      } catch (e) {
+        console.error('[prewedding_reserva] Erro ao buscar ficha:', e)
+      }
+    }
     const dataFormatada = data_evento
       ? new Date(data_evento + 'T12:00:00').toLocaleDateString('pt-PT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
       : null
@@ -143,7 +155,7 @@ export async function POST(req: NextRequest) {
   </table>
 </body>
 </html>`
-    const toList = email_noiva ? [ADMIN_EMAIL, email_noiva] : [ADMIN_EMAIL]
+    const toList = emailNoivaFinal ? [ADMIN_EMAIL, emailNoivaFinal] : [ADMIN_EMAIL]
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
