@@ -1,4 +1,5 @@
-import CalendarClient, { type CalEvent } from './CalendarClient'
+import { createClient } from '@supabase/supabase-js'
+import CalendarClient, { type CalEvent, type PreWeddingEvent } from './CalendarClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,7 +19,12 @@ function getProp(props: any, key: string, type: string): any {
 }
 
 export default async function CalendarioPage() {
-  // Fetch all events from Notion
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  // ── 1. Fetch wedding events from Notion ───────────────────────────────────
   const allPages: any[] = []
   let cursor: string | null = null
 
@@ -62,5 +68,35 @@ export default async function CalendarioPage() {
     })
     .filter(e => e.data_evento !== null)
 
-  return <CalendarClient events={events} />
+  // ── 2. Fetch pre-wedding reservations from Supabase portais ──────────────
+  const { data: portais } = await supabase
+    .from('portais')
+    .select('referencia, noiva, noivo, settings')
+
+  const preWeddings: PreWeddingEvent[] = []
+
+  for (const portal of portais ?? []) {
+    const s = portal.settings ?? {}
+    const slots: any[]           = s.preWeddingSlots ?? []
+    const reservedId: string | null = s.preWeddingReservedSlotId ?? null
+    if (!reservedId) continue
+
+    const slot = slots.find((sl: any) => sl.id === reservedId)
+    if (!slot?.date) continue
+
+    const noiva: string = s.noiva ?? portal.noiva ?? ''
+    const noivo: string = s.noivo ?? portal.noivo ?? ''
+    const nomes = [noiva, noivo].filter(Boolean).join(' & ') || portal.referencia
+
+    preWeddings.push({
+      id:          `pw_${portal.referencia}`,
+      referencia:  portal.referencia,
+      nomes,
+      data_evento: slot.date,          // 'YYYY-MM-DD'
+      hora:        slot.time ?? null,
+      local:       slot.local ?? null,
+    })
+  }
+
+  return <CalendarClient events={events} preWeddings={preWeddings} />
 }
