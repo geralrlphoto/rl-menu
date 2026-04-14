@@ -1016,26 +1016,37 @@ export default function FreelancerViewPage() {
 
           {/* Card de perfil */}
           {freelancer?.foto_url && (
-            <div className="relative w-[260px] h-[360px] overflow-hidden flex-shrink-0"
-              style={{ borderRadius: '28px 28px 80px 28px', boxShadow: '0 0 0 2px rgba(200,70,20,0.85), 0 0 32px 8px rgba(200,70,20,0.30)' }}>
-              {/* Fundo cinza */}
-              <div className="absolute inset-0 bg-neutral-400" />
-              {/* Foto B&W */}
-              <img src={freelancer.foto_url} alt={freelancer.nome}
-                className="absolute inset-0 w-full h-full object-cover"
-                style={{ filter: 'grayscale(100%)' }} />
-              {/* Seta top-right — preta */}
-              <span className="absolute top-4 right-4 text-black font-black text-xl leading-none select-none">↙</span>
-              {/* Nome + função vertical na esquerda */}
-              <div className="absolute left-3 bottom-5 flex items-end gap-[5px]">
-                <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
-                  className="font-black uppercase text-black text-[13px] leading-none tracking-[0.12em] whitespace-nowrap">
-                  {freelancer.nome}
-                </span>
-                <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
-                  className="uppercase text-black/65 text-[9px] leading-none tracking-[0.18em] whitespace-nowrap font-semibold">
-                  {freelancer.status}
-                </span>
+            <div className="flex-shrink-0"
+              style={{ filter: 'drop-shadow(0 0 1px rgba(200,70,20,1)) drop-shadow(0 0 16px rgba(200,70,20,0.45))' }}>
+              {/* SVG clip-path: cantos redondos + corte reto inferior direito */}
+              <svg width="0" height="0" style={{ position: 'absolute' }}>
+                <defs>
+                  <clipPath id={`card-${freelancer.id}`}>
+                    <path d="M28,0 L232,0 Q260,0 260,28 L260,305 L205,360 L28,360 Q0,360 0,332 L0,28 Q0,0 28,0 Z" />
+                  </clipPath>
+                </defs>
+              </svg>
+              <div className="relative w-[260px] h-[360px]"
+                style={{ clipPath: `url(#card-${freelancer.id})` }}>
+                {/* Fundo cinza */}
+                <div className="absolute inset-0 bg-neutral-400" />
+                {/* Foto B&W */}
+                <img src={freelancer.foto_url} alt={freelancer.nome}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  style={{ filter: 'grayscale(100%)' }} />
+                {/* Seta top-right — preta */}
+                <span className="absolute top-4 right-4 text-black font-black text-xl leading-none select-none">↙</span>
+                {/* Nome + função vertical na esquerda */}
+                <div className="absolute left-3 bottom-5 flex items-end gap-[5px]">
+                  <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+                    className="font-black uppercase text-black text-[13px] leading-none tracking-[0.12em] whitespace-nowrap">
+                    {freelancer.nome}
+                  </span>
+                  <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+                    className="uppercase text-black/65 text-[9px] leading-none tracking-[0.18em] whitespace-nowrap font-semibold">
+                    {freelancer.status}
+                  </span>
+                </div>
               </div>
             </div>
           )}
