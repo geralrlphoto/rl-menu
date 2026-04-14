@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { Resend } from 'resend'
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN!
 const DB_ID = '2f3220116d8a8027b435c5b4c0f48948'
-const resend = new Resend(process.env.RESEND_API_KEY!)
 
 const notionH = {
   'Authorization': `Bearer ${NOTION_TOKEN}`,
@@ -244,13 +242,23 @@ export async function POST(req: NextRequest) {
 
     // ── Email confirmação ao freelancer ───────────────────────────────────
     const emailPromise = email
-      ? resend.emails.send({
-          from: 'RL Photo.Video <geral@rlphotovideo.pt>',
-          to: [email],
-          subject: 'Recebemos a tua candidatura · RL Photo.Video',
-          html: buildConfirmacaoHtml(nome),
-        }).then(r => {
-          if (r.error) console.error('[webhook-tally-freelancer] Resend error:', r.error)
+      ? fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+            to: [email],
+            subject: 'Recebemos a tua candidatura · RL Photo.Video',
+            html: buildConfirmacaoHtml(nome),
+          }),
+        }).then(async r => {
+          if (!r.ok) {
+            const e = await r.json()
+            console.error('[webhook-tally-freelancer] Resend error:', e)
+          }
         })
       : Promise.resolve()
 
