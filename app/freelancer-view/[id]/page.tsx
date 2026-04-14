@@ -1170,11 +1170,11 @@ function MensagensTab({ freelancerId, casamentos, mensagens, onRefresh }: {
         <>
           {/* Explicação do separador */}
           <div className="px-4 py-4 rounded-xl border border-white/[0.06] bg-white/[0.02] space-y-2 mb-2">
-            <p className="text-[10px] tracking-[0.35em] text-gold/60 uppercase">Mensagens por Evento</p>
-            <p className="text-[13px] text-white/60 leading-relaxed">
+            <p className="text-[18px] tracking-[0.35em] text-gold/60 uppercase">Mensagens por Evento</p>
+            <p className="text-[16px] text-white leading-relaxed">
               Este espaço serve para manter uma conversa direta com a equipa RL sobre cada evento que te foi atribuído.
             </p>
-            <p className="text-[12px] text-white/35 leading-relaxed">
+            <p className="text-[16px] text-white leading-relaxed">
               Usa-o para partilhar algo relevante que aconteceu antes, durante ou após o casamento. Imprevistos, notas importantes, questões de entrega ou qualquer assunto que deva ficar registado. Assim, todas as mensagens ficam associadas ao evento certo e nada se perde.
             </p>
           </div>
