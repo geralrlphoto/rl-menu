@@ -24,7 +24,7 @@ function daysUntil(d: string | null) {
   return Math.round((new Date(d+'T00:00:00').getTime() - today.getTime()) / 86400000)
 }
 
-type Freelancer = { id: string; nome: string; status: string | null; intro_casamentos: string | null; intro_home: string | null }
+type Freelancer = { id: string; nome: string; status: string | null; intro_casamentos: string | null; intro_home: string | null; is_template?: boolean | null }
 type Casamento  = { id: string; local: string; data_casamento: string | null; referencia?: string | null; equipa_foto: string[] | null; videografo: string | null; briefing_url: string | null; data_confirmada: boolean | null; indisponivel: boolean | null; data_confirmada_videografo: boolean | null; indisponivel_videografo: boolean | null }
 type Edicao     = {
   id: string; nome: string; status: string; data_casamento: string | null
@@ -874,8 +874,16 @@ export default function FreelancerViewPage() {
       fetch(`/api/freelancer-album?freelancer_id=${id}`).then(r => r.json()),
       fetch(`/api/albuns-casamento`).then(r => r.json()).catch(() => ({ rows: [] })),
     ])
-    const f = (fRes.freelancers ?? []).find((x: Freelancer) => x.id === id) ?? null
-    setFreelancer(f)
+    const allFreelancers: Freelancer[] = fRes.freelancers ?? []
+    const f = allFreelancers.find((x: Freelancer) => x.id === id) ?? null
+    const template = allFreelancers.find((x: Freelancer) => x.is_template) ?? null
+    // Herdar textos do template global se o freelancer não tiver os seus próprios
+    const merged: Freelancer | null = f ? {
+      ...f,
+      intro_home: f.intro_home ?? template?.intro_home ?? null,
+      intro_casamentos: f.intro_casamentos ?? template?.intro_casamentos ?? null,
+    } : null
+    setFreelancer(merged)
     setCasamentos(cRes.casamentos ?? [])
     setEdicao(eRes.edicao ?? [])
     // Enrich album with data_entrega_fotos from albuns_casamento

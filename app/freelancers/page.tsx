@@ -13,6 +13,7 @@ type Freelancer = {
   contato_sos: string | null
   order_index: number
   password?: string | null
+  is_template?: boolean | null
 }
 
 type FormData = Omit<Freelancer, 'id' | 'order_index'>
@@ -235,6 +236,11 @@ export default function FreelancersPage() {
                               {f.status && (
                                 <span className={`text-[9px] px-2 py-0.5 rounded-full border tracking-widest uppercase font-semibold ${statusStyle(f.status).badge}`}>
                                   {f.status}
+                                </span>
+                              )}
+                              {f.is_template && (
+                                <span className="text-[9px] px-2 py-0.5 rounded-full border tracking-widest uppercase font-semibold bg-white/10 text-white border-white/30">
+                                  ⌘ Template
                                 </span>
                               )}
                               {f.password && (

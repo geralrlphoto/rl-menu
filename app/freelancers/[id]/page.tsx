@@ -9,7 +9,7 @@ import { useParams } from 'next/navigation'
 type Freelancer = {
   id: string; nome: string; status: string | null; contato: string | null
   email: string | null; nome_sos: string | null; contato_sos: string | null; notas: string | null
-  password: string | null; intro_casamentos: string | null; intro_home: string | null
+  password: string | null; intro_casamentos: string | null; intro_home: string | null; is_template: boolean | null
 }
 type Casamento = {
   id: string; freelancer_id: string; local: string; data_casamento: string | null
@@ -229,11 +229,18 @@ export default function FreelancerDetailPage() {
         <div className="flex items-start justify-between mt-2 gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-widest text-white uppercase">{freelancer.nome}</h1>
-            {freelancer.status && (
-              <span className="inline-block mt-1 text-[9px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-semibold bg-gold/10 text-gold border-gold/30">
-                {freelancer.status}
-              </span>
-            )}
+            <div className="flex flex-wrap items-center gap-2 mt-1">
+              {freelancer.status && (
+                <span className="text-[9px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-semibold bg-gold/10 text-gold border-gold/30">
+                  {freelancer.status}
+                </span>
+              )}
+              {freelancer.is_template && (
+                <span className="text-[9px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-semibold bg-white/10 text-white border-white/30">
+                  ⌘ Centro de Comando
+                </span>
+              )}
+            </div>
             <div className="flex flex-wrap gap-4 mt-2">
               {freelancer.contato && <a href={`tel:${freelancer.contato}`} className="text-xs text-white/40 hover:text-white/70 transition-colors">📞 {freelancer.contato}</a>}
               {freelancer.email && <a href={`mailto:${freelancer.email}`} className="text-xs text-white/40 hover:text-white/70 transition-colors">✉ {freelancer.email}</a>}
