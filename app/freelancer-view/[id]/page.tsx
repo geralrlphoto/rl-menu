@@ -867,16 +867,17 @@ export default function FreelancerViewPage() {
 
   const loadData = useCallback(async () => {
     setLoading(true)
-    const [fRes, cRes, eRes, aRes, alRes] = await Promise.all([
+    const [fRes, cRes, eRes, aRes, alRes, tRes] = await Promise.all([
       fetch(`/api/freelancers`).then(r => r.json()),
       fetch(`/api/freelancer-casamentos?freelancer_id=${id}`).then(r => r.json()),
       fetch(`/api/freelancer-edicao?freelancer_id=${id}`).then(r => r.json()),
       fetch(`/api/freelancer-album?freelancer_id=${id}`).then(r => r.json()),
       fetch(`/api/albuns-casamento`).then(r => r.json()).catch(() => ({ rows: [] })),
+      fetch(`/api/freelancer-template`).then(r => r.json()).catch(() => ({ template: null })),
     ])
     const allFreelancers: Freelancer[] = fRes.freelancers ?? []
     const f = allFreelancers.find((x: Freelancer) => x.id === id) ?? null
-    const template = allFreelancers.find((x: Freelancer) => x.is_template) ?? null
+    const template: Freelancer | null = tRes.template ?? null
     // Herdar textos do template global se o freelancer não tiver os seus próprios
     const merged: Freelancer | null = f ? {
       ...f,
