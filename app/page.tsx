@@ -465,19 +465,20 @@ export default async function Home() {
       {/* ── Relatório Diário Banner ─────────────────────────────────────────── */}
       <div className="border-t border-white/[0.06] bg-[#060606] px-4 sm:px-10 py-6">
         <div className="max-w-lg mx-auto sm:mx-0">
-          {/* Card com canto superior direito em degrau (aba de pasta) */}
-          <div
-            className="bg-white/[0.07] p-px"
-            style={{ clipPath: 'polygon(0 0, calc(100% - 90px) 0, calc(100% - 90px) 90px, 100% 90px, 100% 100%, 0 100%)' }}
-          >
+          {/* Card com degrau arredondado no canto superior direito */}
+          <div className="relative bg-[#0d0d0d] border border-white/[0.08] px-7 sm:px-10 pt-8 pb-8">
+
+            {/* 1. Cobre o canto superior direito com a cor de fundo */}
             <div
-              className="relative bg-[#0d0d0d] px-7 sm:px-10 pt-8 pb-8"
-              style={{ clipPath: 'polygon(0 0, calc(100% - 89px) 0, calc(100% - 89px) 89px, 100% 89px, 100% 100%, 0 100%)' }}
-            >
-              {/* Acento dourado subtil no canto */}
-              <div className="absolute top-0 right-0 w-[90px] h-[90px] pointer-events-none"
-                style={{ background: 'radial-gradient(circle at 0% 100%, rgba(201,168,76,0.15) 0%, transparent 70%)' }}
-              />
+              className="absolute top-[-1px] right-[-1px] bg-[#060606] pointer-events-none"
+              style={{ width: '92px', height: '92px' }}
+            />
+
+            {/* 2. Desenha o degrau arredondado por cima */}
+            <div
+              className="absolute top-0 right-0 border-b border-l border-white/[0.08] pointer-events-none"
+              style={{ width: '90px', height: '90px', borderBottomLeftRadius: '16px' }}
+            />
 
               {/* Label topo */}
               <p className="text-[9px] tracking-[0.55em] text-white/20 uppercase mb-5">RL PHOTO · VIDEO</p>
@@ -513,7 +514,6 @@ export default async function Home() {
                   <p className="text-[9px] tracking-[0.35em] text-white/15 uppercase">GERADO A PEDIDO</p>
                 </div>
               </div>
-            </div>
           </div>
         </div>
       </div>
