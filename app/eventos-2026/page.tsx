@@ -250,7 +250,7 @@ function Eventos2026Inner() {
 
   function loadEvents() {
     setLoading(true)
-    fetch(`/api/eventos-notion?ano=${anoFiltro}`)
+    fetch('/api/eventos-notion')
       .then(r => r.json())
       .then(d => {
         if (d.error) setError(d.error)
@@ -260,9 +260,9 @@ function Eventos2026Inner() {
       .catch(() => { setError('Erro de ligação'); setLoading(false) })
   }
 
-  useEffect(() => { loadEvents() }, [anoFiltro])
+  useEffect(() => { loadEvents() }, [])
 
-  const byYear = events
+  const byYear = events.filter(e => e.data_evento?.startsWith(String(anoFiltro)))
 
   const filtered = byYear.filter(e => {
     const matchSearch = !search ||
