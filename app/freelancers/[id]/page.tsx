@@ -1883,7 +1883,11 @@ function MensagensAdminTab({ freelancerId, freelancerNome, casamentos, mensagens
                 <p className="text-center text-white/20 text-xs py-8">Sem mensagens ainda.</p>
               ) : (
                 thread.map(m => (
-                  <div key={m.id} className={`flex items-end gap-2 ${m.remetente === 'admin' ? 'justify-end' : 'justify-start'}`}>
+                  <div key={m.id} className={`flex items-end gap-2 group/msg ${m.remetente === 'admin' ? 'justify-end' : 'justify-start'}`}>
+                    {m.remetente === 'admin' && (
+                      <button onClick={() => handleDelete(m.id)}
+                        className="text-[10px] text-white/0 group-hover/msg:text-white/20 hover:!text-red-400 transition-colors shrink-0 mb-1">✕</button>
+                    )}
                     <div className={`max-w-[78%] px-4 py-2.5 space-y-1 ${
                       m.remetente === 'admin'
                         ? 'bg-gold/15 border border-gold/25 rounded-2xl rounded-br-sm'
@@ -1897,7 +1901,7 @@ function MensagensAdminTab({ freelancerId, freelancerNome, casamentos, mensagens
                     </div>
                     {m.remetente === 'freelancer' && (
                       <button onClick={() => handleDelete(m.id)}
-                        className="text-[10px] text-white/10 hover:text-red-400 transition-colors shrink-0 mb-1">✕</button>
+                        className="text-[10px] text-white/0 group-hover/msg:text-white/20 hover:!text-red-400 transition-colors shrink-0 mb-1">✕</button>
                     )}
                   </div>
                 ))
