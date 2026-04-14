@@ -468,14 +468,14 @@ export default async function Home() {
           {/* Card com canto superior direito em degrau (aba de pasta) */}
           <div
             className="bg-white/[0.07] p-px"
-            style={{ clipPath: 'polygon(0 0, calc(100% - 48px) 0, calc(100% - 48px) 48px, 100% 48px, 100% 100%, 0 100%)' }}
+            style={{ clipPath: 'polygon(0 0, calc(100% - 90px) 0, calc(100% - 90px) 90px, 100% 90px, 100% 100%, 0 100%)' }}
           >
             <div
               className="relative bg-[#0d0d0d] px-7 sm:px-10 pt-8 pb-8"
-              style={{ clipPath: 'polygon(0 0, calc(100% - 47px) 0, calc(100% - 47px) 47px, 100% 47px, 100% 100%, 0 100%)' }}
+              style={{ clipPath: 'polygon(0 0, calc(100% - 89px) 0, calc(100% - 89px) 89px, 100% 89px, 100% 100%, 0 100%)' }}
             >
               {/* Acento dourado subtil no canto */}
-              <div className="absolute top-0 right-0 w-[48px] h-[48px] pointer-events-none"
+              <div className="absolute top-0 right-0 w-[90px] h-[90px] pointer-events-none"
                 style={{ background: 'radial-gradient(circle at 0% 100%, rgba(201,168,76,0.15) 0%, transparent 70%)' }}
               />
 
