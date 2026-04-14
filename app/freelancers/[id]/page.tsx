@@ -605,9 +605,25 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                 </span>
               )}
               {c.data_confirmada ? (
-                <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 tracking-widest uppercase">
-                  ✓ Confirmado
-                </span>
+                <div className="flex items-center gap-1">
+                  <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 tracking-widest uppercase">
+                    ✓ Confirmado
+                  </span>
+                  <button
+                    onClick={async e => {
+                      e.stopPropagation()
+                      await fetch('/api/freelancer-casamentos', {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: c.id, data_confirmada: false }),
+                      })
+                      onRefresh()
+                    }}
+                    className="text-white/20 hover:text-red-400 transition-colors text-xs leading-none px-1"
+                    title="Remover confirmação">
+                    ✕
+                  </button>
+                </div>
               ) : !isPast ? (
                 <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-400/70 border border-orange-500/20 tracking-widest uppercase">
                   Pendente
