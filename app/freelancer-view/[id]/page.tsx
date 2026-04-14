@@ -1294,10 +1294,14 @@ export default function FreelancerViewPage() {
                     : 'text-white/30 hover:text-white/55 border border-transparent'
                 }`}
               >
-                {t.label}
+                <span className={t.key === 'notificacoes' && t.count > 0 ? 'animate-bell-shake inline-block' : ''}>
+                  {t.label}
+                </span>
                 {t.count > 0 && (
                   <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold transition-all ${
-                    tab === t.key ? 'bg-white/15 text-white/80' : 'bg-white/[0.06] text-white/25'
+                    t.key === 'notificacoes'
+                      ? 'bg-red-500/20 text-red-400 border border-red-500/40'
+                      : tab === t.key ? 'bg-white/15 text-white/80' : 'bg-white/[0.06] text-white/25'
                   }`}>{t.count}</span>
                 )}
               </button>
