@@ -181,7 +181,15 @@ export async function POST(req: NextRequest) {
     const fields: any[] = body.data?.fields ?? []
 
     const nome          = getField(fields, 'NOME')
-    const email         = getField(fields, 'EMAIL') ?? getField(fields, 'E-MAIL') ?? body.data?.respondent?.email ?? null
+
+    // Tentar encontrar email por label ou por tipo ou por valor com @
+    const emailByLabel  = getField(fields, 'EMAIL') ?? getField(fields, 'E-MAIL') ?? getField(fields, 'EMAIL ADDRESS')
+    const emailByType   = fields.find((f: any) => f.type === 'INPUT_EMAIL')?.value ?? null
+    const emailByValue  = fields.find((f: any) => typeof f.value === 'string' && f.value.includes('@') && f.value.includes('.'))?.value ?? null
+    const emailFromResp = body.data?.respondent?.email ?? null
+    const email         = emailByLabel ?? emailByType ?? emailByValue ?? emailFromResp ?? null
+
+    console.log('[webhook-tally-freelancer] email found:', email, '| fields labels:', fields.map((f:any) => f.label))
     const telefone      = getField(fields, 'CONTATO')
     const funcao        = getField(fields, 'FUNÇÃO')
     const valor_servico = getField(fields, 'VALOR PELO SERVIÇO')
