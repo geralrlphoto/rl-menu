@@ -1043,9 +1043,13 @@ function DisponibilidadeTab({ freelancerId, disponibilidade, casamentos, onRefre
 
 // ── Notificações Tab ──────────────────────────────────────────────────────────
 const NOTIF_STYLE: Record<string, { card: string; dot: string }> = {
-  'info':      { card: 'border-blue-500/25 bg-blue-500/[0.04]',      dot: 'bg-blue-400'    },
-  'alerta':    { card: 'border-yellow-500/25 bg-yellow-500/[0.04]',   dot: 'bg-yellow-400'  },
-  'pagamento': { card: 'border-emerald-500/25 bg-emerald-500/[0.04]', dot: 'bg-emerald-400' },
+  'info':                { card: 'border-blue-500/25 bg-blue-500/[0.04]',      dot: 'bg-blue-400'    },
+  'alerta':              { card: 'border-yellow-500/25 bg-yellow-500/[0.04]',   dot: 'bg-yellow-400'  },
+  'pagamento':           { card: 'border-emerald-500/25 bg-emerald-500/[0.04]', dot: 'bg-emerald-400' },
+  'briefing':            { card: 'border-purple-500/25 bg-purple-500/[0.04]',   dot: 'bg-purple-400'  },
+  'briefing_atualizado': { card: 'border-purple-500/25 bg-purple-500/[0.04]',   dot: 'bg-purple-400'  },
+  'briefing_pendente':   { card: 'border-orange-500/25 bg-orange-500/[0.04]',   dot: 'bg-orange-400'  },
+  'briefing_aprovado':   { card: 'border-emerald-500/25 bg-emerald-500/[0.04]', dot: 'bg-emerald-400' },
 }
 
 function NotificacoesTab({ notificacoes, onRefresh }: { notificacoes: Notificacao[]; onRefresh: () => void }) {

@@ -1784,6 +1784,10 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh }: { freel
             <option value="info" style={optStyle}>ℹ Info</option>
             <option value="alerta" style={optStyle}>⚠ Alerta</option>
             <option value="pagamento" style={optStyle}>💰 Pagamento</option>
+            <option value="briefing" style={optStyle}>📋 Briefing</option>
+            <option value="briefing_atualizado" style={optStyle}>📋 Briefing Atualizado</option>
+            <option value="briefing_pendente" style={optStyle}>⏳ Briefing Pendente</option>
+            <option value="briefing_aprovado" style={optStyle}>✅ Briefing Aprovado</option>
           </select>
         </div>
         <div>
