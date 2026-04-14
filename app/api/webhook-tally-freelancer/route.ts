@@ -189,7 +189,8 @@ export async function POST(req: NextRequest) {
     const emailFromResp = body.data?.respondent?.email ?? null
     const email         = emailByLabel ?? emailByType ?? emailByValue ?? emailFromResp ?? null
 
-    console.log('[webhook-tally-freelancer] email found:', email, '| fields labels:', fields.map((f:any) => f.label))
+    console.log('[webhook-tally-freelancer] email found:', email)
+    console.log('[webhook-tally-freelancer] all fields:', JSON.stringify(fields.map((f:any) => ({ label: f.label, type: f.type, value: f.value }))))
     const telefone      = getField(fields, 'CONTATO')
     const funcao        = getField(fields, 'FUNÇÃO')
     const valor_servico = getField(fields, 'VALOR PELO SERVIÇO')
