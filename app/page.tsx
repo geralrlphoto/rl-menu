@@ -464,7 +464,7 @@ export default async function Home() {
 
       {/* ── Relatório Diário Banner ─────────────────────────────────────────── */}
       <div className="border-t border-white/[0.06] bg-[#060606] px-4 sm:px-10 py-12 sm:py-16">
-        <div className="max-w-lg mx-auto sm:mx-0">
+        <div className="w-full">
           <div className="relative rounded-2xl border border-white/[0.08] bg-[#0d0d0d] px-8 sm:px-12 pt-10 pb-10 overflow-hidden">
 
             {/* Linha dourada de destaque no topo do card */}
