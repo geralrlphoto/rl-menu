@@ -1530,12 +1530,63 @@ function InfoTab({ freelancerId, info, onRefresh }: { freelancerId: string; info
 
 // ─── Pagamentos Admin Tab ─────────────────────────────────────────────────────
 
+type PagaFormValues = { casamento_id: string; descricao: string; valor: string; data_prevista: string; data_pago: string; status: string; notas: string }
+
+function PagaForm({ f, setF, casamentos }: { f: PagaFormValues; setF: (v: PagaFormValues) => void; casamentos: Casamento[] }) {
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className={labelCls}>Evento (opcional)</label>
+        <select value={f.casamento_id} onChange={e => setF({ ...f, casamento_id: e.target.value })} className={selectCls}>
+          <option value="" style={optStyle}>— Sem evento associado —</option>
+          {casamentos.map(c => (
+            <option key={c.id} value={c.id} style={optStyle}>
+              {c.local}{c.data_casamento ? ` · ${c.data_casamento}` : ''}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label className={labelCls}>Descrição *</label>
+        <input value={f.descricao} onChange={e => setF({ ...f, descricao: e.target.value })}
+          placeholder="Ex: Sinal · Remanescente · Deslocação" className={inputCls} />
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className={labelCls}>Valor (€)</label>
+          <input value={f.valor} onChange={e => setF({ ...f, valor: e.target.value })}
+            placeholder="0,00" className={inputCls} />
+        </div>
+        <div>
+          <label className={labelCls}>Estado</label>
+          <select value={f.status} onChange={e => setF({ ...f, status: e.target.value })} className={selectCls}>
+            {['PENDENTE','PAGO','PARCIAL'].map(s => <option key={s} value={s} style={optStyle}>{s}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className={labelCls}>Data Prevista</label>
+          <input type="date" value={f.data_prevista} onChange={e => setF({ ...f, data_prevista: e.target.value })} className={inputCls} />
+        </div>
+        <div>
+          <label className={labelCls}>Data Pago</label>
+          <input type="date" value={f.data_pago} onChange={e => setF({ ...f, data_pago: e.target.value })} className={inputCls} />
+        </div>
+      </div>
+      <div>
+        <label className={labelCls}>Notas</label>
+        <input value={f.notas} onChange={e => setF({ ...f, notas: e.target.value })}
+          placeholder="Opcional..." className={inputCls} />
+      </div>
+    </div>
+  )
+}
+
 function PagamentosAdminTab({ freelancerId, pagamentos, casamentos, onRefresh }: { freelancerId: string; pagamentos: Pagamento[]; casamentos: Casamento[]; onRefresh: () => void }) {
   const [showAdd, setShowAdd] = useState(false)
-  const [form, setForm]       = useState({ casamento_id: '', descricao: '', valor: '', data_prevista: '', data_pago: '', status: 'PENDENTE', notas: '' })
+  const [form, setForm]       = useState<PagaFormValues>({ casamento_id: '', descricao: '', valor: '', data_prevista: '', data_pago: '', status: 'PENDENTE', notas: '' })
   const [saving, setSaving]   = useState(false)
   const [editId, setEditId]   = useState<string | null>(null)
-  const [editForm, setEditForm] = useState<typeof form | null>(null)
+  const [editForm, setEditForm] = useState<PagaFormValues | null>(null)
 
   const totalPago     = pagamentos.filter(p => p.status === 'PAGO').reduce((s, p) => s + (p.valor ?? 0), 0)
   const totalPendente = pagamentos.filter(p => p.status !== 'PAGO').reduce((s, p) => s + (p.valor ?? 0), 0)
@@ -1604,55 +1655,6 @@ function PagamentosAdminTab({ freelancerId, pagamentos, casamentos, onRefresh }:
     onRefresh()
   }
 
-  function PagaForm({ f, setF }: { f: typeof form; setF: (v: typeof form) => void }) {
-    return (
-      <div className="space-y-3">
-        <div>
-          <label className={labelCls}>Evento (opcional)</label>
-          <select value={f.casamento_id} onChange={e => setF({ ...f, casamento_id: e.target.value })} className={selectCls}>
-            <option value="" style={optStyle}>— Sem evento associado —</option>
-            {casamentos.map(c => (
-              <option key={c.id} value={c.id} style={optStyle}>
-                {c.local}{c.data_casamento ? ` · ${c.data_casamento}` : ''}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className={labelCls}>Descrição *</label>
-          <input value={f.descricao} onChange={e => setF({ ...f, descricao: e.target.value })}
-            placeholder="Ex: Sinal · Remanescente · Deslocação" className={inputCls} />
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className={labelCls}>Valor (€)</label>
-            <input value={f.valor} onChange={e => setF({ ...f, valor: e.target.value })}
-              placeholder="0,00" className={inputCls} />
-          </div>
-          <div>
-            <label className={labelCls}>Estado</label>
-            <select value={f.status} onChange={e => setF({ ...f, status: e.target.value })} className={selectCls}>
-              {['PENDENTE','PAGO','PARCIAL'].map(s => <option key={s} value={s} style={optStyle}>{s}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className={labelCls}>Data Prevista</label>
-            <input type="date" value={f.data_prevista} onChange={e => setF({ ...f, data_prevista: e.target.value })} className={inputCls} />
-          </div>
-          <div>
-            <label className={labelCls}>Data Pago</label>
-            <input type="date" value={f.data_pago} onChange={e => setF({ ...f, data_pago: e.target.value })} className={inputCls} />
-          </div>
-        </div>
-        <div>
-          <label className={labelCls}>Notas</label>
-          <input value={f.notas} onChange={e => setF({ ...f, notas: e.target.value })}
-            placeholder="Opcional..." className={inputCls} />
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-4">
       {/* Resumo */}
@@ -1679,7 +1681,7 @@ function PagamentosAdminTab({ freelancerId, pagamentos, casamentos, onRefresh }:
       {showAdd && (
         <div className="bg-white/[0.02] border border-gold/20 rounded-2xl p-5 space-y-3">
           <p className="text-[9px] tracking-[0.3em] text-gold/60 uppercase">Novo Pagamento</p>
-          <PagaForm f={form} setF={setForm} />
+          <PagaForm f={form} setF={setForm} casamentos={casamentos} />
           <div className="flex justify-end gap-2 pt-1">
             <button onClick={() => setShowAdd(false)} className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
             <button onClick={handleAdd} disabled={saving || !form.descricao.trim()}
@@ -1698,7 +1700,7 @@ function PagamentosAdminTab({ freelancerId, pagamentos, casamentos, onRefresh }:
         editId === p.id && editForm ? (
           <div key={p.id} className="bg-white/[0.02] border border-white/20 rounded-2xl p-5 space-y-3">
             <p className={labelCls}>Editar</p>
-            <PagaForm f={editForm} setF={setEditForm as any} />
+            <PagaForm f={editForm} setF={setEditForm as any} casamentos={casamentos} />
             <div className="flex justify-between pt-1">
               <button onClick={() => handleDelete(p.id)} className="text-[10px] text-red-400/50 hover:text-red-400 transition-colors">✕ Remover</button>
               <div className="flex gap-2">
