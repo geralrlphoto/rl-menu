@@ -523,7 +523,7 @@ export default function FreelancerDetailPage() {
       {tab === 'info'         && <InfoTab freelancerId={id} info={info} onRefresh={load} />}
       {tab === 'notas'        && <NotasTab freelancer={freelancer} onRefresh={load} />}
       {tab === 'pagamentos'   && <PagamentosAdminTab freelancerId={id} pagamentos={pagamentos} casamentos={casamentos} onRefresh={load} />}
-      {tab === 'mensagens'    && <MensagensAdminTab freelancerId={id} casamentos={casamentos} mensagens={mensagens} onRefresh={load} />}
+      {tab === 'mensagens'    && <MensagensAdminTab freelancerId={id} freelancerNome={freelancer?.nome ?? ''} casamentos={casamentos} mensagens={mensagens} onRefresh={load} />}
       {tab === 'notificacoes' && <NotificacoesAdminTab freelancerId={id} notificacoes={notificacoes} onRefresh={load} />}
     </main>
   )
@@ -1752,8 +1752,8 @@ function PagamentosAdminTab({ freelancerId, pagamentos, casamentos, onRefresh }:
 
 // ─── Mensagens Admin Tab ─────────────────────────────────────────────────────
 
-function MensagensAdminTab({ freelancerId, casamentos, mensagens, onRefresh }: {
-  freelancerId: string; casamentos: Casamento[]; mensagens: Mensagem[]; onRefresh: () => void
+function MensagensAdminTab({ freelancerId, freelancerNome, casamentos, mensagens, onRefresh }: {
+  freelancerId: string; freelancerNome: string; casamentos: Casamento[]; mensagens: Mensagem[]; onRefresh: () => void
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [texto, setTexto]           = useState('')
@@ -1824,7 +1824,7 @@ function MensagensAdminTab({ freelancerId, casamentos, mensagens, onRefresh }: {
                       <p className="text-sm text-white/80 truncate">{c.local || '—'}</p>
                       {last ? (
                         <p className="text-[10px] text-white/30 mt-0.5 truncate">
-                          {last.remetente === 'admin' ? 'Tu: ' : 'Freelancer: '}{last.mensagem}
+                          {last.remetente === 'admin' ? 'Tu: ' : `${freelancerNome}: `}{last.mensagem}
                         </p>
                       ) : (
                         <p className="text-[10px] text-white/20 mt-0.5 italic">Sem mensagens</p>
@@ -1867,7 +1867,7 @@ function MensagensAdminTab({ freelancerId, casamentos, mensagens, onRefresh }: {
                         : 'bg-white/[0.06] border border-white/[0.09] rounded-2xl rounded-bl-sm'
                     }`}>
                       {m.remetente === 'freelancer' && (
-                        <p className="text-[8px] tracking-widest uppercase text-white/30 font-semibold">Freelancer</p>
+                        <p className="text-[8px] tracking-widest uppercase text-white/30 font-semibold">{freelancerNome}</p>
                       )}
                       <p className="text-sm text-white/90 leading-relaxed">{m.mensagem}</p>
                       <p className="text-[9px] text-white/25 text-right">{fmtHora(m.created_at)}</p>
