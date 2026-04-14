@@ -464,29 +464,28 @@ export default async function Home() {
 
       {/* ── Relatório Diário Banner ─────────────────────────────────────────── */}
       <div className="border-t border-white/[0.06] bg-[#060606]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-10 py-7 sm:py-9 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+        <div className="max-w-6xl mx-auto px-4 sm:px-10 py-8 sm:py-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div>
-            <p className="text-[9px] tracking-[0.5em] text-white/15 uppercase mb-2">RL PHOTO · VIDEO</p>
-            <h2 className="text-4xl sm:text-[3.2rem] font-black tracking-tighter text-white uppercase leading-[0.9]">
-              RELATÓRIO<br />
-              <span style={{ color: '#00D4AA' }}>DIÁRIO</span>
+            <p className="text-[9px] tracking-[0.55em] text-white/15 uppercase mb-3">RL PHOTO · VIDEO</p>
+            <h2 className="text-5xl sm:text-6xl font-black tracking-tighter uppercase leading-[0.88]">
+              <span className="text-white">RELATÓRIO</span><br />
+              <span className="text-[#C9A84C]">DIÁRIO</span>
             </h2>
-            <p className="text-white/20 text-xs mt-3 tracking-wider">
-              Eventos · CRM · Portais Noivos · Equipa · Prazos · Pagamentos
+            <p className="text-white/25 text-xs mt-3 tracking-wider leading-relaxed">
+              Eventos · CRM · Portais · Prazos · Pagamentos
             </p>
           </div>
-          <div className="flex flex-col items-start sm:items-end gap-1.5 shrink-0">
+          <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
             <Link
               href="/relatorio-diario"
-              className="flex items-center gap-3 px-7 py-3.5 rounded-full font-black text-sm tracking-[0.2em] uppercase transition-all duration-300 hover:scale-105"
-              style={{ background: '#00D4AA', color: '#000', boxShadow: '0 0 30px rgba(0,212,170,0.25)' }}
+              className="flex items-center gap-3 px-7 py-3.5 rounded-full bg-[#C9A84C] hover:bg-[#e0bb5e] text-black font-black text-sm tracking-[0.2em] uppercase transition-all duration-200 hover:scale-105"
             >
               ENTRAR
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
               </svg>
             </Link>
-            <p className="text-[9px] tracking-[0.3em] text-white/15 uppercase">GERADO A PEDIDO</p>
+            <p className="text-[9px] tracking-[0.35em] text-white/15 uppercase">GERADO A PEDIDO</p>
           </div>
         </div>
       </div>
