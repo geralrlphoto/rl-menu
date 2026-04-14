@@ -53,14 +53,25 @@ export async function POST(req: NextRequest) {
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#0e0a05;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0e0a05;padding:32px 16px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0e0a05;padding:32px 16px 40px;">
     <tr>
       <td align="center">
+
+        <!-- Imagem principal -->
         <a href="https://rl-menu-lake.vercel.app/freelancer-view/${freelancer.id}" style="display:block;text-decoration:none;">
           <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/email-equipa-novidades.png"
             width="560" alt="Tens novidades no portal"
             style="display:block;width:100%;max-width:560px;border:0;" />
         </a>
+
+        <!-- Bloco evento -->
+        <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#120e09;border-left:0.5px solid #4a3a1e;border-right:0.5px solid #4a3a1e;border-bottom:0.5px solid #4a3a1e;">
+          <tr><td style="padding:28px 40px 32px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
+            <p style="margin:0 0 6px;font-size:10px;letter-spacing:0.45em;color:#7a6340;text-transform:uppercase;">Novo Evento</p>
+            <p style="margin:0;font-size:26px;font-weight:400;font-style:italic;color:#c9a96e;line-height:1.2;">${nomesCasal}</p>
+          </td></tr>
+        </table>
+
       </td>
     </tr>
   </table>
