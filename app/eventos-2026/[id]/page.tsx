@@ -212,10 +212,11 @@ function EditMultiField({ label, value, field, eventId, onSaved }: {
 }
 
 // ─── Equipa field — salva no Supabase, NÃO no Notion ──────────────────────────
-function EditEquipaField({ label, field, multi, eventoId, referencia, local, dataCasamento, initialValue, options, onChanged }: {
+function EditEquipaField({ label, field, multi, eventoId, referencia, local, dataCasamento, initialValue, options, onChanged, unavailableNames }: {
   label: string; field: 'fotografo' | 'videografo'; multi: boolean
   eventoId: string; referencia: string; local: string; dataCasamento: string
   initialValue: string[]; options: string[]; onChanged?: (val: string[]) => void
+  unavailableNames?: string[]
 }) {
   const [value, setValue] = useState<string[]>(initialValue)
   const [open, setOpen]   = useState(false)
@@ -280,9 +281,13 @@ function EditEquipaField({ label, field, multi, eventoId, referencia, local, dat
     }
   }
 
-  const tagCls = multi
-    ? 'text-[10px] px-1.5 py-0.5 rounded-md bg-gold/10 text-gold/80 border border-gold/20'
-    : 'text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400/80 border border-emerald-500/20'
+  const tagCls = (name: string) => {
+    const isUnavail = unavailableNames?.includes(name.toUpperCase())
+    if (isUnavail) return 'text-[10px] px-1.5 py-0.5 rounded-md bg-red-500/15 text-red-400 border border-red-500/30'
+    return multi
+      ? 'text-[10px] px-1.5 py-0.5 rounded-md bg-gold/10 text-gold/80 border border-gold/20'
+      : 'text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400/80 border border-emerald-500/20'
+  }
 
   return (
     <div className="flex flex-col gap-0.5 group/f" ref={ref}>
@@ -292,7 +297,9 @@ function EditEquipaField({ label, field, multi, eventoId, referencia, local, dat
           className="w-full text-left px-2 py-1 -mx-2 rounded-lg hover:bg-white/5 transition-colors flex items-center gap-2 min-h-[28px]">
           {value.length > 0
             ? <span className="flex flex-wrap gap-1">{value.map(v => (
-                <span key={v} className={tagCls}>{v}</span>
+                <span key={v} className={tagCls(v)}>
+                  {unavailableNames?.includes(v.toUpperCase()) && <span className="mr-1">⚠</span>}{v}
+                </span>
               ))}</span>
             : <span className="text-white/20 italic text-sm">Clica para editar</span>}
           {saving
@@ -1257,6 +1264,7 @@ export default function EventoPage() {
   const [notifVideoErro, setNotifVideoErro] = useState<string | null>(null)
   const [equipaFoto, setEquipaFoto] = useState<string[]>([])
   const [equipaVideo, setEquipaVideo] = useState<string[]>([])
+  const [unavailableNames, setUnavailableNames] = useState<string[]>([])
   const [optionsFoto, setOptionsFoto] = useState<string[]>(['ALEXANDRE CAPÃO','PATRICIO FERREIRA','SONIA CARVALHO','RUI GARRIDO','BRUNO DE CARVALHO','PEDRO MARTINS'])
   const [optionsVideo, setOptionsVideo] = useState<string[]>(['RUI GONÇALVES','LUIS SOARES'])
 
@@ -1325,6 +1333,14 @@ export default function EventoPage() {
           setReferenciaLoaded(ev.referencia)
           // Carregar pagamentos
           loadPagamentos(ev.referencia)
+
+          // Verificar disponibilidade da equipa para a data do evento
+          if (ev.data_evento) {
+            fetch(`/api/equipa-disponibilidade-check?referencia=${encodeURIComponent(ev.referencia)}&data=${ev.data_evento}`)
+              .then(r => r.json())
+              .then(d => { if (d.unavailable) setUnavailableNames(d.unavailable) })
+              .catch(() => {})
+          }
 
           // Carregar álbum associado → data prevista + sincronizar estado
           fetch(`/api/albuns-by-ref?ref=${encodeURIComponent(ev.referencia)}`)
@@ -1857,11 +1873,13 @@ export default function EventoPage() {
               eventoId={e.id} referencia={e.referencia ?? ''} local={e.local ?? ''} dataCasamento={e.data_evento ?? ''}
               initialValue={e.fotografo ?? []}
               options={optionsFoto}
-              onChanged={setEquipaFoto} />
+              onChanged={setEquipaFoto}
+              unavailableNames={unavailableNames} />
             <EditEquipaField label="Videógrafo" field="videografo" multi={false}
               eventoId={e.id} referencia={e.referencia ?? ''} local={e.local ?? ''} dataCasamento={e.data_evento ?? ''}
               initialValue={e.videografo ?? []}
               options={optionsVideo}
+              unavailableNames={unavailableNames}
               onChanged={setEquipaVideo} />
             <EditField label="Editor de Fotos" value={e.editor_fotos} field="editor_fotos" eventId={e.id} onSaved={handleSaved} />
             <EditField label="Agendamento Email" value={e.agendamento_email} field="agendamento_email" eventId={e.id} onSaved={handleSaved} />
