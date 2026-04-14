@@ -29,7 +29,7 @@ function DiasBadge({ dias }: { dias: number }) {
     : dias <= 7  ? 'bg-orange-500/15 text-orange-400 border-orange-500/25'
     : 'bg-white/5 text-white/40 border-white/10'
   const label = dias < 0 ? `${Math.abs(dias)}d atraso` : dias === 0 ? 'HOJE' : dias === 1 ? 'Amanhã' : `${dias}d`
-  return <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${cls}`}>{label}</span>
+  return <span className={`text-xs font-bold px-2.5 py-1 rounded-full border shrink-0 ${cls}`}>{label}</span>
 }
 
 function Section({ title, count, urgent, children, empty, desc }: {
@@ -46,34 +46,34 @@ function Section({ title, count, urgent, children, empty, desc }: {
         {/* Esquerda: + / − + título + badge */}
         <div className="flex items-center gap-3">
           {/* Sinal + / − */}
-          <span className={`flex items-center justify-center w-6 h-6 rounded-full border text-sm font-bold leading-none transition-all duration-200 shrink-0 ${
+          <span className={`flex items-center justify-center w-7 h-7 rounded-full border text-base font-bold leading-none transition-all duration-200 shrink-0 ${
             open
               ? 'border-gold/40 text-gold bg-gold/10'
               : 'border-white/20 text-white/40 group-hover:border-gold/30 group-hover:text-gold/60'
           }`}>
             {open ? '−' : '+'}
           </span>
-          <div className="flex flex-col items-start gap-0.5">
-            <span className="text-[10px] tracking-[0.35em] text-gold uppercase font-light">{title}</span>
+          <div className="flex flex-col items-start gap-1">
+            <span className="text-sm tracking-[0.25em] text-gold uppercase font-semibold">{title}</span>
             {!open && (
-              <span className="text-[9px] text-white/20 tracking-wide normal-case font-normal">{desc}</span>
+              <span className="text-xs text-white/30 tracking-wide normal-case font-normal">{desc}</span>
             )}
           </div>
           {count > 0 && (
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${
+            <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border shrink-0 ${
               urgent ? 'bg-red-500/15 text-red-400 border-red-500/25' : 'bg-gold/10 text-gold/80 border-gold/25'
             }`}>{count}</span>
           )}
         </div>
         {/* Direita: estado */}
         <div className="flex items-center gap-2 shrink-0">
-          {count === 0 && <span className="text-[9px] tracking-widest text-white/15 uppercase">Em dia</span>}
+          {count === 0 && <span className="text-xs tracking-widest text-white/15 uppercase">Em dia</span>}
         </div>
       </button>
       {open && (
         <div className="px-4 pb-4 pt-2 flex flex-col gap-1.5">
           {count === 0
-            ? <p className="text-white/15 text-xs tracking-widest py-5 text-center border border-dashed border-white/[0.05] rounded-xl">
+            ? <p className="text-white/20 text-sm tracking-widest py-6 text-center border border-dashed border-white/[0.05] rounded-xl">
                 {empty}
               </p>
             : children
@@ -86,10 +86,10 @@ function Section({ title, count, urgent, children, empty, desc }: {
 
 function Item({ main, sub, right }: { main: string; sub?: string; right?: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.04] transition-colors">
+    <div className="flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.04] transition-colors">
       <div className="min-w-0 flex-1">
-        <p className="text-sm text-white/80 truncate">{main}</p>
-        {sub && <p className="text-[10px] text-white/25 truncate mt-0.5">{sub}</p>}
+        <p className="text-base text-white/80 truncate">{main}</p>
+        {sub && <p className="text-sm text-white/30 truncate mt-0.5">{sub}</p>}
       </div>
       {right && <div className="shrink-0">{right}</div>}
     </div>
@@ -98,10 +98,10 @@ function Item({ main, sub, right }: { main: string; sub?: string; right?: React.
 
 function StatCard({ label, val, sub }: { label: string; val: number | string; sub?: string }) {
   return (
-    <div className="flex flex-col gap-1 px-4 py-3 rounded-xl border border-white/[0.07] bg-white/[0.02]">
-      <span className="text-xl font-bold text-white">{val}</span>
-      <span className="text-[9px] tracking-[0.3em] text-white/30 uppercase">{label}</span>
-      {sub && <span className="text-[9px] text-gold/50">{sub}</span>}
+    <div className="flex flex-col gap-1.5 px-4 py-4 rounded-xl border border-white/[0.07] bg-white/[0.02]">
+      <span className="text-2xl font-bold text-white">{val}</span>
+      <span className="text-xs tracking-[0.2em] text-white/30 uppercase">{label}</span>
+      {sub && <span className="text-xs text-gold/50">{sub}</span>}
     </div>
   )
 }
@@ -250,7 +250,7 @@ export default function RelatorioDiarioPage() {
                   <Item
                     main={l.nome || '—'}
                     sub={[l.tipo_evento, l.como_chegou].filter(Boolean).join(' · ')}
-                    right={<span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-red-500/15 text-red-400 border-red-500/25">🔥 Quente</span>}
+                    right={<span className="text-xs font-bold px-2.5 py-1 rounded-full border bg-red-500/15 text-red-400 border-red-500/25">🔥 Quente</span>}
                   />
                 </Link>
               ))}
@@ -259,7 +259,7 @@ export default function RelatorioDiarioPage() {
                   <Item
                     main={l.nome || '—'}
                     sub={[l.tipo_evento, l.como_chegou].filter(Boolean).join(' · ')}
-                    right={<span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-orange-500/15 text-orange-400 border-orange-500/25">🌡 Morno</span>}
+                    right={<span className="text-xs font-bold px-2.5 py-1 rounded-full border bg-orange-500/15 text-orange-400 border-orange-500/25">🌡 Morno</span>}
                   />
                 </Link>
               ))}
@@ -280,7 +280,7 @@ export default function RelatorioDiarioPage() {
                     main={a.label}
                     sub={`${a.nomes} · ${a.referencia}`}
                     right={
-                      <span className="text-[10px] text-white/30">
+                      <span className="text-sm text-white/30">
                         {a.diasAtras === 0 ? 'Hoje' : a.diasAtras === 1 ? 'Ontem' : `há ${a.diasAtras} dias`}
                       </span>
                     }
@@ -303,7 +303,7 @@ export default function RelatorioDiarioPage() {
                     main={a.label}
                     sub={`${a.nomes} · ${a.referencia}`}
                     right={
-                      <span className="text-[10px] text-white/30">
+                      <span className="text-sm text-white/30">
                         {a.diasAtras === 0 ? 'Hoje' : a.diasAtras === 1 ? 'Ontem' : `há ${a.diasAtras} dias`}
                       </span>
                     }
@@ -357,7 +357,7 @@ export default function RelatorioDiarioPage() {
                   key={`ap-${i}`}
                   main={a.nome}
                   sub={a.ref}
-                  right={<span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-gold/10 text-gold border-gold/25">Para Aprovação</span>}
+                  right={<span className="text-xs font-bold px-2.5 py-1 rounded-full border bg-gold/10 text-gold border-gold/25">Para Aprovação</span>}
                 />
               ))}
             </Section>
@@ -376,8 +376,8 @@ export default function RelatorioDiarioPage() {
                   sub={p.data_pagamento ? fmtFull(p.data_pagamento) : '—'}
                   right={
                     p.valor_liquidado
-                      ? <span className="text-sm font-semibold text-white/70">{Number(p.valor_liquidado).toLocaleString('pt-PT')} €</span>
-                      : <span className="text-[10px] text-white/20">Pendente</span>
+                      ? <span className="text-base font-semibold text-white/70">{Number(p.valor_liquidado).toLocaleString('pt-PT')} €</span>
+                      : <span className="text-sm text-white/20">Pendente</span>
                   }
                 />
               ))}
