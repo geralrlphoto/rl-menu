@@ -860,11 +860,11 @@ function PagamentosTab({ pagamentos, casamentos }: { pagamentos: Pagamento[]; ca
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4 space-y-1">
           <p className="text-[9px] tracking-[0.35em] text-emerald-400/60 uppercase">Total Pago</p>
-          <p className="text-2xl font-light text-emerald-400">{fmtEuro(totalPago)}</p>
+          <p className="text-xl font-light text-emerald-400 truncate">{fmtEuro(totalPago)}</p>
         </div>
         <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-2xl p-4 space-y-1">
           <p className="text-[9px] tracking-[0.35em] text-yellow-400/60 uppercase">Pendente</p>
-          <p className="text-2xl font-light text-yellow-400">{fmtEuro(totalPendente)}</p>
+          <p className="text-xl font-light text-yellow-400 truncate">{fmtEuro(totalPendente)}</p>
         </div>
       </div>
 
@@ -978,18 +978,18 @@ function DisponibilidadeTab({ freelancerId, disponibilidade, casamentos, onRefre
         {showForm && (
           <div className="mb-4 bg-white/[0.02] border border-white/10 rounded-2xl p-5 space-y-3">
             <p className="text-[9px] tracking-[0.3em] text-white/25 uppercase">Novo Período</p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className="block text-[9px] text-white/25 tracking-widest uppercase mb-1.5">Data Início *</label>
                 <input type="date" value={form.data_inicio}
                   onChange={e => setForm(v => ({ ...v, data_inicio: e.target.value }))}
-                  className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 [color-scheme:dark]" />
+                  className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white/80 outline-none focus:border-gold/40 [color-scheme:dark]" />
               </div>
               <div>
                 <label className="block text-[9px] text-white/25 tracking-widest uppercase mb-1.5">Data Fim</label>
                 <input type="date" value={form.data_fim}
                   onChange={e => setForm(v => ({ ...v, data_fim: e.target.value }))}
-                  className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 [color-scheme:dark]" />
+                  className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white/80 outline-none focus:border-gold/40 [color-scheme:dark]" />
               </div>
             </div>
             <div>
@@ -1311,21 +1311,20 @@ export default function FreelancerViewPage() {
       )}
 
       {!loading && tab === null && (
-        <div className="flex flex-row items-start justify-between py-8 gap-8">
+        <div className="flex flex-col md:flex-row items-start justify-between py-8 gap-6 md:gap-8">
 
-          {/* Texto — lado esquerdo */}
+          {/* Texto */}
           {(freelancer?.intro_home_title || freelancer?.intro_home) && (
-            <div className="flex-1 min-w-0 space-y-3">
-              {freelancer.intro_home_title && <p className="text-[22px] font-semibold text-white">{freelancer.intro_home_title}</p>}
-              {freelancer.intro_home && <p className="text-[16px] text-white leading-relaxed whitespace-pre-wrap text-justify">{freelancer.intro_home}</p>}
+            <div className="flex-1 min-w-0 space-y-3 order-2 md:order-1">
+              {freelancer.intro_home_title && <p className="text-xl font-semibold text-white">{freelancer.intro_home_title}</p>}
+              {freelancer.intro_home && <p className="text-base text-white leading-relaxed whitespace-pre-wrap">{freelancer.intro_home}</p>}
             </div>
           )}
 
-          {/* Card de perfil — lado direito */}
+          {/* Card de perfil */}
           {freelancer?.foto_url && (
-            <div className="flex-shrink-0"
+            <div className="flex-shrink-0 mx-auto md:mx-0 order-1 md:order-2"
               style={{ filter: 'drop-shadow(0 0 1px rgba(212,175,55,0.9)) drop-shadow(0 0 16px rgba(212,175,55,0.35))' }}>
-              {/* SVG clip-path: cantos redondos + corte reto inferior direito */}
               <svg width="0" height="0" style={{ position: 'absolute' }}>
                 <defs>
                   <clipPath id={`card-${freelancer.id}`}>
@@ -1335,15 +1334,11 @@ export default function FreelancerViewPage() {
               </svg>
               <div className="relative w-[260px] h-[360px]"
                 style={{ clipPath: `url(#card-${freelancer.id})` }}>
-                {/* Fundo cinza */}
                 <div className="absolute inset-0 bg-neutral-400" />
-                {/* Foto B&W */}
                 <img src={freelancer.foto_url} alt={freelancer.nome}
                   className="absolute inset-0 w-full h-full object-cover"
                   style={{ filter: 'grayscale(100%)' }} />
-                {/* Seta top-right — branca */}
                 <span className="absolute top-4 right-4 text-white font-black text-xl leading-none select-none">↙</span>
-                {/* Nome + função vertical na esquerda */}
                 <div className="absolute left-3 bottom-5 flex items-end gap-[5px]">
                   <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
                     className="font-black uppercase text-white text-[13px] leading-none tracking-[0.12em] whitespace-nowrap">
@@ -1358,7 +1353,7 @@ export default function FreelancerViewPage() {
             </div>
           )}
 
-          {/* Fallback se não tiver nada */}
+          {/* Fallback */}
           {!freelancer?.foto_url && !freelancer?.intro_home_title && !freelancer?.intro_home && (
             <div className="w-full flex flex-col items-center justify-center py-12 gap-3">
               <div className="h-px w-8 bg-white/10" />
@@ -1398,37 +1393,35 @@ export default function FreelancerViewPage() {
                       return (
                         <div key={c.id} onClick={() => setFicha(c)}
                           className={`cursor-pointer bg-white/[0.02] border rounded-2xl p-5 space-y-3 hover:border-white/20 transition-all ${isUrgent ? 'border-red-500/25' : 'border-white/[0.07]'}`}>
-                          <div className="flex items-start justify-between gap-3 flex-wrap">
-                            <div className="flex items-center gap-3">
-                              <div className={`flex-shrink-0 flex flex-col items-center justify-center w-12 h-12 rounded-xl border text-center ${isUrgent ? 'bg-red-500/15 border-red-500/30' : 'bg-gold/10 border-gold/25'}`}>
-                                {c.data_casamento ? (
-                                  <>
-                                    <span className={`text-base font-bold leading-none ${isUrgent ? 'text-red-400' : 'text-gold'}`}>{c.data_casamento.split('-')[2]}</span>
-                                    <span className={`text-[8px] uppercase tracking-wide font-semibold ${isUrgent ? 'text-red-400/60' : 'text-gold/60'}`}>{MESES[parseInt(c.data_casamento.split('-')[1])-1]}</span>
-                                  </>
-                                ) : <span className="text-white/20 text-xs">—</span>}
-                              </div>
-                              <div>
-                                <p className="text-base font-light tracking-wider text-white uppercase">{c.local || '—'}</p>
-                                <p className="text-xs text-white mt-0.5">{fmtDate(c.data_casamento)}</p>
-                              </div>
+                          <div className="flex items-start gap-3">
+                            <div className={`flex-shrink-0 flex flex-col items-center justify-center w-12 h-12 rounded-xl border text-center ${isUrgent ? 'bg-red-500/15 border-red-500/30' : 'bg-gold/10 border-gold/25'}`}>
+                              {c.data_casamento ? (
+                                <>
+                                  <span className={`text-base font-bold leading-none ${isUrgent ? 'text-red-400' : 'text-gold'}`}>{c.data_casamento.split('-')[2]}</span>
+                                  <span className={`text-[8px] uppercase tracking-wide font-semibold ${isUrgent ? 'text-red-400/60' : 'text-gold/60'}`}>{MESES[parseInt(c.data_casamento.split('-')[1])-1]}</span>
+                                </>
+                              ) : <span className="text-white/20 text-xs">—</span>}
                             </div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              {days !== null && (
-                                <span className={`text-[10px] px-2.5 py-1 rounded-full border tracking-widest font-medium ${days <= 7 ? 'bg-red-500/15 text-red-400 border-red-500/30' : days <= 30 ? 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30' : 'bg-gold/10 text-gold border-gold/25'}`}>
-                                  {days === 0 ? 'HOJE' : `${days}d`}
-                                </span>
-                              )}
-                              {(freelancer?.status === 'VIDEOGRAFO' ? c.data_confirmada_videografo : c.data_confirmada) && (
-                                <span className="text-[10px] px-2.5 py-1 rounded-full border bg-emerald-500/15 text-emerald-400 border-emerald-500/30 tracking-widest">
-                                  ✓ Confirmado
-                                </span>
-                              )}
-                              {(freelancer?.status === 'VIDEOGRAFO' ? (c.indisponivel_videografo && !c.data_confirmada_videografo) : (c.indisponivel && !c.data_confirmada)) && (
-                                <span className="text-[10px] px-2.5 py-1 rounded-full border bg-red-500/15 text-red-400 border-red-500/30 tracking-widest">
-                                  Indisponível
-                                </span>
-                              )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-base font-light tracking-wider text-white uppercase truncate">{c.local || '—'}</p>
+                              <p className="text-xs text-white/60 mt-0.5">{fmtDate(c.data_casamento)}</p>
+                              <div className="flex items-center gap-2 flex-wrap mt-2">
+                                {days !== null && (
+                                  <span className={`text-[10px] px-2.5 py-1 rounded-full border tracking-widest font-medium ${days <= 7 ? 'bg-red-500/15 text-red-400 border-red-500/30' : days <= 30 ? 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30' : 'bg-gold/10 text-gold border-gold/25'}`}>
+                                    {days === 0 ? 'HOJE' : `${days}d`}
+                                  </span>
+                                )}
+                                {(freelancer?.status === 'VIDEOGRAFO' ? c.data_confirmada_videografo : c.data_confirmada) && (
+                                  <span className="text-[10px] px-2.5 py-1 rounded-full border bg-emerald-500/15 text-emerald-400 border-emerald-500/30 tracking-widest">
+                                    ✓ Confirmado
+                                  </span>
+                                )}
+                                {(freelancer?.status === 'VIDEOGRAFO' ? (c.indisponivel_videografo && !c.data_confirmada_videografo) : (c.indisponivel && !c.data_confirmada)) && (
+                                  <span className="text-[10px] px-2.5 py-1 rounded-full border bg-red-500/15 text-red-400 border-red-500/30 tracking-widest">
+                                    Indisponível
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -1613,29 +1606,31 @@ export default function FreelancerViewPage() {
                                   </div>
                                 </div>
                               )}
-                              <div className="flex items-center justify-between gap-3 px-4 py-3">
-                              <div>
-                                <p className="text-sm text-white/80">{a.nome}</p>
-                                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                                  {a.data_casamento && <p className="text-[10px] text-white/30">{fmtDate(a.data_casamento).split(' · ')[0]}</p>}
-                                  {a.referencia_album && <span className="text-[9px] text-gold/50 font-mono">{a.referencia_album}</span>}
+                              <div className="px-4 py-3 space-y-2">
+                                <div className="flex items-start justify-between gap-3 flex-wrap">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm text-white/80">{a.nome}</p>
+                                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                      {a.data_casamento && <p className="text-[10px] text-white/30">{fmtDate(a.data_casamento).split(' · ')[0]}</p>}
+                                      {a.referencia_album && <span className="text-[9px] text-gold/50 font-mono">{a.referencia_album}</span>}
+                                    </div>
+                                    <div className="flex items-center gap-3 mt-1 flex-wrap">
+                                      {a.data_entrega_fotos && (
+                                        <span className="text-[9px] text-white/30">Entrada: {fmtDate(a.data_entrega_fotos).split(' · ')[0]}</span>
+                                      )}
+                                      {a.data_entrega_fotos && (
+                                        <span className="text-[9px] text-white/30">Limite: {fmtDate(addDaysStr(a.data_entrega_fotos, 35)).split(' · ')[0]}</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <button onClick={() => setAlbumInfo(a)}
+                                      className="text-[10px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-xl border border-gold/30 bg-gold/5 text-gold/70 hover:text-gold hover:border-gold/60 hover:bg-gold/10 transition-all">
+                                      Ver Mais
+                                    </button>
+                                    <AlbumStatusSelect albumId={a.id} status={a.status} onChanged={s => setAlbum(prev => prev.map(x => x.id === a.id ? { ...x, status: s } : x))} />
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-                                  {a.data_entrega_fotos && (
-                                    <span className="text-[9px] text-white/30">Entrada: {fmtDate(a.data_entrega_fotos).split(' · ')[0]}</span>
-                                  )}
-                                  {a.data_entrega_fotos && (
-                                    <span className="text-[9px] text-white/30">Limite: {fmtDate(addDaysStr(a.data_entrega_fotos, 35)).split(' · ')[0]}</span>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2 shrink-0">
-                                <button onClick={() => setAlbumInfo(a)}
-                                  className="text-[10px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-xl border border-gold/30 bg-gold/5 text-gold/70 hover:text-gold hover:border-gold/60 hover:bg-gold/10 transition-all">
-                                  Ver Mais
-                                </button>
-                                <AlbumStatusSelect albumId={a.id} status={a.status} onChanged={s => setAlbum(prev => prev.map(x => x.id === a.id ? { ...x, status: s } : x))} />
-                              </div>
                               </div>
                             </div>
                           ))}
