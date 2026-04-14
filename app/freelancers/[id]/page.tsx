@@ -123,7 +123,9 @@ function PasswordDisplay({ password, freelancerId }: { password: string | null; 
 
 export default function FreelancerDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const [tab, setTab] = useState<'casamentos'|'edicao'|'album'|'valores'|'info'|'notas'>('casamentos')
+  const [tab, setTab] = useState<'casamentos'|'edicao'|'album'|'valores'|'info'|'notas'|null>(null)
+  const [editForm, setEditForm] = useState<{ nome: string; status: string; contato: string; email: string; nome_sos: string; contato_sos: string } | null>(null)
+  const [editSaving, setEditSaving] = useState(false)
 
   const [freelancer, setFreelancer] = useState<Freelancer | null>(null)
   const [casamentos, setCasamentos] = useState<Casamento[]>([])
@@ -175,6 +177,19 @@ export default function FreelancerDetailPage() {
 
   const isVideografo = freelancer?.status === 'VIDEOGRAFO'
   const isFotografo  = freelancer?.status === 'FOTOGRAFO'
+  async function handleEditSave() {
+    if (!editForm) return
+    setEditSaving(true)
+    await fetch('/api/freelancers', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, ...editForm }),
+    })
+    await load()
+    setEditForm(null)
+    setEditSaving(false)
+  }
+
   const tabs: { key: 'casamentos'|'edicao'|'album'|'valores'|'info'|'notas'; label: string; count?: number }[] = [
     { key: 'casamentos', label: 'Casamentos', count: casamentos.length },
     ...(!isVideografo ? [{ key: 'edicao' as const, label: 'Edição Fotos', count: edicao.length }] : []),
@@ -225,6 +240,15 @@ export default function FreelancerDetailPage() {
       {/* Tabs */}
       <div className="flex items-center gap-1.5 mb-6 p-1.5 rounded-2xl border border-white/30 bg-black"
         style={{ boxShadow: '0 0 18px 3px rgba(255,255,255,0.10), 0 0 6px 1px rgba(255,255,255,0.15), inset 0 0 18px 0 rgba(255,255,255,0.03)' }}>
+        {/* Botão casa */}
+        <button onClick={() => { setTab(null); setEditForm(null) }}
+          className={`flex items-center justify-center px-4 py-2.5 rounded-xl text-xl transition-all ${
+            tab === null
+              ? 'bg-white/10 text-white border border-white/20'
+              : 'text-white/40 hover:text-white/70 border border-transparent'
+          }`}>
+          ⌂
+        </button>
         {tabs.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[9px] tracking-[0.25em] uppercase font-semibold transition-all ${
@@ -241,6 +265,66 @@ export default function FreelancerDetailPage() {
           </button>
         ))}
       </div>
+
+      {/* Home — editar dados do freelancer */}
+      {tab === null && (
+        <div className="max-w-lg">
+          {editForm ? (
+            <div className="bg-white/[0.02] border border-gold/20 rounded-2xl p-5 space-y-3">
+              <p className="text-[10px] tracking-[0.3em] text-gold/60 uppercase mb-1">Editar dados</p>
+              {[
+                { label: 'Nome', key: 'nome', placeholder: 'Nome' },
+                { label: 'Contato', key: 'contato', placeholder: '9XX XXX XXX' },
+                { label: 'Email', key: 'email', placeholder: 'email@exemplo.com' },
+                { label: 'SOS — Nome', key: 'nome_sos', placeholder: 'Nome familiar' },
+                { label: 'SOS — Nº', key: 'contato_sos', placeholder: '9XX XXX XXX' },
+              ].map(f => (
+                <div key={f.key}>
+                  <label className="block text-[9px] text-white/25 tracking-widest uppercase mb-1">{f.label}</label>
+                  <input value={(editForm as any)[f.key]} onChange={e => setEditForm(prev => ({ ...prev!, [f.key]: e.target.value }))}
+                    placeholder={f.placeholder}
+                    className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
+                </div>
+              ))}
+              <div>
+                <label className="block text-[9px] text-white/25 tracking-widest uppercase mb-1">Função</label>
+                <select value={editForm.status} onChange={e => setEditForm(prev => ({ ...prev!, status: e.target.value }))}
+                  className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors cursor-pointer">
+                  {['FOTOGRAFO','VIDEOGRAFO','ASSISTENTE','EDITORES','OUTRO'].map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <div className="flex justify-end gap-2 pt-1">
+                <button onClick={() => setEditForm(null)} className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
+                <button onClick={handleEditSave} disabled={editSaving} className="px-4 py-1.5 rounded-lg text-xs bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-50">
+                  {editSaving ? 'A guardar...' : 'Guardar'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 space-y-3">
+              <p className="text-[10px] tracking-[0.3em] text-white/25 uppercase mb-2">Dados do Freelancer</p>
+              {[
+                ['Nome', freelancer.nome],
+                ['Função', freelancer.status],
+                ['Contato', freelancer.contato],
+                ['Email', freelancer.email],
+                ['SOS', freelancer.nome_sos ? `${freelancer.nome_sos}${freelancer.contato_sos ? ` · ${freelancer.contato_sos}` : ''}` : null],
+              ].filter(([,v]) => v).map(([label, val]) => (
+                <div key={label as string} className="flex items-center gap-3">
+                  <span className="text-[9px] text-white/25 tracking-widest uppercase w-16 shrink-0">{label}</span>
+                  <span className="text-sm text-white/70">{val}</span>
+                </div>
+              ))}
+              <div className="pt-2">
+                <button onClick={() => setEditForm({ nome: freelancer.nome, status: freelancer.status ?? '', contato: freelancer.contato ?? '', email: freelancer.email ?? '', nome_sos: freelancer.nome_sos ?? '', contato_sos: freelancer.contato_sos ?? '' })}
+                  className="px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-xs font-semibold tracking-widest hover:bg-gold/20 transition-all uppercase">
+                  Editar
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Tab content */}
       {tab === 'casamentos' && <CasamentosTab freelancerId={id} casamentos={casamentos} onRefresh={load} freelancerStatus={freelancer?.status ?? null} freelancer={freelancer} />}
