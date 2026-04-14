@@ -1012,9 +1012,17 @@ export default function FreelancerViewPage() {
       )}
 
       {!loading && tab === null && (
-        <div className="flex flex-col items-center py-8 gap-8">
+        <div className="flex flex-row items-center justify-between py-8 gap-8">
 
-          {/* Card de perfil */}
+          {/* Texto — lado esquerdo */}
+          {(freelancer?.intro_home_title || freelancer?.intro_home) && (
+            <div className="flex-1 min-w-0 space-y-3">
+              {freelancer.intro_home_title && <p className="text-[22px] font-semibold text-white">{freelancer.intro_home_title}</p>}
+              {freelancer.intro_home && <p className="text-[16px] text-white leading-relaxed whitespace-pre-wrap text-justify">{freelancer.intro_home}</p>}
+            </div>
+          )}
+
+          {/* Card de perfil — lado direito */}
           {freelancer?.foto_url && (
             <div className="flex-shrink-0"
               style={{ filter: 'drop-shadow(0 0 1px rgba(212,175,55,0.9)) drop-shadow(0 0 16px rgba(212,175,55,0.35))' }}>
@@ -1051,17 +1059,9 @@ export default function FreelancerViewPage() {
             </div>
           )}
 
-          {/* Título + texto */}
-          {(freelancer?.intro_home_title || freelancer?.intro_home) && (
-            <div className="max-w-xl w-full px-2 space-y-2 text-center">
-              {freelancer.intro_home_title && <p className="text-[22px] font-semibold text-white">{freelancer.intro_home_title}</p>}
-              {freelancer.intro_home && <p className="text-[16px] text-white leading-relaxed whitespace-pre-wrap">{freelancer.intro_home}</p>}
-            </div>
-          )}
-
           {/* Fallback se não tiver nada */}
           {!freelancer?.foto_url && !freelancer?.intro_home_title && !freelancer?.intro_home && (
-            <div className="flex flex-col items-center justify-center py-12 gap-3">
+            <div className="w-full flex flex-col items-center justify-center py-12 gap-3">
               <div className="h-px w-8 bg-white/10" />
               <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase">Seleciona uma secção acima</p>
             </div>
