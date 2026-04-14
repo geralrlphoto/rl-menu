@@ -35,7 +35,7 @@ type Edicao     = {
 }
 type Alteracao  = { id: string; ref_evento: string; paginas_alterar: string | null; tipos_alteracao: string[] | null; observacoes: string | null; foto_url: string | null; created_at: string }
 type Album      = { id: string; nome: string; status: string; data_casamento: string | null; referencia_album: string | null; data_entrega_fotos?: string | null; alteracao?: Alteracao | null }
-type Pagamento   = { id: string; freelancer_id: string; descricao: string; valor: number | null; data_prevista: string | null; data_pago: string | null; status: string; notas: string | null; created_at: string }
+type Pagamento   = { id: string; freelancer_id: string; casamento_id: string | null; descricao: string; valor: number | null; data_prevista: string | null; data_pago: string | null; status: string; notas: string | null; created_at: string }
 type Disponib    = { id: string; freelancer_id: string; data_inicio: string; data_fim: string | null; motivo: string | null }
 type Notificacao = { id: string; freelancer_id: string; titulo: string; mensagem: string | null; tipo: string; lida: boolean; created_at: string }
 
@@ -846,7 +846,7 @@ const PAGA_STATUS_STYLE: Record<string, string> = {
   'PARCIAL':  'bg-blue-500/15 text-blue-400 border-blue-500/30',
 }
 
-function PagamentosTab({ pagamentos }: { pagamentos: Pagamento[] }) {
+function PagamentosTab({ pagamentos, casamentos }: { pagamentos: Pagamento[]; casamentos: Casamento[] }) {
   const totalPago     = pagamentos.filter(p => p.status === 'PAGO').reduce((s, p) => s + (p.valor ?? 0), 0)
   const totalPendente = pagamentos.filter(p => p.status !== 'PAGO').reduce((s, p) => s + (p.valor ?? 0), 0)
 
@@ -872,30 +872,38 @@ function PagamentosTab({ pagamentos }: { pagamentos: Pagamento[] }) {
         <p className="text-center py-10 text-white/15 text-xs tracking-widest">Sem pagamentos registados.</p>
       ) : (
         <div className="space-y-2">
-          {pagamentos.map(p => (
-            <div key={p.id} className="bg-white/[0.02] border border-white/[0.06] rounded-xl px-4 py-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white/80 font-medium leading-tight">{p.descricao}</p>
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
-                    {p.data_prevista && (
-                      <span className="text-[10px] text-white/30">Previsto: {fmtDate(p.data_prevista).split(' · ')[0]}</span>
-                    )}
-                    {p.data_pago && (
-                      <span className="text-[10px] text-emerald-400/70">Pago em: {fmtDate(p.data_pago).split(' · ')[0]}</span>
-                    )}
+          {pagamentos.map(p => {
+            const casamento = p.casamento_id ? casamentos.find(c => c.id === p.casamento_id) ?? null : null
+            return (
+              <div key={p.id} className="bg-white/[0.02] border border-white/[0.06] rounded-xl px-4 py-3">
+                {casamento && (
+                  <p className="text-[9px] tracking-[0.25em] text-gold/50 uppercase mb-1.5">
+                    📍 {casamento.local}{casamento.data_casamento ? ` · ${fmtDate(casamento.data_casamento).split(' · ')[0]}` : ''}
+                  </p>
+                )}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-white/80 font-medium leading-tight">{p.descricao}</p>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
+                      {p.data_prevista && (
+                        <span className="text-[10px] text-white/30">Previsto: {fmtDate(p.data_prevista).split(' · ')[0]}</span>
+                      )}
+                      {p.data_pago && (
+                        <span className="text-[10px] text-emerald-400/70">Pago em: {fmtDate(p.data_pago).split(' · ')[0]}</span>
+                      )}
+                    </div>
+                    {p.notas && <p className="text-[10px] text-white/25 mt-1 italic">{p.notas}</p>}
                   </div>
-                  {p.notas && <p className="text-[10px] text-white/25 mt-1 italic">{p.notas}</p>}
-                </div>
-                <div className="flex flex-col items-end gap-1.5 shrink-0">
-                  <span className="text-base font-light text-white/80">{fmtEuro(p.valor)}</span>
-                  <span className={`text-[9px] px-2.5 py-0.5 rounded-full border tracking-widest uppercase font-medium ${PAGA_STATUS_STYLE[p.status] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
-                    {p.status}
-                  </span>
+                  <div className="flex flex-col items-end gap-1.5 shrink-0">
+                    <span className="text-base font-light text-white/80">{fmtEuro(p.valor)}</span>
+                    <span className={`text-[9px] px-2.5 py-0.5 rounded-full border tracking-widest uppercase font-medium ${PAGA_STATUS_STYLE[p.status] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
+                      {p.status}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </section>
@@ -1494,7 +1502,7 @@ export default function FreelancerViewPage() {
 
           {/* ── Tab: Pagamentos ── */}
           {tab === 'pagamentos' && (
-            <PagamentosTab pagamentos={pagamentos} />
+            <PagamentosTab pagamentos={pagamentos} casamentos={casamentos} />
           )}
 
           {/* ── Tab: Disponibilidade ── */}

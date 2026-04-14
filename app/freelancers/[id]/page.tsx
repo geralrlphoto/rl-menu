@@ -34,7 +34,7 @@ type Valor = {
   valor_servico: number; kms: number; valor_ao_km: number; order_index: number
 }
 type Info = { id: string; freelancer_id: string; label: string | null; valor: string | null; order_index: number }
-type Pagamento   = { id: string; freelancer_id: string; descricao: string; valor: number | null; data_prevista: string | null; data_pago: string | null; status: string; notas: string | null; created_at: string }
+type Pagamento   = { id: string; freelancer_id: string; casamento_id: string | null; descricao: string; valor: number | null; data_prevista: string | null; data_pago: string | null; status: string; notas: string | null; created_at: string }
 type Notificacao = { id: string; freelancer_id: string; titulo: string; mensagem: string | null; tipo: string; lida: boolean; created_at: string }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -517,7 +517,7 @@ export default function FreelancerDetailPage() {
       {tab === 'valores'      && <ValoresTab freelancerId={id} valores={valores} onRefresh={load} />}
       {tab === 'info'         && <InfoTab freelancerId={id} info={info} onRefresh={load} />}
       {tab === 'notas'        && <NotasTab freelancer={freelancer} onRefresh={load} />}
-      {tab === 'pagamentos'   && <PagamentosAdminTab freelancerId={id} pagamentos={pagamentos} onRefresh={load} />}
+      {tab === 'pagamentos'   && <PagamentosAdminTab freelancerId={id} pagamentos={pagamentos} casamentos={casamentos} onRefresh={load} />}
       {tab === 'notificacoes' && <NotificacoesAdminTab freelancerId={id} notificacoes={notificacoes} onRefresh={load} />}
     </main>
   )
@@ -1524,9 +1524,9 @@ function InfoTab({ freelancerId, info, onRefresh }: { freelancerId: string; info
 
 // ─── Pagamentos Admin Tab ─────────────────────────────────────────────────────
 
-function PagamentosAdminTab({ freelancerId, pagamentos, onRefresh }: { freelancerId: string; pagamentos: Pagamento[]; onRefresh: () => void }) {
+function PagamentosAdminTab({ freelancerId, pagamentos, casamentos, onRefresh }: { freelancerId: string; pagamentos: Pagamento[]; casamentos: Casamento[]; onRefresh: () => void }) {
   const [showAdd, setShowAdd] = useState(false)
-  const [form, setForm]       = useState({ descricao: '', valor: '', data_prevista: '', data_pago: '', status: 'PENDENTE', notas: '' })
+  const [form, setForm]       = useState({ casamento_id: '', descricao: '', valor: '', data_prevista: '', data_pago: '', status: 'PENDENTE', notas: '' })
   const [saving, setSaving]   = useState(false)
   const [editId, setEditId]   = useState<string | null>(null)
   const [editForm, setEditForm] = useState<typeof form | null>(null)
@@ -1545,6 +1545,7 @@ function PagamentosAdminTab({ freelancerId, pagamentos, onRefresh }: { freelance
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         freelancer_id: freelancerId,
+        casamento_id: form.casamento_id || null,
         descricao: form.descricao,
         valor: form.valor ? parseFloat(form.valor.replace(',', '.')) : null,
         data_prevista: form.data_prevista || null,
@@ -1555,7 +1556,7 @@ function PagamentosAdminTab({ freelancerId, pagamentos, onRefresh }: { freelance
     })
     setSaving(false)
     setShowAdd(false)
-    setForm({ descricao: '', valor: '', data_prevista: '', data_pago: '', status: 'PENDENTE', notas: '' })
+    setForm({ casamento_id: '', descricao: '', valor: '', data_prevista: '', data_pago: '', status: 'PENDENTE', notas: '' })
     onRefresh()
   }
 
@@ -1567,6 +1568,7 @@ function PagamentosAdminTab({ freelancerId, pagamentos, onRefresh }: { freelance
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         id: editId,
+        casamento_id: editForm.casamento_id || null,
         descricao: editForm.descricao,
         valor: editForm.valor ? parseFloat(editForm.valor.replace(',', '.')) : null,
         data_prevista: editForm.data_prevista || null,
@@ -1600,9 +1602,20 @@ function PagamentosAdminTab({ freelancerId, pagamentos, onRefresh }: { freelance
     return (
       <div className="space-y-3">
         <div>
+          <label className={labelCls}>Evento (opcional)</label>
+          <select value={f.casamento_id} onChange={e => setF({ ...f, casamento_id: e.target.value })} className={selectCls}>
+            <option value="" style={optStyle}>— Sem evento associado —</option>
+            {casamentos.map(c => (
+              <option key={c.id} value={c.id} style={optStyle}>
+                {c.local}{c.data_casamento ? ` · ${c.data_casamento}` : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
           <label className={labelCls}>Descrição *</label>
           <input value={f.descricao} onChange={e => setF({ ...f, descricao: e.target.value })}
-            placeholder="Ex: Casamento João & Maria" className={inputCls} />
+            placeholder="Ex: Sinal · Remanescente · Deslocação" className={inputCls} />
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
@@ -1694,6 +1707,7 @@ function PagamentosAdminTab({ freelancerId, pagamentos, onRefresh }: { freelance
         ) : (
           <div key={p.id} className="flex items-center gap-4 px-4 py-3 rounded-xl border border-white/[0.06] bg-white/[0.02] group">
             <div className="flex-1 min-w-0">
+              {p.casamento_id && (() => { const c = casamentos.find(c => c.id === p.casamento_id); return c ? <p className="text-[9px] tracking-[0.2em] text-gold/50 uppercase mb-0.5">📍 {c.local}{c.data_casamento ? ` · ${c.data_casamento}` : ''}</p> : null })()}
               <p className="text-sm text-white/80">{p.descricao}</p>
               <div className="flex flex-wrap gap-x-3 mt-0.5">
                 {p.data_prevista && <span className="text-[10px] text-white/30">Previsto: {fmtDate(p.data_prevista).split(' · ')[0]}</span>}
@@ -1716,7 +1730,7 @@ function PagamentosAdminTab({ freelancerId, pagamentos, onRefresh }: { freelance
               <button
                 onClick={() => {
                   setEditId(p.id)
-                  setEditForm({ descricao: p.descricao, valor: p.valor?.toString() ?? '', data_prevista: p.data_prevista ?? '', data_pago: p.data_pago ?? '', status: p.status, notas: p.notas ?? '' })
+                  setEditForm({ casamento_id: p.casamento_id ?? '', descricao: p.descricao, valor: p.valor?.toString() ?? '', data_prevista: p.data_prevista ?? '', data_pago: p.data_pago ?? '', status: p.status, notas: p.notas ?? '' })
                   setShowAdd(false)
                 }}
                 className="text-white/20 hover:text-white/60 transition-colors opacity-0 group-hover:opacity-100">
