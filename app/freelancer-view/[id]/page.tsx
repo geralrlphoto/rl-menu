@@ -1016,26 +1016,27 @@ export default function FreelancerViewPage() {
 
           {/* Card de perfil */}
           {freelancer?.foto_url && (
-            <div className="relative w-64 h-80 rounded-3xl overflow-hidden flex-shrink-0"
-              style={{ boxShadow: '0 0 0 2px rgba(210,100,40,0.7), 0 0 28px 6px rgba(210,100,40,0.25)' }}>
+            <div className="relative w-[260px] h-[320px] rounded-[28px] overflow-hidden flex-shrink-0"
+              style={{ boxShadow: '0 0 0 2px rgba(200,70,20,0.85), 0 0 32px 8px rgba(200,70,20,0.30)' }}>
+              {/* Fundo cinza */}
+              <div className="absolute inset-0 bg-neutral-400" />
               {/* Foto B&W */}
               <img src={freelancer.foto_url} alt={freelancer.nome}
-                className="absolute inset-0 w-full h-full object-cover grayscale" />
-              {/* Overlay escuro suave no fundo */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-              {/* Nome + função — rodado na esquerda */}
-              <div className="absolute bottom-4 left-0 w-full px-4">
-                <div className="flex items-end gap-2">
-                  <div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }} className="text-white font-black uppercase tracking-widest text-[13px] leading-none">
-                    {freelancer.nome}
-                  </div>
-                  <div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }} className="text-white/60 uppercase tracking-widest text-[9px] leading-none">
-                    {freelancer.status}
-                  </div>
-                </div>
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{ filter: 'grayscale(100%)' }} />
+              {/* Seta top-right — preta */}
+              <span className="absolute top-4 right-4 text-black font-black text-xl leading-none select-none">↙</span>
+              {/* Nome + função vertical na esquerda */}
+              <div className="absolute left-3 bottom-5 flex items-end gap-[5px]">
+                <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+                  className="font-black uppercase text-black text-[13px] leading-none tracking-[0.12em] whitespace-nowrap">
+                  {freelancer.nome}
+                </span>
+                <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+                  className="uppercase text-black/65 text-[9px] leading-none tracking-[0.18em] whitespace-nowrap font-semibold">
+                  {freelancer.status}
+                </span>
               </div>
-              {/* Seta canto superior direito */}
-              <div className="absolute top-3 right-3 text-white/80 text-lg font-bold">↙</div>
             </div>
           )}
 
