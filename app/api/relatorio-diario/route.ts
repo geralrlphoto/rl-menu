@@ -6,7 +6,6 @@ const EVENTOS_DBS: Record<string, string> = {
   '2026': '1ad220116d8a804b839ddc36f1e7ecf1',
   '2027': '2a6220116d8a80b4b439fe091b2ac804',
 }
-const ALBUNS_DB = '306220116d8a808e9fc0d77766504e52'
 
 const notionH = {
   'Authorization': `Bearer ${NOTION_TOKEN}`,
@@ -87,43 +86,19 @@ export async function GET() {
       }).then(r => r.json()).catch(() => ({ results: [] }))
     )
 
-    // ── Notion: álbuns prazo próximo + para aprovação ──────────────────────
-    const albunsPromise = fetch(`https://api.notion.com/v1/databases/${ALBUNS_DB}/query`, {
-      method: 'POST', headers: notionH,
-      body: JSON.stringify({
-        filter: { and: [
-          { property: 'Data prevista de entrega', date: { on_or_after: todayStr } },
-          { property: 'Data prevista de entrega', date: { on_or_before: in14Str } },
-        ]},
-        sorts: [{ property: 'Data prevista de entrega', direction: 'ascending' }],
-        page_size: 10,
-      }),
-    }).then(r => r.json()).catch(() => ({ results: [] }))
-
-    const albunsAprovPromise = fetch(`https://api.notion.com/v1/databases/${ALBUNS_DB}/query`, {
-      method: 'POST', headers: notionH,
-      body: JSON.stringify({
-        filter: { property: 'Status', status: { equals: 'PARA APROVAÇÃO' } },
-        page_size: 10,
-      }),
-    }).then(r => r.json()).catch(() => ({ results: [] }))
-
     const [
       eventosRaw,
       fotosRaw,
       videosRaw,
-      albunsRes,
-      albunsAprovRes,
       { data: leads },
       { data: portais },
       { data: pagamentos },
-      { data: freelancers },
+      { data: albunsData },
+      { data: albunsAprovData },
     ] = await Promise.all([
       Promise.all(eventosPromises),
       Promise.all(fotosPromises),
       Promise.all(videosPromises),
-      albunsPromise,
-      albunsAprovPromise,
       database.from('crm_contacts')
         .select('id,nome,status,lead_prioridade,data_casamento,data_entrada,como_chegou,contato,email,tipo_evento')
         .not('status', 'in', '("Fechou","NÃO FECHOU","Sem resposta","Encerrado","Cancelado")')
@@ -133,7 +108,17 @@ export async function GET() {
         .select('referencia,fase_pagamento,valor_liquidado,data_pagamento,metodo_pagamento')
         .order('data_pagamento', { ascending: false })
         .limit(200),
-      database.from('freelancers').select('nome,email,status').order('nome'),
+      // ── Supabase: álbuns com prazo nos próximos 14 dias ──────────────────
+      database.from('albuns_casamento')
+        .select('nome,ref_evento,data_prevista_entrega,status')
+        .gte('data_prevista_entrega', todayStr)
+        .lte('data_prevista_entrega', in14Str)
+        .neq('status', 'ENTREGUE')
+        .order('data_prevista_entrega', { ascending: true }),
+      // ── Supabase: álbuns para aprovação ──────────────────────────────────
+      database.from('albuns_casamento')
+        .select('nome,ref_evento,status')
+        .eq('status', 'PARA APROVAÇÃO'),
     ])
 
     // ── Parse eventos próximos ─────────────────────────────────────────────
@@ -217,26 +202,19 @@ export async function GET() {
       }).filter(Boolean)
     )
 
-    // ── Parse álbuns ───────────────────────────────────────────────────────
-    const albuns = (albunsRes.results ?? []).map((p: any) => {
-      const pr = p.properties ?? {}
-      const data = pr['Data prevista de entrega']?.date?.start ?? null
-      return {
-        nome: pr['Nome']?.title?.[0]?.plain_text ?? '—',
-        ref: pr['REF. EVENTO']?.rich_text?.[0]?.plain_text ?? '',
-        data,
-        dias: data ? daysUntil(data) : 99,
-        status: pr['Status']?.status?.name ?? null,
-      }
-    })
+    // ── Parse álbuns (Supabase) ────────────────────────────────────────────
+    const albuns = (albunsData ?? []).map((a: any) => ({
+      nome: a.nome ?? '—',
+      ref:  a.ref_evento ?? '',
+      data: a.data_prevista_entrega ?? null,
+      dias: a.data_prevista_entrega ? daysUntil(a.data_prevista_entrega) : 99,
+      status: a.status ?? null,
+    }))
 
-    const albunsAprovacao = (albunsAprovRes.results ?? []).map((p: any) => {
-      const pr = p.properties ?? {}
-      return {
-        nome: pr['Nome']?.title?.[0]?.plain_text ?? '—',
-        ref: pr['REF. EVENTO']?.rich_text?.[0]?.plain_text ?? '',
-      }
-    })
+    const albunsAprovacao = (albunsAprovData ?? []).map((a: any) => ({
+      nome: a.nome ?? '—',
+      ref:  a.ref_evento ?? '',
+    }))
 
     // ── Parse portais — atividade recente (7 dias) ─────────────────────────
     const PORTAL_ACTIONS = [
