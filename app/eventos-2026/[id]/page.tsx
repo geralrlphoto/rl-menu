@@ -1893,6 +1893,7 @@ export default function EventoPage() {
               {(() => {
                 const nomes = equipaFoto
                 const hasTeam = nomes.length > 0
+                const allUnavailable = hasTeam && nomes.every(n => unavailableNames.includes(n.toUpperCase()))
                 return (
                   <div className="flex flex-col gap-2 rounded-xl p-4" style={{ background: 'rgba(160,100,240,0.04)', border: '1px solid rgba(160,100,240,0.15)' }}>
                     <p className="text-[9px] tracking-[0.3em] uppercase text-white/30">Fotógrafo</p>
@@ -1921,9 +1922,9 @@ export default function EventoPage() {
                           >✕</button>
                         )}
                         <button
-                          disabled={!hasTeam || sendingNotifFoto}
+                          disabled={!hasTeam || sendingNotifFoto || allUnavailable}
                           onClick={async () => {
-                            if (!hasTeam || !evento?.referencia || sendingNotifFoto) return
+                            if (!hasTeam || !evento?.referencia || sendingNotifFoto || allUnavailable) return
                             setSendingNotifFoto(true)
                             setNotifFotoErro(null)
                             const today = new Date().toISOString().split('T')[0]
@@ -1944,12 +1945,13 @@ export default function EventoPage() {
                           className={`px-3 py-2 rounded-lg text-[10px] font-semibold tracking-[0.15em] uppercase border transition-all ${
                             notifFotoEnviada ? 'bg-green-500/20 text-green-400 border-green-500/30'
                             : !hasTeam ? 'bg-white/[0.03] text-white/20 border-white/10 cursor-not-allowed'
+                            : allUnavailable ? 'bg-red-500/10 text-red-400/60 border-red-500/20 cursor-not-allowed'
                             : sendingNotifFoto ? 'bg-purple-500/10 text-purple-300/50 border-purple-500/20 cursor-not-allowed'
                             : notifFotoErro ? 'bg-red-500/15 text-red-300 border-red-500/25 hover:bg-red-500/25'
                             : 'bg-purple-500/15 text-purple-300 border-purple-500/25 hover:bg-purple-500/25'
                           }`}
                         >
-                          {sendingNotifFoto ? '...' : notifFotoEnviada ? '✓ Enviado' : !hasTeam ? '🔒 Sem equipa' : notifFotoErro ? '⚠ Sem email' : 'Notificar'}
+                          {sendingNotifFoto ? '...' : notifFotoEnviada ? '✓ Enviado' : !hasTeam ? '🔒 Sem equipa' : allUnavailable ? '🔒 Indisponível' : notifFotoErro ? '⚠ Sem email' : 'Notificar'}
                         </button>
                       </div>
                     </div>
@@ -1964,6 +1966,7 @@ export default function EventoPage() {
               {(() => {
                 const nomes = equipaVideo
                 const hasTeam = nomes.length > 0
+                const allUnavailable = hasTeam && nomes.every(n => unavailableNames.includes(n.toUpperCase()))
                 return (
                   <div className="flex flex-col gap-2 rounded-xl p-4" style={{ background: 'rgba(160,100,240,0.04)', border: '1px solid rgba(160,100,240,0.15)' }}>
                     <p className="text-[9px] tracking-[0.3em] uppercase text-white/30">Videógrafo</p>
@@ -1992,9 +1995,9 @@ export default function EventoPage() {
                           >✕</button>
                         )}
                         <button
-                          disabled={!hasTeam || sendingNotifVideo}
+                          disabled={!hasTeam || sendingNotifVideo || allUnavailable}
                           onClick={async () => {
-                            if (!hasTeam || !evento?.referencia || sendingNotifVideo) return
+                            if (!hasTeam || !evento?.referencia || sendingNotifVideo || allUnavailable) return
                             setSendingNotifVideo(true)
                             setNotifVideoErro(null)
                             const today = new Date().toISOString().split('T')[0]
@@ -2015,12 +2018,13 @@ export default function EventoPage() {
                           className={`px-3 py-2 rounded-lg text-[10px] font-semibold tracking-[0.15em] uppercase border transition-all ${
                             notifVideoEnviada ? 'bg-green-500/20 text-green-400 border-green-500/30'
                             : !hasTeam ? 'bg-white/[0.03] text-white/20 border-white/10 cursor-not-allowed'
+                            : allUnavailable ? 'bg-red-500/10 text-red-400/60 border-red-500/20 cursor-not-allowed'
                             : sendingNotifVideo ? 'bg-purple-500/10 text-purple-300/50 border-purple-500/20 cursor-not-allowed'
                             : notifVideoErro ? 'bg-red-500/15 text-red-300 border-red-500/25 hover:bg-red-500/25'
                             : 'bg-purple-500/15 text-purple-300 border-purple-500/25 hover:bg-purple-500/25'
                           }`}
                         >
-                          {sendingNotifVideo ? '...' : notifVideoEnviada ? '✓ Enviado' : !hasTeam ? '🔒 Sem equipa' : notifVideoErro ? '⚠ Sem email' : 'Notificar'}
+                          {sendingNotifVideo ? '...' : notifVideoEnviada ? '✓ Enviado' : !hasTeam ? '🔒 Sem equipa' : allUnavailable ? '🔒 Indisponível' : notifVideoErro ? '⚠ Sem email' : 'Notificar'}
                         </button>
                       </div>
                     </div>
