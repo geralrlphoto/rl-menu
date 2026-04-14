@@ -988,7 +988,7 @@ export default function FreelancerViewPage() {
           </button>
           {[
             { key: 'casamentos', label: 'Casamentos', count: casamentos.length },
-            { key: 'edicao',     label: 'Edição de Fotos', count: edicao.length },
+            { key: 'edicao', label: freelancer?.status === 'VIDEOGRAFO' ? 'Edição de Video' : 'Edição de Fotos', count: edicao.length },
             ...(album.length > 0 ? [{ key: 'album', label: 'Edição de Álbum', count: album.length }] : []),
           ].map(t => (
             <button
