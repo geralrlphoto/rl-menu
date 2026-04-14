@@ -952,6 +952,18 @@ function DisponibilidadeTab({ freelancerId, disponibilidade, casamentos, onRefre
 
   return (
     <section className="space-y-6">
+
+      {/* Explicação do separador */}
+      <div className="px-4 py-4 rounded-xl border border-white/[0.06] bg-white/[0.02] space-y-2">
+        <p className="text-[18px] tracking-[0.3em] text-gold/60 uppercase">A tua Agenda</p>
+        <p className="text-[16px] text-white leading-relaxed">
+          Aqui podes ver de forma simples todos os eventos que te foram atribuídos e gerir a tua disponibilidade.
+        </p>
+        <p className="text-[16px] text-white leading-relaxed">
+          Deves marcar os períodos em que estás indisponível para que a equipa RL saiba que não podes ser contactado. Só recebes notificação de um novo evento se estiveres disponível. Se tiveres indisponibilidade marcada para esse dia não recebes qualquer notificação.
+        </p>
+      </div>
+
       {upcoming.length > 0 && (
         <div className="bg-gold/[0.03] border border-gold/15 rounded-2xl p-5">
           <p className="text-[9px] tracking-[0.35em] text-gold/40 uppercase mb-3">Eventos Atribuídos</p>
