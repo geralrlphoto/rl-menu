@@ -1747,7 +1747,7 @@ function PagamentosAdminTab({ freelancerId, pagamentos, casamentos, onRefresh }:
 // ─── Notificações Admin Tab ───────────────────────────────────────────────────
 
 function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh }: { freelancerId: string; notificacoes: Notificacao[]; onRefresh: () => void }) {
-  const [form, setForm] = useState({ titulo: '', mensagem: '', tipo: 'info' })
+  const [form, setForm] = useState({ titulo: '', mensagem: '', tipo: 'alerta' })
   const [sending, setSending] = useState(false)
 
   async function handleSend() {
@@ -1765,7 +1765,7 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh }: { freel
       body: JSON.stringify({ freelancer_id: freelancerId, titulo: form.titulo, mensagem: form.mensagem || null }),
     }).catch(e => console.error('[send-notif-email]', e))
     setSending(false)
-    setForm({ titulo: '', mensagem: '', tipo: 'info' })
+    setForm({ titulo: '', mensagem: '', tipo: 'alerta' })
     onRefresh()
   }
 
@@ -1781,13 +1781,9 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh }: { freel
         <div>
           <label className={labelCls}>Tipo</label>
           <select value={form.tipo} onChange={e => setForm(v => ({ ...v, tipo: e.target.value }))} className={selectCls}>
-            <option value="info" style={optStyle}>ℹ Info</option>
             <option value="alerta" style={optStyle}>⚠ Alerta</option>
             <option value="pagamento" style={optStyle}>💰 Pagamento</option>
             <option value="briefing" style={optStyle}>📋 Briefing</option>
-            <option value="briefing_atualizado" style={optStyle}>📋 Briefing Atualizado</option>
-            <option value="briefing_pendente" style={optStyle}>⏳ Briefing Pendente</option>
-            <option value="briefing_aprovado" style={optStyle}>✅ Briefing Aprovado</option>
           </select>
         </div>
         <div>
