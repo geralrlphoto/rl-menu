@@ -1324,6 +1324,11 @@ export default function FreelancerViewPage() {
           onClose={() => setAlbumInfo(null)}
         />
       )}
+
+      {/* Rodapé */}
+      <div className="mt-16 -mx-4 px-0">
+        <img src="/banner_footer.png" alt="RL Photo.Video" className="w-full object-cover" />
+      </div>
     </main>
   )
 }
