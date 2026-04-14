@@ -1005,7 +1005,7 @@ export default function FreelancerViewPage() {
         freelancer?.intro_home
           ? (
             <div className="max-w-xl mx-auto px-2 py-8">
-              <p className="text-sm text-white/60 leading-relaxed whitespace-pre-wrap">{freelancer.intro_home}</p>
+              <p className="text-[16px] text-white leading-relaxed whitespace-pre-wrap">{freelancer.intro_home}</p>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
@@ -1026,7 +1026,7 @@ export default function FreelancerViewPage() {
               {(freelancer?.intro_casamentos || true) && (
                 <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] px-5 py-4 space-y-1">
                   <p className="text-[16px] text-white font-semibold">A Tua Agenda</p>
-                  <p className="text-[15px] text-white/75 leading-relaxed whitespace-pre-wrap">
+                  <p className="text-[16px] text-white leading-relaxed whitespace-pre-wrap">
                     {freelancer?.intro_casamentos || `Aqui encontras todos os eventos que te foram atribuídos ao longo do ano. Sempre que um novo evento for adicionado, deverás confirmar a tua disponibilidade.\n\nA 3 dias do evento tens acesso ao briefing com toda a informação necessária para o dia — percurso, contactos, detalhes da cerimónia e muito mais.`}
                   </p>
                 </div>
