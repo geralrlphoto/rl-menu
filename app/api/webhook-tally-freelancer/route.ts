@@ -212,7 +212,7 @@ export async function POST(req: NextRequest) {
       .from('freelancers_novos')
       .insert({
         tally_response_id: body.data?.responseId ?? null,
-        nome, funcao, zona, telefone, valor_servico,
+        nome, email, funcao, zona, telefone, valor_servico,
         valor_drone, valor_edicao, drone, faz_edicao,
         link_trailer, link_video, mensagem,
         tipo_eventos: [], avaliacao: [], servicos_feitos: null,
