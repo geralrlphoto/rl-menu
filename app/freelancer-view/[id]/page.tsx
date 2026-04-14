@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams } from 'next/navigation'
 
 const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
@@ -24,7 +24,7 @@ function daysUntil(d: string | null) {
   return Math.round((new Date(d+'T00:00:00').getTime() - today.getTime()) / 86400000)
 }
 
-type Freelancer = { id: string; nome: string; status: string | null; intro_casamentos: string | null; intro_home: string | null; intro_home_title: string | null; is_template?: boolean | null; foto_url?: string | null }
+type Freelancer = { id: string; nome: string; status: string | null; intro_casamentos: string | null; intro_home: string | null; intro_home_title: string | null; is_template?: boolean | null; foto_url?: string | null; guia_trabalho?: string | null }
 type Casamento  = { id: string; local: string; data_casamento: string | null; referencia?: string | null; equipa_foto: string[] | null; videografo: string | null; briefing_url: string | null; data_confirmada: boolean | null; indisponivel: boolean | null; data_confirmada_videografo: boolean | null; indisponivel_videografo: boolean | null }
 type Edicao     = {
   id: string; nome: string; status: string; data_casamento: string | null
@@ -35,6 +35,9 @@ type Edicao     = {
 }
 type Alteracao  = { id: string; ref_evento: string; paginas_alterar: string | null; tipos_alteracao: string[] | null; observacoes: string | null; foto_url: string | null; created_at: string }
 type Album      = { id: string; nome: string; status: string; data_casamento: string | null; referencia_album: string | null; data_entrega_fotos?: string | null; alteracao?: Alteracao | null }
+type Pagamento   = { id: string; freelancer_id: string; descricao: string; valor: number | null; data_prevista: string | null; data_pago: string | null; status: string; notas: string | null; created_at: string }
+type Disponib    = { id: string; freelancer_id: string; data_inicio: string; data_fim: string | null; motivo: string | null }
+type Notificacao = { id: string; freelancer_id: string; titulo: string; mensagem: string | null; tipo: string; lida: boolean; created_at: string }
 
 const STATUS_EDICAO_STYLE: Record<string, string> = {
   'NOVO TRABALHO': 'bg-blue-500/15 text-blue-400 border-blue-500/30',
@@ -836,6 +839,269 @@ function EdicaoCard({ e, onStatusChange }: { e: Edicao; onStatusChange: (id: str
   )
 }
 
+// ── Pagamentos Tab ────────────────────────────────────────────────────────────
+const PAGA_STATUS_STYLE: Record<string, string> = {
+  'PENDENTE': 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
+  'PAGO':     'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+  'PARCIAL':  'bg-blue-500/15 text-blue-400 border-blue-500/30',
+}
+
+function PagamentosTab({ pagamentos }: { pagamentos: Pagamento[] }) {
+  const totalPago     = pagamentos.filter(p => p.status === 'PAGO').reduce((s, p) => s + (p.valor ?? 0), 0)
+  const totalPendente = pagamentos.filter(p => p.status !== 'PAGO').reduce((s, p) => s + (p.valor ?? 0), 0)
+
+  function fmtEuro(v: number | null) {
+    if (v == null) return '—'
+    return `€ ${v.toFixed(2).replace('.', ',')}`
+  }
+
+  return (
+    <section className="space-y-6">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4 space-y-1">
+          <p className="text-[9px] tracking-[0.35em] text-emerald-400/60 uppercase">Total Pago</p>
+          <p className="text-2xl font-light text-emerald-400">{fmtEuro(totalPago)}</p>
+        </div>
+        <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-2xl p-4 space-y-1">
+          <p className="text-[9px] tracking-[0.35em] text-yellow-400/60 uppercase">Pendente</p>
+          <p className="text-2xl font-light text-yellow-400">{fmtEuro(totalPendente)}</p>
+        </div>
+      </div>
+
+      {pagamentos.length === 0 ? (
+        <p className="text-center py-10 text-white/15 text-xs tracking-widest">Sem pagamentos registados.</p>
+      ) : (
+        <div className="space-y-2">
+          {pagamentos.map(p => (
+            <div key={p.id} className="bg-white/[0.02] border border-white/[0.06] rounded-xl px-4 py-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-white/80 font-medium leading-tight">{p.descricao}</p>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
+                    {p.data_prevista && (
+                      <span className="text-[10px] text-white/30">Previsto: {fmtDate(p.data_prevista).split(' · ')[0]}</span>
+                    )}
+                    {p.data_pago && (
+                      <span className="text-[10px] text-emerald-400/70">Pago em: {fmtDate(p.data_pago).split(' · ')[0]}</span>
+                    )}
+                  </div>
+                  {p.notas && <p className="text-[10px] text-white/25 mt-1 italic">{p.notas}</p>}
+                </div>
+                <div className="flex flex-col items-end gap-1.5 shrink-0">
+                  <span className="text-base font-light text-white/80">{fmtEuro(p.valor)}</span>
+                  <span className={`text-[9px] px-2.5 py-0.5 rounded-full border tracking-widest uppercase font-medium ${PAGA_STATUS_STYLE[p.status] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
+                    {p.status}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
+// ── Disponibilidade Tab ───────────────────────────────────────────────────────
+function DisponibilidadeTab({ freelancerId, disponibilidade, casamentos, onRefresh }: {
+  freelancerId: string; disponibilidade: Disponib[]; casamentos: Casamento[]; onRefresh: () => void
+}) {
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm]         = useState({ data_inicio: '', data_fim: '', motivo: '' })
+  const [saving, setSaving]     = useState(false)
+  const [deleting, setDeleting] = useState<string | null>(null)
+
+  async function handleAdd() {
+    if (!form.data_inicio) return
+    setSaving(true)
+    await fetch('/api/freelancer-disponibilidade', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        freelancer_id: freelancerId,
+        data_inicio: form.data_inicio,
+        data_fim: form.data_fim || null,
+        motivo: form.motivo || null,
+      }),
+    })
+    setSaving(false)
+    setShowForm(false)
+    setForm({ data_inicio: '', data_fim: '', motivo: '' })
+    onRefresh()
+  }
+
+  async function handleDelete(id: string) {
+    setDeleting(id)
+    await fetch(`/api/freelancer-disponibilidade?id=${id}`, { method: 'DELETE' })
+    setDeleting(null)
+    onRefresh()
+  }
+
+  const upcoming = casamentos
+    .filter(c => c.data_casamento && (daysUntil(c.data_casamento) ?? -1) >= 0)
+    .sort((a,b) => (a.data_casamento ?? '') < (b.data_casamento ?? '') ? -1 : 1)
+
+  return (
+    <section className="space-y-6">
+      {upcoming.length > 0 && (
+        <div className="bg-gold/[0.03] border border-gold/15 rounded-2xl p-5">
+          <p className="text-[9px] tracking-[0.35em] text-gold/40 uppercase mb-3">Eventos Atribuídos</p>
+          <div className="space-y-2">
+            {upcoming.map(c => (
+              <div key={c.id} className="flex items-center gap-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-gold/50 flex-shrink-0" />
+                <span className="text-sm text-white/70 flex-1">{c.local}</span>
+                <span className="text-[10px] text-white/30">{c.data_casamento ? fmtDate(c.data_casamento).split(' · ')[0] : '—'}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-[16px] font-semibold text-white">Indisponibilidades</p>
+          <button onClick={() => setShowForm(v => !v)}
+            className="px-3 py-1.5 rounded-xl bg-gold/10 border border-gold/30 text-gold text-xs font-semibold tracking-widest uppercase hover:bg-gold/20 transition-all">
+            + Marcar
+          </button>
+        </div>
+
+        {showForm && (
+          <div className="mb-4 bg-white/[0.02] border border-white/10 rounded-2xl p-5 space-y-3">
+            <p className="text-[9px] tracking-[0.3em] text-white/25 uppercase">Novo Período</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[9px] text-white/25 tracking-widest uppercase mb-1.5">Data Início *</label>
+                <input type="date" value={form.data_inicio}
+                  onChange={e => setForm(v => ({ ...v, data_inicio: e.target.value }))}
+                  className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 [color-scheme:dark]" />
+              </div>
+              <div>
+                <label className="block text-[9px] text-white/25 tracking-widest uppercase mb-1.5">Data Fim</label>
+                <input type="date" value={form.data_fim}
+                  onChange={e => setForm(v => ({ ...v, data_fim: e.target.value }))}
+                  className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 [color-scheme:dark]" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-[9px] text-white/25 tracking-widest uppercase mb-1.5">Motivo (opcional)</label>
+              <input value={form.motivo}
+                onChange={e => setForm(v => ({ ...v, motivo: e.target.value }))}
+                placeholder="Ex: férias, compromisso..."
+                className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => { setShowForm(false); setForm({ data_inicio: '', data_fim: '', motivo: '' }) }}
+                className="px-3 py-1.5 rounded-xl text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
+              <button onClick={handleAdd} disabled={saving || !form.data_inicio}
+                className="px-4 py-1.5 rounded-xl text-xs bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-40">
+                {saving ? 'A guardar...' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {disponibilidade.length === 0 && !showForm ? (
+          <p className="text-center py-8 text-white/15 text-xs tracking-widest">Sem indisponibilidades marcadas.</p>
+        ) : (
+          <div className="space-y-2">
+            {disponibilidade.map(d => (
+              <div key={d.id} className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-red-500/20 bg-red-500/[0.03]">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-white/80">{fmtDate(d.data_inicio).split(' · ')[0]}</span>
+                    {d.data_fim && d.data_fim !== d.data_inicio && (
+                      <>
+                        <span className="text-white/30 text-xs">→</span>
+                        <span className="text-sm text-white/80">{fmtDate(d.data_fim).split(' · ')[0]}</span>
+                      </>
+                    )}
+                  </div>
+                  {d.motivo && <p className="text-[10px] text-white/30 mt-0.5 italic">{d.motivo}</p>}
+                </div>
+                <button onClick={() => handleDelete(d.id)} disabled={deleting === d.id}
+                  className="text-white/20 hover:text-red-400 transition-colors text-sm px-2 py-0.5 disabled:opacity-30">
+                  {deleting === d.id ? '...' : '✕'}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+// ── Notificações Tab ──────────────────────────────────────────────────────────
+const NOTIF_STYLE: Record<string, { card: string; dot: string }> = {
+  'info':      { card: 'border-blue-500/25 bg-blue-500/[0.04]',      dot: 'bg-blue-400'    },
+  'alerta':    { card: 'border-yellow-500/25 bg-yellow-500/[0.04]',   dot: 'bg-yellow-400'  },
+  'pagamento': { card: 'border-emerald-500/25 bg-emerald-500/[0.04]', dot: 'bg-emerald-400' },
+}
+
+function NotificacoesTab({ notificacoes, onRefresh }: { notificacoes: Notificacao[]; onRefresh: () => void }) {
+  const doneRef = useRef(false)
+
+  useEffect(() => {
+    if (doneRef.current) return
+    doneRef.current = true
+    const unread = notificacoes.filter(n => !n.lida)
+    if (!unread.length) return
+    Promise.all(
+      unread.map(n =>
+        fetch('/api/freelancer-notificacoes', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: n.id, lida: true }),
+        })
+      )
+    ).then(() => onRefresh())
+  }, [notificacoes, onRefresh])
+
+  function fmtRelative(dateStr: string) {
+    try {
+      const d = new Date(dateStr)
+      const diff = Math.floor((Date.now() - d.getTime()) / 86400000)
+      if (diff === 0) return 'hoje'
+      if (diff === 1) return 'ontem'
+      if (diff < 7) return `há ${diff} dias`
+      return `${String(d.getDate()).padStart(2,'0')} ${MESES[d.getMonth()]}`
+    } catch { return '' }
+  }
+
+  return (
+    <section className="space-y-3">
+      {notificacoes.length === 0 ? (
+        <div className="text-center py-16 space-y-3">
+          <p className="text-white/20 text-3xl">🔔</p>
+          <p className="text-white/15 text-xs tracking-widest">Sem notificações.</p>
+        </div>
+      ) : (
+        notificacoes.map(n => {
+          const s = NOTIF_STYLE[n.tipo] ?? { card: 'border-white/10 bg-white/[0.02]', dot: 'bg-white/30' }
+          return (
+            <div key={n.id} className={`rounded-2xl border p-4 transition-opacity ${s.card} ${n.lida ? 'opacity-55' : 'opacity-100'}`}>
+              <div className="flex items-start gap-3">
+                <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${s.dot} ${n.lida ? 'opacity-40' : ''}`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2 mb-0.5">
+                    <p className={`text-sm font-semibold leading-tight ${n.lida ? 'text-white/60' : 'text-white/90'}`}>{n.titulo}</p>
+                    <span className="text-[9px] text-white/20 whitespace-nowrap flex-shrink-0">{fmtRelative(n.created_at)}</span>
+                  </div>
+                  {n.mensagem && (
+                    <p className="text-[13px] text-white/55 leading-relaxed mt-0.5">{n.mensagem}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )
+        })
+      )}
+    </section>
+  )
+}
+
 // ── Main View ─────────────────────────────────────────────────────────────────
 export default function FreelancerViewPage() {
   const { id } = useParams<{ id: string }>()
@@ -846,9 +1112,12 @@ export default function FreelancerViewPage() {
   const [edicao, setEdicao]         = useState<Edicao[]>([])
   const [album, setAlbum]           = useState<Album[]>([])
   const [loading, setLoading]       = useState(false)
-  const [tab, setTab]               = useState<'casamentos'|'edicao'|'album'|null>(null)
+  const [tab, setTab]               = useState<'casamentos'|'edicao'|'album'|'pagamentos'|'disponibilidade'|'guia'|'notificacoes'|null>(null)
   const [ficha, setFicha]           = useState<Casamento | null>(null)
   const [albumInfo, setAlbumInfo]   = useState<Album | null>(null)
+  const [pagamentos, setPagamentos]           = useState<Pagamento[]>([])
+  const [disponibilidade, setDisponibilidade] = useState<Disponib[]>([])
+  const [notificacoes, setNotificacoes]       = useState<Notificacao[]>([])
 
   // Block browser back button
   useEffect(() => {
@@ -868,12 +1137,15 @@ export default function FreelancerViewPage() {
   const loadData = useCallback(async () => {
     setLoading(true)
     const TEMPLATE_ID = '8694241a-7530-4dfd-8619-a8bf15b9e15e'
-    const [fRes, cRes, eRes, aRes, alRes] = await Promise.all([
+    const [fRes, cRes, eRes, aRes, alRes, pRes, dRes, nRes] = await Promise.all([
       fetch(`/api/freelancers`).then(r => r.json()),
       fetch(`/api/freelancer-casamentos?freelancer_id=${id}`).then(r => r.json()),
       fetch(`/api/freelancer-edicao?freelancer_id=${id}`).then(r => r.json()),
       fetch(`/api/freelancer-album?freelancer_id=${id}`).then(r => r.json()),
       fetch(`/api/albuns-casamento`).then(r => r.json()).catch(() => ({ rows: [] })),
+      fetch(`/api/freelancer-pagamentos?freelancer_id=${id}`).then(r => r.json()).catch(() => ({ pagamentos: [] })),
+      fetch(`/api/freelancer-disponibilidade?freelancer_id=${id}`).then(r => r.json()).catch(() => ({ periodos: [] })),
+      fetch(`/api/freelancer-notificacoes?freelancer_id=${id}`).then(r => r.json()).catch(() => ({ notificacoes: [] })),
     ])
     const allFreelancers: Freelancer[] = fRes.freelancers ?? []
     const f = allFreelancers.find((x: Freelancer) => x.id === id) ?? null
@@ -884,10 +1156,14 @@ export default function FreelancerViewPage() {
       intro_home:       f.id === TEMPLATE_ID ? f.intro_home       : (f.intro_home       || template?.intro_home       || null),
       intro_home_title: f.id === TEMPLATE_ID ? f.intro_home_title : (f.intro_home_title || template?.intro_home_title || null),
       intro_casamentos: f.id === TEMPLATE_ID ? f.intro_casamentos : (f.intro_casamentos || template?.intro_casamentos || null),
+      guia_trabalho:    f.id === TEMPLATE_ID ? f.guia_trabalho    : (f.guia_trabalho    || template?.guia_trabalho    || null),
     } : null
     setFreelancer(merged)
     setCasamentos(cRes.casamentos ?? [])
     setEdicao(eRes.edicao ?? [])
+    setPagamentos(pRes.pagamentos ?? [])
+    setDisponibilidade(dRes.periodos ?? [])
+    setNotificacoes(nRes.notificacoes ?? [])
     // Enrich album with data_entrega_fotos from albuns_casamento
     const alRows: any[] = alRes.rows ?? []
     const enriched = (aRes.album ?? []).map((a: Album) => {
@@ -974,40 +1250,46 @@ export default function FreelancerViewPage() {
 
       {/* Tab Navigation */}
       {!loading && (
-        <div className="flex items-center gap-1.5 mb-8 p-1.5 rounded-2xl border border-white/30 bg-black"
-          style={{ boxShadow: '0 0 18px 3px rgba(255,255,255,0.10), 0 0 6px 1px rgba(255,255,255,0.15), inset 0 0 18px 0 rgba(255,255,255,0.03)' }}>
-          <button
-            onClick={() => setTab(null)}
-            className={`flex items-center justify-center px-4 py-2.5 rounded-xl text-xl transition-all ${
-              tab === null
-                ? 'bg-white/10 text-white border border-white/20'
-                : 'text-white/40 hover:text-white/70 border border-transparent'
-            }`}
-          >
-            ⌂
-          </button>
-          {[
-            { key: 'casamentos', label: 'Casamentos', count: casamentos.length },
-            { key: 'edicao', label: freelancer?.status === 'VIDEOGRAFO' ? 'Edição de Video' : 'Edição de Fotos', count: edicao.length },
-            ...(album.length > 0 ? [{ key: 'album', label: 'Edição de Álbum', count: album.length }] : []),
-          ].map(t => (
+        <div className="mb-8 -mx-4 px-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          <div className="flex items-center gap-1.5 p-1.5 rounded-2xl border border-white/30 bg-black w-max min-w-full"
+            style={{ boxShadow: '0 0 18px 3px rgba(255,255,255,0.10), 0 0 6px 1px rgba(255,255,255,0.15), inset 0 0 18px 0 rgba(255,255,255,0.03)' }}>
             <button
-              key={t.key}
-              onClick={() => setTab(t.key as typeof tab)}
-              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[9px] tracking-[0.25em] uppercase font-semibold transition-all ${
-                tab === t.key
+              onClick={() => setTab(null)}
+              className={`flex-shrink-0 flex items-center justify-center px-4 py-2.5 rounded-xl text-xl transition-all ${
+                tab === null
                   ? 'bg-white/10 text-white border border-white/20'
-                  : 'text-white/30 hover:text-white/55 border border-transparent'
+                  : 'text-white/40 hover:text-white/70 border border-transparent'
               }`}
             >
-              {t.label}
-              {t.count > 0 && (
-                <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold transition-all ${
-                  tab === t.key ? 'bg-white/15 text-white/80' : 'bg-white/[0.06] text-white/25'
-                }`}>{t.count}</span>
-              )}
+              ⌂
             </button>
-          ))}
+            {[
+              { key: 'casamentos', label: 'Casamentos', count: casamentos.length },
+              { key: 'edicao', label: freelancer?.status === 'VIDEOGRAFO' ? 'Edição Video' : 'Edição Fotos', count: edicao.length },
+              ...(album.length > 0 ? [{ key: 'album', label: 'Álbum', count: album.length }] : []),
+              { key: 'pagamentos',      label: 'Pagamentos', count: 0 },
+              { key: 'disponibilidade', label: 'Agenda',     count: 0 },
+              { key: 'guia',            label: 'Guia',       count: 0 },
+              { key: 'notificacoes',    label: '🔔',         count: notificacoes.filter(n => !n.lida).length },
+            ].map(t => (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key as typeof tab)}
+                className={`flex-shrink-0 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[9px] tracking-[0.25em] uppercase font-semibold transition-all ${
+                  tab === t.key
+                    ? 'bg-white/10 text-white border border-white/20'
+                    : 'text-white/30 hover:text-white/55 border border-transparent'
+                }`}
+              >
+                {t.label}
+                {t.count > 0 && (
+                  <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold transition-all ${
+                    tab === t.key ? 'bg-white/15 text-white/80' : 'bg-white/[0.06] text-white/25'
+                  }`}>{t.count}</span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -1208,6 +1490,42 @@ export default function FreelancerViewPage() {
                 </div>
               )}
             </section>
+          )}
+
+          {/* ── Tab: Pagamentos ── */}
+          {tab === 'pagamentos' && (
+            <PagamentosTab pagamentos={pagamentos} />
+          )}
+
+          {/* ── Tab: Disponibilidade ── */}
+          {tab === 'disponibilidade' && (
+            <DisponibilidadeTab
+              freelancerId={id}
+              disponibilidade={disponibilidade}
+              casamentos={casamentos}
+              onRefresh={loadData}
+            />
+          )}
+
+          {/* ── Tab: Guia de Trabalho ── */}
+          {tab === 'guia' && (
+            <section className="space-y-4">
+              {freelancer?.guia_trabalho ? (
+                <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
+                  <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase mb-5">Guia de Trabalho</p>
+                  <p className="text-[16px] text-white leading-relaxed whitespace-pre-wrap">{freelancer.guia_trabalho}</p>
+                </div>
+              ) : (
+                <div className="text-center py-16 space-y-3">
+                  <p className="text-white/15 text-xs tracking-widest">Guia de trabalho não disponível.</p>
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* ── Tab: Notificações ── */}
+          {tab === 'notificacoes' && (
+            <NotificacoesTab notificacoes={notificacoes} onRefresh={loadData} />
           )}
 
           {/* ── Tab: Edição de Álbum ── */}

@@ -9,7 +9,7 @@ import { useParams } from 'next/navigation'
 type Freelancer = {
   id: string; nome: string; status: string | null; contato: string | null
   email: string | null; nome_sos: string | null; contato_sos: string | null; notas: string | null
-  password: string | null; intro_casamentos: string | null; intro_home: string | null; intro_home_title: string | null; is_template: boolean | null; foto_url: string | null
+  password: string | null; intro_casamentos: string | null; intro_home: string | null; intro_home_title: string | null; is_template: boolean | null; foto_url: string | null; guia_trabalho: string | null
 }
 type Casamento = {
   id: string; freelancer_id: string; local: string; data_casamento: string | null
@@ -34,6 +34,8 @@ type Valor = {
   valor_servico: number; kms: number; valor_ao_km: number; order_index: number
 }
 type Info = { id: string; freelancer_id: string; label: string | null; valor: string | null; order_index: number }
+type Pagamento   = { id: string; freelancer_id: string; descricao: string; valor: number | null; data_prevista: string | null; data_pago: string | null; status: string; notas: string | null; created_at: string }
+type Notificacao = { id: string; freelancer_id: string; titulo: string; mensagem: string | null; tipo: string; lida: boolean; created_at: string }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -123,13 +125,16 @@ function PasswordDisplay({ password, freelancerId }: { password: string | null; 
 
 export default function FreelancerDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const [tab, setTab] = useState<'casamentos'|'edicao'|'album'|'valores'|'info'|'notas'|null>(null)
+  const [tab, setTab] = useState<'casamentos'|'edicao'|'album'|'valores'|'info'|'notas'|'pagamentos'|'notificacoes'|null>(null)
   const [editForm, setEditForm] = useState<{ nome: string; status: string; contato: string; email: string; nome_sos: string; contato_sos: string } | null>(null)
   const [editSaving, setEditSaving] = useState(false)
   const [introHome, setIntroHome] = useState('')
   const [introHomeTitle, setIntroHomeTitle] = useState('')
   const [introHomeStatus, setIntroHomeStatus] = useState<'idle'|'saving'|'saved'>('idle')
   const introHomeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [guia, setGuia] = useState('')
+  const [guiaStatus, setGuiaStatus] = useState<'idle'|'saving'|'saved'>('idle')
+  const guiaTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
 
   const [freelancer, setFreelancer] = useState<Freelancer | null>(null)
@@ -138,27 +143,34 @@ export default function FreelancerDetailPage() {
   const [album, setAlbum] = useState<Album[]>([])
   const [valores, setValores] = useState<Valor[]>([])
   const [info, setInfo] = useState<Info[]>([])
+  const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
+  const [notificacoes, setNotificacoes] = useState<Notificacao[]>([])
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(async () => {
     setLoading(true)
-    const [fRes, cRes, eRes, aRes, vRes, iRes] = await Promise.all([
+    const [fRes, cRes, eRes, aRes, vRes, iRes, pRes, nRes] = await Promise.all([
       fetch(`/api/freelancers`).then(r => r.json()),
       fetch(`/api/freelancer-casamentos?freelancer_id=${id}`).then(r => r.json()),
       fetch(`/api/freelancer-edicao?freelancer_id=${id}`).then(r => r.json()),
       fetch(`/api/freelancer-album?freelancer_id=${id}`).then(r => r.json()),
       fetch(`/api/freelancer-valores?freelancer_id=${id}`).then(r => r.json()),
       fetch(`/api/freelancer-info?freelancer_id=${id}`).then(r => r.json()),
+      fetch(`/api/freelancer-pagamentos?freelancer_id=${id}`).then(r => r.json()).catch(() => ({ pagamentos: [] })),
+      fetch(`/api/freelancer-notificacoes?freelancer_id=${id}`).then(r => r.json()).catch(() => ({ notificacoes: [] })),
     ])
     const f = (fRes.freelancers ?? []).find((x: Freelancer) => x.id === id) ?? null
     setFreelancer(f)
     setIntroHome(f?.intro_home ?? '')
     setIntroHomeTitle(f?.intro_home_title ?? '')
+    setGuia(f?.guia_trabalho ?? '')
     setCasamentos(cRes.casamentos ?? [])
     setEdicao(eRes.edicao ?? [])
     setAlbum(aRes.album ?? [])
     setValores(vRes.valores ?? [])
     setInfo(iRes.info ?? [])
+    setPagamentos(pRes.pagamentos ?? [])
+    setNotificacoes(nRes.notificacoes ?? [])
     setLoading(false)
   }, [id])
 
@@ -215,6 +227,21 @@ export default function FreelancerDetailPage() {
     }, 800)
   }
 
+  function handleGuiaChange(val: string) {
+    setGuia(val)
+    setGuiaStatus('saving')
+    if (guiaTimer.current) clearTimeout(guiaTimer.current)
+    guiaTimer.current = setTimeout(async () => {
+      await fetch('/api/freelancers', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, guia_trabalho: val }),
+      })
+      setGuiaStatus('saved')
+      setTimeout(() => setGuiaStatus('idle'), 2000)
+    }, 800)
+  }
+
   async function handlePhotoUpload(file: File) {
     setUploadingPhoto(true)
     const form = new FormData()
@@ -244,13 +271,15 @@ export default function FreelancerDetailPage() {
     setEditSaving(false)
   }
 
-  const tabs: { key: 'casamentos'|'edicao'|'album'|'valores'|'info'|'notas'; label: string; count?: number }[] = [
-    { key: 'casamentos', label: 'Casamentos', count: casamentos.length },
+  const tabs: { key: 'casamentos'|'edicao'|'album'|'valores'|'info'|'notas'|'pagamentos'|'notificacoes'; label: string; count?: number }[] = [
+    { key: 'casamentos',   label: 'Casamentos',  count: casamentos.length },
     ...(!isVideografo ? [{ key: 'edicao' as const, label: 'Edição Fotos', count: edicao.length }] : []),
     ...(isFotografo ? [{ key: 'album' as const, label: 'Edição Álbum', count: album.length }] : []),
-    { key: 'valores', label: 'Valores' },
-    { key: 'info',    label: 'Info' },
-    { key: 'notas',   label: 'Notas' },
+    { key: 'valores',      label: 'Valores' },
+    { key: 'info',         label: 'Info' },
+    { key: 'notas',        label: 'Notas' },
+    { key: 'pagamentos',   label: 'Pagamentos', count: pagamentos.length },
+    { key: 'notificacoes', label: 'Notif.', count: notificacoes.filter(n => !n.lida).length },
   ]
 
   return (
@@ -299,32 +328,34 @@ export default function FreelancerDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1.5 mb-6 p-1.5 rounded-2xl border border-white/30 bg-black"
-        style={{ boxShadow: '0 0 18px 3px rgba(255,255,255,0.10), 0 0 6px 1px rgba(255,255,255,0.15), inset 0 0 18px 0 rgba(255,255,255,0.03)' }}>
-        {/* Botão casa */}
-        <button onClick={() => { setTab(null); setEditForm(null) }}
-          className={`flex items-center justify-center px-4 py-2.5 rounded-xl text-xl transition-all ${
-            tab === null
-              ? 'bg-white/10 text-white border border-white/20'
-              : 'text-white/40 hover:text-white/70 border border-transparent'
-          }`}>
-          ⌂
-        </button>
-        {tabs.map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)}
-            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[9px] tracking-[0.25em] uppercase font-semibold transition-all ${
-              tab === t.key
+      <div className="mb-6 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+        <div className="flex items-center gap-1.5 p-1.5 rounded-2xl border border-white/30 bg-black w-max min-w-full"
+          style={{ boxShadow: '0 0 18px 3px rgba(255,255,255,0.10), 0 0 6px 1px rgba(255,255,255,0.15), inset 0 0 18px 0 rgba(255,255,255,0.03)' }}>
+          {/* Botão casa */}
+          <button onClick={() => { setTab(null); setEditForm(null) }}
+            className={`flex-shrink-0 flex items-center justify-center px-4 py-2.5 rounded-xl text-xl transition-all ${
+              tab === null
                 ? 'bg-white/10 text-white border border-white/20'
-                : 'text-white/30 hover:text-white/55 border border-transparent'
+                : 'text-white/40 hover:text-white/70 border border-transparent'
             }`}>
-            {t.label}
-            {t.count != null && t.count > 0 && (
-              <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold transition-all ${
-                tab === t.key ? 'bg-white/15 text-white/80' : 'bg-white/[0.06] text-white/25'
-              }`}>{t.count}</span>
-            )}
+            ⌂
           </button>
-        ))}
+          {tabs.map(t => (
+            <button key={t.key} onClick={() => setTab(t.key)}
+              className={`flex-shrink-0 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[9px] tracking-[0.25em] uppercase font-semibold transition-all ${
+                tab === t.key
+                  ? 'bg-white/10 text-white border border-white/20'
+                  : 'text-white/30 hover:text-white/55 border border-transparent'
+              }`}>
+              {t.label}
+              {t.count != null && t.count > 0 && (
+                <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold transition-all ${
+                  tab === t.key ? 'bg-white/15 text-white/80' : 'bg-white/[0.06] text-white/25'
+                }`}>{t.count}</span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Home */}
@@ -400,6 +431,26 @@ export default function FreelancerDetailPage() {
               />
             </div>
 
+            {/* Guia de trabalho */}
+            <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[10px] tracking-[0.3em] text-white/25 uppercase">Guia de Trabalho</p>
+                <span className={`text-[9px] tracking-widest transition-all ${
+                  guiaStatus === 'saving' ? 'text-white/30' :
+                  guiaStatus === 'saved'  ? 'text-emerald-400' : 'text-transparent'
+                }`}>
+                  {guiaStatus === 'saving' ? 'A guardar...' : '✓ Guardado'}
+                </span>
+              </div>
+              <textarea
+                value={guia}
+                onChange={e => handleGuiaChange(e.target.value)}
+                rows={8}
+                placeholder="Escreve aqui as regras e guia de trabalho para os freelancers (herda para todos via template)..."
+                className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm text-white/70 outline-none focus:border-white/20 transition-colors resize-none placeholder:text-white/15 leading-relaxed"
+              />
+            </div>
+
             {/* Dados do freelancer */}
             {editForm ? (
               <div className="bg-white/[0.02] border border-gold/20 rounded-2xl p-5 space-y-3">
@@ -460,12 +511,14 @@ export default function FreelancerDetailPage() {
       )}
 
       {/* Tab content */}
-      {tab === 'casamentos' && <CasamentosTab freelancerId={id} casamentos={casamentos} onRefresh={load} freelancerStatus={freelancer?.status ?? null} freelancer={freelancer} />}
-      {tab === 'edicao'     && <EdicaoTab freelancerId={id} edicao={edicao} onRefresh={load} />}
-      {tab === 'album'      && <AlbumTab freelancerId={id} album={album} onRefresh={load} />}
-      {tab === 'valores'    && <ValoresTab freelancerId={id} valores={valores} onRefresh={load} />}
-      {tab === 'info'       && <InfoTab freelancerId={id} info={info} onRefresh={load} />}
-      {tab === 'notas'      && <NotasTab freelancer={freelancer} onRefresh={load} />}
+      {tab === 'casamentos'   && <CasamentosTab freelancerId={id} casamentos={casamentos} onRefresh={load} freelancerStatus={freelancer?.status ?? null} freelancer={freelancer} />}
+      {tab === 'edicao'       && <EdicaoTab freelancerId={id} edicao={edicao} onRefresh={load} />}
+      {tab === 'album'        && <AlbumTab freelancerId={id} album={album} onRefresh={load} />}
+      {tab === 'valores'      && <ValoresTab freelancerId={id} valores={valores} onRefresh={load} />}
+      {tab === 'info'         && <InfoTab freelancerId={id} info={info} onRefresh={load} />}
+      {tab === 'notas'        && <NotasTab freelancer={freelancer} onRefresh={load} />}
+      {tab === 'pagamentos'   && <PagamentosAdminTab freelancerId={id} pagamentos={pagamentos} onRefresh={load} />}
+      {tab === 'notificacoes' && <NotificacoesAdminTab freelancerId={id} notificacoes={notificacoes} onRefresh={load} />}
     </main>
   )
 }
@@ -1465,6 +1518,297 @@ function InfoTab({ freelancerId, info, onRefresh }: { freelancerId: string; info
           </div>
         )
       ))}
+    </div>
+  )
+}
+
+// ─── Pagamentos Admin Tab ─────────────────────────────────────────────────────
+
+function PagamentosAdminTab({ freelancerId, pagamentos, onRefresh }: { freelancerId: string; pagamentos: Pagamento[]; onRefresh: () => void }) {
+  const [showAdd, setShowAdd] = useState(false)
+  const [form, setForm]       = useState({ descricao: '', valor: '', data_prevista: '', data_pago: '', status: 'PENDENTE', notas: '' })
+  const [saving, setSaving]   = useState(false)
+  const [editId, setEditId]   = useState<string | null>(null)
+  const [editForm, setEditForm] = useState<typeof form | null>(null)
+
+  const totalPago     = pagamentos.filter(p => p.status === 'PAGO').reduce((s, p) => s + (p.valor ?? 0), 0)
+  const totalPendente = pagamentos.filter(p => p.status !== 'PAGO').reduce((s, p) => s + (p.valor ?? 0), 0)
+  const totalGeral    = pagamentos.reduce((s, p) => s + (p.valor ?? 0), 0)
+
+  function fmtEuro(v: number) { return `${v.toFixed(2).replace('.', ',')}€` }
+
+  async function handleAdd() {
+    if (!form.descricao.trim()) return
+    setSaving(true)
+    await fetch('/api/freelancer-pagamentos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        freelancer_id: freelancerId,
+        descricao: form.descricao,
+        valor: form.valor ? parseFloat(form.valor.replace(',', '.')) : null,
+        data_prevista: form.data_prevista || null,
+        data_pago: form.data_pago || null,
+        status: form.status,
+        notas: form.notas || null,
+      }),
+    })
+    setSaving(false)
+    setShowAdd(false)
+    setForm({ descricao: '', valor: '', data_prevista: '', data_pago: '', status: 'PENDENTE', notas: '' })
+    onRefresh()
+  }
+
+  async function handleEdit() {
+    if (!editId || !editForm) return
+    setSaving(true)
+    await fetch('/api/freelancer-pagamentos', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: editId,
+        descricao: editForm.descricao,
+        valor: editForm.valor ? parseFloat(editForm.valor.replace(',', '.')) : null,
+        data_prevista: editForm.data_prevista || null,
+        data_pago: editForm.data_pago || null,
+        status: editForm.status,
+        notas: editForm.notas || null,
+      }),
+    })
+    setSaving(false)
+    setEditId(null)
+    setEditForm(null)
+    onRefresh()
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm('Remover pagamento?')) return
+    await fetch(`/api/freelancer-pagamentos?id=${id}`, { method: 'DELETE' })
+    onRefresh()
+  }
+
+  async function quickPago(id: string) {
+    await fetch('/api/freelancer-pagamentos', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status: 'PAGO', data_pago: new Date().toISOString().split('T')[0] }),
+    })
+    onRefresh()
+  }
+
+  function PagaForm({ f, setF }: { f: typeof form; setF: (v: typeof form) => void }) {
+    return (
+      <div className="space-y-3">
+        <div>
+          <label className={labelCls}>Descrição *</label>
+          <input value={f.descricao} onChange={e => setF({ ...f, descricao: e.target.value })}
+            placeholder="Ex: Casamento João & Maria" className={inputCls} />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className={labelCls}>Valor (€)</label>
+            <input value={f.valor} onChange={e => setF({ ...f, valor: e.target.value })}
+              placeholder="0,00" className={inputCls} />
+          </div>
+          <div>
+            <label className={labelCls}>Estado</label>
+            <select value={f.status} onChange={e => setF({ ...f, status: e.target.value })} className={selectCls}>
+              {['PENDENTE','PAGO','PARCIAL'].map(s => <option key={s} value={s} style={optStyle}>{s}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={labelCls}>Data Prevista</label>
+            <input type="date" value={f.data_prevista} onChange={e => setF({ ...f, data_prevista: e.target.value })} className={inputCls} />
+          </div>
+          <div>
+            <label className={labelCls}>Data Pago</label>
+            <input type="date" value={f.data_pago} onChange={e => setF({ ...f, data_pago: e.target.value })} className={inputCls} />
+          </div>
+        </div>
+        <div>
+          <label className={labelCls}>Notas</label>
+          <input value={f.notas} onChange={e => setF({ ...f, notas: e.target.value })}
+            placeholder="Opcional..." className={inputCls} />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Resumo */}
+      <div className="grid grid-cols-3 gap-2">
+        {[
+          { label: 'Total', val: totalGeral, cls: 'text-white/70' },
+          { label: 'Pago', val: totalPago, cls: 'text-emerald-400' },
+          { label: 'Pendente', val: totalPendente, cls: 'text-yellow-400' },
+        ].map(({ label, val, cls }) => (
+          <div key={label} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-3">
+            <p className="text-[9px] tracking-widest uppercase text-white/25 mb-0.5">{label}</p>
+            <p className={`text-lg font-light ${cls}`}>{fmtEuro(val)}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex justify-end">
+        <button onClick={() => { setShowAdd(true); setEditId(null) }}
+          className="px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-xs font-semibold tracking-widest hover:bg-gold/20 transition-all uppercase">
+          + Pagamento
+        </button>
+      </div>
+
+      {showAdd && (
+        <div className="bg-white/[0.02] border border-gold/20 rounded-2xl p-5 space-y-3">
+          <p className="text-[9px] tracking-[0.3em] text-gold/60 uppercase">Novo Pagamento</p>
+          <PagaForm f={form} setF={setForm} />
+          <div className="flex justify-end gap-2 pt-1">
+            <button onClick={() => setShowAdd(false)} className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
+            <button onClick={handleAdd} disabled={saving || !form.descricao.trim()}
+              className="px-4 py-1.5 rounded-lg text-xs bg-gold text-black font-semibold hover:bg-gold/80 disabled:opacity-40 transition-all">
+              {saving ? '...' : 'Guardar'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {pagamentos.length === 0 && !showAdd && (
+        <p className="text-center py-8 text-white/20 text-xs tracking-widest">Sem pagamentos registados.</p>
+      )}
+
+      {pagamentos.map(p => (
+        editId === p.id && editForm ? (
+          <div key={p.id} className="bg-white/[0.02] border border-white/20 rounded-2xl p-5 space-y-3">
+            <p className={labelCls}>Editar</p>
+            <PagaForm f={editForm} setF={setEditForm as any} />
+            <div className="flex justify-between pt-1">
+              <button onClick={() => handleDelete(p.id)} className="text-[10px] text-red-400/50 hover:text-red-400 transition-colors">✕ Remover</button>
+              <div className="flex gap-2">
+                <button onClick={() => { setEditId(null); setEditForm(null) }} className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
+                <button onClick={handleEdit} disabled={saving}
+                  className="px-4 py-1.5 rounded-lg text-xs bg-gold text-black font-semibold hover:bg-gold/80 disabled:opacity-40 transition-all">
+                  {saving ? '...' : 'Guardar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div key={p.id} className="flex items-center gap-4 px-4 py-3 rounded-xl border border-white/[0.06] bg-white/[0.02] group">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-white/80">{p.descricao}</p>
+              <div className="flex flex-wrap gap-x-3 mt-0.5">
+                {p.data_prevista && <span className="text-[10px] text-white/30">Previsto: {fmtDate(p.data_prevista).split(' · ')[0]}</span>}
+                {p.data_pago && <span className="text-[10px] text-emerald-400/60">Pago: {fmtDate(p.data_pago).split(' · ')[0]}</span>}
+                {p.notas && <span className="text-[10px] text-white/20 italic">{p.notas}</span>}
+              </div>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <span className="text-base font-light text-white/70">{p.valor != null ? fmtEuro(p.valor) : '—'}</span>
+              {p.status !== 'PAGO' ? (
+                <button onClick={() => quickPago(p.id)}
+                  className="text-[9px] px-2.5 py-1 rounded-full border bg-yellow-500/15 text-yellow-400 border-yellow-500/30 hover:bg-emerald-500/15 hover:text-emerald-400 hover:border-emerald-500/30 tracking-widest uppercase font-medium transition-all">
+                  {p.status}
+                </button>
+              ) : (
+                <span className="text-[9px] px-2.5 py-1 rounded-full border bg-emerald-500/15 text-emerald-400 border-emerald-500/30 tracking-widest uppercase font-medium">
+                  PAGO ✓
+                </span>
+              )}
+              <button
+                onClick={() => {
+                  setEditId(p.id)
+                  setEditForm({ descricao: p.descricao, valor: p.valor?.toString() ?? '', data_prevista: p.data_prevista ?? '', data_pago: p.data_pago ?? '', status: p.status, notas: p.notas ?? '' })
+                  setShowAdd(false)
+                }}
+                className="text-white/20 hover:text-white/60 transition-colors opacity-0 group-hover:opacity-100">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              </button>
+            </div>
+          </div>
+        )
+      ))}
+    </div>
+  )
+}
+
+// ─── Notificações Admin Tab ───────────────────────────────────────────────────
+
+function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh }: { freelancerId: string; notificacoes: Notificacao[]; onRefresh: () => void }) {
+  const [form, setForm] = useState({ titulo: '', mensagem: '', tipo: 'info' })
+  const [sending, setSending] = useState(false)
+
+  async function handleSend() {
+    if (!form.titulo.trim()) return
+    setSending(true)
+    await fetch('/api/freelancer-notificacoes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ freelancer_id: freelancerId, titulo: form.titulo, mensagem: form.mensagem || null, tipo: form.tipo, lida: false }),
+    })
+    setSending(false)
+    setForm({ titulo: '', mensagem: '', tipo: 'info' })
+    onRefresh()
+  }
+
+  async function handleDelete(id: string) {
+    await fetch(`/api/freelancer-notificacoes?id=${id}`, { method: 'DELETE' })
+    onRefresh()
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 space-y-3">
+        <p className={labelCls}>Enviar Notificação</p>
+        <div>
+          <label className={labelCls}>Tipo</label>
+          <select value={form.tipo} onChange={e => setForm(v => ({ ...v, tipo: e.target.value }))} className={selectCls}>
+            <option value="info" style={optStyle}>ℹ Info</option>
+            <option value="alerta" style={optStyle}>⚠ Alerta</option>
+            <option value="pagamento" style={optStyle}>💰 Pagamento</option>
+          </select>
+        </div>
+        <div>
+          <label className={labelCls}>Título *</label>
+          <input value={form.titulo} onChange={e => setForm(v => ({ ...v, titulo: e.target.value }))}
+            placeholder="Ex: Novo evento adicionado" className={inputCls} />
+        </div>
+        <div>
+          <label className={labelCls}>Mensagem</label>
+          <textarea value={form.mensagem} onChange={e => setForm(v => ({ ...v, mensagem: e.target.value }))}
+            rows={3} placeholder="Mensagem opcional..."
+            className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors resize-none placeholder:text-white/15" />
+        </div>
+        <div className="flex justify-end">
+          <button onClick={handleSend} disabled={sending || !form.titulo.trim()}
+            className="px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-xs font-semibold tracking-widest hover:bg-gold/20 disabled:opacity-40 transition-all uppercase">
+            {sending ? 'A enviar...' : 'Enviar'}
+          </button>
+        </div>
+      </div>
+
+      {notificacoes.length === 0 ? (
+        <p className="text-center py-6 text-white/20 text-xs tracking-widest">Sem notificações enviadas.</p>
+      ) : (
+        <div className="space-y-2">
+          {notificacoes.map(n => (
+            <div key={n.id} className="flex items-start gap-3 px-4 py-3 rounded-xl border border-white/[0.06] bg-white/[0.02] group">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-[9px] tracking-widest uppercase text-white/30 font-semibold">{n.tipo}</span>
+                  {n.lida
+                    ? <span className="text-[9px] text-white/20">✓ lida</span>
+                    : <span className="text-[9px] text-gold/50">• não lida</span>
+                  }
+                </div>
+                <p className="text-sm text-white/70">{n.titulo}</p>
+                {n.mensagem && <p className="text-xs text-white/40 mt-0.5">{n.mensagem}</p>}
+                <p className="text-[9px] text-white/20 mt-1">{new Date(n.created_at).toLocaleDateString('pt-PT')}</p>
+              </div>
+              <button onClick={() => handleDelete(n.id)}
+                className="text-white/15 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 mt-0.5 flex-shrink-0">✕</button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
