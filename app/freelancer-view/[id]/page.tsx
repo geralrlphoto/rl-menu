@@ -1724,6 +1724,15 @@ export default function FreelancerViewPage() {
           {/* ── Tab: Workflow ── */}
           {tab === 'guia' && (
             <section className="space-y-4">
+              <div className="px-4 py-4 rounded-xl border border-white/[0.06] bg-white/[0.02] space-y-2">
+                <p className="text-[18px] tracking-[0.3em] text-gold/60 uppercase">Workflow</p>
+                <p className="text-[16px] text-white leading-relaxed">
+                  Aqui vais encontrar todo o nosso sistema de trabalho.
+                </p>
+                <p className="text-[16px] text-white leading-relaxed">
+                  Lê com atenção para que nada falhe e para que não haja dúvidas. O nosso fluxo de trabalho está desenhado para garantir que cada projeto é executado com a máxima qualidade e organização.
+                </p>
+              </div>
               {freelancer?.guia_trabalho ? (
                 <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
                   <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase mb-5">Workflow</p>
