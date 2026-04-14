@@ -1485,13 +1485,17 @@ export default function EventoPage() {
 
   const e = evento
 
+  // Ano do evento → sufixo da referência (ex: 2027 → "27")
+  const anoEvento = e.data_evento ? parseInt(e.data_evento.slice(0, 4)) : 2026
+  const anoSufixo = String(anoEvento).slice(2)
+
   // Prazos automáticos
   const prazoSelFotos = e.data_evento ? addCalendarDays(e.data_evento, 30) : null
   const prazoVideo    = e.data_evento ? addWorkingDays(e.data_evento, 180) : null
 
   return (
     <main className="min-h-screen px-4 py-10 max-w-3xl mx-auto">
-      <Link href="/eventos-2026" className="text-xs tracking-widest text-white/30 hover:text-gold transition-colors">
+      <Link href={`/eventos-2026?ano=${anoEvento}`} className="text-xs tracking-widest text-white/30 hover:text-gold transition-colors">
         ‹ VOLTAR AOS CASAMENTOS
       </Link>
 
@@ -1529,7 +1533,7 @@ export default function EventoPage() {
               <option value="" style={{ background: '#1a1610', color: 'rgba(255,255,255,0.5)' }}>Selecionar referência...</option>
               {Array.from({ length: 150 }, (_, i) => {
                 const n = String(i + 1).padStart(3, '0')
-                const ref = `CAS_${n}_26_RL`
+                const ref = `CAS_${n}_${anoSufixo}_RL`
                 const isMine = ref === e.referencia
                 const isTaken = usedRefs.has(ref) && !isMine
                 return (
