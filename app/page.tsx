@@ -462,6 +462,35 @@ export default async function Home() {
         ))}
       </div>
 
+      {/* ── Relatório Diário Banner ─────────────────────────────────────────── */}
+      <div className="border-t border-white/[0.06] bg-[#060606]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-10 py-7 sm:py-9 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+          <div>
+            <p className="text-[9px] tracking-[0.5em] text-white/15 uppercase mb-2">RL PHOTO · VIDEO</p>
+            <h2 className="text-4xl sm:text-[3.2rem] font-black tracking-tighter text-white uppercase leading-[0.9]">
+              RELATÓRIO<br />
+              <span style={{ color: '#00D4AA' }}>DIÁRIO</span>
+            </h2>
+            <p className="text-white/20 text-xs mt-3 tracking-wider">
+              Eventos · CRM · Portais Noivos · Equipa · Prazos · Pagamentos
+            </p>
+          </div>
+          <div className="flex flex-col items-start sm:items-end gap-1.5 shrink-0">
+            <Link
+              href="/relatorio-diario"
+              className="flex items-center gap-3 px-7 py-3.5 rounded-full font-black text-sm tracking-[0.2em] uppercase transition-all duration-300 hover:scale-105"
+              style={{ background: '#00D4AA', color: '#000', boxShadow: '0 0 30px rgba(0,212,170,0.25)' }}
+            >
+              ENTRAR
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </Link>
+            <p className="text-[9px] tracking-[0.3em] text-white/15 uppercase">GERADO A PEDIDO</p>
+          </div>
+        </div>
+      </div>
+
       {/* ── Dashboard carousel ──────────────────────────────────────────────── */}
       <div className="border-t border-[#C9A84C]/25 bg-[#0d0d0d] sm:mt-[80px]">
         <DashboardCarousel cols={cols} />
