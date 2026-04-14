@@ -123,7 +123,7 @@ export default async function SecaoPage({ params }: Props) {
                 className="group flex items-center justify-between px-5 py-4 border border-gold/30 rounded-xl bg-gold/5 hover:bg-gold/10 hover:border-gold/60 transition-all duration-200"
               >
                 <span className="text-sm tracking-wider text-gold/80 group-hover:text-gold uppercase">
-                  {page.title}
+                  {page.title === 'EVENTOS 2026' ? 'CASAMENTOS' : page.title}
                 </span>
                 <span className="text-gold/50 group-hover:text-gold text-lg transition-colors">›</span>
               </Link>
