@@ -235,11 +235,12 @@ export default function Eventos2026() {
   const [showNovoEvento, setShowNovoEvento] = useState(false)
   const router = useRouter()
 
-  async function handleDelete(e: React.MouseEvent, id: string) {
+  async function handleDelete(e: React.MouseEvent, id: string, referencia?: string) {
     e.preventDefault(); e.stopPropagation()
     if (!confirm('Eliminar este evento? Esta ação não pode ser desfeita.')) return
     setDeletingId(id)
-    await fetch(`/api/eventos-notion/${id}`, { method: 'DELETE' })
+    const qs = referencia ? `?referencia=${encodeURIComponent(referencia)}` : ''
+    await fetch(`/api/eventos-notion/${id}${qs}`, { method: 'DELETE' })
     setEvents(prev => prev.filter(ev => ev.id !== id))
     setDeletingId(null)
   }
@@ -438,7 +439,7 @@ export default function Eventos2026() {
 
                       {/* Botão eliminar */}
                       <button
-                        onClick={ev => handleDelete(ev, e.id)}
+                        onClick={ev => handleDelete(ev, e.id, e.referencia)}
                         disabled={deletingId === e.id}
                         className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 p-1.5 rounded-lg hover:bg-red-500/15 text-white/20 hover:text-red-400 shrink-0"
                       >

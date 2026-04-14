@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN!
+
+function supabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
 
 function getProp(props: any, key: string, type: string): any {
   const p = props[key]
@@ -193,7 +201,19 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  const referencia = _req.nextUrl.searchParams.get('referencia')
+
   try {
+    // Limpar registos Supabase associados ao evento
+    if (referencia) {
+      const sb = supabase()
+      await Promise.all([
+        sb.from('freelancer_casamentos').delete().eq('referencia', referencia),
+        sb.from('evento_equipa').delete().eq('referencia', referencia),
+      ])
+    }
+
+    // Arquivar no Notion
     const res = await fetch(`https://api.notion.com/v1/pages/${id}`, {
       method: 'PATCH',
       headers: {
