@@ -24,7 +24,7 @@ function daysUntil(d: string | null) {
   return Math.round((new Date(d+'T00:00:00').getTime() - today.getTime()) / 86400000)
 }
 
-type Freelancer = { id: string; nome: string; status: string | null; intro_casamentos: string | null; intro_home: string | null; intro_home_title: string | null; is_template?: boolean | null }
+type Freelancer = { id: string; nome: string; status: string | null; intro_casamentos: string | null; intro_home: string | null; intro_home_title: string | null; is_template?: boolean | null; foto_url?: string | null }
 type Casamento  = { id: string; local: string; data_casamento: string | null; referencia?: string | null; equipa_foto: string[] | null; videografo: string | null; briefing_url: string | null; data_confirmada: boolean | null; indisponivel: boolean | null; data_confirmada_videografo: boolean | null; indisponivel_videografo: boolean | null }
 type Edicao     = {
   id: string; nome: string; status: string; data_casamento: string | null
@@ -1012,18 +1012,49 @@ export default function FreelancerViewPage() {
       )}
 
       {!loading && tab === null && (
-        (freelancer?.intro_home_title || freelancer?.intro_home)
-          ? (
-            <div className="max-w-xl mx-auto px-2 py-8 space-y-2">
+        <div className="flex flex-col items-center py-8 gap-8">
+
+          {/* Card de perfil */}
+          {freelancer?.foto_url && (
+            <div className="relative w-64 h-80 rounded-3xl overflow-hidden flex-shrink-0"
+              style={{ boxShadow: '0 0 0 2px rgba(210,100,40,0.7), 0 0 28px 6px rgba(210,100,40,0.25)' }}>
+              {/* Foto B&W */}
+              <img src={freelancer.foto_url} alt={freelancer.nome}
+                className="absolute inset-0 w-full h-full object-cover grayscale" />
+              {/* Overlay escuro suave no fundo */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              {/* Nome + função — rodado na esquerda */}
+              <div className="absolute bottom-4 left-0 w-full px-4">
+                <div className="flex items-end gap-2">
+                  <div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }} className="text-white font-black uppercase tracking-widest text-[13px] leading-none">
+                    {freelancer.nome}
+                  </div>
+                  <div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }} className="text-white/60 uppercase tracking-widest text-[9px] leading-none">
+                    {freelancer.status}
+                  </div>
+                </div>
+              </div>
+              {/* Seta canto superior direito */}
+              <div className="absolute top-3 right-3 text-white/80 text-lg font-bold">↙</div>
+            </div>
+          )}
+
+          {/* Título + texto */}
+          {(freelancer?.intro_home_title || freelancer?.intro_home) && (
+            <div className="max-w-xl w-full px-2 space-y-2 text-center">
               {freelancer.intro_home_title && <p className="text-[22px] font-semibold text-white">{freelancer.intro_home_title}</p>}
               {freelancer.intro_home && <p className="text-[16px] text-white leading-relaxed whitespace-pre-wrap">{freelancer.intro_home}</p>}
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
-              <div className="h-px w-8 bg-white/10 mx-auto mb-2" />
+          )}
+
+          {/* Fallback se não tiver nada */}
+          {!freelancer?.foto_url && !freelancer?.intro_home_title && !freelancer?.intro_home && (
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <div className="h-px w-8 bg-white/10" />
               <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase">Seleciona uma secção acima</p>
             </div>
-          )
+          )}
+        </div>
       )}
 
       {!loading && tab !== null && (

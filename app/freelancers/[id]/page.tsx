@@ -9,7 +9,7 @@ import { useParams } from 'next/navigation'
 type Freelancer = {
   id: string; nome: string; status: string | null; contato: string | null
   email: string | null; nome_sos: string | null; contato_sos: string | null; notas: string | null
-  password: string | null; intro_casamentos: string | null; intro_home: string | null; intro_home_title: string | null; is_template: boolean | null
+  password: string | null; intro_casamentos: string | null; intro_home: string | null; intro_home_title: string | null; is_template: boolean | null; foto_url: string | null
 }
 type Casamento = {
   id: string; freelancer_id: string; local: string; data_casamento: string | null
@@ -130,6 +130,7 @@ export default function FreelancerDetailPage() {
   const [introHomeTitle, setIntroHomeTitle] = useState('')
   const [introHomeStatus, setIntroHomeStatus] = useState<'idle'|'saving'|'saved'>('idle')
   const introHomeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
 
   const [freelancer, setFreelancer] = useState<Freelancer | null>(null)
   const [casamentos, setCasamentos] = useState<Casamento[]>([])
@@ -212,6 +213,22 @@ export default function FreelancerDetailPage() {
       setIntroHomeStatus('saved')
       setTimeout(() => setIntroHomeStatus('idle'), 2000)
     }, 800)
+  }
+
+  async function handlePhotoUpload(file: File) {
+    setUploadingPhoto(true)
+    const form = new FormData()
+    form.append('file', file)
+    const res = await fetch('/api/upload-image', { method: 'POST', body: form }).then(r => r.json())
+    if (res.url) {
+      await fetch('/api/freelancers', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, foto_url: res.url }),
+      })
+      await load()
+    }
+    setUploadingPhoto(false)
   }
 
   async function handleEditSave() {
@@ -324,6 +341,38 @@ export default function FreelancerDetailPage() {
 
           {/* ── Controlos admin ── */}
           <div className="border-t border-white/[0.06] pt-5 space-y-4">
+
+            {/* Foto de perfil */}
+            <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
+              <p className="text-[10px] tracking-[0.3em] text-white/25 uppercase mb-4">Foto de Perfil</p>
+              <div className="flex items-center gap-5">
+                {freelancer.foto_url ? (
+                  <div className="relative w-24 h-28 rounded-2xl overflow-hidden flex-shrink-0 border border-white/10"
+                    style={{ boxShadow: '0 0 16px 2px rgba(200,100,50,0.25)' }}>
+                    <img src={freelancer.foto_url} alt={freelancer.nome} className="w-full h-full object-cover grayscale" />
+                  </div>
+                ) : (
+                  <div className="w-24 h-28 rounded-2xl border border-dashed border-white/15 flex items-center justify-center flex-shrink-0">
+                    <span className="text-white/20 text-2xl">👤</span>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <label className={`cursor-pointer px-4 py-2 rounded-xl text-xs border transition-all inline-block ${uploadingPhoto ? 'border-white/10 text-white/20' : 'border-white/20 text-white/50 hover:border-white/40 hover:text-white/80'}`}>
+                    {uploadingPhoto ? 'A enviar...' : freelancer.foto_url ? 'Alterar foto' : 'Carregar foto'}
+                    <input type="file" accept="image/*" className="hidden" disabled={uploadingPhoto}
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoUpload(f) }} />
+                  </label>
+                  {freelancer.foto_url && (
+                    <button onClick={async () => {
+                      await fetch('/api/freelancers', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, foto_url: null }) })
+                      await load()
+                    }} className="block text-[10px] text-red-400/50 hover:text-red-400 transition-colors">
+                      Remover foto
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
 
             {/* Texto da página inicial */}
             <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
