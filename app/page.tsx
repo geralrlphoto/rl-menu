@@ -479,37 +479,9 @@ export default async function Home() {
                 RELATÓRIO
               </p>
 
-              {/* DIÁRIO — efeito rachado com duas metades deslocadas */}
-              <div className="relative select-none">
-                {/* Metade de cima — deslocada para cima e ligeiramente à esquerda */}
-                <p
-                  className="text-[clamp(3rem,9vw,5.5rem)] font-black tracking-tighter leading-[0.85] text-[#C9A84C] uppercase"
-                  style={{
-                    clipPath: 'polygon(0 0, 100% 0, 100% 52%, 75% 50%, 50% 54%, 25% 46%, 0 44%)',
-                    transform: 'translate(-2px, -2px)',
-                  }}
-                >
-                  DIÁRIO
-                </p>
-                {/* Metade de baixo — deslocada para baixo e ligeiramente à direita */}
-                <p
-                  className="absolute inset-0 text-[clamp(3rem,9vw,5.5rem)] font-black tracking-tighter leading-[0.85] text-[#C9A84C] uppercase"
-                  style={{
-                    clipPath: 'polygon(0 47%, 25% 49%, 50% 57%, 75% 53%, 100% 55%, 100% 100%, 0 100%)',
-                    transform: 'translate(2px, 2px)',
-                  }}
-                >
-                  DIÁRIO
-                </p>
-                {/* Brilho ao longo da rachadura */}
-                <div
-                  className="absolute inset-0 pointer-events-none"
-                  style={{
-                    clipPath: 'polygon(0 43%, 25% 45%, 50% 52%, 75% 48%, 100% 51%, 100% 56%, 75% 54%, 50% 58%, 25% 50%, 0 48%)',
-                    background: 'linear-gradient(100deg, transparent 10%, rgba(255,255,255,0.55) 45%, rgba(201,168,76,0.35) 60%, transparent 90%)',
-                  }}
-                />
-              </div>
+              <p className="text-[clamp(3rem,9vw,5.5rem)] font-black tracking-tighter leading-[0.85] text-[#C9A84C] uppercase">
+                DIÁRIO
+              </p>
             </div>
 
             {/* Descrição + Botão */}
