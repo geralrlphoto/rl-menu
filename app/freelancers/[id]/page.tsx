@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 
@@ -126,6 +126,9 @@ export default function FreelancerDetailPage() {
   const [tab, setTab] = useState<'casamentos'|'edicao'|'album'|'valores'|'info'|'notas'|null>(null)
   const [editForm, setEditForm] = useState<{ nome: string; status: string; contato: string; email: string; nome_sos: string; contato_sos: string } | null>(null)
   const [editSaving, setEditSaving] = useState(false)
+  const [introText, setIntroText] = useState('')
+  const [introStatus, setIntroStatus] = useState<'idle'|'saving'|'saved'>('idle')
+  const introTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [freelancer, setFreelancer] = useState<Freelancer | null>(null)
   const [casamentos, setCasamentos] = useState<Casamento[]>([])
@@ -147,6 +150,7 @@ export default function FreelancerDetailPage() {
     ])
     const f = (fRes.freelancers ?? []).find((x: Freelancer) => x.id === id) ?? null
     setFreelancer(f)
+    setIntroText(f?.intro_casamentos ?? '')
     setCasamentos(cRes.casamentos ?? [])
     setEdicao(eRes.edicao ?? [])
     setAlbum(aRes.album ?? [])
@@ -177,6 +181,21 @@ export default function FreelancerDetailPage() {
 
   const isVideografo = freelancer?.status === 'VIDEOGRAFO'
   const isFotografo  = freelancer?.status === 'FOTOGRAFO'
+  function handleIntroChange(val: string) {
+    setIntroText(val)
+    setIntroStatus('saving')
+    if (introTimer.current) clearTimeout(introTimer.current)
+    introTimer.current = setTimeout(async () => {
+      await fetch('/api/freelancers', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, intro_casamentos: val }),
+      })
+      setIntroStatus('saved')
+      setTimeout(() => setIntroStatus('idle'), 2000)
+    }, 800)
+  }
+
   async function handleEditSave() {
     if (!editForm) return
     setEditSaving(true)
@@ -323,6 +342,27 @@ export default function FreelancerDetailPage() {
               </div>
             </div>
           )}
+
+          {/* Texto intro — auto-save, aparece na vista do freelancer */}
+          <div className="mt-4 bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[10px] tracking-[0.3em] text-white/25 uppercase">Texto de introdução</p>
+              <span className={`text-[9px] tracking-widest transition-all ${
+                introStatus === 'saving' ? 'text-white/30' :
+                introStatus === 'saved'  ? 'text-emerald-400' : 'text-transparent'
+              }`}>
+                {introStatus === 'saving' ? 'A guardar...' : '✓ Guardado'}
+              </span>
+            </div>
+            <textarea
+              value={introText}
+              onChange={e => handleIntroChange(e.target.value)}
+              rows={6}
+              placeholder="Escreve aqui o texto que aparece na vista do freelancer..."
+              className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm text-white/70 outline-none focus:border-gold/30 transition-colors resize-none placeholder:text-white/15 leading-relaxed"
+            />
+            <p className="text-[9px] text-white/20 mt-2">Este texto aparece automaticamente na página do freelancer.</p>
+          </div>
         </div>
       )}
 
