@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 type Evento = {
   id: string
@@ -225,7 +225,7 @@ function NovoEventoModal({ onClose, onCreated }: { onClose: () => void; onCreate
   )
 }
 
-export default function Eventos2026() {
+function Eventos2026Inner() {
   const [events, setEvents] = useState<Evento[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -234,6 +234,8 @@ export default function Eventos2026() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [showNovoEvento, setShowNovoEvento] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const anoFiltro = parseInt(searchParams.get('ano') ?? '2026')
 
   async function handleDelete(e: React.MouseEvent, id: string, referencia?: string) {
     e.preventDefault(); e.stopPropagation()
@@ -247,7 +249,7 @@ export default function Eventos2026() {
 
   function loadEvents() {
     setLoading(true)
-    fetch('/api/eventos-notion')
+    fetch(`/api/eventos-notion?ano=${anoFiltro}`)
       .then(r => r.json())
       .then(d => {
         if (d.error) setError(d.error)
@@ -257,7 +259,7 @@ export default function Eventos2026() {
       .catch(() => { setError('Erro de ligação'); setLoading(false) })
   }
 
-  useEffect(() => { loadEvents() }, [])
+  useEffect(() => { loadEvents() }, [anoFiltro])
 
   const filtered = events.filter(e => {
     const matchSearch = !search ||
@@ -283,8 +285,8 @@ export default function Eventos2026() {
       {/* Header */}
       <div className="flex items-end justify-between mb-10">
         <div>
-          <Link href="/" className="text-xs tracking-[0.3em] text-white/20 hover:text-gold transition-colors uppercase">‹ Menu</Link>
-          <h1 className="text-3xl sm:text-5xl font-extralight tracking-[0.15em] sm:tracking-[0.2em] text-white uppercase mt-3">Casamentos</h1>
+          <Link href="/casamentos" className="text-xs tracking-[0.3em] text-white/20 hover:text-gold transition-colors uppercase">‹ Casamentos</Link>
+          <h1 className="text-3xl sm:text-5xl font-extralight tracking-[0.15em] sm:tracking-[0.2em] text-white uppercase mt-3">Casamentos {anoFiltro}</h1>
           <p className="text-white/20 text-xs tracking-[0.3em] mt-2 uppercase">{events.length} casamentos · {totalValor.toLocaleString('pt-PT')} € total</p>
         </div>
         <button onClick={() => setShowNovoEvento(true)}
@@ -466,5 +468,13 @@ export default function Eventos2026() {
         </div>
       )}
     </main>
+  )
+}
+
+export default function Eventos2026() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-white/20 tracking-widest text-xs uppercase">A carregar...</div>}>
+      <Eventos2026Inner />
+    </Suspense>
   )
 }

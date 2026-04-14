@@ -1,7 +1,11 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN!
-const EVENTOS_DB = '1ad220116d8a804b839ddc36f1e7ecf1'
+
+const DB_BY_YEAR: Record<number, string> = {
+  2026: '1ad220116d8a804b839ddc36f1e7ecf1',
+  2027: '2a622011-6d8a-81b4-9c36-000b5667772b',
+}
 
 function getProp(props: any, key: string, type: string): any {
   const p = props[key]
@@ -20,10 +24,14 @@ function getProp(props: any, key: string, type: string): any {
   return null
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const { referencia, cliente, data_evento, local, tipo_evento, tipo_servico, fotografo, videografo, valor_foto, valor_video, valor_liquido } = body
+
+    // Escolher a base certa pelo ano da data do evento
+    const anoEvento = data_evento ? parseInt(data_evento.slice(0, 4)) : 2026
+    const EVENTOS_DB = DB_BY_YEAR[anoEvento] ?? DB_BY_YEAR[2026]
 
     const properties: any = {
       'REFERÊNCIA DO EVENTO': { title: [{ text: { content: referencia ?? '' } }] },
@@ -60,37 +68,48 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const anoParam = req.nextUrl.searchParams.get('ano')
+    const ano = anoParam ? parseInt(anoParam) : null
+
+    // Se há ano específico usa só essa base; caso contrário busca todas
+    const dbIds = ano
+      ? [DB_BY_YEAR[ano] ?? DB_BY_YEAR[2026]]
+      : Object.values(DB_BY_YEAR)
+
     const allPages: any[] = []
-    let cursor: string | null = null
 
-    do {
-      const body: any = {
-        page_size: 100,
-        sorts: [{ property: 'DATA DO EVENTO', direction: 'ascending' }],
-      }
-      if (cursor) body.start_cursor = cursor
+    for (const EVENTOS_DB of dbIds) {
+      let cursor: string | null = null
 
-      const res = await fetch(`https://api.notion.com/v1/databases/${EVENTOS_DB}/query`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${NOTION_TOKEN}`,
-          'Notion-Version': '2022-06-28',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      })
+      do {
+        const body: any = {
+          page_size: 100,
+          sorts: [{ property: 'DATA DO EVENTO', direction: 'ascending' }],
+        }
+        if (cursor) body.start_cursor = cursor
 
-      if (!res.ok) {
-        const err = await res.json()
-        return NextResponse.json({ error: err.message }, { status: res.status })
-      }
+        const res = await fetch(`https://api.notion.com/v1/databases/${EVENTOS_DB}/query`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${NOTION_TOKEN}`,
+            'Notion-Version': '2022-06-28',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+        })
 
-      const data = await res.json()
-      allPages.push(...data.results)
-      cursor = data.has_more ? data.next_cursor : null
-    } while (cursor)
+        if (!res.ok) {
+          const err = await res.json()
+          return NextResponse.json({ error: err.message }, { status: res.status })
+        }
+
+        const data = await res.json()
+        allPages.push(...data.results)
+        cursor = data.has_more ? data.next_cursor : null
+      } while (cursor)
+    }
 
     const events = allPages.map((page: any) => {
       const p = page.properties ?? {}
