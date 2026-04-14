@@ -15,19 +15,22 @@ export default function CasamentosPage() {
   const [stats, setStats] = useState<Record<number, Stats>>({})
 
   useEffect(() => {
-    fetch('/api/eventos-notion')
-      .then(r => r.json())
-      .then(d => {
-        const events: any[] = d.events ?? []
-        const s: Record<number, Stats> = {}
-        for (const ano of [2026, 2027, 2028]) {
-          const filtered = events.filter(e => e.data_evento?.startsWith(String(ano)))
-          const total = filtered.reduce((acc: number, e: any) => acc + (e.valor_liquido ?? 0), 0)
-          s[ano] = { count: filtered.length, total }
-        }
-        setStats(s)
-      })
-      .catch(() => {})
+    Promise.all(
+      [2026, 2027, 2028].map(ano =>
+        fetch(`/api/eventos-notion?ano=${ano}`)
+          .then(r => r.json())
+          .then(d => {
+            const events: any[] = d.events ?? []
+            const total = events.reduce((acc: number, e: any) => acc + (e.valor_liquido ?? 0), 0)
+            return { ano, count: events.length, total }
+          })
+          .catch(() => ({ ano, count: 0, total: 0 }))
+      )
+    ).then(results => {
+      const s: Record<number, Stats> = {}
+      for (const r of results) s[r.ano] = { count: r.count, total: r.total }
+      setStats(s)
+    })
   }, [])
 
   return (

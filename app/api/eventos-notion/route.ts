@@ -1,7 +1,11 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN!
-const EVENTOS_DB = '1ad220116d8a804b839ddc36f1e7ecf1'
+
+const DB_BY_YEAR: Record<number, string> = {
+  2026: '1ad220116d8a804b839ddc36f1e7ecf1',
+  2027: '321220116d8a8010bd3cc1e33083b9b7',
+}
 
 function getProp(props: any, key: string, type: string): any {
   const p = props[key]
@@ -20,10 +24,15 @@ function getProp(props: any, key: string, type: string): any {
   return null
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const { referencia, cliente, data_evento, local, tipo_evento, tipo_servico, fotografo, videografo, valor_foto, valor_video, valor_liquido } = body
+
+    // Determinar o ano pela data do evento ou query param
+    const anoParam = req.nextUrl.searchParams.get('ano')
+    const anoEvento = anoParam ? parseInt(anoParam) : (data_evento ? parseInt(data_evento.slice(0, 4)) : 2026)
+    const EVENTOS_DB = DB_BY_YEAR[anoEvento] ?? DB_BY_YEAR[2026]
 
     const properties: any = {
       'REFERÊNCIA DO EVENTO': { title: [{ text: { content: referencia ?? '' } }] },
@@ -60,9 +69,18 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const anoParam = req.nextUrl.searchParams.get('ano')
+    const ano = anoParam ? parseInt(anoParam) : null
+    // Se não há ano específico, busca todos os anos disponíveis
+    const dbIds = ano
+      ? (DB_BY_YEAR[ano] ? [DB_BY_YEAR[ano]] : [DB_BY_YEAR[2026]])
+      : Object.values(DB_BY_YEAR)
+
     const allPages: any[] = []
+
+    for (const EVENTOS_DB of dbIds) {
     let cursor: string | null = null
 
     do {
@@ -91,6 +109,7 @@ export async function GET() {
       allPages.push(...data.results)
       cursor = data.has_more ? data.next_cursor : null
     } while (cursor)
+    } // end for dbIds
 
     const events = allPages.map((page: any) => {
       const p = page.properties ?? {}
