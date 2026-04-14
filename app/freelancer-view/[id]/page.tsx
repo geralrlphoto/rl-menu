@@ -1017,7 +1017,7 @@ export default function FreelancerViewPage() {
           {/* Card de perfil */}
           {freelancer?.foto_url && (
             <div className="flex-shrink-0"
-              style={{ filter: 'drop-shadow(0 0 1px rgba(200,70,20,1)) drop-shadow(0 0 16px rgba(200,70,20,0.45))' }}>
+              style={{ filter: 'drop-shadow(0 0 1px rgba(212,175,55,0.9)) drop-shadow(0 0 16px rgba(212,175,55,0.35))' }}>
               {/* SVG clip-path: cantos redondos + corte reto inferior direito */}
               <svg width="0" height="0" style={{ position: 'absolute' }}>
                 <defs>
@@ -1034,16 +1034,16 @@ export default function FreelancerViewPage() {
                 <img src={freelancer.foto_url} alt={freelancer.nome}
                   className="absolute inset-0 w-full h-full object-cover"
                   style={{ filter: 'grayscale(100%)' }} />
-                {/* Seta top-right — preta */}
-                <span className="absolute top-4 right-4 text-black font-black text-xl leading-none select-none">↙</span>
+                {/* Seta top-right — branca */}
+                <span className="absolute top-4 right-4 text-white font-black text-xl leading-none select-none">↙</span>
                 {/* Nome + função vertical na esquerda */}
                 <div className="absolute left-3 bottom-5 flex items-end gap-[5px]">
                   <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
-                    className="font-black uppercase text-black text-[13px] leading-none tracking-[0.12em] whitespace-nowrap">
+                    className="font-black uppercase text-white text-[13px] leading-none tracking-[0.12em] whitespace-nowrap">
                     {freelancer.nome}
                   </span>
                   <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
-                    className="uppercase text-black/65 text-[9px] leading-none tracking-[0.18em] whitespace-nowrap font-semibold">
+                    className="uppercase text-white/70 text-[9px] leading-none tracking-[0.18em] whitespace-nowrap font-semibold">
                     {freelancer.status}
                   </span>
                 </div>
