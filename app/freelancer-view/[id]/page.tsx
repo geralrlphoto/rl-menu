@@ -1175,7 +1175,7 @@ function MensagensTab({ freelancerId, casamentos, mensagens, onRefresh }: {
               Este espaço serve para manter uma conversa direta com a equipa RL sobre cada evento que te foi atribuído.
             </p>
             <p className="text-[12px] text-white/35 leading-relaxed">
-              Usa-o para partilhar algo relevante que aconteceu antes, durante ou após o casamento — imprevistos, notas importantes, questões de entrega ou qualquer assunto que deva ficar registado. Assim, todas as mensagens ficam associadas ao evento certo e nada se perde.
+              Usa-o para partilhar algo relevante que aconteceu antes, durante ou após o casamento. Imprevistos, notas importantes, questões de entrega ou qualquer assunto que deva ficar registado. Assim, todas as mensagens ficam associadas ao evento certo e nada se perde.
             </p>
           </div>
           <p className="text-[9px] tracking-[0.35em] text-white/25 uppercase mb-2">Seleciona um Evento</p>
