@@ -463,29 +463,58 @@ export default async function Home() {
       </div>
 
       {/* ── Relatório Diário Banner ─────────────────────────────────────────── */}
-      <div className="border-t border-white/[0.06] bg-[#060606]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-10 py-8 sm:py-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-          <div>
-            <p className="text-[9px] tracking-[0.55em] text-white/15 uppercase mb-3">RL PHOTO · VIDEO</p>
-            <h2 className="text-5xl sm:text-6xl font-black tracking-tighter uppercase leading-[0.88]">
-              <span className="text-white">RELATÓRIO</span><br />
-              <span className="text-[#C9A84C]">DIÁRIO</span>
-            </h2>
-            <p className="text-white/25 text-xs mt-3 tracking-wider leading-relaxed">
-              Eventos · CRM · Portais · Prazos · Pagamentos
-            </p>
-          </div>
-          <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
-            <Link
-              href="/relatorio-diario"
-              className="flex items-center gap-3 px-7 py-3.5 rounded-full bg-[#C9A84C] hover:bg-[#e0bb5e] text-black font-black text-sm tracking-[0.2em] uppercase transition-all duration-200 hover:scale-105"
+      <div className="border-t border-white/[0.06] bg-[#060606] px-4 sm:px-10 py-6">
+        <div className="max-w-6xl mx-auto">
+          {/* Card com canto superior direito recortado — igual à imagem de referência */}
+          <div
+            className="bg-white/[0.06] p-px"
+            style={{ clipPath: 'polygon(0 0, calc(100% - 52px) 0, 100% 52px, 100% 100%, 0 100%)' }}
+          >
+            <div
+              className="relative bg-[#0d0d0d] px-7 sm:px-10 pt-8 pb-8"
+              style={{ clipPath: 'polygon(0 0, calc(100% - 51px) 0, 100% 51px, 100% 100%, 0 100%)' }}
             >
-              ENTRAR
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-              </svg>
-            </Link>
-            <p className="text-[9px] tracking-[0.35em] text-white/15 uppercase">GERADO A PEDIDO</p>
+              {/* Marca do canto recortado */}
+              <div
+                className="absolute top-0 right-0 w-[52px] h-[52px] pointer-events-none"
+                style={{ background: 'linear-gradient(225deg, rgba(201,168,76,0.12) 0%, transparent 65%)' }}
+              />
+
+              {/* Label topo */}
+              <p className="text-[9px] tracking-[0.55em] text-white/20 uppercase mb-5">RL PHOTO · VIDEO</p>
+
+              {/* Título gigante — igual à imagem */}
+              <div className="mb-8">
+                <p className="text-[clamp(3.5rem,10vw,6.5rem)] font-black tracking-tighter leading-[0.85] text-white uppercase">
+                  RELATÓRIO
+                </p>
+                <p className="text-[clamp(3.5rem,10vw,6.5rem)] font-black tracking-tighter leading-[0.85] text-[#C9A84C] uppercase">
+                  DIÁRIO
+                </p>
+              </div>
+
+              {/* Fundo — descrição à esquerda, botão à direita */}
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+                <p className="text-white/30 text-sm leading-relaxed max-w-sm">
+                  Controla o teu negócio todos os dias com dados{' '}
+                  <span className="italic text-white/45">em tempo real</span>.{' '}
+                  Eventos, leads, portais dos noivos e prazos —{' '}
+                  <span className="italic text-white/45">num só lugar</span>.
+                </p>
+                <div className="flex flex-col items-start sm:items-end gap-1.5 shrink-0">
+                  <Link
+                    href="/relatorio-diario"
+                    className="flex items-center gap-3 px-7 py-3.5 rounded-full bg-[#C9A84C] hover:bg-[#dbb95a] text-black font-black text-sm tracking-[0.2em] uppercase transition-all duration-200 hover:scale-[1.03]"
+                  >
+                    ENTRAR
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                  </Link>
+                  <p className="text-[9px] tracking-[0.35em] text-white/15 uppercase">GERADO A PEDIDO</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
