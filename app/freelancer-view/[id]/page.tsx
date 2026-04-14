@@ -24,7 +24,7 @@ function daysUntil(d: string | null) {
   return Math.round((new Date(d+'T00:00:00').getTime() - today.getTime()) / 86400000)
 }
 
-type Freelancer = { id: string; nome: string; status: string | null; intro_casamentos: string | null }
+type Freelancer = { id: string; nome: string; status: string | null; intro_casamentos: string | null; intro_home: string | null }
 type Casamento  = { id: string; local: string; data_casamento: string | null; referencia?: string | null; equipa_foto: string[] | null; videografo: string | null; briefing_url: string | null; data_confirmada: boolean | null; indisponivel: boolean | null; data_confirmada_videografo: boolean | null; indisponivel_videografo: boolean | null }
 type Edicao     = {
   id: string; nome: string; status: string; data_casamento: string | null
@@ -1002,10 +1002,17 @@ export default function FreelancerViewPage() {
       )}
 
       {!loading && tab === null && (
-        <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
-          <div className="h-px w-8 bg-white/10 mx-auto mb-2" />
-          <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase">Seleciona uma secção acima</p>
-        </div>
+        freelancer?.intro_home
+          ? (
+            <div className="max-w-xl mx-auto px-2 py-8">
+              <p className="text-sm text-white/60 leading-relaxed whitespace-pre-wrap">{freelancer.intro_home}</p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
+              <div className="h-px w-8 bg-white/10 mx-auto mb-2" />
+              <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase">Seleciona uma secção acima</p>
+            </div>
+          )
       )}
 
       {!loading && tab !== null && (
