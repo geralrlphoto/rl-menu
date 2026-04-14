@@ -74,9 +74,13 @@ type NovoEventoForm = {
   valor_foto: string; valor_video: string; valor_liquido: string
 }
 
-function NovoEventoModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+function NovoEventoModal({ onClose, onCreated, anoFiltro, totalEventos }: { onClose: () => void; onCreated: () => void; anoFiltro: number; totalEventos: number }) {
+  const anoSufixo = String(anoFiltro).slice(2) // "26" ou "27"
+  const proximoNum = String(totalEventos + 1).padStart(3, '0')
+  const refSugerida = `CAS_${proximoNum}_${anoSufixo}_RL`
+
   const [form, setForm] = useState<NovoEventoForm>({
-    referencia: '', cliente: '', data_evento: '', local: '',
+    referencia: refSugerida, cliente: '', data_evento: '', local: '',
     tipo_evento: [], tipo_servico: [],
     fotografo: '', videografo: '',
     valor_foto: '', valor_video: '', valor_liquido: '',
@@ -138,7 +142,7 @@ function NovoEventoModal({ onClose, onCreated }: { onClose: () => void; onCreate
             <div>
               <label className={lbl}>Referência *</label>
               <input value={form.referencia} onChange={e => set('referencia', e.target.value)}
-                placeholder="CAS_001_26_RL" className={inp} />
+                placeholder={refSugerida} className={inp} />
             </div>
             <div>
               <label className={lbl}>Data do Evento *</label>
@@ -298,7 +302,7 @@ function Eventos2026Inner() {
         </button>
       </div>
       {showNovoEvento && (
-        <NovoEventoModal onClose={() => setShowNovoEvento(false)} onCreated={loadEvents} />
+        <NovoEventoModal onClose={() => setShowNovoEvento(false)} onCreated={loadEvents} anoFiltro={anoFiltro} totalEventos={events.length} />
       )}
 
       {/* Próximos eventos */}
