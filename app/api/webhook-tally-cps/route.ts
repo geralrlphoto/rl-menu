@@ -7,7 +7,11 @@ import { createClient } from '@supabase/supabase-js'
 //   2. Notion   → base de dados EVENTOS 2026
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN!
-const EVENTOS_DB   = '1ad220116d8a804b839ddc36f1e7ecf1' // EVENTOS 2026
+
+const DB_BY_YEAR: Record<number, string> = {
+  2026: '1ad220116d8a804b839ddc36f1e7ecf1',
+  2027: '2a6220116d8a80b4b439fe091b2ac804',
+}
 
 function db() {
   return createClient(
@@ -30,10 +34,14 @@ function getField(fields: any[], ...labels: string[]): string | null {
   return null
 }
 
-// ─── Guardar no Notion (EVENTOS 2026) ────────────────────────────────────────
+// ─── Guardar no Notion (base correta pelo ano) ───────────────────────────────
 async function saveToNotion(data: Record<string, any>) {
   try {
     const rt = (v: string | null) => ({ rich_text: [{ text: { content: v ?? '' } }] })
+
+    // Escolher a base pelo ano da data do casamento
+    const anoEvento = data.data_casamento ? parseInt(data.data_casamento.slice(0, 4)) : 2026
+    const EVENTOS_DB = DB_BY_YEAR[anoEvento] ?? DB_BY_YEAR[2026]
 
     const properties: Record<string, any> = {
       // Título = "AGUARDAR — Nome dos Noivos" (admin atribui referência depois)
