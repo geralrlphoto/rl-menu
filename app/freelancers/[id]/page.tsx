@@ -286,82 +286,96 @@ export default function FreelancerDetailPage() {
         ))}
       </div>
 
-      {/* Home — editar dados do freelancer */}
+      {/* Home */}
       {tab === null && (
-        <div className="max-w-lg">
-          {editForm ? (
-            <div className="bg-white/[0.02] border border-gold/20 rounded-2xl p-5 space-y-3">
-              <p className="text-[10px] tracking-[0.3em] text-gold/60 uppercase mb-1">Editar dados</p>
-              {[
-                { label: 'Nome', key: 'nome', placeholder: 'Nome' },
-                { label: 'Contato', key: 'contato', placeholder: '9XX XXX XXX' },
-                { label: 'Email', key: 'email', placeholder: 'email@exemplo.com' },
-                { label: 'SOS — Nome', key: 'nome_sos', placeholder: 'Nome familiar' },
-                { label: 'SOS — Nº', key: 'contato_sos', placeholder: '9XX XXX XXX' },
-              ].map(f => (
-                <div key={f.key}>
-                  <label className="block text-[9px] text-white/25 tracking-widest uppercase mb-1">{f.label}</label>
-                  <input value={(editForm as any)[f.key]} onChange={e => setEditForm(prev => ({ ...prev!, [f.key]: e.target.value }))}
-                    placeholder={f.placeholder}
-                    className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
-                </div>
-              ))}
-              <div>
-                <label className="block text-[9px] text-white/25 tracking-widest uppercase mb-1">Função</label>
-                <select value={editForm.status} onChange={e => setEditForm(prev => ({ ...prev!, status: e.target.value }))}
-                  className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors cursor-pointer">
-                  {['FOTOGRAFO','VIDEOGRAFO','ASSISTENTE','EDITORES','OUTRO'].map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
-              <div className="flex justify-end gap-2 pt-1">
-                <button onClick={() => setEditForm(null)} className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
-                <button onClick={handleEditSave} disabled={editSaving} className="px-4 py-1.5 rounded-lg text-xs bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-50">
-                  {editSaving ? 'A guardar...' : 'Guardar'}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 space-y-3">
-              <p className="text-[10px] tracking-[0.3em] text-white/25 uppercase mb-2">Dados do Freelancer</p>
-              {[
-                ['Nome', freelancer.nome],
-                ['Função', freelancer.status],
-                ['Contato', freelancer.contato],
-                ['Email', freelancer.email],
-                ['SOS', freelancer.nome_sos ? `${freelancer.nome_sos}${freelancer.contato_sos ? ` · ${freelancer.contato_sos}` : ''}` : null],
-              ].filter(([,v]) => v).map(([label, val]) => (
-                <div key={label as string} className="flex items-center gap-3">
-                  <span className="text-[9px] text-white/25 tracking-widest uppercase w-16 shrink-0">{label}</span>
-                  <span className="text-sm text-white/70">{val}</span>
-                </div>
-              ))}
-              <div className="pt-2">
-                <button onClick={() => setEditForm({ nome: freelancer.nome, status: freelancer.status ?? '', contato: freelancer.contato ?? '', email: freelancer.email ?? '', nome_sos: freelancer.nome_sos ?? '', contato_sos: freelancer.contato_sos ?? '' })}
-                  className="px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-xs font-semibold tracking-widest hover:bg-gold/20 transition-all uppercase">
-                  Editar
-                </button>
-              </div>
-            </div>
-          )}
+        <div className="max-w-2xl">
 
-          {/* Texto na página inicial do freelancer */}
-          <div className="mt-4 bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-[10px] tracking-[0.3em] text-white/25 uppercase">Texto da página inicial</p>
-              <span className={`text-[9px] tracking-widest transition-all ${
-                introHomeStatus === 'saving' ? 'text-white/30' :
-                introHomeStatus === 'saved'  ? 'text-emerald-400' : 'text-transparent'
-              }`}>
-                {introHomeStatus === 'saving' ? 'A guardar...' : '✓ Guardado'}
-              </span>
+          {/* ── Pré-visualização igual ao portal ── */}
+          <div className="mb-6 px-2 py-6 min-h-[80px]">
+            {introHome
+              ? <p className="text-[16px] text-white leading-relaxed whitespace-pre-wrap">{introHome}</p>
+              : <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase text-center py-6">Sem texto — escreve abaixo</p>
+            }
+          </div>
+
+          {/* ── Controlos admin ── */}
+          <div className="border-t border-white/[0.06] pt-5 space-y-4">
+
+            {/* Texto da página inicial */}
+            <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[10px] tracking-[0.3em] text-white/25 uppercase">Texto da página inicial</p>
+                <span className={`text-[9px] tracking-widest transition-all ${
+                  introHomeStatus === 'saving' ? 'text-white/30' :
+                  introHomeStatus === 'saved'  ? 'text-emerald-400' : 'text-transparent'
+                }`}>
+                  {introHomeStatus === 'saving' ? 'A guardar...' : '✓ Guardado'}
+                </span>
+              </div>
+              <textarea
+                value={introHome}
+                onChange={e => handleIntroHomeChange(e.target.value)}
+                rows={5}
+                placeholder="Escreve aqui o texto que aparece na página inicial do freelancer (⌂)..."
+                className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm text-white/70 outline-none focus:border-white/20 transition-colors resize-none placeholder:text-white/15 leading-relaxed"
+              />
             </div>
-            <textarea
-              value={introHome}
-              onChange={e => handleIntroHomeChange(e.target.value)}
-              rows={6}
-              placeholder="Escreve aqui o texto que aparece na página inicial do freelancer (⌂)..."
-              className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm text-white/70 outline-none focus:border-white/20 transition-colors resize-none placeholder:text-white/15 leading-relaxed"
-            />
+
+            {/* Dados do freelancer */}
+            {editForm ? (
+              <div className="bg-white/[0.02] border border-gold/20 rounded-2xl p-5 space-y-3">
+                <p className="text-[10px] tracking-[0.3em] text-gold/60 uppercase mb-1">Editar dados</p>
+                {[
+                  { label: 'Nome', key: 'nome', placeholder: 'Nome' },
+                  { label: 'Contato', key: 'contato', placeholder: '9XX XXX XXX' },
+                  { label: 'Email', key: 'email', placeholder: 'email@exemplo.com' },
+                  { label: 'SOS — Nome', key: 'nome_sos', placeholder: 'Nome familiar' },
+                  { label: 'SOS — Nº', key: 'contato_sos', placeholder: '9XX XXX XXX' },
+                ].map(f => (
+                  <div key={f.key}>
+                    <label className="block text-[9px] text-white/25 tracking-widest uppercase mb-1">{f.label}</label>
+                    <input value={(editForm as any)[f.key]} onChange={e => setEditForm(prev => ({ ...prev!, [f.key]: e.target.value }))}
+                      placeholder={f.placeholder}
+                      className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
+                  </div>
+                ))}
+                <div>
+                  <label className="block text-[9px] text-white/25 tracking-widest uppercase mb-1">Função</label>
+                  <select value={editForm.status} onChange={e => setEditForm(prev => ({ ...prev!, status: e.target.value }))}
+                    className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors cursor-pointer">
+                    {['FOTOGRAFO','VIDEOGRAFO','ASSISTENTE','EDITORES','OUTRO'].map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div className="flex justify-end gap-2 pt-1">
+                  <button onClick={() => setEditForm(null)} className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
+                  <button onClick={handleEditSave} disabled={editSaving} className="px-4 py-1.5 rounded-lg text-xs bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-50">
+                    {editSaving ? 'A guardar...' : 'Guardar'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 space-y-3">
+                <p className="text-[10px] tracking-[0.3em] text-white/25 uppercase mb-2">Dados do Freelancer</p>
+                {[
+                  ['Nome', freelancer.nome],
+                  ['Função', freelancer.status],
+                  ['Contato', freelancer.contato],
+                  ['Email', freelancer.email],
+                  ['SOS', freelancer.nome_sos ? `${freelancer.nome_sos}${freelancer.contato_sos ? ` · ${freelancer.contato_sos}` : ''}` : null],
+                ].filter(([,v]) => v).map(([label, val]) => (
+                  <div key={label as string} className="flex items-center gap-3">
+                    <span className="text-[9px] text-white/25 tracking-widest uppercase w-16 shrink-0">{label}</span>
+                    <span className="text-sm text-white/70">{val}</span>
+                  </div>
+                ))}
+                <div className="pt-2">
+                  <button onClick={() => setEditForm({ nome: freelancer.nome, status: freelancer.status ?? '', contato: freelancer.contato ?? '', email: freelancer.email ?? '', nome_sos: freelancer.nome_sos ?? '', contato_sos: freelancer.contato_sos ?? '' })}
+                    className="px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-xs font-semibold tracking-widest hover:bg-gold/20 transition-all uppercase">
+                    Editar
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
