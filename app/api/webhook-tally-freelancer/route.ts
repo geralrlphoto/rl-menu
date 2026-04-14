@@ -60,7 +60,7 @@ function buildConfirmacaoHtml(nome: string): string {
         <!-- Logo -->
         <tr>
           <td align="center" style="padding:32px 40px 8px;">
-            <img src="https://rl-menu-lake.vercel.app/icon.png" width="64" height="64" alt="RL Photo Video" style="display:block;margin:0 auto;opacity:0.92;"/>
+            <img src="https://rl-menu-lake.vercel.app/logo-email.png" width="72" height="72" alt="RL Photo Video" style="display:block;margin:0 auto;opacity:0.90;"/>
           </td>
         </tr>
 
@@ -90,11 +90,11 @@ function buildConfirmacaoHtml(nome: string): string {
         <!-- Divider -->
         <tr>
           <td align="center" style="padding:4px 40px 28px;">
-            <table cellpadding="0" cellspacing="0">
+            <table cellpadding="0" cellspacing="0" style="width:200px;">
               <tr>
-                <td style="width:40px;height:1px;background:linear-gradient(to right,transparent,#6b5020);"></td>
-                <td style="padding:0 10px;color:#8a6a30;font-size:13px;letter-spacing:4px;">· ◆ ·</td>
-                <td style="width:40px;height:1px;background:linear-gradient(to left,transparent,#6b5020);"></td>
+                <td style="width:60px;border-bottom:1px solid #6b5020;vertical-align:middle;">&nbsp;</td>
+                <td align="center" style="padding:0 10px;color:#8a6a30;font-size:12px;letter-spacing:5px;vertical-align:middle;white-space:nowrap;">· ◆ ·</td>
+                <td style="width:60px;border-bottom:1px solid #6b5020;vertical-align:middle;">&nbsp;</td>
               </tr>
             </table>
           </td>
