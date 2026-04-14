@@ -1300,10 +1300,10 @@ export default function EventoPage() {
       .then(d => {
         if (!d.freelancers) return
         const foto = (d.freelancers as any[])
-          .filter(f => f.funcao === 'FOTOGRAFO')
+          .filter(f => f.status === 'FOTOGRAFO')
           .map(f => (f.nome as string).toUpperCase())
         const video = (d.freelancers as any[])
-          .filter(f => f.funcao === 'VIDEOGRAFO')
+          .filter(f => f.status === 'VIDEOGRAFO')
           .map(f => (f.nome as string).toUpperCase())
         if (foto.length > 0) setOptionsFoto(foto)
         if (video.length > 0) setOptionsVideo(video)
