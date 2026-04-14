@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
 
         <!-- Imagem principal -->
         <a href="https://rl-menu-lake.vercel.app/freelancer-view/${freelancer.id}" style="display:block;text-decoration:none;">
-          <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/email-equipa-novidades.png"
+          <img src="https://rl-menu-lake.vercel.app/card_novo_evento.png"
             width="560" alt="Tens novidades no portal"
             style="display:block;width:100%;max-width:560px;border:0;" />
         </a>
