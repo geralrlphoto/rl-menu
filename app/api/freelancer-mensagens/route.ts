@@ -7,7 +7,7 @@ const ADMIN_EMAIL  = 'geral.rlphoto@gmail.com'
 const ADMIN_URL    = 'https://rl-menu-lake.vercel.app'
 const IMG_BASE     = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
 const PORTAL_BASE  = 'https://rl-menu-lake.vercel.app/freelancer-view'
-const NOTIF_IMG    = 'https://rl-menu-lake.vercel.app/email-notificacao-equipa.png'
+const NOTIF_IMG    = 'https://rl-menu-lake.vercel.app/card_nova_mensagem.png'
 
 function supabase() {
   return createClient(
