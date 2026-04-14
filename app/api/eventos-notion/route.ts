@@ -4,7 +4,7 @@ const NOTION_TOKEN = process.env.NOTION_TOKEN!
 
 const DB_BY_YEAR: Record<number, string> = {
   2026: '1ad220116d8a804b839ddc36f1e7ecf1',
-  2027: '2a6220116d8a81b49c36000b5667772b',
+  2027: '2a6220116d8a80b4b439fe091b2ac804',
 }
 
 function getProp(props: any, key: string, type: string): any {
