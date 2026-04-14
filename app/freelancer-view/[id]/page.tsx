@@ -1417,7 +1417,20 @@ export default function FreelancerViewPage() {
 
       {/* Tab Navigation */}
       {!loading && (
-        <div className="mb-8 -mx-4 px-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+        <div className="mb-8 relative">
+          {/* Left arrow */}
+          <button
+            onClick={() => { const el = document.getElementById('tab-scroll'); if (el) el.scrollBy({ left: -160, behavior: 'smooth' }) }}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-black border border-white/20 text-white/50 hover:text-white hover:border-white/40 transition-all -translate-x-1 shadow-lg"
+            style={{ boxShadow: '0 0 12px 2px rgba(0,0,0,0.8)' }}
+          >‹</button>
+          {/* Right arrow */}
+          <button
+            onClick={() => { const el = document.getElementById('tab-scroll'); if (el) el.scrollBy({ left: 160, behavior: 'smooth' }) }}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-black border border-white/20 text-white/50 hover:text-white hover:border-white/40 transition-all translate-x-1 shadow-lg"
+            style={{ boxShadow: '0 0 12px 2px rgba(0,0,0,0.8)' }}
+          >›</button>
+          <div id="tab-scroll" className="-mx-4 px-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           <div className="flex items-center gap-1.5 p-1.5 rounded-2xl border border-white/30 bg-black w-max min-w-full"
             style={{ boxShadow: '0 0 18px 3px rgba(255,255,255,0.10), 0 0 6px 1px rgba(255,255,255,0.15), inset 0 0 18px 0 rgba(255,255,255,0.03)' }}>
             <button
@@ -1465,6 +1478,7 @@ export default function FreelancerViewPage() {
                 )}
               </button>
             ))}
+          </div>
           </div>
         </div>
       )}
