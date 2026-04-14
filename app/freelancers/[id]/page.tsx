@@ -9,7 +9,7 @@ import { useParams } from 'next/navigation'
 type Freelancer = {
   id: string; nome: string; status: string | null; contato: string | null
   email: string | null; nome_sos: string | null; contato_sos: string | null; notas: string | null
-  password: string | null; intro_casamentos: string | null; intro_home: string | null; is_template: boolean | null
+  password: string | null; intro_casamentos: string | null; intro_home: string | null; intro_home_title: string | null; is_template: boolean | null
 }
 type Casamento = {
   id: string; freelancer_id: string; local: string; data_casamento: string | null
@@ -127,6 +127,7 @@ export default function FreelancerDetailPage() {
   const [editForm, setEditForm] = useState<{ nome: string; status: string; contato: string; email: string; nome_sos: string; contato_sos: string } | null>(null)
   const [editSaving, setEditSaving] = useState(false)
   const [introHome, setIntroHome] = useState('')
+  const [introHomeTitle, setIntroHomeTitle] = useState('')
   const [introHomeStatus, setIntroHomeStatus] = useState<'idle'|'saving'|'saved'>('idle')
   const introHomeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -151,6 +152,7 @@ export default function FreelancerDetailPage() {
     const f = (fRes.freelancers ?? []).find((x: Freelancer) => x.id === id) ?? null
     setFreelancer(f)
     setIntroHome(f?.intro_home ?? '')
+    setIntroHomeTitle(f?.intro_home_title ?? '')
     setCasamentos(cRes.casamentos ?? [])
     setEdicao(eRes.edicao ?? [])
     setAlbum(aRes.album ?? [])
@@ -191,6 +193,21 @@ export default function FreelancerDetailPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, intro_home: val }),
+      })
+      setIntroHomeStatus('saved')
+      setTimeout(() => setIntroHomeStatus('idle'), 2000)
+    }, 800)
+  }
+
+  function handleIntroHomeTitleChange(val: string) {
+    setIntroHomeTitle(val)
+    setIntroHomeStatus('saving')
+    if (introHomeTimer.current) clearTimeout(introHomeTimer.current)
+    introHomeTimer.current = setTimeout(async () => {
+      await fetch('/api/freelancers', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, intro_home_title: val }),
       })
       setIntroHomeStatus('saved')
       setTimeout(() => setIntroHomeStatus('idle'), 2000)
@@ -298,9 +315,10 @@ export default function FreelancerDetailPage() {
         <div className="max-w-2xl">
 
           {/* ── Pré-visualização igual ao portal ── */}
-          {introHome && (
-            <div className="mb-6 px-2 py-6">
-              <p className="text-[16px] text-white leading-relaxed whitespace-pre-wrap">{introHome}</p>
+          {(introHomeTitle || introHome) && (
+            <div className="mb-6 px-2 py-6 space-y-2">
+              {introHomeTitle && <p className="text-[22px] font-semibold text-white">{introHomeTitle}</p>}
+              {introHome && <p className="text-[16px] text-white leading-relaxed whitespace-pre-wrap">{introHome}</p>}
             </div>
           )}
 
@@ -309,7 +327,7 @@ export default function FreelancerDetailPage() {
 
             {/* Texto da página inicial */}
             <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-3">
                 <p className="text-[10px] tracking-[0.3em] text-white/25 uppercase">Texto da página inicial</p>
                 <span className={`text-[9px] tracking-widest transition-all ${
                   introHomeStatus === 'saving' ? 'text-white/30' :
@@ -318,6 +336,12 @@ export default function FreelancerDetailPage() {
                   {introHomeStatus === 'saving' ? 'A guardar...' : '✓ Guardado'}
                 </span>
               </div>
+              <input
+                value={introHomeTitle}
+                onChange={e => handleIntroHomeTitleChange(e.target.value)}
+                placeholder="Título de boas-vindas..."
+                className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm text-white/70 outline-none focus:border-white/20 transition-colors placeholder:text-white/15 mb-2"
+              />
               <textarea
                 value={introHome}
                 onChange={e => handleIntroHomeChange(e.target.value)}
