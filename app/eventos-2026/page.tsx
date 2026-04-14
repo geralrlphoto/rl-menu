@@ -284,8 +284,8 @@ export default function Eventos2026() {
       <div className="flex items-end justify-between mb-10">
         <div>
           <Link href="/" className="text-xs tracking-[0.3em] text-white/20 hover:text-gold transition-colors uppercase">‹ Menu</Link>
-          <h1 className="text-3xl sm:text-5xl font-extralight tracking-[0.15em] sm:tracking-[0.2em] text-white uppercase mt-3">Eventos 2026</h1>
-          <p className="text-white/20 text-xs tracking-[0.3em] mt-2 uppercase">{events.length} eventos · {totalValor.toLocaleString('pt-PT')} € total</p>
+          <h1 className="text-3xl sm:text-5xl font-extralight tracking-[0.15em] sm:tracking-[0.2em] text-white uppercase mt-3">Casamentos</h1>
+          <p className="text-white/20 text-xs tracking-[0.3em] mt-2 uppercase">{events.length} casamentos · {totalValor.toLocaleString('pt-PT')} € total</p>
         </div>
         <button onClick={() => setShowNovoEvento(true)}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black font-bold text-xs tracking-widest hover:bg-gold/80 transition-all uppercase">

@@ -1492,7 +1492,7 @@ export default function EventoPage() {
   return (
     <main className="min-h-screen px-4 py-10 max-w-3xl mx-auto">
       <Link href="/eventos-2026" className="text-xs tracking-widest text-white/30 hover:text-gold transition-colors">
-        ‹ VOLTAR AOS EVENTOS
+        ‹ VOLTAR AOS CASAMENTOS
       </Link>
 
       {/* ── Header editável ── */}

@@ -40,7 +40,7 @@ export default function NovoPortalButton() {
     try {
       const d = await fetch(`/api/evento-by-ref?ref=${encodeURIComponent(ref.trim())}`).then(r => r.json())
       if (!d.found) {
-        setErrorMsg(`Referência "${ref.trim()}" não encontrada em Eventos 2026.`)
+        setErrorMsg(`Referência "${ref.trim()}" não encontrada em Casamentos.`)
         setStep('error')
         return
       }
