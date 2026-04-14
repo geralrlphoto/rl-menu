@@ -1471,7 +1471,7 @@ export default function FreelancerViewPage() {
               ...(album.length > 0 ? [{ key: 'album', label: 'Álbum', count: album.length }] : []),
               { key: 'pagamentos',      label: 'Pagamentos', count: 0 },
               { key: 'disponibilidade', label: 'Agenda',     count: 0 },
-              { key: 'guia',            label: 'Guia',       count: 0 },
+              { key: 'guia',            label: 'Workflow',   count: 0 },
               { key: 'mensagens',        label: '💬',         count: mensagens.filter(m => m.remetente === 'admin' && !m.lida_freelancer).length },
               { key: 'notificacoes',    label: '🔔',         count: notificacoes.filter(n => !n.lida).length },
             ].map(t => (
@@ -1721,17 +1721,17 @@ export default function FreelancerViewPage() {
             />
           )}
 
-          {/* ── Tab: Guia de Trabalho ── */}
+          {/* ── Tab: Workflow ── */}
           {tab === 'guia' && (
             <section className="space-y-4">
               {freelancer?.guia_trabalho ? (
                 <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
-                  <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase mb-5">Guia de Trabalho</p>
+                  <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase mb-5">Workflow</p>
                   <p className="text-[16px] text-white leading-relaxed whitespace-pre-wrap">{freelancer.guia_trabalho}</p>
                 </div>
               ) : (
                 <div className="text-center py-16 space-y-3">
-                  <p className="text-white/15 text-xs tracking-widest">Guia de trabalho não disponível.</p>
+                  <p className="text-white/15 text-xs tracking-widest">Workflow não disponível.</p>
                 </div>
               )}
             </section>
