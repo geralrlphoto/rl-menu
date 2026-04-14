@@ -157,7 +157,7 @@ export async function GET() {
     ).sort((a: any, b: any) => a.dias - b.dias)
 
     // ── Parse prazos fotos (prazo = data_evento + 30 dias) ────────────────
-    const fotosAlerta = fotosRaw.flatMap((r: any) =>
+    const fotosNotionAlerta = fotosRaw.flatMap((r: any) =>
       (r.results ?? []).map((p: any) => {
         const pr = p.properties ?? {}
         const dataEvento = pr['DATA DO EVENTO']?.date?.start ?? null
@@ -174,6 +174,25 @@ export async function GET() {
         }
       }).filter(Boolean)
     )
+
+    // ── Parse seleção fotos noivos (prazo = selecao_enviada + 30 dias) ────
+    const selecaoNoivosAlerta = (portais ?? []).flatMap((portal: any) => {
+      const s = portal.settings ?? {}
+      const selecaoEnviada: string | null = s.selecao_enviada ?? null
+      const estado: string | null = s.selecao_fotos_noivos_estado ?? null
+      if (!selecaoEnviada) return []
+      if (estado === 'Entregue' || estado === 'Concluído') return []
+      const prazo = new Date(selecaoEnviada)
+      prazo.setDate(prazo.getDate() + 30)
+      const dias = Math.round((prazo.getTime() - today.getTime()) / 86400000)
+      if (dias > 15) return []
+      const nomes = [s.noiva || portal.noiva, s.noivo || portal.noivo].filter(Boolean).join(' & ') || portal.referencia
+      return [{ nome: nomes, ref: portal.referencia ?? '', dias, tipo: 'Sel. Fotos Noivos' }]
+    })
+
+    // Combinar e ordenar por urgência
+    const fotosAlerta = [...fotosNotionAlerta, ...selecaoNoivosAlerta]
+      .sort((a: any, b: any) => a.dias - b.dias)
 
     // ── Parse vídeos em atraso/prazo ───────────────────────────────────────
     function parseVideoFormula(formula: string | null): number {

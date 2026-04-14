@@ -341,8 +341,8 @@ export default function RelatorioDiarioPage() {
             {/* ── Prazos Fotos ── */}
             <Section
               title="Prazos Fotos"
-              desc="Seleções de fotos e entregas com prazo a vencer nos próximos 15 dias"
-              info="Eventos dos últimos 30 dias onde a seleção de fotos ainda não foi entregue. O prazo é calculado como data do evento + 30 dias. Só aparecem os que têm 15 dias ou menos até ao prazo (incluindo atrasados)."
+              desc="Prazo Sel. Fotos (evento +30 dias) e Sel. Fotos Noivos (envio +30 dias)"
+              info="Dois prazos combinados: (1) Sel. Fotos — eventos dos últimos 30 dias onde ESTADO SEL. FOTOS no Notion ainda não é Entregue, prazo = data do evento + 30 dias. (2) Sel. Fotos Noivos — portais onde a seleção foi enviada ao casal mas ainda não está Entregue/Concluída, prazo = data de envio + 30 dias. Só aparecem os que têm 15 dias ou menos."
               count={data.fotos_alerta.length}
               urgent={data.fotos_alerta.some((f: any) => f.dias <= 3)}
               empty="Todos os prazos de seleção em dia"
