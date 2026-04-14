@@ -402,7 +402,7 @@ export default async function Home() {
       </div>
 
       {/* Grid principal — desktop */}
-      <div className="hidden sm:flex flex-1 items-center justify-center px-10 py-5">
+      <div className="hidden sm:flex flex-1 items-center justify-center px-10 py-8">
         <div className="w-full max-w-6xl flex flex-col gap-2">
           <div className="grid grid-cols-3 gap-2">
             {allItems.slice(0, 3).map((item) => (
@@ -443,7 +443,7 @@ export default async function Home() {
       </div>
 
       {/* Menu mobile — lista vertical com imagem */}
-      <div className="sm:hidden flex-1 flex flex-col px-4 py-5 gap-3">
+      <div className="sm:hidden flex-1 flex flex-col px-4 py-6 gap-3">
         {allItems.map((item) => (
           <Link key={item.id} href={item.href}
             className="relative overflow-hidden group rounded-2xl flex items-center gap-4 bg-white/[0.03] border border-white/[0.08] active:bg-white/[0.06] transition-colors"
@@ -463,57 +463,47 @@ export default async function Home() {
       </div>
 
       {/* ── Relatório Diário Banner ─────────────────────────────────────────── */}
-      <div className="border-t border-white/[0.06] bg-[#060606] px-4 sm:px-10 py-6">
+      <div className="border-t border-white/[0.06] bg-[#060606] px-4 sm:px-10 py-12 sm:py-16">
         <div className="max-w-lg mx-auto sm:mx-0">
-          {/* Card com degrau arredondado no canto superior direito */}
-          <div className="relative bg-[#0d0d0d] border border-white/[0.08] px-7 sm:px-10 pt-8 pb-8">
+          <div className="relative rounded-2xl border border-white/[0.08] bg-[#0d0d0d] px-8 sm:px-12 pt-10 pb-10 overflow-hidden">
 
-            {/* 1. Cobre o canto superior direito com a cor de fundo */}
-            <div
-              className="absolute top-[-1px] right-[-1px] bg-[#060606] pointer-events-none"
-              style={{ width: '92px', height: '92px' }}
-            />
+            {/* Linha dourada de destaque no topo do card */}
+            <div className="absolute top-0 left-0 w-2/3 h-[2px] bg-gradient-to-r from-[#C9A84C]/70 via-[#C9A84C]/20 to-transparent" />
 
-            {/* 2. Desenha o degrau arredondado por cima */}
-            <div
-              className="absolute top-0 right-0 border-b border-l border-white/[0.08] pointer-events-none"
-              style={{ width: '90px', height: '90px', borderBottomLeftRadius: '16px' }}
-            />
+            {/* Label */}
+            <p className="text-[9px] tracking-[0.55em] text-white/20 uppercase mb-6">RL PHOTO · VIDEO</p>
 
-              {/* Label topo */}
-              <p className="text-[9px] tracking-[0.55em] text-white/20 uppercase mb-5">RL PHOTO · VIDEO</p>
+            {/* Títulos */}
+            <div className="mb-9">
+              <p className="text-[clamp(3rem,9vw,5.5rem)] font-black tracking-tighter leading-[0.85] text-white uppercase">
+                RELATÓRIO
+              </p>
+              <p className="text-[clamp(3rem,9vw,5.5rem)] font-black tracking-tighter leading-[0.85] text-[#C9A84C] uppercase">
+                DIÁRIO
+              </p>
+            </div>
 
-              {/* Título gigante — igual à imagem */}
-              <div className="mb-8">
-                <p className="text-[clamp(3.5rem,10vw,6.5rem)] font-black tracking-tighter leading-[0.85] text-white uppercase">
-                  RELATÓRIO
-                </p>
-                <p className="text-[clamp(3.5rem,10vw,6.5rem)] font-black tracking-tighter leading-[0.85] text-[#C9A84C] uppercase">
-                  DIÁRIO
-                </p>
+            {/* Descrição + Botão */}
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-8">
+              <p className="text-white/30 text-sm leading-relaxed max-w-xs">
+                Eventos, leads, portais e prazos —{' '}
+                <span className="text-white/50 italic">tudo num só lugar</span>, em tempo real.
+              </p>
+              <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
+                <Link
+                  href="/relatorio-diario"
+                  className="flex items-center gap-3 px-7 py-3.5 rounded-full border border-white/60 text-white font-black text-sm tracking-[0.2em] uppercase transition-all duration-300 hover:border-white hover:bg-white/[0.05]"
+                  style={{ boxShadow: '0 0 18px rgba(255,255,255,0.15), 0 0 40px rgba(255,255,255,0.05)' }}
+                >
+                  ENTRAR
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  </svg>
+                </Link>
+                <p className="text-[9px] tracking-[0.35em] text-white/15 uppercase">GERADO A PEDIDO</p>
               </div>
+            </div>
 
-              {/* Fundo — descrição à esquerda, botão à direita */}
-              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
-                <p className="text-white/30 text-sm leading-relaxed max-w-sm">
-                  Controla o teu negócio todos os dias com dados{' '}
-                  <span className="italic text-white/45">em tempo real</span>.{' '}
-                  Eventos, leads, portais dos noivos e prazos —{' '}
-                  <span className="italic text-white/45">num só lugar</span>.
-                </p>
-                <div className="flex flex-col items-start sm:items-end gap-1.5 shrink-0">
-                  <Link
-                    href="/relatorio-diario"
-                    className="flex items-center gap-3 px-7 py-3.5 rounded-full bg-[#C9A84C] hover:bg-[#dbb95a] text-black font-black text-sm tracking-[0.2em] uppercase transition-all duration-200 hover:scale-[1.03]"
-                  >
-                    ENTRAR
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 12h14M12 5l7 7-7 7"/>
-                    </svg>
-                  </Link>
-                  <p className="text-[9px] tracking-[0.35em] text-white/15 uppercase">GERADO A PEDIDO</p>
-                </div>
-              </div>
           </div>
         </div>
       </div>
