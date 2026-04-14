@@ -298,12 +298,11 @@ export default function FreelancerDetailPage() {
         <div className="max-w-2xl">
 
           {/* ── Pré-visualização igual ao portal ── */}
-          <div className="mb-6 px-2 py-6 min-h-[80px]">
-            {introHome
-              ? <p className="text-[16px] text-white leading-relaxed whitespace-pre-wrap">{introHome}</p>
-              : <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase text-center py-6">Sem texto — escreve abaixo</p>
-            }
-          </div>
+          {introHome && (
+            <div className="mb-6 px-2 py-6">
+              <p className="text-[16px] text-white leading-relaxed whitespace-pre-wrap">{introHome}</p>
+            </div>
+          )}
 
           {/* ── Controlos admin ── */}
           <div className="border-t border-white/[0.06] pt-5 space-y-4">
