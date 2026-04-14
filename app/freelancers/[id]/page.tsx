@@ -711,6 +711,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
           isVideografo={freelancerStatus === 'VIDEOGRAFO'}
           onClose={() => setFicha(null)}
           onConfirm={() => { onRefresh() }}
+          onDelete={async () => { await del(ficha.id); setFicha(null) }}
           onEdit={() => {
             setEditing(ficha)
             setForm({ local: ficha.local, data_casamento: ficha.data_casamento ?? '', equipa_foto: ficha.equipa_foto ?? [], videografo: ficha.videografo ?? '', briefing_url: ficha.briefing_url ?? '' })
@@ -723,7 +724,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
   )
 }
 
-function CasamentoFicha({ casamento: c, onClose, onEdit, onConfirm, isVideografo }: { casamento: Casamento; onClose: () => void; onEdit: () => void; onConfirm?: () => void; isVideografo?: boolean }) {
+function CasamentoFicha({ casamento: c, onClose, onEdit, onConfirm, onDelete, isVideografo }: { casamento: Casamento; onClose: () => void; onEdit: () => void; onConfirm?: () => void; onDelete?: () => void; isVideografo?: boolean }) {
   const dtu = daysUntil(c.data_casamento)
   const isUrgent = dtu !== null && dtu >= 0 && dtu <= 15
   const isPast = dtu !== null && dtu < 0
@@ -834,6 +835,14 @@ function CasamentoFicha({ casamento: c, onClose, onEdit, onConfirm, isVideografo
 
         {/* Footer */}
         <div className="px-6 pb-5 flex items-center justify-between gap-3">
+          {/* Caixote */}
+          {onDelete && (
+            <button onClick={onDelete}
+              className="p-2 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-all"
+              title="Eliminar evento">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+            </button>
+          )}
           {/* Confirmar Data */}
           {!isPast && (
             confirmed ? (
