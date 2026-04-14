@@ -1660,7 +1660,16 @@ export default function FreelancerViewPage() {
 
           {/* ── Tab: Edição de Fotos ── */}
           {tab === 'edicao' && (
-            <section>
+            <section className="space-y-5">
+              <div className="px-4 py-4 rounded-xl border border-white/[0.06] bg-white/[0.02] space-y-2">
+                <p className="text-[18px] tracking-[0.3em] text-gold/60 uppercase">Estado da Edição</p>
+                <p className="text-[16px] text-white leading-relaxed">
+                  É importante manteres o estado de cada trabalho sempre atualizado.
+                </p>
+                <p className="text-[16px] text-white leading-relaxed">
+                  Os noivos têm acesso a esta informação em tempo real através do portal deles. Um estado atualizado transmite profissionalismo e mantém os noivos tranquilos ao longo de todo o processo.
+                </p>
+              </div>
               {edicao.length === 0 ? (
                 <p className="text-white/15 text-xs tracking-widest">Sem trabalhos de edição atribuídos.</p>
               ) : (
