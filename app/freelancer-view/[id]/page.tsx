@@ -1012,7 +1012,7 @@ export default function FreelancerViewPage() {
       )}
 
       {!loading && tab === null && (
-        <div className="flex flex-row items-center justify-between py-8 gap-8">
+        <div className="flex flex-row items-start justify-between py-8 gap-8">
 
           {/* Texto — lado esquerdo */}
           {(freelancer?.intro_home_title || freelancer?.intro_home) && (
