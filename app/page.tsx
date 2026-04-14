@@ -464,7 +464,7 @@ export default async function Home() {
 
       {/* ── Relatório Diário Banner ─────────────────────────────────────────── */}
       <div className="border-t border-white/[0.06] bg-[#060606] px-4 sm:px-10 py-6">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-lg mx-auto sm:mx-0">
           {/* Card com canto superior direito recortado — igual à imagem de referência */}
           <div
             className="bg-white/[0.06] p-px"
