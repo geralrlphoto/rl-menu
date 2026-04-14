@@ -4,7 +4,7 @@ const NOTION_TOKEN = process.env.NOTION_TOKEN!
 
 const DB_BY_YEAR: Record<number, string> = {
   2026: '1ad220116d8a804b839ddc36f1e7ecf1',
-  2027: '2a622011-6d8a-81b4-9c36-000b5667772b',
+  2027: '2a6220116d8a80b4b439fe091b2ac804',
 }
 
 function getProp(props: any, key: string, type: string): any {
@@ -73,9 +73,12 @@ export async function GET(req: NextRequest) {
     const anoParam = req.nextUrl.searchParams.get('ano')
     const ano = anoParam ? parseInt(anoParam) : null
 
-    // Se há ano específico usa só essa base; caso contrário busca todas
+    // Se há ano específico usa só essa base; se não existe retorna vazio
+    if (ano && !DB_BY_YEAR[ano]) {
+      return NextResponse.json({ events: [], total: 0 })
+    }
     const dbIds = ano
-      ? [DB_BY_YEAR[ano] ?? DB_BY_YEAR[2026]]
+      ? [DB_BY_YEAR[ano]]
       : Object.values(DB_BY_YEAR)
 
     const allPages: any[] = []
