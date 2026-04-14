@@ -1049,23 +1049,15 @@ const NOTIF_STYLE: Record<string, { card: string; dot: string }> = {
 }
 
 function NotificacoesTab({ notificacoes, onRefresh }: { notificacoes: Notificacao[]; onRefresh: () => void }) {
-  const doneRef = useRef(false)
 
-  useEffect(() => {
-    if (doneRef.current) return
-    doneRef.current = true
-    const unread = notificacoes.filter(n => !n.lida)
-    if (!unread.length) return
-    Promise.all(
-      unread.map(n =>
-        fetch('/api/freelancer-notificacoes', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: n.id, lida: true }),
-        })
-      )
-    ).then(() => onRefresh())
-  }, [notificacoes, onRefresh])
+  async function markLida(id: string) {
+    await fetch('/api/freelancer-notificacoes', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, lida: true }),
+    })
+    onRefresh()
+  }
 
   function fmtRelative(dateStr: string) {
     try {
@@ -1082,29 +1074,38 @@ function NotificacoesTab({ notificacoes, onRefresh }: { notificacoes: Notificaca
     <section className="space-y-3">
       {notificacoes.length === 0 ? (
         <div className="text-center py-16 space-y-3">
-          <p className="text-white/20 text-3xl">🔔</p>
+          <p className="text-white/20 text-5xl">🔔</p>
           <p className="text-white/15 text-xs tracking-widest">Sem notificações.</p>
         </div>
       ) : (
-        notificacoes.map(n => {
-          const s = NOTIF_STYLE[n.tipo] ?? { card: 'border-white/10 bg-white/[0.02]', dot: 'bg-white/30' }
-          return (
-            <div key={n.id} className={`rounded-2xl border p-4 transition-opacity ${s.card} ${n.lida ? 'opacity-55' : 'opacity-100'}`}>
-              <div className="flex items-start gap-3">
-                <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${s.dot} ${n.lida ? 'opacity-40' : ''}`} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2 mb-0.5">
-                    <p className={`text-sm font-semibold leading-tight ${n.lida ? 'text-white/60' : 'text-white/90'}`}>{n.titulo}</p>
-                    <span className="text-[9px] text-white/20 whitespace-nowrap flex-shrink-0">{fmtRelative(n.created_at)}</span>
-                  </div>
-                  {n.mensagem && (
-                    <p className="text-[13px] text-white/55 leading-relaxed mt-0.5">{n.mensagem}</p>
-                  )}
+        notificacoes.map(n => (
+          <div key={n.id} className={`rounded-2xl border p-4 transition-all ${
+            n.lida
+              ? 'border-emerald-500/35 bg-emerald-500/[0.06]'
+              : 'border-red-500/45 bg-red-500/[0.07]'
+          }`}>
+            <div className="flex items-start gap-3">
+              <div className={`w-2.5 h-2.5 rounded-full mt-2 flex-shrink-0 ${n.lida ? 'bg-emerald-400' : 'bg-red-400'}`} />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <p className="text-base font-semibold text-white leading-tight">{n.titulo}</p>
+                  <span className="text-[10px] text-white/30 whitespace-nowrap flex-shrink-0 mt-0.5">{fmtRelative(n.created_at)}</span>
                 </div>
+                {n.mensagem && (
+                  <p className="text-base text-white leading-relaxed mt-1">{n.mensagem}</p>
+                )}
+                {!n.lida && (
+                  <button
+                    onClick={() => markLida(n.id)}
+                    className="mt-3 text-[10px] tracking-[0.2em] uppercase px-3 py-1.5 rounded-full border border-emerald-500/35 text-emerald-400/80 hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-400/50 transition-all font-semibold"
+                  >
+                    ✓ Lida
+                  </button>
+                )}
               </div>
             </div>
-          )
-        })
+          </div>
+        ))
       )}
     </section>
   )
@@ -1283,7 +1284,11 @@ export default function FreelancerViewPage() {
               <button
                 key={t.key}
                 onClick={() => setTab(t.key as typeof tab)}
-                className={`flex-shrink-0 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[9px] tracking-[0.25em] uppercase font-semibold transition-all ${
+                className={`flex-shrink-0 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl transition-all ${
+                  t.key === 'notificacoes'
+                    ? 'text-2xl'
+                    : 'text-[9px] tracking-[0.25em] uppercase font-semibold'
+                } ${
                   tab === t.key
                     ? 'bg-white/10 text-white border border-white/20'
                     : 'text-white/30 hover:text-white/55 border border-transparent'
