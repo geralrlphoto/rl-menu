@@ -1257,6 +1257,8 @@ export default function EventoPage() {
   const [notifVideoErro, setNotifVideoErro] = useState<string | null>(null)
   const [equipaFoto, setEquipaFoto] = useState<string[]>([])
   const [equipaVideo, setEquipaVideo] = useState<string[]>([])
+  const [optionsFoto, setOptionsFoto] = useState<string[]>(['ALEXANDRE CAPÃO','PATRICIO FERREIRA','SONIA CARVALHO','RUI GARRIDO','BRUNO DE CARVALHO','PEDRO MARTINS'])
+  const [optionsVideo, setOptionsVideo] = useState<string[]>(['RUI GONÇALVES','LUIS SOARES'])
 
   function loadPagamentos(ref: string, showRefresh = false) {
     if (showRefresh) setPagamentosRefreshing(true)
@@ -1287,6 +1289,24 @@ export default function EventoPage() {
           const refs = new Set<string>(d.events.map((e: any) => e.referencia).filter(Boolean))
           setUsedRefs(refs)
         }
+      })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    // Carregar freelancers da equipa para os dropdowns (atualiza sempre que há novos membros)
+    fetch('/api/freelancers')
+      .then(r => r.json())
+      .then(d => {
+        if (!d.freelancers) return
+        const foto = (d.freelancers as any[])
+          .filter(f => f.funcao === 'FOTOGRAFO')
+          .map(f => (f.nome as string).toUpperCase())
+        const video = (d.freelancers as any[])
+          .filter(f => f.funcao === 'VIDEOGRAFO')
+          .map(f => (f.nome as string).toUpperCase())
+        if (foto.length > 0) setOptionsFoto(foto)
+        if (video.length > 0) setOptionsVideo(video)
       })
       .catch(() => {})
   }, [])
@@ -1836,12 +1856,12 @@ export default function EventoPage() {
             <EditEquipaField label="Fotógrafo" field="fotografo" multi={true}
               eventoId={e.id} referencia={e.referencia ?? ''} local={e.local ?? ''} dataCasamento={e.data_evento ?? ''}
               initialValue={e.fotografo ?? []}
-              options={['ALEXANDRE CAPÃO','PATRICIO FERREIRA','SONIA CARVALHO','RUI GARRIDO','BRUNO DE CARVALHO','PEDRO MARTINS']}
+              options={optionsFoto}
               onChanged={setEquipaFoto} />
             <EditEquipaField label="Videógrafo" field="videografo" multi={false}
               eventoId={e.id} referencia={e.referencia ?? ''} local={e.local ?? ''} dataCasamento={e.data_evento ?? ''}
               initialValue={e.videografo ?? []}
-              options={['RUI GONÇALVES','LUIS SOARES']}
+              options={optionsVideo}
               onChanged={setEquipaVideo} />
             <EditField label="Editor de Fotos" value={e.editor_fotos} field="editor_fotos" eventId={e.id} onSaved={handleSaved} />
             <EditField label="Agendamento Email" value={e.agendamento_email} field="agendamento_email" eventId={e.id} onSaved={handleSaved} />
