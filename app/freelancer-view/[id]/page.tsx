@@ -1016,8 +1016,8 @@ export default function FreelancerViewPage() {
 
           {/* Card de perfil */}
           {freelancer?.foto_url && (
-            <div className="relative w-[260px] h-[360px] rounded-[28px] overflow-hidden flex-shrink-0"
-              style={{ boxShadow: '0 0 0 2px rgba(200,70,20,0.85), 0 0 32px 8px rgba(200,70,20,0.30)' }}>
+            <div className="relative w-[260px] h-[360px] overflow-hidden flex-shrink-0"
+              style={{ borderRadius: '28px 28px 80px 28px', boxShadow: '0 0 0 2px rgba(200,70,20,0.85), 0 0 32px 8px rgba(200,70,20,0.30)' }}>
               {/* Fundo cinza */}
               <div className="absolute inset-0 bg-neutral-400" />
               {/* Foto B&W */}
