@@ -333,7 +333,10 @@ export default function FreelancerDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="mb-6 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+      <div className="mb-6 relative flex items-center gap-1">
+        <button onClick={() => { const el = document.getElementById('admin-tab-scroll'); if (el) el.scrollBy({ left: -160, behavior: 'smooth' }) }}
+          className="flex-shrink-0 w-7 h-8 flex items-center justify-center text-white/30 hover:text-white/70 transition-colors text-base">‹</button>
+        <div id="admin-tab-scroll" className="flex-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
         <div className="flex items-center gap-1.5 p-1.5 rounded-2xl border border-white/30 bg-black w-max min-w-full"
           style={{ boxShadow: '0 0 18px 3px rgba(255,255,255,0.10), 0 0 6px 1px rgba(255,255,255,0.15), inset 0 0 18px 0 rgba(255,255,255,0.03)' }}>
           {/* Botão casa */}
@@ -361,6 +364,9 @@ export default function FreelancerDetailPage() {
             </button>
           ))}
         </div>
+        </div>
+        <button onClick={() => { const el = document.getElementById('admin-tab-scroll'); if (el) el.scrollBy({ left: 160, behavior: 'smooth' }) }}
+          className="flex-shrink-0 w-7 h-8 flex items-center justify-center text-white/30 hover:text-white/70 transition-colors text-base">›</button>
       </div>
 
       {/* Home */}
