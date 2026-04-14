@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 
 type Evento = {
   id: string
@@ -225,7 +225,7 @@ function NovoEventoModal({ onClose, onCreated }: { onClose: () => void; onCreate
   )
 }
 
-function Eventos2026Inner() {
+export default function Eventos2026() {
   const [events, setEvents] = useState<Evento[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -234,9 +234,6 @@ function Eventos2026Inner() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [showNovoEvento, setShowNovoEvento] = useState(false)
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const anoParam = searchParams.get('ano')
-  const anoFiltro = anoParam ? parseInt(anoParam) : 2026
 
   async function handleDelete(e: React.MouseEvent, id: string, referencia?: string) {
     e.preventDefault(); e.stopPropagation()
@@ -262,9 +259,7 @@ function Eventos2026Inner() {
 
   useEffect(() => { loadEvents() }, [])
 
-  const byYear = events.filter(e => e.data_evento?.startsWith(String(anoFiltro)))
-
-  const filtered = byYear.filter(e => {
+  const filtered = events.filter(e => {
     const matchSearch = !search ||
       e.cliente?.toLowerCase().includes(search.toLowerCase()) ||
       e.local?.toLowerCase().includes(search.toLowerCase()) ||
@@ -274,11 +269,11 @@ function Eventos2026Inner() {
   })
 
   const grouped = groupByMonth(filtered)
-  const totalValor = byYear.reduce((s, e) => s + (e.valor_liquido ?? 0), 0)
+  const totalValor = events.reduce((s, e) => s + (e.valor_liquido ?? 0), 0)
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  const upcoming = byYear
+  const upcoming = events
     .filter(e => e.data_evento && new Date(e.data_evento + 'T00:00:00') >= today)
     .slice(0, 3)
 
@@ -288,9 +283,9 @@ function Eventos2026Inner() {
       {/* Header */}
       <div className="flex items-end justify-between mb-10">
         <div>
-          <Link href="/casamentos" className="text-xs tracking-[0.3em] text-white/20 hover:text-gold transition-colors uppercase">‹ Casamentos</Link>
-          <h1 className="text-3xl sm:text-5xl font-extralight tracking-[0.15em] sm:tracking-[0.2em] text-white uppercase mt-3">Casamentos {anoFiltro}</h1>
-          <p className="text-white/20 text-xs tracking-[0.3em] mt-2 uppercase">{byYear.length} casamentos · {totalValor.toLocaleString('pt-PT')} € total</p>
+          <Link href="/" className="text-xs tracking-[0.3em] text-white/20 hover:text-gold transition-colors uppercase">‹ Menu</Link>
+          <h1 className="text-3xl sm:text-5xl font-extralight tracking-[0.15em] sm:tracking-[0.2em] text-white uppercase mt-3">Casamentos</h1>
+          <p className="text-white/20 text-xs tracking-[0.3em] mt-2 uppercase">{events.length} casamentos · {totalValor.toLocaleString('pt-PT')} € total</p>
         </div>
         <button onClick={() => setShowNovoEvento(true)}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black font-bold text-xs tracking-widest hover:bg-gold/80 transition-all uppercase">
@@ -471,13 +466,5 @@ function Eventos2026Inner() {
         </div>
       )}
     </main>
-  )
-}
-
-export default function Eventos2026() {
-  return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-white/20 tracking-widest text-xs uppercase">A carregar...</div>}>
-      <Eventos2026Inner />
-    </Suspense>
   )
 }
