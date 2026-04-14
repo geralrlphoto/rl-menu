@@ -36,6 +36,7 @@ type Valor = {
 type Info = { id: string; freelancer_id: string; label: string | null; valor: string | null; order_index: number }
 type Pagamento   = { id: string; freelancer_id: string; casamento_id: string | null; descricao: string; valor: number | null; data_prevista: string | null; data_pago: string | null; status: string; notas: string | null; created_at: string }
 type Notificacao = { id: string; freelancer_id: string; titulo: string; mensagem: string | null; tipo: string; lida: boolean; created_at: string }
+type Mensagem    = { id: string; freelancer_id: string; casamento_id: string | null; mensagem: string; remetente: string; lida_admin: boolean; lida_freelancer: boolean; created_at: string }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -125,7 +126,7 @@ function PasswordDisplay({ password, freelancerId }: { password: string | null; 
 
 export default function FreelancerDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const [tab, setTab] = useState<'casamentos'|'edicao'|'album'|'valores'|'info'|'notas'|'pagamentos'|'notificacoes'|null>(null)
+  const [tab, setTab] = useState<'casamentos'|'edicao'|'album'|'valores'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|null>(null)
   const [editForm, setEditForm] = useState<{ nome: string; status: string; contato: string; email: string; nome_sos: string; contato_sos: string } | null>(null)
   const [editSaving, setEditSaving] = useState(false)
   const [introHome, setIntroHome] = useState('')
@@ -145,11 +146,12 @@ export default function FreelancerDetailPage() {
   const [info, setInfo] = useState<Info[]>([])
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([])
+  const [mensagens, setMensagens] = useState<Mensagem[]>([])
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(async () => {
     setLoading(true)
-    const [fRes, cRes, eRes, aRes, vRes, iRes, pRes, nRes] = await Promise.all([
+    const [fRes, cRes, eRes, aRes, vRes, iRes, pRes, nRes, mRes] = await Promise.all([
       fetch(`/api/freelancers`).then(r => r.json()),
       fetch(`/api/freelancer-casamentos?freelancer_id=${id}`).then(r => r.json()),
       fetch(`/api/freelancer-edicao?freelancer_id=${id}`).then(r => r.json()),
@@ -158,6 +160,7 @@ export default function FreelancerDetailPage() {
       fetch(`/api/freelancer-info?freelancer_id=${id}`).then(r => r.json()),
       fetch(`/api/freelancer-pagamentos?freelancer_id=${id}`).then(r => r.json()).catch(() => ({ pagamentos: [] })),
       fetch(`/api/freelancer-notificacoes?freelancer_id=${id}`).then(r => r.json()).catch(() => ({ notificacoes: [] })),
+      fetch(`/api/freelancer-mensagens?freelancer_id=${id}`).then(r => r.json()).catch(() => ({ mensagens: [] })),
     ])
     const f = (fRes.freelancers ?? []).find((x: Freelancer) => x.id === id) ?? null
     setFreelancer(f)
@@ -171,6 +174,7 @@ export default function FreelancerDetailPage() {
     setInfo(iRes.info ?? [])
     setPagamentos(pRes.pagamentos ?? [])
     setNotificacoes(nRes.notificacoes ?? [])
+    setMensagens(mRes.mensagens ?? [])
     setLoading(false)
   }, [id])
 
@@ -279,6 +283,7 @@ export default function FreelancerDetailPage() {
     { key: 'info',         label: 'Info' },
     { key: 'notas',        label: 'Notas' },
     { key: 'pagamentos',   label: 'Pagamentos', count: pagamentos.length },
+    { key: 'mensagens',    label: 'Msgs',   count: mensagens.filter(m => m.remetente === 'freelancer' && !m.lida_admin).length },
     { key: 'notificacoes', label: 'Notif.', count: notificacoes.filter(n => !n.lida).length },
   ]
 
@@ -518,6 +523,7 @@ export default function FreelancerDetailPage() {
       {tab === 'info'         && <InfoTab freelancerId={id} info={info} onRefresh={load} />}
       {tab === 'notas'        && <NotasTab freelancer={freelancer} onRefresh={load} />}
       {tab === 'pagamentos'   && <PagamentosAdminTab freelancerId={id} pagamentos={pagamentos} casamentos={casamentos} onRefresh={load} />}
+      {tab === 'mensagens'    && <MensagensAdminTab freelancerId={id} casamentos={casamentos} mensagens={mensagens} onRefresh={load} />}
       {tab === 'notificacoes' && <NotificacoesAdminTab freelancerId={id} notificacoes={notificacoes} onRefresh={load} />}
     </main>
   )
@@ -1740,6 +1746,158 @@ function PagamentosAdminTab({ freelancerId, pagamentos, casamentos, onRefresh }:
           </div>
         )
       ))}
+    </div>
+  )
+}
+
+// ─── Mensagens Admin Tab ─────────────────────────────────────────────────────
+
+function MensagensAdminTab({ freelancerId, casamentos, mensagens, onRefresh }: {
+  freelancerId: string; casamentos: Casamento[]; mensagens: Mensagem[]; onRefresh: () => void
+}) {
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [texto, setTexto]           = useState('')
+  const [sending, setSending]       = useState(false)
+  const bottomRef                   = useRef<HTMLDivElement>(null)
+  const doneReadRef                 = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (!selectedId || doneReadRef.current === selectedId) return
+    doneReadRef.current = selectedId
+    const unread = mensagens.filter(m => m.casamento_id === selectedId && m.remetente === 'freelancer' && !m.lida_admin)
+    if (!unread.length) return
+    Promise.all(unread.map(m => fetch('/api/freelancer-mensagens', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: m.id, lida_admin: true }),
+    }))).then(() => onRefresh())
+  }, [selectedId, mensagens, onRefresh])
+
+  useEffect(() => {
+    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+  }, [mensagens, selectedId])
+
+  async function handleSend() {
+    if (!texto.trim() || !selectedId) return
+    setSending(true)
+    await fetch('/api/freelancer-mensagens', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ freelancer_id: freelancerId, casamento_id: selectedId, mensagem: texto.trim(), remetente: 'admin' }),
+    })
+    setTexto('')
+    setSending(false)
+    onRefresh()
+  }
+
+  async function handleDelete(id: string) {
+    await fetch(`/api/freelancer-mensagens?id=${id}`, { method: 'DELETE' })
+    onRefresh()
+  }
+
+  function fmtHora(s: string) {
+    try {
+      const d = new Date(s)
+      const hh = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+      return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${hh}`
+    } catch { return '' }
+  }
+
+  const selected = casamentos.find(c => c.id === selectedId)
+  const thread   = mensagens.filter(m => m.casamento_id === selectedId)
+
+  return (
+    <div className="space-y-3">
+      {!selectedId ? (
+        <>
+          <p className={labelCls}>Conversas por Evento</p>
+          {casamentos.length === 0 ? (
+            <p className="text-white/20 text-xs py-6 text-center">Sem eventos disponíveis.</p>
+          ) : (
+            <div className="space-y-2">
+              {casamentos.map(c => {
+                const msgs   = mensagens.filter(m => m.casamento_id === c.id)
+                const unread = msgs.filter(m => m.remetente === 'freelancer' && !m.lida_admin).length
+                const last   = msgs[msgs.length - 1]
+                return (
+                  <button key={c.id} onClick={() => setSelectedId(c.id)}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:border-white/15 text-left transition-all group">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white/80 truncate">{c.local || '—'}</p>
+                      {last ? (
+                        <p className="text-[10px] text-white/30 mt-0.5 truncate">
+                          {last.remetente === 'admin' ? 'Tu: ' : 'Freelancer: '}{last.mensagem}
+                        </p>
+                      ) : (
+                        <p className="text-[10px] text-white/20 mt-0.5 italic">Sem mensagens</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {unread > 0 && (
+                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-gold/20 text-gold border border-gold/30 font-bold">{unread} nova{unread > 1 ? 's' : ''}</span>
+                      )}
+                      <span className="text-white/20 group-hover:text-white/50 transition-colors">›</span>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="space-y-3">
+          <button onClick={() => { setSelectedId(null); doneReadRef.current = null }}
+            className="flex items-center gap-1.5 text-[10px] text-white/30 hover:text-white/60 transition-colors">
+            ← Voltar
+          </button>
+
+          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.01] overflow-hidden">
+            <div className="px-4 py-3 border-b border-white/[0.06] bg-white/[0.02]">
+              <p className="text-sm font-semibold text-white/80">{selected?.local || '—'}</p>
+              {selected?.data_casamento && <p className="text-[10px] text-white/30 mt-0.5">{selected.data_casamento}</p>}
+            </div>
+
+            <div className="px-4 py-4 space-y-3 min-h-[200px] max-h-[420px] overflow-y-auto">
+              {thread.length === 0 ? (
+                <p className="text-center text-white/20 text-xs py-8">Sem mensagens ainda.</p>
+              ) : (
+                thread.map(m => (
+                  <div key={m.id} className={`flex items-end gap-2 ${m.remetente === 'admin' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[78%] px-4 py-2.5 space-y-1 ${
+                      m.remetente === 'admin'
+                        ? 'bg-gold/15 border border-gold/25 rounded-2xl rounded-br-sm'
+                        : 'bg-white/[0.06] border border-white/[0.09] rounded-2xl rounded-bl-sm'
+                    }`}>
+                      {m.remetente === 'freelancer' && (
+                        <p className="text-[8px] tracking-widest uppercase text-white/30 font-semibold">Freelancer</p>
+                      )}
+                      <p className="text-sm text-white/90 leading-relaxed">{m.mensagem}</p>
+                      <p className="text-[9px] text-white/25 text-right">{fmtHora(m.created_at)}</p>
+                    </div>
+                    {m.remetente === 'freelancer' && (
+                      <button onClick={() => handleDelete(m.id)}
+                        className="text-[10px] text-white/10 hover:text-red-400 transition-colors shrink-0 mb-1">✕</button>
+                    )}
+                  </div>
+                ))
+              )}
+              <div ref={bottomRef} />
+            </div>
+
+            <div className="px-3 py-3 border-t border-white/[0.06] flex gap-2">
+              <input
+                value={texto}
+                onChange={e => setTexto(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
+                placeholder="Responder..."
+                className="flex-1 bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15"
+              />
+              <button onClick={handleSend} disabled={sending || !texto.trim()}
+                className="px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-base font-bold hover:bg-gold/20 disabled:opacity-30 transition-all shrink-0">
+                ↑
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

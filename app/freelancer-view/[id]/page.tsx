@@ -38,6 +38,7 @@ type Album      = { id: string; nome: string; status: string; data_casamento: st
 type Pagamento   = { id: string; freelancer_id: string; casamento_id: string | null; descricao: string; valor: number | null; data_prevista: string | null; data_pago: string | null; status: string; notas: string | null; created_at: string }
 type Disponib    = { id: string; freelancer_id: string; data_inicio: string; data_fim: string | null; motivo: string | null }
 type Notificacao = { id: string; freelancer_id: string; titulo: string; mensagem: string | null; tipo: string; lida: boolean; created_at: string }
+type Mensagem    = { id: string; freelancer_id: string; casamento_id: string | null; mensagem: string; remetente: string; lida_admin: boolean; lida_freelancer: boolean; created_at: string }
 
 const STATUS_EDICAO_STYLE: Record<string, string> = {
   'NOVO TRABALHO': 'bg-blue-500/15 text-blue-400 border-blue-500/30',
@@ -1111,6 +1112,160 @@ function NotificacoesTab({ notificacoes, onRefresh }: { notificacoes: Notificaca
   )
 }
 
+// ── Mensagens Tab ─────────────────────────────────────────────────────────────
+function MensagensTab({ freelancerId, casamentos, mensagens, onRefresh }: {
+  freelancerId: string; casamentos: Casamento[]; mensagens: Mensagem[]; onRefresh: () => void
+}) {
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [texto, setTexto]           = useState('')
+  const [sending, setSending]       = useState(false)
+  const bottomRef                   = useRef<HTMLDivElement>(null)
+  const doneReadRef                 = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (!selectedId || doneReadRef.current === selectedId) return
+    doneReadRef.current = selectedId
+    const unread = mensagens.filter(m => m.casamento_id === selectedId && m.remetente === 'admin' && !m.lida_freelancer)
+    if (!unread.length) return
+    Promise.all(unread.map(m => fetch('/api/freelancer-mensagens', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: m.id, lida_freelancer: true }),
+    }))).then(() => onRefresh())
+  }, [selectedId, mensagens, onRefresh])
+
+  useEffect(() => {
+    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+  }, [mensagens, selectedId])
+
+  async function handleSend() {
+    if (!texto.trim() || !selectedId) return
+    setSending(true)
+    await fetch('/api/freelancer-mensagens', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ freelancer_id: freelancerId, casamento_id: selectedId, mensagem: texto.trim(), remetente: 'freelancer' }),
+    })
+    setTexto('')
+    setSending(false)
+    onRefresh()
+  }
+
+  function fmtHora(s: string) {
+    try {
+      const d = new Date(s)
+      const hoje = new Date()
+      const ontem = new Date(hoje); ontem.setDate(hoje.getDate() - 1)
+      const hh = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+      if (d.toDateString() === hoje.toDateString()) return hh
+      if (d.toDateString() === ontem.toDateString()) return `ontem ${hh}`
+      return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${hh}`
+    } catch { return '' }
+  }
+
+  const selected = casamentos.find(c => c.id === selectedId)
+  const thread   = mensagens.filter(m => m.casamento_id === selectedId)
+
+  return (
+    <section className="space-y-4">
+      {!selectedId ? (
+        <>
+          <p className="text-[9px] tracking-[0.35em] text-white/25 uppercase mb-2">Seleciona um Evento</p>
+          {casamentos.length === 0 ? (
+            <p className="text-center py-10 text-white/15 text-xs tracking-widest">Sem eventos disponíveis.</p>
+          ) : (
+            <div className="space-y-2">
+              {casamentos.map(c => {
+                const msgs    = mensagens.filter(m => m.casamento_id === c.id)
+                const unread  = msgs.filter(m => m.remetente === 'admin' && !m.lida_freelancer).length
+                const last    = msgs[msgs.length - 1]
+                return (
+                  <button key={c.id} onClick={() => setSelectedId(c.id)}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border border-white/[0.07] bg-white/[0.02] hover:border-gold/30 hover:bg-gold/[0.03] text-left transition-all group">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white/85 truncate">{c.local || '—'}</p>
+                      {last ? (
+                        <p className="text-[11px] text-white/30 mt-0.5 truncate">
+                          {last.remetente === 'admin' ? '← ' : '→ '}{last.mensagem}
+                        </p>
+                      ) : (
+                        <p className="text-[11px] text-white/15 mt-0.5 italic">Iniciar conversa</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {unread > 0 && (
+                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/35 font-bold">{unread}</span>
+                      )}
+                      {msgs.length > 0 && (
+                        <span className="text-[10px] text-white/20">💬 {msgs.length}</span>
+                      )}
+                      <span className="text-white/15 group-hover:text-white/40 transition-colors text-base">›</span>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="space-y-3">
+          {/* Back */}
+          <button onClick={() => { setSelectedId(null); doneReadRef.current = null }}
+            className="flex items-center gap-1.5 text-[10px] text-white/30 hover:text-white/60 transition-colors">
+            ← Voltar aos eventos
+          </button>
+
+          {/* Chat box */}
+          <div className="rounded-2xl border border-white/[0.08] bg-black/20 overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-white/[0.06] bg-white/[0.02]">
+              <p className="text-xs font-semibold text-white/80 truncate">{selected?.local || '—'}</p>
+              {selected?.data_casamento && <p className="text-[10px] text-white/30 mt-0.5">{selected.data_casamento}</p>}
+            </div>
+
+            {/* Messages */}
+            <div className="px-4 py-4 space-y-3 min-h-[220px] max-h-[380px] overflow-y-auto">
+              {thread.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 gap-2">
+                  <p className="text-3xl opacity-20">💬</p>
+                  <p className="text-[11px] text-white/20 tracking-widest">Sem mensagens. Inicia a conversa!</p>
+                </div>
+              ) : (
+                thread.map(m => (
+                  <div key={m.id} className={`flex ${m.remetente === 'freelancer' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[80%] px-4 py-2.5 space-y-1 ${
+                      m.remetente === 'freelancer'
+                        ? 'bg-gold/15 border border-gold/25 rounded-2xl rounded-br-sm'
+                        : 'bg-white/[0.06] border border-white/[0.09] rounded-2xl rounded-bl-sm'
+                    }`}>
+                      <p className="text-sm text-white leading-relaxed">{m.mensagem}</p>
+                      <p className="text-[9px] text-white/25 text-right">{fmtHora(m.created_at)}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+              <div ref={bottomRef} />
+            </div>
+
+            {/* Input */}
+            <div className="px-3 py-3 border-t border-white/[0.06] flex gap-2">
+              <input
+                value={texto}
+                onChange={e => setTexto(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
+                placeholder="Escreve uma mensagem..."
+                className="flex-1 bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white/85 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15"
+              />
+              <button onClick={handleSend} disabled={sending || !texto.trim()}
+                className="px-4 py-2.5 rounded-xl bg-gold/10 border border-gold/30 text-gold text-base font-bold hover:bg-gold/20 disabled:opacity-30 transition-all shrink-0">
+                ↑
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  )
+}
+
 // ── Main View ─────────────────────────────────────────────────────────────────
 export default function FreelancerViewPage() {
   const { id } = useParams<{ id: string }>()
@@ -1121,12 +1276,13 @@ export default function FreelancerViewPage() {
   const [edicao, setEdicao]         = useState<Edicao[]>([])
   const [album, setAlbum]           = useState<Album[]>([])
   const [loading, setLoading]       = useState(false)
-  const [tab, setTab]               = useState<'casamentos'|'edicao'|'album'|'pagamentos'|'disponibilidade'|'guia'|'notificacoes'|null>(null)
+  const [tab, setTab]               = useState<'casamentos'|'edicao'|'album'|'pagamentos'|'disponibilidade'|'guia'|'notificacoes'|'mensagens'|null>(null)
   const [ficha, setFicha]           = useState<Casamento | null>(null)
   const [albumInfo, setAlbumInfo]   = useState<Album | null>(null)
   const [pagamentos, setPagamentos]           = useState<Pagamento[]>([])
   const [disponibilidade, setDisponibilidade] = useState<Disponib[]>([])
   const [notificacoes, setNotificacoes]       = useState<Notificacao[]>([])
+  const [mensagens, setMensagens]             = useState<Mensagem[]>([])
 
   // Block browser back button
   useEffect(() => {
@@ -1146,7 +1302,7 @@ export default function FreelancerViewPage() {
   const loadData = useCallback(async () => {
     setLoading(true)
     const TEMPLATE_ID = '8694241a-7530-4dfd-8619-a8bf15b9e15e'
-    const [fRes, cRes, eRes, aRes, alRes, pRes, dRes, nRes] = await Promise.all([
+    const [fRes, cRes, eRes, aRes, alRes, pRes, dRes, nRes, mRes] = await Promise.all([
       fetch(`/api/freelancers`).then(r => r.json()),
       fetch(`/api/freelancer-casamentos?freelancer_id=${id}`).then(r => r.json()),
       fetch(`/api/freelancer-edicao?freelancer_id=${id}`).then(r => r.json()),
@@ -1155,6 +1311,7 @@ export default function FreelancerViewPage() {
       fetch(`/api/freelancer-pagamentos?freelancer_id=${id}`).then(r => r.json()).catch(() => ({ pagamentos: [] })),
       fetch(`/api/freelancer-disponibilidade?freelancer_id=${id}`).then(r => r.json()).catch(() => ({ periodos: [] })),
       fetch(`/api/freelancer-notificacoes?freelancer_id=${id}`).then(r => r.json()).catch(() => ({ notificacoes: [] })),
+      fetch(`/api/freelancer-mensagens?freelancer_id=${id}`).then(r => r.json()).catch(() => ({ mensagens: [] })),
     ])
     const allFreelancers: Freelancer[] = fRes.freelancers ?? []
     const f = allFreelancers.find((x: Freelancer) => x.id === id) ?? null
@@ -1173,6 +1330,7 @@ export default function FreelancerViewPage() {
     setPagamentos(pRes.pagamentos ?? [])
     setDisponibilidade(dRes.periodos ?? [])
     setNotificacoes(nRes.notificacoes ?? [])
+    setMensagens(mRes.mensagens ?? [])
     // Enrich album with data_entrega_fotos from albuns_casamento
     const alRows: any[] = alRes.rows ?? []
     const enriched = (aRes.album ?? []).map((a: Album) => {
@@ -1279,13 +1437,14 @@ export default function FreelancerViewPage() {
               { key: 'pagamentos',      label: 'Pagamentos', count: 0 },
               { key: 'disponibilidade', label: 'Agenda',     count: 0 },
               { key: 'guia',            label: 'Guia',       count: 0 },
+              { key: 'mensagens',        label: '💬',         count: mensagens.filter(m => m.remetente === 'admin' && !m.lida_freelancer).length },
               { key: 'notificacoes',    label: '🔔',         count: notificacoes.filter(n => !n.lida).length },
             ].map(t => (
               <button
                 key={t.key}
                 onClick={() => setTab(t.key as typeof tab)}
                 className={`flex-shrink-0 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl transition-all ${
-                  t.key === 'notificacoes'
+                  t.key === 'notificacoes' || t.key === 'mensagens'
                     ? 'text-2xl'
                     : 'text-[9px] tracking-[0.25em] uppercase font-semibold'
                 } ${
@@ -1299,7 +1458,7 @@ export default function FreelancerViewPage() {
                 </span>
                 {t.count > 0 && (
                   <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold transition-all ${
-                    t.key === 'notificacoes'
+                    t.key === 'notificacoes' || t.key === 'mensagens'
                       ? 'bg-red-500/20 text-red-400 border border-red-500/40'
                       : tab === t.key ? 'bg-white/15 text-white/80' : 'bg-white/[0.06] text-white/25'
                   }`}>{t.count}</span>
@@ -1531,6 +1690,11 @@ export default function FreelancerViewPage() {
                 </div>
               )}
             </section>
+          )}
+
+          {/* ── Tab: Mensagens ── */}
+          {tab === 'mensagens' && (
+            <MensagensTab freelancerId={id} casamentos={casamentos} mensagens={mensagens} onRefresh={loadData} />
           )}
 
           {/* ── Tab: Notificações ── */}
