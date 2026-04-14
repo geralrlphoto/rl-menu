@@ -465,19 +465,18 @@ export default async function Home() {
       {/* ── Relatório Diário Banner ─────────────────────────────────────────── */}
       <div className="border-t border-white/[0.06] bg-[#060606] px-4 sm:px-10 py-6">
         <div className="max-w-lg mx-auto sm:mx-0">
-          {/* Card com canto superior direito recortado — igual à imagem de referência */}
+          {/* Card com canto superior direito em degrau (aba de pasta) */}
           <div
-            className="bg-white/[0.06] p-px"
-            style={{ clipPath: 'polygon(0 0, calc(100% - 52px) 0, 100% 52px, 100% 100%, 0 100%)' }}
+            className="bg-white/[0.07] p-px"
+            style={{ clipPath: 'polygon(0 0, calc(100% - 48px) 0, calc(100% - 48px) 48px, 100% 48px, 100% 100%, 0 100%)' }}
           >
             <div
               className="relative bg-[#0d0d0d] px-7 sm:px-10 pt-8 pb-8"
-              style={{ clipPath: 'polygon(0 0, calc(100% - 51px) 0, 100% 51px, 100% 100%, 0 100%)' }}
+              style={{ clipPath: 'polygon(0 0, calc(100% - 47px) 0, calc(100% - 47px) 47px, 100% 47px, 100% 100%, 0 100%)' }}
             >
-              {/* Marca do canto recortado */}
-              <div
-                className="absolute top-0 right-0 w-[52px] h-[52px] pointer-events-none"
-                style={{ background: 'linear-gradient(225deg, rgba(201,168,76,0.12) 0%, transparent 65%)' }}
+              {/* Acento dourado subtil no canto */}
+              <div className="absolute top-0 right-0 w-[48px] h-[48px] pointer-events-none"
+                style={{ background: 'radial-gradient(circle at 0% 100%, rgba(201,168,76,0.15) 0%, transparent 70%)' }}
               />
 
               {/* Label topo */}
