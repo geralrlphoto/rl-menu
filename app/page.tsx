@@ -479,7 +479,19 @@ export default async function Home() {
                 RELATÓRIO
               </p>
 
-              <p className="text-[clamp(3rem,9vw,5.5rem)] font-black tracking-tighter leading-[0.85] text-[#C9A84C] uppercase">
+              {/* Filtro SVG — efeito papel machucado/amassado */}
+              <svg className="absolute w-0 h-0" aria-hidden="true" style={{ overflow: 'hidden' }}>
+                <defs>
+                  <filter id="papel-machucado" x="-10%" y="-15%" width="120%" height="130%">
+                    <feTurbulence type="fractalNoise" baseFrequency="0.04 0.07" numOctaves="4" seed="11" result="noise" />
+                    <feDisplacementMap in="SourceGraphic" in2="noise" scale="7" xChannelSelector="R" yChannelSelector="G" />
+                  </filter>
+                </defs>
+              </svg>
+              <p
+                className="text-[clamp(3rem,9vw,5.5rem)] font-black tracking-tighter leading-[0.85] text-[#C9A84C] uppercase"
+                style={{ filter: 'url(#papel-machucado)' }}
+              >
                 DIÁRIO
               </p>
             </div>
