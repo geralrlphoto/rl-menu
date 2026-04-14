@@ -1758,6 +1758,12 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh }: { freel
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ freelancer_id: freelancerId, titulo: form.titulo, mensagem: form.mensagem || null, tipo: form.tipo, lida: false }),
     })
+    // Enviar email ao freelancer com o design da notificação
+    fetch('/api/send-notif-freelancer-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ freelancer_id: freelancerId, titulo: form.titulo, mensagem: form.mensagem || null }),
+    }).catch(e => console.error('[send-notif-email]', e))
     setSending(false)
     setForm({ titulo: '', mensagem: '', tipo: 'info' })
     onRefresh()
