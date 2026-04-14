@@ -32,28 +32,42 @@ function DiasBadge({ dias }: { dias: number }) {
   return <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${cls}`}>{label}</span>
 }
 
-function Section({ title, count, urgent, children, empty }: {
+function Section({ title, count, urgent, children, empty, desc }: {
   title: string; count: number; urgent?: boolean
-  children: React.ReactNode; empty: string
+  children: React.ReactNode; empty: string; desc: string
 }) {
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(false)
   return (
     <div className="border border-white/[0.08] rounded-2xl overflow-hidden">
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-5 py-4 bg-white/[0.02] hover:bg-white/[0.03] transition-colors"
+        className="w-full flex items-center justify-between px-5 py-4 bg-white/[0.02] hover:bg-white/[0.03] transition-colors group"
       >
+        {/* Esquerda: + / − + título + badge */}
         <div className="flex items-center gap-3">
-          <span className="text-[10px] tracking-[0.35em] text-gold uppercase font-light">{title}</span>
+          {/* Sinal + / − */}
+          <span className={`flex items-center justify-center w-6 h-6 rounded-full border text-sm font-bold leading-none transition-all duration-200 shrink-0 ${
+            open
+              ? 'border-gold/40 text-gold bg-gold/10'
+              : 'border-white/20 text-white/40 group-hover:border-gold/30 group-hover:text-gold/60'
+          }`}>
+            {open ? '−' : '+'}
+          </span>
+          <div className="flex flex-col items-start gap-0.5">
+            <span className="text-[10px] tracking-[0.35em] text-gold uppercase font-light">{title}</span>
+            {!open && (
+              <span className="text-[9px] text-white/20 tracking-wide normal-case font-normal">{desc}</span>
+            )}
+          </div>
           {count > 0 && (
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${
               urgent ? 'bg-red-500/15 text-red-400 border-red-500/25' : 'bg-gold/10 text-gold/80 border-gold/25'
             }`}>{count}</span>
           )}
         </div>
-        <div className="flex items-center gap-3">
+        {/* Direita: estado */}
+        <div className="flex items-center gap-2 shrink-0">
           {count === 0 && <span className="text-[9px] tracking-widest text-white/15 uppercase">Em dia</span>}
-          <span className={`text-white/20 text-[10px] transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>▼</span>
         </div>
       </button>
       {open && (
@@ -211,7 +225,7 @@ export default function RelatorioDiarioPage() {
           <div className="flex flex-col gap-2">
 
             {/* ── Eventos próximos ── */}
-            <Section title="Eventos Próximos" count={data.eventos.length} empty="Sem eventos nos próximos 14 dias">
+            <Section title="Eventos Próximos" desc="Casamentos e sessões agendados nos próximos 14 dias" count={data.eventos.length} empty="Sem eventos nos próximos 14 dias">
               {data.eventos.map((e: any) => (
                 <Link key={e.id} href={`/eventos-2026/${e.id}`}>
                   <Item
@@ -226,6 +240,7 @@ export default function RelatorioDiarioPage() {
             {/* ── Leads urgentes ── */}
             <Section
               title="Leads CRM"
+              desc="Contactos quentes (0–3 dias) e mornos (4–10 dias) ainda em aberto"
               count={data.leads_urgentes.length + data.leads_morno.length}
               urgent={data.leads_urgentes.length > 0}
               empty="Sem leads activas para contactar"
@@ -253,6 +268,7 @@ export default function RelatorioDiarioPage() {
             {/* ── Portais — Noivos ── */}
             <Section
               title="Portais Noivos — Atividade"
+              desc="Entregas enviadas aos noivos nos últimos 7 dias (portal, fotos, filme, álbum…)"
               count={data.portal_atividade.filter((a: any) => a.categoria === 'noivos').length}
               empty="Sem atividade nos portais dos noivos nos últimos 7 dias"
             >
@@ -275,6 +291,7 @@ export default function RelatorioDiarioPage() {
             {/* ── Portais — Equipa ── */}
             <Section
               title="Equipa — Notificações"
+              desc="Notificações enviadas ao fotógrafo e videógrafo nos últimos 7 dias"
               count={data.portal_atividade.filter((a: any) => a.categoria === 'equipa').length}
               empty="Sem notificações à equipa nos últimos 7 dias"
             >
@@ -297,6 +314,7 @@ export default function RelatorioDiarioPage() {
             {/* ── Prazos Fotos ── */}
             <Section
               title="Prazos Fotos"
+              desc="Seleções de fotos e entregas com prazo a vencer nos próximos 15 dias"
               count={data.fotos_alerta.length}
               urgent={data.fotos_alerta.some((f: any) => f.dias <= 3)}
               empty="Todos os prazos de seleção em dia"
@@ -309,6 +327,7 @@ export default function RelatorioDiarioPage() {
             {/* ── Prazos Vídeo ── */}
             <Section
               title="Prazos Vídeo"
+              desc="Filmes em produção com entrega prevista nos próximos 15 dias ou em atraso"
               count={data.videos_alerta.length}
               urgent={data.videos_alerta.some((v: any) => v.dias <= 3)}
               empty="Todos os prazos de vídeo em dia"
@@ -321,6 +340,7 @@ export default function RelatorioDiarioPage() {
             {/* ── Álbuns ── */}
             <Section
               title="Álbuns"
+              desc="Álbuns com entrega prevista nos próximos 14 dias e maquetes para aprovação"
               count={data.albuns.length + data.albuns_aprovacao.length}
               empty="Sem álbuns com prazo próximo ou para aprovação"
             >
@@ -345,6 +365,7 @@ export default function RelatorioDiarioPage() {
             {/* ── Pagamentos Recentes ── */}
             <Section
               title="Pagamentos Recentes"
+              desc="Pagamentos registados nos últimos 7 dias com valor e fase"
               count={data.pagamentos_recentes.length}
               empty="Sem pagamentos registados nos últimos 7 dias"
             >
