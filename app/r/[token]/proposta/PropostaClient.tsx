@@ -318,8 +318,9 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
     <div className="relative w-full overflow-hidden" style={{ height: '100dvh', background: '#0a0a0a' }}>
 
       {/* Fundo degradé */}
-      <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, #0a0a0a 0%, #130f08 40%, #0a0a0a 100%)' }} />
-      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 70% 70% at 50% 50%, rgba(201,168,76,0.09) 0%, transparent 68%)' }} />
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(160deg, #0e0b07 0%, #1a1206 30%, #0e0b07 70%, #060504 100%)' }} />
+      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 75% 65% at 50% 48%, rgba(201,168,76,0.18) 0%, rgba(160,120,40,0.07) 45%, transparent 70%)' }} />
+      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 40% 40% at 50% 48%, rgba(232,180,60,0.08) 0%, transparent 60%)' }} />
 
       {/* Admin bar */}
       {isAdmin && (
