@@ -382,7 +382,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <span style={{ color: typo.accentColor, fontSize: '0.7rem', marginTop: '3px', flexShrink: 0 }}>◆</span>
-                    <p className={`${fontClass(typo.bodyFont)} text-sm sm:text-base font-light`} style={{ color: typo.bodyColor }}>{item}</p>
+                    <p className={`${fontClass(typo.bodyFont)} font-light`} style={{ color: typo.bodyColor, fontSize: '16px' }}>{item}</p>
                   </div>
                 ))}
               </div>
