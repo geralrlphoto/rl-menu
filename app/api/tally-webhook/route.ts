@@ -1,89 +1,66 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
-// Mapa fixo: field key do Tally → campo interno
-// Keys são estáveis e nunca mudam para o mesmo formulário
-const KEY_MAP: Record<string, string> = {
-  question_Vzr1dE: 'nome',
-  question_PzoBgd: 'data_casamento',
-  question_W84BqP: 'local_casamento',
-  question_KVXyo7: 'contato',
-  question_LP8y01: 'email',
-  question_bWaGD6: 'como_chegou',
-  question_a2WgzE: 'servicos',
-  question_6ZqyPO: 'tipo_cerimonia',
-  question_ABk50y: 'tipo_evento',
-  question_7NQzE9: '_convidados',
-  question_VJE41g: 'orcamento',
-  question_bWayz2: '_preocupacoes',
-}
-
-// Resolve valores: se tem options, converte IDs → texto
-function resolveValue(field: any): string {
-  const v = field.value
-  if (v === null || v === undefined || v === false) return ''
-  if (typeof v === 'string') return v.trim()
-  if (typeof v === 'number') return String(v)
-  if (Array.isArray(v)) {
-    if (v.length === 0) return ''
-    const opts: any[] = field.options ?? []
-    if (opts.length > 0) {
-      return v.map(id => opts.find(o => o.id === id)?.text ?? id).filter(Boolean).join(', ')
-    }
-    return v.join(', ')
-  }
-  return ''
-}
-
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const fields: any[] = body?.data?.fields ?? []
 
-    if (!fields.length) {
-      return NextResponse.json({ error: 'Sem campos' }, { status: 400 })
+    // Procura field pelo key fixo do Tally
+    const byKey = (key: string): string => {
+      const f = fields.find((f: any) => f.key === key)
+      if (!f || f.value === null || f.value === undefined) return ''
+      const v = f.value
+      if (Array.isArray(v)) {
+        const opts: any[] = f.options ?? []
+        if (opts.length > 0) {
+          return v.map((id: string) => opts.find((o: any) => o.id === id)?.text ?? '').filter(Boolean).join(', ')
+        }
+        return v.join(', ')
+      }
+      return String(v).trim()
     }
 
-    const today = new Date().toISOString().slice(0, 10)
-    const record: Record<string, string> = {
-      status:          'Por Contactar',
-      lead_prioridade: 'Alta',
-      data_entrada:    today,
-    }
+    const nome = byKey('question_Vzr1dE')
 
-    for (const field of fields) {
-      const dest = KEY_MAP[field.key]
-      if (!dest) continue
-      const val = resolveValue(field)
-      if (val) record[dest] = val
-    }
-
-    // Montar mensagem com preocupações + convidados
-    const partes = []
-    if (record._preocupacoes) partes.push(record._preocupacoes)
-    if (record._convidados)   partes.push(`Convidados: ${record._convidados}`)
-    if (partes.length) record.mensagem = partes.join('\n')
-    delete record._preocupacoes
-    delete record._convidados
-
-    if (!record.nome) {
+    if (!nome) {
       return NextResponse.json({
         error: 'Nome em falta',
-        keys_recebidos: fields.map(f => f.key),
+        keys_recebidos: fields.map((f: any) => f.key),
       }, { status: 400 })
     }
 
-    const { error } = await supabase.from('crm_contacts').insert(record)
-    if (error) throw new Error(error.message)
+    const preocupacoes = byKey('question_bWayz2')
+    const convidados   = byKey('question_7NQzE9')
+    const mensagem     = [preocupacoes, convidados ? `Convidados: ${convidados}` : ''].filter(Boolean).join('\n')
 
-    return NextResponse.json({ success: true, nome: record.nome })
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    const { error } = await supabase.from('crm_contacts').insert({
+      nome,
+      email:           byKey('question_LP8y01'),
+      contato:         byKey('question_KVXyo7'),
+      data_casamento:  byKey('question_PzoBgd'),
+      local_casamento: byKey('question_W84BqP'),
+      como_chegou:     byKey('question_bWaGD6'),
+      servicos:        byKey('question_a2WgzE'),
+      tipo_cerimonia:  byKey('question_6ZqyPO'),
+      tipo_evento:     byKey('question_ABk50y'),
+      orcamento:       byKey('question_VJE41g'),
+      mensagem,
+      status:          'Por Contactar',
+      lead_prioridade: 'Alta',
+      data_entrada:    new Date().toISOString().slice(0, 10),
+    })
+
+    if (error) throw new Error(error.message)
+    return NextResponse.json({ success: true, nome })
+
   } catch (err: any) {
-    console.error('[tally-webhook] Erro:', err)
+    console.error('[tally-webhook]', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
