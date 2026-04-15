@@ -115,6 +115,61 @@ export default function ClientePage() {
   const [togglingPage, setTogglingPage] = useState(false)
   const [copied, setCopied] = useState(false)
 
+  // ── Propostas ────────────────────────────────────────────────────────────────
+  type Proposta = { nome: string; servicos: string[]; valor: string }
+  const DEFAULT_PROPOSTAS: Proposta[] = [
+    { nome: 'Proposta A', servicos: [''], valor: '' },
+    { nome: 'Proposta B', servicos: [''], valor: '' },
+    { nome: 'Proposta C', servicos: [''], valor: '' },
+  ]
+  const [propostas, setPropostas] = useState<Proposta[]>(DEFAULT_PROPOSTAS)
+  const [savingPropostas, setSavingPropostas] = useState(false)
+  const [savedPropostas, setSavedPropostas] = useState(false)
+
+  useEffect(() => {
+    if (!form.page_content) return
+    const pc = typeof form.page_content === 'string' ? JSON.parse(form.page_content) : form.page_content
+    if (pc?.propostas) setPropostas(pc.propostas)
+  }, [form.page_content])
+
+  const handleSavePropostas = async () => {
+    setSavingPropostas(true)
+    const pc = typeof form.page_content === 'string'
+      ? JSON.parse(form.page_content || '{}')
+      : (form.page_content || {})
+    const newPc = { ...pc, propostas }
+    const { error } = await supabase.from('crm_contacts').update({ page_content: newPc }).eq('id', id)
+    if (!error) {
+      setForm((f: Contact) => ({ ...f, page_content: newPc }))
+      setSavedPropostas(true)
+      setTimeout(() => setSavedPropostas(false), 2500)
+    } else {
+      alert('Erro ao guardar propostas: ' + error.message)
+    }
+    setSavingPropostas(false)
+  }
+
+  const setProposta = (pi: number, key: keyof Proposta, value: string) => {
+    setPropostas(prev => prev.map((p, i) => i === pi ? { ...p, [key]: value } : p))
+  }
+  const setServico = (pi: number, si: number, value: string) => {
+    setPropostas(prev => prev.map((p, i) => {
+      if (i !== pi) return p
+      const s = [...p.servicos]; s[si] = value
+      return { ...p, servicos: s }
+    }))
+  }
+  const addServico = (pi: number) => {
+    setPropostas(prev => prev.map((p, i) => i === pi ? { ...p, servicos: [...p.servicos, ''] } : p))
+  }
+  const removeServico = (pi: number, si: number) => {
+    setPropostas(prev => prev.map((p, i) => {
+      if (i !== pi) return p
+      const s = p.servicos.filter((_, j) => j !== si)
+      return { ...p, servicos: s.length ? s : [''] }
+    }))
+  }
+
   const handleEnviarReuniao = async () => {
     if (!form.reuniao_data || !form.reuniao_hora) {
       alert('Preenche a data e hora da reunião.')
@@ -300,6 +355,75 @@ export default function ClientePage() {
             className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50 resize-none"
             placeholder="Notas sobre esta lead..."
           />
+        </div>
+
+        {/* Propostas Fotografia / Vídeo */}
+        <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs tracking-[0.3em] text-gold uppercase">Propostas Fotografia / Vídeo</h2>
+            <button
+              onClick={handleSavePropostas}
+              disabled={savingPropostas}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold tracking-wider transition-all ${
+                savedPropostas ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+                'bg-gold/90 hover:bg-gold text-black disabled:opacity-40'
+              }`}
+            >
+              {savingPropostas ? 'A guardar...' : savedPropostas ? '✓ Guardado' : 'Guardar Propostas'}
+            </button>
+          </div>
+
+          {propostas.map((proposta, pi) => (
+            <div key={pi} className="flex flex-col gap-3 p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] tracking-[0.4em] text-gold/60 uppercase shrink-0">Proposta {['A','B','C'][pi]}</span>
+                <input
+                  type="text"
+                  value={proposta.nome}
+                  onChange={e => setProposta(pi, 'nome', e.target.value)}
+                  placeholder={`Ex: Essencial, Premium, Luxe…`}
+                  className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs tracking-widest text-white/30 uppercase">Serviços incluídos</label>
+                {proposta.servicos.map((s, si) => (
+                  <div key={si} className="flex items-center gap-2">
+                    <span className="text-gold/40 text-xs shrink-0">◆</span>
+                    <input
+                      type="text"
+                      value={s}
+                      onChange={e => setServico(pi, si, e.target.value)}
+                      placeholder="Ex: Fotografia cerimónia + banquete"
+                      className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50"
+                    />
+                    <button
+                      onClick={() => removeServico(pi, si)}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg text-white/25 hover:text-red-400 hover:bg-red-500/10 transition-all text-xs shrink-0"
+                    >✕</button>
+                  </div>
+                ))}
+                <button
+                  onClick={() => addServico(pi)}
+                  className="self-start mt-1 px-3 py-1.5 rounded-lg text-xs text-white/35 hover:text-gold hover:bg-gold/10 border border-white/8 transition-all"
+                >
+                  + Adicionar serviço
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-xs tracking-widest text-white/30 uppercase">Valor Total</label>
+                <input
+                  type="text"
+                  value={proposta.valor}
+                  onChange={e => setProposta(pi, 'valor', e.target.value)}
+                  placeholder="Ex: 3 500 €"
+                  className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50"
+                />
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Página do Cliente */}

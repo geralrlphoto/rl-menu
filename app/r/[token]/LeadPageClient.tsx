@@ -27,6 +27,8 @@ export const TITLE_SIZES: { value: string; label: string; className: string }[] 
   { value: 'xl',  label: 'XL', className: 'text-7xl sm:text-8xl' },
 ]
 
+export type Proposta = { nome: string; servicos: string[]; valor: string }
+
 export type PageContent = {
   hero:         { title: string; titleFont: string; titleSize: string; titleColor: string; brandLine: string; brandColor: string }
   countdown:    { title: string; titleColor: string }
@@ -36,11 +38,13 @@ export type PageContent = {
   about:        { label: string; title: string; titleFont: string; titleColor: string; text: string; textColor: string }
   banner:       { message: string; signature: string }
   proposta:     { password: string; buttonLabel: string }
+  propostas:    Proposta[]
   propostaPage: {
     subtitle: string; intro: string
     about: { title: string; text: string; photo: string; videoUrl: string; titlePos: string }
     relive: { imageUrl: string; buttonUrl: string }
     packages: { title: string; description: string; price: string }[]
+    propostaAtiva: number
     ctaText: string
     typography: {
       titleFont: string; titleSize: string; titleColor: string
@@ -80,6 +84,11 @@ export const DEFAULT_CONTENT: PageContent = {
     signature: '',
   },
   proposta:     { password: '', buttonLabel: 'Ver Proposta Criativa' },
+  propostas: [
+    { nome: 'Proposta A', servicos: [''], valor: '' },
+    { nome: 'Proposta B', servicos: [''], valor: '' },
+    { nome: 'Proposta C', servicos: [''], valor: '' },
+  ],
   propostaPage: {
     subtitle: 'Uma proposta criada especialmente para vocês.',
     intro: 'A vossa história é única — e é essa unicidade que merece ser preservada para sempre. Cada detalhe, cada olhar, cada momento é parte de algo que nunca mais se repetirá.',
@@ -99,6 +108,7 @@ export const DEFAULT_CONTENT: PageContent = {
       { title: 'Premium', description: 'Fotografia + Vídeo cinematográfico com highlights do dia e música personalizada.', price: 'Sob consulta' },
       { title: 'Luxe', description: 'Pacote completo com álbum premium, second shooter, pré-wedding e vídeo completo.', price: 'Sob consulta' },
     ],
+    propostaAtiva: 0,
     ctaText: 'Falemos sobre o vosso dia especial',
     typography: {
       titleFont: 'cormorant', titleSize: 'xl', titleColor: '#ffffff',
@@ -120,7 +130,8 @@ function merge(saved: any): PageContent {
     about:        { ...DEFAULT_CONTENT.about,        ...(saved.about        || {}) },
     banner:       { ...DEFAULT_CONTENT.banner,       ...(saved.banner       || {}) },
     proposta:     { ...DEFAULT_CONTENT.proposta,     ...(saved.proposta     || {}) },
-    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), about: { ...DEFAULT_CONTENT.propostaPage.about, ...(saved.propostaPage?.about || {}) }, relive: { ...DEFAULT_CONTENT.propostaPage.relive, ...(saved.propostaPage?.relive || {}) }, packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
+    propostas:    saved.propostas || DEFAULT_CONTENT.propostas,
+    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), about: { ...DEFAULT_CONTENT.propostaPage.about, ...(saved.propostaPage?.about || {}) }, relive: { ...DEFAULT_CONTENT.propostaPage.relive, ...(saved.propostaPage?.relive || {}) }, packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, propostaAtiva: saved.propostaPage?.propostaAtiva ?? 0, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
   }
 }
 

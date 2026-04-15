@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState, useCallback } from 'react'
-import { DEFAULT_CONTENT, PageContent, FONTS, TITLE_SIZES } from '../LeadPageClient'
+import { DEFAULT_CONTENT, PageContent, Proposta, FONTS, TITLE_SIZES } from '../LeadPageClient'
 
 const IMG_BASE = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
 
@@ -44,7 +44,8 @@ function mergeContent(saved: any): PageContent {
     about:        { ...DEFAULT_CONTENT.about,        ...(saved.about        || {}) },
     banner:       { ...DEFAULT_CONTENT.banner,       ...(saved.banner       || {}) },
     proposta:     { ...DEFAULT_CONTENT.proposta,     ...(saved.proposta     || {}) },
-    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), about: { ...DEFAULT_CONTENT.propostaPage.about, ...(saved.propostaPage?.about || {}) }, relive: { ...DEFAULT_CONTENT.propostaPage.relive, ...(saved.propostaPage?.relive || {}) }, packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
+    propostas:    saved.propostas || DEFAULT_CONTENT.propostas,
+    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), about: { ...DEFAULT_CONTENT.propostaPage.about, ...(saved.propostaPage?.about || {}) }, relive: { ...DEFAULT_CONTENT.propostaPage.relive, ...(saved.propostaPage?.relive || {}) }, packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, propostaAtiva: saved.propostaPage?.propostaAtiva ?? 0, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
   }
 }
 
@@ -438,22 +439,45 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       case 'pkg-1':
       case 'pkg-2': {
         const idx = parseInt(id.split('-')[1])
-        const pkg = pp.packages[idx]
+        const proposta: Proposta = content.propostas?.[idx] || { nome: '', servicos: [], valor: '' }
+        const isAtiva = (pp.propostaAtiva ?? 0) === idx
         const nums = ['I', 'II', 'III']
+        const labels = ['A', 'B', 'C']
         return (
           <div className="flex flex-col items-center justify-center h-full px-8 sm:px-16 gap-0">
             <div className="w-full max-w-xl relative p-10 sm:p-14 text-center"
-              style={{ border: `0.5px solid ${typo.accentColor}4D`, background: 'linear-gradient(160deg, rgba(201,168,76,0.07) 0%, rgba(201,168,76,0.02) 100%)' }}>
+              style={{ border: `0.5px solid ${typo.accentColor}${isAtiva ? '99' : '4D'}`, background: isAtiva ? 'linear-gradient(160deg, rgba(201,168,76,0.12) 0%, rgba(201,168,76,0.04) 100%)' : 'linear-gradient(160deg, rgba(201,168,76,0.07) 0%, rgba(201,168,76,0.02) 100%)' }}>
               <div className="absolute top-0 left-0 w-8 h-8"  style={{ borderTop: `1px solid ${typo.accentColor}99`, borderLeft:  `1px solid ${typo.accentColor}99` }} />
               <div className="absolute top-0 right-0 w-8 h-8" style={{ borderTop: `1px solid ${typo.accentColor}99`, borderRight: `1px solid ${typo.accentColor}99` }} />
               <div className="absolute bottom-0 left-0 w-8 h-8"  style={{ borderBottom: `1px solid ${typo.accentColor}99`, borderLeft:  `1px solid ${typo.accentColor}99` }} />
               <div className="absolute bottom-0 right-0 w-8 h-8" style={{ borderBottom: `1px solid ${typo.accentColor}99`, borderRight: `1px solid ${typo.accentColor}99` }} />
-              <p className="text-[10px] tracking-[0.5em] text-white/20 uppercase mb-6">Pacote {nums[idx]}</p>
-              <h2 className={`${fontClass(typo.pkgTitleFont)} italic font-light mb-5`} style={{ fontSize: 'clamp(2.2rem,6vw,3.5rem)', color: typo.pkgTitleColor, lineHeight: 1.1 }}>{pkg.title}</h2>
+              {isAtiva && (
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4 py-1 text-[9px] tracking-[0.4em] uppercase"
+                  style={{ background: '#0d0b07', border: `0.5px solid ${typo.accentColor}`, color: typo.accentColor }}>
+                  Recomendado
+                </div>
+              )}
+              <p className="text-[10px] tracking-[0.5em] text-white/20 uppercase mb-6">Proposta {labels[idx]}</p>
+              <h2 className={`${fontClass(typo.pkgTitleFont)} italic font-light mb-5`} style={{ fontSize: 'clamp(2.2rem,6vw,3.5rem)', color: typo.pkgTitleColor, lineHeight: 1.1 }}>
+                {proposta.nome || `Proposta ${labels[idx]}`}
+              </h2>
               <div className="h-px mb-6" style={{ background: `${typo.accentColor}33` }} />
-              <p className={`${fontClass(typo.bodyFont)} text-base leading-relaxed mb-8 font-light`} style={{ color: typo.bodyColor }}>{pkg.description}</p>
-              {pkg.price && (
-                <p className={`${fontClass(typo.pkgTitleFont)} text-2xl italic`} style={{ color: typo.titleColor, opacity: 0.75 }}>{pkg.price}</p>
+              {(proposta.servicos || []).filter(Boolean).length > 0 ? (
+                <div className="flex flex-col gap-2 mb-8 text-left">
+                  {(proposta.servicos || []).filter(Boolean).map((s, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <span style={{ color: typo.accentColor, fontSize: '0.6rem', marginTop: '4px', flexShrink: 0 }}>◆</span>
+                      <p className={`${fontClass(typo.bodyFont)} font-light text-sm leading-snug`} style={{ color: typo.bodyColor }}>{s}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className={`${fontClass(typo.bodyFont)} text-sm leading-relaxed mb-8 font-light text-center`} style={{ color: `${typo.bodyColor}60` }}>
+                  Serviços a definir no CRM
+                </p>
+              )}
+              {proposta.valor && (
+                <p className={`${fontClass(typo.pkgTitleFont)} text-2xl italic`} style={{ color: typo.titleColor, opacity: 0.85 }}>{proposta.valor}</p>
               )}
             </div>
           </div>
@@ -676,15 +700,32 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 </Field>
 
                 <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
-                <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Pacotes</p>
-                {pp.packages.map((pkg, i) => (
-                  <div key={i} className="flex flex-col gap-2 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <p className="text-[10px] tracking-widest text-white/20 uppercase">Pacote {i + 1}</p>
-                    <Field label="Nome"><TInput value={pkg.title} onChange={v => setPkg(i, 'title', v)} /></Field>
-                    <Field label="Descrição"><TInput value={pkg.description} onChange={v => setPkg(i, 'description', v)} multiline /></Field>
-                    <Field label="Preço"><TInput value={pkg.price} onChange={v => setPkg(i, 'price', v)} placeholder="Ex: A partir de 2500€" /></Field>
-                  </div>
-                ))}
+                <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Propostas</p>
+                <p className="text-[11px] text-white/30 leading-relaxed">Os serviços e valores são definidos na ficha do CRM. Seleciona qual a proposta em destaque:</p>
+                <div className="flex gap-1">
+                  {[0,1,2].map(i => (
+                    <button key={i} onClick={() => setPage('propostaAtiva', i)}
+                      className="flex-1 py-2 rounded-lg text-xs transition-all"
+                      style={(pp.propostaAtiva ?? 0) === i
+                        ? { background: 'rgba(201,168,76,0.2)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.4)' }
+                        : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                      {content.propostas?.[i]?.nome || `Proposta ${['A','B','C'][i]}`}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-col gap-2">
+                  {[0,1,2].map(i => {
+                    const p = content.propostas?.[i]
+                    return (
+                      <div key={i} className="p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <p className="text-[10px] tracking-widest text-white/25 uppercase mb-1">{p?.nome || `Proposta ${['A','B','C'][i]}`}</p>
+                        {p?.servicos?.filter(Boolean).map((s, j) => <p key={j} className="text-[11px] text-white/40 ml-2">◆ {s}</p>)}
+                        {p?.valor && <p className="text-[11px] text-gold/60 mt-1 font-mono">{p.valor}</p>}
+                        {(!p?.servicos?.filter(Boolean).length) && <p className="text-[11px] text-white/20 italic">Sem serviços — define no CRM</p>}
+                      </div>
+                    )
+                  })}
+                </div>
                 <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
                 <Field label="Texto final (CTA)">
                   <TInput value={pp.ctaText} onChange={v => setPage('ctaText', v)} />
