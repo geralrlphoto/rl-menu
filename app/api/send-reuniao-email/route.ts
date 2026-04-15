@@ -22,50 +22,75 @@ export async function POST(req: NextRequest) {
   const btnTxt  = isVideo ? 'Fazer Reunião' : 'Ver Localização'
   const link    = isVideo ? MEET_LINK : MAPS_LINK
 
-  // Imagem 1080×1080 exibida a 560px → 560px de altura
-  // Posições calculadas (% da imagem original → px a 560px):
-  //   Linha DATA:  ~67.5% → 378px topo, 30px altura
-  //   Linha HORA:  ~70.3% → 394px topo, 30px altura  (378+30 = 408... let me recalculate more precisely)
-  //   Linha MODO:  ~73.1% → 409px topo, 30px altura
-  //   Botão:       ~83.5% → 468px topo, 40px altura
-  //   Coluna label termina: ~35% de 420px (tabela com 70px padding) = 147px → left:217px
-
-  const val = (top: number, txt: string) =>
-    `<div style="position:absolute;top:${top}px;left:217px;right:70px;height:30px;line-height:30px;text-align:right;">
-      <span style="font-family:Georgia,'Times New Roman',serif;font-size:15px;color:#e8dfc8;padding-right:18px;">${txt}</span>
-    </div>`
+  // Card 1080×1080 exibido a 560×560px.
+  // Linha de espaçamento para chegar à secção retangular: 372px
+  // 3 linhas (DATA/HORA/MODO) × 30px = 90px → até 462px
+  // Gap: 10px → 472px
+  // Botão: 44px → 516px
+  // Rodapé: 44px → 560px total
+  // Coluna esquerda (padding + label): 218px
+  // Padding direito: 70px
 
   const html = `<!DOCTYPE html>
 <html lang="pt">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#030201;">
 
-<table width="100%" cellpadding="0" cellspacing="0" bgcolor="#030201" style="background:#030201;padding:0;">
+<table width="100%" cellpadding="0" cellspacing="0" bgcolor="#030201">
 <tr><td align="center">
 
-  <!-- CONTAINER: imagem + valores sobrepostos com position:absolute -->
-  <div style="position:relative;display:block;width:560px;max-width:100%;font-size:0;line-height:0;">
+  <table width="560" cellpadding="0" cellspacing="0" bgcolor="#030201"
+    style="width:560px;max-width:100%;
+           background-image:url(${IMAGE_URL});
+           background-size:560px 560px;
+           background-repeat:no-repeat;
+           background-position:top left;">
 
-    <!-- IMAGEM: exibida exatamente como está, sem alteração -->
-    <img src="${IMAGE_URL}" width="560" alt="Reunião Marcada"
-      style="display:block;width:560px;max-width:100%;border:0;" />
+    <!-- ESPAÇO SUPERIOR: topo do card até à secção retangular -->
+    <tr><td colspan="2" height="372" style="font-size:0;line-height:0;">&nbsp;</td></tr>
 
-    <!-- DATA: valor sobreposto na linha DATA -->
-    ${val(378, dataFmt)}
+    <!-- DATA -->
+    <tr>
+      <td width="218" height="30" style="font-size:0;line-height:0;">&nbsp;</td>
+      <td height="30" style="padding-right:70px;text-align:right;vertical-align:middle;
+          font-family:Georgia,'Times New Roman',serif;font-size:15px;
+          color:#e8dfc8;line-height:30px;">${dataFmt}</td>
+    </tr>
 
-    <!-- HORA: valor sobreposto na linha HORA -->
-    ${val(408, reuniao_hora)}
+    <!-- HORA -->
+    <tr>
+      <td width="218" height="30" style="font-size:0;line-height:0;">&nbsp;</td>
+      <td height="30" style="padding-right:70px;text-align:right;vertical-align:middle;
+          font-family:Georgia,'Times New Roman',serif;font-size:15px;
+          color:#e8dfc8;line-height:30px;">${reuniao_hora}</td>
+    </tr>
 
-    <!-- MODO: valor sobreposto na linha MODO -->
-    ${val(438, modoTxt)}
+    <!-- MODO -->
+    <tr>
+      <td width="218" height="30" style="font-size:0;line-height:0;">&nbsp;</td>
+      <td height="30" style="padding-right:70px;text-align:right;vertical-align:middle;
+          font-family:Georgia,'Times New Roman',serif;font-size:15px;
+          color:#e8dfc8;line-height:30px;">${modoTxt}</td>
+    </tr>
 
-    <!-- BOTÃO: texto sobreposto no botão vazio da imagem -->
-    <div style="position:absolute;top:468px;left:70px;right:70px;height:44px;line-height:44px;text-align:center;">
-      <a href="${link}"
-        style="font-family:Georgia,'Times New Roman',serif;font-size:17px;font-style:italic;font-weight:400;color:#c9a96e;text-decoration:none;letter-spacing:0.04em;">${btnTxt}</a>
-    </div>
+    <!-- GAP antes do botão -->
+    <tr><td colspan="2" height="10" style="font-size:0;line-height:0;">&nbsp;</td></tr>
 
-  </div>
+    <!-- BOTÃO -->
+    <tr>
+      <td colspan="2" height="44" align="center"
+        style="text-align:center;vertical-align:middle;padding:0 70px;">
+        <a href="${link}"
+          style="font-family:Georgia,'Times New Roman',serif;font-size:17px;
+                 font-style:italic;font-weight:400;color:#c9a96e;
+                 text-decoration:none;letter-spacing:0.04em;">${btnTxt}</a>
+      </td>
+    </tr>
+
+    <!-- ESPAÇO INFERIOR: rodapé do card -->
+    <tr><td colspan="2" height="44" style="font-size:0;line-height:0;">&nbsp;</td></tr>
+
+  </table>
 
 </td></tr>
 </table>
