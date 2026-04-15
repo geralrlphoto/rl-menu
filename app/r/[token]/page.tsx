@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 
 const WHATSAPP     = 'https://wa.me/351919191919'
-const DEFAULT_HERO = 'https://rl-menu-lake.vercel.app/banner_footer.png'
+const DEFAULT_HERO = 'https://rl-menu-lake.vercel.app/casamentos-2028.png'
 
 type Contact = Record<string, any>
 
