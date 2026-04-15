@@ -34,6 +34,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/api/lead-page/view') ||
     pathname.startsWith('/api/lead-page/confirm') ||
     pathname.startsWith('/api/lead-page/change-request') ||
+    pathname.startsWith('/api/lead-page/request-change-email') ||
     pathname.startsWith('/api/lead-page/check-admin') ||
     pathname.startsWith('/api/upload-image')
   ) {

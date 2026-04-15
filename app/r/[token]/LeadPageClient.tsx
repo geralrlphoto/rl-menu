@@ -295,9 +295,13 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
   }
   const handleChangeRequest = async () => {
     setRequesting(true)
-    await fetch(`/api/lead-page/change-request?token=${token}`, { method: 'POST' })
-    setStatus('alteracao_pedida'); setRequesting(false)
-    window.open(`${WHATSAPP}?text=${encodeURIComponent('Olá! Gostaria de solicitar uma alteração à reunião marcada.')}`, '_blank')
+    await fetch('/api/lead-page/request-change-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    })
+    setStatus('alteracao_pedida')
+    setRequesting(false)
   }
 
   if (loading) return (
@@ -466,7 +470,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
             <button onClick={handleChangeRequest} disabled={requesting || isAdmin}
               className="w-full py-4 rounded-2xl text-sm tracking-[0.15em] uppercase transition-all disabled:opacity-50"
               style={{ color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}>
-              {requesting ? 'A enviar...' : 'Solicitar Alteração'}
+              {requesting ? 'A enviar...' : 'Alterar Reunião'}
             </button>
             {isAdmin && <p className="text-center text-[10px] text-white/20 tracking-widest uppercase">Botões desativados em modo admin</p>}
           </div>
