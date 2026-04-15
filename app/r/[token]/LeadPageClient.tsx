@@ -28,6 +28,8 @@ export type PageContent = {
   testimonials: { label: string; items: { text: string; author: string }[] }
   about:        { label: string; title: string; titleFont: string; titleColor: string; text: string; textColor: string }
   banner:       { message: string; signature: string }
+  proposta:     { password: string; buttonLabel: string }
+  propostaPage: { subtitle: string; intro: string; packages: { title: string; description: string; price: string }[]; ctaText: string }
 }
 
 export const DEFAULT_CONTENT: PageContent = {
@@ -58,6 +60,17 @@ export const DEFAULT_CONTENT: PageContent = {
     message: 'Cada momento do vosso dia merece ser preservado para sempre. Estamos honrados em fazer parte desta história.',
     signature: '',
   },
+  proposta:     { password: '', buttonLabel: 'Ver Proposta Criativa' },
+  propostaPage: {
+    subtitle: 'Uma proposta criada especialmente para vocês.',
+    intro: 'Preparámos com cuidado esta proposta personalizada. Cada detalhe foi pensado para reflectir a vossa história e garantir que cada momento do vosso dia seja preservado para sempre.',
+    packages: [
+      { title: 'Essencial', description: 'Cobertura fotográfica completa do dia, edição premium e galeria online privada.', price: 'Sob consulta' },
+      { title: 'Premium', description: 'Fotografia + Vídeo cinematográfico com highlights do dia e música personalizada.', price: 'Sob consulta' },
+      { title: 'Luxe', description: 'Pacote completo com álbum premium, second shooter, pré-wedding e vídeo completo.', price: 'Sob consulta' },
+    ],
+    ctaText: 'Falemos sobre o vosso dia especial',
+  },
 }
 
 function merge(saved: any): PageContent {
@@ -70,6 +83,8 @@ function merge(saved: any): PageContent {
     testimonials: { ...DEFAULT_CONTENT.testimonials, ...(saved.testimonials || {}), items: saved.testimonials?.items || DEFAULT_CONTENT.testimonials.items },
     about:        { ...DEFAULT_CONTENT.about,        ...(saved.about        || {}) },
     banner:       { ...DEFAULT_CONTENT.banner,       ...(saved.banner       || {}) },
+    proposta:     { ...DEFAULT_CONTENT.proposta,     ...(saved.proposta     || {}) },
+    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages },
   }
 }
 
@@ -311,6 +326,9 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
   function setBanner(k: keyof PageContent['banner'], v: string) {
     setContent(c => ({ ...c, banner: { ...c.banner, [k]: v } }))
   }
+  function setProposta(k: keyof PageContent['proposta'], v: string) {
+    setContent(c => ({ ...c, proposta: { ...c.proposta, [k]: v } }))
+  }
   function setPhoto(i: number, url: string) {
     setContent(c => {
       const photos = [...c.portfolio.photos]
@@ -413,7 +431,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
   const targetDate = contact!.reuniao_data && contact!.reuniao_hora
     ? `${contact!.reuniao_data}T${horaFmt}:00` : null
 
-  const { hero, countdown, video, portfolio, testimonials, about, banner } = content
+  const { hero, countdown, video, portfolio, testimonials, about, banner, proposta } = content
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
@@ -702,40 +720,62 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
       </section>
 
       {/* ── BANNER ── */}
-      <section className="px-6 py-16" style={{ background: '#0a0a0a' }}>
+      <section className="px-4 sm:px-8 py-16" style={{ background: '#0a0a0a' }}>
         <FadeIn>
-          <div className="relative max-w-2xl mx-auto" style={{ background: 'linear-gradient(135deg, rgba(201,168,76,0.05) 0%, rgba(201,168,76,0.02) 100%)', border: '0.5px solid rgba(201,168,76,0.25)' }}>
+          <div className="relative w-full max-w-5xl mx-auto overflow-hidden"
+            style={{ border: '0.5px solid rgba(201,168,76,0.3)' }}>
+
+            {/* Degradé de fundo */}
+            <div className="absolute inset-0" style={{
+              background: 'linear-gradient(135deg, #1c1408 0%, #0f0c07 30%, #13100a 60%, #1c1408 100%)',
+            }} />
+            <div className="absolute inset-0" style={{
+              background: 'radial-gradient(ellipse 80% 60% at 50% 50%, rgba(201,168,76,0.09) 0%, transparent 70%)',
+            }} />
 
             {/* Cantos ornamentais */}
-            <div className="absolute top-0 left-0 w-10 h-10" style={{ borderTop: '1px solid rgba(201,168,76,0.6)', borderLeft: '1px solid rgba(201,168,76,0.6)' }} />
-            <div className="absolute top-0 right-0 w-10 h-10" style={{ borderTop: '1px solid rgba(201,168,76,0.6)', borderRight: '1px solid rgba(201,168,76,0.6)' }} />
-            <div className="absolute bottom-0 left-0 w-10 h-10" style={{ borderBottom: '1px solid rgba(201,168,76,0.6)', borderLeft: '1px solid rgba(201,168,76,0.6)' }} />
-            <div className="absolute bottom-0 right-0 w-10 h-10" style={{ borderBottom: '1px solid rgba(201,168,76,0.6)', borderRight: '1px solid rgba(201,168,76,0.6)' }} />
+            <div className="absolute top-0 left-0 w-12 h-12" style={{ borderTop: '1px solid rgba(201,168,76,0.7)', borderLeft: '1px solid rgba(201,168,76,0.7)' }} />
+            <div className="absolute top-0 right-0 w-12 h-12" style={{ borderTop: '1px solid rgba(201,168,76,0.7)', borderRight: '1px solid rgba(201,168,76,0.7)' }} />
+            <div className="absolute bottom-0 left-0 w-12 h-12" style={{ borderBottom: '1px solid rgba(201,168,76,0.7)', borderLeft: '1px solid rgba(201,168,76,0.7)' }} />
+            <div className="absolute bottom-0 right-0 w-12 h-12" style={{ borderBottom: '1px solid rgba(201,168,76,0.7)', borderRight: '1px solid rgba(201,168,76,0.7)' }} />
 
-            <div className="px-10 sm:px-16 py-14 text-center">
+            <div className="relative z-10 px-10 sm:px-20 py-16 text-center">
               {/* Logo */}
               <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
-                alt="RL" className="w-12 h-auto mx-auto mb-8 opacity-70" />
+                alt="RL" className="w-14 h-auto mx-auto mb-8 opacity-75" />
 
               {/* Separador */}
-              <p className="text-[11px] tracking-[0.45em] mb-8" style={{ color: 'rgba(201,168,76,0.35)' }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+              <p className="text-[11px] tracking-[0.5em] mb-8" style={{ color: 'rgba(201,168,76,0.4)' }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
 
               {/* Mensagem */}
-              <p className="font-cormorant text-2xl sm:text-3xl italic font-light leading-relaxed mb-8"
-                style={{ color: 'rgba(255,255,255,0.82)' }}>
+              <p className="font-cormorant text-2xl sm:text-4xl italic font-light leading-relaxed mb-8 mx-auto"
+                style={{ color: 'rgba(255,255,255,0.85)', maxWidth: '640px' }}>
                 &ldquo;{banner.message}&rdquo;
               </p>
 
               {/* Separador */}
-              <p className="text-[11px] tracking-[0.45em] mb-6" style={{ color: 'rgba(201,168,76,0.35)' }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+              <p className="text-[11px] tracking-[0.5em] mb-6" style={{ color: 'rgba(201,168,76,0.4)' }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
 
               {/* Assinatura */}
               {banner.signature
-                ? <p className="font-cormorant text-lg italic" style={{ color: '#C9A84C' }}>{banner.signature}</p>
-                : <p className="text-[10px] tracking-[0.4em] uppercase" style={{ color: 'rgba(201,168,76,0.4)' }}>RL Photo · Video</p>
+                ? <p className="font-cormorant text-xl italic" style={{ color: '#C9A84C' }}>{banner.signature}</p>
+                : <p className="text-[10px] tracking-[0.45em] uppercase" style={{ color: 'rgba(201,168,76,0.45)' }}>RL Photo · Video</p>
               }
             </div>
           </div>
+        </FadeIn>
+      </section>
+
+      {/* ── BOTÃO PROPOSTA ── */}
+      <section className="px-6 py-12 flex flex-col items-center" style={{ background: '#0a0a0a' }}>
+        <FadeIn className="flex flex-col items-center gap-3">
+          <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">Exclusivo para vocês</p>
+          <a href={`/r/${token}/proposta`}
+            className="group relative flex items-center gap-4 px-12 py-5 text-[11px] tracking-[0.4em] uppercase transition-all duration-300 hover:scale-[1.03]"
+            style={{ background: 'linear-gradient(135deg, rgba(201,168,76,0.18) 0%, rgba(201,168,76,0.08) 100%)', border: '0.5px solid rgba(201,168,76,0.5)', color: '#C9A84C' }}>
+            <span>{proposta.buttonLabel}</span>
+            <span className="transition-transform duration-300 group-hover:translate-x-1.5">→</span>
+          </a>
         </FadeIn>
       </section>
 
@@ -929,6 +969,19 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
                     </Field>
                   </div>
                 ))}
+              </AccordionSection>
+
+              {/* ── PROPOSTA ── */}
+              <AccordionSection title="Proposta Criativa">
+                <Field label="Texto do botão">
+                  <TInput value={proposta.buttonLabel} onChange={v => setProposta('buttonLabel', v)} />
+                </Field>
+                <Field label="Password de acesso">
+                  <TInput value={proposta.password} onChange={v => setProposta('password', v)} />
+                </Field>
+                {!proposta.password && (
+                  <p className="text-[10px] text-amber-400/60 text-center">Sem password → qualquer pessoa com o link acede</p>
+                )}
               </AccordionSection>
 
               {/* ── BANNER ── */}
