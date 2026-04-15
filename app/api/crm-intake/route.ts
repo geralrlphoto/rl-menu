@@ -34,10 +34,6 @@ export async function POST(req: NextRequest) {
       }, { status: 400 })
     }
 
-    const preocupacoes = byKey('question_bWayz2')
-    const convidados   = byKey('question_7NQzE9')
-    const mensagem     = [preocupacoes, convidados ? `Convidados: ${convidados}` : ''].filter(Boolean).join('\n')
-
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -54,7 +50,8 @@ export async function POST(req: NextRequest) {
       tipo_cerimonia:  byKey('question_6ZqyPO'),
       tipo_evento:     byKey('question_ABk50y'),
       orcamento:       byKey('question_VJE41g'),
-      mensagem,
+      num_convidados:  byKey('question_7NQzE9'),
+      mensagem:        byKey('question_bWayz2'),
       status:          'Por Contactar',
       lead_prioridade: 'Alta',
       data_entrada:    new Date().toISOString().slice(0, 10),

@@ -31,9 +31,9 @@ const COMO_CHEGOU_OPTIONS = ['','Instagram','Facebook','Instagram/Facebook','Web
 
 type Contact = Record<string, string>
 
-function F({ label, name, value, onChange, type = 'text', placeholder = '', readOnly = false }: {
+function F({ label, name, value, onChange, type = 'text', placeholder = '' }: {
   label: string; name: string; value: string; onChange: (k: string, v: string) => void
-  type?: string; placeholder?: string; readOnly?: boolean
+  type?: string; placeholder?: string
 }) {
   return (
     <div className="flex flex-col gap-1">
@@ -41,10 +41,9 @@ function F({ label, name, value, onChange, type = 'text', placeholder = '', read
       <input
         type={type}
         value={value ?? ''}
-        onChange={readOnly ? undefined : e => onChange(name, e.target.value)}
-        readOnly={readOnly}
+        onChange={e => onChange(name, e.target.value)}
         placeholder={placeholder}
-        className={`border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none ${readOnly ? 'bg-white/3 text-white/50 cursor-default' : 'bg-white/5 focus:border-gold/50'}`}
+        className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50"
       />
     </div>
   )
@@ -67,14 +66,6 @@ function S({ label, name, value, onChange, options }: {
   )
 }
 
-function parseConvidados(mensagem: string): string {
-  const line = (mensagem ?? '').split('\n').find(l => l.startsWith('Convidados:'))
-  return line ? line.replace('Convidados:', '').trim() : ''
-}
-
-function parsePreocupacoes(mensagem: string): string {
-  return (mensagem ?? '').split('\n').filter(l => !l.startsWith('Convidados:')).join('\n').trim()
-}
 
 export default function ClientePage() {
   const { id } = useParams<{ id: string }>()
@@ -209,7 +200,7 @@ export default function ClientePage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <F label="Local do Casamento" name="local_casamento" value={form.local_casamento} onChange={set} placeholder="Ex: Quinta das Rosas, Lisboa" />
-            <F label="Nº de Convidados" name="_convidados_display" value={parseConvidados(form.mensagem ?? '')} onChange={() => {}} placeholder="—" readOnly />
+            <F label="Nº de Convidados" name="num_convidados" value={form.num_convidados} onChange={set} placeholder="Ex: 120" />
           </div>
           <F label="Serviços" name="servicos" value={form.servicos} onChange={set} placeholder="Ex: Fotografia + Vídeo" />
         </div>
@@ -218,12 +209,8 @@ export default function ClientePage() {
         <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-4">
           <h2 className="text-xs tracking-[0.3em] text-gold uppercase mb-1">Preocupações / Mensagem Inicial</h2>
           <textarea
-            value={parsePreocupacoes(form.mensagem ?? '')}
-            onChange={e => {
-              const convidados = parseConvidados(form.mensagem ?? '')
-              const newMensagem = [e.target.value, convidados ? `Convidados: ${convidados}` : ''].filter(Boolean).join('\n')
-              set('mensagem', newMensagem)
-            }}
+            value={form.mensagem ?? ''}
+            onChange={e => set('mensagem', e.target.value)}
             rows={4}
             className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50 resize-none"
             placeholder="Preocupações e mensagem enviada pelo cliente..."
