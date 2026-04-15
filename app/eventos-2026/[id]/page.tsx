@@ -617,7 +617,7 @@ function PortalEstadoRow({ label, dateStr, estado, referencia, stateKey, onSaved
   estado: string | null; referencia: string; stateKey: string
   onSaved: (key: string, val: string) => void
 }) {
-  const OPTIONS = ['Aguardar', 'Em Edição', 'Concluído', 'Entregue']
+  const OPTIONS = ['Aguardar', 'Em Edição', 'Concluído', 'Entregue', 'S/SERVIÇO']
   const val = estado ?? 'Aguardar'
   const cfg = estadoCfg(val)
 
@@ -1832,11 +1832,11 @@ export default function EventoPage() {
             )}
             <EstadoRow label="Fotos para Edição"
               dateStr={fotosDataEntrada ? addWorkingDays(fotosDataEntrada, 30) : null}
-              estado={e.fotos_edicao_estado} options={['Aguardar','Enviado','Em Edição','Entregue']}
+              estado={e.fotos_edicao_estado} options={['Aguardar','Enviado','Em Edição','Entregue','S/SERVIÇO']}
               field="fotos_edicao_estado" eventId={e.id} onSaved={handleSaved} />
             <EstadoRow label="Álbum"
               dateStr={albumDataPrevista}
-              estado={e.album_estado} options={['Aguardar','Em Edição','Em Aprovação','Aprovado','Entregue']}
+              estado={e.album_estado} options={['Aguardar','Em Edição','Em Aprovação','Aprovado','Entregue','S/SERVIÇO']}
               field="album_estado" eventId={e.id} onSaved={handleSaved}
               href={`/albuns-casamento?ref=${encodeURIComponent(e.referencia)}`} />
             {e.referencia && <>
