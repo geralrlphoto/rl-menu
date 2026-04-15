@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const IMAGE_URL = 'https://rl-menu-lake.vercel.app/card_reuniao_marcada.png'
+const LOGO = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png'
 
 function fmtData(d: string) {
   const [y, m, day] = d.split('-')
@@ -19,67 +19,99 @@ export async function POST(req: NextRequest) {
   const localTxt = isVideo ? 'Videochamada · Google Meet' : 'Estúdio RL Photo.Video'
   const link     = reuniao_link || '#'
 
-  // Image is 1080×1080. Displayed at 560px wide → 560px tall (square).
-  // Info box in image starts at ~57% from top  = 319px
-  // Each row height in image ~7.3%             =  41px  (×3 = 123px)
-  // Gap between info box and button  ~1.3%     =   7px
-  // Button height in image ~9.8%               =  55px
-  // Bottom spacer (footer area)                =  56px
-  // Total: 319 + 123 + 7 + 55 + 56 = 560px ✓
-
-  const cellBg = '#0e0906'
-  const row = (label: string, value: string, border: boolean) => {
-    const b = border ? 'border-bottom:1px solid #2e2416;' : ''
-    return `<tr>
-      <td align="left" width="90" valign="middle" bgcolor="${cellBg}" style="background-color:${cellBg};text-align:left;padding:11px 18px;${b}border-right:1px solid #2e2416;font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;white-space:nowrap;">${label}</td>
-      <td align="right" valign="middle" bgcolor="${cellBg}" style="background-color:${cellBg};text-align:right;padding:11px 18px;${b}font-size:16px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;">${value}</td>
-    </tr>`
-  }
-
   const html = `<!DOCTYPE html>
 <html lang="pt">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#050302;">
+<body style="margin:0;padding:0;background:#030201;">
 
-<table width="100%" cellpadding="0" cellspacing="0" bgcolor="#050302" style="background:#050302;padding:20px 16px;">
+<table width="100%" cellpadding="0" cellspacing="0" bgcolor="#030201"
+  style="background:radial-gradient(ellipse at 50% 30%,#1c1008 0%,#080503 55%,#030201 100%);padding:40px 16px 32px;">
 <tr><td align="center">
 
-  <table width="560" cellpadding="0" cellspacing="0" bgcolor="#080503"
-    style="max-width:560px;width:100%;background-image:url(${IMAGE_URL});background-size:100% auto;background-repeat:no-repeat;background-position:top center;">
-
-    <!-- top spacer: logo + heading + subtitle area of the image -->
-    <tr><td height="319" style="font-size:0;line-height:0;">&nbsp;</td></tr>
-
-    <!-- INFO BOX OVERLAY — cobre os placeholders da imagem -->
+  <!-- CORNER FRAME -->
+  <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
     <tr>
-      <td style="padding:0 41px;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #2a1e0e;">
-          ${row('DATA',  dataFmt,     true)}
-          ${row('HORA',  reuniao_hora, true)}
-          ${row('LOCAL', localTxt,    false)}
-        </table>
-      </td>
+      <td width="28" height="28" bgcolor="#050302" style="border-top:1px solid #8a6c2a;border-left:1px solid #8a6c2a;"></td>
+      <td bgcolor="#050302" style="border-top:1px solid #8a6c2a;"></td>
+      <td width="28" height="28" bgcolor="#050302" style="border-top:1px solid #8a6c2a;border-right:1px solid #8a6c2a;"></td>
     </tr>
-
-    <!-- gap -->
-    <tr><td height="7" style="font-size:0;line-height:0;">&nbsp;</td></tr>
-
-    <!-- BUTTON OVERLAY -->
     <tr>
-      <td style="padding:0 41px;">
+      <td width="28" bgcolor="#050302" style="border-left:1px solid #8a6c2a;"></td>
+      <td align="center" style="padding:40px 32px 48px;">
+
+        <!-- LOGO — sem círculo adicionado -->
+        <img src="${LOGO}" width="76" height="76" alt="RL Photo Video"
+          style="display:block;margin:0 auto 24px;" />
+
+        <!-- CALENDAR PILL -->
+        <div style="display:inline-block;margin:0 0 22px;padding:10px 22px;background:#0f0c07;border:1px solid #2a1e0e;border-radius:40px;font-size:22px;line-height:1;">&#128197;</div>
+
+        <!-- OLÁ NOIVOS -->
+        <p style="margin:0 0 6px;font-family:Georgia,'Times New Roman',serif;font-size:22px;font-style:italic;font-weight:400;color:#c9a96e;text-align:center;">Olá, Noivos!</p>
+
+        <!-- A VOSSA REUNIÃO -->
+        <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:50px;font-weight:400;color:#ffffff;line-height:1.1;text-align:center;letter-spacing:-0.01em;">A vossa reunião</p>
+
+        <!-- ESTÁ MARCADA -->
+        <p style="margin:0 0 24px;font-family:Georgia,'Times New Roman',serif;font-size:50px;font-weight:400;font-style:italic;color:#c9a96e;line-height:1.1;text-align:center;">está marcada.</p>
+
+        <!-- DIVIDER -->
+        <p style="margin:0 0 20px;font-family:Arial,sans-serif;font-size:11px;color:#6a5228;letter-spacing:0.3em;text-align:center;">&mdash;&nbsp;&middot;&nbsp;&middot;&nbsp;&middot;&nbsp;&mdash;</p>
+
+        <!-- SUBTITLE -->
+        <p style="margin:0 0 32px;font-family:Georgia,'Times New Roman',serif;font-size:15px;color:#a09070;line-height:1.8;text-align:center;">
+          Mal podemos esperar para<br>
+          <strong style="color:#e8dfc8;font-weight:600;">conhecer a vossa história</strong>.
+        </p>
+
+        <!-- INFO BOX -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #2a1e0e;margin:0 0 28px;">
+          <tr>
+            <td align="left" width="90" valign="middle"
+              style="text-align:left;padding:16px 20px;border-bottom:1px solid #2e2416;border-right:1px solid #2e2416;font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;white-space:nowrap;">DATA</td>
+            <td align="right" valign="middle"
+              style="text-align:right;padding:16px 20px;border-bottom:1px solid #2e2416;font-size:16px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;">${dataFmt}</td>
+          </tr>
+          <tr>
+            <td align="left" width="90" valign="middle"
+              style="text-align:left;padding:16px 20px;border-bottom:1px solid #2e2416;border-right:1px solid #2e2416;font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;white-space:nowrap;">HORA</td>
+            <td align="right" valign="middle"
+              style="text-align:right;padding:16px 20px;border-bottom:1px solid #2e2416;font-size:16px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;">${reuniao_hora}</td>
+          </tr>
+          <tr>
+            <td align="left" width="90" valign="middle"
+              style="text-align:left;padding:16px 20px;border-right:1px solid #2e2416;font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;white-space:nowrap;">LOCAL</td>
+            <td align="right" valign="middle"
+              style="text-align:right;padding:16px 20px;font-size:16px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;">${localTxt}</td>
+          </tr>
+        </table>
+
+        <!-- BUTTON -->
         <table width="100%" cellpadding="0" cellspacing="0">
           <tr>
-            <td align="center" bgcolor="${cellBg}" style="background-color:${cellBg};border:1px solid #c9a96e;">
-              <a href="${link}" style="display:block;padding:18px 40px;font-family:Georgia,'Times New Roman',serif;font-size:18px;font-style:italic;font-weight:400;color:#c9a96e;text-decoration:none;letter-spacing:0.04em;">Aceder à Reunião</a>
+            <td align="center" style="border:1px solid #c9a96e;">
+              <a href="${link}"
+                style="display:block;padding:18px 40px;font-family:Georgia,'Times New Roman',serif;font-size:18px;font-style:italic;font-weight:400;color:#c9a96e;text-decoration:none;letter-spacing:0.04em;">Aceder à Reunião</a>
             </td>
           </tr>
         </table>
+
       </td>
+      <td width="28" bgcolor="#050302" style="border-right:1px solid #8a6c2a;"></td>
     </tr>
+    <tr>
+      <td width="28" height="28" bgcolor="#050302" style="border-bottom:1px solid #8a6c2a;border-left:1px solid #8a6c2a;"></td>
+      <td bgcolor="#050302" style="border-bottom:1px solid #8a6c2a;"></td>
+      <td width="28" height="28" bgcolor="#050302" style="border-bottom:1px solid #8a6c2a;border-right:1px solid #8a6c2a;"></td>
+    </tr>
+  </table>
 
-    <!-- bottom spacer: footer area of the image -->
-    <tr><td height="56" style="font-size:0;line-height:0;">&nbsp;</td></tr>
-
+  <!-- FOOTER -->
+  <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;margin-top:14px;">
+    <tr>
+      <td align="left"  style="font-family:Arial,sans-serif;font-size:9px;letter-spacing:0.5em;color:#302818;text-transform:uppercase;padding:0 28px;">RL PHOTO &middot; VIDEO</td>
+      <td align="right" style="font-family:Arial,sans-serif;font-size:9px;letter-spacing:0.5em;color:#302818;text-transform:uppercase;padding:0 28px;">Reunião Marcada</td>
+    </tr>
   </table>
 
 </td></tr>
