@@ -31,9 +31,9 @@ export async function POST(req: NextRequest) {
   const html = `<!DOCTYPE html>
 <html lang="pt">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#080603;">
+<body style="margin:0;padding:0;background:#080503;">
 
-<table width="100%" cellpadding="0" cellspacing="0" bgcolor="#080603" style="background:#080603;padding:48px 16px 32px;">
+<table width="100%" cellpadding="0" cellspacing="0" bgcolor="#080503" style="background:radial-gradient(ellipse at 50% 35%, #1c1008 0%, #080503 55%, #040201 100%);padding:48px 16px 32px;">
 <tr><td align="center">
 
   <!-- CORNER FRAME -->
@@ -45,12 +45,10 @@ export async function POST(req: NextRequest) {
     </tr>
     <tr>
       <td width="32" style="border-left:1px solid #8a6c2a;"></td>
-      <td align="center" style="padding:36px 28px 44px;background:#080603;">
+      <td align="center" style="padding:36px 28px 44px;">
 
         <!-- LOGO -->
-        <div style="margin:0 auto 22px;width:80px;height:80px;border-radius:50%;border:1.5px solid #c9a96e;overflow:hidden;">
-          <img src="${LOGO}" width="80" height="80" alt="RL" style="display:block;border-radius:50%;width:80px;height:80px;" />
-        </div>
+        <img src="${LOGO}" width="80" height="80" alt="RL Photo Video" style="display:block;margin:0 auto 22px;" />
 
         <!-- CALENDAR PILL -->
         <div style="display:inline-block;margin:0 0 22px;padding:10px 24px;background:#100c06;border:1px solid #2a1e0e;border-radius:40px;font-size:24px;line-height:1;">&#128197;</div>
