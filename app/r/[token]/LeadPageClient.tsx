@@ -207,6 +207,9 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
 
   // Photo upload refs for portfolio
   const photoRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)]
+  const [uploadingPhoto, setUploadingPhoto] = useState<number | null>(null)
+  const [uploadError,    setUploadError]    = useState<string | null>(null)
+  const [saveError,      setSaveError]      = useState<string | null>(null)
 
   useEffect(() => {
     fetch(`/api/lead-page/view?token=${token}`)
@@ -254,12 +257,23 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
   // ── Save content ──
   const handleSaveContent = async () => {
     setSaving(true)
-    const res = await fetch('/api/lead-page/save-content', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, page_content: content }),
-    })
-    if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2000) }
+    setSaveError(null)
+    try {
+      const res = await fetch('/api/lead-page/save-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, page_content: content }),
+      })
+      if (res.ok) {
+        setSaved(true)
+        setTimeout(() => setSaved(false), 2000)
+      } else {
+        const d = await res.json().catch(() => ({}))
+        setSaveError(d.error || `Erro ${res.status}`)
+      }
+    } catch {
+      setSaveError('Erro de ligação ao guardar')
+    }
     setSaving(false)
   }
 
@@ -280,11 +294,23 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
     setSavingHero(false)
   }
 
-  const handleUpload = async (file: File, cb: (url: string) => void) => {
-    const fd = new FormData(); fd.append('file', file)
-    const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
-    const data = await res.json()
-    if (data.url) cb(data.url)
+  const handleUpload = async (file: File, cb: (url: string) => void, photoIndex?: number) => {
+    if (photoIndex !== undefined) setUploadingPhoto(photoIndex)
+    setUploadError(null)
+    try {
+      const fd = new FormData(); fd.append('file', file)
+      const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (data.url) {
+        cb(data.url)
+      } else {
+        setUploadError(data.error || 'Erro ao carregar foto')
+      }
+    } catch {
+      setUploadError('Erro de ligação ao carregar foto')
+    } finally {
+      if (photoIndex !== undefined) setUploadingPhoto(null)
+    }
   }
 
   // ── Confirm / change ──
@@ -692,7 +718,17 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
             </div>
 
             {/* Save button */}
-            <div className="px-4 py-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+            <div className="px-4 py-4 border-t flex flex-col gap-2" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+              {uploadError && (
+                <p className="text-[11px] text-red-400 text-center bg-red-500/10 rounded-lg px-3 py-2 border border-red-500/20">
+                  ✕ {uploadError}
+                </p>
+              )}
+              {saveError && (
+                <p className="text-[11px] text-red-400 text-center bg-red-500/10 rounded-lg px-3 py-2 border border-red-500/20">
+                  ✕ {saveError}
+                </p>
+              )}
               <button onClick={handleSaveContent} disabled={saving}
                 className="w-full py-3 rounded-xl text-sm font-semibold tracking-[0.1em] uppercase transition-all disabled:opacity-50"
                 style={{ background: saved ? 'rgba(74,222,128,0.15)' : 'rgba(201,168,76,0.15)', color: saved ? '#4ade80' : '#C9A84C', border: `1px solid ${saved ? 'rgba(74,222,128,0.3)' : 'rgba(201,168,76,0.3)'}` }}>
