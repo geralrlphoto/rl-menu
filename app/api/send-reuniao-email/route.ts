@@ -46,25 +46,25 @@ export async function POST(req: NextRequest) {
 
     <!-- DATA / HORA / LOCAL -->
     <tr>
-      <td style="padding:0 40px;">
+      <td style="padding:0 70px;">
         <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #2a1e0e;">
           <tr>
-            <td align="left" width="90" valign="middle" bgcolor="${bg}"
-              style="background-color:${bg};text-align:left;padding:11px 18px;border-bottom:1px solid #2e2416;border-right:1px solid #2e2416;font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;white-space:nowrap;">DATA</td>
-            <td align="right" valign="middle" bgcolor="${bg}"
-              style="background-color:${bg};text-align:right;padding:11px 18px;border-bottom:1px solid #2e2416;font-size:16px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;">${dataFmt}</td>
+            <td align="left" width="90" valign="middle"
+              style="text-align:left;padding:11px 18px;border-bottom:1px solid #2e2416;border-right:1px solid #2e2416;font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;white-space:nowrap;">DATA</td>
+            <td align="right" valign="middle"
+              style="text-align:right;padding:11px 18px;border-bottom:1px solid #2e2416;font-size:16px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;">${dataFmt}</td>
           </tr>
           <tr>
-            <td align="left" width="90" valign="middle" bgcolor="${bg}"
-              style="background-color:${bg};text-align:left;padding:11px 18px;border-bottom:1px solid #2e2416;border-right:1px solid #2e2416;font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;white-space:nowrap;">HORA</td>
-            <td align="right" valign="middle" bgcolor="${bg}"
-              style="background-color:${bg};text-align:right;padding:11px 18px;border-bottom:1px solid #2e2416;font-size:16px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;">${reuniao_hora}</td>
+            <td align="left" width="90" valign="middle"
+              style="text-align:left;padding:11px 18px;border-bottom:1px solid #2e2416;border-right:1px solid #2e2416;font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;white-space:nowrap;">HORA</td>
+            <td align="right" valign="middle"
+              style="text-align:right;padding:11px 18px;border-bottom:1px solid #2e2416;font-size:16px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;">${reuniao_hora}</td>
           </tr>
           <tr>
-            <td align="left" width="90" valign="middle" bgcolor="${bg}"
-              style="background-color:${bg};text-align:left;padding:11px 18px;border-right:1px solid #2e2416;font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;white-space:nowrap;">LOCAL</td>
-            <td align="right" valign="middle" bgcolor="${bg}"
-              style="background-color:${bg};text-align:right;padding:11px 18px;font-size:16px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;">${localTxt}</td>
+            <td align="left" width="90" valign="middle"
+              style="text-align:left;padding:11px 18px;border-right:1px solid #2e2416;font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;white-space:nowrap;">LOCAL</td>
+            <td align="right" valign="middle"
+              style="text-align:right;padding:11px 18px;font-size:16px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;">${localTxt}</td>
           </tr>
         </table>
       </td>
@@ -75,10 +75,10 @@ export async function POST(req: NextRequest) {
 
     <!-- BOTÃO -->
     <tr>
-      <td style="padding:0 40px;">
+      <td style="padding:0 70px;">
         <table width="100%" cellpadding="0" cellspacing="0">
           <tr>
-            <td align="center" bgcolor="${bg}" style="background-color:${bg};border:1px solid #c9a96e;">
+            <td align="center" style="border:1px solid #c9a96e;">
               <a href="${link}"
                 style="display:block;padding:17px 40px;font-family:Georgia,'Times New Roman',serif;font-size:18px;font-style:italic;font-weight:400;color:#c9a96e;text-decoration:none;letter-spacing:0.04em;">Aceder à Reunião</a>
             </td>
