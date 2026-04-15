@@ -23,6 +23,7 @@ const SIZES: { value: string; label: string; className: string }[] = [
 export type PageContent = {
   hero:         { title: string; titleFont: string; titleSize: string; titleColor: string; brandLine: string; brandColor: string }
   countdown:    { title: string; titleColor: string }
+  video:        { label: string; title: string; url: string }
   portfolio:    { label: string; title: string; titleFont: string; titleColor: string; photos: string[] }
   testimonials: { label: string; items: { text: string; author: string }[] }
   about:        { label: string; title: string; titleFont: string; titleColor: string; text: string; textColor: string }
@@ -34,8 +35,9 @@ export const DEFAULT_CONTENT: PageContent = {
     titleColor: '#ffffff', brandLine: 'RL Photo · Video', brandColor: '#C9A84C',
   },
   countdown:    { title: 'Contagem Regressiva', titleColor: '#C9A84C' },
+  video:        { label: 'O nosso trabalho', title: 'Vê como captamos cada momento.', url: '' },
   portfolio: {
-    label: 'O nosso trabalho', title: 'Momentos que ficam para sempre.',
+    label: 'Portfólio', title: 'Momentos que ficam para sempre.',
     titleFont: 'cormorant', titleColor: '#ffffff', photos: ['', '', ''],
   },
   testimonials: {
@@ -58,6 +60,7 @@ function merge(saved: any): PageContent {
   return {
     hero:         { ...DEFAULT_CONTENT.hero,         ...(saved.hero         || {}) },
     countdown:    { ...DEFAULT_CONTENT.countdown,    ...(saved.countdown    || {}) },
+    video:        { ...DEFAULT_CONTENT.video,        ...(saved.video        || {}) },
     portfolio:    { ...DEFAULT_CONTENT.portfolio,    ...(saved.portfolio    || {}), photos: saved.portfolio?.photos || DEFAULT_CONTENT.portfolio.photos },
     testimonials: { ...DEFAULT_CONTENT.testimonials, ...(saved.testimonials || {}), items: saved.testimonials?.items || DEFAULT_CONTENT.testimonials.items },
     about:        { ...DEFAULT_CONTENT.about,        ...(saved.about        || {}) },
@@ -66,6 +69,19 @@ function merge(saved: any): PageContent {
 
 function fontClass(f: string) { return FONTS.find(x => x.value === f)?.className || 'font-playfair' }
 function sizeClass(s: string) { return SIZES.find(x => x.value === s)?.className || 'text-6xl sm:text-7xl' }
+
+function toEmbedUrl(url: string): string | null {
+  if (!url) return null
+  // YouTube watch or short link
+  const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+  if (yt) return `https://www.youtube.com/embed/${yt[1]}?rel=0&modestbranding=1&color=white`
+  // Vimeo
+  const vm = url.match(/vimeo\.com\/(\d+)/)
+  if (vm) return `https://player.vimeo.com/video/${vm[1]}?title=0&byline=0&portrait=0&color=C9A84C`
+  // Already embed URL
+  if (url.includes('/embed/') || url.includes('player.vimeo')) return url
+  return null
+}
 
 // ─── UI helpers ──────────────────────────────────────────────────────────────
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -233,6 +249,9 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
   function setCountdown(k: keyof PageContent['countdown'], v: string) {
     setContent(c => ({ ...c, countdown: { ...c.countdown, [k]: v } }))
   }
+  function setVideo(k: keyof PageContent['video'], v: string) {
+    setContent(c => ({ ...c, video: { ...c.video, [k]: v } }))
+  }
   function setPortfolio(k: keyof PageContent['portfolio'], v: any) {
     setContent(c => ({ ...c, portfolio: { ...c.portfolio, [k]: v } }))
   }
@@ -348,7 +367,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
   const targetDate = contact!.reuniao_data && contact!.reuniao_hora
     ? `${contact!.reuniao_data}T${horaFmt}:00` : null
 
-  const { hero, countdown, portfolio, testimonials, about } = content
+  const { hero, countdown, video, portfolio, testimonials, about } = content
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
@@ -510,6 +529,30 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
         </div>
       </section>
 
+      {/* ── VÍDEO ── */}
+      {(video.url || isAdmin) && (
+        <section id="sec-video" className="px-6 py-14 flex flex-col items-center" style={{ background: '#0d0d0d' }}>
+          <p className="text-xs tracking-[0.35em] text-white/25 uppercase mb-2">{video.label}</p>
+          <h2 className="font-cormorant text-3xl font-light mb-8 text-center text-white/90">{video.title}</h2>
+          {video.url && toEmbedUrl(video.url) ? (
+            <div className="w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl"
+              style={{ aspectRatio: '16/9', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <iframe
+                src={toEmbedUrl(video.url)!}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            </div>
+          ) : isAdmin ? (
+            <div className="w-full max-w-2xl rounded-2xl flex items-center justify-center"
+              style={{ aspectRatio: '16/9', background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(201,168,76,0.2)' }}>
+              <p className="text-gold/30 text-xs tracking-widest uppercase">Adiciona um vídeo no editor</p>
+            </div>
+          ) : null}
+        </section>
+      )}
+
       <div className="w-full max-w-sm mx-auto h-px" style={{ background: 'rgba(201,168,76,0.15)' }} />
 
       {/* ── PORTFÓLIO ── */}
@@ -628,6 +671,30 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
                 <Field label="Cor do título">
                   <ColorPicker value={countdown.titleColor} onChange={v => setCountdown('titleColor', v)} />
                 </Field>
+              </AccordionSection>
+
+              {/* ── VÍDEO ── */}
+              <AccordionSection title="Vídeo">
+                <Field label="Etiqueta">
+                  <TInput value={video.label} onChange={v => setVideo('label', v)} />
+                </Field>
+                <Field label="Título">
+                  <TInput value={video.title} onChange={v => setVideo('title', v)} />
+                </Field>
+                <Field label="Link (YouTube ou Vimeo)">
+                  <TInput value={video.url} onChange={v => setVideo('url', v)} />
+                </Field>
+                {video.url && (
+                  <p className={`text-[10px] text-center ${toEmbedUrl(video.url) ? 'text-green-400/70' : 'text-red-400/70'}`}>
+                    {toEmbedUrl(video.url) ? '✓ Link válido' : '✕ Link inválido — usa YouTube ou Vimeo'}
+                  </p>
+                )}
+                {video.url && (
+                  <button onClick={() => setVideo('url', '')}
+                    className="text-[9px] text-white/20 hover:text-red-400 transition-colors text-center tracking-wider">
+                    ✕ remover vídeo
+                  </button>
+                )}
               </AccordionSection>
 
               {/* ── PORTFÓLIO ── */}
