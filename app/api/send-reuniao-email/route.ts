@@ -80,16 +80,16 @@ export async function POST(req: NextRequest) {
           <!-- Info box -->
           <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #2e2416;margin:0 0 36px;">
             <tr>
-              <td width="80" style="padding:16px 22px;border-bottom:1px solid #2e2416;font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,sans-serif;vertical-align:middle;white-space:nowrap;">DATA</td>
-              <td style="padding:16px 22px;border-bottom:1px solid #2e2416;font-size:17px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;text-align:right;vertical-align:middle;">${dataFmt}</td>
+              <td width="90" style="padding:18px 22px;border-bottom:1px solid #2e2416;border-right:1px solid #2e2416;font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,sans-serif;vertical-align:middle;white-space:nowrap;">DATA</td>
+              <td style="padding:18px 22px;border-bottom:1px solid #2e2416;font-size:16px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;text-align:right;vertical-align:middle;">${dataFmt}</td>
             </tr>
             <tr>
-              <td width="80" style="padding:16px 22px;border-bottom:1px solid #2e2416;font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,sans-serif;vertical-align:middle;white-space:nowrap;">HORA</td>
-              <td style="padding:16px 22px;border-bottom:1px solid #2e2416;font-size:17px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;text-align:right;vertical-align:middle;">${reuniao_hora}</td>
+              <td width="90" style="padding:18px 22px;border-bottom:1px solid #2e2416;border-right:1px solid #2e2416;font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,sans-serif;vertical-align:middle;white-space:nowrap;">HORA</td>
+              <td style="padding:18px 22px;border-bottom:1px solid #2e2416;font-size:16px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;text-align:right;vertical-align:middle;">${reuniao_hora}</td>
             </tr>
             <tr>
-              <td width="80" style="padding:16px 22px;font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,sans-serif;vertical-align:middle;white-space:nowrap;">LOCAL</td>
-              <td style="padding:16px 22px;font-size:17px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;text-align:right;vertical-align:middle;">${localTxt}</td>
+              <td width="90" style="padding:18px 22px;border-right:1px solid #2e2416;font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,sans-serif;vertical-align:middle;white-space:nowrap;">LOCAL</td>
+              <td style="padding:18px 22px;font-size:16px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;text-align:right;vertical-align:middle;">${localTxt}</td>
             </tr>
           </table>
 
