@@ -492,7 +492,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
         <h2 className={`${fontClass(portfolio.titleFont)} text-3xl font-light mb-8 text-center`} style={{ color: portfolio.titleColor }}>
           {portfolio.title}
         </h2>
-        <div className="w-full max-w-sm grid grid-cols-3 gap-2">
+        <div className="w-full max-w-2xl grid grid-cols-3 gap-3">
           {portfolio.photos.map((url, i) => (
             <div key={i} className="aspect-square rounded-xl overflow-hidden relative group"
               style={{ background: url ? undefined : 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
