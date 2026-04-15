@@ -248,7 +248,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
       case 'cover': return (
         <div className="flex flex-col items-center justify-center h-full text-center px-8 gap-6">
-          <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="w-16 opacity-70 mb-2" />
+          <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="w-28 sm:w-36 opacity-80 mb-2" />
           <p className="text-[10px] tracking-[0.5em] text-white/25 uppercase">{nome || 'Para vocês'}</p>
           <div>
             <h1 className={`${fontClass(typo.titleFont)} ${sizeClass(typo.titleSize)} font-light`} style={{ color: typo.titleColor, lineHeight: 1 }}>Proposta</h1>
@@ -298,7 +298,6 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
       case 'cta': return (
         <div className="flex flex-col items-center justify-center h-full text-center px-8 gap-8">
-          <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="w-12 opacity-60" />
           <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
           <p className={`${fontClass(typo.bodyFont)} text-2xl sm:text-3xl italic font-light`} style={{ color: typo.bodyColor }}>{pp.ctaText}</p>
           <a href={`/r/${token}`}
@@ -331,6 +330,13 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
             className="text-[10px] px-2.5 py-1 border border-gold/30 rounded text-gold/70 hover:text-gold transition-all uppercase tracking-wider">
             ✎ Editar
           </button>
+        </div>
+      )}
+
+      {/* Logo topo — slides 1 a N */}
+      {current > 0 && (
+        <div className={`absolute left-0 right-0 flex justify-center z-20 pointer-events-none ${isAdmin ? 'top-11' : 'top-5'}`}>
+          <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="w-10 opacity-50" />
         </div>
       )}
 
