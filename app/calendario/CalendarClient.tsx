@@ -34,10 +34,20 @@ export type TeamEntry = {
   tipo: 'confirmacao' | 'edicao_fotos' | 'edicao_album' | 'edicao_video'
 }
 
+export type ReuniaoEvent = {
+  id: string
+  nome: string
+  reuniao_data: string         // YYYY-MM-DD
+  reuniao_hora: string | null
+  reuniao_tipo: string | null  // Presencial | Videochamada
+  reuniao_link: string | null
+}
+
 type SelectedItem =
   | { kind: 'event'; data: CalEvent }
   | { kind: 'pw'; data: PreWeddingEvent }
   | { kind: 'team'; data: TeamEntry }
+  | { kind: 'reuniao'; data: ReuniaoEvent }
 
 const MESES = [
   'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
@@ -70,10 +80,12 @@ export default function CalendarClient({
   events,
   preWeddings,
   teamEntries,
+  reunioes,
 }: {
   events: CalEvent[]
   preWeddings: PreWeddingEvent[]
   teamEntries: TeamEntry[]
+  reunioes: ReuniaoEvent[]
 }) {
   const today = new Date()
   const [viewYear, setViewYear]   = useState(today.getFullYear())
@@ -105,13 +117,16 @@ export default function CalendarClient({
       const d = new Date(p.data_evento + 'T00:00:00')
       return d.getFullYear() === viewYear && d.getMonth() === i
     }).length
-    // team entries: count unique dates with at least 1 confirmed (not indisponivel)
     const te = teamEntries.filter(t => {
       if (t.status !== 'confirmado') return false
       const d = new Date(t.data_calendar + 'T00:00:00')
       return d.getFullYear() === viewYear && d.getMonth() === i
     }).length
-    return ev + pw + te
+    const re = reunioes.filter(r => {
+      const d = new Date(r.reuniao_data + 'T00:00:00')
+      return d.getFullYear() === viewYear && d.getMonth() === i
+    }).length
+    return ev + pw + te + re
   })
 
   return (
@@ -198,9 +213,10 @@ export default function CalendarClient({
                 day = i - firstDay + 1
               }
 
-              const dayEvents = isCurrentMonth ? events.filter(e => startsOn(e.data_evento, viewYear, viewMonth, day)) : []
-              const dayPws    = isCurrentMonth ? preWeddings.filter(p => startsOn(p.data_evento, viewYear, viewMonth, day)) : []
-              const dayTeam   = isCurrentMonth ? teamEntries.filter(t => startsOn(t.data_calendar, viewYear, viewMonth, day)) : []
+              const dayEvents   = isCurrentMonth ? events.filter(e => startsOn(e.data_evento, viewYear, viewMonth, day)) : []
+              const dayPws      = isCurrentMonth ? preWeddings.filter(p => startsOn(p.data_evento, viewYear, viewMonth, day)) : []
+              const dayTeam     = isCurrentMonth ? teamEntries.filter(t => startsOn(t.data_calendar, viewYear, viewMonth, day)) : []
+              const dayReunioes = isCurrentMonth ? reunioes.filter(r => startsOn(r.reuniao_data, viewYear, viewMonth, day)) : []
 
               const isToday = isCurrentMonth
                 && day === today.getDate()
@@ -216,6 +232,7 @@ export default function CalendarClient({
                 ...dayEvents.map(e => ({ kind: 'event' as const, e })),
                 ...dayPws.map(p => ({ kind: 'pw' as const, p })),
                 ...dayTeam.map(t => ({ kind: 'team' as const, t })),
+                ...dayReunioes.map(r => ({ kind: 'reuniao' as const, r })),
               ]
               const visible  = allItems.slice(0, MAX)
               const overflow = allItems.length - MAX
@@ -257,6 +274,17 @@ export default function CalendarClient({
                             <div className="px-1.5 py-0.5 rounded text-[10px] leading-tight truncate"
                               style={{ background: 'rgba(79,195,195,0.10)', border: '1px solid rgba(79,195,195,0.25)', color: '#4FC3C3' }}>
                               📷 {pw.nomes}
+                            </div>
+                          </button>
+                        )
+                      }
+                      if (item.kind === 'reuniao') {
+                        const r = item.r
+                        return (
+                          <button key={`re-${r.id}`} onClick={() => setSelected({ kind: 'reuniao', data: r })} className="text-left w-full">
+                            <div className="px-1.5 py-0.5 rounded text-[10px] leading-tight truncate"
+                              style={{ background: 'rgba(192,132,252,0.12)', border: '1px solid rgba(192,132,252,0.28)', color: '#C084FC' }}>
+                              🤝 {r.nome.split(' ')[0]}
                             </div>
                           </button>
                         )
@@ -303,6 +331,10 @@ export default function CalendarClient({
             Pré-Wedding
           </span>
           <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded" style={{ background: 'rgba(192,132,252,0.12)', border: '1px solid rgba(192,132,252,0.28)' }} />
+            🤝 Reunião CRM
+          </span>
+          <span className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded" style={{ background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.28)' }} />
             ✓ Confirmado
           </span>
@@ -335,8 +367,9 @@ export default function CalendarClient({
           <div className="w-full max-w-md bg-[#111] rounded-2xl p-6"
             style={{
               border: `1px solid ${
-                selected.kind === 'pw'   ? 'rgba(79,195,195,0.25)' :
-                selected.kind === 'team' ? (
+                selected.kind === 'pw'      ? 'rgba(79,195,195,0.25)' :
+                selected.kind === 'reuniao' ? 'rgba(192,132,252,0.30)' :
+                selected.kind === 'team'    ? (
                   selected.data.status === 'indisponivel'
                     ? 'rgba(239,68,68,0.25)'
                     : TIPO_COLORS[selected.data.tipo].border
@@ -386,6 +419,39 @@ export default function CalendarClient({
                 </ModalActions>
               </>
             )}
+
+            {selected.kind === 'reuniao' && (() => {
+              const r = selected.data
+              return (
+                <>
+                  <div className="text-[10px] tracking-[0.4em] uppercase mb-1" style={{ color: 'rgba(192,132,252,0.6)' }}>
+                    REUNIÃO CRM · {r.reuniao_tipo || 'Presencial'}
+                  </div>
+                  <h2 className="text-xl font-light text-white tracking-wide mb-4">{r.nome}</h2>
+                  <div className="space-y-2 mb-6">
+                    <Row label="Data">{fmtDate(r.reuniao_data)}</Row>
+                    {r.reuniao_hora && <Row label="Hora">{r.reuniao_hora}</Row>}
+                    <Row label="Tipo">{r.reuniao_tipo || 'Presencial'}</Row>
+                    {r.reuniao_link && (
+                      <Row label="Meet">
+                        <a href={r.reuniao_link} target="_blank" rel="noopener noreferrer"
+                          className="text-green-400 hover:text-green-300 transition-colors break-all">
+                          {r.reuniao_link}
+                        </a>
+                      </Row>
+                    )}
+                  </div>
+                  <ModalActions>
+                    <Link href={`/crm/${r.id}`}
+                      className="flex-1 text-center py-2.5 rounded-xl text-sm tracking-wider transition-colors"
+                      style={{ background: 'rgba(192,132,252,0.10)', border: '1px solid rgba(192,132,252,0.30)', color: '#C084FC' }}>
+                      Ver Ficha CRM
+                    </Link>
+                    <CloseBtn onClose={() => setSelected(null)} />
+                  </ModalActions>
+                </>
+              )
+            })()}
 
             {selected.kind === 'team' && (() => {
               const t = selected.data
