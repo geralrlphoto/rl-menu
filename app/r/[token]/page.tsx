@@ -259,20 +259,23 @@ export default function LeadPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
 
-      {/* ── MENU LATERAL ── */}
-      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} isAdmin={isAdmin} />
+      {/* ── MENU LATERAL (só admin) ── */}
+      {isAdmin && (
+        <>
+          <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} isAdmin={isAdmin} />
 
-      {/* ── BOTÃO HAMBURGER ── */}
-      <button
-        onClick={() => setMenuOpen(true)}
-        className="fixed top-4 left-4 z-40 w-10 h-10 flex flex-col items-center justify-center gap-1.5 rounded-xl transition-all"
-        style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.1)' }}
-        aria-label="Menu"
-      >
-        <span className="w-4.5 h-px bg-white/70 block" style={{ width: '18px' }} />
-        <span className="w-4.5 h-px bg-white/70 block" style={{ width: '14px' }} />
-        <span className="w-4.5 h-px bg-white/70 block" style={{ width: '18px' }} />
-      </button>
+          <button
+            onClick={() => setMenuOpen(true)}
+            className="fixed top-4 left-4 z-40 w-10 h-10 flex flex-col items-center justify-center gap-1.5 rounded-xl transition-all"
+            style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.1)' }}
+            aria-label="Menu"
+          >
+            <span className="block bg-white/70" style={{ width: '18px', height: '1px' }} />
+            <span className="block bg-white/70" style={{ width: '14px', height: '1px' }} />
+            <span className="block bg-white/70" style={{ width: '18px', height: '1px' }} />
+          </button>
+        </>
+      )}
 
       {/* ── ADMIN BAR ── */}
       {isAdmin && (
