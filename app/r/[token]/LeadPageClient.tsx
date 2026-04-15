@@ -694,17 +694,22 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
                   <TInput value={video.title} onChange={v => setVideo('title', v)} />
                 </Field>
                 {[0, 1, 2].map(i => (
-                  <div key={i} className="flex flex-col gap-1.5">
-                    <Field label={`Vídeo ${i + 1} — Link YouTube / Vimeo`}>
-                      <TInput value={video.urls[i] || ''} onChange={v => setVideoUrl(i, v)} />
-                    </Field>
+                  <div key={i} className="flex flex-col gap-1 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <p className="text-[10px] tracking-widest text-white/25 uppercase mb-1">Vídeo {i + 1}</p>
+                    <input
+                      type="text"
+                      placeholder="https://youtube.com/watch?v=..."
+                      value={video.urls[i] || ''}
+                      onChange={e => setVideoUrl(i, e.target.value)}
+                      className="w-full bg-white/[0.06] border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-gold/40 placeholder:text-white/20"
+                    />
                     {video.urls[i] && (
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mt-1">
                         <p className={`text-[10px] ${toEmbedUrl(video.urls[i]) ? 'text-green-400/70' : 'text-red-400/70'}`}>
-                          {toEmbedUrl(video.urls[i]) ? '✓ Link válido' : '✕ Inválido'}
+                          {toEmbedUrl(video.urls[i]) ? '✓ Válido' : '✕ Inválido'}
                         </p>
                         <button onClick={() => setVideoUrl(i, '')}
-                          className="text-[9px] text-white/20 hover:text-red-400 transition-colors tracking-wider">
+                          className="text-[9px] text-white/20 hover:text-red-400 transition-colors">
                           ✕ remover
                         </button>
                       </div>
