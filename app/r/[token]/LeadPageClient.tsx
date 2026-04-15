@@ -508,7 +508,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
       <div className="w-full max-w-sm mx-auto h-px" style={{ background: 'rgba(201,168,76,0.15)' }} />
 
       {/* ── TESTEMUNHOS ── */}
-      <section id="sec-testemunhos" className="px-6 py-14 flex flex-col items-center gap-8 max-w-sm mx-auto">
+      <section id="sec-testemunhos" className="px-6 py-14 flex flex-col items-center gap-8 max-w-2xl mx-auto">
         <p className="text-xs tracking-[0.35em] text-white/25 uppercase">{testimonials.label}</p>
         {testimonials.items.map((item, i) => (
           <div key={i} className="flex flex-col items-center gap-4 w-full">
