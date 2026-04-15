@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
            background-position:top center;">
 
     <!-- ESPAÇO SUPERIOR: logo + heading + subtítulo da imagem -->
-    <tr><td height="320" style="font-size:0;line-height:0;">&nbsp;</td></tr>
+    <tr><td height="375" style="font-size:0;line-height:0;">&nbsp;</td></tr>
 
     <!-- DATA / HORA / LOCAL -->
     <tr>
