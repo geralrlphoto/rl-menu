@@ -38,7 +38,7 @@ export type PageContent = {
   proposta:     { password: string; buttonLabel: string }
   propostaPage: {
     subtitle: string; intro: string
-    about: { title: string; text: string; photo: string; videoUrl: string }
+    about: { title: string; text: string; photo: string; videoUrl: string; titlePos: string }
     packages: { title: string; description: string; price: string }[]
     ctaText: string
     typography: {
@@ -87,6 +87,7 @@ export const DEFAULT_CONTENT: PageContent = {
       text: '',
       photo: '',
       videoUrl: '',
+      titlePos: 'top-right',
     },
     packages: [
       { title: 'Essencial', description: 'Cobertura fotográfica completa do dia, edição premium e galeria online privada.', price: 'Sob consulta' },

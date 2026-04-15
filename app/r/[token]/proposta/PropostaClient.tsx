@@ -1,9 +1,26 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { DEFAULT_CONTENT, PageContent, FONTS, TITLE_SIZES } from '../LeadPageClient'
 
 const IMG_BASE = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
+
+function titlePosStyle(pos: string, isAdmin: boolean): React.CSSProperties {
+  const t = isAdmin ? '76px' : '52px'
+  const m = '40px'
+  const map: Record<string, React.CSSProperties> = {
+    'top-left':   { top: t, left: m, textAlign: 'left' },
+    'top-center': { top: t, left: '50%', transform: 'translateX(-50%)', textAlign: 'center' },
+    'top-right':  { top: t, right: m, textAlign: 'right' },
+    'mid-left':   { top: '50%', transform: 'translateY(-50%)', left: m, textAlign: 'left' },
+    'mid-center': { top: '50%', left: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center' },
+    'mid-right':  { top: '50%', transform: 'translateY(-50%)', right: m, textAlign: 'right' },
+    'bot-left':   { bottom: m, left: m, textAlign: 'left' },
+    'bot-center': { bottom: m, left: '50%', transform: 'translateX(-50%)', textAlign: 'center' },
+    'bot-right':  { bottom: m, right: m, textAlign: 'right' },
+  }
+  return map[pos] || map['top-right']
+}
 
 function toEmbed(url: string) {
   if (!url) return ''
@@ -286,14 +303,13 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       case 'about': return (
         <div className="relative h-full w-full flex items-center justify-center px-10 sm:px-16">
 
-          {/* Título — canto superior direito */}
-          <div className="absolute right-10 text-right" style={{ top: isAdmin ? '76px' : '52px' }}>
-            <p className="text-[9px] tracking-[0.5em] text-white/20 uppercase mb-1">RL Photo · Video</p>
+          {/* Título — posição editável */}
+          <div className="absolute" style={titlePosStyle(pp.about?.titlePos || 'top-right', isAdmin)}>
             <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
-              style={{ fontSize: 'clamp(1.6rem,3.5vw,2.6rem)', color: typo.titleColor, lineHeight: 1.1 }}>
+              style={{ fontSize: 'clamp(1.6rem,3.5vw,2.6rem)', color: typo.titleColor, lineHeight: 1.1, whiteSpace: 'nowrap' }}>
               {pp.about?.title || 'Sobre Nós'}
             </h2>
-            <div className="ml-auto mt-2" style={{ width: '36px', height: '1px', background: `${typo.accentColor}66` }} />
+            <div className="mt-2" style={{ width: '36px', height: '1px', background: `${typo.accentColor}66`, marginLeft: 'auto' }} />
           </div>
 
           {/* Conteúdo: foto + vídeo */}
@@ -543,6 +559,23 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 </Field>
                 <Field label="Título">
                   <TInput value={pp.about?.title || ''} onChange={v => setAbout('title', v)} placeholder="Sobre Nós" />
+                </Field>
+                <Field label="Posição do título">
+                  <div className="grid grid-cols-3 gap-1">
+                    {([
+                      ['top-left','↖'],['top-center','↑'],['top-right','↗'],
+                      ['mid-left','←'],['mid-center','·'],['mid-right','→'],
+                      ['bot-left','↙'],['bot-center','↓'],['bot-right','↘'],
+                    ] as [string,string][]).map(([pos, arrow]) => (
+                      <button key={pos} onClick={() => setAbout('titlePos', pos)}
+                        className="py-2 rounded text-sm transition-all"
+                        style={(pp.about?.titlePos || 'top-right') === pos
+                          ? { background: 'rgba(201,168,76,0.2)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.4)' }
+                          : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                        {arrow}
+                      </button>
+                    ))}
+                  </div>
                 </Field>
                 <Field label="URL do vídeo (YouTube / Vimeo)">
                   <TInput value={pp.about?.videoUrl || ''} onChange={v => setAbout('videoUrl', v)} placeholder="https://youtu.be/..." />
