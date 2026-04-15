@@ -3,83 +3,70 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 
-const WHATSAPP = 'https://wa.me/351919191919'
+const WHATSAPP     = 'https://wa.me/351919191919'
+const DEFAULT_HERO = 'https://rl-menu-lake.vercel.app/banner_footer.png'
 
-type Contact = {
-  nome: string
-  reuniao_data: string
-  reuniao_hora: string
-  reuniao_tipo: string
-  reuniao_link: string
-  page_confirmacao: string
-  page_foto_url: string
-}
+type Contact = Record<string, any>
+
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 
 function fmtData(d: string) {
   if (!d) return ''
-  const [y, m, day] = d.split('-')
-  return `${day} / ${m} / ${y}`
+  try {
+    const dt = new Date(d + 'T00:00:00')
+    return `${String(dt.getDate()).padStart(2,'0')} de ${MESES[dt.getMonth()]} de ${dt.getFullYear()}`
+  } catch { return d }
 }
 
-// ─── Countdown ────────────────────────────────────────────────────────────────
-function useCountdown(data: string, hora: string) {
-  const [diff, setDiff] = useState<{ dias: number; horas: number; min: number; seg: number; passada: boolean } | null>(null)
+function fmtHora(h: string) {
+  return (h || '').slice(0, 5)
+}
+
+// ─── Leaf decorativo (igual ao portal) ───────────────────────────────────────
+function Leaf({ flip }: { flip?: boolean }) {
+  return (
+    <svg viewBox="0 0 80 30" className={`w-16 sm:w-20 h-auto text-gold/50 ${flip ? 'scale-x-[-1]' : ''}`} fill="currentColor">
+      <path d="M5 15 Q20 5 40 15 Q20 25 5 15Z" opacity="0.6"/>
+      <path d="M30 15 Q50 3 75 15 Q50 27 30 15Z" opacity="0.4"/>
+      <line x1="5" y1="15" x2="75" y2="15" stroke="currentColor" strokeWidth="0.5" opacity="0.3"/>
+    </svg>
+  )
+}
+
+// ─── Countdown (igual ao portal) ─────────────────────────────────────────────
+function Countdown({ targetDate }: { targetDate: string }) {
+  const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0 })
 
   useEffect(() => {
-    if (!data || !hora) return
-    const calc = () => {
-      // hora pode vir como "HH:MM" ou "HH:MM:SS" do Supabase — normalizar para "HH:MM"
-      const horaShort = hora.slice(0, 5)
-      const target = new Date(`${data}T${horaShort}:00`)
-      const now = new Date()
-      const ms = target.getTime() - now.getTime()
-      if (ms <= 0) { setDiff({ dias: 0, horas: 0, min: 0, seg: 0, passada: true }); return }
-      const totalSeg = Math.floor(ms / 1000)
-      setDiff({
-        dias:   Math.floor(totalSeg / 86400),
-        horas:  Math.floor((totalSeg % 86400) / 3600),
-        min:    Math.floor((totalSeg % 3600) / 60),
-        seg:    totalSeg % 60,
-        passada: false,
+    function tick() {
+      const diff = new Date(targetDate).getTime() - Date.now()
+      if (diff <= 0) return setT({ d: 0, h: 0, m: 0, s: 0 })
+      setT({
+        d: Math.floor(diff / 86400000),
+        h: Math.floor((diff % 86400000) / 3600000),
+        m: Math.floor((diff % 3600000) / 60000),
+        s: Math.floor((diff % 60000) / 1000),
       })
     }
-    calc()
-    const id = setInterval(calc, 1000)
+    tick()
+    const id = setInterval(tick, 1000)
     return () => clearInterval(id)
-  }, [data, hora])
+  }, [targetDate])
 
-  return diff
-}
-
-function Countdown({ data, hora }: { data: string; hora: string }) {
-  const cd = useCountdown(data, hora)
-  if (!cd) return null
-
-  if (cd.passada) return (
-    <div className="w-full max-w-sm text-center py-3">
-      <span className="text-xs tracking-[0.3em] text-white/30 uppercase">Reunião realizada</span>
+  const Unit = ({ v, label }: { v: number; label: string }) => (
+    <div className="flex flex-col items-center">
+      <span className="font-playfair text-4xl sm:text-5xl font-bold text-white tabular-nums">{String(v).padStart(2, '0')}</span>
+      <span className="text-[10px] tracking-[0.25em] text-white/40 uppercase mt-1">{label}</span>
     </div>
   )
-
-  const pad = (n: number) => String(n).padStart(2, '0')
+  const Sep = () => <span className="font-playfair text-3xl text-gold/40 self-start mt-2">|</span>
 
   return (
-    <div className="w-full max-w-sm mb-6">
-      <p className="text-center text-[10px] tracking-[0.35em] text-white/25 uppercase mb-4">Reunião em</p>
-      <div className="grid grid-cols-4 gap-2">
-        {[
-          { val: cd.dias,  label: 'Dias'    },
-          { val: cd.horas, label: 'Horas'   },
-          { val: cd.min,   label: 'Min'     },
-          { val: cd.seg,   label: 'Seg'     },
-        ].map(({ val, label }) => (
-          <div key={label} className="flex flex-col items-center gap-1.5 py-3 rounded-xl"
-            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-            <span className="font-cormorant text-3xl text-white font-light leading-none">{pad(val)}</span>
-            <span className="text-[9px] tracking-[0.25em] text-white/25 uppercase">{label}</span>
-          </div>
-        ))}
-      </div>
+    <div className="flex items-center justify-center gap-4 sm:gap-8">
+      <Unit v={t.d} label="Dias" />
+      <Sep /><Unit v={t.h} label="Horas" />
+      <Sep /><Unit v={t.m} label="Min" />
+      <Sep /><Unit v={t.s} label="Seg" />
     </div>
   )
 }
@@ -87,10 +74,10 @@ function Countdown({ data, hora }: { data: string; hora: string }) {
 // ─── Página ───────────────────────────────────────────────────────────────────
 export default function LeadPage() {
   const { token } = useParams<{ token: string }>()
-  const [contact, setContact] = useState<Contact | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [contact, setContact]   = useState<Contact | null>(null)
+  const [loading, setLoading]   = useState(true)
   const [notFound, setNotFound] = useState(false)
-  const [status, setStatus] = useState<string | null>(null)
+  const [status, setStatus]     = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
   const [requesting, setRequesting] = useState(false)
 
@@ -118,53 +105,78 @@ export default function LeadPage() {
     await fetch(`/api/lead-page/change-request?token=${token}`, { method: 'POST' })
     setStatus('alteracao_pedida')
     setRequesting(false)
-    window.open(
-      `${WHATSAPP}?text=${encodeURIComponent('Olá! Gostaria de solicitar uma alteração à reunião marcada.')}`,
-      '_blank'
-    )
+    window.open(`${WHATSAPP}?text=${encodeURIComponent('Olá! Gostaria de solicitar uma alteração à reunião marcada.')}`, '_blank')
   }
 
   if (loading) return (
-    <main className="min-h-screen flex items-center justify-center" style={{ background: '#030201' }}>
-      <p className="text-white/20 tracking-[0.3em] text-xs uppercase">A carregar...</p>
+    <main className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
+      <p className="text-white/20 tracking-[0.3em] text-xs uppercase animate-pulse">A carregar...</p>
     </main>
   )
 
   if (notFound) return (
-    <main className="min-h-screen flex items-center justify-center flex-col gap-4" style={{ background: '#030201' }}>
+    <main className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
       <p className="text-white/20 tracking-[0.3em] text-xs uppercase">Página não disponível</p>
     </main>
   )
 
-  const isVideo   = contact?.reuniao_tipo === 'Videochamada'
-  const dataFmt   = fmtData(contact?.reuniao_data || '')
-  const fotoFooter = (contact as any).page_foto_url || 'https://rl-menu-lake.vercel.app/banner_footer.png'
+  const heroImage  = contact.page_foto_url || DEFAULT_HERO
+  const isVideo    = contact.reuniao_tipo === 'Videochamada'
+  const dataFmt    = fmtData(contact.reuniao_data || '')
+  const horaFmt    = fmtHora(contact.reuniao_hora || '')
+  const targetDate = contact.reuniao_data && contact.reuniao_hora
+    ? `${contact.reuniao_data}T${horaFmt}:00`
+    : null
 
   return (
-    <main className="min-h-screen" style={{ background: '#030201' }}>
+    <div className="min-h-screen bg-[#0a0a0a]">
 
-      {/* ── HERO ──────────────────────────────────────────── */}
-      <section className="flex flex-col items-center px-6 pt-16 pb-12">
-
-        {/* Marca */}
-        <div className="flex flex-col items-center gap-2 mb-10">
-          <span className="text-xs tracking-[0.35em] text-gold uppercase font-light">RL Photo · Video</span>
-          <div className="w-8 h-px bg-gold/40" />
+      {/* ── HERO ── */}
+      <section className="relative min-h-[70vh] sm:min-h-[80vh] flex items-end justify-center pb-12 overflow-hidden">
+        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${heroImage})` }}>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-black/90" />
         </div>
 
-        {/* Heading */}
-        <div className="text-center mb-10">
-          <p className="text-white/30 tracking-[0.25em] text-xs uppercase mb-3">A vossa</p>
-          <h1 className="font-cormorant text-5xl text-white font-light leading-tight mb-2">
-            reunião está
-          </h1>
-          <h1 className="font-cormorant text-5xl text-gold italic font-light leading-tight">
-            marcada.
-          </h1>
-        </div>
+        <div className="relative z-10 text-center px-4 pt-20">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Leaf />
+            <p className="font-cormorant text-gold text-sm sm:text-base tracking-[0.4em] uppercase italic">RL Photo · Video</p>
+            <Leaf flip />
+          </div>
 
-        {/* Card da reunião */}
-        <div className="w-full max-w-sm border border-white/10 rounded-2xl overflow-hidden mb-6"
+          <h1 className="font-playfair text-4xl sm:text-6xl lg:text-7xl font-black text-white leading-none tracking-tight mb-4">
+            Reunião Marcada
+          </h1>
+
+          <div className="flex flex-col items-center gap-1 mt-2">
+            {contact.nome && (
+              <p className="font-cormorant text-white/60 text-lg sm:text-xl italic tracking-wide">{contact.nome}</p>
+            )}
+            {dataFmt && (
+              <p className="font-cormorant text-white/50 text-sm sm:text-base italic tracking-wide">
+                ♡ {dataFmt} · {horaFmt} · {contact.reuniao_tipo || 'Presencial'}
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ── COUNTDOWN ── */}
+      {targetDate && (
+        <section className="py-10 sm:py-14 border-y border-white/[0.05] bg-[#0d0d0d]">
+          <p className="font-playfair font-black text-gold text-xl sm:text-2xl text-center mb-6 tracking-tight">Contagem Regressiva</p>
+          <div className="flex items-center justify-center gap-4">
+            <Leaf />
+            <Countdown targetDate={targetDate} />
+            <Leaf flip />
+          </div>
+        </section>
+      )}
+
+      {/* ── CARD REUNIÃO + BOTÕES ── */}
+      <section className="flex flex-col items-center px-6 py-14">
+
+        <div className="w-full max-w-sm border border-white/10 rounded-2xl overflow-hidden mb-8"
           style={{ background: 'rgba(255,255,255,0.03)' }}>
           <div className="px-6 py-4 border-b border-white/8">
             <p className="text-xs tracking-[0.3em] text-white/25 uppercase">Detalhes da Reunião</p>
@@ -177,15 +189,15 @@ export default function LeadPage() {
             <div className="h-px bg-white/5" />
             <div className="flex items-center justify-between">
               <span className="text-xs tracking-[0.2em] text-white/30 uppercase">Hora</span>
-              <span className="font-cormorant text-lg text-white/90">{contact?.reuniao_hora}</span>
+              <span className="font-cormorant text-lg text-white/90">{horaFmt}</span>
             </div>
             <div className="h-px bg-white/5" />
             <div className="flex items-center justify-between">
               <span className="text-xs tracking-[0.2em] text-white/30 uppercase">Modo</span>
-              <span className="font-cormorant text-lg text-white/90">{contact?.reuniao_tipo || 'Presencial'}</span>
+              <span className="font-cormorant text-lg text-white/90">{contact.reuniao_tipo || 'Presencial'}</span>
             </div>
           </div>
-          {contact?.reuniao_link && (
+          {contact.reuniao_link && (
             <div className="px-6 pb-5">
               <a href={contact.reuniao_link} target="_blank" rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs tracking-widest uppercase transition-all"
@@ -197,33 +209,26 @@ export default function LeadPage() {
           )}
         </div>
 
-        {/* ── COUNTDOWN ── */}
-        {contact?.reuniao_data && contact?.reuniao_hora && (
-          <Countdown data={contact.reuniao_data} hora={contact.reuniao_hora} />
-        )}
-
-        {/* Botões de ação */}
+        {/* Botões */}
         {status === 'confirmada' ? (
-          <div className="w-full max-w-sm text-center py-4">
+          <div className="w-full max-w-sm text-center">
             <div className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm tracking-wider"
               style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.2)' }}>
-              <span>✓</span>
-              <span>Reunião Confirmada — Até breve!</span>
+              <span>✓</span><span>Reunião Confirmada — Até breve!</span>
             </div>
           </div>
         ) : status === 'alteracao_pedida' ? (
-          <div className="w-full max-w-sm text-center py-4">
+          <div className="w-full max-w-sm text-center">
             <div className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm tracking-wider"
               style={{ background: 'rgba(251,191,36,0.1)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.2)' }}>
-              <span>⏳</span>
-              <span>Pedido enviado — Entraremos em contacto</span>
+              <span>⏳</span><span>Pedido enviado — Entraremos em contacto</span>
             </div>
           </div>
         ) : (
           <div className="w-full max-w-sm flex flex-col gap-3">
             <button onClick={handleConfirm} disabled={confirming}
               className="w-full py-4 rounded-2xl text-sm font-semibold tracking-[0.15em] uppercase transition-all disabled:opacity-50"
-              style={{ background: '#C9A84C', color: '#030201' }}>
+              style={{ background: '#C9A84C', color: '#0a0a0a' }}>
               {confirming ? 'A confirmar...' : 'Confirmar Reunião'}
             </button>
             <button onClick={handleChangeRequest} disabled={requesting}
@@ -237,12 +242,12 @@ export default function LeadPage() {
 
       <div className="w-full max-w-sm mx-auto h-px" style={{ background: 'rgba(201,168,76,0.15)' }} />
 
-      {/* ── PORTFÓLIO ─────────────────────────────────────── */}
+      {/* ── PORTFÓLIO ── */}
       <section className="px-6 py-14 flex flex-col items-center">
         <p className="text-xs tracking-[0.35em] text-white/25 uppercase mb-2">O nosso trabalho</p>
-        <h2 className="font-cormorant text-3xl text-white font-light mb-8">Momentos que ficam para sempre.</h2>
+        <h2 className="font-cormorant text-3xl text-white font-light mb-8 text-center">Momentos que ficam para sempre.</h2>
         <div className="w-full max-w-sm grid grid-cols-3 gap-2">
-          {[1, 2, 3].map(i => (
+          {[1,2,3].map(i => (
             <div key={i} className="aspect-square rounded-xl overflow-hidden"
               style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
               <div className="w-full h-full flex items-center justify-center">
@@ -255,7 +260,7 @@ export default function LeadPage() {
 
       <div className="w-full max-w-sm mx-auto h-px" style={{ background: 'rgba(201,168,76,0.15)' }} />
 
-      {/* ── TESTEMUNHOS ───────────────────────────────────── */}
+      {/* ── TESTEMUNHOS ── */}
       <section className="px-6 py-14 flex flex-col items-center gap-8 max-w-sm mx-auto">
         <p className="text-xs tracking-[0.35em] text-white/25 uppercase">O que dizem</p>
         <blockquote className="text-center">
@@ -275,7 +280,7 @@ export default function LeadPage() {
 
       <div className="w-full max-w-sm mx-auto h-px" style={{ background: 'rgba(201,168,76,0.15)' }} />
 
-      {/* ── SOBRE NÓS ─────────────────────────────────────── */}
+      {/* ── SOBRE NÓS ── */}
       <section className="px-6 py-14 flex flex-col items-center max-w-sm mx-auto text-center">
         <p className="text-xs tracking-[0.35em] text-white/25 uppercase mb-2">Quem somos</p>
         <h2 className="font-cormorant text-3xl text-white font-light mb-6">RL Photo · Video</h2>
@@ -285,26 +290,12 @@ export default function LeadPage() {
         </p>
       </section>
 
-      {/* ── FOTO FOOTER ───────────────────────────────────── */}
-      <div className="relative w-full overflow-hidden mt-6" style={{ height: '280px' }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={fotoFooter} alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0"
-          style={{ background: 'linear-gradient(to top, #030201 0%, rgba(3,2,1,0.4) 50%, transparent 100%)' }} />
-        <div className="absolute bottom-0 left-0 p-8 flex flex-col gap-1">
-          <span className="text-[10px] tracking-[0.4em] text-white/40 uppercase">RL Photo · Video</span>
-          <span className="font-cormorant text-2xl text-white/80 italic font-light">
-            A vossa história começa aqui.
-          </span>
-        </div>
-      </div>
-
-      {/* ── FOOTER ────────────────────────────────────────── */}
+      {/* ── FOOTER ── */}
       <footer className="px-6 py-10 text-center border-t" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
         <p className="text-xs tracking-widest text-white/15 uppercase">© RL Photo · Video</p>
       </footer>
 
-      {/* ── WHATSAPP FIXO ─────────────────────────────────── */}
+      {/* ── WHATSAPP FIXO ── */}
       <a href={WHATSAPP} target="_blank" rel="noopener noreferrer"
         className="fixed bottom-6 right-6 w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-transform hover:scale-105 z-50"
         style={{ background: '#25D366' }} title="Falar connosco no WhatsApp">
@@ -313,6 +304,6 @@ export default function LeadPage() {
         </svg>
       </a>
 
-    </main>
+    </div>
   )
 }
