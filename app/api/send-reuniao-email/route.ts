@@ -51,7 +51,9 @@ export async function POST(req: NextRequest) {
 
     <!-- DATA -->
     <tr>
-      <td width="218" height="30" style="font-size:0;line-height:0;">&nbsp;</td>
+      <td width="218" height="30" style="padding-left:70px;vertical-align:middle;
+          font-family:Georgia,'Times New Roman',serif;font-size:13px;
+          color:#e8dfc8;letter-spacing:0.08em;line-height:30px;">Data</td>
       <td height="30" style="padding-right:70px;text-align:right;vertical-align:middle;
           font-family:Georgia,'Times New Roman',serif;font-size:15px;
           color:#e8dfc8;line-height:30px;">${dataFmt}</td>
@@ -59,7 +61,9 @@ export async function POST(req: NextRequest) {
 
     <!-- HORA -->
     <tr>
-      <td width="218" height="30" style="font-size:0;line-height:0;">&nbsp;</td>
+      <td width="218" height="30" style="padding-left:70px;vertical-align:middle;
+          font-family:Georgia,'Times New Roman',serif;font-size:13px;
+          color:#e8dfc8;letter-spacing:0.08em;line-height:30px;">Hora</td>
       <td height="30" style="padding-right:70px;text-align:right;vertical-align:middle;
           font-family:Georgia,'Times New Roman',serif;font-size:15px;
           color:#e8dfc8;line-height:30px;">${reuniao_hora}</td>
@@ -67,7 +71,9 @@ export async function POST(req: NextRequest) {
 
     <!-- MODO -->
     <tr>
-      <td width="218" height="30" style="font-size:0;line-height:0;">&nbsp;</td>
+      <td width="218" height="30" style="padding-left:70px;vertical-align:middle;
+          font-family:Georgia,'Times New Roman',serif;font-size:13px;
+          color:#e8dfc8;letter-spacing:0.08em;line-height:30px;">Modo</td>
       <td height="30" style="padding-right:70px;text-align:right;vertical-align:middle;
           font-family:Georgia,'Times New Roman',serif;font-size:15px;
           color:#e8dfc8;line-height:30px;">${modoTxt}</td>
