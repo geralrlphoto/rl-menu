@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 
 const WHATSAPP     = 'https://wa.me/351919191919'
@@ -18,11 +18,9 @@ function fmtData(d: string) {
   } catch { return d }
 }
 
-function fmtHora(h: string) {
-  return (h || '').slice(0, 5)
-}
+function fmtHora(h: string) { return (h || '').slice(0, 5) }
 
-// ─── Leaf decorativo (igual ao portal) ───────────────────────────────────────
+// ─── Leaf decorativo ─────────────────────────────────────────────────────────
 function Leaf({ flip }: { flip?: boolean }) {
   return (
     <svg viewBox="0 0 80 30" className={`w-16 sm:w-20 h-auto text-gold/50 ${flip ? 'scale-x-[-1]' : ''}`} fill="currentColor">
@@ -33,7 +31,7 @@ function Leaf({ flip }: { flip?: boolean }) {
   )
 }
 
-// ─── Countdown (igual ao portal) ─────────────────────────────────────────────
+// ─── Countdown ───────────────────────────────────────────────────────────────
 function Countdown({ targetDate }: { targetDate: string }) {
   const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0 })
 
@@ -63,17 +61,18 @@ function Countdown({ targetDate }: { targetDate: string }) {
 
   return (
     <div className="flex items-center justify-center gap-4 sm:gap-8">
-      <Unit v={t.d} label="Dias" />
-      <Sep /><Unit v={t.h} label="Horas" />
-      <Sep /><Unit v={t.m} label="Min" />
-      <Sep /><Unit v={t.s} label="Seg" />
+      <Unit v={t.d} label="Dias" /><Sep />
+      <Unit v={t.h} label="Horas" /><Sep />
+      <Unit v={t.m} label="Min" /><Sep />
+      <Unit v={t.s} label="Seg" />
     </div>
   )
 }
 
-// ─── Página ───────────────────────────────────────────────────────────────────
+// ─── Página ──────────────────────────────────────────────────────────────────
 export default function LeadPage() {
   const { token } = useParams<{ token: string }>()
+
   const [contact, setContact]   = useState<Contact | null>(null)
   const [loading, setLoading]   = useState(true)
   const [notFound, setNotFound] = useState(false)
@@ -81,16 +80,34 @@ export default function LeadPage() {
   const [confirming, setConfirming] = useState(false)
   const [requesting, setRequesting] = useState(false)
 
+  // Admin
+  const [isAdmin, setIsAdmin]             = useState(false)
+  const [editingHero, setEditingHero]     = useState(false)
+  const [heroInput, setHeroInput]         = useState('')
+  const [heroPreview, setHeroPreview]     = useState('')
+  const [savingHero, setSavingHero]       = useState(false)
+  const [heroSaved, setHeroSaved]         = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   useEffect(() => {
+    // Carregar página
     fetch(`/api/lead-page/view?token=${token}`)
       .then(r => r.json())
       .then(data => {
         if (!data.contact) { setNotFound(true); setLoading(false); return }
         setContact(data.contact)
         setStatus(data.contact.page_confirmacao || null)
+        setHeroPreview(data.contact.page_foto_url || DEFAULT_HERO)
+        setHeroInput(data.contact.page_foto_url || '')
         setLoading(false)
       })
       .catch(() => { setNotFound(true); setLoading(false) })
+
+    // Verificar se é admin
+    fetch('/api/lead-page/check-admin')
+      .then(r => r.json())
+      .then(d => setIsAdmin(d.isAdmin))
+      .catch(() => {})
   }, [token])
 
   const handleConfirm = async () => {
@@ -108,6 +125,30 @@ export default function LeadPage() {
     window.open(`${WHATSAPP}?text=${encodeURIComponent('Olá! Gostaria de solicitar uma alteração à reunião marcada.')}`, '_blank')
   }
 
+  const handleSaveHero = async () => {
+    setSavingHero(true)
+    const res = await fetch('/api/lead-page/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, page_foto_url: heroInput || null }),
+    })
+    if (res.ok) {
+      setHeroPreview(heroInput || DEFAULT_HERO)
+      setContact(c => c ? { ...c, page_foto_url: heroInput || null } : c)
+      setHeroSaved(true)
+      setTimeout(() => { setHeroSaved(false); setEditingHero(false) }, 1500)
+    }
+    setSavingHero(false)
+  }
+
+  const handleUploadHero = async (file: File) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
+    const data = await res.json()
+    if (data.url) { setHeroInput(data.url); setHeroPreview(data.url) }
+  }
+
   if (loading) return (
     <main className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
       <p className="text-white/20 tracking-[0.3em] text-xs uppercase animate-pulse">A carregar...</p>
@@ -120,41 +161,114 @@ export default function LeadPage() {
     </main>
   )
 
-  const heroImage  = contact.page_foto_url || DEFAULT_HERO
-  const isVideo    = contact.reuniao_tipo === 'Videochamada'
-  const dataFmt    = fmtData(contact.reuniao_data || '')
-  const horaFmt    = fmtHora(contact.reuniao_hora || '')
-  const targetDate = contact.reuniao_data && contact.reuniao_hora
-    ? `${contact.reuniao_data}T${horaFmt}:00`
-    : null
+  const heroImage  = heroPreview || DEFAULT_HERO
+  const isVideo    = contact!.reuniao_tipo === 'Videochamada'
+  const dataFmt    = fmtData(contact!.reuniao_data || '')
+  const horaFmt    = fmtHora(contact!.reuniao_hora || '')
+  const targetDate = contact!.reuniao_data && contact!.reuniao_hora
+    ? `${contact!.reuniao_data}T${horaFmt}:00` : null
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
 
+      {/* ── ADMIN BAR ── */}
+      {isAdmin && (
+        <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-2 bg-black/80 backdrop-blur-sm border-b border-white/5">
+          <a href="/crm" className="text-[10px] tracking-widest text-white/25 hover:text-white/50 transition-colors uppercase">
+            ‹ CRM
+          </a>
+          <span className="text-[10px] tracking-widest text-white/20 uppercase">Admin · Página do Cliente</span>
+          <button
+            onClick={() => setEditingHero(true)}
+            className="text-[10px] px-2.5 py-1 border border-gold/20 rounded text-gold/50 hover:text-gold hover:border-gold/40 transition-all uppercase tracking-wider"
+          >
+            ✎ Editar Foto
+          </button>
+        </div>
+      )}
+
       {/* ── HERO ── */}
-      <section className="relative min-h-[70vh] sm:min-h-[80vh] flex items-end justify-center pb-12 overflow-hidden">
+      <section className={`relative min-h-[70vh] sm:min-h-[80vh] flex items-end justify-center pb-12 overflow-hidden ${isAdmin ? 'pt-10' : ''}`}>
+
+        {/* Fundo */}
         <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${heroImage})` }}>
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-black/90" />
         </div>
 
+        {/* Admin — editar foto hero (overlay) */}
+        {isAdmin && editingHero && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/75 backdrop-blur-sm">
+            <div className="w-full max-w-md px-4">
+              <p className="text-[10px] text-gold/60 tracking-widest uppercase mb-3 text-center">Trocar fotografia de fundo</p>
+
+              {/* Upload */}
+              <label className="relative flex items-center justify-center w-full py-3 rounded-xl border border-dashed border-white/20 hover:border-gold/50 hover:bg-gold/5 text-white/40 hover:text-gold/80 cursor-pointer transition-all mb-3">
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadHero(f) }} />
+                <div className="flex items-center gap-2 text-sm">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                  </svg>
+                  Carregar do dispositivo
+                </div>
+              </label>
+
+              {/* URL manual */}
+              <input
+                value={heroInput}
+                onChange={e => { setHeroInput(e.target.value); setHeroPreview(e.target.value || DEFAULT_HERO) }}
+                placeholder="ou cola um URL de imagem..."
+                className="w-full bg-white/[0.08] border border-white/20 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-gold/50 mb-3 placeholder:text-white/25"
+              />
+
+              {/* Preview */}
+              {heroPreview && (
+                <div className="w-full h-28 rounded-lg bg-cover bg-center mb-3 border border-white/10"
+                  style={{ backgroundImage: `url(${heroPreview})` }} />
+              )}
+
+              <div className="flex gap-2 justify-center">
+                <button onClick={() => { setEditingHero(false); setHeroPreview(contact!.page_foto_url || DEFAULT_HERO); setHeroInput(contact!.page_foto_url || '') }}
+                  className="px-4 py-2 text-xs border border-white/15 rounded-lg text-white/50 hover:text-white/80 transition-all">
+                  Cancelar
+                </button>
+                <button onClick={handleSaveHero} disabled={savingHero}
+                  className="px-5 py-2 text-xs bg-gold/20 border border-gold/40 rounded-lg text-gold hover:bg-gold/30 transition-all disabled:opacity-50">
+                  {savingHero ? 'A guardar...' : heroSaved ? '✓ Guardado!' : '✓ Guardar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Admin — botão trocar foto (visível no hero quando não está editando) */}
+        {isAdmin && !editingHero && (
+          <button onClick={() => setEditingHero(true)}
+            className="absolute bottom-4 right-4 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/50 border border-white/15 text-[10px] text-white/50 hover:text-white hover:border-white/30 transition-all backdrop-blur-sm">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Trocar foto
+          </button>
+        )}
+
+        {/* Conteúdo hero */}
         <div className="relative z-10 text-center px-4 pt-20">
           <div className="flex items-center justify-center gap-3 mb-4">
             <Leaf />
             <p className="font-cormorant text-gold text-sm sm:text-base tracking-[0.4em] uppercase italic">RL Photo · Video</p>
             <Leaf flip />
           </div>
-
           <h1 className="font-playfair text-4xl sm:text-6xl lg:text-7xl font-black text-white leading-none tracking-tight mb-4">
             Reunião Marcada
           </h1>
-
           <div className="flex flex-col items-center gap-1 mt-2">
-            {contact.nome && (
-              <p className="font-cormorant text-white/60 text-lg sm:text-xl italic tracking-wide">{contact.nome}</p>
+            {contact!.nome && (
+              <p className="font-cormorant text-white/60 text-lg sm:text-xl italic tracking-wide">{contact!.nome}</p>
             )}
             {dataFmt && (
               <p className="font-cormorant text-white/50 text-sm sm:text-base italic tracking-wide">
-                ♡ {dataFmt} · {horaFmt} · {contact.reuniao_tipo || 'Presencial'}
+                ♡ {dataFmt} · {horaFmt} · {contact!.reuniao_tipo || 'Presencial'}
               </p>
             )}
           </div>
@@ -175,7 +289,6 @@ export default function LeadPage() {
 
       {/* ── CARD REUNIÃO + BOTÕES ── */}
       <section className="flex flex-col items-center px-6 py-14">
-
         <div className="w-full max-w-sm border border-white/10 rounded-2xl overflow-hidden mb-8"
           style={{ background: 'rgba(255,255,255,0.03)' }}>
           <div className="px-6 py-4 border-b border-white/8">
@@ -194,12 +307,12 @@ export default function LeadPage() {
             <div className="h-px bg-white/5" />
             <div className="flex items-center justify-between">
               <span className="text-xs tracking-[0.2em] text-white/30 uppercase">Modo</span>
-              <span className="font-cormorant text-lg text-white/90">{contact.reuniao_tipo || 'Presencial'}</span>
+              <span className="font-cormorant text-lg text-white/90">{contact!.reuniao_tipo || 'Presencial'}</span>
             </div>
           </div>
-          {contact.reuniao_link && (
+          {contact!.reuniao_link && (
             <div className="px-6 pb-5">
-              <a href={contact.reuniao_link} target="_blank" rel="noopener noreferrer"
+              <a href={contact!.reuniao_link} target="_blank" rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs tracking-widest uppercase transition-all"
                 style={{ background: 'rgba(201,168,76,0.08)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.2)' }}>
                 <span>{isVideo ? '🎥' : '📍'}</span>
@@ -209,7 +322,6 @@ export default function LeadPage() {
           )}
         </div>
 
-        {/* Botões */}
         {status === 'confirmada' ? (
           <div className="w-full max-w-sm text-center">
             <div className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm tracking-wider"
@@ -226,16 +338,19 @@ export default function LeadPage() {
           </div>
         ) : (
           <div className="w-full max-w-sm flex flex-col gap-3">
-            <button onClick={handleConfirm} disabled={confirming}
+            <button onClick={handleConfirm} disabled={confirming || isAdmin}
               className="w-full py-4 rounded-2xl text-sm font-semibold tracking-[0.15em] uppercase transition-all disabled:opacity-50"
               style={{ background: '#C9A84C', color: '#0a0a0a' }}>
               {confirming ? 'A confirmar...' : 'Confirmar Reunião'}
             </button>
-            <button onClick={handleChangeRequest} disabled={requesting}
+            <button onClick={handleChangeRequest} disabled={requesting || isAdmin}
               className="w-full py-4 rounded-2xl text-sm tracking-[0.15em] uppercase transition-all disabled:opacity-50"
               style={{ color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}>
               {requesting ? 'A enviar...' : 'Solicitar Alteração'}
             </button>
+            {isAdmin && (
+              <p className="text-center text-[10px] text-white/20 tracking-widest uppercase">Botões desativados em modo admin</p>
+            )}
           </div>
         )}
       </section>
@@ -296,13 +411,15 @@ export default function LeadPage() {
       </footer>
 
       {/* ── WHATSAPP FIXO ── */}
-      <a href={WHATSAPP} target="_blank" rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-transform hover:scale-105 z-50"
-        style={{ background: '#25D366' }} title="Falar connosco no WhatsApp">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="white">
-          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-        </svg>
-      </a>
+      {!isAdmin && (
+        <a href={WHATSAPP} target="_blank" rel="noopener noreferrer"
+          className="fixed bottom-6 right-6 w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-transform hover:scale-105 z-50"
+          style={{ background: '#25D366' }} title="Falar connosco no WhatsApp">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="white">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+          </svg>
+        </a>
+      )}
 
     </div>
   )

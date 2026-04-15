@@ -33,7 +33,8 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/r/') ||
     pathname.startsWith('/api/lead-page/view') ||
     pathname.startsWith('/api/lead-page/confirm') ||
-    pathname.startsWith('/api/lead-page/change-request')
+    pathname.startsWith('/api/lead-page/change-request') ||
+    pathname.startsWith('/api/lead-page/check-admin')
   ) {
     return NextResponse.next()
   }
