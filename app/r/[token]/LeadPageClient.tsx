@@ -448,33 +448,40 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
           )}
         </div>
 
-        {status === 'confirmada' ? (
-          <div className="w-full max-w-sm text-center">
-            <div className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm tracking-wider" style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.2)' }}>
+        <div className="w-full max-w-sm flex flex-col gap-3">
+
+          {/* Status badge */}
+          {status === 'confirmada' && (
+            <div className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl text-sm tracking-wider"
+              style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.2)' }}>
               <span>✓</span><span>Reunião Confirmada — Até breve!</span>
             </div>
-          </div>
-        ) : status === 'alteracao_pedida' ? (
-          <div className="w-full max-w-sm text-center">
-            <div className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm tracking-wider" style={{ background: 'rgba(251,191,36,0.1)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.2)' }}>
+          )}
+          {status === 'alteracao_pedida' && (
+            <div className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl text-sm tracking-wider"
+              style={{ background: 'rgba(251,191,36,0.1)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.2)' }}>
               <span>⏳</span><span>Pedido enviado — Entraremos em contacto</span>
             </div>
-          </div>
-        ) : (
-          <div className="w-full max-w-sm flex flex-col gap-3">
+          )}
+
+          {/* Confirmar — só se ainda não confirmou */}
+          {status !== 'confirmada' && (
             <button onClick={handleConfirm} disabled={confirming || isAdmin}
               className="w-full py-4 rounded-2xl text-sm font-semibold tracking-[0.15em] uppercase transition-all disabled:opacity-50"
               style={{ background: '#C9A84C', color: '#0a0a0a' }}>
               {confirming ? 'A confirmar...' : 'Confirmar Reunião'}
             </button>
-            <button onClick={handleChangeRequest} disabled={requesting || isAdmin}
-              className="w-full py-4 rounded-2xl text-sm tracking-[0.15em] uppercase transition-all disabled:opacity-50"
-              style={{ color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}>
-              {requesting ? 'A enviar...' : 'Alterar Reunião'}
-            </button>
-            {isAdmin && <p className="text-center text-[10px] text-white/20 tracking-widest uppercase">Botões desativados em modo admin</p>}
-          </div>
-        )}
+          )}
+
+          {/* Alterar — sempre visível */}
+          <button onClick={handleChangeRequest} disabled={requesting || isAdmin}
+            className="w-full py-4 rounded-2xl text-sm tracking-[0.15em] uppercase transition-all disabled:opacity-50"
+            style={{ color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            {requesting ? 'A enviar...' : 'Alterar Reunião'}
+          </button>
+
+          {isAdmin && <p className="text-center text-[10px] text-white/20 tracking-widest uppercase">Botões desativados em modo admin</p>}
+        </div>
       </section>
 
       <div className="w-full max-w-sm mx-auto h-px" style={{ background: 'rgba(201,168,76,0.15)' }} />
