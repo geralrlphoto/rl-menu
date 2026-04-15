@@ -618,24 +618,35 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
                 <Field label="Cor do título">
                   <ColorPicker value={portfolio.titleColor} onChange={v => setPortfolio('titleColor', v)} />
                 </Field>
-                {[0, 1, 2].map(i => (
-                  <Field key={i} label={`Foto ${i + 1}`}>
-                    <div className="flex gap-2">
-                      <input type="text" value={portfolio.photos[i] || ''} onChange={e => setPhoto(i, e.target.value)}
-                        placeholder="URL da foto..."
-                        className="flex-1 bg-white/[0.06] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-gold/40 placeholder:text-white/20" />
-                      <label className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 cursor-pointer transition-all text-white/40 hover:text-white flex-shrink-0">
-                        <input ref={photoRefs[i]} type="file" accept="image/*" className="hidden"
-                          onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(f, url => setPhoto(i, url)) }} />
-                        ⬆
-                      </label>
-                    </div>
-                    {portfolio.photos[i] && (
-                      <div className="w-full h-16 rounded-lg bg-cover bg-center border border-white/10 mt-1"
-                        style={{ backgroundImage: `url(${portfolio.photos[i]})` }} />
-                    )}
-                  </Field>
-                ))}
+                <Field label="Fotos (3)">
+                  <div className="grid grid-cols-3 gap-2">
+                    {[0, 1, 2].map(i => (
+                      <div key={i} className="flex flex-col gap-1">
+                        <label className="relative aspect-square rounded-lg overflow-hidden cursor-pointer border border-white/10 hover:border-gold/40 transition-all group"
+                          style={{ background: portfolio.photos[i] ? undefined : 'rgba(255,255,255,0.04)' }}>
+                          <input ref={photoRefs[i]} type="file" accept="image/*" className="hidden"
+                            onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(f, url => setPhoto(i, url)) }} />
+                          {portfolio.photos[i]
+                            ? <img src={portfolio.photos[i]} alt="" className="w-full h-full object-cover" />
+                            : <div className="w-full h-full flex flex-col items-center justify-center gap-1">
+                                <span className="text-white/20 text-lg">⬆</span>
+                                <span className="text-white/20 text-[9px] tracking-wider">Foto {i+1}</span>
+                              </div>
+                          }
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
+                            <span className="text-white text-xs">Trocar</span>
+                          </div>
+                        </label>
+                        {portfolio.photos[i] && (
+                          <button onClick={() => setPhoto(i, '')}
+                            className="text-[9px] text-white/20 hover:text-red-400 transition-colors text-center tracking-wider">
+                            ✕ remover
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </Field>
               </AccordionSection>
 
               {/* ── TESTEMUNHOS ── */}
