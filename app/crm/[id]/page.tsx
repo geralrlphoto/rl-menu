@@ -27,16 +27,13 @@ const leadColor: Record<string, string> = {
 
 const STATUSES = ['Por Contactar','Iniciar','Contactado','Agendar Reunião','Reunião Agendada','Negociação','Fechou','NÃO FECHOU','Sem resposta','Encerrado','Cancelado']
 const PRIORIDADES = ['Alta','Médio','Baixa']
-const TIPOS_EVENTO = ['Casamento','Batizado','Evento','Casamento e Batizado','bodas de prata']
-const TIPOS_CERIMONIA = ['','Religiosa','Civil','Outra']
 const COMO_CHEGOU_OPTIONS = ['','Instagram','Facebook','Instagram/Facebook','WebSite','Casamentos.pt','Indicação','Newsletter']
-const SERVICOS_OPTIONS = ['','SERVIÇO DE FOTOGRAFIA','SERVIÇO DE VIDEO','SERVIÇO DE FOTOGRAFIA + VIDEO','Sessão de Pré-Wedding - Fotografia','Sessão de Pré-Wedding - Vídeo','Drone','Álbum Impresso','Same Day Edit']
 
 type Contact = Record<string, string>
 
-function F({ label, name, value, onChange, type = 'text', placeholder = '' }: {
+function F({ label, name, value, onChange, type = 'text', placeholder = '', readOnly = false }: {
   label: string; name: string; value: string; onChange: (k: string, v: string) => void
-  type?: string; placeholder?: string
+  type?: string; placeholder?: string; readOnly?: boolean
 }) {
   return (
     <div className="flex flex-col gap-1">
@@ -44,9 +41,10 @@ function F({ label, name, value, onChange, type = 'text', placeholder = '' }: {
       <input
         type={type}
         value={value ?? ''}
-        onChange={e => onChange(name, e.target.value)}
+        onChange={readOnly ? undefined : e => onChange(name, e.target.value)}
+        readOnly={readOnly}
         placeholder={placeholder}
-        className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50"
+        className={`border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none ${readOnly ? 'bg-white/3 text-white/50 cursor-default' : 'bg-white/5 focus:border-gold/50'}`}
       />
     </div>
   )
@@ -67,6 +65,15 @@ function S({ label, name, value, onChange, options }: {
       </select>
     </div>
   )
+}
+
+function parseConvidados(mensagem: string): string {
+  const line = (mensagem ?? '').split('\n').find(l => l.startsWith('Convidados:'))
+  return line ? line.replace('Convidados:', '').trim() : ''
+}
+
+function parsePreocupacoes(mensagem: string): string {
+  return (mensagem ?? '').split('\n').filter(l => !l.startsWith('Convidados:')).join('\n').trim()
 }
 
 export default function ClientePage() {
@@ -193,26 +200,33 @@ export default function ClientePage() {
         <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-4">
           <h2 className="text-xs tracking-[0.3em] text-gold uppercase mb-1">Evento</h2>
           <div className="grid grid-cols-2 gap-4">
-            <S label="Tipo de Evento" name="tipo_evento" value={form.tipo_evento} onChange={set} options={TIPOS_EVENTO} />
-            <S label="Tipo de Cerimónia" name="tipo_cerimonia" value={form.tipo_cerimonia} onChange={set} options={TIPOS_CERIMONIA} />
+            <F label="Tipo de Evento" name="tipo_evento" value={form.tipo_evento} onChange={set} placeholder="Ex: Casamento" />
+            <F label="Tipo de Cerimónia" name="tipo_cerimonia" value={form.tipo_cerimonia} onChange={set} placeholder="Ex: Religiosa" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <F label="Data do Casamento" name="data_casamento" value={form.data_casamento} onChange={set} type="date" />
             <F label="Orçamento (€)" name="orcamento" value={form.orcamento} onChange={set} placeholder="Ex: 2500" />
           </div>
-          <F label="Local do Casamento" name="local_casamento" value={form.local_casamento} onChange={set} placeholder="Ex: Quinta das Rosas, Lisboa" />
-          <S label="Serviços" name="servicos" value={form.servicos} onChange={set} options={SERVICOS_OPTIONS} />
+          <div className="grid grid-cols-2 gap-4">
+            <F label="Local do Casamento" name="local_casamento" value={form.local_casamento} onChange={set} placeholder="Ex: Quinta das Rosas, Lisboa" />
+            <F label="Nº de Convidados" name="_convidados_display" value={parseConvidados(form.mensagem ?? '')} onChange={() => {}} placeholder="—" readOnly />
+          </div>
+          <F label="Serviços" name="servicos" value={form.servicos} onChange={set} placeholder="Ex: Fotografia + Vídeo" />
         </div>
 
-        {/* Mensagem */}
+        {/* Preocupações */}
         <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-4">
-          <h2 className="text-xs tracking-[0.3em] text-gold uppercase mb-1">Mensagem Inicial</h2>
+          <h2 className="text-xs tracking-[0.3em] text-gold uppercase mb-1">Preocupações / Mensagem Inicial</h2>
           <textarea
-            value={form.mensagem ?? ''}
-            onChange={e => set('mensagem', e.target.value)}
+            value={parsePreocupacoes(form.mensagem ?? '')}
+            onChange={e => {
+              const convidados = parseConvidados(form.mensagem ?? '')
+              const newMensagem = [e.target.value, convidados ? `Convidados: ${convidados}` : ''].filter(Boolean).join('\n')
+              set('mensagem', newMensagem)
+            }}
             rows={4}
             className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50 resize-none"
-            placeholder="Mensagem enviada pelo cliente..."
+            placeholder="Preocupações e mensagem enviada pelo cliente..."
           />
         </div>
 
