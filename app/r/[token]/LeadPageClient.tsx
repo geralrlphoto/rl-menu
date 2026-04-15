@@ -23,7 +23,7 @@ const SIZES: { value: string; label: string; className: string }[] = [
 export type PageContent = {
   hero:         { title: string; titleFont: string; titleSize: string; titleColor: string; brandLine: string; brandColor: string }
   countdown:    { title: string; titleColor: string }
-  video:        { label: string; title: string; url: string }
+  video:        { label: string; title: string; urls: string[] }
   portfolio:    { label: string; title: string; titleFont: string; titleColor: string; photos: string[] }
   testimonials: { label: string; items: { text: string; author: string }[] }
   about:        { label: string; title: string; titleFont: string; titleColor: string; text: string; textColor: string }
@@ -35,7 +35,7 @@ export const DEFAULT_CONTENT: PageContent = {
     titleColor: '#ffffff', brandLine: 'RL Photo · Video', brandColor: '#C9A84C',
   },
   countdown:    { title: 'Contagem Regressiva', titleColor: '#C9A84C' },
-  video:        { label: 'O nosso trabalho', title: 'Vê como captamos cada momento.', url: '' },
+  video:        { label: 'O nosso trabalho', title: 'Vê como captamos cada momento.', urls: ['', '', ''] },
   portfolio: {
     label: 'Portfólio', title: 'Momentos que ficam para sempre.',
     titleFont: 'cormorant', titleColor: '#ffffff', photos: ['', '', ''],
@@ -60,7 +60,7 @@ function merge(saved: any): PageContent {
   return {
     hero:         { ...DEFAULT_CONTENT.hero,         ...(saved.hero         || {}) },
     countdown:    { ...DEFAULT_CONTENT.countdown,    ...(saved.countdown    || {}) },
-    video:        { ...DEFAULT_CONTENT.video,        ...(saved.video        || {}) },
+    video:        { ...DEFAULT_CONTENT.video,        ...(saved.video        || {}), urls: saved.video?.urls || DEFAULT_CONTENT.video.urls },
     portfolio:    { ...DEFAULT_CONTENT.portfolio,    ...(saved.portfolio    || {}), photos: saved.portfolio?.photos || DEFAULT_CONTENT.portfolio.photos },
     testimonials: { ...DEFAULT_CONTENT.testimonials, ...(saved.testimonials || {}), items: saved.testimonials?.items || DEFAULT_CONTENT.testimonials.items },
     about:        { ...DEFAULT_CONTENT.about,        ...(saved.about        || {}) },
@@ -249,8 +249,15 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
   function setCountdown(k: keyof PageContent['countdown'], v: string) {
     setContent(c => ({ ...c, countdown: { ...c.countdown, [k]: v } }))
   }
-  function setVideo(k: keyof PageContent['video'], v: string) {
+  function setVideo(k: keyof PageContent['video'], v: any) {
     setContent(c => ({ ...c, video: { ...c.video, [k]: v } }))
+  }
+  function setVideoUrl(i: number, v: string) {
+    setContent(c => {
+      const urls = [...c.video.urls]
+      urls[i] = v
+      return { ...c, video: { ...c.video, urls } }
+    })
   }
   function setPortfolio(k: keyof PageContent['portfolio'], v: any) {
     setContent(c => ({ ...c, portfolio: { ...c.portfolio, [k]: v } }))
@@ -530,26 +537,31 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
       </section>
 
       {/* ── VÍDEO ── */}
-      {(video.url || isAdmin) && (
+      {(video.urls.some(u => u) || isAdmin) && (
         <section id="sec-video" className="px-6 py-14 flex flex-col items-center" style={{ background: '#0d0d0d' }}>
           <p className="text-xs tracking-[0.35em] text-white/25 uppercase mb-2">{video.label}</p>
           <h2 className="font-cormorant text-3xl font-light mb-8 text-center text-white/90">{video.title}</h2>
-          {video.url && toEmbedUrl(video.url) ? (
-            <div className="w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl"
-              style={{ aspectRatio: '16/9', border: '1px solid rgba(255,255,255,0.07)' }}>
-              <iframe
-                src={toEmbedUrl(video.url)!}
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-              />
-            </div>
-          ) : isAdmin ? (
-            <div className="w-full max-w-2xl rounded-2xl flex items-center justify-center"
-              style={{ aspectRatio: '16/9', background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(201,168,76,0.2)' }}>
-              <p className="text-gold/30 text-xs tracking-widest uppercase">Adiciona um vídeo no editor</p>
-            </div>
-          ) : null}
+          <div className="w-full max-w-5xl grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {video.urls.map((url, i) => {
+              const embed = toEmbedUrl(url)
+              if (embed) return (
+                <div key={i} className="rounded-xl overflow-hidden shadow-xl"
+                  style={{ aspectRatio: '16/9', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <iframe src={embed} className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen />
+                </div>
+              )
+              if (isAdmin) return (
+                <div key={i} className="rounded-xl flex flex-col items-center justify-center gap-1"
+                  style={{ aspectRatio: '16/9', background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(201,168,76,0.15)' }}>
+                  <span className="text-gold/20 text-lg">▶</span>
+                  <span className="text-white/15 text-[9px] tracking-widest uppercase">Vídeo {i + 1}</span>
+                </div>
+              )
+              return null
+            })}
+          </div>
         </section>
       )}
 
@@ -681,20 +693,24 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
                 <Field label="Título">
                   <TInput value={video.title} onChange={v => setVideo('title', v)} />
                 </Field>
-                <Field label="Link (YouTube ou Vimeo)">
-                  <TInput value={video.url} onChange={v => setVideo('url', v)} />
-                </Field>
-                {video.url && (
-                  <p className={`text-[10px] text-center ${toEmbedUrl(video.url) ? 'text-green-400/70' : 'text-red-400/70'}`}>
-                    {toEmbedUrl(video.url) ? '✓ Link válido' : '✕ Link inválido — usa YouTube ou Vimeo'}
-                  </p>
-                )}
-                {video.url && (
-                  <button onClick={() => setVideo('url', '')}
-                    className="text-[9px] text-white/20 hover:text-red-400 transition-colors text-center tracking-wider">
-                    ✕ remover vídeo
-                  </button>
-                )}
+                {[0, 1, 2].map(i => (
+                  <div key={i} className="flex flex-col gap-1.5">
+                    <Field label={`Vídeo ${i + 1} — Link YouTube / Vimeo`}>
+                      <TInput value={video.urls[i] || ''} onChange={v => setVideoUrl(i, v)} />
+                    </Field>
+                    {video.urls[i] && (
+                      <div className="flex items-center justify-between">
+                        <p className={`text-[10px] ${toEmbedUrl(video.urls[i]) ? 'text-green-400/70' : 'text-red-400/70'}`}>
+                          {toEmbedUrl(video.urls[i]) ? '✓ Link válido' : '✕ Inválido'}
+                        </p>
+                        <button onClick={() => setVideoUrl(i, '')}
+                          className="text-[9px] text-white/20 hover:text-red-400 transition-colors tracking-wider">
+                          ✕ remover
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </AccordionSection>
 
               {/* ── PORTFÓLIO ── */}
