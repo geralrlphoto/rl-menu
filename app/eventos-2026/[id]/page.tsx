@@ -603,10 +603,13 @@ function ServiceChecklist({ title, items, selected, field, eventId, onSaved }: {
 function estadoCfg(val: string) {
   const blue  = ['Em Edição', 'Enviado']
   const green = ['Entregue', 'Aprovado']
+  const red   = ['S/SERVIÇO']
   if (green.includes(val))
     return { box: 'bg-green-500/10 border-green-500/25', dot: 'bg-green-400',  lbl: 'text-green-300/70',  date: 'text-green-200/80',  sel: 'bg-green-500/15 border-green-500/30 hover:border-green-400/50 text-green-100/90', arr: 'text-green-400/60' }
   if (blue.includes(val))
     return { box: 'bg-blue-500/10 border-blue-500/25',   dot: 'bg-blue-400',   lbl: 'text-blue-300/70',   date: 'text-blue-200/80',   sel: 'bg-blue-500/15 border-blue-500/30 hover:border-blue-400/50 text-blue-100/90',   arr: 'text-blue-400/60' }
+  if (red.includes(val))
+    return { box: 'bg-red-500/10 border-red-500/25',     dot: 'bg-red-400',    lbl: 'text-red-300/70',    date: 'text-red-200/80',    sel: 'bg-red-500/15 border-red-500/30 hover:border-red-400/50 text-red-100/90',       arr: 'text-red-400/60' }
   return       { box: 'bg-yellow-500/10 border-yellow-500/25', dot: 'bg-yellow-400', lbl: 'text-yellow-300/70', date: 'text-yellow-200/80', sel: 'bg-yellow-500/15 border-yellow-500/30 hover:border-yellow-400/50 text-yellow-100/90', arr: 'text-yellow-400/60' }
 }
 
