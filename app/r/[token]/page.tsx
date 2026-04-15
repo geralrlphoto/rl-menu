@@ -28,7 +28,9 @@ function useCountdown(data: string, hora: string) {
   useEffect(() => {
     if (!data || !hora) return
     const calc = () => {
-      const target = new Date(`${data}T${hora}:00`)
+      // hora pode vir como "HH:MM" ou "HH:MM:SS" do Supabase — normalizar para "HH:MM"
+      const horaShort = hora.slice(0, 5)
+      const target = new Date(`${data}T${horaShort}:00`)
       const now = new Date()
       const ms = target.getTime() - now.getTime()
       if (ms <= 0) { setDiff({ dias: 0, horas: 0, min: 0, seg: 0, passada: true }); return }
@@ -134,8 +136,9 @@ export default function LeadPage() {
     </main>
   )
 
-  const isVideo = contact?.reuniao_tipo === 'Videochamada'
-  const dataFmt = fmtData(contact?.reuniao_data || '')
+  const isVideo   = contact?.reuniao_tipo === 'Videochamada'
+  const dataFmt   = fmtData(contact?.reuniao_data || '')
+  const fotoFooter = (contact as any).page_foto_url || 'https://rl-menu-lake.vercel.app/banner_footer.png'
 
   return (
     <main className="min-h-screen" style={{ background: '#030201' }}>
@@ -283,29 +286,18 @@ export default function LeadPage() {
       </section>
 
       {/* ── FOTO FOOTER ───────────────────────────────────── */}
-      {(() => {
-        const fotoUrl = contact?.page_foto_url || 'https://rl-menu-lake.vercel.app/banner_footer.png'
-        return (
-        <div className="relative w-full h-64 sm:h-80 overflow-hidden mt-6">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={fotoUrl}
-            alt=""
-            className="w-full h-full object-cover"
-          />
-          {/* Gradiente overlay */}
-          <div className="absolute inset-0"
-            style={{ background: 'linear-gradient(to top, #030201 0%, rgba(3,2,1,0.4) 50%, transparent 100%)' }} />
-          {/* Marca sobre a foto */}
-          <div className="absolute bottom-0 left-0 p-8 flex flex-col gap-1">
-            <span className="text-[10px] tracking-[0.4em] text-white/40 uppercase">RL Photo · Video</span>
-            <span className="font-cormorant text-2xl text-white/80 italic font-light">
-              A vossa história começa aqui.
-            </span>
-          </div>
+      <div className="relative w-full overflow-hidden mt-6" style={{ height: '280px' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={fotoFooter} alt="" className="w-full h-full object-cover" />
+        <div className="absolute inset-0"
+          style={{ background: 'linear-gradient(to top, #030201 0%, rgba(3,2,1,0.4) 50%, transparent 100%)' }} />
+        <div className="absolute bottom-0 left-0 p-8 flex flex-col gap-1">
+          <span className="text-[10px] tracking-[0.4em] text-white/40 uppercase">RL Photo · Video</span>
+          <span className="font-cormorant text-2xl text-white/80 italic font-light">
+            A vossa história começa aqui.
+          </span>
         </div>
-        )
-      })()}
+      </div>
 
       {/* ── FOOTER ────────────────────────────────────────── */}
       <footer className="px-6 py-10 text-center border-t" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
