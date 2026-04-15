@@ -6,50 +6,38 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-// Resolve IDs para texto usando o array de options do campo
-function resolveOptions(field: any): string {
-  if (!field) return ''
-  const values: string[] = Array.isArray(field.value) ? field.value : [field.value].filter(Boolean)
-  if (!values.length) return ''
-  const options: any[] = field.options ?? []
-  if (options.length > 0) {
-    return values
-      .map(id => options.find(o => o.id === id)?.text ?? id)
-      .filter(Boolean)
-      .join(', ')
-  }
-  return values.join(', ')
+// Mapa fixo: field key do Tally → campo interno
+// Keys são estáveis e nunca mudam para o mesmo formulário
+const KEY_MAP: Record<string, string> = {
+  question_Vzr1dE: 'nome',
+  question_PzoBgd: 'data_casamento',
+  question_W84BqP: 'local_casamento',
+  question_KVXyo7: 'contato',
+  question_LP8y01: 'email',
+  question_bWaGD6: 'como_chegou',
+  question_a2WgzE: 'servicos',
+  question_6ZqyPO: 'tipo_cerimonia',
+  question_ABk50y: 'tipo_evento',
+  question_7NQzE9: '_convidados',
+  question_VJE41g: 'orcamento',
+  question_bWayz2: '_preocupacoes',
 }
 
-// Procura campo pelo label (ignora espaços e capitalização)
-function findField(fields: any[], ...labels: string[]): any {
-  for (const label of labels) {
-    const f = fields.find(f => f.label?.toLowerCase().trim() === label.toLowerCase().trim())
-    if (f) return f
-    // Fallback: label começa com o prefixo
-    const fp = fields.find(f => f.label?.toLowerCase().trim().startsWith(label.toLowerCase().trim()))
-    if (fp) return fp
-  }
-  return null
-}
-
-function getText(fields: any[], ...labels: string[]): string {
-  const f = findField(fields, ...labels)
-  if (!f) return ''
-  const v = f.value
-  if (v === null || v === undefined) return ''
+// Resolve valores: se tem options, converte IDs → texto
+function resolveValue(field: any): string {
+  const v = field.value
+  if (v === null || v === undefined || v === false) return ''
+  if (typeof v === 'string') return v.trim()
+  if (typeof v === 'number') return String(v)
   if (Array.isArray(v)) {
-    // Se tem options, resolve IDs → texto
-    if (f.options?.length) return resolveOptions(f)
+    if (v.length === 0) return ''
+    const opts: any[] = field.options ?? []
+    if (opts.length > 0) {
+      return v.map(id => opts.find(o => o.id === id)?.text ?? id).filter(Boolean).join(', ')
+    }
     return v.join(', ')
   }
-  return String(v).trim()
-}
-
-function getOptions(fields: any[], ...labels: string[]): string {
-  const f = findField(fields, ...labels)
-  if (!f) return ''
-  return resolveOptions(f)
+  return ''
 }
 
 export async function POST(req: NextRequest) {
@@ -62,32 +50,32 @@ export async function POST(req: NextRequest) {
     }
 
     const today = new Date().toISOString().slice(0, 10)
-
-    const record = {
-      nome:            getText(fields, 'Nome dos Noivos/as (nome dos pais - batizado)', 'Nome dos Noivos/as', 'Nome dos Noivos', 'Nome'),
-      email:           getText(fields, 'E-mail', 'Email'),
-      contato:         getText(fields, 'Contato', 'Contacto', 'Telefone'),
-      data_casamento:  getText(fields, 'Data do evento', 'Data do Casamento'),
-      local_casamento: getText(fields, 'Local do evento (cerimonia + quinta)', 'Local do evento', 'Local do Casamento', 'Local'),
-      como_chegou:     getOptions(fields, 'Como chegou até nós?', 'Como chegou até nos?', 'Como Chegou'),
-      servicos:        getOptions(fields, 'Serviços que gostariam de ter no vosso Casamento', 'Serviços desejados', 'Serviços'),
-      tipo_cerimonia:  getOptions(fields, 'Tipo de cerimónia', 'Tipo de Cerimónia'),
-      tipo_evento:     getOptions(fields, 'Tipo de Evento?', 'Tipo de Evento'),
-      orcamento:       getText(fields, 'Qual o vosso orçamento para o serviço (sensivelmente)?', 'Orçamento'),
-      mensagem: [
-        getText(fields, 'Alguma preocupação ou algo que não gostam em foto/vídeo?', 'Preocupações foto/vídeo'),
-        getText(fields, 'Número de Convidados (sensivelmente)', 'Número de Convidados')
-          ? `Convidados: ${getText(fields, 'Número de Convidados (sensivelmente)', 'Número de Convidados')}`
-          : ''
-      ].filter(Boolean).join('\n'),
+    const record: Record<string, string> = {
       status:          'Por Contactar',
       lead_prioridade: 'Alta',
       data_entrada:    today,
     }
 
+    for (const field of fields) {
+      const dest = KEY_MAP[field.key]
+      if (!dest) continue
+      const val = resolveValue(field)
+      if (val) record[dest] = val
+    }
+
+    // Montar mensagem com preocupações + convidados
+    const partes = []
+    if (record._preocupacoes) partes.push(record._preocupacoes)
+    if (record._convidados)   partes.push(`Convidados: ${record._convidados}`)
+    if (partes.length) record.mensagem = partes.join('\n')
+    delete record._preocupacoes
+    delete record._convidados
+
     if (!record.nome) {
-      console.error('[tally-webhook] Nome em falta. Labels:', fields.map(f => f.label))
-      return NextResponse.json({ error: 'Nome em falta', labels: fields.map(f => f.label) }, { status: 400 })
+      return NextResponse.json({
+        error: 'Nome em falta',
+        keys_recebidos: fields.map(f => f.key),
+      }, { status: 400 })
     }
 
     const { error } = await supabase.from('crm_contacts').insert(record)
