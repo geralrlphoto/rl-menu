@@ -168,7 +168,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       .catch(() => { setNotFound(true); setLoading(false) })
   }, [token, isAdmin])
 
-  const slides = ['cover', 'about', 'intro', 'relive', 'pkg-0', 'pkg-1', 'pkg-2', 'cta']
+  const slides = ['cover', 'about', 'intro', 'relive', 'invest', 'pkg-0', 'pkg-1', 'pkg-2', 'cta']
   const total  = slides.length
 
   const goTo = useCallback((idx: number) => {
@@ -416,6 +416,21 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
             &ldquo;{pp.intro}&rdquo;
           </p>
           <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
+        </div>
+      )
+
+      case 'invest': return (
+        <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-8 max-w-2xl mx-auto">
+          <p className="text-[10px] tracking-[0.5em] text-white/20 uppercase">&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+          <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
+            style={{ fontSize: 'clamp(2.5rem,7vw,5rem)', color: typo.titleColor, lineHeight: 1.0, letterSpacing: '0.06em' }}>
+            Investimento
+          </h2>
+          <p className="text-[10px] tracking-[0.5em] text-white/20 uppercase">&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+          <p className={`${fontClass(typo.bodyFont)} font-light leading-relaxed`}
+            style={{ fontSize: 'clamp(0.9rem,1.8vw,1.1rem)', color: typo.bodyColor, maxWidth: '480px' }}>
+            As memórias que criamos juntos duram uma vida inteira. O valor que investem hoje é o retorno eterno de cada momento que nunca mais poderão reviver — apenas recordar.
+          </p>
         </div>
       )
 
