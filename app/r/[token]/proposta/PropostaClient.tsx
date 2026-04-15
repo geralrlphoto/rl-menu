@@ -28,6 +28,8 @@ function toEmbed(url: string) {
   if (yt) return `https://www.youtube.com/embed/${yt[1]}?rel=0`
   const vm = url.match(/vimeo\.com\/(\d+)/)
   if (vm) return `https://player.vimeo.com/video/${vm[1]}`
+  const gd = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/)
+  if (gd) return `https://drive.google.com/file/d/${gd[1]}/preview`
   return url
 }
 
