@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { DEFAULT_CONTENT, PageContent } from '../LeadPageClient'
+import { DEFAULT_CONTENT, PageContent, FONTS, TITLE_SIZES } from '../LeadPageClient'
 
 const IMG_BASE = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
 
@@ -51,6 +51,56 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </div>
   )
 }
+function FontPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="flex gap-1">
+      {FONTS.map(f => (
+        <button key={f.value} onClick={() => onChange(f.value)}
+          className={`flex-1 py-1.5 rounded-lg text-xs transition-all ${value === f.value ? 'bg-gold/20 text-gold border border-gold/30' : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10'}`}>
+          {f.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+function SizePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="flex gap-1">
+      {TITLE_SIZES.map(s => (
+        <button key={s.value} onClick={() => onChange(s.value)}
+          className={`flex-1 py-1.5 rounded-lg text-xs transition-all ${value === s.value ? 'bg-gold/20 text-gold border border-gold/30' : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10'}`}>
+          {s.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+function ColorPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="flex items-center gap-2">
+      <input type="color" value={value} onChange={e => onChange(e.target.value)}
+        className="w-9 h-9 rounded-lg cursor-pointer border border-white/10 bg-transparent p-0.5" />
+      <input type="text" value={value} onChange={e => onChange(e.target.value)}
+        className="flex-1 bg-white/[0.06] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-gold/40 font-mono" />
+    </div>
+  )
+}
+function AccordionSection({ title, children }: { title: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="border border-white/[0.07] rounded-xl overflow-hidden">
+      <button onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/[0.03] transition-all">
+        <span className="text-xs tracking-[0.2em] text-white/50 uppercase">{title}</span>
+        <span className="text-white/20 text-xs">{open ? '▲' : '▼'}</span>
+      </button>
+      {open && <div className="px-4 pb-4 flex flex-col gap-4 border-t border-white/[0.06]" style={{ paddingTop: '1rem' }}>{children}</div>}
+    </div>
+  )
+}
+
+function fontClass(f: string) { return FONTS.find(x => x.value === f)?.className || 'font-cormorant' }
+function sizeClass(s: string) { return TITLE_SIZES.find(x => x.value === s)?.className || 'text-6xl sm:text-7xl' }
 
 // ─────────────────────────────────────────────────────────────────────────────
 export default function PropostaClient({ token, isAdmin }: { token: string; isAdmin: boolean }) {
@@ -130,6 +180,9 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   function setPage(k: keyof PageContent['propostaPage'], v: any) {
     setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, [k]: v } }))
   }
+  function setTypo(k: keyof PageContent['propostaPage']['typography'], v: string) {
+    setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, typography: { ...c.propostaPage.typography, [k]: v } } }))
+  }
   function setPkg(i: number, k: 'title' | 'description' | 'price', v: string) {
     setContent(c => {
       const packages = [...c.propostaPage.packages]
@@ -186,6 +239,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   )
 
   const { propostaPage: pp } = content
+  const typo = pp.typography
   const nome = contact!.nome || ''
 
   // ── Slide content ─────────────────────────────────────────────────────────
@@ -197,22 +251,22 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
           <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="w-16 opacity-70 mb-2" />
           <p className="text-[10px] tracking-[0.5em] text-white/25 uppercase">{nome || 'Para vocês'}</p>
           <div>
-            <h1 className="font-cormorant font-light text-white/90" style={{ fontSize: 'clamp(3.5rem,9vw,6rem)', lineHeight: 1 }}>Proposta</h1>
-            <h1 className="font-cormorant font-light italic" style={{ fontSize: 'clamp(3.5rem,9vw,6rem)', lineHeight: 1.1, color: '#C9A84C' }}>Criativa</h1>
+            <h1 className={`${fontClass(typo.titleFont)} ${sizeClass(typo.titleSize)} font-light`} style={{ color: typo.titleColor, lineHeight: 1 }}>Proposta</h1>
+            <h1 className={`${fontClass(typo.titleFont)} ${sizeClass(typo.titleSize)} font-light italic`} style={{ color: typo.accentColor, lineHeight: 1.1 }}>Criativa</h1>
           </div>
-          <p className="text-[11px] tracking-[0.5em]" style={{ color: 'rgba(201,168,76,0.4)' }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-          <p className="font-cormorant text-lg sm:text-xl italic text-white/40">{pp.subtitle}</p>
+          <p className="text-[11px] tracking-[0.5em]" style={{ color: `${typo.accentColor}66` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+          <p className={`${fontClass(typo.bodyFont)} text-lg sm:text-xl italic opacity-60`} style={{ color: typo.bodyColor }}>{pp.subtitle}</p>
         </div>
       )
 
       case 'intro': return (
         <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-8 max-w-3xl mx-auto">
           <p className="text-[10px] tracking-[0.5em] text-white/20 uppercase">A nossa proposta</p>
-          <p className="text-[11px] tracking-[0.45em]" style={{ color: 'rgba(201,168,76,0.4)' }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-          <p className="font-cormorant text-2xl sm:text-3xl italic font-light leading-relaxed" style={{ color: 'rgba(255,255,255,0.78)' }}>
+          <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+          <p className={`${fontClass(typo.bodyFont)} text-2xl sm:text-3xl italic font-light leading-relaxed`} style={{ color: typo.bodyColor }}>
             &ldquo;{pp.intro}&rdquo;
           </p>
-          <p className="text-[11px] tracking-[0.45em]" style={{ color: 'rgba(201,168,76,0.4)' }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+          <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
         </div>
       )
 
@@ -225,17 +279,17 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         return (
           <div className="flex flex-col items-center justify-center h-full px-8 sm:px-16 gap-0">
             <div className="w-full max-w-xl relative p-10 sm:p-14 text-center"
-              style={{ border: '0.5px solid rgba(201,168,76,0.3)', background: 'linear-gradient(160deg, rgba(201,168,76,0.07) 0%, rgba(201,168,76,0.02) 100%)' }}>
-              <div className="absolute top-0 left-0 w-8 h-8"  style={{ borderTop: '1px solid rgba(201,168,76,0.6)', borderLeft:  '1px solid rgba(201,168,76,0.6)' }} />
-              <div className="absolute top-0 right-0 w-8 h-8" style={{ borderTop: '1px solid rgba(201,168,76,0.6)', borderRight: '1px solid rgba(201,168,76,0.6)' }} />
-              <div className="absolute bottom-0 left-0 w-8 h-8"  style={{ borderBottom: '1px solid rgba(201,168,76,0.6)', borderLeft:  '1px solid rgba(201,168,76,0.6)' }} />
-              <div className="absolute bottom-0 right-0 w-8 h-8" style={{ borderBottom: '1px solid rgba(201,168,76,0.6)', borderRight: '1px solid rgba(201,168,76,0.6)' }} />
+              style={{ border: `0.5px solid ${typo.accentColor}4D`, background: 'linear-gradient(160deg, rgba(201,168,76,0.07) 0%, rgba(201,168,76,0.02) 100%)' }}>
+              <div className="absolute top-0 left-0 w-8 h-8"  style={{ borderTop: `1px solid ${typo.accentColor}99`, borderLeft:  `1px solid ${typo.accentColor}99` }} />
+              <div className="absolute top-0 right-0 w-8 h-8" style={{ borderTop: `1px solid ${typo.accentColor}99`, borderRight: `1px solid ${typo.accentColor}99` }} />
+              <div className="absolute bottom-0 left-0 w-8 h-8"  style={{ borderBottom: `1px solid ${typo.accentColor}99`, borderLeft:  `1px solid ${typo.accentColor}99` }} />
+              <div className="absolute bottom-0 right-0 w-8 h-8" style={{ borderBottom: `1px solid ${typo.accentColor}99`, borderRight: `1px solid ${typo.accentColor}99` }} />
               <p className="text-[10px] tracking-[0.5em] text-white/20 uppercase mb-6">Pacote {nums[idx]}</p>
-              <h2 className="font-cormorant italic font-light mb-5" style={{ fontSize: 'clamp(2.2rem,6vw,3.5rem)', color: '#C9A84C', lineHeight: 1.1 }}>{pkg.title}</h2>
-              <div className="h-px mb-6" style={{ background: 'rgba(201,168,76,0.2)' }} />
-              <p className="text-base leading-relaxed text-white/55 mb-8 font-light">{pkg.description}</p>
+              <h2 className={`${fontClass(typo.pkgTitleFont)} italic font-light mb-5`} style={{ fontSize: 'clamp(2.2rem,6vw,3.5rem)', color: typo.pkgTitleColor, lineHeight: 1.1 }}>{pkg.title}</h2>
+              <div className="h-px mb-6" style={{ background: `${typo.accentColor}33` }} />
+              <p className={`${fontClass(typo.bodyFont)} text-base leading-relaxed mb-8 font-light`} style={{ color: typo.bodyColor }}>{pkg.description}</p>
               {pkg.price && (
-                <p className="font-cormorant text-2xl italic" style={{ color: 'rgba(255,255,255,0.7)' }}>{pkg.price}</p>
+                <p className={`${fontClass(typo.pkgTitleFont)} text-2xl italic`} style={{ color: typo.titleColor, opacity: 0.75 }}>{pkg.price}</p>
               )}
             </div>
           </div>
@@ -245,11 +299,11 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       case 'cta': return (
         <div className="flex flex-col items-center justify-center h-full text-center px-8 gap-8">
           <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="w-12 opacity-60" />
-          <p className="text-[11px] tracking-[0.45em]" style={{ color: 'rgba(201,168,76,0.4)' }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-          <p className="font-cormorant text-2xl sm:text-3xl italic font-light text-white/70">{pp.ctaText}</p>
+          <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+          <p className={`${fontClass(typo.bodyFont)} text-2xl sm:text-3xl italic font-light`} style={{ color: typo.bodyColor }}>{pp.ctaText}</p>
           <a href={`/r/${token}`}
             className="flex items-center gap-3 px-10 py-4 text-[10px] tracking-[0.4em] uppercase transition-all hover:scale-[1.03]"
-            style={{ background: 'rgba(201,168,76,0.12)', border: '0.5px solid rgba(201,168,76,0.45)', color: '#C9A84C' }}>
+            style={{ background: `${typo.accentColor}1F`, border: `0.5px solid ${typo.accentColor}73`, color: typo.accentColor }}>
             ← Voltar à página
           </a>
         </div>
@@ -336,7 +390,38 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
               <p className="text-xs tracking-widest text-white/60 uppercase">Editar Proposta</p>
               <button onClick={() => setEditorOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg text-white/30 hover:text-white hover:bg-white/5 transition-all">✕</button>
             </div>
-            <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4">
+            <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
+
+              {/* Tipografia */}
+              <AccordionSection title="Tipografia">
+                <Field label="Tipo de letra — Título">
+                  <FontPicker value={typo.titleFont} onChange={v => setTypo('titleFont', v)} />
+                </Field>
+                <Field label="Tamanho — Título">
+                  <SizePicker value={typo.titleSize} onChange={v => setTypo('titleSize', v)} />
+                </Field>
+                <Field label="Cor — Título">
+                  <ColorPicker value={typo.titleColor} onChange={v => setTypo('titleColor', v)} />
+                </Field>
+                <Field label="Cor de destaque (dourado)">
+                  <ColorPicker value={typo.accentColor} onChange={v => setTypo('accentColor', v)} />
+                </Field>
+                <Field label="Tipo de letra — Corpo">
+                  <FontPicker value={typo.bodyFont} onChange={v => setTypo('bodyFont', v)} />
+                </Field>
+                <Field label="Cor — Corpo / Descrições">
+                  <ColorPicker value={typo.bodyColor} onChange={v => setTypo('bodyColor', v)} />
+                </Field>
+                <Field label="Tipo de letra — Nome pacote">
+                  <FontPicker value={typo.pkgTitleFont} onChange={v => setTypo('pkgTitleFont', v)} />
+                </Field>
+                <Field label="Cor — Nome pacote">
+                  <ColorPicker value={typo.pkgTitleColor} onChange={v => setTypo('pkgTitleColor', v)} />
+                </Field>
+              </AccordionSection>
+
+              <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+
               <Field label="Subtítulo (slide capa)">
                 <TInput value={pp.subtitle} onChange={v => setPage('subtitle', v)} />
               </Field>

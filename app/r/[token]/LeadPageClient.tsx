@@ -7,17 +7,24 @@ const DEFAULT_HERO = 'https://rl-menu-lake.vercel.app/casamentos-2028.png'
 
 type Contact = Record<string, any>
 
-const FONTS: { value: string; label: string; className: string }[] = [
+export const FONTS: { value: string; label: string; className: string }[] = [
   { value: 'playfair',  label: 'Playfair',  className: 'font-playfair' },
   { value: 'cormorant', label: 'Cormorant', className: 'font-cormorant' },
   { value: 'sans',      label: 'Sans',      className: 'font-sans' },
 ]
 
-const SIZES: { value: string; label: string; className: string }[] = [
+export const SIZES: { value: string; label: string; className: string }[] = [
   { value: 'sm',  label: 'S',  className: 'text-2xl' },
   { value: 'md',  label: 'M',  className: 'text-4xl' },
   { value: 'lg',  label: 'L',  className: 'text-5xl sm:text-6xl' },
   { value: 'xl',  label: 'XL', className: 'text-6xl sm:text-7xl' },
+]
+
+export const TITLE_SIZES: { value: string; label: string; className: string }[] = [
+  { value: 'sm',  label: 'S',  className: 'text-4xl sm:text-5xl' },
+  { value: 'md',  label: 'M',  className: 'text-5xl sm:text-6xl' },
+  { value: 'lg',  label: 'L',  className: 'text-6xl sm:text-7xl' },
+  { value: 'xl',  label: 'XL', className: 'text-7xl sm:text-8xl' },
 ]
 
 export type PageContent = {
@@ -29,7 +36,17 @@ export type PageContent = {
   about:        { label: string; title: string; titleFont: string; titleColor: string; text: string; textColor: string }
   banner:       { message: string; signature: string }
   proposta:     { password: string; buttonLabel: string }
-  propostaPage: { subtitle: string; intro: string; packages: { title: string; description: string; price: string }[]; ctaText: string }
+  propostaPage: {
+    subtitle: string; intro: string
+    packages: { title: string; description: string; price: string }[]
+    ctaText: string
+    typography: {
+      titleFont: string; titleSize: string; titleColor: string
+      accentColor: string
+      bodyFont: string; bodyColor: string
+      pkgTitleFont: string; pkgTitleColor: string
+    }
+  }
 }
 
 export const DEFAULT_CONTENT: PageContent = {
@@ -70,6 +87,12 @@ export const DEFAULT_CONTENT: PageContent = {
       { title: 'Luxe', description: 'Pacote completo com álbum premium, second shooter, pré-wedding e vídeo completo.', price: 'Sob consulta' },
     ],
     ctaText: 'Falemos sobre o vosso dia especial',
+    typography: {
+      titleFont: 'cormorant', titleSize: 'xl', titleColor: '#ffffff',
+      accentColor: '#C9A84C',
+      bodyFont: 'cormorant', bodyColor: '#c8c0b0',
+      pkgTitleFont: 'cormorant', pkgTitleColor: '#C9A84C',
+    },
   },
 }
 
@@ -84,7 +107,7 @@ function merge(saved: any): PageContent {
     about:        { ...DEFAULT_CONTENT.about,        ...(saved.about        || {}) },
     banner:       { ...DEFAULT_CONTENT.banner,       ...(saved.banner       || {}) },
     proposta:     { ...DEFAULT_CONTENT.proposta,     ...(saved.proposta     || {}) },
-    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages },
+    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
   }
 }
 
