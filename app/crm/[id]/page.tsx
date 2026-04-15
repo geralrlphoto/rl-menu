@@ -132,6 +132,21 @@ export default function ClientePage() {
     if (!error) {
       setForm(f => ({ ...f, status: 'Reunião Agendada', reuniao_tipo: tipo, reuniao_link: link }))
       setOriginal(f => ({ ...f, status: 'Reunião Agendada', reuniao_data: form.reuniao_data, reuniao_hora: form.reuniao_hora, reuniao_tipo: tipo, reuniao_link: link }))
+      // Enviar email ao cliente se tiver email
+      if (form.email) {
+        fetch('/api/send-reuniao-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email:        form.email,
+            nome:         form.nome,
+            reuniao_data: form.reuniao_data,
+            reuniao_hora: form.reuniao_hora,
+            reuniao_tipo: tipo,
+            reuniao_link: link,
+          }),
+        }).catch(() => {})
+      }
       setReuniaoSent(true)
       setTimeout(() => setReuniaoSent(false), 3000)
     } else {
