@@ -250,9 +250,12 @@ export default function CRMPage() {
   }
 
   useEffect(() => {
-    // Carregamento inicial
+    // Carregamento inicial + sync automático com Notion em background
     supabase.from('crm_contacts').select('*').order('data_entrada', { ascending: false })
       .then(({ data }) => { setContacts(data ?? []); setLoading(false) })
+
+    // Sync silencioso com Notion ao abrir o CRM
+    fetch('/api/sync-notion', { method: 'POST' }).catch(() => {})
 
     // Realtime — atualiza automaticamente quando há mudanças
     const channel = supabase
