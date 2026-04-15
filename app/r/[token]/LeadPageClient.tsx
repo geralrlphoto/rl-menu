@@ -151,6 +151,36 @@ function AccordionSection({ title, children, defaultOpen }: { title: string; chi
   )
 }
 
+function FadeIn({ children, delay = 0, className = '', style = {} }: {
+  children: React.ReactNode; delay?: number; className?: string; style?: React.CSSProperties
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const t = setTimeout(() => {
+      const obs = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect() } },
+        { threshold: 0.08, rootMargin: '0px 0px -20px 0px' }
+      )
+      obs.observe(el)
+      return () => obs.disconnect()
+    }, 60)
+    return () => clearTimeout(t)
+  }, [])
+  return (
+    <div ref={ref} className={className} style={{
+      ...style,
+      opacity: visible ? 1 : 0,
+      transform: visible ? 'translateY(0px)' : 'translateY(22px)',
+      transition: `opacity 0.7s cubic-bezier(0.22,1,0.36,1) ${delay}ms, transform 0.7s cubic-bezier(0.22,1,0.36,1) ${delay}ms`,
+    }}>
+      {children}
+    </div>
+  )
+}
+
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 function fmtData(d: string) {
   if (!d) return ''
@@ -437,38 +467,43 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
         )}
 
         <div className="relative z-10 text-center px-4 pt-20">
-          <div className="flex items-center justify-center gap-3 mb-4">
+          <FadeIn delay={80} className="flex items-center justify-center gap-3 mb-4">
             <Leaf />
             <p className={`${fontClass(hero.titleFont)} text-sm sm:text-base tracking-[0.4em] uppercase italic`} style={{ color: hero.brandColor }}>
               {hero.brandLine}
             </p>
             <Leaf flip />
-          </div>
-          <h1 className={`${fontClass(hero.titleFont)} ${sizeClass(hero.titleSize)} font-black leading-none tracking-tight mb-4`} style={{ color: hero.titleColor }}>
-            {hero.title}
-          </h1>
-          <div className="flex flex-col items-center gap-1 mt-2">
+          </FadeIn>
+          <FadeIn delay={220}>
+            <h1 className={`${fontClass(hero.titleFont)} ${sizeClass(hero.titleSize)} font-black leading-none tracking-tight mb-4`} style={{ color: hero.titleColor }}>
+              {hero.title}
+            </h1>
+          </FadeIn>
+          <FadeIn delay={380} className="flex flex-col items-center gap-1 mt-2">
             {contact!.nome && <p className="font-cormorant text-white/60 text-lg sm:text-xl italic tracking-wide">{contact!.nome}</p>}
             {dataFmt && <p className="font-cormorant text-white/50 text-sm sm:text-base italic tracking-wide">♡ {dataFmt} · {horaFmt} · {contact!.reuniao_tipo || 'Presencial'}</p>}
-          </div>
+          </FadeIn>
         </div>
       </section>
 
       {/* ── COUNTDOWN ── */}
       {targetDate && (
         <section id="sec-countdown" className="py-10 sm:py-14 border-y border-white/[0.05] bg-[#0d0d0d]">
-          <p className={`font-playfair font-black text-xl sm:text-2xl text-center mb-6 tracking-tight`} style={{ color: countdown.titleColor }}>
-            {countdown.title}
-          </p>
-          <div className="flex items-center justify-center gap-4">
+          <FadeIn>
+            <p className={`font-playfair font-black text-xl sm:text-2xl text-center mb-6 tracking-tight`} style={{ color: countdown.titleColor }}>
+              {countdown.title}
+            </p>
+          </FadeIn>
+          <FadeIn delay={150} className="flex items-center justify-center gap-4">
             <Leaf /><Countdown targetDate={targetDate} /><Leaf flip />
-          </div>
+          </FadeIn>
         </section>
       )}
 
       {/* ── CARD REUNIÃO ── */}
       <section className="flex flex-col items-center px-6 py-14">
-        <div className="w-full max-w-sm border border-white/10 rounded-2xl overflow-hidden mb-8" style={{ background: 'rgba(255,255,255,0.03)' }}>
+        <FadeIn className="w-full max-w-sm">
+        <div className="w-full border border-white/10 rounded-2xl overflow-hidden mb-8" style={{ background: 'rgba(255,255,255,0.03)' }}>
           <div className="px-6 py-4 border-b border-white/8">
             <p className="text-xs tracking-[0.3em] text-white/25 uppercase">Detalhes da Reunião</p>
           </div>
@@ -499,8 +534,10 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
             </div>
           )}
         </div>
+        </FadeIn>
 
-        <div className="w-full max-w-sm flex flex-col gap-3">
+        <FadeIn delay={150} className="w-full max-w-sm">
+        <div className="w-full flex flex-col gap-3">
 
           {/* Status badge */}
           {status === 'confirmada' && (
@@ -534,14 +571,16 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
 
           {isAdmin && <p className="text-center text-[10px] text-white/20 tracking-widest uppercase">Botões desativados em modo admin</p>}
         </div>
+        </FadeIn>
       </section>
 
       {/* ── VÍDEO ── */}
       {(video.urls.some(u => u) || isAdmin) && (
         <section id="sec-video" className="px-6 py-14 flex flex-col items-center" style={{ background: '#0d0d0d' }}>
-          <p className="text-xs tracking-[0.35em] text-white/25 uppercase mb-2">{video.label}</p>
-          <h2 className="font-cormorant text-3xl font-light mb-8 text-center text-white/90">{video.title}</h2>
-          <div className="w-full max-w-7xl grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <FadeIn><p className="text-xs tracking-[0.35em] text-white/25 uppercase mb-2">{video.label}</p></FadeIn>
+          <FadeIn delay={120}><h2 className="font-cormorant text-3xl font-light mb-8 text-center text-white/90">{video.title}</h2></FadeIn>
+          <FadeIn delay={240} className="w-full max-w-7xl">
+          <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-5">
             {video.urls.map((url, i) => {
               const embed = toEmbedUrl(url)
               if (embed) return (
@@ -562,6 +601,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
               return null
             })}
           </div>
+          </FadeIn>
         </section>
       )}
 
@@ -569,19 +609,23 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
 
       {/* ── PORTFÓLIO ── */}
       <section id="sec-portfolio" className="px-6 py-14 flex flex-col items-center">
-        <p className="text-xs tracking-[0.35em] text-white/25 uppercase mb-2">{portfolio.label}</p>
-        <h2 className={`${fontClass(portfolio.titleFont)} text-3xl font-light mb-8 text-center`} style={{ color: portfolio.titleColor }}>
-          {portfolio.title}
-        </h2>
+        <FadeIn><p className="text-xs tracking-[0.35em] text-white/25 uppercase mb-2">{portfolio.label}</p></FadeIn>
+        <FadeIn delay={120}>
+          <h2 className={`${fontClass(portfolio.titleFont)} text-3xl font-light mb-8 text-center`} style={{ color: portfolio.titleColor }}>
+            {portfolio.title}
+          </h2>
+        </FadeIn>
         <div className="w-full max-w-2xl grid grid-cols-3 gap-3">
           {portfolio.photos.map((url, i) => (
-            <div key={i} className="aspect-square rounded-xl overflow-hidden relative group"
+            <FadeIn key={i} delay={i * 120} className="aspect-square">
+            <div className="aspect-square rounded-xl overflow-hidden relative group w-full h-full"
               style={{ background: url ? undefined : 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
               {url
                 ? <img src={url} alt="" className="w-full h-full object-cover" />
                 : <div className="w-full h-full flex items-center justify-center"><span className="text-white/10 text-xs tracking-widest">foto</span></div>
               }
             </div>
+            </FadeIn>
           ))}
         </div>
       </section>
@@ -590,15 +634,17 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
 
       {/* ── TESTEMUNHOS ── */}
       <section id="sec-testemunhos" className="px-6 py-14 flex flex-col items-center gap-8 max-w-2xl mx-auto">
-        <p className="text-xs tracking-[0.35em] text-white/25 uppercase">{testimonials.label}</p>
+        <FadeIn><p className="text-xs tracking-[0.35em] text-white/25 uppercase">{testimonials.label}</p></FadeIn>
         {testimonials.items.map((item, i) => (
-          <div key={i} className="flex flex-col items-center gap-4 w-full">
-            <blockquote className="text-center">
-              <p className="font-cormorant text-xl text-white/70 italic font-light leading-relaxed mb-3">"{item.text}"</p>
-              <cite className="text-xs tracking-[0.2em] text-gold/60 not-italic">{item.author}</cite>
-            </blockquote>
-            {i < testimonials.items.length - 1 && <div className="w-8 h-px" style={{ background: 'rgba(201,168,76,0.2)' }} />}
-          </div>
+          <FadeIn key={i} delay={i * 150} className="w-full">
+            <div className="flex flex-col items-center gap-4 w-full">
+              <blockquote className="text-center">
+                <p className="font-cormorant text-xl text-white/70 italic font-light leading-relaxed mb-3">"{item.text}"</p>
+                <cite className="text-xs tracking-[0.2em] text-gold/60 not-italic">{item.author}</cite>
+              </blockquote>
+              {i < testimonials.items.length - 1 && <div className="w-8 h-px" style={{ background: 'rgba(201,168,76,0.2)' }} />}
+            </div>
+          </FadeIn>
         ))}
       </section>
 
@@ -606,16 +652,20 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
 
       {/* ── SOBRE NÓS ── */}
       <section id="sec-sobre" className="px-6 py-14 flex flex-col items-center max-w-sm mx-auto text-center">
-        <p className="text-xs tracking-[0.35em] text-white/25 uppercase mb-2">{about.label}</p>
-        <h2 className={`${fontClass(about.titleFont)} text-3xl font-light mb-6`} style={{ color: about.titleColor }}>
-          {about.title}
-        </h2>
-        <p className="text-sm leading-relaxed font-light" style={{ color: about.textColor }}>{about.text}</p>
+        <FadeIn><p className="text-xs tracking-[0.35em] text-white/25 uppercase mb-2">{about.label}</p></FadeIn>
+        <FadeIn delay={120}>
+          <h2 className={`${fontClass(about.titleFont)} text-3xl font-light mb-6`} style={{ color: about.titleColor }}>
+            {about.title}
+          </h2>
+        </FadeIn>
+        <FadeIn delay={240}>
+          <p className="text-sm leading-relaxed font-light" style={{ color: about.textColor }}>{about.text}</p>
+        </FadeIn>
       </section>
 
       {/* ── FOOTER ── */}
       <footer className="px-6 py-10 text-center border-t" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-        <p className="text-xs tracking-widest text-white/15 uppercase">© RL Photo · Video</p>
+        <FadeIn><p className="text-xs tracking-widest text-white/15 uppercase">© RL Photo · Video</p></FadeIn>
       </footer>
 
       {/* ── WHATSAPP ── */}
