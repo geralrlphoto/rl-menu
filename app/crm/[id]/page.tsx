@@ -107,6 +107,32 @@ export default function ClientePage() {
 
   const [deleting, setDeleting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [sendingReuniao, setSendingReuniao] = useState(false)
+  const [reuniaoSent, setReuniaoSent] = useState(false)
+
+  const handleEnviarReuniao = async () => {
+    if (!form.reuniao_data || !form.reuniao_hora) {
+      alert('Preenche a data e hora da reunião.')
+      return
+    }
+    setSendingReuniao(true)
+    const { error } = await supabase.from('crm_contacts').update({
+      reuniao_data: form.reuniao_data,
+      reuniao_hora: form.reuniao_hora,
+      reuniao_tipo: form.reuniao_tipo || 'Presencial',
+      status: 'Reunião Agendada',
+      status_updated_at: new Date().toISOString(),
+    }).eq('id', id)
+    if (!error) {
+      setForm(f => ({ ...f, status: 'Reunião Agendada' }))
+      setOriginal(f => ({ ...f, status: 'Reunião Agendada', reuniao_data: form.reuniao_data, reuniao_hora: form.reuniao_hora, reuniao_tipo: form.reuniao_tipo || 'Presencial' }))
+      setReuniaoSent(true)
+      setTimeout(() => setReuniaoSent(false), 3000)
+    } else {
+      alert('Erro ao guardar reunião: ' + error.message)
+    }
+    setSendingReuniao(false)
+  }
 
   const handleDelete = async () => {
     if (!confirmDelete) { setConfirmDelete(true); return }
@@ -227,6 +253,60 @@ export default function ClientePage() {
             className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50 resize-none"
             placeholder="Notas sobre esta lead..."
           />
+        </div>
+
+        {/* Marcação de Reunião */}
+        <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs tracking-[0.3em] text-gold uppercase">Marcação de Reunião</h2>
+            {form.reuniao_data && form.reuniao_hora && (
+              <span className="text-xs text-white/30 tracking-wider">
+                {form.reuniao_data} · {form.reuniao_hora} · {form.reuniao_tipo || 'Presencial'}
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs tracking-widest text-white/30 uppercase">Data</label>
+              <input
+                type="date"
+                value={form.reuniao_data ?? ''}
+                onChange={e => set('reuniao_data', e.target.value)}
+                className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold/50"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs tracking-widest text-white/30 uppercase">Hora</label>
+              <input
+                type="time"
+                value={form.reuniao_hora ?? ''}
+                onChange={e => set('reuniao_hora', e.target.value)}
+                className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold/50"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs tracking-widest text-white/30 uppercase">Tipo</label>
+            <select
+              value={form.reuniao_tipo ?? 'Presencial'}
+              onChange={e => set('reuniao_tipo', e.target.value)}
+              className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold/50"
+            >
+              <option value="Presencial" className="bg-zinc-900">Presencial</option>
+              <option value="Videochamada" className="bg-zinc-900">Videochamada</option>
+            </select>
+          </div>
+          <button
+            onClick={handleEnviarReuniao}
+            disabled={sendingReuniao}
+            className={`w-full py-3 rounded-xl text-sm font-semibold tracking-wider transition-all ${
+              reuniaoSent
+                ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                : 'bg-white/8 hover:bg-white/12 text-white border border-white/15 hover:border-white/30'
+            } disabled:opacity-40`}
+          >
+            {sendingReuniao ? 'A enviar...' : reuniaoSent ? '✓ Reunião Agendada' : 'Enviar'}
+          </button>
         </div>
 
       </div>
