@@ -398,7 +398,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
               {pp.relive?.imageUrl
                 ? <img src={pp.relive.imageUrl} alt="Relive Wedding"
                     className="w-full h-auto"
-                    style={{ filter: 'invert(1)', mixBlendMode: 'screen' }} />
+                    style={{ borderRadius: '8px' }} />
                 : <div className="w-full flex items-center justify-center" style={{ height: '260px', background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)' }}>
                     <p className="text-[10px] tracking-widest text-white/15 uppercase">Imagem</p>
                   </div>
