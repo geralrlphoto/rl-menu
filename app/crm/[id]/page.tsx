@@ -130,10 +130,12 @@ export default function ClientePage() {
       reuniao_link: link,
       status: 'Reunião Agendada',
       status_updated_at: new Date().toISOString(),
+      reuniao_enviada_at: new Date().toISOString(),
     }).eq('id', id)
     if (!error) {
-      setForm(f => ({ ...f, status: 'Reunião Agendada', reuniao_tipo: tipo, reuniao_link: link }))
-      setOriginal(f => ({ ...f, status: 'Reunião Agendada', reuniao_data: form.reuniao_data, reuniao_hora: form.reuniao_hora, reuniao_tipo: tipo, reuniao_link: link }))
+      const enviadaAt = new Date().toISOString()
+      setForm(f => ({ ...f, status: 'Reunião Agendada', reuniao_tipo: tipo, reuniao_link: link, reuniao_enviada_at: enviadaAt }))
+      setOriginal(f => ({ ...f, status: 'Reunião Agendada', reuniao_data: form.reuniao_data, reuniao_hora: form.reuniao_hora, reuniao_tipo: tipo, reuniao_link: link, reuniao_enviada_at: enviadaAt }))
       // Enviar email ao cliente se tiver email
       if (form.email) {
         fetch('/api/send-reuniao-email', {
@@ -457,6 +459,14 @@ export default function ClientePage() {
           >
             {sendingReuniao ? 'A enviar...' : reuniaoSent ? '✓ Reunião Agendada' : 'Enviar'}
           </button>
+          {form.reuniao_enviada_at && (
+            <p className="text-[11px] text-white/25 text-center tracking-wide">
+              ✓ Enviado a {new Date(form.reuniao_enviada_at).toLocaleString('pt-PT', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+              })}
+            </p>
+          )}
         </div>
 
       </div>
