@@ -433,10 +433,10 @@ export default function CalendarClient({
                     {r.reuniao_hora && <Row label="Hora">{r.reuniao_hora}</Row>}
                     <Row label="Tipo">{r.reuniao_tipo || 'Presencial'}</Row>
                     {r.reuniao_link && (
-                      <Row label="Meet">
+                      <Row label={r.reuniao_tipo === 'Videochamada' ? 'Meet' : 'Local'}>
                         <a href={r.reuniao_link} target="_blank" rel="noopener noreferrer"
-                          className="text-green-400 hover:text-green-300 transition-colors break-all">
-                          {r.reuniao_link}
+                          className={`hover:opacity-80 transition-opacity break-all ${r.reuniao_tipo === 'Videochamada' ? 'text-green-400' : 'text-blue-400'}`}>
+                          {r.reuniao_tipo === 'Videochamada' ? r.reuniao_link : '📍 Ver no Google Maps'}
                         </a>
                       </Row>
                     )}

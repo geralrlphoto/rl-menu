@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
 const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
+const MAPS_LINK = 'https://www.google.com/maps/place/RL+Photo.Video+(Casamentos,Batizados,Eventos)/@38.634382,-8.9147077,212m/data=!3m2!1e3!4b1!4m6!3m5!1s0xd19414ebaa9e467:0x1d9b63c70ffe06a!8m2!3d38.634381!4d-8.914064!16s%2Fg%2F11w219lx62?authuser=0&entry=ttu&g_ep=EgoyMDI2MDQxMi4wIKXMDSoASAFQAw%3D%3D'
 
 const statusColor: Record<string, string> = {
   'Fechou': 'bg-green-500/20 text-green-400 border-green-500/40',
@@ -118,7 +119,7 @@ export default function ClientePage() {
       return
     }
     const tipo = form.reuniao_tipo || 'Presencial'
-    const link = tipo === 'Videochamada' ? MEET_LINK : ''
+    const link = tipo === 'Videochamada' ? MEET_LINK : MAPS_LINK
     setSendingReuniao(true)
     const { error } = await supabase.from('crm_contacts').update({
       reuniao_data: form.reuniao_data,
@@ -278,10 +279,12 @@ export default function ClientePage() {
                   href={form.reuniao_link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-xs text-green-400 hover:text-green-300 transition-colors font-mono tracking-wide"
+                  className={`flex items-center gap-2 text-xs hover:opacity-80 transition-opacity font-mono tracking-wide ${
+                    form.reuniao_tipo === 'Videochamada' ? 'text-green-400' : 'text-blue-400'
+                  }`}
                 >
-                  <span>🎥</span>
-                  <span>{form.reuniao_link}</span>
+                  <span>{form.reuniao_tipo === 'Videochamada' ? '🎥' : '📍'}</span>
+                  <span>{form.reuniao_tipo === 'Videochamada' ? form.reuniao_link : 'Ver localização no Google Maps'}</span>
                 </a>
               )}
             </div>
