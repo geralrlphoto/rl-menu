@@ -5,6 +5,15 @@ import { DEFAULT_CONTENT, PageContent, FONTS, TITLE_SIZES } from '../LeadPageCli
 
 const IMG_BASE = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
 
+function toEmbed(url: string) {
+  if (!url) return ''
+  const yt = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/)
+  if (yt) return `https://www.youtube.com/embed/${yt[1]}?rel=0`
+  const vm = url.match(/vimeo\.com\/(\d+)/)
+  if (vm) return `https://player.vimeo.com/video/${vm[1]}`
+  return url
+}
+
 function mergeContent(saved: any): PageContent {
   if (!saved) return DEFAULT_CONTENT
   return {
@@ -257,40 +266,6 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   const typo = pp.typography
   const nome = contact!.nome || ''
 
-  // ── About slide ───────────────────────────────────────────────────────────
-  const renderAbout = () => {
-    const photo = pp?.about?.photo || ''
-    const title = pp?.about?.title || 'Sobre Nós'
-    const accent = typo?.accentColor || '#C9A84C'
-    const titleCol = typo?.titleColor || '#ffffff'
-    return (
-      <div className="flex flex-col items-center justify-center h-full text-center px-8 gap-8">
-
-        {/* Foto vertical */}
-        <div className="relative" style={{ width: '160px', height: '220px' }}>
-          <div className="absolute -top-2 -left-2 w-5 h-5" style={{ borderTop: `1px solid ${accent}`, borderLeft: `1px solid ${accent}` }} />
-          <div className="absolute -top-2 -right-2 w-5 h-5" style={{ borderTop: `1px solid ${accent}`, borderRight: `1px solid ${accent}` }} />
-          <div className="absolute -bottom-2 -left-2 w-5 h-5" style={{ borderBottom: `1px solid ${accent}`, borderLeft: `1px solid ${accent}` }} />
-          <div className="absolute -bottom-2 -right-2 w-5 h-5" style={{ borderBottom: `1px solid ${accent}`, borderRight: `1px solid ${accent}` }} />
-          {photo
-            ? <img src={photo} alt="" className="w-full h-full object-cover" />
-            : <div className="w-full h-full" style={{ background: 'rgba(201,168,76,0.06)', border: '0.5px solid rgba(201,168,76,0.2)' }} />
-          }
-        </div>
-
-        {/* Título */}
-        <div className="flex flex-col items-center gap-3">
-          <p className="text-[11px] tracking-[0.45em]" style={{ color: `${accent}66` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-          <h2 className={`${fontClass(typo?.titleFont || 'cormorant')} font-light italic`}
-            style={{ fontSize: 'clamp(2.5rem,6vw,4rem)', color: titleCol, lineHeight: 1.1 }}>
-            {title}
-          </h2>
-        </div>
-
-      </div>
-    )
-  }
-
   // ── Slide content ─────────────────────────────────────────────────────────
   const renderSlide = (id: string) => {
     switch (id) {
@@ -309,22 +284,45 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       )
 
       case 'about': return (
-        <div className="flex flex-col items-center justify-center h-full text-center px-8 gap-8">
-          <div className="relative" style={{ width: '160px', height: '220px' }}>
-            <div className="absolute -top-2 -left-2 w-5 h-5" style={{ borderTop: `1px solid ${typo.accentColor}`, borderLeft: `1px solid ${typo.accentColor}` }} />
-            <div className="absolute -top-2 -right-2 w-5 h-5" style={{ borderTop: `1px solid ${typo.accentColor}`, borderRight: `1px solid ${typo.accentColor}` }} />
-            <div className="absolute -bottom-2 -left-2 w-5 h-5" style={{ borderBottom: `1px solid ${typo.accentColor}`, borderLeft: `1px solid ${typo.accentColor}` }} />
-            <div className="absolute -bottom-2 -right-2 w-5 h-5" style={{ borderBottom: `1px solid ${typo.accentColor}`, borderRight: `1px solid ${typo.accentColor}` }} />
-            {pp.about?.photo
-              ? <img src={pp.about.photo} alt="" className="w-full h-full object-cover" />
-              : <div className="w-full h-full" style={{ background: 'rgba(201,168,76,0.08)', border: '0.5px solid rgba(201,168,76,0.3)' }} />
-            }
-          </div>
-          <div className="flex flex-col items-center gap-3">
-            <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-            <h2 className={`${fontClass(typo.titleFont)} font-light italic`} style={{ fontSize: 'clamp(2.5rem,6vw,4rem)', color: '#ffffff', lineHeight: 1.1 }}>
+        <div className="relative h-full w-full flex items-center justify-center px-10 sm:px-16">
+
+          {/* Título — canto superior direito */}
+          <div className="absolute right-10 text-right" style={{ top: isAdmin ? '76px' : '52px' }}>
+            <p className="text-[9px] tracking-[0.5em] text-white/20 uppercase mb-1">RL Photo · Video</p>
+            <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
+              style={{ fontSize: 'clamp(1.6rem,3.5vw,2.6rem)', color: typo.titleColor, lineHeight: 1.1 }}>
               {pp.about?.title || 'Sobre Nós'}
             </h2>
+            <div className="ml-auto mt-2" style={{ width: '36px', height: '1px', background: `${typo.accentColor}66` }} />
+          </div>
+
+          {/* Conteúdo: foto + vídeo */}
+          <div className="flex flex-row items-center gap-8 sm:gap-12 w-full max-w-5xl">
+
+            {/* Foto vertical */}
+            <div className="relative flex-shrink-0" style={{ width: 'clamp(160px,22vw,260px)', height: 'clamp(240px,33vw,390px)' }}>
+              <div className="absolute -top-2 -left-2 w-6 h-6" style={{ borderTop: `1px solid ${typo.accentColor}`, borderLeft: `1px solid ${typo.accentColor}` }} />
+              <div className="absolute -top-2 -right-2 w-6 h-6" style={{ borderTop: `1px solid ${typo.accentColor}`, borderRight: `1px solid ${typo.accentColor}` }} />
+              <div className="absolute -bottom-2 -left-2 w-6 h-6" style={{ borderBottom: `1px solid ${typo.accentColor}`, borderLeft: `1px solid ${typo.accentColor}` }} />
+              <div className="absolute -bottom-2 -right-2 w-6 h-6" style={{ borderBottom: `1px solid ${typo.accentColor}`, borderRight: `1px solid ${typo.accentColor}` }} />
+              {pp.about?.photo
+                ? <img src={pp.about.photo} alt="" className="w-full h-full object-cover" />
+                : <div className="w-full h-full" style={{ background: 'rgba(201,168,76,0.06)', border: '0.5px solid rgba(201,168,76,0.25)' }} />
+              }
+            </div>
+
+            {/* Vídeo */}
+            <div className="flex-1 relative" style={{ aspectRatio: '16/9' }}>
+              {pp.about?.videoUrl && toEmbed(pp.about.videoUrl)
+                ? <iframe src={toEmbed(pp.about.videoUrl)} className="w-full h-full"
+                    style={{ border: 'none' }} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen />
+                : <div className="w-full h-full flex flex-col items-center justify-center gap-2"
+                    style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', aspectRatio: '16/9' }}>
+                    <span style={{ color: `${typo.accentColor}44`, fontSize: '1.5rem' }}>▶</span>
+                    <p className="text-[10px] tracking-[0.3em] uppercase" style={{ color: 'rgba(255,255,255,0.15)' }}>Vídeo</p>
+                  </div>
+              }
+            </div>
           </div>
         </div>
       )
@@ -544,10 +542,10 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                   )}
                 </Field>
                 <Field label="Título">
-                  <TInput value={pp.about?.title || ''} onChange={v => setAbout('title', v)} placeholder="Sobre mim" />
+                  <TInput value={pp.about?.title || ''} onChange={v => setAbout('title', v)} placeholder="Sobre Nós" />
                 </Field>
-                <Field label="Texto">
-                  <TInput value={pp.about?.text || ''} onChange={v => setAbout('text', v)} multiline placeholder="A tua apresentação..." />
+                <Field label="URL do vídeo (YouTube / Vimeo)">
+                  <TInput value={pp.about?.videoUrl || ''} onChange={v => setAbout('videoUrl', v)} placeholder="https://youtu.be/..." />
                 </Field>
 
                 <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />

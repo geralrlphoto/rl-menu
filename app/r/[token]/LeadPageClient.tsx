@@ -38,7 +38,7 @@ export type PageContent = {
   proposta:     { password: string; buttonLabel: string }
   propostaPage: {
     subtitle: string; intro: string
-    about: { title: string; text: string; photo: string }
+    about: { title: string; text: string; photo: string; videoUrl: string }
     packages: { title: string; description: string; price: string }[]
     ctaText: string
     typography: {
@@ -83,9 +83,10 @@ export const DEFAULT_CONTENT: PageContent = {
     subtitle: 'Uma proposta criada especialmente para vocês.',
     intro: 'Preparámos com cuidado esta proposta personalizada. Cada detalhe foi pensado para reflectir a vossa história e garantir que cada momento do vosso dia seja preservado para sempre.',
     about: {
-      title: 'Sobre mim',
-      text: 'Olá! Sou o Rui, fotógrafo e videógrafo especializado em casamentos. A minha missão é capturar cada momento da vossa história de uma forma autêntica e atemporal — cada olhar, cada emoção, cada detalhe que tornará o vosso dia inesquecível.',
+      title: 'Sobre Nós',
+      text: '',
       photo: '',
+      videoUrl: '',
     },
     packages: [
       { title: 'Essencial', description: 'Cobertura fotográfica completa do dia, edição premium e galeria online privada.', price: 'Sob consulta' },
