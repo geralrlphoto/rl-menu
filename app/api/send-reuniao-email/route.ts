@@ -81,10 +81,10 @@ export async function POST(req: NextRequest) {
         </table>
 
         <!-- BUTTON -->
-        <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
+        <table width="100%" cellpadding="0" cellspacing="0">
           <tr>
             <td align="center" style="border:1px solid #c9a96e;">
-              <a href="${link}" style="display:block;padding:16px 56px;font-family:Georgia,'Times New Roman',serif;font-size:18px;font-style:italic;font-weight:400;color:#c9a96e;text-decoration:none;letter-spacing:0.04em;white-space:nowrap;">Aceder à Reunião</a>
+              <a href="${link}" style="display:block;padding:20px 56px;font-family:Georgia,'Times New Roman',serif;font-size:18px;font-style:italic;font-weight:400;color:#c9a96e;text-decoration:none;letter-spacing:0.04em;">Aceder à Reunião</a>
             </td>
           </tr>
         </table>
