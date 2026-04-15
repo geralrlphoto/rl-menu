@@ -39,6 +39,7 @@ export type PageContent = {
   propostaPage: {
     subtitle: string; intro: string
     about: { title: string; text: string; photo: string; videoUrl: string; titlePos: string }
+    relive: { imageUrl: string; buttonUrl: string }
     packages: { title: string; description: string; price: string }[]
     ctaText: string
     typography: {
@@ -89,6 +90,10 @@ export const DEFAULT_CONTENT: PageContent = {
       videoUrl: '',
       titlePos: 'top-right',
     },
+    relive: {
+      imageUrl: '',
+      buttonUrl: 'https://relive.wedding',
+    },
     packages: [
       { title: 'Essencial', description: 'Cobertura fotográfica completa do dia, edição premium e galeria online privada.', price: 'Sob consulta' },
       { title: 'Premium', description: 'Fotografia + Vídeo cinematográfico com highlights do dia e música personalizada.', price: 'Sob consulta' },
@@ -115,7 +120,7 @@ function merge(saved: any): PageContent {
     about:        { ...DEFAULT_CONTENT.about,        ...(saved.about        || {}) },
     banner:       { ...DEFAULT_CONTENT.banner,       ...(saved.banner       || {}) },
     proposta:     { ...DEFAULT_CONTENT.proposta,     ...(saved.proposta     || {}) },
-    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), about: { ...DEFAULT_CONTENT.propostaPage.about, ...(saved.propostaPage?.about || {}) }, packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
+    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), about: { ...DEFAULT_CONTENT.propostaPage.about, ...(saved.propostaPage?.about || {}) }, relive: { ...DEFAULT_CONTENT.propostaPage.relive, ...(saved.propostaPage?.relive || {}) }, packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
   }
 }
 
