@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
+const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
+
 const statusColor: Record<string, string> = {
   'Fechou': 'bg-green-500/20 text-green-400 border-green-500/40',
   'Negociação': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40',
@@ -115,17 +117,20 @@ export default function ClientePage() {
       alert('Preenche a data e hora da reunião.')
       return
     }
+    const tipo = form.reuniao_tipo || 'Presencial'
+    const link = tipo === 'Videochamada' ? MEET_LINK : ''
     setSendingReuniao(true)
     const { error } = await supabase.from('crm_contacts').update({
       reuniao_data: form.reuniao_data,
       reuniao_hora: form.reuniao_hora,
-      reuniao_tipo: form.reuniao_tipo || 'Presencial',
+      reuniao_tipo: tipo,
+      reuniao_link: link,
       status: 'Reunião Agendada',
       status_updated_at: new Date().toISOString(),
     }).eq('id', id)
     if (!error) {
-      setForm(f => ({ ...f, status: 'Reunião Agendada' }))
-      setOriginal(f => ({ ...f, status: 'Reunião Agendada', reuniao_data: form.reuniao_data, reuniao_hora: form.reuniao_hora, reuniao_tipo: form.reuniao_tipo || 'Presencial' }))
+      setForm(f => ({ ...f, status: 'Reunião Agendada', reuniao_tipo: tipo, reuniao_link: link }))
+      setOriginal(f => ({ ...f, status: 'Reunião Agendada', reuniao_data: form.reuniao_data, reuniao_hora: form.reuniao_hora, reuniao_tipo: tipo, reuniao_link: link }))
       setReuniaoSent(true)
       setTimeout(() => setReuniaoSent(false), 3000)
     } else {
@@ -257,14 +262,31 @@ export default function ClientePage() {
 
         {/* Marcação de Reunião */}
         <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xs tracking-[0.3em] text-gold uppercase">Marcação de Reunião</h2>
-            {form.reuniao_data && form.reuniao_hora && (
-              <span className="text-xs text-white/30 tracking-wider">
-                {form.reuniao_data} · {form.reuniao_hora} · {form.reuniao_tipo || 'Presencial'}
-              </span>
-            )}
-          </div>
+          <h2 className="text-xs tracking-[0.3em] text-gold uppercase">Marcação de Reunião</h2>
+
+          {/* Resumo se já agendada */}
+          {form.reuniao_data && form.reuniao_hora && (
+            <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl px-4 py-3 flex flex-col gap-2">
+              <div className="flex items-center gap-3 text-sm text-purple-300">
+                <span>📅</span>
+                <span>{form.reuniao_data} às {form.reuniao_hora}</span>
+                <span className="text-purple-400/50">·</span>
+                <span>{form.reuniao_tipo || 'Presencial'}</span>
+              </div>
+              {form.reuniao_link && (
+                <a
+                  href={form.reuniao_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-xs text-green-400 hover:text-green-300 transition-colors font-mono tracking-wide"
+                >
+                  <span>🎥</span>
+                  <span>{form.reuniao_link}</span>
+                </a>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">
               <label className="text-xs tracking-widest text-white/30 uppercase">Data</label>
