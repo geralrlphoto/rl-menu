@@ -394,7 +394,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
             </div>
 
             {/* Direita — imagem */}
-            <div className="flex-shrink-0" style={{ width: 'clamp(220px,38vw,460px)' }}>
+            <div className="flex-shrink-0" style={{ width: 'clamp(300px,48vw,580px)' }}>
               {pp.relive?.imageUrl
                 ? <img src={pp.relive.imageUrl} alt="Relive Wedding"
                     className="w-full h-auto"
