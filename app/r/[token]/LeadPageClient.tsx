@@ -541,7 +541,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
         <section id="sec-video" className="px-6 py-14 flex flex-col items-center" style={{ background: '#0d0d0d' }}>
           <p className="text-xs tracking-[0.35em] text-white/25 uppercase mb-2">{video.label}</p>
           <h2 className="font-cormorant text-3xl font-light mb-8 text-center text-white/90">{video.title}</h2>
-          <div className="w-full max-w-5xl grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="w-full max-w-7xl grid grid-cols-1 sm:grid-cols-3 gap-5">
             {video.urls.map((url, i) => {
               const embed = toEmbedUrl(url)
               if (embed) return (
