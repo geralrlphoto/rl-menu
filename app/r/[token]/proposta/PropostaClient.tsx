@@ -120,6 +120,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   const [editorOpen, setEditorOpen] = useState(false)
   const [saving,     setSaving]     = useState(false)
   const [saved,      setSaved]      = useState(false)
+  const [editorTab,  setEditorTab]  = useState<'tipografia'|'texto'>('tipografia')
 
   useEffect(() => {
     fetch(`/api/lead-page/view?token=${token}`)
@@ -398,58 +399,77 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
               <p className="text-xs tracking-widest text-white/60 uppercase">Editar Proposta</p>
               <button onClick={() => setEditorOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg text-white/30 hover:text-white hover:bg-white/5 transition-all">✕</button>
             </div>
-            <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
+            {/* Tabs */}
+            <div className="flex border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+              {(['tipografia','texto'] as const).map(t => (
+                <button key={t} onClick={() => setEditorTab(t)}
+                  className="flex-1 py-2.5 text-[10px] tracking-[0.2em] uppercase transition-all"
+                  style={{ color: editorTab === t ? '#C9A84C' : 'rgba(255,255,255,0.25)', borderBottom: editorTab === t ? '1px solid #C9A84C' : '1px solid transparent' }}>
+                  {t === 'tipografia' ? 'Tipografia' : 'Texto'}
+                </button>
+              ))}
+            </div>
 
-              {/* Tipografia */}
-              <AccordionSection title="Tipografia">
-                <Field label="Tipo de letra — Título">
+            <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4">
+              {editorTab === 'tipografia' && <>
+                <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Título (slide capa)</p>
+                <Field label="Tipo de letra">
                   <FontPicker value={typo.titleFont} onChange={v => setTypo('titleFont', v)} />
                 </Field>
-                <Field label="Tamanho — Título">
+                <Field label="Tamanho">
                   <SizePicker value={typo.titleSize} onChange={v => setTypo('titleSize', v)} />
                 </Field>
-                <Field label="Cor — Título">
+                <Field label="Cor">
                   <ColorPicker value={typo.titleColor} onChange={v => setTypo('titleColor', v)} />
                 </Field>
-                <Field label="Cor de destaque (dourado)">
-                  <ColorPicker value={typo.accentColor} onChange={v => setTypo('accentColor', v)} />
-                </Field>
-                <Field label="Tipo de letra — Corpo">
+
+                <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Corpo / Introdução</p>
+                <Field label="Tipo de letra">
                   <FontPicker value={typo.bodyFont} onChange={v => setTypo('bodyFont', v)} />
                 </Field>
-                <Field label="Cor — Corpo / Descrições">
+                <Field label="Cor">
                   <ColorPicker value={typo.bodyColor} onChange={v => setTypo('bodyColor', v)} />
                 </Field>
-                <Field label="Tipo de letra — Nome pacote">
+
+                <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Nome dos pacotes</p>
+                <Field label="Tipo de letra">
                   <FontPicker value={typo.pkgTitleFont} onChange={v => setTypo('pkgTitleFont', v)} />
                 </Field>
-                <Field label="Cor — Nome pacote">
+                <Field label="Cor">
                   <ColorPicker value={typo.pkgTitleColor} onChange={v => setTypo('pkgTitleColor', v)} />
                 </Field>
-              </AccordionSection>
 
-              <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Cor de destaque</p>
+                <Field label="Dourado / Accent">
+                  <ColorPicker value={typo.accentColor} onChange={v => setTypo('accentColor', v)} />
+                </Field>
+              </>}
 
-              <Field label="Subtítulo (slide capa)">
-                <TInput value={pp.subtitle} onChange={v => setPage('subtitle', v)} />
-              </Field>
-              <Field label="Texto de introdução">
-                <TInput value={pp.intro} onChange={v => setPage('intro', v)} multiline />
-              </Field>
-              <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
-              <p className="text-[10px] tracking-widest text-white/25 uppercase">Pacotes</p>
-              {pp.packages.map((pkg, i) => (
-                <div key={i} className="flex flex-col gap-2 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <p className="text-[10px] tracking-widest text-white/20 uppercase">Pacote {i + 1}</p>
-                  <Field label="Nome"><TInput value={pkg.title} onChange={v => setPkg(i, 'title', v)} /></Field>
-                  <Field label="Descrição"><TInput value={pkg.description} onChange={v => setPkg(i, 'description', v)} multiline /></Field>
-                  <Field label="Preço"><TInput value={pkg.price} onChange={v => setPkg(i, 'price', v)} placeholder="Ex: A partir de 2500€" /></Field>
-                </div>
-              ))}
-              <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
-              <Field label="Texto final (slide CTA)">
-                <TInput value={pp.ctaText} onChange={v => setPage('ctaText', v)} />
-              </Field>
+              {editorTab === 'texto' && <>
+                <Field label="Subtítulo (capa)">
+                  <TInput value={pp.subtitle} onChange={v => setPage('subtitle', v)} />
+                </Field>
+                <Field label="Texto de introdução">
+                  <TInput value={pp.intro} onChange={v => setPage('intro', v)} multiline />
+                </Field>
+                <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Pacotes</p>
+                {pp.packages.map((pkg, i) => (
+                  <div key={i} className="flex flex-col gap-2 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <p className="text-[10px] tracking-widest text-white/20 uppercase">Pacote {i + 1}</p>
+                    <Field label="Nome"><TInput value={pkg.title} onChange={v => setPkg(i, 'title', v)} /></Field>
+                    <Field label="Descrição"><TInput value={pkg.description} onChange={v => setPkg(i, 'description', v)} multiline /></Field>
+                    <Field label="Preço"><TInput value={pkg.price} onChange={v => setPkg(i, 'price', v)} placeholder="Ex: A partir de 2500€" /></Field>
+                  </div>
+                ))}
+                <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                <Field label="Texto final (CTA)">
+                  <TInput value={pp.ctaText} onChange={v => setPage('ctaText', v)} />
+                </Field>
+              </>}
             </div>
             <div className="px-4 py-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
               <button onClick={handleSave} disabled={saving}
