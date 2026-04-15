@@ -11,12 +11,8 @@ function infoRow(label: string, value: string, borderBottom: boolean) {
   const bottom = borderBottom ? 'border-bottom:1px solid #2e2416;' : ''
   return `
   <tr>
-    <td width="100" valign="middle" style="padding:18px 24px;${bottom}font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;white-space:nowrap;">${label}</td>
-    <td valign="middle" style="padding:18px 24px;${bottom}border-left:1px solid #2e2416;">
-      <table width="100%" cellpadding="0" cellspacing="0"><tr>
-        <td align="right" style="font-size:16px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;text-align:right;">${value}</td>
-      </tr></table>
-    </td>
+    <td align="left" width="100" valign="middle" style="text-align:left;padding:18px 24px;${bottom}font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;white-space:nowrap;">${label}</td>
+    <td align="right" valign="middle" style="text-align:right;padding:18px 24px;${bottom}border-left:1px solid #2e2416;font-size:16px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;">${value}</td>
   </tr>`
 }
 
@@ -78,7 +74,7 @@ export async function POST(req: NextRequest) {
         </p>
 
         <!-- INFO BOX -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #2a1e0e;margin:0 0 32px;">
+        <table width="100%" cellpadding="0" cellspacing="0" align="left" style="border:1px solid #2a1e0e;margin:0 0 32px;text-align:left;">
           ${infoRow('DATA', dataFmt, true)}
           ${infoRow('HORA', reuniao_hora, true)}
           ${infoRow('LOCAL', localTxt, false)}
