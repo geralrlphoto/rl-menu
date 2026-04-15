@@ -22,24 +22,44 @@ export async function POST(req: NextRequest) {
   const btnTxt  = isVideo ? 'Fazer Reunião' : 'Ver Localização'
   const link    = isVideo ? MEET_LINK : MAPS_LINK
 
-  // Card 1080×1080 exibido a 560×560px.
-  // Linha de espaçamento para chegar à secção retangular: 372px
-  // 3 linhas (DATA/HORA/MODO) × 30px = 90px → até 462px
-  // Gap: 10px → 472px
-  // Botão: 44px → 516px
-  // Rodapé: 44px → 560px total
-  // Coluna esquerda (padding + label): 218px
-  // Padding direito: 70px
+  // Card 1080×1080 → exibido a 560×560px (quadrado 1:1).
+  // Proporções dos espaçadores relativamente à largura (560px = 100%):
+  //   sp-top : 372px = 66.43%
+  //   sp-row : 30px  =  5.36%   (DATA / HORA / MODO)
+  //   sp-gap : 10px  =  1.79%
+  //   sp-btn : 44px  =  7.86%
+  //   sp-bot : 44px  =  7.86%
+  //   Total  : 560px = 100%  ✓
+  // No mobile estes % são convertidos em vw para escalar com o ecrã.
 
   const html = `<!DOCTYPE html>
 <html lang="pt">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    @media screen and (max-width:560px) {
+      .card-wrap  { width:100% !important; background-size:100% auto !important; }
+      .sp-top     { height:66.4vw  !important; }
+      .sp-row     { height:5.4vw   !important; line-height:5.4vw  !important; }
+      .sp-gap     { height:1.8vw   !important; }
+      .sp-btn     { height:7.9vw   !important; line-height:7.9vw  !important; }
+      .sp-bot     { height:7.9vw   !important; }
+      .lbl-cell   { width:38.9vw   !important; padding-left:12.5vw !important;
+                    font-size:2.3vw !important; line-height:5.4vw  !important; }
+      .val-cell   { padding-right:12.5vw !important;
+                    font-size:2.7vw  !important; line-height:5.4vw !important; }
+      .btn-cell   { padding:0 12.5vw !important;
+                    font-size:3vw    !important; line-height:7.9vw !important; }
+    }
+  </style>
+</head>
 <body style="margin:0;padding:0;background:#030201;">
 
 <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#030201">
 <tr><td align="center">
 
-  <table width="560" cellpadding="0" cellspacing="0" bgcolor="#030201"
+  <table class="card-wrap" width="560" cellpadding="0" cellspacing="0" bgcolor="#030201"
     style="width:560px;max-width:100%;
            background-image:url(${IMAGE_URL});
            background-size:560px 560px;
@@ -47,44 +67,56 @@ export async function POST(req: NextRequest) {
            background-position:top left;">
 
     <!-- ESPAÇO SUPERIOR: topo do card até à secção retangular -->
-    <tr><td colspan="2" height="372" style="font-size:0;line-height:0;">&nbsp;</td></tr>
+    <tr>
+      <td colspan="2" class="sp-top" height="372"
+        style="font-size:0;line-height:0;">&nbsp;</td>
+    </tr>
 
     <!-- DATA -->
     <tr>
-      <td width="218" height="30" style="padding-left:70px;vertical-align:middle;
-          font-family:Georgia,'Times New Roman',serif;font-size:13px;
-          color:#e8dfc8;letter-spacing:0.08em;line-height:30px;">Data</td>
-      <td height="30" style="padding-right:70px;text-align:right;vertical-align:middle;
-          font-family:Georgia,'Times New Roman',serif;font-size:15px;
-          color:#e8dfc8;line-height:30px;">${dataFmt}</td>
+      <td class="lbl-cell" width="218" height="30"
+        style="padding-left:70px;vertical-align:middle;
+               font-family:Georgia,'Times New Roman',serif;font-size:13px;
+               color:#e8dfc8;letter-spacing:0.08em;line-height:30px;">Data</td>
+      <td class="val-cell sp-row" height="30"
+        style="padding-right:70px;text-align:right;vertical-align:middle;
+               font-family:Georgia,'Times New Roman',serif;font-size:15px;
+               color:#e8dfc8;line-height:30px;">${dataFmt}</td>
     </tr>
 
     <!-- HORA -->
     <tr>
-      <td width="218" height="30" style="padding-left:70px;vertical-align:middle;
-          font-family:Georgia,'Times New Roman',serif;font-size:13px;
-          color:#e8dfc8;letter-spacing:0.08em;line-height:30px;">Hora</td>
-      <td height="30" style="padding-right:70px;text-align:right;vertical-align:middle;
-          font-family:Georgia,'Times New Roman',serif;font-size:15px;
-          color:#e8dfc8;line-height:30px;">${reuniao_hora}</td>
+      <td class="lbl-cell" width="218" height="30"
+        style="padding-left:70px;vertical-align:middle;
+               font-family:Georgia,'Times New Roman',serif;font-size:13px;
+               color:#e8dfc8;letter-spacing:0.08em;line-height:30px;">Hora</td>
+      <td class="val-cell sp-row" height="30"
+        style="padding-right:70px;text-align:right;vertical-align:middle;
+               font-family:Georgia,'Times New Roman',serif;font-size:15px;
+               color:#e8dfc8;line-height:30px;">${reuniao_hora}</td>
     </tr>
 
     <!-- MODO -->
     <tr>
-      <td width="218" height="30" style="padding-left:70px;vertical-align:middle;
-          font-family:Georgia,'Times New Roman',serif;font-size:13px;
-          color:#e8dfc8;letter-spacing:0.08em;line-height:30px;">Modo</td>
-      <td height="30" style="padding-right:70px;text-align:right;vertical-align:middle;
-          font-family:Georgia,'Times New Roman',serif;font-size:15px;
-          color:#e8dfc8;line-height:30px;">${modoTxt}</td>
+      <td class="lbl-cell" width="218" height="30"
+        style="padding-left:70px;vertical-align:middle;
+               font-family:Georgia,'Times New Roman',serif;font-size:13px;
+               color:#e8dfc8;letter-spacing:0.08em;line-height:30px;">Modo</td>
+      <td class="val-cell sp-row" height="30"
+        style="padding-right:70px;text-align:right;vertical-align:middle;
+               font-family:Georgia,'Times New Roman',serif;font-size:15px;
+               color:#e8dfc8;line-height:30px;">${modoTxt}</td>
     </tr>
 
     <!-- GAP antes do botão -->
-    <tr><td colspan="2" height="10" style="font-size:0;line-height:0;">&nbsp;</td></tr>
+    <tr>
+      <td colspan="2" class="sp-gap" height="10"
+        style="font-size:0;line-height:0;">&nbsp;</td>
+    </tr>
 
     <!-- BOTÃO -->
     <tr>
-      <td colspan="2" height="44" align="center"
+      <td colspan="2" class="btn-cell sp-btn" height="44" align="center"
         style="text-align:center;vertical-align:middle;padding:0 70px;">
         <a href="${link}"
           style="font-family:Georgia,'Times New Roman',serif;font-size:17px;
@@ -94,7 +126,10 @@ export async function POST(req: NextRequest) {
     </tr>
 
     <!-- ESPAÇO INFERIOR: rodapé do card -->
-    <tr><td colspan="2" height="44" style="font-size:0;line-height:0;">&nbsp;</td></tr>
+    <tr>
+      <td colspan="2" class="sp-bot" height="44"
+        style="font-size:0;line-height:0;">&nbsp;</td>
+    </tr>
 
   </table>
 
