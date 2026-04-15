@@ -720,55 +720,50 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
       </section>
 
       {/* ── BANNER ── */}
-      <section className="px-4 sm:px-8 py-16" style={{ background: '#0a0a0a' }}>
+      <section className="px-4 sm:px-8 py-10" style={{ background: '#0a0a0a' }}>
         <FadeIn>
           <div className="relative w-full max-w-5xl mx-auto overflow-hidden"
             style={{ border: '0.5px solid rgba(201,168,76,0.3)' }}>
 
             {/* Degradé de fundo */}
-            <div className="absolute inset-0" style={{
-              background: 'linear-gradient(135deg, #1c1408 0%, #0f0c07 30%, #13100a 60%, #1c1408 100%)',
-            }} />
-            <div className="absolute inset-0" style={{
-              background: 'radial-gradient(ellipse 80% 60% at 50% 50%, rgba(201,168,76,0.09) 0%, transparent 70%)',
-            }} />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #1c1408 0%, #0f0c07 35%, #13100a 65%, #1c1408 100%)' }} />
+            <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 120% at 30% 50%, rgba(201,168,76,0.08) 0%, transparent 65%)' }} />
 
             {/* Cantos ornamentais */}
-            <div className="absolute top-0 left-0 w-12 h-12" style={{ borderTop: '1px solid rgba(201,168,76,0.7)', borderLeft: '1px solid rgba(201,168,76,0.7)' }} />
-            <div className="absolute top-0 right-0 w-12 h-12" style={{ borderTop: '1px solid rgba(201,168,76,0.7)', borderRight: '1px solid rgba(201,168,76,0.7)' }} />
-            <div className="absolute bottom-0 left-0 w-12 h-12" style={{ borderBottom: '1px solid rgba(201,168,76,0.7)', borderLeft: '1px solid rgba(201,168,76,0.7)' }} />
-            <div className="absolute bottom-0 right-0 w-12 h-12" style={{ borderBottom: '1px solid rgba(201,168,76,0.7)', borderRight: '1px solid rgba(201,168,76,0.7)' }} />
+            <div className="absolute top-0 left-0 w-10 h-10" style={{ borderTop: '1px solid rgba(201,168,76,0.7)', borderLeft: '1px solid rgba(201,168,76,0.7)' }} />
+            <div className="absolute top-0 right-0 w-10 h-10" style={{ borderTop: '1px solid rgba(201,168,76,0.7)', borderRight: '1px solid rgba(201,168,76,0.7)' }} />
+            <div className="absolute bottom-0 left-0 w-10 h-10" style={{ borderBottom: '1px solid rgba(201,168,76,0.7)', borderLeft: '1px solid rgba(201,168,76,0.7)' }} />
+            <div className="absolute bottom-0 right-0 w-10 h-10" style={{ borderBottom: '1px solid rgba(201,168,76,0.7)', borderRight: '1px solid rgba(201,168,76,0.7)' }} />
 
-            <div className="relative z-10 px-10 sm:px-20 py-16 text-center">
-              {/* Logo */}
-              <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
-                alt="RL" className="w-14 h-auto mx-auto mb-8 opacity-75" />
+            {/* Divisor vertical */}
+            <div className="absolute top-8 bottom-8 hidden sm:block" style={{ left: '62%', width: '0.5px', background: 'rgba(201,168,76,0.2)' }} />
 
-              {/* Separador */}
-              <p className="text-[11px] tracking-[0.5em] mb-8" style={{ color: 'rgba(201,168,76,0.4)' }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+            <div className="relative z-10 flex flex-col sm:flex-row items-center px-10 sm:px-14 py-10 gap-8 sm:gap-10">
 
-              {/* Mensagem */}
-              <p className="font-cormorant text-2xl sm:text-4xl italic font-light leading-relaxed mb-8 mx-auto"
-                style={{ color: 'rgba(255,255,255,0.85)', maxWidth: '640px' }}>
-                &ldquo;{banner.message}&rdquo;
-              </p>
+              {/* Esquerda — frase */}
+              <div className="flex-1 flex flex-col gap-3 sm:pr-8">
+                <p className="text-[10px] tracking-[0.45em]" style={{ color: 'rgba(201,168,76,0.4)' }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+                <p className="font-cormorant text-xl sm:text-2xl italic font-light leading-relaxed"
+                  style={{ color: 'rgba(255,255,255,0.82)' }}>
+                  &ldquo;{banner.message}&rdquo;
+                </p>
+                {banner.signature && (
+                  <p className="font-cormorant text-base italic" style={{ color: '#C9A84C' }}>{banner.signature}</p>
+                )}
+              </div>
 
-              {/* Separador */}
-              <p className="text-[11px] tracking-[0.5em] mb-6" style={{ color: 'rgba(201,168,76,0.4)' }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+              {/* Direita — botão + logo */}
+              <div className="flex flex-col items-center gap-5 sm:pl-8" style={{ minWidth: '200px' }}>
+                <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
+                  alt="RL" className="w-10 h-auto opacity-60" />
+                <a href={`/r/${token}/proposta`}
+                  className="group flex items-center gap-3 px-8 py-3.5 text-[10px] tracking-[0.4em] uppercase transition-all duration-300 hover:scale-[1.04] whitespace-nowrap"
+                  style={{ background: 'rgba(201,168,76,0.12)', border: '0.5px solid rgba(201,168,76,0.5)', color: '#C9A84C' }}>
+                  <span>{proposta.buttonLabel}</span>
+                  <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+                </a>
+              </div>
 
-              {/* Assinatura */}
-              {banner.signature
-                ? <p className="font-cormorant text-xl italic mb-10" style={{ color: '#C9A84C' }}>{banner.signature}</p>
-                : <p className="text-[10px] tracking-[0.45em] uppercase mb-10" style={{ color: 'rgba(201,168,76,0.45)' }}>RL Photo · Video</p>
-              }
-
-              {/* Botão Proposta */}
-              <a href={`/r/${token}/proposta`}
-                className="group inline-flex items-center gap-4 px-12 py-4 text-[11px] tracking-[0.4em] uppercase transition-all duration-300 hover:scale-[1.03]"
-                style={{ background: 'rgba(201,168,76,0.12)', border: '0.5px solid rgba(201,168,76,0.5)', color: '#C9A84C' }}>
-                <span>{proposta.buttonLabel}</span>
-                <span className="transition-transform duration-300 group-hover:translate-x-1.5">→</span>
-              </a>
             </div>
           </div>
         </FadeIn>
