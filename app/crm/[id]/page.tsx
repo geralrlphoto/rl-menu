@@ -335,6 +335,18 @@ export default function ClientePage() {
             </div>
           )}
 
+          {/* Foto footer */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs tracking-widest text-white/30 uppercase">Foto Footer (URL)</label>
+            <input
+              type="url"
+              value={form.page_foto_url ?? ''}
+              onChange={e => set('page_foto_url', e.target.value)}
+              placeholder="https://... (foto que aparece no fundo da página)"
+              className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50"
+            />
+          </div>
+
           {/* Link copiável */}
           {form.page_token && (
             <button
