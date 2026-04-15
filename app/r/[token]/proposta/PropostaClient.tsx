@@ -314,11 +314,11 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
             <div className="mt-2" style={{ width: '36px', height: '1px', background: `${typo.accentColor}66`, marginLeft: 'auto' }} />
           </div>
 
-          {/* Conteúdo: foto + vídeo */}
-          <div className="flex flex-row items-center gap-8 sm:gap-12 w-full max-w-5xl">
+          {/* Conteúdo: foto + vídeo — tamanhos iguais */}
+          <div className="flex flex-row items-center gap-10 sm:gap-14 w-full max-w-5xl justify-center">
 
             {/* Foto vertical */}
-            <div className="relative flex-shrink-0" style={{ width: 'clamp(160px,22vw,260px)', height: 'clamp(240px,33vw,390px)' }}>
+            <div className="relative flex-shrink-0" style={{ width: 'clamp(180px,24vw,300px)', height: 'clamp(260px,36vw,430px)' }}>
               <div className="absolute -top-2 -left-2 w-6 h-6" style={{ borderTop: `1px solid ${typo.accentColor}`, borderLeft: `1px solid ${typo.accentColor}` }} />
               <div className="absolute -top-2 -right-2 w-6 h-6" style={{ borderTop: `1px solid ${typo.accentColor}`, borderRight: `1px solid ${typo.accentColor}` }} />
               <div className="absolute -bottom-2 -left-2 w-6 h-6" style={{ borderBottom: `1px solid ${typo.accentColor}`, borderLeft: `1px solid ${typo.accentColor}` }} />
@@ -329,8 +329,12 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
               }
             </div>
 
-            {/* Vídeo */}
-            <div className="flex-1 relative" style={{ height: 'clamp(260px,38vw,420px)' }}>
+            {/* Vídeo — mesmo tamanho que a foto */}
+            <div className="relative flex-shrink-0" style={{ width: 'clamp(180px,24vw,300px)', height: 'clamp(260px,36vw,430px)' }}>
+              <div className="absolute -top-2 -left-2 w-6 h-6 z-10" style={{ borderTop: `1px solid ${typo.accentColor}`, borderLeft: `1px solid ${typo.accentColor}` }} />
+              <div className="absolute -top-2 -right-2 w-6 h-6 z-10" style={{ borderTop: `1px solid ${typo.accentColor}`, borderRight: `1px solid ${typo.accentColor}` }} />
+              <div className="absolute -bottom-2 -left-2 w-6 h-6 z-10" style={{ borderBottom: `1px solid ${typo.accentColor}`, borderLeft: `1px solid ${typo.accentColor}` }} />
+              <div className="absolute -bottom-2 -right-2 w-6 h-6 z-10" style={{ borderBottom: `1px solid ${typo.accentColor}`, borderRight: `1px solid ${typo.accentColor}` }} />
               {pp.about?.videoUrl && toEmbed(pp.about.videoUrl)
                 ? <iframe src={toEmbed(pp.about.videoUrl)} className="w-full h-full"
                     style={{ border: 'none' }} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen />
