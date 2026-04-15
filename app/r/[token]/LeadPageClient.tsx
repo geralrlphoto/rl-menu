@@ -81,7 +81,7 @@ export const DEFAULT_CONTENT: PageContent = {
   proposta:     { password: '', buttonLabel: 'Ver Proposta Criativa' },
   propostaPage: {
     subtitle: 'Uma proposta criada especialmente para vocês.',
-    intro: 'Preparámos com cuidado esta proposta personalizada. Cada detalhe foi pensado para reflectir a vossa história e garantir que cada momento do vosso dia seja preservado para sempre.',
+    intro: 'A vossa história é única — e é essa unicidade que merece ser preservada para sempre. Cada detalhe, cada olhar, cada momento é parte de algo que nunca mais se repetirá.',
     about: {
       title: 'Sobre Nós',
       text: '',
