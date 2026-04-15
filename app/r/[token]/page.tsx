@@ -8,6 +8,91 @@ const DEFAULT_HERO = 'https://rl-menu-lake.vercel.app/casamentos-2028.png'
 
 type Contact = Record<string, any>
 
+// ─── Secções do menu ─────────────────────────────────────────────────────────
+const SECTIONS = [
+  { id: 'sec-reuniao',     label: 'Reunião',      icon: '📅' },
+  { id: 'sec-countdown',   label: 'Contagem',     icon: '⏱' },
+  { id: 'sec-portfolio',   label: 'Portfólio',    icon: '📷' },
+  { id: 'sec-testemunhos', label: 'Testemunhos',  icon: '💬' },
+  { id: 'sec-sobre',       label: 'Sobre Nós',    icon: '✦'  },
+]
+
+function scrollTo(id: string) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+// ─── Menu Lateral ─────────────────────────────────────────────────────────────
+function SideMenu({ open, onClose, isAdmin }: { open: boolean; onClose: () => void; isAdmin: boolean }) {
+  return (
+    <>
+      {/* Overlay */}
+      {open && (
+        <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      )}
+
+      {/* Drawer */}
+      <div className={`fixed top-0 left-0 h-full z-50 flex flex-col transition-transform duration-300 ease-in-out ${open ? 'translate-x-0' : '-translate-x-full'}`}
+        style={{ width: '280px', background: '#0d0d0d', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+
+        {/* Header do menu */}
+        <div className="flex items-center justify-between px-6 py-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+          <div>
+            <p className="text-[10px] tracking-[0.35em] text-gold/60 uppercase">RL Photo · Video</p>
+            <p className="text-xs tracking-widest text-white/30 uppercase mt-0.5">Página do Cliente</p>
+          </div>
+          <button onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-white/30 hover:text-white hover:bg-white/5 transition-all">
+            ✕
+          </button>
+        </div>
+
+        {/* Navegação */}
+        <nav className="flex-1 px-4 py-6 flex flex-col gap-1">
+          <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase px-3 mb-3">Secções</p>
+          {SECTIONS.map(s => (
+            <button key={s.id}
+              onClick={() => { scrollTo(s.id); onClose() }}
+              className="flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all hover:bg-white/5 group">
+              <span className="text-base">{s.icon}</span>
+              <span className="text-sm text-white/60 group-hover:text-white tracking-wide transition-colors">{s.label}</span>
+            </button>
+          ))}
+
+          <div className="h-px my-4" style={{ background: 'rgba(255,255,255,0.06)' }} />
+
+          {/* WhatsApp */}
+          <a href={WHATSAPP} target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-3 px-3 py-3 rounded-xl transition-all hover:bg-white/5 group">
+            <span className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: '#25D366' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="white">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+              </svg>
+            </span>
+            <span className="text-sm text-white/60 group-hover:text-white tracking-wide transition-colors">WhatsApp</span>
+          </a>
+        </nav>
+
+        {/* Admin section */}
+        {isAdmin && (
+          <div className="px-4 py-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+            <p className="text-[9px] tracking-[0.3em] text-gold/40 uppercase px-3 mb-3">Admin</p>
+            <a href="/crm"
+              className="flex items-center gap-3 px-3 py-3 rounded-xl transition-all hover:bg-white/5 group">
+              <span className="text-base">⚙</span>
+              <span className="text-sm text-white/40 group-hover:text-gold tracking-wide transition-colors">Voltar ao CRM</span>
+            </a>
+          </div>
+        )}
+
+        {/* Footer do menu */}
+        <div className="px-6 py-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
+          <p className="text-[9px] tracking-widest text-white/10 uppercase">© RL Photo · Video</p>
+        </div>
+      </div>
+    </>
+  )
+}
+
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 
 function fmtData(d: string) {
@@ -79,6 +164,9 @@ export default function LeadPage() {
   const [status, setStatus]     = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
   const [requesting, setRequesting] = useState(false)
+
+  // Menu lateral
+  const [menuOpen, setMenuOpen] = useState(false)
 
   // Admin
   const [isAdmin, setIsAdmin]             = useState(false)
@@ -171,6 +259,21 @@ export default function LeadPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
 
+      {/* ── MENU LATERAL ── */}
+      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} isAdmin={isAdmin} />
+
+      {/* ── BOTÃO HAMBURGER ── */}
+      <button
+        onClick={() => setMenuOpen(true)}
+        className="fixed top-4 left-4 z-40 w-10 h-10 flex flex-col items-center justify-center gap-1.5 rounded-xl transition-all"
+        style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.1)' }}
+        aria-label="Menu"
+      >
+        <span className="w-4.5 h-px bg-white/70 block" style={{ width: '18px' }} />
+        <span className="w-4.5 h-px bg-white/70 block" style={{ width: '14px' }} />
+        <span className="w-4.5 h-px bg-white/70 block" style={{ width: '18px' }} />
+      </button>
+
       {/* ── ADMIN BAR ── */}
       {isAdmin && (
         <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-2 bg-black/80 backdrop-blur-sm border-b border-white/5">
@@ -188,7 +291,7 @@ export default function LeadPage() {
       )}
 
       {/* ── HERO ── */}
-      <section className={`relative min-h-[70vh] sm:min-h-[80vh] flex items-end justify-center pb-12 overflow-hidden ${isAdmin ? 'pt-10' : ''}`}>
+      <section id="sec-reuniao" className={`relative min-h-[70vh] sm:min-h-[80vh] flex items-end justify-center pb-12 overflow-hidden ${isAdmin ? 'pt-10' : ''}`}>
 
         {/* Fundo */}
         <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${heroImage})` }}>
@@ -277,7 +380,7 @@ export default function LeadPage() {
 
       {/* ── COUNTDOWN ── */}
       {targetDate && (
-        <section className="py-10 sm:py-14 border-y border-white/[0.05] bg-[#0d0d0d]">
+        <section id="sec-countdown" className="py-10 sm:py-14 border-y border-white/[0.05] bg-[#0d0d0d]">
           <p className="font-playfair font-black text-gold text-xl sm:text-2xl text-center mb-6 tracking-tight">Contagem Regressiva</p>
           <div className="flex items-center justify-center gap-4">
             <Leaf />
@@ -358,7 +461,7 @@ export default function LeadPage() {
       <div className="w-full max-w-sm mx-auto h-px" style={{ background: 'rgba(201,168,76,0.15)' }} />
 
       {/* ── PORTFÓLIO ── */}
-      <section className="px-6 py-14 flex flex-col items-center">
+      <section id="sec-portfolio" className="px-6 py-14 flex flex-col items-center">
         <p className="text-xs tracking-[0.35em] text-white/25 uppercase mb-2">O nosso trabalho</p>
         <h2 className="font-cormorant text-3xl text-white font-light mb-8 text-center">Momentos que ficam para sempre.</h2>
         <div className="w-full max-w-sm grid grid-cols-3 gap-2">
@@ -376,7 +479,7 @@ export default function LeadPage() {
       <div className="w-full max-w-sm mx-auto h-px" style={{ background: 'rgba(201,168,76,0.15)' }} />
 
       {/* ── TESTEMUNHOS ── */}
-      <section className="px-6 py-14 flex flex-col items-center gap-8 max-w-sm mx-auto">
+      <section id="sec-testemunhos" className="px-6 py-14 flex flex-col items-center gap-8 max-w-sm mx-auto">
         <p className="text-xs tracking-[0.35em] text-white/25 uppercase">O que dizem</p>
         <blockquote className="text-center">
           <p className="font-cormorant text-xl text-white/70 italic font-light leading-relaxed mb-3">
@@ -396,7 +499,7 @@ export default function LeadPage() {
       <div className="w-full max-w-sm mx-auto h-px" style={{ background: 'rgba(201,168,76,0.15)' }} />
 
       {/* ── SOBRE NÓS ── */}
-      <section className="px-6 py-14 flex flex-col items-center max-w-sm mx-auto text-center">
+      <section id="sec-sobre" className="px-6 py-14 flex flex-col items-center max-w-sm mx-auto text-center">
         <p className="text-xs tracking-[0.35em] text-white/25 uppercase mb-2">Quem somos</p>
         <h2 className="font-cormorant text-3xl text-white font-light mb-6">RL Photo · Video</h2>
         <p className="text-white/40 text-sm leading-relaxed font-light">
