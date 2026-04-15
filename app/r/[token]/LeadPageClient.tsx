@@ -38,6 +38,7 @@ export type PageContent = {
   proposta:     { password: string; buttonLabel: string }
   propostaPage: {
     subtitle: string; intro: string
+    about: { title: string; text: string; photo: string }
     packages: { title: string; description: string; price: string }[]
     ctaText: string
     typography: {
@@ -81,6 +82,11 @@ export const DEFAULT_CONTENT: PageContent = {
   propostaPage: {
     subtitle: 'Uma proposta criada especialmente para vocês.',
     intro: 'Preparámos com cuidado esta proposta personalizada. Cada detalhe foi pensado para reflectir a vossa história e garantir que cada momento do vosso dia seja preservado para sempre.',
+    about: {
+      title: 'Sobre mim',
+      text: 'Olá! Sou o Rui, fotógrafo e videógrafo especializado em casamentos. A minha missão é capturar cada momento da vossa história de uma forma autêntica e atemporal — cada olhar, cada emoção, cada detalhe que tornará o vosso dia inesquecível.',
+      photo: '',
+    },
     packages: [
       { title: 'Essencial', description: 'Cobertura fotográfica completa do dia, edição premium e galeria online privada.', price: 'Sob consulta' },
       { title: 'Premium', description: 'Fotografia + Vídeo cinematográfico com highlights do dia e música personalizada.', price: 'Sob consulta' },
@@ -107,7 +113,7 @@ function merge(saved: any): PageContent {
     about:        { ...DEFAULT_CONTENT.about,        ...(saved.about        || {}) },
     banner:       { ...DEFAULT_CONTENT.banner,       ...(saved.banner       || {}) },
     proposta:     { ...DEFAULT_CONTENT.proposta,     ...(saved.proposta     || {}) },
-    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
+    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), about: { ...DEFAULT_CONTENT.propostaPage.about, ...(saved.propostaPage?.about || {}) }, packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
   }
 }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { DEFAULT_CONTENT, PageContent, FONTS, TITLE_SIZES } from '../LeadPageClient'
 
 const IMG_BASE = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
@@ -16,7 +16,7 @@ function mergeContent(saved: any): PageContent {
     about:        { ...DEFAULT_CONTENT.about,        ...(saved.about        || {}) },
     banner:       { ...DEFAULT_CONTENT.banner,       ...(saved.banner       || {}) },
     proposta:     { ...DEFAULT_CONTENT.proposta,     ...(saved.proposta     || {}) },
-    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages },
+    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), about: { ...DEFAULT_CONTENT.propostaPage.about, ...(saved.propostaPage?.about || {}) }, packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
   }
 }
 
@@ -117,10 +117,11 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   const [direction, setDirection] = useState<'right' | 'left'>('right')
 
   // Editor
-  const [editorOpen, setEditorOpen] = useState(false)
-  const [saving,     setSaving]     = useState(false)
-  const [saved,      setSaved]      = useState(false)
-  const [editorTab,  setEditorTab]  = useState<'tipografia'|'texto'>('tipografia')
+  const [editorOpen,    setEditorOpen]    = useState(false)
+  const [saving,        setSaving]        = useState(false)
+  const [saved,         setSaved]         = useState(false)
+  const [editorTab,     setEditorTab]     = useState<'tipografia'|'texto'>('tipografia')
+  const [uploadingAbout, setUploadingAbout] = useState(false)
 
   useEffect(() => {
     fetch(`/api/lead-page/view?token=${token}`)
@@ -138,7 +139,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       .catch(() => { setNotFound(true); setLoading(false) })
   }, [token, isAdmin])
 
-  const slides = ['cover', 'intro', 'pkg-0', 'pkg-1', 'pkg-2', 'cta']
+  const slides = ['cover', 'about', 'intro', 'pkg-0', 'pkg-1', 'pkg-2', 'cta']
   const total  = slides.length
 
   const goTo = useCallback((idx: number) => {
@@ -190,6 +191,19 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       packages[i] = { ...packages[i], [k]: v }
       return { ...c, propostaPage: { ...c.propostaPage, packages } }
     })
+  }
+  function setAbout(k: keyof PageContent['propostaPage']['about'], v: string) {
+    setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, about: { ...c.propostaPage.about, [k]: v } } }))
+  }
+  const handleAboutUpload = async (file: File) => {
+    setUploadingAbout(true)
+    try {
+      const fd = new FormData(); fd.append('file', file)
+      const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (data.url) setAbout('photo', data.url)
+    } catch {}
+    setUploadingAbout(false)
   }
 
   if (loading) return (
@@ -243,6 +257,40 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   const typo = pp.typography
   const nome = contact!.nome || ''
 
+  // ── About slide ───────────────────────────────────────────────────────────
+  const renderAbout = () => {
+    const photo = pp?.about?.photo || ''
+    const title = pp?.about?.title || 'Sobre Nós'
+    const accent = typo?.accentColor || '#C9A84C'
+    const titleCol = typo?.titleColor || '#ffffff'
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center px-8 gap-8">
+
+        {/* Foto vertical */}
+        <div className="relative" style={{ width: '160px', height: '220px' }}>
+          <div className="absolute -top-2 -left-2 w-5 h-5" style={{ borderTop: `1px solid ${accent}`, borderLeft: `1px solid ${accent}` }} />
+          <div className="absolute -top-2 -right-2 w-5 h-5" style={{ borderTop: `1px solid ${accent}`, borderRight: `1px solid ${accent}` }} />
+          <div className="absolute -bottom-2 -left-2 w-5 h-5" style={{ borderBottom: `1px solid ${accent}`, borderLeft: `1px solid ${accent}` }} />
+          <div className="absolute -bottom-2 -right-2 w-5 h-5" style={{ borderBottom: `1px solid ${accent}`, borderRight: `1px solid ${accent}` }} />
+          {photo
+            ? <img src={photo} alt="" className="w-full h-full object-cover" />
+            : <div className="w-full h-full" style={{ background: 'rgba(201,168,76,0.06)', border: '0.5px solid rgba(201,168,76,0.2)' }} />
+          }
+        </div>
+
+        {/* Título */}
+        <div className="flex flex-col items-center gap-3">
+          <p className="text-[11px] tracking-[0.45em]" style={{ color: `${accent}66` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+          <h2 className={`${fontClass(typo?.titleFont || 'cormorant')} font-light italic`}
+            style={{ fontSize: 'clamp(2.5rem,6vw,4rem)', color: titleCol, lineHeight: 1.1 }}>
+            {title}
+          </h2>
+        </div>
+
+      </div>
+    )
+  }
+
   // ── Slide content ─────────────────────────────────────────────────────────
   const renderSlide = (id: string) => {
     switch (id) {
@@ -257,6 +305,27 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
           </div>
           <p className="text-[11px] tracking-[0.5em]" style={{ color: `${typo.accentColor}66` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
           <p className={`${fontClass(typo.bodyFont)} text-lg sm:text-xl italic opacity-60`} style={{ color: typo.bodyColor }}>{pp.subtitle}</p>
+        </div>
+      )
+
+      case 'about': return (
+        <div className="flex flex-col items-center justify-center h-full text-center px-8 gap-8">
+          <div className="relative" style={{ width: '160px', height: '220px' }}>
+            <div className="absolute -top-2 -left-2 w-5 h-5" style={{ borderTop: `1px solid ${typo.accentColor}`, borderLeft: `1px solid ${typo.accentColor}` }} />
+            <div className="absolute -top-2 -right-2 w-5 h-5" style={{ borderTop: `1px solid ${typo.accentColor}`, borderRight: `1px solid ${typo.accentColor}` }} />
+            <div className="absolute -bottom-2 -left-2 w-5 h-5" style={{ borderBottom: `1px solid ${typo.accentColor}`, borderLeft: `1px solid ${typo.accentColor}` }} />
+            <div className="absolute -bottom-2 -right-2 w-5 h-5" style={{ borderBottom: `1px solid ${typo.accentColor}`, borderRight: `1px solid ${typo.accentColor}` }} />
+            {pp.about?.photo
+              ? <img src={pp.about.photo} alt="" className="w-full h-full object-cover" />
+              : <div className="w-full h-full" style={{ background: 'rgba(201,168,76,0.08)', border: '0.5px solid rgba(201,168,76,0.3)' }} />
+            }
+          </div>
+          <div className="flex flex-col items-center gap-3">
+            <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+            <h2 className={`${fontClass(typo.titleFont)} font-light italic`} style={{ fontSize: 'clamp(2.5rem,6vw,4rem)', color: '#ffffff', lineHeight: 1.1 }}>
+              {pp.about?.title || 'Sobre Nós'}
+            </h2>
+          </div>
         </div>
       )
 
@@ -455,6 +524,32 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 <Field label="Texto de introdução">
                   <TInput value={pp.intro} onChange={v => setPage('intro', v)} multiline />
                 </Field>
+
+                <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Slide "Sobre mim"</p>
+                <Field label="Foto (slide 2)">
+                  <label className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-xs cursor-pointer transition-all ${uploadingAbout ? 'opacity-50 pointer-events-none' : ''}`}
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.35)' }}>
+                    <input type="file" accept="image/*" className="hidden"
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleAboutUpload(f) }} />
+                    {uploadingAbout ? '⏳ A carregar...' : pp.about?.photo ? '✓ Trocar foto' : '⬆ Carregar foto'}
+                  </label>
+                  {pp.about?.photo && (
+                    <div className="relative mt-1 rounded-lg overflow-hidden" style={{ height: '90px' }}>
+                      <img src={pp.about.photo} alt="" className="w-full h-full object-cover opacity-70" />
+                      <button onClick={() => setAbout('photo', '')}
+                        className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px]"
+                        style={{ background: 'rgba(0,0,0,0.7)', color: 'rgba(255,255,255,0.5)' }}>✕</button>
+                    </div>
+                  )}
+                </Field>
+                <Field label="Título">
+                  <TInput value={pp.about?.title || ''} onChange={v => setAbout('title', v)} placeholder="Sobre mim" />
+                </Field>
+                <Field label="Texto">
+                  <TInput value={pp.about?.text || ''} onChange={v => setAbout('text', v)} multiline placeholder="A tua apresentação..." />
+                </Field>
+
                 <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
                 <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Pacotes</p>
                 {pp.packages.map((pkg, i) => (
