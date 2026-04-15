@@ -29,7 +29,11 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/api/send-reuniao-email') ||
     pathname.startsWith('/api/test-email-freelancer') ||
     pathname.startsWith('/portal-cliente') ||
-    pathname.startsWith('/freelancer-view')
+    pathname.startsWith('/freelancer-view') ||
+    pathname.startsWith('/r/') ||
+    pathname.startsWith('/api/lead-page/view') ||
+    pathname.startsWith('/api/lead-page/confirm') ||
+    pathname.startsWith('/api/lead-page/change-request')
   ) {
     return NextResponse.next()
   }

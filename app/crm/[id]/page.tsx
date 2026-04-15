@@ -112,6 +112,8 @@ export default function ClientePage() {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [sendingReuniao, setSendingReuniao] = useState(false)
   const [reuniaoSent, setReuniaoSent] = useState(false)
+  const [togglingPage, setTogglingPage] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   const handleEnviarReuniao = async () => {
     if (!form.reuniao_data || !form.reuniao_hora) {
@@ -153,6 +155,28 @@ export default function ClientePage() {
       alert('Erro ao guardar reunião: ' + error.message)
     }
     setSendingReuniao(false)
+  }
+
+  const handleTogglePage = async (publish: boolean) => {
+    setTogglingPage(true)
+    const res = await fetch('/api/lead-page/toggle-publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, publish }),
+    })
+    const data = await res.json()
+    if (data.token) {
+      setForm(f => ({ ...f, page_publicada: publish ? 'true' : '', page_token: data.token }))
+      setOriginal(f => ({ ...f, page_publicada: publish ? 'true' : '', page_token: data.token }))
+    }
+    setTogglingPage(false)
+  }
+
+  const handleCopyLink = () => {
+    const url = `${window.location.origin}/r/${form.page_token}`
+    navigator.clipboard.writeText(url)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   const handleDelete = async () => {
@@ -274,6 +298,80 @@ export default function ClientePage() {
             className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50 resize-none"
             placeholder="Notas sobre esta lead..."
           />
+        </div>
+
+        {/* Página do Cliente */}
+        <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs tracking-[0.3em] text-gold uppercase">Página do Cliente</h2>
+            <span className={`text-xs px-2.5 py-1 rounded-full border ${
+              form.page_publicada
+                ? 'bg-green-500/15 text-green-400 border-green-500/30'
+                : 'bg-white/5 text-white/25 border-white/10'
+            }`}>
+              {form.page_publicada ? '● Publicada' : '○ Despublicada'}
+            </span>
+          </div>
+
+          {/* Estatísticas */}
+          {form.page_token && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white/3 rounded-xl px-4 py-3 flex flex-col gap-1">
+                <span className="text-xs text-white/25 tracking-widest uppercase">Visitas</span>
+                <span className="text-2xl font-light text-white">{form.page_views || '0'}</span>
+              </div>
+              <div className="bg-white/3 rounded-xl px-4 py-3 flex flex-col gap-1">
+                <span className="text-xs text-white/25 tracking-widest uppercase">Confirmação</span>
+                <span className={`text-sm font-light ${
+                  form.page_confirmacao === 'confirmada' ? 'text-green-400' :
+                  form.page_confirmacao === 'alteracao_pedida' ? 'text-yellow-400' :
+                  'text-white/30'
+                }`}>
+                  {form.page_confirmacao === 'confirmada' ? '✓ Confirmada' :
+                   form.page_confirmacao === 'alteracao_pedida' ? '⚠ Alteração pedida' :
+                   '— Pendente'}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Link copiável */}
+          {form.page_token && (
+            <button
+              onClick={handleCopyLink}
+              className={`w-full py-2.5 rounded-xl text-xs tracking-wider transition-all text-left px-4 flex items-center justify-between ${
+                copied
+                  ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                  : 'bg-white/5 text-white/40 border border-white/10 hover:border-white/20'
+              }`}
+            >
+              <span className="truncate font-mono text-xs">
+                {window?.location?.origin}/r/{form.page_token}
+              </span>
+              <span className="ml-3 shrink-0">{copied ? '✓ Copiado' : 'Copiar'}</span>
+            </button>
+          )}
+
+          {/* Botões publicar / despublicar */}
+          <div className="flex gap-3">
+            {!form.page_publicada ? (
+              <button
+                onClick={() => handleTogglePage(true)}
+                disabled={togglingPage}
+                className="flex-1 py-3 rounded-xl text-sm font-semibold tracking-wider transition-all bg-gold/90 hover:bg-gold text-black disabled:opacity-40"
+              >
+                {togglingPage ? 'A publicar...' : 'Publicar Página'}
+              </button>
+            ) : (
+              <button
+                onClick={() => handleTogglePage(false)}
+                disabled={togglingPage}
+                className="flex-1 py-3 rounded-xl text-sm tracking-wider transition-all bg-white/5 hover:bg-white/10 text-white/50 border border-white/10 disabled:opacity-40"
+              >
+                {togglingPage ? 'A despublicar...' : 'Despublicar'}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Marcação de Reunião */}
