@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+export async function GET() {
+  return NextResponse.json({ ok: true, version: 'v6', endpoint: 'tally-webhook' })
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
@@ -24,8 +28,12 @@ export async function POST(req: NextRequest) {
     const nome = byKey('question_Vzr1dE')
 
     if (!nome) {
+      const nomeField = fields.find((f: any) => f.key === 'question_Vzr1dE')
       return NextResponse.json({
         error: 'Nome em falta',
+        version: 'v6',
+        fields_count: fields.length,
+        nome_field_raw: nomeField ?? null,
         keys_recebidos: fields.map((f: any) => f.key),
       }, { status: 400 })
     }
