@@ -758,24 +758,19 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
 
               {/* Assinatura */}
               {banner.signature
-                ? <p className="font-cormorant text-xl italic" style={{ color: '#C9A84C' }}>{banner.signature}</p>
-                : <p className="text-[10px] tracking-[0.45em] uppercase" style={{ color: 'rgba(201,168,76,0.45)' }}>RL Photo · Video</p>
+                ? <p className="font-cormorant text-xl italic mb-10" style={{ color: '#C9A84C' }}>{banner.signature}</p>
+                : <p className="text-[10px] tracking-[0.45em] uppercase mb-10" style={{ color: 'rgba(201,168,76,0.45)' }}>RL Photo · Video</p>
               }
+
+              {/* Botão Proposta */}
+              <a href={`/r/${token}/proposta`}
+                className="group inline-flex items-center gap-4 px-12 py-4 text-[11px] tracking-[0.4em] uppercase transition-all duration-300 hover:scale-[1.03]"
+                style={{ background: 'rgba(201,168,76,0.12)', border: '0.5px solid rgba(201,168,76,0.5)', color: '#C9A84C' }}>
+                <span>{proposta.buttonLabel}</span>
+                <span className="transition-transform duration-300 group-hover:translate-x-1.5">→</span>
+              </a>
             </div>
           </div>
-        </FadeIn>
-      </section>
-
-      {/* ── BOTÃO PROPOSTA ── */}
-      <section className="px-6 py-12 flex flex-col items-center" style={{ background: '#0a0a0a' }}>
-        <FadeIn className="flex flex-col items-center gap-3">
-          <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">Exclusivo para vocês</p>
-          <a href={`/r/${token}/proposta`}
-            className="group relative flex items-center gap-4 px-12 py-5 text-[11px] tracking-[0.4em] uppercase transition-all duration-300 hover:scale-[1.03]"
-            style={{ background: 'linear-gradient(135deg, rgba(201,168,76,0.18) 0%, rgba(201,168,76,0.08) 100%)', border: '0.5px solid rgba(201,168,76,0.5)', color: '#C9A84C' }}>
-            <span>{proposta.buttonLabel}</span>
-            <span className="transition-transform duration-300 group-hover:translate-x-1.5">→</span>
-          </a>
         </FadeIn>
       </section>
 
