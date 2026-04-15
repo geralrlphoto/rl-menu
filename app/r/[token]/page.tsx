@@ -283,11 +283,13 @@ export default function LeadPage() {
       </section>
 
       {/* ── FOTO FOOTER ───────────────────────────────────── */}
-      {contact?.page_foto_url && (
+      {(() => {
+        const fotoUrl = contact?.page_foto_url || 'https://rl-menu-lake.vercel.app/banner_footer.png'
+        return (
         <div className="relative w-full h-64 sm:h-80 overflow-hidden mt-6">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={contact.page_foto_url}
+            src={fotoUrl}
             alt=""
             className="w-full h-full object-cover"
           />
@@ -302,7 +304,8 @@ export default function LeadPage() {
             </span>
           </div>
         </div>
-      )}
+        )
+      })()}
 
       {/* ── FOOTER ────────────────────────────────────────── */}
       <footer className="px-6 py-10 text-center border-t" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
