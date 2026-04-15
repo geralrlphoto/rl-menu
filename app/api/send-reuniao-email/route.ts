@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     </tr>
 
     <!-- gap -->
-    <tr><td height="12" style="font-size:0;line-height:0;">&nbsp;</td></tr>
+    <tr><td height="24" style="font-size:0;line-height:0;">&nbsp;</td></tr>
 
     <!-- BOTÃO -->
     <tr>
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
           <tr>
             <td align="center" style="border:1px solid #c9a96e;">
               <a href="${link}"
-                style="display:block;padding:17px 40px;font-family:Georgia,'Times New Roman',serif;font-size:18px;font-style:italic;font-weight:400;color:#c9a96e;text-decoration:none;letter-spacing:0.04em;">Aceder à Reunião</a>
+                style="display:block;padding:22px 40px;font-family:Georgia,'Times New Roman',serif;font-size:18px;font-style:italic;font-weight:400;color:#c9a96e;text-decoration:none;letter-spacing:0.04em;">Aceder à Reunião</a>
             </td>
           </tr>
         </table>
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
     </tr>
 
     <!-- ESPAÇO INFERIOR: rodapé da imagem -->
-    <tr><td height="42" style="font-size:0;line-height:0;">&nbsp;</td></tr>
+    <tr><td height="64" style="font-size:0;line-height:0;">&nbsp;</td></tr>
 
   </table>
 
