@@ -336,7 +336,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       {/* Logo topo — slides 1 a N */}
       {current > 0 && (
         <div className={`absolute left-0 right-0 flex justify-center z-20 pointer-events-none ${isAdmin ? 'top-11' : 'top-5'}`}>
-          <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="w-10 opacity-50" />
+          <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="w-20 opacity-70" />
         </div>
       )}
 
