@@ -42,7 +42,8 @@ export async function POST(req: NextRequest) {
            background-position:top center;">
 
     <!-- ESPAÇO SUPERIOR: logo + heading + subtítulo da imagem -->
-    <tr><td height="375" style="font-size:0;line-height:0;">&nbsp;</td></tr>
+    <!-- Imagem 1080×1080 a 560px: subtítulo termina ~350px, rodapé começa ~525px -->
+    <tr><td height="350" style="font-size:0;line-height:0;">&nbsp;</td></tr>
 
     <!-- DATA / HORA / LOCAL -->
     <tr>
@@ -50,28 +51,28 @@ export async function POST(req: NextRequest) {
         <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #2a1e0e;">
           <tr>
             <td align="left" width="90" valign="middle"
-              style="text-align:left;padding:11px 18px;border-bottom:1px solid #2e2416;border-right:1px solid #2e2416;font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;white-space:nowrap;">DATA</td>
+              style="text-align:left;padding:9px 18px;border-bottom:1px solid #2e2416;border-right:1px solid #2e2416;font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;white-space:nowrap;">DATA</td>
             <td align="right" valign="middle"
-              style="text-align:right;padding:11px 18px;border-bottom:1px solid #2e2416;font-size:16px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;">${dataFmt}</td>
+              style="text-align:right;padding:9px 18px;border-bottom:1px solid #2e2416;font-size:16px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;">${dataFmt}</td>
           </tr>
           <tr>
             <td align="left" width="90" valign="middle"
-              style="text-align:left;padding:11px 18px;border-bottom:1px solid #2e2416;border-right:1px solid #2e2416;font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;white-space:nowrap;">HORA</td>
+              style="text-align:left;padding:9px 18px;border-bottom:1px solid #2e2416;border-right:1px solid #2e2416;font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;white-space:nowrap;">HORA</td>
             <td align="right" valign="middle"
-              style="text-align:right;padding:11px 18px;border-bottom:1px solid #2e2416;font-size:16px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;">${reuniao_hora}</td>
+              style="text-align:right;padding:9px 18px;border-bottom:1px solid #2e2416;font-size:16px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;">${reuniao_hora}</td>
           </tr>
           <tr>
             <td align="left" width="90" valign="middle"
-              style="text-align:left;padding:11px 18px;border-right:1px solid #2e2416;font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;white-space:nowrap;">LOCAL</td>
+              style="text-align:left;padding:9px 18px;border-right:1px solid #2e2416;font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;white-space:nowrap;">LOCAL</td>
             <td align="right" valign="middle"
-              style="text-align:right;padding:11px 18px;font-size:16px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;">${localTxt}</td>
+              style="text-align:right;padding:9px 18px;font-size:16px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;">${localTxt}</td>
           </tr>
         </table>
       </td>
     </tr>
 
     <!-- gap -->
-    <tr><td height="24" style="font-size:0;line-height:0;">&nbsp;</td></tr>
+    <tr><td height="16" style="font-size:0;line-height:0;">&nbsp;</td></tr>
 
     <!-- BOTÃO -->
     <tr>
@@ -80,7 +81,7 @@ export async function POST(req: NextRequest) {
           <tr>
             <td align="center" style="border:1px solid #c9a96e;">
               <a href="${link}"
-                style="display:block;padding:22px 40px;font-family:Georgia,'Times New Roman',serif;font-size:18px;font-style:italic;font-weight:400;color:#c9a96e;text-decoration:none;letter-spacing:0.04em;">Aceder à Reunião</a>
+                style="display:block;padding:16px 40px;font-family:Georgia,'Times New Roman',serif;font-size:18px;font-style:italic;font-weight:400;color:#c9a96e;text-decoration:none;letter-spacing:0.04em;">Aceder à Reunião</a>
             </td>
           </tr>
         </table>
@@ -88,7 +89,7 @@ export async function POST(req: NextRequest) {
     </tr>
 
     <!-- ESPAÇO INFERIOR: rodapé da imagem -->
-    <tr><td height="64" style="font-size:0;line-height:0;">&nbsp;</td></tr>
+    <tr><td height="30" style="font-size:0;line-height:0;">&nbsp;</td></tr>
 
   </table>
 
