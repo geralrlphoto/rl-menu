@@ -1,18 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const NOTION_TOKEN = process.env.NOTION_TOKEN!
-const EVENTOS_DBS: Record<string, string> = {
-  '2026': '1ad220116d8a804b839ddc36f1e7ecf1',
-  '2027': '2a6220116d8a80b4b439fe091b2ac804',
-}
-
-const notionH = {
-  'Authorization': `Bearer ${NOTION_TOKEN}`,
-  'Notion-Version': '2022-06-28',
-  'Content-Type': 'application/json',
-}
-
 function sb() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -32,6 +20,18 @@ function isRecent(dateStr: string | null, days = 7): boolean {
   return (Date.now() - d.getTime()) <= days * 86400000
 }
 
+// Adiciona N dias úteis (seg–sex) a uma data
+function addBusinessDays(start: Date, days: number): Date {
+  const result = new Date(start)
+  let added = 0
+  while (added < days) {
+    result.setDate(result.getDate() + 1)
+    const dow = result.getDay()
+    if (dow !== 0 && dow !== 6) added++ // ignora sábado (6) e domingo (0)
+  }
+  return result
+}
+
 export async function GET() {
   try {
     const today = new Date(); today.setHours(0, 0, 0, 0)
@@ -40,65 +40,22 @@ export async function GET() {
     const in14Str   = in14.toISOString().split('T')[0]
     const ago30 = new Date(today); ago30.setDate(ago30.getDate() - 30)
     const ago30Str  = ago30.toISOString().split('T')[0]
+    // 180 dias úteis ≈ 252 dias calendário; buscamos 300 para apanhar atrasados
+    const ago300 = new Date(today); ago300.setDate(ago300.getDate() - 300)
+    const ago300Str = ago300.toISOString().split('T')[0]
 
     const database = sb()
 
-    // ── Notion: eventos próximos 14 dias (todas as bases) ──────────────────
-    const eventosPromises = Object.values(EVENTOS_DBS).map(dbId =>
-      fetch(`https://api.notion.com/v1/databases/${dbId}/query`, {
-        method: 'POST', headers: notionH,
-        body: JSON.stringify({
-          filter: { and: [
-            { property: 'DATA DO EVENTO', date: { on_or_after: todayStr } },
-            { property: 'DATA DO EVENTO', date: { on_or_before: in14Str } },
-          ]},
-          sorts: [{ property: 'DATA DO EVENTO', direction: 'ascending' }],
-          page_size: 20,
-        }),
-      }).then(r => r.json()).catch(() => ({ results: [] }))
-    )
-
-    // ── Notion: prazos fotos (eventos últimos 30 dias) ─────────────────────
-    const fotosPromises = Object.values(EVENTOS_DBS).map(dbId =>
-      fetch(`https://api.notion.com/v1/databases/${dbId}/query`, {
-        method: 'POST', headers: notionH,
-        body: JSON.stringify({
-          filter: { and: [
-            { property: 'DATA DO EVENTO', date: { on_or_after: ago30Str } },
-            { property: 'DATA DO EVENTO', date: { on_or_before: todayStr } },
-            { property: 'ESTADO SEL. FOTOS', select: { does_not_equal: 'Entregue' } },
-          ]},
-          sorts: [{ property: 'DATA DO EVENTO', direction: 'ascending' }],
-          page_size: 50,
-        }),
-      }).then(r => r.json()).catch(() => ({ results: [] }))
-    )
-
-    // ── Notion: vídeos com prazo próximo ───────────────────────────────────
-    const videosPromises = Object.values(EVENTOS_DBS).map(dbId =>
-      fetch(`https://api.notion.com/v1/databases/${dbId}/query`, {
-        method: 'POST', headers: notionH,
-        body: JSON.stringify({
-          filter: { property: 'ESTADO DO VIDEO', select: { does_not_equal: 'Entregue' } },
-          sorts: [{ property: 'DATA DO EVENTO', direction: 'ascending' }],
-          page_size: 100,
-        }),
-      }).then(r => r.json()).catch(() => ({ results: [] }))
-    )
-
     const [
-      eventosRaw,
-      fotosRaw,
-      videosRaw,
       { data: leads },
       { data: portais },
       { data: pagamentos },
+      { data: eventosData },
+      { data: fotosData },
+      { data: videosData },
       { data: albunsData },
       { data: albunsAprovData },
     ] = await Promise.all([
-      Promise.all(eventosPromises),
-      Promise.all(fotosPromises),
-      Promise.all(videosPromises),
       database.from('crm_contacts')
         .select('id,nome,status,lead_prioridade,data_casamento,data_entrada,como_chegou,contato,email,tipo_evento')
         .not('status', 'in', '("Fechou","NÃO FECHOU","Sem resposta","Encerrado","Cancelado")')
@@ -108,6 +65,26 @@ export async function GET() {
         .select('referencia,fase_pagamento,valor_liquidado,data_pagamento,metodo_pagamento')
         .order('data_pagamento', { ascending: false })
         .limit(200),
+      // ── Supabase: eventos próximos 14 dias ──────────────────────────────
+      database.from('evento_equipa')
+        .select('evento_id,referencia,cliente,data_casamento,local,fotografo,videografo,status,tipo_evento')
+        .gte('data_casamento', todayStr)
+        .lte('data_casamento', in14Str)
+        .order('data_casamento', { ascending: true }),
+      // ── Supabase: prazos fotos (eventos últimos 30 dias) ─────────────────
+      database.from('evento_equipa')
+        .select('evento_id,referencia,cliente,data_casamento,estado_sel_fotos')
+        .gte('data_casamento', ago30Str)
+        .lte('data_casamento', todayStr)
+        .or('estado_sel_fotos.neq.Entregue,estado_sel_fotos.is.null')
+        .order('data_casamento', { ascending: true }),
+      // ── Supabase: vídeos não entregues (últimos 300 dias) ────────────────
+      database.from('evento_equipa')
+        .select('evento_id,referencia,cliente,data_casamento,estado_video')
+        .lte('data_casamento', todayStr)
+        .gte('data_casamento', ago300Str)
+        .or('estado_video.neq.Entregue,estado_video.is.null')
+        .order('data_casamento', { ascending: true }),
       // ── Supabase: álbuns com prazo nos próximos 14 dias ──────────────────
       database.from('albuns_casamento')
         .select('nome,ref_evento,data_prevista_entrega,status')
@@ -121,44 +98,41 @@ export async function GET() {
         .eq('status', 'PARA APROVAÇÃO'),
     ])
 
-    // ── Parse eventos próximos ─────────────────────────────────────────────
-    const eventos = eventosRaw.flatMap((r: any) =>
-      (r.results ?? []).map((p: any) => {
-        const pr = p.properties ?? {}
-        const dataEvento = pr['DATA DO EVENTO']?.date?.start ?? null
-        return {
-          id: p.id,
-          referencia: pr['REFERÊNCIA DO EVENTO']?.title?.[0]?.plain_text ?? '—',
-          cliente: pr['CLIENTE']?.rich_text?.[0]?.plain_text ?? '—',
-          data_evento: dataEvento,
-          local: pr['LOCAL']?.rich_text?.[0]?.plain_text ?? '—',
-          fotografo: pr['FOTOGRAFO']?.multi_select?.map((s: any) => s.name) ?? [],
-          videografo: pr['VÍDEOGRAFO ']?.multi_select?.map((s: any) => s.name) ?? [],
-          status: pr['Status']?.status?.name ?? null,
-          tipo_evento: pr['TIPO DE EVENTO']?.multi_select?.map((s: any) => s.name) ?? [],
-          dias: dataEvento ? daysUntil(dataEvento) : 99,
-        }
-      })
-    ).sort((a: any, b: any) => a.dias - b.dias)
+    // ── Parse eventos próximos (Supabase evento_equipa) ───────────────────
+    const toArr = (v: any): string[] => {
+      if (!v) return []
+      if (Array.isArray(v)) return v
+      return String(v).split(', ').filter(Boolean)
+    }
+    const eventos = (eventosData ?? []).map((e: any) => ({
+      id:          e.evento_id,
+      referencia:  e.referencia  ?? '—',
+      cliente:     e.cliente     ?? '—',
+      data_evento: e.data_casamento,
+      local:       e.local       ?? '—',
+      fotografo:   toArr(e.fotografo),
+      videografo:  toArr(e.videografo),
+      status:      e.status      ?? null,
+      tipo_evento: toArr(e.tipo_evento),
+      dias:        e.data_casamento ? daysUntil(e.data_casamento) : 99,
+    })).sort((a: any, b: any) => a.dias - b.dias)
 
-    // ── Parse prazos fotos (prazo = data_evento + 30 dias) ────────────────
-    const fotosNotionAlerta = fotosRaw.flatMap((r: any) =>
-      (r.results ?? []).map((p: any) => {
-        const pr = p.properties ?? {}
-        const dataEvento = pr['DATA DO EVENTO']?.date?.start ?? null
-        if (!dataEvento) return null
-        const prazo = new Date(dataEvento + 'T00:00:00')
-        prazo.setDate(prazo.getDate() + 30)
-        const dias = Math.round((prazo.getTime() - today.getTime()) / 86400000)
-        if (dias > 15) return null
-        return {
-          nome: pr['CLIENTE']?.rich_text?.[0]?.plain_text ?? '—',
-          ref: pr['REFERÊNCIA DO EVENTO']?.title?.[0]?.plain_text ?? '',
-          dias,
-          tipo: 'Sel. Fotos',
-        }
-      }).filter(Boolean)
-    )
+    // ── Parse prazos fotos (prazo = data_casamento + 30 dias, Supabase) ──
+    const fotosNotionAlerta = (fotosData ?? []).map((e: any) => {
+      const dataEvento = e.data_casamento
+      if (!dataEvento) return null
+      if (e.estado_sel_fotos === 'S/SERVIÇO') return null
+      const prazo = new Date(dataEvento + 'T00:00:00')
+      prazo.setDate(prazo.getDate() + 30)
+      const dias = Math.round((prazo.getTime() - today.getTime()) / 86400000)
+      if (dias > 15) return null
+      return {
+        nome: e.cliente   ?? '—',
+        ref:  e.referencia ?? '',
+        dias,
+        tipo: 'Sel. Fotos',
+      }
+    }).filter(Boolean)
 
     // ── Parse seleção fotos noivos (prazo = selecao_enviada + 30 dias) ────
     const selecaoNoivosAlerta = (portais ?? []).flatMap((portal: any) => {
@@ -179,28 +153,24 @@ export async function GET() {
     const fotosAlerta = [...fotosNotionAlerta, ...selecaoNoivosAlerta]
       .sort((a: any, b: any) => a.dias - b.dias)
 
-    // ── Parse vídeos em atraso/prazo ───────────────────────────────────────
-    function parseVideoFormula(formula: string | null): number {
-      if (!formula) return 999
-      const faltam = formula.match(/Faltam (\d+) dias?/); if (faltam) return parseInt(faltam[1])
-      const restantes = formula.match(/(\d+) dias? restantes/); if (restantes) return parseInt(restantes[1])
-      const atraso = formula.match(/(\d+) dias? em atraso/); if (atraso) return -parseInt(atraso[1])
-      return 999
-    }
-    const videosAlerta = videosRaw.flatMap((r: any) =>
-      (r.results ?? []).map((p: any) => {
-        const pr = p.properties ?? {}
-        const formula = pr['DATA ENTREGA VIDEO']?.formula?.string ?? null
-        const dias = parseVideoFormula(formula)
-        if (dias > 15) return null
-        return {
-          cliente: pr['CLIENTE']?.rich_text?.[0]?.plain_text ?? '—',
-          ref: pr['REFERÊNCIA DO EVENTO']?.title?.[0]?.plain_text ?? '',
-          dias,
-          formula,
-        }
-      }).filter(Boolean)
-    )
+    // ── Parse vídeos (prazo = data_casamento + 180 dias úteis) ────────────
+    const videosAlerta = (videosData ?? []).map((e: any) => {
+      if (!e.data_casamento) return null
+      if (e.estado_video === 'S/SERVIÇO') return null
+      const prazo = addBusinessDays(new Date(e.data_casamento + 'T00:00:00'), 180)
+      const dias  = Math.round((prazo.getTime() - today.getTime()) / 86400000)
+      if (dias > 15) return null
+      return {
+        cliente: e.cliente   ?? '—',
+        ref:     e.referencia ?? '',
+        dias,
+        formula: dias < 0
+          ? `${-dias} dias em atraso`
+          : dias === 0
+            ? 'Entrega hoje'
+            : `Faltam ${dias} dias`,
+      }
+    }).filter(Boolean)
 
     // ── Parse álbuns (Supabase) ────────────────────────────────────────────
     const albuns = (albunsData ?? []).map((a: any) => ({

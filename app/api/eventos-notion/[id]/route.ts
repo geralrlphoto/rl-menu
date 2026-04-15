@@ -119,6 +119,24 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: err.message }, { status: res.status })
     }
 
+    // ── Sync campos relevantes para Supabase evento_equipa ─────────────────
+    const syncMap: Record<string, string> = {
+      sel_fotos_estado: 'estado_sel_fotos',
+      video_estado:     'estado_video',
+      cliente:          'cliente',
+      status:           'status',
+      local:            'local',
+      data_evento:      'data_casamento',
+    }
+    const sbFields: Record<string, any> = {}
+    for (const [internal, col] of Object.entries(syncMap)) {
+      if (body[internal] !== undefined) sbFields[col] = body[internal]
+    }
+    if (body.tipo_evento !== undefined) sbFields.tipo_evento = Array.isArray(body.tipo_evento) ? body.tipo_evento.join(', ') : body.tipo_evento
+    if (Object.keys(sbFields).length > 0) {
+      await supabase().from('evento_equipa').update(sbFields).eq('evento_id', id)
+    }
+
     return NextResponse.json({ ok: true })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })

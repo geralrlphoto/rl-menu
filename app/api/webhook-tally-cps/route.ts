@@ -158,10 +158,24 @@ export async function POST(req: NextRequest) {
       saveToNotion(data),
     ])
 
+    // ── Criar registo em evento_equipa com o ID da página Notion ─────────────
+    const notionVal = notionResult.status === 'fulfilled' ? notionResult.value : null
+    if (notionVal?.ok && notionVal?.id) {
+      await db().from('evento_equipa').upsert({
+        evento_id:      notionVal.id,
+        referencia:     `AGUARDAR — ${data.nome_noivos ?? ''}`,
+        cliente:        data.nome_noivos ?? null,
+        data_casamento: data.data_casamento ?? null,
+        local:          data.local_cerimonia ?? null,
+      }, { onConflict: 'evento_id' }).then(({ error }) => {
+        if (error) console.error('[webhook-tally-cps] evento_equipa upsert error:', error)
+      })
+    }
+
     return NextResponse.json({
       ok: true,
       supabase: supabaseResult.status === 'fulfilled' ? supabaseResult.value : { ok: false, error: 'rejected' },
-      notion:   notionResult.status   === 'fulfilled' ? notionResult.value   : { ok: false, error: 'rejected' },
+      notion:   notionVal ?? { ok: false, error: 'rejected' },
     })
 
   } catch (err: any) {

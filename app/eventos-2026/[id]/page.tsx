@@ -1822,12 +1822,12 @@ export default function EventoPage() {
           <div className="flex flex-col gap-2">
             {prazoSelFotos && (
               <EstadoRow label="Prazo Seleção de Fotos (30 dias)" dateStr={prazoSelFotos}
-                estado={e.sel_fotos_estado} options={['Aguardar','Em Edição','Entregue']}
+                estado={e.sel_fotos_estado} options={['Aguardar','Em Edição','Entregue','S/SERVIÇO']}
                 field="sel_fotos_estado" eventId={e.id} onSaved={handleSaved} />
             )}
             {prazoVideo && (
               <EstadoRow label="Prazo Entrega Vídeo (180 dias úteis)" dateStr={prazoVideo}
-                estado={e.video_estado} options={['Aguardar','Em Edição','Entregue']}
+                estado={e.video_estado} options={['Aguardar','Em Edição','Entregue','S/SERVIÇO']}
                 field="video_estado" eventId={e.id} onSaved={handleSaved} />
             )}
             <EstadoRow label="Fotos para Edição"
