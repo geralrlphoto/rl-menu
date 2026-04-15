@@ -27,6 +27,7 @@ export type PageContent = {
   portfolio:    { label: string; title: string; titleFont: string; titleColor: string; photos: string[] }
   testimonials: { label: string; items: { text: string; author: string }[] }
   about:        { label: string; title: string; titleFont: string; titleColor: string; text: string; textColor: string }
+  banner:       { message: string; signature: string }
 }
 
 export const DEFAULT_CONTENT: PageContent = {
@@ -53,6 +54,10 @@ export const DEFAULT_CONTENT: PageContent = {
     text: 'Somos especializados em fotografia e vídeo de casamentos. O nosso objetivo é preservar a autenticidade de cada momento — a emoção, os detalhes, as histórias que só acontecem uma vez.',
     textColor: '#666666',
   },
+  banner: {
+    message: 'Cada momento do vosso dia merece ser preservado para sempre. Estamos honrados em fazer parte desta história.',
+    signature: '',
+  },
 }
 
 function merge(saved: any): PageContent {
@@ -64,6 +69,7 @@ function merge(saved: any): PageContent {
     portfolio:    { ...DEFAULT_CONTENT.portfolio,    ...(saved.portfolio    || {}), photos: saved.portfolio?.photos || DEFAULT_CONTENT.portfolio.photos },
     testimonials: { ...DEFAULT_CONTENT.testimonials, ...(saved.testimonials || {}), items: saved.testimonials?.items || DEFAULT_CONTENT.testimonials.items },
     about:        { ...DEFAULT_CONTENT.about,        ...(saved.about        || {}) },
+    banner:       { ...DEFAULT_CONTENT.banner,       ...(saved.banner       || {}) },
   }
 }
 
@@ -302,6 +308,9 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
   function setAbout(k: keyof PageContent['about'], v: string) {
     setContent(c => ({ ...c, about: { ...c.about, [k]: v } }))
   }
+  function setBanner(k: keyof PageContent['banner'], v: string) {
+    setContent(c => ({ ...c, banner: { ...c.banner, [k]: v } }))
+  }
   function setPhoto(i: number, url: string) {
     setContent(c => {
       const photos = [...c.portfolio.photos]
@@ -404,7 +413,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
   const targetDate = contact!.reuniao_data && contact!.reuniao_hora
     ? `${contact!.reuniao_data}T${horaFmt}:00` : null
 
-  const { hero, countdown, video, portfolio, testimonials, about } = content
+  const { hero, countdown, video, portfolio, testimonials, about, banner } = content
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
@@ -692,6 +701,44 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
         ))}
       </section>
 
+      {/* ── BANNER ── */}
+      <section className="px-6 py-16" style={{ background: '#0a0a0a' }}>
+        <FadeIn>
+          <div className="relative max-w-2xl mx-auto" style={{ background: 'linear-gradient(135deg, rgba(201,168,76,0.05) 0%, rgba(201,168,76,0.02) 100%)', border: '0.5px solid rgba(201,168,76,0.25)' }}>
+
+            {/* Cantos ornamentais */}
+            <div className="absolute top-0 left-0 w-10 h-10" style={{ borderTop: '1px solid rgba(201,168,76,0.6)', borderLeft: '1px solid rgba(201,168,76,0.6)' }} />
+            <div className="absolute top-0 right-0 w-10 h-10" style={{ borderTop: '1px solid rgba(201,168,76,0.6)', borderRight: '1px solid rgba(201,168,76,0.6)' }} />
+            <div className="absolute bottom-0 left-0 w-10 h-10" style={{ borderBottom: '1px solid rgba(201,168,76,0.6)', borderLeft: '1px solid rgba(201,168,76,0.6)' }} />
+            <div className="absolute bottom-0 right-0 w-10 h-10" style={{ borderBottom: '1px solid rgba(201,168,76,0.6)', borderRight: '1px solid rgba(201,168,76,0.6)' }} />
+
+            <div className="px-10 sm:px-16 py-14 text-center">
+              {/* Logo */}
+              <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
+                alt="RL" className="w-12 h-auto mx-auto mb-8 opacity-70" />
+
+              {/* Separador */}
+              <p className="text-[11px] tracking-[0.45em] mb-8" style={{ color: 'rgba(201,168,76,0.35)' }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+
+              {/* Mensagem */}
+              <p className="font-cormorant text-2xl sm:text-3xl italic font-light leading-relaxed mb-8"
+                style={{ color: 'rgba(255,255,255,0.82)' }}>
+                &ldquo;{banner.message}&rdquo;
+              </p>
+
+              {/* Separador */}
+              <p className="text-[11px] tracking-[0.45em] mb-6" style={{ color: 'rgba(201,168,76,0.35)' }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+
+              {/* Assinatura */}
+              {banner.signature
+                ? <p className="font-cormorant text-lg italic" style={{ color: '#C9A84C' }}>{banner.signature}</p>
+                : <p className="text-[10px] tracking-[0.4em] uppercase" style={{ color: 'rgba(201,168,76,0.4)' }}>RL Photo · Video</p>
+              }
+            </div>
+          </div>
+        </FadeIn>
+      </section>
+
       <div className="w-full max-w-sm mx-auto h-px" style={{ background: 'rgba(201,168,76,0.15)' }} />
 
       {/* ── SOBRE NÓS ── */}
@@ -882,6 +929,16 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
                     </Field>
                   </div>
                 ))}
+              </AccordionSection>
+
+              {/* ── BANNER ── */}
+              <AccordionSection title="Banner">
+                <Field label="Mensagem / Frase">
+                  <TInput value={banner.message} onChange={v => setBanner('message', v)} multiline />
+                </Field>
+                <Field label="Assinatura (ex: Ana & Pedro ♡)">
+                  <TInput value={banner.signature} onChange={v => setBanner('signature', v)} />
+                </Field>
               </AccordionSection>
 
               {/* ── SOBRE NÓS ── */}
