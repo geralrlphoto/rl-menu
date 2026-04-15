@@ -48,21 +48,21 @@ export async function POST(req: NextRequest) {
       <td align="center" style="padding:36px 28px 44px;background:#080603;">
 
         <!-- LOGO -->
-        <div style="margin:0 auto 24px;width:76px;height:76px;border-radius:50%;border:1.5px solid #c9a96e;overflow:hidden;">
-          <img src="${LOGO}" width="76" height="76" alt="RL" style="display:block;border-radius:50%;width:76px;height:76px;" />
+        <div style="margin:0 auto 28px;width:100px;height:100px;border-radius:50%;border:1.5px solid #c9a96e;overflow:hidden;">
+          <img src="${LOGO}" width="100" height="100" alt="RL" style="display:block;border-radius:50%;width:100px;height:100px;" />
         </div>
 
         <!-- CALENDAR PILL -->
-        <div style="display:inline-block;margin:0 0 24px;padding:9px 20px;background:#100c06;border:1px solid #2a1e0e;border-radius:40px;font-size:22px;line-height:1;">&#128197;</div>
+        <div style="display:inline-block;margin:0 0 28px;padding:12px 28px;background:#100c06;border:1px solid #2a1e0e;border-radius:40px;font-size:26px;line-height:1;">&#128197;</div>
 
         <!-- OLÁ NOIVOS -->
-        <p style="margin:0 0 8px;font-family:Georgia,'Times New Roman',serif;font-size:22px;font-style:italic;font-weight:400;color:#c9a96e;text-align:center;">Olá, Noivos!</p>
+        <p style="margin:0 0 10px;font-family:Georgia,'Times New Roman',serif;font-size:24px;font-style:italic;font-weight:400;color:#c9a96e;text-align:center;">Olá, Noivos!</p>
 
         <!-- A VOSSA REUNIÃO -->
-        <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:48px;font-weight:400;color:#ffffff;line-height:1.1;text-align:center;letter-spacing:-0.01em;">A vossa reunião</p>
+        <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:54px;font-weight:400;color:#ffffff;line-height:1.1;text-align:center;letter-spacing:-0.01em;">A vossa reunião</p>
 
         <!-- ESTÁ MARCADA -->
-        <p style="margin:0 0 24px;font-family:Georgia,'Times New Roman',serif;font-size:48px;font-weight:400;font-style:italic;color:#c9a96e;line-height:1.1;text-align:center;">está marcada.</p>
+        <p style="margin:0 0 28px;font-family:Georgia,'Times New Roman',serif;font-size:54px;font-weight:400;font-style:italic;color:#c9a96e;line-height:1.1;text-align:center;">está marcada.</p>
 
         <!-- DIVIDER -->
         <p style="margin:0 0 22px;font-family:Arial,sans-serif;font-size:12px;color:#6a5228;letter-spacing:0.4em;text-align:center;">&mdash;&nbsp;&middot;&nbsp;&middot;&nbsp;&middot;&nbsp;&mdash;</p>
