@@ -330,12 +330,12 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
             </div>
 
             {/* Vídeo */}
-            <div className="flex-1 relative" style={{ aspectRatio: '16/9' }}>
+            <div className="flex-1 relative" style={{ height: 'clamp(260px,38vw,420px)' }}>
               {pp.about?.videoUrl && toEmbed(pp.about.videoUrl)
                 ? <iframe src={toEmbed(pp.about.videoUrl)} className="w-full h-full"
                     style={{ border: 'none' }} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen />
                 : <div className="w-full h-full flex flex-col items-center justify-center gap-2"
-                    style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', aspectRatio: '16/9' }}>
+                    style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)' }}>
                     <span style={{ color: `${typo.accentColor}44`, fontSize: '1.5rem' }}>▶</span>
                     <p className="text-[10px] tracking-[0.3em] uppercase" style={{ color: 'rgba(255,255,255,0.15)' }}>Vídeo</p>
                   </div>
