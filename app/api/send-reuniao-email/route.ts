@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// Imagem de fundo: card design sem placeholders, espaço vazio no meio para os dados
 const IMAGE_URL = 'https://rl-menu-lake.vercel.app/card_reuniao_marcada.png'
+const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
+const MAPS_LINK = 'https://www.google.com/maps/place/RL+Photo.Video/@38.7071885,-9.1450227,17z'
 
 function fmtData(d: string) {
   const [y, m, day] = d.split('-')
@@ -9,7 +10,7 @@ function fmtData(d: string) {
 }
 
 export async function POST(req: NextRequest) {
-  const { email, reuniao_data, reuniao_hora, reuniao_tipo, reuniao_link } = await req.json().catch(() => ({}))
+  const { email, reuniao_data, reuniao_hora, reuniao_tipo } = await req.json().catch(() => ({}))
 
   if (!email || !reuniao_data || !reuniao_hora) {
     return NextResponse.json({ error: 'email, reuniao_data e reuniao_hora são obrigatórios' }, { status: 400 })
@@ -17,14 +18,15 @@ export async function POST(req: NextRequest) {
 
   const dataFmt  = fmtData(reuniao_data)
   const isVideo  = reuniao_tipo === 'Videochamada'
-  const localTxt = isVideo ? 'Videochamada · Google Meet' : 'Estúdio RL Photo.Video'
-  const link     = reuniao_link || '#'
+  const modoTxt  = isVideo ? 'Videochamada' : 'Presencial'
+  const btnTxt   = isVideo ? 'Fazer Reunião' : 'Ver Localização'
+  const link     = isVideo ? MEET_LINK : MAPS_LINK
 
-  // Imagem 1080×1080 → exibida a 560px de largura → altura = 560px
-  // O espaço vazio (abaixo do subtítulo, acima do rodapé) começa ~57% = 320px
-  // Espaço disponível até ao rodapé: ~560 - 320 - 40(footer) = 200px
-  // Info box (3 linhas ~38px) = ~116px  |  gap 12px  |  botão ~56px  = ~184px ✓
-  const bg = '#0c0806'
+  // Imagem 1080×1080 exibida a 560px → 560px de altura
+  // Tabela DATA/HORA/MODO começa a ~372px do topo
+  // Cada linha ~30px → 3 linhas = 90px
+  // Botão começa a ~474px (~12px gap após tabela)
+  // Rodapé da imagem a ~515px
 
   const html = `<!DOCTYPE html>
 <html lang="pt">
@@ -41,55 +43,51 @@ export async function POST(req: NextRequest) {
            background-repeat:no-repeat;
            background-position:top center;">
 
-    <!-- ESPAÇO SUPERIOR: logo + heading + subtítulo da imagem -->
-    <!-- Imagem 1080×1080 a 560px: subtítulo termina ~350px, rodapé começa ~525px -->
-    <tr><td height="350" style="font-size:0;line-height:0;">&nbsp;</td></tr>
+    <!-- espaço superior: logo + heading + subtítulo -->
+    <tr><td height="372" style="font-size:0;line-height:0;">&nbsp;</td></tr>
 
-    <!-- DATA / HORA / LOCAL -->
+    <!-- VALORES: sobrepostos sobre as linhas DATA / HORA / MODO da imagem -->
     <tr>
       <td style="padding:0 70px;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #2a1e0e;">
+        <table width="100%" cellpadding="0" cellspacing="0">
           <tr>
-            <td align="left" width="90" valign="middle"
-              style="text-align:left;padding:9px 18px;border-bottom:1px solid #2e2416;border-right:1px solid #2e2416;font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;white-space:nowrap;">DATA</td>
-            <td align="right" valign="middle"
-              style="text-align:right;padding:9px 18px;border-bottom:1px solid #2e2416;font-size:16px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;">${dataFmt}</td>
+            <td width="148" height="30" style="font-size:0;line-height:0;">&nbsp;</td>
+            <td align="right" height="30"
+              style="text-align:right;padding:0 18px;font-size:15px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;vertical-align:middle;">${dataFmt}</td>
           </tr>
           <tr>
-            <td align="left" width="90" valign="middle"
-              style="text-align:left;padding:9px 18px;border-bottom:1px solid #2e2416;border-right:1px solid #2e2416;font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;white-space:nowrap;">HORA</td>
-            <td align="right" valign="middle"
-              style="text-align:right;padding:9px 18px;border-bottom:1px solid #2e2416;font-size:16px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;">${reuniao_hora}</td>
+            <td width="148" height="30" style="font-size:0;line-height:0;">&nbsp;</td>
+            <td align="right" height="30"
+              style="text-align:right;padding:0 18px;font-size:15px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;vertical-align:middle;">${reuniao_hora}</td>
           </tr>
           <tr>
-            <td align="left" width="90" valign="middle"
-              style="text-align:left;padding:9px 18px;border-right:1px solid #2e2416;font-size:9px;letter-spacing:0.4em;color:#7a6030;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;white-space:nowrap;">LOCAL</td>
-            <td align="right" valign="middle"
-              style="text-align:right;padding:9px 18px;font-size:16px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;">${localTxt}</td>
+            <td width="148" height="30" style="font-size:0;line-height:0;">&nbsp;</td>
+            <td align="right" height="30"
+              style="text-align:right;padding:0 18px;font-size:15px;color:#e8dfc8;font-family:Georgia,'Times New Roman',serif;vertical-align:middle;">${modoTxt}</td>
           </tr>
         </table>
       </td>
     </tr>
 
     <!-- gap -->
-    <tr><td height="16" style="font-size:0;line-height:0;">&nbsp;</td></tr>
+    <tr><td height="14" style="font-size:0;line-height:0;">&nbsp;</td></tr>
 
-    <!-- BOTÃO -->
+    <!-- BOTÃO: sobreposto sobre o botão vazio da imagem -->
     <tr>
       <td style="padding:0 70px;">
         <table width="100%" cellpadding="0" cellspacing="0">
           <tr>
-            <td align="center" style="border:1px solid #c9a96e;">
+            <td align="center" height="40">
               <a href="${link}"
-                style="display:block;padding:16px 40px;font-family:Georgia,'Times New Roman',serif;font-size:18px;font-style:italic;font-weight:400;color:#c9a96e;text-decoration:none;letter-spacing:0.04em;">Aceder à Reunião</a>
+                style="display:block;padding:10px 40px;font-family:Georgia,'Times New Roman',serif;font-size:17px;font-style:italic;font-weight:400;color:#c9a96e;text-decoration:none;letter-spacing:0.04em;">${btnTxt}</a>
             </td>
           </tr>
         </table>
       </td>
     </tr>
 
-    <!-- ESPAÇO INFERIOR: rodapé da imagem -->
-    <tr><td height="30" style="font-size:0;line-height:0;">&nbsp;</td></tr>
+    <!-- espaço inferior: rodapé da imagem -->
+    <tr><td height="44" style="font-size:0;line-height:0;">&nbsp;</td></tr>
 
   </table>
 
