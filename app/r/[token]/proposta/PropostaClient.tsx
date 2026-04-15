@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { DEFAULT_CONTENT, PageContent } from '../LeadPageClient'
 
 const IMG_BASE = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
 
-function merge(saved: any): PageContent {
+function mergeContent(saved: any): PageContent {
   if (!saved) return DEFAULT_CONTENT
   return {
     hero:         { ...DEFAULT_CONTENT.hero,         ...(saved.hero         || {}) },
@@ -20,31 +20,29 @@ function merge(saved: any): PageContent {
   }
 }
 
-function FadeIn({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [visible, setVisible] = useState(false)
-  useEffect(() => {
-    const el = ref.current; if (!el) return
-    const t = setTimeout(() => {
-      const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect() } }, { threshold: 0.06 })
-      obs.observe(el); return () => obs.disconnect()
-    }, 60)
-    return () => clearTimeout(t)
-  }, [])
+// ── Slide transition wrapper ──────────────────────────────────────────────────
+function SlideIn({ children, dir }: { children: React.ReactNode; dir: 'right' | 'left' }) {
+  const [vis, setVis] = useState(false)
+  useEffect(() => { const t = setTimeout(() => setVis(true), 30); return () => clearTimeout(t) }, [])
   return (
-    <div ref={ref} className={className} style={{ opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(20px)', transition: `opacity 0.7s cubic-bezier(0.22,1,0.36,1) ${delay}ms, transform 0.7s cubic-bezier(0.22,1,0.36,1) ${delay}ms` }}>
+    <div style={{
+      opacity: vis ? 1 : 0,
+      transform: vis ? 'translateX(0px)' : `translateX(${dir === 'right' ? '48px' : '-48px'})`,
+      transition: 'opacity 0.5s cubic-bezier(0.22,1,0.36,1), transform 0.5s cubic-bezier(0.22,1,0.36,1)',
+      height: '100%',
+    }}>
       {children}
     </div>
   )
 }
 
+// ── Editor helpers ────────────────────────────────────────────────────────────
 function TInput({ value, onChange, multiline, placeholder }: { value: string; onChange: (v: string) => void; multiline?: boolean; placeholder?: string }) {
   const cls = "w-full bg-white/[0.06] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-gold/40 placeholder:text-white/20 resize-none"
   return multiline
-    ? <textarea rows={3} className={cls} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} />
+    ? <textarea rows={4} className={cls} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} />
     : <input type="text" className={cls} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} />
 }
-
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
@@ -55,7 +53,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-
 export default function PropostaClient({ token, isAdmin }: { token: string; isAdmin: boolean }) {
   const [loading,  setLoading]  = useState(true)
   const [notFound, setNotFound] = useState(false)
@@ -64,6 +61,10 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   const [locked,   setLocked]   = useState(true)
   const [pwInput,  setPwInput]  = useState('')
   const [pwError,  setPwError]  = useState(false)
+
+  // Slides
+  const [current,   setCurrent]   = useState(0)
+  const [direction, setDirection] = useState<'right' | 'left'>('right')
 
   // Editor
   const [editorOpen, setEditorOpen] = useState(false)
@@ -76,9 +77,8 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       .then(data => {
         if (!data.contact) { setNotFound(true); setLoading(false); return }
         setContact(data.contact)
-        const merged = merge(data.contact.page_content)
+        const merged = mergeContent(data.contact.page_content)
         setContent(merged)
-        // Check if already unlocked
         const stored = localStorage.getItem(`proposta_${token}`)
         const pw = merged.proposta?.password || ''
         if (isAdmin || !pw || stored === pw) setLocked(false)
@@ -87,22 +87,41 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       .catch(() => { setNotFound(true); setLoading(false) })
   }, [token, isAdmin])
 
+  const slides = ['cover', 'intro', 'pkg-0', 'pkg-1', 'pkg-2', 'cta']
+  const total  = slides.length
+
+  const goTo = useCallback((idx: number) => {
+    if (idx === current || idx < 0 || idx >= total) return
+    setDirection(idx > current ? 'right' : 'left')
+    setCurrent(idx)
+  }, [current, total])
+
+  const prev = useCallback(() => goTo(current - 1), [goTo, current])
+  const next = useCallback(() => goTo(current + 1), [goTo, current])
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') next()
+      if (e.key === 'ArrowLeft')  prev()
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [next, prev])
+
   const handleUnlock = () => {
     const pw = content.proposta?.password || ''
     if (!pw || pwInput === pw) {
       localStorage.setItem(`proposta_${token}`, pwInput)
       setLocked(false)
     } else {
-      setPwError(true)
-      setTimeout(() => setPwError(false), 1500)
+      setPwError(true); setTimeout(() => setPwError(false), 1500)
     }
   }
 
   const handleSave = async () => {
     setSaving(true)
     await fetch('/api/lead-page/save-content', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token, page_content: content }),
     })
     setSaved(true); setTimeout(() => setSaved(false), 2000); setSaving(false)
@@ -119,7 +138,6 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
     })
   }
 
-  // ── Loading ──
   if (loading) return (
     <main className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
       <p className="text-white/20 tracking-[0.3em] text-xs uppercase animate-pulse">A carregar...</p>
@@ -131,33 +149,28 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
     </main>
   )
 
-  // ── Password gate ──
+  // ── Password gate ─────────────────────────────────────────────────────────
   if (locked) return (
     <main className="min-h-screen flex items-center justify-center px-6" style={{ background: '#0a0a0a' }}>
       <div className="w-full max-w-sm">
         <div className="relative" style={{ border: '0.5px solid rgba(201,168,76,0.3)', background: 'linear-gradient(135deg, #1c1408 0%, #0f0c07 50%, #1c1408 100%)' }}>
-          {/* cantos */}
-          {[['top-0 left-0','borderTop borderLeft'],['top-0 right-0','borderTop borderRight'],['bottom-0 left-0','borderBottom borderLeft'],['bottom-0 right-0','borderBottom borderRight']].map(([pos, _], i) => (
-            <div key={i} className={`absolute ${pos} w-8 h-8`} style={{ borderTop: i < 2 ? '1px solid rgba(201,168,76,0.6)' : undefined, borderBottom: i >= 2 ? '1px solid rgba(201,168,76,0.6)' : undefined, borderLeft: i % 2 === 0 ? '1px solid rgba(201,168,76,0.6)' : undefined, borderRight: i % 2 === 1 ? '1px solid rgba(201,168,76,0.6)' : undefined }} />
-          ))}
-
+          <div className="absolute top-0 left-0 w-8 h-8"  style={{ borderTop: '1px solid rgba(201,168,76,0.6)', borderLeft:  '1px solid rgba(201,168,76,0.6)' }} />
+          <div className="absolute top-0 right-0 w-8 h-8" style={{ borderTop: '1px solid rgba(201,168,76,0.6)', borderRight: '1px solid rgba(201,168,76,0.6)' }} />
+          <div className="absolute bottom-0 left-0 w-8 h-8"  style={{ borderBottom: '1px solid rgba(201,168,76,0.6)', borderLeft:  '1px solid rgba(201,168,76,0.6)' }} />
+          <div className="absolute bottom-0 right-0 w-8 h-8" style={{ borderBottom: '1px solid rgba(201,168,76,0.6)', borderRight: '1px solid rgba(201,168,76,0.6)' }} />
           <div className="px-10 py-12 text-center flex flex-col items-center gap-6">
             <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="w-12 opacity-75" />
             <p className="text-[10px] tracking-[0.45em] text-white/20 uppercase">Exclusivo</p>
             <div>
-              <h1 className="font-cormorant text-3xl font-light italic text-white/90 leading-tight">Proposta</h1>
+              <h1 className="font-cormorant text-3xl font-light italic text-white/90">Proposta</h1>
               <h1 className="font-cormorant text-3xl font-light italic" style={{ color: '#C9A84C' }}>Criativa</h1>
             </div>
             <p className="text-[11px] tracking-[0.45em]" style={{ color: 'rgba(201,168,76,0.35)' }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
             <div className="w-full flex flex-col gap-3">
-              <input
-                type="password"
-                placeholder="Introduz a password"
-                value={pwInput}
+              <input type="password" placeholder="Introduz a password" value={pwInput}
                 onChange={e => setPwInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleUnlock()}
-                className={`w-full bg-white/[0.05] rounded-xl px-4 py-3 text-sm text-white text-center outline-none placeholder:text-white/20 transition-all ${pwError ? 'border border-red-400/60' : 'border border-white/10 focus:border-gold/40'}`}
-              />
+                className={`w-full bg-white/[0.05] rounded-xl px-4 py-3 text-sm text-white text-center outline-none placeholder:text-white/20 transition-all ${pwError ? 'border border-red-400/60' : 'border border-white/10 focus:border-gold/40'}`} />
               {pwError && <p className="text-[11px] text-red-400/70 text-center">Password incorreta</p>}
               <button onClick={handleUnlock}
                 className="w-full py-3 text-xs tracking-[0.35em] uppercase transition-all"
@@ -165,9 +178,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 Entrar
               </button>
             </div>
-            <a href={`/r/${token}`} className="text-[10px] tracking-widest text-white/20 hover:text-white/40 transition-colors uppercase">
-              ← Voltar
-            </a>
+            <a href={`/r/${token}`} className="text-[10px] tracking-widest text-white/20 hover:text-white/40 transition-colors uppercase">← Voltar</a>
           </div>
         </div>
       </div>
@@ -175,96 +186,145 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   )
 
   const { propostaPage: pp } = content
+  const nome = contact!.nome || ''
 
-  // ── Proposta page ──
+  // ── Slide content ─────────────────────────────────────────────────────────
+  const renderSlide = (id: string) => {
+    switch (id) {
+
+      case 'cover': return (
+        <div className="flex flex-col items-center justify-center h-full text-center px-8 gap-6">
+          <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="w-16 opacity-70 mb-2" />
+          <p className="text-[10px] tracking-[0.5em] text-white/25 uppercase">{nome || 'Para vocês'}</p>
+          <div>
+            <h1 className="font-cormorant font-light text-white/90" style={{ fontSize: 'clamp(3.5rem,9vw,6rem)', lineHeight: 1 }}>Proposta</h1>
+            <h1 className="font-cormorant font-light italic" style={{ fontSize: 'clamp(3.5rem,9vw,6rem)', lineHeight: 1.1, color: '#C9A84C' }}>Criativa</h1>
+          </div>
+          <p className="text-[11px] tracking-[0.5em]" style={{ color: 'rgba(201,168,76,0.4)' }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+          <p className="font-cormorant text-lg sm:text-xl italic text-white/40">{pp.subtitle}</p>
+        </div>
+      )
+
+      case 'intro': return (
+        <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-8 max-w-3xl mx-auto">
+          <p className="text-[10px] tracking-[0.5em] text-white/20 uppercase">A nossa proposta</p>
+          <p className="text-[11px] tracking-[0.45em]" style={{ color: 'rgba(201,168,76,0.4)' }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+          <p className="font-cormorant text-2xl sm:text-3xl italic font-light leading-relaxed" style={{ color: 'rgba(255,255,255,0.78)' }}>
+            &ldquo;{pp.intro}&rdquo;
+          </p>
+          <p className="text-[11px] tracking-[0.45em]" style={{ color: 'rgba(201,168,76,0.4)' }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+        </div>
+      )
+
+      case 'pkg-0':
+      case 'pkg-1':
+      case 'pkg-2': {
+        const idx = parseInt(id.split('-')[1])
+        const pkg = pp.packages[idx]
+        const nums = ['I', 'II', 'III']
+        return (
+          <div className="flex flex-col items-center justify-center h-full px-8 sm:px-16 gap-0">
+            <div className="w-full max-w-xl relative p-10 sm:p-14 text-center"
+              style={{ border: '0.5px solid rgba(201,168,76,0.3)', background: 'linear-gradient(160deg, rgba(201,168,76,0.07) 0%, rgba(201,168,76,0.02) 100%)' }}>
+              <div className="absolute top-0 left-0 w-8 h-8"  style={{ borderTop: '1px solid rgba(201,168,76,0.6)', borderLeft:  '1px solid rgba(201,168,76,0.6)' }} />
+              <div className="absolute top-0 right-0 w-8 h-8" style={{ borderTop: '1px solid rgba(201,168,76,0.6)', borderRight: '1px solid rgba(201,168,76,0.6)' }} />
+              <div className="absolute bottom-0 left-0 w-8 h-8"  style={{ borderBottom: '1px solid rgba(201,168,76,0.6)', borderLeft:  '1px solid rgba(201,168,76,0.6)' }} />
+              <div className="absolute bottom-0 right-0 w-8 h-8" style={{ borderBottom: '1px solid rgba(201,168,76,0.6)', borderRight: '1px solid rgba(201,168,76,0.6)' }} />
+              <p className="text-[10px] tracking-[0.5em] text-white/20 uppercase mb-6">Pacote {nums[idx]}</p>
+              <h2 className="font-cormorant italic font-light mb-5" style={{ fontSize: 'clamp(2.2rem,6vw,3.5rem)', color: '#C9A84C', lineHeight: 1.1 }}>{pkg.title}</h2>
+              <div className="h-px mb-6" style={{ background: 'rgba(201,168,76,0.2)' }} />
+              <p className="text-base leading-relaxed text-white/55 mb-8 font-light">{pkg.description}</p>
+              {pkg.price && (
+                <p className="font-cormorant text-2xl italic" style={{ color: 'rgba(255,255,255,0.7)' }}>{pkg.price}</p>
+              )}
+            </div>
+          </div>
+        )
+      }
+
+      case 'cta': return (
+        <div className="flex flex-col items-center justify-center h-full text-center px-8 gap-8">
+          <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="w-12 opacity-60" />
+          <p className="text-[11px] tracking-[0.45em]" style={{ color: 'rgba(201,168,76,0.4)' }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+          <p className="font-cormorant text-2xl sm:text-3xl italic font-light text-white/70">{pp.ctaText}</p>
+          <a href={`/r/${token}`}
+            className="flex items-center gap-3 px-10 py-4 text-[10px] tracking-[0.4em] uppercase transition-all hover:scale-[1.03]"
+            style={{ background: 'rgba(201,168,76,0.12)', border: '0.5px solid rgba(201,168,76,0.45)', color: '#C9A84C' }}>
+            ← Voltar à página
+          </a>
+        </div>
+      )
+
+      default: return null
+    }
+  }
+
+  // ── Main presentation ─────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen" style={{ background: '#0a0a0a' }}>
+    <div className="relative w-full overflow-hidden" style={{ height: '100dvh', background: '#0a0a0a' }}>
+
+      {/* Fundo degradé */}
+      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 60% 60% at 50% 50%, rgba(201,168,76,0.05) 0%, transparent 70%)' }} />
 
       {/* Admin bar */}
       {isAdmin && (
-        <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-2 bg-black/80 backdrop-blur-sm border-b border-white/5">
+        <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-2 bg-black/70 backdrop-blur-sm border-b border-white/5">
           <a href={`/r/${token}`} className="text-[10px] tracking-widest text-white/25 hover:text-white/50 transition-colors uppercase">‹ Página</a>
-          <span className="text-[10px] tracking-widest text-white/20 uppercase">Admin · Proposta Criativa</span>
+          <span className="text-[10px] tracking-widest text-white/15 uppercase">Admin · Proposta</span>
           <button onClick={() => setEditorOpen(true)}
-            className="text-[10px] px-2.5 py-1 border border-gold/30 rounded text-gold/70 hover:text-gold hover:border-gold/60 transition-all uppercase tracking-wider">
+            className="text-[10px] px-2.5 py-1 border border-gold/30 rounded text-gold/70 hover:text-gold transition-all uppercase tracking-wider">
             ✎ Editar
           </button>
         </div>
       )}
 
-      {/* ── HERO ── */}
-      <section className={`relative min-h-[50vh] flex items-center justify-center overflow-hidden ${isAdmin ? 'pt-10' : ''}`}>
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, #0a0a0a 0%, #130f08 40%, #0a0a0a 100%)' }} />
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 80% at 50% 50%, rgba(201,168,76,0.08) 0%, transparent 70%)' }} />
-        <div className="relative z-10 text-center px-6 py-16">
-          <FadeIn delay={80}>
-            <p className="text-[10px] tracking-[0.5em] text-white/25 uppercase mb-6">{contact!.nome || 'Para vocês'}</p>
-          </FadeIn>
-          <FadeIn delay={200}>
-            <h1 className="font-cormorant font-light leading-none mb-3" style={{ fontSize: 'clamp(3rem, 8vw, 5.5rem)', color: 'rgba(255,255,255,0.9)' }}>
-              Proposta
-            </h1>
-            <h1 className="font-cormorant font-light italic leading-none" style={{ fontSize: 'clamp(3rem, 8vw, 5.5rem)', color: '#C9A84C' }}>
-              Criativa
-            </h1>
-          </FadeIn>
-          <FadeIn delay={360}>
-            <p className="font-cormorant text-lg sm:text-xl italic text-white/45 mt-6">{pp.subtitle}</p>
-          </FadeIn>
-        </div>
-      </section>
+      {/* Slide atual */}
+      <div className={`absolute inset-0 flex items-center justify-center ${isAdmin ? 'pt-9' : ''}`}>
+        <SlideIn key={current} dir={direction}>
+          <div className="w-full h-full flex items-center justify-center">
+            {renderSlide(slides[current])}
+          </div>
+        </SlideIn>
+      </div>
 
-      {/* ── INTRO ── */}
-      <section className="px-6 py-16 max-w-2xl mx-auto text-center">
-        <FadeIn>
-          <p className="text-[11px] tracking-[0.45em] mb-8" style={{ color: 'rgba(201,168,76,0.4)' }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-          <p className="font-cormorant text-xl sm:text-2xl italic font-light leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>
-            {pp.intro}
-          </p>
-          <p className="text-[11px] tracking-[0.45em] mt-8" style={{ color: 'rgba(201,168,76,0.4)' }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-        </FadeIn>
-      </section>
+      {/* Seta esquerda */}
+      <button onClick={prev} disabled={current === 0}
+        className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-30 flex items-center justify-center w-11 h-11 rounded-full transition-all disabled:opacity-0 disabled:pointer-events-none"
+        style={{ background: 'rgba(201,168,76,0.08)', border: '0.5px solid rgba(201,168,76,0.25)', color: 'rgba(201,168,76,0.7)' }}
+        aria-label="Anterior">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </button>
 
-      {/* ── PACOTES ── */}
-      <section className="px-6 py-16" style={{ background: '#0d0d0d' }}>
-        <FadeIn>
-          <p className="text-[10px] tracking-[0.45em] text-white/20 uppercase text-center mb-12">Os nossos pacotes</p>
-        </FadeIn>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {pp.packages.map((pkg, i) => (
-            <FadeIn key={i} delay={i * 130}>
-              <div className="relative flex flex-col h-full p-8 text-center" style={{ background: 'linear-gradient(180deg, rgba(201,168,76,0.06) 0%, rgba(201,168,76,0.02) 100%)', border: '0.5px solid rgba(201,168,76,0.25)' }}>
-                {/* Cantos */}
-                <div className="absolute top-0 left-0 w-5 h-5" style={{ borderTop: '1px solid rgba(201,168,76,0.5)', borderLeft: '1px solid rgba(201,168,76,0.5)' }} />
-                <div className="absolute top-0 right-0 w-5 h-5" style={{ borderTop: '1px solid rgba(201,168,76,0.5)', borderRight: '1px solid rgba(201,168,76,0.5)' }} />
-                <div className="absolute bottom-0 left-0 w-5 h-5" style={{ borderBottom: '1px solid rgba(201,168,76,0.5)', borderLeft: '1px solid rgba(201,168,76,0.5)' }} />
-                <div className="absolute bottom-0 right-0 w-5 h-5" style={{ borderBottom: '1px solid rgba(201,168,76,0.5)', borderRight: '1px solid rgba(201,168,76,0.5)' }} />
-                <p className="font-cormorant text-2xl italic font-light mb-4" style={{ color: '#C9A84C' }}>{pkg.title}</p>
-                <div className="h-px mb-6" style={{ background: 'rgba(201,168,76,0.15)' }} />
-                <p className="text-sm leading-relaxed text-white/50 flex-1 mb-6">{pkg.description}</p>
-                <p className="font-cormorant text-xl italic" style={{ color: 'rgba(255,255,255,0.7)' }}>{pkg.price}</p>
-              </div>
-            </FadeIn>
-          ))}
-        </div>
-      </section>
+      {/* Seta direita */}
+      <button onClick={next} disabled={current === total - 1}
+        className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 flex items-center justify-center w-11 h-11 rounded-full transition-all disabled:opacity-0 disabled:pointer-events-none"
+        style={{ background: 'rgba(201,168,76,0.08)', border: '0.5px solid rgba(201,168,76,0.25)', color: 'rgba(201,168,76,0.7)' }}
+        aria-label="Próximo">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M9 18l6-6-6-6"/>
+        </svg>
+      </button>
 
-      {/* ── CTA ── */}
-      <section className="px-6 py-16 flex flex-col items-center text-center">
-        <FadeIn className="flex flex-col items-center gap-6">
-          <p className="font-cormorant text-2xl italic text-white/60">{pp.ctaText}</p>
-          <a href={`/r/${token}`}
-            className="flex items-center gap-3 px-10 py-4 text-[11px] tracking-[0.4em] uppercase transition-all hover:scale-[1.02]"
-            style={{ background: 'rgba(201,168,76,0.12)', border: '0.5px solid rgba(201,168,76,0.4)', color: '#C9A84C' }}>
-            ← Voltar à página
-          </a>
-        </FadeIn>
-      </section>
+      {/* Dots — indicador de posição */}
+      <div className="absolute bottom-6 left-0 right-0 flex items-center justify-center gap-2 z-30">
+        {slides.map((_, i) => (
+          <button key={i} onClick={() => goTo(i)}
+            className="rounded-full transition-all duration-300"
+            style={{
+              width:   i === current ? '20px' : '6px',
+              height:  '6px',
+              background: i === current ? '#C9A84C' : 'rgba(201,168,76,0.25)',
+            }}
+          />
+        ))}
+      </div>
 
-      {/* Footer */}
-      <footer className="px-6 py-8 text-center border-t" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-        <p className="text-[10px] tracking-widest text-white/15 uppercase">© RL Photo · Video</p>
-      </footer>
+      {/* Contador */}
+      <p className="absolute bottom-6 right-6 text-[10px] tracking-widest z-30" style={{ color: 'rgba(201,168,76,0.3)' }}>
+        {current + 1} / {total}
+      </p>
 
       {/* ══ EDITOR PANEL ══ */}
       {isAdmin && (
@@ -277,13 +337,14 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
               <button onClick={() => setEditorOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg text-white/30 hover:text-white hover:bg-white/5 transition-all">✕</button>
             </div>
             <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4">
-              <Field label="Subtítulo">
+              <Field label="Subtítulo (slide capa)">
                 <TInput value={pp.subtitle} onChange={v => setPage('subtitle', v)} />
               </Field>
               <Field label="Texto de introdução">
                 <TInput value={pp.intro} onChange={v => setPage('intro', v)} multiline />
               </Field>
-              <p className="text-[10px] tracking-widest text-white/25 uppercase mt-2">Pacotes</p>
+              <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+              <p className="text-[10px] tracking-widest text-white/25 uppercase">Pacotes</p>
               {pp.packages.map((pkg, i) => (
                 <div key={i} className="flex flex-col gap-2 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                   <p className="text-[10px] tracking-widest text-white/20 uppercase">Pacote {i + 1}</p>
@@ -292,7 +353,8 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                   <Field label="Preço"><TInput value={pkg.price} onChange={v => setPkg(i, 'price', v)} placeholder="Ex: A partir de 2500€" /></Field>
                 </div>
               ))}
-              <Field label="Texto CTA">
+              <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+              <Field label="Texto final (slide CTA)">
                 <TInput value={pp.ctaText} onChange={v => setPage('ctaText', v)} />
               </Field>
             </div>
