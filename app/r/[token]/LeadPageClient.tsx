@@ -651,7 +651,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
                         <label className="relative aspect-square rounded-lg overflow-hidden cursor-pointer border border-white/10 hover:border-gold/40 transition-all group"
                           style={{ background: portfolio.photos[i] ? undefined : 'rgba(255,255,255,0.04)' }}>
                           <input ref={photoRefs[i]} type="file" accept="image/*" className="hidden"
-                            onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(f, url => setPhoto(i, url)) }} />
+                            onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(f, url => setPhoto(i, url), i) }} />
                           {portfolio.photos[i]
                             ? <img src={portfolio.photos[i]} alt="" className="w-full h-full object-cover" />
                             : <div className="w-full h-full flex flex-col items-center justify-center gap-1">
@@ -659,9 +659,18 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
                                 <span className="text-white/20 text-[9px] tracking-wider">Foto {i+1}</span>
                               </div>
                           }
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
-                            <span className="text-white text-xs">Trocar</span>
-                          </div>
+                          {/* Loading overlay */}
+                          {uploadingPhoto === i && (
+                            <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center gap-1">
+                              <span className="text-white/70 text-lg animate-spin">⟳</span>
+                              <span className="text-white/40 text-[9px]">A enviar...</span>
+                            </div>
+                          )}
+                          {uploadingPhoto !== i && (
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
+                              <span className="text-white text-xs">Trocar</span>
+                            </div>
+                          )}
                         </label>
                         {portfolio.photos[i] && (
                           <button onClick={() => setPhoto(i, '')}
