@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { DEFAULT_CONTENT, PageContent, Proposta, ExtraServico, FONTS, TITLE_SIZES } from '../LeadPageClient'
 
 const IMG_BASE = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
+const MASTER_TOKEN = '85343645-b0d3-4412-ae78-795fd7f8ddf1'
 
 function titlePosStyle(pos: string, isAdmin: boolean): React.CSSProperties {
   const t = isAdmin ? '76px' : '52px'
@@ -162,6 +163,8 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   const [editorOpen,    setEditorOpen]    = useState(false)
   const [saving,        setSaving]        = useState(false)
   const [saved,         setSaved]         = useState(false)
+  const [publishing,    setPublishing]    = useState(false)
+  const [published,     setPublished]     = useState(false)
   const [editorTab,     setEditorTab]     = useState<'tipografia'|'texto'>('tipografia')
   const [uploadingAbout,  setUploadingAbout]  = useState(false)
   const [uploadingRelive, setUploadingRelive] = useState(false)
@@ -220,6 +223,20 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       body: JSON.stringify({ token, page_content: content }),
     })
     setSaved(true); setTimeout(() => setSaved(false), 2000); setSaving(false)
+  }
+
+  const handlePublish = async () => {
+    setPublishing(true)
+    // 1. Save master first
+    await fetch('/api/lead-page/save-content', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, page_content: content }),
+    })
+    // 2. Sync design to all other proposals
+    await fetch('/api/lead-page/sync-template', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+    })
+    setPublished(true); setTimeout(() => setPublished(false), 3000); setPublishing(false)
   }
 
   function setPage(k: keyof PageContent['propostaPage'], v: any) {
@@ -961,12 +978,19 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 </Field>
               </>}
             </div>
-            <div className="px-4 py-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+            <div className="px-4 py-4 border-t flex flex-col gap-2" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
               <button onClick={handleSave} disabled={saving}
                 className="w-full py-3 rounded-xl text-sm font-semibold tracking-[0.1em] uppercase transition-all disabled:opacity-50"
                 style={{ background: saved ? 'rgba(74,222,128,0.15)' : 'rgba(201,168,76,0.15)', color: saved ? '#4ade80' : '#C9A84C', border: `1px solid ${saved ? 'rgba(74,222,128,0.3)' : 'rgba(201,168,76,0.3)'}` }}>
                 {saving ? 'A guardar...' : saved ? '✓ Guardado!' : 'Guardar'}
               </button>
+              {token === MASTER_TOKEN && (
+                <button onClick={handlePublish} disabled={publishing}
+                  className="w-full py-3 rounded-xl text-sm font-semibold tracking-[0.1em] uppercase transition-all disabled:opacity-50"
+                  style={{ background: published ? 'rgba(74,222,128,0.2)' : 'rgba(255,255,255,0.08)', color: published ? '#4ade80' : '#ffffff', border: `1px solid ${published ? 'rgba(74,222,128,0.4)' : 'rgba(255,255,255,0.15)'}` }}>
+                  {publishing ? '⏳ A publicar...' : published ? '✓ Publicado em todos!' : '🌐 Publicar Maquete'}
+                </button>
+              )}
             </div>
           </div>
         </>
