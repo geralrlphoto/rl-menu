@@ -95,9 +95,18 @@ export default function ClientePage() {
 
   const handleSave = async () => {
     setSaving(true)
-    const { error } = await supabase.from('crm_contacts').update(form).eq('id', id)
+    // Sempre incluir propostas e extras no page_content ao guardar
+    const pc = typeof form.page_content === 'string'
+      ? JSON.parse(form.page_content || '{}')
+      : (form.page_content || {})
+    const formToSave = {
+      ...form,
+      page_content: { ...pc, propostas, extras_proposta: extrasGlobais },
+    }
+    const { error } = await supabase.from('crm_contacts').update(formToSave).eq('id', id)
     if (!error) {
-      setOriginal(form)
+      setForm(formToSave)
+      setOriginal(formToSave)
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } else {
@@ -157,7 +166,13 @@ export default function ClientePage() {
     if (!form.page_content) return
     const pc = typeof form.page_content === 'string' ? JSON.parse(form.page_content) : form.page_content
     if (pc?.propostas) setPropostas(pc.propostas)
-    if (pc?.extras_proposta) setExtrasGlobais(pc.extras_proposta)
+    if (pc?.extras_proposta?.length > 0) {
+      setExtrasGlobais(pc.extras_proposta)
+    } else {
+      // Migrar extras do formato antigo (por proposta) para secção partilhada
+      const primeiraComExtras = (pc?.propostas || []).find((p: any) => p.extras?.length > 0)
+      if (primeiraComExtras?.extras) setExtrasGlobais(primeiraComExtras.extras)
+    }
   }, [form.page_content])
 
   const handleSavePropostas = async () => {
@@ -169,6 +184,7 @@ export default function ClientePage() {
     const { error } = await supabase.from('crm_contacts').update({ page_content: newPc }).eq('id', id)
     if (!error) {
       setForm((f: Contact) => ({ ...f, page_content: newPc }))
+      setOriginal((f: Contact) => ({ ...f, page_content: newPc }))
       setSavedPropostas(true)
       setTimeout(() => setSavedPropostas(false), 2500)
     } else {
