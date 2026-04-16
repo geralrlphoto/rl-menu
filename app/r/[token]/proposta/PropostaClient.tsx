@@ -456,13 +456,6 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
               <div className="absolute bottom-0 left-0 w-10 h-10" style={{ borderBottom: `1px solid ${typo.accentColor}`, borderLeft: `1px solid ${typo.accentColor}` }} />
               <div className="absolute bottom-0 right-0 w-10 h-10" style={{ borderBottom: `1px solid ${typo.accentColor}`, borderRight: `1px solid ${typo.accentColor}` }} />
 
-              {/* Badge Recomendado */}
-              {isAtiva && (
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 px-5 py-1 text-[9px] tracking-[0.5em] uppercase z-10"
-                  style={{ background: '#0d0b07', border: `0.5px solid ${typo.accentColor}`, color: typo.accentColor }}>
-                  Recomendado
-                </div>
-              )}
 
               {/* Painel esquerdo — identidade */}
               <div className="relative flex flex-col justify-between"
@@ -521,7 +514,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                           {(proposta.servicos_foto || []).map((s, i) => (
                             <div key={i} className="flex items-start gap-2.5">
                               <span style={{ color: typo.accentColor, fontSize: '0.5rem', marginTop: '5px', flexShrink: 0 }}>◆</span>
-                              <p className={`${fontClass(typo.bodyFont)} font-light leading-snug`} style={{ fontSize: '13px', color: typo.bodyColor }}>{s}</p>
+                              <p className={`${fontClass(typo.bodyFont)} font-light leading-snug`} style={{ fontSize: '18px', color: typo.bodyColor }}>{s}</p>
                             </div>
                           ))}
                         </div>
@@ -544,7 +537,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                           {(proposta.servicos_video || []).map((s, i) => (
                             <div key={i} className="flex items-start gap-2.5">
                               <span style={{ color: typo.accentColor, fontSize: '0.5rem', marginTop: '5px', flexShrink: 0 }}>◆</span>
-                              <p className={`${fontClass(typo.bodyFont)} font-light leading-snug`} style={{ fontSize: '13px', color: typo.bodyColor }}>{s}</p>
+                              <p className={`${fontClass(typo.bodyFont)} font-light leading-snug`} style={{ fontSize: '18px', color: typo.bodyColor }}>{s}</p>
                             </div>
                           ))}
                         </div>
