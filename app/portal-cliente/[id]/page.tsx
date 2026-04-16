@@ -970,9 +970,9 @@ function PortalSubPageContent() {
       setCronogramaStatus(ps.cronogramaStatus ?? {})
 
       // Proposta token (links portal to CRM lead proposal)
-      const pt = ps.propostaToken ?? ''
-      setPropostaToken(pt)
-      setPropostaTokenForm(pt)
+      const propToken = ps.propostaToken ?? ''
+      setPropostaToken(propToken)
+      setPropostaTokenForm(propToken)
 
       if (ref) {
         setPortalRef(ref)
@@ -981,7 +981,7 @@ function PortalSubPageContent() {
           fetch(`/api/pagamentos-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json()),
           fetch(`/api/evento-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json()),
         ]
-        if (pt) fetches.push(fetch(`/api/crm-proposta-by-token?token=${encodeURIComponent(pt)}`).then(r => r.json()))
+        if (propToken) fetches.push(fetch(`/api/crm-proposta-by-token?token=${encodeURIComponent(propToken)}`).then(r => r.json()))
         const results = await Promise.all(fetches)
         const [pd, ed, propd] = results
         setPagamentos(pd.payments ?? [])
