@@ -2401,9 +2401,9 @@ function PortalSubPageContent() {
                                           </svg>
                                           <span className="text-[9px] tracking-[0.3em] text-white/40 uppercase font-semibold">Serviço de Vídeo</span>
                                         </div>
-                                        <div className="p-3 flex flex-wrap gap-2">
+                                        <div className="p-3 flex flex-col gap-1.5">
                                           {notionServicos.servico_video.map((item: string, i: number) => (
-                                            <span key={i} className="text-[10px] tracking-wider text-gold/80 uppercase bg-gold/[0.06] border border-gold/20 px-2.5 py-1 rounded-lg">{item}</span>
+                                            <span key={i} className="block w-full text-[10px] tracking-wider text-gold/80 uppercase bg-gold/[0.06] border border-gold/20 px-2.5 py-1.5 rounded-lg">{item}</span>
                                           ))}
                                         </div>
                                       </div>
@@ -2416,9 +2416,9 @@ function PortalSubPageContent() {
                                           </svg>
                                           <span className="text-[9px] tracking-[0.3em] text-white/40 uppercase font-semibold">Serviço de Fotografia</span>
                                         </div>
-                                        <div className="p-3 flex flex-wrap gap-2">
+                                        <div className="p-3 flex flex-col gap-1.5">
                                           {notionServicos.servico_foto.map((item: string, i: number) => (
-                                            <span key={i} className="text-[10px] tracking-wider text-gold/80 uppercase bg-gold/[0.06] border border-gold/20 px-2.5 py-1 rounded-lg">{item}</span>
+                                            <span key={i} className="block w-full text-[10px] tracking-wider text-gold/80 uppercase bg-gold/[0.06] border border-gold/20 px-2.5 py-1.5 rounded-lg">{item}</span>
                                           ))}
                                         </div>
                                       </div>
