@@ -469,12 +469,12 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
             </div>
 
             {/* Direita — imagem grande */}
-            <div className="flex-shrink-0" style={{ width: 'clamp(200px,30vw,360px)' }}>
+            <div className="flex-shrink-0 self-stretch" style={{ width: 'clamp(200px,30vw,360px)' }}>
               {pp.grandeDia?.imageUrl
                 ? <img src={pp.grandeDia.imageUrl} alt="O Grande Dia"
-                    className="w-full h-auto"
+                    className="w-full h-full object-cover"
                     style={{ borderRadius: '8px' }} />
-                : <div className="w-full flex items-center justify-center" style={{ height: '420px', background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: '8px' }}>
+                : <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: '8px' }}>
                     <p className="text-[10px] tracking-widest text-white/15 uppercase">Imagem</p>
                   </div>
               }
