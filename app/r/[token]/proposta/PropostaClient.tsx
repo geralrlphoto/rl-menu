@@ -495,7 +495,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                       <p className="text-[9px] tracking-[0.4em] uppercase mb-1" style={{ color: `${typo.accentColor}60` }}>Investimento</p>
                       <p className={`${fontClass(typo.pkgTitleFont)} italic`}
                         style={{ fontSize: 'clamp(1.5rem,3vw,2.2rem)', color: typo.accentColor, lineHeight: 1.1 }}>
-                        {proposta.valor}
+                        {proposta.valor.trim().includes('€') ? proposta.valor : `${proposta.valor} €`}
                       </p>
                     </>
                   ) : (
