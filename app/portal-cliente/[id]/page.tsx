@@ -864,6 +864,11 @@ function PortalSubPageContent() {
   const [contratoDisponivel, setContratoDisponivel] = useState<boolean | null>(null)
   const [contratoUrl, setContratoUrl] = useState<string | null>(null)
   const [portalSettingsObj, setPortalSettingsObj] = useState<any>({})
+  const [propostaData, setPropostaData] = useState<{ nome: string; servicos_foto: string[]; servicos_video: string[] } | null>(null)
+  const [propostaToken, setPropostaToken] = useState('')
+  const [savingPropostaToken, setSavingPropostaToken] = useState(false)
+  const [editingPropostaToken, setEditingPropostaToken] = useState(false)
+  const [propostaTokenForm, setPropostaTokenForm] = useState('')
   const [pageTitles, setPageTitles] = useState<Record<string, string>>({})
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleInput, setTitleInput] = useState('')
@@ -963,13 +968,21 @@ function PortalSubPageContent() {
       setBriefingInfo(ps.briefingInfo ?? {})
       setCronogramaStatus(ps.cronogramaStatus ?? {})
 
+      // Proposta token (links portal to CRM lead proposal)
+      const pt = ps.propostaToken ?? ''
+      setPropostaToken(pt)
+      setPropostaTokenForm(pt)
+
       if (ref) {
         setPortalRef(ref)
         setPortalTotal(total)
-        const [pd, ed] = await Promise.all([
+        const fetches: Promise<any>[] = [
           fetch(`/api/pagamentos-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json()),
           fetch(`/api/evento-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json()),
-        ])
+        ]
+        if (pt) fetches.push(fetch(`/api/crm-proposta-by-token?token=${encodeURIComponent(pt)}`).then(r => r.json()))
+        const results = await Promise.all(fetches)
+        const [pd, ed, propd] = results
         setPagamentos(pd.payments ?? [])
         if (ed.found) {
           setEventoData(ed.evento)
@@ -977,6 +990,7 @@ function PortalSubPageContent() {
             setContratoUrl(`/eventos-2026/${ed.evento.id}/contrato`)
           }
         }
+        if (propd?.found) setPropostaData(propd.proposta)
       }
     } finally {
       setPagRefreshing(false)
@@ -2341,6 +2355,58 @@ function PortalSubPageContent() {
                           return (
                             <>
                               <NotionBlocks blocks={beforeValor} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
+                              {/* ── Proposta Escolhida ─────────────────── */}
+                              {eventoData && (eventoData.servico_foto?.length > 0 || eventoData.servico_video?.length > 0) && (
+                                <div className="mb-6 pb-6 border-b border-white/[0.06]">
+                                  <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-1 h-4 bg-gold rounded-full" />
+                                    <span className="text-[10px] tracking-[0.35em] text-gold uppercase font-semibold">Proposta</span>
+                                    {eventoData.proposta && (
+                                      <span className="ml-auto text-[9px] tracking-widest text-white/50 uppercase bg-white/[0.04] border border-white/[0.08] px-3 py-1 rounded-full">
+                                        {eventoData.proposta}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className={`grid gap-3 ${eventoData.servico_foto?.length > 0 && eventoData.servico_video?.length > 0 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+                                    {eventoData.servico_video?.length > 0 && (
+                                      <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+                                        <div className="px-3 py-2.5 border-b border-white/[0.05] flex items-center gap-2">
+                                          <svg className="w-3.5 h-3.5 text-gold/50 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+                                          </svg>
+                                          <span className="text-[9px] tracking-[0.3em] text-white/40 uppercase font-semibold">Serviço de Vídeo</span>
+                                        </div>
+                                        <div className="p-3 flex flex-wrap gap-2">
+                                          {eventoData.servico_video.map((item: string, i: number) => (
+                                            <span key={i} className="text-[10px] tracking-wider text-gold/80 uppercase bg-gold/[0.06] border border-gold/20 px-2.5 py-1 rounded-lg">
+                                              {item}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {eventoData.servico_foto?.length > 0 && (
+                                      <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+                                        <div className="px-3 py-2.5 border-b border-white/[0.05] flex items-center gap-2">
+                                          <svg className="w-3.5 h-3.5 text-gold/50 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                                          </svg>
+                                          <span className="text-[9px] tracking-[0.3em] text-white/40 uppercase font-semibold">Serviço de Fotografia</span>
+                                        </div>
+                                        <div className="p-3 flex flex-wrap gap-2">
+                                          {eventoData.servico_foto.map((item: string, i: number) => (
+                                            <span key={i} className="text-[10px] tracking-wider text-gold/80 uppercase bg-gold/[0.06] border border-gold/20 px-2.5 py-1 rounded-lg">
+                                              {item}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                              {/* ── Financeiro ─────────────────────────── */}
                               <div className="mb-6 pb-6 border-b border-white/[0.06]">
                                 <span className="text-[10px] tracking-[0.3em] text-gold uppercase block mb-3">Financeiro</span>
                                 <div className="flex items-center justify-between px-4 py-3 bg-gold/5 border border-gold/20 rounded-xl">
