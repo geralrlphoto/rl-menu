@@ -116,7 +116,8 @@ export default function ClientePage() {
   const [copied, setCopied] = useState(false)
 
   // ── Propostas ────────────────────────────────────────────────────────────────
-  type Proposta = { nome: string; servicos_foto: string[]; servicos_video: string[]; extras: string[]; valor: string }
+  type ExtraServico = { nome: string; valor: string }
+  type Proposta = { nome: string; servicos_foto: string[]; servicos_video: string[]; extras: ExtraServico[]; valor: string }
 
   const SERVICOS_FOTO = [
     '1 Fotógrafo', '2 Fotógrafos', 'Rep. Todo Evento',
@@ -142,9 +143,9 @@ export default function ClientePage() {
   ]
 
   const DEFAULT_PROPOSTAS: Proposta[] = [
-    { nome: 'Proposta 1', servicos_foto: [], servicos_video: [], extras: [], valor: '' },
-    { nome: 'Proposta 2', servicos_foto: [], servicos_video: [], extras: [], valor: '' },
-    { nome: 'Proposta 3', servicos_foto: [], servicos_video: [], extras: [], valor: '' },
+    { nome: 'Proposta 1', servicos_foto: [], servicos_video: [], extras: [] as ExtraServico[], valor: '' },
+    { nome: 'Proposta 2', servicos_foto: [], servicos_video: [], extras: [] as ExtraServico[], valor: '' },
+    { nome: 'Proposta 3', servicos_foto: [], servicos_video: [], extras: [] as ExtraServico[], valor: '' },
   ]
   const [propostas, setPropostas] = useState<Proposta[]>(DEFAULT_PROPOSTAS)
   const [savingPropostas, setSavingPropostas] = useState(false)
@@ -176,12 +177,18 @@ export default function ClientePage() {
   const setProposta = (pi: number, key: keyof Proposta, value: string) => {
     setPropostas(prev => prev.map((p, i) => i === pi ? { ...p, [key]: value } : p))
   }
-  const toggleExtra = (pi: number, servico: string) => {
+  const toggleExtra = (pi: number, nome: string) => {
     setPropostas(prev => prev.map((p, i) => {
       if (i !== pi) return p
-      const atual = p.extras || []
-      const has = atual.includes(servico)
-      return { ...p, extras: has ? atual.filter(s => s !== servico) : [...atual, servico] }
+      const atual: ExtraServico[] = p.extras || []
+      const has = atual.some(e => e.nome === nome)
+      return { ...p, extras: has ? atual.filter(e => e.nome !== nome) : [...atual, { nome, valor: '' }] }
+    }))
+  }
+  const setExtraValor = (pi: number, nome: string, valor: string) => {
+    setPropostas(prev => prev.map((p, i) => {
+      if (i !== pi) return p
+      return { ...p, extras: (p.extras || []).map(e => e.nome === nome ? { ...e, valor } : e) }
     }))
   }
   const toggleServico = (pi: number, campo: 'servicos_foto' | 'servicos_video', servico: string) => {
@@ -488,7 +495,7 @@ export default function ClientePage() {
                 <p className="text-[9px] tracking-[0.4em] text-white/30 uppercase mb-1">✦ Serviços Extras</p>
                 <div className="grid grid-cols-2 gap-1">
                   {EXTRAS_OPTIONS.map(s => {
-                    const active = (proposta.extras || []).includes(s)
+                    const active = (proposta.extras || []).some(e => e.nome === s)
                     return (
                       <button key={s} onClick={() => toggleExtra(pi, s)}
                         className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-lg transition-all"
@@ -507,9 +514,19 @@ export default function ClientePage() {
                   })}
                 </div>
                 {(proposta.extras || []).length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {(proposta.extras || []).map(s => (
-                      <span key={s} className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(180,120,255,0.1)', color: '#c9a0ff', border: '0.5px solid rgba(180,120,255,0.25)' }}>{s}</span>
+                  <div className="flex flex-col gap-2 mt-2 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                    <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Valor por serviço extra</p>
+                    {(proposta.extras || []).map(e => (
+                      <div key={e.nome} className="flex items-center gap-2">
+                        <span className="text-[11px] text-white/40 flex-1 truncate">◆ {e.nome}</span>
+                        <input
+                          type="text"
+                          value={e.valor}
+                          onChange={ev => setExtraValor(pi, e.nome, ev.target.value)}
+                          placeholder="Ex: 250 €"
+                          className="w-28 bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white placeholder-white/20 focus:outline-none focus:border-gold/50 text-right"
+                        />
+                      </div>
                     ))}
                   </div>
                 )}

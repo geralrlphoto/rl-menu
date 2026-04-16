@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState, useCallback } from 'react'
-import { DEFAULT_CONTENT, PageContent, Proposta, FONTS, TITLE_SIZES } from '../LeadPageClient'
+import { DEFAULT_CONTENT, PageContent, Proposta, ExtraServico, FONTS, TITLE_SIZES } from '../LeadPageClient'
 
 const IMG_BASE = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
 
@@ -562,11 +562,17 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                       <span className="text-xs transition-transform" style={{ transform: extrasOpen[idx] ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
                     </button>
                     {extrasOpen[idx] && (
-                      <div className="flex flex-col gap-2 pt-3 px-1" style={{ borderLeft: `0.5px solid ${typo.accentColor}25` }}>
-                        {(proposta.extras || []).map((s, i) => (
-                          <div key={i} className="flex items-start gap-2.5">
-                            <span style={{ color: `${typo.accentColor}80`, fontSize: '0.5rem', marginTop: '5px', flexShrink: 0 }}>◆</span>
-                            <p className={`${fontClass(typo.bodyFont)} font-light leading-snug`} style={{ fontSize: '18px', color: `${typo.bodyColor}CC` }}>{s}</p>
+                      <div className="flex flex-col gap-2.5 pt-3 px-1" style={{ borderLeft: `0.5px solid ${typo.accentColor}25` }}>
+                        {(proposta.extras as ExtraServico[] || []).map((e, i) => (
+                          <div key={i} className="flex items-center gap-2.5">
+                            <span style={{ color: `${typo.accentColor}80`, fontSize: '0.5rem', flexShrink: 0 }}>◆</span>
+                            <p className={`${fontClass(typo.bodyFont)} font-light flex-1 leading-snug`} style={{ fontSize: '18px', color: `${typo.bodyColor}CC` }}>{e.nome}</p>
+                            {e.valor && (
+                              <p className={`${fontClass(typo.pkgTitleFont)} italic shrink-0`}
+                                style={{ fontSize: '15px', color: typo.accentColor }}>
+                                {e.valor.trim().includes('€') ? e.valor : `${e.valor} €`}
+                              </p>
+                            )}
                           </div>
                         ))}
                       </div>

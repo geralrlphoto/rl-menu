@@ -27,7 +27,8 @@ export const TITLE_SIZES: { value: string; label: string; className: string }[] 
   { value: 'xl',  label: 'XL', className: 'text-7xl sm:text-8xl' },
 ]
 
-export type Proposta = { nome: string; servicos_foto: string[]; servicos_video: string[]; extras: string[]; valor: string }
+export type ExtraServico = { nome: string; valor: string }
+export type Proposta = { nome: string; servicos_foto: string[]; servicos_video: string[]; extras: ExtraServico[]; valor: string }
 
 export type PageContent = {
   hero:         { title: string; titleFont: string; titleSize: string; titleColor: string; brandLine: string; brandColor: string }
@@ -85,9 +86,9 @@ export const DEFAULT_CONTENT: PageContent = {
   },
   proposta:     { password: '', buttonLabel: 'Ver Proposta Criativa' },
   propostas: [
-    { nome: 'Proposta 1', servicos_foto: [], servicos_video: [], extras: [], valor: '' },
-    { nome: 'Proposta 2', servicos_foto: [], servicos_video: [], extras: [], valor: '' },
-    { nome: 'Proposta 3', servicos_foto: [], servicos_video: [], extras: [], valor: '' },
+    { nome: 'Proposta 1', servicos_foto: [], servicos_video: [], extras: [] as ExtraServico[], valor: '' },
+    { nome: 'Proposta 2', servicos_foto: [], servicos_video: [], extras: [] as ExtraServico[], valor: '' },
+    { nome: 'Proposta 3', servicos_foto: [], servicos_video: [], extras: [] as ExtraServico[], valor: '' },
   ],
   propostaPage: {
     subtitle: 'Uma proposta criada especialmente para vocês.',
