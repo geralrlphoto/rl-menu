@@ -401,6 +401,20 @@ export default function ClientePage() {
           />
         </div>
 
+        {/* Gerar Proposta PDF */}
+        <div className="bg-white/3 border border-white/8 rounded-2xl p-5 flex items-center justify-between">
+          <div>
+            <h2 className="text-xs tracking-[0.3em] text-gold uppercase">Proposta PDF</h2>
+            <p className="text-[11px] text-white/30 mt-1">Gera um PDF profissional com as 3 propostas</p>
+          </div>
+          <button
+            onClick={() => window.open(`/crm/${id}/proposta-pdf`, '_blank')}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold tracking-wider transition-all bg-gold/90 hover:bg-gold text-black"
+          >
+            <span>↗</span> Gerar Proposta
+          </button>
+        </div>
+
         {/* Propostas Fotografia / Vídeo */}
         <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-5">
           <div className="flex items-center justify-between">
