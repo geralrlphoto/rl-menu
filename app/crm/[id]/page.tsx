@@ -124,6 +124,7 @@ export default function ClientePage() {
     'Sessão Pré-Wedding', 'Sessão TTD',
     'Álbum 25×25 — 40 Fotos', 'Álbum 30×30 — 60 Fotos',
     'Foto Lembrança', 'Galerias Open',
+    'Entrega por Link', 'Entrega em Pen Box', 'Relive Wedding', 'Deslocação',
   ]
   const SERVICOS_VIDEO = [
     '1 Videógrafo', '2 Videógrafos', 'Rep. Todo Evento',
