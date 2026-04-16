@@ -809,40 +809,23 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       )
 
       case 'contact': return (
-        <div className="flex flex-col items-center justify-between h-full w-full py-12 px-8 sm:px-16">
+        <div className="flex flex-col items-center justify-center h-full w-full px-8 sm:px-16 text-center gap-8">
 
-          {/* Centro — contactos */}
-          <div className="flex-1 flex flex-col items-center justify-center text-center gap-6">
-            <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="w-14 opacity-70" />
-            <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-            <a href="https://www.rlphotovideo.pt" target="_blank" rel="noopener noreferrer"
-              className={`${fontClass(typo.titleFont)} font-light italic hover:opacity-80 transition-opacity`}
-              style={{ fontSize: 'clamp(1.4rem,3vw,2.4rem)', color: typo.titleColor }}>
-              www.rlphotovideo.pt
-            </a>
-            <a href="tel:912932768"
-              className="font-light tracking-[0.15em]"
-              style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.75 }}>
-              912 932 768
-            </a>
-            <p className="font-light tracking-[0.2em]"
-              style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.5 }}>
-              Pinhal Novo · Palmela
-            </p>
-          </div>
-
-          {/* Baixo — foto horizontal larga */}
-          <div className="w-full mx-6" style={{ maxWidth: '900px' }}>
-            {pp.about?.photo
-              ? <img src={pp.about.photo} alt="RL Photo Video"
-                  className="w-full object-cover"
-                  style={{ height: '160px', borderRadius: '8px' }} />
-              : <div className="w-full flex items-center justify-center"
-                  style={{ height: '160px', background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: '8px' }}>
-                  <p className="text-[10px] tracking-widest text-white/15 uppercase">Foto</p>
-                </div>
-            }
-          </div>
+          <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="opacity-75" style={{ width: '140px' }} />
+          <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+          <a href="https://www.rlphotovideo.pt" target="_blank" rel="noopener noreferrer"
+            className={`${fontClass(typo.titleFont)} font-light italic hover:opacity-80 transition-opacity`}
+            style={{ fontSize: 'clamp(1.4rem,3vw,2.4rem)', color: typo.titleColor }}>
+            www.rlphotovideo.pt
+          </a>
+          <a href="tel:912932768" className="font-light tracking-[0.15em]"
+            style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.75 }}>
+            912 932 768
+          </a>
+          <p className="font-light tracking-[0.2em]"
+            style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.5 }}>
+            Pinhal Novo · Palmela
+          </p>
 
         </div>
       )
