@@ -427,6 +427,8 @@ function PaymentPhasesSection({ referencia, valorTotal, pagamentos, onRefresh, r
 
   const totalPagoGeral = pagamentos.reduce((s, p) => s + (p.valor_liquidado ?? 0), 0)
   const faltaGeral = Math.max(0, (valorTotal || 0) - totalPagoGeral)
+  // Se soma total paga >= valor total do serviço → todas as fases liquidadas
+  const tudoLiquidado = (valorTotal || 0) > 0 && totalPagoGeral >= (valorTotal || 0)
 
   return (
     <div className="mb-6 pb-6 border-b border-white/[0.06]">
@@ -447,7 +449,7 @@ function PaymentPhasesSection({ referencia, valorTotal, pagamentos, onRefresh, r
           const totalPago = pags.reduce((s, p) => s + (p.valor_liquidado ?? 0), 0)
           const valorFase = faseValores[label]
           const falta = Math.max(0, valorFase - totalPago)
-          const liquidado = totalPago >= valorFase && valorFase > 0
+          const liquidado = tudoLiquidado || (totalPago >= valorFase && valorFase > 0)
           const parcial = totalPago > 0 && !liquidado
           const pct = valorFase > 0 ? Math.min(100, Math.round((totalPago / valorFase) * 100)) : 0
           const lastPag = pags[pags.length - 1]
