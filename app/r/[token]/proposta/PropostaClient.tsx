@@ -448,7 +448,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         return (
           <div className="flex items-center justify-center h-full w-full px-6 sm:px-12">
             <div className="relative w-full max-w-4xl flex"
-              style={{ border: `0.5px solid ${typo.accentColor}33`, minHeight: '340px' }}>
+              style={{ border: `0.5px solid ${typo.accentColor}33`, minHeight: 'clamp(340px, 62vh, 480px)' }}>
 
               {/* Cantos decorativos */}
               <div className="absolute top-0 left-0 w-10 h-10" style={{ borderTop: `1px solid ${typo.accentColor}`, borderLeft: `1px solid ${typo.accentColor}` }} />
@@ -465,8 +465,8 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
               )}
 
               {/* Painel esquerdo — identidade */}
-              <div className="relative flex flex-col justify-between overflow-hidden"
-                style={{ width: '38%', background: `linear-gradient(170deg, ${typo.accentColor}12 0%, ${typo.accentColor}04 100%)`, borderRight: `0.5px solid ${typo.accentColor}22`, padding: '44px 32px 36px' }}>
+              <div className="relative flex flex-col justify-between"
+                style={{ width: '38%', background: `linear-gradient(170deg, ${typo.accentColor}12 0%, ${typo.accentColor}04 100%)`, borderRight: `0.5px solid ${typo.accentColor}22`, padding: '44px 32px 36px', overflow: 'hidden' }}>
 
                 {/* Letra decorativa de fundo */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
