@@ -47,7 +47,7 @@ function mergeContent(saved: any): PageContent {
     proposta:     { ...DEFAULT_CONTENT.proposta,     ...(saved.proposta     || {}) },
     propostas:       saved.propostas       || DEFAULT_CONTENT.propostas,
     extras_proposta: saved.extras_proposta || [],
-    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), about: { ...DEFAULT_CONTENT.propostaPage.about, ...(saved.propostaPage?.about || {}) }, relive: { ...DEFAULT_CONTENT.propostaPage.relive, ...(saved.propostaPage?.relive || {}) }, packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, propostaAtiva: saved.propostaPage?.propostaAtiva ?? 0, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
+    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), about: { ...DEFAULT_CONTENT.propostaPage.about, ...(saved.propostaPage?.about || {}) }, relive: { ...DEFAULT_CONTENT.propostaPage.relive, ...(saved.propostaPage?.relive || {}) }, grandeDia: { ...DEFAULT_CONTENT.propostaPage.grandeDia, ...(saved.propostaPage?.grandeDia || {}) }, packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, propostaAtiva: saved.propostaPage?.propostaAtiva ?? 0, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
   }
 }
 
@@ -258,6 +258,9 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   function setRelive(k: keyof PageContent['propostaPage']['relive'], v: string) {
     setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, relive: { ...c.propostaPage.relive, [k]: v } } }))
   }
+  function setGrandeDia(k: keyof PageContent['propostaPage']['grandeDia'], v: string) {
+    setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, grandeDia: { ...c.propostaPage.grandeDia, [k]: v } } }))
+  }
   const handleReliveUpload = async (file: File) => {
     setUploadingRelive(true)
     try {
@@ -266,6 +269,14 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       const data = await res.json()
       if (data.url) setRelive('imageUrl', data.url)
     } catch {}
+    setUploadingRelive(false)
+  }
+  const handleGrandeDiaUpload = async (file: File) => {
+    setUploadingRelive(true)
+    const fd = new FormData(); fd.append('file', file)
+    const r = await fetch('/api/upload-image', { method: 'POST', body: fd })
+    const d = await r.json()
+    if (d.url) setGrandeDia('imageUrl', d.url)
     setUploadingRelive(false)
   }
   const handleAboutUpload = async (file: File) => {
@@ -447,20 +458,20 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
             <div className="flex flex-col gap-5 flex-1">
               <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
                 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.1 }}>
-                o grande dia
+                {pp.grandeDia?.title || 'o grande dia'}
               </h2>
               <div className="flex flex-col gap-4" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.75, lineHeight: 1.75 }}>
-                <p>Nas preparações (sempre que possível), normalmente o que aconselhamos é reunir com as noivas <strong style={{ color: typo.accentColor, fontWeight: 500 }}>1 hora e 45 minutos</strong> e com os noivos cerca de <strong style={{ color: typo.accentColor, fontWeight: 500 }}>1 hora</strong>, antes da saída para a cerimónia.</p>
-                <p>Por norma gostamos de chegar ao local da cerimónia <strong style={{ color: typo.accentColor, fontWeight: 500 }}>20 minutos antes</strong> do seu início, para conseguirmos recolher imagens do local antes do verdadeiro SIM.</p>
-                <p>Junto à golden hour recomendamos reservarem <strong style={{ color: typo.accentColor, fontWeight: 500 }}>30 minutos</strong> (no máx.) para a sessão de casal.</p>
-                <p style={{ fontSize: '11px', opacity: 0.45, fontStyle: 'italic', marginTop: '4px' }}>* Caso a preparação do noivo tenha que ser realizada antes das 08h00 é obrigatório 2 videógrafos, no entanto e se pretenderem a preparação do noivo não é realizada.</p>
+                <p>{pp.grandeDia?.p1 || ''}</p>
+                <p>{pp.grandeDia?.p2 || ''}</p>
+                <p>{pp.grandeDia?.p3 || ''}</p>
+                <p style={{ fontSize: '11px', opacity: 0.45, fontStyle: 'italic', marginTop: '4px' }}>{pp.grandeDia?.note || ''}</p>
               </div>
             </div>
 
             {/* Direita — imagem grande */}
             <div className="flex-shrink-0" style={{ width: 'clamp(200px,30vw,360px)' }}>
-              {pp.about?.photo
-                ? <img src={pp.about.photo} alt="O Grande Dia"
+              {pp.grandeDia?.imageUrl
+                ? <img src={pp.grandeDia.imageUrl} alt="O Grande Dia"
                     className="w-full h-auto"
                     style={{ borderRadius: '8px' }} />
                 : <div className="w-full flex items-center justify-center" style={{ height: '420px', background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: '8px' }}>
@@ -975,6 +986,32 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 <Field label="URL do botão ACEDER">
                   <TInput value={pp.relive?.buttonUrl || ''} onChange={v => setRelive('buttonUrl', v)} placeholder="https://relive.wedding/..." />
                 </Field>
+
+                <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                <AccordionSection title="O Grande Dia">
+                  <Field label="Título">
+                    <TInput value={pp.grandeDia?.title || ''} onChange={v => setGrandeDia('title', v)} />
+                  </Field>
+                  <Field label="Parágrafo 1">
+                    <TInput value={pp.grandeDia?.p1 || ''} onChange={v => setGrandeDia('p1', v)} multiline />
+                  </Field>
+                  <Field label="Parágrafo 2">
+                    <TInput value={pp.grandeDia?.p2 || ''} onChange={v => setGrandeDia('p2', v)} multiline />
+                  </Field>
+                  <Field label="Parágrafo 3">
+                    <TInput value={pp.grandeDia?.p3 || ''} onChange={v => setGrandeDia('p3', v)} multiline />
+                  </Field>
+                  <Field label="Nota de rodapé">
+                    <TInput value={pp.grandeDia?.note || ''} onChange={v => setGrandeDia('note', v)} multiline />
+                  </Field>
+                  <Field label="Imagem">
+                    <label className="flex items-center justify-center w-full py-2.5 rounded-lg border border-dashed border-white/15 hover:border-gold/40 cursor-pointer text-white/30 hover:text-gold/70 transition-all text-xs gap-2">
+                      <input type="file" accept="image/*" className="hidden"
+                        onChange={e => { const f = e.target.files?.[0]; if (f) handleGrandeDiaUpload(f) }} />
+                      {uploadingRelive ? '⏳ A carregar...' : pp.grandeDia?.imageUrl ? '✓ Trocar imagem' : '⬆ Carregar imagem'}
+                    </label>
+                  </Field>
+                </AccordionSection>
 
                 <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
                 <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Propostas</p>

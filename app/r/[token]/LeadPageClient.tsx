@@ -45,6 +45,7 @@ export type PageContent = {
     subtitle: string; intro: string
     about: { title: string; text: string; photo: string; videoUrl: string; titlePos: string }
     relive: { imageUrl: string; buttonUrl: string }
+    grandeDia: { title: string; p1: string; p2: string; p3: string; note: string; imageUrl: string }
     packages: { title: string; description: string; price: string }[]
     propostaAtiva: number
     ctaText: string
@@ -106,6 +107,14 @@ export const DEFAULT_CONTENT: PageContent = {
       imageUrl: '',
       buttonUrl: 'https://relive.wedding',
     },
+    grandeDia: {
+      title: 'o grande dia',
+      p1: 'Nas preparações (sempre que possível), normalmente o que aconselhamos é reunir com as noivas 1 hora e 45 minutos e com os noivos cerca de 1 hora, antes da saída para a cerimónia.',
+      p2: 'Por norma gostamos de chegar ao local da cerimónia 20 minutos antes do seu início, para conseguirmos recolher imagens do local antes do verdadeiro SIM.',
+      p3: 'Junto à golden hour recomendamos reservarem 30 minutos (no máx.) para a sessão de casal.',
+      note: '* Caso a preparação do noivo tenha que ser realizada antes das 08h00 é obrigatório 2 videógrafos, no entanto e se pretenderem a preparação do noivo não é realizada.',
+      imageUrl: '',
+    },
     packages: [
       { title: 'Essencial', description: 'Cobertura fotográfica completa do dia, edição premium e galeria online privada.', price: 'Sob consulta' },
       { title: 'Premium', description: 'Fotografia + Vídeo cinematográfico com highlights do dia e música personalizada.', price: 'Sob consulta' },
@@ -135,7 +144,7 @@ function merge(saved: any): PageContent {
     proposta:     { ...DEFAULT_CONTENT.proposta,     ...(saved.proposta     || {}) },
     propostas:       saved.propostas       || DEFAULT_CONTENT.propostas,
     extras_proposta: saved.extras_proposta || [],
-    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), about: { ...DEFAULT_CONTENT.propostaPage.about, ...(saved.propostaPage?.about || {}) }, relive: { ...DEFAULT_CONTENT.propostaPage.relive, ...(saved.propostaPage?.relive || {}) }, packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, propostaAtiva: saved.propostaPage?.propostaAtiva ?? 0, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
+    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), about: { ...DEFAULT_CONTENT.propostaPage.about, ...(saved.propostaPage?.about || {}) }, relive: { ...DEFAULT_CONTENT.propostaPage.relive, ...(saved.propostaPage?.relive || {}) }, grandeDia: { ...DEFAULT_CONTENT.propostaPage.grandeDia, ...(saved.propostaPage?.grandeDia || {}) }, packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, propostaAtiva: saved.propostaPage?.propostaAtiva ?? 0, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
   }
 }
 
