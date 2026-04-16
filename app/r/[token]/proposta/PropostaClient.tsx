@@ -430,7 +430,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
             Como imaginam o vosso dia?
           </h2>
           <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
-          <p className="font-light leading-relaxed" style={{ fontSize: '15px', color: typo.bodyColor, opacity: 0.7, maxWidth: '520px' }}>
+          <p className="font-light leading-relaxed" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.7, maxWidth: '520px' }}>
             O que é que torna este dia verdadeiramente único para vocês?<br />
             Qual é o momento, o detalhe, a emoção que não pode ficar por registar?
           </p>
