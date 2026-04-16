@@ -156,6 +156,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   const [direction, setDirection] = useState<'right' | 'left'>('right')
   const [extrasOpen,     setExtrasOpen]     = useState<Record<number, boolean>>({})
   const [extrasSelected, setExtrasSelected] = useState<Record<number, string[]>>({})
+  const [formaOpen,      setFormaOpen]      = useState<Record<number, boolean>>({})
 
   // Editor
   const [editorOpen,    setEditorOpen]    = useState(false)
@@ -471,6 +472,12 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         }, 0)
         const baseValor  = parseValorNum(proposta.valor)
         const totalValor = baseValor > 0 ? baseValor + extrasValorTotal : 0
+        // ── forma de investimento ─────────────────────────────────
+        const ADJUDICACAO = 400
+        const totalPagamento = totalValor > 0 ? totalValor : baseValor
+        const restante   = totalPagamento > ADJUDICACAO ? totalPagamento - ADJUDICACAO : 0
+        const reforco    = Math.round(restante * 0.8)
+        const valorFinal = Math.round(restante * 0.2)
         const displayValor = selectedExtras.length > 0 && totalValor > 0
           ? formatValorNum(totalValor)
           : proposta.valor
@@ -626,6 +633,57 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                       ) : (
                         <p className="text-[11px] italic px-2" style={{ color: `${typo.bodyColor}40` }}>Sem serviços extras definidos</p>
                       )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Forma de Investimento — accordion */}
+                <div>
+                  <button
+                    onClick={() => setFormaOpen(prev => ({ ...prev, [idx]: !prev[idx] }))}
+                    className="flex items-center gap-2 px-4 py-2 transition-all w-full mt-1"
+                    style={{ border: `0.5px solid ${typo.accentColor}30`, color: `${typo.bodyColor}BB`, background: `${typo.accentColor}06` }}>
+                    <span className="text-[10px] tracking-[0.35em] uppercase flex-1 text-left">◈ Forma de Investimento</span>
+                    <span className="text-xs" style={{ display: 'inline-block', transition: 'transform 0.2s', transform: formaOpen[idx] ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+                  </button>
+                  {formaOpen[idx] && (
+                    <div className="flex flex-col gap-0 mt-2" style={{ borderLeft: `0.5px solid ${typo.accentColor}20` }}>
+                      {/* Linha 1 — Adjudicação */}
+                      <div className="flex items-center gap-3 px-3 py-2.5" style={{ borderBottom: `0.5px solid ${typo.accentColor}12` }}>
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[9px] font-semibold"
+                          style={{ background: `${typo.accentColor}25`, color: typo.accentColor }}>1</div>
+                        <div className="flex-1">
+                          <p className="text-[9px] tracking-[0.3em] uppercase mb-0.5" style={{ color: `${typo.accentColor}70` }}>Adjudicação</p>
+                          <p className={`${fontClass(typo.bodyFont)} font-light text-[11px]`} style={{ color: `${typo.bodyColor}80` }}>Reserva da data</p>
+                        </div>
+                        <p className={`${fontClass(typo.pkgTitleFont)} italic`} style={{ fontSize: '16px', color: typo.accentColor }}>
+                          400 €
+                        </p>
+                      </div>
+                      {/* Linha 2 — Reforço */}
+                      <div className="flex items-center gap-3 px-3 py-2.5" style={{ borderBottom: `0.5px solid ${typo.accentColor}12` }}>
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[9px] font-semibold"
+                          style={{ background: `${typo.accentColor}25`, color: typo.accentColor }}>2</div>
+                        <div className="flex-1">
+                          <p className="text-[9px] tracking-[0.3em] uppercase mb-0.5" style={{ color: `${typo.accentColor}70` }}>Reforço</p>
+                          <p className={`${fontClass(typo.bodyFont)} font-light text-[11px]`} style={{ color: `${typo.bodyColor}80` }}>80% do valor em falta</p>
+                        </div>
+                        <p className={`${fontClass(typo.pkgTitleFont)} italic`} style={{ fontSize: '16px', color: typo.accentColor }}>
+                          {restante > 0 ? `${reforco.toLocaleString('pt-PT')} €` : '—'}
+                        </p>
+                      </div>
+                      {/* Linha 3 — Valor Final */}
+                      <div className="flex items-center gap-3 px-3 py-2.5">
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[9px] font-semibold"
+                          style={{ background: `${typo.accentColor}25`, color: typo.accentColor }}>3</div>
+                        <div className="flex-1">
+                          <p className="text-[9px] tracking-[0.3em] uppercase mb-0.5" style={{ color: `${typo.accentColor}70` }}>Valor Final</p>
+                          <p className={`${fontClass(typo.bodyFont)} font-light text-[11px]`} style={{ color: `${typo.bodyColor}80` }}>Restante no dia do casamento</p>
+                        </div>
+                        <p className={`${fontClass(typo.pkgTitleFont)} italic`} style={{ fontSize: '16px', color: typo.accentColor }}>
+                          {restante > 0 ? `${valorFinal.toLocaleString('pt-PT')} €` : '—'}
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
