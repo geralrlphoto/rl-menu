@@ -441,7 +441,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         const idx = parseInt(id.split('-')[1])
         const proposta: Proposta = content.propostas?.[idx] || { nome: '', servicos_foto: [], servicos_video: [], valor: '' }
         const isAtiva = (pp.propostaAtiva ?? 0) === idx
-        const labels = ['A', 'B', 'C']
+        const labels = ['1', '2', '3']
         const hasFoto  = (proposta.servicos_foto  || []).length > 0
         const hasVideo = (proposta.servicos_video || []).length > 0
         const hasAny   = hasFoto || hasVideo
@@ -471,7 +471,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 {/* Letra decorativa de fundo */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
                   <span className={`${fontClass(typo.pkgTitleFont)} italic`}
-                    style={{ fontSize: 'clamp(10rem,22vw,18rem)', color: `${typo.accentColor}08`, lineHeight: 1, userSelect: 'none' }}>
+                    style={{ fontSize: 'clamp(14rem,30vw,26rem)', color: `${typo.accentColor}09`, lineHeight: 1, userSelect: 'none' }}>
                     {labels[idx]}
                   </span>
                 </div>
@@ -787,7 +787,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                       style={(pp.propostaAtiva ?? 0) === i
                         ? { background: 'rgba(201,168,76,0.2)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.4)' }
                         : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                      {content.propostas?.[i]?.nome || `Proposta ${['A','B','C'][i]}`}
+                      {content.propostas?.[i]?.nome || `Proposta ${['1','2','3'][i]}`}
                     </button>
                   ))}
                 </div>
@@ -798,7 +798,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                     const sv = p?.servicos_video?.filter(Boolean) || []
                     return (
                       <div key={i} className="p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                        <p className="text-[10px] tracking-widest text-white/25 uppercase mb-1">{p?.nome || `Proposta ${['A','B','C'][i]}`}</p>
+                        <p className="text-[10px] tracking-widest text-white/25 uppercase mb-1">{p?.nome || `Proposta ${['1','2','3'][i]}`}</p>
                         {sf.length > 0 && <><p className="text-[9px] text-white/20 mt-1">📷 Foto</p>{sf.map((s, j) => <p key={j} className="text-[11px] text-white/35 ml-2">◆ {s}</p>)}</>}
                         {sv.length > 0 && <><p className="text-[9px] text-white/20 mt-1">🎥 Vídeo</p>{sv.map((s, j) => <p key={j} className="text-[11px] text-white/35 ml-2">◆ {s}</p>)}</>}
                         {p?.valor && <p className="text-[11px] text-gold/60 mt-1 font-mono">{p.valor}</p>}

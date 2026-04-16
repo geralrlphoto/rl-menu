@@ -85,9 +85,9 @@ export const DEFAULT_CONTENT: PageContent = {
   },
   proposta:     { password: '', buttonLabel: 'Ver Proposta Criativa' },
   propostas: [
-    { nome: 'Proposta A', servicos_foto: [], servicos_video: [], valor: '' },
-    { nome: 'Proposta B', servicos_foto: [], servicos_video: [], valor: '' },
-    { nome: 'Proposta C', servicos_foto: [], servicos_video: [], valor: '' },
+    { nome: 'Proposta 1', servicos_foto: [], servicos_video: [], valor: '' },
+    { nome: 'Proposta 2', servicos_foto: [], servicos_video: [], valor: '' },
+    { nome: 'Proposta 3', servicos_foto: [], servicos_video: [], valor: '' },
   ],
   propostaPage: {
     subtitle: 'Uma proposta criada especialmente para vocês.',

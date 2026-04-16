@@ -384,7 +384,7 @@ export default function ClientePage() {
 
               {/* Nome */}
               <div className="flex items-center gap-3">
-                <span className="text-[10px] tracking-[0.4em] text-gold/60 uppercase shrink-0">Proposta {['A','B','C'][pi]}</span>
+                <span className="text-[10px] tracking-[0.4em] text-gold/60 uppercase shrink-0">Proposta {['1','2','3'][pi]}</span>
                 <input
                   type="text"
                   value={proposta.nome}
@@ -468,7 +468,10 @@ export default function ClientePage() {
 
               {/* Valor */}
               <div className="flex flex-col gap-1">
-                <label className="text-xs tracking-widest text-white/30 uppercase">Valor Total</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs tracking-widest text-white/30 uppercase">Valor Total</label>
+                  <span className="text-[10px] text-white/20">Fotografia + Vídeo</span>
+                </div>
                 <input
                   type="text"
                   value={proposta.valor}
