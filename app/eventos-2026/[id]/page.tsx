@@ -1235,6 +1235,7 @@ export default function EventoPage() {
   const [evento, setEvento] = useState<Evento | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [valorFotografo, setValorFotografo] = useState<number>(0)
   const [valorVideografo, setValorVideografo] = useState<number>(0)
   const [valorEditorVideo, setValorEditorVideo] = useState<number>(0)
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
@@ -1648,7 +1649,18 @@ export default function EventoPage() {
           {/* Despesas */}
           <div className="pt-2 border-t border-white/[0.05]">
             <h3 className="text-[10px] tracking-[0.35em] text-gold uppercase mb-3">Despesas</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] tracking-[0.3em] text-white/25 uppercase">Valor Fotografia</span>
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="number" value={valorFotografo}
+                  onChange={ev => setValorFotografo(Number(ev.target.value))}
+                  className="bg-white/5 border border-white/10 hover:border-gold/30 focus:border-gold/40 rounded-lg px-3 py-1.5 text-sm text-white/80 focus:outline-none w-full"
+                />
+                <span className="text-white/40 text-sm shrink-0">€</span>
+              </div>
+            </div>
             <div className="flex flex-col gap-1">
               <span className="text-[10px] tracking-[0.3em] text-white/25 uppercase">Valor Videógrafo</span>
               <div className="flex items-center gap-1.5">
@@ -1689,10 +1701,10 @@ export default function EventoPage() {
           <div className="flex items-center justify-between px-4 py-3 bg-green-500/10 border border-green-500/20 rounded-xl">
             <div>
               <span className="text-xs tracking-widest text-green-400/60 uppercase block">Valor Líquido a Receber</span>
-              <span className="text-[10px] text-white/20">(Foto + Vídeo + Extras − Videógrafo − Editor Vídeo)</span>
+              <span className="text-[10px] text-white/20">(Foto + Vídeo + Extras − Fotografia − Videógrafo − Editor Vídeo)</span>
             </div>
             <span className="text-green-400 font-bold text-lg">
-              {((e.valor_foto ?? 0) + (e.valor_video ?? 0) + (e.valor_extras ?? 0) - valorVideografo - valorEditorVideo).toLocaleString('pt-PT')} €
+              {((e.valor_foto ?? 0) + (e.valor_video ?? 0) + (e.valor_extras ?? 0) - valorFotografo - valorVideografo - valorEditorVideo).toLocaleString('pt-PT')} €
             </span>
           </div>
 
