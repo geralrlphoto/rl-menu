@@ -809,9 +809,9 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       )
 
       case 'contact': return (
-        <div className="flex flex-col items-center justify-center h-full w-full px-8 sm:px-16 text-center gap-8">
+        <div className="flex flex-col items-center w-full h-full px-8 sm:px-16 text-center gap-8" style={{ paddingTop: '12vh' }}>
 
-          <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="opacity-75" style={{ width: '140px' }} />
+          <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="opacity-75" style={{ width: '200px' }} />
           <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
           <a href="https://www.rlphotovideo.pt" target="_blank" rel="noopener noreferrer"
             className={`${fontClass(typo.titleFont)} font-light italic hover:opacity-80 transition-opacity`}
@@ -871,8 +871,8 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         </div>
       )}
 
-      {/* Logo topo — slides 1 a N */}
-      {current > 0 && (
+      {/* Logo topo — slides 1 a N (exceto contact) */}
+      {current > 0 && slides[current] !== 'contact' && (
         <div className={`absolute left-0 right-0 flex justify-center z-20 pointer-events-none ${isAdmin ? 'top-11' : 'top-5'}`}>
           <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="w-20 opacity-70" />
         </div>
