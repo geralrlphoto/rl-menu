@@ -10,7 +10,7 @@ function fmtData(d: string) {
 }
 
 export async function POST(req: NextRequest) {
-  const { email, reuniao_data, reuniao_hora, reuniao_tipo } = await req.json().catch(() => ({}))
+  const { email, reuniao_data, reuniao_hora, reuniao_tipo, page_token } = await req.json().catch(() => ({}))
 
   if (!email || !reuniao_data || !reuniao_hora) {
     return NextResponse.json({ error: 'email, reuniao_data e reuniao_hora são obrigatórios' }, { status: 400 })
@@ -19,8 +19,10 @@ export async function POST(req: NextRequest) {
   const dataFmt = fmtData(reuniao_data)
   const isVideo = reuniao_tipo === 'Videochamada'
   const modoTxt = isVideo ? 'Videochamada' : 'Presencial'
-  const btnTxt  = isVideo ? 'Fazer Reunião' : 'Ver Localização'
-  const link    = isVideo ? MEET_LINK : MAPS_LINK
+  const btnTxt  = 'A vossa página'
+  const link    = page_token
+    ? `https://rl-menu-lake.vercel.app/r/${page_token}`
+    : (isVideo ? MEET_LINK : MAPS_LINK)
 
   // Card 1080×1080 → exibido a 560×560px (quadrado 1:1).
   // Proporções dos espaçadores relativamente à largura (560px = 100%):
