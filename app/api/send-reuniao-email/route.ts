@@ -48,59 +48,6 @@ export async function POST(req: NextRequest) {
     </tr>
   </table>
 
-  <!-- DETALHES DA REUNIÃO -->
-  <table width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;background:#0d0c0a;border-top:1px solid rgba(201,168,76,0.15);">
-    <tr>
-      <td style="padding:32px 48px 12px;text-align:center;">
-        <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:11px;
-                  letter-spacing:0.4em;color:rgba(201,168,76,0.5);text-transform:uppercase;">
-          Detalhes da Reunião
-        </p>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding:8px 48px;">
-        <table width="100%" cellpadding="0" cellspacing="0">
-          <tr>
-            <td style="padding:6px 0;font-family:Georgia,'Times New Roman',serif;font-size:13px;
-                       color:rgba(232,223,200,0.45);letter-spacing:0.08em;">Data</td>
-            <td style="padding:6px 0;font-family:Georgia,'Times New Roman',serif;font-size:14px;
-                       color:#e8dfc8;text-align:right;letter-spacing:0.04em;">${dataFmt}</td>
-          </tr>
-          <tr>
-            <td style="padding:6px 0;font-family:Georgia,'Times New Roman',serif;font-size:13px;
-                       color:rgba(232,223,200,0.45);letter-spacing:0.08em;">Hora</td>
-            <td style="padding:6px 0;font-family:Georgia,'Times New Roman',serif;font-size:14px;
-                       color:#e8dfc8;text-align:right;letter-spacing:0.04em;">${reuniao_hora}</td>
-          </tr>
-          <tr>
-            <td style="padding:6px 0;font-family:Georgia,'Times New Roman',serif;font-size:13px;
-                       color:rgba(232,223,200,0.45);letter-spacing:0.08em;">Modo</td>
-            <td style="padding:6px 0;font-family:Georgia,'Times New Roman',serif;font-size:14px;
-                       color:#e8dfc8;text-align:right;letter-spacing:0.04em;">${modoTxt}</td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding:20px 48px 36px;text-align:center;">
-        <a href="${pageLink}" target="_blank"
-          style="display:inline-block;padding:12px 32px;
-                 font-family:Georgia,'Times New Roman',serif;font-size:13px;font-style:italic;
-                 color:#C9A84C;letter-spacing:0.08em;text-decoration:none;
-                 border:1px solid rgba(201,168,76,0.35);background:rgba(201,168,76,0.06);">
-          Aceder à vossa página
-        </a>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding:0 0 24px;text-align:center;
-                 font-family:Georgia,'Times New Roman',serif;font-size:10px;
-                 letter-spacing:0.35em;color:rgba(255,255,255,0.12);text-transform:uppercase;">
-        RL Photo · Video
-      </td>
-    </tr>
-  </table>
 
 </td></tr>
 </table>
