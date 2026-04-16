@@ -1701,10 +1701,10 @@ export default function EventoPage() {
           <div className="flex items-center justify-between px-4 py-3 bg-green-500/10 border border-green-500/20 rounded-xl">
             <div>
               <span className="text-xs tracking-widest text-green-400/60 uppercase block">Valor Líquido a Receber</span>
-              <span className="text-[10px] text-white/20">(Foto + Vídeo + Extras − Fotografia − Videógrafo − Editor Vídeo)</span>
+              <span className="text-[10px] text-white/20">(Vídeo + Extras − Fotografia − Editor Vídeo)</span>
             </div>
             <span className="text-green-400 font-bold text-lg">
-              {((e.valor_foto ?? 0) + (e.valor_video ?? 0) + (e.valor_extras ?? 0) - valorFotografo - valorVideografo - valorEditorVideo).toLocaleString('pt-PT')} €
+              {((e.valor_video ?? 0) + (e.valor_extras ?? 0) - valorFotografo - valorEditorVideo).toLocaleString('pt-PT')} €
             </span>
           </div>
 
