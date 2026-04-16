@@ -440,7 +440,37 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       )
 
       case 'blank2': return (
-        <div className="flex items-center justify-center h-full w-full" />
+        <div className="flex items-center justify-center h-full w-full px-8 sm:px-16">
+          <div className="flex flex-row items-center gap-2 sm:gap-3 w-full max-w-5xl">
+
+            {/* Esquerda — texto */}
+            <div className="flex flex-col gap-5 flex-1">
+              <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
+                style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.1 }}>
+                o grande dia
+              </h2>
+              <div className="flex flex-col gap-4" style={{ fontSize: '14px', color: typo.bodyColor, opacity: 0.75, lineHeight: 1.75 }}>
+                <p>Nas preparações (sempre que possível), normalmente o que aconselhamos é reunir com as noivas <strong style={{ color: typo.accentColor, fontWeight: 500 }}>1 hora e 45 minutos</strong> e com os noivos cerca de <strong style={{ color: typo.accentColor, fontWeight: 500 }}>1 hora</strong>, antes da saída para a cerimónia.</p>
+                <p>Por norma gostamos de chegar ao local da cerimónia <strong style={{ color: typo.accentColor, fontWeight: 500 }}>20 minutos antes</strong> do seu início, para conseguirmos recolher imagens do local antes do verdadeiro SIM.</p>
+                <p>Junto à golden hour recomendamos reservarem <strong style={{ color: typo.accentColor, fontWeight: 500 }}>30 minutos</strong> (no máx.) para a sessão de casal.</p>
+                <p style={{ fontSize: '11px', opacity: 0.45, fontStyle: 'italic', marginTop: '4px' }}>* Caso a preparação do noivo tenha que ser realizada antes das 08h00 é obrigatório 2 videógrafos, no entanto e se pretenderem a preparação do noivo não é realizada.</p>
+              </div>
+            </div>
+
+            {/* Direita — imagem grande */}
+            <div className="flex-shrink-0" style={{ width: 'clamp(280px,44vw,540px)' }}>
+              {pp.about?.photo
+                ? <img src={pp.about.photo} alt="O Grande Dia"
+                    className="w-full h-auto"
+                    style={{ borderRadius: '8px' }} />
+                : <div className="w-full flex items-center justify-center" style={{ height: '420px', background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: '8px' }}>
+                    <p className="text-[10px] tracking-widest text-white/15 uppercase">Imagem</p>
+                  </div>
+              }
+            </div>
+
+          </div>
+        </div>
       )
 
       case 'blank': return (
