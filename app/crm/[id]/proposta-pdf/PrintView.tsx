@@ -17,6 +17,7 @@ function fmt(n: number): string {
 }
 
 const FONTS_URL = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Montserrat:wght@300;400;500&display=swap'
+const LOGO_URL  = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png'
 
 export default function PrintView({ contact, content }: { contact: any; content: PageContent }) {
   useEffect(() => {
@@ -63,11 +64,8 @@ export default function PrintView({ contact, content }: { contact: any; content:
 
         {/* Main content */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 60px', textAlign: 'center', gap: 28 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{ width: 36, height: 0.5, background: GOLD }} />
-            <span style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 400, fontSize: 9, letterSpacing: '0.5em', color: GOLD }}>RL PHOTO · VIDEO</span>
-            <div style={{ width: 36, height: 0.5, background: GOLD }} />
-          </div>
+          {/* Logo */}
+          <img src={LOGO_URL} alt="RL Photo · Video" style={{ width: 120, opacity: 0.92 }} />
 
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
             <h1 style={{ margin: 0, fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontWeight: 300, fontSize: 78, color: '#ffffff', lineHeight: 1 }}>Proposta</h1>
@@ -103,9 +101,9 @@ export default function PrintView({ contact, content }: { contact: any; content:
           )}
         </div>
 
-        {/* Footer */}
-        <div style={{ padding: '20px 52px', borderTop: `0.5px solid ${GOLD}20`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <p style={{ margin: 0, fontFamily: 'Montserrat, sans-serif', fontWeight: 300, fontSize: 8, color: `${GOLD}45`, letterSpacing: '0.3em', textTransform: 'uppercase' }}>Fotografia & Vídeo de Casamentos</p>
+        {/* Footer da capa */}
+        <div style={{ padding: '18px 52px', borderTop: `0.5px solid ${GOLD}20`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <img src={LOGO_URL} alt="RL" style={{ height: 28, opacity: 0.4 }} />
           <p style={{ margin: 0, fontFamily: 'Montserrat, sans-serif', fontWeight: 300, fontSize: 8, color: `${GOLD}45`, letterSpacing: '0.2em' }}>{new Date().getFullYear()}</p>
         </div>
       </div>
@@ -132,7 +130,7 @@ export default function PrintView({ contact, content }: { contact: any; content:
                   <p style={{ margin: 0, fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 22, color: '#ffffff', fontWeight: 300, letterSpacing: '0.04em' }}>{proposta.nome || `Proposta ${labels[idx]}`}</p>
                 </div>
               </div>
-              <p style={{ margin: 0, fontFamily: 'Montserrat, sans-serif', fontWeight: 300, fontSize: 9, color: `${GOLD}50`, letterSpacing: '0.2em', textTransform: 'uppercase' }}>RL Photo · Video</p>
+              <img src={LOGO_URL} alt="RL" style={{ height: 32, opacity: 0.65, alignSelf: 'center' }} />
             </div>
 
             {/* Body */}
@@ -245,8 +243,8 @@ export default function PrintView({ contact, content }: { contact: any; content:
             </div>
 
             {/* Page footer */}
-            <div style={{ padding: '12px 44px', borderTop: `0.5px solid ${GOLD}15`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, background: '#fdfcf9' }}>
-              <p style={{ margin: 0, fontFamily: 'Montserrat, sans-serif', fontWeight: 300, fontSize: 7.5, color: '#bbb', letterSpacing: '0.2em', textTransform: 'uppercase' }}>RL Photo · Video — Proposta Criativa</p>
+            <div style={{ padding: '10px 44px', borderTop: `0.5px solid ${GOLD}15`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, background: '#fdfcf9' }}>
+              <img src={LOGO_URL} alt="RL" style={{ height: 22, opacity: 0.3 }} />
               <p style={{ margin: 0, fontFamily: 'Montserrat, sans-serif', fontWeight: 300, fontSize: 7.5, color: '#bbb', letterSpacing: '0.15em' }}>{contact.nome}</p>
             </div>
           </div>
