@@ -1008,6 +1008,24 @@ function PortalSubPageContent() {
     loadPagamentos()
   }, [loadPagamentos])
 
+  // Dedicated fetch for proposta data — runs immediately from refParam (URL param)
+  // This is independent of loadPagamentos so it works even if other fetches fail
+  useEffect(() => {
+    if (!refParam) return
+    fetch(`/api/evento-by-ref?ref=${encodeURIComponent(refParam)}`)
+      .then(r => r.json())
+      .then(ed => {
+        if (ed.found) {
+          setNotionServicos({
+            proposta:      ed.evento.proposta      ?? null,
+            servico_foto:  ed.evento.servico_foto  ?? [],
+            servico_video: ed.evento.servico_video ?? [],
+          })
+        }
+      })
+      .catch(() => {})
+  }, [refParam])
+
   const loadBlocks = useCallback(async (bust = false) => {
     if (!id) return
     const url = `/api/portais-clientes?id=${id}${bust ? '&bust=1' : ''}`
