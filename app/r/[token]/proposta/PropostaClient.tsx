@@ -446,66 +446,117 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         const hasVideo = (proposta.servicos_video || []).length > 0
         const hasAny   = hasFoto || hasVideo
         return (
-          <div className="flex flex-col items-center justify-center h-full px-8 sm:px-16 gap-0">
-            <div className="w-full max-w-xl relative p-8 sm:p-12 text-center"
-              style={{ border: `0.5px solid ${typo.accentColor}${isAtiva ? '99' : '4D'}`, background: isAtiva ? 'linear-gradient(160deg, rgba(201,168,76,0.12) 0%, rgba(201,168,76,0.04) 100%)' : 'linear-gradient(160deg, rgba(201,168,76,0.07) 0%, rgba(201,168,76,0.02) 100%)' }}>
-              <div className="absolute top-0 left-0 w-8 h-8"  style={{ borderTop: `1px solid ${typo.accentColor}99`, borderLeft:  `1px solid ${typo.accentColor}99` }} />
-              <div className="absolute top-0 right-0 w-8 h-8" style={{ borderTop: `1px solid ${typo.accentColor}99`, borderRight: `1px solid ${typo.accentColor}99` }} />
-              <div className="absolute bottom-0 left-0 w-8 h-8"  style={{ borderBottom: `1px solid ${typo.accentColor}99`, borderLeft:  `1px solid ${typo.accentColor}99` }} />
-              <div className="absolute bottom-0 right-0 w-8 h-8" style={{ borderBottom: `1px solid ${typo.accentColor}99`, borderRight: `1px solid ${typo.accentColor}99` }} />
+          <div className="flex items-center justify-center h-full w-full px-6 sm:px-12">
+            <div className="relative w-full max-w-4xl flex"
+              style={{ border: `0.5px solid ${typo.accentColor}33`, minHeight: '340px' }}>
+
+              {/* Cantos decorativos */}
+              <div className="absolute top-0 left-0 w-10 h-10" style={{ borderTop: `1px solid ${typo.accentColor}`, borderLeft: `1px solid ${typo.accentColor}` }} />
+              <div className="absolute top-0 right-0 w-10 h-10" style={{ borderTop: `1px solid ${typo.accentColor}`, borderRight: `1px solid ${typo.accentColor}` }} />
+              <div className="absolute bottom-0 left-0 w-10 h-10" style={{ borderBottom: `1px solid ${typo.accentColor}`, borderLeft: `1px solid ${typo.accentColor}` }} />
+              <div className="absolute bottom-0 right-0 w-10 h-10" style={{ borderBottom: `1px solid ${typo.accentColor}`, borderRight: `1px solid ${typo.accentColor}` }} />
+
+              {/* Badge Recomendado */}
               {isAtiva && (
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4 py-1 text-[9px] tracking-[0.4em] uppercase"
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 px-5 py-1 text-[9px] tracking-[0.5em] uppercase z-10"
                   style={{ background: '#0d0b07', border: `0.5px solid ${typo.accentColor}`, color: typo.accentColor }}>
                   Recomendado
                 </div>
               )}
-              <p className="text-[10px] tracking-[0.5em] text-white/20 uppercase mb-4">Proposta {labels[idx]}</p>
-              <h2 className={`${fontClass(typo.pkgTitleFont)} italic font-light mb-4`} style={{ fontSize: 'clamp(2rem,5vw,3rem)', color: typo.pkgTitleColor, lineHeight: 1.1 }}>
-                {proposta.nome || `Proposta ${labels[idx]}`}
-              </h2>
-              <div className="h-px mb-5" style={{ background: `${typo.accentColor}33` }} />
 
-              {hasAny ? (
-                <div className={`flex gap-6 mb-6 ${hasFoto && hasVideo ? 'flex-row' : 'flex-col items-center'}`}>
-                  {hasFoto && (
-                    <div className="flex-1 text-left">
-                      <p className="text-[9px] tracking-[0.35em] text-white/25 uppercase mb-2">Fotografia</p>
-                      <div className="flex flex-col gap-1.5">
-                        {(proposta.servicos_foto || []).map((s, i) => (
-                          <div key={i} className="flex items-start gap-2">
-                            <span style={{ color: typo.accentColor, fontSize: '0.55rem', marginTop: '5px', flexShrink: 0 }}>◆</span>
-                            <p className={`${fontClass(typo.bodyFont)} font-light text-sm leading-snug`} style={{ color: typo.bodyColor }}>{s}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {hasFoto && hasVideo && (
-                    <div className="w-px self-stretch" style={{ background: `${typo.accentColor}20` }} />
-                  )}
-                  {hasVideo && (
-                    <div className="flex-1 text-left">
-                      <p className="text-[9px] tracking-[0.35em] text-white/25 uppercase mb-2">Vídeo</p>
-                      <div className="flex flex-col gap-1.5">
-                        {(proposta.servicos_video || []).map((s, i) => (
-                          <div key={i} className="flex items-start gap-2">
-                            <span style={{ color: typo.accentColor, fontSize: '0.55rem', marginTop: '5px', flexShrink: 0 }}>◆</span>
-                            <p className={`${fontClass(typo.bodyFont)} font-light text-sm leading-snug`} style={{ color: typo.bodyColor }}>{s}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+              {/* Painel esquerdo — identidade */}
+              <div className="relative flex flex-col justify-between overflow-hidden"
+                style={{ width: '38%', background: `linear-gradient(170deg, ${typo.accentColor}12 0%, ${typo.accentColor}04 100%)`, borderRight: `0.5px solid ${typo.accentColor}22`, padding: '44px 32px 36px' }}>
+
+                {/* Letra decorativa de fundo */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+                  <span className={`${fontClass(typo.pkgTitleFont)} italic`}
+                    style={{ fontSize: 'clamp(10rem,22vw,18rem)', color: `${typo.accentColor}08`, lineHeight: 1, userSelect: 'none' }}>
+                    {labels[idx]}
+                  </span>
+                </div>
+
+                {/* Conteúdo topo */}
+                <div className="relative z-10">
+                  <p className="text-[9px] tracking-[0.55em] uppercase mb-3" style={{ color: `${typo.accentColor}80` }}>
+                    Proposta {labels[idx]}
+                  </p>
+                  <h2 className={`${fontClass(typo.pkgTitleFont)} italic font-light leading-tight`}
+                    style={{ fontSize: 'clamp(1.6rem,3.5vw,2.5rem)', color: typo.pkgTitleColor }}>
+                    {proposta.nome || `Proposta ${labels[idx]}`}
+                  </h2>
+                  <div className="mt-4 w-10 h-px" style={{ background: typo.accentColor }} />
+                </div>
+
+                {/* Valor */}
+                <div className="relative z-10">
+                  {proposta.valor ? (
+                    <>
+                      <p className="text-[9px] tracking-[0.4em] uppercase mb-1" style={{ color: `${typo.accentColor}60` }}>Investimento</p>
+                      <p className={`${fontClass(typo.pkgTitleFont)} italic`}
+                        style={{ fontSize: 'clamp(1.5rem,3vw,2.2rem)', color: typo.accentColor, lineHeight: 1.1 }}>
+                        {proposta.valor}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-[10px] tracking-widest uppercase" style={{ color: `${typo.accentColor}30` }}>
+                      Sob consulta
+                    </p>
                   )}
                 </div>
-              ) : (
-                <p className={`${fontClass(typo.bodyFont)} text-sm leading-relaxed mb-6 font-light text-center`} style={{ color: `${typo.bodyColor}60` }}>
-                  Serviços a definir no CRM
-                </p>
-              )}
+              </div>
 
-              {proposta.valor && (
-                <p className={`${fontClass(typo.pkgTitleFont)} text-2xl italic`} style={{ color: typo.titleColor, opacity: 0.85 }}>{proposta.valor}</p>
-              )}
+              {/* Painel direito — serviços */}
+              <div className="flex-1 flex flex-col justify-center" style={{ padding: '44px 36px 36px' }}>
+                {hasAny ? (
+                  <div className={`flex gap-8 h-full ${hasFoto && hasVideo ? '' : 'items-center'}`}>
+                    {/* Fotografia */}
+                    {hasFoto && (
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-4">
+                          <span className="text-[9px] tracking-[0.45em] uppercase" style={{ color: `${typo.accentColor}70` }}>Fotografia</span>
+                          <div className="flex-1 h-px" style={{ background: `${typo.accentColor}20` }} />
+                        </div>
+                        <div className="flex flex-col gap-2.5">
+                          {(proposta.servicos_foto || []).map((s, i) => (
+                            <div key={i} className="flex items-start gap-2.5">
+                              <span style={{ color: typo.accentColor, fontSize: '0.5rem', marginTop: '5px', flexShrink: 0 }}>◆</span>
+                              <p className={`${fontClass(typo.bodyFont)} font-light leading-snug`} style={{ fontSize: '13px', color: typo.bodyColor }}>{s}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Divisor central */}
+                    {hasFoto && hasVideo && (
+                      <div className="w-px self-stretch my-2" style={{ background: `${typo.accentColor}15` }} />
+                    )}
+
+                    {/* Vídeo */}
+                    {hasVideo && (
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-4">
+                          <span className="text-[9px] tracking-[0.45em] uppercase" style={{ color: `${typo.accentColor}70` }}>Vídeo</span>
+                          <div className="flex-1 h-px" style={{ background: `${typo.accentColor}20` }} />
+                        </div>
+                        <div className="flex flex-col gap-2.5">
+                          {(proposta.servicos_video || []).map((s, i) => (
+                            <div key={i} className="flex items-start gap-2.5">
+                              <span style={{ color: typo.accentColor, fontSize: '0.5rem', marginTop: '5px', flexShrink: 0 }}>◆</span>
+                              <p className={`${fontClass(typo.bodyFont)} font-light leading-snug`} style={{ fontSize: '13px', color: typo.bodyColor }}>{s}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full gap-3 opacity-30">
+                    <p className="text-[10px] tracking-[0.4em] uppercase" style={{ color: typo.bodyColor }}>Serviços a definir no CRM</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )
