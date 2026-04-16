@@ -117,10 +117,25 @@ export default function ClientePage() {
 
   // ── Propostas ────────────────────────────────────────────────────────────────
   type Proposta = { nome: string; servicos: string[]; valor: string }
+
+  const SERVICOS_FOTO = [
+    '1 Fotógrafo', '2 Fotógrafos', 'Rep. Todo Evento',
+    '700 Fotografias Editadas', '850 Fotografias Editadas', '1000 Fotografias Editadas',
+    'Sessão Pré-Wedding', 'Sessão TTD',
+    'Álbum 25×25 — 40 Fotos', 'Álbum 30×30 — 60 Fotos',
+    'Foto Lembrança', 'Galerias Open',
+  ]
+  const SERVICOS_VIDEO = [
+    '1 Videógrafo', '2 Videógrafos', 'Rep. Todo Evento',
+    'Vídeo até 20 min | Full HD', 'Deslocação',
+    'Sessão Pré-Wedding', 'Sessão TTD',
+    'Drone', 'Same Day Edit', 'Trailer', 'Teaser',
+  ]
+
   const DEFAULT_PROPOSTAS: Proposta[] = [
-    { nome: 'Proposta A', servicos: [''], valor: '' },
-    { nome: 'Proposta B', servicos: [''], valor: '' },
-    { nome: 'Proposta C', servicos: [''], valor: '' },
+    { nome: 'Proposta A', servicos: [], valor: '' },
+    { nome: 'Proposta B', servicos: [], valor: '' },
+    { nome: 'Proposta C', servicos: [], valor: '' },
   ]
   const [propostas, setPropostas] = useState<Proposta[]>(DEFAULT_PROPOSTAS)
   const [savingPropostas, setSavingPropostas] = useState(false)
@@ -152,21 +167,11 @@ export default function ClientePage() {
   const setProposta = (pi: number, key: keyof Proposta, value: string) => {
     setPropostas(prev => prev.map((p, i) => i === pi ? { ...p, [key]: value } : p))
   }
-  const setServico = (pi: number, si: number, value: string) => {
+  const toggleServico = (pi: number, servico: string) => {
     setPropostas(prev => prev.map((p, i) => {
       if (i !== pi) return p
-      const s = [...p.servicos]; s[si] = value
-      return { ...p, servicos: s }
-    }))
-  }
-  const addServico = (pi: number) => {
-    setPropostas(prev => prev.map((p, i) => i === pi ? { ...p, servicos: [...p.servicos, ''] } : p))
-  }
-  const removeServico = (pi: number, si: number) => {
-    setPropostas(prev => prev.map((p, i) => {
-      if (i !== pi) return p
-      const s = p.servicos.filter((_, j) => j !== si)
-      return { ...p, servicos: s.length ? s : [''] }
+      const has = p.servicos.includes(servico)
+      return { ...p, servicos: has ? p.servicos.filter(s => s !== servico) : [...p.servicos, servico] }
     }))
   }
 
@@ -374,44 +379,82 @@ export default function ClientePage() {
           </div>
 
           {propostas.map((proposta, pi) => (
-            <div key={pi} className="flex flex-col gap-3 p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <div key={pi} className="flex flex-col gap-4 p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
+
+              {/* Nome */}
               <div className="flex items-center gap-3">
                 <span className="text-[10px] tracking-[0.4em] text-gold/60 uppercase shrink-0">Proposta {['A','B','C'][pi]}</span>
                 <input
                   type="text"
                   value={proposta.nome}
                   onChange={e => setProposta(pi, 'nome', e.target.value)}
-                  placeholder={`Ex: Essencial, Premium, Luxe…`}
+                  placeholder="Ex: Essencial, Premium, Luxe…"
                   className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50"
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs tracking-widest text-white/30 uppercase">Serviços incluídos</label>
-                {proposta.servicos.map((s, si) => (
-                  <div key={si} className="flex items-center gap-2">
-                    <span className="text-gold/40 text-xs shrink-0">◆</span>
-                    <input
-                      type="text"
-                      value={s}
-                      onChange={e => setServico(pi, si, e.target.value)}
-                      placeholder="Ex: Fotografia cerimónia + banquete"
-                      className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50"
-                    />
-                    <button
-                      onClick={() => removeServico(pi, si)}
-                      className="w-7 h-7 flex items-center justify-center rounded-lg text-white/25 hover:text-red-400 hover:bg-red-500/10 transition-all text-xs shrink-0"
-                    >✕</button>
-                  </div>
-                ))}
-                <button
-                  onClick={() => addServico(pi)}
-                  className="self-start mt-1 px-3 py-1.5 rounded-lg text-xs text-white/35 hover:text-gold hover:bg-gold/10 border border-white/8 transition-all"
-                >
-                  + Adicionar serviço
-                </button>
+              {/* Serviços — duas colunas */}
+              <div className="grid grid-cols-2 gap-3">
+
+                {/* Fotografia */}
+                <div className="flex flex-col gap-1.5 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <p className="text-[9px] tracking-[0.4em] text-white/30 uppercase mb-1">📷 Fotografia</p>
+                  {SERVICOS_FOTO.map(s => {
+                    const active = proposta.servicos.includes(s)
+                    return (
+                      <button key={s} onClick={() => toggleServico(pi, s)}
+                        className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-lg transition-all"
+                        style={active
+                          ? { background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.35)' }
+                          : { background: 'transparent', border: '1px solid transparent' }}>
+                        <span className="w-4 h-4 rounded flex items-center justify-center shrink-0 text-[10px]"
+                          style={active
+                            ? { background: 'rgba(201,168,76,0.8)', color: '#0d0b07' }
+                            : { background: 'rgba(255,255,255,0.06)', color: 'transparent', border: '1px solid rgba(255,255,255,0.12)' }}>
+                          {active ? '✓' : ''}
+                        </span>
+                        <span className="text-xs leading-snug" style={{ color: active ? '#C9A84C' : 'rgba(255,255,255,0.45)' }}>{s}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {/* Vídeo */}
+                <div className="flex flex-col gap-1.5 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <p className="text-[9px] tracking-[0.4em] text-white/30 uppercase mb-1">🎥 Vídeo</p>
+                  {SERVICOS_VIDEO.map(s => {
+                    const active = proposta.servicos.includes(s)
+                    return (
+                      <button key={s} onClick={() => toggleServico(pi, s)}
+                        className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-lg transition-all"
+                        style={active
+                          ? { background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.35)' }
+                          : { background: 'transparent', border: '1px solid transparent' }}>
+                        <span className="w-4 h-4 rounded flex items-center justify-center shrink-0 text-[10px]"
+                          style={active
+                            ? { background: 'rgba(201,168,76,0.8)', color: '#0d0b07' }
+                            : { background: 'rgba(255,255,255,0.06)', color: 'transparent', border: '1px solid rgba(255,255,255,0.12)' }}>
+                          {active ? '✓' : ''}
+                        </span>
+                        <span className="text-xs leading-snug" style={{ color: active ? '#C9A84C' : 'rgba(255,255,255,0.45)' }}>{s}</span>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
 
+              {/* Resumo selecionados */}
+              {proposta.servicos.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {proposta.servicos.map(s => (
+                    <span key={s} className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(201,168,76,0.12)', color: '#C9A84C', border: '0.5px solid rgba(201,168,76,0.3)' }}>
+                      {s}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Valor */}
               <div className="flex flex-col gap-1">
                 <label className="text-xs tracking-widest text-white/30 uppercase">Valor Total</label>
                 <input
