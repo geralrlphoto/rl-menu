@@ -28,7 +28,7 @@ export const TITLE_SIZES: { value: string; label: string; className: string }[] 
 ]
 
 export type ExtraServico = { nome: string; valor: string }
-export type Proposta = { nome: string; servicos_foto: string[]; servicos_video: string[]; extras: ExtraServico[]; valor: string }
+export type Proposta = { nome: string; servicos_foto: string[]; servicos_video: string[]; valor: string }
 
 export type PageContent = {
   hero:         { title: string; titleFont: string; titleSize: string; titleColor: string; brandLine: string; brandColor: string }
@@ -40,6 +40,7 @@ export type PageContent = {
   banner:       { message: string; signature: string }
   proposta:     { password: string; buttonLabel: string }
   propostas:    Proposta[]
+  extras_proposta: ExtraServico[]
   propostaPage: {
     subtitle: string; intro: string
     about: { title: string; text: string; photo: string; videoUrl: string; titlePos: string }
@@ -86,10 +87,11 @@ export const DEFAULT_CONTENT: PageContent = {
   },
   proposta:     { password: '', buttonLabel: 'Ver Proposta Criativa' },
   propostas: [
-    { nome: 'Proposta 1', servicos_foto: [], servicos_video: [], extras: [] as ExtraServico[], valor: '' },
-    { nome: 'Proposta 2', servicos_foto: [], servicos_video: [], extras: [] as ExtraServico[], valor: '' },
-    { nome: 'Proposta 3', servicos_foto: [], servicos_video: [], extras: [] as ExtraServico[], valor: '' },
+    { nome: 'Proposta 1', servicos_foto: [], servicos_video: [], valor: '' },
+    { nome: 'Proposta 2', servicos_foto: [], servicos_video: [], valor: '' },
+    { nome: 'Proposta 3', servicos_foto: [], servicos_video: [], valor: '' },
   ],
+  extras_proposta: [] as ExtraServico[],
   propostaPage: {
     subtitle: 'Uma proposta criada especialmente para vocês.',
     intro: 'A vossa história é única — e é essa unicidade que merece ser preservada para sempre. Cada detalhe, cada olhar, cada momento é parte de algo que nunca mais se repetirá.',
@@ -131,7 +133,8 @@ function merge(saved: any): PageContent {
     about:        { ...DEFAULT_CONTENT.about,        ...(saved.about        || {}) },
     banner:       { ...DEFAULT_CONTENT.banner,       ...(saved.banner       || {}) },
     proposta:     { ...DEFAULT_CONTENT.proposta,     ...(saved.proposta     || {}) },
-    propostas:    saved.propostas || DEFAULT_CONTENT.propostas,
+    propostas:       saved.propostas       || DEFAULT_CONTENT.propostas,
+    extras_proposta: saved.extras_proposta || [],
     propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), about: { ...DEFAULT_CONTENT.propostaPage.about, ...(saved.propostaPage?.about || {}) }, relive: { ...DEFAULT_CONTENT.propostaPage.relive, ...(saved.propostaPage?.relive || {}) }, packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, propostaAtiva: saved.propostaPage?.propostaAtiva ?? 0, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
   }
 }

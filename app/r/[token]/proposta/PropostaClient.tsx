@@ -44,7 +44,8 @@ function mergeContent(saved: any): PageContent {
     about:        { ...DEFAULT_CONTENT.about,        ...(saved.about        || {}) },
     banner:       { ...DEFAULT_CONTENT.banner,       ...(saved.banner       || {}) },
     proposta:     { ...DEFAULT_CONTENT.proposta,     ...(saved.proposta     || {}) },
-    propostas:    saved.propostas || DEFAULT_CONTENT.propostas,
+    propostas:       saved.propostas       || DEFAULT_CONTENT.propostas,
+    extras_proposta: saved.extras_proposta || [],
     propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), about: { ...DEFAULT_CONTENT.propostaPage.about, ...(saved.propostaPage?.about || {}) }, relive: { ...DEFAULT_CONTENT.propostaPage.relive, ...(saved.propostaPage?.relive || {}) }, packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, propostaAtiva: saved.propostaPage?.propostaAtiva ?? 0, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
   }
 }
@@ -557,8 +558,8 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                   </button>
                   {extrasOpen[idx] && (
                     <div className="flex flex-col gap-2.5 pt-3 px-1" style={{ borderLeft: `0.5px solid ${typo.accentColor}25` }}>
-                      {((proposta.extras || []) as ExtraServico[]).length > 0 ? (
-                        ((proposta.extras || []) as ExtraServico[]).map((e, i) => (
+                      {(content.extras_proposta || []).length > 0 ? (
+                        (content.extras_proposta || []).map((e, i) => (
                           <div key={i} className="flex items-center gap-2.5">
                             <span style={{ color: `${typo.accentColor}80`, fontSize: '0.5rem', flexShrink: 0 }}>◆</span>
                             <p className={`${fontClass(typo.bodyFont)} font-light flex-1 leading-snug`} style={{ fontSize: '18px', color: `${typo.bodyColor}CC` }}>{e.nome}</p>

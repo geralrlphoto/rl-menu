@@ -117,7 +117,7 @@ export default function ClientePage() {
 
   // ── Propostas ────────────────────────────────────────────────────────────────
   type ExtraServico = { nome: string; valor: string }
-  type Proposta = { nome: string; servicos_foto: string[]; servicos_video: string[]; extras: ExtraServico[]; valor: string }
+  type Proposta = { nome: string; servicos_foto: string[]; servicos_video: string[]; valor: string }
 
   const SERVICOS_FOTO = [
     '1 Fotógrafo', '2 Fotógrafos', 'Rep. Todo Evento',
@@ -143,11 +143,13 @@ export default function ClientePage() {
   ]
 
   const DEFAULT_PROPOSTAS: Proposta[] = [
-    { nome: 'Proposta 1', servicos_foto: [], servicos_video: [], extras: [] as ExtraServico[], valor: '' },
-    { nome: 'Proposta 2', servicos_foto: [], servicos_video: [], extras: [] as ExtraServico[], valor: '' },
-    { nome: 'Proposta 3', servicos_foto: [], servicos_video: [], extras: [] as ExtraServico[], valor: '' },
+    { nome: 'Proposta 1', servicos_foto: [], servicos_video: [], valor: '' },
+    { nome: 'Proposta 2', servicos_foto: [], servicos_video: [], valor: '' },
+    { nome: 'Proposta 3', servicos_foto: [], servicos_video: [], valor: '' },
   ]
   const [propostas, setPropostas] = useState<Proposta[]>(DEFAULT_PROPOSTAS)
+  const [extrasGlobais, setExtrasGlobais] = useState<ExtraServico[]>([])
+  const [propostaOpen, setPropostaOpen] = useState<Record<number, boolean>>({ 0: true, 1: false, 2: false })
   const [savingPropostas, setSavingPropostas] = useState(false)
   const [savedPropostas, setSavedPropostas] = useState(false)
 
@@ -155,6 +157,7 @@ export default function ClientePage() {
     if (!form.page_content) return
     const pc = typeof form.page_content === 'string' ? JSON.parse(form.page_content) : form.page_content
     if (pc?.propostas) setPropostas(pc.propostas)
+    if (pc?.extras_proposta) setExtrasGlobais(pc.extras_proposta)
   }, [form.page_content])
 
   const handleSavePropostas = async () => {
@@ -162,7 +165,7 @@ export default function ClientePage() {
     const pc = typeof form.page_content === 'string'
       ? JSON.parse(form.page_content || '{}')
       : (form.page_content || {})
-    const newPc = { ...pc, propostas }
+    const newPc = { ...pc, propostas, extras_proposta: extrasGlobais }
     const { error } = await supabase.from('crm_contacts').update({ page_content: newPc }).eq('id', id)
     if (!error) {
       setForm((f: Contact) => ({ ...f, page_content: newPc }))
@@ -177,20 +180,6 @@ export default function ClientePage() {
   const setProposta = (pi: number, key: keyof Proposta, value: string) => {
     setPropostas(prev => prev.map((p, i) => i === pi ? { ...p, [key]: value } : p))
   }
-  const toggleExtra = (pi: number, nome: string) => {
-    setPropostas(prev => prev.map((p, i) => {
-      if (i !== pi) return p
-      const atual: ExtraServico[] = p.extras || []
-      const has = atual.some(e => e.nome === nome)
-      return { ...p, extras: has ? atual.filter(e => e.nome !== nome) : [...atual, { nome, valor: '' }] }
-    }))
-  }
-  const setExtraValor = (pi: number, nome: string, valor: string) => {
-    setPropostas(prev => prev.map((p, i) => {
-      if (i !== pi) return p
-      return { ...p, extras: (p.extras || []).map(e => e.nome === nome ? { ...e, valor } : e) }
-    }))
-  }
   const toggleServico = (pi: number, campo: 'servicos_foto' | 'servicos_video', servico: string) => {
     setPropostas(prev => prev.map((p, i) => {
       if (i !== pi) return p
@@ -198,6 +187,15 @@ export default function ClientePage() {
       const has = atual.includes(servico)
       return { ...p, [campo]: has ? atual.filter(s => s !== servico) : [...atual, servico] }
     }))
+  }
+  const toggleExtraGlobal = (nome: string) => {
+    setExtrasGlobais(prev => {
+      const has = prev.some(e => e.nome === nome)
+      return has ? prev.filter(e => e.nome !== nome) : [...prev, { nome, valor: '' }]
+    })
+  }
+  const setExtraValorGlobal = (nome: string, valor: string) => {
+    setExtrasGlobais(prev => prev.map(e => e.nome === nome ? { ...e, valor } : e))
   }
 
   const handleEnviarReuniao = async () => {
@@ -404,150 +402,169 @@ export default function ClientePage() {
           </div>
 
           {propostas.map((proposta, pi) => (
-            <div key={pi} className="flex flex-col gap-4 p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <div key={pi} className="flex flex-col rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
 
-              {/* Nome */}
-              <div className="flex items-center gap-3">
-                <span className="text-[10px] tracking-[0.4em] text-gold/60 uppercase shrink-0">Proposta {['1','2','3'][pi]}</span>
-                <input
-                  type="text"
-                  value={proposta.nome}
-                  onChange={e => setProposta(pi, 'nome', e.target.value)}
-                  placeholder="Ex: Essencial, Premium, Luxe…"
-                  className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50"
-                />
-              </div>
-
-              {/* Serviços — duas colunas */}
-              <div className="grid grid-cols-2 gap-3">
-
-                {/* Fotografia */}
-                <div className="flex flex-col gap-1.5 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <p className="text-[9px] tracking-[0.4em] text-white/30 uppercase mb-1">📷 Fotografia</p>
-                  {SERVICOS_FOTO.map(s => {
-                    const active = (proposta.servicos_foto || []).includes(s)
-                    return (
-                      <button key={s} onClick={() => toggleServico(pi, 'servicos_foto', s)}
-                        className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-lg transition-all"
-                        style={active
-                          ? { background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.35)' }
-                          : { background: 'transparent', border: '1px solid transparent' }}>
-                        <span className="w-4 h-4 rounded flex items-center justify-center shrink-0 text-[10px]"
-                          style={active
-                            ? { background: 'rgba(201,168,76,0.8)', color: '#0d0b07' }
-                            : { background: 'rgba(255,255,255,0.06)', color: 'transparent', border: '1px solid rgba(255,255,255,0.12)' }}>
-                          {active ? '✓' : ''}
-                        </span>
-                        <span className="text-xs leading-snug" style={{ color: active ? '#C9A84C' : 'rgba(255,255,255,0.45)' }}>{s}</span>
-                      </button>
-                    )
-                  })}
+              {/* Card header — clicável para abrir/fechar */}
+              <button
+                onClick={() => setPropostaOpen(prev => ({ ...prev, [pi]: !prev[pi] }))}
+                className="flex items-center justify-between gap-3 px-4 py-3 w-full text-left transition-colors hover:bg-white/3"
+                style={{ background: 'rgba(255,255,255,0.02)' }}>
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] tracking-[0.4em] text-gold/60 uppercase shrink-0">Proposta {['1','2','3'][pi]}</span>
+                  {proposta.nome && <span className="text-sm text-white/60">{proposta.nome}</span>}
+                  {(proposta.servicos_foto.length + proposta.servicos_video.length) > 0 && (
+                    <span className="text-[9px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(201,168,76,0.12)', color: '#C9A84C', border: '0.5px solid rgba(201,168,76,0.3)' }}>
+                      {proposta.servicos_foto.length + proposta.servicos_video.length} serviços
+                    </span>
+                  )}
                 </div>
+                <span className="text-white/30 text-xs transition-transform" style={{ display: 'inline-block', transform: propostaOpen[pi] ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+              </button>
 
-                {/* Vídeo */}
-                <div className="flex flex-col gap-1.5 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <p className="text-[9px] tracking-[0.4em] text-white/30 uppercase mb-1">🎥 Vídeo</p>
-                  {SERVICOS_VIDEO.map(s => {
-                    const active = (proposta.servicos_video || []).includes(s)
-                    return (
-                      <button key={s} onClick={() => toggleServico(pi, 'servicos_video', s)}
-                        className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-lg transition-all"
-                        style={active
-                          ? { background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.35)' }
-                          : { background: 'transparent', border: '1px solid transparent' }}>
-                        <span className="w-4 h-4 rounded flex items-center justify-center shrink-0 text-[10px]"
-                          style={active
-                            ? { background: 'rgba(201,168,76,0.8)', color: '#0d0b07' }
-                            : { background: 'rgba(255,255,255,0.06)', color: 'transparent', border: '1px solid rgba(255,255,255,0.12)' }}>
-                          {active ? '✓' : ''}
-                        </span>
-                        <span className="text-xs leading-snug" style={{ color: active ? '#C9A84C' : 'rgba(255,255,255,0.45)' }}>{s}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
+              {propostaOpen[pi] && (
+                <div className="flex flex-col gap-4 p-4" style={{ background: 'rgba(255,255,255,0.01)' }}>
 
-              {/* Resumo selecionados */}
-              {((proposta.servicos_foto || []).length > 0 || (proposta.servicos_video || []).length > 0) && (
-                <div className="flex flex-col gap-1.5">
-                  {(proposta.servicos_foto || []).length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                      <span className="text-[9px] text-white/20 uppercase tracking-widest self-center mr-1">📷</span>
-                      {(proposta.servicos_foto || []).map(s => (
-                        <span key={s} className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(201,168,76,0.12)', color: '#C9A84C', border: '0.5px solid rgba(201,168,76,0.3)' }}>{s}</span>
-                      ))}
+                  {/* Nome */}
+                  <input
+                    type="text"
+                    value={proposta.nome}
+                    onChange={e => setProposta(pi, 'nome', e.target.value)}
+                    placeholder="Ex: Essencial, Premium, Luxe…"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50"
+                  />
+
+                  {/* Serviços — duas colunas */}
+                  <div className="grid grid-cols-2 gap-3">
+
+                    {/* Fotografia */}
+                    <div className="flex flex-col gap-1.5 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <p className="text-[9px] tracking-[0.4em] text-white/30 uppercase mb-1">📷 Fotografia</p>
+                      {SERVICOS_FOTO.map(s => {
+                        const active = (proposta.servicos_foto || []).includes(s)
+                        return (
+                          <button key={s} onClick={() => toggleServico(pi, 'servicos_foto', s)}
+                            className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-lg transition-all"
+                            style={active
+                              ? { background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.35)' }
+                              : { background: 'transparent', border: '1px solid transparent' }}>
+                            <span className="w-4 h-4 rounded flex items-center justify-center shrink-0 text-[10px]"
+                              style={active
+                                ? { background: 'rgba(201,168,76,0.8)', color: '#0d0b07' }
+                                : { background: 'rgba(255,255,255,0.06)', color: 'transparent', border: '1px solid rgba(255,255,255,0.12)' }}>
+                              {active ? '✓' : ''}
+                            </span>
+                            <span className="text-xs leading-snug" style={{ color: active ? '#C9A84C' : 'rgba(255,255,255,0.45)' }}>{s}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    {/* Vídeo */}
+                    <div className="flex flex-col gap-1.5 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <p className="text-[9px] tracking-[0.4em] text-white/30 uppercase mb-1">🎥 Vídeo</p>
+                      {SERVICOS_VIDEO.map(s => {
+                        const active = (proposta.servicos_video || []).includes(s)
+                        return (
+                          <button key={s} onClick={() => toggleServico(pi, 'servicos_video', s)}
+                            className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-lg transition-all"
+                            style={active
+                              ? { background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.35)' }
+                              : { background: 'transparent', border: '1px solid transparent' }}>
+                            <span className="w-4 h-4 rounded flex items-center justify-center shrink-0 text-[10px]"
+                              style={active
+                                ? { background: 'rgba(201,168,76,0.8)', color: '#0d0b07' }
+                                : { background: 'rgba(255,255,255,0.06)', color: 'transparent', border: '1px solid rgba(255,255,255,0.12)' }}>
+                              {active ? '✓' : ''}
+                            </span>
+                            <span className="text-xs leading-snug" style={{ color: active ? '#C9A84C' : 'rgba(255,255,255,0.45)' }}>{s}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Resumo selecionados */}
+                  {((proposta.servicos_foto || []).length > 0 || (proposta.servicos_video || []).length > 0) && (
+                    <div className="flex flex-col gap-1.5">
+                      {(proposta.servicos_foto || []).length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          <span className="text-[9px] text-white/20 uppercase tracking-widest self-center mr-1">📷</span>
+                          {(proposta.servicos_foto || []).map(s => (
+                            <span key={s} className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(201,168,76,0.12)', color: '#C9A84C', border: '0.5px solid rgba(201,168,76,0.3)' }}>{s}</span>
+                          ))}
+                        </div>
+                      )}
+                      {(proposta.servicos_video || []).length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          <span className="text-[9px] text-white/20 uppercase tracking-widest self-center mr-1">🎥</span>
+                          {(proposta.servicos_video || []).map(s => (
+                            <span key={s} className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(100,160,255,0.1)', color: '#90b8ff', border: '0.5px solid rgba(100,160,255,0.25)' }}>{s}</span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
-                  {(proposta.servicos_video || []).length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                      <span className="text-[9px] text-white/20 uppercase tracking-widest self-center mr-1">🎥</span>
-                      {(proposta.servicos_video || []).map(s => (
-                        <span key={s} className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(100,160,255,0.1)', color: '#90b8ff', border: '0.5px solid rgba(100,160,255,0.25)' }}>{s}</span>
-                      ))}
+
+                  {/* Valor */}
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs tracking-widest text-white/30 uppercase">Valor Total</label>
+                      <span className="text-[10px] text-white/20">Fotografia + Vídeo</span>
                     </div>
-                  )}
+                    <input
+                      type="text"
+                      value={proposta.valor}
+                      onChange={e => setProposta(pi, 'valor', e.target.value)}
+                      placeholder="Ex: 3 500 €"
+                      className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50"
+                    />
+                  </div>
                 </div>
               )}
-
-              {/* Serviços Extras */}
-              <div className="flex flex-col gap-2 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <p className="text-[9px] tracking-[0.4em] text-white/30 uppercase mb-1">✦ Serviços Extras</p>
-                <div className="grid grid-cols-2 gap-1">
-                  {EXTRAS_OPTIONS.map(s => {
-                    const active = (proposta.extras || []).some(e => e.nome === s)
-                    return (
-                      <button key={s} onClick={() => toggleExtra(pi, s)}
-                        className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-lg transition-all"
-                        style={active
-                          ? { background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.35)' }
-                          : { background: 'transparent', border: '1px solid transparent' }}>
-                        <span className="w-4 h-4 rounded flex items-center justify-center shrink-0 text-[10px]"
-                          style={active
-                            ? { background: 'rgba(201,168,76,0.8)', color: '#0d0b07' }
-                            : { background: 'rgba(255,255,255,0.06)', color: 'transparent', border: '1px solid rgba(255,255,255,0.12)' }}>
-                          {active ? '✓' : ''}
-                        </span>
-                        <span className="text-xs leading-snug" style={{ color: active ? '#C9A84C' : 'rgba(255,255,255,0.45)' }}>{s}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-                {(proposta.extras || []).length > 0 && (
-                  <div className="flex flex-col gap-2 mt-2 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                    <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Valor por serviço extra</p>
-                    {(proposta.extras || []).map(e => (
-                      <div key={e.nome} className="flex items-center gap-2">
-                        <span className="text-[11px] text-white/40 flex-1 truncate">◆ {e.nome}</span>
-                        <input
-                          type="text"
-                          value={e.valor}
-                          onChange={ev => setExtraValor(pi, e.nome, ev.target.value)}
-                          placeholder="Ex: 250 €"
-                          className="w-28 bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white placeholder-white/20 focus:outline-none focus:border-gold/50 text-right"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Valor */}
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs tracking-widest text-white/30 uppercase">Valor Total</label>
-                  <span className="text-[10px] text-white/20">Fotografia + Vídeo</span>
-                </div>
-                <input
-                  type="text"
-                  value={proposta.valor}
-                  onChange={e => setProposta(pi, 'valor', e.target.value)}
-                  placeholder="Ex: 3 500 €"
-                  className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50"
-                />
-              </div>
             </div>
           ))}
+
+          {/* ── Serviços Extras — secção partilhada ──────────────────────────── */}
+          <div className="flex flex-col gap-2 p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <p className="text-[9px] tracking-[0.4em] text-gold/60 uppercase mb-1">✦ Serviços Extras — comuns às 3 propostas</p>
+            <div className="grid grid-cols-2 gap-1">
+              {EXTRAS_OPTIONS.map(s => {
+                const active = extrasGlobais.some(e => e.nome === s)
+                return (
+                  <button key={s} onClick={() => toggleExtraGlobal(s)}
+                    className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-lg transition-all"
+                    style={active
+                      ? { background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.35)' }
+                      : { background: 'transparent', border: '1px solid transparent' }}>
+                    <span className="w-4 h-4 rounded flex items-center justify-center shrink-0 text-[10px]"
+                      style={active
+                        ? { background: 'rgba(201,168,76,0.8)', color: '#0d0b07' }
+                        : { background: 'rgba(255,255,255,0.06)', color: 'transparent', border: '1px solid rgba(255,255,255,0.12)' }}>
+                      {active ? '✓' : ''}
+                    </span>
+                    <span className="text-xs leading-snug" style={{ color: active ? '#C9A84C' : 'rgba(255,255,255,0.45)' }}>{s}</span>
+                  </button>
+                )
+              })}
+            </div>
+            {extrasGlobais.length > 0 && (
+              <div className="flex flex-col gap-2 mt-2 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Valor por serviço extra</p>
+                {extrasGlobais.map(e => (
+                  <div key={e.nome} className="flex items-center gap-2">
+                    <span className="text-[11px] text-white/40 flex-1 truncate">◆ {e.nome}</span>
+                    <input
+                      type="text"
+                      value={e.valor}
+                      onChange={ev => setExtraValorGlobal(e.nome, ev.target.value)}
+                      placeholder="Ex: 250 €"
+                      className="w-28 bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white placeholder-white/20 focus:outline-none focus:border-gold/50 text-right"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Página do Cliente */}
