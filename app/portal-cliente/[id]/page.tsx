@@ -574,12 +574,6 @@ function ContratoPropostaSection({ evento, blocks, settings, contratoDisponivel,
                   </li>
                 ))}
               </ul>
-              {evento.valor_foto && (
-                <div className="px-4 py-3 border-t border-white/[0.06] flex items-center justify-between">
-                  <span className="text-[10px] text-white/25 tracking-widest uppercase">Valor</span>
-                  <span className="text-sm font-semibold text-gold">{(evento.valor_foto as number).toLocaleString('pt-PT')} €</span>
-                </div>
-              )}
             </div>
           )}
 
@@ -599,20 +593,16 @@ function ContratoPropostaSection({ evento, blocks, settings, contratoDisponivel,
                   </li>
                 ))}
               </ul>
-              {evento.valor_video && (
-                <div className="px-4 py-3 border-t border-white/[0.06] flex items-center justify-between">
-                  <span className="text-[10px] text-white/25 tracking-widest uppercase">Valor</span>
-                  <span className="text-sm font-semibold text-gold">{(evento.valor_video as number).toLocaleString('pt-PT')} €</span>
-                </div>
-              )}
             </div>
           )}
         </div>
 
-        {evento.valor_liquido && (
+        {((evento.valor_foto as number ?? 0) + (evento.valor_video as number ?? 0)) > 0 && (
           <div className="mt-4 flex items-center justify-between px-4 py-3 rounded-xl bg-gold/5 border border-gold/20">
             <span className="text-[10px] tracking-widest text-gold/60 uppercase">Total do Serviço</span>
-            <span className="text-gold font-bold text-lg">{(evento.valor_liquido as number).toLocaleString('pt-PT')} €</span>
+            <span className="text-gold font-bold text-lg">
+              {((evento.valor_foto as number ?? 0) + (evento.valor_video as number ?? 0)).toLocaleString('pt-PT')} €
+            </span>
           </div>
         )}
       </div>
