@@ -7,6 +7,9 @@ const MASTER_TOKEN = '85343645-b0d3-4412-ae78-795fd7f8ddf1'
 // propostaAtiva is couple-specific → NOT synced
 const DESIGN_KEYS = ['subtitle', 'intro', 'about', 'relive', 'packages', 'ctaText', 'typography'] as const
 
+// Top-level content fields that are also synced (shared design across all proposals)
+const TOP_LEVEL_DESIGN_KEYS = ['video', 'about', 'testimonials', 'banner'] as const
+
 export async function POST(req: NextRequest) {
   const auth = req.cookies.get('rl_auth')?.value
   if (auth !== process.env.AUTH_SECRET) {
@@ -30,11 +33,19 @@ export async function POST(req: NextRequest) {
 
   const masterPropostaPage = master.page_content.propostaPage ?? {}
 
-  // Extract only design keys from master
+  // Extract only design keys from propostaPage
   const designPatch: Record<string, any> = {}
   for (const key of DESIGN_KEYS) {
     if (masterPropostaPage[key] !== undefined) {
       designPatch[key] = masterPropostaPage[key]
+    }
+  }
+
+  // Extract top-level design fields (e.g. video URLs)
+  const topLevelPatch: Record<string, any> = {}
+  for (const key of TOP_LEVEL_DESIGN_KEYS) {
+    if (master.page_content[key] !== undefined) {
+      topLevelPatch[key] = master.page_content[key]
     }
   }
 
@@ -59,7 +70,7 @@ export async function POST(req: NextRequest) {
       propostaAtiva: currentPropostaPage.propostaAtiva ?? 0,
     }
 
-    const newContent = { ...current, propostaPage: newPropostaPage }
+    const newContent = { ...current, ...topLevelPatch, propostaPage: newPropostaPage }
 
     const { error } = await supabase
       .from('crm_contacts')
