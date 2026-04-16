@@ -620,12 +620,6 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                                 style={{ fontSize: '18px', color: isOn ? typo.bodyColor : `${typo.bodyColor}99` }}>
                                 {e.nome}
                               </p>
-                              {e.valor && (
-                                <p className={`${fontClass(typo.pkgTitleFont)} italic shrink-0`}
-                                  style={{ fontSize: '15px', color: isOn ? typo.accentColor : `${typo.accentColor}70` }}>
-                                  {e.valor.trim().includes('€') ? e.valor : `${e.valor} €`}
-                                </p>
-                              )}
                             </button>
                           )
                         })
