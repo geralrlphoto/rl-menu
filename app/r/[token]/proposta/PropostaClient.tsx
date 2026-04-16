@@ -449,7 +449,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.1 }}>
                 o grande dia
               </h2>
-              <div className="flex flex-col gap-4" style={{ fontSize: '14px', color: typo.bodyColor, opacity: 0.75, lineHeight: 1.75 }}>
+              <div className="flex flex-col gap-4" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.75, lineHeight: 1.75 }}>
                 <p>Nas preparações (sempre que possível), normalmente o que aconselhamos é reunir com as noivas <strong style={{ color: typo.accentColor, fontWeight: 500 }}>1 hora e 45 minutos</strong> e com os noivos cerca de <strong style={{ color: typo.accentColor, fontWeight: 500 }}>1 hora</strong>, antes da saída para a cerimónia.</p>
                 <p>Por norma gostamos de chegar ao local da cerimónia <strong style={{ color: typo.accentColor, fontWeight: 500 }}>20 minutos antes</strong> do seu início, para conseguirmos recolher imagens do local antes do verdadeiro SIM.</p>
                 <p>Junto à golden hour recomendamos reservarem <strong style={{ color: typo.accentColor, fontWeight: 500 }}>30 minutos</strong> (no máx.) para a sessão de casal.</p>
@@ -458,7 +458,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
             </div>
 
             {/* Direita — imagem grande */}
-            <div className="flex-shrink-0" style={{ width: 'clamp(280px,44vw,540px)' }}>
+            <div className="flex-shrink-0" style={{ width: 'clamp(200px,30vw,360px)' }}>
               {pp.about?.photo
                 ? <img src={pp.about.photo} alt="O Grande Dia"
                     className="w-full h-auto"
