@@ -439,13 +439,15 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       case 'pkg-1':
       case 'pkg-2': {
         const idx = parseInt(id.split('-')[1])
-        const proposta: Proposta = content.propostas?.[idx] || { nome: '', servicos: [], valor: '' }
+        const proposta: Proposta = content.propostas?.[idx] || { nome: '', servicos_foto: [], servicos_video: [], valor: '' }
         const isAtiva = (pp.propostaAtiva ?? 0) === idx
-        const nums = ['I', 'II', 'III']
         const labels = ['A', 'B', 'C']
+        const hasFoto  = (proposta.servicos_foto  || []).length > 0
+        const hasVideo = (proposta.servicos_video || []).length > 0
+        const hasAny   = hasFoto || hasVideo
         return (
           <div className="flex flex-col items-center justify-center h-full px-8 sm:px-16 gap-0">
-            <div className="w-full max-w-xl relative p-10 sm:p-14 text-center"
+            <div className="w-full max-w-xl relative p-8 sm:p-12 text-center"
               style={{ border: `0.5px solid ${typo.accentColor}${isAtiva ? '99' : '4D'}`, background: isAtiva ? 'linear-gradient(160deg, rgba(201,168,76,0.12) 0%, rgba(201,168,76,0.04) 100%)' : 'linear-gradient(160deg, rgba(201,168,76,0.07) 0%, rgba(201,168,76,0.02) 100%)' }}>
               <div className="absolute top-0 left-0 w-8 h-8"  style={{ borderTop: `1px solid ${typo.accentColor}99`, borderLeft:  `1px solid ${typo.accentColor}99` }} />
               <div className="absolute top-0 right-0 w-8 h-8" style={{ borderTop: `1px solid ${typo.accentColor}99`, borderRight: `1px solid ${typo.accentColor}99` }} />
@@ -457,25 +459,50 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                   Recomendado
                 </div>
               )}
-              <p className="text-[10px] tracking-[0.5em] text-white/20 uppercase mb-6">Proposta {labels[idx]}</p>
-              <h2 className={`${fontClass(typo.pkgTitleFont)} italic font-light mb-5`} style={{ fontSize: 'clamp(2.2rem,6vw,3.5rem)', color: typo.pkgTitleColor, lineHeight: 1.1 }}>
+              <p className="text-[10px] tracking-[0.5em] text-white/20 uppercase mb-4">Proposta {labels[idx]}</p>
+              <h2 className={`${fontClass(typo.pkgTitleFont)} italic font-light mb-4`} style={{ fontSize: 'clamp(2rem,5vw,3rem)', color: typo.pkgTitleColor, lineHeight: 1.1 }}>
                 {proposta.nome || `Proposta ${labels[idx]}`}
               </h2>
-              <div className="h-px mb-6" style={{ background: `${typo.accentColor}33` }} />
-              {(proposta.servicos || []).filter(Boolean).length > 0 ? (
-                <div className="flex flex-col gap-2 mb-8 text-left">
-                  {(proposta.servicos || []).filter(Boolean).map((s, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <span style={{ color: typo.accentColor, fontSize: '0.6rem', marginTop: '4px', flexShrink: 0 }}>◆</span>
-                      <p className={`${fontClass(typo.bodyFont)} font-light text-sm leading-snug`} style={{ color: typo.bodyColor }}>{s}</p>
+              <div className="h-px mb-5" style={{ background: `${typo.accentColor}33` }} />
+
+              {hasAny ? (
+                <div className={`flex gap-6 mb-6 ${hasFoto && hasVideo ? 'flex-row' : 'flex-col items-center'}`}>
+                  {hasFoto && (
+                    <div className="flex-1 text-left">
+                      <p className="text-[9px] tracking-[0.35em] text-white/25 uppercase mb-2">Fotografia</p>
+                      <div className="flex flex-col gap-1.5">
+                        {(proposta.servicos_foto || []).map((s, i) => (
+                          <div key={i} className="flex items-start gap-2">
+                            <span style={{ color: typo.accentColor, fontSize: '0.55rem', marginTop: '5px', flexShrink: 0 }}>◆</span>
+                            <p className={`${fontClass(typo.bodyFont)} font-light text-sm leading-snug`} style={{ color: typo.bodyColor }}>{s}</p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ))}
+                  )}
+                  {hasFoto && hasVideo && (
+                    <div className="w-px self-stretch" style={{ background: `${typo.accentColor}20` }} />
+                  )}
+                  {hasVideo && (
+                    <div className="flex-1 text-left">
+                      <p className="text-[9px] tracking-[0.35em] text-white/25 uppercase mb-2">Vídeo</p>
+                      <div className="flex flex-col gap-1.5">
+                        {(proposta.servicos_video || []).map((s, i) => (
+                          <div key={i} className="flex items-start gap-2">
+                            <span style={{ color: typo.accentColor, fontSize: '0.55rem', marginTop: '5px', flexShrink: 0 }}>◆</span>
+                            <p className={`${fontClass(typo.bodyFont)} font-light text-sm leading-snug`} style={{ color: typo.bodyColor }}>{s}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
-                <p className={`${fontClass(typo.bodyFont)} text-sm leading-relaxed mb-8 font-light text-center`} style={{ color: `${typo.bodyColor}60` }}>
+                <p className={`${fontClass(typo.bodyFont)} text-sm leading-relaxed mb-6 font-light text-center`} style={{ color: `${typo.bodyColor}60` }}>
                   Serviços a definir no CRM
                 </p>
               )}
+
               {proposta.valor && (
                 <p className={`${fontClass(typo.pkgTitleFont)} text-2xl italic`} style={{ color: typo.titleColor, opacity: 0.85 }}>{proposta.valor}</p>
               )}
@@ -716,12 +743,15 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 <div className="flex flex-col gap-2">
                   {[0,1,2].map(i => {
                     const p = content.propostas?.[i]
+                    const sf = p?.servicos_foto?.filter(Boolean) || []
+                    const sv = p?.servicos_video?.filter(Boolean) || []
                     return (
                       <div key={i} className="p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
                         <p className="text-[10px] tracking-widest text-white/25 uppercase mb-1">{p?.nome || `Proposta ${['A','B','C'][i]}`}</p>
-                        {p?.servicos?.filter(Boolean).map((s, j) => <p key={j} className="text-[11px] text-white/40 ml-2">◆ {s}</p>)}
+                        {sf.length > 0 && <><p className="text-[9px] text-white/20 mt-1">📷 Foto</p>{sf.map((s, j) => <p key={j} className="text-[11px] text-white/35 ml-2">◆ {s}</p>)}</>}
+                        {sv.length > 0 && <><p className="text-[9px] text-white/20 mt-1">🎥 Vídeo</p>{sv.map((s, j) => <p key={j} className="text-[11px] text-white/35 ml-2">◆ {s}</p>)}</>}
                         {p?.valor && <p className="text-[11px] text-gold/60 mt-1 font-mono">{p.valor}</p>}
-                        {(!p?.servicos?.filter(Boolean).length) && <p className="text-[11px] text-white/20 italic">Sem serviços — define no CRM</p>}
+                        {!sf.length && !sv.length && <p className="text-[11px] text-white/20 italic">Sem serviços — define no CRM</p>}
                       </div>
                     )
                   })}

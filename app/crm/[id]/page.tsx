@@ -116,7 +116,7 @@ export default function ClientePage() {
   const [copied, setCopied] = useState(false)
 
   // ── Propostas ────────────────────────────────────────────────────────────────
-  type Proposta = { nome: string; servicos: string[]; valor: string }
+  type Proposta = { nome: string; servicos_foto: string[]; servicos_video: string[]; valor: string }
 
   const SERVICOS_FOTO = [
     '1 Fotógrafo', '2 Fotógrafos', 'Rep. Todo Evento',
@@ -133,9 +133,9 @@ export default function ClientePage() {
   ]
 
   const DEFAULT_PROPOSTAS: Proposta[] = [
-    { nome: 'Proposta A', servicos: [], valor: '' },
-    { nome: 'Proposta B', servicos: [], valor: '' },
-    { nome: 'Proposta C', servicos: [], valor: '' },
+    { nome: 'Proposta A', servicos_foto: [], servicos_video: [], valor: '' },
+    { nome: 'Proposta B', servicos_foto: [], servicos_video: [], valor: '' },
+    { nome: 'Proposta C', servicos_foto: [], servicos_video: [], valor: '' },
   ]
   const [propostas, setPropostas] = useState<Proposta[]>(DEFAULT_PROPOSTAS)
   const [savingPropostas, setSavingPropostas] = useState(false)
@@ -167,11 +167,12 @@ export default function ClientePage() {
   const setProposta = (pi: number, key: keyof Proposta, value: string) => {
     setPropostas(prev => prev.map((p, i) => i === pi ? { ...p, [key]: value } : p))
   }
-  const toggleServico = (pi: number, servico: string) => {
+  const toggleServico = (pi: number, campo: 'servicos_foto' | 'servicos_video', servico: string) => {
     setPropostas(prev => prev.map((p, i) => {
       if (i !== pi) return p
-      const has = p.servicos.includes(servico)
-      return { ...p, servicos: has ? p.servicos.filter(s => s !== servico) : [...p.servicos, servico] }
+      const atual = p[campo] || []
+      const has = atual.includes(servico)
+      return { ...p, [campo]: has ? atual.filter(s => s !== servico) : [...atual, servico] }
     }))
   }
 
@@ -400,9 +401,9 @@ export default function ClientePage() {
                 <div className="flex flex-col gap-1.5 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
                   <p className="text-[9px] tracking-[0.4em] text-white/30 uppercase mb-1">📷 Fotografia</p>
                   {SERVICOS_FOTO.map(s => {
-                    const active = proposta.servicos.includes(s)
+                    const active = (proposta.servicos_foto || []).includes(s)
                     return (
-                      <button key={s} onClick={() => toggleServico(pi, s)}
+                      <button key={s} onClick={() => toggleServico(pi, 'servicos_foto', s)}
                         className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-lg transition-all"
                         style={active
                           ? { background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.35)' }
@@ -423,9 +424,9 @@ export default function ClientePage() {
                 <div className="flex flex-col gap-1.5 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
                   <p className="text-[9px] tracking-[0.4em] text-white/30 uppercase mb-1">🎥 Vídeo</p>
                   {SERVICOS_VIDEO.map(s => {
-                    const active = proposta.servicos.includes(s)
+                    const active = (proposta.servicos_video || []).includes(s)
                     return (
-                      <button key={s} onClick={() => toggleServico(pi, s)}
+                      <button key={s} onClick={() => toggleServico(pi, 'servicos_video', s)}
                         className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-lg transition-all"
                         style={active
                           ? { background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.35)' }
@@ -444,13 +445,24 @@ export default function ClientePage() {
               </div>
 
               {/* Resumo selecionados */}
-              {proposta.servicos.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {proposta.servicos.map(s => (
-                    <span key={s} className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(201,168,76,0.12)', color: '#C9A84C', border: '0.5px solid rgba(201,168,76,0.3)' }}>
-                      {s}
-                    </span>
-                  ))}
+              {((proposta.servicos_foto || []).length > 0 || (proposta.servicos_video || []).length > 0) && (
+                <div className="flex flex-col gap-1.5">
+                  {(proposta.servicos_foto || []).length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      <span className="text-[9px] text-white/20 uppercase tracking-widest self-center mr-1">📷</span>
+                      {(proposta.servicos_foto || []).map(s => (
+                        <span key={s} className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(201,168,76,0.12)', color: '#C9A84C', border: '0.5px solid rgba(201,168,76,0.3)' }}>{s}</span>
+                      ))}
+                    </div>
+                  )}
+                  {(proposta.servicos_video || []).length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      <span className="text-[9px] text-white/20 uppercase tracking-widest self-center mr-1">🎥</span>
+                      {(proposta.servicos_video || []).map(s => (
+                        <span key={s} className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(100,160,255,0.1)', color: '#90b8ff', border: '0.5px solid rgba(100,160,255,0.25)' }}>{s}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
