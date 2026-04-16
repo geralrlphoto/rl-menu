@@ -776,10 +776,10 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         <div className="flex items-center justify-center h-full w-full px-8 sm:px-16 py-8">
           <div className="w-full max-w-5xl flex flex-col gap-6">
 
-            <p className={`${fontClass(typo.titleFont)} font-light italic`}
+            <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
               style={{ fontSize: 'clamp(1.6rem,3.5vw,2.8rem)', color: typo.titleColor, lineHeight: 1.1 }}>
-              {pp.ctaText}
-            </p>
+              Informações Gerais
+            </h2>
 
             <div className="h-px" style={{ background: `${typo.accentColor}25` }} />
 
