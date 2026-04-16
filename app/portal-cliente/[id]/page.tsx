@@ -2392,7 +2392,7 @@ function PortalSubPageContent() {
                                       </span>
                                     )}
                                   </div>
-                                  <div className={`grid gap-3 ${notionServicos.servico_foto.length > 0 && notionServicos.servico_video.length > 0 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+                                  <div className="grid gap-3 grid-cols-1">
                                     {notionServicos.servico_video.length > 0 && (
                                       <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
                                         <div className="px-3 py-2.5 border-b border-white/[0.05] flex items-center gap-2">
