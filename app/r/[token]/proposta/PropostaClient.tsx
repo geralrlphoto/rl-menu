@@ -144,6 +144,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   // Slides
   const [current,   setCurrent]   = useState(0)
   const [direction, setDirection] = useState<'right' | 'left'>('right')
+  const [extrasOpen, setExtrasOpen] = useState<Record<number, boolean>>({})
 
   // Editor
   const [editorOpen,    setEditorOpen]    = useState(false)
@@ -547,6 +548,29 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full gap-3 opacity-30">
                     <p className="text-[10px] tracking-[0.4em] uppercase" style={{ color: typo.bodyColor }}>Serviços a definir no CRM</p>
+                  </div>
+                )}
+
+                {/* Serviços Extras accordion */}
+                {(proposta.extras || []).length > 0 && (
+                  <div className="mt-4">
+                    <button
+                      onClick={() => setExtrasOpen(prev => ({ ...prev, [idx]: !prev[idx] }))}
+                      className="flex items-center gap-2 px-4 py-2 transition-all w-full"
+                      style={{ border: `0.5px solid ${typo.accentColor}50`, color: typo.accentColor, background: `${typo.accentColor}0D` }}>
+                      <span className="text-[10px] tracking-[0.35em] uppercase flex-1 text-left">✦ Serviços Extras</span>
+                      <span className="text-xs transition-transform" style={{ transform: extrasOpen[idx] ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+                    </button>
+                    {extrasOpen[idx] && (
+                      <div className="flex flex-col gap-2 pt-3 px-1" style={{ borderLeft: `0.5px solid ${typo.accentColor}25` }}>
+                        {(proposta.extras || []).map((s, i) => (
+                          <div key={i} className="flex items-start gap-2.5">
+                            <span style={{ color: `${typo.accentColor}80`, fontSize: '0.5rem', marginTop: '5px', flexShrink: 0 }}>◆</span>
+                            <p className={`${fontClass(typo.bodyFont)} font-light leading-snug`} style={{ fontSize: '18px', color: `${typo.bodyColor}CC` }}>{s}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

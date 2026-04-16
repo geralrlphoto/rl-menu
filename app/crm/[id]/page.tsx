@@ -116,7 +116,7 @@ export default function ClientePage() {
   const [copied, setCopied] = useState(false)
 
   // ── Propostas ────────────────────────────────────────────────────────────────
-  type Proposta = { nome: string; servicos_foto: string[]; servicos_video: string[]; valor: string }
+  type Proposta = { nome: string; servicos_foto: string[]; servicos_video: string[]; extras: string[]; valor: string }
 
   const SERVICOS_FOTO = [
     '1 Fotógrafo', '2 Fotógrafos', 'Rep. Todo Evento',
@@ -133,11 +133,18 @@ export default function ClientePage() {
     'Drone', 'Same Day Edit', 'Trailer', 'Teaser',
     'Relive Wedding', 'Entrega por Link', 'Entrega em Pen Box',
   ]
+  const EXTRAS_OPTIONS = [
+    '1 Fotógrafo', '2 Fotógrafos', 'Sessão Pré-Wedding', 'Sessão TTD',
+    'Álbum 25×25 — 40 Fotos', 'Álbum 30×30 — 60 Fotos',
+    'Foto Lembrança', 'Galerias Open', 'Entrega por Link', 'Entrega em Pen Box', 'Deslocação',
+    '1 Videógrafo', '2 Videógrafos', 'Drone', 'Same Day Edit', 'Trailer', 'Teaser',
+    'Relive Wedding', 'Vídeo até 20 min | Full HD',
+  ]
 
   const DEFAULT_PROPOSTAS: Proposta[] = [
-    { nome: 'Proposta A', servicos_foto: [], servicos_video: [], valor: '' },
-    { nome: 'Proposta B', servicos_foto: [], servicos_video: [], valor: '' },
-    { nome: 'Proposta C', servicos_foto: [], servicos_video: [], valor: '' },
+    { nome: 'Proposta 1', servicos_foto: [], servicos_video: [], extras: [], valor: '' },
+    { nome: 'Proposta 2', servicos_foto: [], servicos_video: [], extras: [], valor: '' },
+    { nome: 'Proposta 3', servicos_foto: [], servicos_video: [], extras: [], valor: '' },
   ]
   const [propostas, setPropostas] = useState<Proposta[]>(DEFAULT_PROPOSTAS)
   const [savingPropostas, setSavingPropostas] = useState(false)
@@ -168,6 +175,14 @@ export default function ClientePage() {
 
   const setProposta = (pi: number, key: keyof Proposta, value: string) => {
     setPropostas(prev => prev.map((p, i) => i === pi ? { ...p, [key]: value } : p))
+  }
+  const toggleExtra = (pi: number, servico: string) => {
+    setPropostas(prev => prev.map((p, i) => {
+      if (i !== pi) return p
+      const atual = p.extras || []
+      const has = atual.includes(servico)
+      return { ...p, extras: has ? atual.filter(s => s !== servico) : [...atual, servico] }
+    }))
   }
   const toggleServico = (pi: number, campo: 'servicos_foto' | 'servicos_video', servico: string) => {
     setPropostas(prev => prev.map((p, i) => {
@@ -467,6 +482,38 @@ export default function ClientePage() {
                   )}
                 </div>
               )}
+
+              {/* Serviços Extras */}
+              <div className="flex flex-col gap-2 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <p className="text-[9px] tracking-[0.4em] text-white/30 uppercase mb-1">✦ Serviços Extras</p>
+                <div className="grid grid-cols-2 gap-1">
+                  {EXTRAS_OPTIONS.map(s => {
+                    const active = (proposta.extras || []).includes(s)
+                    return (
+                      <button key={s} onClick={() => toggleExtra(pi, s)}
+                        className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-lg transition-all"
+                        style={active
+                          ? { background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.35)' }
+                          : { background: 'transparent', border: '1px solid transparent' }}>
+                        <span className="w-4 h-4 rounded flex items-center justify-center shrink-0 text-[10px]"
+                          style={active
+                            ? { background: 'rgba(201,168,76,0.8)', color: '#0d0b07' }
+                            : { background: 'rgba(255,255,255,0.06)', color: 'transparent', border: '1px solid rgba(255,255,255,0.12)' }}>
+                          {active ? '✓' : ''}
+                        </span>
+                        <span className="text-xs leading-snug" style={{ color: active ? '#C9A84C' : 'rgba(255,255,255,0.45)' }}>{s}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+                {(proposta.extras || []).length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {(proposta.extras || []).map(s => (
+                      <span key={s} className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(180,120,255,0.1)', color: '#c9a0ff', border: '0.5px solid rgba(180,120,255,0.25)' }}>{s}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Valor */}
               <div className="flex flex-col gap-1">
