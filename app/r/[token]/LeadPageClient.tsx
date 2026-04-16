@@ -16,15 +16,15 @@ export const FONTS: { value: string; label: string; className: string }[] = [
 export const SIZES: { value: string; label: string; className: string }[] = [
   { value: 'sm',  label: 'S',  className: 'text-2xl' },
   { value: 'md',  label: 'M',  className: 'text-4xl' },
-  { value: 'lg',  label: 'L',  className: 'text-5xl sm:text-6xl' },
-  { value: 'xl',  label: 'XL', className: 'text-6xl sm:text-7xl' },
+  { value: 'lg',  label: 'L',  className: 'text-3xl sm:text-6xl' },
+  { value: 'xl',  label: 'XL', className: 'text-4xl sm:text-7xl' },
 ]
 
 export const TITLE_SIZES: { value: string; label: string; className: string }[] = [
   { value: 'sm',  label: 'S',  className: 'text-4xl sm:text-5xl' },
-  { value: 'md',  label: 'M',  className: 'text-5xl sm:text-6xl' },
-  { value: 'lg',  label: 'L',  className: 'text-6xl sm:text-7xl' },
-  { value: 'xl',  label: 'XL', className: 'text-7xl sm:text-8xl' },
+  { value: 'md',  label: 'M',  className: 'text-2xl sm:text-6xl' },
+  { value: 'lg',  label: 'L',  className: 'text-3xl sm:text-7xl' },
+  { value: 'xl',  label: 'XL', className: 'text-4xl sm:text-8xl' },
 ]
 
 export type ExtraServico = { nome: string; valor: string }
@@ -506,7 +506,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
       )}
 
       {/* ── HERO ── */}
-      <section id="sec-reuniao" className={`relative min-h-[70vh] sm:min-h-[80vh] flex items-end justify-center pb-12 overflow-hidden ${isAdmin ? 'pt-10' : ''}`}>
+      <section id="sec-reuniao" className={`relative min-h-[85vh] sm:min-h-[80vh] flex items-end justify-center pb-12 overflow-hidden ${isAdmin ? 'pt-10' : ''}`}>
         <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${heroImage})` }}>
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-black/90" />
         </div>
@@ -544,7 +544,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
           </button>
         )}
 
-        <div className="relative z-10 text-center px-4 pt-20">
+        <div className="relative z-10 text-center px-4 pt-12 sm:pt-20">
           <FadeIn delay={80} className="flex items-center justify-center gap-3 mb-4">
             <Leaf />
             <p className={`${fontClass(hero.titleFont)} text-sm sm:text-base tracking-[0.4em] uppercase italic`} style={{ color: hero.brandColor }}>
@@ -572,14 +572,14 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
               {countdown.title}
             </p>
           </FadeIn>
-          <FadeIn delay={150} className="flex items-center justify-center gap-4">
+          <FadeIn delay={150} className="flex items-center justify-center gap-2 sm:gap-4">
             <Leaf /><Countdown targetDate={targetDate} /><Leaf flip />
           </FadeIn>
         </section>
       )}
 
       {/* ── CARD REUNIÃO ── */}
-      <section className="flex flex-col items-center px-6 py-14">
+      <section className="flex flex-col items-center px-6 py-10 sm:py-14">
         <FadeIn className="w-full max-w-sm">
         <div className="w-full border border-white/10 rounded-2xl overflow-hidden mb-8" style={{ background: 'rgba(255,255,255,0.03)' }}>
           <div className="px-6 py-4 border-b border-white/8">
@@ -634,7 +634,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
           {/* Confirmar — só se ainda não confirmou */}
           {status !== 'confirmada' && (
             <button onClick={handleConfirm} disabled={confirming || isAdmin}
-              className="w-full py-4 rounded-2xl text-sm font-semibold tracking-[0.15em] uppercase transition-all disabled:opacity-50"
+              className="w-full py-3.5 rounded-2xl text-sm font-semibold tracking-[0.15em] uppercase transition-all disabled:opacity-50"
               style={{ background: '#C9A84C', color: '#0a0a0a' }}>
               {confirming ? 'A confirmar...' : 'Confirmar Reunião'}
             </button>
@@ -642,7 +642,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
 
           {/* Alterar — sempre visível */}
           <button onClick={handleChangeRequest} disabled={requesting || isAdmin}
-            className="w-full py-4 rounded-2xl text-sm tracking-[0.15em] uppercase transition-all disabled:opacity-50"
+            className="w-full py-3.5 rounded-2xl text-sm tracking-[0.15em] uppercase transition-all disabled:opacity-50"
             style={{ color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}>
             {requesting ? 'A enviar...' : 'Alterar Reunião'}
           </button>
@@ -700,7 +700,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
       {(video.urls.some(u => u) || isAdmin) && (
         <section id="sec-video" className="px-6 py-14 flex flex-col items-center" style={{ background: '#0d0d0d' }}>
           <FadeIn><p className="text-xs tracking-[0.35em] text-white/25 uppercase mb-2">{video.label}</p></FadeIn>
-          <FadeIn delay={120}><h2 className="font-cormorant text-3xl font-light mb-8 text-center text-white/90">{video.title}</h2></FadeIn>
+          <FadeIn delay={120}><h2 className="font-cormorant text-xl sm:text-3xl font-light mb-8 text-center text-white/90">{video.title}</h2></FadeIn>
           <FadeIn delay={240} className="w-full max-w-7xl">
           <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-5">
             {video.urls.map((url, i) => {
@@ -733,7 +733,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
       <section id="sec-portfolio" className="px-6 py-14 flex flex-col items-center">
         <FadeIn><p className="text-xs tracking-[0.35em] text-white/25 uppercase mb-2">{portfolio.label}</p></FadeIn>
         <FadeIn delay={120}>
-          <h2 className={`${fontClass(portfolio.titleFont)} text-3xl font-light mb-8 text-center`} style={{ color: portfolio.titleColor }}>
+          <h2 className={`${fontClass(portfolio.titleFont)} text-xl sm:text-3xl font-light mb-8 text-center`} style={{ color: portfolio.titleColor }}>
             {portfolio.title}
           </h2>
         </FadeIn>
@@ -761,7 +761,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
           <FadeIn key={i} delay={i * 150} className="w-full">
             <div className="flex flex-col items-center gap-4 w-full">
               <blockquote className="text-center">
-                <p className="font-cormorant text-xl text-white/70 italic font-light leading-relaxed mb-3">"{item.text}"</p>
+                <p className="font-cormorant text-base sm:text-xl text-white/70 italic font-light leading-relaxed mb-3">"{item.text}"</p>
                 <cite className="text-xs tracking-[0.2em] text-gold/60 not-italic">{item.author}</cite>
               </blockquote>
               {i < testimonials.items.length - 1 && <div className="w-8 h-px" style={{ background: 'rgba(201,168,76,0.2)' }} />}
@@ -789,7 +789,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
             {/* Divisor vertical */}
             <div className="absolute top-8 bottom-8 hidden sm:block" style={{ left: '62%', width: '0.5px', background: 'rgba(201,168,76,0.2)' }} />
 
-            <div className="relative z-10 flex flex-col sm:flex-row items-center px-10 sm:px-14 py-10 gap-8 sm:gap-10">
+            <div className="relative z-10 flex flex-col sm:flex-row items-center px-6 sm:px-14 py-8 sm:py-10 gap-8 sm:gap-10">
 
               {/* Esquerda — frase */}
               <div className="flex-1 flex flex-col gap-3 sm:pr-8">
@@ -804,7 +804,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
               </div>
 
               {/* Direita — botão + logo */}
-              <div className="flex flex-col items-center gap-5 sm:pl-8" style={{ minWidth: '200px' }}>
+              <div className="flex flex-col items-center gap-5 sm:pl-8">
                 <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
                   alt="RL" className="w-10 h-auto opacity-60" />
                 <a href={`/r/${token}/proposta`}
@@ -823,10 +823,10 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
       <div className="w-full max-w-sm mx-auto h-px" style={{ background: 'rgba(201,168,76,0.15)' }} />
 
       {/* ── SOBRE NÓS ── */}
-      <section id="sec-sobre" className="px-6 py-14 flex flex-col items-center max-w-sm mx-auto text-center">
+      <section id="sec-sobre" className="px-6 py-14 flex flex-col items-center max-w-lg mx-auto text-center">
         <FadeIn><p className="text-xs tracking-[0.35em] text-white/25 uppercase mb-2">{about.label}</p></FadeIn>
         <FadeIn delay={120}>
-          <h2 className={`${fontClass(about.titleFont)} text-3xl font-light mb-6`} style={{ color: about.titleColor }}>
+          <h2 className={`${fontClass(about.titleFont)} text-xl sm:text-3xl font-light mb-6`} style={{ color: about.titleColor }}>
             {about.title}
           </h2>
         </FadeIn>
