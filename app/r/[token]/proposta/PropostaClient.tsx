@@ -552,33 +552,35 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 )}
 
                 {/* Serviços Extras accordion */}
-                {(proposta.extras || []).length > 0 && (
-                  <div className="mt-4">
+                <div className="mt-4">
                     <button
                       onClick={() => setExtrasOpen(prev => ({ ...prev, [idx]: !prev[idx] }))}
                       className="flex items-center gap-2 px-4 py-2 transition-all w-full"
                       style={{ border: `0.5px solid ${typo.accentColor}50`, color: typo.accentColor, background: `${typo.accentColor}0D` }}>
                       <span className="text-[10px] tracking-[0.35em] uppercase flex-1 text-left">✦ Serviços Extras</span>
-                      <span className="text-xs transition-transform" style={{ transform: extrasOpen[idx] ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+                      <span className="text-xs" style={{ transform: extrasOpen[idx] ? 'rotate(180deg)' : 'rotate(0deg)', display: 'inline-block', transition: 'transform 0.2s' }}>▼</span>
                     </button>
                     {extrasOpen[idx] && (
                       <div className="flex flex-col gap-2.5 pt-3 px-1" style={{ borderLeft: `0.5px solid ${typo.accentColor}25` }}>
-                        {(proposta.extras as ExtraServico[] || []).map((e, i) => (
-                          <div key={i} className="flex items-center gap-2.5">
-                            <span style={{ color: `${typo.accentColor}80`, fontSize: '0.5rem', flexShrink: 0 }}>◆</span>
-                            <p className={`${fontClass(typo.bodyFont)} font-light flex-1 leading-snug`} style={{ fontSize: '18px', color: `${typo.bodyColor}CC` }}>{e.nome}</p>
-                            {e.valor && (
-                              <p className={`${fontClass(typo.pkgTitleFont)} italic shrink-0`}
-                                style={{ fontSize: '15px', color: typo.accentColor }}>
-                                {e.valor.trim().includes('€') ? e.valor : `${e.valor} €`}
-                              </p>
-                            )}
-                          </div>
-                        ))}
+                        {(proposta.extras as ExtraServico[] || []).length > 0 ? (
+                          (proposta.extras as ExtraServico[]).map((e, i) => (
+                            <div key={i} className="flex items-center gap-2.5">
+                              <span style={{ color: `${typo.accentColor}80`, fontSize: '0.5rem', flexShrink: 0 }}>◆</span>
+                              <p className={`${fontClass(typo.bodyFont)} font-light flex-1 leading-snug`} style={{ fontSize: '18px', color: `${typo.bodyColor}CC` }}>{e.nome}</p>
+                              {e.valor && (
+                                <p className={`${fontClass(typo.pkgTitleFont)} italic shrink-0`}
+                                  style={{ fontSize: '15px', color: typo.accentColor }}>
+                                  {e.valor.trim().includes('€') ? e.valor : `${e.valor} €`}
+                                </p>
+                              )}
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-[11px] italic" style={{ color: `${typo.bodyColor}40` }}>Sem serviços extras definidos</p>
+                        )}
                       </div>
                     )}
                   </div>
-                )}
               </div>
             </div>
           </div>
