@@ -988,30 +988,29 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 </Field>
 
                 <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
-                <AccordionSection title="O Grande Dia">
-                  <Field label="Título">
-                    <TInput value={pp.grandeDia?.title || ''} onChange={v => setGrandeDia('title', v)} />
-                  </Field>
-                  <Field label="Parágrafo 1">
-                    <TInput value={pp.grandeDia?.p1 || ''} onChange={v => setGrandeDia('p1', v)} multiline />
-                  </Field>
-                  <Field label="Parágrafo 2">
-                    <TInput value={pp.grandeDia?.p2 || ''} onChange={v => setGrandeDia('p2', v)} multiline />
-                  </Field>
-                  <Field label="Parágrafo 3">
-                    <TInput value={pp.grandeDia?.p3 || ''} onChange={v => setGrandeDia('p3', v)} multiline />
-                  </Field>
-                  <Field label="Nota de rodapé">
-                    <TInput value={pp.grandeDia?.note || ''} onChange={v => setGrandeDia('note', v)} multiline />
-                  </Field>
-                  <Field label="Imagem">
-                    <label className="flex items-center justify-center w-full py-2.5 rounded-lg border border-dashed border-white/15 hover:border-gold/40 cursor-pointer text-white/30 hover:text-gold/70 transition-all text-xs gap-2">
-                      <input type="file" accept="image/*" className="hidden"
-                        onChange={e => { const f = e.target.files?.[0]; if (f) handleGrandeDiaUpload(f) }} />
-                      {uploadingRelive ? '⏳ A carregar...' : pp.grandeDia?.imageUrl ? '✓ Trocar imagem' : '⬆ Carregar imagem'}
-                    </label>
-                  </Field>
-                </AccordionSection>
+                <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Slide "O Grande Dia"</p>
+                <Field label="Título">
+                  <TInput value={pp.grandeDia?.title || ''} onChange={v => setGrandeDia('title', v)} />
+                </Field>
+                <Field label="Parágrafo 1">
+                  <TInput value={pp.grandeDia?.p1 || ''} onChange={v => setGrandeDia('p1', v)} multiline />
+                </Field>
+                <Field label="Parágrafo 2">
+                  <TInput value={pp.grandeDia?.p2 || ''} onChange={v => setGrandeDia('p2', v)} multiline />
+                </Field>
+                <Field label="Parágrafo 3">
+                  <TInput value={pp.grandeDia?.p3 || ''} onChange={v => setGrandeDia('p3', v)} multiline />
+                </Field>
+                <Field label="Nota de rodapé">
+                  <TInput value={pp.grandeDia?.note || ''} onChange={v => setGrandeDia('note', v)} multiline />
+                </Field>
+                <Field label="Imagem">
+                  <label className="flex items-center justify-center w-full py-2.5 rounded-lg border border-dashed border-white/15 hover:border-gold/40 cursor-pointer text-white/30 hover:text-gold/70 transition-all text-xs gap-2">
+                    <input type="file" accept="image/*" className="hidden"
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleGrandeDiaUpload(f) }} />
+                    {uploadingRelive ? '⏳ A carregar...' : pp.grandeDia?.imageUrl ? '✓ Trocar imagem' : '⬆ Carregar imagem'}
+                  </label>
+                </Field>
 
                 <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
                 <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Propostas</p>
