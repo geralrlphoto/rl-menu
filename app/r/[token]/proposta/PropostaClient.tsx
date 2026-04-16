@@ -379,7 +379,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
       case 'relive': return (
         <div className="flex items-center justify-center h-full w-full px-8 sm:px-16">
-          <div className="flex flex-row items-center gap-10 sm:gap-16 w-full max-w-5xl">
+          <div className="flex flex-row items-center gap-6 sm:gap-8 w-full max-w-5xl">
 
             {/* Esquerda — texto */}
             <div className="flex flex-col gap-6 flex-1">
@@ -396,7 +396,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <span style={{ color: typo.accentColor, fontSize: '0.7rem', marginTop: '3px', flexShrink: 0 }}>◆</span>
-                    <p className={`${fontClass(typo.bodyFont)} font-light`} style={{ color: typo.bodyColor, fontSize: '16px' }}>{item}</p>
+                    <p className={`${fontClass(typo.bodyFont)} font-light`} style={{ color: typo.bodyColor, fontSize: '20px' }}>{item}</p>
                   </div>
                 ))}
               </div>
