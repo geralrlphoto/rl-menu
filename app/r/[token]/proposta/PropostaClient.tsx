@@ -185,7 +185,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       .catch(() => { setNotFound(true); setLoading(false) })
   }, [token, isAdmin])
 
-  const slides = ['cover', 'about', 'intro', 'relive', 'blank', 'blank2', 'invest', 'pkg-0', 'pkg-1', 'pkg-2', 'cta']
+  const slides = ['cover', 'about', 'intro', 'relive', 'blank', 'blank2', 'invest', 'pkg-0', 'pkg-1', 'pkg-2', 'cta', 'final']
   const total  = slides.length
 
   const goTo = useCallback((idx: number) => {
@@ -805,6 +805,22 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
             </a>
 
           </div>
+        </div>
+      )
+
+      case 'final': return (
+        <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-10 max-w-3xl mx-auto">
+          <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+          <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
+            style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.15 }}>
+            O que gostaram mais até agora?
+          </h2>
+          <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
+          <p className="font-light leading-relaxed" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.7, maxWidth: '520px' }}>
+            Há algum momento, detalhe ou serviço que vos tocou de forma especial?<br />
+            A vossa opinião ajuda-nos a construir algo verdadeiramente único para vocês.
+          </p>
+          <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
         </div>
       )
 
