@@ -185,7 +185,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       .catch(() => { setNotFound(true); setLoading(false) })
   }, [token, isAdmin])
 
-  const slides = ['cover', 'about', 'intro', 'relive', 'blank', 'invest', 'blank2', 'pkg-0', 'pkg-1', 'pkg-2', 'cta']
+  const slides = ['cover', 'about', 'intro', 'relive', 'blank', 'blank2', 'invest', 'pkg-0', 'pkg-1', 'pkg-2', 'cta']
   const total  = slides.length
 
   const goTo = useCallback((idx: number) => {
