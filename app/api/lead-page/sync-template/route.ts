@@ -8,7 +8,7 @@ const MASTER_TOKEN = '85343645-b0d3-4412-ae78-795fd7f8ddf1'
 const DESIGN_KEYS = ['subtitle', 'intro', 'about', 'relive', 'packages', 'ctaText', 'typography'] as const
 
 // Top-level content fields that are also synced (shared design across all proposals)
-const TOP_LEVEL_DESIGN_KEYS = ['video', 'about', 'testimonials', 'banner'] as const
+const TOP_LEVEL_DESIGN_KEYS = ['video', 'about', 'testimonials', 'banner', 'portfolio'] as const
 
 export async function POST(req: NextRequest) {
   const auth = req.cookies.get('rl_auth')?.value
