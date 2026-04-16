@@ -379,7 +379,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
       case 'relive': return (
         <div className="flex items-center justify-center h-full w-full px-8 sm:px-16">
-          <div className="flex flex-row items-center gap-6 sm:gap-8 w-full max-w-5xl">
+          <div className="flex flex-row items-center gap-2 sm:gap-3 w-full max-w-5xl">
 
             {/* Esquerda — texto */}
             <div className="flex flex-col gap-6 flex-1">
