@@ -869,6 +869,7 @@ function PortalSubPageContent() {
   const [savingPropostaToken, setSavingPropostaToken] = useState(false)
   const [editingPropostaToken, setEditingPropostaToken] = useState(false)
   const [propostaTokenForm, setPropostaTokenForm] = useState('')
+  const [notionServicos, setNotionServicos] = useState<{ proposta: string | null; servico_foto: string[]; servico_video: string[] } | null>(null)
   const [pageTitles, setPageTitles] = useState<Record<string, string>>({})
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleInput, setTitleInput] = useState('')
@@ -1000,6 +1001,25 @@ function PortalSubPageContent() {
   useEffect(() => {
     loadPagamentos()
   }, [loadPagamentos])
+
+  // Fetch serviços da proposta directamente do Notion quando portalRef estiver disponível
+  useEffect(() => {
+    if (!portalRef) return
+    fetch(`/api/evento-by-ref?ref=${encodeURIComponent(portalRef)}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.found) {
+          setNotionServicos({
+            proposta:      d.evento.proposta ?? null,
+            servico_foto:  d.evento.servico_foto  ?? [],
+            servico_video: d.evento.servico_video ?? [],
+          })
+          // também actualiza eventoData se ainda não estiver definido
+          if (!eventoData) setEventoData(d.evento)
+        }
+      })
+      .catch(() => {})
+  }, [portalRef])
 
   const loadBlocks = useCallback(async (bust = false) => {
     if (!id) return
@@ -2356,19 +2376,19 @@ function PortalSubPageContent() {
                             <>
                               <NotionBlocks blocks={beforeValor} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
                               {/* ── Proposta Escolhida ─────────────────── */}
-                              {eventoData && (eventoData.servico_foto?.length > 0 || eventoData.servico_video?.length > 0) && (
+                              {notionServicos && (notionServicos.proposta || notionServicos.servico_foto.length > 0 || notionServicos.servico_video.length > 0) && (
                                 <div className="mb-6 pb-6 border-b border-white/[0.06]">
                                   <div className="flex items-center gap-3 mb-4">
                                     <div className="w-1 h-4 bg-gold rounded-full" />
                                     <span className="text-[10px] tracking-[0.35em] text-gold uppercase font-semibold">Proposta</span>
-                                    {eventoData.proposta && (
+                                    {notionServicos.proposta && (
                                       <span className="ml-auto text-[9px] tracking-widest text-white/50 uppercase bg-white/[0.04] border border-white/[0.08] px-3 py-1 rounded-full">
-                                        {eventoData.proposta}
+                                        {notionServicos.proposta}
                                       </span>
                                     )}
                                   </div>
-                                  <div className={`grid gap-3 ${eventoData.servico_foto?.length > 0 && eventoData.servico_video?.length > 0 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
-                                    {eventoData.servico_video?.length > 0 && (
+                                  <div className={`grid gap-3 ${notionServicos.servico_foto.length > 0 && notionServicos.servico_video.length > 0 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+                                    {notionServicos.servico_video.length > 0 && (
                                       <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
                                         <div className="px-3 py-2.5 border-b border-white/[0.05] flex items-center gap-2">
                                           <svg className="w-3.5 h-3.5 text-gold/50 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -2377,7 +2397,7 @@ function PortalSubPageContent() {
                                           <span className="text-[9px] tracking-[0.3em] text-white/40 uppercase font-semibold">Serviço de Vídeo</span>
                                         </div>
                                         <div className="p-3 flex flex-wrap gap-2">
-                                          {eventoData.servico_video.map((item: string, i: number) => (
+                                          {notionServicos.servico_video.map((item: string, i: number) => (
                                             <span key={i} className="text-[10px] tracking-wider text-gold/80 uppercase bg-gold/[0.06] border border-gold/20 px-2.5 py-1 rounded-lg">
                                               {item}
                                             </span>
@@ -2385,7 +2405,7 @@ function PortalSubPageContent() {
                                         </div>
                                       </div>
                                     )}
-                                    {eventoData.servico_foto?.length > 0 && (
+                                    {notionServicos.servico_foto.length > 0 && (
                                       <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
                                         <div className="px-3 py-2.5 border-b border-white/[0.05] flex items-center gap-2">
                                           <svg className="w-3.5 h-3.5 text-gold/50 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -2395,7 +2415,7 @@ function PortalSubPageContent() {
                                           <span className="text-[9px] tracking-[0.3em] text-white/40 uppercase font-semibold">Serviço de Fotografia</span>
                                         </div>
                                         <div className="p-3 flex flex-wrap gap-2">
-                                          {eventoData.servico_foto.map((item: string, i: number) => (
+                                          {notionServicos.servico_foto.map((item: string, i: number) => (
                                             <span key={i} className="text-[10px] tracking-wider text-gold/80 uppercase bg-gold/[0.06] border border-gold/20 px-2.5 py-1 rounded-lg">
                                               {item}
                                             </span>
