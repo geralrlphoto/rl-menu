@@ -773,14 +773,38 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       }
 
       case 'cta': return (
-        <div className="flex flex-col items-center justify-center h-full text-center px-8 gap-8">
-          <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-          <p className={`${fontClass(typo.bodyFont)} text-2xl sm:text-3xl italic font-light`} style={{ color: typo.bodyColor }}>{pp.ctaText}</p>
-          <a href={`/r/${token}`}
-            className="flex items-center gap-3 px-10 py-4 text-[10px] tracking-[0.4em] uppercase transition-all hover:scale-[1.03]"
-            style={{ background: `${typo.accentColor}1F`, border: `0.5px solid ${typo.accentColor}73`, color: typo.accentColor }}>
-            ← Voltar à página
-          </a>
+        <div className="flex items-center justify-center h-full w-full px-8 sm:px-16 py-8">
+          <div className="w-full max-w-5xl flex flex-col gap-6">
+
+            <p className={`${fontClass(typo.titleFont)} font-light italic`}
+              style={{ fontSize: 'clamp(1.6rem,3.5vw,2.8rem)', color: typo.titleColor, lineHeight: 1.1 }}>
+              {pp.ctaText}
+            </p>
+
+            <div className="h-px" style={{ background: `${typo.accentColor}25` }} />
+
+            <ul className="flex flex-col gap-2.5" style={{ fontSize: '13px', color: typo.bodyColor, opacity: 0.75, lineHeight: 1.65 }}>
+              <li className="flex gap-2"><span style={{ color: typo.accentColor, flexShrink: 0 }}>–</span><span>Adjudicação no valor de <strong style={{ color: typo.accentColor, fontWeight: 500 }}>400€</strong>;</span></li>
+              <li className="flex gap-2"><span style={{ color: typo.accentColor, flexShrink: 0 }}>–</span><span><strong style={{ color: typo.accentColor, fontWeight: 500 }}>80%</strong> do valor em falta até 48 horas antes do evento, <strong style={{ color: typo.accentColor, fontWeight: 500 }}>10%</strong> na edição do vídeo, <strong style={{ color: typo.accentColor, fontWeight: 500 }}>10%</strong> na entrega de seleção de fotografias;</span></li>
+              <li className="flex gap-2"><span style={{ color: typo.accentColor, flexShrink: 0 }}>–</span><span>Entrega de fotografias para seleção <strong style={{ color: typo.accentColor, fontWeight: 500 }}>30 dias úteis</strong> após o evento;</span></li>
+              <li className="flex gap-2"><span style={{ color: typo.accentColor, flexShrink: 0 }}>–</span><span>Entrega até um prazo estimado de <strong style={{ color: typo.accentColor, fontWeight: 500 }}>180 dias úteis</strong>;</span></li>
+              <li className="flex gap-2"><span style={{ color: typo.accentColor, flexShrink: 0 }}>–</span><span>Entrega do vídeo e fotografias com resolução máxima por link online;</span></li>
+              <li className="flex gap-2"><span style={{ color: typo.accentColor, flexShrink: 0 }}>–</span><span>Direito a <strong style={{ color: typo.accentColor, fontWeight: 500 }}>três alterações</strong> de uma só vez após a entrega final;</span></li>
+              <li className="flex gap-2"><span style={{ color: typo.accentColor, flexShrink: 0 }}>–</span><span>A refeição da equipa na quinta tem de ser assegurada pelos noivos;</span></li>
+              <li className="flex gap-2"><span style={{ color: typo.accentColor, flexShrink: 0 }}>–</span><span>Orçamento com validade de <strong style={{ color: typo.accentColor, fontWeight: 500 }}>30 dias</strong> após envio;</span></li>
+              <li className="flex gap-2" style={{ opacity: 0.45, fontSize: '11px', fontStyle: 'italic' }}><span style={{ color: typo.accentColor, flexShrink: 0 }}>*</span><span>Duração: permanecemos no local até acharmos que registámos todos os momentos para vos poder entregar um bom vídeo.</span></li>
+              <li className="flex gap-2" style={{ opacity: 0.45, fontSize: '11px', fontStyle: 'italic' }}><span style={{ color: typo.accentColor, flexShrink: 0 }}>*</span><span>Deslocação: casamentos fora da zona de Setúbal/Almada/Montijo será cobrado valor extra.</span></li>
+            </ul>
+
+            <div className="h-px" style={{ background: `${typo.accentColor}25` }} />
+
+            <a href={`/r/${token}`}
+              className="self-start flex items-center gap-3 px-8 py-3 text-[10px] tracking-[0.4em] uppercase transition-all hover:scale-[1.03]"
+              style={{ background: `${typo.accentColor}1F`, border: `0.5px solid ${typo.accentColor}73`, color: typo.accentColor }}>
+              ← Voltar à página
+            </a>
+
+          </div>
         </div>
       )
 
