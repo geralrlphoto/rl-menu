@@ -124,13 +124,14 @@ export default function ClientePage() {
     'Sessão Pré-Wedding', 'Sessão TTD',
     'Álbum 25×25 — 40 Fotos', 'Álbum 30×30 — 60 Fotos',
     'Foto Lembrança', 'Galerias Open',
-    'Entrega por Link', 'Entrega em Pen Box', 'Relive Wedding', 'Deslocação',
+    'Entrega por Link', 'Entrega em Pen Box', 'Deslocação',
   ]
   const SERVICOS_VIDEO = [
     '1 Videógrafo', '2 Videógrafos', 'Rep. Todo Evento',
     'Vídeo até 20 min | Full HD', 'Deslocação',
     'Sessão Pré-Wedding', 'Sessão TTD',
     'Drone', 'Same Day Edit', 'Trailer', 'Teaser',
+    'Relive Wedding', 'Entrega por Link', 'Entrega em Pen Box',
   ]
 
   const DEFAULT_PROPOSTAS: Proposta[] = [
