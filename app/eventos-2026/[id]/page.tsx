@@ -1733,13 +1733,17 @@ export default function EventoPage() {
                   return `${String(dt.getDate()).padStart(2,'0')} ${MESES_S[dt.getMonth()]} ${dt.getFullYear()}`
                 }
 
+                // Se a soma total de todos os pagamentos cobrir o valor total → todas as fases liquidadas
+                const totalPagoGeral = pagamentos.reduce((s, p) => s + (p.valor_liquidado ?? 0), 0)
+                const tudoLiquidado = total > 0 && totalPagoGeral >= total
+
                 return ['ADJUDICAÇÃO','REFORÇO','FINAL'].map(label => {
                   // Todos os pagamentos para esta fase (pode haver vários parciais)
                   const pags = pagamentos.filter(p => p.fase_pagamento.includes(label))
                   const totalPago = pags.reduce((s, p) => s + (p.valor_liquidado ?? 0), 0)
                   const valorFase = faseValores[label]
                   const falta = Math.max(0, valorFase - totalPago)
-                  const liquidado = totalPago >= valorFase && valorFase > 0
+                  const liquidado = tudoLiquidado || (totalPago >= valorFase && valorFase > 0)
                   const parcial = totalPago > 0 && !liquidado
                   const pct = valorFase > 0 ? Math.min(100, Math.round((totalPago / valorFase) * 100)) : 0
 
