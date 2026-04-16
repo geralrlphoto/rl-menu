@@ -597,44 +597,14 @@ function ContratoPropostaSection({ evento, blocks, settings, contratoDisponivel,
           )}
         </div>
 
-        {((evento.valor_foto as number ?? 0) + (evento.valor_video as number ?? 0)) > 0 && (() => {
-          const total       = (evento.valor_foto as number ?? 0) + (evento.valor_video as number ?? 0)
-          const ADJUDICACAO = 400
-          const restante    = total > ADJUDICACAO ? total - ADJUDICACAO : 0
-          const reforco     = Math.round(restante * 0.8)
-          const valorFinal  = Math.round(restante * 0.2)
-          return (
-            <div className="mt-4 flex flex-col gap-2">
-              {/* Total */}
-              <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-gold/5 border border-gold/20">
-                <span className="text-[10px] tracking-widest text-gold/60 uppercase">Total do Serviço</span>
-                <span className="text-gold font-bold text-lg">{total.toLocaleString('pt-PT')} €</span>
-              </div>
-              {/* Fases de pagamento */}
-              <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] overflow-hidden">
-                <div className="px-4 py-2.5 border-b border-white/[0.06]">
-                  <span className="text-[9px] tracking-[0.4em] text-white/30 uppercase font-semibold">Forma de Investimento</span>
-                </div>
-                {[
-                  { n: '1', label: 'Adjudicação',  desc: 'Reserva da data',              val: `${ADJUDICACAO.toLocaleString('pt-PT')} €` },
-                  { n: '2', label: 'Reforço',       desc: '80% do valor em falta',        val: restante > 0 ? `${reforco.toLocaleString('pt-PT')} €` : '—' },
-                  { n: '3', label: 'Valor Final',   desc: 'Restante no dia do casamento', val: restante > 0 ? `${valorFinal.toLocaleString('pt-PT')} €` : '—' },
-                ].map((step, si) => (
-                  <div key={si} className={`flex items-center gap-3 px-4 py-3 ${si < 2 ? 'border-b border-white/[0.05]' : ''}`}>
-                    <div className="w-6 h-6 rounded-full bg-gold/10 border border-gold/20 flex items-center justify-center shrink-0">
-                      <span className="text-[9px] font-semibold text-gold">{step.n}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-white/70 font-medium">{step.label}</p>
-                      <p className="text-[10px] text-white/30 mt-0.5">{step.desc}</p>
-                    </div>
-                    <span className="text-sm font-semibold text-gold shrink-0">{step.val}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )
-        })()}
+        {((evento.valor_foto as number ?? 0) + (evento.valor_video as number ?? 0)) > 0 && (
+          <div className="mt-4 flex items-center justify-between px-4 py-3 rounded-xl bg-gold/5 border border-gold/20">
+            <span className="text-[10px] tracking-widest text-gold/60 uppercase">Total do Serviço</span>
+            <span className="text-gold font-bold text-lg">
+              {((evento.valor_foto as number ?? 0) + (evento.valor_video as number ?? 0)).toLocaleString('pt-PT')} €
+            </span>
+          </div>
+        )}
       </div>
     </>
   )
