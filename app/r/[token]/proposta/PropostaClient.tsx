@@ -132,6 +132,15 @@ function AccordionSection({ title, children }: { title: string; children: React.
 function fontClass(f: string) { return FONTS.find(x => x.value === f)?.className || 'font-cormorant' }
 function sizeClass(s: string) { return TITLE_SIZES.find(x => x.value === s)?.className || 'text-6xl sm:text-7xl' }
 
+function parseValorNum(v: string): number {
+  if (!v) return 0
+  return parseFloat(v.replace(/€/g, '').replace(/\s+/g, '').replace(',', '.')) || 0
+}
+function formatValorNum(n: number): string {
+  if (n === 0) return ''
+  return n.toLocaleString('pt-PT') + ' €'
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 export default function PropostaClient({ token, isAdmin }: { token: string; isAdmin: boolean }) {
   const [loading,  setLoading]  = useState(true)
@@ -145,7 +154,8 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   // Slides
   const [current,   setCurrent]   = useState(0)
   const [direction, setDirection] = useState<'right' | 'left'>('right')
-  const [extrasOpen, setExtrasOpen] = useState<Record<number, boolean>>({})
+  const [extrasOpen,     setExtrasOpen]     = useState<Record<number, boolean>>({})
+  const [extrasSelected, setExtrasSelected] = useState<Record<number, string[]>>({})
 
   // Editor
   const [editorOpen,    setEditorOpen]    = useState(false)
@@ -447,6 +457,25 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         const hasFoto  = (proposta.servicos_foto  || []).length > 0
         const hasVideo = (proposta.servicos_video || []).length > 0
         const hasAny   = hasFoto || hasVideo
+        // ── extras dinâmicos ──────────────────────────────────────
+        const selectedExtras = extrasSelected[idx] || []
+        const toggleExtraSlide = (nome: string) =>
+          setExtrasSelected(prev => {
+            const cur = prev[idx] || []
+            const has = cur.includes(nome)
+            return { ...prev, [idx]: has ? cur.filter(n => n !== nome) : [...cur, nome] }
+          })
+        const extrasValorTotal = selectedExtras.reduce((sum, nome) => {
+          const ex = (content.extras_proposta || []).find(e => e.nome === nome)
+          return sum + parseValorNum(ex?.valor || '')
+        }, 0)
+        const baseValor  = parseValorNum(proposta.valor)
+        const totalValor = baseValor > 0 ? baseValor + extrasValorTotal : 0
+        const displayValor = selectedExtras.length > 0 && totalValor > 0
+          ? formatValorNum(totalValor)
+          : proposta.valor
+            ? (proposta.valor.trim().includes('€') ? proposta.valor : `${proposta.valor} €`)
+            : ''
         return (
           <div className="flex items-center justify-center h-full w-full px-6 sm:px-12">
             <div className="relative w-full max-w-4xl flex"
@@ -485,13 +514,21 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
                 {/* Valor */}
                 <div className="relative z-10">
-                  {proposta.valor ? (
+                  {displayValor ? (
                     <>
-                      <p className="text-[9px] tracking-[0.4em] uppercase mb-1" style={{ color: `${typo.accentColor}60` }}>Investimento</p>
-                      <p className={`${fontClass(typo.pkgTitleFont)} italic`}
-                        style={{ fontSize: 'clamp(1.5rem,3vw,2.2rem)', color: typo.accentColor, lineHeight: 1.1 }}>
-                        {proposta.valor.trim().includes('€') ? proposta.valor : `${proposta.valor} €`}
+                      <p className="text-[9px] tracking-[0.4em] uppercase mb-1" style={{ color: `${typo.accentColor}60` }}>
+                        {selectedExtras.length > 0 ? 'Total c/ Extras' : 'Investimento'}
                       </p>
+                      <p className={`${fontClass(typo.pkgTitleFont)} italic`}
+                        style={{ fontSize: 'clamp(1.5rem,3vw,2.2rem)', color: typo.accentColor, lineHeight: 1.1, transition: 'all 0.3s ease' }}>
+                        {displayValor}
+                      </p>
+                      {selectedExtras.length > 0 && baseValor > 0 && (
+                        <p className="text-[9px] mt-1.5" style={{ color: `${typo.accentColor}50` }}>
+                          base {proposta.valor.trim().includes('€') ? proposta.valor : `${proposta.valor} €`}
+                          {' '}+{' '}{selectedExtras.length} extra{selectedExtras.length > 1 ? 's' : ''}
+                        </p>
+                      )}
                     </>
                   ) : (
                     <p className="text-[10px] tracking-widest uppercase" style={{ color: `${typo.accentColor}30` }}>
@@ -547,31 +584,53 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                   <p className="text-[10px] tracking-[0.4em] uppercase opacity-25 text-center" style={{ color: typo.bodyColor }}>Serviços a definir no CRM</p>
                 )}
 
-                {/* Serviços Extras — botão accordion */}
+                {/* Serviços Extras — accordion selecionável */}
                 <div>
                   <button
                     onClick={() => setExtrasOpen(prev => ({ ...prev, [idx]: !prev[idx] }))}
                     className="flex items-center gap-2 px-4 py-2 transition-all w-full"
                     style={{ border: `0.5px solid ${typo.accentColor}50`, color: typo.accentColor, background: `${typo.accentColor}0D` }}>
                     <span className="text-[10px] tracking-[0.35em] uppercase flex-1 text-left">✦ Serviços Extras</span>
+                    {selectedExtras.length > 0 && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full mr-1 font-semibold" style={{ background: typo.accentColor, color: '#0d0b07' }}>
+                        {selectedExtras.length}
+                      </span>
+                    )}
                     <span className="text-xs" style={{ display: 'inline-block', transition: 'transform 0.2s', transform: extrasOpen[idx] ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
                   </button>
                   {extrasOpen[idx] && (
-                    <div className="flex flex-col gap-2.5 pt-3 px-1" style={{ borderLeft: `0.5px solid ${typo.accentColor}25` }}>
+                    <div className="flex flex-col gap-1.5 pt-3 px-1" style={{ borderLeft: `0.5px solid ${typo.accentColor}25` }}>
                       {(content.extras_proposta || []).length > 0 ? (
-                        (content.extras_proposta || []).map((e, i) => (
-                          <div key={i} className="flex items-center gap-2.5">
-                            <span style={{ color: `${typo.accentColor}80`, fontSize: '0.5rem', flexShrink: 0 }}>◆</span>
-                            <p className={`${fontClass(typo.bodyFont)} font-light flex-1 leading-snug`} style={{ fontSize: '18px', color: `${typo.bodyColor}CC` }}>{e.nome}</p>
-                            {e.valor && (
-                              <p className={`${fontClass(typo.pkgTitleFont)} italic shrink-0`} style={{ fontSize: '15px', color: typo.accentColor }}>
-                                {e.valor.trim().includes('€') ? e.valor : `${e.valor} €`}
+                        (content.extras_proposta || []).map((e, i) => {
+                          const isOn = selectedExtras.includes(e.nome)
+                          return (
+                            <button key={i}
+                              onClick={() => toggleExtraSlide(e.nome)}
+                              className="flex items-center gap-2.5 w-full text-left px-2 py-1.5 rounded-lg transition-all"
+                              style={isOn
+                                ? { background: `${typo.accentColor}15`, border: `0.5px solid ${typo.accentColor}45` }
+                                : { background: 'transparent', border: '0.5px solid transparent' }}>
+                              <span className="w-4 h-4 rounded flex items-center justify-center shrink-0 text-[9px]"
+                                style={isOn
+                                  ? { background: typo.accentColor, color: '#0d0b07' }
+                                  : { border: `0.5px solid ${typo.accentColor}45`, color: 'transparent' }}>
+                                {isOn ? '✓' : ''}
+                              </span>
+                              <p className={`${fontClass(typo.bodyFont)} font-light flex-1 leading-snug`}
+                                style={{ fontSize: '18px', color: isOn ? typo.bodyColor : `${typo.bodyColor}99` }}>
+                                {e.nome}
                               </p>
-                            )}
-                          </div>
-                        ))
+                              {e.valor && (
+                                <p className={`${fontClass(typo.pkgTitleFont)} italic shrink-0`}
+                                  style={{ fontSize: '15px', color: isOn ? typo.accentColor : `${typo.accentColor}70` }}>
+                                  {e.valor.trim().includes('€') ? e.valor : `${e.valor} €`}
+                                </p>
+                              )}
+                            </button>
+                          )
+                        })
                       ) : (
-                        <p className="text-[11px] italic" style={{ color: `${typo.bodyColor}40` }}>Sem serviços extras definidos</p>
+                        <p className="text-[11px] italic px-2" style={{ color: `${typo.bodyColor}40` }}>Sem serviços extras definidos</p>
                       )}
                     </div>
                   )}
