@@ -598,11 +598,20 @@ function ContratoPropostaSection({ evento, blocks, settings, contratoDisponivel,
         </div>
 
         {((evento.valor_foto as number ?? 0) + (evento.valor_video as number ?? 0)) > 0 && (
-          <div className="mt-4 flex items-center justify-between px-4 py-3 rounded-xl bg-gold/5 border border-gold/20">
-            <span className="text-[10px] tracking-widest text-gold/60 uppercase">Total do Serviço</span>
-            <span className="text-gold font-bold text-lg">
-              {((evento.valor_foto as number ?? 0) + (evento.valor_video as number ?? 0)).toLocaleString('pt-PT')} €
-            </span>
+          <div className="mt-4 flex flex-col gap-3">
+            <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-gold/5 border border-gold/20">
+              <span className="text-[10px] tracking-widest text-gold/60 uppercase">Total do Serviço</span>
+              <span className="text-gold font-bold text-lg">
+                {((evento.valor_foto as number ?? 0) + (evento.valor_video as number ?? 0)).toLocaleString('pt-PT')} €
+              </span>
+            </div>
+            <PaymentPhasesSection
+              referencia={portalRef}
+              valorTotal={(evento.valor_foto as number ?? 0) + (evento.valor_video as number ?? 0)}
+              pagamentos={pagamentos}
+              onRefresh={loadPagamentos}
+              refreshing={pagRefreshing}
+            />
           </div>
         )}
       </div>
