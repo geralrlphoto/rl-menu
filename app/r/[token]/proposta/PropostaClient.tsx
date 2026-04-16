@@ -501,10 +501,11 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
               </div>
 
               {/* Painel direito — serviços */}
-              <div className="flex-1 flex flex-col justify-center" style={{ padding: '44px 36px 36px' }}>
+              <div className="flex-1 flex flex-col gap-4 justify-center" style={{ padding: '40px 36px 36px' }}>
+
+                {/* Serviços principais */}
                 {hasAny ? (
-                  <div className={`flex gap-8 h-full ${hasFoto && hasVideo ? '' : 'items-center'}`}>
-                    {/* Fotografia */}
+                  <div className={`flex gap-8 ${hasFoto && hasVideo ? '' : 'items-start'}`}>
                     {hasFoto && (
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-4">
@@ -521,13 +522,9 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                         </div>
                       </div>
                     )}
-
-                    {/* Divisor central */}
                     {hasFoto && hasVideo && (
-                      <div className="w-px self-stretch my-2" style={{ background: `${typo.accentColor}15` }} />
+                      <div className="w-px self-stretch" style={{ background: `${typo.accentColor}15` }} />
                     )}
-
-                    {/* Vídeo */}
                     {hasVideo && (
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-4">
@@ -546,41 +543,39 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                     )}
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center h-full gap-3 opacity-30">
-                    <p className="text-[10px] tracking-[0.4em] uppercase" style={{ color: typo.bodyColor }}>Serviços a definir no CRM</p>
-                  </div>
+                  <p className="text-[10px] tracking-[0.4em] uppercase opacity-25 text-center" style={{ color: typo.bodyColor }}>Serviços a definir no CRM</p>
                 )}
 
-                {/* Serviços Extras accordion */}
-                <div className="mt-4">
-                    <button
-                      onClick={() => setExtrasOpen(prev => ({ ...prev, [idx]: !prev[idx] }))}
-                      className="flex items-center gap-2 px-4 py-2 transition-all w-full"
-                      style={{ border: `0.5px solid ${typo.accentColor}50`, color: typo.accentColor, background: `${typo.accentColor}0D` }}>
-                      <span className="text-[10px] tracking-[0.35em] uppercase flex-1 text-left">✦ Serviços Extras</span>
-                      <span className="text-xs" style={{ transform: extrasOpen[idx] ? 'rotate(180deg)' : 'rotate(0deg)', display: 'inline-block', transition: 'transform 0.2s' }}>▼</span>
-                    </button>
-                    {extrasOpen[idx] && (
-                      <div className="flex flex-col gap-2.5 pt-3 px-1" style={{ borderLeft: `0.5px solid ${typo.accentColor}25` }}>
-                        {(proposta.extras as ExtraServico[] || []).length > 0 ? (
-                          (proposta.extras as ExtraServico[]).map((e, i) => (
-                            <div key={i} className="flex items-center gap-2.5">
-                              <span style={{ color: `${typo.accentColor}80`, fontSize: '0.5rem', flexShrink: 0 }}>◆</span>
-                              <p className={`${fontClass(typo.bodyFont)} font-light flex-1 leading-snug`} style={{ fontSize: '18px', color: `${typo.bodyColor}CC` }}>{e.nome}</p>
-                              {e.valor && (
-                                <p className={`${fontClass(typo.pkgTitleFont)} italic shrink-0`}
-                                  style={{ fontSize: '15px', color: typo.accentColor }}>
-                                  {e.valor.trim().includes('€') ? e.valor : `${e.valor} €`}
-                                </p>
-                              )}
-                            </div>
-                          ))
-                        ) : (
-                          <p className="text-[11px] italic" style={{ color: `${typo.bodyColor}40` }}>Sem serviços extras definidos</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                {/* Serviços Extras — botão accordion */}
+                <div>
+                  <button
+                    onClick={() => setExtrasOpen(prev => ({ ...prev, [idx]: !prev[idx] }))}
+                    className="flex items-center gap-2 px-4 py-2 transition-all w-full"
+                    style={{ border: `0.5px solid ${typo.accentColor}50`, color: typo.accentColor, background: `${typo.accentColor}0D` }}>
+                    <span className="text-[10px] tracking-[0.35em] uppercase flex-1 text-left">✦ Serviços Extras</span>
+                    <span className="text-xs" style={{ display: 'inline-block', transition: 'transform 0.2s', transform: extrasOpen[idx] ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+                  </button>
+                  {extrasOpen[idx] && (
+                    <div className="flex flex-col gap-2.5 pt-3 px-1" style={{ borderLeft: `0.5px solid ${typo.accentColor}25` }}>
+                      {((proposta.extras || []) as ExtraServico[]).length > 0 ? (
+                        ((proposta.extras || []) as ExtraServico[]).map((e, i) => (
+                          <div key={i} className="flex items-center gap-2.5">
+                            <span style={{ color: `${typo.accentColor}80`, fontSize: '0.5rem', flexShrink: 0 }}>◆</span>
+                            <p className={`${fontClass(typo.bodyFont)} font-light flex-1 leading-snug`} style={{ fontSize: '18px', color: `${typo.bodyColor}CC` }}>{e.nome}</p>
+                            {e.valor && (
+                              <p className={`${fontClass(typo.pkgTitleFont)} italic shrink-0`} style={{ fontSize: '15px', color: typo.accentColor }}>
+                                {e.valor.trim().includes('€') ? e.valor : `${e.valor} €`}
+                              </p>
+                            )}
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-[11px] italic" style={{ color: `${typo.bodyColor}40` }}>Sem serviços extras definidos</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
               </div>
             </div>
           </div>
