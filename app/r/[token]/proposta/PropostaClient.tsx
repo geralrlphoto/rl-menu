@@ -423,7 +423,19 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       )
 
       case 'blank': return (
-        <div className="flex items-center justify-center h-full w-full" />
+        <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-10 max-w-3xl mx-auto">
+          <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+          <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
+            style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.15 }}>
+            Como imaginam o vosso dia?
+          </h2>
+          <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
+          <p className="font-light leading-relaxed" style={{ fontSize: '15px', color: typo.bodyColor, opacity: 0.7, maxWidth: '520px' }}>
+            O que é que torna este dia verdadeiramente único para vocês?<br />
+            Qual é o momento, o detalhe, a emoção que não pode ficar por registar?
+          </p>
+          <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+        </div>
       )
 
       case 'intro': return (
