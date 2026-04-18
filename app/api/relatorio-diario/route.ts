@@ -55,6 +55,7 @@ export async function GET() {
       { data: videosData },
       { data: albunsData },
       { data: albunsAprovData },
+      { data: novosEventosData },
     ] = await Promise.all([
       database.from('crm_contacts')
         .select('id,nome,status,lead_prioridade,data_casamento,data_entrada,como_chegou,contato,email,tipo_evento')
@@ -96,6 +97,11 @@ export async function GET() {
       database.from('albuns_casamento')
         .select('nome,ref_evento,status')
         .eq('status', 'PARA APROVAÇÃO'),
+      // ── Supabase: eventos novos ou sem referência (em eventos_2026) ──────
+      database.from('eventos_2026')
+        .select('id,notion_id,cliente,referencia,data_evento,local,tipo_evento')
+        .or('referencia.is.null,referencia.eq.,referencia.ilike.AGUARDAR%')
+        .order('data_evento', { ascending: true }),
     ])
 
     // ── Parse eventos próximos (Supabase evento_equipa) ───────────────────
@@ -237,6 +243,17 @@ export async function GET() {
       .filter(p => isRecent(p.data_pagamento, 7))
       .slice(0, 20)
 
+    // ── Parse novos eventos / sem referência ────────────────────────────────
+    const novosEventos = (novosEventosData ?? []).map((e: any) => ({
+      id:          e.id,
+      notion_id:   e.notion_id,
+      cliente:     e.cliente || '(sem cliente)',
+      referencia:  e.referencia || null,
+      data_evento: e.data_evento,
+      local:       e.local || '—',
+      tipo_evento: toArr(e.tipo_evento),
+    }))
+
     return NextResponse.json({
       gerado_em: new Date().toISOString(),
       resumo: {
@@ -249,6 +266,7 @@ export async function GET() {
         albuns_prazo: albuns.length,
         albuns_aprovacao: albunsAprovacao.length,
         pagamentos_recentes: pagamentosRecentes.length,
+        novos_eventos: novosEventos.length,
       },
       eventos,
       leads_urgentes: leadsUrgentes,
@@ -259,6 +277,7 @@ export async function GET() {
       albuns,
       albuns_aprovacao: albunsAprovacao,
       pagamentos_recentes: pagamentosRecentes,
+      novos_eventos: novosEventos,
     })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })

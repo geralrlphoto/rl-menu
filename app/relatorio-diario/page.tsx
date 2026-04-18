@@ -248,6 +248,32 @@ export default function RelatorioDiarioPage() {
 
           <div className="flex flex-col gap-2">
 
+            {/* ── Novos eventos / sem referência ── */}
+            {data.novos_eventos && data.novos_eventos.length > 0 && (
+              <Section
+                title="Novos Eventos · Sem Referência"
+                desc="Eventos criados recentemente ou que ainda aguardam referência"
+                info="Eventos na tabela eventos_2026 cuja referência está em branco ou começa com 'AGUARDAR'. São eventos que entraram via formulário Tally e precisam de ser revistos/completados."
+                count={data.novos_eventos.length}
+                urgent={true}
+                empty=""
+              >
+                {data.novos_eventos.map((e: any) => (
+                  <Link key={e.id} href={`/eventos-2026/${e.notion_id ?? e.id}`}>
+                    <Item
+                      main={e.cliente}
+                      sub={[fmtShort(e.data_evento), e.local !== '—' ? e.local : null, e.tipo_evento?.join(', ')].filter(Boolean).join(' · ')}
+                      right={
+                        <span className="text-xs font-bold px-2.5 py-1 rounded-full border bg-amber-500/15 text-amber-400 border-amber-500/25 whitespace-nowrap">
+                          {e.referencia ? e.referencia.replace(/^AGUARDAR\s*—?\s*/i, '⏳ AGUARDAR') : '⚠️ SEM REF'}
+                        </span>
+                      }
+                    />
+                  </Link>
+                ))}
+              </Section>
+            )}
+
             {/* ── Eventos próximos ── */}
             <Section title="Eventos Próximos" desc="Casamentos e sessões agendados nos próximos 14 dias" info="Retirado das bases Notion de 2026 e 2027. Mostra todos os eventos com data nos próximos 14 dias — cliente, data, local e fotógrafo atribuído." count={data.eventos.length} empty="Sem eventos nos próximos 14 dias">
               {data.eventos.map((e: any) => (
