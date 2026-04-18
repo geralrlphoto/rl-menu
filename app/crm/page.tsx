@@ -74,6 +74,13 @@ function daysSince(dateStr: string): number {
   return Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24))
 }
 
+function sumOrcamento(contacts: Contact[]): number {
+  return contacts.reduce((sum, c) => {
+    const val = parseFloat((c.orcamento ?? '').toString().replace(/[^\d.,]/g, '').replace(',', '.'))
+    return sum + (isNaN(val) ? 0 : val)
+  }, 0)
+}
+
 /* ── LEAD CARD ── */
 function LeadCard({ c, onStatusChange }: { c: Contact; onStatusChange: (id: string, s: string) => void }) {
   const dias = daysSince(c.status_updated_at || c.data_entrada)
@@ -349,6 +356,11 @@ export default function CRMPage() {
                 <span className="text-sm tracking-[0.25em] uppercase font-semibold text-red-400">Quente</span>
                 <span className="text-xs text-white/20 font-normal">0–3 dias</span>
                 <span className="ml-auto text-xs bg-red-500/15 border border-red-500/25 text-red-400 px-2 py-0.5 rounded-full">{leadsQuente.length}</span>
+                {sumOrcamento(leadsQuente) > 0 && (
+                  <span className="text-xs font-bold text-red-300 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded-full whitespace-nowrap">
+                    {sumOrcamento(leadsQuente).toLocaleString('pt-PT')} €
+                  </span>
+                )}
                 <span className={`text-white/20 text-xs transition-transform duration-200 ${openAlerts.quente ? 'rotate-180' : ''}`}>▼</span>
               </button>
               {openAlerts.quente && (
@@ -365,6 +377,11 @@ export default function CRMPage() {
                 <span className="text-sm tracking-[0.25em] uppercase font-semibold text-orange-400">Morno</span>
                 <span className="text-xs text-white/20 font-normal">4–10 dias</span>
                 <span className="ml-auto text-xs bg-orange-500/15 border border-orange-500/25 text-orange-400 px-2 py-0.5 rounded-full">{leadsMorno.length}</span>
+                {sumOrcamento(leadsMorno) > 0 && (
+                  <span className="text-xs font-bold text-orange-300 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-full whitespace-nowrap">
+                    {sumOrcamento(leadsMorno).toLocaleString('pt-PT')} €
+                  </span>
+                )}
                 <span className={`text-white/20 text-xs transition-transform duration-200 ${openAlerts.morno ? 'rotate-180' : ''}`}>▼</span>
               </button>
               {openAlerts.morno && (
@@ -381,6 +398,11 @@ export default function CRMPage() {
                 <span className="text-sm tracking-[0.25em] uppercase font-semibold text-blue-400">Frio</span>
                 <span className="text-xs text-white/20 font-normal">+10 dias</span>
                 <span className="ml-auto text-xs bg-blue-500/15 border border-blue-500/25 text-blue-400 px-2 py-0.5 rounded-full">{leadsFrio.length}</span>
+                {sumOrcamento(leadsFrio) > 0 && (
+                  <span className="text-xs font-bold text-blue-300 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full whitespace-nowrap">
+                    {sumOrcamento(leadsFrio).toLocaleString('pt-PT')} €
+                  </span>
+                )}
                 <span className={`text-white/20 text-xs transition-transform duration-200 ${openAlerts.frio ? 'rotate-180' : ''}`}>▼</span>
               </button>
               {openAlerts.frio && (
