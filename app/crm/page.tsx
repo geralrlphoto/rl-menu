@@ -351,17 +351,24 @@ export default function CRMPage() {
 
             {/* 🔴 QUENTE — 0 a 3 dias */}
             <div>
-              <button onClick={() => toggleAlert('quente')} className="flex items-center gap-2 mb-3 w-full text-left">
-                <span className="text-base">🔥</span>
-                <span className="text-sm tracking-[0.25em] uppercase font-semibold text-red-400">Quente</span>
-                <span className="text-xs text-white/20 font-normal">0–3 dias</span>
-                <span className="ml-auto text-xs bg-red-500/15 border border-red-500/25 text-red-400 px-2 py-0.5 rounded-full">{leadsQuente.length}</span>
-                {sumOrcamento(leadsQuente) > 0 && (
-                  <span className="text-xs font-bold text-red-300 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded-full whitespace-nowrap">
-                    {sumOrcamento(leadsQuente).toLocaleString('pt-PT')} €
-                  </span>
-                )}
-                <span className={`text-white/20 text-xs transition-transform duration-200 ${openAlerts.quente ? 'rotate-180' : ''}`}>▼</span>
+              <button onClick={() => toggleAlert('quente')} className="w-full text-left mb-3">
+                <div className="rounded-2xl border border-red-500/20 bg-red-500/5 px-5 py-4 hover:bg-red-500/10 transition-colors">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">🔥</span>
+                      <span className="text-sm tracking-[0.25em] uppercase font-semibold text-red-400">Quente</span>
+                      <span className="text-xs text-white/20 font-normal">0–3 dias</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs bg-red-500/15 border border-red-500/25 text-red-400 px-2 py-0.5 rounded-full">{leadsQuente.length} leads</span>
+                      <span className={`text-white/20 text-xs transition-transform duration-200 ${openAlerts.quente ? 'rotate-180' : ''}`}>▼</span>
+                    </div>
+                  </div>
+                  <div className="text-3xl font-bold text-red-300 tracking-tight">
+                    {sumOrcamento(leadsQuente) > 0 ? `${sumOrcamento(leadsQuente).toLocaleString('pt-PT')} €` : '—'}
+                  </div>
+                  <div className="text-xs text-red-400/40 tracking-widest uppercase mt-1">Em pipeline</div>
+                </div>
               </button>
               {openAlerts.quente && (
                 leadsQuente.length > 0
@@ -372,17 +379,24 @@ export default function CRMPage() {
 
             {/* 🟠 MORNO — 4 a 10 dias */}
             <div>
-              <button onClick={() => toggleAlert('morno')} className="flex items-center gap-2 mb-3 w-full text-left">
-                <span className="text-base">🌡</span>
-                <span className="text-sm tracking-[0.25em] uppercase font-semibold text-orange-400">Morno</span>
-                <span className="text-xs text-white/20 font-normal">4–10 dias</span>
-                <span className="ml-auto text-xs bg-orange-500/15 border border-orange-500/25 text-orange-400 px-2 py-0.5 rounded-full">{leadsMorno.length}</span>
-                {sumOrcamento(leadsMorno) > 0 && (
-                  <span className="text-xs font-bold text-orange-300 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-full whitespace-nowrap">
-                    {sumOrcamento(leadsMorno).toLocaleString('pt-PT')} €
-                  </span>
-                )}
-                <span className={`text-white/20 text-xs transition-transform duration-200 ${openAlerts.morno ? 'rotate-180' : ''}`}>▼</span>
+              <button onClick={() => toggleAlert('morno')} className="w-full text-left mb-3">
+                <div className="rounded-2xl border border-orange-500/20 bg-orange-500/5 px-5 py-4 hover:bg-orange-500/10 transition-colors">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">🌡</span>
+                      <span className="text-sm tracking-[0.25em] uppercase font-semibold text-orange-400">Morno</span>
+                      <span className="text-xs text-white/20 font-normal">4–10 dias</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs bg-orange-500/15 border border-orange-500/25 text-orange-400 px-2 py-0.5 rounded-full">{leadsMorno.length} leads</span>
+                      <span className={`text-white/20 text-xs transition-transform duration-200 ${openAlerts.morno ? 'rotate-180' : ''}`}>▼</span>
+                    </div>
+                  </div>
+                  <div className="text-3xl font-bold text-orange-300 tracking-tight">
+                    {sumOrcamento(leadsMorno) > 0 ? `${sumOrcamento(leadsMorno).toLocaleString('pt-PT')} €` : '—'}
+                  </div>
+                  <div className="text-xs text-orange-400/40 tracking-widest uppercase mt-1">Em pipeline</div>
+                </div>
               </button>
               {openAlerts.morno && (
                 leadsMorno.length > 0
@@ -393,17 +407,24 @@ export default function CRMPage() {
 
             {/* 🔵 FRIO — +10 dias */}
             <div>
-              <button onClick={() => toggleAlert('frio')} className="flex items-center gap-2 mb-3 w-full text-left">
-                <span className="text-base">❄️</span>
-                <span className="text-sm tracking-[0.25em] uppercase font-semibold text-blue-400">Frio</span>
-                <span className="text-xs text-white/20 font-normal">+10 dias</span>
-                <span className="ml-auto text-xs bg-blue-500/15 border border-blue-500/25 text-blue-400 px-2 py-0.5 rounded-full">{leadsFrio.length}</span>
-                {sumOrcamento(leadsFrio) > 0 && (
-                  <span className="text-xs font-bold text-blue-300 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full whitespace-nowrap">
-                    {sumOrcamento(leadsFrio).toLocaleString('pt-PT')} €
-                  </span>
-                )}
-                <span className={`text-white/20 text-xs transition-transform duration-200 ${openAlerts.frio ? 'rotate-180' : ''}`}>▼</span>
+              <button onClick={() => toggleAlert('frio')} className="w-full text-left mb-3">
+                <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 px-5 py-4 hover:bg-blue-500/10 transition-colors">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">❄️</span>
+                      <span className="text-sm tracking-[0.25em] uppercase font-semibold text-blue-400">Frio</span>
+                      <span className="text-xs text-white/20 font-normal">+10 dias</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs bg-blue-500/15 border border-blue-500/25 text-blue-400 px-2 py-0.5 rounded-full">{leadsFrio.length} leads</span>
+                      <span className={`text-white/20 text-xs transition-transform duration-200 ${openAlerts.frio ? 'rotate-180' : ''}`}>▼</span>
+                    </div>
+                  </div>
+                  <div className="text-3xl font-bold text-blue-300 tracking-tight">
+                    {sumOrcamento(leadsFrio) > 0 ? `${sumOrcamento(leadsFrio).toLocaleString('pt-PT')} €` : '—'}
+                  </div>
+                  <div className="text-xs text-blue-400/40 tracking-widest uppercase mt-1">Em pipeline</div>
+                </div>
               </button>
               {openAlerts.frio && (
                 leadsFrio.length > 0
