@@ -172,6 +172,43 @@ export async function POST(req: NextRequest) {
       })
     }
 
+    // ── Criar registo em eventos_2026/2027 para aparecer no site ──────────────
+    try {
+      const ano = data.data_casamento ? parseInt(data.data_casamento.slice(0, 4)) : 2026
+      const TABLE_BY_YEAR: Record<number, string> = {
+        2026: 'eventos_2026',
+        // 2027: 'eventos_2027',
+      }
+      const table = TABLE_BY_YEAR[ano]
+      if (table) {
+        const sb = db()
+        // Gerar referência automática CAS_NNN_YY_RL
+        const { count } = await sb.from(table).select('*', { count: 'exact', head: true })
+        const anoSufixo = String(ano).slice(2)
+        const proximoNum = String((count ?? 0) + 1).padStart(3, '0')
+        const referencia = `CAS_${proximoNum}_${anoSufixo}_RL`
+
+        const evRow: any = {
+          notion_id: notionVal?.ok ? notionVal.id : null,
+          referencia,
+          cliente: data.nome_noivos ?? '',
+          data_evento: data.data_casamento ?? null,
+          local: data.local_cerimonia ?? '',
+          status: 'Não iniciada',
+          fotos_enviadas: false,
+          tipo_evento: JSON.stringify(['CASAMENTO']),
+          tipo_servico: data.servico ? [data.servico] : null,
+          fotografo: JSON.stringify([]),
+          valor_foto: null,
+          valor_liquido: null,
+        }
+        const { error } = await sb.from(table).insert(evRow)
+        if (error) console.error('[webhook-tally-cps] eventos_2026 insert error:', error)
+      }
+    } catch (e) {
+      console.error('[webhook-tally-cps] eventos_2026 exception:', e)
+    }
+
     return NextResponse.json({
       ok: true,
       supabase: supabaseResult.status === 'fulfilled' ? supabaseResult.value : { ok: false, error: 'rejected' },
