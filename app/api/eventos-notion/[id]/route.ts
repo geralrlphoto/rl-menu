@@ -152,12 +152,18 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       fotos_enviadas: 'fotos_enviadas',
     }
     const evFields: Record<string, any> = {}
+    const ARRAY_COLS = new Set(['tipo_evento', 'fotografo', 'tipo_servico'])
     for (const [internal, col] of Object.entries(eventosSyncMap)) {
       if (body[internal] !== undefined) {
         const v = body[internal]
-        // Converter arrays em texto JSON (colunas são text no Supabase)
-        if (Array.isArray(v) && (col === 'tipo_evento' || col === 'fotografo')) {
-          evFields[col] = JSON.stringify(v)
+        if (ARRAY_COLS.has(col)) {
+          // Garantir que colunas array são sempre gravadas como JSON array string
+          if (Array.isArray(v)) evFields[col] = JSON.stringify(v)
+          else if (typeof v === 'string') {
+            const s = v.trim()
+            evFields[col] = s.startsWith('[') ? s : JSON.stringify(s ? [s] : [])
+          } else if (v == null) evFields[col] = null
+          else evFields[col] = JSON.stringify([String(v)])
         } else {
           evFields[col] = v
         }

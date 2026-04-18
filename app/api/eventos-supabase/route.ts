@@ -37,7 +37,13 @@ export async function GET(req: NextRequest) {
       const parseArr = (v: any): string[] => {
         if (Array.isArray(v)) return v
         if (typeof v === 'string') {
-          try { const p = JSON.parse(v); return Array.isArray(p) ? p : [] } catch { return [] }
+          const s = v.trim()
+          if (!s) return []
+          if (s.startsWith('[')) {
+            try { const p = JSON.parse(s); return Array.isArray(p) ? p : [] } catch { return [s] }
+          }
+          // plain-string: "CASAMENTO" ou "CASAMENTO, BATIZADO"
+          return s.split(',').map(x => x.trim()).filter(Boolean)
         }
         return []
       }
