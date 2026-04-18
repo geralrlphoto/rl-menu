@@ -137,6 +137,51 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       await supabase().from('evento_equipa').update(sbFields).eq('evento_id', id)
     }
 
+    // ── Sync campos principais para tabela eventos_2026/2027 ──────────────
+    const eventosSyncMap: Record<string, string> = {
+      cliente:        'cliente',
+      local:          'local',
+      data_evento:    'data_evento',
+      status:         'status',
+      valor_foto:     'valor_foto',
+      valor_liquido:  'valor_liquido',
+      fotografo:      'fotografo',
+      tipo_evento:    'tipo_evento',
+      tipo_servico:   'tipo_servico',
+      referencia:     'referencia',
+      fotos_enviadas: 'fotos_enviadas',
+    }
+    const evFields: Record<string, any> = {}
+    for (const [internal, col] of Object.entries(eventosSyncMap)) {
+      if (body[internal] !== undefined) {
+        const v = body[internal]
+        // Converter arrays em texto JSON (colunas são text no Supabase)
+        if (Array.isArray(v) && (col === 'tipo_evento' || col === 'fotografo')) {
+          evFields[col] = JSON.stringify(v)
+        } else {
+          evFields[col] = v
+        }
+      }
+    }
+    if (Object.keys(evFields).length > 0) {
+      // Determinar tabela pelo ano da data, se existir
+      let ano = 2026
+      if (body.data_evento) {
+        ano = parseInt(String(body.data_evento).slice(0, 4)) || 2026
+      } else {
+        // Buscar data atual do Supabase para determinar a tabela
+        for (const t of ['eventos_2026', 'eventos_2027']) {
+          const { data } = await supabase().from(t).select('data_evento').eq('notion_id', id).limit(1).maybeSingle()
+          if (data) {
+            ano = parseInt(String(data.data_evento).slice(0, 4)) || 2026
+            break
+          }
+        }
+      }
+      const table = ano === 2027 ? 'eventos_2027' : 'eventos_2026'
+      await supabase().from(table).update(evFields).eq('notion_id', id)
+    }
+
     return NextResponse.json({ ok: true })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
