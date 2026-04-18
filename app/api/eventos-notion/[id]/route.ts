@@ -156,18 +156,27 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       fotos_enviadas: 'fotos_enviadas',
     }
     const evFields: Record<string, any> = {}
-    const ARRAY_COLS = new Set(['tipo_evento', 'fotografo', 'tipo_servico'])
+    // Colunas que são text (guardam JSON string)
+    const JSON_STRING_COLS = new Set(['tipo_evento', 'fotografo'])
+    // Colunas que são array Postgres (text[])
+    const PG_ARRAY_COLS = new Set(['tipo_servico'])
     for (const [internal, col] of Object.entries(eventosSyncMap)) {
       if (body[internal] !== undefined) {
         const v = body[internal]
-        if (ARRAY_COLS.has(col)) {
-          // Garantir que colunas array são sempre gravadas como JSON array string
+        if (JSON_STRING_COLS.has(col)) {
           if (Array.isArray(v)) evFields[col] = JSON.stringify(v)
           else if (typeof v === 'string') {
             const s = v.trim()
             evFields[col] = s.startsWith('[') ? s : JSON.stringify(s ? [s] : [])
           } else if (v == null) evFields[col] = null
           else evFields[col] = JSON.stringify([String(v)])
+        } else if (PG_ARRAY_COLS.has(col)) {
+          // text[]: passar array Postgres diretamente
+          if (Array.isArray(v)) evFields[col] = v
+          else if (typeof v === 'string' && v.trim().startsWith('[')) {
+            try { evFields[col] = JSON.parse(v) } catch { evFields[col] = v ? [v] : null }
+          } else if (v == null || v === '') evFields[col] = null
+          else evFields[col] = [String(v)]
         } else {
           evFields[col] = v
         }

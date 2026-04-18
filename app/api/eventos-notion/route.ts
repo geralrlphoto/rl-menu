@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
           status: 'Não iniciada',
           fotos_enviadas: false,
           tipo_evento: tipo_evento?.length ? JSON.stringify(tipo_evento) : null,
-          tipo_servico: tipo_servico?.length ? JSON.stringify(tipo_servico) : null,
+          tipo_servico: tipo_servico?.length ? tipo_servico : null, // text[] - array Postgres
           fotografo: fotografo?.length ? JSON.stringify(fotografo) : null,
           valor_foto: valor_foto != null ? Number(valor_foto) : null,
           valor_liquido: valor_liquido != null ? Number(valor_liquido) : (valor_video != null ? Number(valor_video) : null),
