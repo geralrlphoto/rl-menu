@@ -9,6 +9,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/login') ||
     pathname.startsWith('/api/auth') ||
     pathname.startsWith('/api/eventos-notion') ||
+    pathname.startsWith('/api/eventos-supabase') ||
     pathname.startsWith('/api/debug-page') ||
     pathname.startsWith('/api/debug-calendar') ||
     pathname.startsWith('/api/setup-fotos-estados') ||
