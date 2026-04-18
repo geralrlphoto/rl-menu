@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 
 type Evento = {
   id: string
+  notion_id?: string
   referencia: string
   cliente: string
   data_evento: string
@@ -356,7 +357,7 @@ function Eventos2026Inner() {
             const isToday = days === 0
             const isPast = days < 0
             return (
-              <Link key={e.id} href={`/eventos-2026/${e.id}`}
+              <Link key={e.id} href={`/eventos-2026/${e.notion_id ?? e.id}`}
                 className="group relative overflow-hidden rounded-2xl border border-white/[0.08] hover:border-gold/30 bg-white/[0.02] hover:bg-white/[0.04] p-5 flex flex-col gap-3 transition-all">
                 {/* Dias restantes */}
                 <div className="flex items-baseline gap-1.5">
@@ -438,7 +439,7 @@ function Eventos2026Inner() {
                 {/* Lista de eventos do mês */}
                 <div className="flex flex-col gap-2">
                   {monthEvents.map(e => (
-                    <Link key={e.id} href={`/eventos-2026/${e.id}`} className="group flex items-center gap-3 sm:gap-5 px-3 sm:px-5 py-3 sm:py-4 bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] hover:border-gold/20 rounded-xl transition-all cursor-pointer relative">
+                    <Link key={e.id} href={`/eventos-2026/${e.notion_id ?? e.id}`} className="group flex items-center gap-3 sm:gap-5 px-3 sm:px-5 py-3 sm:py-4 bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] hover:border-gold/20 rounded-xl transition-all cursor-pointer relative">
 
                       {/* Data */}
                       <div className="w-16 shrink-0 text-center">
