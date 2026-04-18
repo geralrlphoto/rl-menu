@@ -253,7 +253,7 @@ function Eventos2026Inner() {
 
   function loadEvents() {
     setLoading(true)
-    fetch(`/api/eventos-notion?ano=${anoFiltro}`)
+    fetch(`/api/eventos-supabase?ano=${anoFiltro}`)
       .then(r => r.json())
       .then(d => {
         if (d.error) setError(d.error)
@@ -276,6 +276,10 @@ function Eventos2026Inner() {
 
   const grouped = groupByMonth(filtered)
   const totalValor = events.reduce((s, e) => s + (e.valor_liquido ?? 0), 0)
+  const totalFoto = events.reduce((s, e) => s + (e.valor_foto ?? 0), 0)
+  const totalVideo = events.reduce((s, e) => s + (e.valor_liquido ?? 0), 0)
+  const totalGeral = totalFoto + totalVideo
+  const casamentosCount = events.filter(e => (e.tipo_evento ?? []).includes('CASAMENTO')).length
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -287,11 +291,11 @@ function Eventos2026Inner() {
     <main className="min-h-screen px-3 sm:px-6 py-6 sm:py-10 max-w-[1200px] mx-auto">
 
       {/* Header */}
-      <div className="flex items-end justify-between mb-10">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-10 gap-6">
         <div>
           <Link href="/casamentos" className="text-xs tracking-[0.3em] text-white/20 hover:text-gold transition-colors uppercase">‹ Casamentos</Link>
           <h1 className="text-3xl sm:text-5xl font-extralight tracking-[0.15em] sm:tracking-[0.2em] text-white uppercase mt-3">Casamentos {anoFiltro}</h1>
-          <p className="text-white/20 text-xs tracking-[0.3em] mt-2 uppercase">{events.length} casamentos · {totalValor.toLocaleString('pt-PT')} € total</p>
+          <p className="text-white/20 text-xs tracking-[0.3em] mt-2 uppercase">{casamentosCount} casamentos · {events.length} eventos totais</p>
         </div>
         <button onClick={() => setShowNovoEvento(true)}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black font-bold text-xs tracking-widest hover:bg-gold/80 transition-all uppercase">
@@ -303,6 +307,44 @@ function Eventos2026Inner() {
       </div>
       {showNovoEvento && (
         <NovoEventoModal onClose={() => setShowNovoEvento(false)} onCreated={loadEvents} anoFiltro={anoFiltro} totalEventos={events.length} />
+      )}
+
+      {/* Cards de Totais (Supabase) */}
+      {!loading && !error && events.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-8">
+          <div className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent p-5 sm:p-6 overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(99,102,241,0.12),transparent_60%)] pointer-events-none" />
+            <div className="relative">
+              <p className="text-[10px] sm:text-xs tracking-[0.3em] text-white/40 uppercase mb-2">Fotografia</p>
+              <p className="text-2xl sm:text-3xl font-light text-white tracking-wide">
+                {totalFoto.toLocaleString('pt-PT')} <span className="text-white/40 text-lg">€</span>
+              </p>
+              <p className="text-[10px] tracking-[0.25em] text-white/30 uppercase mt-2">Valor Total</p>
+            </div>
+          </div>
+
+          <div className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent p-5 sm:p-6 overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(236,72,153,0.12),transparent_60%)] pointer-events-none" />
+            <div className="relative">
+              <p className="text-[10px] sm:text-xs tracking-[0.3em] text-white/40 uppercase mb-2">Vídeo</p>
+              <p className="text-2xl sm:text-3xl font-light text-white tracking-wide">
+                {totalVideo.toLocaleString('pt-PT')} <span className="text-white/40 text-lg">€</span>
+              </p>
+              <p className="text-[10px] tracking-[0.25em] text-white/30 uppercase mt-2">Valor Total</p>
+            </div>
+          </div>
+
+          <div className="relative rounded-2xl border border-gold/30 bg-gradient-to-br from-gold/10 to-transparent p-5 sm:p-6 overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(212,175,55,0.18),transparent_60%)] pointer-events-none" />
+            <div className="relative">
+              <p className="text-[10px] sm:text-xs tracking-[0.3em] text-gold/70 uppercase mb-2">Total Geral</p>
+              <p className="text-2xl sm:text-3xl font-light text-gold tracking-wide">
+                {totalGeral.toLocaleString('pt-PT')} <span className="text-gold/50 text-lg">€</span>
+              </p>
+              <p className="text-[10px] tracking-[0.25em] text-gold/50 uppercase mt-2">Foto + Vídeo</p>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Próximos eventos */}
