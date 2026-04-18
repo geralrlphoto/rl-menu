@@ -284,6 +284,14 @@ export default function ClientePage() {
   const handleDelete = async () => {
     if (!confirmDelete) { setConfirmDelete(true); return }
     setDeleting(true)
+    // Arquivar no Notion primeiro (evita que o sync a recrie)
+    if (form.notion_id) {
+      fetch('/api/archive-notion-page', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notion_id: form.notion_id }),
+      }).catch(() => {})
+    }
     const { error } = await supabase.from('crm_contacts').delete().eq('id', id)
     if (!error) {
       router.push('/crm')
