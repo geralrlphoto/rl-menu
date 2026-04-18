@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN!
+
+function sb() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
 
 const DB_BY_YEAR: Record<number, string> = {
   2026: '1ad220116d8a804b839ddc36f1e7ecf1',
@@ -62,6 +70,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: err.message }, { status: res.status })
     }
     const page = await res.json()
+
+    // ── Criar tambem no Supabase (eventos_2026/2027) ────────────────────────
+    try {
+      const TABLE_BY_ANO: Record<number, string> = {
+        2026: 'eventos_2026',
+        2027: 'eventos_2027',
+      }
+      const tbl = TABLE_BY_ANO[anoEvento]
+      if (tbl) {
+        const sbRow: any = {
+          notion_id: page.id,
+          referencia: referencia ?? '',
+          cliente: cliente ?? '',
+          data_evento: data_evento ?? null,
+          local: local ?? '',
+          status: 'Não iniciada',
+          fotos_enviadas: false,
+          tipo_evento: tipo_evento?.length ? JSON.stringify(tipo_evento) : null,
+          tipo_servico: tipo_servico?.length ? JSON.stringify(tipo_servico) : null,
+          fotografo: fotografo?.length ? JSON.stringify(fotografo) : null,
+          valor_foto: valor_foto != null ? Number(valor_foto) : null,
+          valor_liquido: valor_liquido != null ? Number(valor_liquido) : (valor_video != null ? Number(valor_video) : null),
+        }
+        await sb().from(tbl).insert(sbRow)
+      }
+    } catch (e) {
+      console.error('Erro a inserir no Supabase:', e)
+    }
+
     return NextResponse.json({ id: page.id })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
