@@ -138,13 +138,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     // ── Sync campos principais para tabela eventos_2026/2027 ──────────────
+    // NOTA: na ficha, o user edita `valor_video` (VALOR DO SERVIÇO VÍDEO do Notion).
+    // Mas o "Total Vídeo" da página /eventos-2026 soma `valor_liquido` no Supabase.
+    // Mapeamento pedido pelo user: valor_video (ficha) → valor_liquido (Supabase)
     const eventosSyncMap: Record<string, string> = {
       cliente:        'cliente',
       local:          'local',
       data_evento:    'data_evento',
       status:         'status',
       valor_foto:     'valor_foto',
-      valor_liquido:  'valor_liquido',
+      valor_video:    'valor_liquido',  // valor_video na ficha → valor_liquido no Supabase
+      valor_liquido:  'valor_liquido',  // se também editado diretamente
       fotografo:      'fotografo',
       tipo_evento:    'tipo_evento',
       tipo_servico:   'tipo_servico',
