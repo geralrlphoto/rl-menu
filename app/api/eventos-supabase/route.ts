@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (ano && !TABLE_BY_YEAR[ano]) {
-      return NextResponse.json({ events: [], total: 0 })
+      return NextResponse.json({ events: [], total: 0, totais: { foto: 0, video: 0, geral: 0 } })
     }
 
     const table = ano ? TABLE_BY_YEAR[ano] : TABLE_BY_YEAR[2026]

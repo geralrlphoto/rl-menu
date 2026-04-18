@@ -9,7 +9,7 @@ const ANOS = [
   { ano: 2028, img: '/casamentos-2028.png' },
 ]
 
-type Stats = { count: number; total: number }
+type Stats = { count: number; total: number; foto: number; video: number }
 
 export default function CasamentosPage() {
   const [stats, setStats] = useState<Record<number, Stats>>({})
@@ -17,18 +17,18 @@ export default function CasamentosPage() {
   useEffect(() => {
     Promise.all(
       [2026, 2027, 2028].map(ano =>
-        fetch(`/api/eventos-notion?ano=${ano}`)
+        fetch(`/api/eventos-supabase?ano=${ano}`)
           .then(r => r.json())
           .then(d => {
             const events: any[] = d.events ?? []
-            const total = events.reduce((acc: number, e: any) => acc + (e.valor_liquido ?? 0), 0)
-            return { ano, count: events.length, total }
+            const totais = d.totais ?? { foto: 0, video: 0, geral: 0 }
+            return { ano, count: events.length, total: totais.geral, foto: totais.foto, video: totais.video }
           })
-          .catch(() => ({ ano, count: 0, total: 0 }))
+          .catch(() => ({ ano, count: 0, total: 0, foto: 0, video: 0 }))
       )
     ).then(results => {
       const s: Record<number, Stats> = {}
-      for (const r of results) s[r.ano] = { count: r.count, total: r.total }
+      for (const r of results) s[r.ano] = { count: r.count, total: r.total, foto: r.foto, video: r.video }
       setStats(s)
     })
   }, [])
