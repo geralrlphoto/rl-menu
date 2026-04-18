@@ -148,7 +148,7 @@ export default function ClientePage() {
     'Álbum 25×25 — 40 Fotos', 'Álbum 30×30 — 60 Fotos',
     'Foto Lembrança', 'Galerias Open', 'Entrega por Link', 'Entrega em Pen Box', 'Deslocação',
     '1 Videógrafo', '2 Videógrafos', 'Drone', 'Same Day Edit', 'Trailer', 'Teaser',
-    'Relive Wedding', 'Vídeo até 20 min | Full HD',
+    'Relive Wedding', 'Vídeo até 20 min | Full HD', 'Vídeos Originais',
   ]
 
   const DEFAULT_PROPOSTAS: Proposta[] = [
