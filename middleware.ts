@@ -26,6 +26,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/api/webhook-tally-cps') ||
     pathname.startsWith('/api/webhook-tally-freelancer') ||
     pathname.startsWith('/api/tally-webhook') ||
+    pathname.startsWith('/api/webhook-tally-evento') ||
     pathname.startsWith('/api/crm-intake') ||
     pathname.startsWith('/api/send-reuniao-email') ||
     pathname.startsWith('/api/test-email-freelancer') ||
