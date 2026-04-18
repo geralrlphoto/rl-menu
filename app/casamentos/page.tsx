@@ -21,18 +21,11 @@ export default function CasamentosPage() {
           .then(r => r.json())
           .then(d => {
             const events: any[] = d.events ?? []
-            // Filtrar apenas eventos do tipo CASAMENTO (excluir batizados, aniversários, etc)
-            const casamentos = events.filter((e: any) => (e.tipo_evento ?? []).includes('CASAMENTO'))
-            const totais = casamentos.reduce(
-              (acc: any, e: any) => {
-                acc.foto += Number(e.valor_foto) || 0
-                acc.video += Number(e.valor_liquido) || 0
-                return acc
-              },
-              { foto: 0, video: 0 }
-            )
-            const geral = totais.foto + totais.video
-            return { ano, count: casamentos.length, total: geral, foto: totais.foto, video: totais.video }
+            // Contar apenas eventos do tipo CASAMENTO (coerente com /eventos-2026)
+            const casamentosCount = events.filter((e: any) => (e.tipo_evento ?? []).includes('CASAMENTO')).length
+            // Total = soma de TODOS os eventos (coerente com /eventos-2026)
+            const totais = d.totais ?? { foto: 0, video: 0, geral: 0 }
+            return { ano, count: casamentosCount, total: totais.geral, foto: totais.foto, video: totais.video }
           })
           .catch(() => ({ ano, count: 0, total: 0, foto: 0, video: 0 }))
       )
