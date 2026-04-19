@@ -780,8 +780,8 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
                 <button
                   onClick={() => handleProposta('rejeitar')}
                   disabled={submittingProposta || isAdmin}
-                  className="w-full py-3 rounded-xl text-xs tracking-[0.2em] uppercase transition-all disabled:opacity-40 hover:bg-white/5"
-                  style={{ color: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  className="w-full py-3 rounded-xl text-xs tracking-[0.2em] uppercase transition-all disabled:opacity-40"
+                  style={{ color: 'rgba(239,68,68,0.85)', border: '1px solid rgba(239,68,68,0.35)', background: 'rgba(239,68,68,0.07)' }}>
                   {submittingProposta ? '...' : 'Rejeitar Proposta'}
                 </button>
               </div>
