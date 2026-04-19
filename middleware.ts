@@ -31,6 +31,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/api/send-reuniao-email') ||
     pathname.startsWith('/api/test-email-freelancer') ||
     pathname.startsWith('/portal-cliente') ||
+    (pathname.includes('/contrato') && !pathname.startsWith('/api')) ||
     pathname.startsWith('/freelancer-view') ||
     pathname.startsWith('/r/') ||
     pathname.startsWith('/api/lead-page/view') ||
