@@ -1751,7 +1751,7 @@ function PortalSubPageContent() {
                               await fetch('/api/portal-notif-prewedding', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ emailNoiva: portalSettingsObj.emailNoiva }),
+                                body: JSON.stringify({ emailNoiva: portalSettingsObj.emailNoiva ?? null, referencia: refParam ?? portalSettingsObj.referencia ?? null }),
                               })
                               setNotifNoivosEnviado(true)
                               setTimeout(() => setNotifNoivosEnviado(false), 5000)
