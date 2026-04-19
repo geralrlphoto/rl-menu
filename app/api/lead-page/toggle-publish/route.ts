@@ -35,26 +35,27 @@ export async function POST(req: NextRequest) {
       .eq('page_token', MASTER_TOKEN)
       .maybeSingle()
 
-    if (master?.page_content) {
-      const masterPC = master.page_content
-      const currentPC = existing?.page_content ?? {}
+    const masterPC = master?.page_content ?? {}
+    const currentPC = existing?.page_content ?? {}
 
-      // Preservar apenas o que é específico de cada casal:
-      // - propostas (os 3 pacotes com preços e serviços escolhidos)
-      // - extras_proposta
-      // - propostaAtiva (qual proposta está activa)
-      const newContent = {
-        ...masterPC,                                              // tudo da maquete
-        propostas: currentPC.propostas ?? masterPC.propostas,    // propostas do casal
-        extras_proposta: currentPC.extras_proposta ?? masterPC.extras_proposta,
-        propostaPage: {
-          ...masterPC.propostaPage,                              // design todo da maquete
-          propostaAtiva: currentPC.propostaPage?.propostaAtiva ?? 0,
-        },
-      }
-
-      updatePayload.page_content = newContent
+    // Sempre guarda conteúdo no cliente:
+    // - se maquete tem conteúdo: copia tudo da maquete
+    // - se maquete está vazia: guarda o conteúdo actual do cliente (ou vazio)
+    // Preservar apenas o que é específico de cada casal:
+    // - propostas (os 3 pacotes com preços e serviços escolhidos)
+    // - extras_proposta
+    // - propostaAtiva (qual proposta está activa)
+    const newContent = {
+      ...masterPC,
+      propostas: currentPC.propostas ?? masterPC.propostas,
+      extras_proposta: currentPC.extras_proposta ?? masterPC.extras_proposta,
+      propostaPage: {
+        ...(masterPC.propostaPage ?? {}),
+        propostaAtiva: currentPC.propostaPage?.propostaAtiva ?? 0,
+      },
     }
+
+    updatePayload.page_content = newContent
   }
 
   const { error } = await supabase

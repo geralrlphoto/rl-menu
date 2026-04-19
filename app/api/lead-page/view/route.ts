@@ -10,13 +10,16 @@ export async function GET(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
+  const isAdmin = req.cookies.get('rl_auth')?.value === process.env.AUTH_SECRET
+
   const { data: contact } = await supabase
     .from('crm_contacts')
     .select('*')
     .eq('page_token', token)
     .single()
 
-  if (!contact || !contact.page_publicada) {
+  // Admins vêem sempre; clientes só vêem páginas publicadas
+  if (!contact || (!contact.page_publicada && !isAdmin)) {
     return NextResponse.json({ error: 'not_found' }, { status: 404 })
   }
 
