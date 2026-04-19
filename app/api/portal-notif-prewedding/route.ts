@@ -31,15 +31,18 @@ export async function POST(req: NextRequest) {
   const { emailNoiva, referencia } = await req.json().catch(() => ({}))
 
   let email = emailNoiva ?? null
-
-  // Fallback: buscar email no Notion pela referência
   if (!email && referencia) {
     email = await getEmailFromNotion(referencia)
   }
-
   if (!email) {
     return NextResponse.json({ error: 'Email da noiva não encontrado' }, { status: 400 })
   }
+
+  // Fetch card and embed as base64 so email clients don't block it
+  const imgRes = await fetch(CARD_URL, { cache: 'no-store' })
+  const imgBuffer = await imgRes.arrayBuffer()
+  const imgBase64 = Buffer.from(imgBuffer).toString('base64')
+  const dataUri = `data:image/png;base64,${imgBase64}`
 
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -51,7 +54,7 @@ export async function POST(req: NextRequest) {
       from: 'RL Photo.Video <geral@rlphotovideo.pt>',
       to: [email],
       subject: 'O seu Pré-Wedding — RL Photo.Video',
-      html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#000000;"><img src="${CARD_URL}" alt="Pré-Wedding" style="display:block;width:100%;max-width:100%;height:auto;" /></body></html>`,
+      html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#000000;"><img src="${dataUri}" alt="Pré-Wedding" style="display:block;width:100%;max-width:100%;height:auto;" /></body></html>`,
     }),
   })
 
