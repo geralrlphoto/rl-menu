@@ -3,13 +3,6 @@ import { createClient } from '@supabase/supabase-js'
 
 const MASTER_TOKEN = '85343645-b0d3-4412-ae78-795fd7f8ddf1'
 
-// Fields in propostaPage that are design/template (synced from master)
-// propostaAtiva is couple-specific → NOT synced
-const DESIGN_KEYS = ['subtitle', 'intro', 'about', 'relive', 'packages', 'ctaText', 'typography'] as const
-
-// Top-level content fields that are also synced (shared design across all proposals)
-const TOP_LEVEL_DESIGN_KEYS = ['video', 'about', 'testimonials', 'banner', 'portfolio'] as const
-
 export async function POST(req: NextRequest) {
   const auth = req.cookies.get('rl_auth')?.value
   if (auth !== process.env.AUTH_SECRET) {
@@ -21,7 +14,7 @@ export async function POST(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  // 1. Fetch master page_content
+  // 1. Buscar page_content da maquete
   const { data: master, error: masterErr } = await supabase
     .from('crm_contacts')
     .select('page_content')
@@ -31,25 +24,9 @@ export async function POST(req: NextRequest) {
   if (masterErr) return NextResponse.json({ error: masterErr.message }, { status: 500 })
   if (!master?.page_content) return NextResponse.json({ error: 'Master not found' }, { status: 404 })
 
-  const masterPropostaPage = master.page_content.propostaPage ?? {}
+  const masterPC = master.page_content
 
-  // Extract only design keys from propostaPage
-  const designPatch: Record<string, any> = {}
-  for (const key of DESIGN_KEYS) {
-    if (masterPropostaPage[key] !== undefined) {
-      designPatch[key] = masterPropostaPage[key]
-    }
-  }
-
-  // Extract top-level design fields (e.g. video URLs)
-  const topLevelPatch: Record<string, any> = {}
-  for (const key of TOP_LEVEL_DESIGN_KEYS) {
-    if (master.page_content[key] !== undefined) {
-      topLevelPatch[key] = master.page_content[key]
-    }
-  }
-
-  // 2. Fetch all other contacts with a page_token
+  // 2. Buscar todos os outros contactos com page_token
   const { data: contacts, error: contactsErr } = await supabase
     .from('crm_contacts')
     .select('page_token, page_content')
@@ -60,17 +37,18 @@ export async function POST(req: NextRequest) {
 
   let updated = 0
   for (const contact of (contacts ?? [])) {
-    const current = contact.page_content ?? {}
-    const currentPropostaPage = current.propostaPage ?? {}
+    const currentPC = contact.page_content ?? {}
 
-    // Merge design fields, preserve propostaAtiva (couple-specific)
-    const newPropostaPage = {
-      ...currentPropostaPage,
-      ...designPatch,
-      propostaAtiva: currentPropostaPage.propostaAtiva ?? 0,
+    // Copiar TUDO da maquete, preservar apenas dados específicos do casal
+    const newContent = {
+      ...masterPC,
+      propostas: currentPC.propostas ?? masterPC.propostas,
+      extras_proposta: currentPC.extras_proposta ?? masterPC.extras_proposta,
+      propostaPage: {
+        ...masterPC.propostaPage,
+        propostaAtiva: currentPC.propostaPage?.propostaAtiva ?? 0,
+      },
     }
-
-    const newContent = { ...current, ...topLevelPatch, propostaPage: newPropostaPage }
 
     const { error } = await supabase
       .from('crm_contacts')
