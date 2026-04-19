@@ -1010,6 +1010,12 @@ function PortalSubPageContent() {
     loadPagamentos()
   }, [loadPagamentos])
 
+  // Auto-refresh pagamentos a cada 30 segundos
+  useEffect(() => {
+    const id = setInterval(() => { loadPagamentos() }, 30000)
+    return () => clearInterval(id)
+  }, [loadPagamentos])
+
   // Dedicated fetch for proposta data — runs immediately from refParam (URL param)
   // This is independent of loadPagamentos so it works even if other fetches fail
   useEffect(() => {
