@@ -625,7 +625,7 @@ function ContratoPropostaSection({ evento, blocks, settings, contratoDisponivel,
 
 type PreWeddingSlot = { id: string; date: string; time: string; local: string }
 
-function PreWeddingSection({ slots, reservedSlotId, reservingSlotId, showReservedWarning, blocks, settings, onReserve }: {
+function PreWeddingSection({ slots, reservedSlotId, reservingSlotId, showReservedWarning, blocks, settings, onReserve, onNotificarNoivos, sendingNotifNoivos, notifNoivosEnviado }: {
   slots: PreWeddingSlot[]
   reservedSlotId: string | null
   reservingSlotId: string | null
@@ -633,6 +633,9 @@ function PreWeddingSection({ slots, reservedSlotId, reservingSlotId, showReserve
   blocks: Block[]
   settings: { hiddenNav: string[] }
   onReserve: (slotId: string) => void
+  onNotificarNoivos?: () => void
+  sendingNotifNoivos?: boolean
+  notifNoivosEnviado?: boolean
 }) {
   const MESES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
   const DIAS_ABBR  = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
@@ -795,6 +798,18 @@ function PreWeddingSection({ slots, reservedSlotId, reservingSlotId, showReserve
             </div>
           </>
         )}
+
+        {onNotificarNoivos && (
+          <div className="mt-6 pt-5 border-t border-white/[0.06] flex flex-col items-center gap-2">
+            <button
+              onClick={onNotificarNoivos}
+              disabled={sendingNotifNoivos || notifNoivosEnviado}
+              className="w-full py-3 rounded-xl border border-white/40 bg-white/5 text-white font-semibold text-xs tracking-widest uppercase hover:bg-white/10 transition-all disabled:opacity-50"
+              style={{ boxShadow: '0 0 10px 2px rgba(255,255,255,0.12)' }}>
+              {notifNoivosEnviado ? '✓ CARD ENVIADO' : sendingNotifNoivos ? '...' : 'NOTIFICAR NOIVOS'}
+            </button>
+          </div>
+        )}
       </div>
     </>
   )
@@ -861,6 +876,8 @@ function PortalSubPageContent() {
   const [editingPreWedding, setEditingPreWedding] = useState(false)
   const [preWeddingForm, setPreWeddingForm] = useState<Array<{id:string;date:string;time:string;local:string}>>([])
   const [savingSlots, setSavingSlots] = useState(false)
+  const [sendingNotifNoivos, setSendingNotifNoivos] = useState(false)
+  const [notifNoivosEnviado, setNotifNoivosEnviado] = useState(false)
 
   const [eventoData, setEventoData] = useState<any>(null)
   const [contratoDisponivel, setContratoDisponivel] = useState<boolean | null>(null)
@@ -1726,6 +1743,21 @@ function PortalSubPageContent() {
                           showReservedWarning={showReservedWarning}
                           blocks={blocks}
                           settings={settings}
+                          sendingNotifNoivos={sendingNotifNoivos}
+                          notifNoivosEnviado={notifNoivosEnviado}
+                          onNotificarNoivos={async () => {
+                            setSendingNotifNoivos(true)
+                            try {
+                              await fetch('/api/portal-notif-prewedding', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ emailNoiva: portalSettingsObj.emailNoiva }),
+                              })
+                              setNotifNoivosEnviado(true)
+                              setTimeout(() => setNotifNoivosEnviado(false), 5000)
+                            } catch (e) { console.error('[notif-noivos]', e) }
+                            setSendingNotifNoivos(false)
+                          }}
                           onReserve={async (slotId) => {
                             if (reservedSlotId) { setShowReservedWarning(true); setTimeout(() => setShowReservedWarning(false), 4000); return }
                             setReservingSlotId(slotId)

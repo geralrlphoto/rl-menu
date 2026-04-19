@@ -43,7 +43,8 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/api/lead-page/check-admin') ||
     pathname.startsWith('/api/lead-page/proposta-response') ||
     pathname.startsWith('/api/lembrete-reuniao') ||
-    pathname.startsWith('/api/upload-image')
+    pathname.startsWith('/api/upload-image') ||
+    pathname.startsWith('/api/portal-notif-prewedding')
   ) {
     return NextResponse.next()
   }
