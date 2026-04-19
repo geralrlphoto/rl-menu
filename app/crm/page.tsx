@@ -333,6 +333,10 @@ export default function CRMPage() {
             </button>
             {syncMsg && <span className="text-xs text-green-400/70">{syncMsg}</span>}
           </div>
+          <a href="https://rl-menu-lake.vercel.app/r/85343645-b0d3-4412-ae78-795fd7f8ddf1" target="_blank" rel="noopener noreferrer"
+            className="px-5 py-3 border border-gold/20 hover:border-gold/60 rounded-xl text-sm text-gold/50 hover:text-gold tracking-[0.15em] uppercase transition-all">
+            ✦ Maquete
+          </a>
           <Link href="/crm/stats"
             className="px-5 py-3 border border-white/10 hover:border-gold/40 rounded-xl text-sm text-white/40 hover:text-gold tracking-[0.15em] uppercase transition-all">
             Estatísticas
