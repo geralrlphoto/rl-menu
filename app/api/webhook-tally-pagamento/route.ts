@@ -32,6 +32,29 @@ function getField(fields: any[], ...labels: string[]): string | null {
   return null
 }
 
+// Extrai labels legíveis de campos de escolha múltipla (Tally envia UUIDs como value)
+function getChoiceLabels(fields: any[], ...labels: string[]): string[] {
+  for (const label of labels) {
+    const f = fields.find(
+      (f: any) => f.label?.trim().toLowerCase() === label.trim().toLowerCase()
+    )
+    if (!f) continue
+    const options: any[] = f.options ?? []
+    const values: string[] = Array.isArray(f.value) ? f.value : [f.value].filter(Boolean)
+    if (options.length > 0 && values.length > 0) {
+      // Cruzar UUIDs com labels
+      const labels = values.map((v: string) => {
+        const opt = options.find((o: any) => o.id === v || o.text === v)
+        return opt?.text ?? v
+      }).filter(Boolean)
+      if (labels.length > 0) return labels
+    }
+    // Fallback: value já é texto legível
+    if (values.length > 0) return values
+  }
+  return []
+}
+
 // ─── Email comprovativo → CLIENTE ─────────────────────────────────────────────
 function buildComprovatvoClienteEmail(data: {
   nome_noivos: string
@@ -294,13 +317,16 @@ export async function POST(req: NextRequest) {
 
     // Extrair campos do formulário
     // ⚠️ Ajusta os labels abaixo para corresponderem EXATAMENTE aos campos do teu formulário Tally
-    const nome_noivos     = getField(fields, 'Nome dos Noivos', 'NOME DOS NOIVOS', 'Nome', 'NOME') ?? 'Noivos'
-    const referencia      = getField(fields, 'Referência', 'REFERÊNCIA', 'Referencia', 'REFERENCIA', 'Referência do Evento', 'REFERÊNCIA DO EVENTO')
-    const email_cliente   = getField(fields, 'Email', 'EMAIL', 'E-mail', 'E-MAIL', 'Email do Cliente', 'EMAIL DO CLIENTE')
-    const valor           = getField(fields, 'Valor a Liquidar', 'VALOR A LIQUIDAR', 'Valor', 'VALOR', 'Valor Pago', 'VALOR PAGO', 'Montante', 'MONTANTE')
-    const forma_pagamento = getField(fields, 'Forma de Pagamento', 'FORMA DE PAGAMENTO', 'Método de Pagamento', 'MÉTODO DE PAGAMENTO')
-    const data_pagamento  = getField(fields, 'Data', 'DATA', 'Data de Pagamento', 'DATA DE PAGAMENTO')
-    const notas           = getField(fields, 'Notas', 'NOTAS', 'Observações', 'OBSERVAÇÕES', 'Nota', 'NOTA')
+    const nome_noivos      = getField(fields, 'Nome dos Noivos', 'NOME DOS NOIVOS', 'Nome', 'NOME') ?? 'Noivos'
+    const referencia       = getField(fields, 'Referência', 'REFERÊNCIA', 'Referencia', 'REFERENCIA', 'Referência do Evento', 'REFERÊNCIA DO EVENTO')
+    const email_cliente    = getField(fields, 'Email', 'EMAIL', 'E-mail', 'E-MAIL', 'Email do Cliente', 'EMAIL DO CLIENTE')
+    const valor            = getField(fields, 'Valor a Liquidar', 'VALOR A LIQUIDAR', 'Valor', 'VALOR', 'Valor Pago', 'VALOR PAGO', 'Montante', 'MONTANTE')
+    const data_pagamento   = getField(fields, 'Data', 'DATA', 'Data de Pagamento', 'DATA DE PAGAMENTO')
+    const notas            = getField(fields, 'Notas', 'NOTAS', 'Observações', 'OBSERVAÇÕES', 'Nota', 'NOTA')
+    // Campos de escolha múltipla — extrai labels legíveis
+    const fase_pagamento   = getChoiceLabels(fields, 'Fase de Pagamento', 'FASE DE PAGAMENTO', 'Fase', 'FASE')
+    const metodo_labels    = getChoiceLabels(fields, 'Forma de Pagamento', 'FORMA DE PAGAMENTO', 'Método de Pagamento', 'MÉTODO DE PAGAMENTO')
+    const forma_pagamento  = metodo_labels[0] ?? getField(fields, 'Forma de Pagamento', 'FORMA DE PAGAMENTO', 'Método de Pagamento', 'MÉTODO DE PAGAMENTO')
 
     const paymentData = { nome_noivos, referencia, valor, forma_pagamento, data_pagamento, email_cliente, notas }
 
@@ -313,7 +339,8 @@ export async function POST(req: NextRequest) {
       nome_noivos,
       referencia:       referencia ?? null,
       data_pagamento:   data_pagamento ?? null,
-      metodo_pagamento: forma_pagamento ? [forma_pagamento] : [],
+      fase_pagamento:   fase_pagamento.length > 0 ? fase_pagamento : null,
+      metodo_pagamento: metodo_labels.length > 0 ? metodo_labels : (forma_pagamento ? [forma_pagamento] : []),
       valor_liquidado:  isNaN(valorNumerico!) ? null : valorNumerico,
       email_cliente:    email_cliente ?? null,
       notas:            notas ?? null,
