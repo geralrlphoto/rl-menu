@@ -92,7 +92,9 @@ export async function POST(req: NextRequest) {
 
   const now = new Date().toISOString()
   const updatePayload: Record<string, any> = {
-    page_publicada: false,
+    // Ao confirmar: página fica publicada (cliente mantém acesso)
+    // Ao rejeitar: página é despublicada
+    page_publicada: action === 'confirmar' ? true : false,
     status: action === 'confirmar' ? 'Fechou' : 'NÃO FECHOU',
     status_updated_at: now,
     proposta_resposta: action,
