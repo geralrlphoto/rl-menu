@@ -38,6 +38,8 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/api/lead-page/change-request') ||
     pathname.startsWith('/api/lead-page/request-change-email') ||
     pathname.startsWith('/api/lead-page/check-admin') ||
+    pathname.startsWith('/api/lead-page/proposta-response') ||
+    pathname.startsWith('/api/lembrete-reuniao') ||
     pathname.startsWith('/api/upload-image')
   ) {
     return NextResponse.next()
