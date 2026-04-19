@@ -712,13 +712,17 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
               if (isAdmin) return
               setSubmittingProposta(true)
               try {
-                await fetch('/api/lead-page/proposta-response', {
+                const res = await fetch('/api/lead-page/proposta-response', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ token, action }),
                 })
-                setPropostaResposta(action === 'confirmar' ? 'confirmada' : 'rejeitada')
-              } catch {}
+                const data = await res.json()
+                console.log('[proposta-response]', res.status, data)
+                if (res.ok) {
+                  setPropostaResposta(action === 'confirmar' ? 'confirmada' : 'rejeitada')
+                }
+              } catch (e) { console.error('[proposta-response] erro:', e) }
               setSubmittingProposta(false)
             }
 
