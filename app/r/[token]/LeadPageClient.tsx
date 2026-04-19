@@ -738,7 +738,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
                 <a href="https://tally.so/r/3XXZlV" target="_blank" rel="noopener noreferrer"
                   className="w-full py-4 rounded-2xl text-sm font-semibold tracking-[0.15em] uppercase text-center block"
                   style={{ background: '#C9A84C', color: '#0a0a0a' }}>
-                  Assinar Contrato →
+                  Próximo Passo →
                 </a>
               </div>
             )
