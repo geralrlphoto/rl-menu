@@ -99,9 +99,13 @@ export default function ClientePage() {
     const pc = typeof form.page_content === 'string'
       ? JSON.parse(form.page_content || '{}')
       : (form.page_content || {})
-    const formToSave = {
+    const formToSave: Record<string, any> = {
       ...form,
       page_content: { ...pc, propostas, extras_proposta: extrasGlobais },
+    }
+    // Regista data_fecho automaticamente quando status = Fechou e ainda não tem
+    if (form.status === 'Fechou' && !form.data_fecho) {
+      formToSave.data_fecho = new Date().toISOString()
     }
     const { error } = await supabase.from('crm_contacts').update(formToSave).eq('id', id)
     if (!error) {

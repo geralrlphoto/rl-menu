@@ -19,6 +19,7 @@ type Contact = {
   como_chegou: string
   servicos: string
   status_updated_at: string
+  data_fecho: string
 }
 
 const statusColor: Record<string, string> = {
@@ -252,8 +253,12 @@ export default function CRMPage() {
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     const now = new Date().toISOString()
-    setContacts(prev => prev.map(c => c.id === id ? { ...c, status: newStatus, status_updated_at: now } : c))
-    await supabase.from('crm_contacts').update({ status: newStatus, status_updated_at: now }).eq('id', id)
+    const existing = contacts.find(c => c.id === id)
+    const updatePayload: Record<string, string> = { status: newStatus, status_updated_at: now }
+    // Regista data_fecho apenas quando muda para Fechou e ainda não tem
+    if (newStatus === 'Fechou' && !existing?.data_fecho) updatePayload.data_fecho = now
+    setContacts(prev => prev.map(c => c.id === id ? { ...c, ...updatePayload } : c))
+    await supabase.from('crm_contacts').update(updatePayload).eq('id', id)
   }
 
   useEffect(() => {
