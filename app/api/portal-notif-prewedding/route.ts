@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import fs from 'fs'
+import path from 'path'
 
-const CARD_URL      = 'https://rl-menu-lake.vercel.app/card_prewedding_marcar_mobile.png'
 const NOTION_TOKEN  = process.env.NOTION_TOKEN!
 const EVENTOS_DB    = '1ad220116d8a804b839ddc36f1e7ecf1'
 
@@ -38,11 +39,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Email da noiva não encontrado' }, { status: 400 })
   }
 
-  // Fetch card and embed as base64 so email clients don't block it
-  const imgRes = await fetch(CARD_URL, { cache: 'no-store' })
-  const imgBuffer = await imgRes.arrayBuffer()
-  const imgBase64 = Buffer.from(imgBuffer).toString('base64')
-  const dataUri = `data:image/png;base64,${imgBase64}`
+  // Ler card diretamente do public/
+  const cardPath = path.join(process.cwd(), 'public', 'card_prewedding_marcar_mobile.png')
+  const cardBase64 = fs.readFileSync(cardPath).toString('base64')
 
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -54,7 +53,13 @@ export async function POST(req: NextRequest) {
       from: 'RL Photo.Video <geral@rlphotovideo.pt>',
       to: [email],
       subject: 'O seu Pré-Wedding — RL Photo.Video',
-      html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#000000;"><img src="${dataUri}" alt="Pré-Wedding" style="display:block;width:100%;max-width:100%;height:auto;" /></body></html>`,
+      html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#000000;"><img src="cid:card_prewedding" alt="Pré-Wedding" style="display:block;width:100%;max-width:100%;height:auto;" /></body></html>`,
+      attachments: [{
+        content: cardBase64,
+        filename: 'card_prewedding_marcar_mobile.png',
+        content_type: 'image/png',
+        content_id: 'card_prewedding',
+      }],
     }),
   })
 
