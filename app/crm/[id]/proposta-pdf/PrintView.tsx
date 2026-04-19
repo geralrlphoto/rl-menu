@@ -183,40 +183,40 @@ export default function PrintView({ contact, content, autoPrint = true }: { cont
             <div style={{ display: 'flex', flex: 1 }}>
 
               {/* Left panel */}
-              <div style={{ width: '37%', background: CREAM, borderRight: `0.5px solid ${GOLD}25`, padding: '30px 24px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+              <div style={{ width: '37%', background: CREAM, borderRight: `2px solid ${GOLD}`, padding: '30px 24px', display: 'flex', flexDirection: 'column', gap: 24 }}>
 
                 {/* Investimento */}
                 <div>
-                  <p style={{ margin: '0 0 6px', fontFamily: 'Montserrat, sans-serif', fontWeight: 400, fontSize: 7.5, letterSpacing: '0.5em', color: `${GOLD}80`, textTransform: 'uppercase' }}>Investimento Total</p>
+                  <p style={{ margin: '0 0 6px', fontFamily: 'Montserrat, sans-serif', fontWeight: 500, fontSize: 9, letterSpacing: '0.45em', color: GOLD, textTransform: 'uppercase' }}>Investimento Total</p>
                   {valor > 0
-                    ? <p style={{ margin: 0, fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontWeight: 300, fontSize: 42, color: GOLD, lineHeight: 1 }}>{fmt(valor)}</p>
-                    : <p style={{ margin: 0, fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 18, color: `${GOLD}60`, fontWeight: 300 }}>Sob consulta</p>
+                    ? <p style={{ margin: 0, fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontWeight: 400, fontSize: 46, color: GOLD, lineHeight: 1 }}>{fmt(valor)}</p>
+                    : <p style={{ margin: 0, fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 22, color: GOLD, fontWeight: 300 }}>Sob consulta</p>
                   }
                 </div>
 
-                <div style={{ height: 0.5, background: `${GOLD}30` }} />
+                <div style={{ height: 1, background: `${GOLD}50` }} />
 
                 {/* Forma de Investimento */}
                 {valor > 0 && (
                   <div>
-                    <p style={{ margin: '0 0 14px', fontFamily: 'Montserrat, sans-serif', fontWeight: 500, fontSize: 7.5, letterSpacing: '0.45em', color: BODY_COLOR, textTransform: 'uppercase' }}>Forma de Investimento</p>
+                    <p style={{ margin: '0 0 14px', fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: 9, letterSpacing: '0.4em', color: BODY_COLOR, textTransform: 'uppercase' }}>Forma de Investimento</p>
 
                     {[
                       { n: 1, label: 'Adjudicação', desc: 'Reserva da data', val: '400 €' },
                       { n: 2, label: 'Reforço', desc: '80% do valor em falta', val: restante > 0 ? fmt(reforco) : '—' },
                       { n: 3, label: 'Valor Final', desc: 'Restante no dia do casamento', val: restante > 0 ? fmt(valorFinal) : '—' },
                     ].map((step, si) => (
-                      <div key={si} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderBottom: si < 2 ? `0.5px solid ${GOLD}18` : 'none' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                          <div style={{ width: 18, height: 18, borderRadius: '50%', background: `${GOLD}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: 8, color: GOLD }}>{step.n}</span>
+                      <div key={si} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: si < 2 ? `1px solid ${GOLD}30` : 'none' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{ width: 20, height: 20, borderRadius: '50%', background: GOLD, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700, fontSize: 9, color: '#fff' }}>{step.n}</span>
                           </div>
                           <div>
-                            <p style={{ margin: 0, fontFamily: 'Montserrat, sans-serif', fontWeight: 500, fontSize: 8.5, color: BODY_COLOR }}>{step.label}</p>
-                            <p style={{ margin: '2px 0 0', fontFamily: 'Montserrat, sans-serif', fontWeight: 300, fontSize: 7.5, color: '#888' }}>{step.desc}</p>
+                            <p style={{ margin: 0, fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: 10, color: BODY_COLOR }}>{step.label}</p>
+                            <p style={{ margin: '2px 0 0', fontFamily: 'Montserrat, sans-serif', fontWeight: 300, fontSize: 9, color: '#666' }}>{step.desc}</p>
                           </div>
                         </div>
-                        <p style={{ margin: 0, fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 17, color: GOLD, fontWeight: 400, flexShrink: 0 }}>{step.val}</p>
+                        <p style={{ margin: 0, fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 20, color: GOLD, fontWeight: 500, flexShrink: 0 }}>{step.val}</p>
                       </div>
                     ))}
                   </div>
@@ -225,14 +225,14 @@ export default function PrintView({ contact, content, autoPrint = true }: { cont
                 {/* Extras */}
                 {extras.length > 0 && (
                   <>
-                    <div style={{ height: 0.5, background: `${GOLD}20` }} />
+                    <div style={{ height: 1, background: `${GOLD}30` }} />
                     <div>
-                      <p style={{ margin: '0 0 12px', fontFamily: 'Montserrat, sans-serif', fontWeight: 500, fontSize: 7.5, letterSpacing: '0.45em', color: BODY_COLOR, textTransform: 'uppercase' }}>Serviços Extras Disponíveis</p>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                      <p style={{ margin: '0 0 12px', fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: 9, letterSpacing: '0.4em', color: BODY_COLOR, textTransform: 'uppercase' }}>Serviços Extras Disponíveis</p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                         {extras.map((e, i) => (
-                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{ color: GOLD, fontSize: 5, flexShrink: 0 }}>◆</span>
-                            <p style={{ margin: 0, fontFamily: 'Montserrat, sans-serif', fontWeight: 300, fontSize: 9, color: BODY_COLOR }}>{e.nome}</p>
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                            <span style={{ color: GOLD, fontSize: 6, flexShrink: 0 }}>◆</span>
+                            <p style={{ margin: 0, fontFamily: 'Montserrat, sans-serif', fontWeight: 400, fontSize: 10, color: BODY_COLOR }}>{e.nome}</p>
                           </div>
                         ))}
                       </div>
@@ -242,23 +242,23 @@ export default function PrintView({ contact, content, autoPrint = true }: { cont
               </div>
 
               {/* Right panel — services */}
-              <div style={{ flex: 1, padding: '30px 28px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+              <div style={{ flex: 1, padding: '30px 32px', display: 'flex', flexDirection: 'column', gap: 26, background: '#ffffff' }}>
 
                 {!hasFoto && !hasVideo && (
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 300, fontSize: 11, color: '#ccc', fontStyle: 'italic' }}>Serviços a definir</p>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 300, fontSize: 12, color: '#999', fontStyle: 'italic' }}>Serviços a definir</p>
                 )}
 
                 {hasFoto && (
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                      <p style={{ margin: 0, fontFamily: 'Montserrat, sans-serif', fontWeight: 500, fontSize: 7.5, letterSpacing: '0.45em', color: GOLD, textTransform: 'uppercase' }}>Fotografia</p>
-                      <div style={{ flex: 1, height: 0.5, background: `${GOLD}35` }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                      <p style={{ margin: 0, fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: 9, letterSpacing: '0.45em', color: GOLD, textTransform: 'uppercase' }}>Fotografia</p>
+                      <div style={{ flex: 1, height: 1.5, background: GOLD }} />
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
                       {proposta.servicos_foto.map((s, i) => (
                         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <span style={{ color: GOLD, fontSize: 5.5, flexShrink: 0 }}>◆</span>
-                          <p style={{ margin: 0, fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 16, color: BODY_COLOR, fontWeight: 400, lineHeight: 1.2 }}>{s}</p>
+                          <span style={{ color: GOLD, fontSize: 7, flexShrink: 0 }}>◆</span>
+                          <p style={{ margin: 0, fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 19, color: '#1a1510', fontWeight: 500, lineHeight: 1.2 }}>{s}</p>
                         </div>
                       ))}
                     </div>
@@ -266,20 +266,20 @@ export default function PrintView({ contact, content, autoPrint = true }: { cont
                 )}
 
                 {hasFoto && hasVideo && (
-                  <div style={{ height: 0.5, background: `${GOLD}18` }} />
+                  <div style={{ height: 1, background: `${GOLD}40` }} />
                 )}
 
                 {hasVideo && (
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                      <p style={{ margin: 0, fontFamily: 'Montserrat, sans-serif', fontWeight: 500, fontSize: 7.5, letterSpacing: '0.45em', color: GOLD, textTransform: 'uppercase' }}>Vídeo</p>
-                      <div style={{ flex: 1, height: 0.5, background: `${GOLD}35` }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                      <p style={{ margin: 0, fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: 9, letterSpacing: '0.45em', color: GOLD, textTransform: 'uppercase' }}>Vídeo</p>
+                      <div style={{ flex: 1, height: 1.5, background: GOLD }} />
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
                       {proposta.servicos_video.map((s, i) => (
                         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <span style={{ color: GOLD, fontSize: 5.5, flexShrink: 0 }}>◆</span>
-                          <p style={{ margin: 0, fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 16, color: BODY_COLOR, fontWeight: 400, lineHeight: 1.2 }}>{s}</p>
+                          <span style={{ color: GOLD, fontSize: 7, flexShrink: 0 }}>◆</span>
+                          <p style={{ margin: 0, fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 19, color: '#1a1510', fontWeight: 500, lineHeight: 1.2 }}>{s}</p>
                         </div>
                       ))}
                     </div>
@@ -289,9 +289,9 @@ export default function PrintView({ contact, content, autoPrint = true }: { cont
             </div>
 
             {/* Page footer */}
-            <div style={{ padding: '10px 44px', borderTop: `0.5px solid ${GOLD}15`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, background: '#fdfcf9' }}>
-              <img src={LOGO_URL} alt="RL" style={{ height: 22, opacity: 0.3 }} />
-              <p style={{ margin: 0, fontFamily: 'Montserrat, sans-serif', fontWeight: 300, fontSize: 7.5, color: '#bbb', letterSpacing: '0.15em' }}>{contact.nome}</p>
+            <div style={{ padding: '12px 44px', borderTop: `1px solid ${GOLD}30`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, background: '#fdfcf9' }}>
+              <img src={LOGO_URL} alt="RL" style={{ height: 24, opacity: 0.4 }} />
+              <p style={{ margin: 0, fontFamily: 'Montserrat, sans-serif', fontWeight: 400, fontSize: 9, color: '#999', letterSpacing: '0.2em' }}>{contact.nome}</p>
             </div>
           </div>
         )
@@ -311,9 +311,9 @@ export default function PrintView({ contact, content, autoPrint = true }: { cont
         {/* Body */}
         <div style={{ flex: 1, padding: '32px 44px', display: 'flex', flexDirection: 'column', gap: 0 }}>
           {CONDICOES.map((c, i) => (
-            <div key={i} style={{ paddingBottom: 18, marginBottom: 18, borderBottom: i < CONDICOES.length - 1 ? `0.5px solid ${GOLD}18` : 'none' }}>
-              <p style={{ margin: '0 0 5px', fontFamily: 'Montserrat, sans-serif', fontWeight: 500, fontSize: 8, letterSpacing: '0.25em', color: GOLD, textTransform: 'uppercase' }}>{c.titulo}</p>
-              <p style={{ margin: 0, fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 13.5, color: '#3a3530', lineHeight: 1.75, fontWeight: 400 }}>{c.texto}</p>
+            <div key={i} style={{ paddingBottom: 16, marginBottom: 16, borderBottom: i < CONDICOES.length - 1 ? `1px solid ${GOLD}25` : 'none' }}>
+              <p style={{ margin: '0 0 5px', fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: 9, letterSpacing: '0.25em', color: GOLD, textTransform: 'uppercase' }}>{c.titulo}</p>
+              <p style={{ margin: 0, fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 15, color: '#2a2520', lineHeight: 1.7, fontWeight: 400 }}>{c.texto}</p>
             </div>
           ))}
         </div>
