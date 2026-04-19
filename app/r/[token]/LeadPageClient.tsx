@@ -317,6 +317,8 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
   const [status,     setStatus]     = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
   const [requesting, setRequesting] = useState(false)
+  const [propostaResposta,    setPropostaResposta]    = useState<'confirmada' | 'rejeitada' | null>(null)
+  const [submittingProposta,  setSubmittingProposta]  = useState(false)
 
   // Hero photo
   const [heroPreview,  setHeroPreview]  = useState('')
@@ -345,6 +347,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
         if (!data.contact) { setNotFound(true); setLoading(false); return }
         setContact(data.contact)
         setStatus(data.contact.page_confirmacao || null)
+        setPropostaResposta(data.contact.proposta_resposta === 'confirmar' ? 'confirmada' : data.contact.proposta_resposta === 'rejeitar' ? 'rejeitada' : null)
         setHeroPreview(data.contact.page_foto_url || DEFAULT_HERO)
         setHeroInput(data.contact.page_foto_url || '')
         setContent(merge(data.contact.page_content))
@@ -657,6 +660,78 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
           </button>
 
           {isAdmin && <p className="text-center text-[10px] text-white/20 tracking-widest uppercase">Botões desativados em modo admin</p>}
+
+          {/* ── Proposta: Confirmar / Rejeitar ── */}
+          {(() => {
+            const handleProposta = async (action: 'confirmar' | 'rejeitar') => {
+              if (isAdmin) return
+              setSubmittingProposta(true)
+              try {
+                await fetch('/api/lead-page/proposta-response', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ token, action }),
+                })
+                setPropostaResposta(action === 'confirmar' ? 'confirmada' : 'rejeitada')
+              } catch {}
+              setSubmittingProposta(false)
+            }
+
+            if (propostaResposta === 'confirmada') return (
+              <div className="mt-4 flex flex-col items-center gap-5 w-full px-2 py-8 rounded-2xl text-center"
+                style={{ background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.15)' }}>
+                <div style={{ width: 52, height: 52, borderRadius: '50%', border: '1.5px solid #4ade80', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
+                  <span style={{ color: '#4ade80', fontSize: 22 }}>✓</span>
+                </div>
+                <div>
+                  <p className="font-cormorant text-2xl font-light text-white/90 mb-1">Obrigado por nos escolherem</p>
+                  <p className="font-cormorant text-lg font-light" style={{ color: '#C9A84C' }}>para o vosso grande dia!</p>
+                </div>
+                <p className="text-white/40 text-xs tracking-wider leading-relaxed px-2">
+                  Estamos muito felizes por fazer parte deste momento tão especial.<br />Para dar seguimento ao contrato, cliquem no botão abaixo.
+                </p>
+                <a href="https://tally.so/r/3XXZlV" target="_blank" rel="noopener noreferrer"
+                  className="w-full py-4 rounded-2xl text-sm font-semibold tracking-[0.15em] uppercase text-center block"
+                  style={{ background: '#C9A84C', color: '#0a0a0a' }}>
+                  Assinar Contrato →
+                </a>
+              </div>
+            )
+
+            if (propostaResposta === 'rejeitada') return (
+              <div className="mt-4 flex flex-col items-center gap-4 w-full px-2 py-8 rounded-2xl text-center"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <p className="font-cormorant text-2xl font-light text-white/70">Obrigado por todo o vosso tempo</p>
+                <p className="text-white/30 text-xs tracking-wider leading-relaxed px-2">
+                  Foi um prazer conhecer-vos e esperamos poder trabalhar juntos no futuro.<br />Desejamos-vos o melhor para o vosso dia especial.
+                </p>
+              </div>
+            )
+
+            return (
+              <div className="mt-4 flex flex-col gap-3 w-full">
+                <div className="flex items-center gap-3 mb-1">
+                  <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                  <p className="text-[10px] tracking-[0.3em] text-white/20 uppercase whitespace-nowrap">Resposta à Proposta</p>
+                  <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                </div>
+                <button
+                  onClick={() => handleProposta('confirmar')}
+                  disabled={submittingProposta || isAdmin}
+                  className="w-full py-4 rounded-2xl text-sm font-semibold tracking-[0.15em] uppercase transition-all disabled:opacity-50"
+                  style={{ background: '#C9A84C', color: '#0a0a0a' }}>
+                  {submittingProposta ? 'A processar...' : '✓ Confirmar Proposta'}
+                </button>
+                <button
+                  onClick={() => handleProposta('rejeitar')}
+                  disabled={submittingProposta || isAdmin}
+                  className="w-full py-3.5 rounded-2xl text-sm tracking-[0.15em] uppercase transition-all disabled:opacity-50"
+                  style={{ color: 'rgba(239,68,68,0.6)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                  {submittingProposta ? '...' : 'Rejeitar'}
+                </button>
+              </div>
+            )
+          })()}
 
           {/* ── Adicionar ao Calendário ── */}
           {targetDate && (() => {
