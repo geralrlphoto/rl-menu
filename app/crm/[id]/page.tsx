@@ -415,17 +415,33 @@ export default function ClientePage() {
         </div>
 
         {/* Gerar Proposta PDF */}
-        <div className="bg-white/3 border border-white/8 rounded-2xl p-5 flex items-center justify-between">
-          <div>
-            <h2 className="text-xs tracking-[0.3em] text-gold uppercase">Proposta PDF</h2>
-            <p className="text-[11px] text-white/30 mt-1">Gera um PDF profissional com as 3 propostas</p>
+        <div className="bg-white/3 border border-white/8 rounded-2xl p-5 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xs tracking-[0.3em] text-gold uppercase">Proposta PDF</h2>
+              <p className="text-[11px] text-white/30 mt-1">Gera um PDF profissional com as 3 propostas</p>
+            </div>
+            <button
+              onClick={() => window.open(`/crm/${id}/proposta-pdf`, '_blank')}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold tracking-wider transition-all bg-gold/90 hover:bg-gold text-black"
+            >
+              <span>↗</span> Gerar Proposta
+            </button>
           </div>
-          <button
-            onClick={() => window.open(`/crm/${id}/proposta-pdf`, '_blank')}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold tracking-wider transition-all bg-gold/90 hover:bg-gold text-black"
-          >
-            <span>↗</span> Gerar Proposta
-          </button>
+          {form.proposta_pdf_url ? (
+            <div className="flex items-center justify-between bg-gold/5 border border-gold/20 rounded-xl px-4 py-3">
+              <div className="flex items-center gap-2">
+                <span className="text-gold text-sm">✓</span>
+                <span className="text-[11px] text-gold/80">Botão PDF visível para o cliente</span>
+              </div>
+              <a href={form.proposta_pdf_url} target="_blank" rel="noopener noreferrer"
+                className="text-[11px] text-white/30 hover:text-white/60 underline transition-colors">
+                Ver →
+              </a>
+            </div>
+          ) : (
+            <p className="text-[11px] text-white/20 italic">Gera a proposta para o link ser criado automaticamente.</p>
+          )}
         </div>
 
         {/* Propostas Fotografia / Vídeo */}

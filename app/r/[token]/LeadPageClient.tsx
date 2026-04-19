@@ -339,6 +339,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
   const [uploadingPhoto, setUploadingPhoto] = useState<number | null>(null)
   const [uploadError,    setUploadError]    = useState<string | null>(null)
   const [saveError,      setSaveError]      = useState<string | null>(null)
+  const [propostaPdfUrl, setPropostaPdfUrl] = useState<string | null>(null)
 
   useEffect(() => {
     fetch(`/api/lead-page/view?token=${token}`)
@@ -348,6 +349,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
         setContact(data.contact)
         setStatus(data.contact.page_confirmacao || null)
         setPropostaResposta(data.contact.proposta_resposta === 'confirmar' ? 'confirmada' : data.contact.proposta_resposta === 'rejeitar' ? 'rejeitada' : null)
+        setPropostaPdfUrl(data.contact.proposta_pdf_url || null)
         setHeroPreview(data.contact.page_foto_url || DEFAULT_HERO)
         setHeroInput(data.contact.page_foto_url || '')
         setContent(merge(data.contact.page_content))
@@ -909,6 +911,17 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
                   <span>{proposta.buttonLabel}</span>
                   <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
                 </a>
+                {propostaPdfUrl && (
+                  <a href={propostaPdfUrl} target="_blank" rel="noopener noreferrer"
+                    className="group flex items-center gap-2 px-6 py-3 text-[10px] tracking-[0.35em] uppercase transition-all duration-300 hover:scale-[1.04] whitespace-nowrap"
+                    style={{ background: 'rgba(201,168,76,0.07)', border: '0.5px solid rgba(201,168,76,0.3)', color: 'rgba(201,168,76,0.75)' }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+                    </svg>
+                    <span>Ver Proposta PDF</span>
+                    <span className="transition-transform duration-300 group-hover:translate-x-1">↗</span>
+                  </a>
+                )}
               </div>
 
             </div>

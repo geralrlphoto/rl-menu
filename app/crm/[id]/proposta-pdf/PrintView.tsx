@@ -8,6 +8,50 @@ const DARK = '#0d0b07'
 const CREAM = '#faf8f3'
 const BODY_COLOR = '#1e1a14'
 
+// ── Dados da empresa ─────────────────────────────────────────────────────────
+const EMPRESA = {
+  nome:      'RL Photo · Video',
+  email:     'geral@rlphotovideo.pt',
+  telefone:  '+351 919 191 919',
+  whatsapp:  'https://wa.me/351919191919',
+  instagram: '@rlphotovideo',
+  website:   'www.rlphotovideo.pt',
+  morada:    'Portugal',
+  nif:       '',
+}
+
+// ── Condições Gerais ─────────────────────────────────────────────────────────
+const CONDICOES = [
+  {
+    titulo: '1. Reserva e Adjudicação',
+    texto: 'A reserva da data apenas fica confirmada após o pagamento da adjudicação no valor de 400 €. Este valor é deduzido do valor total do serviço. Enquanto a adjudicação não for liquidada, a data permanece disponível para outros clientes.',
+  },
+  {
+    titulo: '2. Forma de Pagamento',
+    texto: 'O valor total do serviço divide-se em três momentos: (1) Adjudicação de 400 € para reserva da data; (2) Reforço correspondente a 80% do valor restante, a liquidar até 30 dias antes do evento; (3) Valor final (20% restante) a pagar no próprio dia do casamento, antes do início do serviço.',
+  },
+  {
+    titulo: '3. Entrega dos Materiais',
+    texto: 'As fotografias editadas são entregues num prazo máximo de 90 dias após a data do evento, através de galeria online privada e/ou pen drive. O vídeo de casamento tem um prazo de entrega de até 180 dias após a data do evento. Estes prazos podem ser ajustados em função da época e volume de trabalho.',
+  },
+  {
+    titulo: '4. Direitos de Autor e Uso de Imagens',
+    texto: 'Todos os conteúdos fotográficos e videográficos produzidos são propriedade intelectual da RL Photo · Video. O cliente recebe licença de uso pessoal ilimitado. A RL Photo · Video reserva o direito de utilizar os conteúdos produzidos para fins de portfólio, redes sociais e material promocional, salvo indicação expressa em contrário por parte do cliente.',
+  },
+  {
+    titulo: '5. Cancelamento e Alterações',
+    texto: 'Em caso de cancelamento por parte do cliente, a adjudicação não é reembolsável. Em caso de adiamento da data, a RL Photo · Video compromete-se a assegurar a nova data, sujeito a disponibilidade. Qualquer alteração ao contrato deve ser comunicada por escrito com, pelo menos, 30 dias de antecedência.',
+  },
+  {
+    titulo: '6. Responsabilidade',
+    texto: 'A RL Photo · Video compromete-se a garantir a máxima qualidade e profissionalismo na captação dos momentos. Em caso de falha técnica de equipamento, serão envidados todos os esforços para minimizar o impacto. A responsabilidade máxima da RL Photo · Video limita-se ao valor pago pelo serviço. Não nos responsabilizamos por condições meteorológicas, atrasos ou imprevistos alheios à nossa vontade.',
+  },
+  {
+    titulo: '7. Contrato',
+    texto: 'Todos os serviços ficam formalizados através de contrato escrito assinado por ambas as partes. O contrato é enviado digitalmente para assinatura após confirmação da proposta e pagamento da adjudicação. A proposta tem validade de 15 dias a partir da data de emissão.',
+  },
+]
+
 function parseVal(v: string): number {
   if (!v) return 0
   return parseFloat(v.replace(/€/g, '').replace(/\s+/g, '').replace(',', '.')) || 0
@@ -19,11 +63,12 @@ function fmt(n: number): string {
 const FONTS_URL = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Montserrat:wght@300;400;500&display=swap'
 const LOGO_URL  = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png'
 
-export default function PrintView({ contact, content }: { contact: any; content: PageContent }) {
+export default function PrintView({ contact, content, autoPrint = true }: { contact: any; content: PageContent; autoPrint?: boolean }) {
   useEffect(() => {
+    if (!autoPrint) return
     const t = setTimeout(() => window.print(), 900)
     return () => clearTimeout(t)
-  }, [])
+  }, [autoPrint])
 
   const ADJUDICACAO = 400
   const intro = content.propostaPage?.intro || ''
@@ -110,6 +155,7 @@ export default function PrintView({ contact, content }: { contact: any; content:
 
       {/* ── PÁGINAS DE PROPOSTA ── */}
       {content.propostas.map((proposta, idx) => {
+
         const valor = parseVal(proposta.valor)
         const restante = valor > ADJUDICACAO ? valor - ADJUDICACAO : 0
         const reforco = Math.round(restante * 0.8)
@@ -250,6 +296,88 @@ export default function PrintView({ contact, content }: { contact: any; content:
           </div>
         )
       })}
+      {/* ── CONDIÇÕES GERAIS ── */}
+      <div className="a4" style={{ background: '#ffffff', display: 'flex', flexDirection: 'column' }}>
+
+        {/* Header */}
+        <div style={{ background: DARK, padding: '24px 44px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <div>
+            <p style={{ margin: '0 0 3px', fontFamily: 'Montserrat, sans-serif', fontWeight: 400, fontSize: 7.5, letterSpacing: '0.45em', color: `${GOLD}70`, textTransform: 'uppercase' }}>Documento</p>
+            <p style={{ margin: 0, fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 26, color: '#ffffff', fontWeight: 300, letterSpacing: '0.04em' }}>Condições Gerais</p>
+          </div>
+          <img src={LOGO_URL} alt="RL" style={{ height: 32, opacity: 0.65 }} />
+        </div>
+
+        {/* Body */}
+        <div style={{ flex: 1, padding: '32px 44px', display: 'flex', flexDirection: 'column', gap: 0 }}>
+          {CONDICOES.map((c, i) => (
+            <div key={i} style={{ paddingBottom: 18, marginBottom: 18, borderBottom: i < CONDICOES.length - 1 ? `0.5px solid ${GOLD}18` : 'none' }}>
+              <p style={{ margin: '0 0 5px', fontFamily: 'Montserrat, sans-serif', fontWeight: 500, fontSize: 8, letterSpacing: '0.25em', color: GOLD, textTransform: 'uppercase' }}>{c.titulo}</p>
+              <p style={{ margin: 0, fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 13.5, color: '#3a3530', lineHeight: 1.75, fontWeight: 400 }}>{c.texto}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: '10px 44px', borderTop: `0.5px solid ${GOLD}15`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, background: '#fdfcf9' }}>
+          <img src={LOGO_URL} alt="RL" style={{ height: 22, opacity: 0.3 }} />
+          <p style={{ margin: 0, fontFamily: 'Montserrat, sans-serif', fontWeight: 300, fontSize: 7.5, color: '#bbb', letterSpacing: '0.15em' }}>{contact.nome}</p>
+        </div>
+      </div>
+
+      {/* ── CONTACTOS ── */}
+      <div className="a4" style={{ background: DARK, display: 'flex', flexDirection: 'column' }}>
+        {/* Corner decorations */}
+        {[['top','left'],['top','right'],['bottom','left'],['bottom','right']].map(([v, h]) => (
+          <div key={v+h} style={{ position: 'absolute', [v]: 36, [h]: 36, width: 44, height: 44,
+            [`border${v.charAt(0).toUpperCase()+v.slice(1)}`]: `1px solid ${GOLD}`,
+            [`border${h.charAt(0).toUpperCase()+h.slice(1)}`]: `1px solid ${GOLD}` }} />
+        ))}
+
+        {/* Central content */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 60px', textAlign: 'center', gap: 36 }}>
+
+          <img src={LOGO_URL} alt="RL Photo · Video" style={{ width: 110, opacity: 0.9 }} />
+
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            <p style={{ margin: 0, fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 300, fontSize: 42, color: '#ffffff', letterSpacing: '0.04em' }}>{EMPRESA.nome}</p>
+            <p style={{ margin: 0, fontFamily: 'Montserrat, sans-serif', fontWeight: 300, fontSize: 9, letterSpacing: '0.4em', color: `${GOLD}70`, textTransform: 'uppercase' }}>Fotografia & Vídeo de Casamentos</p>
+          </div>
+
+          <div style={{ width: 50, height: 0.5, background: `${GOLD}50` }} />
+
+          {/* Contact grid */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%', maxWidth: 340 }}>
+            {[
+              { icon: '✉', label: 'Email', value: EMPRESA.email },
+              { icon: '📱', label: 'Telefone', value: EMPRESA.telefone },
+              { icon: '◎', label: 'Instagram', value: EMPRESA.instagram },
+              { icon: '⌂', label: 'Website', value: EMPRESA.website },
+              { icon: '⊙', label: 'Localização', value: EMPRESA.morada },
+            ].map((item, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 20px', border: `0.5px solid ${GOLD}25`, borderRadius: 4 }}>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, color: `${GOLD}80`, width: 20, textAlign: 'center', flexShrink: 0 }}>{item.icon}</span>
+                <div style={{ textAlign: 'left' }}>
+                  <p style={{ margin: '0 0 2px', fontFamily: 'Montserrat, sans-serif', fontWeight: 400, fontSize: 7, letterSpacing: '0.35em', color: `${GOLD}55`, textTransform: 'uppercase' }}>{item.label}</p>
+                  <p style={{ margin: 0, fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 16, color: '#ffffff', fontWeight: 300, letterSpacing: '0.03em' }}>{item.value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ width: 50, height: 0.5, background: `${GOLD}30` }} />
+
+          <p style={{ margin: 0, fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 14, color: `rgba(255,255,255,0.3)`, maxWidth: 320, lineHeight: 1.9 }}>
+            Obrigado pela vossa confiança. Será uma honra fazer parte do vosso dia especial.
+          </p>
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: '18px 52px', borderTop: `0.5px solid ${GOLD}20`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <img src={LOGO_URL} alt="RL" style={{ height: 28, opacity: 0.4 }} />
+          <p style={{ margin: 0, fontFamily: 'Montserrat, sans-serif', fontWeight: 300, fontSize: 8, color: `${GOLD}45`, letterSpacing: '0.2em' }}>{new Date().getFullYear()}</p>
+        </div>
+      </div>
     </>
   )
 }
