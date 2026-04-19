@@ -28,7 +28,7 @@ export async function GET() {
     },
     body: JSON.stringify({
       from: 'RL Photo.Video <geral@rlphotovideo.pt>',
-      to: ['geral.rlphoto@gmail.com'],
+      to: ['ruimngpro@gmail.com'],
       subject: '⏰ A vossa reunião começa em 30 minutos',
       html,
     }),
