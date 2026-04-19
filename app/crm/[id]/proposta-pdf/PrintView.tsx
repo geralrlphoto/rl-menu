@@ -12,8 +12,8 @@ const BODY_COLOR = '#1e1a14'
 const EMPRESA = {
   nome:      'RL Photo · Video',
   email:     'geral@rlphotovideo.pt',
-  telefone:  '+351 919 191 919',
-  whatsapp:  'https://wa.me/351919191919',
+  telefone:  '+351 912 932 768',
+  whatsapp:  'https://wa.me/351912932768',
   instagram: '@rlphotovideo',
   website:   'www.rlphotovideo.pt',
   morada:    'Portugal',
