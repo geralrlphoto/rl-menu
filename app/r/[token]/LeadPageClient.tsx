@@ -752,25 +752,37 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
             )
 
             return (
-              <div className="mt-4 flex flex-col gap-3 w-full">
-                <div className="flex items-center gap-3 mb-1">
-                  <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
-                  <p className="text-[10px] tracking-[0.3em] text-white/20 uppercase whitespace-nowrap">Resposta à Proposta</p>
-                  <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+              <div className="mt-6 flex flex-col gap-3 w-full">
+                {/* Card de destaque */}
+                <div className="w-full rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(201,168,76,0.12) 0%, rgba(201,168,76,0.04) 100%)', border: '1px solid rgba(201,168,76,0.3)' }}>
+                  {/* Topo dourado */}
+                  <div className="px-5 pt-5 pb-4 flex flex-col items-center gap-3 text-center">
+                    <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(201,168,76,0.15)', border: '1.5px solid rgba(201,168,76,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ color: '#C9A84C', fontSize: 18 }}>✦</span>
+                    </div>
+                    <div>
+                      <p className="text-[10px] tracking-[0.4em] uppercase mb-1" style={{ color: 'rgba(201,168,76,0.5)' }}>A vossa decisão</p>
+                      <p className="font-cormorant text-xl font-light text-white/90">Confirmam a nossa proposta?</p>
+                    </div>
+                  </div>
+                  {/* Botão principal */}
+                  <div className="px-4 pb-4">
+                    <button
+                      onClick={() => handleProposta('confirmar')}
+                      disabled={submittingProposta || isAdmin}
+                      className="w-full py-4 rounded-xl text-sm font-bold tracking-[0.2em] uppercase transition-all disabled:opacity-50 active:scale-[0.98]"
+                      style={{ background: 'linear-gradient(135deg, #C9A84C, #e6c46a)', color: '#0a0a0a', boxShadow: '0 4px 20px rgba(201,168,76,0.3)' }}>
+                      {submittingProposta ? 'A processar...' : '✓  Confirmar Proposta'}
+                    </button>
+                  </div>
                 </div>
-                <button
-                  onClick={() => handleProposta('confirmar')}
-                  disabled={submittingProposta || isAdmin}
-                  className="w-full py-4 rounded-2xl text-sm font-semibold tracking-[0.15em] uppercase transition-all disabled:opacity-50"
-                  style={{ background: '#C9A84C', color: '#0a0a0a' }}>
-                  {submittingProposta ? 'A processar...' : '✓ Confirmar Proposta'}
-                </button>
+                {/* Rejeitar — discreto */}
                 <button
                   onClick={() => handleProposta('rejeitar')}
                   disabled={submittingProposta || isAdmin}
-                  className="w-full py-3.5 rounded-2xl text-sm tracking-[0.15em] uppercase transition-all disabled:opacity-50"
-                  style={{ color: 'rgba(239,68,68,0.6)', border: '1px solid rgba(239,68,68,0.2)' }}>
-                  {submittingProposta ? '...' : 'Rejeitar'}
+                  className="w-full py-3 rounded-xl text-xs tracking-[0.2em] uppercase transition-all disabled:opacity-40 hover:bg-white/5"
+                  style={{ color: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  {submittingProposta ? '...' : 'Não, obrigado'}
                 </button>
               </div>
             )
