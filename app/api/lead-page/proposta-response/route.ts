@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const ADMIN_EMAIL = 'ruimngpro@gmail.com'
+const ADMIN_EMAIL = 'geral.rlphoto@gmail.com'
 const IMG_BASE    = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
 
 function buildEmail(nome: string, action: 'confirmar' | 'rejeitar'): string {
@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   // Enviar email ao admin
-  await fetch('https://api.resend.com/emails', {
+  const emailRes = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
@@ -123,7 +123,8 @@ export async function POST(req: NextRequest) {
         : `✕ Proposta rejeitada — ${contact.nome ?? 'Noivos'}`,
       html: buildEmail(contact.nome ?? 'Noivos', action),
     }),
-  }).catch(() => {})
+  })
+  const emailData = await emailRes.json().catch(() => ({}))
 
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, email: emailData })
 }
