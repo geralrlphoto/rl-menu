@@ -709,7 +709,6 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
           {/* ── Proposta: Confirmar / Rejeitar ── */}
           {(() => {
             const handleProposta = async (action: 'confirmar' | 'rejeitar') => {
-              if (isAdmin) return
               setSubmittingProposta(true)
               try {
                 const res = await fetch('/api/lead-page/proposta-response', {
@@ -775,7 +774,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
                   <div className="px-4 pb-4">
                     <button
                       onClick={() => handleProposta('confirmar')}
-                      disabled={submittingProposta || isAdmin}
+                      disabled={submittingProposta}
                       className="w-full py-4 rounded-xl text-sm font-bold tracking-[0.2em] uppercase transition-all disabled:opacity-50 active:scale-[0.98]"
                       style={{ background: 'linear-gradient(135deg, #C9A84C, #e6c46a)', color: '#0a0a0a', boxShadow: '0 4px 20px rgba(201,168,76,0.3)' }}>
                       {submittingProposta ? 'A processar...' : '✓  Confirmar Proposta'}
@@ -785,7 +784,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
                 {/* Rejeitar — discreto */}
                 <button
                   onClick={() => handleProposta('rejeitar')}
-                  disabled={submittingProposta || isAdmin}
+                  disabled={submittingProposta}
                   className="w-full py-3 rounded-xl text-xs tracking-[0.2em] uppercase transition-all disabled:opacity-40"
                   style={{ color: '#ef4444', border: '1px solid rgba(239,68,68,0.5)', background: 'rgba(239,68,68,0.08)', boxShadow: '0 0 12px rgba(239,68,68,0.25), inset 0 0 12px rgba(239,68,68,0.05)' }}>
                   {submittingProposta ? '...' : 'Rejeitar Proposta'}
