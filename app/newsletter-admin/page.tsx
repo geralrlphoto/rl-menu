@@ -66,17 +66,17 @@ export default async function NewsletterAdmin() {
             Calendario editorial · Envio quinzenal
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 11, color: '#8a7450', letterSpacing: 2, marginBottom: 4 }}>SUBSCRITORES</div>
-            <div style={{ fontSize: 24, fontFamily: 'Georgia, serif' }}>
-              <span style={{ color: '#c9a96e' }}>{activeCount || 0}</span>
-              <span style={{ fontSize: 13, color: '#6a5a3e', marginLeft: 8 }}>ativos</span>
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+          <Link href="/newsletter-admin/subscritores" style={{
+            padding: '14px 20px', background: 'transparent', color: '#c9a96e',
+            border: '1px solid #7a6340', fontSize: 11, letterSpacing: 2,
+            textTransform: 'uppercase', textDecoration: 'none', textAlign: 'center',
+          }}>
+            <div style={{ fontSize: 24, fontFamily: 'Georgia, serif', marginBottom: 2 }}>
+              {activeCount || 0}
             </div>
-            {pendingCount ? (
-              <div style={{ fontSize: 11, color: '#6a5a3e', marginTop: 4 }}>{pendingCount} pendentes</div>
-            ) : null}
-          </div>
+            <div style={{ fontSize: 10, letterSpacing: 2 }}>SUBSCRITORES →</div>
+          </Link>
           <LogoutButton />
         </div>
       </div>

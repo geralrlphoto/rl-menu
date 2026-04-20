@@ -44,7 +44,13 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/api/lead-page/proposta-response') ||
     pathname.startsWith('/api/lembrete-reuniao') ||
     pathname.startsWith('/api/upload-image') ||
-    pathname.startsWith('/api/portal-notif-prewedding')
+    pathname.startsWith('/api/portal-notif-prewedding') ||
+    pathname === '/newsletter' ||
+    pathname.startsWith('/newsletter/') ||
+    pathname.startsWith('/api/newsletter-subscribe') ||
+    pathname.startsWith('/api/newsletter-confirm') ||
+    pathname.startsWith('/api/newsletter-unsubscribe') ||
+    pathname.startsWith('/api/newsletter-cron')
   ) {
     return NextResponse.next()
   }
