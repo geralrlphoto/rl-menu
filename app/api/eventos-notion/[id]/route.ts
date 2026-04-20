@@ -287,13 +287,17 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
   try {
     // Limpar registos Supabase associados ao evento
-    if (referencia) {
-      const sb = supabase()
-      await Promise.all([
+    const sb = supabase()
+    await Promise.all([
+      // Apagar da lista (eventos_2026 / eventos_2027) pelo notion_id
+      sb.from('eventos_2026').delete().eq('notion_id', id),
+      sb.from('eventos_2027').delete().eq('notion_id', id),
+      // Limpar restantes tabelas se tiver referência
+      ...(referencia ? [
         sb.from('freelancer_casamentos').delete().eq('referencia', referencia),
         sb.from('evento_equipa').delete().eq('referencia', referencia),
-      ])
-    }
+      ] : []),
+    ])
 
     // Arquivar no Notion
     const res = await fetch(`https://api.notion.com/v1/pages/${id}`, {
