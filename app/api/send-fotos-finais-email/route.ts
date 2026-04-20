@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { resolveEmailNoiva } from '../_lib/emailNoiva'
 
 export async function POST(req: NextRequest) {
-  const { email_noiva, nome_noiva, nome_noivo, url } = await req.json().catch(() => ({}))
+  const { email_noiva, nome_noiva, nome_noivo, url, referencia } = await req.json().catch(() => ({}))
 
-  if (!email_noiva) {
-    return NextResponse.json({ error: 'email_noiva required' }, { status: 400 })
+  const resolvedEmail = await resolveEmailNoiva(email_noiva, referencia)
+  if (!resolvedEmail) {
+    return NextResponse.json({ error: 'Email da noiva não encontrado. Preenche o email na ficha do evento.' }, { status: 400 })
   }
 
   const nomes = [nome_noiva, nome_noivo].filter(Boolean).join(' & ') || 'Noivos'
@@ -17,7 +19,7 @@ export async function POST(req: NextRequest) {
     },
     body: JSON.stringify({
       from: 'RL Photo.Video <geral@rlphotovideo.pt>',
-      to: [email_noiva],
+      to: [resolvedEmail],
       subject: 'As vossas fotos já estão editadas',
       html: `<!DOCTYPE html>
 <html>

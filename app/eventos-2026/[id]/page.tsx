@@ -2121,8 +2121,10 @@ export default function EventoPage() {
                         const today = new Date().toISOString().split('T')[0]
                         await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [key]: today, [`${urlKey}_url`]: url } } }) })
                         setState(today)
-                        if (evento.email_noiva) {
-                          await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email_noiva: evento.email_noiva, nome_noiva: evento.nome_noiva, nome_noivo: evento.nome_noivo, url }) })
+                        const emailRes = await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email_noiva: evento.email_noiva, nome_noiva: evento.nome_noiva, nome_noivo: evento.nome_noivo, url, referencia: evento.referencia }) })
+                        if (!emailRes.ok) {
+                          const err = await emailRes.json().catch(() => ({}))
+                          alert(err?.error ?? 'Erro ao enviar email')
                         }
                       }}
                       className={`px-5 py-2.5 rounded-xl text-xs font-semibold tracking-[0.2em] uppercase border transition-all ${
@@ -2210,8 +2212,10 @@ export default function EventoPage() {
                           const today = new Date().toISOString().split('T')[0]
                           await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [key]: today, [`${urlKey}_url`]: url } } }) })
                           setState(today)
-                          if (evento.email_noiva) {
-                            await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email_noiva: evento.email_noiva, nome_noiva: evento.nome_noiva, nome_noivo: evento.nome_noivo, url }) })
+                          const emailRes = await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email_noiva: evento.email_noiva, nome_noiva: evento.nome_noiva, nome_noivo: evento.nome_noivo, url, referencia: evento.referencia }) })
+                          if (!emailRes.ok) {
+                            const err = await emailRes.json().catch(() => ({}))
+                            alert(err?.error ?? 'Erro ao enviar email')
                           }
                         }}
                         className={`px-5 py-2.5 rounded-xl text-xs font-semibold tracking-[0.2em] uppercase border transition-all ${
@@ -2284,13 +2288,13 @@ export default function EventoPage() {
                   )}
                   <button
                     onClick={async () => {
-                      if (!evento?.referencia || !evento?.email_noiva) return
+                      if (!evento?.referencia) return
                       const today = new Date().toISOString().split('T')[0]
                       await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { portal_enviada: today } } }) })
                       setPortalEnviada(today)
                       const pwRes = await fetch(`/api/portais-password?ref=${encodeURIComponent(evento.referencia)}`)
                       const pwData = await pwRes.json()
-                      await fetch('/api/send-portal-email', {
+                      const portalEmailRes = await fetch('/api/send-portal-email', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -2302,6 +2306,10 @@ export default function EventoPage() {
                           portal_url: `https://rl-menu-lake.vercel.app/portal-cliente/ref/${encodeURIComponent(evento.referencia)}`,
                         }),
                       })
+                      if (!portalEmailRes.ok) {
+                        const err = await portalEmailRes.json().catch(() => ({}))
+                        alert(err?.error ?? 'Erro ao enviar email do portal')
+                      }
                     }}
                     className={`px-5 py-2.5 rounded-xl text-xs font-semibold tracking-[0.2em] uppercase border transition-all ${
                       portalEnviada ? 'bg-green-500/20 text-green-400 border-green-500/30'
