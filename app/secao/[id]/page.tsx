@@ -108,13 +108,15 @@ export default async function SecaoPage({ params }: Props) {
             const isFotosSel      = page.title?.toUpperCase().includes('SELEÇÃO') || page.title?.toUpperCase().includes('SELECAO')
             const isFreelancers   = page.title?.toUpperCase().includes('FREELANC')
             const isCalendario    = page.title?.toUpperCase().includes('CALENDARIO') || page.title?.toUpperCase().includes('CALENDÁRIO')
-            const isInternal      = page.title === 'CRM' || page.title === 'EVENTOS 2026' || isFinancas || isFotosSel || isFreelancers || isCalendario
+            const isNewsletter    = page.title?.toUpperCase().includes('NEWSLETTER')
+            const isInternal      = page.title === 'CRM' || page.title === 'EVENTOS 2026' || isFinancas || isFotosSel || isFreelancers || isCalendario || isNewsletter
             const internalHref    = page.title === 'CRM' ? '/crm'
               : page.title === 'EVENTOS 2026' ? '/casamentos'
               : isFinancas ? '/financas'
               : isFotosSel ? '/fotos-selecao'
               : isFreelancers ? '/freelancers'
               : isCalendario ? '/calendario'
+              : isNewsletter ? '/newsletter-admin'
               : '/'
             return isInternal ? (
               <Link
