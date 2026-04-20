@@ -282,16 +282,22 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const referencia = _req.nextUrl.searchParams.get('referencia')
+  const { id } = await params  // Notion page ID
+  const referencia  = _req.nextUrl.searchParams.get('referencia')
+  const supabaseId  = _req.nextUrl.searchParams.get('supabaseId')
 
   try {
-    // Limpar registos Supabase associados ao evento
     const sb = supabase()
     await Promise.all([
-      // Apagar da lista (eventos_2026 / eventos_2027) pelo notion_id
-      sb.from('eventos_2026').delete().eq('notion_id', id),
-      sb.from('eventos_2027').delete().eq('notion_id', id),
+      // Apagar da lista pelo Supabase UUID (id direto) — mais fiável
+      ...(supabaseId ? [
+        sb.from('eventos_2026').delete().eq('id', supabaseId),
+        sb.from('eventos_2027').delete().eq('id', supabaseId),
+      ] : [
+        // Fallback: por notion_id se não tiver supabaseId
+        sb.from('eventos_2026').delete().eq('notion_id', id),
+        sb.from('eventos_2027').delete().eq('notion_id', id),
+      ]),
       // Limpar restantes tabelas se tiver referência
       ...(referencia ? [
         sb.from('freelancer_casamentos').delete().eq('referencia', referencia),

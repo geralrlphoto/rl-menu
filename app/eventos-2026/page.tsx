@@ -242,13 +242,16 @@ function Eventos2026Inner() {
   const searchParams = useSearchParams()
   const anoFiltro = parseInt(searchParams.get('ano') ?? '2026')
 
-  async function handleDelete(e: React.MouseEvent, id: string, referencia?: string) {
+  async function handleDelete(e: React.MouseEvent, supabaseId: string, notionId: string | undefined, referencia?: string) {
     e.preventDefault(); e.stopPropagation()
     if (!confirm('Eliminar este evento? Esta ação não pode ser desfeita.')) return
-    setDeletingId(id)
-    const qs = referencia ? `?referencia=${encodeURIComponent(referencia)}` : ''
-    await fetch(`/api/eventos-notion/${id}${qs}`, { method: 'DELETE' })
-    setEvents(prev => prev.filter(ev => ev.id !== id))
+    setDeletingId(supabaseId)
+    const notionPageId = notionId ?? supabaseId
+    const qs = new URLSearchParams()
+    if (referencia) qs.set('referencia', referencia)
+    qs.set('supabaseId', supabaseId)
+    await fetch(`/api/eventos-notion/${notionPageId}?${qs}`, { method: 'DELETE' })
+    setEvents(prev => prev.filter(ev => ev.id !== supabaseId))
     setDeletingId(null)
   }
 
@@ -488,7 +491,7 @@ function Eventos2026Inner() {
 
                       {/* Botão eliminar */}
                       <button
-                        onClick={ev => handleDelete(ev, e.id, e.referencia)}
+                        onClick={ev => handleDelete(ev, e.id, e.notion_id, e.referencia)}
                         disabled={deletingId === e.id}
                         className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 p-1.5 rounded-lg hover:bg-red-500/15 text-white/20 hover:text-red-400 shrink-0"
                       >
