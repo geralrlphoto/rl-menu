@@ -74,6 +74,8 @@ export default async function Home() {
     })),
     { id: 'crm', name: 'CRM', href: '/crm',
       img: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=1200&q=80' },
+    { id: 'newsletter', name: 'NEWSLETTER', href: '/newsletter-admin',
+      img: 'https://images.unsplash.com/photo-1524678606370-a47ad25cb82a?w=1200&q=80' },
   ]
 
   // ── Datas de referência ───────────────────────────────────────────────────
