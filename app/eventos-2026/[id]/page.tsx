@@ -1411,6 +1411,9 @@ export default function EventoPage() {
               if (s.portal_enviada)           setPortalEnviada(s.portal_enviada)
               if (s.notif_foto_enviada)       setNotifFotoEnviada(s.notif_foto_enviada)
               if (s.notif_video_enviada)      setNotifVideoEnviada(s.notif_video_enviada)
+              if (s.valor_fotografo  != null) setValorFotografo(s.valor_fotografo)
+              if (s.valor_videografo != null) setValorVideografo(s.valor_videografo)
+              if (s.valor_editor_video != null) setValorEditorVideo(s.valor_editor_video)
               setVideoActionUrls({ video_prewedding: s.video_prewedding_url ?? '', wedding_film: s.wedding_film_url ?? '', same_day_edit: s.same_day_edit_url ?? '', teaser: s.teaser_url ?? '' })
               // Auto-populate URLs from portal calloutLinks (FOTOGRAFIAS page cards)
               const calloutLinks = s.calloutLinks ?? {}
@@ -1656,6 +1659,7 @@ export default function EventoPage() {
                 <input
                   type="number" value={valorFotografo}
                   onChange={ev => setValorFotografo(Number(ev.target.value))}
+                  onBlur={ev => { const val = Number(ev.target.value); if (e.referencia) fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: e.referencia, updates: { settings: { valor_fotografo: val } } }) }) }}
                   className="bg-white/5 border border-white/10 hover:border-gold/30 focus:border-gold/40 rounded-lg px-3 py-1.5 text-sm text-white/80 focus:outline-none w-full"
                 />
                 <span className="text-white/40 text-sm shrink-0">€</span>
@@ -1667,6 +1671,7 @@ export default function EventoPage() {
                 <input
                   type="number" value={valorVideografo}
                   onChange={ev => setValorVideografo(Number(ev.target.value))}
+                  onBlur={ev => { const val = Number(ev.target.value); if (e.referencia) fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: e.referencia, updates: { settings: { valor_videografo: val } } }) }) }}
                   className="bg-white/5 border border-white/10 hover:border-gold/30 focus:border-gold/40 rounded-lg px-3 py-1.5 text-sm text-white/80 focus:outline-none w-full"
                 />
                 <span className="text-white/40 text-sm shrink-0">€</span>
@@ -1678,6 +1683,7 @@ export default function EventoPage() {
                 <input
                   type="number" value={valorEditorVideo}
                   onChange={ev => setValorEditorVideo(Number(ev.target.value))}
+                  onBlur={ev => { const val = Number(ev.target.value); if (e.referencia) fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: e.referencia, updates: { settings: { valor_editor_video: val } } }) }) }}
                   className="bg-white/5 border border-white/10 hover:border-gold/30 focus:border-gold/40 rounded-lg px-3 py-1.5 text-sm text-white/80 focus:outline-none w-full"
                 />
                 <span className="text-white/40 text-sm shrink-0">€</span>
