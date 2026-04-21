@@ -14,6 +14,7 @@ export default function NewsletterEditor({ initialData, activeSubscribers }: { i
   })
   const [saving, setSaving] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [previewKey, setPreviewKey] = useState(0)
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState<any>(null)
   const [adminKey, setAdminKey] = useState('')
@@ -162,10 +163,20 @@ export default function NewsletterEditor({ initialData, activeSubscribers }: { i
 
         {/* PREVIEW */}
         <div style={{ padding: 28, background: '#0a0804', overflowY: 'auto', maxHeight: 'calc(100vh - 80px)' }}>
-          <div style={{ fontSize: 11, color: '#8a7450', letterSpacing: 3, marginBottom: 8 }}>PREVIEW</div>
-          <div style={{ fontSize: 11, color: '#6a5a3e', marginBottom: 20 }}>Assim chega ao subscritor</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <div>
+              <div style={{ fontSize: 11, color: '#8a7450', letterSpacing: 3 }}>PREVIEW</div>
+              <div style={{ fontSize: 11, color: '#6a5a3e', marginTop: 4 }}>Assim chega ao subscritor (com rotação real de fotos)</div>
+            </div>
+            <button onClick={() => setPreviewKey(k => k + 1)} style={btnGhost}>↻ Rodar Foto</button>
+          </div>
           <div style={{ background: '#fff', borderRadius: 4, overflow: 'hidden' }}>
-            <iframe srcDoc={html} style={{ width: '100%', height: 700, border: 'none', display: 'block' }} title="Preview" />
+            <iframe
+              key={previewKey}
+              src={`/api/newsletter-preview/${data.id}?v=${previewKey}`}
+              style={{ width: '100%', height: 900, border: 'none', display: 'block' }}
+              title="Preview"
+            />
           </div>
         </div>
       </div>
