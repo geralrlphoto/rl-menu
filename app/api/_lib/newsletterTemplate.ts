@@ -205,6 +205,29 @@ export function buildNewsletterHtml(d: any) {
 
     <tr><td style="padding:24px 40px 0;background:rgba(201,168,76,0.03);"><table width="100%"><tr><td style="border-top:1px solid rgba(201,168,76,0.08);height:1px;font-size:1px;">&nbsp;</td></tr></table></td></tr>
 
+    <!-- Instagram CTA -->
+    <tr><td style="padding:56px 40px 48px;text-align:center;" class="mobile-pad">
+      <p style="margin:0 0 8px;font-family:'Montserrat',Arial,sans-serif;font-size:10px;letter-spacing:4px;color:#c9a84c;text-transform:uppercase;">
+        INSTAGRAM
+      </p>
+      <h3 style="margin:0 0 16px;font-family:'Cormorant Garamond',Georgia,serif;font-size:30px;font-weight:400;color:#f5f0e8;line-height:1.2;">
+        Os bastidores <em style="font-style:italic;color:#c9a84c;">todos os dias</em>
+      </h3>
+      <p style="margin:0 0 32px;max-width:420px;margin-left:auto;margin-right:auto;font-family:'Montserrat',Arial,sans-serif;font-size:14px;color:#a09585;line-height:1.7;font-weight:300;">
+        Acompanhem a nossa jornada no Instagram. Fotografias exclusivas, vídeos dos casamentos e inspiração para o vosso grande dia.
+      </p>
+      <table cellpadding="0" cellspacing="0" style="margin:0 auto;"><tr>
+        <td style="background:#c9a84c;padding:16px 40px;">
+          <a href="https://www.instagram.com/rlphoto_fotografia.video/" style="display:block;color:#0c0907;text-decoration:none;font-family:'Montserrat',Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;">
+            Seguir no Instagram
+          </a>
+        </td>
+      </tr></table>
+      <p style="margin:18px 0 0;font-family:'Montserrat',Arial,sans-serif;font-size:11px;color:#6a5a3e;">
+        @rlphoto_fotografia.video
+      </p>
+    </td></tr>
+
     <!-- Assinatura -->
     <tr><td style="padding:48px 40px 32px;text-align:center;" class="mobile-pad">
       <table cellpadding="0" cellspacing="0" style="margin:0 auto 20px;"><tr>
@@ -226,7 +249,7 @@ export function buildNewsletterHtml(d: any) {
       <p style="margin:0 0 14px;font-family:'Montserrat',Arial,sans-serif;font-size:11px;color:#a09585;line-height:1.7;">
         <a href="https://rlphotovideo.pt" style="color:#a09585;text-decoration:none;">rlphotovideo.pt</a>
         &nbsp;·&nbsp;
-        <a href="https://www.instagram.com/rlphotovideo" style="color:#a09585;text-decoration:none;">Instagram</a>
+        <a href="https://www.instagram.com/rlphoto_fotografia.video/" style="color:#a09585;text-decoration:none;">Instagram</a>
       </p>
       <p style="margin:16px 0 0;font-family:'Montserrat',Arial,sans-serif;font-size:10px;color:#6a5a3e;line-height:1.6;font-weight:300;">
         Recebeste este email porque subscreveste a nossa newsletter.<br>
