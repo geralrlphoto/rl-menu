@@ -52,7 +52,8 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/api/newsletter-unsubscribe') ||
     pathname.startsWith('/api/newsletter-cron') ||
     pathname.startsWith('/api/newsletter-preview') ||
-    pathname.startsWith('/api/newsletter-webhook')
+    pathname.startsWith('/api/newsletter-webhook') ||
+    pathname.startsWith('/api/newsletter-debug')
   ) {
     return NextResponse.next()
   }
