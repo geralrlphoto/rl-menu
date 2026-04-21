@@ -18,6 +18,8 @@ export default function NewsletterEditor({ initialData, activeSubscribers }: { i
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState<any>(null)
   const [adminKey, setAdminKey] = useState('')
+  const [testMode, setTestMode] = useState(false)
+  const [testEmail, setTestEmail] = useState('ruimngpro@gmail.com')
   const [toast, setToast] = useState('')
 
   const isLocked = data.status === 'sent'
@@ -72,7 +74,10 @@ export default function NewsletterEditor({ initialData, activeSubscribers }: { i
       const r = await fetch('/api/newsletter-send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-        body: JSON.stringify({ newsletter_id: data.id }),
+        body: JSON.stringify({
+          newsletter_id: data.id,
+          ...(testMode ? { test_email: testEmail } : {}),
+        }),
       })
       const result = await r.json()
       if (!r.ok) throw new Error(result.error || 'Erro')
@@ -103,7 +108,10 @@ export default function NewsletterEditor({ initialData, activeSubscribers }: { i
               <button onClick={save} disabled={saving} style={btnGhost}>
                 {saving ? 'A guardar...' : 'Guardar'}
               </button>
-              <button onClick={() => setShowConfirm(true)} disabled={!isComplete} style={{ ...btnGold, opacity: isComplete ? 1 : 0.4 }}>
+              <button onClick={() => { setTestMode(true); setShowConfirm(true) }} disabled={!isComplete} style={{ ...btnGhost, opacity: isComplete ? 1 : 0.4 }}>
+                ✉ Enviar Teste
+              </button>
+              <button onClick={() => { setTestMode(false); setShowConfirm(true) }} disabled={!isComplete} style={{ ...btnGold, opacity: isComplete ? 1 : 0.4 }}>
                 Aprovar e Enviar →
               </button>
             </>
@@ -209,12 +217,28 @@ export default function NewsletterEditor({ initialData, activeSubscribers }: { i
           }}>
             {!sent ? (
               <>
-                <h2 style={{ fontSize: 26, marginBottom: 16 }}>Confirmar <em style={{ color: '#c9a96e' }}>envio</em></h2>
-                <p style={{ color: '#b3a082', fontFamily: 'Arial, sans-serif', fontSize: 13, lineHeight: 1.7, marginBottom: 24 }}>
-                  Vais enviar <strong>"{data.subject}"</strong> para<br />
-                  <strong style={{ color: '#c9a96e' }}>{activeSubscribers} subscritores ativos</strong>.<br />
-                  <span style={{ fontSize: 11, opacity: 0.7 }}>Esta ação não pode ser revertida.</span>
-                </p>
+                <h2 style={{ fontSize: 26, marginBottom: 16 }}>
+                  {testMode ? 'Envio de ' : 'Confirmar '}
+                  <em style={{ color: '#c9a96e' }}>{testMode ? 'teste' : 'envio'}</em>
+                </h2>
+                {testMode ? (
+                  <>
+                    <p style={{ color: '#b3a082', fontFamily: 'Arial, sans-serif', fontSize: 13, lineHeight: 1.7, marginBottom: 20 }}>
+                      Envia "<strong>{data.subject}</strong>" apenas para um email para testares o design e conteúdo.<br />
+                      <span style={{ fontSize: 11, opacity: 0.7 }}>Não afeta os {activeSubscribers} subscritores.</span>
+                    </p>
+                    <div style={{ textAlign: 'left', marginBottom: 14 }}>
+                      <label style={{ fontSize: 10, color: '#8a7450', letterSpacing: 2, fontFamily: 'Arial, sans-serif' }}>EMAIL DE TESTE</label>
+                      <input type="email" value={testEmail} onChange={e => setTestEmail(e.target.value)} style={{ ...input, marginTop: 6 }} />
+                    </div>
+                  </>
+                ) : (
+                  <p style={{ color: '#b3a082', fontFamily: 'Arial, sans-serif', fontSize: 13, lineHeight: 1.7, marginBottom: 24 }}>
+                    Vais enviar <strong>"{data.subject}"</strong> para<br />
+                    <strong style={{ color: '#c9a96e' }}>{activeSubscribers} subscritores ativos</strong>.<br />
+                    <span style={{ fontSize: 11, opacity: 0.7 }}>Esta ação não pode ser revertida.</span>
+                  </p>
+                )}
                 <div style={{ textAlign: 'left', marginBottom: 20 }}>
                   <label style={{ fontSize: 10, color: '#8a7450', letterSpacing: 2, fontFamily: 'Arial, sans-serif' }}>CHAVE ADMIN</label>
                   <input type="password" value={adminKey} onChange={e => setAdminKey(e.target.value)} style={{ ...input, marginTop: 6 }} autoFocus />
@@ -222,7 +246,7 @@ export default function NewsletterEditor({ initialData, activeSubscribers }: { i
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button onClick={() => setShowConfirm(false)} disabled={sending} style={{ ...btnGhost, flex: 1 }}>Cancelar</button>
                   <button onClick={approveAndSend} disabled={sending || !adminKey} style={{ ...btnGold, flex: 1 }}>
-                    {sending ? 'A enviar...' : 'Confirmar'}
+                    {sending ? 'A enviar...' : (testMode ? 'Enviar Teste' : 'Confirmar')}
                   </button>
                 </div>
               </>

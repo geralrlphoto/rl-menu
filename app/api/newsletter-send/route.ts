@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { newsletter_id } = await req.json()
+    const { newsletter_id, test_email } = await req.json()
     if (!newsletter_id) return NextResponse.json({ error: 'newsletter_id obrigatório' }, { status: 400 })
 
     const { data: nl, error: nErr } = await supabase
@@ -26,14 +26,27 @@ export async function POST(req: NextRequest) {
       .maybeSingle()
 
     if (nErr || !nl) return NextResponse.json({ error: 'Newsletter não encontrada' }, { status: 404 })
-    if (nl.status === 'sent') return NextResponse.json({ error: 'Já foi enviada' }, { status: 400 })
 
-    const { data: subs, error: sErr } = await supabase
-      .from('newsletter_subscribers')
-      .select('id, email, nome, confirmation_token')
-      .eq('status', 'active')
+    const isTest = !!test_email
+    if (!isTest && nl.status === 'sent') return NextResponse.json({ error: 'Já foi enviada' }, { status: 400 })
 
-    if (sErr) throw sErr
+    // Se for teste, envia só para o email indicado. Caso contrário, envia para todos os activos.
+    let subs: any[] = []
+    if (isTest) {
+      subs = [{
+        id: '00000000-0000-0000-0000-000000000000',
+        email: test_email,
+        nome: 'Teste',
+        confirmation_token: '00000000-0000-0000-0000-000000000000',
+      }]
+    } else {
+      const { data, error: sErr } = await supabase
+        .from('newsletter_subscribers')
+        .select('id, email, nome, confirmation_token')
+        .eq('status', 'active')
+      if (sErr) throw sErr
+      subs = data || []
+    }
     if (!subs || subs.length === 0) {
       await supabase.from('newsletters').update({
         status: 'sent', sent_at: new Date().toISOString(), sent_to_count: 0,
@@ -68,10 +81,12 @@ export async function POST(req: NextRequest) {
         const result = await res.json()
         if (res.ok && result.data) {
           sent += result.data.length
-          const sends = result.data.map((r: any, idx: number) => ({
-            newsletter_id, subscriber_id: batch[idx].id, resend_id: r.id, status: 'sent',
-          }))
-          await supabase.from('newsletter_sends').insert(sends)
+          if (!isTest) {
+            const sends = result.data.map((r: any, idx: number) => ({
+              newsletter_id, subscriber_id: batch[idx].id, resend_id: r.id, status: 'sent',
+            }))
+            await supabase.from('newsletter_sends').insert(sends)
+          }
         } else {
           failed += batch.length
           console.error('[newsletter-send] batch failed:', result)
@@ -84,11 +99,13 @@ export async function POST(req: NextRequest) {
       if (i + batchSize < subs.length) await new Promise(r => setTimeout(r, 1000))
     }
 
-    await supabase.from('newsletters').update({
-      status: 'sent', sent_at: new Date().toISOString(), sent_to_count: sent,
-    }).eq('id', newsletter_id)
+    if (!isTest) {
+      await supabase.from('newsletters').update({
+        status: 'sent', sent_at: new Date().toISOString(), sent_to_count: sent,
+      }).eq('id', newsletter_id)
+    }
 
-    return NextResponse.json({ ok: true, sent, failed, total: subs.length })
+    return NextResponse.json({ ok: true, sent, failed, total: subs.length, test: isTest })
   } catch (err: any) {
     console.error('[newsletter-send]', err)
     return NextResponse.json({ error: err.message || 'Erro' }, { status: 500 })
