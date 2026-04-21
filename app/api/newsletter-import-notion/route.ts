@@ -6,7 +6,12 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const EVENTOS_DB = '1ad220116d8a804b839ddc36f1e7ecf1'
+// Bases de eventos por ano — o Notion tem uma DB separada por ano
+const EVENTOS_DBS: { year: number; id: string }[] = [
+  { year: 2025, id: '198220116d8a8020ae0ef315dea8e1af' },
+  { year: 2026, id: '1ad220116d8a804b839ddc36f1e7ecf1' },
+  { year: 2027, id: '2a6220116d8a80b4b439fe091b2ac804' },
+]
 
 export async function POST() {
   try {
@@ -21,55 +26,64 @@ export async function POST() {
       'Content-Type': 'application/json',
     }
 
-    // Paginar toda a base de eventos
-    const emails = new Map<string, { nome?: string; data_casamento?: string }>()
-    let cursor: string | undefined
+    // Paginar todas as bases de eventos (2025, 2026, 2027)
+    const emails = new Map<string, { nome?: string; data_casamento?: string; year?: number }>()
     let pagesScanned = 0
+    const perYear: Record<number, number> = {}
 
-    do {
-      const res = await fetch(`https://api.notion.com/v1/databases/${EVENTOS_DB}/query`, {
-        method: 'POST',
-        headers: notionH,
-        cache: 'no-store',
-        body: JSON.stringify({
-          page_size: 100,
-          ...(cursor ? { start_cursor: cursor } : {}),
-        }),
-      })
+    for (const { year, id: dbId } of EVENTOS_DBS) {
+      let cursor: string | undefined
+      let yearPages = 0
+      do {
+        const res = await fetch(`https://api.notion.com/v1/databases/${dbId}/query`, {
+          method: 'POST',
+          headers: notionH,
+          cache: 'no-store',
+          body: JSON.stringify({
+            page_size: 100,
+            ...(cursor ? { start_cursor: cursor } : {}),
+          }),
+        })
 
-      if (!res.ok) {
-        const text = await res.text()
-        return NextResponse.json({ error: `Notion API: ${text}` }, { status: 500 })
-      }
-
-      const data = await res.json()
-      pagesScanned += data.results.length
-
-      for (const page of data.results) {
-        const props = page.properties || {}
-
-        const nomeNoiva = getText(props['Nome da Noiva'])
-        const nomeNoivo = getText(props['nome do noivo'])
-        const emailNoiva = getEmail(props['E-mail da noiva'])
-        const emailNoivo = getEmail(props['E-mail do noivo'])
-        const dataEvento = getDate(props['DATA DO EVENTO'])
-
-        if (emailNoiva && isValidEmail(emailNoiva)) {
-          emails.set(emailNoiva.toLowerCase().trim(), {
-            nome: nomeNoiva || undefined,
-            data_casamento: dataEvento || undefined,
-          })
+        if (!res.ok) {
+          const text = await res.text()
+          console.error(`[import-notion] DB ${year} failed:`, text)
+          // Continuar para outros anos mesmo se um falhar
+          break
         }
-        if (emailNoivo && isValidEmail(emailNoivo)) {
-          emails.set(emailNoivo.toLowerCase().trim(), {
-            nome: nomeNoivo || undefined,
-            data_casamento: dataEvento || undefined,
-          })
-        }
-      }
 
-      cursor = data.has_more ? data.next_cursor : undefined
-    } while (cursor)
+        const data = await res.json()
+        pagesScanned += data.results.length
+        yearPages += data.results.length
+
+        for (const page of data.results) {
+          const props = page.properties || {}
+          const nomeNoiva = getText(props['Nome da Noiva'])
+          const nomeNoivo = getText(props['nome do noivo'])
+          const emailNoiva = getEmail(props['E-mail da noiva'])
+          const emailNoivo = getEmail(props['E-mail do noivo'])
+          const dataEvento = getDate(props['DATA DO EVENTO'])
+
+          if (emailNoiva && isValidEmail(emailNoiva)) {
+            emails.set(emailNoiva.toLowerCase().trim(), {
+              nome: nomeNoiva || undefined,
+              data_casamento: dataEvento || undefined,
+              year,
+            })
+          }
+          if (emailNoivo && isValidEmail(emailNoivo)) {
+            emails.set(emailNoivo.toLowerCase().trim(), {
+              nome: nomeNoivo || undefined,
+              data_casamento: dataEvento || undefined,
+              year,
+            })
+          }
+        }
+
+        cursor = data.has_more ? data.next_cursor : undefined
+      } while (cursor)
+      perYear[year] = yearPages
+    }
 
     if (emails.size === 0) {
       return NextResponse.json({
@@ -113,6 +127,7 @@ export async function POST() {
       skipped: emails.size - toInsert.length,
       total_found: emails.size,
       pages_scanned: pagesScanned,
+      per_year: perYear,
     })
   } catch (e: any) {
     console.error('[import-notion]', e)
