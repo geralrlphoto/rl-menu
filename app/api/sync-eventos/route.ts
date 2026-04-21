@@ -5,12 +5,13 @@ const NOTION_TOKEN = process.env.NOTION_TOKEN!
 
 const DB_BY_YEAR: Record<number, string> = {
   2026: '1ad220116d8a804b839ddc36f1e7ecf1',
-  2027: '2a6220116d8a80b4b439fe091b2ac804',
+  2027: 'a9c8db8c0a6141ee839c1d0e5ad97915',
 }
 
+// Todos os anos usam a mesma tabela Supabase — filtrados por data_evento
 const TABLE_BY_YEAR: Record<number, string> = {
   2026: 'eventos_2026',
-  // 2027: 'eventos_2027',
+  2027: 'eventos_2026',
 }
 
 function supabase() {
