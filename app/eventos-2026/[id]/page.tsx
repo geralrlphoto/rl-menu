@@ -1732,7 +1732,7 @@ export default function EventoPage() {
                 <button
                   onClick={() => e.referencia && loadPagamentos(e.referencia, true)}
                   title="Atualizar pagamentos"
-                  className="text-white/20 hover:text-gold transition-colors"
+                  className="print:hidden text-white/20 hover:text-gold transition-colors"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={pagamentosRefreshing ? 'animate-spin' : ''}>
                     <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
@@ -1740,7 +1740,7 @@ export default function EventoPage() {
                   </svg>
                 </button>
               </div>
-              <a href={`/financas?ref=${encodeURIComponent(e.referencia ?? '')}`} className="text-[10px] text-white/20 hover:text-gold transition-colors tracking-wider">
+              <a href={`/financas?ref=${encodeURIComponent(e.referencia ?? '')}`} className="print:hidden text-[10px] text-white/20 hover:text-gold transition-colors tracking-wider">
                 Ver todos os pagamentos ›
               </a>
             </div>
@@ -1886,7 +1886,7 @@ export default function EventoPage() {
           {/* Link rápido → Seleção dos Noivos */}
           {e.referencia && (
             <Link href={`/fotos-selecao?ref=${encodeURIComponent(e.referencia)}`}
-              className="flex items-center justify-between px-4 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] hover:border-gold/20 transition-all group">
+              className="print:hidden flex items-center justify-between px-4 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] hover:border-gold/20 transition-all group">
               <span className="text-[10px] tracking-widest text-white/30 uppercase group-hover:text-white/50 transition-colors">Seleção de Fotos dos Noivos</span>
               <span className="text-xs text-white/20 group-hover:text-gold transition-colors">›</span>
             </Link>
@@ -1925,7 +1925,7 @@ export default function EventoPage() {
           </div>
 
           {/* ── Notificações Equipa ── */}
-          <div className="mt-5 pt-5 border-t border-white/[0.05]">
+          <div className="print:hidden mt-5 pt-5 border-t border-white/[0.05]">
             <p className="text-[9px] tracking-[0.4em] text-purple-400/60 uppercase mb-4">Notificação</p>
             <div className="grid grid-cols-2 gap-4">
               {/* Notificação Fotógrafo */}
@@ -2086,7 +2086,7 @@ export default function EventoPage() {
         </Section>
 
         {/* ── Ações Fotografia ── */}
-        <div className="rounded-2xl p-6 flex flex-col gap-4"
+        <div className="print:hidden rounded-2xl p-6 flex flex-col gap-4"
           style={{ background: 'rgba(56,130,246,0.04)', border: '1px solid rgba(56,130,246,0.18)', boxShadow: '0 0 24px rgba(56,130,246,0.08), 0 0 6px rgba(56,130,246,0.06)' }}>
           <h2 className="text-[10px] tracking-[0.35em] uppercase" style={{ color: 'rgba(99,165,255,0.8)' }}>Ações Fotografia</h2>
           <div className="flex flex-col gap-4">
@@ -2179,7 +2179,7 @@ export default function EventoPage() {
         </div>
 
         {/* ── Ações Vídeo ── */}
-        <div className="rounded-2xl p-6 flex flex-col gap-4"
+        <div className="print:hidden rounded-2xl p-6 flex flex-col gap-4"
           style={{ background: 'rgba(180,140,40,0.04)', border: '1px solid rgba(180,140,40,0.2)', boxShadow: '0 0 24px rgba(180,140,40,0.07), 0 0 6px rgba(180,140,40,0.05)' }}>
           <h2 className="text-[10px] tracking-[0.35em] uppercase" style={{ color: 'rgba(200,165,80,0.75)' }}>Ações Vídeo</h2>
           <div className="flex flex-col gap-4">
@@ -2268,7 +2268,7 @@ export default function EventoPage() {
         </div>
 
         {/* ── Outras Ações ── */}
-        <div className="rounded-2xl p-6 flex flex-col gap-4"
+        <div className="print:hidden rounded-2xl p-6 flex flex-col gap-4"
           style={{ background: 'rgba(40,180,100,0.03)', border: '1px solid rgba(40,180,100,0.18)', boxShadow: '0 0 24px rgba(40,180,100,0.07), 0 0 6px rgba(40,180,100,0.05)' }}>
           <h2 className="text-[10px] tracking-[0.35em] uppercase" style={{ color: 'rgba(80,200,130,0.75)' }}>Outras Ações</h2>
           <div className="flex flex-col gap-2">
@@ -2405,9 +2405,15 @@ export default function EventoPage() {
           /* Secções — ligeiro fundo */
           #evento-page .rounded-2xl { border: 1px solid #ddd !important; page-break-inside: avoid; }
 
-          /* Botões e elementos interativos — esconder */
-          #evento-page button { display: none !important; }
-          #evento-page input  { border: none !important; background: transparent !important; padding: 0 !important; }
+          /* Botões — mostrar conteúdo como texto simples, sem aparência de botão */
+          #evento-page button { background: transparent !important; border: none !important; box-shadow: none !important; padding: 2px 0 !important; cursor: default !important; color: #333 !important; font: inherit !important; display: inline !important; }
+          /* Esconder spans de placeholder "Clica para editar" e indicadores de ação */
+          #evento-page button em, #evento-page button i, #evento-page button span[class*="italic"] { display: none !important; }
+          /* Esconder ícone ✎ e indicador "..." (são sempre o último span com ml-auto) */
+          #evento-page button .ml-auto { display: none !important; }
+          /* Esconder botões que são puramente de ação (têm só SVG ou texto de ação) */
+          #evento-page button:has(svg:only-child) { display: none !important; }
+          #evento-page input  { border: none !important; background: transparent !important; padding: 0 !important; color: #333 !important; }
           #evento-page select { display: none !important; }
           #evento-page a[class*="hover"] { color: #333 !important; text-decoration: none !important; }
 
