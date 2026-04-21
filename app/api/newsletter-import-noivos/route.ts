@@ -11,13 +11,12 @@ export async function POST() {
   try {
     const emails = new Map<string, { nome?: string; source: string }>()
 
-    // 1. CRM contacts — excluindo quem explicitamente nao fechou ou cancelou
+    // 1. CRM contacts — TODOS (sem filtro por status)
     try {
       const { data: crm } = await supabase
         .from('crm_contacts')
         .select('email, nome, status')
         .not('email', 'is', null)
-        .not('status', 'in', '("NÃO FECHOU","Cancelado","Encerrado","Sem resposta")')
       for (const c of crm || []) {
         if (c.email && isValidEmail(c.email)) {
           emails.set(c.email.toLowerCase().trim(), { nome: c.nome, source: 'crm' })
