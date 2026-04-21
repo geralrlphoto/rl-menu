@@ -119,20 +119,22 @@ export default function NewsletterEditor({ initialData, activeSubscribers }: { i
         </div>
       </div>
 
-      {isLocked && (
+      {(data.delivered_count || data.unique_opens || data.total_clicks || isLocked) ? (
         <div style={{ padding: '20px 32px', background: 'rgba(201,168,76,0.05)', borderBottom: '1px solid #2a2217' }}>
-          <div style={{ fontSize: 10, color: '#8a7450', letterSpacing: 3, marginBottom: 12 }}>ESTATÍSTICAS DE ENVIO</div>
+          <div style={{ fontSize: 10, color: '#8a7450', letterSpacing: 3, marginBottom: 12 }}>
+            ESTATÍSTICAS {isLocked ? 'DE ENVIO' : '(INCLUI TESTES)'}
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 14 }}>
-            <Stat label="Destinatários" value={data.sent_to_count || 0} />
-            <Stat label="Entregues" value={data.delivered_count || 0} sub={`${pct(data.delivered_count || 0, data.sent_to_count || 0)}%`} />
-            <Stat label="Aberturas únicas" value={data.unique_opens || 0} sub={`${pct(data.unique_opens || 0, data.sent_to_count || 0)}%`} />
+            <Stat label="Destinatários" value={(data.sent_to_count || 0) + (isLocked ? 0 : (data.delivered_count || 0))} />
+            <Stat label="Entregues" value={data.delivered_count || 0} />
+            <Stat label="Aberturas únicas" value={data.unique_opens || 0} />
             <Stat label="Cliques total" value={data.total_clicks || 0} />
             <Stat label="Cliques Instagram" value={data.ig_clicks || 0} icon="📸" />
             <Stat label="Partilhas" value={data.share_clicks || 0} icon="↗" />
             <Stat label="Bounces" value={data.bounced_count || 0} />
           </div>
         </div>
-      )}
+      ) : null}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: 'calc(100vh - 80px)' }}>
         {/* EDITOR */}

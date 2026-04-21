@@ -30,15 +30,33 @@ export async function POST(req: NextRequest) {
     const isTest = !!test_email
     if (!isTest && nl.status === 'sent') return NextResponse.json({ error: 'Já foi enviada' }, { status: 400 })
 
-    // Se for teste, envia só para o email indicado. Caso contrário, envia para todos os activos.
+    // Se for teste, envia só para o email indicado (cria ou usa subscritor existente).
+    // Caso contrário, envia para todos os activos.
     let subs: any[] = []
     if (isTest) {
-      subs = [{
-        id: '00000000-0000-0000-0000-000000000000',
-        email: test_email,
-        nome: 'Teste',
-        confirmation_token: '00000000-0000-0000-0000-000000000000',
-      }]
+      const emailLower = String(test_email).toLowerCase().trim()
+      const { data: existing } = await supabase
+        .from('newsletter_subscribers')
+        .select('id, email, nome, confirmation_token')
+        .eq('email', emailLower)
+        .maybeSingle()
+
+      if (existing) {
+        subs = [existing]
+      } else {
+        const { data: created } = await supabase
+          .from('newsletter_subscribers')
+          .insert({
+            email: emailLower,
+            nome: 'Teste',
+            source: 'test',
+            status: 'active',
+            confirmed_at: new Date().toISOString(),
+          })
+          .select('id, email, nome, confirmation_token')
+          .single()
+        subs = created ? [created] : []
+      }
     } else {
       const { data, error: sErr } = await supabase
         .from('newsletter_subscribers')
@@ -81,12 +99,11 @@ export async function POST(req: NextRequest) {
         const result = await res.json()
         if (res.ok && result.data) {
           sent += result.data.length
-          if (!isTest) {
-            const sends = result.data.map((r: any, idx: number) => ({
-              newsletter_id, subscriber_id: batch[idx].id, resend_id: r.id, status: 'sent',
-            }))
-            await supabase.from('newsletter_sends').insert(sends)
-          }
+          // Registar sempre (incluindo testes) para o webhook poder associar eventos
+          const sends = result.data.map((r: any, idx: number) => ({
+            newsletter_id, subscriber_id: batch[idx].id, resend_id: r.id, status: 'sent',
+          }))
+          await supabase.from('newsletter_sends').insert(sends)
         } else {
           failed += batch.length
           console.error('[newsletter-send] batch failed:', result)
