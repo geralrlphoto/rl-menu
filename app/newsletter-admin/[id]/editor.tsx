@@ -281,11 +281,6 @@ function buildEmailHtml(d: any) {
   <!-- HERO inspira -->
   <tr><td style="padding:72px 40px 64px;text-align:center;background:#0c0907;">
     <table cellpadding="0" cellspacing="0" style="margin:0 auto 40px;"><tr>
-      <td style="width:140px;height:140px;border-radius:50%;border:1px solid rgba(201,168,76,0.4);text-align:center;vertical-align:middle;">
-        <img src="https://rl-menu-lake.vercel.app/logo-email.png" alt="RL" width="90" height="90" style="display:inline-block;width:90px;height:auto;border:0;" />
-      </td>
-    </tr></table>
-    <table cellpadding="0" cellspacing="0" style="margin:0 auto 40px;"><tr>
       <td style="border:1px solid rgba(201,168,76,0.3);padding:10px 28px;">
         <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:11px;letter-spacing:4px;color:#c9a84c;text-transform:uppercase;">NEWSLETTER EXCLUSIVA</p>
       </td>
