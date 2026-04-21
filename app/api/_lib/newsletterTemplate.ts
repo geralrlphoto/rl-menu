@@ -155,6 +155,37 @@ export function buildNewsletterHtml(d: any) {
       </tr></table>
     </td></tr>
 
+    <!-- Estatisticas -->
+    <tr><td style="padding:48px 40px;background:#0c0907;" class="mobile-pad">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="25%" align="center" style="padding:8px;">
+            <div style="font-family:'Cormorant Garamond',Georgia,serif;font-size:38px;font-weight:300;color:#c9a84c;line-height:1;margin-bottom:6px;">+500</div>
+            <div style="font-family:'Montserrat',Arial,sans-serif;font-size:10px;letter-spacing:3px;color:#a09585;text-transform:uppercase;">Casamentos</div>
+          </td>
+          <td width="25%" align="center" style="padding:8px;">
+            <div style="font-family:'Cormorant Garamond',Georgia,serif;font-size:38px;font-weight:300;color:#c9a84c;line-height:1;margin-bottom:6px;">8</div>
+            <div style="font-family:'Montserrat',Arial,sans-serif;font-size:10px;letter-spacing:3px;color:#a09585;text-transform:uppercase;">Anos de experi&ecirc;ncia</div>
+          </td>
+          <td width="25%" align="center" style="padding:8px;">
+            <div style="font-family:'Cormorant Garamond',Georgia,serif;font-size:38px;font-weight:300;color:#c9a84c;line-height:1;margin-bottom:6px;">50+</div>
+            <div style="font-family:'Montserrat',Arial,sans-serif;font-size:10px;letter-spacing:3px;color:#a09585;text-transform:uppercase;">Dicas exclusivas</div>
+          </td>
+          <td width="25%" align="center" style="padding:8px;">
+            <div style="font-family:'Cormorant Garamond',Georgia,serif;font-size:32px;font-weight:300;color:#c9a84c;line-height:1;margin-bottom:6px;font-style:italic;">Quinzenal</div>
+            <div style="font-family:'Montserrat',Arial,sans-serif;font-size:10px;letter-spacing:3px;color:#a09585;text-transform:uppercase;">Frequ&ecirc;ncia</div>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+
+    <!-- Divisor -->
+    <tr><td style="padding:0 40px;">
+      <table width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td style="border-top:1px solid rgba(201,168,76,0.15);height:1px;font-size:1px;line-height:1px;">&nbsp;</td>
+      </tr></table>
+    </td></tr>
+
     <!-- Título -->
     <tr><td style="padding:32px 40px 24px;" class="mobile-pad">
       <h1 class="mobile-title" style="margin:0;font-family:'Cormorant Garamond',Georgia,serif;font-size:32px;font-weight:400;color:#f5f0e8;line-height:1.25;">
