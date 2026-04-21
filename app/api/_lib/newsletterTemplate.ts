@@ -1,3 +1,5 @@
+import { pickRandomPhoto } from './newsletterPhotos'
+
 // Template de email — espelha o mockup da landing page
 // Compatível com Gmail, Outlook, Apple Mail, Yahoo
 
@@ -26,6 +28,8 @@ function getRandomTestimonials(): typeof TESTIMONIALS {
 }
 
 export function buildNewsletterHtml(d: any) {
+  // Foto aleatória da pasta /public/newsletter/ (ou fallback para o hero específico)
+  const heroPhoto = pickRandomPhoto(d.hero_image_url)
   const sections = (d.sections || []).map((s: any) => `
     <tr><td style="padding:32px 40px 0;">
       <table width="100%" cellpadding="0" cellspacing="0"><tr>
@@ -43,9 +47,9 @@ export function buildNewsletterHtml(d: any) {
       </tr></table>
     </td></tr>`).join('')
 
-  const hero = d.hero_image_url
+  const hero = heroPhoto
     ? `<tr><td style="padding:0 40px 32px;">
-        <img src="${esc(d.hero_image_url)}" alt="" style="width:100%;display:block;height:auto;border:0;border-radius:4px;" />
+        <img src="${esc(heroPhoto)}" alt="" style="width:100%;display:block;height:auto;border:0;border-radius:4px;" />
       </td></tr>`
     : ''
 
