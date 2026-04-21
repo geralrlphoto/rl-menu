@@ -21,6 +21,7 @@ export default function NewsletterEditor({ initialData, activeSubscribers }: { i
   const [toast, setToast] = useState('')
 
   const isLocked = data.status === 'sent'
+  const pct = (a: number, b: number) => b ? Math.round((a / b) * 100) : 0
 
   function update(patch: any) {
     setData((d: any) => ({ ...d, ...patch }))
@@ -109,6 +110,21 @@ export default function NewsletterEditor({ initialData, activeSubscribers }: { i
           )}
         </div>
       </div>
+
+      {isLocked && (
+        <div style={{ padding: '20px 32px', background: 'rgba(201,168,76,0.05)', borderBottom: '1px solid #2a2217' }}>
+          <div style={{ fontSize: 10, color: '#8a7450', letterSpacing: 3, marginBottom: 12 }}>ESTATÍSTICAS DE ENVIO</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 14 }}>
+            <Stat label="Destinatários" value={data.sent_to_count || 0} />
+            <Stat label="Entregues" value={data.delivered_count || 0} sub={`${pct(data.delivered_count || 0, data.sent_to_count || 0)}%`} />
+            <Stat label="Aberturas únicas" value={data.unique_opens || 0} sub={`${pct(data.unique_opens || 0, data.sent_to_count || 0)}%`} />
+            <Stat label="Cliques total" value={data.total_clicks || 0} />
+            <Stat label="Cliques Instagram" value={data.ig_clicks || 0} icon="📸" />
+            <Stat label="Partilhas" value={data.share_clicks || 0} icon="↗" />
+            <Stat label="Bounces" value={data.bounced_count || 0} />
+          </div>
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: 'calc(100vh - 80px)' }}>
         {/* EDITOR */}
@@ -240,6 +256,19 @@ const btnGold: React.CSSProperties = {
 const btnGhost: React.CSSProperties = {
   padding: '12px 24px', background: 'transparent', color: '#c9a96e', border: '1px solid #7a6340',
   fontSize: 11, fontWeight: 500, letterSpacing: 2, textTransform: 'uppercase', cursor: 'pointer',
+}
+
+function Stat({ label, value, sub, icon }: { label: string; value: number; sub?: string; icon?: string }) {
+  return (
+    <div style={{ padding: 14, background: 'rgba(0,0,0,0.25)', border: '1px solid #2a2217' }}>
+      <div style={{ fontSize: 10, color: '#8a7450', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6 }}>
+        {icon && <span style={{ marginRight: 4 }}>{icon}</span>}{label}
+      </div>
+      <div style={{ fontSize: 24, fontFamily: 'Georgia, serif', color: '#c9a96e', fontWeight: 300 }}>
+        {value}{sub && <span style={{ fontSize: 12, color: '#6a5a3e', marginLeft: 6 }}>{sub}</span>}
+      </div>
+    </div>
+  )
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {

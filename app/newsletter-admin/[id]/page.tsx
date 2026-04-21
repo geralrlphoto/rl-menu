@@ -27,3 +27,10 @@ export default async function NewsletterDetail({ params }: { params: Promise<{ i
     />
   )
 }
+
+// Helper para percentagem
+function pct(a: number, b: number): string {
+  if (!b) return '0%'
+  return `${Math.round((a / b) * 100)}%`
+}
+

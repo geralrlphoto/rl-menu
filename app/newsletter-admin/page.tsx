@@ -173,8 +173,15 @@ function Card({ n }: { n: any }) {
       <div style={{ fontSize: 11, color: '#8a7450' }}>
         {n.status === 'sent' ? (
           <>
-            {fmtDate(n.sent_at?.split('T')[0] || n.scheduled_for)}
-            <span style={{ marginLeft: 12, color: '#6a5a3e' }}>{n.sent_to_count || 0} destinatarios</span>
+            <div>{fmtDate(n.sent_at?.split('T')[0] || n.scheduled_for)} &middot; {n.sent_to_count || 0} destinatários</div>
+            {(n.unique_opens || n.total_clicks || n.ig_clicks) ? (
+              <div style={{ marginTop: 8, display: 'flex', gap: 14, fontSize: 11, color: '#b3a082' }}>
+                <span>👁 {n.unique_opens || 0}</span>
+                <span>🖱 {n.total_clicks || 0}</span>
+                <span>📸 {n.ig_clicks || 0}</span>
+                <span>↗ {n.share_clicks || 0}</span>
+              </div>
+            ) : null}
           </>
         ) : (
           fmtDate(n.scheduled_for)
