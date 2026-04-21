@@ -9,23 +9,14 @@ const supabase = createClient(SUPABASE_URL, SERVICE_KEY)
 export async function GET(req: NextRequest) {
   try {
     const anoParam = req.nextUrl.searchParams.get('ano')
-    const ano = anoParam ? parseInt(anoParam) : null
+    const ano = anoParam ? parseInt(anoParam) : 2026
 
-    // Tabela por ano
-    const TABLE_BY_YEAR: Record<number, string> = {
-      2026: 'eventos_2026',
-      // 2027: 'eventos_2027', // adicionar quando existir
-    }
-
-    if (ano && !TABLE_BY_YEAR[ano]) {
-      return NextResponse.json({ events: [], total: 0, totais: { foto: 0, video: 0, geral: 0 } })
-    }
-
-    const table = ano ? TABLE_BY_YEAR[ano] : TABLE_BY_YEAR[2026]
-
+    // Todos os eventos ficam na tabela eventos_2026 — filtra por ano via data_evento
     const { data, error } = await supabase
-      .from(table)
+      .from('eventos_2026')
       .select('*')
+      .gte('data_evento', `${ano}-01-01`)
+      .lte('data_evento', `${ano}-12-31`)
       .order('data_evento', { ascending: true })
 
     if (error) {

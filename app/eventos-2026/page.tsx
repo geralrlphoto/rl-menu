@@ -270,12 +270,13 @@ function Eventos2026Inner() {
   useEffect(() => { loadEvents() }, [anoFiltro])
 
   const filtered = events.filter(e => {
+    const matchAno = !e.data_evento || e.data_evento.startsWith(String(anoFiltro))
     const matchSearch = !search ||
       e.cliente?.toLowerCase().includes(search.toLowerCase()) ||
       e.local?.toLowerCase().includes(search.toLowerCase()) ||
       e.referencia?.toLowerCase().includes(search.toLowerCase())
     const matchTipo = tipoFilter === 'Todos' || e.tipo_evento?.includes(tipoFilter)
-    return matchSearch && matchTipo
+    return matchAno && matchSearch && matchTipo
   })
 
   const grouped = groupByMonth(filtered)
