@@ -14,6 +14,11 @@ const nextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      { source: '/newsletter', destination: '/nl/index.html' },
+    ]
+  },
 }
 
 module.exports = nextConfig

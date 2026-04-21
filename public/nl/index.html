@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0c0907">
+  <title>Newsletter | RL Photo & Video</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Montserrat:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0c0907;
+      --bg-card: #161008;
+      --gold: #c9a84c;
+      --gold-light: #e0c67a;
+      --gold-dim: rgba(160,110,50,0.15);
+      --text: #f5f0e8;
+      --text-muted: #a09585;
+      --serif: 'Cormorant Garamond', Georgia, serif;
+      --sans: 'Montserrat', sans-serif;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg-dark);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Background effects */
+    .bg-effects {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .bg-effects::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 20%, rgba(160,110,50,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(140,95,40,0.06) 0%, transparent 45%),
+        radial-gradient(ellipse at 50% 50%, rgba(201,168,76,0.03) 0%, transparent 60%);
+    }
+    .bg-effects::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      opacity: 0.4;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Navigation */
+    nav {
+      padding: 32px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .logo img {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 1px solid rgba(201,168,76,0.4);
+      box-shadow: 0 4px 16px rgba(201,168,76,0.15);
+    }
+    .hero-logo {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      margin: 0 auto 32px;
+      display: block;
+      border: 2px solid rgba(201,168,76,0.3);
+      box-shadow: 0 8px 40px rgba(201,168,76,0.2);
+    }
+    .logo-text {
+      font-family: var(--serif);
+      font-size: 1.4rem;
+      font-weight: 400;
+      color: var(--gold);
+      letter-spacing: 2px;
+    }
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.75rem;
+      font-weight: 300;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      transition: color 0.3s;
+    }
+    .nav-links a:hover { color: var(--gold); }
+
+    /* Hero */
+    .hero {
+      padding: 80px 0 100px;
+      text-align: center;
+      position: relative;
+    }
+    .hero-badge {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--gold);
+      border: 1px solid rgba(201,168,76,0.3);
+      padding: 8px 24px;
+      margin-bottom: 40px;
+    }
+    .hero h1 {
+      font-family: var(--serif);
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 300;
+      line-height: 1.15;
+      margin-bottom: 24px;
+      color: var(--text);
+    }
+    .hero h1 em {
+      font-style: italic;
+      color: var(--gold);
+    }
+    .hero p {
+      font-size: 1rem;
+      font-weight: 300;
+      color: var(--text-muted);
+      max-width: 560px;
+      margin: 0 auto 48px;
+      line-height: 1.8;
+    }
+
+    /* Subscribe form */
+    .subscribe-form {
+      display: flex;
+      gap: 0;
+      max-width: 520px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .subscribe-form input {
+      flex: 1;
+      padding: 18px 24px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(201,168,76,0.2);
+      border-right: none;
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 0.85rem;
+      font-weight: 300;
+      letter-spacing: 0.5px;
+      outline: none;
+      transition: all 0.3s;
+    }
+    .subscribe-form input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+    .subscribe-form input:focus {
+      border-color: rgba(201,168,76,0.5);
+      background: rgba(255,255,255,0.06);
+    }
+    .subscribe-form button {
+      padding: 18px 36px;
+      background: var(--gold);
+      border: 1px solid var(--gold);
+      color: var(--bg-dark);
+      font-family: var(--sans);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+    .subscribe-form button:hover {
+      background: var(--gold-light);
+      border-color: var(--gold-light);
+    }
+    .form-note {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      opacity: 0.6;
+      letter-spacing: 0.5px;
+    }
+
+    /* Success message */
+    .success-msg {
+      display: none;
+      text-align: center;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+    .success-msg.show {
+      display: block;
+      animation: fadeUp 0.5s ease;
+    }
+    .success-icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+    }
+    .success-msg h3 {
+      font-family: var(--serif);
+      font-size: 1.8rem;
+      font-weight: 400;
+      color: var(--gold);
+      margin-bottom: 12px;
+    }
+    .success-msg p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 300;
+    }
+
+    /* Stats */
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 64px;
+      padding: 60px 0;
+      border-top: 1px solid rgba(201,168,76,0.1);
+      border-bottom: 1px solid rgba(201,168,76,0.1);
+    }
+    .stat {
+      text-align: center;
+    }
+    .stat-number {
+      font-family: var(--serif);
+      font-size: 2.5rem;
+      font-weight: 300;
+      color: var(--gold);
+      margin-bottom: 4px;
+    }
+    .stat-label {
+      font-size: 0.65rem;
+      font-weight: 400;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    /* What you'll get */
+    .section {
+      padding: 80px 0;
+    }
+    .section-title {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+    .section-title h2 {
+      font-family: var(--serif);
+      font-size: 2.2rem;
+      font-weight: 300;
+      margin-bottom: 12px;
+    }
+    .section-title h2 em { color: var(--gold); font-style: italic; }
+    .section-title p {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 300;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+    }
+    .feature-card {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(201,168,76,0.1);
+      padding: 40px 32px;
+      transition: all 0.4s;
+      position: relative;
+      overflow: hidden;
+    }
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    .feature-card:hover {
+      border-color: rgba(201,168,76,0.25);
+      background: rgba(255,255,255,0.03);
+      transform: translateY(-4px);
+    }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-icon {
+      font-size: 1.8rem;
+      margin-bottom: 20px;
+      display: block;
+    }
+    .feature-card h3 {
+      font-family: var(--serif);
+      font-size: 1.3rem;
+      font-weight: 400;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+    .feature-card p {
+      font-size: 0.8rem;
+      font-weight: 300;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    /* Preview section */
+    .preview-section {
+      padding: 80px 0;
+    }
+    .preview-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 64px;
+      align-items: center;
+    }
+    .preview-text h2 {
+      font-family: var(--serif);
+      font-size: 2.2rem;
+      font-weight: 300;
+      margin-bottom: 20px;
+    }
+    .preview-text h2 em { color: var(--gold); font-style: italic; }
+    .preview-text p {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 300;
+      line-height: 1.8;
+      margin-bottom: 24px;
+    }
+    .preview-list {
+      list-style: none;
+    }
+    .preview-list li {
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(201,168,76,0.08);
+      font-size: 0.8rem;
+      font-weight: 300;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .preview-list li span {
+      color: var(--gold);
+      font-size: 0.7rem;
+    }
+
+    /* Email mockup */
+    .email-mockup {
+      background: #1a1410;
+      border: 1px solid rgba(201,168,76,0.15);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.4);
+    }
+    .email-toolbar {
+      background: rgba(201,168,76,0.06);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid rgba(201,168,76,0.1);
+    }
+    .email-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(201,168,76,0.3);
+    }
+    .email-dot:first-child { background: rgba(255,95,87,0.6); }
+    .email-dot:nth-child(2) { background: rgba(255,189,46,0.6); }
+    .email-dot:nth-child(3) { background: rgba(39,201,63,0.6); }
+    .email-body {
+      padding: 32px 28px;
+    }
+    .email-header {
+      text-align: center;
+      padding-bottom: 24px;
+      border-bottom: 1px solid rgba(201,168,76,0.1);
+      margin-bottom: 24px;
+    }
+    .email-logo {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      margin-bottom: 12px;
+      border: 1px solid rgba(201,168,76,0.3);
+    }
+    .email-header h4 {
+      font-family: var(--serif);
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--gold);
+      letter-spacing: 2px;
+    }
+    .email-header small {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+    }
+    .email-content h3 {
+      font-family: var(--serif);
+      font-size: 1.4rem;
+      font-weight: 400;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+    .email-content p {
+      font-size: 0.75rem;
+      font-weight: 300;
+      color: var(--text-muted);
+      line-height: 1.8;
+      margin-bottom: 16px;
+    }
+    .email-img-placeholder {
+      width: 100%;
+      height: 220px;
+      overflow: hidden;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      border: 1px solid rgba(201,168,76,0.15);
+    }
+    .email-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .email-cta {
+      display: inline-block;
+      padding: 12px 28px;
+      background: var(--gold);
+      color: var(--bg-dark);
+      font-size: 0.6rem;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      text-decoration: none;
+    }
+
+    /* Testimonial */
+    .testimonials {
+      padding: 80px 0;
+      border-top: 1px solid rgba(201,168,76,0.1);
+    }
+    .testimonial-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+    }
+    .testimonial {
+      padding: 32px;
+      border: 1px solid rgba(201,168,76,0.08);
+      background: rgba(255,255,255,0.015);
+    }
+    .testimonial-stars {
+      color: var(--gold);
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      margin-bottom: 16px;
+    }
+    .testimonial p {
+      font-family: var(--serif);
+      font-size: 1rem;
+      font-weight: 300;
+      font-style: italic;
+      color: var(--text);
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+    .testimonial-author {
+      font-size: 0.7rem;
+      font-weight: 400;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    /* CTA bottom */
+    .cta-bottom {
+      padding: 100px 0;
+      text-align: center;
+      position: relative;
+    }
+    .cta-bottom::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 1px;
+      height: 60px;
+      background: linear-gradient(to bottom, transparent, var(--gold));
+    }
+    .cta-bottom h2 {
+      font-family: var(--serif);
+      font-size: 2.5rem;
+      font-weight: 300;
+      margin-bottom: 16px;
+    }
+    .cta-bottom h2 em { color: var(--gold); font-style: italic; }
+    .cta-bottom p {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 300;
+      margin-bottom: 40px;
+    }
+
+    /* Footer */
+    footer {
+      padding: 40px 0;
+      border-top: 1px solid rgba(201,168,76,0.08);
+      text-align: center;
+    }
+    footer p {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      opacity: 0.5;
+      letter-spacing: 1px;
+    }
+
+    /* Article Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 1000;
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 20px;
+      overflow-y: auto;
+    }
+    .modal-overlay.show {
+      display: flex;
+      animation: fadeIn 0.4s ease;
+    }
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid rgba(201,168,76,0.2);
+      max-width: 780px;
+      width: 100%;
+      padding: 0;
+      position: relative;
+      animation: modalUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 40px 100px rgba(0,0,0,0.6);
+    }
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 40px;
+      height: 40px;
+      background: rgba(0,0,0,0.6);
+      border: 1px solid rgba(201,168,76,0.3);
+      color: var(--gold);
+      font-size: 1.2rem;
+      cursor: pointer;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+      z-index: 10;
+    }
+    .modal-close:hover {
+      background: var(--gold);
+      color: var(--bg-dark);
+    }
+    .modal-hero {
+      width: 100%;
+      height: 320px;
+      overflow: hidden;
+      position: relative;
+    }
+    .modal-hero img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .modal-hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, transparent 50%, var(--bg-card));
+    }
+    .modal-body {
+      padding: 40px 56px 56px;
+    }
+    .modal-meta {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      font-size: 0.65rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 20px;
+    }
+    .modal-meta span:nth-child(2) { color: var(--text-muted); }
+    .modal-body h1 {
+      font-family: var(--serif);
+      font-size: 2.4rem;
+      font-weight: 400;
+      line-height: 1.2;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+    .modal-body .lead {
+      font-family: var(--serif);
+      font-size: 1.15rem;
+      font-style: italic;
+      font-weight: 300;
+      color: var(--gold);
+      line-height: 1.6;
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid rgba(201,168,76,0.15);
+    }
+    .modal-body h2 {
+      font-family: var(--serif);
+      font-size: 1.5rem;
+      font-weight: 400;
+      margin: 32px 0 12px;
+      color: var(--gold);
+    }
+    .modal-body h2 .num {
+      display: inline-block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 2px;
+      margin-right: 12px;
+      vertical-align: middle;
+    }
+    .modal-body p {
+      font-size: 0.9rem;
+      font-weight: 300;
+      line-height: 1.9;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+    .modal-body .author {
+      margin-top: 48px;
+      padding-top: 32px;
+      border-top: 1px solid rgba(201,168,76,0.15);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .modal-body .author img {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 1px solid rgba(201,168,76,0.3);
+    }
+    .author-info h4 {
+      font-family: var(--serif);
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+    .author-info small {
+      font-size: 0.65rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes modalUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+      .modal-body { padding: 32px 24px; }
+      .modal-body h1 { font-size: 1.6rem; }
+      .modal-hero { height: 200px; }
+    }
+
+    /* Animations */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Responsive - Tablet */
+    @media (max-width: 968px) {
+      .features-grid { grid-template-columns: repeat(2, 1fr); gap: 20px; }
+      .testimonial-grid { grid-template-columns: 1fr; gap: 20px; }
+      .preview-container { grid-template-columns: 1fr; gap: 40px; }
+      .section { padding: 60px 0; }
+    }
+
+    /* Responsive - Mobile */
+    @media (max-width: 768px) {
+      .container { padding: 0 20px; }
+
+      /* Nav */
+      nav { padding: 20px 0; flex-wrap: wrap; gap: 12px; }
+      .nav-links { display: none; }
+      .logo img { width: 44px; height: 44px; }
+      .logo-text { font-size: 1rem; letter-spacing: 1.5px; }
+
+      /* Hero */
+      .hero { padding: 32px 0 56px; }
+      .hero-logo { width: 90px; height: 90px; margin-bottom: 24px; }
+      .hero-badge { font-size: 0.6rem; padding: 6px 18px; margin-bottom: 28px; letter-spacing: 3px; }
+      .hero h1 { font-size: 2.2rem; line-height: 1.2; margin-bottom: 20px; }
+      .hero p { font-size: 0.9rem; margin-bottom: 32px; padding: 0 8px; }
+
+      /* Form */
+      .subscribe-form { flex-direction: column; gap: 10px; max-width: 100%; }
+      .subscribe-form input { border: 1px solid rgba(201,168,76,0.25); padding: 16px 20px; font-size: 0.9rem; width: 100%; }
+      .subscribe-form button { padding: 16px 24px; width: 100%; font-size: 0.7rem; }
+      .form-note { font-size: 0.65rem; padding: 0 12px; }
+
+      /* Stats - 2x2 grid */
+      .stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 28px 20px;
+        padding: 40px 0;
+      }
+      .stat-number { font-size: 1.9rem; }
+      .stat-label { font-size: 0.6rem; letter-spacing: 2px; }
+
+      /* Features */
+      .features-grid { grid-template-columns: 1fr; gap: 16px; }
+      .feature-card { padding: 28px 24px; }
+      .feature-card h3 { font-size: 1.2rem; }
+      .feature-card p { font-size: 0.82rem; }
+
+      /* Section titles */
+      .section { padding: 56px 0; }
+      .section-title { margin-bottom: 36px; }
+      .section-title h2 { font-size: 1.7rem; line-height: 1.3; }
+      .section-title p { font-size: 0.8rem; padding: 0 12px; }
+
+      /* Preview */
+      .preview-section { padding: 56px 0; }
+      .preview-text h2 { font-size: 1.7rem; }
+      .email-mockup { margin: 0 -4px; }
+      .email-body { padding: 24px 20px; }
+      .email-content h3 { font-size: 1.15rem; }
+      .email-img-placeholder { height: 160px; }
+
+      /* Testimonials */
+      .testimonials { padding: 56px 0; }
+      .testimonial { padding: 24px 20px; }
+      .testimonial p { font-size: 0.95rem; }
+
+      /* CTA bottom */
+      .cta-bottom { padding: 60px 0; }
+      .cta-bottom h2 { font-size: 1.9rem; }
+      .cta-bottom p { font-size: 0.82rem; padding: 0 12px; }
+
+      /* Modal - fullscreen mobile */
+      .modal-overlay { padding: 0; align-items: stretch; }
+      .modal {
+        min-height: 100vh;
+        max-width: 100%;
+        border: none;
+      }
+      .modal-close {
+        top: 14px;
+        right: 14px;
+        width: 36px;
+        height: 36px;
+      }
+      .modal-hero { height: 220px; }
+      .modal-body { padding: 28px 22px 48px; }
+      .modal-body h1 { font-size: 1.6rem; line-height: 1.25; }
+      .modal-body .lead { font-size: 1rem; margin-bottom: 24px; }
+      .modal-body h2 { font-size: 1.25rem; margin: 28px 0 10px; }
+      .modal-body p { font-size: 0.88rem; line-height: 1.8; }
+      .modal-meta { font-size: 0.6rem; gap: 10px; }
+
+      footer { padding: 32px 0 48px; }
+    }
+
+    /* Small mobile */
+    @media (max-width: 380px) {
+      .hero h1 { font-size: 1.9rem; }
+      .stats { grid-template-columns: 1fr; gap: 24px; }
+      .logo-text { display: none; }
+      .section-title h2, .preview-text h2, .cta-bottom h2 { font-size: 1.5rem; }
+    }
+
+    /* Prevent iOS zoom on input focus */
+    @media (max-width: 768px) {
+      input, button { font-size: 16px !important; }
+      .form-note { font-size: 0.65rem !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-effects"></div>
+
+  <div class="container">
+
+    <!-- Nav -->
+    <nav>
+      <div class="logo">
+        <img src="logo_rl_gold.png" alt="RL">
+        <span class="logo-text">RL PHOTO & VIDEO</span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#features">O que recebes</a></li>
+        <li><a href="#preview">Preview</a></li>
+        <li><a href="#testemunhos">Testemunhos</a></li>
+        <li><a href="#subscrever">Subscrever</a></li>
+      </ul>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero fade-in">
+      <img src="logo_rl_gold.png" alt="RL Photo & Video" class="hero-logo">
+      <div class="hero-badge">Newsletter Exclusiva</div>
+      <h1>Inspira o teu<br><em>casamento de sonho</em></h1>
+      <p>Dicas, tendencias e bastidores do mundo da fotografia e videografia de casamentos. Direto na tua caixa de email, todas as semanas.</p>
+
+      <div id="formContainer">
+        <form class="subscribe-form" id="subscribeForm">
+          <input type="email" placeholder="O teu melhor email..." required id="emailInput">
+          <button type="submit">Subscrever</button>
+        </form>
+        <p class="form-note">Sem spam. Cancela quando quiseres.</p>
+      </div>
+
+      <div class="success-msg" id="successMsg">
+        <div class="success-icon">&#10003;</div>
+        <h3>Bem-vindo/a!</h3>
+        <p>Obrigado por subscreveres. A primeira newsletter chega em breve.</p>
+      </div>
+    </section>
+
+    <!-- Stats -->
+    <div class="stats fade-in">
+      <div class="stat">
+        <div class="stat-number">+500</div>
+        <div class="stat-label">Casamentos</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">8</div>
+        <div class="stat-label">Anos de experiencia</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">50+</div>
+        <div class="stat-label">Dicas exclusivas</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">Quinzenal</div>
+        <div class="stat-label">Frequencia</div>
+      </div>
+    </div>
+
+    <!-- Features -->
+    <section class="section fade-in" id="features">
+      <div class="section-title">
+        <h2>O que vais <em>receber</em></h2>
+        <p>Conteudo curado para quem esta a planear o dia mais importante</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <span class="feature-icon">&#9825;</span>
+          <h3>Dicas para Noivos</h3>
+          <p>Guias praticos sobre como escolher fornecedores, preparar a timeline e evitar os erros mais comuns no planeamento do casamento.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">&#9733;</span>
+          <h3>Tendencias</h3>
+          <p>As ultimas tendencias em fotografia e videografia de casamentos: estilos, cores, locais e formas de contar a vossa historia.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">&#9783;</span>
+          <h3>Bastidores</h3>
+          <p>Behind the scenes de casamentos reais. Ve como fotografamos e filmamos os momentos mais especiais e o processo criativo por tras de cada projeto.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">&#10029;</span>
+          <h3>Inspiracao Visual</h3>
+          <p>Selecao curada de fotografias e filmes dos nossos melhores trabalhos, com dicas sobre poses, luz, som e ambientes cinematograficos.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">&#9998;</span>
+          <h3>Checklists</h3>
+          <p>Listas praticas e organizadas por meses antes do casamento. Desde os 12 meses ate a vespera do grande dia.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">&#9829;</span>
+          <h3>Historias Reais</h3>
+          <p>Testemunhos e historias de casais que ja viveram o seu dia. Inspiracao autentica de quem ja passou pelo mesmo.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Preview -->
+    <section class="preview-section fade-in" id="preview">
+      <div class="preview-container">
+        <div class="preview-text">
+          <h2>Um <em>preview</em> do<br>que te espera</h2>
+          <p>Cada edicao e cuidadosamente preparada com conteudo relevante e visualmente apelativo. Nada de emails genericos.</p>
+          <ul class="preview-list">
+            <li><span>&#9670;</span> Design elegante e facil de ler</li>
+            <li><span>&#9670;</span> Conteudo exclusivo nao publicado nas redes</li>
+            <li><span>&#9670;</span> Descontos e ofertas especiais para subscritores</li>
+            <li><span>&#9670;</span> Acesso antecipado a novos servicos</li>
+            <li><span>&#9670;</span> Convites para eventos e workshops</li>
+          </ul>
+        </div>
+
+        <div class="email-mockup">
+          <div class="email-toolbar">
+            <div class="email-dot"></div>
+            <div class="email-dot"></div>
+            <div class="email-dot"></div>
+          </div>
+          <div class="email-body">
+            <div class="email-header">
+              <img src="logo_rl_gold.png" alt="RL" class="email-logo">
+              <h4>RL PHOTO & VIDEO</h4>
+              <small>NEWSLETTER SEMANAL</small>
+            </div>
+            <div class="email-content">
+              <h3>5 Erros que os Noivos Cometem ao Escolher o Fotografo e Videografo</h3>
+              <div class="email-img-placeholder">
+                <img src="wedding_hero.jpg" alt="Casamento" class="email-img">
+              </div>
+              <p>Escolher a equipa de fotografia e video do casamento e uma das decisoes mais importantes. Neste artigo, partilhamos os erros mais comuns e como evita-los...</p>
+              <a href="#" class="email-cta" onclick="openArticle(event)">Ler Artigo Completo</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="testimonials fade-in" id="testemunhos">
+      <div class="section-title">
+        <h2>O que dizem os <em>noivos</em></h2>
+        <p>Casais que confiaram em nos para eternizar o seu grande dia</p>
+      </div>
+
+      <div class="testimonial-grid">
+        <div class="testimonial">
+          <div class="testimonial-stars">&#9733; &#9733; &#9733; &#9733; &#9733;</div>
+          <p>O Rui e a equipa foram incriveis. Captaram cada emocao com uma sensibilidade unica. As fotografias sao autenticas obras de arte, superaram todas as expectativas.</p>
+          <div class="testimonial-author">Ana & Pedro &middot; Casamento 2025</div>
+        </div>
+        <div class="testimonial">
+          <div class="testimonial-stars">&#9733; &#9733; &#9733; &#9733; &#9733;</div>
+          <p>Profissionalismo do inicio ao fim. Passaram despercebidos durante o dia mas captaram todos os momentos especiais. O filme de casamento e simplesmente cinematografico!</p>
+          <div class="testimonial-author">Sofia & Miguel &middot; Casamento 2025</div>
+        </div>
+        <div class="testimonial">
+          <div class="testimonial-stars">&#9733; &#9733; &#9733; &#9733; &#9733;</div>
+          <p>Mais do que fotografos, ganhamos amigos. Fizeram-nos sentir em casa, confortaveis e naturais. O resultado fala por si. Recomendamos de olhos fechados!</p>
+          <div class="testimonial-author">Joana & Tiago &middot; Casamento 2024</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom CTA -->
+    <section class="cta-bottom fade-in" id="subscrever">
+      <h2>Pronto para <em>comecar</em>?</h2>
+      <p>Junta-te a centenas de noivos que ja recebem as nossas dicas.</p>
+      <form class="subscribe-form" id="subscribeForm2">
+        <input type="email" placeholder="O teu melhor email..." required>
+        <button type="submit">Subscrever</button>
+      </form>
+      <p class="form-note">Sem spam. Cancela quando quiseres.</p>
+    </section>
+
+    <!-- Article Modal -->
+    <div class="modal-overlay" id="articleModal" onclick="if(event.target===this)closeArticle()">
+      <article class="modal">
+        <button class="modal-close" onclick="closeArticle()">&times;</button>
+        <div class="modal-hero">
+          <img src="wedding_hero.jpg" alt="Casamento">
+        </div>
+        <div class="modal-body">
+          <div class="modal-meta">
+            <span>Guia para Noivos</span>
+            <span>&middot;</span>
+            <span>5 min de leitura</span>
+          </div>
+          <h1>5 Erros que os Noivos Cometem ao Escolher o Fotografo e Videografo</h1>
+          <p class="lead">A escolha do fotografo e videografo de casamento sao das decisoes mais importantes do planeamento. As fotografias e o filme serao a memoria eterna do vosso dia, por isso vale a pena evitar estes erros comuns.</p>
+
+          <h2><span class="num">01</span> Decidir apenas pelo preco</h2>
+          <p>E natural querer controlar o orcamento, mas escolher o fotografo ou videografo mais barato pode sair caro. A fotografia e o video sao servicos onde a experiencia, o equipamento e o olhar artistico fazem toda a diferenca. Um profissional que cobra pouco normalmente tem pouca experiencia ou usa equipamento limitado, o que se refletira nas imagens e no filme final que vao ficar para sempre.</p>
+          <p>Em vez de procurar o mais barato, definam um orcamento realista para fotografia e video (entre 15% a 20% do orcamento total do casamento) e procurem os melhores profissionais dentro dessa faixa. Muitas vezes contratar fotografo e videografo na mesma equipa traz beneficios de coordenacao e preco.</p>
+
+          <h2><span class="num">02</span> Nao ver portfolios completos</h2>
+          <p>Muitos noivos veem apenas algumas fotografias ou um teaser no Instagram e decidem. Erro grave. Todos os profissionais mostram os seus melhores momentos nas redes sociais. O que precisam de ver sao casamentos completos, do inicio ao fim, para perceber a consistencia do trabalho em todas as fases do dia: preparativos, cerimonia, reportagem, retratos e festa.</p>
+          <p>No caso do video, pecam para ver filmes completos e nao apenas trailers. Um bom videografo consegue contar a historia do vosso dia com ritmo, som ambiente e emocao real, nao apenas imagens bonitas.</p>
+
+          <h2><span class="num">03</span> Ignorar a quimica pessoal</h2>
+          <p>O fotografo e o videografo vao estar convosco durante 10 a 12 horas no dia mais importante da vossa vida. Se nao se sentem confortaveis na reuniao, isso vai transparecer nas imagens. A quimica pessoal e fundamental para conseguirem relaxar e serem genuinos perante a camara.</p>
+          <p>Uma equipa coesa de fotografo e videografo que ja trabalha em conjunto ha anos tambem faz diferenca: movem-se em sintonia, nao se atrapalham e capturam o dia de forma fluida.</p>
+
+          <h2><span class="num">04</span> Nao ler o contrato com atencao</h2>
+          <p>Quantas horas de cobertura? Quantas fotografias entregues? Duracao do filme final? Same Day Edit incluido? Prazo de entrega? Direitos de utilizacao? Album e teaser incluidos? Segundo fotografo ou videografo? Drone? Todas estas questoes devem estar claramente escritas no contrato. Infelizmente, muitos casais so descobrem o que nao esta incluido depois do casamento.</p>
+          <p>Leiam o contrato com calma, tirem duvidas e nao hesitem em pedir alteracoes antes de assinar.</p>
+
+          <h2><span class="num">05</span> Deixar para a ultima hora</h2>
+          <p>Os melhores fotografos e videografos tem agendas preenchidas com 12 a 18 meses de antecedencia, especialmente nos meses de maio a setembro. Deixar a escolha para 6 meses antes significa que ja nao terao acesso aos profissionais mais requisitados.</p>
+          <p>Assim que tiverem a data confirmada, comecem a pesquisa. Idealmente fechem a equipa de fotografia e video 12 meses antes do casamento, para garantirem os profissionais com quem realmente se identificam.</p>
+
+          <div class="author">
+            <img src="logo_rl_gold.png" alt="RL">
+            <div class="author-info">
+              <h4>RL Photo & Video</h4>
+              <small>EQUIPA EDITORIAL</small>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      <p>&copy; 2026 RL Photo & Video. Todos os direitos reservados.</p>
+    </footer>
+
+  </div>
+
+  <script>
+    // Scroll animations
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+    // Form handling — chama API real
+    document.querySelectorAll('form').forEach(form => {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const input = form.querySelector('input[type="email"]') || form.querySelector('input');
+        const email = input?.value;
+        if (!email) return;
+
+        const button = form.querySelector('button');
+        const originalText = button.textContent;
+        button.textContent = 'A subscrever...';
+        button.disabled = true;
+
+        try {
+          const res = await fetch('/api/newsletter-subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, source: 'landing' }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Erro');
+
+          if (form.id === 'subscribeForm') {
+            document.getElementById('formContainer').style.display = 'none';
+            const msg = document.getElementById('successMsg');
+            msg.classList.add('show');
+          } else {
+            form.innerHTML = '<p style="color: var(--gold); font-family: var(--serif); font-size: 1.3rem; padding: 20px;">&#10003; Verifica o teu email para confirmares!</p>';
+          }
+        } catch (err) {
+          button.textContent = originalText;
+          button.disabled = false;
+          alert('Erro: ' + err.message);
+        }
+      });
+    });
+
+    // Article modal
+    function openArticle(e) {
+      e.preventDefault();
+      document.getElementById('articleModal').classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeArticle() {
+      document.getElementById('articleModal').classList.remove('show');
+      document.body.style.overflow = '';
+    }
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeArticle();
+    });
+
+    // Smooth scroll
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+  </script>
+
+</body>
+</html>
