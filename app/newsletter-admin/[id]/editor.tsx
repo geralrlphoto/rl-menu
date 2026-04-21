@@ -336,8 +336,8 @@ function buildEmailHtml(d: any) {
   const sections = (d.sections || []).map((s: any) => `
     <tr><td style="padding:32px 40px 0;">
       <p style="margin:0 0 8px;font-family:'Cormorant Garamond',Georgia,serif;font-size:14px;font-style:italic;color:#c9a84c;letter-spacing:1px;">${esc(s.num || '')}</p>
-      <h2 style="margin:0 0 14px;font-family:'Cormorant Garamond',Georgia,serif;font-size:24px;font-weight:400;color:#f5f0e8;line-height:1.25;">${esc(s.title || '')}</h2>
-      <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:14px;line-height:1.85;color:#a09585;font-weight:300;">${esc(s.body || '')}</p>
+      <h2 style="margin:0 0 14px;font-family:'Cormorant Garamond',Georgia,serif;font-size:26px;font-weight:400;color:#f5f0e8;line-height:1.3;">${esc(s.title || '')}</h2>
+      <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:16px;line-height:1.75;color:#b3a082;font-weight:300;">${esc(s.body || '')}</p>
     </td></tr>
   `).join('')
 
@@ -350,7 +350,7 @@ function buildEmailHtml(d: any) {
   </td></tr>` : ''
 
   const intro = d.intro ? `<tr><td style="padding:0 40px 8px;">
-    <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:14px;line-height:1.8;color:#a09585;font-weight:300;">${esc(d.intro)}</p>
+    <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:16px;line-height:1.75;color:#b3a082;font-weight:300;">${esc(d.intro)}</p>
   </td></tr>` : ''
 
   return `<!DOCTYPE html><html lang="pt"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">

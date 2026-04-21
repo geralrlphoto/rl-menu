@@ -34,13 +34,13 @@ export function buildNewsletterHtml(d: any) {
     <tr><td style="padding:32px 40px 0;">
       <table width="100%" cellpadding="0" cellspacing="0"><tr>
         <td>
-          <p style="margin:0 0 8px;font-family:'Cormorant Garamond',Georgia,serif;font-size:14px;font-style:italic;color:#c9a84c;letter-spacing:1px;">
+          <p style="margin:0 0 8px;font-family:'Cormorant Garamond',Georgia,serif;font-size:16px;font-style:italic;color:#c9a84c;letter-spacing:1px;">
             ${esc(s.num || '')}
           </p>
-          <h2 style="margin:0 0 14px;font-family:'Cormorant Garamond',Georgia,serif;font-size:24px;font-weight:400;color:#f5f0e8;line-height:1.25;">
+          <h2 style="margin:0 0 14px;font-family:'Cormorant Garamond',Georgia,serif;font-size:26px;font-weight:400;color:#f5f0e8;line-height:1.3;">
             ${esc(s.title || '')}
           </h2>
-          <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:14px;line-height:1.85;color:#a09585;font-weight:300;">
+          <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:16px;line-height:1.75;color:#b3a082;font-weight:300;">
             ${esc(s.body || '')}
           </p>
         </td>
@@ -67,7 +67,7 @@ export function buildNewsletterHtml(d: any) {
 
   const intro = d.intro
     ? `<tr><td style="padding:0 40px 8px;">
-        <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:14px;line-height:1.8;color:#a09585;font-weight:300;">
+        <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:16px;line-height:1.75;color:#b3a082;font-weight:300;">
           ${esc(d.intro)}
         </p>
       </td></tr>`
@@ -157,7 +157,7 @@ export function buildNewsletterHtml(d: any) {
 
     <!-- Título -->
     <tr><td style="padding:32px 40px 24px;" class="mobile-pad">
-      <h1 class="mobile-title" style="margin:0;font-family:'Cormorant Garamond',Georgia,serif;font-size:30px;font-weight:400;color:#f5f0e8;line-height:1.25;">
+      <h1 class="mobile-title" style="margin:0;font-family:'Cormorant Garamond',Georgia,serif;font-size:32px;font-weight:400;color:#f5f0e8;line-height:1.25;">
         ${esc(d.subject || '')}
       </h1>
     </td></tr>
@@ -192,7 +192,7 @@ export function buildNewsletterHtml(d: any) {
       <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(255,255,255,0.015);border:1px solid rgba(201,168,76,0.08);">
         <tr><td style="padding:28px 28px;">
           <p style="margin:0 0 14px;font-family:'Montserrat',Arial,sans-serif;font-size:11px;letter-spacing:2px;color:#c9a84c;">★ ★ ★ ★ ★</p>
-          <p style="margin:0 0 18px;font-family:'Cormorant Garamond',Georgia,serif;font-size:16px;font-style:italic;color:#f5f0e8;line-height:1.7;">
+          <p style="margin:0 0 18px;font-family:'Cormorant Garamond',Georgia,serif;font-size:17px;font-style:italic;color:#f5f0e8;line-height:1.7;">
             "${t.text}"
           </p>
           <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:10px;letter-spacing:2px;color:#a09585;text-transform:uppercase;">
