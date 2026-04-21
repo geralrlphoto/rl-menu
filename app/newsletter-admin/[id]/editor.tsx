@@ -302,11 +302,8 @@ function buildEmailHtml(d: any) {
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#0e0b06;"><tr><td align="center" style="padding:32px 16px;">
 <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#110e08;border:1px solid #3a2f1e;">
   <tr><td style="padding:48px 40px 32px;text-align:center;">
-    <div style="display:inline-block;width:72px;height:72px;border-radius:50%;border:1px solid #c9a96e;line-height:72px;margin-bottom:18px;">
-      <span style="font-size:22px;font-style:italic;color:#c9a96e;font-family:Georgia,serif;letter-spacing:1px;">RL</span>
-    </div>
-    <p style="margin:0;font-size:10px;letter-spacing:4px;color:#8a7450;font-family:Arial,sans-serif;font-weight:500;">RL PHOTO &amp; VIDEO</p>
-    <p style="margin:6px 0 0;font-size:9px;letter-spacing:3px;color:#4a3f28;font-family:Arial,sans-serif;">NEWSLETTER QUINZENAL</p>
+    <img src="https://rl-menu-lake.vercel.app/logo-email.png" alt="RL Photo & Video" width="120" height="120" style="display:block;margin:0 auto 10px;width:120px;height:auto;border:0;" />
+    <p style="margin:6px 0 0;font-size:9px;letter-spacing:3px;color:#8a7450;font-family:Arial,sans-serif;">NEWSLETTER QUINZENAL</p>
   </td></tr>
   ${hero}
   <tr><td style="padding:40px 0 0;">&nbsp;</td></tr>

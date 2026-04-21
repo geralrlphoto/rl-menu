@@ -95,13 +95,8 @@ export function buildNewsletterHtml(d: any) {
 
     <!-- Header com logo -->
     <tr><td style="padding:48px 40px 32px;text-align:center;" class="mobile-pad">
-      <div style="display:inline-block;width:72px;height:72px;border-radius:50%;border:1px solid #c9a96e;line-height:72px;text-align:center;margin-bottom:18px;">
-        <span style="font-size:22px;font-style:italic;color:#c9a96e;font-family:Georgia,serif;letter-spacing:1px;">RL</span>
-      </div>
-      <p style="margin:0;font-size:10px;letter-spacing:4px;color:#8a7450;font-family:Arial,sans-serif;font-weight:500;">
-        RL PHOTO &amp; VIDEO
-      </p>
-      <p style="margin:6px 0 0;font-size:9px;letter-spacing:3px;color:#4a3f28;font-family:Arial,sans-serif;">
+      <img src="https://rl-menu-lake.vercel.app/logo-email.png" alt="RL Photo & Video" width="120" height="120" style="display:block;margin:0 auto 10px;width:120px;height:auto;border:0;outline:none;text-decoration:none;" />
+      <p style="margin:6px 0 0;font-size:9px;letter-spacing:3px;color:#8a7450;font-family:Arial,sans-serif;">
         NEWSLETTER QUINZENAL
       </p>
     </td></tr>
