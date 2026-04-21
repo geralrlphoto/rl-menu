@@ -130,7 +130,7 @@ export default function NewsletterEditor({ initialData, activeSubscribers }: { i
             <Stat label="Aberturas únicas" value={data.unique_opens || 0} />
             <Stat label="Cliques total" value={data.total_clicks || 0} />
             <Stat label="Cliques Instagram" value={data.ig_clicks || 0} icon="📸" />
-            <Stat label="Partilhas" value={data.share_clicks || 0} icon="↗" />
+            <Stat label="Cliques Site" value={data.share_clicks || 0} icon="🌐" />
             <Stat label="Bounces" value={data.bounced_count || 0} />
           </div>
         </div>
@@ -382,10 +382,10 @@ function buildEmailHtml(d: any) {
     </p>
     <table cellpadding="0" cellspacing="0" style="margin:0 auto;"><tr>
       <td style="background:#c9a84c;padding:16px 44px;">
-        <a href="https://rl-menu-lake.vercel.app/newsletter" style="display:block;color:#0c0907;text-decoration:none;font-family:'Montserrat',Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;">Partilhar com Amigos</a>
+        <a href="https://rlphotovideo.pt" style="display:block;color:#0c0907;text-decoration:none;font-family:'Montserrat',Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;">Visitar o nosso site</a>
       </td>
     </tr></table>
-    <p style="margin:20px 0 0;font-family:'Montserrat',Arial,sans-serif;font-size:11px;color:#6a5a3e;">Sem spam. Cancela quando quiseres.</p>
+    <p style="margin:20px 0 0;font-family:'Montserrat',Arial,sans-serif;font-size:11px;color:#6a5a3e;">rlphotovideo.pt</p>
   </td></tr>
   <tr><td style="padding:0 40px;"><table width="100%"><tr><td style="border-top:1px solid rgba(201,168,76,0.15);height:1px;font-size:1px;">&nbsp;</td></tr></table></td></tr>
   <tr><td style="padding:48px 40px;background:#0c0907;">

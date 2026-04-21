@@ -136,14 +136,14 @@ export function buildNewsletterHtml(d: any) {
 
       <table cellpadding="0" cellspacing="0" style="margin:0 auto;"><tr>
         <td style="background:#c9a84c;padding:16px 44px;">
-          <a href="https://rl-menu-lake.vercel.app/newsletter" style="display:block;color:#0c0907;text-decoration:none;font-family:'Montserrat',Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;">
-            Partilhar com Amigos
+          <a href="https://rlphotovideo.pt" style="display:block;color:#0c0907;text-decoration:none;font-family:'Montserrat',Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;">
+            Visitar o nosso site
           </a>
         </td>
       </tr></table>
 
       <p style="margin:20px 0 0;font-family:'Montserrat',Arial,sans-serif;font-size:11px;color:#6a5a3e;">
-        Sem spam. Cancela quando quiseres.
+        rlphotovideo.pt
       </p>
 
     </td></tr>

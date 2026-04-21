@@ -179,7 +179,7 @@ function Card({ n }: { n: any }) {
                 <span>👁 {n.unique_opens || 0}</span>
                 <span>🖱 {n.total_clicks || 0}</span>
                 <span>📸 {n.ig_clicks || 0}</span>
-                <span>↗ {n.share_clicks || 0}</span>
+                <span>🌐 {n.share_clicks || 0}</span>
               </div>
             ) : null}
           </>

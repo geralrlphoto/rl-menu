@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
         await supabase.rpc('increment_sends_field', {
           send_id: send.id, field: 'ig_clicks',
         }).catch(() => {})
-      } else if (url && url.includes('/newsletter')) {
+      } else if (url && url.includes('rlphotovideo.pt')) {
         await incrementNewsletter(send.newsletter_id, 'share_clicks')
       }
     }
