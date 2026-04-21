@@ -51,7 +51,7 @@ async function getBlocks(blockId: string): Promise<any[]> {
     })
     if (!res.ok) break
     const data = await res.json()
-    all.push(...data.results)
+    all.push(...(data.results ?? []))
     cursor = data.has_more ? data.next_cursor : undefined
   } while (cursor)
 
@@ -84,6 +84,10 @@ export async function GET(req: Request) {
       headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
     })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 })
+    console.error('[portais-clientes] Notion API error:', e.message)
+    // Return empty blocks instead of propagating error — portal page should always render
+    return NextResponse.json({ blocks: [], settings: { hiddenNav: [] }, settingsBlockId: null }, {
+      headers: { 'Cache-Control': 'no-store' }
+    })
   }
 }

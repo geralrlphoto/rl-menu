@@ -1018,6 +1018,8 @@ function PortalSubPageContent() {
         }
         if (propd?.found) setPropostaData(propd.proposta)
       }
+    } catch {
+      // Silently fail — portal still renders with available data
     } finally {
       setPagRefreshing(false)
     }
@@ -1054,12 +1056,19 @@ function PortalSubPageContent() {
   const loadBlocks = useCallback(async (bust = false) => {
     if (!id) return
     const url = `/api/portais-clientes?id=${id}${bust ? '&bust=1' : ''}`
-    const d = await fetch(url).then(r => r.json())
-    if (d.error) setError(d.error)
-    else {
-      setBlocks(d.blocks ?? [])
-      setSettings(d.settings ?? { hiddenNav: [] })
-      setSettingsBlockId(d.settingsBlockId ?? null)
+    try {
+      const d = await fetch(url).then(r => r.json())
+      if (d.error) {
+        // API error — silently fail, portal renders without Notion blocks
+        setBlocks([])
+      } else {
+        setBlocks(d.blocks ?? [])
+        setSettings(d.settings ?? { hiddenNav: [] })
+        setSettingsBlockId(d.settingsBlockId ?? null)
+      }
+    } catch {
+      // Network error — portal still renders (payments, contrato, etc. work independently)
+      setBlocks([])
     }
   }, [id])
 
