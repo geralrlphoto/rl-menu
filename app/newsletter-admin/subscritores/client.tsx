@@ -55,11 +55,12 @@ export default function SubscribersClient({ initial }: { initial: any[] }) {
     }
   }
 
-  async function importFromEvents() {
+  async function importFromEvents(source: 'supabase' | 'notion') {
     setImporting(true)
     setImportResult(null)
     try {
-      const r = await fetch('/api/newsletter-import-noivos', { method: 'POST' })
+      const url = source === 'notion' ? '/api/newsletter-import-notion' : '/api/newsletter-import-noivos'
+      const r = await fetch(url, { method: 'POST' })
       const data = await r.json()
       if (!r.ok) throw new Error(data.error)
       setImportResult(data)
@@ -94,6 +95,7 @@ export default function SubscribersClient({ initial }: { initial: any[] }) {
           <button onClick={() => setShowImport(!showImport)} style={btnGhost}>
             Importar Noivos
           </button>
+          <Link href="/newsletter-admin" style={{ ...btnGhost, textDecoration: 'none' }}>← Voltar</Link>
         </div>
       </div>
 
@@ -105,12 +107,21 @@ export default function SubscribersClient({ initial }: { initial: any[] }) {
             Vai buscar todos os emails dos eventos/casais que já tens no Supabase e adicionar à lista como subscritores <strong>ativos</strong>.<br />
             Não são enviados emails de confirmação — assume que são clientes teus e já deram consentimento.
           </p>
-          <button onClick={importFromEvents} disabled={importing} style={btnGold}>
-            {importing ? 'A importar...' : 'Importar Agora'}
-          </button>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button onClick={() => importFromEvents('notion')} disabled={importing} style={btnGold}>
+              {importing ? 'A importar...' : 'Importar do Notion'}
+            </button>
+            <button onClick={() => importFromEvents('supabase')} disabled={importing} style={btnGhost}>
+              {importing ? '...' : 'Importar do Supabase'}
+            </button>
+          </div>
+          <p style={{ marginTop: 10, fontSize: 11, color: '#6a5a3e' }}>
+            <strong>Notion</strong>: vai buscar emails da tua base de eventos no Notion · <strong>Supabase</strong>: emails em tabelas crm_contacts / portal_clientes / eventos
+          </p>
           {importResult && (
             <div style={{ marginTop: 16, padding: 14, background: '#110e08', border: '1px solid #3ca374', fontSize: 13, color: '#b3a082' }}>
               ✓ Importação completa: <strong style={{ color: '#c9a96e' }}>{importResult.imported}</strong> novos · {importResult.skipped} já existiam · {importResult.total_found} emails encontrados
+              {importResult.pages_scanned && <> · {importResult.pages_scanned} eventos lidos</>}
             </div>
           )}
         </div>
