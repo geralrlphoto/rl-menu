@@ -1,6 +1,30 @@
 // Template de email — espelha o mockup da landing page
 // Compatível com Gmail, Outlook, Apple Mail, Yahoo
 
+// Banco de testemunhos — seleccionam-se 3 aleatoriamente em cada envio
+const TESTIMONIALS = [
+  { text: "O Rui e a equipa foram incriveis. Captaram cada emocao com uma sensibilidade unica. As fotografias sao autenticas obras de arte.", author: "Ana & Pedro", year: 2025 },
+  { text: "Profissionalismo do inicio ao fim. Passaram despercebidos durante o dia mas captaram todos os momentos especiais. O filme e cinematografico!", author: "Sofia & Miguel", year: 2025 },
+  { text: "Mais do que fotografos, ganhamos amigos. Fizeram-nos sentir em casa, confortaveis e naturais. Recomendamos de olhos fechados!", author: "Joana & Tiago", year: 2024 },
+  { text: "Olhamos para as fotografias e revivemos o dia como se fosse ontem. A qualidade e impressionante, a emocao esta toda la.", author: "Catarina & Rui", year: 2025 },
+  { text: "Tinhamos medo da camara e eles souberam poer-nos a vontade. As fotografias mais naturais que ja vimos.", author: "Ines & Ricardo", year: 2024 },
+  { text: "Vale cada cent. O album e uma obra-prima que vamos passar aos filhos. O filme faz-nos chorar todas as vezes que vemos.", author: "Marta & Andre", year: 2025 },
+  { text: "Contratamos outros fotografos para sessoes e nenhum chegou ao nivel. A diferenca esta nos detalhes que so eles captam.", author: "Beatriz & Joao", year: 2024 },
+  { text: "No dia do casamento estavam em todo o lado mas sem se notar. Capturaram momentos que nem nos vimos acontecer. Magia pura.", author: "Carolina & Diogo", year: 2025 },
+  { text: "A equipa certa faz toda a diferenca. Com o Rui e a equipa sentimos que estavamos em casa. O resultado fala por si.", author: "Filipa & Nuno", year: 2024 },
+  { text: "Entrega impecavel, prazo cumprido, qualidade acima do esperado. O Same Day Edit foi o momento mais emocionante da festa.", author: "Raquel & Hugo", year: 2025 },
+  { text: "Escolhemos com base no portfolio e nao nos enganamos. Cada fotografia conta uma historia. O nosso album e uma recordacao eterna.", author: "Sara & Bruno", year: 2024 },
+  { text: "Investimento bem feito. Convidados ainda comentam a qualidade das fotografias que partilhamos. Tudo profissional.", author: "Madalena & Tiago", year: 2025 },
+  { text: "Chegaram antes da hora, ficaram ate tarde, nunca sentimos que eram pagos ao fim. Sentiram o dia com connosco.", author: "Patricia & Goncalo", year: 2024 },
+  { text: "O pre-wedding mudou tudo. No dia ja estavamos a vontade com a camara. Nota-se nas fotografias — tudo natural.", author: "Rita & Francisco", year: 2025 },
+  { text: "Tivemos chuva no dia e nada os parou. Transformaram as nuvens em fotografias dramaticas e romanticas. Genios.", author: "Lucia & Paulo", year: 2024 },
+]
+
+function getRandomTestimonials(): typeof TESTIMONIALS {
+  const shuffled = [...TESTIMONIALS].sort(() => Math.random() - 0.5)
+  return shuffled.slice(0, 3)
+}
+
 export function buildNewsletterHtml(d: any) {
   const sections = (d.sections || []).map((s: any) => `
     <tr><td style="padding:32px 40px 0;">
@@ -145,6 +169,37 @@ export function buildNewsletterHtml(d: any) {
 
     <!-- CTA -->
     ${cta}
+
+    <!-- Testemunhos rotativos -->
+    <tr><td style="padding:56px 40px 16px;text-align:center;background:rgba(201,168,76,0.03);border-top:1px solid rgba(201,168,76,0.1);" class="mobile-pad">
+      <p style="margin:0 0 8px;font-family:'Montserrat',Arial,sans-serif;font-size:10px;letter-spacing:4px;color:#c9a84c;text-transform:uppercase;">
+        TESTEMUNHOS
+      </p>
+      <h3 style="margin:0 0 8px;font-family:'Cormorant Garamond',Georgia,serif;font-size:28px;font-weight:400;color:#f5f0e8;line-height:1.2;">
+        O que dizem os <em style="font-style:italic;color:#c9a84c;">noivos</em>
+      </h3>
+      <p style="margin:0 0 36px;font-family:'Montserrat',Arial,sans-serif;font-size:12px;color:#6a5a3e;">
+        Casais que confiaram em nos para eternizar o seu grande dia
+      </p>
+    </td></tr>
+
+    ${getRandomTestimonials().map(t => `
+    <tr><td style="padding:0 40px 16px;background:rgba(201,168,76,0.03);" class="mobile-pad">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(255,255,255,0.015);border:1px solid rgba(201,168,76,0.08);">
+        <tr><td style="padding:28px 28px;">
+          <p style="margin:0 0 14px;font-family:'Montserrat',Arial,sans-serif;font-size:11px;letter-spacing:2px;color:#c9a84c;">★ ★ ★ ★ ★</p>
+          <p style="margin:0 0 18px;font-family:'Cormorant Garamond',Georgia,serif;font-size:16px;font-style:italic;color:#f5f0e8;line-height:1.7;">
+            "${t.text}"
+          </p>
+          <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:10px;letter-spacing:2px;color:#a09585;text-transform:uppercase;">
+            ${t.author} &middot; Casamento ${t.year}
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+    `).join('')}
+
+    <tr><td style="padding:24px 40px 0;background:rgba(201,168,76,0.03);"><table width="100%"><tr><td style="border-top:1px solid rgba(201,168,76,0.08);height:1px;font-size:1px;">&nbsp;</td></tr></table></td></tr>
 
     <!-- Assinatura -->
     <tr><td style="padding:48px 40px 32px;text-align:center;" class="mobile-pad">
