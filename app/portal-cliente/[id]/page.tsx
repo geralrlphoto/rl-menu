@@ -501,12 +501,16 @@ function PaymentPhasesSection({ referencia, valorTotal, pagamentos, onRefresh, r
 
 // ─── contrato proposta section ────────────────────────────────────────────────
 
-function ContratoPropostaSection({ evento, blocks, settings, contratoDisponivel, contratoUrl }: {
+function ContratoPropostaSection({ evento, blocks, settings, contratoDisponivel, contratoUrl, portalRef, pagamentos, loadPagamentos, pagRefreshing }: {
   evento: any
   blocks: Block[]
   settings: { hiddenNav: string[] }
   contratoDisponivel: boolean | null
   contratoUrl: string | null
+  portalRef: string
+  pagamentos: any[]
+  loadPagamentos: () => void
+  pagRefreshing: boolean
 }) {
   const fotoItems: string[] = evento.servico_foto ?? []
   const videoItems: string[] = evento.servico_video ?? []
@@ -1638,7 +1642,7 @@ function PortalSubPageContent() {
                   </div>
                   {(() => {
                     if (isContratoPage && eventoData) {
-                      return <ContratoPropostaSection evento={eventoData} blocks={blocks} settings={settings} contratoDisponivel={contratoDisponivel} contratoUrl={contratoUrl} />
+                      return <ContratoPropostaSection evento={eventoData} blocks={blocks} settings={settings} contratoDisponivel={contratoDisponivel} contratoUrl={contratoUrl} portalRef={portalRef} pagamentos={pagamentos} loadPagamentos={loadPagamentos} pagRefreshing={pagRefreshing} />
                     }
                     if (isContratoPage) {
                       // No evento linked yet — show status banner + blocks
