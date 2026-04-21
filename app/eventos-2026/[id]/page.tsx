@@ -1501,15 +1501,15 @@ export default function EventoPage() {
   const prazoVideo    = e.data_evento ? addWorkingDays(e.data_evento, 180) : null
 
   return (
-    <main className="min-h-screen px-4 py-10 max-w-3xl mx-auto">
-      <Link href={`/eventos-2026?ano=${anoEvento}`} className="text-xs tracking-widest text-white/30 hover:text-gold transition-colors">
+    <main id="evento-page" className="min-h-screen px-4 py-10 max-w-3xl mx-auto print:max-w-full print:py-6 print:px-8">
+      <Link href={`/eventos-2026?ano=${anoEvento}`} className="print:hidden text-xs tracking-widest text-white/30 hover:text-gold transition-colors">
         ‹ VOLTAR AOS CASAMENTOS
       </Link>
 
       {/* ── Header editável ── */}
       <div className="mt-8 mb-2">
         {/* Dropdown atribuir referência */}
-        <div className="mb-4 flex flex-col gap-1.5">
+        <div className="print:hidden mb-4 flex flex-col gap-1.5">
           <label className="text-[9px] tracking-[0.35em] uppercase text-gold/50">Atribuir Referência</label>
           <div className="flex items-center gap-2">
             <select
@@ -1582,9 +1582,19 @@ export default function EventoPage() {
             {e.status && (
               <span className="text-xs px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white/60">{e.status}</span>
             )}
+            <button
+              onClick={() => window.print()}
+              className="print:hidden flex items-center gap-1.5 text-xs text-white/30 hover:text-gold transition-colors tracking-widest"
+              title="Imprimir / Guardar como PDF"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+              PDF
+            </button>
             {e.notion_url && (
               <a href={e.notion_url} target="_blank" rel="noopener noreferrer"
-                className="text-xs text-white/20 hover:text-gold transition-colors tracking-widest">
+                className="print:hidden text-xs text-white/20 hover:text-gold transition-colors tracking-widest">
                 Ver no Notion ↗
               </a>
             )}
@@ -1599,13 +1609,13 @@ export default function EventoPage() {
             <span key={t} className="text-xs px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/25 text-blue-400/80">{t}</span>
           ))}
         </div>
-        <p className="text-[10px] text-white/15 mt-3 tracking-wider">Clica em qualquer campo para editar · guarda automaticamente no Notion</p>
+        <p className="print:hidden text-[10px] text-white/15 mt-3 tracking-wider">Clica em qualquer campo para editar · guarda automaticamente no Notion</p>
       </div>
 
       <div className="h-px bg-gold/15 my-7" />
 
       {/* ── Portal do Cliente ── */}
-      {e.referencia && <PortalSection evento={e} />}
+      <div className="print:hidden">{e.referencia && <PortalSection evento={e} />}</div>
 
       <div className="flex flex-col gap-5">
 
@@ -2351,6 +2361,63 @@ export default function EventoPage() {
         </Section>
 
       </div>
+
+      <style>{`
+        @media print {
+          body { background: white !important; }
+
+          #evento-page {
+            background: white !important;
+            color: #111 !important;
+            max-width: 100% !important;
+            padding: 1.5cm 1.5cm !important;
+            font-size: 12px !important;
+          }
+
+          /* Texto branco/claro → escuro */
+          #evento-page [class*="text-white"] { color: #333 !important; }
+          #evento-page [class*="text-gold"]  { color: #7a5b00 !important; }
+          #evento-page [class*="text-green"] { color: #1a7a1a !important; }
+          #evento-page [class*="text-blue"]  { color: #1a4d8f !important; }
+          #evento-page [class*="text-orange"]{ color: #b35a00 !important; }
+          #evento-page [class*="text-red"]   { color: #aa1111 !important; }
+          #evento-page [class*="text-amber"] { color: #7a5500 !important; }
+
+          /* Fundos escuros → branco / cinza muito claro */
+          #evento-page [class*="bg-white"]   { background: #f9f9f7 !important; }
+          #evento-page [class*="bg-gold"]    { background: rgba(122,91,0,0.07) !important; }
+          #evento-page [class*="bg-green"]   { background: rgba(26,122,26,0.06) !important; }
+          #evento-page [class*="bg-blue"]    { background: rgba(26,77,143,0.06) !important; }
+          #evento-page [class*="bg-red"]     { background: rgba(170,17,17,0.06) !important; }
+          #evento-page [class*="bg-amber"]   { background: rgba(122,85,0,0.06) !important; }
+          #evento-page [class*="bg-zinc"]    { background: #f5f5f3 !important; }
+          #evento-page [class*="bg-black"]   { background: #f0f0ee !important; }
+
+          /* Bordas */
+          #evento-page [class*="border-white"] { border-color: #ddd !important; }
+          #evento-page [class*="border-gold"]  { border-color: #c8a94b !important; }
+          #evento-page [class*="border-green"] { border-color: #4cae4c !important; }
+          #evento-page [class*="border-blue"]  { border-color: #4a7fd4 !important; }
+
+          /* Divisores */
+          #evento-page [class*="bg-gold/15"] { background: #ddd !important; }
+
+          /* Secções — ligeiro fundo */
+          #evento-page .rounded-2xl { border: 1px solid #ddd !important; page-break-inside: avoid; }
+
+          /* Botões e elementos interativos — esconder */
+          #evento-page button { display: none !important; }
+          #evento-page input  { border: none !important; background: transparent !important; padding: 0 !important; }
+          #evento-page select { display: none !important; }
+          #evento-page a[class*="hover"] { color: #333 !important; text-decoration: none !important; }
+
+          /* Evitar quebra de página dentro de secções */
+          #evento-page .flex.flex-col.gap-5 > * { page-break-inside: avoid; }
+
+          /* Título da página */
+          @page { margin: 1cm; size: A4; }
+        }
+      `}</style>
     </main>
   )
 }
