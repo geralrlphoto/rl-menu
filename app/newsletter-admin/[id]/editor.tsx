@@ -278,6 +278,31 @@ function buildEmailHtml(d: any) {
     <p style="margin:0 0 6px;font-family:'Cormorant Garamond',Georgia,serif;font-size:18px;color:#c9a84c;letter-spacing:4px;">RL PHOTO &amp; VIDEO</p>
     <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:10px;letter-spacing:3px;color:#a09585;">NEWSLETTER QUINZENAL</p>
   </td></tr>
+  <!-- HERO inspira -->
+  <tr><td style="padding:72px 40px 64px;text-align:center;background:#0c0907;">
+    <table cellpadding="0" cellspacing="0" style="margin:0 auto 40px;"><tr>
+      <td style="width:140px;height:140px;border-radius:50%;border:1px solid rgba(201,168,76,0.4);text-align:center;vertical-align:middle;">
+        <img src="https://rl-menu-lake.vercel.app/logo-email.png" alt="RL" width="90" height="90" style="display:inline-block;width:90px;height:auto;border:0;" />
+      </td>
+    </tr></table>
+    <table cellpadding="0" cellspacing="0" style="margin:0 auto 40px;"><tr>
+      <td style="border:1px solid rgba(201,168,76,0.3);padding:10px 28px;">
+        <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:11px;letter-spacing:4px;color:#c9a84c;text-transform:uppercase;">NEWSLETTER EXCLUSIVA</p>
+      </td>
+    </tr></table>
+    <h1 style="margin:0 0 28px;font-family:'Cormorant Garamond',Georgia,serif;font-size:46px;font-weight:300;line-height:1.15;color:#f5f0e8;">
+      Inspira o teu<br><em style="font-style:italic;color:#c9a84c;">casamento de sonho</em>
+    </h1>
+    <p style="margin:0 auto 40px;max-width:460px;font-family:'Montserrat',Arial,sans-serif;font-size:14px;font-weight:300;line-height:1.8;color:#a09585;">
+      Dicas, tendências e bastidores do mundo da fotografia e videografia de casamentos. Direto na tua caixa de email, todas as semanas.
+    </p>
+    <table cellpadding="0" cellspacing="0" style="margin:0 auto;"><tr>
+      <td style="background:#c9a84c;padding:16px 44px;">
+        <a href="https://rl-menu-lake.vercel.app/newsletter" style="display:block;color:#0c0907;text-decoration:none;font-family:'Montserrat',Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;">Partilhar com Amigos</a>
+      </td>
+    </tr></table>
+    <p style="margin:20px 0 0;font-family:'Montserrat',Arial,sans-serif;font-size:11px;color:#6a5a3e;">Sem spam. Cancela quando quiseres.</p>
+  </td></tr>
   <tr><td style="padding:0 40px;"><table width="100%"><tr><td style="border-top:1px solid rgba(201,168,76,0.15);height:1px;font-size:1px;">&nbsp;</td></tr></table></td></tr>
   <tr><td style="padding:32px 40px 24px;">
     <h1 style="margin:0;font-family:'Cormorant Garamond',Georgia,serif;font-size:30px;font-weight:400;color:#f5f0e8;line-height:1.25;">${esc(d.subject || '')}</h1>
@@ -302,33 +327,5 @@ function buildEmailHtml(d: any) {
       <a href="{{unsubscribe_url}}" style="color:#8a7450;text-decoration:underline;">Cancelar subscrição</a>
     </p>
   </td></tr>
-</table>
-<!-- HERO apos footer -->
-<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#0c0907;margin-top:32px;">
-  <tr><td style="padding:80px 40px;text-align:center;">
-    <table cellpadding="0" cellspacing="0" style="margin:0 auto 40px;"><tr>
-      <td style="width:160px;height:160px;border-radius:50%;border:1px solid rgba(201,168,76,0.4);text-align:center;vertical-align:middle;">
-        <img src="https://rl-menu-lake.vercel.app/logo-email.png" alt="RL" width="100" height="100" style="display:inline-block;width:100px;height:auto;border:0;" />
-      </td>
-    </tr></table>
-    <table cellpadding="0" cellspacing="0" style="margin:0 auto 48px;"><tr>
-      <td style="border:1px solid rgba(201,168,76,0.3);padding:10px 28px;">
-        <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:11px;letter-spacing:4px;color:#c9a84c;text-transform:uppercase;">NEWSLETTER EXCLUSIVA</p>
-      </td>
-    </tr></table>
-    <h1 style="margin:0 0 32px;font-family:'Cormorant Garamond',Georgia,serif;font-size:52px;font-weight:300;line-height:1.15;color:#f5f0e8;">
-      Inspira o teu<br><em style="font-style:italic;color:#c9a84c;">casamento de sonho</em>
-    </h1>
-    <p style="margin:0 auto 48px;max-width:480px;font-family:'Montserrat',Arial,sans-serif;font-size:15px;font-weight:300;line-height:1.8;color:#a09585;">
-      Dicas, tendências e bastidores do mundo da fotografia e videografia de casamentos. Direto na tua caixa de email, todas as semanas.
-    </p>
-    <table cellpadding="0" cellspacing="0" style="margin:0 auto;"><tr>
-      <td style="background:#c9a84c;padding:18px 48px;">
-        <a href="https://rl-menu-lake.vercel.app/newsletter" style="display:block;color:#0c0907;text-decoration:none;font-family:'Montserrat',Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;">Partilhar com Amigos</a>
-      </td>
-    </tr></table>
-    <p style="margin:20px 0 0;font-family:'Montserrat',Arial,sans-serif;font-size:11px;color:#6a5a3e;">Sem spam. Cancela quando quiseres.</p>
-  </td></tr>
-</table>
-</td></tr></table></body></html>`
+</table></td></tr></table></body></html>`
 }

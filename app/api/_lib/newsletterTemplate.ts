@@ -83,6 +83,49 @@ export function buildNewsletterHtml(d: any) {
       </p>
     </td></tr>
 
+    <!-- ============================================ -->
+    <!-- HERO "Inspira o teu casamento de sonho" -->
+    <!-- ============================================ -->
+    <tr><td style="padding:72px 40px 64px;text-align:center;background:#0c0907;" class="mobile-pad">
+
+      <table cellpadding="0" cellspacing="0" style="margin:0 auto 40px;"><tr>
+        <td style="width:140px;height:140px;border-radius:50%;border:1px solid rgba(201,168,76,0.4);text-align:center;vertical-align:middle;">
+          <img src="https://rl-menu-lake.vercel.app/logo-email.png" alt="RL Photo & Video" width="90" height="90" style="display:inline-block;width:90px;height:auto;border:0;vertical-align:middle;" />
+        </td>
+      </tr></table>
+
+      <table cellpadding="0" cellspacing="0" style="margin:0 auto 40px;"><tr>
+        <td style="border:1px solid rgba(201,168,76,0.3);padding:10px 28px;">
+          <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:11px;font-weight:500;letter-spacing:4px;color:#c9a84c;text-transform:uppercase;">
+            NEWSLETTER EXCLUSIVA
+          </p>
+        </td>
+      </tr></table>
+
+      <h1 class="mobile-title" style="margin:0 0 28px;font-family:'Cormorant Garamond',Georgia,serif;font-size:46px;font-weight:300;line-height:1.15;color:#f5f0e8;">
+        Inspira o teu<br>
+        <em style="font-style:italic;color:#c9a84c;">casamento de sonho</em>
+      </h1>
+
+      <p style="margin:0 auto 40px;max-width:460px;font-family:'Montserrat',Arial,sans-serif;font-size:14px;font-weight:300;line-height:1.8;color:#a09585;">
+        Dicas, tendências e bastidores do mundo da fotografia e videografia de casamentos.
+        Direto na tua caixa de email, todas as semanas.
+      </p>
+
+      <table cellpadding="0" cellspacing="0" style="margin:0 auto;"><tr>
+        <td style="background:#c9a84c;padding:16px 44px;">
+          <a href="https://rl-menu-lake.vercel.app/newsletter" style="display:block;color:#0c0907;text-decoration:none;font-family:'Montserrat',Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;">
+            Partilhar com Amigos
+          </a>
+        </td>
+      </tr></table>
+
+      <p style="margin:20px 0 0;font-family:'Montserrat',Arial,sans-serif;font-size:11px;color:#6a5a3e;">
+        Sem spam. Cancela quando quiseres.
+      </p>
+
+    </td></tr>
+
     <!-- Divisor -->
     <tr><td style="padding:0 40px;">
       <table width="100%" cellpadding="0" cellspacing="0"><tr>
@@ -138,57 +181,6 @@ export function buildNewsletterHtml(d: any) {
       </p>
     </td></tr>
 
-  </table>
-
-  <!-- ============================================ -->
-  <!-- HERO "Inspira o teu casamento de sonho" -->
-  <!-- Aparece DEPOIS do footer do artigo -->
-  <!-- ============================================ -->
-  <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#0c0907;margin-top:32px;">
-    <tr><td style="padding:80px 40px 80px;text-align:center;" class="mobile-pad">
-
-      <!-- Logo grande com halo dourado -->
-      <table cellpadding="0" cellspacing="0" style="margin:0 auto 40px;"><tr>
-        <td style="width:160px;height:160px;border-radius:50%;border:1px solid rgba(201,168,76,0.4);text-align:center;vertical-align:middle;">
-          <img src="https://rl-menu-lake.vercel.app/logo-email.png" alt="RL Photo & Video" width="100" height="100" style="display:inline-block;width:100px;height:auto;border:0;vertical-align:middle;" />
-        </td>
-      </tr></table>
-
-      <!-- Badge -->
-      <table cellpadding="0" cellspacing="0" style="margin:0 auto 48px;"><tr>
-        <td style="border:1px solid rgba(201,168,76,0.3);padding:10px 28px;">
-          <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:11px;font-weight:500;letter-spacing:4px;color:#c9a84c;text-transform:uppercase;">
-            NEWSLETTER EXCLUSIVA
-          </p>
-        </td>
-      </tr></table>
-
-      <!-- Título -->
-      <h1 class="mobile-title" style="margin:0 0 32px;font-family:'Cormorant Garamond',Georgia,serif;font-size:52px;font-weight:300;line-height:1.15;color:#f5f0e8;">
-        Inspira o teu<br>
-        <em style="font-style:italic;color:#c9a84c;">casamento de sonho</em>
-      </h1>
-
-      <!-- Descrição -->
-      <p style="margin:0 auto 48px;max-width:480px;font-family:'Montserrat',Arial,sans-serif;font-size:15px;font-weight:300;line-height:1.8;color:#a09585;">
-        Dicas, tendências e bastidores do mundo da fotografia e videografia de casamentos.
-        Direto na tua caixa de email, todas as semanas.
-      </p>
-
-      <!-- Botão CTA grande -->
-      <table cellpadding="0" cellspacing="0" style="margin:0 auto;"><tr>
-        <td style="background:#c9a84c;padding:18px 48px;">
-          <a href="https://rl-menu-lake.vercel.app/newsletter" style="display:block;color:#0c0907;text-decoration:none;font-family:'Montserrat',Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;">
-            Partilhar com Amigos
-          </a>
-        </td>
-      </tr></table>
-
-      <p style="margin:20px 0 0;font-family:'Montserrat',Arial,sans-serif;font-size:11px;color:#6a5a3e;">
-        Sem spam. Cancela quando quiseres.
-      </p>
-
-    </td></tr>
   </table>
 
 </td></tr></table>
