@@ -146,6 +146,7 @@ export default function ClientePage() {
     'Sessão Pré-Wedding', 'Sessão TTD',
     'Drone', 'Same Day Edit', 'Trailer', 'Teaser',
     'Relive Wedding', 'Entrega por Link', 'Entrega em Pen Box',
+    'Qualidade Full HD', 'Qualidade 4K',
   ]
   const EXTRAS_OPTIONS = [
     '1 Fotógrafo', '2 Fotógrafos', 'Sessão Pré-Wedding', 'Sessão TTD',
