@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { buildNewsletterHtml } from '../_lib/newsletterTemplate'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -7,34 +8,34 @@ const supabase = createClient(
 )
 
 // Vercel Cron — corre todos os dias às 8h.
-// Avisa o admin 1 dia antes de cada envio agendado.
+// 1. Avisa o admin 1 dia antes de cada envio agendado.
+// 2. Envia automaticamente o batch 2 das newsletters em modo split.
+export const maxDuration = 60
+
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Calcular data de amanhã
+  const today = new Date()
+  const todayStr = today.toISOString().split('T')[0]
+
+  // ── 1. Lembrete: newsletter agendada para amanhã, ainda não enviada ──────────
   const tomorrow = new Date()
   tomorrow.setDate(tomorrow.getDate() + 1)
   const tomorrowStr = tomorrow.toISOString().split('T')[0]
 
-  // Newsletter agendada para amanhã, ainda não enviada
   const { data: upcoming } = await supabase
     .from('newsletters')
     .select('*')
     .in('status', ['draft', 'approved'])
     .eq('scheduled_for', tomorrowStr)
 
-  if (!upcoming || upcoming.length === 0) {
-    return NextResponse.json({ ok: true, message: 'Nenhuma newsletter para amanhã' })
-  }
-
   const adminEmail = process.env.NEWSLETTER_ADMIN_EMAIL || 'geral@rlphotovideo.pt'
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://rl-menu-lake.vercel.app'
 
-  // Enviar uma notificação por newsletter (normalmente há só 1)
-  for (const n of upcoming) {
+  for (const n of (upcoming ?? [])) {
     const isComplete = n.intro && Array.isArray(n.sections) && n.sections.length > 0
     const fmtDate = new Date(n.scheduled_for + 'T00:00:00').toLocaleDateString('pt-PT', {
       weekday: 'long', day: '2-digit', month: 'long',
@@ -109,7 +110,121 @@ export async function GET(req: NextRequest) {
     })
   }
 
-  return NextResponse.json({ ok: true, notified: upcoming.length })
+  // ── 2. Batch 2: newsletters em modo split cujo next_batch_at chegou ──────────
+  const { data: pendingBatch2 } = await supabase
+    .from('newsletters')
+    .select('*')
+    .eq('status', 'sending')
+    .lte('next_batch_at', todayStr)
+
+  let batch2Sent = 0
+
+  for (const nl of (pendingBatch2 ?? [])) {
+    try {
+      // Quem já recebeu o batch 1 (registado em newsletter_sends)
+      const { data: alreadySent } = await supabase
+        .from('newsletter_sends')
+        .select('subscriber_id')
+        .eq('newsletter_id', nl.id)
+
+      const alreadySentIds = new Set((alreadySent ?? []).map((s: any) => s.subscriber_id))
+
+      // Subscritores ativos que ainda não receberam
+      const { data: allActive } = await supabase
+        .from('newsletter_subscribers')
+        .select('id, email, nome, confirmation_token')
+        .eq('status', 'active')
+
+      const subs = (allActive ?? []).filter((s: any) => !alreadySentIds.has(s.id))
+
+      if (subs.length === 0) {
+        // Ninguém por enviar — marcar como enviada de qualquer forma
+        await supabase.from('newsletters').update({
+          status: 'sent',
+          sent_at: new Date().toISOString(),
+          next_batch_at: null,
+        }).eq('id', nl.id)
+        continue
+      }
+
+      const html = buildNewsletterHtml(nl)
+      const batchSize = 50
+      let sent2 = 0
+
+      for (let i = 0; i < subs.length; i += batchSize) {
+        const batch = subs.slice(i, i + batchSize)
+        const emails = batch.map((sub: any) => ({
+          from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+          to: [sub.email],
+          subject: nl.subject,
+          html: html.replace(/\{\{unsubscribe_url\}\}/g, `${baseUrl}/api/newsletter-unsubscribe?token=${sub.confirmation_token}`),
+        }))
+
+        try {
+          const res = await fetch('https://api.resend.com/emails/batch', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(emails),
+          })
+          const result = await res.json()
+          if (res.ok && result.data) {
+            sent2 += result.data.length
+            const sends = result.data.map((r: any, idx: number) => ({
+              newsletter_id: nl.id,
+              subscriber_id: batch[idx].id,
+              resend_id: r.id,
+              status: 'sent',
+            }))
+            await supabase.from('newsletter_sends').insert(sends)
+          }
+        } catch (e) {
+          console.error('[newsletter-cron] batch2 error:', e)
+        }
+
+        if (i + batchSize < subs.length) await new Promise(r => setTimeout(r, 1000))
+      }
+
+      // Marcar newsletter como totalmente enviada
+      await supabase.from('newsletters').update({
+        status: 'sent',
+        sent_at: new Date().toISOString(),
+        sent_to_count: (nl.sent_to_count ?? 0) + sent2,
+        next_batch_at: null,
+      }).eq('id', nl.id)
+
+      batch2Sent++
+
+      // Notificar admin que o batch 2 foi enviado
+      await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+          to: [adminEmail],
+          subject: `✓ Batch 2 enviado: ${nl.title}`,
+          html: `<p style="font-family:Arial,sans-serif;font-size:14px;color:#333;">
+            O <strong>batch 2</strong> da newsletter <strong>"${escapeHtml(nl.title)}"</strong> foi enviado automaticamente para <strong>${sent2} subscritores</strong>.
+            <br><br>
+            <a href="${baseUrl}/newsletter-admin/${nl.id}">Ver estatísticas →</a>
+          </p>`,
+        }),
+      })
+    } catch (e) {
+      console.error('[newsletter-cron] batch2 processing error for nl', nl.id, e)
+    }
+  }
+
+  return NextResponse.json({
+    ok: true,
+    reminders: upcoming?.length ?? 0,
+    batch2_processed: batch2Sent,
+  })
 }
 
 function escapeHtml(s: string): string {

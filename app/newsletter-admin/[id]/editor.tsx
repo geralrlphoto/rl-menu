@@ -20,9 +20,10 @@ export default function NewsletterEditor({ initialData, activeSubscribers }: { i
   const [adminKey, setAdminKey] = useState('')
   const [testMode, setTestMode] = useState(false)
   const [testEmail, setTestEmail] = useState('ruimngpro@gmail.com')
+  const [splitMode, setSplitMode] = useState(false)
   const [toast, setToast] = useState('')
 
-  const isLocked = data.status === 'sent'
+  const isLocked = data.status === 'sent' || data.status === 'sending'
   const pct = (a: number, b: number) => b ? Math.round((a / b) * 100) : 0
 
   function update(patch: any) {
@@ -77,6 +78,7 @@ export default function NewsletterEditor({ initialData, activeSubscribers }: { i
         body: JSON.stringify({
           newsletter_id: data.id,
           ...(testMode ? { test_email: testEmail } : {}),
+          ...(!testMode && splitMode ? { split_mode: true } : {}),
         }),
       })
       const result = await r.json()
@@ -103,6 +105,11 @@ export default function NewsletterEditor({ initialData, activeSubscribers }: { i
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           {toast && <span style={{ fontSize: 12, color: '#3ca374' }}>✓ {toast}</span>}
+          {data.status === 'sending' && (
+            <span style={{ fontSize: 11, color: '#c9a96e', background: 'rgba(201,169,110,0.1)', border: '1px solid rgba(201,169,110,0.3)', padding: '6px 12px' }}>
+              🕗 Batch 1 enviado · Batch 2 amanhã às 8h
+            </span>
+          )}
           {!isLocked && (
             <>
               <button onClick={save} disabled={saving} style={btnGhost}>
@@ -235,11 +242,40 @@ export default function NewsletterEditor({ initialData, activeSubscribers }: { i
                     </div>
                   </>
                 ) : (
-                  <p style={{ color: '#b3a082', fontFamily: 'Arial, sans-serif', fontSize: 13, lineHeight: 1.7, marginBottom: 24 }}>
-                    Vais enviar <strong>"{data.subject}"</strong> para<br />
-                    <strong style={{ color: '#c9a96e' }}>{activeSubscribers} subscritores ativos</strong>.<br />
-                    <span style={{ fontSize: 11, opacity: 0.7 }}>Esta ação não pode ser revertida.</span>
-                  </p>
+                  <>
+                    <p style={{ color: '#b3a082', fontFamily: 'Arial, sans-serif', fontSize: 13, lineHeight: 1.7, marginBottom: 20 }}>
+                      Vais enviar <strong>"{data.subject}"</strong> para<br />
+                      <strong style={{ color: '#c9a96e' }}>{activeSubscribers} subscritores ativos</strong>.<br />
+                      <span style={{ fontSize: 11, opacity: 0.7 }}>Esta ação não pode ser revertida.</span>
+                    </p>
+                    {/* Opção de envio em 2 dias */}
+                    <div
+                      onClick={() => setSplitMode(v => !v)}
+                      style={{
+                        display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 20,
+                        padding: 14, border: `1px solid ${splitMode ? '#c9a96e' : '#2a2217'}`,
+                        background: splitMode ? 'rgba(201,169,110,0.08)' : 'transparent',
+                        cursor: 'pointer', textAlign: 'left', fontFamily: 'Arial, sans-serif',
+                      }}
+                    >
+                      <div style={{
+                        width: 16, height: 16, border: `2px solid ${splitMode ? '#c9a96e' : '#6a5a3e'}`,
+                        background: splitMode ? '#c9a96e' : 'transparent', flexShrink: 0, marginTop: 2,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        {splitMode && <span style={{ color: '#0e0b06', fontSize: 11, fontWeight: 700 }}>✓</span>}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 12, color: splitMode ? '#c9a96e' : '#a09585', fontWeight: 600, marginBottom: 4 }}>
+                          Enviar em 2 dias (50% / 50%)
+                        </div>
+                        <div style={{ fontSize: 11, color: '#6a5a3e', lineHeight: 1.5 }}>
+                          Hoje envia para ~{Math.ceil(activeSubscribers / 2)} subscritores.<br />
+                          Amanhã às 8h envia automaticamente para os restantes ~{Math.floor(activeSubscribers / 2)}.
+                        </div>
+                      </div>
+                    </div>
+                  </>
                 )}
                 <div style={{ textAlign: 'left', marginBottom: 20 }}>
                   <label style={{ fontSize: 10, color: '#8a7450', letterSpacing: 2, fontFamily: 'Arial, sans-serif' }}>CHAVE ADMIN</label>
@@ -255,11 +291,25 @@ export default function NewsletterEditor({ initialData, activeSubscribers }: { i
             ) : (
               <>
                 <div style={{ fontSize: 48, color: '#c9a96e', marginBottom: 16 }}>✓</div>
-                <h2 style={{ fontSize: 26, marginBottom: 16 }}>Newsletter <em style={{ color: '#c9a96e' }}>enviada</em></h2>
-                <p style={{ color: '#b3a082', fontFamily: 'Arial, sans-serif', fontSize: 13, lineHeight: 1.7, marginBottom: 24 }}>
-                  Enviada para <strong>{sent.sent}</strong> de <strong>{sent.total}</strong> subscritores.
-                  {sent.failed > 0 && <><br />{sent.failed} falharam.</>}
-                </p>
+                {sent.batch === 1 ? (
+                  <>
+                    <h2 style={{ fontSize: 26, marginBottom: 16 }}>Batch 1 <em style={{ color: '#c9a96e' }}>enviado</em></h2>
+                    <p style={{ color: '#b3a082', fontFamily: 'Arial, sans-serif', fontSize: 13, lineHeight: 1.7, marginBottom: 8 }}>
+                      Enviado para <strong>{sent.sent}</strong> subscritores hoje.
+                    </p>
+                    <p style={{ color: '#c9a96e', fontFamily: 'Arial, sans-serif', fontSize: 12, lineHeight: 1.6, marginBottom: 24, background: 'rgba(201,169,110,0.08)', padding: 12, border: '1px solid rgba(201,169,110,0.2)' }}>
+                      🕗 Batch 2 ({sent.total - sent.sent} subscritores) enviado automaticamente amanhã às 8h.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h2 style={{ fontSize: 26, marginBottom: 16 }}>Newsletter <em style={{ color: '#c9a96e' }}>enviada</em></h2>
+                    <p style={{ color: '#b3a082', fontFamily: 'Arial, sans-serif', fontSize: 13, lineHeight: 1.7, marginBottom: 24 }}>
+                      Enviada para <strong>{sent.sent}</strong> de <strong>{sent.total}</strong> subscritores.
+                      {sent.failed > 0 && <><br />{sent.failed} falharam.</>}
+                    </p>
+                  </>
+                )}
                 <button onClick={() => { router.push('/newsletter-admin'); router.refresh() }} style={btnGold}>Voltar à Lista</button>
               </>
             )}

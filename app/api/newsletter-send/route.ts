@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { newsletter_id, test_email } = await req.json()
+    const { newsletter_id, test_email, split_mode } = await req.json()
     if (!newsletter_id) return NextResponse.json({ error: 'newsletter_id obrigatório' }, { status: 400 })
 
     const { data: nl, error: nErr } = await supabase
@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
 
     const isTest = !!test_email
     if (!isTest && nl.status === 'sent') return NextResponse.json({ error: 'Já foi enviada' }, { status: 400 })
+    if (!isTest && nl.status === 'sending') return NextResponse.json({ error: 'Batch 1 já enviado — batch 2 será enviado automaticamente amanhã' }, { status: 400 })
 
     // Se for teste, envia só para o email indicado (cria ou usa subscritor existente).
     // Caso contrário, envia para todos os activos.
@@ -70,6 +71,13 @@ export async function POST(req: NextRequest) {
         status: 'sent', sent_at: new Date().toISOString(), sent_to_count: 0,
       }).eq('id', newsletter_id)
       return NextResponse.json({ ok: true, sent: 0, total: 0, failed: 0, message: 'Sem subscritores' })
+    }
+
+    // Modo split: envia apenas para a primeira metade
+    const totalSubs = subs.length
+    if (!isTest && split_mode) {
+      const halfCount = Math.ceil(subs.length / 2)
+      subs = subs.slice(0, halfCount)
     }
 
     const html = buildNewsletterHtml(nl)
@@ -117,9 +125,28 @@ export async function POST(req: NextRequest) {
     }
 
     if (!isTest) {
-      await supabase.from('newsletters').update({
-        status: 'sent', sent_at: new Date().toISOString(), sent_to_count: sent,
-      }).eq('id', newsletter_id)
+      if (split_mode) {
+        // Batch 1 enviado — guardar estado para o cron enviar o batch 2 amanhã
+        const tomorrow = new Date()
+        tomorrow.setDate(tomorrow.getDate() + 1)
+        const tomorrowStr = tomorrow.toISOString().split('T')[0]
+        await supabase.from('newsletters').update({
+          status: 'sending',
+          sent_to_count: sent,
+          next_batch_at: tomorrowStr,
+        }).eq('id', newsletter_id)
+        return NextResponse.json({
+          ok: true, sent, failed,
+          total: totalSubs,
+          batch: 1,
+          next_batch_at: tomorrowStr,
+          message: `Batch 1 enviado (${sent} subscritores). Batch 2 será enviado automaticamente amanhã.`,
+        })
+      } else {
+        await supabase.from('newsletters').update({
+          status: 'sent', sent_at: new Date().toISOString(), sent_to_count: sent,
+        }).eq('id', newsletter_id)
+      }
     }
 
     return NextResponse.json({ ok: true, sent, failed, total: subs.length, test: isTest })
@@ -128,4 +155,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: err.message || 'Erro' }, { status: 500 })
   }
 }
-
