@@ -1711,7 +1711,7 @@ export default function EventoPage() {
               <span className="text-[10px] text-white/20">(Fotografia + Vídeo)</span>
             </div>
             <span className="text-blue-400 font-bold text-lg">
-              {(((e.valor_real_foto ?? e.valor_foto) ?? 0) + (e.valor_video ?? 0)).toLocaleString('pt-PT')} €
+              {((e.valor_foto ?? 0) + (e.valor_video ?? 0)).toLocaleString('pt-PT')} €
             </span>
           </div>
 
@@ -1748,7 +1748,7 @@ export default function EventoPage() {
             </div>
             <div className="grid grid-cols-3 gap-3">
               {(() => {
-                const total = ((e.valor_real_foto ?? e.valor_foto) ?? 0) + (e.valor_video ?? 0) + (e.valor_extras ?? 0)
+                const total = (e.valor_foto ?? 0) + (e.valor_video ?? 0) + (e.valor_extras ?? 0)
                 const adj = 400
                 const remainder = Math.max(0, total - adj)
                 const faseValores: Record<string, number> = {
