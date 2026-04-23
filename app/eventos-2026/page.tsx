@@ -282,7 +282,7 @@ function Eventos2026Inner() {
 
   const grouped = groupByMonth(filtered)
   const totalValor = events.reduce((s, e) => s + (e.valor_liquido ?? 0), 0)
-  const totalFoto = events.reduce((s, e) => s + ((e.valor_real_foto ?? e.valor_foto) ?? 0), 0)
+  const totalFoto = events.reduce((s, e) => s + (e.valor_real_foto ?? 0), 0)
   const totalVideo = events.reduce((s, e) => s + (e.valor_liquido ?? 0), 0)
   const totalGeral = totalFoto + totalVideo
   const casamentosCount = events.filter(e => (e.tipo_evento ?? []).includes('CASAMENTO')).length
