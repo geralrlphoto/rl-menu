@@ -100,23 +100,23 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       properties[mapping.key] = buildNotionValue(mapping.type, val)
     }
 
-    if (Object.keys(properties).length === 0) {
-      return NextResponse.json({ error: 'No valid fields' }, { status: 400 })
-    }
+    // Só faz PATCH ao Notion se houver propriedades Notion para actualizar
+    // (campos Supabase-only como valor_real_foto não têm entrada no FIELD_MAP)
+    if (Object.keys(properties).length > 0) {
+      const res = await fetch(`https://api.notion.com/v1/pages/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${NOTION_TOKEN}`,
+          'Notion-Version': '2022-06-28',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ properties }),
+      })
 
-    const res = await fetch(`https://api.notion.com/v1/pages/${id}`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${NOTION_TOKEN}`,
-        'Notion-Version': '2022-06-28',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ properties }),
-    })
-
-    if (!res.ok) {
-      const err = await res.json()
-      return NextResponse.json({ error: err.message }, { status: res.status })
+      if (!res.ok) {
+        const err = await res.json()
+        return NextResponse.json({ error: err.message }, { status: res.status })
+      }
     }
 
     // ── Sync campos relevantes para Supabase evento_equipa ─────────────────
