@@ -46,11 +46,12 @@ export default function CasamentosPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        {ANOS.map(({ ano, img }) => {
+        {ANOS.map(({ ano, img }, i) => {
           const s = stats[ano]
+          const isLast = i === ANOS.length - 1
           return (
             <Link key={ano} href={`/eventos-2026?ano=${ano}`}
-              className="group relative overflow-hidden rounded-2xl aspect-[3/4] flex flex-col justify-between cursor-pointer"
+              className={`group relative overflow-hidden rounded-2xl aspect-[3/4] flex flex-col justify-between cursor-pointer${isLast ? ' sm:col-start-2' : ''}`}
               style={{ textDecoration: 'none' }}>
 
               {/* Imagem de fundo */}
