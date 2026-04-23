@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
 const ANOS = [
-  { ano: 2025, img: '/casamentos-2025.jpg' },
+  { ano: 2025, img: '/newsletter/casamento-07.jpg' },
   { ano: 2026, img: '/casamentos-2026.jpg' },
   { ano: 2027, img: '/casamentos-2027.jpg' },
   { ano: 2028, img: '/casamentos-2028.png' },
