@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
 const ANOS = [
+  { ano: 2025, img: '/casamentos-2025.jpg' },
   { ano: 2026, img: '/casamentos-2026.jpg' },
   { ano: 2027, img: '/casamentos-2027.jpg' },
   { ano: 2028, img: '/casamentos-2028.png' },
@@ -16,7 +17,7 @@ export default function CasamentosPage() {
 
   useEffect(() => {
     Promise.all(
-      [2026, 2027, 2028].map(ano =>
+      [2025, 2026, 2027, 2028].map(ano =>
         fetch(`/api/eventos-supabase?ano=${ano}`)
           .then(r => r.json())
           .then(d => {
@@ -44,7 +45,7 @@ export default function CasamentosPage() {
         <p className="text-white/20 text-xs tracking-[0.3em] mt-2 uppercase">Seleciona o ano</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {ANOS.map(({ ano, img }) => {
           const s = stats[ano]
           return (
