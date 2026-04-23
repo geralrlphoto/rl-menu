@@ -4,12 +4,14 @@ import { createClient } from '@supabase/supabase-js'
 const NOTION_TOKEN = process.env.NOTION_TOKEN!
 
 const DB_BY_YEAR: Record<number, string> = {
+  2025: '198220116d8a8020ae0ef315dea8e1af',
   2026: '1ad220116d8a804b839ddc36f1e7ecf1',
   2027: 'a9c8db8c0a6141ee839c1d0e5ad97915',
 }
 
 // Todos os anos usam a mesma tabela Supabase — filtrados por data_evento
 const TABLE_BY_YEAR: Record<number, string> = {
+  2025: 'eventos_2026',
   2026: 'eventos_2026',
   2027: 'eventos_2026',
 }
