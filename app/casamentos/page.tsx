@@ -45,7 +45,7 @@ export default function CasamentosPage() {
         <p className="text-white/20 text-xs tracking-[0.3em] mt-2 uppercase">Seleciona o ano</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         {ANOS.map(({ ano, img }) => {
           const s = stats[ano]
           return (
