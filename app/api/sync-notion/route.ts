@@ -102,6 +102,9 @@ export async function POST() {
     const toInsert = records.filter(r => !existingMap.has(r.notion_id))
     const toUpdate = records.filter(r => existingMap.has(r.notion_id))
 
+    // Campos geridos pela app — nunca sobrescrever com dados do Notion
+    const APP_MANAGED = ['status', 'status_updated_at', 'data_fecho', 'lead_prioridade']
+
     let inserted = 0, updated = 0
     const errors: string[] = []
 
@@ -112,7 +115,11 @@ export async function POST() {
     }
 
     for (const r of toUpdate) {
-      const { error } = await supabase.from('crm_contacts').update(r).eq('notion_id', r.notion_id)
+      // Remover campos app-managed do payload de update
+      const payload = Object.fromEntries(
+        Object.entries(r).filter(([k]) => !APP_MANAGED.includes(k))
+      )
+      const { error } = await supabase.from('crm_contacts').update(payload).eq('notion_id', r.notion_id)
       if (!error) updated++
     }
 
