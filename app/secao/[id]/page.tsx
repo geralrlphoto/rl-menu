@@ -86,7 +86,7 @@ export default async function SecaoPage({ params }: Props) {
       )}
 
       {/* Botões fixos para secções especiais (Finanças) */}
-      {section.name?.toUpperCase().includes('FINANÇ') && (
+      {(section.name?.toUpperCase().includes('FINANÇ') || id === '657aa823-19f0-4bc8-a1a1-a0a712f6d6e0') && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
           <Link
             href="/financas"
@@ -94,6 +94,15 @@ export default async function SecaoPage({ params }: Props) {
           >
             <span className="text-sm tracking-wider text-gold/80 group-hover:text-gold uppercase">
               Pagamentos Noivos
+            </span>
+            <span className="text-gold/50 group-hover:text-gold text-lg transition-colors">›</span>
+          </Link>
+          <Link
+            href="/financas-gerais"
+            className="group flex items-center justify-between px-5 py-4 border border-gold/30 rounded-xl bg-gold/5 hover:bg-gold/10 hover:border-gold/60 transition-all duration-200"
+          >
+            <span className="text-sm tracking-wider text-gold/80 group-hover:text-gold uppercase">
+              Finanças Gerais
             </span>
             <span className="text-gold/50 group-hover:text-gold text-lg transition-colors">›</span>
           </Link>
