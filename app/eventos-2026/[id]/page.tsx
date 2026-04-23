@@ -57,6 +57,7 @@ type Evento = {
   proposta: string
   valor_liquido: number | null
   valor_foto: number | null
+  valor_real_foto: number | null
   valor_video: number | null
   valor_extras: number | null
   data_entrega: string | null
@@ -1653,8 +1654,9 @@ export default function EventoPage() {
         {/* ── Financeiro ── */}
         <Section title="Financeiro">
           {/* Valores do serviço */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-4 gap-4">
             <EditField label="Valor Fotografia" value={e.valor_foto} field="valor_foto" eventId={e.id} type="number" suffix="€" onSaved={handleSaved} />
+            <EditField label="Valor Real Fotografia" value={e.valor_real_foto} field="valor_real_foto" eventId={e.id} type="number" suffix="€" onSaved={handleSaved} />
             <EditField label="Valor Vídeo" value={e.valor_video} field="valor_video" eventId={e.id} type="number" suffix="€" onSaved={handleSaved} />
             <EditField label="Valor Extras" value={e.valor_extras} field="valor_extras" eventId={e.id} type="number" suffix="€" onSaved={handleSaved} />
           </div>
@@ -1709,7 +1711,7 @@ export default function EventoPage() {
               <span className="text-[10px] text-white/20">(Fotografia + Vídeo)</span>
             </div>
             <span className="text-blue-400 font-bold text-lg">
-              {((e.valor_foto ?? 0) + (e.valor_video ?? 0)).toLocaleString('pt-PT')} €
+              {(((e.valor_real_foto ?? e.valor_foto) ?? 0) + (e.valor_video ?? 0)).toLocaleString('pt-PT')} €
             </span>
           </div>
 
@@ -1746,7 +1748,7 @@ export default function EventoPage() {
             </div>
             <div className="grid grid-cols-3 gap-3">
               {(() => {
-                const total = (e.valor_foto ?? 0) + (e.valor_video ?? 0) + (e.valor_extras ?? 0)
+                const total = ((e.valor_real_foto ?? e.valor_foto) ?? 0) + (e.valor_video ?? 0) + (e.valor_extras ?? 0)
                 const adj = 400
                 const remainder = Math.max(0, total - adj)
                 const faseValores: Record<string, number> = {

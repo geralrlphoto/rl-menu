@@ -146,8 +146,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       local:          'local',
       data_evento:    'data_evento',
       status:         'status',
-      valor_foto:     'valor_foto',
-      valor_video:    'valor_liquido',  // valor_video na ficha → valor_liquido no Supabase
+      valor_foto:      'valor_foto',
+      valor_real_foto: 'valor_real_foto',
+      valor_video:     'valor_liquido',  // valor_video na ficha → valor_liquido no Supabase
       valor_liquido:  'valor_liquido',  // se também editado diretamente
       fotografo:      'fotografo',
       tipo_evento:    'tipo_evento',
@@ -226,6 +227,13 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const page = await res.json()
     const p = page.properties ?? {}
 
+    // Buscar campos Supabase-only (não existem no Notion)
+    const { data: sbRow } = await supabase()
+      .from('eventos_2026')
+      .select('valor_real_foto')
+      .eq('notion_id', id)
+      .maybeSingle()
+
     const event = {
       id: page.id,
       referencia:       getProp(p, 'REFERÊNCIA DO EVENTO', 'title'),
@@ -242,6 +250,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       proposta:         getProp(p, 'PROPOSTA ESCOLHIDA', 'select'),
       valor_liquido:    getProp(p, 'VALOR LIQUIDO A RECEBER', 'number'),
       valor_foto:       getProp(p, 'VALOR SERVIÇO FOTO', 'number'),
+      valor_real_foto:  sbRow?.valor_real_foto ?? null,
       valor_video:      getProp(p, 'VALOR DO SERVIÇO VÍDEO', 'number'),
       valor_extras:     getProp(p, 'VALOR DOS EXTRAS', 'number'),
       data_entrega:     getProp(p, 'DATA FINAL ENTREGA FOTOS', 'date'),

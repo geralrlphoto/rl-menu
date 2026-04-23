@@ -50,6 +50,7 @@ export async function GET(req: NextRequest) {
         status: row.status ?? '',
         fotografo: parseArr(row.fotografo),
         valor_foto: row.valor_foto,
+        valor_real_foto: row.valor_real_foto ?? null,
         valor_video: row.valor_liquido, // mapping pedido: valor_video = valor_liquido
         valor_liquido: row.valor_liquido,
         fotos_enviadas: row.fotos_enviadas ?? false,
@@ -59,7 +60,7 @@ export async function GET(req: NextRequest) {
     // Totais
     const totais = events.reduce(
       (acc, e) => {
-        acc.totalFoto += Number(e.valor_foto) || 0
+        acc.totalFoto += Number(e.valor_real_foto ?? e.valor_foto) || 0
         acc.totalVideo += Number(e.valor_video) || 0
         return acc
       },
