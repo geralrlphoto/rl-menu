@@ -92,14 +92,38 @@ export async function POST() {
       return NextResponse.json({ synced: 0, message: 'Nenhum registo encontrado' })
     }
 
-    const { error, data } = await supabase
+    // Buscar notion_ids já existentes para evitar duplicados mesmo sem UNIQUE constraint
+    const { data: existing } = await supabase
       .from('crm_contacts')
-      .upsert(records, { onConflict: 'notion_id', ignoreDuplicates: false })
-      .select('id')
+      .select('id, notion_id')
 
-    if (error) throw new Error(error.message)
+    const existingMap = new Map((existing ?? []).map((r: any) => [r.notion_id, r.id]))
 
-    return NextResponse.json({ synced: records.length, message: `${records.length} leads sincronizadas` })
+    const toInsert = records.filter(r => !existingMap.has(r.notion_id))
+    const toUpdate = records.filter(r => existingMap.has(r.notion_id))
+
+    let inserted = 0, updated = 0
+    const errors: string[] = []
+
+    if (toInsert.length > 0) {
+      const { error } = await supabase.from('crm_contacts').insert(toInsert)
+      if (error) errors.push(error.message)
+      else inserted = toInsert.length
+    }
+
+    for (const r of toUpdate) {
+      const { error } = await supabase.from('crm_contacts').update(r).eq('notion_id', r.notion_id)
+      if (!error) updated++
+    }
+
+    if (errors.length > 0) throw new Error(errors.join('; '))
+
+    return NextResponse.json({
+      synced: inserted + updated,
+      inserted,
+      updated,
+      message: `${inserted + updated} leads sincronizadas (${inserted} novas, ${updated} atualizadas)`,
+    })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }

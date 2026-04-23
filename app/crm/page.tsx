@@ -261,10 +261,21 @@ export default function CRMPage() {
     await supabase.from('crm_contacts').update(updatePayload).eq('id', id)
   }
 
+  // Deduplica por notion_id — mantém o registo mais recente (primeiro da lista ordenada por data_entrada desc)
+  function dedupeContacts(data: Contact[]): Contact[] {
+    const seen = new Set<string>()
+    return data.filter(c => {
+      const key = c.notion_id as any ?? c.id
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  }
+
   useEffect(() => {
     // Carregamento inicial + sync automático com Notion em background
     supabase.from('crm_contacts').select('*').order('data_entrada', { ascending: false })
-      .then(({ data }) => { setContacts(data ?? []); setLoading(false) })
+      .then(({ data }) => { setContacts(dedupeContacts(data ?? [])); setLoading(false) })
 
     // Sync silencioso com Notion ao abrir o CRM
     fetch('/api/sync-notion', { method: 'POST' }).catch(() => {})
@@ -274,7 +285,7 @@ export default function CRMPage() {
       .channel('crm_realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'crm_contacts' }, () => {
         supabase.from('crm_contacts').select('*').order('data_entrada', { ascending: false })
-          .then(({ data }) => { if (data) setContacts(data) })
+          .then(({ data }) => { if (data) setContacts(dedupeContacts(data)) })
       })
       .subscribe()
 
