@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState, useEffect, use } from 'react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { ComposedChart, BarChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
 // ─── DADOS BASE 2025 ───────────────────────────────────────────────────────────
 
@@ -424,25 +424,36 @@ export default function FinancasAnoPage({ params }: Props) {
       {/* ── RECEITAS por mês ── */}
       {tab === 'receitas' && (
         <div className="space-y-6">
-          {/* Gráfico */}
+          {/* Gráfico — barras verdes + linha acumulada dourada */}
           <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
-            <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-4">Receitas por Mês</p>
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={resumo.map(r => ({ mes: r.mes.slice(0,3), valor: r.receitas }))} barCategoryGap="30%">
-                <XAxis dataKey="mes" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10, fontFamily: 'inherit' }} axisLine={false} tickLine={false} />
-                <YAxis hide />
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase">Receitas por Mês</p>
+              <div className="flex items-center gap-4">
+                <span className="flex items-center gap-1.5 text-[10px] text-white/30"><span className="w-3 h-3 rounded-sm bg-green-400/70 inline-block" /> Mensal</span>
+                <span className="flex items-center gap-1.5 text-[10px] text-white/30"><span className="w-4 h-px bg-gold inline-block" /> Acumulado</span>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={200}>
+              <ComposedChart data={resumo.map((r, i, arr) => ({
+                mes: r.mes.slice(0,3),
+                mensal: r.receitas,
+                acumulado: arr.slice(0, i+1).reduce((s, x) => s + x.receitas, 0),
+              }))} barCategoryGap="35%">
+                <XAxis dataKey="mes" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis yAxisId="bar" hide />
+                <YAxis yAxisId="line" hide />
                 <Tooltip
                   cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                   contentStyle={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 12 }}
-                  labelStyle={{ color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}
-                  formatter={(v: number) => [`${v.toLocaleString('pt-PT', { minimumFractionDigits: 2 })} €`, 'Receitas']}
+                  labelStyle={{ color: 'rgba(255,255,255,0.4)', marginBottom: 4, fontSize: 11 }}
+                  formatter={(v: number, name: string) => [
+                    `${v.toLocaleString('pt-PT', { minimumFractionDigits: 2 })} €`,
+                    name === 'mensal' ? 'Mês' : 'Acumulado'
+                  ]}
                 />
-                <Bar dataKey="valor" radius={[6,6,0,0]}>
-                  {resumo.map((r, i) => (
-                    <Cell key={i} fill={r.receitas > 0 ? 'rgba(74,222,128,0.7)' : 'rgba(74,222,128,0.15)'} />
-                  ))}
-                </Bar>
-              </BarChart>
+                <Bar yAxisId="bar" dataKey="mensal" radius={[6,6,0,0]} fill="rgba(74,222,128,0.65)" />
+                <Line yAxisId="line" dataKey="acumulado" type="monotone" stroke="#c9a84c" strokeWidth={2} dot={{ fill: '#c9a84c', r: 3, strokeWidth: 0 }} />
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
           {receitasPorMes.map(({ mes, items }) => {
@@ -494,24 +505,30 @@ export default function FinancasAnoPage({ params }: Props) {
       {/* ── DESPESAS por mês ── */}
       {tab === 'despesas' && (
         <div className="space-y-6">
-          {/* Gráfico */}
+          {/* Gráfico — barras duplas receitas vs despesas */}
           <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
-            <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-4">Despesas por Mês</p>
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={resumo.map(r => ({ mes: r.mes.slice(0,3), valor: r.despesas }))} barCategoryGap="30%">
-                <XAxis dataKey="mes" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10, fontFamily: 'inherit' }} axisLine={false} tickLine={false} />
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase">Receitas vs Despesas</p>
+              <div className="flex items-center gap-4">
+                <span className="flex items-center gap-1.5 text-[10px] text-white/30"><span className="w-3 h-3 rounded-sm bg-green-400/60 inline-block" /> Receitas</span>
+                <span className="flex items-center gap-1.5 text-[10px] text-white/30"><span className="w-3 h-3 rounded-sm bg-red-400/60 inline-block" /> Despesas</span>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={resumo.map(r => ({ mes: r.mes.slice(0,3), receitas: r.receitas, despesas: r.despesas }))} barCategoryGap="25%" barGap={2}>
+                <XAxis dataKey="mes" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
                 <YAxis hide />
                 <Tooltip
                   cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                   contentStyle={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 12 }}
-                  labelStyle={{ color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}
-                  formatter={(v: number) => [`${v.toLocaleString('pt-PT', { minimumFractionDigits: 2 })} €`, 'Despesas']}
+                  labelStyle={{ color: 'rgba(255,255,255,0.4)', marginBottom: 4, fontSize: 11 }}
+                  formatter={(v: number, name: string) => [
+                    `${v.toLocaleString('pt-PT', { minimumFractionDigits: 2 })} €`,
+                    name === 'receitas' ? 'Receitas' : 'Despesas'
+                  ]}
                 />
-                <Bar dataKey="valor" radius={[6,6,0,0]}>
-                  {resumo.map((r, i) => (
-                    <Cell key={i} fill={r.despesas > 0 ? 'rgba(248,113,113,0.7)' : 'rgba(248,113,113,0.15)'} />
-                  ))}
-                </Bar>
+                <Bar dataKey="receitas" radius={[4,4,0,0]} fill="rgba(74,222,128,0.6)" />
+                <Bar dataKey="despesas" radius={[4,4,0,0]} fill="rgba(248,113,113,0.6)" />
               </BarChart>
             </ResponsiveContainer>
           </div>
