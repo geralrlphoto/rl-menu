@@ -18,7 +18,7 @@ export default function FinancasGeraisPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         {ANOS.map(ano => (
-          <Link key={ano} href={`/financas?ano=${ano}`}
+          <Link key={ano} href={`/financas-gerais/${ano}`}
             className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.04] hover:border-gold/30 transition-all duration-300 p-8 flex flex-col justify-between min-h-[200px]">
 
             {/* Fundo gradiente suave */}
@@ -31,7 +31,10 @@ export default function FinancasGeraisPage() {
               </p>
             </div>
 
-            <div className="relative flex items-center justify-end pt-6 border-t border-white/[0.06]">
+            <div className="relative flex items-center justify-between pt-6 border-t border-white/[0.06]">
+              <span className="text-[10px] tracking-[0.3em] text-white/30 uppercase group-hover:text-gold/60 transition-colors">
+                Ver Detalhes
+              </span>
               <span className="text-white/30 group-hover:text-gold transition-colors text-lg">›</span>
             </div>
           </Link>
