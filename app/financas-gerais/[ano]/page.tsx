@@ -505,30 +505,44 @@ export default function FinancasAnoPage({ params }: Props) {
       {/* ── DESPESAS por mês ── */}
       {tab === 'despesas' && (
         <div className="space-y-6">
-          {/* Gráfico — barras duplas receitas vs despesas */}
+          {/* Gráfico — saldo por mês (verde = bom, vermelho = mau) */}
           <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase">Receitas vs Despesas</p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase">Saldo por Mês</p>
               <div className="flex items-center gap-4">
-                <span className="flex items-center gap-1.5 text-[10px] text-white/30"><span className="w-3 h-3 rounded-sm bg-green-400/60 inline-block" /> Receitas</span>
-                <span className="flex items-center gap-1.5 text-[10px] text-white/30"><span className="w-3 h-3 rounded-sm bg-red-400/60 inline-block" /> Despesas</span>
+                <span className="flex items-center gap-1.5 text-[10px] text-white/30"><span className="w-3 h-3 rounded-sm bg-green-400/60 inline-block" /> Mês positivo</span>
+                <span className="flex items-center gap-1.5 text-[10px] text-white/30"><span className="w-3 h-3 rounded-sm bg-red-400/60 inline-block" /> Mês negativo</span>
               </div>
             </div>
+            <p className="text-[10px] text-white/20 mb-4">Receitas − Despesas · barras para cima = mês bom · para baixo = mês mau</p>
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={resumo.map(r => ({ mes: r.mes.slice(0,3), receitas: r.receitas, despesas: r.despesas }))} barCategoryGap="25%" barGap={2}>
+              <BarChart
+                data={resumo.map(r => ({ mes: r.mes.slice(0,3), saldo: r.receitas - r.despesas, receitas: r.receitas, despesas: r.despesas }))}
+                barCategoryGap="30%"
+              >
                 <XAxis dataKey="mes" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
                 <YAxis hide />
                 <Tooltip
                   cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                   contentStyle={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 12 }}
                   labelStyle={{ color: 'rgba(255,255,255,0.4)', marginBottom: 4, fontSize: 11 }}
-                  formatter={(v: number, name: string) => [
-                    `${v.toLocaleString('pt-PT', { minimumFractionDigits: 2 })} €`,
-                    name === 'receitas' ? 'Receitas' : 'Despesas'
-                  ]}
+                  formatter={(v: number, name: string, props: any) => {
+                    const { receitas, despesas, saldo } = props.payload
+                    return [
+                      <span key="tip">
+                        <span style={{ color: '#4ade80' }}>Rec: {receitas.toLocaleString('pt-PT', { minimumFractionDigits: 2 })} €</span><br/>
+                        <span style={{ color: '#f87171' }}>Desp: {despesas.toLocaleString('pt-PT', { minimumFractionDigits: 2 })} €</span><br/>
+                        <span style={{ color: saldo >= 0 ? '#c9a84c' : '#f87171', fontWeight: 700 }}>Saldo: {saldo >= 0 ? '+' : ''}{saldo.toLocaleString('pt-PT', { minimumFractionDigits: 2 })} €</span>
+                      </span>,
+                      ''
+                    ]
+                  }}
                 />
-                <Bar dataKey="receitas" radius={[4,4,0,0]} fill="rgba(74,222,128,0.6)" />
-                <Bar dataKey="despesas" radius={[4,4,0,0]} fill="rgba(248,113,113,0.6)" />
+                <Bar dataKey="saldo" radius={[4,4,4,4]}>
+                  {resumo.map((r, i) => (
+                    <Cell key={i} fill={r.receitas - r.despesas >= 0 ? 'rgba(74,222,128,0.65)' : 'rgba(248,113,113,0.65)'} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
