@@ -512,17 +512,19 @@ export default function FinancasAnoPage({ params }: Props) {
             const mediaTotal  = totalDespesas / mesesAtivos
 
             // Detecta custos fixos: itens que aparecem em ≥ 8 meses
-            const porItem = new Map<string, { total: number; meses: Set<string> }>()
+            // Normaliza ordenando palavras (LOJA RENDA = RENDA LOJA) e remove conteúdo entre parênteses
+            const porItem = new Map<string, { total: number; meses: Set<string>; nome: string }>()
             for (const d of allDespesas) {
-              const key = d.item.toUpperCase().replace(/\s*\(.*\)/, '').trim()
-              if (!porItem.has(key)) porItem.set(key, { total: 0, meses: new Set() })
+              const key = d.item.toUpperCase().replace(/\s*\(.*\)/, '').trim().split(/\s+/).sort().join(' ')
+              const nomeOriginal = d.item.toUpperCase().replace(/\s*\(.*\)/, '').trim()
+              if (!porItem.has(key)) porItem.set(key, { total: 0, meses: new Set(), nome: nomeOriginal })
               const e = porItem.get(key)!
               e.total += d.valor
               e.meses.add(d.mes)
             }
             const fixos = [...porItem.entries()]
               .filter(([, v]) => v.meses.size >= 8)
-              .map(([nome, v]) => ({ nome, media: v.total / v.meses.size, meses: v.meses.size }))
+              .map(([, v]) => ({ nome: v.nome, media: v.total / v.meses.size, meses: v.meses.size }))
             const totalFixo = fixos.reduce((s, f) => s + f.media, 0)
             const totalVariavel = mediaTotal - totalFixo
 
