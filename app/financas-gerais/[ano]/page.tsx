@@ -214,18 +214,28 @@ function fmt(n: number) {
   return n.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
+const ORDEM_MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+
+function groupByMes<T extends { mes: string }>(arr: T[]): { mes: string; items: T[] }[] {
+  const map = new Map<string, T[]>()
+  for (const item of arr) {
+    if (!map.has(item.mes)) map.set(item.mes, [])
+    map.get(item.mes)!.push(item)
+  }
+  return ORDEM_MESES
+    .filter(m => map.has(m))
+    .map(m => ({ mes: m, items: map.get(m)! }))
+}
+
 export default function FinancasAnoPage() {
   const [tab, setTab] = useState<'resumo' | 'receitas' | 'despesas'>('resumo')
-  const [mesFiltro, setMesFiltro] = useState('Todos')
 
   const totalReceitas = RECEITAS_2025.reduce((s, r) => s + r.valor, 0)
   const totalDespesas = DESPESAS_2025.reduce((s, d) => s + d.valor, 0)
   const saldo = totalReceitas - totalDespesas
 
-  const meses = ['Todos', ...Array.from(new Set([...RECEITAS_2025.map(r => r.mes), ...DESPESAS_2025.map(d => d.mes)]))]
-
-  const receitasFiltradas = mesFiltro === 'Todos' ? RECEITAS_2025 : RECEITAS_2025.filter(r => r.mes === mesFiltro)
-  const despesasFiltradas = mesFiltro === 'Todos' ? DESPESAS_2025 : DESPESAS_2025.filter(d => d.mes === mesFiltro)
+  const receitasPorMes  = groupByMes(RECEITAS_2025)
+  const despesasPorMes  = groupByMes(DESPESAS_2025)
 
   return (
     <main className="min-h-screen px-4 py-12 max-w-5xl mx-auto">
@@ -257,7 +267,7 @@ export default function FinancasAnoPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 border-b border-white/[0.06]">
+      <div className="flex gap-1 mb-8 border-b border-white/[0.06]">
         {(['resumo', 'receitas', 'despesas'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
             className={`px-5 py-2.5 text-xs tracking-[0.25em] uppercase transition-colors ${tab === t ? 'text-gold border-b-2 border-gold -mb-px' : 'text-white/30 hover:text-white/60'}`}>
@@ -265,16 +275,6 @@ export default function FinancasAnoPage() {
           </button>
         ))}
       </div>
-
-      {/* Filtro mês */}
-      {tab !== 'resumo' && (
-        <div className="mb-4">
-          <select value={mesFiltro} onChange={e => setMesFiltro(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white/70 focus:outline-none focus:border-gold/40">
-            {meses.map(m => <option key={m} value={m} className="bg-zinc-900">{m}</option>)}
-          </select>
-        </div>
-      )}
 
       {/* RESUMO */}
       {tab === 'resumo' && (
@@ -315,73 +315,74 @@ export default function FinancasAnoPage() {
         </div>
       )}
 
-      {/* RECEITAS */}
+      {/* RECEITAS por mês */}
       {tab === 'receitas' && (
-        <div className="rounded-2xl border border-white/[0.06] overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-white/[0.06]">
-                <th className="text-left px-4 py-3 text-[10px] tracking-[0.3em] text-white/30 uppercase font-normal">Data</th>
-                <th className="text-left px-4 py-3 text-[10px] tracking-[0.3em] text-white/30 uppercase font-normal">Mês</th>
-                <th className="text-left px-4 py-3 text-[10px] tracking-[0.3em] text-white/30 uppercase font-normal">Tipo</th>
-                <th className="text-right px-4 py-3 text-[10px] tracking-[0.3em] text-green-400/60 uppercase font-normal">Valor</th>
-                <th className="text-left px-4 py-3 text-[10px] tracking-[0.3em] text-white/30 uppercase font-normal hidden sm:table-cell">Info</th>
-              </tr>
-            </thead>
-            <tbody>
-              {receitasFiltradas.map((r, i) => (
-                <tr key={i} className={`border-b border-white/[0.04] ${i % 2 === 0 ? 'bg-white/[0.01]' : ''}`}>
-                  <td className="px-4 py-2.5 text-white/40 font-mono text-xs">{r.data}</td>
-                  <td className="px-4 py-2.5 text-white/50 text-xs">{r.mes}</td>
-                  <td className="px-4 py-2.5">
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full border ${TIPO_CLS[r.tipo] ?? 'bg-white/10 text-white/40 border-white/20'}`}>{r.tipo}</span>
-                  </td>
-                  <td className="px-4 py-2.5 text-right text-green-400 font-mono font-semibold">{fmt(r.valor)} €</td>
-                  <td className="px-4 py-2.5 text-white/30 text-xs hidden sm:table-cell">{r.info}</td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr className="border-t border-white/[0.1] bg-white/[0.03]">
-                <td colSpan={3} className="px-4 py-3 text-[10px] tracking-[0.3em] text-white/40 uppercase font-semibold">Total</td>
-                <td className="px-4 py-3 text-right text-green-400 font-mono font-bold">{fmt(receitasFiltradas.reduce((s, r) => s + r.valor, 0))} €</td>
-                <td className="hidden sm:table-cell" />
-              </tr>
-            </tfoot>
-          </table>
+        <div className="space-y-6">
+          {receitasPorMes.map(({ mes, items }) => {
+            const subtotal = items.reduce((s, r) => s + r.valor, 0)
+            return (
+              <div key={mes} className="rounded-2xl border border-white/[0.06] overflow-hidden">
+                {/* Cabeçalho do mês */}
+                <div className="flex items-center justify-between px-5 py-3 bg-white/[0.03] border-b border-white/[0.06]">
+                  <span className="text-xs tracking-[0.35em] text-white/60 uppercase font-medium">{mes}</span>
+                  <span className="text-sm font-mono font-semibold text-green-400">{fmt(subtotal)} €</span>
+                </div>
+                <table className="w-full text-sm">
+                  <tbody>
+                    {items.map((r, i) => (
+                      <tr key={i} className={`border-b border-white/[0.04] last:border-0 ${i % 2 === 0 ? '' : 'bg-white/[0.01]'}`}>
+                        <td className="px-4 py-2.5 text-white/35 font-mono text-xs w-24">{r.data}</td>
+                        <td className="px-4 py-2.5">
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full border ${TIPO_CLS[r.tipo] ?? 'bg-white/10 text-white/40 border-white/20'}`}>{r.tipo}</span>
+                        </td>
+                        <td className="px-4 py-2.5 text-white/40 text-xs hidden sm:table-cell">{r.info}</td>
+                        <td className="px-4 py-2.5 text-right text-green-400 font-mono font-semibold whitespace-nowrap">{fmt(r.valor)} €</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          })}
+          {/* Total geral */}
+          <div className="flex items-center justify-between px-5 py-4 rounded-2xl border border-green-500/20 bg-green-500/5">
+            <span className="text-xs tracking-[0.35em] text-white/40 uppercase">Total Receitas 2025</span>
+            <span className="text-xl font-mono font-bold text-green-400">{fmt(totalReceitas)} €</span>
+          </div>
         </div>
       )}
 
-      {/* DESPESAS */}
+      {/* DESPESAS por mês */}
       {tab === 'despesas' && (
-        <div className="rounded-2xl border border-white/[0.06] overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-white/[0.06]">
-                <th className="text-left px-4 py-3 text-[10px] tracking-[0.3em] text-white/30 uppercase font-normal">Mês</th>
-                <th className="text-left px-4 py-3 text-[10px] tracking-[0.3em] text-white/30 uppercase font-normal">Item</th>
-                <th className="text-right px-4 py-3 text-[10px] tracking-[0.3em] text-red-400/60 uppercase font-normal">Valor</th>
-                <th className="text-left px-4 py-3 text-[10px] tracking-[0.3em] text-white/30 uppercase font-normal hidden sm:table-cell">Notas</th>
-              </tr>
-            </thead>
-            <tbody>
-              {despesasFiltradas.map((d, i) => (
-                <tr key={i} className={`border-b border-white/[0.04] ${i % 2 === 0 ? 'bg-white/[0.01]' : ''}`}>
-                  <td className="px-4 py-2.5 text-white/40 text-xs">{d.mes}</td>
-                  <td className="px-4 py-2.5 text-white/70 text-xs font-medium">{d.item}</td>
-                  <td className="px-4 py-2.5 text-right text-red-400 font-mono font-semibold">{fmt(d.valor)} €</td>
-                  <td className="px-4 py-2.5 text-white/30 text-xs hidden sm:table-cell">{d.notas}</td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr className="border-t border-white/[0.1] bg-white/[0.03]">
-                <td colSpan={2} className="px-4 py-3 text-[10px] tracking-[0.3em] text-white/40 uppercase font-semibold">Total</td>
-                <td className="px-4 py-3 text-right text-red-400 font-mono font-bold">{fmt(despesasFiltradas.reduce((s, d) => s + d.valor, 0))} €</td>
-                <td className="hidden sm:table-cell" />
-              </tr>
-            </tfoot>
-          </table>
+        <div className="space-y-6">
+          {despesasPorMes.map(({ mes, items }) => {
+            const subtotal = items.reduce((s, d) => s + d.valor, 0)
+            return (
+              <div key={mes} className="rounded-2xl border border-white/[0.06] overflow-hidden">
+                {/* Cabeçalho do mês */}
+                <div className="flex items-center justify-between px-5 py-3 bg-white/[0.03] border-b border-white/[0.06]">
+                  <span className="text-xs tracking-[0.35em] text-white/60 uppercase font-medium">{mes}</span>
+                  <span className="text-sm font-mono font-semibold text-red-400">{fmt(subtotal)} €</span>
+                </div>
+                <table className="w-full text-sm">
+                  <tbody>
+                    {items.map((d, i) => (
+                      <tr key={i} className={`border-b border-white/[0.04] last:border-0 ${i % 2 === 0 ? '' : 'bg-white/[0.01]'}`}>
+                        <td className="px-4 py-2.5 text-white/70 text-xs font-medium">{d.item}</td>
+                        <td className="px-4 py-2.5 text-white/30 text-xs hidden sm:table-cell">{d.notas}</td>
+                        <td className="px-4 py-2.5 text-right text-red-400 font-mono font-semibold whitespace-nowrap">{fmt(d.valor)} €</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          })}
+          {/* Total geral */}
+          <div className="flex items-center justify-between px-5 py-4 rounded-2xl border border-red-500/20 bg-red-500/5">
+            <span className="text-xs tracking-[0.35em] text-white/40 uppercase">Total Despesas 2025</span>
+            <span className="text-xl font-mono font-bold text-red-400">{fmt(totalDespesas)} €</span>
+          </div>
         </div>
       )}
     </main>
