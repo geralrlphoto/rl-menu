@@ -352,7 +352,8 @@ export default function FinancasAnoPage({ params }: Props) {
               const mes  = MES[dt.getMonth()]
               const tipos: string[] = (() => { try { return JSON.parse(e.tipo_evento || '[]') } catch { return [] } })()
               const tipo = tipos[0] ?? 'CASAMENTO'
-              const valor = (e.valor_real_foto ?? e.valor_foto ?? 0) + (e.valor_liquido ?? 0)
+              // Usa valor_liquido — mesma lógica da página eventos-2026 (card Vídeo e total mensal)
+              const valor = e.valor_liquido ?? 0
               const dataFmt = `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`
               return { data: dataFmt, mes, tipo, valor, info: e.cliente ?? '', referencia: e.referencia ?? '' }
             })
