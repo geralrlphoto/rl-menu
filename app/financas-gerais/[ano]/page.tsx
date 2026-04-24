@@ -1,9 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect, use } from 'react'
 
-// ─── DADOS 2025 ────────────────────────────────────────────────────────────────
+// ─── DADOS BASE 2025 ───────────────────────────────────────────────────────────
 
 const RECEITAS_2025 = [
   { data: '21/02/2025', mes: 'Fevereiro', tipo: 'CASAMENTO', valor: 1000, info: '' },
@@ -188,33 +188,22 @@ const DESPESAS_2025 = [
   { data: '12/2025', mes: 'Dezembro', item: 'EQUIPAMENTO / OUTROS', valor: 1840.83, notas: '' },
 ]
 
-const RESUMO_2025 = [
-  { mes: 'Janeiro',   receitas: 0,      despesas: 336.68  },
-  { mes: 'Fevereiro', receitas: 1000,   despesas: 2178.50 },
-  { mes: 'Março',     receitas: 200,    despesas: 567.78  },
-  { mes: 'Abril',     receitas: 1550,   despesas: 1901.81 },
-  { mes: 'Maio',      receitas: 5445,   despesas: 1780.62 },
-  { mes: 'Junho',     receitas: 5155,   despesas: 1014.73 },
-  { mes: 'Julho',     receitas: 3250,   despesas: 1389.11 },
-  { mes: 'Agosto',    receitas: 7530,   despesas: 2272.82 },
-  { mes: 'Setembro',  receitas: 5350,   despesas: 1428.28 },
-  { mes: 'Outubro',   receitas: 5550,   despesas: 1074.25 },
-  { mes: 'Novembro',  receitas: 680,    despesas: 1174.14 },
-  { mes: 'Dezembro',  receitas: 700,    despesas: 2080.83 },
-]
+// ─── HELPERS ───────────────────────────────────────────────────────────────────
+
+const ORDEM_MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+const TIPOS_RECEITA = ['CASAMENTO', 'BATIZADO', 'CORPORATIVO', 'SESSÃO', 'OUTRO']
 
 const TIPO_CLS: Record<string, string> = {
   'CASAMENTO':   'bg-gold/10 text-gold/80 border-gold/20',
   'BATIZADO':    'bg-blue-500/10 text-blue-400 border-blue-500/20',
   'CORPORATIVO': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
   'SESSÃO':      'bg-green-500/10 text-green-400 border-green-500/20',
+  'OUTRO':       'bg-white/10 text-white/50 border-white/20',
 }
 
 function fmt(n: number) {
   return n.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
-
-const ORDEM_MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 
 function groupByMes<T extends { mes: string }>(arr: T[]): { mes: string; items: T[] }[] {
   const map = new Map<string, T[]>()
@@ -222,20 +211,119 @@ function groupByMes<T extends { mes: string }>(arr: T[]): { mes: string; items: 
     if (!map.has(item.mes)) map.set(item.mes, [])
     map.get(item.mes)!.push(item)
   }
-  return ORDEM_MESES
-    .filter(m => map.has(m))
-    .map(m => ({ mes: m, items: map.get(m)! }))
+  return ORDEM_MESES.filter(m => map.has(m)).map(m => ({ mes: m, items: map.get(m)! }))
 }
 
-export default function FinancasAnoPage() {
-  const [tab, setTab] = useState<'resumo' | 'receitas' | 'despesas'>('resumo')
+// ─── TIPOS ─────────────────────────────────────────────────────────────────────
 
-  const totalReceitas = RECEITAS_2025.reduce((s, r) => s + r.valor, 0)
-  const totalDespesas = DESPESAS_2025.reduce((s, d) => s + d.valor, 0)
+type DbEntry = {
+  id: string
+  ano: number
+  tipo: 'receita' | 'despesa'
+  data: string
+  mes: string
+  categoria: string
+  valor: number
+  info: string
+}
+
+type ReceitaRow = { _id?: string; data: string; mes: string; tipo: string; valor: number; info: string }
+type DespesaRow = { _id?: string; data: string; mes: string; item: string; valor: number; notas: string }
+
+type Props = { params: Promise<{ ano: string }> }
+
+// ─── PAGE ──────────────────────────────────────────────────────────────────────
+
+export default function FinancasAnoPage({ params }: Props) {
+  const { ano } = use(params)
+  const anoNum = parseInt(ano)
+
+  const [tab, setTab]           = useState<'resumo' | 'receitas' | 'despesas'>('resumo')
+  const [dbEntries, setDbEntries] = useState<DbEntry[]>([])
+  const [modalOpen, setModalOpen] = useState(false)
+  const [formTipo, setFormTipo]   = useState<'receita' | 'despesa'>('receita')
+  const [fMes, setFMes]           = useState('Janeiro')
+  const [fData, setFData]         = useState('')
+  const [fCategoria, setFCategoria] = useState('CASAMENTO')
+  const [fItem, setFItem]         = useState('')
+  const [fValor, setFValor]       = useState('')
+  const [fInfo, setFInfo]         = useState('')
+  const [saving, setSaving]       = useState(false)
+  const [deleting, setDeleting]   = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch(`/api/financas-gerais?ano=${anoNum}`)
+      .then(r => r.json())
+      .then(d => setDbEntries(d.entries ?? []))
+  }, [anoNum])
+
+  // Base hardcoded (só para 2025)
+  const baseReceitas: ReceitaRow[] = anoNum === 2025
+    ? RECEITAS_2025.map(r => ({ data: r.data, mes: r.mes, tipo: r.tipo, valor: r.valor, info: r.info }))
+    : []
+  const baseDespesas: DespesaRow[] = anoNum === 2025
+    ? DESPESAS_2025.map(d => ({ data: d.data, mes: d.mes, item: d.item, valor: d.valor, notas: d.notas }))
+    : []
+
+  // DB entries convertidas
+  const dbReceitas: ReceitaRow[] = dbEntries
+    .filter(e => e.tipo === 'receita')
+    .map(e => ({ _id: e.id, data: e.data, mes: e.mes, tipo: e.categoria, valor: e.valor, info: e.info }))
+  const dbDespesas: DespesaRow[] = dbEntries
+    .filter(e => e.tipo === 'despesa')
+    .map(e => ({ _id: e.id, data: e.data, mes: e.mes, item: e.categoria, valor: e.valor, notas: e.info }))
+
+  const allReceitas = [...baseReceitas, ...dbReceitas]
+  const allDespesas = [...baseDespesas, ...dbDespesas]
+
+  const totalReceitas = allReceitas.reduce((s, r) => s + r.valor, 0)
+  const totalDespesas = allDespesas.reduce((s, d) => s + d.valor, 0)
   const saldo = totalReceitas - totalDespesas
 
-  const receitasPorMes  = groupByMes(RECEITAS_2025)
-  const despesasPorMes  = groupByMes(DESPESAS_2025)
+  // Resumo calculado dinamicamente
+  const resumo = ORDEM_MESES
+    .map(mes => ({
+      mes,
+      receitas: allReceitas.filter(r => r.mes === mes).reduce((s, r) => s + r.valor, 0),
+      despesas: allDespesas.filter(d => d.mes === mes).reduce((s, d) => s + d.valor, 0),
+    }))
+    .filter(r => r.receitas > 0 || r.despesas > 0)
+
+  const receitasPorMes = groupByMes(allReceitas)
+  const despesasPorMes = groupByMes(allDespesas)
+
+  function openModal(tipo: 'receita' | 'despesa') {
+    setFormTipo(tipo)
+    setFMes('Janeiro'); setFData(''); setFCategoria('CASAMENTO')
+    setFItem(''); setFValor(''); setFInfo('')
+    setModalOpen(true)
+  }
+
+  async function handleSave() {
+    const valorNum = parseFloat(fValor.replace(',', '.'))
+    if (!fMes || !valorNum) return
+    setSaving(true)
+    const payload = {
+      ano: anoNum, tipo: formTipo, mes: fMes, data: fData,
+      categoria: formTipo === 'receita' ? fCategoria : fItem,
+      valor: valorNum, info: fInfo,
+    }
+    const res = await fetch('/api/financas-gerais', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    const d = await res.json()
+    if (d.entry) setDbEntries(prev => [...prev, d.entry])
+    setSaving(false)
+    setModalOpen(false)
+  }
+
+  async function handleDelete(id: string) {
+    setDeleting(id)
+    await fetch(`/api/financas-gerais?id=${id}`, { method: 'DELETE' })
+    setDbEntries(prev => prev.filter(e => e.id !== id))
+    setDeleting(null)
+  }
 
   return (
     <main className="min-h-screen px-4 py-12 max-w-5xl mx-auto">
@@ -245,7 +333,7 @@ export default function FinancasAnoPage() {
 
       <header className="mb-10">
         <p className="text-xs tracking-[0.4em] text-white/30 uppercase mb-1">RL PHOTO.VIDEO</p>
-        <h1 className="text-2xl font-light tracking-widest text-gold uppercase">Finanças 2025</h1>
+        <h1 className="text-2xl font-light tracking-widest text-gold uppercase">Finanças {ano}</h1>
         <div className="mt-3 h-px w-16 bg-gold/40" />
       </header>
 
@@ -267,16 +355,33 @@ export default function FinancasAnoPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-8 border-b border-white/[0.06]">
-        {(['resumo', 'receitas', 'despesas'] as const).map(t => (
-          <button key={t} onClick={() => setTab(t)}
-            className={`px-5 py-2.5 text-xs tracking-[0.25em] uppercase transition-colors ${tab === t ? 'text-gold border-b-2 border-gold -mb-px' : 'text-white/30 hover:text-white/60'}`}>
-            {t === 'resumo' ? 'Resumo Mensal' : t === 'receitas' ? `Receitas (${RECEITAS_2025.length})` : `Despesas (${DESPESAS_2025.length})`}
+      <div className="flex items-center justify-between mb-8 border-b border-white/[0.06]">
+        <div className="flex gap-1">
+          {(['resumo', 'receitas', 'despesas'] as const).map(t => (
+            <button key={t} onClick={() => setTab(t)}
+              className={`px-5 py-2.5 text-xs tracking-[0.25em] uppercase transition-colors ${tab === t ? 'text-gold border-b-2 border-gold -mb-px' : 'text-white/30 hover:text-white/60'}`}>
+              {t === 'resumo' ? 'Resumo Mensal' : t === 'receitas' ? `Receitas (${allReceitas.length})` : `Despesas (${allDespesas.length})`}
+            </button>
+          ))}
+        </div>
+
+        {/* Botão Adicionar */}
+        {tab !== 'resumo' && (
+          <button
+            onClick={() => openModal(tab === 'receitas' ? 'receita' : 'despesa')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs tracking-widest uppercase transition-all border ${
+              tab === 'receitas'
+                ? 'border-green-500/30 bg-green-500/10 text-green-400 hover:bg-green-500/20'
+                : 'border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20'
+            }`}
+          >
+            <span className="text-base leading-none">+</span>
+            {tab === 'receitas' ? 'Receita' : 'Despesa'}
           </button>
-        ))}
+        )}
       </div>
 
-      {/* RESUMO */}
+      {/* ── RESUMO ── */}
       {tab === 'resumo' && (
         <div className="rounded-2xl border border-white/[0.06] overflow-hidden">
           <table className="w-full text-sm">
@@ -289,7 +394,7 @@ export default function FinancasAnoPage() {
               </tr>
             </thead>
             <tbody>
-              {RESUMO_2025.map((r, i) => {
+              {resumo.map((r, i) => {
                 const s = r.receitas - r.despesas
                 return (
                   <tr key={r.mes} className={`border-b border-white/[0.04] ${i % 2 === 0 ? 'bg-white/[0.01]' : ''}`}>
@@ -315,14 +420,13 @@ export default function FinancasAnoPage() {
         </div>
       )}
 
-      {/* RECEITAS por mês */}
+      {/* ── RECEITAS por mês ── */}
       {tab === 'receitas' && (
         <div className="space-y-6">
           {receitasPorMes.map(({ mes, items }) => {
             const subtotal = items.reduce((s, r) => s + r.valor, 0)
             return (
               <div key={mes} className="rounded-2xl border border-white/[0.06] overflow-hidden">
-                {/* Cabeçalho do mês */}
                 <div className="flex items-center justify-between px-5 py-3 bg-white/[0.03] border-b border-white/[0.06]">
                   <span className="text-xs tracking-[0.35em] text-white/60 uppercase font-medium">{mes}</span>
                   <span className="text-sm font-mono font-semibold text-green-400">{fmt(subtotal)} €</span>
@@ -330,13 +434,27 @@ export default function FinancasAnoPage() {
                 <table className="w-full text-sm">
                   <tbody>
                     {items.map((r, i) => (
-                      <tr key={i} className={`border-b border-white/[0.04] last:border-0 ${i % 2 === 0 ? '' : 'bg-white/[0.01]'}`}>
+                      <tr key={i} className={`border-b border-white/[0.04] last:border-0 ${i % 2 === 0 ? '' : 'bg-white/[0.01]'} group`}>
                         <td className="px-4 py-2.5 text-white/35 font-mono text-xs w-24">{r.data}</td>
-                        <td className="px-4 py-2.5">
+                        <td className="px-4 py-2.5 w-28">
                           <span className={`text-[10px] px-2 py-0.5 rounded-full border ${TIPO_CLS[r.tipo] ?? 'bg-white/10 text-white/40 border-white/20'}`}>{r.tipo}</span>
                         </td>
-                        <td className="px-4 py-2.5 text-white/40 text-xs hidden sm:table-cell">{r.info}</td>
-                        <td className="px-4 py-2.5 text-right text-green-400 font-mono font-semibold whitespace-nowrap">{fmt(r.valor)} €</td>
+                        <td className="px-4 py-2.5 text-white/40 text-xs">{r.info}</td>
+                        <td className="px-4 py-2.5 text-right text-green-400 font-mono font-semibold whitespace-nowrap">
+                          {fmt(r.valor)} €
+                        </td>
+                        <td className="px-4 py-2.5 w-10 text-right">
+                          {r._id && (
+                            <button
+                              onClick={() => handleDelete(r._id!)}
+                              disabled={deleting === r._id}
+                              className="text-white/20 hover:text-red-400 transition-colors text-xs opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                              title="Apagar"
+                            >
+                              {deleting === r._id ? '…' : '×'}
+                            </button>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -344,22 +462,20 @@ export default function FinancasAnoPage() {
               </div>
             )
           })}
-          {/* Total geral */}
           <div className="flex items-center justify-between px-5 py-4 rounded-2xl border border-green-500/20 bg-green-500/5">
-            <span className="text-xs tracking-[0.35em] text-white/40 uppercase">Total Receitas 2025</span>
+            <span className="text-xs tracking-[0.35em] text-white/40 uppercase">Total Receitas {ano}</span>
             <span className="text-xl font-mono font-bold text-green-400">{fmt(totalReceitas)} €</span>
           </div>
         </div>
       )}
 
-      {/* DESPESAS por mês */}
+      {/* ── DESPESAS por mês ── */}
       {tab === 'despesas' && (
         <div className="space-y-6">
           {despesasPorMes.map(({ mes, items }) => {
             const subtotal = items.reduce((s, d) => s + d.valor, 0)
             return (
               <div key={mes} className="rounded-2xl border border-white/[0.06] overflow-hidden">
-                {/* Cabeçalho do mês */}
                 <div className="flex items-center justify-between px-5 py-3 bg-white/[0.03] border-b border-white/[0.06]">
                   <span className="text-xs tracking-[0.35em] text-white/60 uppercase font-medium">{mes}</span>
                   <span className="text-sm font-mono font-semibold text-red-400">{fmt(subtotal)} €</span>
@@ -367,10 +483,24 @@ export default function FinancasAnoPage() {
                 <table className="w-full text-sm">
                   <tbody>
                     {items.map((d, i) => (
-                      <tr key={i} className={`border-b border-white/[0.04] last:border-0 ${i % 2 === 0 ? '' : 'bg-white/[0.01]'}`}>
+                      <tr key={i} className={`border-b border-white/[0.04] last:border-0 ${i % 2 === 0 ? '' : 'bg-white/[0.01]'} group`}>
                         <td className="px-4 py-2.5 text-white/70 text-xs font-medium">{d.item}</td>
                         <td className="px-4 py-2.5 text-white/30 text-xs hidden sm:table-cell">{d.notas}</td>
-                        <td className="px-4 py-2.5 text-right text-red-400 font-mono font-semibold whitespace-nowrap">{fmt(d.valor)} €</td>
+                        <td className="px-4 py-2.5 text-right text-red-400 font-mono font-semibold whitespace-nowrap">
+                          {fmt(d.valor)} €
+                        </td>
+                        <td className="px-4 py-2.5 w-10 text-right">
+                          {d._id && (
+                            <button
+                              onClick={() => handleDelete(d._id!)}
+                              disabled={deleting === d._id}
+                              className="text-white/20 hover:text-red-400 transition-colors text-xs opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                              title="Apagar"
+                            >
+                              {deleting === d._id ? '…' : '×'}
+                            </button>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -378,10 +508,109 @@ export default function FinancasAnoPage() {
               </div>
             )
           })}
-          {/* Total geral */}
           <div className="flex items-center justify-between px-5 py-4 rounded-2xl border border-red-500/20 bg-red-500/5">
-            <span className="text-xs tracking-[0.35em] text-white/40 uppercase">Total Despesas 2025</span>
+            <span className="text-xs tracking-[0.35em] text-white/40 uppercase">Total Despesas {ano}</span>
             <span className="text-xl font-mono font-bold text-red-400">{fmt(totalDespesas)} €</span>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL ── */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setModalOpen(false)} />
+
+          {/* Card */}
+          <div className="relative w-full max-w-md bg-[#111] border border-white/10 rounded-2xl p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className={`text-sm tracking-[0.3em] uppercase font-medium ${formTipo === 'receita' ? 'text-green-400' : 'text-red-400'}`}>
+                {formTipo === 'receita' ? '+ Nova Receita' : '+ Nova Despesa'}
+              </h2>
+              <button onClick={() => setModalOpen(false)} className="text-white/30 hover:text-white text-xl leading-none">×</button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Mês */}
+              <div>
+                <label className="block text-[10px] tracking-[0.3em] text-white/30 uppercase mb-1.5">Mês</label>
+                <select value={fMes} onChange={e => setFMes(e.target.value)}
+                  className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-gold/40 transition-colors">
+                  {ORDEM_MESES.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+
+              {/* Data */}
+              <div>
+                <label className="block text-[10px] tracking-[0.3em] text-white/30 uppercase mb-1.5">Data <span className="text-white/20 normal-case tracking-normal">(opcional)</span></label>
+                <input
+                  type="text" value={fData} onChange={e => setFData(e.target.value)}
+                  placeholder="ex: 15/04/2025"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/40 transition-colors"
+                />
+              </div>
+
+              {/* Categoria / Item */}
+              {formTipo === 'receita' ? (
+                <div>
+                  <label className="block text-[10px] tracking-[0.3em] text-white/30 uppercase mb-1.5">Tipo</label>
+                  <select value={fCategoria} onChange={e => setFCategoria(e.target.value)}
+                    className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-gold/40 transition-colors">
+                    {TIPOS_RECEITA.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-[10px] tracking-[0.3em] text-white/30 uppercase mb-1.5">Item / Descrição</label>
+                  <input
+                    type="text" value={fItem} onChange={e => setFItem(e.target.value)}
+                    placeholder="ex: RENDA LOJA"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/40 transition-colors"
+                  />
+                </div>
+              )}
+
+              {/* Valor */}
+              <div>
+                <label className="block text-[10px] tracking-[0.3em] text-white/30 uppercase mb-1.5">Valor (€)</label>
+                <input
+                  type="text" value={fValor} onChange={e => setFValor(e.target.value)}
+                  placeholder="ex: 600"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/40 transition-colors"
+                />
+              </div>
+
+              {/* Info / Notas */}
+              <div>
+                <label className="block text-[10px] tracking-[0.3em] text-white/30 uppercase mb-1.5">
+                  {formTipo === 'receita' ? 'Info' : 'Notas'} <span className="text-white/20 normal-case tracking-normal">(opcional)</span>
+                </label>
+                <input
+                  type="text" value={fInfo} onChange={e => setFInfo(e.target.value)}
+                  placeholder="ex: Joana e Miguel"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/40 transition-colors"
+                />
+              </div>
+            </div>
+
+            {/* Botões */}
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setModalOpen(false)}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-white/10 text-xs tracking-widest text-white/40 hover:text-white/70 uppercase transition-colors">
+                Cancelar
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving || !fValor}
+                className={`flex-1 px-4 py-2.5 rounded-xl text-xs tracking-widest uppercase font-medium transition-all disabled:opacity-40 ${
+                  formTipo === 'receita'
+                    ? 'bg-green-500/20 border border-green-500/30 text-green-400 hover:bg-green-500/30'
+                    : 'bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30'
+                }`}
+              >
+                {saving ? 'A guardar…' : 'Guardar'}
+              </button>
+            </div>
           </div>
         </div>
       )}
