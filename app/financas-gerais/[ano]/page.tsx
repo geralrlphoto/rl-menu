@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState, useEffect, use } from 'react'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
 // ─── DADOS BASE 2025 ───────────────────────────────────────────────────────────
 
@@ -423,6 +424,27 @@ export default function FinancasAnoPage({ params }: Props) {
       {/* ── RECEITAS por mês ── */}
       {tab === 'receitas' && (
         <div className="space-y-6">
+          {/* Gráfico */}
+          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
+            <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-4">Receitas por Mês</p>
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={resumo.map(r => ({ mes: r.mes.slice(0,3), valor: r.receitas }))} barCategoryGap="30%">
+                <XAxis dataKey="mes" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10, fontFamily: 'inherit' }} axisLine={false} tickLine={false} />
+                <YAxis hide />
+                <Tooltip
+                  cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                  contentStyle={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 12 }}
+                  labelStyle={{ color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}
+                  formatter={(v: number) => [`${v.toLocaleString('pt-PT', { minimumFractionDigits: 2 })} €`, 'Receitas']}
+                />
+                <Bar dataKey="valor" radius={[6,6,0,0]}>
+                  {resumo.map((r, i) => (
+                    <Cell key={i} fill={r.receitas > 0 ? 'rgba(74,222,128,0.7)' : 'rgba(74,222,128,0.15)'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
           {receitasPorMes.map(({ mes, items }) => {
             const subtotal = items.reduce((s, r) => s + r.valor, 0)
             return (
@@ -472,6 +494,27 @@ export default function FinancasAnoPage({ params }: Props) {
       {/* ── DESPESAS por mês ── */}
       {tab === 'despesas' && (
         <div className="space-y-6">
+          {/* Gráfico */}
+          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
+            <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-4">Despesas por Mês</p>
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={resumo.map(r => ({ mes: r.mes.slice(0,3), valor: r.despesas }))} barCategoryGap="30%">
+                <XAxis dataKey="mes" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10, fontFamily: 'inherit' }} axisLine={false} tickLine={false} />
+                <YAxis hide />
+                <Tooltip
+                  cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                  contentStyle={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 12 }}
+                  labelStyle={{ color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}
+                  formatter={(v: number) => [`${v.toLocaleString('pt-PT', { minimumFractionDigits: 2 })} €`, 'Despesas']}
+                />
+                <Bar dataKey="valor" radius={[6,6,0,0]}>
+                  {resumo.map((r, i) => (
+                    <Cell key={i} fill={r.despesas > 0 ? 'rgba(248,113,113,0.7)' : 'rgba(248,113,113,0.15)'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
           {despesasPorMes.map(({ mes, items }) => {
             const subtotal = items.reduce((s, d) => s + d.valor, 0)
             return (
