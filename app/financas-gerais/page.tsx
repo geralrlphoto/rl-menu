@@ -31,10 +31,7 @@ export default function FinancasGeraisPage() {
               </p>
             </div>
 
-            <div className="relative flex items-center justify-between pt-6 border-t border-white/[0.06]">
-              <span className="text-[10px] tracking-[0.3em] text-white/30 uppercase group-hover:text-gold/60 transition-colors">
-                Ver pagamentos
-              </span>
+            <div className="relative flex items-center justify-end pt-6 border-t border-white/[0.06]">
               <span className="text-white/30 group-hover:text-gold transition-colors text-lg">›</span>
             </div>
           </Link>
