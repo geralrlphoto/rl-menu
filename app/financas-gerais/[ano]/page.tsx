@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState, useEffect, use } from 'react'
-import { ComposedChart, BarChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { ComposedChart, BarChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts'
 
 // ─── DADOS BASE 2025 ───────────────────────────────────────────────────────────
 
@@ -189,6 +189,87 @@ const DESPESAS_2025 = [
   { data: '12/2025', mes: 'Dezembro', item: 'EQUIPAMENTO / OUTROS', valor: 1840.83, notas: '' },
 ]
 
+const RECEITAS_2026 = [
+  { data: '21/01/2026', mes: 'Janeiro', tipo: 'CASAMENTO', valor: 600, info: 'ANA E EDNEY (ACERTO FINAL)' },
+  { data: '22/01/2026', mes: 'Janeiro', tipo: 'CORPORATIVO', valor: 750, info: 'ARRAIALZINHO' },
+  { data: '29/01/2026', mes: 'Janeiro', tipo: 'CORPORATIVO', valor: 100, info: 'SITE KAPPA (CAPÃO)' },
+  { data: '12/02/2026', mes: 'Fevereiro', tipo: 'CORPORATIVO', valor: 600, info: 'ANIVERSÁRIO 2026/02/28' },
+  { data: '13/02/2026', mes: 'Fevereiro', tipo: 'CORPORATIVO', valor: 198.59, info: 'Domínio e mudança de site PLÁTANOS' },
+  { data: '21/02/2026', mes: 'Fevereiro', tipo: 'CASAMENTO', valor: 80, info: 'TOTAL SERVIÇO=150€' },
+  { data: '28/02/2026', mes: 'Fevereiro', tipo: 'CASAMENTO', valor: 500, info: 'CASAMENTO 31/01/2026' },
+  { data: '07/03/2026', mes: 'Março', tipo: 'CASAMENTO', valor: 150, info: 'Plataforma Fotos+Vídeos 05/07/2025' },
+  { data: '08/03/2026', mes: 'Março', tipo: 'CASAMENTO', valor: 55, info: 'FOTOS IMPRESSAS - Sra. D.Fátima Ricardo' },
+  { data: '10/03/2026', mes: 'Março', tipo: 'CASAMENTO', valor: 5, info: 'FOTO DIGITAL - Sra. Mihaela Mudric' },
+]
+
+const DESPESAS_2026 = [
+  // Janeiro
+  { data: '05/01/2026', mes: 'Janeiro', item: 'MAXMAT (RIPAS MADEIRA)', valor: 50.17, notas: '' },
+  { data: '05/01/2026', mes: 'Janeiro', item: 'MOTIONARRA MOTION', valor: 29.51, notas: '' },
+  { data: '07/01/2026', mes: 'Janeiro', item: 'RENDA ESTÚDIO', valor: 320, notas: '' },
+  { data: '09/01/2026', mes: 'Janeiro', item: 'LEROY MERLIN', valor: 105.16, notas: '' },
+  { data: '12/01/2026', mes: 'Janeiro', item: 'MAXMAT', valor: 37.93, notas: '' },
+  { data: '14/01/2026', mes: 'Janeiro', item: 'ESTADIA PORTO', valor: 50.85, notas: 'Mentoria João Seagull' },
+  { data: '14/01/2026', mes: 'Janeiro', item: 'EXPRESSO LX', valor: 15.46, notas: 'Mentoria João Seagull' },
+  { data: '14/01/2026', mes: 'Janeiro', item: 'VOO PORTO', valor: 45.22, notas: 'Mentoria João Seagull' },
+  { data: '14/01/2026', mes: 'Janeiro', item: 'IKEA', valor: 129.90, notas: '' },
+  { data: '15/01/2026', mes: 'Janeiro', item: 'INTERNET HOTSPOT', valor: 20, notas: '' },
+  { data: '19/01/2026', mes: 'Janeiro', item: 'CARTÕES DE VISITA', valor: 20, notas: '' },
+  { data: '20/01/2026', mes: 'Janeiro', item: 'LUZ ESTÚDIO', valor: 10.80, notas: '' },
+  { data: '24/01/2026', mes: 'Janeiro', item: 'DOMINIO SITE (RL MEDIA)', valor: 48.59, notas: '' },
+  { data: '31/01/2026', mes: 'Janeiro', item: 'DOMINIO SITE (KAPPA)', valor: 48.59, notas: '' },
+  { data: '31/01/2026', mes: 'Janeiro', item: 'ESTACIONAMENTO LISBOA', valor: 5, notas: 'Mentoria João Seagull' },
+  { data: '31/01/2026', mes: 'Janeiro', item: 'ALIMENTAÇÃO PORTO', valor: 7.48, notas: 'Mentoria João Seagull' },
+  { data: '31/01/2026', mes: 'Janeiro', item: 'UBER', valor: 7.62, notas: 'Mentoria João Seagull' },
+  // Fevereiro
+  { data: '05/02/2026', mes: 'Fevereiro', item: 'RENDA ESTÚDIO', valor: 320, notas: '' },
+  { data: '08/02/2026', mes: 'Fevereiro', item: 'MICROFONE', valor: 60, notas: 'Em 2ª mão' },
+  { data: '16/02/2026', mes: 'Fevereiro', item: 'DOMÍNIO SITE (PLÁTANOS)', valor: 48.59, notas: '' },
+  { data: '17/02/2026', mes: 'Fevereiro', item: 'PLATAFORMA CASAMENTOS.PT', valor: 920, notas: '' },
+  { data: '18/02/2026', mes: 'Fevereiro', item: 'INTERNET HOTSPOT', valor: 20, notas: '' },
+  { data: '25/02/2026', mes: 'Fevereiro', item: 'VIDFLOW', valor: 30.83, notas: '' },
+  { data: '28/02/2026', mes: 'Fevereiro', item: 'COMISSÃO ANA LAGUS RESORT', valor: 150, notas: '' },
+  // Março
+  { data: '01/03/2026', mes: 'Março', item: 'RENDA ESTÚDIO', valor: 320, notas: 'DESPESA FIXA' },
+  { data: '02/03/2026', mes: 'Março', item: 'CTT', valor: 5.28, notas: '' },
+  { data: '03/03/2026', mes: 'Março', item: 'NOTION (AVENÇA MENSAL)', valor: 28.91, notas: '' },
+  { data: '10/03/2026', mes: 'Março', item: 'AMAZON (Discos+rato+cartões)', valor: 734.85, notas: '2x12TB+1x4TB, rato ergonómico, cartões' },
+  { data: '12/03/2026', mes: 'Março', item: 'EDIÇÃO NVS FILMS', valor: 150, notas: 'CAS_08/08/25_SoniaEDiogo' },
+  { data: '13/03/2026', mes: 'Março', item: 'AMAZON (Diversos)', valor: 97.48, notas: '' },
+  { data: '13/03/2026', mes: 'Março', item: 'AMAZON (Microfones lapela)', valor: 34.43, notas: '' },
+  { data: '13/03/2026', mes: 'Março', item: 'MICROS LAPELA BRANCOS', valor: 30, notas: '' },
+  { data: '17/03/2026', mes: 'Março', item: 'MENTORIA JOÃO SEAGULL', valor: 3800, notas: '' },
+  { data: '17/03/2026', mes: 'Março', item: 'SEGURO RC', valor: 64.72, notas: 'ANUAL' },
+  { data: '17/03/2026', mes: 'Março', item: 'LUZ ESTÚDIO', valor: 40.38, notas: '' },
+  { data: '18/03/2026', mes: 'Março', item: 'FILMMAKERSSUMMIT', valor: 87.08, notas: '' },
+  { data: '18/03/2026', mes: 'Março', item: 'INTERNET HOTSPOT', valor: 20, notas: '' },
+  { data: '26/03/2026', mes: 'Março', item: 'EDIÇÃO NVS FILMS', valor: 150, notas: '' },
+  { data: '30/03/2026', mes: 'Março', item: 'CHAT GPT SUBSCRIÇÃO', valor: 7.99, notas: '' },
+  // Abril
+  { data: '01/04/2026', mes: 'Abril', item: 'CLAUDE', valor: 22.14, notas: '' },
+  { data: '02/04/2026', mes: 'Abril', item: 'CP (PALESTRA J.SEAGULL PORTO)', valor: 42, notas: '' },
+  { data: '07/04/2026', mes: 'Abril', item: 'ESTACIONAMENTO LX', valor: 5, notas: 'Palestra João Seagull' },
+  { data: '07/04/2026', mes: 'Abril', item: 'CP (PALESTRA J.SEAGULL PORTO)', valor: 18.70, notas: '' },
+  { data: '08/04/2026', mes: 'Abril', item: 'TOKENS IA', valor: 205.84, notas: '' },
+  { data: '08/04/2026', mes: 'Abril', item: 'RENDA ESTÚDIO', valor: 320, notas: '' },
+  { data: '10/04/2026', mes: 'Abril', item: 'EDIÇÃO JOSÉ SOUZA', valor: 150, notas: '' },
+  { data: '11/04/2026', mes: 'Abril', item: 'INTERNET HOTSPOT', valor: 20, notas: '' },
+  { data: '11/04/2026', mes: 'Abril', item: 'LUZ ESTÚDIO', valor: 19.94, notas: '' },
+]
+
+const DATA_BY_ANO: Record<number, { receitas: typeof RECEITAS_2025; despesas: typeof DESPESAS_2025 }> = {
+  2025: { receitas: RECEITAS_2025, despesas: DESPESAS_2025 },
+  2026: { receitas: RECEITAS_2026 as any, despesas: DESPESAS_2026 as any },
+}
+
+const PIE_COLORS: Record<string, string> = {
+  'CASAMENTO':   '#c9a84c',
+  'BATIZADO':    '#60a5fa',
+  'CORPORATIVO': '#a78bfa',
+  'SESSÃO':      '#4ade80',
+  'OUTRO':       '#6b7280',
+}
+
 // ─── HELPERS ───────────────────────────────────────────────────────────────────
 
 const ORDEM_MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
@@ -258,13 +339,10 @@ export default function FinancasAnoPage({ params }: Props) {
       .then(d => setDbEntries(d.entries ?? []))
   }, [anoNum])
 
-  // Base hardcoded (só para 2025)
-  const baseReceitas: ReceitaRow[] = anoNum === 2025
-    ? RECEITAS_2025.map(r => ({ data: r.data, mes: r.mes, tipo: r.tipo, valor: r.valor, info: r.info }))
-    : []
-  const baseDespesas: DespesaRow[] = anoNum === 2025
-    ? DESPESAS_2025.map(d => ({ data: d.data, mes: d.mes, item: d.item, valor: d.valor, notas: d.notas }))
-    : []
+  // Base hardcoded por ano
+  const baseAnual = DATA_BY_ANO[anoNum] ?? { receitas: [], despesas: [] }
+  const baseReceitas: ReceitaRow[] = (baseAnual.receitas as any[]).map((r: any) => ({ data: r.data, mes: r.mes, tipo: r.tipo, valor: r.valor, info: r.info }))
+  const baseDespesas: DespesaRow[] = (baseAnual.despesas as any[]).map((d: any) => ({ data: d.data, mes: d.mes, item: d.item, valor: d.valor, notas: d.notas }))
 
   // DB entries convertidas
   const dbReceitas: ReceitaRow[] = dbEntries
@@ -456,6 +534,53 @@ export default function FinancasAnoPage({ params }: Props) {
               </ComposedChart>
             </ResponsiveContainer>
           </div>
+          {/* Donut — breakdown por tipo */}
+          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
+            <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-4">Receitas por Tipo</p>
+            <div className="flex items-center gap-6">
+              <ResponsiveContainer width={180} height={180}>
+                <PieChart>
+                  <Pie
+                    data={TIPOS_RECEITA
+                      .map(tipo => ({ nome: tipo, valor: allReceitas.filter(r => r.tipo === tipo).reduce((s, r) => s + r.valor, 0) }))
+                      .filter(d => d.valor > 0)}
+                    cx="50%" cy="50%"
+                    innerRadius={50} outerRadius={75}
+                    dataKey="valor" nameKey="nome"
+                  >
+                    {TIPOS_RECEITA
+                      .map(tipo => ({ nome: tipo, valor: allReceitas.filter(r => r.tipo === tipo).reduce((s, r) => s + r.valor, 0) }))
+                      .filter(d => d.valor > 0)
+                      .map((entry, i) => (
+                        <Cell key={i} fill={PIE_COLORS[entry.nome] ?? '#6b7280'} opacity={0.8} />
+                      ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 12 }}
+                    formatter={(v: number, name: string) => [`${v.toLocaleString('pt-PT', { minimumFractionDigits: 2 })} €`, name]}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex-1 space-y-2.5">
+                {TIPOS_RECEITA
+                  .map(tipo => ({ tipo, valor: allReceitas.filter(r => r.tipo === tipo).reduce((s, r) => s + r.valor, 0) }))
+                  .filter(d => d.valor > 0)
+                  .sort((a, b) => b.valor - a.valor)
+                  .map(d => (
+                    <div key={d.tipo}>
+                      <div className="flex justify-between text-[10px] mb-1">
+                        <span style={{ color: PIE_COLORS[d.tipo] }} className="tracking-wider">{d.tipo}</span>
+                        <span className="text-white/40 font-mono">{fmt(d.valor)} € · {Math.round(d.valor / totalReceitas * 100)}%</span>
+                      </div>
+                      <div className="h-1 bg-white/[0.06] rounded-full overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${d.valor / totalReceitas * 100}%`, backgroundColor: PIE_COLORS[d.tipo], opacity: 0.7 }} />
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </div>
+
           {receitasPorMes.map(({ mes, items }) => {
             const subtotal = items.reduce((s, r) => s + r.valor, 0)
             return (
@@ -566,6 +691,36 @@ export default function FinancasAnoPage({ params }: Props) {
                     </div>
                   </div>
                 )}
+              </div>
+            )
+          })()}
+
+          {/* Top Despesas */}
+          {(() => {
+            const top = [...allDespesas]
+              .sort((a, b) => b.valor - a.valor)
+              .slice(0, 8)
+            const maxValor = top[0]?.valor ?? 1
+            return (
+              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
+                <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-4">Top Despesas do Ano</p>
+                <div className="space-y-2.5">
+                  {top.map((d, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <span className="text-[10px] font-mono text-white/20 w-5 text-right">{i + 1}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between text-[10px] mb-1">
+                          <span className="text-white/60 truncate pr-2">{d.item}</span>
+                          <span className="text-red-400/80 font-mono whitespace-nowrap">{fmt(d.valor)} €</span>
+                        </div>
+                        <div className="h-1 bg-white/[0.06] rounded-full overflow-hidden">
+                          <div className="h-full bg-red-400/50 rounded-full" style={{ width: `${(d.valor / maxValor) * 100}%` }} />
+                        </div>
+                      </div>
+                      <span className="text-[9px] text-white/20 w-12 text-right">{d.mes.slice(0,3)}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )
           })()}
