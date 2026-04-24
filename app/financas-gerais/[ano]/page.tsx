@@ -505,6 +505,69 @@ export default function FinancasAnoPage({ params }: Props) {
       {/* ── DESPESAS por mês ── */}
       {tab === 'despesas' && (
         <div className="space-y-6">
+
+          {/* ── Análise de Custos ── */}
+          {(() => {
+            const mesesAtivos = resumo.filter(r => r.despesas > 0).length || 1
+            const mediaTotal  = totalDespesas / mesesAtivos
+
+            // Detecta custos fixos: itens que aparecem em ≥ 8 meses
+            const porItem = new Map<string, { total: number; meses: Set<string> }>()
+            for (const d of allDespesas) {
+              const key = d.item.toUpperCase().replace(/\s*\(.*\)/, '').trim()
+              if (!porItem.has(key)) porItem.set(key, { total: 0, meses: new Set() })
+              const e = porItem.get(key)!
+              e.total += d.valor
+              e.meses.add(d.mes)
+            }
+            const fixos = [...porItem.entries()]
+              .filter(([, v]) => v.meses.size >= 8)
+              .map(([nome, v]) => ({ nome, media: v.total / v.meses.size, meses: v.meses.size }))
+            const totalFixo = fixos.reduce((s, f) => s + f.media, 0)
+            const totalVariavel = mediaTotal - totalFixo
+
+            return (
+              <div className="space-y-3">
+                {/* Cards */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 text-center">
+                    <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-2">Média Mensal</p>
+                    <p className="text-2xl font-light text-red-400">{fmt(mediaTotal)}</p>
+                    <p className="text-[9px] text-white/20 mt-1">€ / mês</p>
+                  </div>
+                  <div className="rounded-2xl border border-orange-500/20 bg-orange-500/5 p-4 text-center">
+                    <p className="text-[9px] tracking-[0.3em] text-orange-400/60 uppercase mb-2">Custos Fixos</p>
+                    <p className="text-2xl font-light text-orange-300">{fmt(totalFixo)}</p>
+                    <p className="text-[9px] text-orange-400/30 mt-1">€ / mês</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 text-center">
+                    <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-2">Variáveis</p>
+                    <p className="text-2xl font-light text-white/60">{fmt(totalVariavel)}</p>
+                    <p className="text-[9px] text-white/20 mt-1">€ / mês</p>
+                  </div>
+                </div>
+
+                {/* Custos fixos detalhados */}
+                {fixos.length > 0 && (
+                  <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-4">
+                    <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-3">Custos Fixos Identificados <span className="text-white/20 normal-case tracking-normal">(aparecem em {'>'}= 8 meses)</span></p>
+                    <div className="space-y-2">
+                      {fixos.sort((a,b) => b.media - a.media).map(f => (
+                        <div key={f.nome} className="flex items-center gap-3">
+                          <div className="flex-1 bg-white/[0.04] rounded-full h-1.5 overflow-hidden">
+                            <div className="h-full bg-orange-400/50 rounded-full" style={{ width: `${Math.min(100, (f.media / totalFixo) * 100)}%` }} />
+                          </div>
+                          <span className="text-[10px] text-white/50 w-36 truncate text-right">{f.nome}</span>
+                          <span className="text-[10px] font-mono text-orange-300 w-20 text-right">{fmt(f.media)} €</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
+
           {/* Gráfico — saldo por mês (verde = bom, vermelho = mau) */}
           <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
             <div className="flex items-center justify-between mb-1">
