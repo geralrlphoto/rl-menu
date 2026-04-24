@@ -320,28 +320,53 @@ export default function FinancasAnoPage({ params }: Props) {
   const { ano } = use(params)
   const anoNum = parseInt(ano)
 
-  const [tab, setTab]           = useState<'resumo' | 'receitas' | 'despesas'>('resumo')
-  const [dbEntries, setDbEntries] = useState<DbEntry[]>([])
-  const [modalOpen, setModalOpen] = useState(false)
-  const [formTipo, setFormTipo]   = useState<'receita' | 'despesa'>('receita')
-  const [fMes, setFMes]           = useState('Janeiro')
-  const [fData, setFData]         = useState('')
+  const [tab, setTab]             = useState<'resumo' | 'receitas' | 'despesas'>('resumo')
+  const [dbEntries, setDbEntries]   = useState<DbEntry[]>([])
+  const [eventReceitas, setEventReceitas] = useState<ReceitaRow[]>([])
+  const [modalOpen, setModalOpen]   = useState(false)
+  const [formTipo, setFormTipo]     = useState<'receita' | 'despesa'>('receita')
+  const [fMes, setFMes]             = useState('Janeiro')
+  const [fData, setFData]           = useState('')
   const [fCategoria, setFCategoria] = useState('CASAMENTO')
-  const [fItem, setFItem]         = useState('')
-  const [fValor, setFValor]       = useState('')
-  const [fInfo, setFInfo]         = useState('')
-  const [saving, setSaving]       = useState(false)
-  const [deleting, setDeleting]   = useState<string | null>(null)
+  const [fItem, setFItem]           = useState('')
+  const [fValor, setFValor]         = useState('')
+  const [fInfo, setFInfo]           = useState('')
+  const [saving, setSaving]         = useState(false)
+  const [deleting, setDeleting]     = useState<string | null>(null)
 
   useEffect(() => {
     fetch(`/api/financas-gerais?ano=${anoNum}`)
       .then(r => r.json())
       .then(d => setDbEntries(d.entries ?? []))
+
+    // Para 2026+ as receitas vêm dos eventos (mesma fonte que /eventos-2026)
+    if (anoNum >= 2026) {
+      fetch(`/api/eventos-supabase?ano=${anoNum}`)
+        .then(r => r.json())
+        .then(d => {
+          const MES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+          const rows: ReceitaRow[] = (d.events ?? [])
+            .filter((e: any) => e.data_evento)
+            .map((e: any) => {
+              const dt   = new Date(e.data_evento)
+              const mes  = MES[dt.getMonth()]
+              const tipos: string[] = (() => { try { return JSON.parse(e.tipo_evento || '[]') } catch { return [] } })()
+              const tipo = tipos[0] ?? 'CASAMENTO'
+              const valor = (e.valor_real_foto ?? e.valor_foto ?? 0) + (e.valor_liquido ?? 0)
+              const dataFmt = `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`
+              return { data: dataFmt, mes, tipo, valor, info: e.cliente ?? '', referencia: e.referencia ?? '' }
+            })
+            .filter((r: ReceitaRow) => r.valor > 0)
+          setEventReceitas(rows)
+        })
+    }
   }, [anoNum])
 
-  // Base hardcoded por ano
+  // Base hardcoded para 2025; API de eventos para 2026+
   const baseAnual = DATA_BY_ANO[anoNum] ?? { receitas: [], despesas: [] }
-  const baseReceitas: ReceitaRow[] = (baseAnual.receitas as any[]).map((r: any) => ({ data: r.data, mes: r.mes, tipo: r.tipo, valor: r.valor, info: r.info }))
+  const baseReceitas: ReceitaRow[] = anoNum >= 2026
+    ? eventReceitas
+    : (baseAnual.receitas as any[]).map((r: any) => ({ data: r.data, mes: r.mes, tipo: r.tipo, valor: r.valor, info: r.info }))
   const baseDespesas: DespesaRow[] = (baseAnual.despesas as any[]).map((d: any) => ({ data: d.data, mes: d.mes, item: d.item, valor: d.valor, notas: d.notas }))
 
   // DB entries convertidas
