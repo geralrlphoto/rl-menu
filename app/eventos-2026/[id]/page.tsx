@@ -1461,6 +1461,19 @@ export default function EventoPage() {
       }).catch(() => {})
     }
 
+    // Recalcular e guardar valor_liquido quando valor_video ou valor_extras mudam
+    if ((field === 'valor_video' || field === 'valor_extras') && evento) {
+      const vVideo  = field === 'valor_video'  ? (val ?? 0) : (evento.valor_video  ?? 0)
+      const vExtras = field === 'valor_extras' ? (val ?? 0) : (evento.valor_extras ?? 0)
+      const novoLiquido = vVideo + vExtras - valorFotografo - valorVideografo - valorEditorVideo
+      fetch(`/api/eventos-notion/${evento.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ valor_liquido: novoLiquido }),
+      }).catch(() => {})
+      setEvento(prev => prev ? { ...prev, valor_liquido: novoLiquido } : prev)
+    }
+
     // Sincronizar album_estado → álbuns de casamento
     if (field === 'album_estado' && albumNotionId) {
       const toAlbumStatus: Record<string, string> = {
@@ -1477,6 +1490,23 @@ export default function EventoPage() {
         body: JSON.stringify({ status: albumStatus }),
       })
     }
+  }
+
+  // Recalcula e grava valor_liquido no Supabase sempre que uma despesa muda
+  function syncLiquido(overrides: { fotografo?: number; videografo?: number; editorVideo?: number } = {}) {
+    if (!evento) return
+    const vVideo  = evento.valor_video  ?? 0
+    const vExtras = evento.valor_extras ?? 0
+    const vFotog  = overrides.fotografo   ?? valorFotografo
+    const vVideog = overrides.videografo  ?? valorVideografo
+    const vEditor = overrides.editorVideo ?? valorEditorVideo
+    const novoLiquido = vVideo + vExtras - vFotog - vVideog - vEditor
+    fetch(`/api/eventos-notion/${evento.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ valor_liquido: novoLiquido }),
+    }).catch(() => {})
+    setEvento(prev => prev ? { ...prev, valor_liquido: novoLiquido } : prev)
   }
 
   if (loading) return (
@@ -1671,7 +1701,7 @@ export default function EventoPage() {
                 <input
                   type="number" value={valorFotografo}
                   onChange={ev => setValorFotografo(Number(ev.target.value))}
-                  onBlur={ev => { const val = Number(ev.target.value); if (e.referencia) fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: e.referencia, updates: { settings: { valor_fotografo: val } } }) }) }}
+                  onBlur={ev => { const val = Number(ev.target.value); if (e.referencia) fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: e.referencia, updates: { settings: { valor_fotografo: val } } }) }); syncLiquido({ fotografo: val }) }}
                   className="bg-white/5 border border-white/10 hover:border-gold/30 focus:border-gold/40 rounded-lg px-3 py-1.5 text-sm text-white/80 focus:outline-none w-full"
                 />
                 <span className="text-white/40 text-sm shrink-0">€</span>
@@ -1683,7 +1713,7 @@ export default function EventoPage() {
                 <input
                   type="number" value={valorVideografo}
                   onChange={ev => setValorVideografo(Number(ev.target.value))}
-                  onBlur={ev => { const val = Number(ev.target.value); if (e.referencia) fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: e.referencia, updates: { settings: { valor_videografo: val } } }) }) }}
+                  onBlur={ev => { const val = Number(ev.target.value); if (e.referencia) fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: e.referencia, updates: { settings: { valor_videografo: val } } }) }); syncLiquido({ videografo: val }) }}
                   className="bg-white/5 border border-white/10 hover:border-gold/30 focus:border-gold/40 rounded-lg px-3 py-1.5 text-sm text-white/80 focus:outline-none w-full"
                 />
                 <span className="text-white/40 text-sm shrink-0">€</span>
@@ -1695,7 +1725,7 @@ export default function EventoPage() {
                 <input
                   type="number" value={valorEditorVideo}
                   onChange={ev => setValorEditorVideo(Number(ev.target.value))}
-                  onBlur={ev => { const val = Number(ev.target.value); if (e.referencia) fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: e.referencia, updates: { settings: { valor_editor_video: val } } }) }) }}
+                  onBlur={ev => { const val = Number(ev.target.value); if (e.referencia) fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: e.referencia, updates: { settings: { valor_editor_video: val } } }) }); syncLiquido({ editorVideo: val }) }}
                   className="bg-white/5 border border-white/10 hover:border-gold/30 focus:border-gold/40 rounded-lg px-3 py-1.5 text-sm text-white/80 focus:outline-none w-full"
                 />
                 <span className="text-white/40 text-sm shrink-0">€</span>
