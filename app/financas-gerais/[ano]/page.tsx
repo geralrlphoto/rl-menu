@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState, useEffect, use } from 'react'
-import { ComposedChart, BarChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts'
+import { ComposedChart, BarChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, ReferenceLine } from 'recharts'
 
 // ─── DADOS BASE 2025 ───────────────────────────────────────────────────────────
 
@@ -296,6 +296,46 @@ function groupByMes<T extends { mes: string }>(arr: T[]): { mes: string; items: 
   return ORDEM_MESES.filter(m => map.has(m)).map(m => ({ mes: m, items: map.get(m)! }))
 }
 
+function mapEvents(events: any[]): ReceitaRow[] {
+  const MES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+  return events
+    .filter((e: any) => e.data_evento)
+    .map((e: any) => {
+      const dt   = new Date(e.data_evento)
+      const mes  = MES[dt.getMonth()]
+      const tipos: string[] = (() => { try { return JSON.parse(e.tipo_evento || '[]') } catch { return [] } })()
+      const tipo = tipos[0] ?? 'CASAMENTO'
+      const valor = e.valor_liquido ?? 0
+      const dataFmt = `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`
+      return { data: dataFmt, mes, tipo, valor, info: e.cliente ?? '' }
+    })
+    .filter((r: ReceitaRow) => r.valor > 0)
+}
+
+// ─── CUSTOS FIXOS ANUAIS — dados por defeito ───────────────────────────────────
+
+type CustoFixo = { id: string; item: string; valor: number }
+
+const DEFAULT_CUSTOS_FIXOS: Record<number, CustoFixo[]> = {
+  2025: [
+    { id: 'cf25-1', item: 'WFOLIO', valor: 80 },
+    { id: 'cf25-2', item: 'HOSTINGER ALOJAMENTO', valor: 150 },
+    { id: 'cf25-3', item: 'DOMINIO AMEN.PT', valor: 50 },
+    { id: 'cf25-4', item: 'SEGURO RC PROFISSIONAL', valor: 259 },
+  ],
+  2026: [
+    { id: 'cf26-1', item: 'WFOLIO', valor: 80 },
+    { id: 'cf26-2', item: 'HOSTINGER ALOJAMENTO', valor: 150 },
+    { id: 'cf26-3', item: 'DOMINIO AMEN.PT (X2)', valor: 100 },
+    { id: 'cf26-4', item: 'SEGURO RC PROFISSIONAL', valor: 259 },
+    { id: 'cf26-5', item: 'NOTION', valor: 120 },
+    { id: 'cf26-6', item: 'DISCOS NAS 2', valor: 800 },
+    { id: 'cf26-7', item: 'SMASH', valor: 100 },
+    { id: 'cf26-8', item: 'PLATAFORMA "CASAMENTOS.PT"', valor: 920 },
+    { id: 'cf26-9', item: 'COMISSÕES QUINTAS PARCEIRAS', valor: 300 },
+  ],
+}
+
 // ─── TIPOS ─────────────────────────────────────────────────────────────────────
 
 type DbEntry = {
@@ -320,21 +360,43 @@ export default function FinancasAnoPage({ params }: Props) {
   const { ano } = use(params)
   const anoNum = parseInt(ano)
 
-  const [tab, setTab]             = useState<'resumo' | 'receitas' | 'despesas'>('resumo')
-  const [dbEntries, setDbEntries]   = useState<DbEntry[]>([])
-  const [eventReceitas, setEventReceitas] = useState<ReceitaRow[]>([])
-  const [modalOpen, setModalOpen]   = useState(false)
-  const [formTipo, setFormTipo]     = useState<'receita' | 'despesa'>('receita')
-  const [fMes, setFMes]             = useState('Janeiro')
-  const [fData, setFData]           = useState('')
-  const [fCategoria, setFCategoria] = useState('CASAMENTO')
-  const [fItem, setFItem]           = useState('')
-  const [fValor, setFValor]         = useState('')
-  const [fInfo, setFInfo]           = useState('')
-  const [saving, setSaving]         = useState(false)
-  const [deleting, setDeleting]     = useState<string | null>(null)
+  const [tab, setTab]                   = useState<'resumo' | 'receitas' | 'despesas' | 'comparação'>('resumo')
+  const [dbEntries, setDbEntries]       = useState<DbEntry[]>([])
+  const [eventReceitas, setEventReceitas]   = useState<ReceitaRow[]>([])
+  const [prevYearReceitas, setPrevYearReceitas] = useState<ReceitaRow[]>([])
+  const [prevYearDespesas, setPrevYearDespesas] = useState<DespesaRow[]>([])
+  const [metaMensal, setMetaMensal]     = useState<number>(0)
+  const [modalOpen, setModalOpen]       = useState(false)
+  const [formTipo, setFormTipo]         = useState<'receita' | 'despesa'>('receita')
+  const [fMes, setFMes]                 = useState('Janeiro')
+  const [fData, setFData]               = useState('')
+  const [fCategoria, setFCategoria]     = useState('CASAMENTO')
+  const [fItem, setFItem]               = useState('')
+  const [fValor, setFValor]             = useState('')
+  const [fInfo, setFInfo]               = useState('')
+  const [saving, setSaving]             = useState(false)
+  const [deleting, setDeleting]         = useState<string | null>(null)
+  // Custos fixos anuais
+  const [custosFixosAnuais, setCustosFixosAnuais] = useState<CustoFixo[]>([])
+  const [cfModalOpen, setCfModalOpen]   = useState(false)
+  const [cfItem, setCfItem]             = useState('')
+  const [cfValor, setCfValor]           = useState('')
 
   useEffect(() => {
+    // Meta mensal from localStorage
+    const saved = localStorage.getItem(`meta-mensal-${anoNum}`)
+    if (saved) setMetaMensal(parseFloat(saved) || 0)
+
+    // Custos fixos anuais from localStorage (com defaults pré-carregados)
+    const savedCF = localStorage.getItem(`custos-fixos-${anoNum}`)
+    if (savedCF) {
+      try { setCustosFixosAnuais(JSON.parse(savedCF)) } catch {}
+    } else if (DEFAULT_CUSTOS_FIXOS[anoNum]) {
+      setCustosFixosAnuais(DEFAULT_CUSTOS_FIXOS[anoNum])
+      localStorage.setItem(`custos-fixos-${anoNum}`, JSON.stringify(DEFAULT_CUSTOS_FIXOS[anoNum]))
+    }
+
+    // DB entries
     fetch(`/api/financas-gerais?ano=${anoNum}`)
       .then(r => r.json())
       .then(d => setDbEntries(d.entries ?? []))
@@ -343,25 +405,49 @@ export default function FinancasAnoPage({ params }: Props) {
     if (anoNum >= 2026) {
       fetch(`/api/eventos-supabase?ano=${anoNum}`)
         .then(r => r.json())
-        .then(d => {
-          const MES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
-          const rows: ReceitaRow[] = (d.events ?? [])
-            .filter((e: any) => e.data_evento)
-            .map((e: any) => {
-              const dt   = new Date(e.data_evento)
-              const mes  = MES[dt.getMonth()]
-              const tipos: string[] = (() => { try { return JSON.parse(e.tipo_evento || '[]') } catch { return [] } })()
-              const tipo = tipos[0] ?? 'CASAMENTO'
-              // Usa valor_liquido — mesma lógica da página eventos-2026 (card Vídeo e total mensal)
-              const valor = e.valor_liquido ?? 0
-              const dataFmt = `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`
-              return { data: dataFmt, mes, tipo, valor, info: e.cliente ?? '', referencia: e.referencia ?? '' }
-            })
-            .filter((r: ReceitaRow) => r.valor > 0)
-          setEventReceitas(rows)
-        })
+        .then(d => setEventReceitas(mapEvents(d.events ?? [])))
+    }
+
+    // Dados do ano anterior para a aba de comparação
+    if (anoNum >= 2026) {
+      const prevAno = anoNum - 1
+      if (prevAno === 2025) {
+        // Usar dados hardcoded 2025
+        setPrevYearReceitas(RECEITAS_2025.map(r => ({ data: r.data, mes: r.mes, tipo: r.tipo, valor: r.valor, info: r.info })))
+        setPrevYearDespesas(DESPESAS_2025.map(d => ({ data: d.data, mes: d.mes, item: d.item, valor: d.valor, notas: d.notas })))
+      } else {
+        // Para 2027+ buscar via API
+        fetch(`/api/eventos-supabase?ano=${prevAno}`)
+          .then(r => r.json())
+          .then(d => setPrevYearReceitas(mapEvents(d.events ?? [])))
+      }
     }
   }, [anoNum])
+
+  function handleMetaChange(val: number) {
+    setMetaMensal(val)
+    if (val > 0) localStorage.setItem(`meta-mensal-${anoNum}`, String(val))
+    else localStorage.removeItem(`meta-mensal-${anoNum}`)
+  }
+
+  function addCustoFixo() {
+    const valorNum = parseFloat(cfValor.replace(',', '.'))
+    if (!cfItem.trim() || !valorNum) return
+    const novo: CustoFixo = { id: `cf-${Date.now()}`, item: cfItem.trim().toUpperCase(), valor: valorNum }
+    const updated = [...custosFixosAnuais, novo]
+    setCustosFixosAnuais(updated)
+    localStorage.setItem(`custos-fixos-${anoNum}`, JSON.stringify(updated))
+    setCfItem(''); setCfValor('')
+    setCfModalOpen(false)
+  }
+
+  function removeCustoFixo(id: string) {
+    const updated = custosFixosAnuais.filter(c => c.id !== id)
+    setCustosFixosAnuais(updated)
+    localStorage.setItem(`custos-fixos-${anoNum}`, JSON.stringify(updated))
+  }
+
+  const totalCustosFixosAnuais = custosFixosAnuais.reduce((s, c) => s + c.valor, 0)
 
   // Base hardcoded para 2025; API de eventos para 2026+
   const baseAnual = DATA_BY_ANO[anoNum] ?? { receitas: [], despesas: [] }
@@ -396,6 +482,47 @@ export default function FinancasAnoPage({ params }: Props) {
 
   const receitasPorMes = groupByMes(allReceitas)
   const despesasPorMes = groupByMes(allDespesas)
+
+  // ── Previsão de fecho de ano ──
+  const hoje = new Date()
+  const anoAtual = hoje.getFullYear()
+  const mesAtualIdx = hoje.getMonth() // 0-based (April = 3)
+  const podeProjetar = anoNum === anoAtual
+  const mesesDecorridos = podeProjetar ? mesAtualIdx + 1 : (anoNum < anoAtual ? 12 : 0)
+  const mesesFuturos = podeProjetar ? 12 - mesesDecorridos : 0
+
+  const mesesComDados = resumo.filter(r => ORDEM_MESES.indexOf(r.mes) < mesesDecorridos)
+  const avgRecMes = mesesComDados.length > 0
+    ? mesesComDados.reduce((s, r) => s + r.receitas, 0) / mesesComDados.length : 0
+  const avgDespMes = mesesComDados.length > 0
+    ? mesesComDados.reduce((s, r) => s + r.despesas, 0) / mesesComDados.length : 0
+  const projReceitas = totalReceitas + avgRecMes * mesesFuturos
+  const projDespesas = totalDespesas + avgDespMes * mesesFuturos
+  const projSaldo = projReceitas - projDespesas
+
+  // ── Comparação com o ano anterior ──
+  const prevTotalReceitas = prevYearReceitas.reduce((s, r) => s + r.valor, 0)
+  const prevTotalDespesas = prevYearDespesas.reduce((s, d) => s + d.valor, 0)
+  const prevSaldo = prevTotalReceitas - prevTotalDespesas
+
+  const prevResumo = ORDEM_MESES
+    .map(mes => ({
+      mes,
+      receitas: prevYearReceitas.filter(r => r.mes === mes).reduce((s, r) => s + r.valor, 0),
+      despesas: prevYearDespesas.filter(d => d.mes === mes).reduce((s, d) => s + d.valor, 0),
+    }))
+    .filter(r => r.receitas > 0 || r.despesas > 0)
+
+  // Dados para gráfico agrupado por mês (comparação)
+  const comparacaoChartData = ORDEM_MESES.map(mes => {
+    const obj: Record<string, any> = { mes: mes.slice(0, 3) }
+    obj[String(anoNum - 1)] = prevYearReceitas.filter(r => r.mes === mes).reduce((s, r) => s + r.valor, 0)
+    obj[String(anoNum)]     = allReceitas.filter(r => r.mes === mes).reduce((s, r) => s + r.valor, 0)
+    return obj
+  }).filter(d => (d[String(anoNum - 1)] as number) > 0 || (d[String(anoNum)] as number) > 0)
+
+  // Meses acima da meta
+  const mesesAcimaMeta = metaMensal > 0 ? resumo.filter(r => r.receitas >= metaMensal).length : 0
 
   function openModal(tipo: 'receita' | 'despesa') {
     setFormTipo(tipo)
@@ -461,17 +588,23 @@ export default function FinancasAnoPage({ params }: Props) {
 
       {/* Tabs */}
       <div className="flex items-center justify-between mb-8 border-b border-white/[0.06]">
-        <div className="flex gap-1">
+        <div className="flex gap-1 flex-wrap">
           {(['resumo', 'receitas', 'despesas'] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
-              className={`px-5 py-2.5 text-xs tracking-[0.25em] uppercase transition-colors ${tab === t ? 'text-gold border-b-2 border-gold -mb-px' : 'text-white/30 hover:text-white/60'}`}>
-              {t === 'resumo' ? 'Resumo Mensal' : t === 'receitas' ? `Receitas (${allReceitas.length})` : `Despesas (${allDespesas.length})`}
+              className={`px-4 py-2.5 text-xs tracking-[0.25em] uppercase transition-colors ${tab === t ? 'text-gold border-b-2 border-gold -mb-px' : 'text-white/30 hover:text-white/60'}`}>
+              {t === 'resumo' ? 'Resumo' : t === 'receitas' ? `Receitas (${allReceitas.length})` : `Despesas (${allDespesas.length})`}
             </button>
           ))}
+          {anoNum >= 2026 && (
+            <button onClick={() => setTab('comparação')}
+              className={`px-4 py-2.5 text-xs tracking-[0.25em] uppercase transition-colors ${tab === 'comparação' ? 'text-gold border-b-2 border-gold -mb-px' : 'text-white/30 hover:text-white/60'}`}>
+              {anoNum - 1} vs {anoNum}
+            </button>
+          )}
         </div>
 
         {/* Botão Adicionar */}
-        {tab !== 'resumo' && (
+        {(tab === 'receitas' || tab === 'despesas') && (
           <button
             onClick={() => openModal(tab === 'receitas' ? 'receita' : 'despesa')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs tracking-widest uppercase transition-all border ${
@@ -488,53 +621,124 @@ export default function FinancasAnoPage({ params }: Props) {
 
       {/* ── RESUMO ── */}
       {tab === 'resumo' && (
-        <div className="rounded-2xl border border-white/[0.06] overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-white/[0.06]">
-                <th className="text-left px-5 py-3 text-[10px] tracking-[0.3em] text-white/30 uppercase font-normal">Mês</th>
-                <th className="text-right px-5 py-3 text-[10px] tracking-[0.3em] text-green-400/60 uppercase font-normal">Receitas</th>
-                <th className="text-right px-5 py-3 text-[10px] tracking-[0.3em] text-red-400/60 uppercase font-normal">Despesas</th>
-                <th className="text-right px-5 py-3 text-[10px] tracking-[0.3em] text-white/30 uppercase font-normal">Saldo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {resumo.map((r, i) => {
-                const s = r.receitas - r.despesas
-                return (
-                  <tr key={r.mes} className={`border-b border-white/[0.04] ${i % 2 === 0 ? 'bg-white/[0.01]' : ''}`}>
-                    <td className="px-5 py-3 text-white/70">{r.mes}</td>
-                    <td className="px-5 py-3 text-right text-green-400/80 font-mono">{fmt(r.receitas)} €</td>
-                    <td className="px-5 py-3 text-right text-red-400/80 font-mono">{fmt(r.despesas)} €</td>
-                    <td className={`px-5 py-3 text-right font-mono font-semibold ${s >= 0 ? 'text-gold' : 'text-red-400'}`}>
-                      {s >= 0 ? '+' : ''}{fmt(s)} €
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-            <tfoot>
-              <tr className="border-t border-white/[0.1] bg-white/[0.03]">
-                <td className="px-5 py-3 text-[10px] tracking-[0.3em] text-white/40 uppercase font-semibold">Total</td>
-                <td className="px-5 py-3 text-right text-green-400 font-mono font-bold">{fmt(totalReceitas)} €</td>
-                <td className="px-5 py-3 text-right text-red-400 font-mono font-bold">{fmt(totalDespesas)} €</td>
-                <td className={`px-5 py-3 text-right font-mono font-bold ${saldo >= 0 ? 'text-gold' : 'text-red-400'}`}>{saldo >= 0 ? '+' : ''}{fmt(saldo)} €</td>
-              </tr>
-            </tfoot>
-          </table>
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-white/[0.06] overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-white/[0.06]">
+                  <th className="text-left px-5 py-3 text-[10px] tracking-[0.3em] text-white/30 uppercase font-normal">Mês</th>
+                  <th className="text-right px-5 py-3 text-[10px] tracking-[0.3em] text-green-400/60 uppercase font-normal">Receitas</th>
+                  <th className="text-right px-5 py-3 text-[10px] tracking-[0.3em] text-red-400/60 uppercase font-normal">Despesas</th>
+                  <th className="text-right px-5 py-3 text-[10px] tracking-[0.3em] text-white/30 uppercase font-normal">Saldo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {resumo.map((r, i) => {
+                  const s = r.receitas - r.despesas
+                  return (
+                    <tr key={r.mes} className={`border-b border-white/[0.04] ${i % 2 === 0 ? 'bg-white/[0.01]' : ''}`}>
+                      <td className="px-5 py-3 text-white/70">{r.mes}</td>
+                      <td className="px-5 py-3 text-right text-green-400/80 font-mono">{fmt(r.receitas)} €</td>
+                      <td className="px-5 py-3 text-right text-red-400/80 font-mono">{fmt(r.despesas)} €</td>
+                      <td className={`px-5 py-3 text-right font-mono font-semibold ${s >= 0 ? 'text-gold' : 'text-red-400'}`}>
+                        {s >= 0 ? '+' : ''}{fmt(s)} €
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+              <tfoot>
+                <tr className="border-t border-white/[0.1] bg-white/[0.03]">
+                  <td className="px-5 py-3 text-[10px] tracking-[0.3em] text-white/40 uppercase font-semibold">Total</td>
+                  <td className="px-5 py-3 text-right text-green-400 font-mono font-bold">{fmt(totalReceitas)} €</td>
+                  <td className="px-5 py-3 text-right text-red-400 font-mono font-bold">{fmt(totalDespesas)} €</td>
+                  <td className={`px-5 py-3 text-right font-mono font-bold ${saldo >= 0 ? 'text-gold' : 'text-red-400'}`}>{saldo >= 0 ? '+' : ''}{fmt(saldo)} €</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          {/* ── Previsão de Fecho de Ano ── */}
+          {podeProjetar && mesesFuturos > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-white/[0.06]" />
+                <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">Previsão de Fecho de Ano</p>
+                <div className="h-px flex-1 bg-white/[0.06]" />
+              </div>
+              <p className="text-[10px] text-white/20 text-center">
+                Baseado na média dos últimos {mesesDecorridos} {mesesDecorridos === 1 ? 'mês' : 'meses'} · {mesesFuturos} {mesesFuturos === 1 ? 'mês restante' : 'meses restantes'} a projetar
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="rounded-2xl border border-green-500/20 bg-green-500/5 p-5">
+                  <p className="text-[9px] tracking-[0.3em] text-green-400/50 uppercase mb-1">Receitas Previstas</p>
+                  <p className="text-2xl font-light text-green-400">{fmt(projReceitas)}</p>
+                  <p className="text-[9px] text-green-400/30 mt-1">€ no final do ano</p>
+                  <p className="text-[9px] text-white/20 mt-2">média {fmt(avgRecMes)} €/mês</p>
+                </div>
+                <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-5">
+                  <p className="text-[9px] tracking-[0.3em] text-red-400/50 uppercase mb-1">Despesas Previstas</p>
+                  <p className="text-2xl font-light text-red-400">{fmt(projDespesas)}</p>
+                  <p className="text-[9px] text-red-400/30 mt-1">€ no final do ano</p>
+                  <p className="text-[9px] text-white/20 mt-2">média {fmt(avgDespMes)} €/mês</p>
+                </div>
+                <div className={`rounded-2xl border p-5 ${projSaldo >= 0 ? 'border-gold/30 bg-gold/5' : 'border-red-500/30 bg-red-500/5'}`}>
+                  <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Saldo Previsto</p>
+                  <p className={`text-2xl font-light ${projSaldo >= 0 ? 'text-gold' : 'text-red-400'}`}>{projSaldo >= 0 ? '+' : ''}{fmt(projSaldo)}</p>
+                  <p className={`text-[9px] mt-1 ${projSaldo >= 0 ? 'text-gold/30' : 'text-red-400/30'}`}>€ no final do ano</p>
+                  <p className="text-[9px] text-white/20 mt-2 italic">estimativa linear</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Badge ano completo */}
+          {anoNum < anoAtual && (
+            <div className="flex items-center justify-center gap-2 py-3">
+              <span className="text-[10px] tracking-[0.3em] text-gold/40 uppercase px-4 py-1.5 border border-gold/20 rounded-full">
+                ✓ Ano Completo
+              </span>
+            </div>
+          )}
         </div>
       )}
 
       {/* ── RECEITAS por mês ── */}
       {tab === 'receitas' && (
         <div className="space-y-6">
+
+          {/* Meta Mensal */}
+          <div className="flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.01] px-5 py-3.5">
+            <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase flex-1">Meta Mensal</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                value={metaMensal || ''}
+                onChange={e => handleMetaChange(parseFloat(e.target.value) || 0)}
+                placeholder="0"
+                className="w-28 bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-sm text-white font-mono text-right placeholder-white/20 focus:outline-none focus:border-gold/40 transition-colors"
+              />
+              <span className="text-white/30 text-sm">€ / mês</span>
+            </div>
+            {metaMensal > 0 && resumo.length > 0 && (
+              <span className={`text-[10px] tracking-wider px-3 py-1 rounded-full border ${
+                mesesAcimaMeta >= resumo.length / 2
+                  ? 'border-green-500/30 bg-green-500/10 text-green-400'
+                  : 'border-orange-500/30 bg-orange-500/10 text-orange-400'
+              }`}>
+                {mesesAcimaMeta}/{resumo.length} meses ✓
+              </span>
+            )}
+          </div>
+
           {/* Gráfico — barras verdes + linha acumulada dourada */}
           <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
             <div className="flex items-center justify-between mb-4">
               <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase">Receitas por Mês</p>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 flex-wrap justify-end">
                 <span className="flex items-center gap-1.5 text-[10px] text-white/30"><span className="w-3 h-3 rounded-sm bg-green-400/70 inline-block" /> Mensal</span>
                 <span className="flex items-center gap-1.5 text-[10px] text-white/30"><span className="w-4 h-px bg-gold inline-block" /> Acumulado</span>
+                {metaMensal > 0 && <span className="flex items-center gap-1.5 text-[10px] text-white/30"><span className="w-4 h-px border-t border-dashed border-gold/60 inline-block" /> Meta</span>}
               </div>
             </div>
             <ResponsiveContainer width="100%" height={200}>
@@ -555,11 +759,28 @@ export default function FinancasAnoPage({ params }: Props) {
                     name === 'mensal' ? 'Mês' : 'Acumulado'
                   ]}
                 />
-                <Bar yAxisId="bar" dataKey="mensal" radius={[6,6,0,0]} fill="rgba(74,222,128,0.65)" />
+                {metaMensal > 0 && (
+                  <ReferenceLine
+                    yAxisId="bar"
+                    y={metaMensal}
+                    stroke="rgba(201,168,76,0.55)"
+                    strokeDasharray="5 4"
+                    label={{ value: `Meta ${fmt(metaMensal)} €`, fill: 'rgba(201,168,76,0.5)', fontSize: 9, position: 'insideTopRight' }}
+                  />
+                )}
+                <Bar yAxisId="bar" dataKey="mensal" radius={[6,6,0,0]}>
+                  {resumo.map((r, i) => (
+                    <Cell
+                      key={i}
+                      fill={metaMensal > 0 && r.receitas >= metaMensal ? 'rgba(74,222,128,0.85)' : 'rgba(74,222,128,0.55)'}
+                    />
+                  ))}
+                </Bar>
                 <Line yAxisId="line" dataKey="acumulado" type="monotone" stroke="#c9a84c" strokeWidth={2} dot={{ fill: '#c9a84c', r: 3, strokeWidth: 0 }} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
+
           {/* Donut — breakdown por tipo */}
           <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
             <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-4">Receitas por Tipo</p>
@@ -613,7 +834,14 @@ export default function FinancasAnoPage({ params }: Props) {
               <div key={mes} className="rounded-2xl border border-white/[0.06] overflow-hidden">
                 <div className="flex items-center justify-between px-5 py-3 bg-white/[0.03] border-b border-white/[0.06]">
                   <span className="text-xs tracking-[0.35em] text-white/60 uppercase font-medium">{mes}</span>
-                  <span className="text-sm font-mono font-semibold text-green-400">{fmt(subtotal)} €</span>
+                  <div className="flex items-center gap-3">
+                    {metaMensal > 0 && (
+                      <span className={`text-[9px] tracking-wider px-2 py-0.5 rounded-full ${subtotal >= metaMensal ? 'text-green-400/70 bg-green-500/10' : 'text-orange-400/70 bg-orange-500/10'}`}>
+                        {subtotal >= metaMensal ? '✓ meta' : `${fmt(metaMensal - subtotal)} € p/ meta`}
+                      </span>
+                    )}
+                    <span className="text-sm font-mono font-semibold text-green-400">{fmt(subtotal)} €</span>
+                  </div>
                 </div>
                 <table className="w-full text-sm">
                   <tbody>
@@ -656,6 +884,70 @@ export default function FinancasAnoPage({ params }: Props) {
       {/* ── DESPESAS por mês ── */}
       {tab === 'despesas' && (
         <div className="space-y-6">
+
+          {/* ── Custos Fixos Anuais ── */}
+          <div className="rounded-2xl border border-orange-500/25 bg-orange-500/[0.04] overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-orange-500/15">
+              <div>
+                <p className="text-xs tracking-[0.4em] text-orange-400/70 uppercase">Custos Fixos Anuais</p>
+                <p className="text-[10px] text-white/20 mt-0.5 tracking-wider">despesas recorrentes planeadas para {ano}</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <p className="text-[9px] text-white/20 uppercase tracking-widest">Total</p>
+                  <p className="text-xl font-mono font-semibold text-orange-300">{fmt(totalCustosFixosAnuais)} €</p>
+                </div>
+                <button
+                  onClick={() => { setCfItem(''); setCfValor(''); setCfModalOpen(true) }}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 text-xs tracking-widest uppercase transition-all"
+                >
+                  <span className="text-base leading-none">+</span> Adicionar
+                </button>
+              </div>
+            </div>
+
+            {/* Lista */}
+            <div className="divide-y divide-orange-500/[0.08]">
+              {custosFixosAnuais.length === 0 && (
+                <p className="text-center py-8 text-white/20 text-xs tracking-widest">Sem custos fixos definidos</p>
+              )}
+              {custosFixosAnuais.map((c, i) => (
+                <div key={c.id} className="group flex items-center gap-4 px-6 py-3.5 hover:bg-orange-500/[0.04] transition-colors">
+                  <span className="text-xl font-extralight text-white/10 w-7 text-right flex-shrink-0">{i + 1}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-3 mb-1.5">
+                      <span className="text-sm text-white/70 font-medium tracking-wide truncate">{c.item}</span>
+                      <span className="text-base font-mono font-semibold text-orange-300 flex-shrink-0">{fmt(c.valor)} €</span>
+                    </div>
+                    {/* Barra proporcional */}
+                    <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-orange-400/60"
+                        style={{ width: `${totalCustosFixosAnuais > 0 ? (c.valor / totalCustosFixosAnuais) * 100 : 0}%` }}
+                      />
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-white/20 flex-shrink-0 w-16 text-right font-mono">
+                    {totalCustosFixosAnuais > 0 ? Math.round((c.valor / totalCustosFixosAnuais) * 100) : 0}%
+                  </span>
+                  <button
+                    onClick={() => removeCustoFixo(c.id)}
+                    className="opacity-0 group-hover:opacity-100 text-white/20 hover:text-red-400 transition-all text-lg leading-none flex-shrink-0 w-6 text-center"
+                    title="Remover"
+                  >×</button>
+                </div>
+              ))}
+            </div>
+
+            {/* Footer totais */}
+            {custosFixosAnuais.length > 0 && (
+              <div className="flex items-center justify-between px-6 py-3 bg-orange-500/[0.06] border-t border-orange-500/15">
+                <span className="text-[10px] tracking-[0.3em] text-white/30 uppercase">{custosFixosAnuais.length} itens · média mensal</span>
+                <span className="text-sm font-mono font-semibold text-orange-300/70">{fmt(totalCustosFixosAnuais / 12)} € / mês</span>
+              </div>
+            )}
+          </div>
 
           {/* ── Análise de Custos ── */}
           {(() => {
@@ -728,22 +1020,33 @@ export default function FinancasAnoPage({ params }: Props) {
               .slice(0, 8)
             const maxValor = top[0]?.valor ?? 1
             return (
-              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
-                <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-4">Top Despesas do Ano</p>
-                <div className="space-y-2.5">
+              <div className="rounded-2xl border border-red-500/20 bg-red-500/[0.03] p-6">
+                <p className="text-xs tracking-[0.4em] text-red-400/50 uppercase mb-6">Top Despesas do Ano</p>
+                <div className="space-y-4">
                   {top.map((d, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <span className="text-[10px] font-mono text-white/20 w-5 text-right">{i + 1}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between text-[10px] mb-1">
-                          <span className="text-white/60 truncate pr-2">{d.item}</span>
-                          <span className="text-red-400/80 font-mono whitespace-nowrap">{fmt(d.valor)} €</span>
+                    <div key={i} className="flex items-center gap-4">
+                      {/* Rank */}
+                      <span className="text-2xl font-extralight text-white/10 w-8 text-right leading-none flex-shrink-0">{i + 1}</span>
+
+                      {/* Barra + labels */}
+                      <div className="flex-1 min-w-0 space-y-1.5">
+                        <div className="flex items-baseline justify-between gap-3">
+                          <span className="text-sm text-white/70 truncate font-medium tracking-wide">{d.item}</span>
+                          <div className="flex items-baseline gap-2 flex-shrink-0">
+                            <span className="text-base font-mono font-semibold text-red-400" style={{ opacity: 1 - i * 0.07 }}>{fmt(d.valor)} €</span>
+                            <span className="text-[10px] text-white/25 tracking-wider">{d.mes.slice(0,3).toUpperCase()}</span>
+                          </div>
                         </div>
-                        <div className="h-1 bg-white/[0.06] rounded-full overflow-hidden">
-                          <div className="h-full bg-red-400/50 rounded-full" style={{ width: `${(d.valor / maxValor) * 100}%` }} />
+                        <div className="h-2.5 bg-white/[0.05] rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full"
+                            style={{
+                              width: `${(d.valor / maxValor) * 100}%`,
+                              background: `rgba(248,113,113,${0.75 - i * 0.06})`,
+                            }}
+                          />
                         </div>
                       </div>
-                      <span className="text-[9px] text-white/20 w-12 text-right">{d.mes.slice(0,3)}</span>
                     </div>
                   ))}
                 </div>
@@ -792,6 +1095,7 @@ export default function FinancasAnoPage({ params }: Props) {
               </BarChart>
             </ResponsiveContainer>
           </div>
+
           {despesasPorMes.map(({ mes, items }) => {
             const subtotal = items.reduce((s, d) => s + d.valor, 0)
             return (
@@ -831,6 +1135,225 @@ export default function FinancasAnoPage({ params }: Props) {
           <div className="flex items-center justify-between px-5 py-4 rounded-2xl border border-red-500/20 bg-red-500/5">
             <span className="text-xs tracking-[0.35em] text-white/40 uppercase">Total Despesas {ano}</span>
             <span className="text-xl font-mono font-bold text-red-400">{fmt(totalDespesas)} €</span>
+          </div>
+        </div>
+      )}
+
+      {/* ── COMPARAÇÃO ANO ANTERIOR ── */}
+      {tab === 'comparação' && anoNum >= 2026 && (
+        <div className="space-y-6">
+
+          {/* Cards comparação */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Ano anterior */}
+            <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5 space-y-3">
+              <p className="text-[10px] tracking-[0.4em] text-blue-400/60 uppercase">{anoNum - 1}</p>
+              <div className="flex justify-between items-end">
+                <div>
+                  <p className="text-[9px] text-white/30 uppercase tracking-wider mb-1">Receitas</p>
+                  <p className="text-2xl font-light text-blue-300">{fmt(prevTotalReceitas)} <span className="text-sm text-blue-300/40">€</span></p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[9px] text-white/30 uppercase tracking-wider mb-1">Despesas</p>
+                  <p className="text-xl font-light text-red-400/70">{fmt(prevTotalDespesas)} <span className="text-sm text-red-400/30">€</span></p>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-white/[0.06]">
+                <p className="text-[9px] text-white/30 uppercase tracking-wider mb-1">Saldo</p>
+                <p className={`text-xl font-semibold font-mono ${prevSaldo >= 0 ? 'text-blue-300' : 'text-red-400'}`}>
+                  {prevSaldo >= 0 ? '+' : ''}{fmt(prevSaldo)} €
+                </p>
+              </div>
+            </div>
+            {/* Ano atual */}
+            <div className="rounded-2xl border border-gold/30 bg-gold/5 p-5 space-y-3">
+              <p className="text-[10px] tracking-[0.4em] text-gold/60 uppercase">{anoNum} <span className="text-[8px] text-white/20 ml-1">{podeProjetar ? '(em curso)' : ''}</span></p>
+              <div className="flex justify-between items-end">
+                <div>
+                  <p className="text-[9px] text-white/30 uppercase tracking-wider mb-1">Receitas</p>
+                  <p className="text-2xl font-light text-green-400">{fmt(totalReceitas)} <span className="text-sm text-green-400/40">€</span></p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[9px] text-white/30 uppercase tracking-wider mb-1">Despesas</p>
+                  <p className="text-xl font-light text-red-400/70">{fmt(totalDespesas)} <span className="text-sm text-red-400/30">€</span></p>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-white/[0.06]">
+                <p className="text-[9px] text-white/30 uppercase tracking-wider mb-1">Saldo</p>
+                <p className={`text-xl font-semibold font-mono ${saldo >= 0 ? 'text-gold' : 'text-red-400'}`}>
+                  {saldo >= 0 ? '+' : ''}{fmt(saldo)} €
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Variação */}
+          {prevTotalReceitas > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {(() => {
+                const varRec  = totalReceitas - prevTotalReceitas
+                const varDesp = totalDespesas - prevTotalDespesas
+                const varSaldo = saldo - prevSaldo
+                const pctRec  = prevTotalReceitas > 0 ? (varRec / prevTotalReceitas) * 100 : 0
+                return (
+                  <>
+                    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 text-center">
+                      <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-2">Δ Receitas</p>
+                      <p className={`text-xl font-mono font-semibold ${varRec >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {varRec >= 0 ? '+' : ''}{fmt(varRec)} €
+                      </p>
+                      <p className={`text-[10px] mt-1 ${varRec >= 0 ? 'text-green-400/40' : 'text-red-400/40'}`}>
+                        {varRec >= 0 ? '▲' : '▼'} {Math.abs(pctRec).toFixed(1)}%
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 text-center">
+                      <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-2">Δ Despesas</p>
+                      <p className={`text-xl font-mono font-semibold ${varDesp <= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {varDesp >= 0 ? '+' : ''}{fmt(varDesp)} €
+                      </p>
+                      <p className={`text-[10px] mt-1 ${varDesp <= 0 ? 'text-green-400/40' : 'text-red-400/40'}`}>
+                        {varDesp >= 0 ? '▲' : '▼'} {prevTotalDespesas > 0 ? Math.abs((varDesp / prevTotalDespesas) * 100).toFixed(1) : '—'}%
+                      </p>
+                    </div>
+                    <div className={`rounded-2xl border p-4 text-center ${varSaldo >= 0 ? 'border-gold/20 bg-gold/5' : 'border-red-500/20 bg-red-500/5'}`}>
+                      <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-2">Δ Saldo</p>
+                      <p className={`text-xl font-mono font-semibold ${varSaldo >= 0 ? 'text-gold' : 'text-red-400'}`}>
+                        {varSaldo >= 0 ? '+' : ''}{fmt(varSaldo)} €
+                      </p>
+                      <p className={`text-[10px] mt-1 ${varSaldo >= 0 ? 'text-gold/40' : 'text-red-400/40'}`}>
+                        vs {anoNum - 1}
+                      </p>
+                    </div>
+                  </>
+                )
+              })()}
+            </div>
+          )}
+
+          {/* Gráfico comparação receitas por mês */}
+          {comparacaoChartData.length > 0 && (
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase">Receitas por Mês</p>
+                <div className="flex items-center gap-4">
+                  <span className="flex items-center gap-1.5 text-[10px] text-white/30">
+                    <span className="w-3 h-3 rounded-sm bg-blue-400/60 inline-block" /> {anoNum - 1}
+                  </span>
+                  <span className="flex items-center gap-1.5 text-[10px] text-white/30">
+                    <span className="w-3 h-3 rounded-sm bg-gold/70 inline-block" /> {anoNum}
+                  </span>
+                </div>
+              </div>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={comparacaoChartData} barCategoryGap="25%" barGap={3}>
+                  <XAxis dataKey="mes" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <YAxis hide />
+                  <Tooltip
+                    cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                    contentStyle={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 12 }}
+                    labelStyle={{ color: 'rgba(255,255,255,0.4)', marginBottom: 4, fontSize: 11 }}
+                    formatter={(v: number, name: string) => [
+                      `${v.toLocaleString('pt-PT', { minimumFractionDigits: 2 })} €`,
+                      name
+                    ]}
+                  />
+                  <Bar dataKey={String(anoNum - 1)} name={String(anoNum - 1)} fill="rgba(96,165,250,0.55)" radius={[4,4,0,0]} />
+                  <Bar dataKey={String(anoNum)} name={String(anoNum)} fill="rgba(201,168,76,0.70)" radius={[4,4,0,0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
+          {/* Tabela comparativa mensal */}
+          <div className="rounded-2xl border border-white/[0.06] overflow-hidden">
+            <div className="px-5 py-3 bg-white/[0.03] border-b border-white/[0.06] grid grid-cols-4 gap-2">
+              <span className="text-[10px] tracking-[0.3em] text-white/30 uppercase">Mês</span>
+              <span className="text-[10px] tracking-[0.3em] text-blue-400/50 uppercase text-right">{anoNum - 1}</span>
+              <span className="text-[10px] tracking-[0.3em] text-gold/50 uppercase text-right">{anoNum}</span>
+              <span className="text-[10px] tracking-[0.3em] text-white/30 uppercase text-right">Variação</span>
+            </div>
+            {ORDEM_MESES.map(mes => {
+              const prev = prevYearReceitas.filter(r => r.mes === mes).reduce((s, r) => s + r.valor, 0)
+              const curr = allReceitas.filter(r => r.mes === mes).reduce((s, r) => s + r.valor, 0)
+              if (prev === 0 && curr === 0) return null
+              const diff = curr - prev
+              return (
+                <div key={mes} className="px-5 py-3 grid grid-cols-4 gap-2 border-b border-white/[0.04] last:border-0 hover:bg-white/[0.02] transition-colors">
+                  <span className="text-sm text-white/60">{mes}</span>
+                  <span className="text-sm font-mono text-blue-300/70 text-right">{prev > 0 ? `${fmt(prev)} €` : '—'}</span>
+                  <span className="text-sm font-mono text-green-400/80 text-right">{curr > 0 ? `${fmt(curr)} €` : '—'}</span>
+                  <span className={`text-sm font-mono text-right font-semibold ${diff > 0 ? 'text-green-400' : diff < 0 ? 'text-red-400' : 'text-white/20'}`}>
+                    {diff !== 0 ? `${diff > 0 ? '+' : ''}${fmt(diff)} €` : '—'}
+                  </span>
+                </div>
+              )
+            })}
+            <div className="px-5 py-3 grid grid-cols-4 gap-2 bg-white/[0.03] border-t border-white/[0.1]">
+              <span className="text-[10px] tracking-[0.3em] text-white/40 uppercase font-semibold">Total</span>
+              <span className="text-sm font-mono font-bold text-blue-300 text-right">{fmt(prevTotalReceitas)} €</span>
+              <span className="text-sm font-mono font-bold text-green-400 text-right">{fmt(totalReceitas)} €</span>
+              <span className={`text-sm font-mono font-bold text-right ${totalReceitas - prevTotalReceitas >= 0 ? 'text-gold' : 'text-red-400'}`}>
+                {totalReceitas - prevTotalReceitas >= 0 ? '+' : ''}{fmt(totalReceitas - prevTotalReceitas)} €
+              </span>
+            </div>
+          </div>
+
+          {comparacaoChartData.length === 0 && prevTotalReceitas === 0 && (
+            <div className="text-center py-16 text-white/20 text-sm tracking-widest">
+              A CARREGAR DADOS DO ANO ANTERIOR…
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── MODAL CUSTO FIXO ── */}
+      {cfModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setCfModalOpen(false)} />
+          <div className="relative w-full max-w-sm bg-[#111] border border-orange-500/20 rounded-2xl p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-sm tracking-[0.3em] uppercase font-medium text-orange-400">+ Custo Fixo Anual</h2>
+              <button onClick={() => setCfModalOpen(false)} className="text-white/30 hover:text-white text-xl leading-none">×</button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[10px] tracking-[0.3em] text-white/30 uppercase mb-1.5">Descrição</label>
+                <input
+                  type="text" value={cfItem} onChange={e => setCfItem(e.target.value)}
+                  placeholder="ex: HOSTINGER ALOJAMENTO"
+                  onKeyDown={e => e.key === 'Enter' && addCustoFixo()}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-orange-500/40 transition-colors"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] tracking-[0.3em] text-white/30 uppercase mb-1.5">Valor Anual (€)</label>
+                <input
+                  type="text" value={cfValor} onChange={e => setCfValor(e.target.value)}
+                  placeholder="ex: 150"
+                  onKeyDown={e => e.key === 'Enter' && addCustoFixo()}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-orange-500/40 transition-colors font-mono"
+                />
+                {cfValor && parseFloat(cfValor.replace(',', '.')) > 0 && (
+                  <p className="text-[10px] text-white/20 mt-1.5 pl-1">
+                    ≈ {fmt(parseFloat(cfValor.replace(',', '.')) / 12)} € / mês
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setCfModalOpen(false)}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-white/10 text-xs tracking-widest text-white/40 hover:text-white/70 uppercase transition-colors">
+                Cancelar
+              </button>
+              <button
+                onClick={addCustoFixo}
+                disabled={!cfItem.trim() || !cfValor}
+                className="flex-1 px-4 py-2.5 rounded-xl text-xs tracking-widest uppercase font-medium transition-all disabled:opacity-40 bg-orange-500/15 border border-orange-500/30 text-orange-400 hover:bg-orange-500/25"
+              >
+                Guardar
+              </button>
+            </div>
           </div>
         </div>
       )}
