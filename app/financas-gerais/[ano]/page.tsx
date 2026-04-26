@@ -524,9 +524,9 @@ export default function FinancasAnoPage({ params }: Props) {
   // Meses acima da meta
   const mesesAcimaMeta = metaMensal > 0 ? resumo.filter(r => r.receitas >= metaMensal).length : 0
 
-  function openModal(tipo: 'receita' | 'despesa') {
+  function openModal(tipo: 'receita' | 'despesa', mesPrefill?: string) {
     setFormTipo(tipo)
-    setFMes('Janeiro'); setFData(''); setFCategoria('CASAMENTO')
+    setFMes(mesPrefill ?? 'Janeiro'); setFData(''); setFCategoria('CASAMENTO')
     setFItem(''); setFValor(''); setFInfo('')
     setModalOpen(true)
   }
@@ -841,6 +841,11 @@ export default function FinancasAnoPage({ params }: Props) {
                       </span>
                     )}
                     <span className="text-sm font-mono font-semibold text-green-400">{fmt(subtotal)} €</span>
+                    <button
+                      onClick={() => openModal('receita', mes)}
+                      className="flex items-center justify-center w-7 h-7 rounded-lg border border-green-500/30 bg-green-500/10 text-green-400 hover:bg-green-500/25 hover:border-green-500/50 transition-all text-lg leading-none"
+                      title={`Adicionar receita em ${mes}`}
+                    >+</button>
                   </div>
                 </div>
                 <table className="w-full text-sm">
@@ -856,16 +861,16 @@ export default function FinancasAnoPage({ params }: Props) {
                           {fmt(r.valor)} €
                         </td>
                         <td className="px-4 py-2.5 w-10 text-right">
-                          {r._id && (
+                          {r._id ? (
                             <button
                               onClick={() => handleDelete(r._id!)}
                               disabled={deleting === r._id}
-                              className="text-white/20 hover:text-red-400 transition-colors text-xs opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                              className="text-white/20 hover:text-red-400 transition-colors text-base opacity-0 group-hover:opacity-100 disabled:opacity-50"
                               title="Apagar"
                             >
                               {deleting === r._id ? '…' : '×'}
                             </button>
-                          )}
+                          ) : null}
                         </td>
                       </tr>
                     ))}
@@ -874,6 +879,25 @@ export default function FinancasAnoPage({ params }: Props) {
               </div>
             )
           })}
+
+          {/* Meses ainda sem receitas — botões para adicionar */}
+          {ORDEM_MESES.filter(m => !receitasPorMes.find(g => g.mes === m)).length > 0 && (
+            <div>
+              <p className="text-[10px] tracking-[0.3em] text-white/20 uppercase mb-3">Adicionar noutro mês</p>
+              <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                {ORDEM_MESES.filter(m => !receitasPorMes.find(g => g.mes === m)).map(mes => (
+                  <button
+                    key={mes}
+                    onClick={() => openModal('receita', mes)}
+                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-dashed border-white/[0.08] text-white/25 hover:border-green-500/30 hover:text-green-400/60 hover:bg-green-500/5 transition-all text-xs tracking-wider"
+                  >
+                    <span className="text-sm leading-none">+</span>{mes.slice(0, 3)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center justify-between px-5 py-4 rounded-2xl border border-green-500/20 bg-green-500/5">
             <span className="text-xs tracking-[0.35em] text-white/40 uppercase">Total Receitas {ano}</span>
             <span className="text-xl font-mono font-bold text-green-400">{fmt(totalReceitas)} €</span>
