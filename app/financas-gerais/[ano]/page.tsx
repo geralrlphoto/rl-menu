@@ -1495,6 +1495,21 @@ export default function FinancasAnoPage({ params }: Props) {
         return (
           <div className="space-y-8">
 
+            {/* ── Botão Gerar Relatório (topo) ── */}
+            <div className="flex justify-center">
+              <button
+                onClick={() => {
+                  const next = !relatorioOpen
+                  setRelatorioOpen(next)
+                  if (next) setTimeout(() => document.getElementById('relatorio-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80)
+                }}
+                className="flex items-center gap-3 px-8 py-4 rounded-2xl border border-gold/40 bg-gold/[0.08] hover:bg-gold/[0.14] transition-all text-gold text-sm tracking-[0.2em] uppercase font-medium shadow-lg shadow-gold/5"
+              >
+                <span className="text-lg">📊</span>
+                {relatorioOpen ? 'Fechar Relatório' : 'Gerar Relatório'}
+              </button>
+            </div>
+
             {/* ── Serviços & Preços ── */}
             <div className="space-y-3">
               <div className="flex items-center gap-3">
@@ -2753,17 +2768,6 @@ export default function FinancasAnoPage({ params }: Props) {
               </div>
             </div>
 
-            {/* ── Botão Gerar Relatório ── */}
-            <div className="flex justify-center pt-2">
-              <button
-                onClick={() => setRelatorioOpen(v => !v)}
-                className="flex items-center gap-3 px-8 py-4 rounded-2xl border border-gold/40 bg-gold/[0.08] hover:bg-gold/[0.14] transition-all text-gold text-sm tracking-[0.2em] uppercase font-medium shadow-lg shadow-gold/5"
-              >
-                <span className="text-lg">📊</span>
-                {relatorioOpen ? 'Fechar Relatório' : 'Gerar Relatório'}
-              </button>
-            </div>
-
             {/* ── Relatório Completo ── */}
             {relatorioOpen && (() => {
               // ── Dados financeiros dinâmicos
@@ -2865,7 +2869,7 @@ export default function FinancasAnoPage({ params }: Props) {
               ]
 
               return (
-                <div className="space-y-6 border-t border-white/[0.06] pt-6">
+                <div id="relatorio-section" className="space-y-6 border-t border-white/[0.06] pt-6">
                   {/* Header */}
                   <div className="flex items-center gap-3">
                     <div className="h-px flex-1 bg-gold/20" />
