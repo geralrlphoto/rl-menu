@@ -1359,6 +1359,13 @@ export default function FinancasAnoPage({ params }: Props) {
         // Margem líquida atual por evento vídeo (recebido − pago ao freelancer ~280€)
         const margemVideoAtual = ticketMedioVideo - 280
 
+        // ── Ticket médio do ano atual (casamentos em allReceitas — inclui Supabase)
+        const casamentosAno = allReceitas.filter(r => r.tipo === 'CASAMENTO')
+        const ticketMedioAno = casamentosAno.length > 0
+          ? Math.round(casamentosAno.reduce((s, r) => s + r.valor, 0) / casamentosAno.length)
+          : 0
+        const margemAno = ticketMedioAno > 0 ? ticketMedioAno - 280 : 0
+
         // ── Mix 2027: 20 eventos de vídeo (8 × P1 + 8 × P2 + 4 × P3)
         const mixData = [
           { proposta: 'P1 × 8', receita: p1Preco * 8, margem: p1Margem * 8 },
@@ -1383,22 +1390,42 @@ export default function FinancasAnoPage({ params }: Props) {
                 <div className="h-px flex-1 bg-white/[0.06]" />
               </div>
 
-              {/* Destaque: margem actual vs nova */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Destaque: 2025 → 2026 → 2027 */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* 2025 — vídeo */}
                 <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 text-center">
-                  <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Ticket Médio Atual</p>
-                  <p className="text-[9px] text-white/20 mb-2">vídeo recebido 2025</p>
+                  <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">2025 · Vídeo</p>
+                  <p className="text-[9px] text-white/20 mb-2">ticket médio recebido</p>
                   <p className="text-3xl font-light text-white/55">{ticketMedioVideo}</p>
                   <p className="text-[9px] text-white/20 mt-1">€ / evento</p>
                   <div className="mt-3 pt-3 border-t border-white/[0.05]">
                     <p className="text-[9px] text-white/20">margem líquida</p>
-                    <p className="text-base font-mono text-red-400/60">{margemVideoAtual} €</p>
+                    <p className={`text-base font-mono ${margemVideoAtual > 0 ? 'text-green-400/60' : 'text-red-400/60'}`}>{margemVideoAtual} €</p>
                     <p className="text-[9px] text-white/15">após ~280€ freelancer</p>
                   </div>
                 </div>
+                {/* Ano atual */}
+                <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.05] p-4 text-center">
+                  <p className="text-[9px] tracking-[0.3em] text-blue-400/60 uppercase mb-1">{anoNum} · Casamentos</p>
+                  <p className="text-[9px] text-white/20 mb-2">
+                    {casamentosAno.length > 0 ? `${casamentosAno.length} entradas` : 'sem dados'}
+                  </p>
+                  <p className="text-3xl font-light text-blue-300">
+                    {ticketMedioAno > 0 ? ticketMedioAno.toLocaleString('pt-PT') : '—'}
+                  </p>
+                  <p className="text-[9px] text-blue-400/30 mt-1">€ / entrada</p>
+                  <div className="mt-3 pt-3 border-t border-blue-500/[0.10]">
+                    <p className="text-[9px] text-white/20">margem estimada</p>
+                    <p className={`text-base font-mono ${margemAno > 0 ? 'text-green-400/70' : 'text-white/30'}`}>
+                      {ticketMedioAno > 0 ? `${margemAno} €` : '—'}
+                    </p>
+                    <p className="text-[9px] text-white/15">após ~280€ freelancer</p>
+                  </div>
+                </div>
+                {/* 2027 objetivo */}
                 <div className="rounded-2xl border border-gold/20 bg-gold/[0.05] p-4 text-center">
-                  <p className="text-[9px] tracking-[0.3em] text-gold/60 uppercase mb-1">Ticket Médio 2027</p>
-                  <p className="text-[9px] text-white/20 mb-2">com mix de propostas</p>
+                  <p className="text-[9px] tracking-[0.3em] text-gold/60 uppercase mb-1">2027 · Objetivo</p>
+                  <p className="text-[9px] text-white/20 mb-2">mix de propostas</p>
                   <p className="text-3xl font-light text-gold">{ticketMedio2027.toLocaleString('pt-PT')}</p>
                   <p className="text-[9px] text-gold/30 mt-1">€ / evento</p>
                   <div className="mt-3 pt-3 border-t border-gold/[0.10]">
@@ -1409,43 +1436,62 @@ export default function FinancasAnoPage({ params }: Props) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {/* Atual */}
-                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 text-center">
-                  <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-2">Atual (2025)</p>
-                  <p className="text-2xl font-light text-white/55">{ticketMedioVideo}</p>
-                  <p className="text-[9px] text-white/20 mt-1">€ / evento</p>
-                  <div className="mt-3 h-1 bg-white/[0.05] rounded-full overflow-hidden">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                {/* 2025 vídeo */}
+                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-3 text-center">
+                  <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1.5">2025 Vídeo</p>
+                  <p className="text-xl font-light text-white/55">{ticketMedioVideo}</p>
+                  <p className="text-[9px] text-white/20 mt-0.5">€ / evento</p>
+                  <div className="mt-2 h-1 bg-white/[0.05] rounded-full overflow-hidden">
                     <div className="h-full bg-white/25 rounded-full" style={{ width: `${(ticketMedioVideo / 1300) * 100}%` }} />
                   </div>
                 </div>
+                {/* Ano atual */}
+                <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.05] p-3 text-center">
+                  <p className="text-[9px] tracking-[0.3em] text-blue-400/60 uppercase mb-1.5">{anoNum} Real</p>
+                  <p className="text-xl font-light text-blue-300">
+                    {ticketMedioAno > 0 ? ticketMedioAno.toLocaleString('pt-PT') : '—'}
+                  </p>
+                  <p className="text-[9px] text-blue-400/30 mt-0.5">€ / entrada</p>
+                  {ticketMedioAno > 0 && ticketMedioVideo > 0 && (
+                    <p className="text-[9px] text-white/25 mt-1">
+                      {ticketMedioAno > ticketMedioVideo
+                        ? <span className="text-green-400/60">+{Math.round((ticketMedioAno / ticketMedioVideo - 1) * 100)}% vs 2025</span>
+                        : <span className="text-red-400/50">{Math.round((ticketMedioAno / ticketMedioVideo - 1) * 100)}% vs 2025</span>
+                      }
+                    </p>
+                  )}
+                  <div className="mt-2 h-1 bg-white/[0.05] rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-400/40 rounded-full" style={{ width: `${Math.min(100, (ticketMedioAno / 1300) * 100)}%` }} />
+                  </div>
+                </div>
                 {/* P1 */}
-                <div className="rounded-2xl border border-blue-500/25 bg-blue-500/[0.06] p-4 text-center">
-                  <p className="text-[9px] tracking-[0.3em] text-blue-400/60 uppercase mb-2">Proposta 1</p>
-                  <p className="text-2xl font-light text-blue-300">850</p>
-                  <p className="text-[9px] text-blue-400/30 mt-1">€ / evento</p>
-                  <p className="text-[9px] text-green-400/70 mt-1.5">+{Math.round((850 / ticketMedioVideo - 1) * 100)}% vs atual</p>
-                  <div className="mt-3 h-1 bg-white/[0.05] rounded-full overflow-hidden">
+                <div className="rounded-2xl border border-blue-500/25 bg-blue-500/[0.06] p-3 text-center">
+                  <p className="text-[9px] tracking-[0.3em] text-blue-400/60 uppercase mb-1.5">Proposta 1</p>
+                  <p className="text-xl font-light text-blue-300">850</p>
+                  <p className="text-[9px] text-blue-400/30 mt-0.5">€ / evento</p>
+                  <p className="text-[9px] text-green-400/70 mt-1">+{Math.round((850 / ticketMedioVideo - 1) * 100)}% vs 2025</p>
+                  <div className="mt-2 h-1 bg-white/[0.05] rounded-full overflow-hidden">
                     <div className="h-full bg-blue-400/50 rounded-full" style={{ width: `${(850 / 1300) * 100}%` }} />
                   </div>
                 </div>
                 {/* P2 */}
-                <div className="rounded-2xl border border-gold/25 bg-gold/[0.06] p-4 text-center">
-                  <p className="text-[9px] tracking-[0.3em] text-gold/60 uppercase mb-2">Proposta 2</p>
-                  <p className="text-2xl font-light text-gold">1.050</p>
-                  <p className="text-[9px] text-gold/30 mt-1">€ / evento</p>
-                  <p className="text-[9px] text-green-400/70 mt-1.5">+{Math.round((1050 / ticketMedioVideo - 1) * 100)}% vs atual</p>
-                  <div className="mt-3 h-1 bg-white/[0.05] rounded-full overflow-hidden">
+                <div className="rounded-2xl border border-gold/25 bg-gold/[0.06] p-3 text-center">
+                  <p className="text-[9px] tracking-[0.3em] text-gold/60 uppercase mb-1.5">Proposta 2</p>
+                  <p className="text-xl font-light text-gold">1.050</p>
+                  <p className="text-[9px] text-gold/30 mt-0.5">€ / evento</p>
+                  <p className="text-[9px] text-green-400/70 mt-1">+{Math.round((1050 / ticketMedioVideo - 1) * 100)}% vs 2025</p>
+                  <div className="mt-2 h-1 bg-white/[0.05] rounded-full overflow-hidden">
                     <div className="h-full bg-gold/50 rounded-full" style={{ width: `${(1050 / 1300) * 100}%` }} />
                   </div>
                 </div>
                 {/* P3 */}
-                <div className="rounded-2xl border border-purple-500/25 bg-purple-500/[0.06] p-4 text-center">
-                  <p className="text-[9px] tracking-[0.3em] text-purple-400/60 uppercase mb-2">Proposta 3</p>
-                  <p className="text-2xl font-light text-purple-300">1.300</p>
-                  <p className="text-[9px] text-purple-400/30 mt-1">€ / evento</p>
-                  <p className="text-[9px] text-green-400/70 mt-1.5">+{Math.round((1300 / ticketMedioVideo - 1) * 100)}% vs atual</p>
-                  <div className="mt-3 h-1 bg-white/[0.05] rounded-full overflow-hidden">
+                <div className="rounded-2xl border border-purple-500/25 bg-purple-500/[0.06] p-3 text-center">
+                  <p className="text-[9px] tracking-[0.3em] text-purple-400/60 uppercase mb-1.5">Proposta 3</p>
+                  <p className="text-xl font-light text-purple-300">1.300</p>
+                  <p className="text-[9px] text-purple-400/30 mt-0.5">€ / evento</p>
+                  <p className="text-[9px] text-green-400/70 mt-1">+{Math.round((1300 / ticketMedioVideo - 1) * 100)}% vs 2025</p>
+                  <div className="mt-2 h-1 bg-white/[0.05] rounded-full overflow-hidden">
                     <div className="h-full bg-purple-400/50 rounded-full" style={{ width: '100%' }} />
                   </div>
                 </div>
@@ -1453,38 +1499,47 @@ export default function FinancasAnoPage({ params }: Props) {
 
               {/* Gráfico ticket médio */}
               <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
-                <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-4">Ticket por Proposta (€ / evento)</p>
-                <ResponsiveContainer width="100%" height={180}>
+                <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-4">Evolução Ticket Médio (€ / evento)</p>
+                <ResponsiveContainer width="100%" height={200}>
                   <BarChart
                     data={[
-                      { label: 'Atual 2025', valor: ticketMedioVideo, margem: margemVideoAtual },
+                      { label: '2025 Vídeo', valor: ticketMedioVideo, margem: margemVideoAtual },
+                      ...(ticketMedioAno > 0 ? [{ label: `${anoNum} Real`, valor: ticketMedioAno, margem: margemAno }] : []),
                       { label: 'Proposta 1', valor: 850, margem: p1Margem },
                       { label: 'Proposta 2', valor: 1050, margem: p2Margem },
                       { label: 'Proposta 3', valor: 1300, margem: p3Margem },
                     ]}
-                    barCategoryGap="22%" barGap={3}
+                    barCategoryGap="20%" barGap={3}
                   >
                     <XAxis dataKey="label" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
                     <YAxis hide />
                     <Tooltip
                       cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                       contentStyle={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 12 }}
-                      formatter={(v: number, name: string) => [`${v.toLocaleString('pt-PT')} €`, name === 'valor' ? 'Preço Pack' : 'Margem Líquida']}
+                      formatter={(v: number, name: string) => [`${v.toLocaleString('pt-PT')} €`, name === 'valor' ? 'Ticket' : 'Margem Líquida']}
                     />
                     <Bar dataKey="valor" name="valor" radius={[4,4,0,0]}>
-                      {['rgba(255,255,255,0.20)','rgba(96,165,250,0.70)','rgba(201,168,76,0.75)','rgba(167,139,250,0.70)'].map((fill, i) => (
-                        <Cell key={i} fill={fill} />
-                      ))}
+                      {[
+                        'rgba(255,255,255,0.20)',
+                        ...(ticketMedioAno > 0 ? ['rgba(59,130,246,0.65)'] : []),
+                        'rgba(96,165,250,0.70)',
+                        'rgba(201,168,76,0.75)',
+                        'rgba(167,139,250,0.70)',
+                      ].map((fill, i) => <Cell key={i} fill={fill} />)}
                     </Bar>
                     <Bar dataKey="margem" name="margem" radius={[4,4,0,0]}>
-                      {['rgba(255,255,255,0.10)','rgba(96,165,250,0.35)','rgba(201,168,76,0.35)','rgba(167,139,250,0.35)'].map((fill, i) => (
-                        <Cell key={i} fill={fill} />
-                      ))}
+                      {[
+                        'rgba(255,255,255,0.10)',
+                        ...(ticketMedioAno > 0 ? ['rgba(59,130,246,0.30)'] : []),
+                        'rgba(96,165,250,0.35)',
+                        'rgba(201,168,76,0.35)',
+                        'rgba(167,139,250,0.35)',
+                      ].map((fill, i) => <Cell key={i} fill={fill} />)}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
                 <div className="flex items-center gap-6 mt-2 justify-center">
-                  <span className="flex items-center gap-1.5 text-[10px] text-white/30"><span className="w-3 h-2 rounded-sm bg-white/25 inline-block" /> Preço Pack</span>
+                  <span className="flex items-center gap-1.5 text-[10px] text-white/30"><span className="w-3 h-2 rounded-sm bg-white/25 inline-block" /> Ticket</span>
                   <span className="flex items-center gap-1.5 text-[10px] text-white/30"><span className="w-3 h-2 rounded-sm bg-white/10 inline-block" /> Margem Líquida</span>
                 </div>
               </div>
