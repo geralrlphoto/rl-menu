@@ -1342,20 +1342,35 @@ export default function FinancasAnoPage({ params }: Props) {
 
       {/* ── ESTRATÉGIA ── */}
       {tab === 'estratégia' && (() => {
-        const p1Preco = 950, p1Margem = 950
-        const p2Preco = 1600, p2Margem = 1250
-        const p3Preco = 2200, p3Margem = 1750
+        // ── Packs de vídeo 2027
+        const p1Preco = 850,  p1Freelancer = 300, p1Margem = 850  - 300  // 550€
+        const p2Preco = 1050, p2Freelancer = 300, p2Margem = 1050 - 300  // 750€
+        const p3Preco = 1300, p3Freelancer = 350, p3Margem = 1300 - 350  // 950€
+
+        // ── Ticket médio video atual (entradas com "Videografo"/"Letras" no info 2025)
+        const videoEntries2025 = RECEITAS_2025.filter(r =>
+          /videografo|letras|vídeo|video/i.test(r.info)
+        )
+        const videoSumAtual = videoEntries2025.reduce((s, r) => s + r.valor, 0)
+        const ticketMedioVideo = videoEntries2025.length > 0
+          ? Math.round(videoSumAtual / videoEntries2025.length)
+          : 370
+
+        // Margem líquida atual por evento vídeo (recebido − pago ao freelancer ~280€)
+        const margemVideoAtual = ticketMedioVideo - 280
+
+        // ── Mix 2027: 20 eventos de vídeo (8 × P1 + 8 × P2 + 4 × P3)
         const mixData = [
-          { proposta: 'P1 × 10', receita: p1Preco * 10, margem: p1Margem * 10 },
-          { proposta: 'P2 × 11', receita: p2Preco * 11, margem: p2Margem * 11 },
-          { proposta: 'P3 × 5',  receita: p3Preco * 5,  margem: p3Margem * 5  },
-          { proposta: 'Corp.',   receita: 4500,           margem: 4500           },
+          { proposta: 'P1 × 8', receita: p1Preco * 8, margem: p1Margem * 8 },
+          { proposta: 'P2 × 8', receita: p2Preco * 8, margem: p2Margem * 8 },
+          { proposta: 'P3 × 4', receita: p3Preco * 4, margem: p3Margem * 4 },
         ]
-        const mixReceitas = mixData.reduce((s, d) => s + d.receita, 0)
-        const mixMargem   = mixData.reduce((s, d) => s + d.margem, 0)
-        const pctMelhoria = Math.round(((mixMargem - 22000) / 22000) * 100)
-        const ticketMedio2027 = Math.round((p1Preco*10 + p2Preco*11 + p3Preco*5) / 26)
-        const fillCells = ['rgba(96,165,250,0.65)','rgba(201,168,76,0.70)','rgba(167,139,250,0.65)','rgba(74,222,128,0.55)']
+        const mixReceitas  = mixData.reduce((s, d) => s + d.receita, 0)
+        const mixMargem    = mixData.reduce((s, d) => s + d.margem, 0)
+        const atualMargem  = videoEntries2025.length * margemVideoAtual
+        const pctMelhoria  = atualMargem > 0 ? Math.round(((mixMargem - atualMargem) / atualMargem) * 100) : 0
+        const ticketMedio2027 = Math.round((p1Preco*8 + p2Preco*8 + p3Preco*4) / 20)
+        const fillCells    = ['rgba(96,165,250,0.65)','rgba(201,168,76,0.70)','rgba(167,139,250,0.65)']
 
         return (
           <div className="space-y-8">
@@ -1364,46 +1379,72 @@ export default function FinancasAnoPage({ params }: Props) {
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="h-px flex-1 bg-white/[0.06]" />
-                <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">Ticket Médio</p>
+                <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">Ticket Médio — Vídeo</p>
                 <div className="h-px flex-1 bg-white/[0.06]" />
+              </div>
+
+              {/* Destaque: margem actual vs nova */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 text-center">
+                  <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Ticket Médio Atual</p>
+                  <p className="text-[9px] text-white/20 mb-2">vídeo recebido 2025</p>
+                  <p className="text-3xl font-light text-white/55">{ticketMedioVideo}</p>
+                  <p className="text-[9px] text-white/20 mt-1">€ / evento</p>
+                  <div className="mt-3 pt-3 border-t border-white/[0.05]">
+                    <p className="text-[9px] text-white/20">margem líquida</p>
+                    <p className="text-base font-mono text-red-400/60">{margemVideoAtual} €</p>
+                    <p className="text-[9px] text-white/15">após ~280€ freelancer</p>
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-gold/20 bg-gold/[0.05] p-4 text-center">
+                  <p className="text-[9px] tracking-[0.3em] text-gold/60 uppercase mb-1">Ticket Médio 2027</p>
+                  <p className="text-[9px] text-white/20 mb-2">com mix de propostas</p>
+                  <p className="text-3xl font-light text-gold">{ticketMedio2027.toLocaleString('pt-PT')}</p>
+                  <p className="text-[9px] text-gold/30 mt-1">€ / evento</p>
+                  <div className="mt-3 pt-3 border-t border-gold/[0.10]">
+                    <p className="text-[9px] text-white/20">margem média</p>
+                    <p className="text-base font-mono text-green-400">{Math.round((p1Margem*8 + p2Margem*8 + p3Margem*4) / 20)} €</p>
+                    <p className="text-[9px] text-green-400/30">após freelancer</p>
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {/* Atual */}
                 <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 text-center">
                   <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-2">Atual (2025)</p>
-                  <p className="text-2xl font-light text-white/60">{fmt(Math.round(ticketMedioAtual))}</p>
-                  <p className="text-[9px] text-white/20 mt-1">€ / entrada</p>
+                  <p className="text-2xl font-light text-white/55">{ticketMedioVideo}</p>
+                  <p className="text-[9px] text-white/20 mt-1">€ / evento</p>
                   <div className="mt-3 h-1 bg-white/[0.05] rounded-full overflow-hidden">
-                    <div className="h-full bg-white/25 rounded-full" style={{ width: `${(ticketMedioAtual / 2200) * 100}%` }} />
+                    <div className="h-full bg-white/25 rounded-full" style={{ width: `${(ticketMedioVideo / 1300) * 100}%` }} />
                   </div>
                 </div>
                 {/* P1 */}
                 <div className="rounded-2xl border border-blue-500/25 bg-blue-500/[0.06] p-4 text-center">
                   <p className="text-[9px] tracking-[0.3em] text-blue-400/60 uppercase mb-2">Proposta 1</p>
-                  <p className="text-2xl font-light text-blue-300">950</p>
+                  <p className="text-2xl font-light text-blue-300">850</p>
                   <p className="text-[9px] text-blue-400/30 mt-1">€ / evento</p>
-                  <p className="text-[9px] text-green-400/70 mt-1.5">+{Math.round((950 / ticketMedioAtual - 1) * 100)}% vs atual</p>
+                  <p className="text-[9px] text-green-400/70 mt-1.5">+{Math.round((850 / ticketMedioVideo - 1) * 100)}% vs atual</p>
                   <div className="mt-3 h-1 bg-white/[0.05] rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-400/50 rounded-full" style={{ width: `${(950 / 2200) * 100}%` }} />
+                    <div className="h-full bg-blue-400/50 rounded-full" style={{ width: `${(850 / 1300) * 100}%` }} />
                   </div>
                 </div>
                 {/* P2 */}
                 <div className="rounded-2xl border border-gold/25 bg-gold/[0.06] p-4 text-center">
                   <p className="text-[9px] tracking-[0.3em] text-gold/60 uppercase mb-2">Proposta 2</p>
-                  <p className="text-2xl font-light text-gold">1.600</p>
+                  <p className="text-2xl font-light text-gold">1.050</p>
                   <p className="text-[9px] text-gold/30 mt-1">€ / evento</p>
-                  <p className="text-[9px] text-green-400/70 mt-1.5">+{Math.round((1600 / ticketMedioAtual - 1) * 100)}% vs atual</p>
+                  <p className="text-[9px] text-green-400/70 mt-1.5">+{Math.round((1050 / ticketMedioVideo - 1) * 100)}% vs atual</p>
                   <div className="mt-3 h-1 bg-white/[0.05] rounded-full overflow-hidden">
-                    <div className="h-full bg-gold/50 rounded-full" style={{ width: `${(1600 / 2200) * 100}%` }} />
+                    <div className="h-full bg-gold/50 rounded-full" style={{ width: `${(1050 / 1300) * 100}%` }} />
                   </div>
                 </div>
                 {/* P3 */}
                 <div className="rounded-2xl border border-purple-500/25 bg-purple-500/[0.06] p-4 text-center">
                   <p className="text-[9px] tracking-[0.3em] text-purple-400/60 uppercase mb-2">Proposta 3</p>
-                  <p className="text-2xl font-light text-purple-300">2.200</p>
+                  <p className="text-2xl font-light text-purple-300">1.300</p>
                   <p className="text-[9px] text-purple-400/30 mt-1">€ / evento</p>
-                  <p className="text-[9px] text-green-400/70 mt-1.5">+{Math.round((2200 / ticketMedioAtual - 1) * 100)}% vs atual</p>
+                  <p className="text-[9px] text-green-400/70 mt-1.5">+{Math.round((1300 / ticketMedioVideo - 1) * 100)}% vs atual</p>
                   <div className="mt-3 h-1 bg-white/[0.05] rounded-full overflow-hidden">
                     <div className="h-full bg-purple-400/50 rounded-full" style={{ width: '100%' }} />
                   </div>
@@ -1412,31 +1453,40 @@ export default function FinancasAnoPage({ params }: Props) {
 
               {/* Gráfico ticket médio */}
               <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
-                <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-4">Comparação Ticket Médio (€ / evento)</p>
+                <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-4">Ticket por Proposta (€ / evento)</p>
                 <ResponsiveContainer width="100%" height={180}>
                   <BarChart
                     data={[
-                      { label: 'Atual 2025', valor: Math.round(ticketMedioAtual) },
-                      { label: 'Proposta 1', valor: 950 },
-                      { label: 'Proposta 2', valor: 1600 },
-                      { label: 'Proposta 3', valor: 2200 },
+                      { label: 'Atual 2025', valor: ticketMedioVideo, margem: margemVideoAtual },
+                      { label: 'Proposta 1', valor: 850, margem: p1Margem },
+                      { label: 'Proposta 2', valor: 1050, margem: p2Margem },
+                      { label: 'Proposta 3', valor: 1300, margem: p3Margem },
                     ]}
-                    barCategoryGap="30%"
+                    barCategoryGap="22%" barGap={3}
                   >
                     <XAxis dataKey="label" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
                     <YAxis hide />
                     <Tooltip
                       cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                       contentStyle={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 12 }}
-                      formatter={(v: number) => [`${v.toLocaleString('pt-PT')} €`, 'Ticket']}
+                      formatter={(v: number, name: string) => [`${v.toLocaleString('pt-PT')} €`, name === 'valor' ? 'Preço Pack' : 'Margem Líquida']}
                     />
-                    <Bar dataKey="valor" radius={[6,6,0,0]}>
+                    <Bar dataKey="valor" name="valor" radius={[4,4,0,0]}>
                       {['rgba(255,255,255,0.20)','rgba(96,165,250,0.70)','rgba(201,168,76,0.75)','rgba(167,139,250,0.70)'].map((fill, i) => (
+                        <Cell key={i} fill={fill} />
+                      ))}
+                    </Bar>
+                    <Bar dataKey="margem" name="margem" radius={[4,4,0,0]}>
+                      {['rgba(255,255,255,0.10)','rgba(96,165,250,0.35)','rgba(201,168,76,0.35)','rgba(167,139,250,0.35)'].map((fill, i) => (
                         <Cell key={i} fill={fill} />
                       ))}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
+                <div className="flex items-center gap-6 mt-2 justify-center">
+                  <span className="flex items-center gap-1.5 text-[10px] text-white/30"><span className="w-3 h-2 rounded-sm bg-white/25 inline-block" /> Preço Pack</span>
+                  <span className="flex items-center gap-1.5 text-[10px] text-white/30"><span className="w-3 h-2 rounded-sm bg-white/10 inline-block" /> Margem Líquida</span>
+                </div>
               </div>
             </div>
 
@@ -1444,7 +1494,7 @@ export default function FinancasAnoPage({ params }: Props) {
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="h-px flex-1 bg-white/[0.06]" />
-                <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">As 3 Propostas</p>
+                <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">Packs de Vídeo</p>
                 <div className="h-px flex-1 bg-white/[0.06]" />
               </div>
 
@@ -1456,18 +1506,18 @@ export default function FinancasAnoPage({ params }: Props) {
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-[9px] tracking-[0.4em] text-blue-400/70 uppercase font-semibold">Proposta 1</span>
                         <span className="text-[9px] text-white/20">·</span>
-                        <span className="text-[9px] tracking-wider text-white/30 uppercase">Fotografia</span>
+                        <span className="text-[9px] tracking-wider text-white/30 uppercase">Reportagem Vídeo</span>
                       </div>
-                      <p className="text-2xl font-light text-blue-300">950 <span className="text-sm text-blue-300/40">€</span></p>
+                      <p className="text-2xl font-light text-blue-300">850 <span className="text-sm text-blue-300/40">€</span></p>
                     </div>
                     <div className="text-right">
                       <p className="text-[9px] text-white/20 uppercase tracking-widest mb-0.5">Margem líquida</p>
-                      <p className="text-xl font-mono font-semibold text-green-400">950 €</p>
-                      <p className="text-[9px] text-green-400/30 mt-0.5">100% do valor · sem freelancers</p>
+                      <p className="text-xl font-mono font-semibold text-green-400">{p1Margem} €</p>
+                      <p className="text-[9px] text-white/20 mt-0.5">após {p1Freelancer}€ videógrafo</p>
                     </div>
                   </div>
                   <div className="px-6 py-3.5 flex flex-wrap gap-x-6 gap-y-2">
-                    {['1 Fotógrafo (8h)', '450–600 fotos editadas', 'Galeria online Smash', 'Entrega em 60 dias'].map(item => (
+                    {['1 Videógrafo', 'Reportagem de todo o evento', 'Vídeo final 20 min', 'Qualidade Full HD', 'Deslocação incluída'].map(item => (
                       <span key={item} className="flex items-center gap-2 text-[11px] text-white/40">
                         <span className="w-1 h-1 rounded-full bg-blue-400/50 flex-shrink-0" />{item}
                       </span>
@@ -1482,18 +1532,18 @@ export default function FinancasAnoPage({ params }: Props) {
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-[9px] tracking-[0.4em] text-gold/70 uppercase font-semibold">Proposta 2</span>
                         <span className="text-[9px] text-white/20">·</span>
-                        <span className="text-[9px] tracking-wider text-white/30 uppercase">Foto + Vídeo</span>
+                        <span className="text-[9px] tracking-wider text-white/30 uppercase">Reportagem + Pré-Wedding</span>
                       </div>
-                      <p className="text-2xl font-light text-gold">1.600 <span className="text-sm text-gold/40">€</span></p>
+                      <p className="text-2xl font-light text-gold">1.050 <span className="text-sm text-gold/40">€</span></p>
                     </div>
                     <div className="text-right">
                       <p className="text-[9px] text-white/20 uppercase tracking-widest mb-0.5">Margem líquida</p>
-                      <p className="text-xl font-mono font-semibold text-green-400">1.250 €</p>
-                      <p className="text-[9px] text-white/20 mt-0.5">após 350€ videógrafo</p>
+                      <p className="text-xl font-mono font-semibold text-green-400">{p2Margem} €</p>
+                      <p className="text-[9px] text-white/20 mt-0.5">após {p2Freelancer}€ videógrafo</p>
                     </div>
                   </div>
                   <div className="px-6 py-3.5 flex flex-wrap gap-x-6 gap-y-2">
-                    {['1 Fotógrafo + 1 Videógrafo', 'Highlights vídeo 3–4 min', 'Drone incluído', 'Galeria online', 'Entrega em 90 dias'].map(item => (
+                    {['1 Videógrafo', 'Reportagem de todo o evento', 'Vídeo final 20 min', 'Qualidade Full HD', 'Deslocação incluída', 'Sessão Pré-Wedding'].map(item => (
                       <span key={item} className="flex items-center gap-2 text-[11px] text-white/40">
                         <span className="w-1 h-1 rounded-full bg-gold/50 flex-shrink-0" />{item}
                       </span>
@@ -1508,18 +1558,18 @@ export default function FinancasAnoPage({ params }: Props) {
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-[9px] tracking-[0.4em] text-purple-400/70 uppercase font-semibold">Proposta 3</span>
                         <span className="text-[9px] text-white/20">·</span>
-                        <span className="text-[9px] tracking-wider text-white/30 uppercase">Foto + Vídeo Cinemático</span>
+                        <span className="text-[9px] tracking-wider text-white/30 uppercase">Premium · Drone + SDE</span>
                       </div>
-                      <p className="text-2xl font-light text-purple-300">2.200 <span className="text-sm text-purple-300/40">€</span></p>
+                      <p className="text-2xl font-light text-purple-300">1.300 <span className="text-sm text-purple-300/40">€</span></p>
                     </div>
                     <div className="text-right">
                       <p className="text-[9px] text-white/20 uppercase tracking-widest mb-0.5">Margem líquida</p>
-                      <p className="text-xl font-mono font-semibold text-green-400">1.750 €</p>
-                      <p className="text-[9px] text-white/20 mt-0.5">após 450€ videógrafo</p>
+                      <p className="text-xl font-mono font-semibold text-green-400">{p3Margem} €</p>
+                      <p className="text-[9px] text-white/20 mt-0.5">após {p3Freelancer}€ videógrafo</p>
                     </div>
                   </div>
                   <div className="px-6 py-3.5 flex flex-wrap gap-x-6 gap-y-2">
-                    {['Tudo da Proposta 2', 'Same-Day Edit (SDE)', 'Wedding Film 20–25 min', 'Teaser 60s redes sociais', 'USB personalizado'].map(item => (
+                    {['1 Videógrafo', 'Reportagem de todo o evento', 'Vídeo final 20 min', 'Qualidade Full HD', 'Deslocação incluída', 'Sessão Pré-Wedding', 'Imagens de Drone', 'Same-Day Edit (SDE)'].map(item => (
                       <span key={item} className="flex items-center gap-2 text-[11px] text-white/40">
                         <span className="w-1 h-1 rounded-full bg-purple-400/50 flex-shrink-0" />{item}
                       </span>
@@ -1527,13 +1577,26 @@ export default function FinancasAnoPage({ params }: Props) {
                   </div>
                 </div>
 
-                {/* Suplemento destino */}
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-6 py-3 flex items-center justify-between">
-                  <div>
-                    <span className="text-[9px] tracking-[0.3em] text-white/30 uppercase">+ Suplemento Destino</span>
-                    <p className="text-[11px] text-white/25 mt-0.5">eventos a mais de 100km · viagem + estadia incluída</p>
+                {/* Comparação de margens */}
+                <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
+                  <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-3">Margem por Pack (após freelancer)</p>
+                  <div className="space-y-3">
+                    {[
+                      { label: 'Proposta 1 · 850€', margem: p1Margem, max: p3Margem, pct: Math.round(p1Margem/p3Margem*100), fill: 'rgba(96,165,250,0.5)' },
+                      { label: 'Proposta 2 · 1.050€', margem: p2Margem, max: p3Margem, pct: Math.round(p2Margem/p3Margem*100), fill: 'rgba(201,168,76,0.55)' },
+                      { label: 'Proposta 3 · 1.300€', margem: p3Margem, max: p3Margem, pct: 100, fill: 'rgba(167,139,250,0.5)' },
+                    ].map(r => (
+                      <div key={r.label}>
+                        <div className="flex justify-between text-[10px] mb-1.5">
+                          <span className="text-white/40">{r.label}</span>
+                          <span className="font-mono text-green-400">{r.margem} €</span>
+                        </div>
+                        <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
+                          <div className="h-full rounded-full transition-all" style={{ width: `${r.pct}%`, background: r.fill }} />
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <p className="text-lg font-light text-white/40">+350 <span className="text-sm text-white/20">€</span></p>
                 </div>
               </div>
             </div>
@@ -1542,18 +1605,18 @@ export default function FinancasAnoPage({ params }: Props) {
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="h-px flex-1 bg-white/[0.06]" />
-                <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">Projeção 2027</p>
+                <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">Projeção Vídeo 2027</p>
                 <div className="h-px flex-1 bg-white/[0.06]" />
               </div>
 
               {/* Cenários */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 space-y-3">
-                  <p className="text-[10px] tracking-[0.4em] text-white/30 uppercase">Sem Mudança de Preços</p>
+                  <p className="text-[10px] tracking-[0.4em] text-white/30 uppercase">Sem Mudança (preços actuais)</p>
                   <div className="space-y-2">
                     {[
-                      { l: 'Receitas estimadas', v: '36.000 €', c: 'text-white/50' },
-                      { l: 'Despesas estimadas', v: '14.000 €', c: 'text-red-400/50' },
+                      { l: `${videoEntries2025.length} eventos × ${ticketMedioVideo}€`, v: `${videoSumAtual.toLocaleString('pt-PT')} €`, c: 'text-white/50' },
+                      { l: 'Custo freelancers', v: `−${(videoEntries2025.length * 280).toLocaleString('pt-PT')} €`, c: 'text-red-400/50' },
                     ].map(r => (
                       <div key={r.l} className="flex justify-between text-sm">
                         <span className="text-white/35">{r.l}</span>
@@ -1561,31 +1624,25 @@ export default function FinancasAnoPage({ params }: Props) {
                       </div>
                     ))}
                     <div className="flex justify-between text-sm pt-2 border-t border-white/[0.06]">
-                      <span className="text-white/50 font-medium">Resultado líquido</span>
-                      <span className="font-mono font-bold text-white/40">22.000 €</span>
-                    </div>
-                    <div className="flex justify-between text-xs pt-1">
-                      <span className="text-white/25">Nº casamentos</span>
-                      <span className="text-white/25">~35 eventos</span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-white/25">Ticket médio</span>
-                      <span className="text-white/25">~{fmt(Math.round(ticketMedioAtual))} €</span>
+                      <span className="text-white/50 font-medium">Margem líquida vídeo</span>
+                      <span className="font-mono font-bold text-white/40">{atualMargem.toLocaleString('pt-PT')} €</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="rounded-2xl border border-gold/25 bg-gold/[0.05] p-5 space-y-3">
                   <div className="flex items-center justify-between">
-                    <p className="text-[10px] tracking-[0.4em] text-gold/60 uppercase">Mix Propostas 2027</p>
-                    <span className="text-[9px] text-green-400/70 tracking-wider px-2 py-0.5 rounded-full border border-green-500/20 bg-green-500/10">
-                      +{pctMelhoria}% lucro
-                    </span>
+                    <p className="text-[10px] tracking-[0.4em] text-gold/60 uppercase">Mix 2027 · 20 eventos</p>
+                    {pctMelhoria > 0 && (
+                      <span className="text-[9px] text-green-400/70 tracking-wider px-2 py-0.5 rounded-full border border-green-500/20 bg-green-500/10">
+                        +{pctMelhoria}% margem
+                      </span>
+                    )}
                   </div>
                   <div className="space-y-2">
                     {[
-                      { l: 'Receitas estimadas', v: `${mixReceitas.toLocaleString('pt-PT')} €`, c: 'text-green-400/70' },
-                      { l: 'Despesas estimadas', v: '14.250 €', c: 'text-red-400/50' },
+                      { l: `20 eventos × ~${ticketMedio2027}€`, v: `${mixReceitas.toLocaleString('pt-PT')} €`, c: 'text-green-400/70' },
+                      { l: 'Custo freelancers', v: `−${(mixReceitas - mixMargem).toLocaleString('pt-PT')} €`, c: 'text-red-400/50' },
                     ].map(r => (
                       <div key={r.l} className="flex justify-between text-sm">
                         <span className="text-white/35">{r.l}</span>
@@ -1593,27 +1650,19 @@ export default function FinancasAnoPage({ params }: Props) {
                       </div>
                     ))}
                     <div className="flex justify-between text-sm pt-2 border-t border-gold/[0.15]">
-                      <span className="text-white/50 font-medium">Resultado líquido</span>
-                      <span className="font-mono font-bold text-gold">{(mixMargem - 14250).toLocaleString('pt-PT')} €</span>
-                    </div>
-                    <div className="flex justify-between text-xs pt-1">
-                      <span className="text-white/25">Nº casamentos</span>
-                      <span className="text-green-400/50">~26 eventos (−9)</span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-white/25">Ticket médio</span>
-                      <span className="text-gold/50">~{ticketMedio2027.toLocaleString('pt-PT')} €</span>
+                      <span className="text-white/50 font-medium">Margem líquida vídeo</span>
+                      <span className="font-mono font-bold text-gold">{mixMargem.toLocaleString('pt-PT')} €</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Gráfico mix por proposta */}
+              {/* Gráfico mix */}
               <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
-                <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-1">Composição do Mix 2027</p>
+                <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-1">Composição do Mix 2027 · 20 Eventos</p>
                 <p className="text-[10px] text-white/20 mb-4">receita bruta vs margem líquida por proposta</p>
                 <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={mixData} barCategoryGap="22%" barGap={3}>
+                  <BarChart data={mixData} barCategoryGap="25%" barGap={3}>
                     <XAxis dataKey="proposta" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
                     <YAxis hide />
                     <Tooltip
@@ -1635,15 +1684,15 @@ export default function FinancasAnoPage({ params }: Props) {
                 </div>
               </div>
 
-              {/* Evolução resultado líquido */}
+              {/* Evolução resultado líquido total */}
               <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
-                <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-4">Evolução do Resultado Líquido</p>
+                <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-4">Evolução Resultado Líquido (negócio total)</p>
                 <ResponsiveContainer width="100%" height={180}>
                   <BarChart
                     data={[
                       { ano: '2025 Real', liquido: 19825 },
                       { ano: '2026 Est.', liquido: 23000 },
-                      { ano: '2027 Obj.', liquido: mixMargem - 14250 },
+                      { ano: '2027 Obj.', liquido: 28500 },
                     ]}
                     barCategoryGap="35%"
                   >
@@ -1665,7 +1714,7 @@ export default function FinancasAnoPage({ params }: Props) {
                   {[
                     { ano: '2025 Real', val: 19825, c: 'text-blue-300' },
                     { ano: '2026 Estimado', val: 23000, c: 'text-gold' },
-                    { ano: '2027 Objetivo', val: mixMargem - 14250, c: 'text-green-400' },
+                    { ano: '2027 Objetivo', val: 28500, c: 'text-green-400' },
                   ].map(d => (
                     <div key={d.ano} className="text-center">
                       <p className="text-[9px] text-white/25 uppercase tracking-wider mb-1">{d.ano}</p>
@@ -1688,12 +1737,12 @@ export default function FinancasAnoPage({ params }: Props) {
               </div>
               <div className="space-y-2">
                 {[
-                  { u: 'IMEDIATO',     c: 'text-red-400',    b: 'border-red-500/20',    bg: 'bg-red-500/[0.04]',    a: 'Atualizar preço base de casamento para 950€ em todos os novos contratos' },
-                  { u: 'IMEDIATO',     c: 'text-red-400',    b: 'border-red-500/20',    bg: 'bg-red-500/[0.04]',    a: 'Criar proposta formal PDF para Proposta 2 (Foto+Vídeo) e Proposta 3 (Cinemático)' },
-                  { u: 'CURTO PRAZO', c: 'text-orange-400', b: 'border-orange-500/20', bg: 'bg-orange-500/[0.04]', a: 'Parar de cobrar vídeo a 350€ — mínimo 550€ se incluir videógrafo externo' },
-                  { u: 'CURTO PRAZO', c: 'text-orange-400', b: 'border-orange-500/20', bg: 'bg-orange-500/[0.04]', a: 'Avaliar se o estúdio (320€/mês = 3.840€/ano) tem retorno real em sessões e reuniões' },
-                  { u: 'MÉDIO PRAZO', c: 'text-yellow-400', b: 'border-yellow-500/20', bg: 'bg-yellow-500/[0.04]', a: 'Limitar agenda 2027 a máximo 28 casamentos — priorizar Proposta 2 e 3' },
-                  { u: 'MÉDIO PRAZO', c: 'text-yellow-400', b: 'border-yellow-500/20', bg: 'bg-yellow-500/[0.04]', a: 'Criar proposta corporate profissional com orçamentação por hora ou por projeto' },
+                  { u: 'IMEDIATO',    c: 'text-red-400',    b: 'border-red-500/20',    bg: 'bg-red-500/[0.04]',    a: `Implementar Proposta 1 (850€) como mínimo — abandonar vídeo a ${ticketMedioVideo}€` },
+                  { u: 'IMEDIATO',    c: 'text-red-400',    b: 'border-red-500/20',    bg: 'bg-red-500/[0.04]',    a: 'Criar proposta PDF com os 3 packs para apresentar a novos clientes' },
+                  { u: 'CURTO PRAZO', c: 'text-orange-400', b: 'border-orange-500/20', bg: 'bg-orange-500/[0.04]', a: 'Promover activamente a Proposta 2 — pré-wedding diferencia e justifica +200€' },
+                  { u: 'CURTO PRAZO', c: 'text-orange-400', b: 'border-orange-500/20', bg: 'bg-orange-500/[0.04]', a: 'Avaliar se o estúdio (320€/mês = 3.840€/ano) tem retorno real' },
+                  { u: 'MÉDIO PRAZO', c: 'text-yellow-400', b: 'border-yellow-500/20', bg: 'bg-yellow-500/[0.04]', a: 'Objetivo: 40% dos eventos na Proposta 2 ou 3 — maior margem com mesma carga de trabalho' },
+                  { u: 'MÉDIO PRAZO', c: 'text-yellow-400', b: 'border-yellow-500/20', bg: 'bg-yellow-500/[0.04]', a: 'Criar proposta corporate autónoma — eventos tipo OLEOBIO (2.400€/dia) são muito mais eficientes' },
                 ].map((row, i) => (
                   <div key={i} className={`flex items-start gap-4 rounded-xl border ${row.b} ${row.bg} px-5 py-3.5`}>
                     <span className={`text-[9px] tracking-[0.2em] ${row.c} font-medium flex-shrink-0 mt-0.5 w-24`}>{row.u}</span>
