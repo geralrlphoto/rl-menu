@@ -58,7 +58,7 @@ export async function GET() {
       { data: novosEventosData },
     ] = await Promise.all([
       database.from('crm_contacts')
-        .select('id,nome,status,lead_prioridade,data_casamento,data_entrada,como_chegou,contato,email,tipo_evento')
+        .select('id,notion_id,nome,status,lead_prioridade,data_casamento,data_entrada,como_chegou,contato,email,tipo_evento')
         .not('status', 'in', '("Fechou","NÃO FECHOU","Sem resposta","Encerrado","Cancelado")')
         .order('data_entrada', { ascending: false }),
       database.from('portais').select('referencia,settings,noiva,noivo'),
@@ -228,13 +228,18 @@ export async function GET() {
     portalAtividade.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
     // ── Parse leads CRM ───────────────────────────────────────────────────
-    // Deduplicar por notion_id (sync pode ter inserido duplicados sem UNIQUE constraint)
-    // Mantém o registo com id mais alto (mais recente) para ter data_entrada correcta
+    // Deduplicar por notion_id; fallback por nome (trimmed) para apanhar
+    // entradas com espaços extra ou notion_ids diferentes para o mesmo casal
     const leadsMap = new Map<string, any>()
     for (const l of (leads ?? [])) {
-      const key = l.notion_id || l.nome
+      const key = l.notion_id || (l.nome || '').trim()
       const existing = leadsMap.get(key)
-      if (!existing || l.id > existing.id) leadsMap.set(key, l)
+      if (!existing) {
+        leadsMap.set(key, l)
+      } else if (l.lead_prioridade && !existing.lead_prioridade) {
+        // Prefere o registo com prioridade definida (mais completo)
+        leadsMap.set(key, l)
+      }
     }
     const leadsUniq = Array.from(leadsMap.values())
 
