@@ -3007,7 +3007,7 @@ export default function FinancasAnoPage({ params }: Props) {
 
                   {/* ── 5. Tendências de Mercado ── */}
                   <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 space-y-3">
-                    <p className="text-[10px] tracking-[0.4em] text-white/30 uppercase">5 · Tendências de Mercado 2025</p>
+                    <p className="text-[10px] tracking-[0.4em] text-white/30 uppercase">5 · Tendências de Mercado 2026</p>
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                       {[
                         { icon: '🚁', titulo: 'Drone é standard acima de €900', desc: 'Maioria dos concorrentes mid-range inclui drone. Cobrar como add-on já não justifica.' },
