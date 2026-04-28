@@ -360,7 +360,7 @@ export default function FinancasAnoPage({ params }: Props) {
   const { ano } = use(params)
   const anoNum = parseInt(ano)
 
-  const [tab, setTab]                   = useState<'resumo' | 'receitas' | 'despesas' | 'comparação'>('resumo')
+  const [tab, setTab]                   = useState<'resumo' | 'receitas' | 'despesas' | 'comparação' | 'estratégia'>('resumo')
   const [dbEntries, setDbEntries]       = useState<DbEntry[]>([])
   const [eventReceitas, setEventReceitas]   = useState<ReceitaRow[]>([])
   const [prevYearReceitas, setPrevYearReceitas] = useState<ReceitaRow[]>([])
@@ -524,6 +524,12 @@ export default function FinancasAnoPage({ params }: Props) {
   // Meses acima da meta
   const mesesAcimaMeta = metaMensal > 0 ? resumo.filter(r => r.receitas >= metaMensal).length : 0
 
+  // ── Ticket médio atual (baseline 2025 casamentos) ──
+  const casamentos2025 = RECEITAS_2025.filter(r => r.tipo === 'CASAMENTO')
+  const ticketMedioAtual = casamentos2025.length > 0
+    ? casamentos2025.reduce((s, r) => s + r.valor, 0) / casamentos2025.length
+    : 0
+
   function openModal(tipo: 'receita' | 'despesa', mesPrefill?: string) {
     setFormTipo(tipo)
     setFMes(mesPrefill ?? 'Janeiro'); setFData(''); setFCategoria('CASAMENTO')
@@ -601,6 +607,10 @@ export default function FinancasAnoPage({ params }: Props) {
               {anoNum - 1} vs {anoNum}
             </button>
           )}
+          <button onClick={() => setTab('estratégia')}
+            className={`px-4 py-2.5 text-xs tracking-[0.25em] uppercase transition-colors ${tab === 'estratégia' ? 'text-gold border-b-2 border-gold -mb-px' : 'text-white/30 hover:text-white/60'}`}>
+            Estratégia
+          </button>
         </div>
 
         {/* Botão Adicionar */}
@@ -1329,6 +1339,373 @@ export default function FinancasAnoPage({ params }: Props) {
           )}
         </div>
       )}
+
+      {/* ── ESTRATÉGIA ── */}
+      {tab === 'estratégia' && (() => {
+        const p1Preco = 950, p1Margem = 950
+        const p2Preco = 1600, p2Margem = 1250
+        const p3Preco = 2200, p3Margem = 1750
+        const mixData = [
+          { proposta: 'P1 × 10', receita: p1Preco * 10, margem: p1Margem * 10 },
+          { proposta: 'P2 × 11', receita: p2Preco * 11, margem: p2Margem * 11 },
+          { proposta: 'P3 × 5',  receita: p3Preco * 5,  margem: p3Margem * 5  },
+          { proposta: 'Corp.',   receita: 4500,           margem: 4500           },
+        ]
+        const mixReceitas = mixData.reduce((s, d) => s + d.receita, 0)
+        const mixMargem   = mixData.reduce((s, d) => s + d.margem, 0)
+        const pctMelhoria = Math.round(((mixMargem - 22000) / 22000) * 100)
+        const ticketMedio2027 = Math.round((p1Preco*10 + p2Preco*11 + p3Preco*5) / 26)
+        const fillCells = ['rgba(96,165,250,0.65)','rgba(201,168,76,0.70)','rgba(167,139,250,0.65)','rgba(74,222,128,0.55)']
+
+        return (
+          <div className="space-y-8">
+
+            {/* ── Ticket Médio ── */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-white/[0.06]" />
+                <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">Ticket Médio</p>
+                <div className="h-px flex-1 bg-white/[0.06]" />
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {/* Atual */}
+                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 text-center">
+                  <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-2">Atual (2025)</p>
+                  <p className="text-2xl font-light text-white/60">{fmt(Math.round(ticketMedioAtual))}</p>
+                  <p className="text-[9px] text-white/20 mt-1">€ / entrada</p>
+                  <div className="mt-3 h-1 bg-white/[0.05] rounded-full overflow-hidden">
+                    <div className="h-full bg-white/25 rounded-full" style={{ width: `${(ticketMedioAtual / 2200) * 100}%` }} />
+                  </div>
+                </div>
+                {/* P1 */}
+                <div className="rounded-2xl border border-blue-500/25 bg-blue-500/[0.06] p-4 text-center">
+                  <p className="text-[9px] tracking-[0.3em] text-blue-400/60 uppercase mb-2">Proposta 1</p>
+                  <p className="text-2xl font-light text-blue-300">950</p>
+                  <p className="text-[9px] text-blue-400/30 mt-1">€ / evento</p>
+                  <p className="text-[9px] text-green-400/70 mt-1.5">+{Math.round((950 / ticketMedioAtual - 1) * 100)}% vs atual</p>
+                  <div className="mt-3 h-1 bg-white/[0.05] rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-400/50 rounded-full" style={{ width: `${(950 / 2200) * 100}%` }} />
+                  </div>
+                </div>
+                {/* P2 */}
+                <div className="rounded-2xl border border-gold/25 bg-gold/[0.06] p-4 text-center">
+                  <p className="text-[9px] tracking-[0.3em] text-gold/60 uppercase mb-2">Proposta 2</p>
+                  <p className="text-2xl font-light text-gold">1.600</p>
+                  <p className="text-[9px] text-gold/30 mt-1">€ / evento</p>
+                  <p className="text-[9px] text-green-400/70 mt-1.5">+{Math.round((1600 / ticketMedioAtual - 1) * 100)}% vs atual</p>
+                  <div className="mt-3 h-1 bg-white/[0.05] rounded-full overflow-hidden">
+                    <div className="h-full bg-gold/50 rounded-full" style={{ width: `${(1600 / 2200) * 100}%` }} />
+                  </div>
+                </div>
+                {/* P3 */}
+                <div className="rounded-2xl border border-purple-500/25 bg-purple-500/[0.06] p-4 text-center">
+                  <p className="text-[9px] tracking-[0.3em] text-purple-400/60 uppercase mb-2">Proposta 3</p>
+                  <p className="text-2xl font-light text-purple-300">2.200</p>
+                  <p className="text-[9px] text-purple-400/30 mt-1">€ / evento</p>
+                  <p className="text-[9px] text-green-400/70 mt-1.5">+{Math.round((2200 / ticketMedioAtual - 1) * 100)}% vs atual</p>
+                  <div className="mt-3 h-1 bg-white/[0.05] rounded-full overflow-hidden">
+                    <div className="h-full bg-purple-400/50 rounded-full" style={{ width: '100%' }} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Gráfico ticket médio */}
+              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
+                <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-4">Comparação Ticket Médio (€ / evento)</p>
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart
+                    data={[
+                      { label: 'Atual 2025', valor: Math.round(ticketMedioAtual) },
+                      { label: 'Proposta 1', valor: 950 },
+                      { label: 'Proposta 2', valor: 1600 },
+                      { label: 'Proposta 3', valor: 2200 },
+                    ]}
+                    barCategoryGap="30%"
+                  >
+                    <XAxis dataKey="label" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                    <YAxis hide />
+                    <Tooltip
+                      cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                      contentStyle={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 12 }}
+                      formatter={(v: number) => [`${v.toLocaleString('pt-PT')} €`, 'Ticket']}
+                    />
+                    <Bar dataKey="valor" radius={[6,6,0,0]}>
+                      {['rgba(255,255,255,0.20)','rgba(96,165,250,0.70)','rgba(201,168,76,0.75)','rgba(167,139,250,0.70)'].map((fill, i) => (
+                        <Cell key={i} fill={fill} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* ── As 3 Propostas ── */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-white/[0.06]" />
+                <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">As 3 Propostas</p>
+                <div className="h-px flex-1 bg-white/[0.06]" />
+              </div>
+
+              <div className="space-y-3">
+                {/* Proposta 1 */}
+                <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.04] overflow-hidden">
+                  <div className="flex items-center justify-between px-6 py-4 border-b border-blue-500/[0.10]">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[9px] tracking-[0.4em] text-blue-400/70 uppercase font-semibold">Proposta 1</span>
+                        <span className="text-[9px] text-white/20">·</span>
+                        <span className="text-[9px] tracking-wider text-white/30 uppercase">Fotografia</span>
+                      </div>
+                      <p className="text-2xl font-light text-blue-300">950 <span className="text-sm text-blue-300/40">€</span></p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[9px] text-white/20 uppercase tracking-widest mb-0.5">Margem líquida</p>
+                      <p className="text-xl font-mono font-semibold text-green-400">950 €</p>
+                      <p className="text-[9px] text-green-400/30 mt-0.5">100% do valor · sem freelancers</p>
+                    </div>
+                  </div>
+                  <div className="px-6 py-3.5 flex flex-wrap gap-x-6 gap-y-2">
+                    {['1 Fotógrafo (8h)', '450–600 fotos editadas', 'Galeria online Smash', 'Entrega em 60 dias'].map(item => (
+                      <span key={item} className="flex items-center gap-2 text-[11px] text-white/40">
+                        <span className="w-1 h-1 rounded-full bg-blue-400/50 flex-shrink-0" />{item}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Proposta 2 */}
+                <div className="rounded-2xl border border-gold/20 bg-gold/[0.04] overflow-hidden">
+                  <div className="flex items-center justify-between px-6 py-4 border-b border-gold/[0.10]">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[9px] tracking-[0.4em] text-gold/70 uppercase font-semibold">Proposta 2</span>
+                        <span className="text-[9px] text-white/20">·</span>
+                        <span className="text-[9px] tracking-wider text-white/30 uppercase">Foto + Vídeo</span>
+                      </div>
+                      <p className="text-2xl font-light text-gold">1.600 <span className="text-sm text-gold/40">€</span></p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[9px] text-white/20 uppercase tracking-widest mb-0.5">Margem líquida</p>
+                      <p className="text-xl font-mono font-semibold text-green-400">1.250 €</p>
+                      <p className="text-[9px] text-white/20 mt-0.5">após 350€ videógrafo</p>
+                    </div>
+                  </div>
+                  <div className="px-6 py-3.5 flex flex-wrap gap-x-6 gap-y-2">
+                    {['1 Fotógrafo + 1 Videógrafo', 'Highlights vídeo 3–4 min', 'Drone incluído', 'Galeria online', 'Entrega em 90 dias'].map(item => (
+                      <span key={item} className="flex items-center gap-2 text-[11px] text-white/40">
+                        <span className="w-1 h-1 rounded-full bg-gold/50 flex-shrink-0" />{item}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Proposta 3 */}
+                <div className="rounded-2xl border border-purple-500/20 bg-purple-500/[0.04] overflow-hidden">
+                  <div className="flex items-center justify-between px-6 py-4 border-b border-purple-500/[0.10]">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[9px] tracking-[0.4em] text-purple-400/70 uppercase font-semibold">Proposta 3</span>
+                        <span className="text-[9px] text-white/20">·</span>
+                        <span className="text-[9px] tracking-wider text-white/30 uppercase">Foto + Vídeo Cinemático</span>
+                      </div>
+                      <p className="text-2xl font-light text-purple-300">2.200 <span className="text-sm text-purple-300/40">€</span></p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[9px] text-white/20 uppercase tracking-widest mb-0.5">Margem líquida</p>
+                      <p className="text-xl font-mono font-semibold text-green-400">1.750 €</p>
+                      <p className="text-[9px] text-white/20 mt-0.5">após 450€ videógrafo</p>
+                    </div>
+                  </div>
+                  <div className="px-6 py-3.5 flex flex-wrap gap-x-6 gap-y-2">
+                    {['Tudo da Proposta 2', 'Same-Day Edit (SDE)', 'Wedding Film 20–25 min', 'Teaser 60s redes sociais', 'USB personalizado'].map(item => (
+                      <span key={item} className="flex items-center gap-2 text-[11px] text-white/40">
+                        <span className="w-1 h-1 rounded-full bg-purple-400/50 flex-shrink-0" />{item}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Suplemento destino */}
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-6 py-3 flex items-center justify-between">
+                  <div>
+                    <span className="text-[9px] tracking-[0.3em] text-white/30 uppercase">+ Suplemento Destino</span>
+                    <p className="text-[11px] text-white/25 mt-0.5">eventos a mais de 100km · viagem + estadia incluída</p>
+                  </div>
+                  <p className="text-lg font-light text-white/40">+350 <span className="text-sm text-white/20">€</span></p>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Projeção 2027 ── */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-white/[0.06]" />
+                <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">Projeção 2027</p>
+                <div className="h-px flex-1 bg-white/[0.06]" />
+              </div>
+
+              {/* Cenários */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 space-y-3">
+                  <p className="text-[10px] tracking-[0.4em] text-white/30 uppercase">Sem Mudança de Preços</p>
+                  <div className="space-y-2">
+                    {[
+                      { l: 'Receitas estimadas', v: '36.000 €', c: 'text-white/50' },
+                      { l: 'Despesas estimadas', v: '14.000 €', c: 'text-red-400/50' },
+                    ].map(r => (
+                      <div key={r.l} className="flex justify-between text-sm">
+                        <span className="text-white/35">{r.l}</span>
+                        <span className={`font-mono ${r.c}`}>{r.v}</span>
+                      </div>
+                    ))}
+                    <div className="flex justify-between text-sm pt-2 border-t border-white/[0.06]">
+                      <span className="text-white/50 font-medium">Resultado líquido</span>
+                      <span className="font-mono font-bold text-white/40">22.000 €</span>
+                    </div>
+                    <div className="flex justify-between text-xs pt-1">
+                      <span className="text-white/25">Nº casamentos</span>
+                      <span className="text-white/25">~35 eventos</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-white/25">Ticket médio</span>
+                      <span className="text-white/25">~{fmt(Math.round(ticketMedioAtual))} €</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-gold/25 bg-gold/[0.05] p-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] tracking-[0.4em] text-gold/60 uppercase">Mix Propostas 2027</p>
+                    <span className="text-[9px] text-green-400/70 tracking-wider px-2 py-0.5 rounded-full border border-green-500/20 bg-green-500/10">
+                      +{pctMelhoria}% lucro
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {[
+                      { l: 'Receitas estimadas', v: `${mixReceitas.toLocaleString('pt-PT')} €`, c: 'text-green-400/70' },
+                      { l: 'Despesas estimadas', v: '14.250 €', c: 'text-red-400/50' },
+                    ].map(r => (
+                      <div key={r.l} className="flex justify-between text-sm">
+                        <span className="text-white/35">{r.l}</span>
+                        <span className={`font-mono ${r.c}`}>{r.v}</span>
+                      </div>
+                    ))}
+                    <div className="flex justify-between text-sm pt-2 border-t border-gold/[0.15]">
+                      <span className="text-white/50 font-medium">Resultado líquido</span>
+                      <span className="font-mono font-bold text-gold">{(mixMargem - 14250).toLocaleString('pt-PT')} €</span>
+                    </div>
+                    <div className="flex justify-between text-xs pt-1">
+                      <span className="text-white/25">Nº casamentos</span>
+                      <span className="text-green-400/50">~26 eventos (−9)</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-white/25">Ticket médio</span>
+                      <span className="text-gold/50">~{ticketMedio2027.toLocaleString('pt-PT')} €</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Gráfico mix por proposta */}
+              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
+                <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-1">Composição do Mix 2027</p>
+                <p className="text-[10px] text-white/20 mb-4">receita bruta vs margem líquida por proposta</p>
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={mixData} barCategoryGap="22%" barGap={3}>
+                    <XAxis dataKey="proposta" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                    <YAxis hide />
+                    <Tooltip
+                      cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                      contentStyle={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 12 }}
+                      formatter={(v: number, name: string) => [`${v.toLocaleString('pt-PT')} €`, name === 'receita' ? 'Receita Bruta' : 'Margem Líquida']}
+                    />
+                    <Bar dataKey="receita" name="receita" radius={[4,4,0,0]}>
+                      {fillCells.map((fill, i) => <Cell key={i} fill={fill} />)}
+                    </Bar>
+                    <Bar dataKey="margem" name="margem" radius={[4,4,0,0]}>
+                      {fillCells.map((fill, i) => <Cell key={i} fill={fill} opacity={0.4} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+                <div className="flex items-center gap-6 mt-2 justify-center">
+                  <span className="flex items-center gap-1.5 text-[10px] text-white/30"><span className="w-3 h-2 rounded-sm bg-white/25 inline-block" /> Receita Bruta</span>
+                  <span className="flex items-center gap-1.5 text-[10px] text-white/30"><span className="w-3 h-2 rounded-sm bg-white/10 inline-block" /> Margem Líquida</span>
+                </div>
+              </div>
+
+              {/* Evolução resultado líquido */}
+              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
+                <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-4">Evolução do Resultado Líquido</p>
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart
+                    data={[
+                      { ano: '2025 Real', liquido: 19825 },
+                      { ano: '2026 Est.', liquido: 23000 },
+                      { ano: '2027 Obj.', liquido: mixMargem - 14250 },
+                    ]}
+                    barCategoryGap="35%"
+                  >
+                    <XAxis dataKey="ano" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                    <YAxis hide />
+                    <Tooltip
+                      cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                      contentStyle={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 12 }}
+                      formatter={(v: number) => [`${v.toLocaleString('pt-PT')} €`, 'Resultado Líquido']}
+                    />
+                    <Bar dataKey="liquido" radius={[6,6,0,0]}>
+                      <Cell fill="rgba(96,165,250,0.55)" />
+                      <Cell fill="rgba(201,168,76,0.65)" />
+                      <Cell fill="rgba(74,222,128,0.75)" />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+                <div className="grid grid-cols-3 gap-3 mt-4">
+                  {[
+                    { ano: '2025 Real', val: 19825, c: 'text-blue-300' },
+                    { ano: '2026 Estimado', val: 23000, c: 'text-gold' },
+                    { ano: '2027 Objetivo', val: mixMargem - 14250, c: 'text-green-400' },
+                  ].map(d => (
+                    <div key={d.ano} className="text-center">
+                      <p className="text-[9px] text-white/25 uppercase tracking-wider mb-1">{d.ano}</p>
+                      <p className={`text-lg font-mono font-semibold ${d.c}`}>{d.val.toLocaleString('pt-PT')} €</p>
+                      {d.ano !== '2025 Real' && (
+                        <p className="text-[9px] text-green-400/50 mt-0.5">+{Math.round(((d.val - 19825) / 19825) * 100)}% vs 2025</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* ── Ações Prioritárias ── */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-white/[0.06]" />
+                <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">Ações Prioritárias</p>
+                <div className="h-px flex-1 bg-white/[0.06]" />
+              </div>
+              <div className="space-y-2">
+                {[
+                  { u: 'IMEDIATO',     c: 'text-red-400',    b: 'border-red-500/20',    bg: 'bg-red-500/[0.04]',    a: 'Atualizar preço base de casamento para 950€ em todos os novos contratos' },
+                  { u: 'IMEDIATO',     c: 'text-red-400',    b: 'border-red-500/20',    bg: 'bg-red-500/[0.04]',    a: 'Criar proposta formal PDF para Proposta 2 (Foto+Vídeo) e Proposta 3 (Cinemático)' },
+                  { u: 'CURTO PRAZO', c: 'text-orange-400', b: 'border-orange-500/20', bg: 'bg-orange-500/[0.04]', a: 'Parar de cobrar vídeo a 350€ — mínimo 550€ se incluir videógrafo externo' },
+                  { u: 'CURTO PRAZO', c: 'text-orange-400', b: 'border-orange-500/20', bg: 'bg-orange-500/[0.04]', a: 'Avaliar se o estúdio (320€/mês = 3.840€/ano) tem retorno real em sessões e reuniões' },
+                  { u: 'MÉDIO PRAZO', c: 'text-yellow-400', b: 'border-yellow-500/20', bg: 'bg-yellow-500/[0.04]', a: 'Limitar agenda 2027 a máximo 28 casamentos — priorizar Proposta 2 e 3' },
+                  { u: 'MÉDIO PRAZO', c: 'text-yellow-400', b: 'border-yellow-500/20', bg: 'bg-yellow-500/[0.04]', a: 'Criar proposta corporate profissional com orçamentação por hora ou por projeto' },
+                ].map((row, i) => (
+                  <div key={i} className={`flex items-start gap-4 rounded-xl border ${row.b} ${row.bg} px-5 py-3.5`}>
+                    <span className={`text-[9px] tracking-[0.2em] ${row.c} font-medium flex-shrink-0 mt-0.5 w-24`}>{row.u}</span>
+                    <span className="text-sm text-white/50">{row.a}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        )
+      })()}
 
       {/* ── MODAL CUSTO FIXO ── */}
       {cfModalOpen && (
