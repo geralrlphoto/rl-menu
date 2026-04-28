@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { useState, useEffect, use } from 'react'
-import { ComposedChart, BarChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, ReferenceLine } from 'recharts'
+import { ComposedChart, BarChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, ReferenceLine, LineChart, Legend } from 'recharts'
+import { supabase } from '@/lib/supabase'
 
 // ─── DADOS BASE 2025 ───────────────────────────────────────────────────────────
 
@@ -381,6 +382,10 @@ export default function FinancasAnoPage({ params }: Props) {
   const [cfModalOpen, setCfModalOpen]   = useState(false)
   const [cfItem, setCfItem]             = useState('')
   const [cfValor, setCfValor]           = useState('')
+  // Estratégia
+  const [metaAnualSim, setMetaAnualSim] = useState<number>(30000)
+  type CrmEst = { total: number; fechados: number; perdidos: number; ativos: number; porChegou: Array<{ canal: string; count: number; fechados: number }> }
+  const [crmEst, setCrmEst]             = useState<CrmEst | null>(null)
 
   useEffect(() => {
     // Meta mensal from localStorage
@@ -423,6 +428,34 @@ export default function FinancasAnoPage({ params }: Props) {
       }
     }
   }, [anoNum])
+
+  // CRM stats para tab Estratégia
+  useEffect(() => {
+    if (tab !== 'estratégia' || crmEst) return
+    supabase.from('crm_contacts').select('status, como_chegou').then(({ data }) => {
+      if (!data) return
+      const total = data.length
+      const fechados = data.filter(c => c.status === 'Fechou').length
+      const perdidos = data.filter(c => ['NÃO FECHOU','Encerrado','Cancelado','Sem resposta'].includes(c.status)).length
+      const ativos   = total - fechados - perdidos
+      const canaisMap = new Map<string, { count: number; fechados: number }>()
+      for (const c of data) {
+        const raw = c.como_chegou ?? ''
+        const canais = raw.split(',').map((s: string) => s.trim()).filter(Boolean)
+        if (!canais.length) canais.push('Não especificado')
+        for (const canal of canais) {
+          if (!canaisMap.has(canal)) canaisMap.set(canal, { count: 0, fechados: 0 })
+          canaisMap.get(canal)!.count++
+          if (c.status === 'Fechou') canaisMap.get(canal)!.fechados++
+        }
+      }
+      const porChegou = [...canaisMap.entries()]
+        .map(([canal, v]) => ({ canal, count: v.count, fechados: v.fechados }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 8)
+      setCrmEst({ total, fechados, perdidos, ativos, porChegou })
+    })
+  }, [tab, crmEst])
 
   function handleMetaChange(val: number) {
     setMetaMensal(val)
@@ -1781,6 +1814,356 @@ export default function FinancasAnoPage({ params }: Props) {
                   ))}
                 </div>
               </div>
+            </div>
+
+            {/* ── Ponto de Equilíbrio ── */}
+            {(() => {
+              const custoFixoAnual = totalCustosFixosAnuais + 3840 + 480 // +renda 320×12 + internet/luz 40×12
+              const cfMes = Math.round(custoFixoAnual / 12)
+              const beAnual = { p1: Math.ceil(custoFixoAnual / p1Margem), p2: Math.ceil(custoFixoAnual / p2Margem), p3: Math.ceil(custoFixoAnual / p3Margem) }
+              const maxBe = beAnual.p1
+              const beChartData = Array.from({ length: Math.min(maxBe + 5, 30) }, (_, i) => ({
+                eventos: i + 1,
+                p1: Math.round((i + 1) * p1Margem - custoFixoAnual),
+                p2: Math.round((i + 1) * p2Margem - custoFixoAnual),
+                p3: Math.round((i + 1) * p3Margem - custoFixoAnual),
+              }))
+              return (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-px flex-1 bg-white/[0.06]" />
+                    <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">Ponto de Equilíbrio</p>
+                    <div className="h-px flex-1 bg-white/[0.06]" />
+                  </div>
+                  <p className="text-[10px] text-white/20 text-center">
+                    Custos fixos anuais estimados: <span className="text-white/40 font-mono">{custoFixoAnual.toLocaleString('pt-PT')} €</span>
+                    <span className="text-white/20 ml-2">({cfMes.toLocaleString('pt-PT')} €/mês)</span>
+                  </p>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { label: 'Proposta 1', be: beAnual.p1, preco: 850, margem: p1Margem, fill: 'border-blue-500/25 bg-blue-500/[0.05]', tc: 'text-blue-300' },
+                      { label: 'Proposta 2', be: beAnual.p2, preco: 1050, margem: p2Margem, fill: 'border-gold/20 bg-gold/[0.05]', tc: 'text-gold' },
+                      { label: 'Proposta 3', be: beAnual.p3, preco: 1300, margem: p3Margem, fill: 'border-purple-500/20 bg-purple-500/[0.05]', tc: 'text-purple-300' },
+                    ].map(c => (
+                      <div key={c.label} className={`rounded-2xl border ${c.fill} p-4 text-center`}>
+                        <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-2">{c.label}</p>
+                        <p className={`text-3xl font-light ${c.tc}`}>{c.be}</p>
+                        <p className="text-[9px] text-white/20 mt-1">eventos / ano</p>
+                        <p className="text-[9px] text-white/25 mt-2">{Math.ceil(c.be / 12) === 0 ? '<1' : Math.ceil(c.be / 12)} por mês</p>
+                        <div className="mt-3 pt-2 border-t border-white/[0.06]">
+                          <p className="text-[9px] text-white/20">cada evento acima = lucro</p>
+                          <p className={`text-sm font-mono font-semibold ${c.tc} mt-0.5`}>+{c.margem} €</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
+                    <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-1">Acumulado por Nº de Eventos (após custos fixos)</p>
+                    <p className="text-[10px] text-white/20 mb-4">acima de zero = lucro · abaixo de zero = prejuízo</p>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <LineChart data={beChartData}>
+                        <XAxis dataKey="eventos" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} label={{ value: 'nº eventos/ano', fill: 'rgba(255,255,255,0.2)', fontSize: 9, position: 'insideBottomRight', offset: -5 }} />
+                        <YAxis hide />
+                        <Tooltip
+                          contentStyle={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 11 }}
+                          formatter={(v: number, name: string) => [`${v.toLocaleString('pt-PT')} €`, name === 'p1' ? 'P1' : name === 'p2' ? 'P2' : 'P3']}
+                          labelFormatter={(l: number) => `${l} eventos`}
+                        />
+                        <ReferenceLine y={0} stroke="rgba(255,255,255,0.15)" strokeDasharray="4 3" />
+                        <Line dataKey="p1" stroke="rgba(96,165,250,0.7)" strokeWidth={2} dot={false} />
+                        <Line dataKey="p2" stroke="rgba(201,168,76,0.7)" strokeWidth={2} dot={false} />
+                        <Line dataKey="p3" stroke="rgba(167,139,250,0.7)" strokeWidth={2} dot={false} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                    <div className="flex items-center gap-6 mt-2 justify-center">
+                      {[['P1','rgba(96,165,250,0.7)'],['P2','rgba(201,168,76,0.7)'],['P3','rgba(167,139,250,0.7)']].map(([l,c]) => (
+                        <span key={l} className="flex items-center gap-1.5 text-[10px] text-white/30">
+                          <span className="w-4 h-px inline-block" style={{ background: c as string }} />{l}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+
+            {/* ── ROI por Tipo de Evento ── */}
+            {(() => {
+              const HORAS: Record<string, number> = { CASAMENTO: 14, BATIZADO: 5, CORPORATIVO: 6, 'SESSÃO': 3, OUTRO: 4 }
+              const roiData = TIPOS_RECEITA
+                .map(tipo => {
+                  const entries = allReceitas.filter(r => r.tipo === tipo)
+                  if (!entries.length) return null
+                  const avg = Math.round(entries.reduce((s, r) => s + r.valor, 0) / entries.length)
+                  const horas = HORAS[tipo] ?? 5
+                  return { tipo, avg, horas, porHora: Math.round(avg / horas), count: entries.length }
+                })
+                .filter(Boolean)
+                .sort((a, b) => b!.porHora - a!.porHora) as { tipo: string; avg: number; horas: number; porHora: number; count: number }[]
+              const maxPH = roiData[0]?.porHora ?? 1
+              const COLS: Record<string, string> = { CASAMENTO: '#c9a84c', BATIZADO: '#60a5fa', CORPORATIVO: '#a78bfa', 'SESSÃO': '#4ade80', OUTRO: '#6b7280' }
+              return (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-px flex-1 bg-white/[0.06]" />
+                    <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">ROI por Tipo de Evento</p>
+                    <div className="h-px flex-1 bg-white/[0.06]" />
+                  </div>
+                  <p className="text-[10px] text-white/20 text-center">ticket médio ÷ horas estimadas (shoot + edição)</p>
+                  <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] overflow-hidden">
+                    {roiData.map((d, i) => (
+                      <div key={d.tipo} className="flex items-center gap-4 px-5 py-4 border-b border-white/[0.04] last:border-0">
+                        <span className="text-xl font-extralight text-white/10 w-5 text-right flex-shrink-0">{i+1}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-3">
+                              <span className="text-sm text-white/70 font-medium">{d.tipo}</span>
+                              <span className="text-[9px] text-white/25">{d.count} entradas · {d.horas}h estimadas</span>
+                            </div>
+                            <div className="flex items-center gap-3 flex-shrink-0">
+                              <span className="text-[10px] text-white/30 font-mono">avg {d.avg.toLocaleString('pt-PT')} €</span>
+                              <span className="text-sm font-mono font-bold" style={{ color: COLS[d.tipo] }}>{d.porHora} €/h</span>
+                            </div>
+                          </div>
+                          <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
+                            <div className="h-full rounded-full" style={{ width: `${(d.porHora / maxPH) * 100}%`, background: COLS[d.tipo], opacity: 0.65 }} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {roiData.length >= 2 && (
+                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-5 py-3 flex items-center gap-3">
+                      <span className="text-lg">💡</span>
+                      <p className="text-[11px] text-white/40 leading-relaxed">
+                        <span style={{ color: COLS[roiData[0].tipo] }} className="font-semibold">{roiData[0].tipo}</span> é o tipo mais rentável por hora ({roiData[0].porHora} €/h).
+                        {roiData.find(d => d.tipo === 'CASAMENTO') && roiData[0].tipo !== 'CASAMENTO' &&
+                          ` Casamento rende ${roiData.find(d => d.tipo === 'CASAMENTO')!.porHora} €/h — ${Math.round(roiData[0].porHora / roiData.find(d => d.tipo === 'CASAMENTO')!.porHora)}× menos eficiente.`
+                        }
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
+
+            {/* ── Simulador de Meta Anual ── */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-white/[0.06]" />
+                <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">Simulador de Meta Anual</p>
+                <div className="h-px flex-1 bg-white/[0.06]" />
+              </div>
+              <div className="flex items-center gap-4 rounded-2xl border border-gold/20 bg-gold/[0.04] px-5 py-4">
+                <p className="text-[10px] tracking-[0.3em] text-gold/60 uppercase flex-shrink-0">Meta Líquida</p>
+                <div className="flex-1">
+                  <input type="range" min={15000} max={60000} step={1000} value={metaAnualSim}
+                    onChange={e => setMetaAnualSim(Number(e.target.value))}
+                    className="w-full accent-yellow-400" />
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <input type="number" value={metaAnualSim} step={1000}
+                    onChange={e => setMetaAnualSim(Number(e.target.value) || 30000)}
+                    className="w-24 bg-white/5 border border-gold/20 rounded-xl px-3 py-1.5 text-sm text-gold font-mono text-right focus:outline-none focus:border-gold/40" />
+                  <span className="text-white/30 text-sm">€</span>
+                </div>
+              </div>
+              {(() => {
+                const custoFixoAnual = totalCustosFixosAnuais + 3840 + 480
+                const receitasNec = metaAnualSim + custoFixoAnual
+                const simData = [
+                  { label: 'Proposta 1', preco: p1Preco, margem: p1Margem, eventos: Math.ceil(receitasNec / p1Preco), evMargem: Math.ceil(metaAnualSim / p1Margem), fill: 'rgba(96,165,250,0.65)', tc: 'text-blue-300' },
+                  { label: 'Proposta 2', preco: p2Preco, margem: p2Margem, eventos: Math.ceil(receitasNec / p2Preco), evMargem: Math.ceil(metaAnualSim / p2Margem), fill: 'rgba(201,168,76,0.70)', tc: 'text-gold' },
+                  { label: 'Proposta 3', preco: p3Preco, margem: p3Margem, eventos: Math.ceil(receitasNec / p3Preco), evMargem: Math.ceil(metaAnualSim / p3Margem), fill: 'rgba(167,139,250,0.65)', tc: 'text-purple-300' },
+                ]
+                return (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-3 gap-3">
+                      {simData.map(s => (
+                        <div key={s.label} className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 text-center">
+                          <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-3">{s.label} · {s.preco}€</p>
+                          <p className={`text-3xl font-light ${s.tc}`}>{s.evMargem}</p>
+                          <p className="text-[9px] text-white/20 mt-1">eventos / ano</p>
+                          <p className="text-[9px] text-white/20 mt-2">{Math.ceil(s.evMargem / 12)} a {Math.ceil(s.evMargem / 10)} / mês</p>
+                          <div className="mt-3 h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
+                            <div className="h-full rounded-full" style={{ width: `${Math.min(100, (s.evMargem / 35) * 100)}%`, background: s.fill }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
+                      <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-4">Eventos Necessários por Proposta</p>
+                      <ResponsiveContainer width="100%" height={160}>
+                        <BarChart data={simData.map(s => ({ label: s.label, eventos: s.evMargem }))} barCategoryGap="35%">
+                          <XAxis dataKey="label" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                          <YAxis hide />
+                          <Tooltip
+                            contentStyle={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 11 }}
+                            formatter={(v: number) => [`${v} eventos/ano`, 'Necessário']}
+                          />
+                          <Bar dataKey="eventos" radius={[6,6,0,0]}>
+                            {simData.map((s, i) => <Cell key={i} fill={s.fill} />)}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )
+              })()}
+            </div>
+
+            {/* ── Sazonalidade ── */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-white/[0.06]" />
+                <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">Sazonalidade</p>
+                <div className="h-px flex-1 bg-white/[0.06]" />
+              </div>
+              {(() => {
+                const maxRec = Math.max(...resumo.map(r => r.receitas), 1)
+                const totalAnual = resumo.reduce((s, r) => s + r.receitas, 0)
+                const mesesMortos = ORDEM_MESES.filter(m => !resumo.find(r => r.mes === m && r.receitas > 0))
+                return (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                      {ORDEM_MESES.map(mes => {
+                        const r = resumo.find(m => m.mes === mes)
+                        const val = r?.receitas ?? 0
+                        const pct = Math.round((val / maxRec) * 100)
+                        const isAtual = mes === ORDEM_MESES[new Date().getMonth()] && anoNum === new Date().getFullYear()
+                        return (
+                          <div key={mes} className={`rounded-xl border p-3 text-center transition-colors ${
+                            val === 0 ? 'border-white/[0.04] bg-white/[0.01]' :
+                            pct >= 80 ? 'border-green-500/30 bg-green-500/[0.08]' :
+                            pct >= 40 ? 'border-gold/20 bg-gold/[0.05]' :
+                            'border-white/[0.08] bg-white/[0.03]'
+                          } ${isAtual ? 'ring-1 ring-gold/30' : ''}`}>
+                            <p className="text-[9px] tracking-wider text-white/30 uppercase">{mes.slice(0,3)}</p>
+                            {val > 0 ? (
+                              <>
+                                <p className={`text-base font-mono font-semibold mt-1 ${pct >= 80 ? 'text-green-400' : pct >= 40 ? 'text-gold' : 'text-white/50'}`}>
+                                  {val >= 1000 ? `${(val/1000).toFixed(1)}k` : val}
+                                </p>
+                                <div className="mt-1.5 h-1 bg-white/[0.05] rounded-full overflow-hidden">
+                                  <div className="h-full rounded-full" style={{ width: `${pct}%`, background: pct >= 80 ? 'rgba(74,222,128,0.6)' : pct >= 40 ? 'rgba(201,168,76,0.6)' : 'rgba(255,255,255,0.3)' }} />
+                                </div>
+                              </>
+                            ) : (
+                              <p className="text-[10px] text-white/15 mt-2">—</p>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                    {mesesMortos.length > 0 && (
+                      <div className="rounded-xl border border-orange-500/20 bg-orange-500/[0.04] px-5 py-3">
+                        <p className="text-[10px] tracking-[0.3em] text-orange-400/60 uppercase mb-1.5">Meses sem receita registada</p>
+                        <div className="flex flex-wrap gap-2">
+                          {mesesMortos.map(m => (
+                            <span key={m} className="text-[10px] text-white/30 px-2.5 py-1 rounded-full border border-white/[0.06] bg-white/[0.02]">{m}</span>
+                          ))}
+                        </div>
+                        <p className="text-[10px] text-white/20 mt-2">→ Ideal para corporate, sessões pré-wedding, álbuns pendentes ou mentoria</p>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {[
+                        { label: 'Melhor Mês', val: resumo.reduce((best, r) => r.receitas > best.receitas ? r : best, resumo[0] ?? { mes: '—', receitas: 0 }) },
+                        { label: 'Pior Mês Ativo', val: resumo.filter(r => r.receitas > 0).reduce((worst, r) => r.receitas < worst.receitas ? r : worst, resumo.filter(r => r.receitas > 0)[0] ?? { mes: '—', receitas: 0 }) },
+                      ].map(({ label, val }) => val && (
+                        <div key={label} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-center col-span-1">
+                          <p className="text-[9px] text-white/25 uppercase tracking-wider mb-1">{label}</p>
+                          <p className="text-base font-medium text-white/60">{val.mes}</p>
+                          <p className="text-sm font-mono text-gold/70">{fmt(val.receitas)} €</p>
+                        </div>
+                      ))}
+                      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-center">
+                        <p className="text-[9px] text-white/25 uppercase tracking-wider mb-1">Meses Ativos</p>
+                        <p className="text-2xl font-light text-white/60">{resumo.filter(r => r.receitas > 0).length}</p>
+                        <p className="text-[9px] text-white/20">de 12</p>
+                      </div>
+                      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-center">
+                        <p className="text-[9px] text-white/25 uppercase tracking-wider mb-1">Média Mês Ativo</p>
+                        <p className="text-base font-mono font-semibold text-gold/70">
+                          {resumo.filter(r => r.receitas > 0).length > 0 ? fmt(Math.round(totalAnual / resumo.filter(r => r.receitas > 0).length)) : '—'} €
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
+            </div>
+
+            {/* ── Taxa de Conversão CRM ── */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-white/[0.06]" />
+                <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">Funil de Conversão CRM</p>
+                <div className="h-px flex-1 bg-white/[0.06]" />
+              </div>
+              {!crmEst ? (
+                <div className="text-center py-8 text-white/20 text-xs tracking-widest">A carregar dados CRM…</div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                      { l: 'Total Leads', v: crmEst.total, c: 'text-white/60', b: 'border-white/[0.08] bg-white/[0.02]' },
+                      { l: 'Em Pipeline', v: crmEst.ativos, c: 'text-blue-300', b: 'border-blue-500/20 bg-blue-500/[0.04]' },
+                      { l: 'Fechados', v: crmEst.fechados, c: 'text-green-400', b: 'border-green-500/20 bg-green-500/[0.04]' },
+                      { l: 'Perdidos', v: crmEst.perdidos, c: 'text-red-400/70', b: 'border-red-500/20 bg-red-500/[0.04]' },
+                    ].map(c => (
+                      <div key={c.l} className={`rounded-2xl border ${c.b} p-4 text-center`}>
+                        <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-2">{c.l}</p>
+                        <p className={`text-3xl font-light ${c.c}`}>{c.v}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl border border-green-500/20 bg-green-500/[0.04] p-4 text-center">
+                      <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-2">Taxa de Conversão</p>
+                      <p className="text-3xl font-light text-green-400">
+                        {crmEst.total > 0 ? Math.round((crmEst.fechados / crmEst.total) * 100) : 0}%
+                      </p>
+                      <p className="text-[9px] text-white/20 mt-1">{crmEst.fechados} de {crmEst.total} leads</p>
+                    </div>
+                    <div className="rounded-2xl border border-red-500/20 bg-red-500/[0.04] p-4 text-center">
+                      <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-2">Taxa de Perda</p>
+                      <p className="text-3xl font-light text-red-400/70">
+                        {crmEst.total > 0 ? Math.round((crmEst.perdidos / crmEst.total) * 100) : 0}%
+                      </p>
+                      <p className="text-[9px] text-white/20 mt-1">{crmEst.perdidos} leads perdidas</p>
+                    </div>
+                  </div>
+                  {/* Barra de funil */}
+                  <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
+                    <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-4">Canais de Aquisição</p>
+                    <div className="space-y-3">
+                      {crmEst.porChegou.map((c, i) => {
+                        const convRate = c.count > 0 ? Math.round((c.fechados / c.count) * 100) : 0
+                        const maxCount = crmEst.porChegou[0]?.count ?? 1
+                        return (
+                          <div key={i} className="flex items-center gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-1.5">
+                                <span className="text-[11px] text-white/50 truncate">{c.canal}</span>
+                                <div className="flex items-center gap-3 flex-shrink-0">
+                                  <span className="text-[10px] text-white/30 font-mono">{c.count} leads</span>
+                                  <span className={`text-[10px] font-mono font-semibold ${convRate >= 30 ? 'text-green-400' : convRate >= 15 ? 'text-gold' : 'text-white/30'}`}>
+                                    {convRate}% conv.
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
+                                <div className="h-full rounded-full bg-blue-400/40" style={{ width: `${(c.count / maxCount) * 100}%` }} />
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* ── Ações Prioritárias ── */}
