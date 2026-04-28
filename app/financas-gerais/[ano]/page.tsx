@@ -413,9 +413,21 @@ export default function FinancasAnoPage({ params }: Props) {
       localStorage.setItem(`custos-fixos-${anoNum}`, JSON.stringify(DEFAULT_CUSTOS_FIXOS[anoNum]))
     }
 
-    // Packs config from localStorage
+    // Packs config from localStorage — merge with defaults to handle schema migrations
     const savedPacks = localStorage.getItem('packs-config')
-    if (savedPacks) { try { setPacksCfg(JSON.parse(savedPacks)) } catch {} }
+    if (savedPacks) {
+      try {
+        const p = JSON.parse(savedPacks)
+        const merged: AllPacksCfg = {
+          p1:   { ...DEFAULT_PACKS_CFG.p1,   ...p.p1,   servicos: p.p1?.servicos   ?? DEFAULT_PACKS_CFG.p1.servicos },
+          p2:   { ...DEFAULT_PACKS_CFG.p2,   ...p.p2,   servicos: p.p2?.servicos   ?? DEFAULT_PACKS_CFG.p2.servicos },
+          p3:   { ...DEFAULT_PACKS_CFG.p3,   ...p.p3,   servicos: p.p3?.servicos   ?? DEFAULT_PACKS_CFG.p3.servicos },
+          bat:  { ...DEFAULT_PACKS_CFG.bat,  ...p.bat,  servicos: p.bat?.servicos  ?? DEFAULT_PACKS_CFG.bat.servicos },
+          corp: { ...DEFAULT_PACKS_CFG.corp, ...p.corp, servicos: p.corp?.servicos ?? DEFAULT_PACKS_CFG.corp.servicos },
+        }
+        setPacksCfg(merged)
+      } catch { localStorage.removeItem('packs-config') }
+    }
 
     // DB entries
     fetch(`/api/financas-gerais?ano=${anoNum}`)
@@ -1494,7 +1506,7 @@ export default function FinancasAnoPage({ params }: Props) {
                       </div>
                       {/* Service chips */}
                       <div className="flex flex-wrap gap-2 mt-2">
-                        {cfg.servicos.map((s, si) => (
+                        {(cfg.servicos ?? []).map((s, si) => (
                           <span key={si} className={`inline-flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full border ${row.chipBg} text-white/50`}>
                             {s}
                             <button onClick={() => removeServico(row.key, si)}
@@ -1561,7 +1573,7 @@ export default function FinancasAnoPage({ params }: Props) {
                       </div>
                       {/* Service chips */}
                       <div className="flex flex-wrap gap-2">
-                        {cfg.servicos.map((s, si) => (
+                        {(cfg.servicos ?? []).map((s, si) => (
                           <span key={si} className={`inline-flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full border ${row.chipBg} text-white/50`}>
                             {s}
                             <button onClick={() => removeServico(row.key, si)}
@@ -1788,7 +1800,7 @@ export default function FinancasAnoPage({ params }: Props) {
                     </div>
                   </div>
                   <div className="px-6 py-3.5 flex flex-wrap gap-x-6 gap-y-2">
-                    {packsCfg.p1.servicos.map(item => (
+                    {(packsCfg.p1.servicos ?? []).map(item => (
                       <span key={item} className="flex items-center gap-2 text-[11px] text-white/40">
                         <span className="w-1 h-1 rounded-full bg-blue-400/50 flex-shrink-0" />{item}
                       </span>
@@ -1814,7 +1826,7 @@ export default function FinancasAnoPage({ params }: Props) {
                     </div>
                   </div>
                   <div className="px-6 py-3.5 flex flex-wrap gap-x-6 gap-y-2">
-                    {packsCfg.p2.servicos.map(item => (
+                    {(packsCfg.p2.servicos ?? []).map(item => (
                       <span key={item} className="flex items-center gap-2 text-[11px] text-white/40">
                         <span className="w-1 h-1 rounded-full bg-gold/50 flex-shrink-0" />{item}
                       </span>
@@ -1840,7 +1852,7 @@ export default function FinancasAnoPage({ params }: Props) {
                     </div>
                   </div>
                   <div className="px-6 py-3.5 flex flex-wrap gap-x-6 gap-y-2">
-                    {packsCfg.p3.servicos.map(item => (
+                    {(packsCfg.p3.servicos ?? []).map(item => (
                       <span key={item} className="flex items-center gap-2 text-[11px] text-white/40">
                         <span className="w-1 h-1 rounded-full bg-purple-400/50 flex-shrink-0" />{item}
                       </span>
