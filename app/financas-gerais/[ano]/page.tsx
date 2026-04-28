@@ -2438,8 +2438,8 @@ export default function FinancasAnoPage({ params }: Props) {
               ]
 
               const strategies = profileDefs.map(pd => {
-                const avgMargem = pd.mix.p1*p1Margem + pd.mix.p2*p2Margem + pd.mix.p3*p3Margem + pd.mix.bat*MARG_BAT + pd.mix.corp*MARG_CORP
-                const totalEvents = Math.ceil(margemNecessaria / avgMargem)
+                // Usa exactamente numEventosSim — o utilizador define o volume, calculamos o resultado
+                const totalEvents = numEventosSim
                 const counts: StratMix = {
                   p1: Math.round(totalEvents * pd.mix.p1),
                   p2: Math.round(totalEvents * pd.mix.p2),
@@ -2447,6 +2447,7 @@ export default function FinancasAnoPage({ params }: Props) {
                   bat: Math.round(totalEvents * pd.mix.bat),
                   corp: Math.round(totalEvents * pd.mix.corp),
                 }
+                // Ajustar arredondamentos em p2 para totalEvents bater certo
                 const sumC = counts.p1 + counts.p2 + counts.p3 + counts.bat + counts.corp
                 counts.p2 += (totalEvents - sumC)
                 const totalMargem = counts.p1*p1Margem + counts.p2*p2Margem + counts.p3*p3Margem + counts.bat*MARG_BAT + counts.corp*MARG_CORP
@@ -2477,7 +2478,7 @@ export default function FinancasAnoPage({ params }: Props) {
                     <div className="h-px flex-1 bg-white/[0.04]" />
                   </div>
                   <p className="text-[10px] text-white/20 text-center">
-                    Para atingir <span className="font-mono font-semibold text-gold/70">{metaAnualSim.toLocaleString('pt-PT')} €</span> líquidos · 3 caminhos possíveis
+                    Com <span className="font-mono font-semibold text-blue-300">{numEventosSim}</span> eventos · resultado líquido de cada mix vs meta <span className="font-mono font-semibold text-gold/70">{metaAnualSim.toLocaleString('pt-PT')} €</span>
                   </p>
 
                   {strategies.map((s, si) => {
