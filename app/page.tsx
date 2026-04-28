@@ -306,7 +306,13 @@ export default async function Home() {
     const today = new Date(); today.setHours(0,0,0,0)
     return Math.round((today.getTime() - new Date(d + 'T00:00:00').getTime()) / 86400000)
   }
-  const leadsQuenteMorno = (leadsAtivas ?? []).filter(l => daysSince(l.data_entrada) <= 10)
+  // Deduplicar por nome trimado (a BD pode ter duplicados por sync Notion)
+  const leadsDedup = new Map<string, any>()
+  for (const l of (leadsAtivas ?? [])) {
+    const key = (l.nome || '').trim()
+    if (key && !leadsDedup.has(key)) leadsDedup.set(key, l)
+  }
+  const leadsQuenteMorno = Array.from(leadsDedup.values()).filter(l => daysSince(l.data_entrada) <= 10)
   const quente = leadsQuenteMorno.filter(l => daysSince(l.data_entrada) <= 3)
   const morno  = leadsQuenteMorno.filter(l => daysSince(l.data_entrada) > 3)
 
