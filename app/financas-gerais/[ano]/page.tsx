@@ -2243,6 +2243,7 @@ export default function FinancasAnoPage({ params }: Props) {
                   { label: 'Proposta 3', preco: p3Preco, margem: p3Margem, eventos: Math.ceil(receitasNec / p3Preco), evMargem: Math.ceil(metaAnualSim / p3Margem), fill: 'rgba(167,139,250,0.65)', tc: 'text-purple-300' },
                 ]
                 return (
+                  <>
                   <div className="space-y-3">
                     <div className="grid grid-cols-3 gap-3">
                       {simData.map(s => (
@@ -2342,7 +2343,7 @@ export default function FinancasAnoPage({ params }: Props) {
                       </div>
                     )
                   })()}
-                </div>
+                </>
                 )
               })()}
 
