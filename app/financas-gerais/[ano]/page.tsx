@@ -2538,59 +2538,72 @@ export default function FinancasAnoPage({ params }: Props) {
                       <p className="text-[9px] text-white/20 mt-1">{crmEst.perdidos} leads perdidas</p>
                     </div>
                   </div>
-                  {/* ── Propostas Fechadas ── */}
+                  {/* ── Propostas Fechadas — baseado em eventos reais ── */}
                   {(() => {
-                    const oF = crmEst.orcamentosF
-                    const midP1P2 = (p1Preco + p2Preco) / 2   // ~950
-                    const midP2P3 = (p2Preco + p3Preco) / 2   // ~1175
-                    const b1 = oF.filter(v => v <= midP1P2).length
-                    const b2 = oF.filter(v => v > midP1P2 && v <= midP2P3).length
-                    const b3 = oF.filter(v => v > midP2P3).length
-                    const semOrc = crmEst.fechados - oF.length
-                    const maxB = Math.max(b1, b2, b3, 1)
-                    const ticketMedioF = oF.length > 0 ? Math.round(oF.reduce((s, v) => s + v, 0) / oF.length) : 0
+                    // Fonte: RECEITAS_2025 (hardcoded) + eventos Supabase (ano atual)
+                    // Valor real cobrado é o dado mais fiável — sem depender de campos CRM
+                    const todosEventos = [...RECEITAS_2025, ...eventReceitas]
+                    const casamentos = todosEventos.filter(r => r.tipo === 'CASAMENTO' && r.valor > 0)
+                    const mid12 = (p1Preco + p2Preco) / 2
+                    const mid23 = (p2Preco + p3Preco) / 2
+                    const b1 = casamentos.filter(r => r.valor <= mid12)
+                    const b2 = casamentos.filter(r => r.valor > mid12 && r.valor <= mid23)
+                    const b3 = casamentos.filter(r => r.valor > mid23)
+                    const total = casamentos.length
+                    const maxB = Math.max(b1.length, b2.length, b3.length, 1)
+                    const ticketMedio = total > 0
+                      ? Math.round(casamentos.reduce((s, r) => s + r.valor, 0) / total)
+                      : 0
+                    const rec2025 = RECEITAS_2025.filter(r => r.tipo === 'CASAMENTO').length
+                    const recAno = eventReceitas.filter(r => r.tipo === 'CASAMENTO').length
                     return (
                       <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase">Propostas Fechadas</p>
-                          {ticketMedioF > 0 && (
-                            <span className="text-[10px] text-gold/60 font-mono">ticket médio: {ticketMedioF.toLocaleString('pt-PT')} €</span>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase">Distribuição por Proposta</p>
+                            <p className="text-[9px] text-white/15 mt-1">
+                              {rec2025} casamentos 2025
+                              {recAno > 0 ? ` · ${recAno} de ${anoNum}` : ''}
+                              {' · '}{total} total
+                            </p>
+                          </div>
+                          {ticketMedio > 0 && (
+                            <span className="text-[10px] text-gold/60 font-mono flex-shrink-0">
+                              ticket médio {ticketMedio.toLocaleString('pt-PT')} €
+                            </span>
                           )}
                         </div>
-                        {oF.length === 0 ? (
-                          <p className="text-[11px] text-white/20 text-center py-2">
-                            {crmEst.fechados > 0
-                              ? `${crmEst.fechados} leads fechadas sem orçamento registado no CRM`
-                              : 'Sem leads fechadas registadas'}
-                          </p>
-                        ) : (
-                          <div className="space-y-3">
-                            {[
-                              { label: `Proposta 1 · ≤${midP1P2.toFixed(0)}€`, count: b1, color: 'bg-blue-400/50',   tc: 'text-blue-300',   preco: p1Preco },
-                              { label: `Proposta 2 · ${midP1P2.toFixed(0)}–${midP2P3.toFixed(0)}€`, count: b2, color: 'bg-gold/50',      tc: 'text-gold',       preco: p2Preco },
-                              { label: `Proposta 3 · >${midP2P3.toFixed(0)}€`,  count: b3, color: 'bg-purple-400/50', tc: 'text-purple-300', preco: p3Preco },
-                            ].map((row, ri) => {
-                              const pct = oF.length > 0 ? Math.round((row.count / oF.length) * 100) : 0
-                              return (
-                                <div key={ri}>
-                                  <div className="flex items-center justify-between mb-1.5">
-                                    <span className="text-[11px] text-white/40">{row.label}</span>
-                                    <div className="flex items-center gap-3">
-                                      <span className={`text-sm font-mono font-bold ${row.tc}`}>{row.count}</span>
-                                      <span className="text-[10px] text-white/25 font-mono w-8 text-right">{pct}%</span>
-                                    </div>
+                        <div className="space-y-3">
+                          {[
+                            { label: `Proposta 1`, sub: `≤ ${mid12.toFixed(0)} €`, items: b1, color: 'bg-blue-400/50',   tc: 'text-blue-300' },
+                            { label: `Proposta 2`, sub: `${mid12.toFixed(0)} – ${mid23.toFixed(0)} €`, items: b2, color: 'bg-gold/50', tc: 'text-gold' },
+                            { label: `Proposta 3`, sub: `> ${mid23.toFixed(0)} €`,  items: b3, color: 'bg-purple-400/50', tc: 'text-purple-300' },
+                          ].map((row, ri) => {
+                            const pct = total > 0 ? Math.round((row.items.length / total) * 100) : 0
+                            const avgVal = row.items.length > 0
+                              ? Math.round(row.items.reduce((s, r) => s + r.valor, 0) / row.items.length)
+                              : 0
+                            return (
+                              <div key={ri}>
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`text-[11px] font-medium ${row.tc}`}>{row.label}</span>
+                                    <span className="text-[9px] text-white/20">{row.sub}</span>
                                   </div>
-                                  <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
-                                    <div className={`h-full rounded-full ${row.color}`} style={{ width: `${(row.count / maxB) * 100}%` }} />
+                                  <div className="flex items-center gap-3">
+                                    {avgVal > 0 && <span className="text-[9px] text-white/20 font-mono">~{avgVal.toLocaleString('pt-PT')} €/ev</span>}
+                                    <span className={`text-sm font-mono font-bold ${row.tc}`}>{row.items.length}</span>
+                                    <span className="text-[10px] text-white/25 font-mono w-8 text-right">{pct}%</span>
                                   </div>
                                 </div>
-                              )
-                            })}
-                            {semOrc > 0 && (
-                              <p className="text-[9px] text-white/20 pt-1">+ {semOrc} fechado{semOrc > 1 ? 's' : ''} sem orçamento no CRM</p>
-                            )}
-                          </div>
-                        )}
+                                <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
+                                  <div className={`h-full rounded-full ${row.color}`}
+                                    style={{ width: `${(row.items.length / maxB) * 100}%` }} />
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
                       </div>
                     )
                   })()}
