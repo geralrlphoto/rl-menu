@@ -386,6 +386,7 @@ export default function FinancasAnoPage({ params }: Props) {
   const [metaAnualSim, setMetaAnualSim]     = useState<number>(30000)
   const [numEventosSim, setNumEventosSim]   = useState<number>(20)
   const [relatorioOpen, setRelatorioOpen]   = useState<boolean>(false)
+  const [concExpandedIdx, setConcExpandedIdx] = useState<number | null>(null)
   type CrmEst = {
     total: number; fechados: number; perdidos: number; ativos: number
     porChegou: Array<{ canal: string; count: number; fechados: number }>
@@ -2864,20 +2865,81 @@ export default function FinancasAnoPage({ params }: Props) {
                 t === 'Budget' ? 'border-blue-500/20 bg-blue-500/[0.04]' : t === 'Mid-Range' ? 'border-gold/20 bg-gold/[0.04]' : 'border-purple-500/20 bg-purple-500/[0.04]'
 
               // ── Dados concorrentes (pesquisa exaustiva Lisboa/Setúbal 2025)
-              const CONCORRENTES = [
-                { nome: 'Alerfilme',       zona: 'Lisboa/Sintra',      min: 590,  max: 590,  inclui: '1 videógrafo · FullHD · Highlights + full film · USB',                  nota: '' },
-                { nome: 'Jada Cine',       zona: 'Lisboa',             min: 400,  max: 900,  inclui: '1 videógrafo · 4K · Highlights + teaser · Drone incluído',              nota: 'pagamento até 2 meses pós-evento' },
-                { nome: 'Luís Ademar',     zona: 'Lisboa',             min: 500,  max: 800,  inclui: '1 videógrafo · Full event · 3 DVDs',                                   nota: '4.9★' },
-                { nome: 'EyeFocus',        zona: 'Seixal (Setúbal)',   min: 750,  max: 5000, inclui: 'Sony a7III 4K · Full coverage · Wedding Awards ★',                    nota: '5.0★ 100% rec.' },
-                { nome: 'CortejoFilm',     zona: 'Almada (Setúbal)',   min: 900,  max: 1300, inclui: '1 videógrafo · Full day · Highlights + full film',                      nota: '4.9★ 98% rec.' },
-                { nome: 'Bravo',           zona: 'Corroios (Setúbal)', min: 950,  max: 1500, inclui: 'Foto + Vídeo · Drone · Love Session',                                  nota: 'Setúbal focused' },
-                { nome: 'Diogo Francisco', zona: 'Lisboa',             min: 950,  max: 2500, inclui: '1 videógrafo · Full coverage · edição profissional',                   nota: '5.0★ 100% rec.' },
-                { nome: 'Pithon Films',    zona: 'Lisboa',             min: 900,  max: 4900, inclui: 'Personalizado · vários formatos · Chico Pithon',                       nota: '' },
-                { nome: 'Make Me Feel',    zona: 'Lisboa',             min: 1250, max: 2250, inclui: '1–2 videógrafos · 4K · Drone · Highlights + full film',                nota: 'preços públicos' },
-                { nome: 'LuísGorrão',      zona: 'Lisboa',             min: 1400, max: 2300, inclui: '2 videógrafos std · Drone · Sony FX3 · SDE opcional',                  nota: '5.0★ 100% rec.' },
-                { nome: 'Digital Studio',  zona: 'Lisboa',             min: 1000, max: 2100, inclui: 'Foto + Vídeo · 4K multicam · Drone · SDE Pack Rubi 1.500€',            nota: 'preços públicos' },
-                { nome: 'Murall Films',    zona: 'Lisboa',             min: 2000, max: 5000, inclui: '4K cinema · Drone certificado · SDE · colour grading',                 nota: 'sem preços públicos' },
-                { nome: 'Laranja Metade',  zona: 'Lisboa',             min: 1150, max: 3000, inclui: 'Multi-câmara 4K · Drone · equipa 3 profissionais',                     nota: 'Timeout + Zankyou top' },
+              type Concorrente = { nome: string; zona: string; min: number; max: number; nota: string; packs: { nome: string; preco: number; servicos: string[] }[] }
+              const CONCORRENTES: Concorrente[] = [
+                { nome: 'Alerfilme', zona: 'Lisboa/Sintra', min: 590, max: 590, nota: '',
+                  packs: [
+                    { nome: 'Pack Único', preco: 590, servicos: ['1 Videógrafo', 'FullHD', 'Highlights + Full Film', 'Entrega USB'] },
+                  ]},
+                { nome: 'Jada Cine', zona: 'Lisboa', min: 400, max: 900, nota: 'pagamento até 2 meses pós-evento',
+                  packs: [
+                    { nome: 'Essencial', preco: 400, servicos: ['1 Videógrafo', 'Highlights 3–5 min', 'Entrega digital'] },
+                    { nome: 'Clássico',  preco: 650, servicos: ['1 Videógrafo', '4K', 'Highlights + Teaser', 'Entrega digital'] },
+                    { nome: 'Premium',   preco: 900, servicos: ['1 Videógrafo', '4K', 'Highlights + Full Film', 'Drone incluído', 'Entrega digital'] },
+                  ]},
+                { nome: 'Luís Ademar', zona: 'Lisboa', min: 500, max: 800, nota: '4.9★',
+                  packs: [
+                    { nome: 'Básico',    preco: 500, servicos: ['1 Videógrafo', 'Highlights', '3 DVDs'] },
+                    { nome: 'Completo',  preco: 800, servicos: ['1 Videógrafo', 'Full Event', 'Highlights + Full Film', '3 DVDs'] },
+                  ]},
+                { nome: 'EyeFocus', zona: 'Seixal (Setúbal)', min: 750, max: 5000, nota: '5.0★ 100% rec.',
+                  packs: [
+                    { nome: 'Silver',   preco: 750,  servicos: ['1 Videógrafo', 'Sony a7III 4K', 'Highlights', 'Entrega digital'] },
+                    { nome: 'Gold',     preco: 1500, servicos: ['1 Videógrafo', 'Sony a7III 4K', 'Full Coverage', 'Highlights + Full Film', 'Drone'] },
+                    { nome: 'Platinum', preco: 3000, servicos: ['2 Videógrafos', '4K multicam', 'Drone', 'SDE', 'Full Film', 'Colour grading'] },
+                    { nome: 'Cinema',   preco: 5000, servicos: ['Equipa completa', 'Cinema 4K', 'Drone', 'SDE', 'Colour grading premium', 'Wedding Awards'] },
+                  ]},
+                { nome: 'CortejoFilm', zona: 'Almada (Setúbal)', min: 900, max: 1300, nota: '4.9★ 98% rec.',
+                  packs: [
+                    { nome: 'Essencial', preco: 900,  servicos: ['1 Videógrafo', 'Full Day', 'Highlights'] },
+                    { nome: 'Premium',   preco: 1300, servicos: ['1 Videógrafo', 'Full Day', 'Highlights + Full Film', 'Drone'] },
+                  ]},
+                { nome: 'Bravo', zona: 'Corroios (Setúbal)', min: 950, max: 1500, nota: 'Setúbal focused',
+                  packs: [
+                    { nome: 'Vídeo',         preco: 950,  servicos: ['1 Videógrafo', 'Full Coverage', 'Highlights'] },
+                    { nome: 'Foto + Vídeo',  preco: 1250, servicos: ['Fotógrafo + Videógrafo', 'Full Coverage', 'Drone', 'Álbum digital'] },
+                    { nome: 'Premium',       preco: 1500, servicos: ['Fotógrafo + Videógrafo', 'Full Coverage', 'Drone', 'Love Session', 'Álbum físico'] },
+                  ]},
+                { nome: 'Diogo Francisco', zona: 'Lisboa', min: 950, max: 2500, nota: '5.0★ 100% rec.',
+                  packs: [
+                    { nome: 'Essencial', preco: 950,  servicos: ['1 Videógrafo', 'Full Coverage', 'Highlights'] },
+                    { nome: 'Clássico',  preco: 1500, servicos: ['1 Videógrafo', 'Full Coverage', 'Highlights + Full Film', 'Edição profissional'] },
+                    { nome: 'Premium',   preco: 2500, servicos: ['2 Videógrafos', '4K', 'Drone', 'Full Film', 'Colour grading'] },
+                  ]},
+                { nome: 'Pithon Films', zona: 'Lisboa', min: 900, max: 4900, nota: '',
+                  packs: [
+                    { nome: 'Base',     preco: 900,  servicos: ['1 Videógrafo', 'Highlights', 'Entrega digital'] },
+                    { nome: 'Médio',    preco: 2000, servicos: ['1 Videógrafo', '4K', 'Full Film', 'Colour grading'] },
+                    { nome: 'Completo', preco: 4900, servicos: ['2 Videógrafos', '4K cinema', 'Drone', 'SDE', 'Full Film', 'Chico Pithon presente'] },
+                  ]},
+                { nome: 'Make Me Feel', zona: 'Lisboa', min: 1250, max: 2250, nota: 'preços públicos',
+                  packs: [
+                    { nome: 'Essential', preco: 1250, servicos: ['1 Videógrafo', '4K', 'Drone incluído', 'Highlights', 'Full Film'] },
+                    { nome: 'Full',      preco: 2250, servicos: ['2 Videógrafos', '4K', 'Drone', 'Highlights + Full Film', 'Teaser Redes Sociais', 'Entrega digital'] },
+                  ]},
+                { nome: 'LuísGorrão', zona: 'Lisboa', min: 1400, max: 2300, nota: '5.0★ 100% rec.',
+                  packs: [
+                    { nome: 'Silver', preco: 1400, servicos: ['1 Videógrafo', 'Sony FX3', 'Drone', 'Highlights + Full Film'] },
+                    { nome: 'Gold',   preco: 2300, servicos: ['2 Videógrafos', 'Sony FX3', 'Drone', 'Highlights + Full Film', 'SDE opcional', 'Teaser'] },
+                  ]},
+                { nome: 'Digital Studio', zona: 'Lisboa', min: 1000, max: 2100, nota: 'preços públicos',
+                  packs: [
+                    { nome: 'Safira', preco: 1000, servicos: ['Foto + Vídeo', '4K multicam', 'Highlights', 'Álbum digital'] },
+                    { nome: 'Rubi',   preco: 1500, servicos: ['Foto + Vídeo', '4K multicam', 'Drone', 'SDE incluído', 'Highlights + Full Film'] },
+                    { nome: 'Diamante', preco: 2100, servicos: ['Foto + Vídeo', '4K multicam', 'Drone', 'SDE', 'Full Film', 'Álbum físico premium'] },
+                  ]},
+                { nome: 'Murall Films', zona: 'Lisboa', min: 2000, max: 5000, nota: 'sem preços públicos',
+                  packs: [
+                    { nome: 'Cinema', preco: 2000, servicos: ['1 Videógrafo', '4K cinema', 'Drone certificado', 'Colour grading'] },
+                    { nome: 'Premium', preco: 3500, servicos: ['2 Videógrafos', '4K cinema', 'Drone', 'SDE', 'Colour grading premium'] },
+                    { nome: 'Exclusivo', preco: 5000, servicos: ['Equipa completa', 'Cinema 4K', 'Drone', 'SDE', 'Full Film cinematic', 'Colour grading cinema'] },
+                  ]},
+                { nome: 'Laranja Metade', zona: 'Lisboa', min: 1150, max: 3000, nota: 'Timeout + Zankyou top',
+                  packs: [
+                    { nome: 'Essencial', preco: 1150, servicos: ['2 Profissionais', '4K multicam', 'Highlights'] },
+                    { nome: 'Clássico',  preco: 2000, servicos: ['3 Profissionais', '4K multicam', 'Drone', 'Highlights + Full Film'] },
+                    { nome: 'Premium',   preco: 3000, servicos: ['Equipa 3 profissionais', '4K multicam', 'Drone', 'Full Film', 'SDE', 'Colour grading'] },
+                  ]},
               ]
 
               // ── Diagnóstico automático (tips dinâmicos)
@@ -3027,23 +3089,64 @@ export default function FinancasAnoPage({ params }: Props) {
                       {CONCORRENTES.sort((a, b) => a.min - b.min).map((c, i) => {
                         const tier = getTier((c.min + c.max) / 2)
                         const isMeuRange = (p1Preco >= c.min && p1Preco <= c.max) || (p2Preco >= c.min && p2Preco <= c.max) || (p3Preco >= c.min && p3Preco <= c.max)
+                        const isOpen = concExpandedIdx === i
                         return (
-                          <div key={i} className={`flex items-start gap-3 rounded-xl px-4 py-3 border transition-colors ${isMeuRange ? 'border-gold/25 bg-gold/[0.04]' : 'border-white/[0.06] bg-white/[0.01]'}`}>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                                <span className="text-sm text-white/70 font-medium">{c.nome}</span>
-                                <span className="text-[9px] text-white/25">{c.zona}</span>
-                                {isMeuRange && <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-gold/20 text-gold border border-gold/20">concorre contigo</span>}
-                                {c.nota && <span className="text-[8px] text-white/20">{c.nota}</span>}
+                          <div key={i} className={`rounded-xl border transition-all ${isMeuRange ? 'border-gold/25 bg-gold/[0.04]' : 'border-white/[0.06] bg-white/[0.01]'}`}>
+                            {/* Linha principal */}
+                            <div className="flex items-center gap-3 px-4 py-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                                  <span className="text-sm text-white/70 font-medium">{c.nome}</span>
+                                  <span className="text-[9px] text-white/25">{c.zona}</span>
+                                  {isMeuRange && <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-gold/20 text-gold border border-gold/20">concorre contigo</span>}
+                                  {c.nota && <span className="text-[8px] text-white/20">{c.nota}</span>}
+                                </div>
+                                <p className="text-[9px] text-white/25">{c.packs.length} pack{c.packs.length !== 1 ? 's' : ''} · {c.min === c.max ? `${c.min}€` : `${c.min}–${c.max}€`}</p>
                               </div>
-                              <p className="text-[9px] text-white/30 leading-relaxed">{c.inclui}</p>
+                              <div className="flex items-center gap-3 flex-shrink-0">
+                                <div className="text-right">
+                                  <p className={`text-sm font-mono font-semibold ${getTierColor(tier)}`}>
+                                    {c.min === c.max ? `${c.min}€` : `${c.min}–${c.max}€`}
+                                  </p>
+                                  <p className={`text-[8px] ${getTierColor(tier)}`}>{tier}</p>
+                                </div>
+                                {/* Botão toggle */}
+                                <button
+                                  onClick={() => setConcExpandedIdx(isOpen ? null : i)}
+                                  className={`w-7 h-7 rounded-lg border flex items-center justify-center flex-shrink-0 transition-all text-xs font-bold ${
+                                    isOpen
+                                      ? 'border-gold/40 bg-gold/[0.12] text-gold'
+                                      : 'border-white/[0.12] bg-white/[0.04] text-white/40 hover:border-white/25 hover:text-white/60'
+                                  }`}
+                                >
+                                  {isOpen ? '−' : '+'}
+                                </button>
+                              </div>
                             </div>
-                            <div className="text-right flex-shrink-0">
-                              <p className={`text-sm font-mono font-semibold ${getTierColor(tier)}`}>
-                                {c.min === c.max ? `${c.min}€` : `${c.min}–${c.max}€`}
-                              </p>
-                              <p className={`text-[8px] ${getTierColor(tier)}`}>{tier}</p>
-                            </div>
+
+                            {/* Detalhe packs — accordion */}
+                            {isOpen && (
+                              <div className="px-4 pb-4 space-y-2 border-t border-white/[0.06] pt-3">
+                                {c.packs.map((pk, pi) => {
+                                  const pkTier = getTier(pk.preco)
+                                  return (
+                                    <div key={pi} className={`rounded-lg border p-3 ${isMeuRange ? 'border-gold/15 bg-gold/[0.02]' : 'border-white/[0.06] bg-white/[0.015]'}`}>
+                                      <div className="flex items-center justify-between mb-2">
+                                        <span className={`text-[10px] font-semibold tracking-wide ${getTierColor(pkTier)}`}>{pk.nome}</span>
+                                        <span className={`text-sm font-mono font-bold ${getTierColor(pkTier)}`}>{pk.preco} €</span>
+                                      </div>
+                                      <div className="flex flex-wrap gap-x-3 gap-y-1">
+                                        {pk.servicos.map((s, si) => (
+                                          <span key={si} className="flex items-center gap-1 text-[9px] text-white/35">
+                                            <span className="w-1 h-1 rounded-full bg-white/20 flex-shrink-0" />{s}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            )}
                           </div>
                         )
                       })}
