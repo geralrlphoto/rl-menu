@@ -386,6 +386,17 @@ export default function FinancasAnoPage({ params }: Props) {
   const [metaAnualSim, setMetaAnualSim] = useState<number>(30000)
   type CrmEst = { total: number; fechados: number; perdidos: number; ativos: number; porChegou: Array<{ canal: string; count: number; fechados: number }> }
   const [crmEst, setCrmEst]             = useState<CrmEst | null>(null)
+  // Packs config (editável, persistido em localStorage)
+  type PacksCfg = { preco: number; freelancer: number }
+  type AllPacksCfg = { p1: PacksCfg; p2: PacksCfg; p3: PacksCfg; bat: PacksCfg; corp: PacksCfg }
+  const DEFAULT_PACKS_CFG: AllPacksCfg = {
+    p1:   { preco: 850,  freelancer: 300 },
+    p2:   { preco: 1050, freelancer: 300 },
+    p3:   { preco: 1300, freelancer: 350 },
+    bat:  { preco: 450,  freelancer: 120 },
+    corp: { preco: 700,  freelancer: 80  },
+  }
+  const [packsCfg, setPacksCfg] = useState<AllPacksCfg>(DEFAULT_PACKS_CFG)
 
   useEffect(() => {
     // Meta mensal from localStorage
@@ -400,6 +411,10 @@ export default function FinancasAnoPage({ params }: Props) {
       setCustosFixosAnuais(DEFAULT_CUSTOS_FIXOS[anoNum])
       localStorage.setItem(`custos-fixos-${anoNum}`, JSON.stringify(DEFAULT_CUSTOS_FIXOS[anoNum]))
     }
+
+    // Packs config from localStorage
+    const savedPacks = localStorage.getItem('packs-config')
+    if (savedPacks) { try { setPacksCfg(JSON.parse(savedPacks)) } catch {} }
 
     // DB entries
     fetch(`/api/financas-gerais?ano=${anoNum}`)
@@ -1375,10 +1390,10 @@ export default function FinancasAnoPage({ params }: Props) {
 
       {/* ── ESTRATÉGIA ── */}
       {tab === 'estratégia' && (() => {
-        // ── Packs de vídeo 2027
-        const p1Preco = 850,  p1Freelancer = 300, p1Margem = 850  - 300  // 550€
-        const p2Preco = 1050, p2Freelancer = 300, p2Margem = 1050 - 300  // 750€
-        const p3Preco = 1300, p3Freelancer = 350, p3Margem = 1300 - 350  // 950€
+        // ── Packs de vídeo (editáveis via UI)
+        const p1Preco = packsCfg.p1.preco, p1Freelancer = packsCfg.p1.freelancer, p1Margem = p1Preco - p1Freelancer
+        const p2Preco = packsCfg.p2.preco, p2Freelancer = packsCfg.p2.freelancer, p2Margem = p2Preco - p2Freelancer
+        const p3Preco = packsCfg.p3.preco, p3Freelancer = packsCfg.p3.freelancer, p3Margem = p3Preco - p3Freelancer
 
         // ── Ticket médio video atual (entradas com "Videografo"/"Letras" no info 2025)
         const videoEntries2025 = RECEITAS_2025.filter(r =>
@@ -1412,8 +1427,152 @@ export default function FinancasAnoPage({ params }: Props) {
         const ticketMedio2027 = Math.round((p1Preco*8 + p2Preco*8 + p3Preco*4) / 20)
         const fillCells    = ['rgba(96,165,250,0.65)','rgba(201,168,76,0.70)','rgba(167,139,250,0.65)']
 
+        const updatePack = (key: keyof AllPacksCfg, field: 'preco' | 'freelancer', val: number) => {
+          const next = { ...packsCfg, [key]: { ...packsCfg[key], [field]: val } }
+          setPacksCfg(next)
+          localStorage.setItem('packs-config', JSON.stringify(next))
+        }
+
         return (
           <div className="space-y-8">
+
+            {/* ── Serviços & Preços ── */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-white/[0.06]" />
+                <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">Serviços & Preços</p>
+                <div className="h-px flex-1 bg-white/[0.06]" />
+              </div>
+              <p className="text-[10px] text-white/15 text-center">Edita os valores — todos os cálculos actualizam automaticamente</p>
+
+              {/* Casamentos — P1/P2/P3 */}
+              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] overflow-hidden">
+                <div className="px-5 py-3 border-b border-white/[0.06]">
+                  <p className="text-[9px] tracking-[0.35em] text-white/30 uppercase">Casamentos · Packs de Vídeo</p>
+                </div>
+                {([
+                  { key: 'p1' as const, label: 'Proposta 1', color: 'text-blue-300', border: 'border-blue-500/15',
+                    servicos: ['Videógrafo', 'Reportagem completa', 'Vídeo 20 min', 'Full HD', 'Deslocação'] },
+                  { key: 'p2' as const, label: 'Proposta 2', color: 'text-gold',     border: 'border-gold/10',
+                    servicos: ['Videógrafo', 'Reportagem completa', 'Vídeo 20 min', 'Full HD', 'Deslocação', '+ Pré-Wedding'] },
+                  { key: 'p3' as const, label: 'Proposta 3', color: 'text-purple-300', border: 'border-purple-500/15',
+                    servicos: ['Videógrafo', 'Reportagem completa', 'Vídeo 20 min', 'Full HD', 'Deslocação', '+ Pré-Wedding', '+ Drone', '+ SDE'] },
+                ] as { key: keyof AllPacksCfg; label: string; color: string; border: string; servicos: string[] }[]).map(row => {
+                  const cfg = packsCfg[row.key]
+                  const margem = cfg.preco - cfg.freelancer
+                  return (
+                    <div key={row.key} className={`px-5 py-4 border-b last:border-b-0 ${row.border}`}>
+                      <div className="flex items-start gap-4">
+                        {/* Label + serviços */}
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-xs font-semibold ${row.color} mb-1.5`}>{row.label}</p>
+                          <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+                            {row.servicos.map(s => (
+                              <span key={s} className="text-[10px] text-white/25 flex items-center gap-1">
+                                <span className="w-0.5 h-0.5 rounded-full bg-white/20 flex-shrink-0" />{s}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        {/* Editable fields */}
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          <div className="text-center">
+                            <p className="text-[8px] tracking-[0.25em] text-white/20 uppercase mb-1">Preço</p>
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number" min={0} step={50} value={cfg.preco}
+                                onChange={e => updatePack(row.key, 'preco', Number(e.target.value) || 0)}
+                                className={`w-20 bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-sm font-mono text-right focus:outline-none focus:border-white/25 transition-colors ${row.color}`}
+                              />
+                              <span className="text-[10px] text-white/20">€</span>
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-[8px] tracking-[0.25em] text-white/20 uppercase mb-1">Freelancer</p>
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number" min={0} step={10} value={cfg.freelancer}
+                                onChange={e => updatePack(row.key, 'freelancer', Number(e.target.value) || 0)}
+                                className="w-20 bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-sm font-mono text-right text-red-400/60 focus:outline-none focus:border-white/25 transition-colors"
+                              />
+                              <span className="text-[10px] text-white/20">€</span>
+                            </div>
+                          </div>
+                          <div className="text-center min-w-[56px]">
+                            <p className="text-[8px] tracking-[0.25em] text-white/20 uppercase mb-1">Margem</p>
+                            <p className={`text-sm font-mono font-semibold ${margem > 0 ? 'text-green-400' : 'text-red-400'}`}>{margem} €</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Outros serviços — Batizado + Corporate */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {([
+                  { key: 'bat' as const,  label: 'Batizado',   color: 'text-yellow-300',
+                    servicos: ['Reportagem completa', 'Vídeo highlights', 'Deslocação'] },
+                  { key: 'corp' as const, label: 'Corporate',  color: 'text-emerald-300',
+                    servicos: ['Captação de evento', 'Edição profissional', 'Entrega digital'] },
+                ] as { key: keyof AllPacksCfg; label: string; color: string; servicos: string[] }[]).map(row => {
+                  const cfg = packsCfg[row.key]
+                  const margem = cfg.preco - cfg.freelancer
+                  return (
+                    <div key={row.key} className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <p className={`text-xs font-semibold ${row.color}`}>{row.label}</p>
+                          <div className="flex flex-wrap gap-x-2 mt-1">
+                            {row.servicos.map(s => (
+                              <span key={s} className="text-[9px] text-white/20">{s}</span>
+                            ))}
+                          </div>
+                        </div>
+                        <div className={`text-right`}>
+                          <p className="text-[8px] text-white/20 uppercase tracking-wider mb-0.5">Margem</p>
+                          <p className={`text-base font-mono font-semibold ${margem > 0 ? 'text-green-400' : 'text-red-400'}`}>{margem} €</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1">
+                          <p className="text-[8px] text-white/20 uppercase tracking-wider mb-1">Preço</p>
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number" min={0} step={50} value={cfg.preco}
+                              onChange={e => updatePack(row.key, 'preco', Number(e.target.value) || 0)}
+                              className={`w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-sm font-mono text-right focus:outline-none focus:border-white/25 transition-colors ${row.color}`}
+                            />
+                            <span className="text-[10px] text-white/20">€</span>
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-[8px] text-white/20 uppercase tracking-wider mb-1">Freelancer</p>
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number" min={0} step={10} value={cfg.freelancer}
+                              onChange={e => updatePack(row.key, 'freelancer', Number(e.target.value) || 0)}
+                              className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-sm font-mono text-right text-red-400/60 focus:outline-none focus:border-white/25 transition-colors"
+                            />
+                            <span className="text-[10px] text-white/20">€</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              {/* Reset */}
+              <div className="flex justify-end">
+                <button
+                  onClick={() => { setPacksCfg(DEFAULT_PACKS_CFG); localStorage.setItem('packs-config', JSON.stringify(DEFAULT_PACKS_CFG)) }}
+                  className="text-[10px] tracking-[0.25em] text-white/20 hover:text-white/40 uppercase transition-colors"
+                >
+                  ↺ Repor valores por defeito
+                </button>
+              </div>
+            </div>
 
             {/* ── Ticket Médio ── */}
             <div className="space-y-4">
@@ -2015,8 +2174,8 @@ export default function FinancasAnoPage({ params }: Props) {
             {(() => {
               const custoFixoAnual = totalCustosFixosAnuais + 3840 + 480
               const margemNecessaria = metaAnualSim + custoFixoAnual
-              const MARG_BAT = 300, PREC_BAT = 450
-              const MARG_CORP = 600, PREC_CORP = 700
+              const PREC_BAT = packsCfg.bat.preco,  MARG_BAT = packsCfg.bat.preco  - packsCfg.bat.freelancer
+              const PREC_CORP = packsCfg.corp.preco, MARG_CORP = packsCfg.corp.preco - packsCfg.corp.freelancer
               // Seasonal weights Jan–Dec (sum ≈ 13.0)
               const SW = [0, 0.4, 0.3, 1.0, 1.5, 1.8, 1.8, 2.0, 2.0, 1.2, 0.5, 0.5]
               const SW_SUM = SW.reduce((a, b) => a + b, 0)
@@ -2051,8 +2210,8 @@ export default function FinancasAnoPage({ params }: Props) {
                   ...(counts.p1 > 0 ? [{ l: `Proposta 1 · 850 €`, n: counts.p1, m: counts.p1*p1Margem, fill: 'rgba(96,165,250,0.55)' }] : []),
                   ...(counts.p2 > 0 ? [{ l: `Proposta 2 · 1.050 €`, n: counts.p2, m: counts.p2*p2Margem, fill: 'rgba(201,168,76,0.55)' }] : []),
                   ...(counts.p3 > 0 ? [{ l: `Proposta 3 · 1.300 €`, n: counts.p3, m: counts.p3*p3Margem, fill: 'rgba(167,139,250,0.55)' }] : []),
-                  ...(counts.bat > 0 ? [{ l: `Batizados · 450 €`, n: counts.bat, m: counts.bat*MARG_BAT, fill: 'rgba(251,191,36,0.45)' }] : []),
-                  ...(counts.corp > 0 ? [{ l: `Corporate · 700 €`, n: counts.corp, m: counts.corp*MARG_CORP, fill: 'rgba(74,222,128,0.45)' }] : []),
+                  ...(counts.bat > 0 ? [{ l: `Batizados · ${PREC_BAT} €`, n: counts.bat, m: counts.bat*MARG_BAT, fill: 'rgba(251,191,36,0.45)' }] : []),
+                  ...(counts.corp > 0 ? [{ l: `Corporate · ${PREC_CORP} €`, n: counts.corp, m: counts.corp*MARG_CORP, fill: 'rgba(74,222,128,0.45)' }] : []),
                 ]
                 const monthlyEv = SW.map(w => Math.round((totalEvents * w / SW_SUM) * 10) / 10)
                 return { ...pd, totalEvents, counts, totalMargem, totalBruto, liquido, rows, monthlyEv }
