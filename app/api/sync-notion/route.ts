@@ -134,11 +134,37 @@ export async function POST() {
 
     if (errors.length > 0) throw new Error(errors.join('; '))
 
+    // ── Limpar duplicados residuais na tabela (manter id mais baixo por notion_id)
+    let deleted = 0
+    try {
+      const { data: allRows } = await supabase
+        .from('crm_contacts')
+        .select('id, notion_id')
+        .order('id', { ascending: true })
+
+      const seen = new Map<string, number>()
+      const toDelete: number[] = []
+      for (const row of (allRows ?? [])) {
+        if (row.notion_id) {
+          if (seen.has(row.notion_id)) {
+            toDelete.push(row.id)
+          } else {
+            seen.set(row.notion_id, row.id)
+          }
+        }
+      }
+      if (toDelete.length > 0) {
+        await supabase.from('crm_contacts').delete().in('id', toDelete)
+        deleted = toDelete.length
+      }
+    } catch { /* silencioso — não bloqueia o sync */ }
+
     return NextResponse.json({
       synced: inserted + updated,
       inserted,
       updated,
-      message: `${inserted + updated} leads sincronizadas (${inserted} novas, ${updated} atualizadas)`,
+      deleted,
+      message: `${inserted + updated} leads sincronizadas (${inserted} novas, ${updated} atualizadas)${deleted > 0 ? `, ${deleted} duplicados removidos` : ''}`,
     })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })

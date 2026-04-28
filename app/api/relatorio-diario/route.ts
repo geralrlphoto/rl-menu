@@ -228,15 +228,22 @@ export async function GET() {
     portalAtividade.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
     // ── Parse leads CRM ───────────────────────────────────────────────────
-    const leadsUrgentes = (leads ?? []).filter(l => {
+    // Deduplicar por notion_id (sync pode ter inserido duplicados sem UNIQUE constraint)
+    const leadsUniq = (leads ?? []).reduce((acc: any[], l: any) => {
+      const key = l.notion_id || l.nome
+      if (!acc.find(x => (x.notion_id || x.nome) === key)) acc.push(l)
+      return acc
+    }, [])
+
+    const leadsUrgentes = leadsUniq.filter(l => {
       const d = new Date(l.data_entrada + 'T00:00:00')
       return (Date.now() - d.getTime()) / 86400000 <= 3
     })
-    const leadsMorno = (leads ?? []).filter(l => {
+    const leadsMorno = leadsUniq.filter(l => {
       const dias = (Date.now() - new Date(l.data_entrada + 'T00:00:00').getTime()) / 86400000
       return dias > 3 && dias <= 10
     })
-    const leadsTotal = leads ?? []
+    const leadsTotal = leadsUniq
 
     // ── Parse pagamentos recentes ──────────────────────────────────────────
     const pagamentosRecentes = (pagamentos ?? [])
