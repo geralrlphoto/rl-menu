@@ -1465,18 +1465,23 @@ export default function FinancasAnoPage({ params }: Props) {
           : 0
         const margemAno = ticketMedioAno > 0 ? ticketMedioAno - 280 : 0
 
-        // ── Mix 2027: 20 eventos de vídeo (8 × P1 + 8 × P2 + 4 × P3)
+        // ── Mix dinâmico baseado em numEventosSim (40% P1, 40% P2, 20% P3)
+        const mx1 = Math.round(numEventosSim * 0.40)
+        const mx2 = Math.round(numEventosSim * 0.40)
+        const mx3 = Math.max(0, numEventosSim - mx1 - mx2)
         const mixData = [
-          { proposta: 'P1 × 8', receita: p1Preco * 8, margem: p1Margem * 8 },
-          { proposta: 'P2 × 8', receita: p2Preco * 8, margem: p2Margem * 8 },
-          { proposta: 'P3 × 4', receita: p3Preco * 4, margem: p3Margem * 4 },
+          { proposta: `P1 × ${mx1}`, receita: p1Preco * mx1, margem: p1Margem * mx1 },
+          { proposta: `P2 × ${mx2}`, receita: p2Preco * mx2, margem: p2Margem * mx2 },
+          ...(mx3 > 0 ? [{ proposta: `P3 × ${mx3}`, receita: p3Preco * mx3, margem: p3Margem * mx3 }] : []),
         ]
         const mixReceitas  = mixData.reduce((s, d) => s + d.receita, 0)
         const mixMargem    = mixData.reduce((s, d) => s + d.margem, 0)
         const atualMargem  = videoEntries2025.length * margemVideoAtual
         const pctMelhoria  = atualMargem > 0 ? Math.round(((mixMargem - atualMargem) / atualMargem) * 100) : 0
-        const ticketMedio2027 = Math.round((p1Preco*8 + p2Preco*8 + p3Preco*4) / 20)
-        const fillCells    = ['rgba(96,165,250,0.65)','rgba(201,168,76,0.70)','rgba(167,139,250,0.65)']
+        const ticketMedio2027 = numEventosSim > 0 ? Math.round((p1Preco*mx1 + p2Preco*mx2 + p3Preco*mx3) / numEventosSim) : 0
+        const fillCells    = mx3 > 0
+          ? ['rgba(96,165,250,0.65)','rgba(201,168,76,0.70)','rgba(167,139,250,0.65)']
+          : ['rgba(96,165,250,0.65)','rgba(201,168,76,0.70)']
 
         const savePacks = (next: AllPacksCfg) => { setPacksCfg(next); localStorage.setItem('packs-config', JSON.stringify(next)) }
         const updatePack = (key: keyof AllPacksCfg, field: 'preco' | 'freelancer', val: number) =>
@@ -1508,6 +1513,70 @@ export default function FinancasAnoPage({ params }: Props) {
                 <span className="text-lg">📊</span>
                 {relatorioOpen ? 'Fechar Relatório' : 'Gerar Relatório'}
               </button>
+            </div>
+
+            {/* ── Objetivos ── */}
+            <div className="rounded-2xl border border-white/[0.10] bg-white/[0.02] p-5 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-white/[0.06]" />
+                <p className="text-[10px] tracking-[0.4em] text-white/30 uppercase">🎯 Objetivos — toda a estratégia usa estes valores</p>
+                <div className="h-px flex-1 bg-white/[0.06]" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Meta Líquida */}
+                <div className="flex items-center gap-4 rounded-xl border border-gold/20 bg-gold/[0.04] px-4 py-4">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[9px] tracking-[0.3em] text-gold/60 uppercase mb-2">Meta Líquida Anual</p>
+                    <input type="range" min={15000} max={100000} step={1000} value={metaAnualSim}
+                      onChange={e => setMetaAnualSim(Number(e.target.value))}
+                      className="w-full accent-yellow-400" />
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <input type="number" value={metaAnualSim} step={1000}
+                      onChange={e => setMetaAnualSim(Number(e.target.value) || 30000)}
+                      className="w-24 bg-white/5 border border-gold/20 rounded-xl px-3 py-1.5 text-sm text-gold font-mono text-right focus:outline-none focus:border-gold/40" />
+                    <span className="text-[10px] text-white/25">€</span>
+                  </div>
+                </div>
+                {/* Nº Eventos */}
+                <div className="flex items-center gap-4 rounded-xl border border-blue-500/20 bg-blue-500/[0.04] px-4 py-4">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[9px] tracking-[0.3em] text-blue-400/60 uppercase mb-2">Nº de Eventos / Ano</p>
+                    <input type="range" min={1} max={80} step={1} value={numEventosSim}
+                      onChange={e => setNumEventosSim(Number(e.target.value))}
+                      className="w-full accent-blue-400" />
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <input type="number" value={numEventosSim} step={1} min={1} max={80}
+                      onChange={e => setNumEventosSim(Math.max(1, Number(e.target.value) || 1))}
+                      className="w-24 bg-white/5 border border-blue-500/20 rounded-xl px-3 py-1.5 text-sm text-blue-300 font-mono text-right focus:outline-none focus:border-blue-400/40" />
+                    <span className="text-[10px] text-white/25">ev</span>
+                  </div>
+                </div>
+              </div>
+              {/* Resumo instantâneo */}
+              {(() => {
+                const custoFix = totalCustosFixosAnuais + 3840 + 480
+                const recNec = metaAnualSim + custoFix
+                const ticketNec = numEventosSim > 0 ? Math.round(recNec / numEventosSim) : 0
+                const margemNec = numEventosSim > 0 ? Math.round(metaAnualSim / numEventosSim) : 0
+                const viavel = ticketNec <= p3Preco
+                return (
+                  <div className="grid grid-cols-3 gap-3 pt-1">
+                    {[
+                      { l: 'Receita necessária', v: `${recNec.toLocaleString('pt-PT')} €`, c: 'text-white/50' },
+                      { l: 'Ticket médio mínimo', v: `${ticketNec.toLocaleString('pt-PT')} €`, c: viavel ? 'text-green-400' : 'text-red-400' },
+                      { l: 'Margem / evento', v: `${margemNec.toLocaleString('pt-PT')} €`, c: 'text-gold' },
+                    ].map(({ l, v, c }) => (
+                      <div key={l} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-center">
+                        <p className="text-[8px] tracking-[0.25em] text-white/20 uppercase mb-1">{l}</p>
+                        <p className={`text-sm font-mono font-semibold ${c}`}>{v}</p>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
+              <p className="text-[9px] text-white/15 text-center">Altera estes valores — toda a estratégia recalcula automaticamente ↓</p>
             </div>
 
             {/* ── Serviços & Preços ── */}
@@ -1711,7 +1780,7 @@ export default function FinancasAnoPage({ params }: Props) {
                   <p className="text-[9px] text-gold/30 mt-1">€ / evento</p>
                   <div className="mt-3 pt-3 border-t border-gold/[0.10]">
                     <p className="text-[9px] text-white/20">margem média</p>
-                    <p className="text-base font-mono text-green-400">{Math.round((p1Margem*8 + p2Margem*8 + p3Margem*4) / 20)} €</p>
+                    <p className="text-base font-mono text-green-400">{numEventosSim > 0 ? Math.round((p1Margem*mx1 + p2Margem*mx2 + p3Margem*mx3) / numEventosSim) : 0} €</p>
                     <p className="text-[9px] text-green-400/30">após freelancer</p>
                   </div>
                 </div>
@@ -1968,7 +2037,7 @@ export default function FinancasAnoPage({ params }: Props) {
 
                 <div className="rounded-2xl border border-gold/25 bg-gold/[0.05] p-5 space-y-3">
                   <div className="flex items-center justify-between">
-                    <p className="text-[10px] tracking-[0.4em] text-gold/60 uppercase">Mix 2027 · 20 eventos</p>
+                    <p className="text-[10px] tracking-[0.4em] text-gold/60 uppercase">Mix 2027 · {numEventosSim} eventos</p>
                     {pctMelhoria > 0 && (
                       <span className="text-[9px] text-green-400/70 tracking-wider px-2 py-0.5 rounded-full border border-green-500/20 bg-green-500/10">
                         +{pctMelhoria}% margem
@@ -1977,7 +2046,7 @@ export default function FinancasAnoPage({ params }: Props) {
                   </div>
                   <div className="space-y-2">
                     {[
-                      { l: `20 eventos × ~${ticketMedio2027}€`, v: `${mixReceitas.toLocaleString('pt-PT')} €`, c: 'text-green-400/70' },
+                      { l: `${numEventosSim} eventos × ~${ticketMedio2027}€`, v: `${mixReceitas.toLocaleString('pt-PT')} €`, c: 'text-green-400/70' },
                       { l: 'Custo freelancers', v: `−${(mixReceitas - mixMargem).toLocaleString('pt-PT')} €`, c: 'text-red-400/50' },
                     ].map(r => (
                       <div key={r.l} className="flex justify-between text-sm">
@@ -1995,7 +2064,7 @@ export default function FinancasAnoPage({ params }: Props) {
 
               {/* Gráfico mix */}
               <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
-                <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-1">Composição do Mix 2027 · 20 Eventos</p>
+                <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-1">Composição do Mix 2027 · {numEventosSim} Eventos</p>
                 <p className="text-[10px] text-white/20 mb-4">receita bruta vs margem líquida por proposta</p>
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={mixData} barCategoryGap="25%" barGap={3}>
@@ -2027,8 +2096,8 @@ export default function FinancasAnoPage({ params }: Props) {
                   <BarChart
                     data={[
                       { ano: '2025 Real', liquido: 19825 },
-                      { ano: '2026 Est.', liquido: 23000 },
-                      { ano: '2027 Obj.', liquido: 28500 },
+                      { ano: `${anoNum} Real`, liquido: saldo > 0 ? saldo : 0 },
+                      { ano: '2027 Obj.', liquido: metaAnualSim },
                     ]}
                     barCategoryGap="35%"
                   >
@@ -2049,8 +2118,8 @@ export default function FinancasAnoPage({ params }: Props) {
                 <div className="grid grid-cols-3 gap-3 mt-4">
                   {[
                     { ano: '2025 Real', val: 19825, c: 'text-blue-300' },
-                    { ano: '2026 Estimado', val: 23000, c: 'text-gold' },
-                    { ano: '2027 Objetivo', val: 28500, c: 'text-green-400' },
+                    { ano: `${anoNum} Real`, val: saldo > 0 ? saldo : 0, c: 'text-gold' },
+                    { ano: '2027 Objetivo', val: metaAnualSim, c: 'text-green-400' },
                   ].map(d => (
                     <div key={d.ano} className="text-center">
                       <p className="text-[9px] text-white/25 uppercase tracking-wider mb-1">{d.ano}</p>
