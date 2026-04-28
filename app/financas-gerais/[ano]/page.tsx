@@ -2010,6 +2010,179 @@ export default function FinancasAnoPage({ params }: Props) {
                   </div>
                 )
               })()}
+
+            {/* ── Estratégia de Vendas ── */}
+            {(() => {
+              const custoFixoAnual = totalCustosFixosAnuais + 3840 + 480
+              const margemNecessaria = metaAnualSim + custoFixoAnual
+              const MARG_BAT = 300, PREC_BAT = 450
+              const MARG_CORP = 600, PREC_CORP = 700
+              // Seasonal weights Jan–Dec (sum ≈ 13.0)
+              const SW = [0, 0.4, 0.3, 1.0, 1.5, 1.8, 1.8, 2.0, 2.0, 1.2, 0.5, 0.5]
+              const SW_SUM = SW.reduce((a, b) => a + b, 0)
+              const MESES_S = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+
+              type StratMix = { p1: number; p2: number; p3: number; bat: number; corp: number }
+              const profileDefs: { name: string; tag: string; desc: string; color: string; mix: StratMix }[] = [
+                { name: 'Conservadora', tag: 'Volume', desc: 'Mais eventos, preço base — ideal para encher agenda', color: 'blue',
+                  mix: { p1: 0.55, p2: 0.25, p3: 0.05, bat: 0.10, corp: 0.05 } },
+                { name: 'Equilibrada', tag: 'Recomendada', desc: 'Mix diversificado — menos eventos, margem mais alta', color: 'gold',
+                  mix: { p1: 0.20, p2: 0.50, p3: 0.15, bat: 0.10, corp: 0.05 } },
+                { name: 'Premium', tag: 'Alto Valor', desc: 'Poucos eventos de alto valor — máxima eficiência', color: 'purple',
+                  mix: { p1: 0.05, p2: 0.30, p3: 0.50, bat: 0.10, corp: 0.05 } },
+              ]
+
+              const strategies = profileDefs.map(pd => {
+                const avgMargem = pd.mix.p1*p1Margem + pd.mix.p2*p2Margem + pd.mix.p3*p3Margem + pd.mix.bat*MARG_BAT + pd.mix.corp*MARG_CORP
+                const totalEvents = Math.ceil(margemNecessaria / avgMargem)
+                const counts: StratMix = {
+                  p1: Math.round(totalEvents * pd.mix.p1),
+                  p2: Math.round(totalEvents * pd.mix.p2),
+                  p3: Math.round(totalEvents * pd.mix.p3),
+                  bat: Math.round(totalEvents * pd.mix.bat),
+                  corp: Math.round(totalEvents * pd.mix.corp),
+                }
+                const sumC = counts.p1 + counts.p2 + counts.p3 + counts.bat + counts.corp
+                counts.p2 += (totalEvents - sumC)
+                const totalMargem = counts.p1*p1Margem + counts.p2*p2Margem + counts.p3*p3Margem + counts.bat*MARG_BAT + counts.corp*MARG_CORP
+                const totalBruto = counts.p1*p1Preco + counts.p2*p2Preco + counts.p3*p3Preco + counts.bat*PREC_BAT + counts.corp*PREC_CORP
+                const liquido = totalMargem - custoFixoAnual
+                const rows = [
+                  ...(counts.p1 > 0 ? [{ l: `Proposta 1 · 850 €`, n: counts.p1, m: counts.p1*p1Margem, fill: 'rgba(96,165,250,0.55)' }] : []),
+                  ...(counts.p2 > 0 ? [{ l: `Proposta 2 · 1.050 €`, n: counts.p2, m: counts.p2*p2Margem, fill: 'rgba(201,168,76,0.55)' }] : []),
+                  ...(counts.p3 > 0 ? [{ l: `Proposta 3 · 1.300 €`, n: counts.p3, m: counts.p3*p3Margem, fill: 'rgba(167,139,250,0.55)' }] : []),
+                  ...(counts.bat > 0 ? [{ l: `Batizados · 450 €`, n: counts.bat, m: counts.bat*MARG_BAT, fill: 'rgba(251,191,36,0.45)' }] : []),
+                  ...(counts.corp > 0 ? [{ l: `Corporate · 700 €`, n: counts.corp, m: counts.corp*MARG_CORP, fill: 'rgba(74,222,128,0.45)' }] : []),
+                ]
+                const monthlyEv = SW.map(w => Math.round((totalEvents * w / SW_SUM) * 10) / 10)
+                return { ...pd, totalEvents, counts, totalMargem, totalBruto, liquido, rows, monthlyEv }
+              })
+
+              const colorMap: Record<string, { border: string; bg: string; tc: string; badge: string; bar: string }> = {
+                blue:   { border: 'border-blue-500/20',   bg: 'bg-blue-500/[0.04]',   tc: 'text-blue-300',   badge: 'bg-blue-500/10 border-blue-500/20 text-blue-300/80',   bar: 'rgba(96,165,250,0.45)' },
+                gold:   { border: 'border-gold/25',       bg: 'bg-gold/[0.05]',       tc: 'text-gold',       badge: 'bg-gold/10 border-gold/25 text-gold/80',               bar: 'rgba(201,168,76,0.45)' },
+                purple: { border: 'border-purple-500/20', bg: 'bg-purple-500/[0.04]', tc: 'text-purple-300', badge: 'bg-purple-500/10 border-purple-500/20 text-purple-300/80', bar: 'rgba(167,139,250,0.45)' },
+              }
+
+              return (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-px flex-1 bg-white/[0.04]" />
+                    <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">Estratégia de Vendas</p>
+                    <div className="h-px flex-1 bg-white/[0.04]" />
+                  </div>
+                  <p className="text-[10px] text-white/20 text-center">
+                    Para atingir <span className="font-mono font-semibold text-gold/70">{metaAnualSim.toLocaleString('pt-PT')} €</span> líquidos · 3 caminhos possíveis
+                  </p>
+
+                  {strategies.map((s, si) => {
+                    const cm = colorMap[s.color]
+                    const maxM = Math.max(...s.rows.map(r => r.m), 1)
+                    const maxEv = Math.max(...s.monthlyEv, 1)
+                    return (
+                      <div key={si} className={`rounded-2xl border ${cm.border} ${cm.bg} overflow-hidden`}>
+
+                        {/* Header */}
+                        <div className="flex items-start justify-between px-5 pt-5 pb-4 border-b border-white/[0.06]">
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className={`text-sm font-semibold ${cm.tc}`}>{s.name}</p>
+                              <span className={`text-[9px] tracking-[0.2em] uppercase px-2 py-0.5 rounded-full border ${cm.badge}`}>{s.tag}</span>
+                            </div>
+                            <p className="text-[10px] text-white/25">{s.desc}</p>
+                          </div>
+                          <div className="text-right flex-shrink-0 ml-4">
+                            <p className={`text-3xl font-light ${cm.tc}`}>{s.totalEvents}</p>
+                            <p className="text-[9px] text-white/25 uppercase tracking-wider">eventos/ano</p>
+                          </div>
+                        </div>
+
+                        {/* Mix breakdown with bars */}
+                        <div className="px-5 py-4 space-y-3">
+                          {s.rows.map((r, ri) => (
+                            <div key={ri}>
+                              <div className="flex items-center justify-between mb-1.5">
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-xs font-mono font-bold w-5 text-right flex-shrink-0 ${cm.tc}`}>{r.n}×</span>
+                                  <span className="text-[11px] text-white/40">{r.l}</span>
+                                </div>
+                                <span className="text-[11px] text-white/35 font-mono">+{r.m.toLocaleString('pt-PT')} €</span>
+                              </div>
+                              <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden ml-7">
+                                <div className="h-full rounded-full" style={{ width: `${(r.m / maxM) * 100}%`, background: r.fill }} />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Totals */}
+                        <div className="grid grid-cols-3 divide-x divide-white/[0.06] border-t border-white/[0.06]">
+                          {[
+                            { l: 'Receita Bruta',      v: `${s.totalBruto.toLocaleString('pt-PT')} €`,  tc: 'text-white/40' },
+                            { l: 'Margem Total',       v: `${s.totalMargem.toLocaleString('pt-PT')} €`, tc: 'text-white/40' },
+                            { l: 'Resultado Líquido',  v: `${s.liquido.toLocaleString('pt-PT')} €`,     tc: s.liquido >= metaAnualSim ? cm.tc : 'text-red-400' },
+                          ].map((t, ti) => (
+                            <div key={ti} className="px-3 py-3 text-center">
+                              <p className="text-[8px] tracking-[0.25em] text-white/20 uppercase mb-1">{t.l}</p>
+                              <p className={`text-sm font-mono font-semibold ${t.tc}`}>{t.v}</p>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Monthly bar chart */}
+                        <div className="px-5 py-4 border-t border-white/[0.06]">
+                          <p className="text-[9px] tracking-[0.25em] text-white/20 uppercase mb-3">
+                            Distribuição Mensal Sugerida · {(s.totalEvents / 12).toFixed(1)} eventos/mês médio
+                          </p>
+                          <div className="grid grid-cols-12 gap-1">
+                            {s.monthlyEv.map((ev, mi) => {
+                              const rounded = Math.round(ev)
+                              return (
+                                <div key={mi} className="flex flex-col items-center gap-1">
+                                  <div className="h-10 w-full flex items-end justify-center">
+                                    {ev > 0 ? (
+                                      <div className="w-full rounded-t-sm transition-all"
+                                        style={{ height: `${Math.max(4, (ev / maxEv) * 40)}px`, background: cm.bar }} />
+                                    ) : (
+                                      <div className="w-full h-1 rounded-full bg-white/[0.03]" />
+                                    )}
+                                  </div>
+                                  <p className={`text-[9px] font-mono leading-none ${rounded > 0 ? cm.tc : 'text-white/15'}`}>
+                                    {rounded > 0 ? rounded : '·'}
+                                  </p>
+                                  <p className="text-[7px] text-white/15 leading-none">{MESES_S[mi]}</p>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Action plan callout — only for recommended */}
+                        {s.color === 'gold' && (
+                          <div className="px-5 pb-5">
+                            <div className="rounded-xl border border-gold/15 bg-gold/[0.03] px-4 py-3.5 space-y-2">
+                              <p className="text-[9px] tracking-[0.35em] text-gold/50 uppercase">Plano de Ação</p>
+                              {[
+                                `Proposta 2 (pré-wedding) como produto principal — maior margem sem custo extra de freelancer`,
+                                `Aceitar ${s.counts.p1 > 0 ? s.counts.p1 : 'poucos'} eventos P1 em meses de menor procura (Jan–Mar, Nov–Dez) para manter fluxo`,
+                                `${s.counts.p3 > 0 ? s.counts.p3 : 'Alguns'} casamentos P3 (drone+SDE) para elevar posicionamento e ticket médio`,
+                                `Ticket médio alvo por evento: ${Math.round(s.totalBruto / s.totalEvents).toLocaleString('pt-PT')} € — usar como referência ao fechar contratos`,
+                                `${s.counts.bat > 0 ? s.counts.bat : 'Alguns'} batizados + ${s.counts.corp > 0 ? s.counts.corp : 'alguns'} corporate para diversificar receita nos meses mortos`,
+                              ].map((tip, ti) => (
+                                <div key={ti} className="flex items-start gap-2.5">
+                                  <span className="text-gold/40 text-xs flex-shrink-0 mt-0.5">→</span>
+                                  <p className="text-[11px] text-white/35 leading-relaxed">{tip}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })()}
             </div>
 
             {/* ── Sazonalidade ── */}
