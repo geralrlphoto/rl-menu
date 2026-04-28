@@ -383,7 +383,8 @@ export default function FinancasAnoPage({ params }: Props) {
   const [cfItem, setCfItem]             = useState('')
   const [cfValor, setCfValor]           = useState('')
   // Estratégia
-  const [metaAnualSim, setMetaAnualSim] = useState<number>(30000)
+  const [metaAnualSim, setMetaAnualSim]     = useState<number>(30000)
+  const [numEventosSim, setNumEventosSim]   = useState<number>(20)
   type CrmEst = {
     total: number; fechados: number; perdidos: number; ativos: number
     porChegou: Array<{ canal: string; count: number; fechados: number }>
@@ -2185,18 +2186,36 @@ export default function FinancasAnoPage({ params }: Props) {
                 <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">Simulador de Meta Anual</p>
                 <div className="h-px flex-1 bg-white/[0.06]" />
               </div>
-              <div className="flex items-center gap-4 rounded-2xl border border-gold/20 bg-gold/[0.04] px-5 py-4">
-                <p className="text-[10px] tracking-[0.3em] text-gold/60 uppercase flex-shrink-0">Meta Líquida</p>
-                <div className="flex-1">
-                  <input type="range" min={15000} max={60000} step={1000} value={metaAnualSim}
-                    onChange={e => setMetaAnualSim(Number(e.target.value))}
-                    className="w-full accent-yellow-400" />
+              <div className="space-y-2">
+                {/* Slider Meta Líquida */}
+                <div className="flex items-center gap-4 rounded-2xl border border-gold/20 bg-gold/[0.04] px-5 py-4">
+                  <p className="text-[10px] tracking-[0.3em] text-gold/60 uppercase flex-shrink-0 w-28">Meta Líquida</p>
+                  <div className="flex-1">
+                    <input type="range" min={15000} max={60000} step={1000} value={metaAnualSim}
+                      onChange={e => setMetaAnualSim(Number(e.target.value))}
+                      className="w-full accent-yellow-400" />
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <input type="number" value={metaAnualSim} step={1000}
+                      onChange={e => setMetaAnualSim(Number(e.target.value) || 30000)}
+                      className="w-24 bg-white/5 border border-gold/20 rounded-xl px-3 py-1.5 text-sm text-gold font-mono text-right focus:outline-none focus:border-gold/40" />
+                    <span className="text-white/30 text-sm">€</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <input type="number" value={metaAnualSim} step={1000}
-                    onChange={e => setMetaAnualSim(Number(e.target.value) || 30000)}
-                    className="w-24 bg-white/5 border border-gold/20 rounded-xl px-3 py-1.5 text-sm text-gold font-mono text-right focus:outline-none focus:border-gold/40" />
-                  <span className="text-white/30 text-sm">€</span>
+                {/* Slider Nº de Eventos */}
+                <div className="flex items-center gap-4 rounded-2xl border border-blue-500/20 bg-blue-500/[0.04] px-5 py-4">
+                  <p className="text-[10px] tracking-[0.3em] text-blue-400/60 uppercase flex-shrink-0 w-28">Nº Eventos</p>
+                  <div className="flex-1">
+                    <input type="range" min={1} max={60} step={1} value={numEventosSim}
+                      onChange={e => setNumEventosSim(Number(e.target.value))}
+                      className="w-full accent-blue-400" />
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <input type="number" value={numEventosSim} step={1} min={1} max={60}
+                      onChange={e => setNumEventosSim(Math.max(1, Number(e.target.value) || 1))}
+                      className="w-24 bg-white/5 border border-blue-500/20 rounded-xl px-3 py-1.5 text-sm text-blue-300 font-mono text-right focus:outline-none focus:border-blue-400/40" />
+                    <span className="text-white/30 text-sm">ev.</span>
+                  </div>
                 </div>
               </div>
               {(() => {
@@ -2239,6 +2258,75 @@ export default function FinancasAnoPage({ params }: Props) {
                       </ResponsiveContainer>
                     </div>
                   </div>
+
+                  {/* ── Resultado por Nº de Eventos ── */}
+                  {(() => {
+                    const custoFixoAnual = totalCustosFixosAnuais + 3840 + 480
+                    const evData = [
+                      { label: 'Proposta 1', preco: p1Preco, margem: p1Margem, fill: 'rgba(96,165,250,0.65)',  tc: 'text-blue-300',   border: 'border-blue-500/20',   bg: 'bg-blue-500/[0.04]' },
+                      { label: 'Proposta 2', preco: p2Preco, margem: p2Margem, fill: 'rgba(201,168,76,0.70)',  tc: 'text-gold',       border: 'border-gold/20',       bg: 'bg-gold/[0.04]' },
+                      { label: 'Proposta 3', preco: p3Preco, margem: p3Margem, fill: 'rgba(167,139,250,0.65)', tc: 'text-purple-300', border: 'border-purple-500/20', bg: 'bg-purple-500/[0.04]' },
+                    ].map(s => {
+                      const bruto   = numEventosSim * s.preco
+                      const margem  = numEventosSim * s.margem
+                      const liquido = margem - custoFixoAnual
+                      const metaOk  = liquido >= metaAnualSim
+                      return { ...s, bruto, margem, liquido, metaOk }
+                    })
+                    const maxLiq = Math.max(...evData.map(s => Math.abs(s.liquido)), 1)
+                    return (
+                      <div className="space-y-3">
+                        <p className="text-[10px] text-white/20 text-center">
+                          Com <span className="text-blue-300 font-mono font-semibold">{numEventosSim}</span> eventos · resultado líquido por proposta
+                        </p>
+                        <div className="grid grid-cols-3 gap-3">
+                          {evData.map(s => (
+                            <div key={s.label} className={`rounded-2xl border ${s.border} ${s.bg} p-4 text-center space-y-2`}>
+                              <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase">{s.label}</p>
+                              <div>
+                                <p className={`text-2xl font-light ${s.metaOk ? s.tc : 'text-red-400/70'}`}>
+                                  {s.liquido >= 0 ? '' : '−'}{Math.abs(s.liquido).toLocaleString('pt-PT')}
+                                </p>
+                                <p className="text-[9px] text-white/20 mt-0.5">€ líquidos</p>
+                              </div>
+                              <div className="pt-2 border-t border-white/[0.06] space-y-1">
+                                <div className="flex justify-between text-[9px]">
+                                  <span className="text-white/20">Bruto</span>
+                                  <span className="text-white/35 font-mono">{s.bruto.toLocaleString('pt-PT')} €</span>
+                                </div>
+                                <div className="flex justify-between text-[9px]">
+                                  <span className="text-white/20">Margem</span>
+                                  <span className="text-white/35 font-mono">{s.margem.toLocaleString('pt-PT')} €</span>
+                                </div>
+                              </div>
+                              {s.metaOk
+                                ? <p className="text-[9px] text-green-400/60">✓ meta atingida</p>
+                                : <p className="text-[9px] text-red-400/40">faltam {(metaAnualSim - s.liquido).toLocaleString('pt-PT')} €</p>
+                              }
+                            </div>
+                          ))}
+                        </div>
+                        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
+                          <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-4">Resultado Líquido por Proposta</p>
+                          <ResponsiveContainer width="100%" height={150}>
+                            <BarChart data={evData.map(s => ({ label: s.label, liquido: Math.max(0, s.liquido), deficit: Math.min(0, s.liquido) }))} barCategoryGap="35%">
+                              <XAxis dataKey="label" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                              <YAxis hide />
+                              <ReferenceLine y={0} stroke="rgba(255,255,255,0.15)" strokeDasharray="4 3" />
+                              <Tooltip
+                                contentStyle={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 11 }}
+                                formatter={(v: number, name: string) => [`${Math.abs(v).toLocaleString('pt-PT')} €`, name === 'liquido' ? 'Resultado' : 'Défice']}
+                              />
+                              <Bar dataKey="liquido" radius={[6,6,0,0]}>
+                                {evData.map((s, i) => <Cell key={i} fill={s.fill} />)}
+                              </Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </div>
                 )
               })()}
 
