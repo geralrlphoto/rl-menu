@@ -229,11 +229,14 @@ export async function GET() {
 
     // ── Parse leads CRM ───────────────────────────────────────────────────
     // Deduplicar por notion_id (sync pode ter inserido duplicados sem UNIQUE constraint)
-    const leadsUniq = (leads ?? []).reduce((acc: any[], l: any) => {
+    // Mantém o registo com id mais alto (mais recente) para ter data_entrada correcta
+    const leadsMap = new Map<string, any>()
+    for (const l of (leads ?? [])) {
       const key = l.notion_id || l.nome
-      if (!acc.find(x => (x.notion_id || x.nome) === key)) acc.push(l)
-      return acc
-    }, [])
+      const existing = leadsMap.get(key)
+      if (!existing || l.id > existing.id) leadsMap.set(key, l)
+    }
+    const leadsUniq = Array.from(leadsMap.values())
 
     const leadsUrgentes = leadsUniq.filter(l => {
       const d = new Date(l.data_entrada + 'T00:00:00')
