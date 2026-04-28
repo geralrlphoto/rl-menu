@@ -385,6 +385,7 @@ export default function FinancasAnoPage({ params }: Props) {
   // Estratégia
   const [metaAnualSim, setMetaAnualSim]     = useState<number>(30000)
   const [numEventosSim, setNumEventosSim]   = useState<number>(20)
+  const [relatorioOpen, setRelatorioOpen]   = useState<boolean>(false)
   type CrmEst = {
     total: number; fechados: number; perdidos: number; ativos: number
     porChegou: Array<{ canal: string; count: number; fechados: number }>
@@ -2751,6 +2752,280 @@ export default function FinancasAnoPage({ params }: Props) {
                 ))}
               </div>
             </div>
+
+            {/* ── Botão Gerar Relatório ── */}
+            <div className="flex justify-center pt-2">
+              <button
+                onClick={() => setRelatorioOpen(v => !v)}
+                className="flex items-center gap-3 px-8 py-4 rounded-2xl border border-gold/40 bg-gold/[0.08] hover:bg-gold/[0.14] transition-all text-gold text-sm tracking-[0.2em] uppercase font-medium shadow-lg shadow-gold/5"
+              >
+                <span className="text-lg">📊</span>
+                {relatorioOpen ? 'Fechar Relatório' : 'Gerar Relatório'}
+              </button>
+            </div>
+
+            {/* ── Relatório Completo ── */}
+            {relatorioOpen && (() => {
+              // ── Dados financeiros dinâmicos
+              const p1Preco = packsCfg.p1.preco
+              const p2Preco = packsCfg.p2.preco
+              const p3Preco = packsCfg.p3.preco
+              const custoAnual = totalCustosFixosAnuais + 3840 + 480
+              const receitasBruto  = allReceitas.reduce((s, r) => s + r.valor, 0)
+              const casamentosAno  = allReceitas.filter(r => r.tipo === 'CASAMENTO')
+              const ticketMedio    = casamentosAno.length > 0 ? Math.round(casamentosAno.reduce((s, r) => s + r.valor, 0) / casamentosAno.length) : 0
+              const margemEstimada = receitasBruto - custoAnual
+
+              // ── Posicionamento no mercado
+              // Média Lisboa (casamentos.pt): €1,028  |  Setúbal (fixando): €400–€500
+              const MEDIA_LX = 1028
+              const MID_BUDGET_MAX = 750
+              const MID_MID_MAX    = 1800
+              const getTier = (preco: number) =>
+                preco < MID_BUDGET_MAX ? 'Budget' : preco < MID_MID_MAX ? 'Mid-Range' : 'Premium'
+              const getTierColor = (t: string) =>
+                t === 'Budget' ? 'text-blue-300' : t === 'Mid-Range' ? 'text-gold' : 'text-purple-300'
+              const getTierBg = (t: string) =>
+                t === 'Budget' ? 'border-blue-500/20 bg-blue-500/[0.04]' : t === 'Mid-Range' ? 'border-gold/20 bg-gold/[0.04]' : 'border-purple-500/20 bg-purple-500/[0.04]'
+
+              // ── Dados concorrentes (pesquisa exaustiva Lisboa/Setúbal 2025)
+              const CONCORRENTES = [
+                { nome: 'Alerfilme',       zona: 'Lisboa/Sintra',      min: 590,  max: 590,  inclui: '1 videógrafo · FullHD · Highlights + full film · USB',                  nota: '' },
+                { nome: 'Jada Cine',       zona: 'Lisboa',             min: 400,  max: 900,  inclui: '1 videógrafo · 4K · Highlights + teaser · Drone incluído',              nota: 'pagamento até 2 meses pós-evento' },
+                { nome: 'Luís Ademar',     zona: 'Lisboa',             min: 500,  max: 800,  inclui: '1 videógrafo · Full event · 3 DVDs',                                   nota: '4.9★' },
+                { nome: 'EyeFocus',        zona: 'Seixal (Setúbal)',   min: 750,  max: 5000, inclui: 'Sony a7III 4K · Full coverage · Wedding Awards ★',                    nota: '5.0★ 100% rec.' },
+                { nome: 'CortejoFilm',     zona: 'Almada (Setúbal)',   min: 900,  max: 1300, inclui: '1 videógrafo · Full day · Highlights + full film',                      nota: '4.9★ 98% rec.' },
+                { nome: 'Bravo',           zona: 'Corroios (Setúbal)', min: 950,  max: 1500, inclui: 'Foto + Vídeo · Drone · Love Session',                                  nota: 'Setúbal focused' },
+                { nome: 'Diogo Francisco', zona: 'Lisboa',             min: 950,  max: 2500, inclui: '1 videógrafo · Full coverage · edição profissional',                   nota: '5.0★ 100% rec.' },
+                { nome: 'Pithon Films',    zona: 'Lisboa',             min: 900,  max: 4900, inclui: 'Personalizado · vários formatos · Chico Pithon',                       nota: '' },
+                { nome: 'Make Me Feel',    zona: 'Lisboa',             min: 1250, max: 2250, inclui: '1–2 videógrafos · 4K · Drone · Highlights + full film',                nota: 'preços públicos' },
+                { nome: 'LuísGorrão',      zona: 'Lisboa',             min: 1400, max: 2300, inclui: '2 videógrafos std · Drone · Sony FX3 · SDE opcional',                  nota: '5.0★ 100% rec.' },
+                { nome: 'Digital Studio',  zona: 'Lisboa',             min: 1000, max: 2100, inclui: 'Foto + Vídeo · 4K multicam · Drone · SDE Pack Rubi 1.500€',            nota: 'preços públicos' },
+                { nome: 'Murall Films',    zona: 'Lisboa',             min: 2000, max: 5000, inclui: '4K cinema · Drone certificado · SDE · colour grading',                 nota: 'sem preços públicos' },
+                { nome: 'Laranja Metade',  zona: 'Lisboa',             min: 1150, max: 3000, inclui: 'Multi-câmara 4K · Drone · equipa 3 profissionais',                     nota: 'Timeout + Zankyou top' },
+              ]
+
+              // ── Diagnóstico automático (tips dinâmicos)
+              const tips: { tipo: 'ok' | 'atenção' | 'crítico'; titulo: string; desc: string }[] = []
+
+              // Tip 1: posicionamento P1
+              const tierP1 = getTier(p1Preco)
+              if (p1Preco < MEDIA_LX) {
+                tips.push({ tipo: 'atenção', titulo: `Proposta 1 abaixo da média Lisboa (${MEDIA_LX}€)`, desc: `O teu P1 está a ${p1Preco}€. A média de mercado em Lisboa é ${MEDIA_LX}€. Tens espaço para subir sem perder competitividade.` })
+              } else {
+                tips.push({ tipo: 'ok', titulo: `Proposta 1 bem posicionada (${p1Preco}€)`, desc: `Acima da média Lisboa (${MEDIA_LX}€). Bom posicionamento para não competir apenas por preço.` })
+              }
+
+              // Tip 2: drone incluído?
+              const p3HasDrone = packsCfg.p3.servicos.some(s => /drone/i.test(s))
+              const p2HasDrone = packsCfg.p2.servicos.some(s => /drone/i.test(s))
+              if (!p3HasDrone) {
+                tips.push({ tipo: 'crítico', titulo: 'Drone não incluído na Proposta 3', desc: 'Em Lisboa, drone é standard acima de €900. Sem drone no P3 (€' + p3Preco + ') perdes para concorrentes como Make Me Feel e LuísGorrão que incluem de série.' })
+              } else if (!p2HasDrone) {
+                tips.push({ tipo: 'atenção', titulo: 'Drone só a partir de P3', desc: 'Considera incluir drone na P2 — Make Me Feel inclui drone a partir de €1.250. Pode ser diferenciador para fechar mais P2.' })
+              } else {
+                tips.push({ tipo: 'ok', titulo: 'Drone incluído a partir de P2', desc: 'Bom posicionamento. Drone como standard no P2 aumenta valor percebido face a concorrentes que cobram como add-on.' })
+              }
+
+              // Tip 3: SDE
+              const p3HasSDE = packsCfg.p3.servicos.some(s => /sde|same.day/i.test(s))
+              if (!p3HasSDE) {
+                tips.push({ tipo: 'atenção', titulo: 'SDE (Same-Day Edit) não incluído na P3', desc: 'Digital Studio já inclui SDE no pack €1.500. Considerar adicionar SDE ao P3 para justificar o preço premium.' })
+              } else {
+                tips.push({ tipo: 'ok', titulo: 'SDE incluído na P3 — diferenciador forte', desc: 'SDE no P3 é um diferenciador real. Reforça este ponto no marketing — muitos concorrentes cobram €200–€300 extra.' })
+              }
+
+              // Tip 4: margem vs meta
+              const evNecP2 = metaAnualSim > 0 ? Math.ceil((metaAnualSim + custoAnual) / p2Preco) : 0
+              if (evNecP2 > 25) {
+                tips.push({ tipo: 'crítico', titulo: `Meta requer ${evNecP2} eventos só com P2`, desc: `Com meta de €${metaAnualSim.toLocaleString('pt-PT')} e P2 a €${p2Preco}, precisas de ${evNecP2} eventos/ano — acima de 25 é operacionalmente exigente. Considera subir o P2 ou aumentar o mix de P3.` })
+              } else {
+                tips.push({ tipo: 'ok', titulo: `Meta atingível com ${evNecP2} eventos em P2`, desc: `Operacionalmente realista. ${evNecP2} eventos/ano em P2 dá para gerir com qualidade.` })
+              }
+
+              // Tip 5: ticket médio actual
+              if (ticketMedio > 0 && ticketMedio < p1Preco) {
+                tips.push({ tipo: 'crítico', titulo: `Ticket médio actual (${ticketMedio}€) abaixo do P1 (${p1Preco}€)`, desc: `Ainda existem eventos abaixo do P1. Urge eliminar trabalho abaixo de €${p1Preco} — cada evento a esse preço reduz a tua margem anual disponível.` })
+              } else if (ticketMedio > 0 && ticketMedio >= p1Preco && ticketMedio < p2Preco) {
+                tips.push({ tipo: 'atenção', titulo: `Ticket médio (${ticketMedio}€) ainda no P1`, desc: `A maioria dos eventos fecha em P1. O objectivo é migrar para média de P2 — foca o pitch na Sessão Pré-Wedding como upgrade natural.` })
+              } else if (ticketMedio >= p2Preco) {
+                tips.push({ tipo: 'ok', titulo: `Ticket médio (${ticketMedio}€) acima de P2 — excelente`, desc: `Já estás a fechar maioritariamente em P2 ou superior. Foca agora em aumentar a % de P3.` })
+              }
+
+              // Tip 6: Setúbal vs Lisboa
+              tips.push({ tipo: 'atenção', titulo: 'Mercado Setúbal paga menos — diferencia a proposta', desc: `Preços Setúbal: €400–€500 (fixando.pt). Posicionares-te a €${p1Preco} em Setúbal requer diferenciação clara: qualidade 4K, drone, entregáveis superiores. Em Lisboa podes ir até €${p2Preco}–€${p3Preco} sem atrito.` })
+
+              // Estatísticas de mercado
+              const mktStats = [
+                { label: 'Média Lisboa (casamentos.pt)', valor: '€1.028', cor: 'text-gold' },
+                { label: 'Range Setúbal (fixando.pt)',   valor: '€400–500', cor: 'text-blue-300' },
+                { label: 'Range Lisboa (fixando.pt)',    valor: '€650–1.250', cor: 'text-gold' },
+                { label: 'Média nacional (zaask.pt)',    valor: '€1.050', cor: 'text-white/50' },
+                { label: 'Top premium Lisboa',           valor: '€2.000–5.000', cor: 'text-purple-300' },
+              ]
+
+              return (
+                <div className="space-y-6 border-t border-white/[0.06] pt-6">
+                  {/* Header */}
+                  <div className="flex items-center gap-3">
+                    <div className="h-px flex-1 bg-gold/20" />
+                    <div className="text-center">
+                      <p className="text-[10px] tracking-[0.5em] text-gold/50 uppercase">Relatório Estratégico</p>
+                      <p className="text-[9px] text-white/20 mt-0.5">{new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                    </div>
+                    <div className="h-px flex-1 bg-gold/20" />
+                  </div>
+
+                  {/* ── 1. Diagnóstico Financeiro ── */}
+                  <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 space-y-4">
+                    <p className="text-[10px] tracking-[0.4em] text-white/30 uppercase">1 · Diagnóstico Financeiro</p>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                      {[
+                        { label: 'Receitas Brutas', valor: `${receitasBruto.toLocaleString('pt-PT')} €`, cor: 'text-green-400' },
+                        { label: 'Custos Fixos Est.', valor: `${custoAnual.toLocaleString('pt-PT')} €`, cor: 'text-red-400/70' },
+                        { label: 'Margem Estimada', valor: `${margemEstimada.toLocaleString('pt-PT')} €`, cor: margemEstimada >= metaAnualSim ? 'text-green-400' : 'text-orange-400' },
+                        { label: 'Meta Anual',       valor: `${metaAnualSim.toLocaleString('pt-PT')} €`, cor: 'text-gold' },
+                      ].map(s => (
+                        <div key={s.label} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-center">
+                          <p className="text-[9px] text-white/25 uppercase tracking-wider mb-1">{s.label}</p>
+                          <p className={`text-lg font-light font-mono ${s.cor}`}>{s.valor}</p>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Progress bar meta */}
+                    <div>
+                      <div className="flex justify-between text-[9px] text-white/30 mb-1.5">
+                        <span>Progresso para meta ({metaAnualSim.toLocaleString('pt-PT')} €)</span>
+                        <span className={margemEstimada >= metaAnualSim ? 'text-green-400' : 'text-orange-400'}>
+                          {Math.min(100, Math.round((margemEstimada / metaAnualSim) * 100))}%
+                        </span>
+                      </div>
+                      <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full transition-all ${margemEstimada >= metaAnualSim ? 'bg-green-400/60' : 'bg-orange-400/60'}`}
+                          style={{ width: `${Math.min(100, (margemEstimada / metaAnualSim) * 100)}%` }} />
+                      </div>
+                      {ticketMedio > 0 && (
+                        <p className="text-[9px] text-white/25 mt-2">Ticket médio actual: <span className="text-gold font-mono">{ticketMedio}€</span> · Benchmark Lisboa: <span className="text-white/40 font-mono">€1.028</span></p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ── 2. Posicionamento de Mercado ── */}
+                  <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 space-y-4">
+                    <p className="text-[10px] tracking-[0.4em] text-white/30 uppercase">2 · Posicionamento dos Packs no Mercado Lisboa/Setúbal</p>
+                    <div className="grid grid-cols-3 gap-3">
+                      {([
+                        { key: 'p1', label: 'Proposta 1', preco: p1Preco },
+                        { key: 'p2', label: 'Proposta 2', preco: p2Preco },
+                        { key: 'p3', label: 'Proposta 3', preco: p3Preco },
+                      ] as const).map(s => {
+                        const tier = getTier(s.preco)
+                        const pctMkt = Math.min(100, Math.round((s.preco / 4000) * 100))
+                        return (
+                          <div key={s.key} className={`rounded-xl border p-4 text-center space-y-2 ${getTierBg(tier)}`}>
+                            <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase">{s.label}</p>
+                            <p className={`text-2xl font-light font-mono ${getTierColor(tier)}`}>{s.preco}€</p>
+                            <span className={`text-[9px] px-2 py-0.5 rounded-full border ${getTierBg(tier)} ${getTierColor(tier)}`}>{tier}</span>
+                            <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden mt-2">
+                              <div className="h-full rounded-full" style={{ width: `${pctMkt}%`, background: tier === 'Budget' ? 'rgba(96,165,250,0.5)' : tier === 'Mid-Range' ? 'rgba(201,168,76,0.55)' : 'rgba(167,139,250,0.55)' }} />
+                            </div>
+                            <p className="text-[8px] text-white/20">vs mercado Lisboa (€0–€4.000)</p>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    {/* Stats mercado */}
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-5">
+                      {mktStats.map(s => (
+                        <div key={s.label} className="rounded-xl border border-white/[0.06] bg-white/[0.01] px-3 py-2 text-center">
+                          <p className="text-[8px] text-white/25 mb-0.5 leading-tight">{s.label}</p>
+                          <p className={`text-xs font-mono font-semibold ${s.cor}`}>{s.valor}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* ── 3. Benchmarking Concorrentes ── */}
+                  <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 space-y-3">
+                    <p className="text-[10px] tracking-[0.4em] text-white/30 uppercase">3 · Benchmarking — Concorrentes Lisboa & Setúbal (2025)</p>
+                    <div className="space-y-2">
+                      {CONCORRENTES.sort((a, b) => a.min - b.min).map((c, i) => {
+                        const tier = getTier((c.min + c.max) / 2)
+                        const isMeuRange = (p1Preco >= c.min && p1Preco <= c.max) || (p2Preco >= c.min && p2Preco <= c.max) || (p3Preco >= c.min && p3Preco <= c.max)
+                        return (
+                          <div key={i} className={`flex items-start gap-3 rounded-xl px-4 py-3 border transition-colors ${isMeuRange ? 'border-gold/25 bg-gold/[0.04]' : 'border-white/[0.06] bg-white/[0.01]'}`}>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                                <span className="text-sm text-white/70 font-medium">{c.nome}</span>
+                                <span className="text-[9px] text-white/25">{c.zona}</span>
+                                {isMeuRange && <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-gold/20 text-gold border border-gold/20">concorre contigo</span>}
+                                {c.nota && <span className="text-[8px] text-white/20">{c.nota}</span>}
+                              </div>
+                              <p className="text-[9px] text-white/30 leading-relaxed">{c.inclui}</p>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              <p className={`text-sm font-mono font-semibold ${getTierColor(tier)}`}>
+                                {c.min === c.max ? `${c.min}€` : `${c.min}–${c.max}€`}
+                              </p>
+                              <p className={`text-[8px] ${getTierColor(tier)}`}>{tier}</p>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <p className="text-[9px] text-white/20 text-center pt-1">Fonte: casamentos.pt · fixando.pt · zaask.pt · sites próprios — pesquisa Abr 2025</p>
+                  </div>
+
+                  {/* ── 4. Diagnóstico & Recomendações ── */}
+                  <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 space-y-3">
+                    <p className="text-[10px] tracking-[0.4em] text-white/30 uppercase">4 · Diagnóstico & Recomendações</p>
+                    <div className="space-y-2">
+                      {tips.map((t, i) => (
+                        <div key={i} className={`rounded-xl border px-4 py-3 flex items-start gap-3 ${
+                          t.tipo === 'ok'      ? 'border-green-500/20 bg-green-500/[0.04]' :
+                          t.tipo === 'atenção' ? 'border-yellow-500/20 bg-yellow-500/[0.04]' :
+                                                 'border-red-500/20 bg-red-500/[0.04]'
+                        }`}>
+                          <span className="text-base flex-shrink-0 mt-0.5">
+                            {t.tipo === 'ok' ? '✅' : t.tipo === 'atenção' ? '⚠️' : '🚨'}
+                          </span>
+                          <div>
+                            <p className={`text-[11px] font-medium mb-0.5 ${
+                              t.tipo === 'ok' ? 'text-green-400' : t.tipo === 'atenção' ? 'text-yellow-400' : 'text-red-400'
+                            }`}>{t.titulo}</p>
+                            <p className="text-[10px] text-white/40 leading-relaxed">{t.desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* ── 5. Tendências de Mercado ── */}
+                  <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 space-y-3">
+                    <p className="text-[10px] tracking-[0.4em] text-white/30 uppercase">5 · Tendências de Mercado 2025</p>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {[
+                        { icon: '🚁', titulo: 'Drone é standard acima de €900', desc: 'Maioria dos concorrentes mid-range inclui drone. Cobrar como add-on já não justifica.' },
+                        { icon: '🎬', titulo: '4K multicam substituiu FullHD', desc: 'Até em pacotes a €1.000–€1.200 o 4K é norm. FullHD já não diferencia positivamente.' },
+                        { icon: '⚡', titulo: 'SDE a tornar-se mid-range', desc: 'Digital Studio já inclui SDE no pack de €1.500. Era exclusividade premium.' },
+                        { icon: '📦', titulo: 'Foto+Vídeo bundle domina', desc: 'Casais preferem fornecedor único. Bundles €2.000–€2.500 aumentam fidelização.' },
+                        { icon: '🔒', titulo: 'Opacidade de preços = premium', desc: '60% dos top players não publicam preços — cria percepção de exclusividade.' },
+                        { icon: '📅', titulo: 'Lead time 9–12 meses em Lisboa', desc: 'Bons fornecedores estão cheios 9–12 meses antes. Foca na pré-reserva precoce.' },
+                      ].map((t, i) => (
+                        <div key={i} className="flex items-start gap-3 rounded-xl border border-white/[0.06] bg-white/[0.01] px-4 py-3">
+                          <span className="text-lg flex-shrink-0">{t.icon}</span>
+                          <div>
+                            <p className="text-[11px] text-white/60 font-medium mb-0.5">{t.titulo}</p>
+                            <p className="text-[10px] text-white/30 leading-relaxed">{t.desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                </div>
+              )
+            })()}
 
           </div>
         )
