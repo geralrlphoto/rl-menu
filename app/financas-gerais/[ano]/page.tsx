@@ -384,7 +384,11 @@ export default function FinancasAnoPage({ params }: Props) {
   const [cfValor, setCfValor]           = useState('')
   // Estratégia
   const [metaAnualSim, setMetaAnualSim] = useState<number>(30000)
-  type CrmEst = { total: number; fechados: number; perdidos: number; ativos: number; porChegou: Array<{ canal: string; count: number; fechados: number }> }
+  type CrmEst = {
+    total: number; fechados: number; perdidos: number; ativos: number
+    porChegou: Array<{ canal: string; count: number; fechados: number }>
+    orcamentosF: number[]   // valores de orcamento dos leads fechados (parsed)
+  }
   const [crmEst, setCrmEst]             = useState<CrmEst | null>(null)
   // Packs config (editável, persistido em localStorage)
   type PacksCfg = { preco: number; freelancer: number; servicos: string[] }
@@ -460,12 +464,14 @@ export default function FinancasAnoPage({ params }: Props) {
   // CRM stats para tab Estratégia
   useEffect(() => {
     if (tab !== 'estratégia' || crmEst) return
-    supabase.from('crm_contacts').select('status, como_chegou').then(({ data }) => {
+    supabase.from('crm_contacts').select('status, como_chegou, orcamento').then(({ data }) => {
       if (!data) return
       const total = data.length
       const fechados = data.filter(c => c.status === 'Fechou').length
       const perdidos = data.filter(c => ['NÃO FECHOU','Encerrado','Cancelado','Sem resposta'].includes(c.status)).length
       const ativos   = total - fechados - perdidos
+
+      // Canais de aquisição
       const canaisMap = new Map<string, { count: number; fechados: number }>()
       for (const c of data) {
         const raw = c.como_chegou ?? ''
@@ -481,7 +487,23 @@ export default function FinancasAnoPage({ params }: Props) {
         .map(([canal, v]) => ({ canal, count: v.count, fechados: v.fechados }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 8)
-      setCrmEst({ total, fechados, perdidos, ativos, porChegou })
+
+      // Orçamentos dos leads fechados (parse string → número)
+      const orcamentosF = data
+        .filter(c => c.status === 'Fechou')
+        .map(c => {
+          const raw = (c.orcamento ?? '').toString()
+          // Remove tudo excepto dígitos, vírgula e ponto; normaliza separador decimal
+          const cleaned = raw.replace(/[^0-9.,]/g, '').replace(',', '.')
+          // Se houver ponto como separador de milhar (ex: "1.050") e não como decimal, remover
+          const num = cleaned.includes('.') && cleaned.split('.')[1]?.length === 3
+            ? parseFloat(cleaned.replace('.', ''))
+            : parseFloat(cleaned)
+          return isNaN(num) ? 0 : num
+        })
+        .filter(v => v > 0)
+
+      setCrmEst({ total, fechados, perdidos, ativos, porChegou, orcamentosF })
     })
   }, [tab, crmEst])
 
@@ -2502,7 +2524,64 @@ export default function FinancasAnoPage({ params }: Props) {
                       <p className="text-[9px] text-white/20 mt-1">{crmEst.perdidos} leads perdidas</p>
                     </div>
                   </div>
-                  {/* Barra de funil */}
+                  {/* ── Propostas Fechadas ── */}
+                  {(() => {
+                    const oF = crmEst.orcamentosF
+                    const midP1P2 = (p1Preco + p2Preco) / 2   // ~950
+                    const midP2P3 = (p2Preco + p3Preco) / 2   // ~1175
+                    const b1 = oF.filter(v => v <= midP1P2).length
+                    const b2 = oF.filter(v => v > midP1P2 && v <= midP2P3).length
+                    const b3 = oF.filter(v => v > midP2P3).length
+                    const semOrc = crmEst.fechados - oF.length
+                    const maxB = Math.max(b1, b2, b3, 1)
+                    const ticketMedioF = oF.length > 0 ? Math.round(oF.reduce((s, v) => s + v, 0) / oF.length) : 0
+                    return (
+                      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase">Propostas Fechadas</p>
+                          {ticketMedioF > 0 && (
+                            <span className="text-[10px] text-gold/60 font-mono">ticket médio: {ticketMedioF.toLocaleString('pt-PT')} €</span>
+                          )}
+                        </div>
+                        {oF.length === 0 ? (
+                          <p className="text-[11px] text-white/20 text-center py-2">
+                            {crmEst.fechados > 0
+                              ? `${crmEst.fechados} leads fechadas sem orçamento registado no CRM`
+                              : 'Sem leads fechadas registadas'}
+                          </p>
+                        ) : (
+                          <div className="space-y-3">
+                            {[
+                              { label: `Proposta 1 · ≤${midP1P2.toFixed(0)}€`, count: b1, color: 'bg-blue-400/50',   tc: 'text-blue-300',   preco: p1Preco },
+                              { label: `Proposta 2 · ${midP1P2.toFixed(0)}–${midP2P3.toFixed(0)}€`, count: b2, color: 'bg-gold/50',      tc: 'text-gold',       preco: p2Preco },
+                              { label: `Proposta 3 · >${midP2P3.toFixed(0)}€`,  count: b3, color: 'bg-purple-400/50', tc: 'text-purple-300', preco: p3Preco },
+                            ].map((row, ri) => {
+                              const pct = oF.length > 0 ? Math.round((row.count / oF.length) * 100) : 0
+                              return (
+                                <div key={ri}>
+                                  <div className="flex items-center justify-between mb-1.5">
+                                    <span className="text-[11px] text-white/40">{row.label}</span>
+                                    <div className="flex items-center gap-3">
+                                      <span className={`text-sm font-mono font-bold ${row.tc}`}>{row.count}</span>
+                                      <span className="text-[10px] text-white/25 font-mono w-8 text-right">{pct}%</span>
+                                    </div>
+                                  </div>
+                                  <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
+                                    <div className={`h-full rounded-full ${row.color}`} style={{ width: `${(row.count / maxB) * 100}%` }} />
+                                  </div>
+                                </div>
+                              )
+                            })}
+                            {semOrc > 0 && (
+                              <p className="text-[9px] text-white/20 pt-1">+ {semOrc} fechado{semOrc > 1 ? 's' : ''} sem orçamento no CRM</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
+
+                  {/* Canais de Aquisição */}
                   <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
                     <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-4">Canais de Aquisição</p>
                     <div className="space-y-3">
