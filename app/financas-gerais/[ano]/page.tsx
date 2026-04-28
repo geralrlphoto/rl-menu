@@ -1659,7 +1659,7 @@ export default function FinancasAnoPage({ params }: Props) {
                   <p className="text-xl font-light text-white/55">{ticketMedioVideo}</p>
                   <p className="text-[9px] text-white/20 mt-0.5">€ / evento</p>
                   <div className="mt-2 h-1 bg-white/[0.05] rounded-full overflow-hidden">
-                    <div className="h-full bg-white/25 rounded-full" style={{ width: `${(ticketMedioVideo / 1300) * 100}%` }} />
+                    <div className="h-full bg-white/25 rounded-full" style={{ width: `${(ticketMedioVideo / p3Preco) * 100}%` }} />
                   </div>
                 </div>
                 {/* Ano atual */}
@@ -1678,35 +1678,35 @@ export default function FinancasAnoPage({ params }: Props) {
                     </p>
                   )}
                   <div className="mt-2 h-1 bg-white/[0.05] rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-400/40 rounded-full" style={{ width: `${Math.min(100, (ticketMedioAno / 1300) * 100)}%` }} />
+                    <div className="h-full bg-blue-400/40 rounded-full" style={{ width: `${Math.min(100, (ticketMedioAno / p3Preco) * 100)}%` }} />
                   </div>
                 </div>
                 {/* P1 */}
                 <div className="rounded-2xl border border-blue-500/25 bg-blue-500/[0.06] p-3 text-center">
                   <p className="text-[9px] tracking-[0.3em] text-blue-400/60 uppercase mb-1.5">Proposta 1</p>
-                  <p className="text-xl font-light text-blue-300">850</p>
+                  <p className="text-xl font-light text-blue-300">{p1Preco.toLocaleString('pt-PT')}</p>
                   <p className="text-[9px] text-blue-400/30 mt-0.5">€ / evento</p>
-                  <p className="text-[9px] text-green-400/70 mt-1">+{Math.round((850 / ticketMedioVideo - 1) * 100)}% vs 2025</p>
+                  <p className="text-[9px] text-green-400/70 mt-1">+{Math.round((p1Preco / ticketMedioVideo - 1) * 100)}% vs 2025</p>
                   <div className="mt-2 h-1 bg-white/[0.05] rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-400/50 rounded-full" style={{ width: `${(850 / 1300) * 100}%` }} />
+                    <div className="h-full bg-blue-400/50 rounded-full" style={{ width: `${(p1Preco / p3Preco) * 100}%` }} />
                   </div>
                 </div>
                 {/* P2 */}
                 <div className="rounded-2xl border border-gold/25 bg-gold/[0.06] p-3 text-center">
                   <p className="text-[9px] tracking-[0.3em] text-gold/60 uppercase mb-1.5">Proposta 2</p>
-                  <p className="text-xl font-light text-gold">1.050</p>
+                  <p className="text-xl font-light text-gold">{p2Preco.toLocaleString('pt-PT')}</p>
                   <p className="text-[9px] text-gold/30 mt-0.5">€ / evento</p>
-                  <p className="text-[9px] text-green-400/70 mt-1">+{Math.round((1050 / ticketMedioVideo - 1) * 100)}% vs 2025</p>
+                  <p className="text-[9px] text-green-400/70 mt-1">+{Math.round((p2Preco / ticketMedioVideo - 1) * 100)}% vs 2025</p>
                   <div className="mt-2 h-1 bg-white/[0.05] rounded-full overflow-hidden">
-                    <div className="h-full bg-gold/50 rounded-full" style={{ width: `${(1050 / 1300) * 100}%` }} />
+                    <div className="h-full bg-gold/50 rounded-full" style={{ width: `${(p2Preco / p3Preco) * 100}%` }} />
                   </div>
                 </div>
                 {/* P3 */}
                 <div className="rounded-2xl border border-purple-500/25 bg-purple-500/[0.06] p-3 text-center">
                   <p className="text-[9px] tracking-[0.3em] text-purple-400/60 uppercase mb-1.5">Proposta 3</p>
-                  <p className="text-xl font-light text-purple-300">1.300</p>
+                  <p className="text-xl font-light text-purple-300">{p3Preco.toLocaleString('pt-PT')}</p>
                   <p className="text-[9px] text-purple-400/30 mt-0.5">€ / evento</p>
-                  <p className="text-[9px] text-green-400/70 mt-1">+{Math.round((1300 / ticketMedioVideo - 1) * 100)}% vs 2025</p>
+                  <p className="text-[9px] text-green-400/70 mt-1">+{Math.round((p3Preco / ticketMedioVideo - 1) * 100)}% vs 2025</p>
                   <div className="mt-2 h-1 bg-white/[0.05] rounded-full overflow-hidden">
                     <div className="h-full bg-purple-400/50 rounded-full" style={{ width: '100%' }} />
                   </div>
@@ -1721,9 +1721,9 @@ export default function FinancasAnoPage({ params }: Props) {
                     data={[
                       { label: '2025 Vídeo', valor: ticketMedioVideo, margem: margemVideoAtual },
                       ...(ticketMedioAno > 0 ? [{ label: `${anoNum} Real`, valor: ticketMedioAno, margem: margemAno }] : []),
-                      { label: 'Proposta 1', valor: 850, margem: p1Margem },
-                      { label: 'Proposta 2', valor: 1050, margem: p2Margem },
-                      { label: 'Proposta 3', valor: 1300, margem: p3Margem },
+                      { label: 'Proposta 1', valor: p1Preco, margem: p1Margem },
+                      { label: 'Proposta 2', valor: p2Preco, margem: p2Margem },
+                      { label: 'Proposta 3', valor: p3Preco, margem: p3Margem },
                     ]}
                     barCategoryGap="20%" barGap={3}
                   >
@@ -1779,7 +1779,7 @@ export default function FinancasAnoPage({ params }: Props) {
                         <span className="text-[9px] text-white/20">·</span>
                         <span className="text-[9px] tracking-wider text-white/30 uppercase">Reportagem Vídeo</span>
                       </div>
-                      <p className="text-2xl font-light text-blue-300">850 <span className="text-sm text-blue-300/40">€</span></p>
+                      <p className="text-2xl font-light text-blue-300">{p1Preco.toLocaleString('pt-PT')} <span className="text-sm text-blue-300/40">€</span></p>
                     </div>
                     <div className="text-right">
                       <p className="text-[9px] text-white/20 uppercase tracking-widest mb-0.5">Margem líquida</p>
@@ -1805,7 +1805,7 @@ export default function FinancasAnoPage({ params }: Props) {
                         <span className="text-[9px] text-white/20">·</span>
                         <span className="text-[9px] tracking-wider text-white/30 uppercase">Reportagem + Pré-Wedding</span>
                       </div>
-                      <p className="text-2xl font-light text-gold">1.050 <span className="text-sm text-gold/40">€</span></p>
+                      <p className="text-2xl font-light text-gold">{p2Preco.toLocaleString('pt-PT')} <span className="text-sm text-gold/40">€</span></p>
                     </div>
                     <div className="text-right">
                       <p className="text-[9px] text-white/20 uppercase tracking-widest mb-0.5">Margem líquida</p>
@@ -1831,7 +1831,7 @@ export default function FinancasAnoPage({ params }: Props) {
                         <span className="text-[9px] text-white/20">·</span>
                         <span className="text-[9px] tracking-wider text-white/30 uppercase">Premium · Drone + SDE</span>
                       </div>
-                      <p className="text-2xl font-light text-purple-300">1.300 <span className="text-sm text-purple-300/40">€</span></p>
+                      <p className="text-2xl font-light text-purple-300">{p3Preco.toLocaleString('pt-PT')} <span className="text-sm text-purple-300/40">€</span></p>
                     </div>
                     <div className="text-right">
                       <p className="text-[9px] text-white/20 uppercase tracking-widest mb-0.5">Margem líquida</p>
@@ -1853,9 +1853,9 @@ export default function FinancasAnoPage({ params }: Props) {
                   <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-3">Margem por Pack (após freelancer)</p>
                   <div className="space-y-3">
                     {[
-                      { label: 'Proposta 1 · 850€', margem: p1Margem, max: p3Margem, pct: Math.round(p1Margem/p3Margem*100), fill: 'rgba(96,165,250,0.5)' },
-                      { label: 'Proposta 2 · 1.050€', margem: p2Margem, max: p3Margem, pct: Math.round(p2Margem/p3Margem*100), fill: 'rgba(201,168,76,0.55)' },
-                      { label: 'Proposta 3 · 1.300€', margem: p3Margem, max: p3Margem, pct: 100, fill: 'rgba(167,139,250,0.5)' },
+                      { label: `Proposta 1 · ${p1Preco}€`, margem: p1Margem, max: p3Margem, pct: Math.round(p1Margem/p3Margem*100), fill: 'rgba(96,165,250,0.5)' },
+                      { label: `Proposta 2 · ${p2Preco}€`, margem: p2Margem, max: p3Margem, pct: Math.round(p2Margem/p3Margem*100), fill: 'rgba(201,168,76,0.55)' },
+                      { label: `Proposta 3 · ${p3Preco}€`, margem: p3Margem, max: p3Margem, pct: 100, fill: 'rgba(167,139,250,0.5)' },
                     ].map(r => (
                       <div key={r.label}>
                         <div className="flex justify-between text-[10px] mb-1.5">
@@ -2024,9 +2024,9 @@ export default function FinancasAnoPage({ params }: Props) {
                   </p>
                   <div className="grid grid-cols-3 gap-3">
                     {[
-                      { label: 'Proposta 1', be: beAnual.p1, preco: 850, margem: p1Margem, fill: 'border-blue-500/25 bg-blue-500/[0.05]', tc: 'text-blue-300' },
-                      { label: 'Proposta 2', be: beAnual.p2, preco: 1050, margem: p2Margem, fill: 'border-gold/20 bg-gold/[0.05]', tc: 'text-gold' },
-                      { label: 'Proposta 3', be: beAnual.p3, preco: 1300, margem: p3Margem, fill: 'border-purple-500/20 bg-purple-500/[0.05]', tc: 'text-purple-300' },
+                      { label: 'Proposta 1', be: beAnual.p1, preco: p1Preco, margem: p1Margem, fill: 'border-blue-500/25 bg-blue-500/[0.05]', tc: 'text-blue-300' },
+                      { label: 'Proposta 2', be: beAnual.p2, preco: p2Preco, margem: p2Margem, fill: 'border-gold/20 bg-gold/[0.05]', tc: 'text-gold' },
+                      { label: 'Proposta 3', be: beAnual.p3, preco: p3Preco, margem: p3Margem, fill: 'border-purple-500/20 bg-purple-500/[0.05]', tc: 'text-purple-300' },
                     ].map(c => (
                       <div key={c.label} className={`rounded-2xl border ${c.fill} p-4 text-center`}>
                         <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-2">{c.label}</p>
@@ -2231,9 +2231,9 @@ export default function FinancasAnoPage({ params }: Props) {
                 const totalBruto = counts.p1*p1Preco + counts.p2*p2Preco + counts.p3*p3Preco + counts.bat*PREC_BAT + counts.corp*PREC_CORP
                 const liquido = totalMargem - custoFixoAnual
                 const rows = [
-                  ...(counts.p1 > 0 ? [{ l: `Proposta 1 · 850 €`, n: counts.p1, m: counts.p1*p1Margem, fill: 'rgba(96,165,250,0.55)' }] : []),
-                  ...(counts.p2 > 0 ? [{ l: `Proposta 2 · 1.050 €`, n: counts.p2, m: counts.p2*p2Margem, fill: 'rgba(201,168,76,0.55)' }] : []),
-                  ...(counts.p3 > 0 ? [{ l: `Proposta 3 · 1.300 €`, n: counts.p3, m: counts.p3*p3Margem, fill: 'rgba(167,139,250,0.55)' }] : []),
+                  ...(counts.p1 > 0 ? [{ l: `Proposta 1 · ${p1Preco} €`, n: counts.p1, m: counts.p1*p1Margem, fill: 'rgba(96,165,250,0.55)' }] : []),
+                  ...(counts.p2 > 0 ? [{ l: `Proposta 2 · ${p2Preco} €`, n: counts.p2, m: counts.p2*p2Margem, fill: 'rgba(201,168,76,0.55)' }] : []),
+                  ...(counts.p3 > 0 ? [{ l: `Proposta 3 · ${p3Preco} €`, n: counts.p3, m: counts.p3*p3Margem, fill: 'rgba(167,139,250,0.55)' }] : []),
                   ...(counts.bat > 0 ? [{ l: `Batizados · ${PREC_BAT} €`, n: counts.bat, m: counts.bat*MARG_BAT, fill: 'rgba(251,191,36,0.45)' }] : []),
                   ...(counts.corp > 0 ? [{ l: `Corporate · ${PREC_CORP} €`, n: counts.corp, m: counts.corp*MARG_CORP, fill: 'rgba(74,222,128,0.45)' }] : []),
                 ]
@@ -2531,7 +2531,7 @@ export default function FinancasAnoPage({ params }: Props) {
               </div>
               <div className="space-y-2">
                 {[
-                  { u: 'IMEDIATO',    c: 'text-red-400',    b: 'border-red-500/20',    bg: 'bg-red-500/[0.04]',    a: `Implementar Proposta 1 (850€) como mínimo — abandonar vídeo a ${ticketMedioVideo}€` },
+                  { u: 'IMEDIATO',    c: 'text-red-400',    b: 'border-red-500/20',    bg: 'bg-red-500/[0.04]',    a: `Implementar Proposta 1 (${p1Preco}€) como mínimo — abandonar vídeo a ${ticketMedioVideo}€` },
                   { u: 'IMEDIATO',    c: 'text-red-400',    b: 'border-red-500/20',    bg: 'bg-red-500/[0.04]',    a: 'Criar proposta PDF com os 3 packs para apresentar a novos clientes' },
                   { u: 'CURTO PRAZO', c: 'text-orange-400', b: 'border-orange-500/20', bg: 'bg-orange-500/[0.04]', a: 'Promover activamente a Proposta 2 — pré-wedding diferencia e justifica +200€' },
                   { u: 'CURTO PRAZO', c: 'text-orange-400', b: 'border-orange-500/20', bg: 'bg-orange-500/[0.04]', a: 'Avaliar se o estúdio (320€/mês = 3.840€/ano) tem retorno real' },
