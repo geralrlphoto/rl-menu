@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 
 type Contact = {
   id: string
+  notion_id?: string | null
   nome: string
   contato: string
   email: string
@@ -261,13 +262,18 @@ export default function CRMPage() {
     await supabase.from('crm_contacts').update(updatePayload).eq('id', id)
   }
 
-  // Deduplica por notion_id — mantém o registo mais recente (primeiro da lista ordenada por data_entrada desc)
+  // Deduplica por notion_id E por nome+data_casamento para eliminar duplicados mesmo sem notion_id
   function dedupeContacts(data: Contact[]): Contact[] {
-    const seen = new Set<string>()
+    const seenNotionId = new Set<string>()
+    const seenName = new Set<string>()
     return data.filter(c => {
-      const key = c.notion_id as any ?? c.id
-      if (seen.has(key)) return false
-      seen.add(key)
+      if (c.notion_id) {
+        if (seenNotionId.has(c.notion_id)) return false
+        seenNotionId.add(c.notion_id)
+      }
+      const nameKey = `${(c.nome ?? '').toLowerCase().trim()}|${c.data_casamento ?? ''}`
+      if (nameKey !== '|' && seenName.has(nameKey)) return false
+      seenName.add(nameKey)
       return true
     })
   }
@@ -277,8 +283,13 @@ export default function CRMPage() {
     supabase.from('crm_contacts').select('*').order('data_entrada', { ascending: false })
       .then(({ data }) => { setContacts(dedupeContacts(data ?? [])); setLoading(false) })
 
-    // Sync silencioso com Notion ao abrir o CRM
-    fetch('/api/sync-notion', { method: 'POST' }).catch(() => {})
+    // Sync silencioso com Notion ao abrir o CRM — throttle: só sincroniza se passaram >5 min desde o último sync
+    const lastSync = localStorage.getItem('crm_last_sync')
+    if (!lastSync || Date.now() - Number(lastSync) > 5 * 60 * 1000) {
+      fetch('/api/sync-notion', { method: 'POST' })
+        .then(() => localStorage.setItem('crm_last_sync', String(Date.now())))
+        .catch(() => {})
+    }
 
     // Realtime — atualiza automaticamente quando há mudanças
     const channel = supabase

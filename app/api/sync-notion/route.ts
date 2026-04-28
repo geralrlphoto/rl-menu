@@ -109,9 +109,18 @@ export async function POST() {
     const errors: string[] = []
 
     if (toInsert.length > 0) {
-      const { error } = await supabase.from('crm_contacts').insert(toInsert)
-      if (error) errors.push(error.message)
-      else inserted = toInsert.length
+      // Double-check imediatamente antes de inserir para reduzir janela de race condition
+      const { data: freshCheck } = await supabase
+        .from('crm_contacts')
+        .select('notion_id')
+        .in('notion_id', toInsert.map(r => r.notion_id))
+      const freshSet = new Set((freshCheck ?? []).map((r: any) => r.notion_id))
+      const safeInsert = toInsert.filter(r => !freshSet.has(r.notion_id))
+      if (safeInsert.length > 0) {
+        const { error } = await supabase.from('crm_contacts').insert(safeInsert)
+        if (error) errors.push(error.message)
+        else inserted = safeInsert.length
+      }
     }
 
     for (const r of toUpdate) {
