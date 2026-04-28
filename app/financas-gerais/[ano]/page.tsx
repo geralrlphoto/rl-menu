@@ -464,47 +464,61 @@ export default function FinancasAnoPage({ params }: Props) {
   // CRM stats para tab Estratégia
   useEffect(() => {
     if (tab !== 'estratégia' || crmEst) return
-    supabase.from('crm_contacts').select('status, como_chegou, orcamento').then(({ data }) => {
-      if (!data) return
-      const total = data.length
-      const fechados = data.filter(c => c.status === 'Fechou').length
-      const perdidos = data.filter(c => ['NÃO FECHOU','Encerrado','Cancelado','Sem resposta'].includes(c.status)).length
-      const ativos   = total - fechados - perdidos
+    // Busca tudo o que precisamos de crm_contacts — tudo no Supabase, sem tocar no Notion
+    supabase
+      .from('crm_contacts')
+      .select('status, como_chegou, orcamento, servicos, nome, data_casamento, tipo_evento')
+      .then(({ data }) => {
+        if (!data) return
+        const total = data.length
+        const fechados = data.filter(c => c.status === 'Fechou').length
+        const perdidos = data.filter(c => ['NÃO FECHOU','Encerrado','Cancelado','Sem resposta'].includes(c.status)).length
+        const ativos   = total - fechados - perdidos
 
-      // Canais de aquisição
-      const canaisMap = new Map<string, { count: number; fechados: number }>()
-      for (const c of data) {
-        const raw = c.como_chegou ?? ''
-        const canais = raw.split(',').map((s: string) => s.trim()).filter(Boolean)
-        if (!canais.length) canais.push('Não especificado')
-        for (const canal of canais) {
-          if (!canaisMap.has(canal)) canaisMap.set(canal, { count: 0, fechados: 0 })
-          canaisMap.get(canal)!.count++
-          if (c.status === 'Fechou') canaisMap.get(canal)!.fechados++
+        // Canais de aquisição
+        const canaisMap = new Map<string, { count: number; fechados: number }>()
+        for (const c of data) {
+          const raw = c.como_chegou ?? ''
+          const canais = raw.split(',').map((s: string) => s.trim()).filter(Boolean)
+          if (!canais.length) canais.push('Não especificado')
+          for (const canal of canais) {
+            if (!canaisMap.has(canal)) canaisMap.set(canal, { count: 0, fechados: 0 })
+            canaisMap.get(canal)!.count++
+            if (c.status === 'Fechou') canaisMap.get(canal)!.fechados++
+          }
         }
-      }
-      const porChegou = [...canaisMap.entries()]
-        .map(([canal, v]) => ({ canal, count: v.count, fechados: v.fechados }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 8)
+        const porChegou = [...canaisMap.entries()]
+          .map(([canal, v]) => ({ canal, count: v.count, fechados: v.fechados }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 8)
 
-      // Orçamentos dos leads fechados (parse string → número)
-      const orcamentosF = data
-        .filter(c => c.status === 'Fechou')
-        .map(c => {
-          const raw = (c.orcamento ?? '').toString()
-          // Remove tudo excepto dígitos, vírgula e ponto; normaliza separador decimal
+        // Classificação de proposta para leads fechados
+        // Prioridade: servicos (mais fiável) > orcamento (fallback)
+        const parseOrc = (raw: string): number => {
           const cleaned = raw.replace(/[^0-9.,]/g, '').replace(',', '.')
-          // Se houver ponto como separador de milhar (ex: "1.050") e não como decimal, remover
           const num = cleaned.includes('.') && cleaned.split('.')[1]?.length === 3
             ? parseFloat(cleaned.replace('.', ''))
             : parseFloat(cleaned)
           return isNaN(num) ? 0 : num
-        })
-        .filter(v => v > 0)
+        }
 
-      setCrmEst({ total, fechados, perdidos, ativos, porChegou, orcamentosF })
-    })
+        const orcamentosF = data
+          .filter(c => c.status === 'Fechou')
+          .map(c => {
+            const servStr = (c.servicos ?? '').toLowerCase()
+            // Classificar por serviços incluídos (campo mais fiável)
+            if (/drone|sde|same.day/i.test(servStr)) return 1300        // P3
+            if (/pr[eé].wedding|pre.wedding/i.test(servStr)) return 1050 // P2
+            // Fallback: usar orçamento se tiver valor
+            const orc = parseOrc((c.orcamento ?? '').toString())
+            if (orc > 0) return orc
+            // Sem dados suficientes
+            return 0
+          })
+          .filter(v => v > 0)
+
+        setCrmEst({ total, fechados, perdidos, ativos, porChegou, orcamentosF })
+      })
   }, [tab, crmEst])
 
   function handleMetaChange(val: number) {
