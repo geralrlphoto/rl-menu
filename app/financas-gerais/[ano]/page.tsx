@@ -387,16 +387,17 @@ export default function FinancasAnoPage({ params }: Props) {
   type CrmEst = { total: number; fechados: number; perdidos: number; ativos: number; porChegou: Array<{ canal: string; count: number; fechados: number }> }
   const [crmEst, setCrmEst]             = useState<CrmEst | null>(null)
   // Packs config (editável, persistido em localStorage)
-  type PacksCfg = { preco: number; freelancer: number }
+  type PacksCfg = { preco: number; freelancer: number; servicos: string[] }
   type AllPacksCfg = { p1: PacksCfg; p2: PacksCfg; p3: PacksCfg; bat: PacksCfg; corp: PacksCfg }
   const DEFAULT_PACKS_CFG: AllPacksCfg = {
-    p1:   { preco: 850,  freelancer: 300 },
-    p2:   { preco: 1050, freelancer: 300 },
-    p3:   { preco: 1300, freelancer: 350 },
-    bat:  { preco: 450,  freelancer: 120 },
-    corp: { preco: 700,  freelancer: 80  },
+    p1:   { preco: 850,  freelancer: 300, servicos: ['1 Videógrafo', 'Reportagem completa', 'Vídeo final 20 min', 'Qualidade Full HD', 'Deslocação incluída'] },
+    p2:   { preco: 1050, freelancer: 300, servicos: ['1 Videógrafo', 'Reportagem completa', 'Vídeo final 20 min', 'Qualidade Full HD', 'Deslocação incluída', 'Sessão Pré-Wedding'] },
+    p3:   { preco: 1300, freelancer: 350, servicos: ['1 Videógrafo', 'Reportagem completa', 'Vídeo final 20 min', 'Qualidade Full HD', 'Deslocação incluída', 'Sessão Pré-Wedding', 'Imagens de Drone', 'Same-Day Edit (SDE)'] },
+    bat:  { preco: 450,  freelancer: 120, servicos: ['Reportagem completa', 'Vídeo highlights', 'Deslocação incluída'] },
+    corp: { preco: 700,  freelancer: 80,  servicos: ['Captação de evento', 'Edição profissional', 'Entrega digital'] },
   }
   const [packsCfg, setPacksCfg] = useState<AllPacksCfg>(DEFAULT_PACKS_CFG)
+  const [newServicoInput, setNewServicoInput] = useState<Record<string, string>>({ p1: '', p2: '', p3: '', bat: '', corp: '' })
 
   useEffect(() => {
     // Meta mensal from localStorage
@@ -1427,10 +1428,18 @@ export default function FinancasAnoPage({ params }: Props) {
         const ticketMedio2027 = Math.round((p1Preco*8 + p2Preco*8 + p3Preco*4) / 20)
         const fillCells    = ['rgba(96,165,250,0.65)','rgba(201,168,76,0.70)','rgba(167,139,250,0.65)']
 
-        const updatePack = (key: keyof AllPacksCfg, field: 'preco' | 'freelancer', val: number) => {
-          const next = { ...packsCfg, [key]: { ...packsCfg[key], [field]: val } }
-          setPacksCfg(next)
-          localStorage.setItem('packs-config', JSON.stringify(next))
+        const savePacks = (next: AllPacksCfg) => { setPacksCfg(next); localStorage.setItem('packs-config', JSON.stringify(next)) }
+        const updatePack = (key: keyof AllPacksCfg, field: 'preco' | 'freelancer', val: number) =>
+          savePacks({ ...packsCfg, [key]: { ...packsCfg[key], [field]: val } })
+        const removeServico = (key: keyof AllPacksCfg, idx: number) => {
+          const next = { ...packsCfg, [key]: { ...packsCfg[key], servicos: packsCfg[key].servicos.filter((_, i) => i !== idx) } }
+          savePacks(next)
+        }
+        const addServico = (key: keyof AllPacksCfg) => {
+          const val = (newServicoInput[key] ?? '').trim()
+          if (!val) return
+          savePacks({ ...packsCfg, [key]: { ...packsCfg[key], servicos: [...packsCfg[key].servicos, val] } })
+          setNewServicoInput(prev => ({ ...prev, [key]: '' }))
         }
 
         return (
@@ -1451,57 +1460,61 @@ export default function FinancasAnoPage({ params }: Props) {
                   <p className="text-[9px] tracking-[0.35em] text-white/30 uppercase">Casamentos · Packs de Vídeo</p>
                 </div>
                 {([
-                  { key: 'p1' as const, label: 'Proposta 1', color: 'text-blue-300', border: 'border-blue-500/15',
-                    servicos: ['Videógrafo', 'Reportagem completa', 'Vídeo 20 min', 'Full HD', 'Deslocação'] },
-                  { key: 'p2' as const, label: 'Proposta 2', color: 'text-gold',     border: 'border-gold/10',
-                    servicos: ['Videógrafo', 'Reportagem completa', 'Vídeo 20 min', 'Full HD', 'Deslocação', '+ Pré-Wedding'] },
-                  { key: 'p3' as const, label: 'Proposta 3', color: 'text-purple-300', border: 'border-purple-500/15',
-                    servicos: ['Videógrafo', 'Reportagem completa', 'Vídeo 20 min', 'Full HD', 'Deslocação', '+ Pré-Wedding', '+ Drone', '+ SDE'] },
-                ] as { key: keyof AllPacksCfg; label: string; color: string; border: string; servicos: string[] }[]).map(row => {
+                  { key: 'p1' as const, label: 'Proposta 1', color: 'text-blue-300',   chipBg: 'bg-blue-500/10 border-blue-500/20',   border: 'border-blue-500/15' },
+                  { key: 'p2' as const, label: 'Proposta 2', color: 'text-gold',        chipBg: 'bg-gold/10 border-gold/20',            border: 'border-gold/10' },
+                  { key: 'p3' as const, label: 'Proposta 3', color: 'text-purple-300',  chipBg: 'bg-purple-500/10 border-purple-500/20', border: 'border-purple-500/15' },
+                ] as { key: keyof AllPacksCfg; label: string; color: string; chipBg: string; border: string }[]).map(row => {
                   const cfg = packsCfg[row.key]
                   const margem = cfg.preco - cfg.freelancer
                   return (
                     <div key={row.key} className={`px-5 py-4 border-b last:border-b-0 ${row.border}`}>
-                      <div className="flex items-start gap-4">
-                        {/* Label + serviços */}
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-xs font-semibold ${row.color} mb-1.5`}>{row.label}</p>
-                          <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-                            {row.servicos.map(s => (
-                              <span key={s} className="text-[10px] text-white/25 flex items-center gap-1">
-                                <span className="w-0.5 h-0.5 rounded-full bg-white/20 flex-shrink-0" />{s}
-                              </span>
-                            ))}
+                      {/* Row header */}
+                      <div className="flex items-center justify-between mb-3">
+                        <p className={`text-xs font-semibold ${row.color}`}>{row.label}</p>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1">
+                            <span className="text-[8px] text-white/20 uppercase tracking-wider">Preço</span>
+                            <input type="number" min={0} step={50} value={cfg.preco}
+                              onChange={e => updatePack(row.key, 'preco', Number(e.target.value) || 0)}
+                              className={`w-20 bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-sm font-mono text-right focus:outline-none focus:border-white/25 transition-colors ${row.color}`} />
+                            <span className="text-[10px] text-white/20">€</span>
                           </div>
-                        </div>
-                        {/* Editable fields */}
-                        <div className="flex items-center gap-3 flex-shrink-0">
-                          <div className="text-center">
-                            <p className="text-[8px] tracking-[0.25em] text-white/20 uppercase mb-1">Preço</p>
-                            <div className="flex items-center gap-1">
-                              <input
-                                type="number" min={0} step={50} value={cfg.preco}
-                                onChange={e => updatePack(row.key, 'preco', Number(e.target.value) || 0)}
-                                className={`w-20 bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-sm font-mono text-right focus:outline-none focus:border-white/25 transition-colors ${row.color}`}
-                              />
-                              <span className="text-[10px] text-white/20">€</span>
-                            </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-[8px] text-white/20 uppercase tracking-wider">Freelancer</span>
+                            <input type="number" min={0} step={10} value={cfg.freelancer}
+                              onChange={e => updatePack(row.key, 'freelancer', Number(e.target.value) || 0)}
+                              className="w-20 bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-sm font-mono text-right text-red-400/60 focus:outline-none focus:border-white/25 transition-colors" />
+                            <span className="text-[10px] text-white/20">€</span>
                           </div>
-                          <div className="text-center">
-                            <p className="text-[8px] tracking-[0.25em] text-white/20 uppercase mb-1">Freelancer</p>
-                            <div className="flex items-center gap-1">
-                              <input
-                                type="number" min={0} step={10} value={cfg.freelancer}
-                                onChange={e => updatePack(row.key, 'freelancer', Number(e.target.value) || 0)}
-                                className="w-20 bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-sm font-mono text-right text-red-400/60 focus:outline-none focus:border-white/25 transition-colors"
-                              />
-                              <span className="text-[10px] text-white/20">€</span>
-                            </div>
-                          </div>
-                          <div className="text-center min-w-[56px]">
-                            <p className="text-[8px] tracking-[0.25em] text-white/20 uppercase mb-1">Margem</p>
+                          <div className="text-center min-w-[52px]">
+                            <p className="text-[8px] text-white/20 uppercase tracking-wider mb-0.5">Margem</p>
                             <p className={`text-sm font-mono font-semibold ${margem > 0 ? 'text-green-400' : 'text-red-400'}`}>{margem} €</p>
                           </div>
+                        </div>
+                      </div>
+                      {/* Service chips */}
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {cfg.servicos.map((s, si) => (
+                          <span key={si} className={`inline-flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full border ${row.chipBg} text-white/50`}>
+                            {s}
+                            <button onClick={() => removeServico(row.key, si)}
+                              className="text-white/25 hover:text-red-400/70 leading-none transition-colors text-xs ml-0.5">×</button>
+                          </span>
+                        ))}
+                        {/* Add new service */}
+                        <div className="inline-flex items-center gap-1">
+                          <input
+                            type="text"
+                            placeholder="+ novo serviço"
+                            value={newServicoInput[row.key] ?? ''}
+                            onChange={e => setNewServicoInput(prev => ({ ...prev, [row.key]: e.target.value }))}
+                            onKeyDown={e => e.key === 'Enter' && addServico(row.key)}
+                            className="text-[10px] bg-white/[0.03] border border-white/[0.08] rounded-full px-3 py-1 text-white/30 placeholder-white/15 focus:outline-none focus:border-white/20 focus:text-white/50 transition-colors w-28"
+                          />
+                          {(newServicoInput[row.key] ?? '').trim() && (
+                            <button onClick={() => addServico(row.key)}
+                              className="text-[10px] text-white/30 hover:text-white/60 transition-colors">↵</button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1512,51 +1525,62 @@ export default function FinancasAnoPage({ params }: Props) {
               {/* Outros serviços — Batizado + Corporate */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {([
-                  { key: 'bat' as const,  label: 'Batizado',   color: 'text-yellow-300',
-                    servicos: ['Reportagem completa', 'Vídeo highlights', 'Deslocação'] },
-                  { key: 'corp' as const, label: 'Corporate',  color: 'text-emerald-300',
-                    servicos: ['Captação de evento', 'Edição profissional', 'Entrega digital'] },
-                ] as { key: keyof AllPacksCfg; label: string; color: string; servicos: string[] }[]).map(row => {
+                  { key: 'bat' as const,  label: 'Batizado',  color: 'text-yellow-300',  chipBg: 'bg-yellow-500/10 border-yellow-500/20' },
+                  { key: 'corp' as const, label: 'Corporate', color: 'text-emerald-300', chipBg: 'bg-emerald-500/10 border-emerald-500/20' },
+                ] as { key: keyof AllPacksCfg; label: string; color: string; chipBg: string }[]).map(row => {
                   const cfg = packsCfg[row.key]
                   const margem = cfg.preco - cfg.freelancer
                   return (
-                    <div key={row.key} className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4">
-                      <div className="flex items-center justify-between mb-3">
+                    <div key={row.key} className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <p className={`text-xs font-semibold ${row.color}`}>{row.label}</p>
                         <div>
-                          <p className={`text-xs font-semibold ${row.color}`}>{row.label}</p>
-                          <div className="flex flex-wrap gap-x-2 mt-1">
-                            {row.servicos.map(s => (
-                              <span key={s} className="text-[9px] text-white/20">{s}</span>
-                            ))}
-                          </div>
-                        </div>
-                        <div className={`text-right`}>
-                          <p className="text-[8px] text-white/20 uppercase tracking-wider mb-0.5">Margem</p>
+                          <p className="text-[8px] text-white/20 uppercase tracking-wider mb-0.5 text-right">Margem</p>
                           <p className={`text-base font-mono font-semibold ${margem > 0 ? 'text-green-400' : 'text-red-400'}`}>{margem} €</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex gap-3">
                         <div className="flex-1">
                           <p className="text-[8px] text-white/20 uppercase tracking-wider mb-1">Preço</p>
                           <div className="flex items-center gap-1">
-                            <input
-                              type="number" min={0} step={50} value={cfg.preco}
+                            <input type="number" min={0} step={50} value={cfg.preco}
                               onChange={e => updatePack(row.key, 'preco', Number(e.target.value) || 0)}
-                              className={`w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-sm font-mono text-right focus:outline-none focus:border-white/25 transition-colors ${row.color}`}
-                            />
+                              className={`w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-sm font-mono text-right focus:outline-none focus:border-white/25 transition-colors ${row.color}`} />
                             <span className="text-[10px] text-white/20">€</span>
                           </div>
                         </div>
                         <div className="flex-1">
                           <p className="text-[8px] text-white/20 uppercase tracking-wider mb-1">Freelancer</p>
                           <div className="flex items-center gap-1">
-                            <input
-                              type="number" min={0} step={10} value={cfg.freelancer}
+                            <input type="number" min={0} step={10} value={cfg.freelancer}
                               onChange={e => updatePack(row.key, 'freelancer', Number(e.target.value) || 0)}
-                              className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-sm font-mono text-right text-red-400/60 focus:outline-none focus:border-white/25 transition-colors"
-                            />
+                              className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-sm font-mono text-right text-red-400/60 focus:outline-none focus:border-white/25 transition-colors" />
                             <span className="text-[10px] text-white/20">€</span>
                           </div>
+                        </div>
+                      </div>
+                      {/* Service chips */}
+                      <div className="flex flex-wrap gap-2">
+                        {cfg.servicos.map((s, si) => (
+                          <span key={si} className={`inline-flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full border ${row.chipBg} text-white/50`}>
+                            {s}
+                            <button onClick={() => removeServico(row.key, si)}
+                              className="text-white/25 hover:text-red-400/70 leading-none transition-colors text-xs ml-0.5">×</button>
+                          </span>
+                        ))}
+                        <div className="inline-flex items-center gap-1">
+                          <input
+                            type="text"
+                            placeholder="+ novo serviço"
+                            value={newServicoInput[row.key] ?? ''}
+                            onChange={e => setNewServicoInput(prev => ({ ...prev, [row.key]: e.target.value }))}
+                            onKeyDown={e => e.key === 'Enter' && addServico(row.key)}
+                            className="text-[10px] bg-white/[0.03] border border-white/[0.08] rounded-full px-3 py-1 text-white/30 placeholder-white/15 focus:outline-none focus:border-white/20 focus:text-white/50 transition-colors w-28"
+                          />
+                          {(newServicoInput[row.key] ?? '').trim() && (
+                            <button onClick={() => addServico(row.key)}
+                              className="text-[10px] text-white/30 hover:text-white/60 transition-colors">↵</button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1764,7 +1788,7 @@ export default function FinancasAnoPage({ params }: Props) {
                     </div>
                   </div>
                   <div className="px-6 py-3.5 flex flex-wrap gap-x-6 gap-y-2">
-                    {['1 Videógrafo', 'Reportagem de todo o evento', 'Vídeo final 20 min', 'Qualidade Full HD', 'Deslocação incluída'].map(item => (
+                    {packsCfg.p1.servicos.map(item => (
                       <span key={item} className="flex items-center gap-2 text-[11px] text-white/40">
                         <span className="w-1 h-1 rounded-full bg-blue-400/50 flex-shrink-0" />{item}
                       </span>
@@ -1790,7 +1814,7 @@ export default function FinancasAnoPage({ params }: Props) {
                     </div>
                   </div>
                   <div className="px-6 py-3.5 flex flex-wrap gap-x-6 gap-y-2">
-                    {['1 Videógrafo', 'Reportagem de todo o evento', 'Vídeo final 20 min', 'Qualidade Full HD', 'Deslocação incluída', 'Sessão Pré-Wedding'].map(item => (
+                    {packsCfg.p2.servicos.map(item => (
                       <span key={item} className="flex items-center gap-2 text-[11px] text-white/40">
                         <span className="w-1 h-1 rounded-full bg-gold/50 flex-shrink-0" />{item}
                       </span>
@@ -1816,7 +1840,7 @@ export default function FinancasAnoPage({ params }: Props) {
                     </div>
                   </div>
                   <div className="px-6 py-3.5 flex flex-wrap gap-x-6 gap-y-2">
-                    {['1 Videógrafo', 'Reportagem de todo o evento', 'Vídeo final 20 min', 'Qualidade Full HD', 'Deslocação incluída', 'Sessão Pré-Wedding', 'Imagens de Drone', 'Same-Day Edit (SDE)'].map(item => (
+                    {packsCfg.p3.servicos.map(item => (
                       <span key={item} className="flex items-center gap-2 text-[11px] text-white/40">
                         <span className="w-1 h-1 rounded-full bg-purple-400/50 flex-shrink-0" />{item}
                       </span>
