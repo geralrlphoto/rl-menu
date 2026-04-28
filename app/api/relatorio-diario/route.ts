@@ -228,16 +228,19 @@ export async function GET() {
     portalAtividade.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
     // ── Parse leads CRM ───────────────────────────────────────────────────
-    // Deduplicar por notion_id; fallback por nome (trimmed) para apanhar
-    // entradas com espaços extra ou notion_ids diferentes para o mesmo casal
+    // Deduplicar por nome (trimmed): cada casal aparece apenas uma vez.
+    // Padrão comum: existe uma entrada vinda do Notion (notion_id preenchido,
+    // lead_prioridade vazia) e outra criada na app (notion_id null,
+    // lead_prioridade definida). Preferimos sempre a versão da app.
     const leadsMap = new Map<string, any>()
     for (const l of (leads ?? [])) {
-      const key = l.notion_id || (l.nome || '').trim()
+      const key = (l.nome || '').trim()
+      if (!key) continue
       const existing = leadsMap.get(key)
       if (!existing) {
         leadsMap.set(key, l)
       } else if (l.lead_prioridade && !existing.lead_prioridade) {
-        // Prefere o registo com prioridade definida (mais completo)
+        // Versão da app (com prioridade) prevalece sobre versão do Notion
         leadsMap.set(key, l)
       }
     }
