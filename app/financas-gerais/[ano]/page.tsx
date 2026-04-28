@@ -361,7 +361,7 @@ export default function FinancasAnoPage({ params }: Props) {
   const { ano } = use(params)
   const anoNum = parseInt(ano)
 
-  const [tab, setTab]                   = useState<'resumo' | 'receitas' | 'despesas' | 'comparação' | 'estratégia'>('resumo')
+  const [tab, setTab]                   = useState<'resumo' | 'receitas' | 'despesas' | 'comparação' | 'estratégia' | 'crescimento'>('resumo')
   const [dbEntries, setDbEntries]       = useState<DbEntry[]>([])
   const [eventReceitas, setEventReceitas]   = useState<ReceitaRow[]>([])
   const [prevYearReceitas, setPrevYearReceitas] = useState<ReceitaRow[]>([])
@@ -710,6 +710,10 @@ export default function FinancasAnoPage({ params }: Props) {
           <button onClick={() => setTab('estratégia')}
             className={`px-4 py-2.5 text-xs tracking-[0.25em] uppercase transition-colors ${tab === 'estratégia' ? 'text-gold border-b-2 border-gold -mb-px' : 'text-white/30 hover:text-white/60'}`}>
             Estratégia
+          </button>
+          <button onClick={() => setTab('crescimento')}
+            className={`px-4 py-2.5 text-xs tracking-[0.25em] uppercase transition-colors ${tab === 'crescimento' ? 'text-gold border-b-2 border-gold -mb-px' : 'text-white/30 hover:text-white/60'}`}>
+            Crescimento
           </button>
         </div>
 
@@ -3204,6 +3208,394 @@ export default function FinancasAnoPage({ params }: Props) {
                 </div>
               )
             })()}
+
+          </div>
+        )
+      })()}
+
+      {/* ── CRESCIMENTO ── */}
+      {tab === 'crescimento' && (() => {
+        // ── Baseline 2025 (dados reais hardcoded)
+        const rec2025  = RECEITAS_2025.reduce((s, r) => s + r.valor, 0)
+        const dep2025  = DESPESAS_2025.reduce((s, d) => s + d.valor, 0)
+        const cas2025  = RECEITAS_2025.filter(r => r.tipo === 'CASAMENTO').length
+        const ticket25 = cas2025 > 0 ? Math.round(rec2025 / cas2025) : 0
+        const lucro25  = rec2025 - dep2025
+        const margem25 = rec2025 > 0 ? Math.round((lucro25 / rec2025) * 1000) / 10 : 0
+        // Custos fixos 2025 (base — renda+luz+internet+domínio+NAS+Smash+seguro)
+        const cfixo25  = dep2025 > 0 ? Math.round(dep2025 * 0.48) : 4309  // ~48% fixo vs variável
+        const cvar25   = dep2025 - cfixo25
+        const varRatio = rec2025 > 0 ? cvar25 / rec2025 : 0.115
+
+        // ── Dados ano atual
+        const recAtual    = totalReceitas
+        const depAtual    = totalDespesas
+        const lucroAtual  = saldo
+        const casAtual    = allReceitas.filter(r => r.tipo === 'CASAMENTO').length
+        const ticketAtual = casAtual > 0 ? Math.round(recAtual / casAtual) : 0
+        const margemAtual = recAtual > 0 ? Math.round((lucroAtual / recAtual) * 1000) / 10 : 0
+        const cfixoAtual  = totalCustosFixosAnuais + 3840 + 480  // mesma fórmula que estratégia
+
+        // ── Crescimento
+        const crescTicket  = ticket25 > 0 ? Math.round(((ticketAtual - ticket25) / ticket25) * 100) : 0
+        const crescLucro   = lucro25 > 0 ? Math.round(((lucroAtual - lucro25) / lucro25) * 100) : 0
+        const crescRec     = rec2025 > 0 ? Math.round(((recAtual - rec2025) / rec2025) * 100) : 0
+        const eficiencia   = lucro25 > 0 ? Math.round((lucroAtual / lucro25) * 100) : 0
+
+        // ── Ponto mínimo de faturação para superar 2025
+        // recNec × (1 − varRatio) = lucro25 + cfixoAtual
+        const pontoMinimo  = Math.round((lucro25 + cfixoAtual) / (1 - varRatio))
+        const faltam       = Math.max(0, pontoMinimo - recAtual)
+        const jaPassou     = recAtual >= pontoMinimo
+
+        // ── 4 Cenários de encerramento de ano
+        const cenarioEvs   = [{ n: cas2025 || 68, tag: 'Volume', label: `Volume (igual a 2025)` }, { n: 55, tag: 'Equilíbrio', label: 'Equilíbrio (recomendado)' }, { n: 45, tag: 'Premium', label: 'Posicionamento premium' }, { n: 40, tag: 'Alto Valor', label: 'Premium real' }]
+        const cenarios     = cenarioEvs.map(c => ({ ...c, precoMin: Math.round(pontoMinimo / c.n), ok: ticketAtual >= Math.round(pontoMinimo / c.n) }))
+
+        // ── Score de saúde financeira (0–100)
+        const scoreItems = [
+          { ok: crescTicket > 0,         peso: 30, label: 'Ticket médio a crescer' },
+          { ok: margemAtual >= margem25 - 3, peso: 25, label: 'Margem mantida ≥2025' },
+          { ok: casAtual > 0 && (recAtual / casAtual) > ticket25, peso: 20, label: 'Eficiência por evento' },
+          { ok: !jaPassou ? faltam < pontoMinimo * 0.25 : true, peso: 25, label: 'Perto do ponto mínimo' },
+        ]
+        const score = scoreItems.reduce((s, i) => s + (i.ok ? i.peso : 0), 0)
+        const scoreCor = score >= 75 ? 'text-green-400' : score >= 50 ? 'text-gold' : 'text-red-400'
+        const scoreLabel = score >= 75 ? 'Crescimento saudável' : score >= 50 ? 'Em transição' : 'Atenção necessária'
+
+        return (
+          <div className="space-y-6 pb-12">
+
+            {/* ── Cabeçalho relatório ── */}
+            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 space-y-2">
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                  <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-1">Relatório de Análise Financeira</p>
+                  <h2 className="text-xl font-light text-white/80 tracking-wide">RL PHOTO.VIDEO — Crescimento 2025 → {anoNum}</h2>
+                  <p className="text-[11px] text-gold/60 mt-1 tracking-widest uppercase">Trabalhar menos · Ganhar mais</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[8px] tracking-[0.3em] text-white/20 uppercase mb-1">Score saúde financeira</p>
+                  <p className={`text-4xl font-light ${scoreCor}`}>{score}</p>
+                  <p className={`text-[9px] ${scoreCor} tracking-wider`}>{scoreLabel}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-white/[0.06]">
+                {scoreItems.map((si, i) => (
+                  <div key={i} className={`flex items-center gap-2 text-[9px] ${si.ok ? 'text-green-400/70' : 'text-white/25'}`}>
+                    <span>{si.ok ? '✓' : '○'}</span><span>{si.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ── 2025 vs Atual lado a lado ── */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* 2025 */}
+              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] overflow-hidden">
+                <div className="px-5 py-3 border-b border-white/[0.06]">
+                  <p className="text-[9px] tracking-[0.4em] text-white/30 uppercase">2025 — Base Real (Fechado)</p>
+                </div>
+                <div className="p-5 space-y-3">
+                  <div className="space-y-2">
+                    {[
+                      { l: 'Eventos (casamentos)', v: `${cas2025}`, c: 'text-white/60' },
+                      { l: 'Receita bruta', v: `${rec2025.toLocaleString('pt-PT')} €`, c: 'text-white/70' },
+                      { l: 'Ticket médio', v: `${ticket25.toLocaleString('pt-PT')} €/evento`, c: 'text-blue-300' },
+                    ].map(r => (
+                      <div key={r.l} className="flex justify-between text-[11px]">
+                        <span className="text-white/30">{r.l}</span>
+                        <span className={`font-mono font-semibold ${r.c}`}>{r.v}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="pt-3 border-t border-white/[0.05] space-y-2">
+                    {[
+                      { l: 'Total despesas', v: `−${dep2025.toLocaleString('pt-PT')} €`, c: 'text-red-400/60' },
+                      { l: 'Lucro operacional', v: `${lucro25.toLocaleString('pt-PT')} €`, c: 'text-green-400' },
+                      { l: 'Margem operacional', v: `${margem25}%`, c: 'text-green-400' },
+                    ].map(r => (
+                      <div key={r.l} className="flex justify-between text-[11px]">
+                        <span className="text-white/30">{r.l}</span>
+                        <span className={`font-mono font-semibold ${r.c}`}>{r.v}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Ano atual */}
+              <div className="rounded-2xl border border-gold/20 bg-gold/[0.03] overflow-hidden">
+                <div className="px-5 py-3 border-b border-gold/[0.10]">
+                  <p className="text-[9px] tracking-[0.4em] text-gold/50 uppercase">{anoNum} — Situação Atual</p>
+                </div>
+                <div className="p-5 space-y-3">
+                  <div className="space-y-2">
+                    {[
+                      { l: 'Eventos (casamentos)', v: `${casAtual}`, c: 'text-white/60' },
+                      { l: 'Receita bruta', v: `${recAtual.toLocaleString('pt-PT')} €`, c: 'text-white/70' },
+                      { l: 'Ticket médio', v: ticketAtual > 0 ? `${ticketAtual.toLocaleString('pt-PT')} €/evento` : '—', c: crescTicket > 0 ? 'text-green-400' : 'text-white/50' },
+                    ].map(r => (
+                      <div key={r.l} className="flex justify-between text-[11px]">
+                        <span className="text-white/30">{r.l}</span>
+                        <span className={`font-mono font-semibold ${r.c}`}>{r.v}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="pt-3 border-t border-gold/[0.08] space-y-2">
+                    {[
+                      { l: 'Total despesas', v: `−${depAtual.toLocaleString('pt-PT')} €`, c: 'text-red-400/60' },
+                      { l: 'Lucro operacional', v: `${lucroAtual.toLocaleString('pt-PT')} €`, c: lucroAtual > 0 ? 'text-green-400' : 'text-red-400' },
+                      { l: 'Margem operacional', v: `${margemAtual}%`, c: margemAtual >= margem25 ? 'text-green-400' : 'text-yellow-400' },
+                    ].map(r => (
+                      <div key={r.l} className="flex justify-between text-[11px]">
+                        <span className="text-white/30">{r.l}</span>
+                        <span className={`font-mono font-semibold ${r.c}`}>{r.v}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Indicadores de crescimento ── */}
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { icon: '📈', label: 'Crescimento ticket médio', val: crescTicket > 0 ? `+${crescTicket}%` : `${crescTicket}%`, sub: `${ticket25}€ → ${ticketAtual}€`, ok: crescTicket > 0 },
+                { icon: '💰', label: 'Crescimento receita', val: crescRec > 0 ? `+${crescRec}%` : `${crescRec}%`, sub: `${rec2025.toLocaleString('pt-PT')}€ → ${recAtual.toLocaleString('pt-PT')}€`, ok: crescRec > 0 },
+                { icon: '⚡', label: 'Eficiência operacional', val: `${eficiencia}%`, sub: `do lucro 2025 já gerado`, ok: eficiencia >= 80 },
+              ].map((ind, i) => (
+                <div key={i} className={`rounded-2xl border p-4 text-center ${ind.ok ? 'border-green-500/20 bg-green-500/[0.04]' : 'border-red-500/20 bg-red-500/[0.04]'}`}>
+                  <p className="text-2xl mb-1">{ind.icon}</p>
+                  <p className={`text-2xl font-light font-mono ${ind.ok ? 'text-green-400' : 'text-red-400'}`}>{ind.val}</p>
+                  <p className="text-[8px] text-white/30 mt-1 uppercase tracking-wide">{ind.label}</p>
+                  <p className="text-[8px] text-white/20 mt-0.5">{ind.sub}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* ── Análise escrita — crescimento real ── */}
+            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 space-y-4">
+              <p className="text-[10px] tracking-[0.4em] text-white/30 uppercase">Análise — O Que Está a Acontecer de Verdade?</p>
+
+              <div className="space-y-3">
+                <p className="text-[10px] tracking-[0.3em] text-green-400/60 uppercase">✦ Onde há crescimento real</p>
+                {[
+                  crescTicket > 0 && {
+                    titulo: `Preço médio por evento: ${ticket25}€ → ${ticketAtual}€`,
+                    desc: `Crescimento de +${crescTicket}% no ticket médio. Isto é crescimento estrutural, não pontual — a marca está a subir de patamar.`,
+                  },
+                  casAtual < cas2025 && lucroAtual > lucro25 * 0.7 && {
+                    titulo: `Menos eventos, resultado semelhante`,
+                    desc: `Com ${casAtual} eventos já geraste ${eficiencia}% do lucro operacional de 2025 (${cas2025} eventos). Muito mais eficiência por evento.`,
+                  },
+                  depAtual / recAtual < dep2025 / rec2025 * 1.05 && {
+                    titulo: `Custos variáveis controlados`,
+                    desc: `A subcontratação não está a escalar descontroladamente. Bom sinal de gestão operacional.`,
+                  },
+                ].filter(Boolean).map((item: any, i) => (
+                  <div key={i} className="flex items-start gap-3 rounded-xl border border-green-500/15 bg-green-500/[0.03] px-4 py-3">
+                    <span className="text-green-400 flex-shrink-0 mt-0.5">✓</span>
+                    <div>
+                      <p className="text-[11px] font-medium text-green-400/80 mb-0.5">{item.titulo}</p>
+                      <p className="text-[10px] text-white/40 leading-relaxed">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-[10px] tracking-[0.3em] text-yellow-400/60 uppercase">⚠ Onde pode estar a correr mal</p>
+                {[
+                  cfixoAtual > cfixo25 * 1.1 && {
+                    titulo: `Custos fixos cresceram mais rápido que a margem`,
+                    desc: `Custos fixos estimados de ${cfixoAtual.toLocaleString('pt-PT')}€ vs ${cfixo25.toLocaleString('pt-PT')}€ em 2025 (+${Math.round(((cfixoAtual - cfixo25) / cfixo25) * 100)}%). Isto obriga a subir preços ou faturação total.`,
+                  },
+                  margemAtual < margem25 - 2 && {
+                    titulo: `Margem operacional caiu ${Math.round(margem25 - margemAtual)} pontos`,
+                    desc: `2025: ${margem25}% → ${anoNum}: ${margemAtual}%. Principal motivo: aumento de custos fixos. A receita sobe mas o lucro absoluto cresce menos.`,
+                  },
+                  {
+                    titulo: `Dependência do teu próprio trabalho`,
+                    desc: `A margem é alta porque o teu "salário" não está contabilizado e não há amortização de equipamento. Crescimento sem estrutura pode virar auto-exploração.`,
+                  },
+                ].filter(Boolean).map((item: any, i) => (
+                  <div key={i} className="flex items-start gap-3 rounded-xl border border-yellow-500/15 bg-yellow-500/[0.03] px-4 py-3">
+                    <span className="text-yellow-400 flex-shrink-0 mt-0.5">⚠</span>
+                    <div>
+                      <p className="text-[11px] font-medium text-yellow-400/80 mb-0.5">{item.titulo}</p>
+                      <p className="text-[10px] text-white/40 leading-relaxed">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ── Ponto mínimo de faturação ── */}
+            <div className={`rounded-2xl border p-5 space-y-4 ${jaPassou ? 'border-green-500/25 bg-green-500/[0.04]' : 'border-gold/25 bg-gold/[0.04]'}`}>
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                  <p className="text-[10px] tracking-[0.4em] text-white/30 uppercase">Ponto Mínimo de Faturação {anoNum}</p>
+                  <p className="text-[10px] text-white/25 mt-1">Faturação necessária para superar o lucro de 2025 ({lucro25.toLocaleString('pt-PT')} €)</p>
+                </div>
+                <div className="text-right">
+                  <p className={`text-3xl font-light font-mono ${jaPassou ? 'text-green-400' : 'text-gold'}`}>{pontoMinimo.toLocaleString('pt-PT')} €</p>
+                  <p className={`text-[9px] ${jaPassou ? 'text-green-400/60' : 'text-gold/60'}`}>{jaPassou ? '✓ já ultrapassado' : `faltam ${faltam.toLocaleString('pt-PT')} €`}</p>
+                </div>
+              </div>
+
+              {/* Cálculo visível */}
+              <div className="rounded-xl border border-white/[0.06] bg-black/20 p-4 space-y-1.5 font-mono text-[10px]">
+                <div className="flex justify-between text-white/30">
+                  <span>Lucro mínimo a bater (2025)</span>
+                  <span>{lucro25.toLocaleString('pt-PT')} €</span>
+                </div>
+                <div className="flex justify-between text-white/30">
+                  <span>+ Custos fixos {anoNum}</span>
+                  <span>{cfixoAtual.toLocaleString('pt-PT')} €</span>
+                </div>
+                <div className="flex justify-between text-white/30">
+                  <span>÷ (1 − rácio custos variáveis {Math.round(varRatio * 100)}%)</span>
+                  <span>= {pontoMinimo.toLocaleString('pt-PT')} €</span>
+                </div>
+                <div className={`flex justify-between pt-1.5 border-t border-white/[0.08] font-semibold ${jaPassou ? 'text-green-400' : 'text-gold'}`}>
+                  <span>Receita atual</span>
+                  <span>{recAtual.toLocaleString('pt-PT')} € {jaPassou ? '✓' : `(−${faltam.toLocaleString('pt-PT')} €)`}</span>
+                </div>
+              </div>
+
+              {!jaPassou && faltam > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[9px] text-white/25 uppercase tracking-wider">Para fechar o gap de {faltam.toLocaleString('pt-PT')} € faltam por exemplo:</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { n: Math.ceil(faltam / (ticketAtual * 1.0)), preco: ticketAtual, label: 'ticket atual' },
+                      { n: Math.ceil(faltam / (ticketAtual * 1.15)), preco: Math.round(ticketAtual * 1.15), label: '+15% ticket' },
+                      { n: Math.ceil(faltam / (ticketAtual * 1.30)), preco: Math.round(ticketAtual * 1.30), label: '+30% ticket' },
+                    ].filter(x => x.preco > 0).map((x, i) => (
+                      <div key={i} className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3 text-center">
+                        <p className="text-xl font-light text-white/60">{x.n}</p>
+                        <p className="text-[8px] text-white/20 mt-0.5">eventos × {x.preco.toLocaleString('pt-PT')} €</p>
+                        <p className="text-[8px] text-white/15">{x.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ── 4 Cenários ── */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-white/[0.06]" />
+                <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">4 Cenários de Encerramento do Ano</p>
+                <div className="h-px flex-1 bg-white/[0.06]" />
+              </div>
+              <p className="text-[10px] text-white/20 text-center">Preço mínimo por casamento para superar 2025 · cada cenário com volume diferente</p>
+              <div className="grid grid-cols-2 gap-3">
+                {cenarios.map((c, i) => {
+                  const colors = ['border-blue-500/20 bg-blue-500/[0.04] text-blue-300', 'border-gold/25 bg-gold/[0.05] text-gold', 'border-purple-500/20 bg-purple-500/[0.04] text-purple-300', 'border-green-500/20 bg-green-500/[0.04] text-green-400']
+                  const [border, bg, tc] = colors[i].split(' ')
+                  return (
+                    <div key={i} className={`rounded-2xl border ${border} ${bg} p-4`}>
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <p className={`text-xs font-semibold ${tc}`}>{c.tag}</p>
+                          <p className="text-[9px] text-white/25 mt-0.5">{c.label}</p>
+                        </div>
+                        {c.ok && ticketAtual > 0 && (
+                          <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-green-500/15 border border-green-500/20 text-green-400">ticket OK</span>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-[11px]">
+                          <span className="text-white/30">Nº eventos</span>
+                          <span className={`font-mono font-bold ${tc}`}>{c.n}</span>
+                        </div>
+                        <div className="flex justify-between text-[11px]">
+                          <span className="text-white/30">Preço mínimo/evento</span>
+                          <span className={`font-mono font-bold ${tc}`}>{c.precoMin.toLocaleString('pt-PT')} €</span>
+                        </div>
+                        {ticketAtual > 0 && (
+                          <div className="flex justify-between text-[11px]">
+                            <span className="text-white/30">Teu ticket atual</span>
+                            <span className={`font-mono ${c.ok ? 'text-green-400' : 'text-red-400/70'}`}>{ticketAtual.toLocaleString('pt-PT')} € {c.ok ? '✓' : '✗'}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-3 h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${Math.min(100, (ticketAtual / c.precoMin) * 100)}%`, background: c.ok ? 'rgba(74,222,128,0.6)' : 'rgba(248,113,113,0.5)' }} />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* ── Conclusão de Consultor ── */}
+            <div className="rounded-2xl border border-white/[0.10] bg-white/[0.02] p-6 space-y-5">
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-white/[0.06]" />
+                <p className="text-[10px] tracking-[0.4em] text-white/30 uppercase">Conclusão de Consultor</p>
+                <div className="h-px flex-1 bg-white/[0.06]" />
+              </div>
+
+              {/* Parágrafo 1 — situação atual */}
+              <div className="space-y-2">
+                <p className="text-[9px] tracking-[0.3em] text-gold/50 uppercase">Resumo direto e honesto</p>
+                <p className="text-[12px] text-white/60 leading-relaxed">
+                  A <span className="text-white/80 font-medium">RL Photo.Video</span> está a crescer em <span className="text-gold">maturidade e posicionamento</span>.
+                  O ticket médio subiu de <span className="font-mono text-blue-300">{ticket25.toLocaleString('pt-PT')}€</span> para <span className="font-mono text-green-400">{ticketAtual.toLocaleString('pt-PT')}€</span>{crescTicket > 0 ? ` (+${crescTicket}%)` : ''} — isto é o sinal mais positivo de todo o relatório.
+                  {casAtual > 0 && casAtual < cas2025 ? ` Com ${casAtual} eventos já geraste ${eficiencia}% do lucro operacional de 2025.` : ''}
+                </p>
+              </div>
+
+              {/* Parágrafo 2 — risco */}
+              {cfixoAtual > cfixo25 && (
+                <div className="space-y-2 pt-4 border-t border-white/[0.05]">
+                  <p className="text-[9px] tracking-[0.3em] text-yellow-400/50 uppercase">O que ainda não está resolvido</p>
+                  <p className="text-[12px] text-white/60 leading-relaxed">
+                    Os custos fixos cresceram — a estrutura pesa mais. Isto não é mau em si,
+                    mas <span className="text-yellow-400">obriga a que o ticket médio continue a subir</span> para que a margem não erose.
+                    O risco real é voltar a baixar preços para encher agenda —
+                    nesse cenário trabalhas <span className="text-red-400/70">mais para ganhar menos</span> do que em 2025.
+                  </p>
+                </div>
+              )}
+
+              {/* Parágrafo 3 — veredito */}
+              <div className="space-y-2 pt-4 border-t border-white/[0.05]">
+                <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase">Veredito</p>
+                <p className="text-[12px] text-white/60 leading-relaxed">
+                  O teu número mágico é <span className={`font-mono font-semibold ${jaPassou ? 'text-green-400' : 'text-gold'}`}>{pontoMinimo.toLocaleString('pt-PT')} €</span>.
+                  {jaPassou
+                    ? ` Já ultrapassaste esse valor — ${anoNum} é objetivamente melhor que 2025. Cada euro faturado a partir daqui é crescimento verdadeiro.`
+                    : ` A partir daqui, ${anoNum} passa a ser objetivamente melhor que 2025. Faltam ${faltam.toLocaleString('pt-PT')} €.`
+                  }
+                </p>
+                <div className="grid grid-cols-3 gap-2 mt-3">
+                  {[
+                    { val: `< ${Math.round(pontoMinimo / (casAtual || cas2025))} €/evento`, desc: 'negócio mais cansativo do que em 2025', c: 'text-red-400/70', border: 'border-red-500/20' },
+                    { val: `~${Math.round(pontoMinimo / Math.round((casAtual || cas2025) * 0.85))} €/evento`, desc: 'sustentável — cobertura garantida', c: 'text-gold', border: 'border-gold/20' },
+                    { val: `> ${Math.round(pontoMinimo / 45)} €/evento`, desc: 'crescimento real · marca forte', c: 'text-green-400', border: 'border-green-500/20' },
+                  ].map((v, i) => (
+                    <div key={i} className={`rounded-xl border ${v.border} p-3 text-center`}>
+                      <p className={`text-sm font-mono font-semibold ${v.c}`}>{v.val}</p>
+                      <p className="text-[8px] text-white/25 mt-1 leading-tight">{v.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Parágrafo 4 — melhor ponto */}
+              <div className="rounded-xl border border-gold/15 bg-gold/[0.04] px-5 py-4 space-y-1">
+                <p className="text-[9px] tracking-[0.3em] text-gold/50 uppercase">O melhor ponto para a RL Photo.Video em {anoNum}</p>
+                <p className="text-[12px] text-white/70 leading-relaxed">
+                  <span className="text-gold font-semibold">45–50 casamentos</span> com ticket médio entre <span className="text-gold font-semibold">{Math.round(pontoMinimo / 50).toLocaleString('pt-PT')}€ e {Math.round(pontoMinimo / 45).toLocaleString('pt-PT')}€</span>.
+                  Crescimento líquido real, menos desgaste, marca a valorizar. A partir desse patamar, cada subida de preço é pura margem.
+                </p>
+              </div>
+            </div>
 
           </div>
         )
