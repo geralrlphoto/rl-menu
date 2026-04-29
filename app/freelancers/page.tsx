@@ -20,17 +20,64 @@ type FormData = Omit<Freelancer, 'id' | 'order_index'>
 
 const STATUS_OPTIONS = ['FOTOGRAFO', 'VIDEOGRAFO', 'ASSISTENTE', 'EDITORES', 'OUTRO']
 
-const STATUS_STYLE: Record<string, { badge: string; dot: string }> = {
-  FOTOGRAFO:  { badge: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',  dot: 'bg-yellow-400' },
-  VIDEOGRAFO: { badge: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30', dot: 'bg-emerald-400' },
-  ASSISTENTE: { badge: 'bg-pink-500/15 text-pink-400 border-pink-500/30',        dot: 'bg-pink-400' },
-  EDITORES:   { badge: 'bg-orange-500/15 text-orange-400 border-orange-500/30',  dot: 'bg-orange-400' },
-  OUTRO:      { badge: 'bg-white/10 text-white/50 border-white/20',              dot: 'bg-white/40' },
-}
+const CATEGORY_CONFIG = [
+  {
+    key: 'FOTOGRAFO',
+    label: 'Fotógrafos',
+    icon: '📷',
+    border:  'border-yellow-500/25 hover:border-yellow-500/50',
+    borderActive: 'border-yellow-500/60',
+    bg:      'bg-yellow-500/5',
+    bgActive:'bg-yellow-500/10',
+    accent:  'text-yellow-400',
+    badge:   'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
+    dot:     'bg-yellow-400',
+    glow:    'shadow-yellow-500/10',
+  },
+  {
+    key: 'VIDEOGRAFO',
+    label: 'Videógrafos',
+    icon: '🎥',
+    border:  'border-emerald-500/25 hover:border-emerald-500/50',
+    borderActive: 'border-emerald-500/60',
+    bg:      'bg-emerald-500/5',
+    bgActive:'bg-emerald-500/10',
+    accent:  'text-emerald-400',
+    badge:   'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+    dot:     'bg-emerald-400',
+    glow:    'shadow-emerald-500/10',
+  },
+  {
+    key: 'ASSISTENTE',
+    label: 'Assistentes',
+    icon: '🤝',
+    border:  'border-pink-500/25 hover:border-pink-500/50',
+    borderActive: 'border-pink-500/60',
+    bg:      'bg-pink-500/5',
+    bgActive:'bg-pink-500/10',
+    accent:  'text-pink-400',
+    badge:   'bg-pink-500/15 text-pink-400 border-pink-500/30',
+    dot:     'bg-pink-400',
+    glow:    'shadow-pink-500/10',
+  },
+  {
+    key: 'EDITORES',
+    label: 'Editores',
+    icon: '✂️',
+    border:  'border-orange-500/25 hover:border-orange-500/50',
+    borderActive: 'border-orange-500/60',
+    bg:      'bg-orange-500/5',
+    bgActive:'bg-orange-500/10',
+    accent:  'text-orange-400',
+    badge:   'bg-orange-500/15 text-orange-400 border-orange-500/30',
+    dot:     'bg-orange-400',
+    glow:    'shadow-orange-500/10',
+  },
+]
 
-function statusStyle(s: string | null) {
-  return STATUS_STYLE[s ?? ''] ?? STATUS_STYLE.OUTRO
-}
+const CATEGORY_MAP: Record<string, typeof CATEGORY_CONFIG[0]> = Object.fromEntries(
+  CATEGORY_CONFIG.map(c => [c.key, c])
+)
 
 const EMPTY_FORM: FormData = { nome: '', status: 'FOTOGRAFO', contato: '', email: '', nome_sos: '', contato_sos: '' }
 
@@ -46,22 +93,23 @@ function CopiarUrlButton({ id }: { id: string }) {
   return (
     <button onClick={copy}
       className={`text-[9px] px-2.5 py-1 rounded-lg border transition-all tracking-widest uppercase ${copied ? 'border-emerald-500/40 text-emerald-400 bg-emerald-500/10' : 'border-white/10 text-white/30 hover:text-white/60 hover:border-white/25'}`}>
-      {copied ? '✓ Copiado' : '🔗 Copiar URL'}
+      {copied ? '✓ Copiado' : '🔗 URL'}
     </button>
   )
 }
 
 export default function FreelancersPage() {
-  const [list, setList] = useState<Freelancer[]>([])
-  const [loading, setLoading] = useState(true)
+  const [list, setList]           = useState<Freelancer[]>([])
+  const [loading, setLoading]     = useState(true)
+  const [activeGroup, setActiveGroup] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [showAdd, setShowAdd] = useState(false)
-  const [form, setForm] = useState<FormData>(EMPTY_FORM)
-  const [saving, setSaving] = useState(false)
+  const [showAdd, setShowAdd]     = useState(false)
+  const [form, setForm]           = useState<FormData>(EMPTY_FORM)
+  const [saving, setSaving]       = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [pwEditId, setPwEditId]     = useState<string | null>(null)
-  const [pwDraft, setPwDraft]       = useState('')
-  const [pwSaving, setPwSaving]     = useState(false)
+  const [pwEditId, setPwEditId]   = useState<string | null>(null)
+  const [pwDraft, setPwDraft]     = useState('')
+  const [pwSaving, setPwSaving]   = useState(false)
   const [removendoId, setRemovendo] = useState<string | null>(null)
   const [removidoIds, setRemovidoIds] = useState<Set<string>>(new Set())
 
@@ -125,44 +173,35 @@ export default function FreelancersPage() {
     if (!confirm(`Mover "${f.nome}" de volta para Novos Freelancers?`)) return
     setRemovendo(f.id)
     try {
-      // 1. Criar nos Novos Freelancers (Notion)
       await fetch('/api/freelancers-novos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nome: f.nome,
-          funcao: statusToFuncao(f.status),
-          telefone: f.contato ?? '',
-          tipo_eventos: [],
-          zona: '',
-          avaliacao: [],
-        }),
+        body: JSON.stringify({ nome: f.nome, funcao: statusToFuncao(f.status), telefone: f.contato ?? '', tipo_eventos: [], zona: '', avaliacao: [] }),
       })
-      // 2. Remover da equipa (Supabase)
       await fetch(`/api/freelancers?id=${f.id}`, { method: 'DELETE' })
       setRemovidoIds(prev => new Set([...prev, f.id]))
       setTimeout(() => {
         setList(prev => prev.filter(x => x.id !== f.id))
         setRemovidoIds(prev => { const s = new Set(prev); s.delete(f.id); return s })
       }, 1200)
-    } finally {
-      setRemovendo(null)
-    }
+    } finally { setRemovendo(null) }
   }
 
   // Group by status
   const groups: Record<string, Freelancer[]> = {}
-  const ORDER = ['FOTOGRAFO', 'VIDEOGRAFO', 'ASSISTENTE', 'EDITORES', 'OUTRO']
   for (const f of list) {
     const key = STATUS_OPTIONS.includes(f.status ?? '') ? (f.status ?? 'OUTRO') : 'OUTRO'
     if (!groups[key]) groups[key] = []
     groups[key].push(f)
   }
 
+  const activeCat = activeGroup ? CATEGORY_MAP[activeGroup] : null
+
   return (
     <main className="min-h-screen px-4 sm:px-8 py-8 max-w-[900px] mx-auto">
+
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-10">
         <div>
           <Link href="/" className="text-[10px] tracking-[0.3em] text-white/25 hover:text-white/50 uppercase transition-colors">
             ← Dashboard
@@ -185,7 +224,7 @@ export default function FreelancersPage() {
 
       {/* Add form */}
       {showAdd && (
-        <div className="mb-6 bg-white/[0.02] border border-gold/20 rounded-2xl p-5 space-y-3">
+        <div className="mb-8 bg-white/[0.02] border border-gold/20 rounded-2xl p-5 space-y-3">
           <p className="text-[10px] tracking-[0.3em] text-gold/70 uppercase mb-3">Novo Membro</p>
           <FormFields form={form} setForm={setForm} />
           <div className="flex justify-end gap-2 pt-1">
@@ -200,115 +239,163 @@ export default function FreelancersPage() {
       {loading ? (
         <div className="text-center py-24 text-white/20 text-xs tracking-widest uppercase">A carregar...</div>
       ) : (
-        <div className="space-y-8">
-          {ORDER.filter(g => groups[g]?.length).map(group => (
-            <div key={group}>
-              <div className="flex items-center gap-2 mb-3">
-                <span className={`w-2 h-2 rounded-full ${statusStyle(group).dot}`} />
-                <span className="text-[10px] tracking-[0.35em] text-white/30 uppercase">{group}</span>
-                <span className="text-[10px] text-white/20">({groups[group].length})</span>
+        <>
+          {/* ── Category cards ────────────────────────────────────────────── */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+            {CATEGORY_CONFIG.map(cat => {
+              const count = groups[cat.key]?.length ?? 0
+              const isActive = activeGroup === cat.key
+              return (
+                <button
+                  key={cat.key}
+                  onClick={() => setActiveGroup(isActive ? null : cat.key)}
+                  className={`relative flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border transition-all duration-200 shadow-lg ${
+                    isActive
+                      ? `${cat.bgActive} ${cat.borderActive} ${cat.glow}`
+                      : `${cat.bg} ${cat.border}`
+                  }`}
+                >
+                  {/* count badge */}
+                  <span className={`absolute top-3 right-3 text-[10px] px-2 py-0.5 rounded-full border font-semibold tracking-wider ${cat.badge}`}>
+                    {count}
+                  </span>
+
+                  {/* icon */}
+                  <span className="text-4xl leading-none">{cat.icon}</span>
+
+                  {/* label */}
+                  <span className={`text-xs font-bold tracking-widest uppercase ${isActive ? cat.accent : 'text-white/50'}`}>
+                    {cat.label}
+                  </span>
+
+                  {/* chevron */}
+                  <span className={`text-[10px] transition-transform duration-200 ${isActive ? cat.accent : 'text-white/20'} ${isActive ? 'rotate-180' : ''}`}>
+                    ▼
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* ── Active group members ──────────────────────────────────────── */}
+          {activeGroup && activeCat && (
+            <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+
+              {/* Section header */}
+              <div className="flex items-center gap-3 mb-4">
+                <span className={`w-2 h-2 rounded-full ${activeCat.dot}`} />
+                <span className={`text-xs font-bold tracking-[0.3em] uppercase ${activeCat.accent}`}>
+                  {activeCat.label}
+                </span>
+                <span className="text-xs text-white/20">
+                  {groups[activeGroup]?.length ?? 0} membro{(groups[activeGroup]?.length ?? 0) !== 1 ? 's' : ''}
+                </span>
               </div>
-              <div className="space-y-2">
-                {groups[group].map(f => (
-                  <div key={f.id}>
-                    {editingId === f.id ? (
-                      <div className="bg-white/[0.02] border border-gold/20 rounded-xl p-4 space-y-3">
-                        <FormFields form={form} setForm={setForm} />
-                        <div className="flex items-center justify-between pt-1">
-                          <button onClick={() => handleDelete(f.id)} disabled={!!deletingId}
-                            className="text-[10px] text-red-400/60 hover:text-red-400 transition-colors tracking-widest">
-                            ✕ Remover
-                          </button>
-                          <div className="flex gap-2">
-                            <button onClick={() => setEditingId(null)} className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
-                            <button onClick={handleSave} disabled={saving || !form.nome} className="px-4 py-1.5 rounded-lg text-xs bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-50">
-                              {saving ? 'A guardar...' : 'Guardar'}
+
+              {(!groups[activeGroup] || groups[activeGroup].length === 0) ? (
+                <div className="py-12 text-center text-white/20 text-xs tracking-widest border border-white/5 rounded-2xl">
+                  Nenhum membro nesta categoria
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {groups[activeGroup].map(f => (
+                    <div key={f.id}>
+                      {editingId === f.id ? (
+                        <div className="bg-white/[0.02] border border-gold/20 rounded-xl p-4 space-y-3">
+                          <FormFields form={form} setForm={setForm} />
+                          <div className="flex items-center justify-between pt-1">
+                            <button onClick={() => handleDelete(f.id)} disabled={!!deletingId}
+                              className="text-[10px] text-red-400/60 hover:text-red-400 transition-colors tracking-widest">
+                              ✕ Remover
                             </button>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12] transition-all group">
-                        <div className="flex items-center gap-4 px-4 py-3">
-                          <Link href={`/freelancers/${f.id}`} className="flex-1 min-w-0 cursor-pointer">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-sm font-semibold text-white/85 group-hover:text-white transition-colors">{f.nome}</span>
-                              {f.status && (
-                                <span className={`text-[9px] px-2 py-0.5 rounded-full border tracking-widest uppercase font-semibold ${statusStyle(f.status).badge}`}>
-                                  {f.status}
-                                </span>
-                              )}
-                              {f.is_template && (
-                                <span className="text-[9px] px-2 py-0.5 rounded-full border tracking-widest uppercase font-semibold bg-white/10 text-white border-white/30">
-                                  ⌘ Template
-                                </span>
-                              )}
-                              {f.password && (
-                                <span className="text-[9px] text-white/20">🔑</span>
-                              )}
-                            </div>
-                            <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1">
-                              {f.contato && <span className="text-xs text-white/40">📞 {f.contato}</span>}
-                              {f.email && <span className="text-xs text-white/40 truncate max-w-[200px]">✉ {f.email}</span>}
-                              {f.nome_sos && <span className="text-xs text-white/25">SOS: {f.nome_sos}{f.contato_sos ? ` · ${f.contato_sos}` : ''}</span>}
-                            </div>
-                          </Link>
-                          <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0">
-                            <CopiarUrlButton id={f.id} />
-                            <button onClick={() => { setPwEditId(f.id); setPwDraft(f.password ?? '') }}
-                              className="text-[9px] px-2.5 py-1 rounded-lg border border-white/10 text-white/30 hover:text-white/60 hover:border-white/25 transition-all tracking-widest uppercase">
-                              🔑 Password
-                            </button>
-                            {removidoIds.has(f.id) ? (
-                              <span className="text-[9px] px-2.5 py-1 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 tracking-widest uppercase">
-                                ✓ Movido
-                              </span>
-                            ) : (
-                              <button
-                                onClick={() => handleRemoverDaEquipa(f)}
-                                disabled={removendoId === f.id}
-                                className="text-[9px] px-2.5 py-1 rounded-lg border border-orange-500/25 bg-orange-500/5 text-orange-400/70 hover:text-orange-400 hover:border-orange-500/40 hover:bg-orange-500/10 transition-all tracking-widest uppercase disabled:opacity-40">
-                                {removendoId === f.id ? '...' : '− Equipa'}
+                            <div className="flex gap-2">
+                              <button onClick={() => setEditingId(null)} className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
+                              <button onClick={handleSave} disabled={saving || !form.nome} className="px-4 py-1.5 rounded-lg text-xs bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-50">
+                                {saving ? 'A guardar...' : 'Guardar'}
                               </button>
-                            )}
-                            <button onClick={() => startEdit(f)}
-                              className="p-1.5 rounded-lg text-white/25 hover:text-white/60 hover:bg-white/[0.06] transition-all">
-                              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                              </svg>
-                            </button>
+                            </div>
                           </div>
                         </div>
-                        {/* Password editor inline */}
-                        {pwEditId === f.id && (
-                          <div className="px-4 pb-3 flex items-center gap-2 border-t border-white/[0.05] pt-3">
-                            <span className="text-[9px] text-white/25 tracking-widest uppercase shrink-0">Password:</span>
-                            <input
-                              type="text"
-                              value={pwDraft}
-                              onChange={e => setPwDraft(e.target.value)}
-                              placeholder="ex: rl2026"
-                              autoFocus
-                              className="flex-1 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors font-mono placeholder:text-white/15"
-                            />
-                            <button onClick={() => handleSavePassword(f.id)} disabled={pwSaving}
-                              className="text-[9px] px-3 py-1.5 rounded-lg bg-gold/10 border border-gold/30 text-gold hover:bg-gold/20 transition-all tracking-widest uppercase disabled:opacity-40">
-                              {pwSaving ? '...' : 'Guardar'}
-                            </button>
-                            <button onClick={() => setPwEditId(null)}
-                              className="text-[9px] px-2.5 py-1.5 rounded-lg border border-white/10 text-white/30 hover:text-white/60 transition-all">
-                              ✕
-                            </button>
+                      ) : (
+                        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12] transition-all group">
+                          <div className="flex items-center gap-4 px-4 py-3">
+                            <Link href={`/freelancers/${f.id}`} className="flex-1 min-w-0 cursor-pointer">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-sm font-semibold text-white/85 group-hover:text-white transition-colors">{f.nome}</span>
+                                {f.is_template && (
+                                  <span className="text-[9px] px-2 py-0.5 rounded-full border tracking-widest uppercase font-semibold bg-white/10 text-white border-white/30">
+                                    ⌘ Template
+                                  </span>
+                                )}
+                                {f.password && (
+                                  <span className="text-[9px] text-white/20">🔑</span>
+                                )}
+                              </div>
+                              <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1">
+                                {f.contato && <span className="text-xs text-white/40">📞 {f.contato}</span>}
+                                {f.email && <span className="text-xs text-white/40 truncate max-w-[220px]">✉ {f.email}</span>}
+                                {f.nome_sos && <span className="text-xs text-white/25">SOS: {f.nome_sos}{f.contato_sos ? ` · ${f.contato_sos}` : ''}</span>}
+                              </div>
+                            </Link>
+
+                            <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0">
+                              <CopiarUrlButton id={f.id} />
+                              <button onClick={() => { setPwEditId(f.id); setPwDraft(f.password ?? '') }}
+                                className="text-[9px] px-2.5 py-1 rounded-lg border border-white/10 text-white/30 hover:text-white/60 hover:border-white/25 transition-all tracking-widest uppercase">
+                                🔑 PW
+                              </button>
+                              {removidoIds.has(f.id) ? (
+                                <span className="text-[9px] px-2.5 py-1 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 tracking-widest uppercase">
+                                  ✓ Movido
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => handleRemoverDaEquipa(f)}
+                                  disabled={removendoId === f.id}
+                                  className="text-[9px] px-2.5 py-1 rounded-lg border border-orange-500/25 bg-orange-500/5 text-orange-400/70 hover:text-orange-400 hover:border-orange-500/40 hover:bg-orange-500/10 transition-all tracking-widest uppercase disabled:opacity-40">
+                                  {removendoId === f.id ? '...' : '− Equipa'}
+                                </button>
+                              )}
+                              <button onClick={() => startEdit(f)}
+                                className="p-1.5 rounded-lg text-white/25 hover:text-white/60 hover:bg-white/[0.06] transition-all">
+                                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                              </button>
+                            </div>
                           </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+
+                          {/* Password editor inline */}
+                          {pwEditId === f.id && (
+                            <div className="px-4 pb-3 flex items-center gap-2 border-t border-white/[0.05] pt-3">
+                              <span className="text-[9px] text-white/25 tracking-widest uppercase shrink-0">Password:</span>
+                              <input
+                                type="text"
+                                value={pwDraft}
+                                onChange={e => setPwDraft(e.target.value)}
+                                placeholder="ex: rl2026"
+                                autoFocus
+                                className="flex-1 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors font-mono placeholder:text-white/15"
+                              />
+                              <button onClick={() => handleSavePassword(f.id)} disabled={pwSaving}
+                                className="text-[9px] px-3 py-1.5 rounded-lg bg-gold/10 border border-gold/30 text-gold hover:bg-gold/20 transition-all tracking-widest uppercase disabled:opacity-40">
+                                {pwSaving ? '...' : 'Guardar'}
+                              </button>
+                              <button onClick={() => setPwEditId(null)}
+                                className="text-[9px] px-2.5 py-1.5 rounded-lg border border-white/10 text-white/30 hover:text-white/60 transition-all">
+                                ✕
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </main>
   )
