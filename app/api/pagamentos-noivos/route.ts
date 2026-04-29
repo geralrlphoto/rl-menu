@@ -79,8 +79,32 @@ export async function GET() {
   }
 }
 
-export async function POST() {
+export async function POST(req: Request) {
   try {
+    // Se vier body com dados, cria registo completo; caso contrário cria entrada vazia (financas page)
+    let body: any = {}
+    try { body = await req.json() } catch { /* sem body → entrada vazia */ }
+
+    const {
+      nome_noivos: nomeNoivos,
+      referencia,
+      data_casamento,
+      data_pagamento,
+      fase_pagamento,
+      metodo_pagamento,
+      valor_liquidado,
+    } = body
+
+    const properties: any = {
+      'NOME DOS NOIVOS': { title: [{ text: { content: nomeNoivos ?? 'Novo Registo' } }] },
+    }
+    if (referencia)       properties['REFERÊNCIA DO EVENTO'] = { rich_text: [{ text: { content: referencia } }] }
+    if (data_casamento)   properties['DATA DO CASAMENTO']    = { date: { start: data_casamento } }
+    if (data_pagamento)   properties['DATA DO PAGAMENTO']    = { date: { start: data_pagamento } }
+    if (fase_pagamento?.length)   properties['FASE DO PAGAMENTO']    = { multi_select: fase_pagamento.map((n: string) => ({ name: n })) }
+    if (metodo_pagamento?.length) properties['MÉTODO DE PAGAMENTO'] = { multi_select: metodo_pagamento.map((n: string) => ({ name: n })) }
+    if (valor_liquidado != null)  properties['VALOR LIQUIDADO']     = { number: Number(valor_liquidado) }
+
     const res = await fetch('https://api.notion.com/v1/pages', {
       method: 'POST',
       headers: {
@@ -88,12 +112,7 @@ export async function POST() {
         'Notion-Version': '2022-06-28',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        parent: { database_id: DB_ID },
-        properties: {
-          'NOME DOS NOIVOS': { title: [{ text: { content: 'Novo Registo' } }] },
-        },
-      }),
+      body: JSON.stringify({ parent: { database_id: DB_ID }, properties }),
     })
     if (!res.ok) {
       const err = await res.json()
@@ -102,21 +121,27 @@ export async function POST() {
     const page = await res.json()
     const p = page.properties ?? {}
     const row = {
-      id: page.id,
+      id:               page.id,
       nome_noivos:      p['NOME DOS NOIVOS']?.title?.map((t: any) => t.plain_text).join('') ?? '',
-      referencia:       '',
-      data_casamento:   null,
-      data_pagamento:   null,
-      fase_pagamento:   [],
-      metodo_pagamento: [],
-      valor_liquidado:  null,
+      referencia:       referencia ?? '',
+      data_casamento:   data_casamento ?? null,
+      data_pagamento:   data_pagamento ?? null,
+      fase_pagamento:   fase_pagamento ?? [],
+      metodo_pagamento: metodo_pagamento ?? [],
+      valor_liquidado:  valor_liquidado ?? null,
       atualizado:       false,
     }
 
-    // Guardar também em Supabase (non-blocking)
+    // Guardar também em Supabase
     db().from('pagamentos_noivos').insert({
-      notion_id:    page.id,
-      nome_noivos:  row.nome_noivos,
+      notion_id:        page.id,
+      nome_noivos:      row.nome_noivos,
+      referencia:       row.referencia || null,
+      data_casamento:   row.data_casamento,
+      data_pagamento:   row.data_pagamento,
+      fase_pagamento:   row.fase_pagamento,
+      metodo_pagamento: row.metodo_pagamento,
+      valor_liquidado:  row.valor_liquidado,
     }).then(({ error }) => {
       if (error) console.error('[pagamentos-noivos] Supabase error:', error)
     })

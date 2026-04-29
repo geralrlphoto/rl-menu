@@ -1241,6 +1241,11 @@ export default function EventoPage() {
   const [valorEditorVideo, setValorEditorVideo] = useState<number>(0)
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
   const [pagamentosRefreshing, setPagamentosRefreshing] = useState(false)
+  const [registarFase, setRegistarFase] = useState<string | null>(null)   // fase a registar manualmente
+  const [registarValor, setRegistarValor] = useState('')
+  const [registarData, setRegistarData]   = useState(new Date().toISOString().slice(0, 10))
+  const [registarMetodo, setRegistarMetodo] = useState('Transferência')
+  const [registarSaving, setRegistarSaving] = useState(false)
   const [fotosDataEntrada, setFotosDataEntrada] = useState<string | null>(null)
   const [albumDataPrevista, setAlbumDataPrevista] = useState<string | null>(null)
   const [albumNotionId, setAlbumNotionId] = useState<string | null>(null)
@@ -1284,6 +1289,33 @@ export default function EventoPage() {
         if (showRefresh) setPagamentosRefreshing(false)
       })
       .catch(() => { if (showRefresh) setPagamentosRefreshing(false) })
+  }
+
+  async function handleRegistarPagamento(e: Evento, fase: string, valorFase: number) {
+    if (!e.referencia) return
+    setRegistarSaving(true)
+    try {
+      await fetch('/api/pagamentos-noivos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome_noivos:      e.cliente || e.nome_noiva || e.nome_noivo || '',
+          referencia:       e.referencia,
+          data_casamento:   e.data_evento ?? null,
+          data_pagamento:   registarData || new Date().toISOString().slice(0, 10),
+          fase_pagamento:   [fase],
+          metodo_pagamento: [registarMetodo],
+          valor_liquidado:  Number(registarValor) || valorFase,
+        }),
+      })
+      setRegistarFase(null)
+      setRegistarValor('')
+      setRegistarData(new Date().toISOString().slice(0, 10))
+      setRegistarMetodo('Transferência')
+      loadPagamentos(e.referencia, true)
+    } finally {
+      setRegistarSaving(false)
+    }
   }
 
   // Poll payments every 30 seconds automatically
@@ -1881,6 +1913,58 @@ export default function EventoPage() {
                           <span className="text-[10px] text-white/20">{metodos.join(', ')}</span>
                         )}
                       </div>
+
+                      {/* Botão Registar Pagamento (só quando não liquidado) */}
+                      {!liquidado && (
+                        registarFase === label ? (
+                          <div className="mt-2 flex flex-col gap-1.5 pt-2 border-t border-white/[0.06]">
+                            <input
+                              type="number"
+                              value={registarValor}
+                              onChange={ev => setRegistarValor(ev.target.value)}
+                              placeholder={`${falta > 0 ? falta : valorFase} €`}
+                              className="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white/80 focus:outline-none focus:border-gold/40"
+                            />
+                            <input
+                              type="date"
+                              value={registarData}
+                              onChange={ev => setRegistarData(ev.target.value)}
+                              className="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white/60 focus:outline-none focus:border-gold/40"
+                            />
+                            <select
+                              value={registarMetodo}
+                              onChange={ev => setRegistarMetodo(ev.target.value)}
+                              className="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white/60 focus:outline-none focus:border-gold/40"
+                            >
+                              {['Transferência','Multibanco','MBWay','Numerário','Cheque'].map(m => (
+                                <option key={m} value={m}>{m}</option>
+                              ))}
+                            </select>
+                            <div className="flex gap-1.5">
+                              <button
+                                onClick={() => handleRegistarPagamento(e, label, falta > 0 ? falta : valorFase)}
+                                disabled={registarSaving}
+                                className="flex-1 text-[10px] tracking-wider bg-gold/80 hover:bg-gold text-black font-semibold py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                              >
+                                {registarSaving ? '…' : 'Guardar'}
+                              </button>
+                              <button
+                                onClick={() => setRegistarFase(null)}
+                                className="px-2.5 text-[10px] text-white/30 hover:text-white/60 border border-white/10 rounded-lg transition-colors"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => { setRegistarFase(label); setRegistarValor(String(falta > 0 ? falta : valorFase)) }}
+                            className="mt-1 w-full text-[9px] tracking-[0.2em] text-white/20 hover:text-gold/70 border border-white/[0.06] hover:border-gold/30 rounded-lg py-1.5 transition-all uppercase"
+                          >
+                            + Registar Pagamento
+                          </button>
+                        )
+                      )}
                     </div>
                   )
                 })
