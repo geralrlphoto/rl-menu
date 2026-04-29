@@ -96,6 +96,19 @@ export async function PATCH(req: NextRequest) {
     const removed = oldFoto.filter(n => !newFoto.includes(n))
     const added   = newFoto.filter(n => !oldFoto.includes(n))
 
+    // Buscar briefing_url existente para incluir em novos registos
+    let existingBriefingUrl: string | null = null
+    if (evento_id) {
+      const { data: eq } = await supabase
+        .from('evento_equipa').select('briefing_url').eq('evento_id', evento_id).maybeSingle()
+      existingBriefingUrl = eq?.briefing_url ?? null
+    }
+    if (!existingBriefingUrl && referencia) {
+      const { data: eq } = await supabase
+        .from('evento_equipa').select('briefing_url').eq('referencia', referencia).maybeSingle()
+      existingBriefingUrl = eq?.briefing_url ?? null
+    }
+
     // Remove casamentos for deselected photographers
     for (const name of removed) {
       const { data: fl } = await supabase
@@ -124,7 +137,7 @@ export async function PATCH(req: NextRequest) {
             data_casamento: data_casamento || null,
             equipa_foto: newFoto,
             videografo: newVideo[0] ?? null,
-            briefing_url: null,
+            briefing_url: existingBriefingUrl,  // herda briefing já enviado
             order_index: 999,
           })
         } else {
@@ -178,6 +191,13 @@ export async function PATCH(req: NextRequest) {
           .from('freelancer_casamentos').select('id')
           .eq('freelancer_id', newVfl.id).eq('evento_id', evento_id).maybeSingle()
         if (!exists) {
+          // Buscar briefing_url existente para o videógrafo também herdar
+          let vBriefingUrl: string | null = null
+          if (evento_id) {
+            const { data: eq } = await supabase
+              .from('evento_equipa').select('briefing_url').eq('evento_id', evento_id).maybeSingle()
+            vBriefingUrl = eq?.briefing_url ?? null
+          }
           await supabase.from('freelancer_casamentos').insert({
             freelancer_id: newVfl.id,
             evento_id,
@@ -186,7 +206,7 @@ export async function PATCH(req: NextRequest) {
             data_casamento: data_casamento || null,
             equipa_foto: newFoto,
             videografo: newVideo[0],
-            briefing_url: null,
+            briefing_url: vBriefingUrl,  // herda briefing já enviado
             order_index: 999,
           })
         } else {
@@ -224,24 +244,33 @@ export async function POST(req: NextRequest) {
     resolvedEventoId = eq?.evento_id ?? null
   }
 
-  // Upsert evento_equipa with briefing_url
+  // Upsert evento_equipa com briefing_url (guarda sempre o URL)
+  const upsertPayload: any = { briefing_url }
+  if (resolvedEventoId) upsertPayload.evento_id = resolvedEventoId
+  if (referencia)       upsertPayload.referencia = referencia
+
   if (resolvedEventoId) {
     await supabase.from('evento_equipa')
-      .upsert({ evento_id: resolvedEventoId, briefing_url }, { onConflict: 'evento_id' })
-
-    // Update all freelancer_casamentos tied to this evento_id
+      .upsert(upsertPayload, { onConflict: 'evento_id' })
+    // Atualizar por evento_id
     await supabase.from('freelancer_casamentos')
       .update({ briefing_url })
       .eq('evento_id', resolvedEventoId)
   }
 
-  // Also match Notion-imported records (evento_id IS NULL) by local + data_casamento
+  // Atualizar por referencia (o mais fiável — cobre registos criados pelo novo sistema)
+  if (referencia) {
+    await supabase.from('freelancer_casamentos')
+      .update({ briefing_url })
+      .eq('referencia', referencia)
+  }
+
+  // Atualizar por local + data (registos antigos do Notion sem referencia nem evento_id)
   if (local && data_casamento) {
     await supabase.from('freelancer_casamentos')
       .update({ briefing_url })
-      .eq('local', local)
+      .ilike('local', local)
       .eq('data_casamento', data_casamento)
-      .is('evento_id', null)
   }
 
   return NextResponse.json({ ok: true })
