@@ -23,10 +23,11 @@ const SERVICOS = [
 ]
 
 const STEPS = [
-  { num: '01', titulo: 'O Vosso Evento',      sub: 'Conte-nos sobre o grande dia' },
-  { num: '02', titulo: 'Local & Cerimónia',   sub: 'Onde vai acontecer a magia' },
-  { num: '03', titulo: 'Contacto',            sub: 'Como podemos falar convosco' },
-  { num: '04', titulo: 'Serviços & Detalhes', sub: 'O que precisam de nós' },
+  { num: '01', titulo: '',                    sub: '' },
+  { num: '02', titulo: 'O Vosso Evento',      sub: 'Conte-nos sobre o grande dia' },
+  { num: '03', titulo: 'Local & Cerimónia',   sub: 'Onde vai acontecer a magia' },
+  { num: '04', titulo: 'Contacto',            sub: 'Como podemos falar convosco' },
+  { num: '05', titulo: 'Serviços & Detalhes', sub: 'O que precisam de nós' },
 ]
 
 // ── Helpers de animação ───────────────────────────────────────────────────────
@@ -285,12 +286,14 @@ export default function NovaLeadPage() {
           />
         </div>
 
-        {/* Contador de step */}
-        <div className="flex justify-end mb-6">
-          <p className="text-[10px] tracking-[0.3em] uppercase" style={{ color: 'rgba(255,255,255,0.15)' }}>
-            {cur.num} / {STEPS.length.toString().padStart(2, '0')}
-          </p>
-        </div>
+        {/* Contador de step — escondido no step 0 */}
+        {step > 0 && (
+          <div className="flex justify-end mb-6">
+            <p className="text-[10px] tracking-[0.3em] uppercase" style={{ color: 'rgba(255,255,255,0.15)' }}>
+              {cur.num} / {STEPS.length.toString().padStart(2, '0')}
+            </p>
+          </div>
+        )}
 
         {/* Step content */}
         <div
@@ -300,31 +303,47 @@ export default function NovaLeadPage() {
             transform: visible ? 'translateY(0)' : 'translateY(16px)',
           }}
         >
-          {/* Título do step */}
-          {step === 1 && form.nome ? (
-            <div className="mb-10 space-y-1">
-              <p className="font-playfair text-2xl sm:text-3xl font-light leading-snug" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                Olá,
-              </p>
-              <h2 className="font-playfair text-4xl sm:text-5xl font-light text-white leading-tight">
-                {form.nome}
-              </h2>
-              <div className="w-8 h-px mt-3" style={{ background: 'rgba(201,168,76,0.4)' }} />
-            </div>
-          ) : (
-            <div className="mb-10 space-y-2">
-              <p className="text-[10px] tracking-[0.45em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.55)' }}>
-                {cur.sub}
-              </p>
-              <h2 className="font-playfair text-4xl sm:text-5xl font-light text-white leading-tight">
-                {cur.titulo}
-              </h2>
-              <div className="w-8 h-px mt-3" style={{ background: 'rgba(201,168,76,0.4)' }} />
+          {/* ── STEP 0 — só nome, sem título ─── */}
+          {step === 0 && (
+            <div className="space-y-10">
+              <div className="space-y-3">
+                <h2 className="font-playfair text-4xl sm:text-5xl font-light italic text-white leading-tight">
+                  Como se chamam?
+                </h2>
+                <div className="w-8 h-px" style={{ background: 'rgba(201,168,76,0.4)' }} />
+              </div>
+              <LeadInput label="Nome dos Noivos / Família" value={form.nome} onChange={v => set('nome', v)}
+                placeholder="Ex: Ana & João Silva" required />
             </div>
           )}
 
-          {/* ── STEP 1 ─── */}
-          {step === 0 && (
+          {/* Título dos steps 1–4 */}
+          {step > 0 && (
+            step === 1 && form.nome ? (
+              <div className="mb-10 space-y-1">
+                <p className="font-playfair text-2xl sm:text-3xl font-light leading-snug" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  Olá,
+                </p>
+                <h2 className="font-playfair text-4xl sm:text-5xl font-light text-white leading-tight">
+                  {form.nome}
+                </h2>
+                <div className="w-8 h-px mt-3" style={{ background: 'rgba(201,168,76,0.4)' }} />
+              </div>
+            ) : step > 0 ? (
+              <div className="mb-10 space-y-2">
+                <p className="text-[10px] tracking-[0.45em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.55)' }}>
+                  {cur.sub}
+                </p>
+                <h2 className="font-playfair text-4xl sm:text-5xl font-light text-white leading-tight">
+                  {cur.titulo}
+                </h2>
+                <div className="w-8 h-px mt-3" style={{ background: 'rgba(201,168,76,0.4)' }} />
+              </div>
+            ) : null
+          )}
+
+          {/* ── STEP 1 — O Vosso Evento ─── */}
+          {step === 1 && (
             <div className="space-y-8">
               <div className="space-y-2">
                 <p className="text-[10px] tracking-[0.4em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.7)' }}>
@@ -332,14 +351,12 @@ export default function NovaLeadPage() {
                 </p>
                 <PillToggle options={TIPO_EVENTO} value={form.tipoEvento} onChange={v => set('tipoEvento', v)} />
               </div>
-              <LeadInput label="Nome dos Noivos / Família" value={form.nome} onChange={v => set('nome', v)}
-                placeholder="Ex: Ana & João Silva" required />
               <LeadInput label="Data do Evento" type="date" value={form.dataEvento} onChange={v => set('dataEvento', v)} required />
             </div>
           )}
 
-          {/* ── STEP 2 ─── */}
-          {step === 1 && (
+          {/* ── STEP 2 — Local & Cerimónia ─── */}
+          {step === 2 && (
             <div className="space-y-8">
               <LeadInput label="Local do Evento (Cerimónia + Quinta)" value={form.local} onChange={v => set('local', v)}
                 placeholder="Ex: Igreja X + Quinta Y" required />
@@ -350,12 +367,12 @@ export default function NovaLeadPage() {
                 <PillToggle options={TIPO_CERIMONIA} value={form.tipoCerimonia} onChange={v => set('tipoCerimonia', v)} multi />
               </div>
               <LeadInput label="Número de Convidados (sensivelmente)" value={form.numConvidados}
-                onChange={v => set('numConvidados', v)} placeholder="Ex: 150" required />
+                onChange={v => set('numConvidados', v)} placeholder="Ex: 150" />
             </div>
           )}
 
-          {/* ── STEP 3 ─── */}
-          {step === 2 && (
+          {/* ── STEP 3 — Contacto ─── */}
+          {step === 3 && (
             <div className="space-y-8">
               <LeadInput label="Contacto (Telemóvel)" type="tel" value={form.contato}
                 onChange={v => set('contato', v)} placeholder="Ex: 912 345 678" required />
@@ -366,8 +383,8 @@ export default function NovaLeadPage() {
             </div>
           )}
 
-          {/* ── STEP 4 ─── */}
-          {step === 3 && (
+          {/* ── STEP 4 — Serviços & Detalhes ─── */}
+          {step === 4 && (
             <div className="space-y-8">
               <div className="space-y-2">
                 <p className="text-[10px] tracking-[0.4em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.7)' }}>
@@ -419,7 +436,7 @@ export default function NovaLeadPage() {
               <button onClick={goNext} type="button"
                 className="flex items-center gap-3 px-8 py-3.5 rounded-full font-semibold text-sm tracking-widest uppercase transition-all duration-200 hover:scale-[1.03] active:scale-[0.98]"
                 style={{ background: '#C9A84C', color: '#0a0a0a' }}>
-                Seguinte
+                {step === 0 ? 'Começar' : 'Seguinte'}
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
                 </svg>
