@@ -118,7 +118,8 @@ export default async function SecaoPage({ params }: Props) {
       t.includes('FREELANC')        ||
       t.includes('CALENDARIO')      ||
       t.includes('CALENDÁRIO')      ||
-      t.includes('NEWSLETTER')
+      t.includes('NEWSLETTER')      ||
+      t.includes('TAREFA')
 
     const href = isInternal
       ? page.title === 'CRM'          ? '/crm'
@@ -128,6 +129,7 @@ export default async function SecaoPage({ params }: Props) {
       : t.includes('FREELANC')        ? '/freelancers'
       : t.includes('CALENDARIO') || t.includes('CALENDÁRIO') ? '/calendario'
       : t.includes('NEWSLETTER')      ? '/newsletter-admin'
+      : t.includes('TAREFA')          ? '/tarefas'
       : '/'
       : (page.notion_url ?? '#')
 
