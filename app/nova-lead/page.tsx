@@ -27,8 +27,7 @@ const STEPS = [
   { num: '02', titulo: '',                    sub: '' },
   { num: '03', titulo: 'O Vosso Evento',      sub: 'Conte-nos sobre o grande dia' },
   { num: '04', titulo: 'Local & Cerimónia',   sub: 'Onde vai acontecer a magia' },
-  { num: '05', titulo: 'Contacto',            sub: 'Como podemos falar convosco' },
-  { num: '06', titulo: 'Serviços & Detalhes', sub: 'O que precisam de nós' },
+  { num: '05', titulo: 'Serviços & Detalhes', sub: 'O que precisam de nós' },
 ]
 
 // ── Helpers de animação ───────────────────────────────────────────────────────
@@ -168,18 +167,19 @@ export default function NovaLeadPage() {
   const topRef                = useRef<HTMLDivElement>(null)
 
   const [form, setForm] = useState({
-    tipoEvento:     '',
-    nome:           '',
-    dataEvento:     '',
-    local:          '',
-    tipoCerimonia:  [] as string[],
-    numConvidados:  '',
-    contato:        '',
-    email:          '',
-    comoChegou:     '',
-    servicos:       [] as string[],
-    orcamento:      '',
-    preocupacoes:   '',
+    tipoEvento:      '',
+    nome:            '',
+    dataEvento:      '',
+    local:           '',
+    tipoCerimonia:   [] as string[],
+    numConvidados:   '',
+    contato:         '',
+    email:           '',
+    zonaResidencia:  '',
+    comoChegou:      '',
+    servicos:        [] as string[],
+    orcamento:       '',
+    preocupacoes:    '',
   })
 
   function set<K extends keyof typeof form>(k: K, v: typeof form[K]) {
@@ -214,7 +214,8 @@ export default function NovaLeadPage() {
           tipo_evento:    form.tipoEvento,
           orcamento:      form.orcamento,
           num_convidados: form.numConvidados,
-          mensagem:       form.preocupacoes,
+          zona_residencia: form.zonaResidencia,
+          mensagem:        form.preocupacoes,
         }),
       })
       if (!res.ok) { const d = await res.json(); setErro(d.error || 'Erro ao enviar'); return }
@@ -365,6 +366,16 @@ export default function NovaLeadPage() {
                   Preencham com calma e sinceridade. Tudo o que partilharem será usado para criar um registo fiel e emocionante do vosso casamento.
                 </p>
               </div>
+
+              {/* Campos de contacto */}
+              <div className="pt-2 space-y-7" style={{ borderTop: '1px solid rgba(201,168,76,0.1)' }}>
+                <LeadInput label="Telemóvel" type="tel" value={form.contato}
+                  onChange={v => set('contato', v)} placeholder="Ex: 912 345 678" required />
+                <LeadInput label="E-mail" type="email" value={form.email}
+                  onChange={v => set('email', v)} placeholder="Ex: ana@email.com" required />
+                <LeadInput label="Zona de Residência" value={form.zonaResidencia}
+                  onChange={v => set('zonaResidencia', v)} placeholder="Ex: Lisboa, Setúbal..." required />
+              </div>
             </div>
           )}
 
@@ -407,23 +418,13 @@ export default function NovaLeadPage() {
               </div>
               <LeadInput label="Número de Convidados (sensivelmente)" value={form.numConvidados}
                 onChange={v => set('numConvidados', v)} placeholder="Ex: 150" />
-            </div>
-          )}
-
-          {/* ── STEP 4 — Contacto ─── */}
-          {step === 4 && (
-            <div className="space-y-8">
-              <LeadInput label="Contacto (Telemóvel)" type="tel" value={form.contato}
-                onChange={v => set('contato', v)} placeholder="Ex: 912 345 678" required />
-              <LeadInput label="E-mail" type="email" value={form.email}
-                onChange={v => set('email', v)} placeholder="Ex: ana@email.com" required />
               <LeadSelect label="Como chegaram até nós?" value={form.comoChegou}
-                onChange={v => set('comoChegou', v)} options={COMO_CHEGOU} required />
+                onChange={v => set('comoChegou', v)} options={COMO_CHEGOU} />
             </div>
           )}
 
-          {/* ── STEP 5 — Serviços & Detalhes ─── */}
-          {step === 5 && (
+          {/* ── STEP 4 — Serviços & Detalhes ─── */}
+          {step === 4 && (
             <div className="space-y-8">
               <div className="space-y-2">
                 <p className="text-[10px] tracking-[0.4em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.7)' }}>
