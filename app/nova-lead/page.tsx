@@ -436,7 +436,7 @@ export default function NovaLeadPage() {
 
               {/* Visão 20 anos */}
               <div className="space-y-3">
-                <p className="font-playfair text-xl italic font-light text-white">"Como imaginam olhar para estas fotos daqui a 20 anos?"</p>
+                <p className="font-playfair text-xl italic font-light text-white">"Como imaginam olhar para as fotos e o vídeo daqui a 20 anos?"</p>
                 <textarea
                   value={form.visao20anos}
                   onChange={e => set('visao20anos', e.target.value)}
