@@ -705,7 +705,7 @@ function RelatorioVideoModal({ c, freelancerNome, onClose }: { c: Casamento; fre
     audio:           [] as string[],
     corteBolo:       [] as string[],
     animacao:        '',
-    duranteRefeicao: '',
+    duranteRefeicao: [] as string[],
     notas:           '',
   })
 
@@ -736,7 +736,7 @@ function RelatorioVideoModal({ c, freelancerNome, onClose }: { c: Casamento; fre
             'AUDIO':                                    form.audio.length ? form.audio.join(', ') : null,
             'CORTE DO BOLO':                            form.corteBolo.length ? form.corteBolo.join(', ') : null,
             'EQUIPA DE ANIMAÇÃO':                       form.animacao          || null,
-            'DURANTE A REFEIÇAO E FESTA':               form.duranteRefeicao   || null,
+            'DURANTE A REFEIÇAO E FESTA':               form.duranteRefeicao.length ? form.duranteRefeicao.join(', ') : null,
             'ALGUMA INFORMAÇÃO RELEVANTE COLOCA AQUI':  form.notas             || null,
           },
         }),
@@ -860,7 +860,11 @@ function RelatorioVideoModal({ c, freelancerNome, onClose }: { c: Casamento; fre
               <RInput value={form.animacao} onChange={v => set('animacao', v)} placeholder="Nome da equipa ou DJ" />
             </RField>
             <RField label="Durante Refeição e Festa">
-              <RInput value={form.duranteRefeicao} onChange={v => set('duranteRefeicao', v)} placeholder="Como decorreu..." />
+              <RMulti
+                options={['Houve Discursos', 'Jogos (Quiz, Óscares, Batalha...)', 'Música ao Vivo', 'Bouquet', 'Bomba', 'Dança dos Noivos', 'Nada / Tudo Normal']}
+                value={form.duranteRefeicao}
+                onChange={v => set('duranteRefeicao', v)}
+              />
             </RField>
           </RSection>
 
