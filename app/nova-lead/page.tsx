@@ -335,7 +335,7 @@ export default function NovaLeadPage() {
               {/* Mensagem */}
               <div className="space-y-5" style={{ color: 'rgba(255,255,255,0.55)' }}>
                 <p className="font-cormorant text-xl leading-relaxed">
-                  Queremos que o registo do vosso casamento seja exactamente como sempre imaginaram — cada detalhe, cada emoção, cada momento único.
+                  Queremos que o registo do vosso casamento seja exactamente como sempre imaginaram, cada detalhe, cada emoção, cada momento único.
                 </p>
                 <p className="font-cormorant text-xl leading-relaxed">
                   Este briefing foi criado para conhecermos melhor o vosso estilo, as vossas preferências e as expectativas para a fotografia e o vídeo do grande dia.
@@ -358,7 +358,7 @@ export default function NovaLeadPage() {
                 </div>
 
                 <p className="font-cormorant text-xl leading-relaxed">
-                  Quanto mais soubermos agora, mais presentes estaremos no dia — para que possam simplesmente viver cada instante, enquanto nós eternizamos tudo.
+                  Quanto mais soubermos agora, mais presentes estaremos no dia, para que possam simplesmente viver cada instante enquanto nós eternizamos tudo.
                 </p>
 
                 <p className="font-cormorant text-base italic" style={{ color: 'rgba(255,255,255,0.3)' }}>
