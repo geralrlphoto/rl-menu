@@ -597,9 +597,9 @@ export default function NovaLeadPage() {
               <LeadInput label="E-mail" type="email" value={form.email}
                 onChange={v => set('email', v)} placeholder="Ex: ana@email.com" required />
               <LeadInput label="Zona de Residência" value={form.zonaResidencia}
-                onChange={v => set('zonaResidencia', v)} placeholder="Ex: Lisboa, Setúbal..." />
+                onChange={v => set('zonaResidencia', v)} placeholder="Ex: Lisboa, Setúbal..." required />
               <LeadSelect label="Como chegaram até nós?" value={form.comoChegou}
-                onChange={v => set('comoChegou', v)} options={COMO_CHEGOU} />
+                onChange={v => set('comoChegou', v)} options={COMO_CHEGOU} required />
             </div>
           )}
 
