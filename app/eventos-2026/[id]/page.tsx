@@ -1302,25 +1302,40 @@ export default function EventoPage() {
   async function handleRegistarPagamento(e: Evento, fase: string, valorFase: number) {
     if (!e.referencia) return
     setRegistarSaving(true)
+    const valor = Number(registarValor) || valorFase
+    const data  = registarData || new Date().toISOString().slice(0, 10)
     try {
-      await fetch('/api/pagamentos-noivos', {
+      const res = await fetch('/api/pagamentos-noivos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nome_noivos:      e.cliente || e.nome_noiva || e.nome_noivo || '',
           referencia:       e.referencia,
           data_casamento:   e.data_evento ?? null,
-          data_pagamento:   registarData || new Date().toISOString().slice(0, 10),
+          data_pagamento:   data,
           fase_pagamento:   [fase],
           metodo_pagamento: [registarMetodo],
-          valor_liquidado:  Number(registarValor) || valorFase,
+          valor_liquidado:  valor,
         }),
       })
+      const d = await res.json()
       setRegistarFase(null)
       setRegistarValor('')
       setRegistarData(new Date().toISOString().slice(0, 10))
       setRegistarMetodo('Transferência')
-      loadPagamentos(e.referencia, true)
+
+      // Adicionar ao estado local imediatamente (Notion demora a indexar)
+      if (d.row) {
+        setPagamentos(prev => [...prev, {
+          id:               d.row.id,
+          fase_pagamento:   [fase],
+          metodo_pagamento: [registarMetodo],
+          valor_liquidado:  valor,
+          data_pagamento:   data,
+        }])
+      }
+      // Re-fetch com delay para deixar o Notion indexar
+      setTimeout(() => loadPagamentos(e.referencia!, false), 3000)
     } finally {
       setRegistarSaving(false)
     }
@@ -1345,7 +1360,11 @@ export default function EventoPage() {
           body: JSON.stringify({ valor_liquidado: 0 }),
         })
       }))
-      loadPagamentos(refEvento, true)
+      // Atualizar local imediatamente
+      setPagamentos(prev => prev.map(p =>
+        pags.some(pg => pg.id === p.id) ? { ...p, valor_liquidado: 0 } : p
+      ))
+      setTimeout(() => loadPagamentos(refEvento, false), 3000)
     } else {
       // Sem registos próprios → guardar override nas settings para forçar pendente
       const novaLista = fasesPendentesOverride.includes(label)
@@ -1359,20 +1378,30 @@ export default function EventoPage() {
 
   async function handleEditPagSave(pag: any, refEvento: string) {
     setEditingPagSaving(true)
+    const novoValor  = Number(editingPagValor) || 0
+    const novaData   = editingPagData || null
+    const novoMetodo = editingPagMetodo ? [editingPagMetodo] : []
+    const novaFase   = editingPagFase
     try {
       const apiId = pag.id.startsWith('notion_') ? pag.id.replace('notion_', '') : pag.id
       await fetch(`/api/pagamentos-noivos/${apiId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          valor_liquidado:  Number(editingPagValor) || 0,
-          data_pagamento:   editingPagData || null,
-          metodo_pagamento: editingPagMetodo ? [editingPagMetodo] : [],
-          fase_pagamento:   editingPagFase,
+          valor_liquidado:  novoValor,
+          data_pagamento:   novaData,
+          metodo_pagamento: novoMetodo,
+          fase_pagamento:   novaFase,
         }),
       })
       setEditingPagId(null)
-      loadPagamentos(refEvento, true)
+      // Atualizar estado local imediatamente (não esperar Notion indexar)
+      setPagamentos(prev => prev.map(p =>
+        p.id === pag.id
+          ? { ...p, valor_liquidado: novoValor, data_pagamento: novaData, metodo_pagamento: novoMetodo, fase_pagamento: novaFase }
+          : p
+      ))
+      setTimeout(() => loadPagamentos(refEvento, false), 3000)
     } finally {
       setEditingPagSaving(false)
     }
