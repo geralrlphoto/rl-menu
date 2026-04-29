@@ -454,6 +454,21 @@ export default function NovaLeadPage() {
                   placeholder="Ex: o vídeo do casamento na Quinta..." />
               </div>
 
+              {/* Preocupações */}
+              <div className="space-y-3">
+                <p className="font-playfair text-xl italic font-light text-white">"Há algo que não gostam em fotos ou vídeo?"</p>
+                <textarea
+                  value={form.preocupacoes}
+                  onChange={e => set('preocupacoes', e.target.value)}
+                  rows={3}
+                  placeholder="Poses, ângulos, estilos de edição..."
+                  className="w-full bg-transparent outline-none text-white placeholder-white/20 py-3 px-0 text-base font-cormorant tracking-wide transition-all duration-200 resize-none"
+                  style={{ borderBottom: '1px solid rgba(201,168,76,0.25)' }}
+                  onFocus={e => { e.currentTarget.style.borderBottomColor = 'rgba(201,168,76,0.8)' }}
+                  onBlur={e => { e.currentTarget.style.borderBottomColor = 'rgba(201,168,76,0.25)' }}
+                />
+              </div>
+
             </div>
           )}
 
@@ -549,21 +564,6 @@ export default function NovaLeadPage() {
               </div>
               <LeadInput label="Orçamento Previsto (sensivelmente)" value={form.orcamento}
                 onChange={v => set('orcamento', v)} placeholder="Ex: 2.000 — 3.000€" />
-              <div className="space-y-2">
-                <label className="block text-[10px] tracking-[0.4em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.7)' }}>
-                  Alguma preocupação ou algo que não gostam em foto/vídeo?
-                </label>
-                <textarea
-                  value={form.preocupacoes}
-                  onChange={e => set('preocupacoes', e.target.value)}
-                  rows={4}
-                  placeholder="Partilhem connosco qualquer detalhe importante..."
-                  className="w-full bg-transparent outline-none text-white placeholder-white/20 py-3 px-0 text-base font-cormorant tracking-wide transition-all duration-200 resize-none"
-                  style={{ borderBottom: '1px solid rgba(201,168,76,0.25)' }}
-                  onFocus={e => { e.currentTarget.style.borderBottomColor = 'rgba(201,168,76,0.8)' }}
-                  onBlur={e => { e.currentTarget.style.borderBottomColor = 'rgba(201,168,76,0.25)' }}
-                />
-              </div>
             </div>
           )}
 
