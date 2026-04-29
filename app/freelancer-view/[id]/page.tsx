@@ -703,7 +703,7 @@ function RelatorioVideoModal({ c, freelancerNome, onClose }: { c: Casamento; fre
     caixa:           '',
     drone:           null as boolean | null,
     audio:           '',
-    corteBolo:       null as boolean | null,
+    corteBolo:       [] as string[],
     animacao:        '',
     duranteRefeicao: '',
     notas:           '',
@@ -734,7 +734,7 @@ function RelatorioVideoModal({ c, freelancerNome, onClose }: { c: Casamento; fre
             'N.º DA CAIXA UTILIZADA':                   form.caixa             || null,
             'DRONE UTILIZADO':                          form.drone === null ? null : form.drone ? 'Sim' : 'Não',
             'AUDIO':                                    form.audio             || null,
-            'CORTE DO BOLO':                            form.corteBolo === null ? null : form.corteBolo ? 'Sim' : 'Não',
+            'CORTE DO BOLO':                            form.corteBolo.length ? form.corteBolo.join(', ') : null,
             'EQUIPA DE ANIMAÇÃO':                       form.animacao          || null,
             'DURANTE A REFEIÇAO E FESTA':               form.duranteRefeicao   || null,
             'ALGUMA INFORMAÇÃO RELEVANTE COLOCA AQUI':  form.notas             || null,
@@ -854,7 +854,7 @@ function RelatorioVideoModal({ c, freelancerNome, onClose }: { c: Casamento; fre
               <RSegmented options={['Sim', 'Não', 'Parcial']} value={form.audio} onChange={v => set('audio', v)} />
             </RField>
             <RField label="Corte do Bolo">
-              <RToggle value={form.corteBolo} onChange={v => set('corteBolo', v)} />
+              <RMulti options={['Sparkles', 'Fogo de Artifício', 'Fogo Preso', 'Outro', 'Nada / Tudo Normal']} value={form.corteBolo} onChange={v => set('corteBolo', v)} />
             </RField>
             <RField label="Equipa de Animação / DJ">
               <RInput value={form.animacao} onChange={v => set('animacao', v)} placeholder="Nome da equipa ou DJ" />
