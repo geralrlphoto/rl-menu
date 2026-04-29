@@ -11,13 +11,38 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
 
-    // Estrutura do Tally webhook:
-    // body.data.fields = array de { label, value }
-    const fields: { label: string; value: any }[] = body?.data?.fields ?? []
+    // Log do payload completo para debug
+    console.log('Tally webhook payload:', JSON.stringify(body, null, 2))
 
-    // Helper para extrair valor por label
+    // Estrutura do Tally webhook:
+    // body.data.fields = array de { key, label, type, value }
+    // Hidden fields têm type === 'HIDDEN_FIELDS' e value é um objecto { chave: valor }
+    const fields: { key?: string; label: string; type?: string; value: any }[] = body?.data?.fields ?? []
+
+    // Extrair hidden fields (Tally agrupa-os num único entry com type HIDDEN_FIELDS)
+    const hiddenEntry = fields.find(f => f.type === 'HIDDEN_FIELDS')
+    const hiddenFields: Record<string, string> = {}
+    if (hiddenEntry && typeof hiddenEntry.value === 'object' && !Array.isArray(hiddenEntry.value)) {
+      for (const [k, v] of Object.entries(hiddenEntry.value as Record<string, any>)) {
+        hiddenFields[k] = String(v ?? '')
+      }
+    }
+    console.log('Hidden fields extraídos:', hiddenFields)
+
+    // Helper: procura em hidden fields (case-insensitive)
+    function getHidden(key: string): string {
+      if (hiddenFields[key] !== undefined) return hiddenFields[key]
+      const lk = key.toLowerCase()
+      for (const [k, v] of Object.entries(hiddenFields)) {
+        if (k.toLowerCase() === lk) return v
+      }
+      return ''
+    }
+
+    // Helper: procura nos campos normais por label
     function get(label: string): string {
       const f = fields.find(f =>
+        f.type !== 'HIDDEN_FIELDS' &&
         f.label.toLowerCase().includes(label.toLowerCase())
       )
       if (!f) return ''
@@ -25,12 +50,16 @@ export async function POST(req: NextRequest) {
       return String(f.value ?? '')
     }
 
-    const referencia    = get('referencia') || get('referência') || ''
-    const nome_operador = get('operador') || get('nome') || ''
+    // Referência e operador — primeiro tenta hidden fields, depois campos normais
+    const referencia    = getHidden('referencia') || getHidden('referência') || getHidden('Referencia') || get('referencia') || get('referência') || ''
+    const nome_operador = getHidden('Nome do Operador') || getHidden('nome_operador') || getHidden('Nome do operador') || get('operador') || get('nome') || ''
 
-    // Guarda tudo em dados (jsonb) para não perder nenhuma resposta
-    const dados: Record<string, any> = {}
+    console.log('referencia:', referencia, '| nome_operador:', nome_operador)
+
+    // Guarda todos os campos normais em dados (jsonb)
+    const dados: Record<string, any> = { ...hiddenFields }
     for (const f of fields) {
+      if (f.type === 'HIDDEN_FIELDS') continue
       dados[f.label] = Array.isArray(f.value) ? f.value.join(', ') : f.value
     }
 
@@ -45,6 +74,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
     }
 
+    console.log('Relatório guardado com sucesso. referencia:', referencia)
     return NextResponse.json({ ok: true })
   } catch (err: any) {
     console.error('Webhook error:', err)
