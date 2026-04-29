@@ -1750,10 +1750,14 @@ export default function EventoPage() {
           <div className="flex items-center justify-between px-4 py-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
             <div>
               <span className="text-xs tracking-widest text-blue-400/60 uppercase block">Total do Serviço</span>
-              <span className="text-[10px] text-white/20">(Fotografia + Vídeo)</span>
+              <span className="text-[10px] text-white/20">
+                {(e.valor_extras ?? 0) > 0
+                  ? `Foto + Vídeo + Extras (${(e.valor_extras ?? 0).toLocaleString('pt-PT')}€)`
+                  : '(Fotografia + Vídeo)'}
+              </span>
             </div>
             <span className="text-blue-400 font-bold text-lg">
-              {((e.valor_foto ?? 0) + (e.valor_video ?? 0)).toLocaleString('pt-PT')} €
+              {((e.valor_foto ?? 0) + (e.valor_video ?? 0) + (e.valor_extras ?? 0)).toLocaleString('pt-PT')} €
             </span>
           </div>
 
@@ -1882,6 +1886,31 @@ export default function EventoPage() {
                 })
               })()}
             </div>
+
+            {/* Resumo total pagamentos */}
+            {(() => {
+              const total = (e.valor_foto ?? 0) + (e.valor_video ?? 0) + (e.valor_extras ?? 0)
+              const totalPagoGeral = pagamentos.reduce((s, p) => s + (p.valor_liquidado ?? 0), 0)
+              const faltaTotal = Math.max(0, total - totalPagoGeral)
+              if (pagamentos.length === 0 || total === 0) return null
+              return (
+                <div className={`flex items-center justify-between px-4 py-2.5 rounded-xl border mt-2 ${faltaTotal === 0 ? 'bg-green-500/8 border-green-500/20' : 'bg-orange-500/5 border-orange-500/15'}`}>
+                  <span className="text-[10px] tracking-widest text-white/30 uppercase">Total Pago</span>
+                  <div className="flex items-center gap-3">
+                    <span className={`text-sm font-semibold ${faltaTotal === 0 ? 'text-green-400' : 'text-orange-400'}`}>
+                      {totalPagoGeral.toLocaleString('pt-PT')} €
+                    </span>
+                    <span className="text-white/15 text-xs">de</span>
+                    <span className="text-white/40 text-sm font-medium">{total.toLocaleString('pt-PT')} €</span>
+                    {faltaTotal > 0 && (
+                      <span className="text-[10px] text-orange-400/70 bg-orange-500/10 px-2 py-0.5 rounded-full">
+                        falta {faltaTotal.toLocaleString('pt-PT')}€
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )
+            })()}
           </div>
 
           {/* Criar Contrato */}
