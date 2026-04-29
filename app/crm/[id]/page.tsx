@@ -713,6 +713,37 @@ export default function ClientePage() {
           </div>
         </div>
 
+        {/* Notas da Reunião */}
+        <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xs tracking-[0.3em] text-gold uppercase">Notas da Reunião</h2>
+              <p className="text-[11px] text-white/25 mt-1">O que foi falado, decidido ou acordado</p>
+            </div>
+            <button
+              onClick={() => {
+                const now = new Date().toLocaleString('pt-PT', {
+                  day: '2-digit', month: '2-digit', year: 'numeric',
+                  hour: '2-digit', minute: '2-digit'
+                })
+                const prefix = `\n── ${now} ──\n`
+                const current = form.reuniao_notas ?? ''
+                set('reuniao_notas', prefix + current)
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] tracking-wider text-white/40 border border-white/10 hover:border-gold/40 hover:text-gold/80 transition-all"
+            >
+              <span>+</span> Nova entrada
+            </button>
+          </div>
+          <textarea
+            value={form.reuniao_notas ?? ''}
+            onChange={e => set('reuniao_notas', e.target.value)}
+            rows={8}
+            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50 resize-y font-mono leading-relaxed"
+            placeholder={`── 28/04/2026 14:30 ──\nCliente interessado em foto + vídeo.\nOrçamento até 3500€.\nDúvida sobre álbum — enviar exemplos.\n\n── 05/05/2026 10:00 ──\n...`}
+          />
+        </div>
+
         {/* Marcação de Reunião */}
         <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-4">
           <h2 className="text-xs tracking-[0.3em] text-gold uppercase">Marcação de Reunião</h2>
