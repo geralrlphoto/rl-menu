@@ -22,12 +22,15 @@ const SERVICOS = [
   'Sessão de Família — Vídeo',
 ]
 
+const ESTILO = ['Elegante', 'Minimalista', 'Romântico', 'Documental', 'Vibrante']
+
 const STEPS = [
-  { num: '01', titulo: '',                    sub: '' },
-  { num: '02', titulo: '',                    sub: '' },
-  { num: '03', titulo: 'O Vosso Evento',      sub: 'Conte-nos sobre o grande dia' },
-  { num: '04', titulo: 'Local & Cerimónia',   sub: 'Onde vai acontecer a magia' },
-  { num: '05', titulo: 'Serviços & Detalhes', sub: 'O que precisam de nós' },
+  { num: '01', titulo: '',                         sub: '' },
+  { num: '02', titulo: '',                         sub: '' },
+  { num: '03', titulo: 'O Vosso Evento',           sub: 'Conte-nos sobre o grande dia' },
+  { num: '04', titulo: 'Local & Cerimónia',        sub: 'Onde vai acontecer a magia' },
+  { num: '05', titulo: 'Perguntas que ninguém faz', sub: 'Queremos conhecer-vos melhor' },
+  { num: '06', titulo: 'Serviços & Detalhes',      sub: 'O que precisam de nós' },
 ]
 
 // ── Helpers de animação ───────────────────────────────────────────────────────
@@ -177,6 +180,9 @@ export default function NovaLeadPage() {
     email:           '',
     zonaResidencia:  '',
     comoChegou:      '',
+    estilo:          [] as string[],
+    visao20anos:     '',
+    trabalhoFavorito: '',
     servicos:        [] as string[],
     orcamento:       '',
     preocupacoes:    '',
@@ -214,8 +220,11 @@ export default function NovaLeadPage() {
           tipo_evento:    form.tipoEvento,
           orcamento:      form.orcamento,
           num_convidados: form.numConvidados,
-          zona_residencia: form.zonaResidencia,
-          mensagem:        form.preocupacoes,
+          zona_residencia:  form.zonaResidencia,
+          estilo:           form.estilo.join(', '),
+          visao_20anos:     form.visao20anos,
+          trabalho_favorito: form.trabalhoFavorito,
+          mensagem:         form.preocupacoes,
         }),
       })
       if (!res.ok) { const d = await res.json(); setErro(d.error || 'Erro ao enviar'); return }
@@ -423,8 +432,47 @@ export default function NovaLeadPage() {
             </div>
           )}
 
-          {/* ── STEP 4 — Serviços & Detalhes ─── */}
+          {/* ── STEP 4 — Perguntas que ninguém faz ─── */}
           {step === 4 && (
+            <div className="space-y-10">
+
+              {/* Estilo */}
+              <div className="space-y-3">
+                <div>
+                  <p className="font-playfair text-xl italic font-light text-white">"Qual é o vosso estilo?"</p>
+                  <p className="text-[11px] tracking-wide mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>Podem escolher mais do que um</p>
+                </div>
+                <PillToggle options={ESTILO} value={form.estilo} onChange={v => set('estilo', v)} multi />
+              </div>
+
+              {/* Visão 20 anos */}
+              <div className="space-y-3">
+                <p className="font-playfair text-xl italic font-light text-white">"Como imaginam olhar para estas fotos daqui a 20 anos?"</p>
+                <textarea
+                  value={form.visao20anos}
+                  onChange={e => set('visao20anos', e.target.value)}
+                  rows={3}
+                  placeholder="Partilhem o que sentem..."
+                  className="w-full bg-transparent outline-none text-white placeholder-white/20 py-3 px-0 text-base font-cormorant tracking-wide transition-all duration-200 resize-none"
+                  style={{ borderBottom: '1px solid rgba(201,168,76,0.25)' }}
+                  onFocus={e => { e.currentTarget.style.borderBottomColor = 'rgba(201,168,76,0.8)' }}
+                  onBlur={e => { e.currentTarget.style.borderBottomColor = 'rgba(201,168,76,0.25)' }}
+                />
+              </div>
+
+              {/* Trabalho favorito */}
+              <div className="space-y-3">
+                <p className="font-playfair text-xl italic font-light text-white">"Já viram algum trabalho nosso que vos emocionou?"</p>
+                <LeadInput label="Link ou descrição" value={form.trabalhoFavorito}
+                  onChange={v => set('trabalhoFavorito', v)}
+                  placeholder="Ex: o vídeo do casamento na Quinta..." />
+              </div>
+
+            </div>
+          )}
+
+          {/* ── STEP 5 — Serviços & Detalhes ─── */}
+          {step === 5 && (
             <div className="space-y-8">
               <div className="space-y-2">
                 <p className="text-[10px] tracking-[0.4em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.7)' }}>

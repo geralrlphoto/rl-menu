@@ -23,6 +23,9 @@ export async function POST(req: NextRequest) {
       tipo_evento,
       orcamento,
       num_convidados,
+      estilo,
+      visao_20anos,
+      trabalho_favorito,
       mensagem,
     } = body
 
@@ -64,6 +67,9 @@ export async function POST(req: NextRequest) {
       ['Como nos Encontrou',como_chegou],
       ['Serviços',          Array.isArray(servicos) ? servicos.join(', ') : servicos],
       ['Orçamento',         orcamento],
+      ['Estilo',            estilo],
+      ['Visão a 20 anos',   visao_20anos],
+      ['Trabalho favorito', trabalho_favorito],
       ['Mensagem',          mensagem],
     ]
 
