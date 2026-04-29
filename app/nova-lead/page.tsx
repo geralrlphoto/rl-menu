@@ -8,17 +8,20 @@ const TIPO_CERIMONIA = ['Religiosa', 'Civil', 'Outra']
 const COMO_CHEGOU  = ['Instagram', 'Facebook', 'Google', 'Recomendação de amigos', 'TikTok', 'Pinterest', 'Casamentos.pt', 'Outro']
 const SERVICOS_PRINCIPAIS = ['Fotografia', 'Vídeo']
 
-const SERVICOS_ADICIONAIS = [
-  'Pré-Wedding — Fotografia',
-  'Pré-Wedding — Vídeo',
-  'Trash the Dress — Fotografia',
-  'Trash the Dress — Vídeo',
+const ADICIONAIS_FOTO = [
+  'Pré-Wedding',
+  'Trash the Dress',
+  'Álbum Impresso',
+  'Sessão de Família',
+]
+
+const ADICIONAIS_VIDEO = [
+  'Pré-Wedding',
+  'Trash the Dress',
   'Drone',
   'Same Day Edit',
-  'Álbum Impresso',
   'Vídeos Originais',
-  'Sessão de Família — Fotografia',
-  'Sessão de Família — Vídeo',
+  'Sessão de Família',
 ]
 
 const ESTILO = ['Elegante', 'Minimalista', 'Romântico', 'Documental', 'Vibrante']
@@ -484,15 +487,63 @@ export default function NovaLeadPage() {
                 </div>
               </div>
 
-              {/* Adicionais */}
-              <div className="space-y-2">
+              {/* Adicionais — duas colunas */}
+              <div className="space-y-3">
                 <p className="text-[10px] tracking-[0.4em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.4)' }}>
                   Serviços adicionais
                 </p>
-                <ServicoCheck options={SERVICOS_ADICIONAIS} value={form.servicos} onChange={v => {
-                  const principais = form.servicos.filter(s => SERVICOS_PRINCIPAIS.includes(s))
-                  set('servicos', [...principais, ...v.filter(s => !SERVICOS_PRINCIPAIS.includes(s))])
-                }} />
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Coluna Fotografia */}
+                  <div className="space-y-1.5">
+                    <p className="text-[9px] tracking-[0.35em] uppercase mb-2" style={{ color: 'rgba(201,168,76,0.5)' }}>Fotografia</p>
+                    {ADICIONAIS_FOTO.map(s => {
+                      const key = `${s} — Fotografia`
+                      const active = form.servicos.includes(key)
+                      return (
+                        <button key={key} type="button"
+                          onClick={() => set('servicos', active ? form.servicos.filter(x => x !== key) : [...form.servicos, key])}
+                          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-all duration-150"
+                          style={active ? {
+                            background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.35)',
+                          } : {
+                            background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)',
+                          }}>
+                          <div className="w-3.5 h-3.5 rounded-full shrink-0 flex items-center justify-center"
+                            style={active ? { background: 'rgba(201,168,76,0.2)', border: '1px solid rgba(201,168,76,0.7)' } : { border: '1px solid rgba(255,255,255,0.2)' }}>
+                            {active && <div className="w-1 h-1 rounded-full" style={{ background: '#C9A84C' }} />}
+                          </div>
+                          <span className="text-xs font-cormorant tracking-wide leading-tight"
+                            style={{ color: active ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.4)' }}>{s}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {/* Coluna Vídeo */}
+                  <div className="space-y-1.5">
+                    <p className="text-[9px] tracking-[0.35em] uppercase mb-2" style={{ color: 'rgba(201,168,76,0.5)' }}>Vídeo</p>
+                    {ADICIONAIS_VIDEO.map(s => {
+                      const key = `${s} — Vídeo`
+                      const active = form.servicos.includes(key)
+                      return (
+                        <button key={key} type="button"
+                          onClick={() => set('servicos', active ? form.servicos.filter(x => x !== key) : [...form.servicos, key])}
+                          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-all duration-150"
+                          style={active ? {
+                            background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.35)',
+                          } : {
+                            background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)',
+                          }}>
+                          <div className="w-3.5 h-3.5 rounded-full shrink-0 flex items-center justify-center"
+                            style={active ? { background: 'rgba(201,168,76,0.2)', border: '1px solid rgba(201,168,76,0.7)' } : { border: '1px solid rgba(255,255,255,0.2)' }}>
+                            {active && <div className="w-1 h-1 rounded-full" style={{ background: '#C9A84C' }} />}
+                          </div>
+                          <span className="text-xs font-cormorant tracking-wide leading-tight"
+                            style={{ color: active ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.4)' }}>{s}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
               </div>
               <LeadInput label="Orçamento Previsto (sensivelmente)" value={form.orcamento}
                 onChange={v => set('orcamento', v)} placeholder="Ex: 2.000 — 3.000€" />
