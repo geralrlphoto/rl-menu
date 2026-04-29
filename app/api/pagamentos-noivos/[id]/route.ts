@@ -76,18 +76,39 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const res = await fetch(`https://api.notion.com/v1/pages/${id}`, {
-    method: 'PATCH',
-    headers: {
-      'Authorization': `Bearer ${NOTION_TOKEN}`,
-      'Notion-Version': '2022-06-28',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ archived: true }),
-  })
-  if (!res.ok) {
-    const err = await res.json()
-    return NextResponse.json({ error: err.message }, { status: res.status })
+  const supabase = db()
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+
+  if (isUUID) {
+    // 1. Ler notion_id antes de apagar (para arquivar no Notion também)
+    const { data: row } = await supabase
+      .from('pagamentos_noivos')
+      .select('notion_id')
+      .eq('id', id)
+      .maybeSingle()
+
+    // 2. Apagar do Supabase
+    await supabase.from('pagamentos_noivos').delete().eq('id', id)
+
+    // 3. Arquivar no Notion se existir entrada lá
+    if (row?.notion_id) {
+      await fetch(`https://api.notion.com/v1/pages/${row.notion_id}`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${NOTION_TOKEN}`, 'Notion-Version': '2022-06-28', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archived: true }),
+      }).catch(() => {}) // não bloquear se Notion falhar
+    }
+  } else {
+    // ID é Notion page ID → arquivar no Notion + apagar do Supabase pelo notion_id
+    await Promise.all([
+      fetch(`https://api.notion.com/v1/pages/${id}`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${NOTION_TOKEN}`, 'Notion-Version': '2022-06-28', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archived: true }),
+      }),
+      supabase.from('pagamentos_noivos').delete().eq('notion_id', id),
+    ])
   }
+
   return NextResponse.json({ ok: true })
 }
