@@ -50,9 +50,13 @@ export async function POST(req: NextRequest) {
       return String(f.value ?? '')
     }
 
-    // Referência e operador — primeiro tenta hidden fields, depois campos normais
-    const referencia    = getHidden('referencia') || getHidden('referência') || getHidden('Referencia') || get('referencia') || get('referência') || ''
-    const nome_operador = getHidden('Nome do Operador') || getHidden('nome_operador') || getHidden('Nome do operador') || get('operador') || get('nome') || ''
+    // Referência e operador — tenta todas as variações de nomes (hidden fields e campos normais)
+    const referencia    = getHidden('referencia') || getHidden('referência') || getHidden('Referencia')
+                       || getHidden('REFERÊNCIA') || getHidden('REFERENCIA')
+                       || get('referencia') || get('referência') || ''
+    const nome_operador = getHidden('Nome do Operador') || getHidden('nome_operador') || getHidden('Nome do operador')
+                       || getHidden('NOME DO OPERADOR') || getHidden('NOME_DO_OPERADOR')
+                       || get('nome do operador') || get('operador') || ''
 
     console.log('referencia:', referencia, '| nome_operador:', nome_operador)
 
