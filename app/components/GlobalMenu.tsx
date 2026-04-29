@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 
-const HIDDEN_PATHS = ['/login', '/portal-cliente', '/freelancer-view', '/r/']
+const HIDDEN_PATHS = ['/login', '/portal-cliente', '/freelancer-view', '/r/', '/nova-lead']
 
 const LINKS = [
   {
