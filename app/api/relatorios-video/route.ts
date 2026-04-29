@@ -27,3 +27,26 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({ relatorios: data ?? [] })
 }
+
+// POST /api/relatorios-video — submissão do formulário in-site
+export async function POST(req: NextRequest) {
+  const body = await req.json()
+  const { referencia, nome_operador, dados } = body
+
+  if (!referencia) {
+    return NextResponse.json({ error: 'referencia obrigatória' }, { status: 400 })
+  }
+
+  const { error } = await supabase.from('relatorios_video').insert({
+    referencia,
+    nome_operador: nome_operador || null,
+    dados: dados ?? {},
+  })
+
+  if (error) {
+    console.error('Supabase error:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json({ ok: true })
+}

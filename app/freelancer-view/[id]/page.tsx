@@ -587,6 +587,292 @@ function BriefingModal({ url, onClose }: { url: string; onClose: () => void }) {
   )
 }
 
+// ── Relatório Vídeo — helpers ─────────────────────────────────────────────────
+function RSection({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <span className="text-[9px] tracking-[0.4em] uppercase font-semibold shrink-0"
+          style={{ color: 'rgba(6,182,212,0.55)' }}>{label}</span>
+        <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, rgba(6,182,212,0.2), transparent)' }} />
+      </div>
+      <div className="space-y-4">{children}</div>
+    </div>
+  )
+}
+
+function RField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <p className="text-[9px] tracking-[0.35em] uppercase font-medium" style={{ color: 'rgba(255,255,255,0.25)' }}>{label}</p>
+      {children}
+    </div>
+  )
+}
+
+function RInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
+  return (
+    <input type="text" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+      className="w-full bg-transparent outline-none text-sm text-white placeholder-white/10 py-3 px-4 rounded-xl transition-all duration-200"
+      style={{ border: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.02)' }}
+      onFocus={e => { e.currentTarget.style.borderColor = 'rgba(6,182,212,0.45)'; e.currentTarget.style.boxShadow = '0 0 16px rgba(6,182,212,0.08)' }}
+      onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.boxShadow = 'none' }}
+    />
+  )
+}
+
+function RTextarea({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
+  return (
+    <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={3}
+      className="w-full bg-transparent outline-none text-sm text-white placeholder-white/10 py-3 px-4 rounded-xl transition-all duration-200 resize-none"
+      style={{ border: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.02)' }}
+      onFocus={e => { e.currentTarget.style.borderColor = 'rgba(6,182,212,0.45)'; e.currentTarget.style.boxShadow = '0 0 16px rgba(6,182,212,0.08)' }}
+      onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.boxShadow = 'none' }}
+    />
+  )
+}
+
+function RSegmented({ options, value, onChange }: { options: string[]; value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="flex gap-2 flex-wrap">
+      {options.map(opt => (
+        <button key={opt} type="button" onClick={() => onChange(value === opt ? '' : opt)}
+          className="px-4 py-2 rounded-lg text-[10px] font-semibold tracking-widest uppercase transition-all duration-150"
+          style={value === opt ? {
+            background: 'rgba(6,182,212,0.12)', border: '1px solid rgba(6,182,212,0.4)',
+            color: 'rgba(6,182,212,0.9)', boxShadow: '0 0 14px rgba(6,182,212,0.1)',
+          } : { background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.28)' }}>
+          {opt}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function RToggle({ value, onChange }: { value: boolean | null; onChange: (v: boolean) => void }) {
+  return (
+    <div className="flex gap-2">
+      {([true, false] as const).map(v => (
+        <button key={String(v)} type="button" onClick={() => onChange(v)}
+          className="flex-1 py-2.5 rounded-xl text-[10px] font-semibold tracking-widest uppercase transition-all duration-150"
+          style={value === v ? {
+            background: v ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.08)',
+            border: `1px solid ${v ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.3)'}`,
+            color: v ? 'rgba(52,211,153,0.9)' : 'rgba(252,165,165,0.85)',
+            boxShadow: v ? '0 0 12px rgba(16,185,129,0.1)' : '0 0 10px rgba(239,68,68,0.07)',
+          } : { background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.22)' }}>
+          {v ? 'Sim' : 'Não'}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// ── Relatório Vídeo — Modal ───────────────────────────────────────────────────
+function RelatorioVideoModal({ c, freelancerNome, onClose }: { c: Casamento; freelancerNome: string; onClose: () => void }) {
+  const [submitting, setSubmitting] = useState(false)
+  const [done, setDone]             = useState(false)
+  const [error, setError]           = useState('')
+  const [form, setForm] = useState({
+    nomeNoivos:      '',
+    tipoCerimonia:   '',
+    maquina:         '',
+    cartao:          '',
+    caixa:           '',
+    drone:           null as boolean | null,
+    audio:           '',
+    corteBolo:       null as boolean | null,
+    animacao:        '',
+    duranteRefeicao: '',
+    notas:           '',
+  })
+
+  function set<K extends keyof typeof form>(k: K, v: typeof form[K]) {
+    setForm(p => ({ ...p, [k]: v }))
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    setSubmitting(true)
+    try {
+      const res = await fetch('/api/relatorios-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          referencia:    c.referencia,
+          nome_operador: freelancerNome,
+          dados: {
+            'NOME DOS NOIVOS':                          form.nomeNoivos        || null,
+            'LOCAL DO CASAMENTO (QUINTA)':              c.local                || null,
+            'DATA DO CASAMENTO':                        c.data_casamento       || null,
+            'TIPO DE CERIMÓNIA':                        form.tipoCerimonia     || null,
+            'MAQUINA UTLIZADA (MARCA/MODELO)':          form.maquina           || null,
+            'QUAL O N.º DO CARTÃO UTILIZADO':           form.cartao            || null,
+            'N.º DA CAIXA UTILIZADA':                   form.caixa             || null,
+            'DRONE UTILIZADO':                          form.drone === null ? null : form.drone ? 'Sim' : 'Não',
+            'AUDIO':                                    form.audio             || null,
+            'CORTE DO BOLO':                            form.corteBolo === null ? null : form.corteBolo ? 'Sim' : 'Não',
+            'EQUIPA DE ANIMAÇÃO':                       form.animacao          || null,
+            'DURANTE A REFEIÇAO E FESTA':               form.duranteRefeicao   || null,
+            'ALGUMA INFORMAÇÃO RELEVANTE COLOCA AQUI':  form.notas             || null,
+          },
+        }),
+      })
+      if (!res.ok) { const d = await res.json(); setError(d.error || 'Erro ao enviar'); return }
+      setDone(true)
+      setTimeout(onClose, 2200)
+    } catch { setError('Erro de ligação') } finally { setSubmitting(false) }
+  }
+
+  // ── Success ──────────────────────────────────────────────────────────────────
+  if (done) return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center" style={{ background: 'rgba(0,4,10,0.97)' }}>
+      <div className="text-center space-y-5 px-8">
+        <div className="relative mx-auto w-20 h-20">
+          <div className="absolute inset-0 rounded-full animate-ping" style={{ background: 'rgba(16,185,129,0.12)', animationDuration: '1.2s' }} />
+          <div className="relative w-20 h-20 rounded-full border flex items-center justify-center"
+            style={{ borderColor: 'rgba(16,185,129,0.5)', background: 'rgba(16,185,129,0.08)', boxShadow: '0 0 30px rgba(16,185,129,0.2)' }}>
+            <svg className="w-9 h-9" style={{ color: 'rgba(52,211,153,0.9)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+        </div>
+        <div>
+          <p className="text-lg font-light tracking-[0.2em] uppercase" style={{ color: 'rgba(52,211,153,0.9)' }}>Relatório Enviado</p>
+          <p className="text-[10px] tracking-widest mt-1" style={{ color: 'rgba(255,255,255,0.2)' }}>A fechar...</p>
+        </div>
+      </div>
+    </div>
+  )
+
+  // ── Form ─────────────────────────────────────────────────────────────────────
+  return (
+    <div className="fixed inset-0 z-[200] overflow-y-auto" style={{ background: 'rgba(0,4,10,0.98)' }}>
+      {/* Grid bg */}
+      <div className="fixed inset-0 pointer-events-none"
+        style={{ backgroundImage: 'linear-gradient(rgba(6,182,212,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(6,182,212,0.025) 1px,transparent 1px)', backgroundSize: '44px 44px' }} />
+
+      <div className="relative min-h-screen px-4 py-8 max-w-[500px] mx-auto">
+
+        {/* Header */}
+        <div className="flex items-start justify-between mb-7">
+          <div>
+            <p className="text-[9px] tracking-[0.45em] uppercase mb-1.5" style={{ color: 'rgba(6,182,212,0.5)' }}>
+              Relatório Pós-Evento
+            </p>
+            <h2 className="text-2xl font-light tracking-[0.12em] text-white uppercase leading-tight">
+              {c.local || '—'}
+            </h2>
+          </div>
+          <button onClick={onClose} type="button"
+            className="mt-1 w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+            style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)', color: 'rgba(255,255,255,0.35)' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'rgba(255,255,255,0.35)' }}>
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        {/* Info pills */}
+        <div className="flex flex-wrap gap-2 mb-8">
+          {c.referencia && (
+            <span className="text-[9px] px-3 py-1.5 rounded-full font-semibold tracking-widest uppercase"
+              style={{ border: '1px solid rgba(6,182,212,0.3)', color: 'rgba(6,182,212,0.75)', background: 'rgba(6,182,212,0.06)' }}>
+              {c.referencia}
+            </span>
+          )}
+          <span className="text-[9px] px-3 py-1.5 rounded-full font-medium tracking-widest uppercase"
+            style={{ border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.02)' }}>
+            {freelancerNome}
+          </span>
+          {c.data_casamento && (
+            <span className="text-[9px] px-3 py-1.5 rounded-full font-medium tracking-widest uppercase"
+              style={{ border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.02)' }}>
+              {fmtDate(c.data_casamento).split(' · ')[0]}
+            </span>
+          )}
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-9">
+
+          {/* CERIMÓNIA */}
+          <RSection label="Cerimónia">
+            <RField label="Nome dos Noivos">
+              <RInput value={form.nomeNoivos} onChange={v => set('nomeNoivos', v)} placeholder="Ex: Ana & João Silva" />
+            </RField>
+            <RField label="Tipo de Cerimónia">
+              <RSegmented options={['Civil', 'Religiosa', 'Simbólica', 'Outra']} value={form.tipoCerimonia} onChange={v => set('tipoCerimonia', v)} />
+            </RField>
+          </RSection>
+
+          {/* EQUIPAMENTO */}
+          <RSection label="Equipamento">
+            <RField label="Máquina Utilizada (Marca / Modelo)">
+              <RInput value={form.maquina} onChange={v => set('maquina', v)} placeholder="Ex: Sony FX3 + Lumix GH7" />
+            </RField>
+            <div className="grid grid-cols-2 gap-3">
+              <RField label="N.º do Cartão">
+                <RInput value={form.cartao} onChange={v => set('cartao', v)} placeholder="Ex: 4" />
+              </RField>
+              <RField label="N.º da Caixa">
+                <RInput value={form.caixa} onChange={v => set('caixa', v)} placeholder="Ex: 2" />
+              </RField>
+            </div>
+            <RField label="Drone Utilizado">
+              <RToggle value={form.drone} onChange={v => set('drone', v)} />
+            </RField>
+          </RSection>
+
+          {/* COBERTURA */}
+          <RSection label="Cobertura">
+            <RField label="Áudio">
+              <RSegmented options={['Sim', 'Não', 'Parcial']} value={form.audio} onChange={v => set('audio', v)} />
+            </RField>
+            <RField label="Corte do Bolo">
+              <RToggle value={form.corteBolo} onChange={v => set('corteBolo', v)} />
+            </RField>
+            <RField label="Equipa de Animação / DJ">
+              <RInput value={form.animacao} onChange={v => set('animacao', v)} placeholder="Nome da equipa ou DJ" />
+            </RField>
+            <RField label="Durante Refeição e Festa">
+              <RInput value={form.duranteRefeicao} onChange={v => set('duranteRefeicao', v)} placeholder="Como decorreu..." />
+            </RField>
+          </RSection>
+
+          {/* OBSERVAÇÕES */}
+          <RSection label="Observações">
+            <RField label="Informação Relevante">
+              <RTextarea value={form.notas} onChange={v => set('notas', v)} placeholder="Qualquer detalhe importante sobre o evento..." />
+            </RField>
+          </RSection>
+
+          {/* Error */}
+          {error && (
+            <p className="text-xs text-red-400/70 text-center">{error}</p>
+          )}
+
+          {/* Submit */}
+          <button type="submit" disabled={submitting}
+            className="w-full py-4 rounded-xl text-sm font-semibold tracking-[0.3em] uppercase transition-all duration-200"
+            style={submitting ? {
+              background: 'rgba(6,182,212,0.06)', border: '1px solid rgba(6,182,212,0.15)', color: 'rgba(6,182,212,0.4)',
+            } : {
+              background: 'rgba(6,182,212,0.1)', border: '1px solid rgba(6,182,212,0.35)', color: 'rgba(6,182,212,0.85)',
+              boxShadow: '0 0 24px rgba(6,182,212,0.1), 0 0 48px rgba(6,182,212,0.04)',
+            }}>
+            {submitting ? 'A enviar...' : 'Submeter Relatório'}
+          </button>
+
+          <div className="h-6" />
+        </form>
+      </div>
+    </div>
+  )
+}
+
 // ── Casamento Ficha (read-only) ───────────────────────────────────────────────
 function CasamentoFicha({ c, onClose, onConfirm, isVideografo, freelancerNome }: {
   c: Casamento; onClose: () => void; onConfirm: (id: string) => void; isVideografo: boolean; freelancerNome: string
@@ -604,6 +890,7 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo, freelancerNome }:
   const [indisponivel, setIndisponivel]     = useState(indispInit)
   const [markingIndisp, setMarkingIndisp]   = useState(false)
   const [briefingOpen, setBriefingOpen]     = useState(false)
+  const [showRelatorio, setShowRelatorio]   = useState(false)
 
   async function handleConfirmar() {
     setConfirming(true)
@@ -715,13 +1002,12 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo, freelancerNome }:
             <div>
               <p className="text-[9px] tracking-[0.3em] text-white uppercase mb-2">Relatório Pós-Evento</p>
               {c.referencia ? (
-                <a
-                  href={`https://tally.so/r/np88GE?referencia=${encodeURIComponent(c.referencia ?? '')}&REFER%C3%8ANCIA=${encodeURIComponent(c.referencia ?? '')}&nome_operador=${encodeURIComponent(freelancerNome)}&NOME%20DO%20OPERADOR=${encodeURIComponent(freelancerNome)}&Nome%20do%20Operador=${encodeURIComponent(freelancerNome)}`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold tracking-widest uppercase hover:bg-emerald-500/20 transition-all">
+                <button onClick={() => setShowRelatorio(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold tracking-widest uppercase transition-all"
+                  style={{ background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.3)', color: 'rgba(6,182,212,0.8)' }}>
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                   Preencher Relatório
-                </a>
+                </button>
               ) : (
                 <p className="text-xs text-white/20 italic">Referência não disponível</p>
               )}
@@ -774,6 +1060,9 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo, freelancerNome }:
     </div>
     {briefingOpen && c.briefing_url && (
       <BriefingModal url={c.briefing_url} onClose={() => setBriefingOpen(false)} />
+    )}
+    {showRelatorio && (
+      <RelatorioVideoModal c={c} freelancerNome={freelancerNome} onClose={() => setShowRelatorio(false)} />
     )}
     </>
   )
