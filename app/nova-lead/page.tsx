@@ -225,19 +225,24 @@ export default function NovaLeadPage() {
 
   // ── Ecrã de sucesso ───────────────────────────────────────────────────────
   if (done) return (
-    <div className="min-h-screen flex items-center justify-center px-6 py-20" style={{ background: '#0a0a0a' }}>
-      <div className="text-center max-w-md space-y-8">
-        {/* Ornamento */}
+    <div className="relative min-h-screen flex items-center justify-center px-6 py-20" style={{ background: '#0a0a0a' }}>
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(160deg, #0e0b07 0%, #1a1206 30%, #0e0b07 70%, #060504 100%)' }} />
+      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 75% 65% at 50% 48%, rgba(201,168,76,0.18) 0%, rgba(160,120,40,0.07) 45%, transparent 70%)' }} />
+      <div className="relative text-center max-w-md space-y-8">
         <div className="flex justify-center">
-          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+          <img
+            src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
+            alt="RL Photo · Video"
+            className="w-28 opacity-80"
+          />
+        </div>
+        <div className="flex justify-center">
+          <svg width="44" height="44" viewBox="0 0 48 48" fill="none">
             <circle cx="24" cy="24" r="23" stroke="rgba(201,168,76,0.3)" strokeWidth="1"/>
             <path d="M14 24l7 7 13-14" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
         <div className="space-y-4">
-          <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: 'rgba(201,168,76,0.6)' }}>
-            RL Photo · Video
-          </p>
           <h1 className="font-playfair text-4xl font-light text-white leading-tight">
             Obrigado pela<br />vossa confiança
           </h1>
@@ -256,7 +261,12 @@ export default function NovaLeadPage() {
   const cur = STEPS[step]
 
   return (
-    <div className="min-h-screen" style={{ background: '#0a0a0a' }} ref={topRef}>
+    <div className="relative min-h-screen" style={{ background: '#0a0a0a' }} ref={topRef}>
+
+      {/* Background proposta criativa */}
+      <div className="fixed inset-0 pointer-events-none" style={{ background: 'linear-gradient(160deg, #0e0b07 0%, #1a1206 30%, #0e0b07 70%, #060504 100%)' }} />
+      <div className="fixed inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 75% 65% at 50% 48%, rgba(201,168,76,0.18) 0%, rgba(160,120,40,0.07) 45%, transparent 70%)' }} />
+      <div className="fixed inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 40% 40% at 50% 48%, rgba(232,180,60,0.08) 0%, transparent 60%)' }} />
 
       {/* Barra de progresso */}
       <div className="fixed top-0 left-0 right-0 z-50 h-[2px]" style={{ background: 'rgba(255,255,255,0.06)' }}>
@@ -264,13 +274,15 @@ export default function NovaLeadPage() {
           style={{ width: `${progress}%`, background: 'linear-gradient(90deg,rgba(201,168,76,0.5),#C9A84C)' }} />
       </div>
 
-      <div className="max-w-lg mx-auto px-6 py-16 sm:py-20">
+      <div className="relative max-w-lg mx-auto px-6 py-16 sm:py-20">
 
-        {/* Logo / marca */}
+        {/* Logo */}
         <div className="mb-14 flex items-center justify-between">
-          <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: 'rgba(201,168,76,0.5)' }}>
-            RL Photo · Video
-          </p>
+          <img
+            src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
+            alt="RL Photo · Video"
+            className="h-8 opacity-70"
+          />
           <p className="text-[10px] tracking-[0.3em] uppercase" style={{ color: 'rgba(255,255,255,0.15)' }}>
             {cur.num} / {STEPS.length.toString().padStart(2, '0')}
           </p>
