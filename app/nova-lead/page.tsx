@@ -24,10 +24,11 @@ const SERVICOS = [
 
 const STEPS = [
   { num: '01', titulo: '',                    sub: '' },
-  { num: '02', titulo: 'O Vosso Evento',      sub: 'Conte-nos sobre o grande dia' },
-  { num: '03', titulo: 'Local & Cerimónia',   sub: 'Onde vai acontecer a magia' },
-  { num: '04', titulo: 'Contacto',            sub: 'Como podemos falar convosco' },
-  { num: '05', titulo: 'Serviços & Detalhes', sub: 'O que precisam de nós' },
+  { num: '02', titulo: '',                    sub: '' },
+  { num: '03', titulo: 'O Vosso Evento',      sub: 'Conte-nos sobre o grande dia' },
+  { num: '04', titulo: 'Local & Cerimónia',   sub: 'Onde vai acontecer a magia' },
+  { num: '05', titulo: 'Contacto',            sub: 'Como podemos falar convosco' },
+  { num: '06', titulo: 'Serviços & Detalhes', sub: 'O que precisam de nós' },
 ]
 
 // ── Helpers de animação ───────────────────────────────────────────────────────
@@ -286,11 +287,11 @@ export default function NovaLeadPage() {
           />
         </div>
 
-        {/* Contador de step — escondido no step 0 */}
-        {step > 0 && (
+        {/* Contador de step — visível só a partir do step 2 */}
+        {step >= 2 && (
           <div className="flex justify-end mb-6">
             <p className="text-[10px] tracking-[0.3em] uppercase" style={{ color: 'rgba(255,255,255,0.15)' }}>
-              {cur.num} / {STEPS.length.toString().padStart(2, '0')}
+              {String(step - 1).padStart(2, '0')} / {String(STEPS.length - 2).padStart(2, '0')}
             </p>
           </div>
         )}
@@ -303,7 +304,7 @@ export default function NovaLeadPage() {
             transform: visible ? 'translateY(0)' : 'translateY(16px)',
           }}
         >
-          {/* ── STEP 0 — só nome, sem título ─── */}
+          {/* ── STEP 0 — só nome ─── */}
           {step === 0 && (
             <div className="space-y-10">
               <div className="space-y-3">
@@ -317,33 +318,71 @@ export default function NovaLeadPage() {
             </div>
           )}
 
-          {/* Título dos steps 1–4 */}
-          {step > 0 && (
-            step === 1 && form.nome ? (
-              <div className="mb-10 space-y-1">
+          {/* ── STEP 1 — Boas-vindas ─── */}
+          {step === 1 && (
+            <div className="space-y-8">
+              {/* Saudação */}
+              <div className="space-y-1">
                 <p className="font-playfair text-2xl sm:text-3xl font-light leading-snug" style={{ color: 'rgba(255,255,255,0.35)' }}>
                   Olá,
                 </p>
                 <h2 className="font-playfair text-4xl sm:text-5xl font-light text-white leading-tight">
-                  {form.nome}
+                  {form.nome || 'bem-vindos'}
                 </h2>
                 <div className="w-8 h-px mt-3" style={{ background: 'rgba(201,168,76,0.4)' }} />
               </div>
-            ) : step > 0 ? (
-              <div className="mb-10 space-y-2">
-                <p className="text-[10px] tracking-[0.45em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.55)' }}>
-                  {cur.sub}
+
+              {/* Mensagem */}
+              <div className="space-y-5" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                <p className="font-cormorant text-xl leading-relaxed">
+                  Queremos que o registo do vosso casamento seja exactamente como sempre imaginaram — cada detalhe, cada emoção, cada momento único.
                 </p>
-                <h2 className="font-playfair text-4xl sm:text-5xl font-light text-white leading-tight">
-                  {cur.titulo}
-                </h2>
-                <div className="w-8 h-px mt-3" style={{ background: 'rgba(201,168,76,0.4)' }} />
+                <p className="font-cormorant text-xl leading-relaxed">
+                  Este briefing foi criado para conhecermos melhor o vosso estilo, as vossas preferências e as expectativas para a fotografia e o vídeo do grande dia.
+                </p>
+
+                <div className="space-y-2 pl-1">
+                  <p className="font-cormorant text-base tracking-wide" style={{ color: 'rgba(201,168,76,0.6)' }}>
+                    Ao preencherem este questionário, ajudam-nos a:
+                  </p>
+                  {[
+                    'Personalizar a nossa abordagem ao vosso dia',
+                    'Garantir que captamos o que mais valorizam em cada momento',
+                    'Chegar à reunião com uma proposta pensada para vocês',
+                  ].map(item => (
+                    <div key={item} className="flex items-start gap-3">
+                      <span className="mt-1.5 shrink-0 w-1 h-1 rounded-full" style={{ background: '#C9A84C' }} />
+                      <p className="font-cormorant text-lg leading-snug">{item}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <p className="font-cormorant text-xl leading-relaxed">
+                  Quanto mais soubermos agora, mais presentes estaremos no dia — para que possam simplesmente viver cada instante, enquanto nós eternizamos tudo.
+                </p>
+
+                <p className="font-cormorant text-base italic" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                  Preencham com calma e sinceridade. Tudo o que partilharem será usado para criar um registo fiel e emocionante do vosso casamento.
+                </p>
               </div>
-            ) : null
+            </div>
           )}
 
-          {/* ── STEP 1 — O Vosso Evento ─── */}
-          {step === 1 && (
+          {/* Título dos steps 2–5 */}
+          {step >= 2 && (
+            <div className="mb-10 space-y-2">
+              <p className="text-[10px] tracking-[0.45em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.55)' }}>
+                {cur.sub}
+              </p>
+              <h2 className="font-playfair text-4xl sm:text-5xl font-light text-white leading-tight">
+                {cur.titulo}
+              </h2>
+              <div className="w-8 h-px mt-3" style={{ background: 'rgba(201,168,76,0.4)' }} />
+            </div>
+          )}
+
+          {/* ── STEP 2 — O Vosso Evento ─── */}
+          {step === 2 && (
             <div className="space-y-8">
               <div className="space-y-2">
                 <p className="text-[10px] tracking-[0.4em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.7)' }}>
@@ -355,8 +394,8 @@ export default function NovaLeadPage() {
             </div>
           )}
 
-          {/* ── STEP 2 — Local & Cerimónia ─── */}
-          {step === 2 && (
+          {/* ── STEP 3 — Local & Cerimónia ─── */}
+          {step === 3 && (
             <div className="space-y-8">
               <LeadInput label="Local do Evento (Cerimónia + Quinta)" value={form.local} onChange={v => set('local', v)}
                 placeholder="Ex: Igreja X + Quinta Y" required />
@@ -371,8 +410,8 @@ export default function NovaLeadPage() {
             </div>
           )}
 
-          {/* ── STEP 3 — Contacto ─── */}
-          {step === 3 && (
+          {/* ── STEP 4 — Contacto ─── */}
+          {step === 4 && (
             <div className="space-y-8">
               <LeadInput label="Contacto (Telemóvel)" type="tel" value={form.contato}
                 onChange={v => set('contato', v)} placeholder="Ex: 912 345 678" required />
@@ -383,8 +422,8 @@ export default function NovaLeadPage() {
             </div>
           )}
 
-          {/* ── STEP 4 — Serviços & Detalhes ─── */}
-          {step === 4 && (
+          {/* ── STEP 5 — Serviços & Detalhes ─── */}
+          {step === 5 && (
             <div className="space-y-8">
               <div className="space-y-2">
                 <p className="text-[10px] tracking-[0.4em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.7)' }}>
@@ -436,7 +475,7 @@ export default function NovaLeadPage() {
               <button onClick={goNext} type="button"
                 className="flex items-center gap-3 px-8 py-3.5 rounded-full font-semibold text-sm tracking-widest uppercase transition-all duration-200 hover:scale-[1.03] active:scale-[0.98]"
                 style={{ background: '#C9A84C', color: '#0a0a0a' }}>
-                {step === 0 ? 'Começar' : 'Seguinte'}
+                {step === 0 ? 'Começar' : step === 1 ? 'Continuar' : 'Seguinte'}
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
                 </svg>
