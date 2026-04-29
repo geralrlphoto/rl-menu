@@ -95,12 +95,29 @@ export default function ClientePage() {
 
   const handleSave = async () => {
     setSaving(true)
-    // Sempre incluir propostas e extras no page_content ao guardar
+    // Buscar campos críticos do DB para não os sobrescrever se estiverem vazios no form
+    const { data: current } = await supabase
+      .from('crm_contacts')
+      .select('reuniao_data,reuniao_hora,reuniao_tipo,reuniao_link,reuniao_enviada_at,page_token,page_publicada,page_views,page_confirmacao')
+      .eq('id', id)
+      .single()
+
     const pc = typeof form.page_content === 'string'
       ? JSON.parse(form.page_content || '{}')
       : (form.page_content || {})
     const formToSave: Record<string, any> = {
       ...form,
+      // Preservar campos da reunião — só sobrescreve se o form tiver valor explícito
+      reuniao_data:       form.reuniao_data       || current?.reuniao_data       || null,
+      reuniao_hora:       form.reuniao_hora       || current?.reuniao_hora       || null,
+      reuniao_tipo:       form.reuniao_tipo       || current?.reuniao_tipo       || null,
+      reuniao_link:       form.reuniao_link       || current?.reuniao_link       || null,
+      reuniao_enviada_at: form.reuniao_enviada_at || current?.reuniao_enviada_at || null,
+      // Preservar token e estado da página (geridos por handleTogglePage)
+      page_token:         form.page_token         || current?.page_token         || null,
+      page_publicada:     form.page_publicada      ?? current?.page_publicada    ?? false,
+      page_views:         current?.page_views      ?? form.page_views            ?? 0,
+      page_confirmacao:   current?.page_confirmacao ?? form.page_confirmacao     ?? null,
       page_content: { ...pc, propostas, extras_proposta: extrasGlobais },
     }
     // Regista data_fecho automaticamente quando status = Fechou e ainda não tem
