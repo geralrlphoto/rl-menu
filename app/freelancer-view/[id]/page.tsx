@@ -713,12 +713,18 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo, freelancerNome }:
           </div>
           {isVideografo && (
             <div>
-              <p className="text-[9px] tracking-[0.3em] text-white uppercase mb-2">Relatório</p>
-              <a href="https://tally.so/r/np88GE" target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold tracking-widest uppercase hover:bg-emerald-500/20 transition-all">
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                Relatório
-              </a>
+              <p className="text-[9px] tracking-[0.3em] text-white uppercase mb-2">Relatório Pós-Evento</p>
+              {c.referencia ? (
+                <a
+                  href={`https://tally.so/r/np88GE?referencia=${encodeURIComponent(c.referencia ?? '')}&Nome%20do%20Operador=${encodeURIComponent(freelancerNome)}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold tracking-widest uppercase hover:bg-emerald-500/20 transition-all">
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  Preencher Relatório
+                </a>
+              ) : (
+                <p className="text-xs text-white/20 italic">Referência não disponível</p>
+              )}
             </div>
           )}
         </div>
