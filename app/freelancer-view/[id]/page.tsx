@@ -804,7 +804,7 @@ function RelatorioVideoModal({ c, freelancerNome, onClose }: { c: Casamento; fre
               <RInput value={form.nomeNoivos} onChange={v => set('nomeNoivos', v)} placeholder="Ex: Ana & João Silva" />
             </RField>
             <RField label="Tipo de Cerimónia">
-              <RSegmented options={['Civil', 'Religiosa', 'Simbólica', 'Outra']} value={form.tipoCerimonia} onChange={v => set('tipoCerimonia', v)} />
+              <RSegmented options={['Religiosa', 'Civil', 'Com Celebrente', 'Com Votos', 'Com Discursos', 'Com Rituais']} value={form.tipoCerimonia} onChange={v => set('tipoCerimonia', v)} />
             </RField>
           </RSection>
 
