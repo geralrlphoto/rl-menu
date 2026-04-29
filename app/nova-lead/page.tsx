@@ -164,6 +164,27 @@ function ServicoCheck({ options, value, onChange }: {
   )
 }
 
+const LS_KEY = 'rl_nova_lead_draft'
+
+const FORM_DEFAULT = {
+  tipoEvento:       '',
+  nome:             '',
+  dataEvento:       '',
+  local:            '',
+  tipoCerimonia:    [] as string[],
+  numConvidados:    '',
+  contato:          '',
+  email:            '',
+  zonaResidencia:   '',
+  comoChegou:       '',
+  estilo:           [] as string[],
+  visao20anos:      '',
+  trabalhoFavorito: '',
+  servicos:         [] as string[],
+  orcamento:        '',
+  preocupacoes:     '',
+}
+
 // ── Página principal ──────────────────────────────────────────────────────────
 export default function NovaLeadPage() {
   const [step, setStep]       = useState(0)
@@ -173,24 +194,25 @@ export default function NovaLeadPage() {
   const visible               = useFadeIn(step)
   const topRef                = useRef<HTMLDivElement>(null)
 
-  const [form, setForm] = useState({
-    tipoEvento:      '',
-    nome:            '',
-    dataEvento:      '',
-    local:           '',
-    tipoCerimonia:   [] as string[],
-    numConvidados:   '',
-    contato:         '',
-    email:           '',
-    zonaResidencia:  '',
-    comoChegou:      '',
-    estilo:          [] as string[],
-    visao20anos:     '',
-    trabalhoFavorito: '',
-    servicos:        [] as string[],
-    orcamento:       '',
-    preocupacoes:    '',
-  })
+  const [form, setForm] = useState(FORM_DEFAULT)
+
+  // ── Restaurar rascunho do localStorage ──────────────────────────────────────
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(LS_KEY)
+      if (saved) {
+        const { step: savedStep, form: savedForm } = JSON.parse(saved)
+        if (savedForm) setForm({ ...FORM_DEFAULT, ...savedForm })
+        if (typeof savedStep === 'number') setStep(savedStep)
+      }
+    } catch {}
+  }, [])
+
+  // ── Guardar rascunho sempre que muda ────────────────────────────────────────
+  useEffect(() => {
+    if (done) { localStorage.removeItem(LS_KEY); return }
+    try { localStorage.setItem(LS_KEY, JSON.stringify({ step, form })) } catch {}
+  }, [step, form, done])
 
   function set<K extends keyof typeof form>(k: K, v: typeof form[K]) {
     setForm(p => ({ ...p, [k]: v }))
@@ -213,22 +235,22 @@ export default function NovaLeadPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          nome:           form.nome,
-          email:          form.email,
-          contato:        form.contato,
-          data_casamento: form.dataEvento,
-          local_casamento: form.local,
-          como_chegou:    form.comoChegou,
-          servicos:       form.servicos.join(', '),
-          tipo_cerimonia: form.tipoCerimonia.join(', '),
-          tipo_evento:    form.tipoEvento,
-          orcamento:      form.orcamento,
-          num_convidados: form.numConvidados,
-          zona_residencia:  form.zonaResidencia,
-          estilo:           form.estilo.join(', '),
-          visao_20anos:     form.visao20anos,
+          nome:              form.nome,
+          email:             form.email,
+          contato:           form.contato,
+          data_casamento:    form.dataEvento,
+          local_casamento:   form.local,
+          como_chegou:       form.comoChegou,
+          servicos:          form.servicos.join(', '),
+          tipo_cerimonia:    form.tipoCerimonia.join(', '),
+          tipo_evento:       form.tipoEvento,
+          orcamento:         form.orcamento,
+          num_convidados:    form.numConvidados,
+          zona_residencia:   form.zonaResidencia,
+          estilo:            form.estilo.join(', '),
+          visao_20anos:      form.visao20anos,
           trabalho_favorito: form.trabalhoFavorito,
-          mensagem:         form.preocupacoes,
+          mensagem:          form.preocupacoes,
         }),
       })
       if (!res.ok) { const d = await res.json(); setErro(d.error || 'Erro ao enviar'); return }

@@ -105,6 +105,63 @@ export async function POST(req: NextRequest) {
       }),
     }).catch(() => null)
 
+    // ── Email para os noivos ─────────────────────────────────────────────────
+    if (email) {
+      const servicosList = [
+        Array.isArray(servicos) ? servicos.join(', ') : servicos,
+      ].filter(Boolean).join(', ')
+
+      await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+          to: [email],
+          subject: `Recebemos o vosso pedido — RL Photo.Video`,
+          html: `
+            <div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:40px 24px;background:#000;color:#fff;">
+              <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
+                alt="RL Photo.Video" style="width:120px;margin-bottom:32px;opacity:0.85;" />
+
+              <p style="font-size:10px;letter-spacing:0.5em;color:#555;text-transform:uppercase;margin:0 0 20px;">Recebemos o vosso pedido</p>
+
+              <h1 style="font-size:26px;font-weight:300;letter-spacing:0.1em;margin:0 0 8px;color:#fff;">
+                ${nome}
+              </h1>
+              ${data_casamento ? `<p style="font-size:12px;color:#C9A84C;letter-spacing:0.2em;margin:0 0 32px;">${data_casamento}${local_casamento ? ' · ' + local_casamento : ''}</p>` : ''}
+
+              <p style="font-size:15px;color:#aaa;line-height:1.7;margin:0 0 28px;">
+                Obrigado por nos escolherem para eternizar o vosso dia. Recebemos o vosso briefing e entraremos em contacto em breve para marcarmos uma reunião.
+              </p>
+
+              ${servicosList ? `
+              <div style="border:0.5px solid rgba(201,168,76,0.3);padding:20px 24px;margin-bottom:28px;">
+                <p style="font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:#C9A84C;margin:0 0 8px;">Serviços solicitados</p>
+                <p style="font-size:13px;color:#ccc;margin:0;">${servicosList}</p>
+              </div>` : ''}
+
+              <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,0.3),transparent);margin:0 0 28px;"></div>
+
+              <p style="font-size:13px;color:#666;line-height:1.7;margin:0 0 24px;">
+                Enquanto aguardam, podem inspirar-se no nosso blog com histórias de casamentos que já tivemos o privilégio de documentar.
+              </p>
+
+              <a href="https://rlphotovideo.pt/blog-list1"
+                style="display:inline-block;padding:14px 32px;background:rgba(201,168,76,0.15);border:0.5px solid rgba(201,168,76,0.5);color:#C9A84C;text-decoration:none;font-size:11px;letter-spacing:0.35em;text-transform:uppercase;">
+                Ver o Blog
+              </a>
+
+              <div style="height:1px;background:rgba(255,255,255,0.05);margin:36px 0 20px;"></div>
+              <p style="font-size:10px;color:#333;letter-spacing:0.3em;text-transform:uppercase;">RL Photo.Video · rlphotovideo.pt</p>
+            </div>
+          `,
+        }),
+      }).catch(() => null)
+    }
+
     return NextResponse.json({ ok: true })
 
   } catch (err: any) {
