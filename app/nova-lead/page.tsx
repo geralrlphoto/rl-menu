@@ -28,10 +28,9 @@ const STEPS = [
   { num: '01', titulo: '',                          sub: '' },
   { num: '02', titulo: '',                          sub: '' },
   { num: '03', titulo: 'O Vosso Evento',            sub: 'Conte-nos sobre o grande dia' },
-  { num: '04', titulo: 'Local & Cerimónia',         sub: 'Onde vai acontecer a magia' },
-  { num: '05', titulo: 'Perguntas que ninguém faz', sub: 'Queremos conhecer-vos melhor' },
-  { num: '06', titulo: 'Serviços & Detalhes',       sub: 'O que precisam de nós' },
-  { num: '07', titulo: 'Os vossos contactos',       sub: 'Para podermos falar convosco' },
+  { num: '04', titulo: 'Perguntas que ninguém faz', sub: 'Queremos conhecer-vos melhor' },
+  { num: '05', titulo: 'Serviços & Detalhes',       sub: 'O que precisam de nós' },
+  { num: '06', titulo: 'Os vossos contactos',       sub: 'Para podermos falar convosco' },
 ]
 
 // ── Helpers de animação ───────────────────────────────────────────────────────
@@ -392,7 +391,7 @@ export default function NovaLeadPage() {
             </div>
           )}
 
-          {/* ── STEP 2 — O Vosso Evento ─── */}
+          {/* ── STEP 2 — O Vosso Evento + Local & Cerimónia ─── */}
           {step === 2 && (
             <div className="space-y-8">
               <div className="space-y-2">
@@ -402,14 +401,8 @@ export default function NovaLeadPage() {
                 <PillToggle options={TIPO_EVENTO} value={form.tipoEvento} onChange={v => set('tipoEvento', v)} />
               </div>
               <LeadInput label="Data do Evento" type="date" value={form.dataEvento} onChange={v => set('dataEvento', v)} required />
-            </div>
-          )}
-
-          {/* ── STEP 3 — Local & Cerimónia ─── */}
-          {step === 3 && (
-            <div className="space-y-8">
               <LeadInput label="Local do Evento (Cerimónia + Quinta)" value={form.local} onChange={v => set('local', v)}
-                placeholder="Ex: Igreja X + Quinta Y" required />
+                placeholder="Ex: Igreja X + Quinta Y" />
               <div className="space-y-2">
                 <p className="text-[10px] tracking-[0.4em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.7)' }}>
                   Tipo de Cerimónia
@@ -421,8 +414,8 @@ export default function NovaLeadPage() {
             </div>
           )}
 
-          {/* ── STEP 4 — Perguntas que ninguém faz ─── */}
-          {step === 4 && (
+          {/* ── STEP 3 — Perguntas que ninguém faz ─── */}
+          {step === 3 && (
             <div className="space-y-10">
 
               {/* Estilo */}
@@ -460,8 +453,8 @@ export default function NovaLeadPage() {
             </div>
           )}
 
-          {/* ── STEP 5 — Serviços & Detalhes ─── */}
-          {step === 5 && (
+          {/* ── STEP 4 — Serviços & Detalhes ─── */}
+          {step === 4 && (
             <div className="space-y-8">
               <div className="space-y-2">
                 <p className="text-[10px] tracking-[0.4em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.7)' }}>
@@ -489,8 +482,8 @@ export default function NovaLeadPage() {
             </div>
           )}
 
-          {/* ── STEP 6 — Contactos ─── */}
-          {step === 6 && (
+          {/* ── STEP 5 — Contactos ─── */}
+          {step === 5 && (
             <div className="space-y-8">
               <LeadInput label="Telemóvel" type="tel" value={form.contato}
                 onChange={v => set('contato', v)} placeholder="Ex: 912 345 678" required />
