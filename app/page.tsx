@@ -434,14 +434,16 @@ export default async function Home() {
               <Link key={item.id} href={item.href}
                 className="relative overflow-hidden group rounded-lg"
                 style={{ height: '160px' }}>
-                <div className="absolute inset-0 bg-cover bg-center scale-100 group-hover:scale-110 transition-transform duration-700 ease-out"
+                <div className="absolute inset-0 bg-cover bg-center scale-100 group-hover:scale-105 transition-transform duration-700 ease-out"
                   style={{ backgroundImage: `url(${item.img})` }} />
-                <div className="absolute inset-0 bg-black/55 group-hover:bg-black/35 transition-colors duration-500" />
-                <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent" />
-                <div className="absolute bottom-0 right-0">
-                  <div className="bg-[#C9A84C] group-hover:bg-white transition-colors duration-300 px-4 py-2.5 rounded-tl-lg">
-                    <span className="text-black text-[11px] font-bold tracking-[0.2em] uppercase whitespace-nowrap">{item.name}</span>
+                <div className="absolute inset-0 bg-black/50 group-hover:bg-black/30 transition-colors duration-500" />
+                <div className="absolute bottom-0 left-0 right-0 h-2/3 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 px-5 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-[2px] bg-[#C9A84C]/60 group-hover:bg-[#C9A84C] transition-all duration-300" style={{ height: '12px' }} />
+                    <span className="text-[10px] tracking-[0.3em] font-medium text-white/70 group-hover:text-white uppercase transition-colors duration-200 whitespace-nowrap">{item.name}</span>
                   </div>
+                  <span className="text-[#C9A84C]/40 group-hover:text-[#C9A84C] group-hover:translate-x-1 transition-all duration-300">→</span>
                 </div>
               </Link>
             ))}
@@ -452,14 +454,16 @@ export default async function Home() {
               <Link key={item.id} href={item.href}
                 className="relative overflow-hidden group rounded-lg"
                 style={{ height: '160px' }}>
-                <div className="absolute inset-0 bg-cover bg-center scale-100 group-hover:scale-110 transition-transform duration-700 ease-out"
+                <div className="absolute inset-0 bg-cover bg-center scale-100 group-hover:scale-105 transition-transform duration-700 ease-out"
                   style={{ backgroundImage: `url(${item.img})` }} />
-                <div className="absolute inset-0 bg-black/55 group-hover:bg-black/35 transition-colors duration-500" />
-                <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent" />
-                <div className="absolute bottom-0 right-0">
-                  <div className="bg-[#C9A84C] group-hover:bg-white transition-colors duration-300 px-4 py-2.5 rounded-tl-lg">
-                    <span className="text-black text-[11px] font-bold tracking-[0.2em] uppercase whitespace-nowrap">{item.name}</span>
+                <div className="absolute inset-0 bg-black/50 group-hover:bg-black/30 transition-colors duration-500" />
+                <div className="absolute bottom-0 left-0 right-0 h-2/3 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 px-5 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-[2px] bg-[#C9A84C]/60 group-hover:bg-[#C9A84C] transition-all duration-300" style={{ height: '12px' }} />
+                    <span className="text-[10px] tracking-[0.3em] font-medium text-white/70 group-hover:text-white uppercase transition-colors duration-200 whitespace-nowrap">{item.name}</span>
                   </div>
+                  <span className="text-[#C9A84C]/40 group-hover:text-[#C9A84C] group-hover:translate-x-1 transition-all duration-300">→</span>
                 </div>
               </Link>
             ))}
