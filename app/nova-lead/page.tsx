@@ -282,10 +282,10 @@ export default function NovaLeadPage() {
         </div>
         <div className="space-y-4">
           <h1 className="font-playfair text-4xl font-light text-white leading-tight">
-            Obrigado pela<br />vossa confiança
+            Obrigado<br />pelo vosso contacto
           </h1>
           <p className="font-cormorant text-lg leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            Recebemos o vosso pedido e iremos entrar em contacto em breve para começarmos a criar algo especial juntos.
+            Recebemos a vossa mensagem e entraremos em contacto convosco em breve.
           </p>
         </div>
         <div className="h-px" style={{ background: 'linear-gradient(90deg,transparent,rgba(201,168,76,0.3),transparent)' }} />

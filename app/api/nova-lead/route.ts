@@ -120,21 +120,21 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           from: 'RL Photo.Video <geral@rlphotovideo.pt>',
           to: [email],
-          subject: `Recebemos o vosso pedido — RL Photo.Video`,
+          subject: `Recebemos o vosso contacto — RL Photo.Video`,
           html: `
             <div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:40px 24px;background:#000;color:#fff;">
               <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
                 alt="RL Photo.Video" style="width:120px;margin-bottom:32px;opacity:0.85;" />
 
-              <p style="font-size:10px;letter-spacing:0.5em;color:#555;text-transform:uppercase;margin:0 0 20px;">Recebemos o vosso pedido</p>
+              <p style="font-size:10px;letter-spacing:0.5em;color:#555;text-transform:uppercase;margin:0 0 20px;">RL Photo.Video</p>
 
               <h1 style="font-size:26px;font-weight:300;letter-spacing:0.1em;margin:0 0 8px;color:#fff;">
-                ${nome}
+                Obrigado pelo vosso contacto
               </h1>
-              ${data_casamento ? `<p style="font-size:12px;color:#C9A84C;letter-spacing:0.2em;margin:0 0 32px;">${data_casamento}${local_casamento ? ' · ' + local_casamento : ''}</p>` : ''}
+              ${data_casamento ? `<p style="font-size:12px;color:#C9A84C;letter-spacing:0.2em;margin:0 0 32px;">${data_casamento}${local_casamento ? ' · ' + local_casamento : ''}</p>` : '<div style="margin-bottom:32px;"></div>'}
 
               <p style="font-size:15px;color:#aaa;line-height:1.7;margin:0 0 28px;">
-                Obrigado por nos escolherem para eternizar o vosso dia. Recebemos o vosso briefing e entraremos em contacto em breve para marcarmos uma reunião.
+                Recebemos a vossa mensagem e entraremos em contacto convosco em breve.
               </p>
 
               ${servicosList ? `
