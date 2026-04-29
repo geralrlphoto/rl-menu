@@ -67,16 +67,16 @@ export default function GlobalMenu() {
         style={{
           background: 'rgba(0,4,10,0.75)',
           backdropFilter: 'blur(12px)',
-          border: '1px solid rgba(6,182,212,0.2)',
-          boxShadow: '0 0 16px rgba(6,182,212,0.06)',
+          border: '1px solid rgba(201,168,76,0.2)',
+          boxShadow: '0 0 16px rgba(201,168,76,0.06)',
         }}
-        onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(6,182,212,0.45)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(6,182,212,0.12)' }}
-        onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(6,182,212,0.2)'; e.currentTarget.style.boxShadow = '0 0 16px rgba(6,182,212,0.06)' }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(201,168,76,0.45)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(201,168,76,0.12)' }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(201,168,76,0.2)'; e.currentTarget.style.boxShadow = '0 0 16px rgba(201,168,76,0.06)' }}
         aria-label="Menu"
       >
-        <span className="block rounded-full transition-all duration-200" style={{ width: '16px', height: '1px', background: 'rgba(6,182,212,0.8)' }} />
-        <span className="block rounded-full transition-all duration-200" style={{ width: '10px', height: '1px', background: 'rgba(6,182,212,0.5)' }} />
-        <span className="block rounded-full transition-all duration-200" style={{ width: '16px', height: '1px', background: 'rgba(6,182,212,0.8)' }} />
+        <span className="block rounded-full transition-all duration-200" style={{ width: '16px', height: '1px', background: 'rgba(201,168,76,0.8)' }} />
+        <span className="block rounded-full transition-all duration-200" style={{ width: '10px', height: '1px', background: 'rgba(201,168,76,0.5)' }} />
+        <span className="block rounded-full transition-all duration-200" style={{ width: '16px', height: '1px', background: 'rgba(201,168,76,0.8)' }} />
       </button>
 
       {/* Overlay */}
@@ -94,24 +94,24 @@ export default function GlobalMenu() {
         style={{
           width: '256px',
           background: 'rgba(0,4,10,0.98)',
-          borderRight: '1px solid rgba(6,182,212,0.12)',
-          boxShadow: '4px 0 40px rgba(6,182,212,0.06)',
+          borderRight: '1px solid rgba(201,168,76,0.12)',
+          boxShadow: '4px 0 40px rgba(201,168,76,0.06)',
         }}
       >
         {/* Grid bg */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden"
           style={{
-            backgroundImage: 'linear-gradient(rgba(6,182,212,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(6,182,212,0.025) 1px,transparent 1px)',
+            backgroundImage: 'linear-gradient(rgba(201,168,76,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,0.025) 1px,transparent 1px)',
             backgroundSize: '40px 40px',
           }}
         />
 
         {/* Header */}
         <div className="relative flex items-center justify-between px-5 py-5"
-          style={{ borderBottom: '1px solid rgba(6,182,212,0.1)' }}>
+          style={{ borderBottom: '1px solid rgba(201,168,76,0.1)' }}>
           <div>
             <p className="text-[9px] tracking-[0.5em] uppercase font-semibold"
-              style={{ color: 'rgba(6,182,212,0.6)' }}>
+              style={{ color: 'rgba(201,168,76,0.6)' }}>
               RL Photo · Video
             </p>
             <p className="text-[10px] tracking-[0.3em] uppercase mt-1"
@@ -143,26 +143,26 @@ export default function GlobalMenu() {
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group"
                 style={active ? {
-                  background: 'rgba(6,182,212,0.08)',
-                  border: '1px solid rgba(6,182,212,0.22)',
-                  boxShadow: '0 0 16px rgba(6,182,212,0.06)',
+                  background: 'rgba(201,168,76,0.08)',
+                  border: '1px solid rgba(201,168,76,0.22)',
+                  boxShadow: '0 0 16px rgba(201,168,76,0.06)',
                 } : {
                   border: '1px solid transparent',
                 }}
                 onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}
                 onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
               >
-                <span style={{ color: active ? 'rgba(6,182,212,0.85)' : 'rgba(255,255,255,0.3)' }}
+                <span style={{ color: active ? 'rgba(201,168,76,0.85)' : 'rgba(255,255,255,0.3)' }}
                   className="shrink-0 transition-colors duration-150">
                   {icon}
                 </span>
                 <span className="text-[12px] tracking-wide transition-colors duration-150"
-                  style={{ color: active ? 'rgba(6,182,212,0.9)' : 'rgba(255,255,255,0.45)' }}>
+                  style={{ color: active ? 'rgba(201,168,76,0.9)' : 'rgba(255,255,255,0.45)' }}>
                   {label}
                 </span>
                 {active && (
                   <span className="ml-auto w-1 h-1 rounded-full shrink-0"
-                    style={{ background: 'rgba(6,182,212,0.8)', boxShadow: '0 0 6px rgba(6,182,212,0.6)' }} />
+                    style={{ background: 'rgba(201,168,76,0.8)', boxShadow: '0 0 6px rgba(201,168,76,0.6)' }} />
                 )}
               </a>
             )
@@ -170,7 +170,7 @@ export default function GlobalMenu() {
         </nav>
 
         {/* Footer */}
-        <div className="relative px-5 py-4" style={{ borderTop: '1px solid rgba(6,182,212,0.06)' }}>
+        <div className="relative px-5 py-4" style={{ borderTop: '1px solid rgba(201,168,76,0.06)' }}>
           <p className="text-[8px] tracking-[0.4em] uppercase" style={{ color: 'rgba(255,255,255,0.1)' }}>
             © RL Photo · Video
           </p>
