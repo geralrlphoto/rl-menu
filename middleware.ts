@@ -53,7 +53,9 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/api/newsletter-cron') ||
     pathname.startsWith('/api/newsletter-preview') ||
     pathname.startsWith('/api/newsletter-webhook') ||
-    pathname.startsWith('/api/newsletter-debug')
+    pathname.startsWith('/api/newsletter-debug') ||
+    pathname.startsWith('/api/tally-relatorio-video') ||
+    pathname.startsWith('/api/relatorios-video')
   ) {
     return NextResponse.next()
   }
