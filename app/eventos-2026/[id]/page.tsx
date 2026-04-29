@@ -1246,6 +1246,9 @@ export default function EventoPage() {
   const [registarData, setRegistarData]   = useState(new Date().toISOString().slice(0, 10))
   const [registarMetodo, setRegistarMetodo] = useState('Transferência')
   const [registarSaving, setRegistarSaving] = useState(false)
+  const [editingPagId, setEditingPagId] = useState<string | null>(null)
+  const [editingPagValor, setEditingPagValor] = useState('')
+  const [editingPagSaving, setEditingPagSaving] = useState(false)
   const [fotosDataEntrada, setFotosDataEntrada] = useState<string | null>(null)
   const [albumDataPrevista, setAlbumDataPrevista] = useState<string | null>(null)
   const [albumNotionId, setAlbumNotionId] = useState<string | null>(null)
@@ -1315,6 +1318,36 @@ export default function EventoPage() {
       loadPagamentos(e.referencia, true)
     } finally {
       setRegistarSaving(false)
+    }
+  }
+
+  async function handleEditPagValor(pag: Pagamento, refEvento: string) {
+    const novoValor = Number(editingPagValor)
+    if (isNaN(novoValor)) return
+    setEditingPagSaving(true)
+    try {
+      // Notion records têm id "notion_XXXX", Supabase têm UUID
+      const isNotion = pag.id.startsWith('notion_')
+      if (isNotion) {
+        const notionId = pag.id.replace('notion_', '')
+        await fetch(`/api/pagamentos-noivos/${notionId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ valor_liquidado: novoValor }),
+        })
+      } else {
+        // Supabase UUID — atualizar via API de pagamentos-by-ref
+        await fetch(`/api/pagamentos-noivos/${pag.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ valor_liquidado: novoValor }),
+        })
+      }
+      setEditingPagId(null)
+      setEditingPagValor('')
+      loadPagamentos(refEvento, true)
+    } finally {
+      setEditingPagSaving(false)
     }
   }
 
@@ -1894,23 +1927,59 @@ export default function EventoPage() {
                         <span className="text-[9px] tracking-widest">{statusLabel}</span>
                       </div>
 
-                      {/* Detalhes */}
-                      <div className="flex flex-col gap-0.5 pt-1 border-t border-white/[0.05]">
-                        {totalPago > 0 && (
-                          <span className="text-[10px] text-white/40">
-                            Pago: <span className={`font-medium ${liquidado ? 'text-green-400' : 'text-orange-400'}`}>{totalPago.toLocaleString('pt-PT')} €</span>
-                          </span>
-                        )}
+                      {/* Registos de pagamento editáveis */}
+                      <div className="flex flex-col gap-1 pt-1 border-t border-white/[0.05]">
+                        {pags.map((pag: any) => (
+                          <div key={pag.id} className="flex items-center justify-between gap-2">
+                            <div className="flex flex-col min-w-0">
+                              {pag.data_pagamento && (
+                                <span className="text-[9px] text-white/25 leading-tight">{fmtD(pag.data_pagamento)}</span>
+                              )}
+                              {pag.metodo_pagamento?.length > 0 && (
+                                <span className="text-[9px] text-white/20 leading-tight truncate">{pag.metodo_pagamento.join(', ')}</span>
+                              )}
+                            </div>
+                            {/* Valor editável por clique */}
+                            {editingPagId === pag.id ? (
+                              <div className="flex items-center gap-1 shrink-0">
+                                <input
+                                  type="number"
+                                  value={editingPagValor}
+                                  onChange={ev => setEditingPagValor(ev.target.value)}
+                                  onKeyDown={ev => {
+                                    if (ev.key === 'Enter') handleEditPagValor(pag, e.referencia!)
+                                    if (ev.key === 'Escape') { setEditingPagId(null); setEditingPagValor('') }
+                                  }}
+                                  autoFocus
+                                  className="w-16 bg-white/8 border border-gold/40 rounded px-1.5 py-0.5 text-[11px] text-white/90 focus:outline-none text-right"
+                                />
+                                <button
+                                  onClick={() => handleEditPagValor(pag, e.referencia!)}
+                                  disabled={editingPagSaving}
+                                  className="text-[9px] text-gold/70 hover:text-gold font-semibold"
+                                >
+                                  {editingPagSaving ? '…' : '✓'}
+                                </button>
+                                <button onClick={() => { setEditingPagId(null); setEditingPagValor('') }} className="text-[9px] text-white/30 hover:text-white/60">✕</button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => { setEditingPagId(pag.id); setEditingPagValor(String(pag.valor_liquidado ?? '')) }}
+                                className={`text-[12px] font-semibold shrink-0 hover:opacity-70 transition-opacity ${liquidado ? 'text-green-400' : 'text-orange-400'}`}
+                                title="Clique para editar"
+                              >
+                                {(pag.valor_liquidado ?? 0).toLocaleString('pt-PT')} €
+                              </button>
+                            )}
+                          </div>
+                        ))}
+
+                        {/* Linha "Falta" quando não liquidado */}
                         {!liquidado && falta > 0 && (
-                          <span className="text-[10px] text-white/30">
-                            Falta: <span className="text-white/50 font-medium">{falta.toLocaleString('pt-PT')} €</span>
-                          </span>
-                        )}
-                        {lastPag?.data_pagamento && (
-                          <span className="text-[10px] text-white/25">{fmtD(lastPag.data_pagamento)}</span>
-                        )}
-                        {metodos.length > 0 && (
-                          <span className="text-[10px] text-white/20">{metodos.join(', ')}</span>
+                          <div className="flex items-center justify-between mt-0.5 pt-1 border-t border-white/[0.04]">
+                            <span className="text-[9px] text-white/25 uppercase tracking-wider">Falta</span>
+                            <span className="text-[12px] font-semibold text-red-400/70">{falta.toLocaleString('pt-PT')} €</span>
+                          </div>
                         )}
                       </div>
 

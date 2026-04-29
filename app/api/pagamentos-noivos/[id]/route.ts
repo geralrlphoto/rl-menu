@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN!
+
+function db() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 function buildValue(type: string, value: any) {
   if (type === 'title')        return { title: [{ text: { content: value ?? '' } }] }
@@ -27,6 +35,20 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params
   const body = await req.json()
 
+  // UUID Supabase → atualizar diretamente na tabela pagamentos_noivos
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+  if (isUUID) {
+    const updates: Record<string, any> = {}
+    const allowed = ['valor_liquidado','data_pagamento','fase_pagamento','metodo_pagamento','atualizado']
+    for (const [k, v] of Object.entries(body)) {
+      if (allowed.includes(k)) updates[k] = v
+    }
+    const { error } = await db().from('pagamentos_noivos').update(updates).eq('id', id)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  }
+
+  // Notion page ID → atualizar no Notion
   const properties: any = {}
   for (const [field, value] of Object.entries(body)) {
     const map = FIELD_MAP[field]
