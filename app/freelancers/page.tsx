@@ -76,6 +76,33 @@ const CATEGORY_COLORS: Record<string, string> = {
   EDITORES:   '#fb923c',
 }
 
+const NEON_GLOW: Record<string, { idle: string; active: string; border: string; borderActive: string }> = {
+  FOTOGRAFO:  {
+    idle:        '0 0 8px rgba(250,204,21,0.15), 0 0 20px rgba(250,204,21,0.08)',
+    active:      '0 0 12px rgba(250,204,21,0.5), 0 0 30px rgba(250,204,21,0.25), 0 0 60px rgba(250,204,21,0.1), inset 0 0 20px rgba(250,204,21,0.05)',
+    border:      'rgba(250,204,21,0.2)',
+    borderActive:'rgba(250,204,21,0.7)',
+  },
+  VIDEOGRAFO: {
+    idle:        '0 0 8px rgba(52,211,153,0.15), 0 0 20px rgba(52,211,153,0.08)',
+    active:      '0 0 12px rgba(52,211,153,0.5), 0 0 30px rgba(52,211,153,0.25), 0 0 60px rgba(52,211,153,0.1), inset 0 0 20px rgba(52,211,153,0.05)',
+    border:      'rgba(52,211,153,0.2)',
+    borderActive:'rgba(52,211,153,0.7)',
+  },
+  ASSISTENTE: {
+    idle:        '0 0 8px rgba(244,114,182,0.15), 0 0 20px rgba(244,114,182,0.08)',
+    active:      '0 0 12px rgba(244,114,182,0.5), 0 0 30px rgba(244,114,182,0.25), 0 0 60px rgba(244,114,182,0.1), inset 0 0 20px rgba(244,114,182,0.05)',
+    border:      'rgba(244,114,182,0.2)',
+    borderActive:'rgba(244,114,182,0.7)',
+  },
+  EDITORES:   {
+    idle:        '0 0 8px rgba(251,146,60,0.15), 0 0 20px rgba(251,146,60,0.08)',
+    active:      '0 0 12px rgba(251,146,60,0.5), 0 0 30px rgba(251,146,60,0.25), 0 0 60px rgba(251,146,60,0.1), inset 0 0 20px rgba(251,146,60,0.05)',
+    border:      'rgba(251,146,60,0.2)',
+    borderActive:'rgba(251,146,60,0.7)',
+  },
+}
+
 const CATEGORY_CONFIG = [
   {
     key: 'FOTOGRAFO',
@@ -297,33 +324,38 @@ export default function FreelancersPage() {
             {CATEGORY_CONFIG.map(cat => {
               const count = groups[cat.key]?.length ?? 0
               const isActive = activeGroup === cat.key
+              const neon = NEON_GLOW[cat.key]
               return (
                 <button
                   key={cat.key}
                   onClick={() => setActiveGroup(isActive ? null : cat.key)}
-                  className={`relative flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border transition-all duration-200 shadow-lg ${
-                    isActive
-                      ? `${cat.bgActive} ${cat.borderActive} ${cat.glow}`
-                      : `${cat.bg} ${cat.border}`
+                  className={`relative flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border transition-all duration-300 ${
+                    isActive ? cat.bgActive : cat.bg
                   }`}
+                  style={{
+                    borderColor: isActive ? neon.borderActive : neon.border,
+                    boxShadow: isActive ? neon.active : neon.idle,
+                    transition: 'box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease',
+                  }}
                 >
                   {/* count badge */}
                   <span className={`absolute top-3 right-3 text-[10px] px-2 py-0.5 rounded-full border font-semibold tracking-wider ${cat.badge}`}>
                     {count}
                   </span>
 
-                  {/* icon */}
-                  <div className="opacity-90">
+                  {/* icon — mais brilhante quando activo */}
+                  <div style={{ opacity: isActive ? 1 : 0.7, filter: isActive ? `drop-shadow(0 0 6px ${CATEGORY_COLORS[cat.key]}99)` : 'none', transition: 'all 0.3s ease' }}>
                     {CATEGORY_ICONS[cat.key]?.(CATEGORY_COLORS[cat.key] ?? '#ffffff')}
                   </div>
 
                   {/* label */}
-                  <span className={`text-xs font-bold tracking-widest uppercase ${isActive ? cat.accent : 'text-white/50'}`}>
+                  <span className={`text-xs font-bold tracking-widest uppercase transition-colors duration-300 ${isActive ? cat.accent : 'text-white/40'}`}>
                     {cat.label}
                   </span>
 
                   {/* chevron */}
-                  <span className={`text-[10px] transition-transform duration-200 ${isActive ? cat.accent : 'text-white/20'} ${isActive ? 'rotate-180' : ''}`}>
+                  <span className={`text-[10px] transition-all duration-300 ${isActive ? cat.accent : 'text-white/15'}`}
+                    style={{ transform: isActive ? 'rotate(180deg)' : 'rotate(0deg)' }}>
                     ▼
                   </span>
                 </button>
