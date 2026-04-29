@@ -1347,7 +1347,7 @@ export default function EventoPage() {
       }))
       loadPagamentos(refEvento, true)
     } else {
-      // Sem registos (liquidado só por tudoLiquidado) → guardar override nas settings
+      // Sem registos próprios → guardar override nas settings para forçar pendente
       const novaLista = fasesPendentesOverride.includes(label)
         ? fasesPendentesOverride.filter(f => f !== label)   // já estava → remover (toggle)
         : [...fasesPendentesOverride, label]
@@ -1901,9 +1901,7 @@ export default function EventoPage() {
                   return `${String(dt.getDate()).padStart(2,'0')} ${MESES_S[dt.getMonth()]} ${dt.getFullYear()}`
                 }
 
-                // Se a soma total de todos os pagamentos cobrir o valor total → todas as fases liquidadas
                 const totalPagoGeral = pagamentos.reduce((s, p) => s + (p.valor_liquidado ?? 0), 0)
-                const tudoLiquidado = total > 0 && totalPagoGeral >= total
 
                 return ['ADJUDICAÇÃO','REFORÇO','FINAL'].map(label => {
                   // Todos os pagamentos para esta fase (pode haver vários parciais)
@@ -1911,7 +1909,8 @@ export default function EventoPage() {
                   const totalPago = pags.reduce((s, p) => s + (p.valor_liquidado ?? 0), 0)
                   const valorFase = faseValores[label]
                   const falta = Math.max(0, valorFase - totalPago)
-                  const liquidado = !fasesPendentesOverride.includes(label) && (tudoLiquidado || (totalPago >= valorFase && valorFase > 0))
+                  // Cada fase é liquidada apenas pelos seus próprios registos — sem "tudoLiquidado"
+                  const liquidado = !fasesPendentesOverride.includes(label) && (totalPago >= valorFase && valorFase > 0)
                   const parcial = totalPago > 0 && !liquidado
                   const pct = valorFase > 0 ? Math.min(100, Math.round((totalPago / valorFase) * 100)) : 0
 
