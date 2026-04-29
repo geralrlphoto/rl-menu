@@ -1932,16 +1932,33 @@ export default function EventoPage() {
 
                 const totalPagoGeral = pagamentos.reduce((s, p) => s + (p.valor_liquidado ?? 0), 0)
 
+                // Cascata: o total pago preenche ADJ → REFORÇO → FINAL por ordem
+                // Assim um único pagamento multi-fase não conta o valor completo para cada fase
+                const cumAdj     = faseValores['ADJUDICAÇÃO']
+                const cumReforco = cumAdj + faseValores['REFORÇO']
+                const cumFinal   = cumReforco + faseValores['FINAL']
+                const faseCum: Record<string, number> = {
+                  'ADJUDICAÇÃO': cumAdj,
+                  'REFORÇO':     cumReforco,
+                  'FINAL':       cumFinal,
+                }
+
                 return ['ADJUDICAÇÃO','REFORÇO','FINAL'].map(label => {
-                  // Todos os pagamentos para esta fase (pode haver vários parciais)
-                  const pags = pagamentos.filter(p => p.fase_pagamento.includes(label))
-                  const totalPago = pags.reduce((s, p) => s + (p.valor_liquidado ?? 0), 0)
-                  const valorFase = faseValores[label]
+                  const valorFase  = faseValores[label]
+                  const cumThresh  = faseCum[label]
+                  const prevThresh = cumThresh - valorFase
+
+                  // Porção do total pago que pertence a esta fase em cascata
+                  const totalPago = Math.max(0, Math.min(totalPagoGeral, cumThresh) - prevThresh)
                   const falta = Math.max(0, valorFase - totalPago)
-                  // Cada fase é liquidada apenas pelos seus próprios registos — sem "tudoLiquidado"
-                  const liquidado = !fasesPendentesOverride.includes(label) && (totalPago >= valorFase && valorFase > 0)
+
+                  // Liquidado quando o total pago geral cobre a threshold cumulativa desta fase
+                  const liquidado = !fasesPendentesOverride.includes(label) && valorFase > 0 && totalPagoGeral >= cumThresh
                   const parcial = totalPago > 0 && !liquidado
                   const pct = valorFase > 0 ? Math.min(100, Math.round((totalPago / valorFase) * 100)) : 0
+
+                  // Registos para mostrar (mantém filtragem por tag para exibição)
+                  const pags = pagamentos.filter(p => p.fase_pagamento.includes(label))
 
                   // Último pagamento para data/método
                   const lastPag = pags[pags.length - 1]
