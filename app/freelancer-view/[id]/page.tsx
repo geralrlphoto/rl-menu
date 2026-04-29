@@ -691,7 +691,7 @@ function RToggle({ value, onChange }: { value: boolean | null; onChange: (v: boo
 }
 
 // ── Relatório Vídeo — Modal ───────────────────────────────────────────────────
-function RelatorioVideoModal({ c, freelancerNome, onClose }: { c: Casamento; freelancerNome: string; onClose: () => void }) {
+function RelatorioVideoModal({ c, freelancerNome, onClose, onSubmitted }: { c: Casamento; freelancerNome: string; onClose: () => void; onSubmitted: () => void }) {
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone]             = useState(false)
   const [error, setError]           = useState('')
@@ -743,27 +743,34 @@ function RelatorioVideoModal({ c, freelancerNome, onClose }: { c: Casamento; fre
       })
       if (!res.ok) { const d = await res.json(); setError(d.error || 'Erro ao enviar'); return }
       setDone(true)
-      setTimeout(onClose, 2200)
+      onSubmitted()
     } catch { setError('Erro de ligação') } finally { setSubmitting(false) }
   }
 
   // ── Success ──────────────────────────────────────────────────────────────────
   if (done) return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center" style={{ background: 'rgba(0,4,10,0.97)' }}>
-      <div className="text-center space-y-5 px-8">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center px-8" style={{ background: 'rgba(0,4,10,0.98)' }}>
+      <div className="text-center space-y-7 max-w-[340px]">
         <div className="relative mx-auto w-20 h-20">
-          <div className="absolute inset-0 rounded-full animate-ping" style={{ background: 'rgba(16,185,129,0.12)', animationDuration: '1.2s' }} />
+          <div className="absolute inset-0 rounded-full animate-ping" style={{ background: 'rgba(16,185,129,0.1)', animationDuration: '1.4s' }} />
           <div className="relative w-20 h-20 rounded-full border flex items-center justify-center"
-            style={{ borderColor: 'rgba(16,185,129,0.5)', background: 'rgba(16,185,129,0.08)', boxShadow: '0 0 30px rgba(16,185,129,0.2)' }}>
-            <svg className="w-9 h-9" style={{ color: 'rgba(52,211,153,0.9)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            style={{ borderColor: 'rgba(16,185,129,0.45)', background: 'rgba(16,185,129,0.07)', boxShadow: '0 0 40px rgba(16,185,129,0.15)' }}>
+            <svg className="w-9 h-9" style={{ color: 'rgba(52,211,153,0.85)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polyline points="20 6 9 17 4 12"/>
             </svg>
           </div>
         </div>
-        <div>
-          <p className="text-lg font-light tracking-[0.2em] uppercase" style={{ color: 'rgba(52,211,153,0.9)' }}>Relatório Enviado</p>
-          <p className="text-[10px] tracking-widest mt-1" style={{ color: 'rgba(255,255,255,0.2)' }}>A fechar...</p>
+        <div className="space-y-3">
+          <p className="text-xl font-light tracking-[0.2em] uppercase" style={{ color: 'rgba(52,211,153,0.9)' }}>Obrigado!</p>
+          <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            O teu relatório foi recebido com sucesso. A equipa RL fica a par de tudo.
+          </p>
         </div>
+        <button onClick={onClose}
+          className="w-full py-3 rounded-xl text-xs font-semibold tracking-[0.3em] uppercase transition-all"
+          style={{ border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.02)' }}>
+          Fechar
+        </button>
       </div>
     </div>
   )
@@ -917,6 +924,18 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo, freelancerNome }:
   const [markingIndisp, setMarkingIndisp]   = useState(false)
   const [briefingOpen, setBriefingOpen]     = useState(false)
   const [showRelatorio, setShowRelatorio]   = useState(false)
+  const [jaEnviou, setJaEnviou]             = useState<string | null | 'loading'>('loading')
+
+  useEffect(() => {
+    if (!isVideografo || !c.referencia) { setJaEnviou(null); return }
+    fetch(`/api/relatorios-video?referencia=${encodeURIComponent(c.referencia)}`)
+      .then(r => r.json())
+      .then(d => {
+        const meu = (d.relatorios ?? []).find((r: any) => r.nome_operador === freelancerNome)
+        setJaEnviou(meu ? meu.criado_em : null)
+      })
+      .catch(() => setJaEnviou(null))
+  }, [isVideografo, c.referencia, freelancerNome])
 
   async function handleConfirmar() {
     setConfirming(true)
@@ -1028,12 +1047,27 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo, freelancerNome }:
             <div>
               <p className="text-[9px] tracking-[0.3em] text-white uppercase mb-2">Relatório Pós-Evento</p>
               {c.referencia ? (
-                <button onClick={() => setShowRelatorio(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold tracking-widest uppercase transition-all"
-                  style={{ background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.3)', color: 'rgba(6,182,212,0.8)' }}>
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                  Preencher Relatório
-                </button>
+                jaEnviou === 'loading' ? (
+                  <p className="text-xs text-white/20 italic">...</p>
+                ) : jaEnviou ? (
+                  <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl"
+                    style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.25)' }}>
+                    <svg className="w-3.5 h-3.5 shrink-0" style={{ color: 'rgba(52,211,153,0.7)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    <div>
+                      <p className="text-[10px] font-semibold tracking-widest uppercase" style={{ color: 'rgba(52,211,153,0.8)' }}>Relatório Enviado</p>
+                      <p className="text-[9px] mt-0.5" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                        {new Date(jaEnviou).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={() => setShowRelatorio(true)}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold tracking-widest uppercase transition-all"
+                    style={{ background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.3)', color: 'rgba(6,182,212,0.8)' }}>
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    Preencher Relatório
+                  </button>
+                )
               ) : (
                 <p className="text-xs text-white/20 italic">Referência não disponível</p>
               )}
@@ -1088,7 +1122,10 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo, freelancerNome }:
       <BriefingModal url={c.briefing_url} onClose={() => setBriefingOpen(false)} />
     )}
     {showRelatorio && (
-      <RelatorioVideoModal c={c} freelancerNome={freelancerNome} onClose={() => setShowRelatorio(false)} />
+      <RelatorioVideoModal c={c} freelancerNome={freelancerNome}
+        onClose={() => setShowRelatorio(false)}
+        onSubmitted={() => setJaEnviou(new Date().toISOString())}
+      />
     )}
     </>
   )
