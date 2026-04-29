@@ -397,13 +397,32 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-[#080808] flex flex-col">
 
-      {/* Header */}
-      <div className="h-14 flex items-center justify-center border-b border-white/[0.06] shrink-0 relative">
-        <h1 className="text-sm font-light tracking-[0.5em] text-white uppercase">
-          RL <span className="text-[#C9A84C]">PHOTO</span>.VIDEO
-        </h1>
-        <div className="absolute right-4">
+      {/* Header — hero com foto */}
+      <div className="relative overflow-hidden shrink-0" style={{ height: '320px' }}>
+        {/* Foto de fundo */}
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: "url('/casamentos-2028.png')" }}
+        />
+        {/* Overlay base */}
+        <div className="absolute inset-0 bg-black/30" />
+        {/* Desvanecer topo */}
+        <div className="absolute top-0 left-0 right-0 h-28 bg-gradient-to-b from-[#080808] to-transparent" />
+        {/* Desvanecer fundo — funde com o resto da página */}
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-[#080808] via-[#080808]/60 to-transparent" />
+        {/* Vinheta lateral */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#080808]/50 via-transparent to-[#080808]/50" />
+        {/* Logout */}
+        <div className="absolute top-4 right-4 z-10">
           <LogoutButton />
+        </div>
+        {/* Logo centrado */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+          <p className="text-[8px] tracking-[0.6em] text-white/30 uppercase">Menu Interno</p>
+          <h1 className="text-3xl sm:text-4xl font-extralight tracking-[0.4em] text-white/80 uppercase">
+            RL <span className="text-[#C9A84C]">PHOTO</span>.VIDEO
+          </h1>
+          <div className="h-px w-16 bg-gradient-to-r from-transparent via-[#C9A84C]/50 to-transparent" />
         </div>
       </div>
 
