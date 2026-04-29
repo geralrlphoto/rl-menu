@@ -1264,6 +1264,7 @@ export default function EventoPage() {
   const [notifFotoEnviada, setNotifFotoEnviada] = useState<string | null>(null)
   const [notifVideoEnviada, setNotifVideoEnviada] = useState<string | null>(null)
   const [relatoriosVideo, setRelatoriosVideo] = useState<any[]>([])
+  const [copiedVideoIdx, setCopiedVideoIdx] = useState<number | null>(null)
   const [sendingNotifFoto, setSendingNotifFoto] = useState(false)
   const [sendingNotifVideo, setSendingNotifVideo] = useState(false)
   const [notifFotoErro, setNotifFotoErro] = useState<string | null>(null)
@@ -2132,11 +2133,10 @@ export default function EventoPage() {
             return `${tallyBase}?${params.toString()}`
           }
 
-          const [copiedIdx, setCopiedIdx] = useState<number | null>(null)
           function copyLink(idx: number, nome: string) {
             navigator.clipboard.writeText(tallyLink(nome))
-            setCopiedIdx(idx)
-            setTimeout(() => setCopiedIdx(null), 2000)
+            setCopiedVideoIdx(idx)
+            setTimeout(() => setCopiedVideoIdx(null), 2000)
           }
 
           return (
@@ -2166,12 +2166,12 @@ export default function EventoPage() {
                         <button
                           onClick={() => copyLink(idx, nome)}
                           className={`text-[9px] px-2.5 py-1 rounded-lg border transition-all tracking-widest uppercase ${
-                            copiedIdx === idx
+                            copiedVideoIdx === idx
                               ? 'border-emerald-500/40 text-emerald-400 bg-emerald-500/10'
                               : 'border-white/10 text-white/30 hover:text-white/60 hover:border-white/25'
                           }`}
                         >
-                          {copiedIdx === idx ? '✓ Copiado' : '🔗 Copiar link'}
+                          {copiedVideoIdx === idx ? '✓ Copiado' : '🔗 Copiar link'}
                         </button>
                       </div>
                     </div>
