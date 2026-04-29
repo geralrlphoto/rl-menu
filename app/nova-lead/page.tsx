@@ -274,15 +274,19 @@ export default function NovaLeadPage() {
           style={{ width: `${progress}%`, background: 'linear-gradient(90deg,rgba(201,168,76,0.5),#C9A84C)' }} />
       </div>
 
-      <div className="relative max-w-lg mx-auto px-6 py-16 sm:py-20">
+      <div className="relative max-w-lg mx-auto px-6 pt-14 pb-16 sm:pt-16 sm:pb-20">
 
-        {/* Logo */}
-        <div className="mb-14 flex items-center justify-between">
+        {/* Logo centrado */}
+        <div className="flex justify-center mb-12">
           <img
             src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
             alt="RL Photo · Video"
-            className="h-8 opacity-70"
+            className="w-28 sm:w-36 opacity-80"
           />
+        </div>
+
+        {/* Contador de step */}
+        <div className="flex justify-end mb-6">
           <p className="text-[10px] tracking-[0.3em] uppercase" style={{ color: 'rgba(255,255,255,0.15)' }}>
             {cur.num} / {STEPS.length.toString().padStart(2, '0')}
           </p>
