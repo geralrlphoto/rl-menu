@@ -84,3 +84,14 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ ok: true })
 }
+
+// DELETE /api/relatorios-video?id=UUID — admin reset
+export async function DELETE(req: NextRequest) {
+  const id = req.nextUrl.searchParams.get('id')
+  if (!id) return NextResponse.json({ error: 'id obrigatório' }, { status: 400 })
+
+  const { error } = await supabase.from('relatorios_video').delete().eq('id', id)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  return NextResponse.json({ ok: true })
+}
