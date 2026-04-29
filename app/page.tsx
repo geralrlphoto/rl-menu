@@ -532,38 +532,6 @@ export default async function Home() {
         <DashboardCarousel cols={cols} />
       </div>
 
-      {/* ── Footer — Portal dos Noivos ─────────────────────────────────────────── */}
-      <div className="relative overflow-hidden" style={{ height: '380px' }}>
-        {/* Foto de fundo */}
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=1920&q=85')" }}
-        />
-        {/* Overlay base */}
-        <div className="absolute inset-0 bg-black/40" />
-        {/* Desvanecer topo — a foto emerge do escuro da página */}
-        <div className="absolute top-0 left-0 right-0 h-56 bg-gradient-to-b from-[#0d0d0d] via-[#0d0d0d]/70 to-transparent" />
-        {/* Desvanecer fundo — volta ao escuro */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#080808] to-transparent" />
-        {/* Vinheta lateral */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#080808]/40 via-transparent to-[#080808]/40" />
-        {/* Conteúdo centrado */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-          <p className="text-[8px] tracking-[0.6em] text-white/30 uppercase">Portal dos Noivos</p>
-          <h2 className="text-2xl sm:text-3xl font-extralight tracking-[0.4em] text-white/60 uppercase">
-            RL <span className="text-[#C9A84C]/70">PHOTO</span>.VIDEO
-          </h2>
-          <div className="h-px w-16 bg-gradient-to-r from-transparent via-[#C9A84C]/40 to-transparent mt-1" />
-          <Link
-            href="/portais-clientes"
-            className="mt-3 group flex items-center gap-2 text-[10px] tracking-[0.35em] text-white/25 hover:text-[#C9A84C]/70 uppercase transition-colors duration-300"
-          >
-            Aceder ao Portal
-            <span className="group-hover:translate-x-1 transition-transform duration-200">→</span>
-          </Link>
-        </div>
-      </div>
-
       {/* Footer marquee */}
       <div className="h-10 border-t border-white/[0.06] overflow-hidden flex items-center">
         <div className="flex animate-marquee whitespace-nowrap">
