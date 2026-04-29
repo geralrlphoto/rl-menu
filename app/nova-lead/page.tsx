@@ -285,15 +285,27 @@ export default function NovaLeadPage() {
           }}
         >
           {/* Título do step */}
-          <div className="mb-10 space-y-2">
-            <p className="text-[10px] tracking-[0.45em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.55)' }}>
-              {cur.sub}
-            </p>
-            <h2 className="font-playfair text-4xl sm:text-5xl font-light text-white leading-tight">
-              {cur.titulo}
-            </h2>
-            <div className="w-8 h-px mt-3" style={{ background: 'rgba(201,168,76,0.4)' }} />
-          </div>
+          {step === 1 && form.nome ? (
+            <div className="mb-10 space-y-1">
+              <p className="font-playfair text-2xl sm:text-3xl font-light leading-snug" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                Olá,
+              </p>
+              <h2 className="font-playfair text-4xl sm:text-5xl font-light text-white leading-tight">
+                {form.nome}
+              </h2>
+              <div className="w-8 h-px mt-3" style={{ background: 'rgba(201,168,76,0.4)' }} />
+            </div>
+          ) : (
+            <div className="mb-10 space-y-2">
+              <p className="text-[10px] tracking-[0.45em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.55)' }}>
+                {cur.sub}
+              </p>
+              <h2 className="font-playfair text-4xl sm:text-5xl font-light text-white leading-tight">
+                {cur.titulo}
+              </h2>
+              <div className="w-8 h-px mt-3" style={{ background: 'rgba(201,168,76,0.4)' }} />
+            </div>
+          )}
 
           {/* ── STEP 1 ─── */}
           {step === 0 && (
