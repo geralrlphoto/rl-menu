@@ -858,6 +858,7 @@ function ContratoStatusSection({ eventoId, referencia }: { eventoId: string; ref
       setPortalSettings(ps)
       setSettingsBlockId(notionData?.settingsBlockId ?? null)
       setDisponivel(ps.contratoDisponivel ?? false)
+      if (Array.isArray(ps.fases_pendentes_override)) setFasesPendentesOverride(ps.fases_pendentes_override)
     })
   }, [referencia])
 
@@ -1246,6 +1247,7 @@ export default function EventoPage() {
   const [registarData, setRegistarData]   = useState(new Date().toISOString().slice(0, 10))
   const [registarMetodo, setRegistarMetodo] = useState('Transferência')
   const [registarSaving, setRegistarSaving] = useState(false)
+  const [fasesPendentesOverride, setFasesPendentesOverride] = useState<string[]>([])
   const [editingPagId, setEditingPagId] = useState<string | null>(null)
   const [editingPagValor, setEditingPagValor] = useState('')
   const [editingPagData, setEditingPagData] = useState('')
@@ -1332,17 +1334,27 @@ export default function EventoPage() {
     setEditingPagFase(pag.fase_pagamento ?? [])
   }
 
-  async function handleAnularFase(pags: any[], refEvento: string) {
-    // Zera o valor_liquidado de todos os registos desta fase → fica POR LIQUIDAR
-    await Promise.all(pags.map(pag => {
-      const apiId = pag.id.startsWith('notion_') ? pag.id.replace('notion_', '') : pag.id
-      return fetch(`/api/pagamentos-noivos/${apiId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ valor_liquidado: 0 }),
-      })
-    }))
-    loadPagamentos(refEvento, true)
+  async function handleAnularFase(label: string, pags: any[], refEvento: string) {
+    if (pags.length > 0) {
+      // Tem registos → zera os valores
+      await Promise.all(pags.map(pag => {
+        const apiId = pag.id.startsWith('notion_') ? pag.id.replace('notion_', '') : pag.id
+        return fetch(`/api/pagamentos-noivos/${apiId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ valor_liquidado: 0 }),
+        })
+      }))
+      loadPagamentos(refEvento, true)
+    } else {
+      // Sem registos (liquidado só por tudoLiquidado) → guardar override nas settings
+      const novaLista = fasesPendentesOverride.includes(label)
+        ? fasesPendentesOverride.filter(f => f !== label)   // já estava → remover (toggle)
+        : [...fasesPendentesOverride, label]
+      setFasesPendentesOverride(novaLista)
+      const newSettings = { ...(portalSettings ?? {}), fases_pendentes_override: novaLista }
+      await saveSettings(newSettings)
+    }
   }
 
   async function handleEditPagSave(pag: any, refEvento: string) {
@@ -1899,7 +1911,7 @@ export default function EventoPage() {
                   const totalPago = pags.reduce((s, p) => s + (p.valor_liquidado ?? 0), 0)
                   const valorFase = faseValores[label]
                   const falta = Math.max(0, valorFase - totalPago)
-                  const liquidado = tudoLiquidado || (totalPago >= valorFase && valorFase > 0)
+                  const liquidado = !fasesPendentesOverride.includes(label) && (tudoLiquidado || (totalPago >= valorFase && valorFase > 0))
                   const parcial = totalPago > 0 && !liquidado
                   const pct = valorFase > 0 ? Math.min(100, Math.round((totalPago / valorFase) * 100)) : 0
 
@@ -1937,9 +1949,9 @@ export default function EventoPage() {
                       </div>
 
                       {/* Badge de estado — clicável quando LIQUIDADO para anular */}
-                      {liquidado && pags.length > 0 ? (
+                      {liquidado ? (
                         <button
-                          onClick={() => handleAnularFase(pags, e.referencia!)}
+                          onClick={() => handleAnularFase(label, pags, e.referencia!)}
                           title="Clique para marcar como Por Liquidar"
                           className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full w-fit ${statusCls} hover:bg-red-500/15 hover:text-red-400/80 group transition-colors`}
                         >
