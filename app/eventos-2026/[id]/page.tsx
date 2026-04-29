@@ -1333,6 +1333,8 @@ export default function EventoPage() {
         if (d.error) { setError(d.error); setLoading(false); return }
         const ev = d.event
         setEvento(ev)
+        if (ev.fotografo?.length)  setEquipaFoto(ev.fotografo)
+        if (ev.videografo?.length) setEquipaVideo(ev.videografo)
         setLoading(false)
 
         if (ev.referencia) {
@@ -2121,7 +2123,7 @@ export default function EventoPage() {
 
         {/* ── Relatório Vídeo ── */}
         {(() => {
-          const videografos: string[] = e.videografo ?? []
+          const videografos: string[] = equipaVideo.length > 0 ? equipaVideo : (e.videografo ?? [])
           const tallyBase = 'https://tally.so/r/np88GE'
           const ref = e.referencia ?? ''
 
