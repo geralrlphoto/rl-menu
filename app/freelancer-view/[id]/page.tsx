@@ -925,16 +925,24 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo, freelancerNome }:
   const [briefingOpen, setBriefingOpen]     = useState(false)
   const [showRelatorio, setShowRelatorio]   = useState(false)
   const [jaEnviou, setJaEnviou]             = useState<string | null | 'loading'>('loading')
+  const [relatorioExterno, setRelatorioExterno] = useState<any | null>('loading')
 
   useEffect(() => {
-    if (!isVideografo || !c.referencia) { setJaEnviou(null); return }
+    if (!c.referencia) { setJaEnviou(null); setRelatorioExterno(null); return }
     fetch(`/api/relatorios-video?referencia=${encodeURIComponent(c.referencia)}`)
       .then(r => r.json())
       .then(d => {
-        const meu = (d.relatorios ?? []).find((r: any) => r.nome_operador === freelancerNome)
-        setJaEnviou(meu ? meu.criado_em : null)
+        const lista = d.relatorios ?? []
+        if (isVideografo) {
+          const meu = lista.find((r: any) => r.nome_operador === freelancerNome)
+          setJaEnviou(meu ? meu.criado_em : null)
+          setRelatorioExterno(null)
+        } else {
+          setJaEnviou(null)
+          setRelatorioExterno(lista[0] ?? null)
+        }
       })
-      .catch(() => setJaEnviou(null))
+      .catch(() => { setJaEnviou(null); setRelatorioExterno(null) })
   }, [isVideografo, c.referencia, freelancerNome])
 
   async function handleConfirmar() {
@@ -1070,6 +1078,59 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo, freelancerNome }:
                 )
               ) : (
                 <p className="text-xs text-white/20 italic">Referência não disponível</p>
+              )}
+            </div>
+          )}
+          {!isVideografo && c.referencia && (
+            <div>
+              <p className="text-[9px] tracking-[0.3em] text-white uppercase mb-2">Relatório do Videógrafo</p>
+              {relatorioExterno === 'loading' ? (
+                <p className="text-xs text-white/20 italic">...</p>
+              ) : relatorioExterno ? (() => {
+                const d = relatorioExterno.dados ?? {}
+                const SKIP = ['LOCAL DO CASAMENTO (QUINTA)', 'DATA DO CASAMENTO']
+                const LABEL: Record<string, string> = {
+                  'NOME DOS NOIVOS': 'Noivos',
+                  'TIPO DE CERIMÓNIA': 'Cerimónia',
+                  'MAQUINA UTLIZADA (MARCA/MODELO)': 'Máquina',
+                  'QUAL O N.º DO CARTÃO UTILIZADO': 'Cartão',
+                  'N.º DA CAIXA UTILIZADA': 'Caixa',
+                  'DRONE UTILIZADO': 'Drone',
+                  'AUDIO': 'Áudio',
+                  'CORTE DO BOLO': 'Corte do Bolo',
+                  'EQUIPA DE ANIMAÇÃO': 'Animação',
+                  'DURANTE A REFEIÇAO E FESTA': 'Durante Festa',
+                  'ALGUMA INFORMAÇÃO RELEVANTE COLOCA AQUI': 'Notas',
+                }
+                const campos = Object.entries(d).filter(([k, v]) => !SKIP.includes(k) && v !== null && v !== undefined && String(v).trim() !== '')
+                return (
+                  <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.02)' }}>
+                    {/* Header do relatório */}
+                    <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                        <span className="text-xs font-medium text-white/70">{relatorioExterno.nome_operador || '—'}</span>
+                      </div>
+                      <span className="text-[9px] text-white/25">
+                        {new Date(relatorioExterno.criado_em).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                      </span>
+                    </div>
+                    {/* Campos */}
+                    <div className="px-4 py-3 flex flex-col gap-2.5">
+                      {campos.map(([key, val]) => (
+                        <div key={key} className="flex items-baseline justify-between gap-3">
+                          <span className="text-[9px] tracking-widest uppercase shrink-0" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                            {LABEL[key] ?? key}
+                          </span>
+                          <span className="text-xs text-right" style={{ color: 'rgba(255,255,255,0.6)' }}>{String(val)}</span>
+                        </div>
+                      ))}
+                      {campos.length === 0 && <p className="text-xs text-white/20 italic">Sem dados preenchidos.</p>}
+                    </div>
+                  </div>
+                )
+              })() : (
+                <p className="text-xs text-white/20 italic">Sem relatório ainda.</p>
               )}
             </div>
           )}
