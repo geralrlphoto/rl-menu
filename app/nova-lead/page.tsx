@@ -13,6 +13,7 @@ const ADICIONAIS_FOTO = [
   'Trash the Dress',
   'Álbum Impresso',
   'Sessão de Família',
+  'Galerias Abertas',
 ]
 
 const ADICIONAIS_VIDEO = [
@@ -22,6 +23,7 @@ const ADICIONAIS_VIDEO = [
   'Same Day Edit',
   'Vídeos Originais',
   'Sessão de Família',
+  'Trailer',
 ]
 
 const ESTILO = ['Elegante', 'Minimalista', 'Romântico', 'Documental', 'Vibrante']
