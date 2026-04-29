@@ -119,6 +119,7 @@ export async function PATCH(req: NextRequest) {
           await supabase.from('freelancer_casamentos').insert({
             freelancer_id: fl.id,
             evento_id,
+            referencia: referencia ?? null,
             local: local ?? '',
             data_casamento: data_casamento || null,
             equipa_foto: newFoto,
@@ -126,6 +127,13 @@ export async function PATCH(req: NextRequest) {
             briefing_url: null,
             order_index: 999,
           })
+        } else {
+          // ensure referencia is synced even on existing records
+          if (referencia) {
+            await supabase.from('freelancer_casamentos')
+              .update({ referencia })
+              .eq('freelancer_id', fl.id).eq('evento_id', evento_id)
+          }
         }
       }
     }
@@ -136,7 +144,7 @@ export async function PATCH(req: NextRequest) {
     if (allC?.length) {
       for (const c of allC) {
         await supabase.from('freelancer_casamentos')
-          .update({ equipa_foto: newFoto, videografo: newVideo[0] ?? null })
+          .update({ equipa_foto: newFoto, videografo: newVideo[0] ?? null, ...(referencia ? { referencia } : {}) })
           .eq('id', c.id)
       }
     }
@@ -173,6 +181,7 @@ export async function PATCH(req: NextRequest) {
           await supabase.from('freelancer_casamentos').insert({
             freelancer_id: newVfl.id,
             evento_id,
+            referencia: referencia ?? null,
             local: local ?? '',
             data_casamento: data_casamento || null,
             equipa_foto: newFoto,
@@ -180,6 +189,13 @@ export async function PATCH(req: NextRequest) {
             briefing_url: null,
             order_index: 999,
           })
+        } else {
+          // ensure referencia is synced on existing record
+          if (referencia) {
+            await supabase.from('freelancer_casamentos')
+              .update({ referencia, equipa_foto: newFoto, videografo: newVideo[0] })
+              .eq('freelancer_id', newVfl.id).eq('evento_id', evento_id)
+          }
         }
       }
     }
