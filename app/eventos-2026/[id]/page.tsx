@@ -2122,103 +2122,47 @@ export default function EventoPage() {
         </Section>
 
         {/* ── Relatório Vídeo ── */}
-        {(() => {
-          const videografos: string[] = equipaVideo.length > 0 ? equipaVideo : (e.videografo ?? [])
-          const tallyBase = 'https://tally.so/r/np88GE'
-          const ref = e.referencia ?? ''
-
-          function tallyLink(nomeOperador: string) {
-            const params = new URLSearchParams({
-              referencia: ref,
-              'Nome do Operador': nomeOperador,
-            })
-            return `${tallyBase}?${params.toString()}`
+        <Section title="Relatório Vídeo"
+          right={
+            <span className="text-[9px] tracking-widest text-white/20 uppercase">
+              {relatoriosVideo.length > 0 ? `${relatoriosVideo.length} recebido${relatoriosVideo.length > 1 ? 's' : ''}` : 'Sem relatórios'}
+            </span>
           }
-
-          function copyLink(idx: number, nome: string) {
-            navigator.clipboard.writeText(tallyLink(nome))
-            setCopiedVideoIdx(idx)
-            setTimeout(() => setCopiedVideoIdx(null), 2000)
-          }
-
-          return (
-            <Section title="Relatório Vídeo"
-              right={
-                <span className="text-[9px] tracking-widest text-white/20 uppercase">
-                  {relatoriosVideo.length > 0 ? `${relatoriosVideo.length} recebido${relatoriosVideo.length > 1 ? 's' : ''}` : 'Sem relatórios'}
-                </span>
-              }
-            >
-              {/* Links por videógrafo */}
-              {videografos.length > 0 ? (
-                <div className="flex flex-col gap-2">
-                  <p className="text-[10px] text-white/30 tracking-widest uppercase mb-1">Enviar link do relatório</p>
-                  {videografos.map((nome, idx) => (
-                    <div key={idx} className="flex items-center justify-between gap-3 bg-white/[0.02] border border-white/[0.06] rounded-xl px-4 py-2.5">
-                      <span className="text-sm text-white/70 font-medium">{nome}</span>
-                      <div className="flex items-center gap-2">
-                        <a
-                          href={tallyLink(nome)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[9px] px-2.5 py-1 rounded-lg border border-white/10 text-white/30 hover:text-white/60 hover:border-white/25 transition-all tracking-widest uppercase"
-                        >
-                          ↗ Abrir
-                        </a>
-                        <button
-                          onClick={() => copyLink(idx, nome)}
-                          className={`text-[9px] px-2.5 py-1 rounded-lg border transition-all tracking-widest uppercase ${
-                            copiedVideoIdx === idx
-                              ? 'border-emerald-500/40 text-emerald-400 bg-emerald-500/10'
-                              : 'border-white/10 text-white/30 hover:text-white/60 hover:border-white/25'
-                          }`}
-                        >
-                          {copiedVideoIdx === idx ? '✓ Copiado' : '🔗 Copiar link'}
-                        </button>
+        >
+          {relatoriosVideo.length === 0 ? (
+            <p className="text-xs text-white/20 italic">Nenhum relatório recebido ainda.</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {relatoriosVideo.map((r: any, idx: number) => {
+                const dados = r.dados ?? {}
+                const dataStr = r.criado_em
+                  ? new Date(r.criado_em).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                  : '—'
+                return (
+                  <details key={idx} className="bg-white/[0.02] border border-white/[0.06] rounded-xl overflow-hidden">
+                    <summary className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-white/[0.03] transition-colors list-none">
+                      <div className="flex items-center gap-3">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                        <span className="text-sm text-white/80 font-medium">{r.nome_operador || '—'}</span>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs text-white/20 italic">Nenhum videógrafo atribuído a este evento.</p>
-              )}
-
-              {/* Relatórios recebidos */}
-              {relatoriosVideo.length > 0 && (
-                <div className="flex flex-col gap-2 mt-2 pt-4 border-t border-white/[0.05]">
-                  <p className="text-[10px] text-white/30 tracking-widest uppercase mb-1">Relatórios recebidos</p>
-                  {relatoriosVideo.map((r: any, idx: number) => {
-                    const dados = r.dados ?? {}
-                    const dataStr = r.criado_em
-                      ? new Date(r.criado_em).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-                      : '—'
-                    return (
-                      <details key={idx} className="bg-white/[0.02] border border-white/[0.06] rounded-xl overflow-hidden">
-                        <summary className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-white/[0.02] transition-colors list-none">
-                          <div className="flex items-center gap-3">
-                            <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-                            <span className="text-sm text-white/80 font-medium">{r.nome_operador || '—'}</span>
+                      <span className="text-[10px] text-white/30">{dataStr}</span>
+                    </summary>
+                    <div className="px-4 pb-4 pt-2 flex flex-col gap-2 border-t border-white/[0.05]">
+                      {Object.entries(dados).map(([key, val]: [string, any]) => (
+                        key !== 'referencia' && key !== 'Nome do Operador' && (
+                          <div key={key} className="flex flex-col gap-0.5">
+                            <span className="text-[9px] tracking-widest text-white/25 uppercase">{key}</span>
+                            <span className="text-xs text-white/60">{String(val ?? '—')}</span>
                           </div>
-                          <span className="text-[10px] text-white/30">{dataStr}</span>
-                        </summary>
-                        <div className="px-4 pb-4 pt-2 flex flex-col gap-2 border-t border-white/[0.05]">
-                          {Object.entries(dados).map(([key, val]: [string, any]) => (
-                            key !== 'referencia' && key !== 'Nome do Operador' && (
-                              <div key={key} className="flex flex-col gap-0.5">
-                                <span className="text-[9px] tracking-widest text-white/25 uppercase">{key}</span>
-                                <span className="text-xs text-white/60">{String(val ?? '—')}</span>
-                              </div>
-                            )
-                          ))}
-                        </div>
-                      </details>
-                    )
-                  })}
-                </div>
-              )}
-            </Section>
-          )
-        })()}
+                        )
+                      ))}
+                    </div>
+                  </details>
+                )
+              })}
+            </div>
+          )}
+        </Section>
 
         {/* ── Armazenamento ── */}
         <Section title="Armazenamento">
