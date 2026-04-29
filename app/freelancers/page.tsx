@@ -20,11 +20,66 @@ type FormData = Omit<Freelancer, 'id' | 'order_index'>
 
 const STATUS_OPTIONS = ['FOTOGRAFO', 'VIDEOGRAFO', 'ASSISTENTE', 'EDITORES', 'OUTRO']
 
+// ── Ícones SVG futuristas ─────────────────────────────────────────────────────
+const IconCamera = ({ color }: { color: string }) => (
+  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="4" y="12" width="32" height="22" rx="3" stroke={color} strokeWidth="1.5"/>
+    <path d="M14 12V9a2 2 0 012-2h8a2 2 0 012 2v3" stroke={color} strokeWidth="1.5"/>
+    <circle cx="20" cy="23" r="5.5" stroke={color} strokeWidth="1.5"/>
+    <circle cx="20" cy="23" r="2.5" fill={color} opacity="0.4"/>
+    <rect x="28" y="17" width="4" height="2.5" rx="0.5" fill={color} opacity="0.5"/>
+    <line x1="4" y1="18" x2="11" y2="18" stroke={color} strokeWidth="1" opacity="0.4"/>
+  </svg>
+)
+
+const IconVideo = ({ color }: { color: string }) => (
+  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="3" y="11" width="24" height="18" rx="3" stroke={color} strokeWidth="1.5"/>
+    <path d="M27 16l9-5v18l-9-5V16z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
+    <line x1="10" y1="20" x2="18" y2="20" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    <line x1="14" y1="16" x2="14" y2="24" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    <circle cx="14" cy="20" r="1.5" fill={color} opacity="0.6"/>
+  </svg>
+)
+
+const IconAssist = ({ color }: { color: string }) => (
+  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="20" cy="13" r="5.5" stroke={color} strokeWidth="1.5"/>
+    <path d="M7 35c0-7.18 5.82-13 13-13s13 5.82 13 13" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    <line x1="20" y1="18" x2="20" y2="22" stroke={color} strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
+    <circle cx="20" cy="13" r="2" fill={color} opacity="0.4"/>
+  </svg>
+)
+
+const IconEdit = ({ color }: { color: string }) => (
+  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <line x1="6" y1="12" x2="34" y2="12" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    <rect x="12" y="8" width="16" height="8" rx="1.5" stroke={color} strokeWidth="1.2" opacity="0.4"/>
+    <line x1="6" y1="20" x2="34" y2="20" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    <rect x="6" y="16" width="10" height="8" rx="1.5" stroke={color} strokeWidth="1.2" opacity="0.4"/>
+    <line x1="6" y1="28" x2="34" y2="28" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    <rect x="24" y="24" width="10" height="8" rx="1.5" stroke={color} strokeWidth="1.2" opacity="0.4"/>
+  </svg>
+)
+
+const CATEGORY_ICONS: Record<string, (color: string) => JSX.Element> = {
+  FOTOGRAFO:  (c) => <IconCamera color={c} />,
+  VIDEOGRAFO: (c) => <IconVideo color={c} />,
+  ASSISTENTE: (c) => <IconAssist color={c} />,
+  EDITORES:   (c) => <IconEdit color={c} />,
+}
+
+const CATEGORY_COLORS: Record<string, string> = {
+  FOTOGRAFO:  '#facc15',
+  VIDEOGRAFO: '#34d399',
+  ASSISTENTE: '#f472b6',
+  EDITORES:   '#fb923c',
+}
+
 const CATEGORY_CONFIG = [
   {
     key: 'FOTOGRAFO',
     label: 'Fotógrafos',
-    icon: '📷',
     border:  'border-yellow-500/25 hover:border-yellow-500/50',
     borderActive: 'border-yellow-500/60',
     bg:      'bg-yellow-500/5',
@@ -37,7 +92,6 @@ const CATEGORY_CONFIG = [
   {
     key: 'VIDEOGRAFO',
     label: 'Videógrafos',
-    icon: '🎥',
     border:  'border-emerald-500/25 hover:border-emerald-500/50',
     borderActive: 'border-emerald-500/60',
     bg:      'bg-emerald-500/5',
@@ -50,7 +104,6 @@ const CATEGORY_CONFIG = [
   {
     key: 'ASSISTENTE',
     label: 'Assistentes',
-    icon: '🤝',
     border:  'border-pink-500/25 hover:border-pink-500/50',
     borderActive: 'border-pink-500/60',
     bg:      'bg-pink-500/5',
@@ -63,7 +116,6 @@ const CATEGORY_CONFIG = [
   {
     key: 'EDITORES',
     label: 'Editores',
-    icon: '✂️',
     border:  'border-orange-500/25 hover:border-orange-500/50',
     borderActive: 'border-orange-500/60',
     bg:      'bg-orange-500/5',
@@ -261,7 +313,9 @@ export default function FreelancersPage() {
                   </span>
 
                   {/* icon */}
-                  <span className="text-4xl leading-none">{cat.icon}</span>
+                  <div className="opacity-90">
+                    {CATEGORY_ICONS[cat.key]?.(CATEGORY_COLORS[cat.key] ?? '#ffffff')}
+                  </div>
 
                   {/* label */}
                   <span className={`text-xs font-bold tracking-widest uppercase ${isActive ? cat.accent : 'text-white/50'}`}>
