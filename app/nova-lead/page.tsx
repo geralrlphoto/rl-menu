@@ -6,10 +6,9 @@ import { useState, useEffect, useRef } from 'react'
 const TIPO_EVENTO   = ['Casamento', 'Batizado', 'Casamento e Batizado']
 const TIPO_CERIMONIA = ['Religiosa', 'Civil', 'Outra']
 const COMO_CHEGOU  = ['Instagram', 'Facebook', 'Google', 'Recomendação de amigos', 'TikTok', 'Pinterest', 'Casamentos.pt', 'Outro']
-const SERVICOS = [
-  'Serviço de Fotografia',
-  'Serviço de Vídeo',
-  'Serviço de Fotografia + Vídeo',
+const SERVICOS_PRINCIPAIS = ['Fotografia', 'Vídeo']
+
+const SERVICOS_ADICIONAIS = [
   'Pré-Wedding — Fotografia',
   'Pré-Wedding — Vídeo',
   'Trash the Dress — Fotografia',
@@ -456,11 +455,44 @@ export default function NovaLeadPage() {
           {/* ── STEP 4 — Serviços & Detalhes ─── */}
           {step === 4 && (
             <div className="space-y-8">
-              <div className="space-y-2">
+              {/* Serviço principal */}
+              <div className="space-y-3">
                 <p className="text-[10px] tracking-[0.4em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.7)' }}>
-                  Serviços Pretendidos <span style={{ color: 'rgba(201,168,76,0.4)' }}>*</span>
+                  O que pretendem? <span style={{ color: 'rgba(201,168,76,0.4)' }}>*</span>
                 </p>
-                <ServicoCheck options={SERVICOS} value={form.servicos} onChange={v => set('servicos', v)} />
+                <div className="flex gap-3">
+                  {SERVICOS_PRINCIPAIS.map(s => {
+                    const active = form.servicos.includes(s)
+                    return (
+                      <button key={s} type="button"
+                        onClick={() => set('servicos', active ? form.servicos.filter(x => x !== s) : [...form.servicos, s])}
+                        className="flex-1 py-4 rounded-2xl text-sm tracking-widest uppercase font-medium transition-all duration-200"
+                        style={active ? {
+                          background: 'rgba(201,168,76,0.12)',
+                          border: '1px solid rgba(201,168,76,0.6)',
+                          color: '#C9A84C',
+                          boxShadow: '0 0 20px rgba(201,168,76,0.1)',
+                        } : {
+                          background: 'rgba(255,255,255,0.03)',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          color: 'rgba(255,255,255,0.4)',
+                        }}>
+                        {s}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Adicionais */}
+              <div className="space-y-2">
+                <p className="text-[10px] tracking-[0.4em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.4)' }}>
+                  Serviços adicionais
+                </p>
+                <ServicoCheck options={SERVICOS_ADICIONAIS} value={form.servicos} onChange={v => {
+                  const principais = form.servicos.filter(s => SERVICOS_PRINCIPAIS.includes(s))
+                  set('servicos', [...principais, ...v.filter(s => !SERVICOS_PRINCIPAIS.includes(s))])
+                }} />
               </div>
               <LeadInput label="Orçamento Previsto (sensivelmente)" value={form.orcamento}
                 onChange={v => set('orcamento', v)} placeholder="Ex: 2.000 — 3.000€" />
