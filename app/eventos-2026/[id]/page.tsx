@@ -1332,6 +1332,19 @@ export default function EventoPage() {
     setEditingPagFase(pag.fase_pagamento ?? [])
   }
 
+  async function handleAnularFase(pags: any[], refEvento: string) {
+    // Zera o valor_liquidado de todos os registos desta fase → fica POR LIQUIDAR
+    await Promise.all(pags.map(pag => {
+      const apiId = pag.id.startsWith('notion_') ? pag.id.replace('notion_', '') : pag.id
+      return fetch(`/api/pagamentos-noivos/${apiId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ valor_liquidado: 0 }),
+      })
+    }))
+    loadPagamentos(refEvento, true)
+  }
+
   async function handleEditPagSave(pag: any, refEvento: string) {
     setEditingPagSaving(true)
     try {
@@ -1923,11 +1936,23 @@ export default function EventoPage() {
                           style={{ width: `${pct}%` }} />
                       </div>
 
-                      {/* Badge de estado */}
-                      <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full w-fit ${statusCls}`}>
-                        <div className={`w-1.5 h-1.5 rounded-full ${dotCls}`} />
-                        <span className="text-[9px] tracking-widest">{statusLabel}</span>
-                      </div>
+                      {/* Badge de estado — clicável quando LIQUIDADO para anular */}
+                      {liquidado && pags.length > 0 ? (
+                        <button
+                          onClick={() => handleAnularFase(pags, e.referencia!)}
+                          title="Clique para marcar como Por Liquidar"
+                          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full w-fit ${statusCls} hover:bg-red-500/15 hover:text-red-400/80 group transition-colors`}
+                        >
+                          <div className={`w-1.5 h-1.5 rounded-full ${dotCls} group-hover:bg-red-400`} />
+                          <span className="text-[9px] tracking-widest group-hover:hidden">{statusLabel}</span>
+                          <span className="text-[9px] tracking-widest hidden group-hover:inline">POR LIQUIDAR</span>
+                        </button>
+                      ) : (
+                        <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full w-fit ${statusCls}`}>
+                          <div className={`w-1.5 h-1.5 rounded-full ${dotCls}`} />
+                          <span className="text-[9px] tracking-widest">{statusLabel}</span>
+                        </div>
+                      )}
 
                       {/* Registos de pagamento — visualização + edição */}
                       <div className="flex flex-col gap-1.5 pt-1 border-t border-white/[0.05]">
