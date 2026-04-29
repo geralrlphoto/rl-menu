@@ -649,6 +649,28 @@ function RSegmented({ options, value, onChange }: { options: string[]; value: st
   )
 }
 
+function RMulti({ options, value, onChange }: { options: string[]; value: string[]; onChange: (v: string[]) => void }) {
+  const toggle = (opt: string) =>
+    onChange(value.includes(opt) ? value.filter(x => x !== opt) : [...value, opt])
+  return (
+    <div className="flex gap-2 flex-wrap">
+      {options.map(opt => {
+        const active = value.includes(opt)
+        return (
+          <button key={opt} type="button" onClick={() => toggle(opt)}
+            className="px-4 py-2 rounded-lg text-[10px] font-semibold tracking-widest uppercase transition-all duration-150"
+            style={active ? {
+              background: 'rgba(6,182,212,0.12)', border: '1px solid rgba(6,182,212,0.4)',
+              color: 'rgba(6,182,212,0.9)', boxShadow: '0 0 14px rgba(6,182,212,0.1)',
+            } : { background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.28)' }}>
+            {opt}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 function RToggle({ value, onChange }: { value: boolean | null; onChange: (v: boolean) => void }) {
   return (
     <div className="flex gap-2">
@@ -675,7 +697,7 @@ function RelatorioVideoModal({ c, freelancerNome, onClose }: { c: Casamento; fre
   const [error, setError]           = useState('')
   const [form, setForm] = useState({
     nomeNoivos:      '',
-    tipoCerimonia:   '',
+    tipoCerimonia:   [] as string[],
     maquina:         '',
     cartao:          '',
     caixa:           '',
@@ -706,7 +728,7 @@ function RelatorioVideoModal({ c, freelancerNome, onClose }: { c: Casamento; fre
             'NOME DOS NOIVOS':                          form.nomeNoivos        || null,
             'LOCAL DO CASAMENTO (QUINTA)':              c.local                || null,
             'DATA DO CASAMENTO':                        c.data_casamento       || null,
-            'TIPO DE CERIMÓNIA':                        form.tipoCerimonia     || null,
+            'TIPO DE CERIMÓNIA':                        form.tipoCerimonia.length ? form.tipoCerimonia.join(', ') : null,
             'MAQUINA UTLIZADA (MARCA/MODELO)':          form.maquina           || null,
             'QUAL O N.º DO CARTÃO UTILIZADO':           form.cartao            || null,
             'N.º DA CAIXA UTILIZADA':                   form.caixa             || null,
@@ -804,7 +826,7 @@ function RelatorioVideoModal({ c, freelancerNome, onClose }: { c: Casamento; fre
               <RInput value={form.nomeNoivos} onChange={v => set('nomeNoivos', v)} placeholder="Ex: Ana & João Silva" />
             </RField>
             <RField label="Tipo de Cerimónia">
-              <RSegmented options={['Religiosa', 'Civil', 'Com Celebrente', 'Com Votos', 'Com Discursos', 'Com Rituais']} value={form.tipoCerimonia} onChange={v => set('tipoCerimonia', v)} />
+              <RMulti options={['Religiosa', 'Civil', 'Com Celebrente', 'Com Votos', 'Com Discursos', 'Com Rituais']} value={form.tipoCerimonia} onChange={v => set('tipoCerimonia', v)} />
             </RField>
           </RSection>
 
