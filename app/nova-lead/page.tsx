@@ -25,12 +25,13 @@ const SERVICOS = [
 const ESTILO = ['Elegante', 'Minimalista', 'Romântico', 'Documental', 'Vibrante']
 
 const STEPS = [
-  { num: '01', titulo: '',                         sub: '' },
-  { num: '02', titulo: '',                         sub: '' },
-  { num: '03', titulo: 'O Vosso Evento',           sub: 'Conte-nos sobre o grande dia' },
-  { num: '04', titulo: 'Local & Cerimónia',        sub: 'Onde vai acontecer a magia' },
+  { num: '01', titulo: '',                          sub: '' },
+  { num: '02', titulo: '',                          sub: '' },
+  { num: '03', titulo: 'O Vosso Evento',            sub: 'Conte-nos sobre o grande dia' },
+  { num: '04', titulo: 'Local & Cerimónia',         sub: 'Onde vai acontecer a magia' },
   { num: '05', titulo: 'Perguntas que ninguém faz', sub: 'Queremos conhecer-vos melhor' },
-  { num: '06', titulo: 'Serviços & Detalhes',      sub: 'O que precisam de nós' },
+  { num: '06', titulo: 'Serviços & Detalhes',       sub: 'O que precisam de nós' },
+  { num: '07', titulo: 'Os vossos contactos',       sub: 'Para podermos falar convosco' },
 ]
 
 // ── Helpers de animação ───────────────────────────────────────────────────────
@@ -375,16 +376,6 @@ export default function NovaLeadPage() {
                   Preencham com calma e sinceridade. Tudo o que partilharem será usado para criar um registo fiel e emocionante do vosso casamento.
                 </p>
               </div>
-
-              {/* Campos de contacto */}
-              <div className="pt-2 space-y-7" style={{ borderTop: '1px solid rgba(201,168,76,0.1)' }}>
-                <LeadInput label="Telemóvel" type="tel" value={form.contato}
-                  onChange={v => set('contato', v)} placeholder="Ex: 912 345 678" required />
-                <LeadInput label="E-mail" type="email" value={form.email}
-                  onChange={v => set('email', v)} placeholder="Ex: ana@email.com" required />
-                <LeadInput label="Zona de Residência" value={form.zonaResidencia}
-                  onChange={v => set('zonaResidencia', v)} placeholder="Ex: Lisboa, Setúbal..." required />
-              </div>
             </div>
           )}
 
@@ -427,8 +418,6 @@ export default function NovaLeadPage() {
               </div>
               <LeadInput label="Número de Convidados (sensivelmente)" value={form.numConvidados}
                 onChange={v => set('numConvidados', v)} placeholder="Ex: 150" />
-              <LeadSelect label="Como chegaram até nós?" value={form.comoChegou}
-                onChange={v => set('comoChegou', v)} options={COMO_CHEGOU} />
             </div>
           )}
 
@@ -497,6 +486,20 @@ export default function NovaLeadPage() {
                   onBlur={e => { e.currentTarget.style.borderBottomColor = 'rgba(201,168,76,0.25)' }}
                 />
               </div>
+            </div>
+          )}
+
+          {/* ── STEP 6 — Contactos ─── */}
+          {step === 6 && (
+            <div className="space-y-8">
+              <LeadInput label="Telemóvel" type="tel" value={form.contato}
+                onChange={v => set('contato', v)} placeholder="Ex: 912 345 678" required />
+              <LeadInput label="E-mail" type="email" value={form.email}
+                onChange={v => set('email', v)} placeholder="Ex: ana@email.com" required />
+              <LeadInput label="Zona de Residência" value={form.zonaResidencia}
+                onChange={v => set('zonaResidencia', v)} placeholder="Ex: Lisboa, Setúbal..." />
+              <LeadSelect label="Como chegaram até nós?" value={form.comoChegou}
+                onChange={v => set('comoChegou', v)} options={COMO_CHEGOU} />
             </div>
           )}
 
