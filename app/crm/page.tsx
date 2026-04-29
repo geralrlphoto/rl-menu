@@ -363,6 +363,13 @@ export default function CRMPage() {
             className="px-5 py-3 border border-white/10 hover:border-gold/40 rounded-xl text-sm text-white/40 hover:text-gold tracking-[0.15em] uppercase transition-all">
             Estatísticas
           </Link>
+          <a href="/nova-lead" target="_blank" rel="noopener noreferrer"
+            className="px-5 py-3 border border-gold/20 hover:border-gold/60 rounded-xl text-sm text-gold/50 hover:text-gold tracking-[0.15em] uppercase transition-all flex items-center gap-2">
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+            </svg>
+            Form. Noivos
+          </a>
           <Link href="/crm/nova"
             className="px-6 py-3 bg-gold/90 hover:bg-gold rounded-xl text-sm font-semibold text-black tracking-[0.15em] uppercase transition-all">
             + Nova Lead
