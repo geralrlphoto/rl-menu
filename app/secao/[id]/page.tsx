@@ -112,7 +112,10 @@ export default async function SecaoPage({ params }: Props) {
       {/* Sub-páginas do Supabase */}
       {pages && pages.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {pages.map((page) => {
+          {pages.filter(page => {
+            const t = page.title?.toUpperCase() ?? ''
+            return !(t.includes('EVENTO') && (t.includes('2025') || t.includes('2027')))
+          }).map((page) => {
             const isFinancas      = page.title?.toUpperCase().includes('FINANÇ')
             const isFotosSel      = page.title?.toUpperCase().includes('SELEÇÃO') || page.title?.toUpperCase().includes('SELECAO')
             const isFreelancers   = page.title?.toUpperCase().includes('FREELANC')
