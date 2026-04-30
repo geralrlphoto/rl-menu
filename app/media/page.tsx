@@ -46,36 +46,34 @@ export default async function MediaDashboard() {
         style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(180,200,255,0.04) 0%, transparent 70%)' }}
       />
 
-      {/* ── Header ──────────────────────────────────────────────────── */}
-      <header className="relative z-10 flex items-center justify-between px-8 pt-8 pb-6">
-        <div className="flex items-center gap-5">
-          <div className="flex flex-col gap-[3px]">
-            <div className="h-px w-6 bg-white/40" />
-            <div className="h-px w-4 bg-white/20" />
-            <div className="h-px w-6 bg-white/40" />
-          </div>
-          <div>
-            <p className="text-[8px] tracking-[0.6em] text-white/25 uppercase">Menu Interno</p>
-            <h1 className="text-sm font-extralight tracking-[0.5em] text-white/70 uppercase mt-0.5">
-              RL <span className="text-white/90">MEDIA</span>
-            </h1>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="hidden sm:flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400/60 animate-pulse" />
-            <span className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Online</span>
-          </div>
+      {/* ── Hero com imagem ─────────────────────────────────────────── */}
+      <div className="relative z-10 shrink-0 overflow-hidden" style={{ height: '380px' }}>
+        {/* Imagem de fundo */}
+        <div className="absolute inset-0 bg-cover bg-center scale-105"
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=1600&q=80')" }} />
+        {/* Overlays */}
+        <div className="absolute inset-0 bg-black/55" />
+        <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-[#050507] to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-56 bg-gradient-to-t from-[#050507] via-[#050507]/70 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#050507]/40 via-transparent to-[#050507]/40" />
+
+        {/* Logout — topo direito */}
+        <div className="absolute top-5 right-6 z-10">
           <LogoutButton />
         </div>
-      </header>
 
-      {/* ── Hero line ───────────────────────────────────────────────── */}
-      <div className="relative z-10 px-8 pb-10">
-        <div className="flex items-center gap-4">
-          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-          <span className="text-[8px] tracking-[0.5em] text-white/15 uppercase">Audiovisual</span>
-          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        {/* Conteúdo centrado */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+          <p className="text-[8px] tracking-[0.6em] text-white/25 uppercase">Menu Interno</p>
+          <h1 className="text-3xl sm:text-4xl font-extralight tracking-[0.45em] text-white/85 uppercase">
+            RL <span className="text-white/60">MEDIA</span>
+          </h1>
+          <p className="text-sm font-extralight tracking-[0.3em] text-white/30 uppercase">Audiovisual</p>
+          <div className="flex items-center gap-3 mt-1">
+            <div className="h-px w-8 bg-white/15" />
+            <div className="w-1 h-1 rounded-full bg-white/20" />
+            <div className="h-px w-8 bg-white/15" />
+          </div>
         </div>
       </div>
 
