@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 const TIPOS = [
   'Produção Audiovisual',
@@ -32,8 +33,11 @@ const ESTADOS_CONTRATO = [
 ]
 
 interface FormData {
+  ref: string
   nome: string
   empresa: string
+  nif: string
+  morada: string
   email: string
   telefone: string
   tipo: string
@@ -53,8 +57,11 @@ interface FormData {
 }
 
 const EMPTY: FormData = {
+  ref: '',
   nome: '',
   empresa: '',
+  nif: '',
+  morada: '',
   email: '',
   telefone: '',
   tipo: '',
@@ -76,7 +83,10 @@ export default function FichaClientePage() {
   const [form, setForm] = useState<FormData>(EMPTY)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [gerando, setGerando] = useState(false)
+  const [contratoGerado, setContratoGerado] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const router = useRouter()
 
   const set = (k: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }))
@@ -86,11 +96,31 @@ export default function FichaClientePage() {
     if (!form.nome.trim()) { setError('Nome do cliente é obrigatório.'); return }
     setSaving(true)
     setError('')
-    // Simulated save (future: POST to /api/media-portal/ficha-cliente)
     await new Promise(r => setTimeout(r, 900))
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
+  }
+
+  async function handleGerarContrato() {
+    if (!form.ref.trim()) { setError('Ref do portal é obrigatória para gerar o contrato.'); return }
+    if (!form.nome.trim()) { setError('Nome do cliente é obrigatório.'); return }
+    setGerando(true)
+    setError('')
+    try {
+      const res = await fetch('/api/media-portal/gerar-contrato', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setContratoGerado(data.contratoUrl)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Erro ao gerar contrato.')
+    } finally {
+      setGerando(false)
+    }
   }
 
   const labelCls = "block text-[8px] tracking-[0.5em] text-white/25 uppercase mb-2"
@@ -137,6 +167,16 @@ export default function FichaClientePage() {
               <span>01 — Identificação</span>
               <span className="flex-1 h-px bg-white/[0.05]" />
             </p>
+            <div className="mb-4">
+              <label className={labelCls}>Ref do Portal *</label>
+              <input
+                value={form.ref}
+                onChange={e => setForm(f => ({ ...f, ref: e.target.value.toUpperCase() }))}
+                placeholder="Ex: OLEOBIO"
+                className={inputCls + ' uppercase tracking-widest'}
+              />
+              <p className="mt-1.5 text-[9px] text-white/15">Referência única do projeto — liga a ficha ao portal do cliente.</p>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>Nome *</label>
@@ -147,12 +187,20 @@ export default function FichaClientePage() {
                 <input value={form.empresa} onChange={set('empresa')} placeholder="Nome da empresa" className={inputCls} />
               </div>
               <div>
-                <label className={labelCls}>Email</label>
-                <input type="email" value={form.email} onChange={set('email')} placeholder="email@exemplo.com" className={inputCls} />
+                <label className={labelCls}>NIF / NIPC</label>
+                <input value={form.nif} onChange={set('nif')} placeholder="123 456 789" className={inputCls} />
               </div>
               <div>
                 <label className={labelCls}>Telefone</label>
                 <input value={form.telefone} onChange={set('telefone')} placeholder="+351 9xx xxx xxx" className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Email</label>
+                <input type="email" value={form.email} onChange={set('email')} placeholder="email@exemplo.com" className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Morada</label>
+                <input value={form.morada} onChange={set('morada')} placeholder="Rua, cidade" className={inputCls} />
               </div>
             </div>
           </div>
@@ -265,23 +313,67 @@ export default function FichaClientePage() {
             <p className="text-[10px] tracking-[0.3em] text-red-400/70 uppercase">{error}</p>
           )}
 
+          {/* Contrato gerado — banner */}
+          {contratoGerado && (
+            <div className="border border-emerald-400/20 bg-emerald-400/5 px-5 py-4 flex items-center justify-between gap-4">
+              <div>
+                <p className="text-[9px] tracking-[0.4em] text-emerald-400/70 uppercase mb-1">✓ Contrato Gerado</p>
+                <p className="text-xs text-white/30">Disponível na ficha e no portal do cliente.</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <a
+                  href={contratoGerado}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[9px] tracking-[0.4em] text-white/40 hover:text-white/70 border border-white/10
+                             hover:border-white/25 px-4 py-2 uppercase transition-all duration-200"
+                >
+                  Ver Contrato →
+                </a>
+              </div>
+            </div>
+          )}
+
           {/* Actions */}
           <div className="flex items-center justify-between pt-2 border-t border-white/[0.05]">
-            <button type="button" onClick={() => setForm(EMPTY)}
+            <button type="button" onClick={() => { setForm(EMPTY); setContratoGerado(null) }}
               className="text-[9px] tracking-[0.4em] text-white/20 hover:text-white/45 uppercase transition-colors">
               Limpar
             </button>
-            <button type="submit" disabled={saving}
-              className="flex items-center gap-3 border border-white/20 bg-white/[0.04] hover:bg-white/[0.09] hover:border-white/35
-                         px-8 py-4 transition-all duration-300 disabled:opacity-40">
-              {saving ? (
-                <span className="text-[9px] tracking-[0.5em] text-white/40 uppercase">A guardar...</span>
-              ) : saved ? (
-                <span className="text-[9px] tracking-[0.5em] text-emerald-400/70 uppercase">✓ Guardado</span>
-              ) : (
-                <span className="text-[9px] tracking-[0.5em] text-white/55 uppercase">Guardar Ficha →</span>
-              )}
-            </button>
+            <div className="flex items-center gap-3">
+              {/* Gerar Contrato */}
+              <button
+                type="button"
+                onClick={handleGerarContrato}
+                disabled={gerando}
+                className="flex items-center gap-2 border border-white/15 bg-white/[0.03] hover:bg-white/[0.07]
+                           hover:border-white/30 px-6 py-4 transition-all duration-300 disabled:opacity-40"
+              >
+                {gerando ? (
+                  <span className="text-[9px] tracking-[0.4em] text-white/35 uppercase">A gerar...</span>
+                ) : (
+                  <>
+                    <svg className="w-3 h-3 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0121 9.414V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span className="text-[9px] tracking-[0.4em] text-white/40 uppercase">Gerar Contrato</span>
+                  </>
+                )}
+              </button>
+
+              {/* Guardar */}
+              <button type="submit" disabled={saving}
+                className="flex items-center gap-3 border border-white/20 bg-white/[0.04] hover:bg-white/[0.09] hover:border-white/35
+                           px-8 py-4 transition-all duration-300 disabled:opacity-40">
+                {saving ? (
+                  <span className="text-[9px] tracking-[0.5em] text-white/40 uppercase">A guardar...</span>
+                ) : saved ? (
+                  <span className="text-[9px] tracking-[0.5em] text-emerald-400/70 uppercase">✓ Guardado</span>
+                ) : (
+                  <span className="text-[9px] tracking-[0.5em] text-white/55 uppercase">Guardar Ficha →</span>
+                )}
+              </button>
+            </div>
           </div>
 
         </form>
