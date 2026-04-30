@@ -100,14 +100,10 @@ export async function POST(req: NextRequest) {
     <!-- Corpo principal -->
     <tr><td style="background:radial-gradient(ellipse 100% 85% at 50% 10%,#1c2a4a 0%,#101928 50%,#080d18 100%);padding:52px 52px 48px;text-align:center;">
 
-      <!-- Logo circular -->
-      <table cellpadding="0" cellspacing="0" style="margin:0 auto 32px;">
-        <tr><td width="90" height="90" style="width:90px;height:90px;border-radius:50%;background:radial-gradient(ellipse at 35% 30%,#2d3d5c,#141e30);border:1px solid rgba(200,170,100,0.6);text-align:center;vertical-align:middle;box-shadow:0 0 12px rgba(200,170,100,0.55),0 0 28px rgba(200,170,100,0.25),0 0 55px rgba(200,170,100,0.10);">
-          <img src="https://rl-menu-lake.vercel.app/logo_marca_advocacia__8_-removebg-preview.png"
-            width="72" height="72" alt="RL Media"
-            style="display:block;margin:9px auto 0;width:72px;height:72px;object-fit:contain;" />
-        </td></tr>
-      </table>
+      <!-- Logo circular com neon -->
+      <img src="https://rl-menu-lake.vercel.app/logo_marca_advocacia__8_-removebg-preview.png"
+        width="88" height="88" alt="RL Media"
+        style="display:block;margin:0 auto 32px;width:88px;height:88px;object-fit:cover;border-radius:50%;border:1.5px solid rgba(200,170,100,0.65);box-shadow:0 0 10px rgba(200,170,100,0.7),0 0 24px rgba(200,170,100,0.35),0 0 50px rgba(200,170,100,0.15);" />
 
       <!-- Brand -->
       <p style="margin:0 0 36px;font-size:9px;letter-spacing:7px;color:rgba(180,150,90,0.6);text-transform:uppercase;">
