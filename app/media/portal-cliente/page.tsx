@@ -92,18 +92,31 @@ export default function PortalClientePage() {
                   </div>
                 </div>
 
-                {/* CTA */}
-                <Link href={portal.href} target="_blank"
-                  className="shrink-0 flex items-center gap-3 border border-white/15 bg-white/[0.04]
-                             hover:bg-white/[0.09] hover:border-white/30
-                             px-5 py-3 transition-all duration-300 group/btn">
-                  <span className="text-[9px] tracking-[0.4em] text-white/50 group-hover/btn:text-white/80 uppercase transition-colors whitespace-nowrap">
-                    Abrir Portal
-                  </span>
-                  <span className="text-white/25 group-hover/btn:text-white/60 group-hover/btn:translate-x-0.5 transition-all duration-200">
-                    →
-                  </span>
-                </Link>
+                {/* CTAs */}
+                <div className="shrink-0 flex items-center gap-2">
+                  <Link href={`/portal-media/${portal.ref}/card`} target="_blank"
+                    className="flex items-center gap-2 border border-white/10 bg-white/[0.02]
+                               hover:bg-white/[0.06] hover:border-white/20
+                               px-4 py-3 transition-all duration-300 group/card">
+                    <svg className="w-3 h-3 text-white/25 group-hover/card:text-white/55 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>
+                    </svg>
+                    <span className="text-[9px] tracking-[0.4em] text-white/30 group-hover/card:text-white/60 uppercase transition-colors whitespace-nowrap">
+                      Card
+                    </span>
+                  </Link>
+                  <Link href={portal.href} target="_blank"
+                    className="flex items-center gap-3 border border-white/15 bg-white/[0.04]
+                               hover:bg-white/[0.09] hover:border-white/30
+                               px-5 py-3 transition-all duration-300 group/btn">
+                    <span className="text-[9px] tracking-[0.4em] text-white/50 group-hover/btn:text-white/80 uppercase transition-colors whitespace-nowrap">
+                      Abrir Portal
+                    </span>
+                    <span className="text-white/25 group-hover/btn:text-white/60 group-hover/btn:translate-x-0.5 transition-all duration-200">
+                      →
+                    </span>
+                  </Link>
+                </div>
               </div>
             </div>
           ))}
