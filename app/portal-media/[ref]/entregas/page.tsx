@@ -40,8 +40,8 @@ export default async function EntregasPage({ params }: Props) {
               <div className="flex items-start gap-4">
                 <span className="text-sm font-mono text-white/15 mt-0.5">{String(i + 1).padStart(2, '0')}</span>
                 <div>
-                  <p className="text-base tracking-[0.25em] text-white/65 uppercase font-medium">{e.titulo}</p>
-                  <p className="text-base tracking-[0.15em] text-white/25 mt-1">{e.formato} · {e.duracao}</p>
+                  <p className="text-sm tracking-[0.25em] text-white/65 uppercase font-medium">{e.titulo}</p>
+                  <p className="text-sm tracking-[0.15em] text-white/25 mt-1">{e.formato} · {e.duracao}</p>
                 </div>
               </div>
               {e.estado === 'disponivel' && e.linkUrl ? (
@@ -57,7 +57,7 @@ export default async function EntregasPage({ params }: Props) {
         </div>
 
         <div className="mt-8 border border-white/[0.05] bg-white/[0.01] px-5 py-4">
-          <p className="text-base tracking-[0.2em] text-white/20 leading-relaxed">
+          <p className="text-sm tracking-[0.2em] text-white/20 leading-relaxed">
             Os ficheiros ficarão disponíveis após a aprovação da entrega final. Os links expiram 30 dias após disponibilização.
           </p>
         </div>

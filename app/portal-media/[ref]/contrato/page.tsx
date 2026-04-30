@@ -37,7 +37,7 @@ export default async function ContratoPage({ params }: Props) {
           <div className={`border px-6 py-5 flex items-center justify-between
             ${projeto.contratoUrl ? 'border-emerald-400/20 bg-emerald-400/5' : 'border-white/[0.07] bg-white/[0.02]'}`}>
             <div>
-              <p className="text-base tracking-[0.25em] text-white/60 uppercase font-medium">Contrato de Prestação de Serviços</p>
+              <p className="text-sm tracking-[0.25em] text-white/60 uppercase font-medium">Contrato de Prestação de Serviços</p>
               <p className={`text-xs tracking-[0.3em] uppercase mt-1 ${projeto.contratoUrl ? 'text-emerald-400/60' : 'text-white/20'}`}>
                 {projeto.contratoUrl ? 'Assinado' : 'Pendente de envio'}
               </p>
@@ -53,7 +53,7 @@ export default async function ContratoPage({ params }: Props) {
           {/* CPS form */}
           <div className="border border-white/[0.07] bg-white/[0.02] px-6 py-6">
             <p className="text-xs tracking-[0.4em] text-white/25 uppercase mb-2">Dados para CPS</p>
-            <p className="text-base text-white/30 leading-relaxed mb-4">
+            <p className="text-sm text-white/30 leading-relaxed mb-4">
               Para emissão do contrato precisamos dos dados fiscais da tua empresa. Preenche o formulário abaixo.
             </p>
             <button
@@ -65,7 +65,7 @@ export default async function ContratoPage({ params }: Props) {
         </div>
 
         <div className="border border-white/[0.05] bg-white/[0.01] px-5 py-4">
-          <p className="text-base tracking-[0.2em] text-white/20 leading-relaxed">
+          <p className="text-sm tracking-[0.2em] text-white/20 leading-relaxed">
             Dúvidas sobre o contrato? Contacta <span className="text-white/35">rl@rlmedia.pt</span>
           </p>
         </div>

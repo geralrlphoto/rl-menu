@@ -45,8 +45,8 @@ export default async function BriefingPage({ params }: Props) {
               <div className="flex items-start gap-4">
                 <span className="text-sm font-mono text-white/15 shrink-0 mt-0.5">{String(i + 1).padStart(2, '0')}</span>
                 <div>
-                  <p className="text-base tracking-[0.25em] text-white/55 uppercase font-medium mb-1.5">{item.label}</p>
-                  <p className="text-base text-white/30 leading-relaxed">{item.desc}</p>
+                  <p className="text-sm tracking-[0.25em] text-white/55 uppercase font-medium mb-1.5">{item.label}</p>
+                  <p className="text-sm text-white/30 leading-relaxed">{item.desc}</p>
                 </div>
               </div>
             </div>
@@ -56,7 +56,7 @@ export default async function BriefingPage({ params }: Props) {
         {projeto.briefingUrl && (
           <a href={projeto.briefingUrl} target="_blank" rel="noopener noreferrer"
             className="mt-6 flex items-center justify-between border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] px-6 py-4 transition-colors group">
-            <span className="text-base tracking-[0.3em] text-white/40 uppercase">Ver Briefing Completo</span>
+            <span className="text-sm tracking-[0.3em] text-white/40 uppercase">Ver Briefing Completo</span>
             <span className="text-white/20 group-hover:text-white/50 transition-colors">↗</span>
           </a>
         )}

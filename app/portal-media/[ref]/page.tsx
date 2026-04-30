@@ -125,7 +125,7 @@ export default async function PortalMediaPage({ params }: Props) {
             </div>
           </div>
 
-          <p className="text-base text-white/45 leading-relaxed mb-6">
+          <p className="text-sm text-white/45 leading-relaxed mb-6">
             Olá, seja bem-vindo ao <span className="text-white/65">Portal do Cliente</span>.<br/>
             Aqui encontra <span className="text-white/65">tudo o que precisa saber sobre o andamento do seu projeto</span> de forma clara, organizada e transparente.
           </p>
@@ -172,7 +172,7 @@ export default async function PortalMediaPage({ params }: Props) {
           </div>
 
           <div className="border-t border-white/[0.05] pt-5 flex items-start gap-2">
-            <span className="text-base shrink-0">👉</span>
+            <span className="text-sm shrink-0">👉</span>
             <p className="text-sm text-white/35 leading-relaxed">
               Este portal foi criado para <span className="text-white/45">garantir transparência, confiança e proximidade</span> durante todo o processo.
               Obrigado pela confiança na nossa equipa.

@@ -62,8 +62,8 @@ export default async function PagamentosPage({ params }: Props) {
             return (
               <div key={i} className={`flex items-center justify-between border ${cfg.border} ${cfg.bg} px-6 py-5`}>
                 <div>
-                  <p className="text-base tracking-[0.2em] text-white/60 uppercase font-medium">{pag.descricao}</p>
-                  <p className="text-base tracking-[0.2em] text-white/20 mt-1">{pag.data}</p>
+                  <p className="text-sm tracking-[0.2em] text-white/60 uppercase font-medium">{pag.descricao}</p>
+                  <p className="text-sm tracking-[0.2em] text-white/20 mt-1">{pag.data}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-xl tracking-[0.1em] text-white/60 font-light">{pag.valor.toLocaleString('pt-PT')} €</p>
@@ -74,7 +74,7 @@ export default async function PagamentosPage({ params }: Props) {
           })}
         </div>
 
-        <p className="mt-8 text-base tracking-[0.2em] text-white/15 leading-relaxed">
+        <p className="mt-8 text-sm tracking-[0.2em] text-white/15 leading-relaxed">
           Para questões relacionadas com faturação contacta financeiro@rlmedia.pt
         </p>
       </div>

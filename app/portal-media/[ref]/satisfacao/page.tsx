@@ -39,7 +39,7 @@ export default async function SatisfacaoPage({ params }: Props) {
           </div>
           <div>
             <p className="text-lg tracking-[0.3em] text-white/50 uppercase mb-2">Avaliação do Projeto</p>
-            <p className="text-base text-white/25 leading-relaxed max-w-sm">
+            <p className="text-sm text-white/25 leading-relaxed max-w-sm">
               No final do projeto pedimos que avalies a tua experiência com a RL Media.
               A tua opinião ajuda-nos a melhorar continuamente.
             </p>

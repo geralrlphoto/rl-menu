@@ -41,21 +41,21 @@ export default async function AtendimentoPage({ params }: Props) {
               <span className="text-lg text-white/20 select-none">◈</span>
             </div>
             <div>
-              <p className="text-base tracking-[0.2em] text-white/65 uppercase font-light">{projeto.gestorNome}</p>
-              <p className="text-base tracking-[0.2em] text-white/25 mt-0.5">RL Media · Audiovisual</p>
+              <p className="text-sm tracking-[0.2em] text-white/65 uppercase font-light">{projeto.gestorNome}</p>
+              <p className="text-sm tracking-[0.2em] text-white/25 mt-0.5">RL Media · Audiovisual</p>
             </div>
           </div>
           <div className="flex flex-col gap-3">
             <a href={`mailto:${projeto.gestorEmail}`}
               className="group flex items-center gap-4 border border-white/[0.06] bg-white/[0.01] hover:bg-white/[0.04] px-5 py-3 transition-colors">
               <span className="text-xs tracking-[0.4em] text-white/20 uppercase w-14 shrink-0">Email</span>
-              <span className="text-base tracking-[0.15em] text-white/45 group-hover:text-white/65 transition-colors">{projeto.gestorEmail}</span>
+              <span className="text-sm tracking-[0.15em] text-white/45 group-hover:text-white/65 transition-colors">{projeto.gestorEmail}</span>
               <span className="ml-auto text-white/15 group-hover:text-white/40 transition-colors">→</span>
             </a>
             <a href={`tel:${projeto.gestorTelefone}`}
               className="group flex items-center gap-4 border border-white/[0.06] bg-white/[0.01] hover:bg-white/[0.04] px-5 py-3 transition-colors">
               <span className="text-xs tracking-[0.4em] text-white/20 uppercase w-14 shrink-0">Tel.</span>
-              <span className="text-base tracking-[0.15em] text-white/45 group-hover:text-white/65 transition-colors">{projeto.gestorTelefone}</span>
+              <span className="text-sm tracking-[0.15em] text-white/45 group-hover:text-white/65 transition-colors">{projeto.gestorTelefone}</span>
               <span className="ml-auto text-white/15 group-hover:text-white/40 transition-colors">→</span>
             </a>
           </div>
@@ -65,8 +65,8 @@ export default async function AtendimentoPage({ params }: Props) {
         <a href="https://www.rlmedia.pt" target="_blank" rel="noopener noreferrer"
           className="group flex items-center justify-between border border-white/[0.06] bg-white/[0.01] hover:bg-white/[0.04] hover:border-white/15 px-6 py-4 transition-all">
           <div>
-            <p className="text-base tracking-[0.3em] text-white/40 uppercase group-hover:text-white/60 transition-colors">RL Media · Audiovisual</p>
-            <p className="text-base tracking-[0.15em] text-white/20 mt-0.5">www.rlmedia.pt</p>
+            <p className="text-sm tracking-[0.3em] text-white/40 uppercase group-hover:text-white/60 transition-colors">RL Media · Audiovisual</p>
+            <p className="text-sm tracking-[0.15em] text-white/20 mt-0.5">www.rlmedia.pt</p>
           </div>
           <span className="text-white/15 group-hover:text-white/40 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all">↗</span>
         </a>

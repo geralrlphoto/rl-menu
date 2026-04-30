@@ -55,7 +55,7 @@ export default async function RevisoesPage({ params }: Props) {
             <div key={i} className={`flex items-center gap-4 border px-6 py-4
               ${i < usadas ? 'border-emerald-400/20 bg-emerald-400/5' : 'border-white/[0.06] bg-white/[0.015]'}`}>
               <div className={`w-2 h-2 rounded-full shrink-0 ${i < usadas ? 'bg-emerald-400' : 'bg-white/10'}`} />
-              <p className={`text-base tracking-[0.25em] uppercase ${i < usadas ? 'text-white/55' : 'text-white/20'}`}>
+              <p className={`text-sm tracking-[0.25em] uppercase ${i < usadas ? 'text-white/55' : 'text-white/20'}`}>
                 Revisão {i + 1}
               </p>
               <span className={`ml-auto text-xs tracking-[0.35em] uppercase ${i < usadas ? 'text-emerald-400/70' : 'text-white/15'}`}>
@@ -68,7 +68,7 @@ export default async function RevisoesPage({ params }: Props) {
         {/* CTA */}
         <div className="border border-white/[0.07] bg-white/[0.02] px-6 py-6">
           <p className="text-xs tracking-[0.4em] text-white/25 uppercase mb-3">Dar Feedback</p>
-          <p className="text-base text-white/35 leading-relaxed mb-4">
+          <p className="text-sm text-white/35 leading-relaxed mb-4">
             Quando receberes o link do vídeo para revisão, usa o botão abaixo para enviar os teus comentários.
           </p>
           <button disabled

@@ -63,7 +63,7 @@ export default async function WorkflowPage({ params }: Props) {
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-mono text-white/15">{String(i + 1).padStart(2, '0')}</span>
-                        <h3 className={`text-base tracking-[0.3em] font-medium uppercase ${fase.estado === 'pendente' ? 'text-white/35' : 'text-white/75'}`}>
+                        <h3 className={`text-sm tracking-[0.3em] font-medium uppercase ${fase.estado === 'pendente' ? 'text-white/35' : 'text-white/75'}`}>
                           {fase.nome}
                         </h3>
                       </div>
@@ -71,9 +71,9 @@ export default async function WorkflowPage({ params }: Props) {
                         {cfg.label}
                       </span>
                     </div>
-                    <p className="text-base text-white/25 leading-relaxed pl-7">{fase.descricao}</p>
+                    <p className="text-sm text-white/25 leading-relaxed pl-7">{fase.descricao}</p>
                     {fase.data && (
-                      <p className={`text-base tracking-[0.2em] mt-2 pl-7 ${fase.estado === 'pendente' ? 'text-white/15' : 'text-white/35'}`}>
+                      <p className={`text-sm tracking-[0.2em] mt-2 pl-7 ${fase.estado === 'pendente' ? 'text-white/15' : 'text-white/35'}`}>
                         {fase.data}
                       </p>
                     )}
@@ -86,7 +86,7 @@ export default async function WorkflowPage({ params }: Props) {
 
         {/* Footer note */}
         <div className="mt-12 border border-white/[0.05] bg-white/[0.01] px-5 py-4">
-          <p className="text-base tracking-[0.2em] text-white/20 leading-relaxed">
+          <p className="text-sm tracking-[0.2em] text-white/20 leading-relaxed">
             As datas indicadas são estimativas e podem ser ajustadas conforme o avanço do projeto.
             Serás notificado em cada transição de fase.
           </p>
