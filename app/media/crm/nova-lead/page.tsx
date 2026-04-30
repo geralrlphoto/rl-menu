@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useState } from 'react'
 import CustomSelect from '@/app/components/CustomSelect'
 
@@ -118,13 +117,6 @@ export default function NovaLeadPage() {
       }} />
 
       <div className="relative z-10 max-w-2xl mx-auto px-6 sm:px-10 py-10">
-
-        {/* Back */}
-        <Link href="/media/crm"
-          className="inline-flex items-center gap-2 text-[9px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
-          <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
-          CRM
-        </Link>
 
         {/* Header */}
         <div className="mb-12 flex flex-col items-center text-center">
