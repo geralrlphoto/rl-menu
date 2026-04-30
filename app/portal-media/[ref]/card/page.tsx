@@ -56,12 +56,12 @@ export default async function CardPage({ params }: Props) {
 
           {/* Logo */}
           <div className="flex justify-center pt-12 pb-7">
-            <div className="w-[88px] h-[88px] rounded-full overflow-hidden bg-white"
-              style={{ boxShadow: '0 0 40px rgba(255,255,255,0.08)' }}>
+            <div className="w-[110px] h-[110px] flex items-center justify-center"
+              style={{ filter: 'drop-shadow(0 0 20px rgba(255,255,255,0.12))' }}>
               <img
-                src="/logo-email.png"
+                src="/logo_marca_advocacia__8_-removebg-preview.png"
                 alt="RL Media"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
             </div>
           </div>
