@@ -123,7 +123,8 @@ export default async function SecaoPage({ params }: Props) {
       t.includes('OBJECTIVO')       ||
       t.includes('OBJETIVO')        ||
       t.includes('REDES')           ||
-      t.includes('SOCIAL')
+      t.includes('SOCIAL')          ||
+      t.includes('CONVIDADO')
 
     const href = isInternal
       ? page.title === 'CRM'          ? '/crm'
@@ -136,6 +137,7 @@ export default async function SecaoPage({ params }: Props) {
       : t.includes('TAREFA')                                    ? '/tarefas'
       : t.includes('OBJECTIVO') || t.includes('OBJETIVO')        ? '/objetivos'
       : t.includes('REDES')    || t.includes('SOCIAL')          ? '/redes'
+      : t.includes('CONVIDADO')                                  ? '/fotos-convidados'
       : '/'
       : (page.notion_url ?? '#')
 

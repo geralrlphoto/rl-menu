@@ -57,7 +57,8 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/api/tally-relatorio-video') ||
     pathname.startsWith('/api/relatorios-video') ||
     pathname.startsWith('/nova-lead') ||
-    pathname.startsWith('/api/nova-lead')
+    pathname.startsWith('/api/nova-lead') ||
+    pathname.startsWith('/api/webhook-tally-fotos-convidados')
   ) {
     return NextResponse.next()
   }
