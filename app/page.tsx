@@ -423,6 +423,13 @@ export default async function Home() {
             RL <span className="text-[#C9A84C]">PHOTO</span>.VIDEO
           </h1>
           <div className="h-px w-16 bg-gradient-to-r from-transparent via-[#C9A84C]/50 to-transparent" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
+            alt="RL Photo Video"
+            className="mt-1 opacity-70"
+            style={{ height: '48px', width: 'auto' }}
+          />
         </div>
       </div>
 
