@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'RL Media <onboarding@resend.dev>',
+        from: 'RL Media <geral@rlphotovideo.pt>',
         to: 'geral.rlmedia@gmail.com',
         subject: `Nova Lead — ${body.nome}`,
         html: `
