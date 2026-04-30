@@ -71,13 +71,26 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
           Portal {projeto.nome}
         </Link>
 
-        <div className="mb-12">
+        <div className="mb-8">
           <p className="text-xs tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · {projeto.nome}</p>
           <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Workflow</h1>
           <div className="mt-4 flex items-center gap-3">
             <div className="h-px w-12 bg-white/25" />
             <div className="h-px flex-1 bg-white/[0.04]" />
           </div>
+        </div>
+
+        {/* Intro box */}
+        <div className="mb-10 border border-white/15 bg-white/[0.05] px-6 py-5 flex flex-col gap-3">
+          <p style={{ fontSize: '14px' }} className="text-white leading-relaxed">
+            Este é o nosso workflow na sua versão mais completa.
+          </p>
+          <p style={{ fontSize: '14px' }} className="text-white/70 leading-relaxed">
+            Em alguns projetos não passamos exatamente por todos os passos, mas não se preocupem! A nossa atenção e dedicação será a mesma, bem como a qualidade do trabalho que vamos entregar.
+          </p>
+          <p style={{ fontSize: '14px' }} className="text-white/70 leading-relaxed">
+            A flexibilidade que aplicamos no número de etapas é uma característica da nossa personalidade, que procura eficiência em cada projeto, garantindo sempre o foco nos objetivos e resultados.
+          </p>
         </div>
 
         {/* Timeline */}
@@ -151,15 +164,10 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
           </button>
         )}
 
-        <div className="mt-12 border border-white/[0.05] bg-white/[0.01] px-5 py-6 flex flex-col gap-4">
-          <p className="text-xs tracking-[0.2em] text-white/35 leading-relaxed">
-            Este é o nosso workflow na sua versão mais completa.
-          </p>
+        <div className="mt-12 border border-white/[0.05] bg-white/[0.01] px-5 py-4">
           <p className="text-xs tracking-[0.2em] text-white/20 leading-relaxed">
-            Em alguns projetos não passamos exatamente por todos os passos, mas não se preocupem! A nossa atenção e dedicação será a mesma, bem como a qualidade do trabalho que vamos entregar.
-          </p>
-          <p className="text-xs tracking-[0.2em] text-white/20 leading-relaxed">
-            A flexibilidade que aplicamos no número de etapas é uma característica da nossa personalidade, que procura eficiência em cada projeto, garantido sempre o foco nos objetivos e resultados.
+            As datas indicadas são estimativas e podem ser ajustadas conforme o avanço do projeto.
+            Serás notificado em cada transição de fase.
           </p>
         </div>
       </div>
