@@ -39,6 +39,8 @@ export interface Projeto {
   fases: Fase[]
   pagamentos: Pagamento[]
   entregas: Entrega[]
+  heroImageUrl?: string
+  heroLogoUrl?: string
   briefingUrl?: string
   contratoUrl?: string
 }
@@ -75,6 +77,7 @@ const PROJETOS: Record<string, Projeto> = {
       { titulo: 'Versão Stories',      formato: 'MP4 · 9:16 · HD',     duracao: '30 seg',  estado: 'pendente' },
       { titulo: 'Teaser / Highlight',  formato: 'MP4 · 16:9 · HD',     duracao: '30 seg',  estado: 'pendente' },
     ],
+    heroImageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&q=80',
     briefingUrl: undefined,
     contratoUrl: undefined,
   },

@@ -43,24 +43,62 @@ export default async function PortalMediaPage({ params }: Props) {
         background: 'radial-gradient(ellipse 90% 50% at 50% -5%, rgba(180,200,255,0.045) 0%, transparent 70%)',
       }} />
 
-      {/* ── HERO ── */}
-      <header className="relative z-10 px-6 sm:px-12 pt-10 pb-14 max-w-5xl mx-auto">
+      {/* ── HERO COM IMAGEM ── */}
+      {projeto.heroImageUrl && (
+        <div className="relative z-10 w-full overflow-hidden shrink-0" style={{ height: '320px' }}>
+          <div className="absolute inset-0 bg-cover bg-center scale-105"
+            style={{ backgroundImage: `url(${projeto.heroImageUrl})` }} />
+          <div className="absolute inset-0 bg-black/55" />
+          <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#050507] to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-[#050507] via-[#050507]/70 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#050507]/30 via-transparent to-[#050507]/30" />
 
-        {/* Top bar */}
-        <div className="flex items-center justify-between mb-14">
-          <div className="flex items-center gap-3">
-            <div className="flex flex-col gap-[3px]">
-              <div className="h-px w-5 bg-white/35" />
-              <div className="h-px w-3 bg-white/15" />
-              <div className="h-px w-5 bg-white/35" />
+          {/* Logo do cliente se existir */}
+          {projeto.heroLogoUrl && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <img src={projeto.heroLogoUrl} alt={projeto.nome}
+                className="max-h-16 max-w-[200px] object-contain opacity-80" />
             </div>
-            <span className="text-[9px] tracking-[0.5em] text-white/25 uppercase">RL Media · Portal do Cliente</span>
-          </div>
-          <div className="flex items-center gap-2">
+          )}
+
+          {/* Badge topo direito */}
+          <div className="absolute top-5 right-6 flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400/70 animate-pulse" />
-            <span className="text-[8px] tracking-[0.4em] text-white/20 uppercase">Activo</span>
+            <span className="text-[8px] tracking-[0.4em] text-white/30 uppercase">Activo</span>
+          </div>
+
+          {/* Label topo esquerdo */}
+          <div className="absolute top-5 left-6 flex items-center gap-3">
+            <div className="flex flex-col gap-[3px]">
+              <div className="h-px w-5 bg-white/30" />
+              <div className="h-px w-3 bg-white/15" />
+              <div className="h-px w-5 bg-white/30" />
+            </div>
+            <span className="text-[8px] tracking-[0.45em] text-white/25 uppercase">RL Media · Portal do Cliente</span>
           </div>
         </div>
+      )}
+
+      {/* ── HERO ── */}
+      <header className="relative z-10 px-6 sm:px-12 pt-8 pb-14 max-w-5xl mx-auto">
+
+        {/* Top bar — só mostra se não há imagem */}
+        {!projeto.heroImageUrl && (
+          <div className="flex items-center justify-between mb-14">
+            <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-[3px]">
+                <div className="h-px w-5 bg-white/35" />
+                <div className="h-px w-3 bg-white/15" />
+                <div className="h-px w-5 bg-white/35" />
+              </div>
+              <span className="text-[9px] tracking-[0.5em] text-white/25 uppercase">RL Media · Portal do Cliente</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400/70 animate-pulse" />
+              <span className="text-[8px] tracking-[0.4em] text-white/20 uppercase">Activo</span>
+            </div>
+          </div>
+        )}
 
         {/* Project name */}
         <div className="flex items-start gap-6 mb-10">
