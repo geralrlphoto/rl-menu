@@ -562,6 +562,46 @@ export default async function Home() {
         <DashboardCarousel cols={cols} />
       </div>
 
+      {/* ── Redes Sociais ───────────────────────────────────────────────────── */}
+      <div className="border-t border-white/[0.06] bg-[#060606] px-6 py-5 flex items-center justify-center gap-2 sm:gap-4">
+        <span className="text-[8px] tracking-[0.5em] text-white/15 uppercase mr-4 hidden sm:block">Redes</span>
+
+        {[
+          {
+            label: 'Instagram', href: 'https://www.instagram.com/rlphoto_fotografia.video/',
+            color: '#E1306C',
+            svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>,
+          },
+          {
+            label: 'Facebook', href: 'https://www.facebook.com/people/RL_Photo/100089058572642/?locale=pt_PT',
+            color: '#1877F2',
+            svg: <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>,
+          },
+          {
+            label: 'YouTube', href: 'https://www.youtube.com/@rlphotovideo3062',
+            color: '#FF0000',
+            svg: <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>,
+          },
+          {
+            label: 'Website', href: 'https://rlphotovideo.pt',
+            color: '#C9A84C',
+            svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
+          },
+        ].map(r => (
+          <a key={r.label} href={r.href} target="_blank" rel="noopener noreferrer"
+            className="group flex items-center gap-2 px-4 py-2 rounded-full border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05] transition-all duration-300">
+            <span className="transition-colors duration-200" style={{ color: `${r.color}70` }}>
+              <span className="group-hover:scale-110 transition-transform duration-200 block" style={{ color: r.color }}>
+                {r.svg}
+              </span>
+            </span>
+            <span className="text-[9px] tracking-[0.3em] text-white/30 group-hover:text-white/70 uppercase transition-colors duration-200 hidden sm:block">
+              {r.label}
+            </span>
+          </a>
+        ))}
+      </div>
+
       {/* Footer marquee */}
       <div className="h-10 border-t border-white/[0.06] overflow-hidden flex items-center">
         <div className="flex animate-marquee whitespace-nowrap">
