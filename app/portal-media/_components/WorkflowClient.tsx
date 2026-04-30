@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
 import type { Projeto, FaseEstado } from '@/app/portal-media/_data/mockProject'
 import AdminBar from './AdminBar'
@@ -21,10 +21,19 @@ const ESTADO_OPTIONS = [
 
 interface Props { projeto: Projeto; isAdmin: boolean }
 
+const PT_MONTHS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+function nowPT() {
+  const d = new Date()
+  return `${d.getDate()} ${PT_MONTHS[d.getMonth()]} ${d.getFullYear()}`
+}
+
 export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
+  // useRef so notification sends survive cancel
+  const baseRef = useRef(initial)
   const [projeto, setProjeto] = useState(initial)
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [sendingId, setSendingId] = useState<string | null>(null)
 
   const save = async () => {
     setSaving(true)
@@ -34,12 +43,34 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fases: projeto.fases }),
       })
+      baseRef.current = { ...baseRef.current, fases: projeto.fases }
     } catch {}
     setSaving(false)
     setIsEditing(false)
   }
 
-  const cancel = () => { setProjeto(initial); setIsEditing(false) }
+  const cancel = () => { setProjeto(baseRef.current); setIsEditing(false) }
+
+  const sendNotification = async (faseIdx: number) => {
+    const fase = projeto.fases[faseIdx]
+    if (fase.notificacaoEnviada) return
+    setSendingId(fase.id)
+    const date = nowPT()
+    const updatedFases = projeto.fases.map((f, i) =>
+      i === faseIdx ? { ...f, notificacaoEnviada: date } : f
+    )
+    const updated = { ...projeto, fases: updatedFases }
+    setProjeto(updated)
+    baseRef.current = { ...baseRef.current, fases: updatedFases }
+    try {
+      await fetch(`/api/media-portal/${projeto.ref}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fases: updatedFases }),
+      })
+    } catch {}
+    setSendingId(null)
+  }
 
   const updateFase = (idx: number, field: string, value: string) =>
     setProjeto(p => ({
@@ -144,6 +175,33 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
                       className={`text-xs tracking-[0.2em] mt-2 pl-7 block ${fase.estado === 'pendente' ? 'text-white/15' : 'text-white/35'}`}
                       placeholder="Data estimada"
                     />
+                    {/* Notification button — always visible for admin */}
+                    {isAdmin && (
+                      <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between gap-3">
+                        {fase.notificacaoEnviada ? (
+                          <span className="flex items-center gap-1.5 text-xs tracking-[0.25em] text-emerald-400/70 uppercase">
+                            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            Notificado — {fase.notificacaoEnviada}
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => sendNotification(i)}
+                            disabled={sendingId === fase.id}
+                            className="flex items-center gap-1.5 text-xs tracking-[0.25em] text-white/30
+                                       hover:text-white/65 border border-white/10 hover:border-white/25
+                                       bg-white/[0.02] hover:bg-white/[0.05] px-3 py-1.5 uppercase
+                                       transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-5-5.917V5a1 1 0 10-2 0v.083A6 6 0 006 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                            </svg>
+                            {sendingId === fase.id ? 'A enviar...' : 'Notificar Cliente'}
+                          </button>
+                        )}
+                      </div>
+                    )}
                     {isEditing && (
                       <button onClick={() => removeFase(i)}
                         className="mt-3 text-xs tracking-[0.3em] text-red-400/50 hover:text-red-400/80 uppercase transition-colors">

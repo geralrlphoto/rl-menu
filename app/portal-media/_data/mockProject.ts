@@ -6,6 +6,7 @@ export interface Fase {
   descricao: string
   estado: FaseEstado
   data?: string
+  notificacaoEnviada?: string
 }
 
 export interface Pagamento {
