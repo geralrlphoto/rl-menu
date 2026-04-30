@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import CustomSelect from '@/app/components/CustomSelect'
 
 const TIPOS = [
@@ -43,7 +42,7 @@ export default function NovaLeadPage() {
   const [form, setForm] = useState(EMPTY)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const router = useRouter()
+  const [enviado, setEnviado] = useState(false)
 
   const set = (k: keyof typeof EMPTY) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
@@ -62,9 +61,9 @@ export default function NovaLeadPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      router.push('/media/crm/leads')
+      setEnviado(true)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erro ao guardar.')
+      setError(err instanceof Error ? err.message : 'Erro ao enviar.')
       setSaving(false)
     }
   }
@@ -72,6 +71,41 @@ export default function NovaLeadPage() {
   const labelCls = "block text-[8px] tracking-[0.5em] text-white/25 uppercase mb-2"
   const inputCls = "w-full bg-white/[0.03] border border-white/[0.08] focus:border-white/25 focus:outline-none px-4 py-3 text-[15px] text-white/75 placeholder:text-white/15 transition-colors duration-200"
   const selectCls = inputCls + " appearance-none cursor-pointer [color-scheme:dark]"
+
+  if (enviado) {
+    return (
+      <main className="min-h-screen bg-[#050507] relative flex items-center justify-center">
+        <div className="pointer-events-none fixed inset-0 z-0" style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.016) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.016) 1px,transparent 1px)`,
+          backgroundSize: '60px 60px',
+        }} />
+        <div className="pointer-events-none fixed inset-0 z-0" style={{
+          background: 'radial-gradient(ellipse 70% 50% at 50% -10%, rgba(180,200,255,0.04) 0%, transparent 70%)',
+        }} />
+        <div className="relative z-10 flex flex-col items-center text-center px-6">
+          <img
+            src="/logo_marca_advocacia__8_-removebg-preview.png"
+            alt="RL Media"
+            className="w-16 h-16 object-contain mb-8"
+            style={{ filter: 'drop-shadow(0 0 16px rgba(255,255,255,0.1))' }}
+          />
+          <div className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center mb-6">
+            <span className="text-white/50 text-lg">✓</span>
+          </div>
+          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-3">RL Media · Audiovisual</p>
+          <h2 className="text-xl font-extralight tracking-[0.4em] text-white/70 uppercase mb-4">Mensagem Enviada</h2>
+          <p className="text-[12px] text-white/30 tracking-wider max-w-xs leading-relaxed">
+            Recebemos o teu contacto. Entraremos em breve em contacto contigo.
+          </p>
+          <div className="mt-8 flex items-center gap-3 w-full max-w-xs">
+            <div className="h-px flex-1 bg-white/[0.06]" />
+            <div className="w-1 h-1 rounded-full bg-white/20" />
+            <div className="h-px flex-1 bg-white/[0.06]" />
+          </div>
+        </div>
+      </main>
+    )
+  }
 
   return (
     <main className="min-h-screen bg-[#050507] relative">
@@ -184,7 +218,7 @@ export default function NovaLeadPage() {
               className="flex items-center gap-3 border border-white/20 bg-white/[0.04] hover:bg-white/[0.09] hover:border-white/35
                          px-8 py-4 transition-all duration-300 disabled:opacity-40">
               <span className="text-[9px] tracking-[0.5em] text-white/55 uppercase">
-                {saving ? 'A guardar...' : 'Guardar Lead →'}
+                {saving ? 'A enviar...' : 'Enviar →'}
               </span>
             </button>
           </div>
