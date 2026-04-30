@@ -428,7 +428,7 @@ export default async function Home() {
             src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
             alt="RL Photo Video"
             className="mt-1 opacity-70"
-            style={{ height: '48px', width: 'auto' }}
+            style={{ height: '90px', width: 'auto' }}
           />
         </div>
       </div>
