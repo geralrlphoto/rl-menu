@@ -49,7 +49,13 @@ export default function NovaLeadPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!form.nome.trim()) { setError('Nome é obrigatório.'); return }
+    if (!form.nome.trim())     { setError('O nome é obrigatório.'); return }
+    if (!form.empresa.trim())  { setError('A empresa é obrigatória.'); return }
+    if (!form.email.trim())    { setError('O email é obrigatório.'); return }
+    if (!form.telefone.trim()) { setError('O telefone é obrigatório.'); return }
+    if (!form.tipo)            { setError('O tipo de serviço é obrigatório.'); return }
+    if (!form.fonte)           { setError('Indica como nos encontrou.'); return }
+    if (!form.mensagem.trim()) { setError('A mensagem é obrigatória.'); return }
     setSaving(true)
     setError('')
     try {
@@ -149,15 +155,15 @@ export default function NovaLeadPage() {
                 <input value={form.nome} onChange={set('nome')} placeholder="Nome completo" className={inputCls} />
               </div>
               <div>
-                <label className={labelCls}>Empresa</label>
+                <label className={labelCls}>Empresa *</label>
                 <input value={form.empresa} onChange={set('empresa')} placeholder="Nome da empresa" className={inputCls} />
               </div>
               <div>
-                <label className={labelCls}>Email</label>
+                <label className={labelCls}>Email *</label>
                 <input type="email" value={form.email} onChange={set('email')} placeholder="email@exemplo.com" className={inputCls} />
               </div>
               <div>
-                <label className={labelCls}>Telefone</label>
+                <label className={labelCls}>Telefone *</label>
                 <input value={form.telefone} onChange={set('telefone')} placeholder="+351 9xx xxx xxx" className={inputCls} />
               </div>
             </div>
@@ -171,7 +177,7 @@ export default function NovaLeadPage() {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className={labelCls}>Tipo de Serviço</label>
+                <label className={labelCls}>Tipo de Serviço *</label>
                 <CustomSelect
                   value={form.tipo}
                   onChange={v => setForm(f => ({ ...f, tipo: v }))}
@@ -180,7 +186,7 @@ export default function NovaLeadPage() {
                 />
               </div>
               <div>
-                <label className={labelCls}>Como nos encontrou</label>
+                <label className={labelCls}>Como nos encontrou *</label>
                 <CustomSelect
                   value={form.fonte}
                   onChange={v => setForm(f => ({ ...f, fonte: v }))}
@@ -190,7 +196,7 @@ export default function NovaLeadPage() {
               </div>
             </div>
             <div className="mt-4">
-              <label className={labelCls}>Mensagem / Descrição do Pedido</label>
+              <label className={labelCls}>Mensagem / Descrição do Pedido *</label>
               <textarea value={form.mensagem} onChange={set('mensagem')}
                 placeholder="Descreve o que o cliente pretende..." rows={5}
                 className={inputCls + ' resize-none leading-relaxed'} />

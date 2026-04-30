@@ -60,6 +60,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/api/nova-lead') ||
     pathname.startsWith('/media/crm/nova-lead') ||
     pathname.startsWith('/api/media-leads') ||
+    pathname.startsWith('/api/test-lead-card') ||
     pathname.startsWith('/api/webhook-tally-fotos-convidados') ||
     pathname.startsWith('/portal-media')
   ) {
