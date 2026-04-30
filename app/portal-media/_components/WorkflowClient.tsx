@@ -151,10 +151,15 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
           </button>
         )}
 
-        <div className="mt-12 border border-white/[0.05] bg-white/[0.01] px-5 py-4">
+        <div className="mt-12 border border-white/[0.05] bg-white/[0.01] px-5 py-6 flex flex-col gap-4">
+          <p className="text-xs tracking-[0.2em] text-white/35 leading-relaxed">
+            Este é o nosso workflow na sua versão mais completa.
+          </p>
           <p className="text-xs tracking-[0.2em] text-white/20 leading-relaxed">
-            As datas indicadas são estimativas e podem ser ajustadas conforme o avanço do projeto.
-            Serás notificado em cada transição de fase.
+            Em alguns projetos não passamos exatamente por todos os passos, mas não se preocupem! A nossa atenção e dedicação será a mesma, bem como a qualidade do trabalho que vamos entregar.
+          </p>
+          <p className="text-xs tracking-[0.2em] text-white/20 leading-relaxed">
+            A flexibilidade que aplicamos no número de etapas é uma característica da nossa personalidade, que procura eficiência em cada projeto, garantido sempre o foco nos objetivos e resultados.
           </p>
         </div>
       </div>
