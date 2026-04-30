@@ -398,7 +398,7 @@ export default async function Home() {
     <main className="min-h-screen bg-[#080808] flex flex-col">
 
       {/* Header — hero com foto */}
-      <div className="relative overflow-hidden shrink-0" style={{ height: '320px' }}>
+      <div className="relative overflow-hidden shrink-0" style={{ height: '420px' }}>
         {/* Foto de fundo */}
         <div
           className="absolute inset-0 bg-cover bg-center"
@@ -428,13 +428,13 @@ export default async function Home() {
             src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
             alt="RL Photo Video"
             className="mt-1 opacity-70"
-            style={{ height: '90px', width: 'auto' }}
+            style={{ height: '150px', width: 'auto' }}
           />
         </div>
       </div>
 
       {/* Grid principal — desktop */}
-      <div className="hidden sm:flex flex-1 items-center justify-center px-10 py-8">
+      <div className="hidden sm:flex flex-1 items-center justify-center px-10 py-12 pt-16">
         <div className="w-full max-w-6xl flex flex-col gap-2">
           <div className="grid grid-cols-3 gap-2">
             {allItems.slice(0, 3).map((item) => (
