@@ -72,8 +72,10 @@ export default async function Home() {
       href: `/secao/${s.id}`,
       img: sectionImages[s.name] ?? fallbackImage,
     })),
-    { id: 'crm', name: 'CRM', href: '/crm',
+    { id: 'crm',      name: 'CRM',      href: '/crm',
       img: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=1200&q=80' },
+    { id: 'objetivos', name: 'OBJETIVOS', href: '/objetivos',
+      img: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&q=80' },
   ]
 
   // ── Datas de referência ───────────────────────────────────────────────────
