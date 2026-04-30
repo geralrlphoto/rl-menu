@@ -93,12 +93,19 @@ export default function NovaLeadPage() {
         </Link>
 
         {/* Header */}
-        <div className="mb-12">
-          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · CRM</p>
-          <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Nova Lead</h1>
-          <div className="mt-4 flex items-center gap-3">
-            <div className="h-px w-12 bg-white/25" />
-            <div className="h-px flex-1 bg-white/[0.04]" />
+        <div className="mb-12 flex flex-col items-center text-center">
+          <img
+            src="/logo_marca_advocacia__8_-removebg-preview.png"
+            alt="RL Media"
+            className="w-20 h-20 object-contain mb-6"
+            style={{ filter: 'drop-shadow(0 0 16px rgba(255,255,255,0.1))' }}
+          />
+          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · Audiovisual</p>
+          <h1 className="text-2xl font-extralight tracking-[0.4em] text-white/80 uppercase">Nova Lead</h1>
+          <div className="mt-4 flex items-center gap-3 w-full max-w-xs">
+            <div className="h-px flex-1 bg-white/[0.06]" />
+            <div className="w-1 h-1 rounded-full bg-white/20" />
+            <div className="h-px flex-1 bg-white/[0.06]" />
           </div>
         </div>
 
