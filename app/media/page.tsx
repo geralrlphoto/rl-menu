@@ -79,67 +79,92 @@ export default async function MediaDashboard() {
 
       {/* ── Cards ───────────────────────────────────────────────────── */}
       <section className="relative z-10 flex-1 px-6 sm:px-10 pb-16">
-        {items.length === 0 ? (
-          <div className="flex items-center justify-center h-64">
-            <p className="text-[10px] tracking-[0.5em] text-white/15 uppercase">Sem secções</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-4xl mx-auto">
-            {items.map((item, i) => (
-              <Link key={item.id} href={item.href}
-                className="group relative overflow-hidden border border-white/[0.07] hover:border-white/20
-                           bg-white/[0.02] hover:bg-white/[0.04]
-                           transition-all duration-500 rounded-sm"
-                style={{ minHeight: '160px' }}
-              >
-                {/* Background image */}
-                {item.image_url && (
-                  <>
-                    <div className="absolute inset-0 bg-cover bg-center opacity-10 group-hover:opacity-18 transition-opacity duration-700 scale-105 group-hover:scale-100"
-                      style={{ backgroundImage: `url(${item.image_url})` }} />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#050507] via-[#050507]/80 to-[#050507]/40" />
-                  </>
-                )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-4xl mx-auto">
 
-                {/* Corner bracket TL */}
-                <div className="absolute top-4 left-4 pointer-events-none">
-                  <div className="w-4 h-px bg-white/20 group-hover:bg-white/50 transition-colors duration-300" />
-                  <div className="w-px h-4 bg-white/20 group-hover:bg-white/50 transition-colors duration-300 mt-0" />
+          {/* Cards dinâmicos do Supabase */}
+          {items.map((item, i) => (
+            <Link key={item.id} href={item.href}
+              className="group relative overflow-hidden border border-white/[0.07] hover:border-white/20
+                         bg-white/[0.02] hover:bg-white/[0.04]
+                         transition-all duration-500 rounded-sm"
+              style={{ minHeight: '160px' }}
+            >
+              {item.image_url && (
+                <>
+                  <div className="absolute inset-0 bg-cover bg-center opacity-10 group-hover:opacity-18 transition-opacity duration-700 scale-105 group-hover:scale-100"
+                    style={{ backgroundImage: `url(${item.image_url})` }} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#050507] via-[#050507]/80 to-[#050507]/40" />
+                </>
+              )}
+              <div className="absolute top-4 left-4 pointer-events-none">
+                <div className="w-4 h-px bg-white/20 group-hover:bg-white/50 transition-colors duration-300" />
+                <div className="w-px h-4 bg-white/20 group-hover:bg-white/50 transition-colors duration-300 mt-0" />
+              </div>
+              <div className="absolute bottom-4 right-4 pointer-events-none flex flex-col items-end">
+                <div className="w-px h-4 bg-white/20 group-hover:bg-white/50 transition-colors duration-300" />
+                <div className="w-4 h-px bg-white/20 group-hover:bg-white/50 transition-colors duration-300" />
+              </div>
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                style={{ boxShadow: 'inset 0 0 40px rgba(200,220,255,0.04)' }} />
+              <div className="relative z-10 flex flex-col justify-between h-full p-6" style={{ minHeight: '160px' }}>
+                <div className="flex items-start justify-between">
+                  <span className="text-[20px] text-white/10 group-hover:text-white/25 transition-colors duration-300 select-none">
+                    {item.icon}
+                  </span>
+                  <span className="text-[9px] font-mono text-white/15 group-hover:text-white/30 transition-colors duration-300">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
                 </div>
-                {/* Corner bracket BR */}
-                <div className="absolute bottom-4 right-4 pointer-events-none flex flex-col items-end">
-                  <div className="w-px h-4 bg-white/20 group-hover:bg-white/50 transition-colors duration-300" />
-                  <div className="w-4 h-px bg-white/20 group-hover:bg-white/50 transition-colors duration-300" />
-                </div>
-
-                {/* Glow on hover */}
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                  style={{ boxShadow: 'inset 0 0 40px rgba(200,220,255,0.04)' }} />
-
-                {/* Content */}
-                <div className="relative z-10 flex flex-col justify-between h-full p-6" style={{ minHeight: '160px' }}>
-                  <div className="flex items-start justify-between">
-                    <span className="text-[20px] text-white/10 group-hover:text-white/25 transition-colors duration-300 select-none">
-                      {item.icon}
-                    </span>
-                    <span className="text-[9px] font-mono text-white/15 group-hover:text-white/30 transition-colors duration-300">
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
-                  </div>
-                  <div>
-                    <h2 className="text-[11px] tracking-[0.4em] font-medium text-white/55 group-hover:text-white/85 uppercase transition-colors duration-300">
-                      {item.name}
-                    </h2>
-                    <div className="flex items-center gap-2 mt-2">
-                      <div className="h-px w-0 group-hover:w-6 bg-white/40 transition-all duration-500" />
-                      <span className="text-white/0 group-hover:text-white/30 text-xs transition-colors duration-500">→</span>
-                    </div>
+                <div>
+                  <h2 className="text-[11px] tracking-[0.4em] font-medium text-white/55 group-hover:text-white/85 uppercase transition-colors duration-300">
+                    {item.name}
+                  </h2>
+                  <div className="flex items-center gap-2 mt-2">
+                    <div className="h-px w-0 group-hover:w-6 bg-white/40 transition-all duration-500" />
+                    <span className="text-white/0 group-hover:text-white/30 text-xs transition-colors duration-500">→</span>
                   </div>
                 </div>
-              </Link>
-            ))}
-          </div>
-        )}
+              </div>
+            </Link>
+          ))}
+
+          {/* Card estático — Ficha de Cliente */}
+          <Link href="/media/ficha-cliente"
+            className="group relative overflow-hidden border border-white/[0.07] hover:border-white/20
+                       bg-white/[0.02] hover:bg-white/[0.04]
+                       transition-all duration-500 rounded-sm"
+            style={{ minHeight: '160px' }}
+          >
+            <div className="absolute top-4 left-4 pointer-events-none">
+              <div className="w-4 h-px bg-white/20 group-hover:bg-white/50 transition-colors duration-300" />
+              <div className="w-px h-4 bg-white/20 group-hover:bg-white/50 transition-colors duration-300 mt-0" />
+            </div>
+            <div className="absolute bottom-4 right-4 pointer-events-none flex flex-col items-end">
+              <div className="w-px h-4 bg-white/20 group-hover:bg-white/50 transition-colors duration-300" />
+              <div className="w-4 h-px bg-white/20 group-hover:bg-white/50 transition-colors duration-300" />
+            </div>
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+              style={{ boxShadow: 'inset 0 0 40px rgba(200,220,255,0.04)' }} />
+            <div className="relative z-10 flex flex-col justify-between h-full p-6" style={{ minHeight: '160px' }}>
+              <div className="flex items-start justify-between">
+                <span className="text-[20px] text-white/10 group-hover:text-white/25 transition-colors duration-300 select-none">◑</span>
+                <span className="text-[9px] font-mono text-white/15 group-hover:text-white/30 transition-colors duration-300">
+                  {String(items.length + 1).padStart(2, '0')}
+                </span>
+              </div>
+              <div>
+                <h2 className="text-[11px] tracking-[0.4em] font-medium text-white/55 group-hover:text-white/85 uppercase transition-colors duration-300">
+                  Ficha de Cliente
+                </h2>
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="h-px w-0 group-hover:w-6 bg-white/40 transition-all duration-500" />
+                  <span className="text-white/0 group-hover:text-white/30 text-xs transition-colors duration-500">→</span>
+                </div>
+              </div>
+            </div>
+          </Link>
+
+        </div>
       </section>
 
       {/* ── Footer ──────────────────────────────────────────────────── */}
