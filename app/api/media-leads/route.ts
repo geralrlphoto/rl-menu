@@ -90,60 +90,63 @@ export async function POST(req: NextRequest) {
     const cardHtml = `<!DOCTYPE html>
 <html lang="pt">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#020204;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+<body style="margin:0;padding:0;background:#080d18;font-family:Arial,Helvetica,sans-serif;">
 
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#020204;">
-<tr><td align="center" style="padding:48px 16px 56px;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#080d18;">
+<tr><td align="center" style="padding:36px 12px 44px;">
 
-  <table width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%;">
+  <table width="500" cellpadding="0" cellspacing="0" style="max-width:500px;width:100%;border-radius:12px;overflow:hidden;border:1px solid rgba(180,150,90,0.18);">
 
-    <!-- Accent top -->
-    <tr><td height="1" style="background:linear-gradient(90deg,#020204 0%,rgba(255,255,255,0.45) 50%,#020204 100%);font-size:0;line-height:0;">&nbsp;</td></tr>
+    <!-- Corpo principal -->
+    <tr><td style="background:radial-gradient(ellipse 100% 85% at 50% 10%,#1c2a4a 0%,#101928 50%,#080d18 100%);padding:52px 52px 48px;text-align:center;">
 
-    <!-- Card -->
-    <tr><td style="background:#0c0c16;border-left:1px solid rgba(255,255,255,0.06);border-right:1px solid rgba(255,255,255,0.06);padding:64px 60px 60px;text-align:center;">
+      <!-- Logo circular -->
+      <table cellpadding="0" cellspacing="0" style="margin:0 auto 32px;">
+        <tr><td width="84" height="84" style="width:84px;height:84px;border-radius:50%;background:radial-gradient(ellipse at 35% 30%,#2d3d5c,#141e30);border:1px solid rgba(180,150,90,0.45);text-align:center;vertical-align:middle;">
+          <img src="https://rl-menu-lake.vercel.app/logo_marca_advocacia__8_-removebg-preview.png"
+            width="46" height="46" alt="RL Media"
+            style="display:block;margin:19px auto 0;width:46px;height:46px;object-fit:contain;opacity:0.88;" />
+        </td></tr>
+      </table>
 
-      <!-- Logo -->
-      <img src="https://rl-menu-lake.vercel.app/logo_marca_advocacia__8_-removebg-preview.png"
-        width="60" height="60" alt="RL Media"
-        style="display:block;margin:0 auto 44px;width:60px;height:60px;object-fit:contain;opacity:0.9;" />
-
-      <!-- Eyebrow -->
-      <p style="margin:0 0 44px;font-size:9px;letter-spacing:7px;color:rgba(255,255,255,0.18);text-transform:uppercase;">
+      <!-- Brand -->
+      <p style="margin:0 0 36px;font-size:9px;letter-spacing:7px;color:rgba(180,150,90,0.6);text-transform:uppercase;">
         RL MEDIA &nbsp;&middot;&nbsp; AUDIOVISUAL
       </p>
 
-      <!-- Nome do cliente -->
-      <h1 style="margin:0 0 10px;font-size:40px;font-weight:200;letter-spacing:9px;color:rgba(255,255,255,0.92);text-transform:uppercase;line-height:1.05;">
+      <!-- Nome — elemento principal -->
+      <h1 style="margin:0 0 10px;font-size:52px;font-weight:400;letter-spacing:12px;color:#c4a46a;text-transform:uppercase;line-height:1;font-family:Georgia,'Times New Roman',serif;">
         ${primeiroNome}
       </h1>
 
       <!-- Tipo de serviço -->
-      <p style="margin:0 0 52px;font-size:10px;letter-spacing:4px;color:rgba(255,255,255,0.2);text-transform:uppercase;">
+      <p style="margin:0 0 40px;font-size:10px;letter-spacing:5px;color:rgba(180,150,90,0.4);text-transform:uppercase;">
         ${tipoTxt}
       </p>
 
-      <!-- Linha fina -->
-      <table cellpadding="0" cellspacing="0" style="margin:0 auto 48px;">
-        <tr><td width="56" height="1" style="background:rgba(255,255,255,0.1);font-size:0;line-height:0;">&nbsp;</td></tr>
+      <!-- Separador com diamante -->
+      <table cellpadding="0" cellspacing="0" style="margin:0 auto 36px;width:200px;">
+        <tr>
+          <td style="border-top:1px solid rgba(180,150,90,0.3);vertical-align:middle;">&nbsp;</td>
+          <td style="padding:0 12px;color:rgba(180,150,90,0.6);font-size:9px;white-space:nowrap;line-height:1;">&#9670;</td>
+          <td style="border-top:1px solid rgba(180,150,90,0.3);vertical-align:middle;">&nbsp;</td>
+        </tr>
       </table>
 
-      <!-- Mensagem principal -->
-      <p style="margin:0 0 14px;font-size:17px;font-weight:300;color:rgba(255,255,255,0.58);line-height:1.5;">
+      <!-- Mensagem -->
+      <p style="margin:0 0 14px;font-size:17px;font-weight:300;color:rgba(255,255,255,0.80);line-height:1.4;">
         Recebemos o teu pedido.
       </p>
-
-      <!-- Submensagem -->
-      <p style="margin:0;font-size:13px;font-weight:300;color:rgba(255,255,255,0.26);line-height:1.9;">
+      <p style="margin:0;font-size:13px;font-weight:300;color:rgba(255,255,255,0.33);line-height:1.9;">
         A nossa equipa vai entrar em contacto<br>contigo muito em breve.
       </p>
 
     </td></tr>
 
     <!-- Footer -->
-    <tr><td style="background:#07070e;border:1px solid rgba(255,255,255,0.05);border-top:none;padding:22px 60px;text-align:center;">
-      <p style="margin:0;font-size:9px;letter-spacing:5px;color:rgba(255,255,255,0.12);text-transform:uppercase;">
-        RL Media &nbsp;&middot;&nbsp; Audiovisual
+    <tr><td style="background:#060a12;border-top:1px solid rgba(180,150,90,0.12);padding:20px 52px;text-align:center;">
+      <p style="margin:0;font-size:8px;letter-spacing:6px;color:rgba(180,150,90,0.32);text-transform:uppercase;">
+        RL MEDIA &nbsp;&middot;&nbsp; AUDIOVISUAL
       </p>
     </td></tr>
 
