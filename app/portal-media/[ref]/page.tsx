@@ -115,6 +115,71 @@ export default async function PortalMediaPage({ params }: Props) {
           </div>
         </div>
 
+        {/* ── BOAS VINDAS ── */}
+        <div className="mb-10 border border-white/[0.07] bg-white/[0.02] px-7 py-7">
+          <div className="flex items-start gap-3 mb-5">
+            <span className="text-lg leading-none mt-0.5">👋</span>
+            <div>
+              <p className="text-[8px] tracking-[0.5em] text-white/20 uppercase mb-1">Apresentação</p>
+              <h2 className="text-[13px] tracking-[0.2em] font-light text-white/70 uppercase">Bem-vindo ao Portal do Cliente</h2>
+            </div>
+          </div>
+
+          <p className="text-[10px] text-white/35 leading-relaxed mb-6">
+            Olá, seja bem-vindo ao <span className="text-white/55">Portal do Cliente</span>.<br/>
+            Aqui encontra <span className="text-white/55">tudo o que precisa saber sobre o andamento do seu projeto</span> de forma clara, organizada e transparente.
+          </p>
+
+          <div className="grid sm:grid-cols-2 gap-5 mb-6">
+            <div>
+              <p className="text-[8px] tracking-[0.4em] text-white/25 uppercase mb-3 flex items-center gap-2">
+                <span>🔎</span> O que pode acompanhar
+              </p>
+              <ul className="flex flex-col gap-2">
+                {[
+                  ['Workflow do Projeto',     'Etapas concluídas, em curso e próximas fases'],
+                  ['Cronograma',              'Progresso detalhado de cada fase'],
+                  ['Contactos Dedicados',     'A quem falar em cada momento'],
+                  ['Documentos & Entregas',   'Ficheiros e registos importantes'],
+                ].map(([titulo, desc]) => (
+                  <li key={titulo} className="flex items-start gap-2">
+                    <span className="text-white/15 mt-0.5 shrink-0 text-[10px]">—</span>
+                    <span className="text-[9px] text-white/30 leading-relaxed">
+                      <span className="text-white/50">{titulo}</span> — {desc}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <p className="text-[8px] tracking-[0.4em] text-white/25 uppercase mb-3 flex items-center gap-2">
+                <span>✅</span> Como usar
+              </p>
+              <ol className="flex flex-col gap-2">
+                {[
+                  'Navegue pelo menu para explorar cada secção.',
+                  'Clique na fase do projeto para ver detalhes, prazos e status.',
+                  'Use a área de contactos para falar diretamente com os responsáveis.',
+                ].map((step, i) => (
+                  <li key={i} className="flex items-start gap-2.5">
+                    <span className="text-[9px] font-mono text-white/15 shrink-0 mt-0.5">{String(i + 1).padStart(2, '0')}</span>
+                    <span className="text-[9px] text-white/30 leading-relaxed">{step}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </div>
+
+          <div className="border-t border-white/[0.05] pt-5 flex items-start gap-2">
+            <span className="text-[11px] shrink-0">👉</span>
+            <p className="text-[9px] text-white/25 leading-relaxed">
+              Este portal foi criado para <span className="text-white/45">garantir transparência, confiança e proximidade</span> durante todo o processo.
+              Obrigado pela confiança na nossa equipa.
+            </p>
+          </div>
+        </div>
+
         {/* Stats row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-10">
           {[
