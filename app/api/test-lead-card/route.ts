@@ -19,10 +19,10 @@ export async function GET() {
 
       <!-- Logo circular -->
       <table cellpadding="0" cellspacing="0" style="margin:0 auto 32px;">
-        <tr><td width="84" height="84" style="width:84px;height:84px;border-radius:50%;background:radial-gradient(ellipse at 35% 30%,#2d3d5c,#141e30);border:1px solid rgba(180,150,90,0.45);text-align:center;vertical-align:middle;">
+        <tr><td width="90" height="90" style="width:90px;height:90px;border-radius:50%;background:radial-gradient(ellipse at 35% 30%,#2d3d5c,#141e30);border:1px solid rgba(200,170,100,0.6);text-align:center;vertical-align:middle;box-shadow:0 0 12px rgba(200,170,100,0.55),0 0 28px rgba(200,170,100,0.25),0 0 55px rgba(200,170,100,0.10);">
           <img src="https://rl-menu-lake.vercel.app/logo_marca_advocacia__8_-removebg-preview.png"
-            width="46" height="46" alt="RL Media"
-            style="display:block;margin:19px auto 0;width:46px;height:46px;object-fit:contain;opacity:0.88;" />
+            width="72" height="72" alt="RL Media"
+            style="display:block;margin:9px auto 0;width:72px;height:72px;object-fit:contain;" />
         </td></tr>
       </table>
 
