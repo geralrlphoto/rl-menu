@@ -23,6 +23,11 @@ export interface Entrega {
   estado: 'disponivel' | 'pendente'
 }
 
+export interface BriefingItem {
+  label: string
+  desc: string
+}
+
 export interface Projeto {
   ref: string
   nome: string
@@ -42,7 +47,10 @@ export interface Projeto {
   heroImageUrl?: string
   heroLogoUrl?: string
   briefingUrl?: string
+  briefingItems?: BriefingItem[]
   contratoUrl?: string
+  cpsFormUrl?: string
+  satisfacaoUrl?: string
 }
 
 const PROJETOS: Record<string, Projeto> = {
@@ -79,7 +87,16 @@ const PROJETOS: Record<string, Projeto> = {
     ],
     heroImageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&q=80',
     briefingUrl: undefined,
+    briefingItems: [
+      { label: 'Objetivos do Projeto', desc: 'Vídeo institucional para comunicação digital e presença online da marca Oleobio.' },
+      { label: 'Tom e Estilo',          desc: 'Clean, moderno, profissional. Transmitir confiança e qualidade do produto.' },
+      { label: 'Público-alvo',          desc: 'Empresas B2B no sector alimentar, retalhistas e distribuidores.' },
+      { label: 'Referências Visuais',   desc: '3 referências partilhadas e aprovadas em reunião de 10 Mai 2025.' },
+      { label: 'Assets da Marca',       desc: 'Logótipo, guia de cores e fontes entregues em 12 Mai 2025.' },
+    ],
     contratoUrl: undefined,
+    cpsFormUrl: undefined,
+    satisfacaoUrl: undefined,
   },
 }
 
