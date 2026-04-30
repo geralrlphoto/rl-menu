@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import CustomSelect from '@/app/components/CustomSelect'
 
 const TIPOS = [
   'Vídeo Institucional',
@@ -138,23 +139,21 @@ export default function NovaLeadPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>Tipo de Serviço</label>
-                <div className="relative">
-                  <select value={form.tipo} onChange={set('tipo')} className={selectCls}>
-                    <option value="">Selecionar...</option>
-                    {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-white/20 text-xs">▾</span>
-                </div>
+                <CustomSelect
+                  value={form.tipo}
+                  onChange={v => setForm(f => ({ ...f, tipo: v }))}
+                  options={TIPOS}
+                  placeholder="Selecionar..."
+                />
               </div>
               <div>
                 <label className={labelCls}>Como nos encontrou</label>
-                <div className="relative">
-                  <select value={form.fonte} onChange={set('fonte')} className={selectCls}>
-                    <option value="">Selecionar...</option>
-                    {FONTES.map(f => <option key={f} value={f}>{f}</option>)}
-                  </select>
-                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-white/20 text-xs">▾</span>
-                </div>
+                <CustomSelect
+                  value={form.fonte}
+                  onChange={v => setForm(f => ({ ...f, fonte: v }))}
+                  options={FONTES}
+                  placeholder="Selecionar..."
+                />
               </div>
             </div>
             <div className="mt-4">

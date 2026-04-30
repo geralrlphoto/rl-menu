@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import CustomSelect from '@/app/components/CustomSelect'
 
 const TIPOS = [
   'Produção Audiovisual',
@@ -227,22 +228,11 @@ export default function FichaClientePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>Tipo de Serviço</label>
-                <div className="relative">
-                  <select value={form.tipo} onChange={set('tipo')} className={selectCls}>
-                    <option value="">Selecionar...</option>
-                    {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-white/20 text-xs">▾</span>
-                </div>
+                <CustomSelect value={form.tipo} onChange={v => setForm(f => ({ ...f, tipo: v }))} options={TIPOS} placeholder="Selecionar..." />
               </div>
               <div>
                 <label className={labelCls}>Estado</label>
-                <div className="relative">
-                  <select value={form.estado} onChange={set('estado')} className={selectCls}>
-                    {ESTADOS.map(e => <option key={e} value={e}>{e}</option>)}
-                  </select>
-                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-white/20 text-xs">▾</span>
-                </div>
+                <CustomSelect value={form.estado} onChange={v => setForm(f => ({ ...f, estado: v }))} options={ESTADOS} />
               </div>
               <div>
                 <label className={labelCls}>Data de Filmagem</label>
@@ -306,12 +296,7 @@ export default function FichaClientePage() {
               </div>
               <div>
                 <label className={labelCls}>Estado do Contrato</label>
-                <div className="relative">
-                  <select value={form.contratoEstado} onChange={set('contratoEstado')} className={selectCls}>
-                    {ESTADOS_CONTRATO.map(e => <option key={e} value={e}>{e}</option>)}
-                  </select>
-                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-white/20 text-xs">▾</span>
-                </div>
+                <CustomSelect value={form.contratoEstado} onChange={v => setForm(f => ({ ...f, contratoEstado: v }))} options={ESTADOS_CONTRATO} />
               </div>
               <div>
                 <label className={labelCls}>Data de Envio</label>
