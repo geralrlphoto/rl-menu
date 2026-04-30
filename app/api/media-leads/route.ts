@@ -152,9 +152,9 @@ export async function POST(req: NextRequest) {
 </body>
 </html>`
 
-    // Destinatários: cliente (se tiver email) + sempre uma cópia para o admin ver
-    const destinatarios: string[] = ['geral.rlmedia@gmail.com']
-    if (body.email && body.email.trim()) destinatarios.push(body.email.trim())
+    // Só envia card se o cliente tiver email
+    if (!body.email || !body.email.trim()) return NextResponse.json({ ok: true, lead: data })
+    const destinatarios: string[] = [body.email.trim()]
 
     await fetch('https://api.resend.com/emails', {
       method: 'POST',
