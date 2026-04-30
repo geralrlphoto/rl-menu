@@ -40,6 +40,7 @@ interface FormData {
   morada: string
   email: string
   telefone: string
+  representanteLegal: string
   tipo: string
   estado: string
   descricao: string
@@ -47,6 +48,10 @@ interface FormData {
   dataFilmagem: string
   dataEntrega: string
   notas: string
+  // Anexo I
+  servicosList: string
+  profissionaisList: string
+  localAssinatura: string
   // Contrato
   contratoRef: string
   contratoEstado: string
@@ -64,6 +69,7 @@ const EMPTY: FormData = {
   morada: '',
   email: '',
   telefone: '',
+  representanteLegal: '',
   tipo: '',
   estado: 'Contacto Inicial',
   descricao: '',
@@ -71,6 +77,9 @@ const EMPTY: FormData = {
   dataFilmagem: '',
   dataEntrega: '',
   notas: '',
+  servicosList: '',
+  profissionaisList: '',
+  localAssinatura: 'Lisboa',
   contratoRef: '',
   contratoEstado: 'Por Elaborar',
   contratoDataEnvio: '',
@@ -202,6 +211,10 @@ export default function FichaClientePage() {
                 <label className={labelCls}>Morada</label>
                 <input value={form.morada} onChange={set('morada')} placeholder="Rua, cidade" className={inputCls} />
               </div>
+              <div className="sm:col-span-2">
+                <label className={labelCls}>Representante Legal</label>
+                <input value={form.representanteLegal} onChange={set('representanteLegal')} placeholder="Nome completo do representante legal" className={inputCls} />
+              </div>
             </div>
           </div>
 
@@ -254,10 +267,36 @@ export default function FichaClientePage() {
             </div>
           </div>
 
+          {/* Secção — Anexo I */}
+          <div>
+            <p className="text-[8px] tracking-[0.55em] text-white/20 uppercase mb-5 flex items-center gap-3">
+              <span>03 — Anexo I · Serviços & Profissionais</span>
+              <span className="flex-1 h-px bg-white/[0.05]" />
+            </p>
+            <div className="flex flex-col gap-4">
+              <div>
+                <label className={labelCls}>Serviços Contratados (um por linha)</label>
+                <textarea value={form.servicosList} onChange={set('servicosList')}
+                  placeholder={"2 REUNIÕES DE ARRANQUE\n1 A 2 DIAS DE FILMAGEM\nCORREÇÃO DE CORES\nDIREITOS DE MÚSICAS ILIMITADOS"}
+                  rows={6} className={inputCls + ' resize-none leading-relaxed font-mono text-xs'} />
+              </div>
+              <div>
+                <label className={labelCls}>Profissionais Envolvidos (um por linha)</label>
+                <textarea value={form.profissionaisList} onChange={set('profissionaisList')}
+                  placeholder={"1 VIDEÓGRAFO\n1 FOTÓGRAFO\n1 ASSISTENTE"}
+                  rows={4} className={inputCls + ' resize-none leading-relaxed font-mono text-xs'} />
+              </div>
+              <div>
+                <label className={labelCls}>Local de Assinatura</label>
+                <input value={form.localAssinatura} onChange={set('localAssinatura')} placeholder="Lisboa" className={inputCls} />
+              </div>
+            </div>
+          </div>
+
           {/* Secção — Contrato */}
           <div>
             <p className="text-[8px] tracking-[0.55em] text-white/20 uppercase mb-5 flex items-center gap-3">
-              <span>03 — Contrato</span>
+              <span>04 — Contrato</span>
               <span className="flex-1 h-px bg-white/[0.05]" />
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -300,7 +339,7 @@ export default function FichaClientePage() {
           {/* Secção — Notas */}
           <div>
             <p className="text-[8px] tracking-[0.55em] text-white/20 uppercase mb-5 flex items-center gap-3">
-              <span>04 — Notas Internas</span>
+              <span>05 — Notas Internas</span>
               <span className="flex-1 h-px bg-white/[0.05]" />
             </p>
             <textarea value={form.notas} onChange={set('notas')}
