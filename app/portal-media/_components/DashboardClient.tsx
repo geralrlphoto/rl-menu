@@ -4,6 +4,7 @@ import Link from 'next/link'
 import type { Projeto } from '@/app/portal-media/_data/mockProject'
 import AdminBar from './AdminBar'
 import EditableField from './EditableField'
+import EditableDateField from './EditableDateField'
 
 const NAV = [
   { slug: 'workflow',        label: 'Workflow',        desc: 'Fases do projeto',        icon: '◈' },
@@ -162,25 +163,34 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-          {([
-            { label: 'Local',         field: 'local'         },
-            { label: 'Filmagem',      field: 'dataFilmagem'  },
-            { label: 'Revisões',      field: null            },
-            { label: 'Entrega Final', field: 'dataEntrega'   },
-          ] as { label: string; field: keyof Projeto | null }[]).map(stat => (
-            <div key={stat.label} className="border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-              <p className="text-xs tracking-[0.4em] text-white/25 uppercase mb-1">{stat.label}</p>
-              {stat.field ? (
-                <EditableField value={String(projeto[stat.field] ?? '')} isEditing={isEditing}
-                  onChange={v => set(stat.field!, v)}
-                  className="text-sm tracking-[0.15em] text-white/65 font-light block" />
-              ) : (
-                <p className="text-sm tracking-[0.15em] text-white/65 font-light">
-                  {projeto.revisoes.usadas} / {projeto.revisoes.total}
-                </p>
-              )}
-            </div>
-          ))}
+          {/* Local */}
+          <div className="border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+            <p className="text-xs tracking-[0.4em] text-white/25 uppercase mb-1">Local</p>
+            <EditableField value={projeto.local} isEditing={isEditing}
+              onChange={v => set('local', v)}
+              className="text-sm tracking-[0.15em] text-white/65 font-light block" />
+          </div>
+          {/* Filmagem */}
+          <div className="border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+            <p className="text-xs tracking-[0.4em] text-white/25 uppercase mb-1">Filmagem</p>
+            <EditableDateField value={projeto.dataFilmagem} isEditing={isEditing}
+              onChange={v => set('dataFilmagem', v)}
+              className="text-sm tracking-[0.15em] text-white/65 font-light block" />
+          </div>
+          {/* Revisões */}
+          <div className="border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+            <p className="text-xs tracking-[0.4em] text-white/25 uppercase mb-1">Revisões</p>
+            <p className="text-sm tracking-[0.15em] text-white/65 font-light">
+              {projeto.revisoes.usadas} / {projeto.revisoes.total}
+            </p>
+          </div>
+          {/* Entrega Final */}
+          <div className="border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+            <p className="text-xs tracking-[0.4em] text-white/25 uppercase mb-1">Entrega Final</p>
+            <EditableDateField value={projeto.dataEntrega} isEditing={isEditing}
+              onChange={v => set('dataEntrega', v)}
+              className="text-sm tracking-[0.15em] text-white/65 font-light block" />
+          </div>
         </div>
 
         {/* Progress */}

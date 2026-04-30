@@ -5,6 +5,7 @@ import type { Projeto } from '@/app/portal-media/_data/mockProject'
 import AdminBar from './AdminBar'
 import EditableField from './EditableField'
 import EditableSelect from './EditableSelect'
+import EditableDateField from './EditableDateField'
 
 const PAG_CFG = {
   pago:      { label: 'Pago',      color: 'text-emerald-400/80', border: 'border-emerald-400/20', bg: 'bg-emerald-400/5'  },
@@ -106,7 +107,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                       className="text-xs tracking-[0.2em] text-white/60 uppercase font-medium block"
                       placeholder="Descrição"
                     />
-                    <EditableField
+                    <EditableDateField
                       value={pag.data}
                       isEditing={isEditing}
                       onChange={v => updatePag(i, 'data', v)}

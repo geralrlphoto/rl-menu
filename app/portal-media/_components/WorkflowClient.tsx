@@ -5,6 +5,7 @@ import type { Projeto, FaseEstado } from '@/app/portal-media/_data/mockProject'
 import AdminBar from './AdminBar'
 import EditableField from './EditableField'
 import EditableSelect from './EditableSelect'
+import EditableDateField from './EditableDateField'
 
 const ESTADO_CFG = {
   concluido: { label: 'Concluído', bg: 'bg-emerald-400/10', border: 'border-emerald-400/30', dot: 'bg-emerald-400',  text: 'text-emerald-400/80' },
@@ -136,7 +137,7 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
                       placeholder="Descrição da fase"
                       multiline
                     />
-                    <EditableField
+                    <EditableDateField
                       value={fase.data ?? ''}
                       isEditing={isEditing}
                       onChange={v => updateFase(i, 'data', v)}
