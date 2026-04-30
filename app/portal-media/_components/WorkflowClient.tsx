@@ -171,6 +171,24 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
             Serás notificado em cada transição de fase.
           </p>
         </div>
+
+        <div className="mt-4 border border-white/15 bg-white/[0.05] px-6 py-6 flex flex-col gap-4">
+          <p style={{ fontSize: '14px' }} className="text-white font-medium tracking-[0.15em] uppercase">
+            Timings
+          </p>
+          <p style={{ fontSize: '14px' }} className="text-white/70 leading-relaxed">
+            No projeto tens todos os timings associados ao teu projeto, bem como cada passo que damos até à conclusão do mesmo.
+          </p>
+          <p style={{ fontSize: '14px' }} className="text-white/70 leading-relaxed">
+            O compromisso entre ambas as partes com estes timings é fundamental para que tenhas os conteúdos do teu lado dentro do prazo estabelecido.
+          </p>
+          <p style={{ fontSize: '14px' }} className="text-white/70 leading-relaxed">
+            No entanto deverá haver sempre alguma flexibilidade para imprevistos.
+          </p>
+          <p style={{ fontSize: '14px' }} className="text-white leading-relaxed">
+            Contamos contigo para nos ajudares neste processo.
+          </p>
+        </div>
       </div>
 
       {isAdmin && (
