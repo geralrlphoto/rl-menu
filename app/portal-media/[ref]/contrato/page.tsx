@@ -18,13 +18,13 @@ export default async function ContratoPage({ params }: Props) {
       <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 py-10">
 
         <Link href={`/portal-media/${ref}`}
-          className="inline-flex items-center gap-2 text-[9px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
+          className="inline-flex items-center gap-2 text-sm tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
           <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
           Portal {projeto.nome}
         </Link>
 
         <div className="mb-10">
-          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · {projeto.nome}</p>
+          <p className="text-xs tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · {projeto.nome}</p>
           <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Contrato & CPS</h1>
           <div className="mt-4 flex items-center gap-3">
             <div className="h-px w-12 bg-white/25" />
@@ -37,35 +37,35 @@ export default async function ContratoPage({ params }: Props) {
           <div className={`border px-6 py-5 flex items-center justify-between
             ${projeto.contratoUrl ? 'border-emerald-400/20 bg-emerald-400/5' : 'border-white/[0.07] bg-white/[0.02]'}`}>
             <div>
-              <p className="text-[10px] tracking-[0.25em] text-white/60 uppercase font-medium">Contrato de Prestação de Serviços</p>
-              <p className={`text-[8px] tracking-[0.3em] uppercase mt-1 ${projeto.contratoUrl ? 'text-emerald-400/60' : 'text-white/20'}`}>
+              <p className="text-base tracking-[0.25em] text-white/60 uppercase font-medium">Contrato de Prestação de Serviços</p>
+              <p className={`text-xs tracking-[0.3em] uppercase mt-1 ${projeto.contratoUrl ? 'text-emerald-400/60' : 'text-white/20'}`}>
                 {projeto.contratoUrl ? 'Assinado' : 'Pendente de envio'}
               </p>
             </div>
             {projeto.contratoUrl ? (
               <a href={projeto.contratoUrl} target="_blank" rel="noopener noreferrer"
-                className="text-[9px] tracking-[0.3em] text-white/35 hover:text-white/60 uppercase transition-colors">Ver →</a>
+                className="text-sm tracking-[0.3em] text-white/35 hover:text-white/60 uppercase transition-colors">Ver →</a>
             ) : (
-              <span className="text-[9px] tracking-[0.3em] text-white/15 uppercase">Em breve</span>
+              <span className="text-sm tracking-[0.3em] text-white/15 uppercase">Em breve</span>
             )}
           </div>
 
           {/* CPS form */}
           <div className="border border-white/[0.07] bg-white/[0.02] px-6 py-6">
-            <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-2">Dados para CPS</p>
-            <p className="text-[10px] text-white/30 leading-relaxed mb-4">
+            <p className="text-xs tracking-[0.4em] text-white/25 uppercase mb-2">Dados para CPS</p>
+            <p className="text-base text-white/30 leading-relaxed mb-4">
               Para emissão do contrato precisamos dos dados fiscais da tua empresa. Preenche o formulário abaixo.
             </p>
             <button
               className="border border-white/15 bg-white/[0.04] hover:bg-white/[0.08] px-5 py-2.5
-                         text-[9px] tracking-[0.4em] text-white/45 hover:text-white/70 uppercase transition-all">
+                         text-sm tracking-[0.4em] text-white/45 hover:text-white/70 uppercase transition-all">
               Preencher Formulário →
             </button>
           </div>
         </div>
 
         <div className="border border-white/[0.05] bg-white/[0.01] px-5 py-4">
-          <p className="text-[9px] tracking-[0.2em] text-white/20 leading-relaxed">
+          <p className="text-base tracking-[0.2em] text-white/20 leading-relaxed">
             Dúvidas sobre o contrato? Contacta <span className="text-white/35">rl@rlmedia.pt</span>
           </p>
         </div>

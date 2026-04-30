@@ -21,13 +21,13 @@ export default async function RevisoesPage({ params }: Props) {
       <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 py-10">
 
         <Link href={`/portal-media/${ref}`}
-          className="inline-flex items-center gap-2 text-[9px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
+          className="inline-flex items-center gap-2 text-sm tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
           <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
           Portal {projeto.nome}
         </Link>
 
         <div className="mb-10">
-          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · {projeto.nome}</p>
+          <p className="text-xs tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · {projeto.nome}</p>
           <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Revisões</h1>
           <div className="mt-4 flex items-center gap-3">
             <div className="h-px w-12 bg-white/25" />
@@ -43,7 +43,7 @@ export default async function RevisoesPage({ params }: Props) {
             { label: 'Restantes', value: restantes   },
           ].map(s => (
             <div key={s.label} className="border border-white/[0.07] bg-white/[0.02] px-4 py-5 text-center">
-              <p className="text-[8px] tracking-[0.4em] text-white/25 uppercase mb-2">{s.label}</p>
+              <p className="text-xs tracking-[0.4em] text-white/25 uppercase mb-2">{s.label}</p>
               <p className="text-3xl font-extralight text-white/60">{s.value}</p>
             </div>
           ))}
@@ -55,10 +55,10 @@ export default async function RevisoesPage({ params }: Props) {
             <div key={i} className={`flex items-center gap-4 border px-6 py-4
               ${i < usadas ? 'border-emerald-400/20 bg-emerald-400/5' : 'border-white/[0.06] bg-white/[0.015]'}`}>
               <div className={`w-2 h-2 rounded-full shrink-0 ${i < usadas ? 'bg-emerald-400' : 'bg-white/10'}`} />
-              <p className={`text-[10px] tracking-[0.25em] uppercase ${i < usadas ? 'text-white/55' : 'text-white/20'}`}>
+              <p className={`text-base tracking-[0.25em] uppercase ${i < usadas ? 'text-white/55' : 'text-white/20'}`}>
                 Revisão {i + 1}
               </p>
-              <span className={`ml-auto text-[8px] tracking-[0.35em] uppercase ${i < usadas ? 'text-emerald-400/70' : 'text-white/15'}`}>
+              <span className={`ml-auto text-xs tracking-[0.35em] uppercase ${i < usadas ? 'text-emerald-400/70' : 'text-white/15'}`}>
                 {i < usadas ? 'Concluída' : 'Disponível'}
               </span>
             </div>
@@ -67,12 +67,12 @@ export default async function RevisoesPage({ params }: Props) {
 
         {/* CTA */}
         <div className="border border-white/[0.07] bg-white/[0.02] px-6 py-6">
-          <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-3">Dar Feedback</p>
-          <p className="text-[10px] text-white/35 leading-relaxed mb-4">
+          <p className="text-xs tracking-[0.4em] text-white/25 uppercase mb-3">Dar Feedback</p>
+          <p className="text-base text-white/35 leading-relaxed mb-4">
             Quando receberes o link do vídeo para revisão, usa o botão abaixo para enviar os teus comentários.
           </p>
           <button disabled
-            className="border border-white/10 bg-white/[0.03] px-5 py-2.5 text-[9px] tracking-[0.4em] text-white/20 uppercase cursor-not-allowed">
+            className="border border-white/10 bg-white/[0.03] px-5 py-2.5 text-sm tracking-[0.4em] text-white/20 uppercase cursor-not-allowed">
             Aguardar Vídeo
           </button>
         </div>

@@ -27,13 +27,13 @@ export default async function PagamentosPage({ params }: Props) {
       <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 py-10">
 
         <Link href={`/portal-media/${ref}`}
-          className="inline-flex items-center gap-2 text-[9px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
+          className="inline-flex items-center gap-2 text-sm tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
           <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
           Portal {projeto.nome}
         </Link>
 
         <div className="mb-10">
-          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · {projeto.nome}</p>
+          <p className="text-xs tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · {projeto.nome}</p>
           <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Pagamentos</h1>
           <div className="mt-4 flex items-center gap-3">
             <div className="h-px w-12 bg-white/25" />
@@ -49,8 +49,8 @@ export default async function PagamentosPage({ params }: Props) {
             { label: 'Restante',value: `${(total - pago).toLocaleString('pt-PT')} €` },
           ].map(s => (
             <div key={s.label} className="border border-white/[0.07] bg-white/[0.02] px-4 py-4 text-center">
-              <p className="text-[8px] tracking-[0.4em] text-white/25 uppercase mb-1">{s.label}</p>
-              <p className="text-[13px] tracking-[0.1em] text-white/65 font-light">{s.value}</p>
+              <p className="text-xs tracking-[0.4em] text-white/25 uppercase mb-1">{s.label}</p>
+              <p className="text-lg tracking-[0.1em] text-white/65 font-light">{s.value}</p>
             </div>
           ))}
         </div>
@@ -62,19 +62,19 @@ export default async function PagamentosPage({ params }: Props) {
             return (
               <div key={i} className={`flex items-center justify-between border ${cfg.border} ${cfg.bg} px-6 py-5`}>
                 <div>
-                  <p className="text-[11px] tracking-[0.2em] text-white/60 uppercase font-medium">{pag.descricao}</p>
-                  <p className="text-[9px] tracking-[0.2em] text-white/20 mt-1">{pag.data}</p>
+                  <p className="text-base tracking-[0.2em] text-white/60 uppercase font-medium">{pag.descricao}</p>
+                  <p className="text-base tracking-[0.2em] text-white/20 mt-1">{pag.data}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[13px] tracking-[0.1em] text-white/60 font-light">{pag.valor.toLocaleString('pt-PT')} €</p>
-                  <p className={`text-[8px] tracking-[0.3em] uppercase mt-1 ${cfg.color}`}>{cfg.label}</p>
+                  <p className="text-xl tracking-[0.1em] text-white/60 font-light">{pag.valor.toLocaleString('pt-PT')} €</p>
+                  <p className={`text-xs tracking-[0.3em] uppercase mt-1 ${cfg.color}`}>{cfg.label}</p>
                 </div>
               </div>
             )
           })}
         </div>
 
-        <p className="mt-8 text-[9px] tracking-[0.2em] text-white/15 leading-relaxed">
+        <p className="mt-8 text-base tracking-[0.2em] text-white/15 leading-relaxed">
           Para questões relacionadas com faturação contacta financeiro@rlmedia.pt
         </p>
       </div>

@@ -26,14 +26,14 @@ export default async function WorkflowPage({ params }: Props) {
 
         {/* Back */}
         <Link href={`/portal-media/${ref}`}
-          className="inline-flex items-center gap-2 text-[9px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
+          className="inline-flex items-center gap-2 text-sm tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
           <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
           Portal {projeto.nome}
         </Link>
 
         {/* Header */}
         <div className="mb-12">
-          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · {projeto.nome}</p>
+          <p className="text-xs tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · {projeto.nome}</p>
           <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Workflow</h1>
           <div className="mt-4 flex items-center gap-3">
             <div className="h-px w-12 bg-white/25" />
@@ -62,18 +62,18 @@ export default async function WorkflowPage({ params }: Props) {
                   <div className={`flex-1 border ${cfg.border} ${cfg.bg} p-5`}>
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <div className="flex items-center gap-3">
-                        <span className="text-[9px] font-mono text-white/15">{String(i + 1).padStart(2, '0')}</span>
-                        <h3 className={`text-[11px] tracking-[0.3em] font-medium uppercase ${fase.estado === 'pendente' ? 'text-white/35' : 'text-white/75'}`}>
+                        <span className="text-sm font-mono text-white/15">{String(i + 1).padStart(2, '0')}</span>
+                        <h3 className={`text-base tracking-[0.3em] font-medium uppercase ${fase.estado === 'pendente' ? 'text-white/35' : 'text-white/75'}`}>
                           {fase.nome}
                         </h3>
                       </div>
-                      <span className={`text-[8px] tracking-[0.3em] uppercase shrink-0 ${cfg.text}`}>
+                      <span className={`text-xs tracking-[0.3em] uppercase shrink-0 ${cfg.text}`}>
                         {cfg.label}
                       </span>
                     </div>
-                    <p className="text-[10px] text-white/25 leading-relaxed pl-7">{fase.descricao}</p>
+                    <p className="text-base text-white/25 leading-relaxed pl-7">{fase.descricao}</p>
                     {fase.data && (
-                      <p className={`text-[9px] tracking-[0.2em] mt-2 pl-7 ${fase.estado === 'pendente' ? 'text-white/15' : 'text-white/35'}`}>
+                      <p className={`text-base tracking-[0.2em] mt-2 pl-7 ${fase.estado === 'pendente' ? 'text-white/15' : 'text-white/35'}`}>
                         {fase.data}
                       </p>
                     )}
@@ -86,7 +86,7 @@ export default async function WorkflowPage({ params }: Props) {
 
         {/* Footer note */}
         <div className="mt-12 border border-white/[0.05] bg-white/[0.01] px-5 py-4">
-          <p className="text-[9px] tracking-[0.2em] text-white/20 leading-relaxed">
+          <p className="text-base tracking-[0.2em] text-white/20 leading-relaxed">
             As datas indicadas são estimativas e podem ser ajustadas conforme o avanço do projeto.
             Serás notificado em cada transição de fase.
           </p>
