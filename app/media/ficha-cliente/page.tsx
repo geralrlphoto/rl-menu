@@ -24,6 +24,13 @@ const ESTADOS = [
   'Cancelado',
 ]
 
+const ESTADOS_CONTRATO = [
+  'Por Elaborar',
+  'Enviado ao Cliente',
+  'Assinado',
+  'Cancelado',
+]
+
 interface FormData {
   nome: string
   empresa: string
@@ -36,6 +43,13 @@ interface FormData {
   dataFilmagem: string
   dataEntrega: string
   notas: string
+  // Contrato
+  contratoRef: string
+  contratoEstado: string
+  contratoDataEnvio: string
+  contratoDataAssinatura: string
+  contratoUrl: string
+  contratoNotas: string
 }
 
 const EMPTY: FormData = {
@@ -50,6 +64,12 @@ const EMPTY: FormData = {
   dataFilmagem: '',
   dataEntrega: '',
   notas: '',
+  contratoRef: '',
+  contratoEstado: 'Por Elaborar',
+  contratoDataEnvio: '',
+  contratoDataAssinatura: '',
+  contratoUrl: '',
+  contratoNotas: '',
 }
 
 export default function FichaClientePage() {
@@ -186,10 +206,53 @@ export default function FichaClientePage() {
             </div>
           </div>
 
+          {/* Secção — Contrato */}
+          <div>
+            <p className="text-[8px] tracking-[0.55em] text-white/20 uppercase mb-5 flex items-center gap-3">
+              <span>03 — Contrato</span>
+              <span className="flex-1 h-px bg-white/[0.05]" />
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className={labelCls}>Referência do Contrato</label>
+                <input value={form.contratoRef} onChange={set('contratoRef')} placeholder="Ex: CPS-2026-001" className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Estado do Contrato</label>
+                <div className="relative">
+                  <select value={form.contratoEstado} onChange={set('contratoEstado')} className={selectCls}>
+                    {ESTADOS_CONTRATO.map(e => <option key={e} value={e}>{e}</option>)}
+                  </select>
+                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-white/20 text-xs">▾</span>
+                </div>
+              </div>
+              <div>
+                <label className={labelCls}>Data de Envio</label>
+                <input type="date" value={form.contratoDataEnvio} onChange={set('contratoDataEnvio')}
+                  className={inputCls + ' [color-scheme:dark]'} />
+              </div>
+              <div>
+                <label className={labelCls}>Data de Assinatura</label>
+                <input type="date" value={form.contratoDataAssinatura} onChange={set('contratoDataAssinatura')}
+                  className={inputCls + ' [color-scheme:dark]'} />
+              </div>
+            </div>
+            <div className="mt-4">
+              <label className={labelCls}>Link do Contrato (PDF / Drive)</label>
+              <input value={form.contratoUrl} onChange={set('contratoUrl')} placeholder="https://..." className={inputCls} />
+            </div>
+            <div className="mt-4">
+              <label className={labelCls}>Notas sobre o Contrato</label>
+              <textarea value={form.contratoNotas} onChange={set('contratoNotas')}
+                placeholder="Condições especiais, revisões, observações..." rows={3}
+                className={inputCls + ' resize-none leading-relaxed'} />
+            </div>
+          </div>
+
           {/* Secção — Notas */}
           <div>
             <p className="text-[8px] tracking-[0.55em] text-white/20 uppercase mb-5 flex items-center gap-3">
-              <span>03 — Notas Internas</span>
+              <span>04 — Notas Internas</span>
               <span className="flex-1 h-px bg-white/[0.05]" />
             </p>
             <textarea value={form.notas} onChange={set('notas')}
