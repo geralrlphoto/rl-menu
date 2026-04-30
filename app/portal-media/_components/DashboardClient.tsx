@@ -45,6 +45,18 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
 
   const cancel = () => { setProjeto(initial); setIsEditing(false) }
 
+  // Click on phase dot → set as current (all before = concluido, all after = pendente)
+  const setFaseAtual = (idx: number) => {
+    setProjeto(p => ({
+      ...p,
+      fases: p.fases.map((f, i) => ({
+        ...f,
+        estado: i < idx ? 'concluido' : i === idx ? 'em_curso' : 'pendente',
+      })),
+    }))
+    setIsEditing(true)
+  }
+
   const fasesTotal = projeto.fases.length
   const fasesConcluidas = projeto.fases.filter(f => f.estado === 'concluido').length
   const progresso = Math.round((fasesConcluidas / fasesTotal) * 100)
@@ -179,14 +191,30 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
         <div className="h-px w-full bg-white/[0.06] relative overflow-hidden mb-4">
           <div className="absolute left-0 top-0 h-full bg-gradient-to-r from-white/30 to-white/10" style={{ width: `${progresso}%` }} />
         </div>
+        {isAdmin && (
+          <p className="text-xs tracking-[0.3em] text-white/15 uppercase mb-2">
+            ↑ clica numa fase para definir a fase actual
+          </p>
+        )}
         <div className="flex items-start gap-0 overflow-x-auto pb-1 mb-12">
           {projeto.fases.map((fase, i) => {
             const cfg = FASE_CFG[fase.estado]
             return (
               <div key={fase.id} className="flex items-center shrink-0">
-                <div className="flex flex-col items-center gap-1.5 px-3">
-                  <div className={`w-2 h-2 rounded-full ${cfg.dot}`} />
-                  <span className={`text-xs tracking-[0.2em] uppercase whitespace-nowrap ${cfg.color}`}>{fase.nome}</span>
+                <div
+                  className={`flex flex-col items-center gap-1.5 px-3 transition-opacity duration-150
+                    ${isAdmin ? 'cursor-pointer hover:opacity-100 opacity-70' : ''}`}
+                  onClick={isAdmin ? () => setFaseAtual(i) : undefined}
+                  title={isAdmin ? `Definir "${fase.nome}" como fase actual` : undefined}
+                >
+                  <div className={`w-2 h-2 rounded-full transition-transform duration-150
+                    ${cfg.dot}
+                    ${isAdmin ? 'hover:scale-150' : ''}
+                    ${fase.estado === 'em_curso' ? 'animate-pulse' : ''}`}
+                  />
+                  <span className={`text-xs tracking-[0.2em] uppercase whitespace-nowrap ${cfg.color}`}>
+                    {fase.nome}
+                  </span>
                 </div>
                 {i < projeto.fases.length - 1 && <div className="h-px w-6 bg-white/[0.06] shrink-0" />}
               </div>
