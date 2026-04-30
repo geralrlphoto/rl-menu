@@ -60,7 +60,7 @@ export default function RedesPage() {
 
       {/* Voltar */}
       <Link
-        href="/"
+        href="/photo"
         className="inline-flex items-center gap-2 text-[10px] tracking-[0.35em] text-white/30 hover:text-[#C9A84C] transition-colors mb-12 uppercase"
       >
         ‹ Menu

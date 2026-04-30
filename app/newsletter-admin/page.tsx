@@ -58,7 +58,7 @@ export default async function NewsletterAdmin() {
       {/* Header */}
       <div style={{ padding: '24px 40px', borderBottom: '1px solid #2a2217', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
         <div>
-          <Link href="/" style={{ color: '#8a7450', fontSize: 11, textDecoration: 'none', letterSpacing: 2 }}>← VOLTAR AO MENU</Link>
+          <Link href="/photo" style={{ color: '#8a7450', fontSize: 11, textDecoration: 'none', letterSpacing: 2 }}>← VOLTAR AO MENU</Link>
           <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 32, fontWeight: 400, marginTop: 8 }}>
             Newsletter <em style={{ color: '#c9a96e' }}>Admin</em>
           </h1>

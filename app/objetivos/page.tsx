@@ -214,7 +214,7 @@ export default function ObjetivosPage() {
   return (
     <main className="min-h-screen bg-[#080808] px-4 py-12 max-w-5xl mx-auto">
 
-      <Link href="/"
+      <Link href="/photo"
         className="inline-flex items-center gap-2 text-[10px] tracking-[0.35em] text-white/30 hover:text-[#C9A84C] transition-colors mb-12 uppercase">
         ‹ Menu
       </Link>

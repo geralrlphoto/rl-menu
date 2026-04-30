@@ -219,7 +219,7 @@ function FinancasPageInner() {
 
   return (
     <main className="min-h-screen px-3 py-6 sm:px-4 sm:py-12 max-w-[1400px] mx-auto">
-      <Link href="/" className="inline-flex items-center gap-2 text-xs tracking-widest text-white/40 hover:text-gold transition-colors mb-10">
+      <Link href="/photo" className="inline-flex items-center gap-2 text-xs tracking-widest text-white/40 hover:text-gold transition-colors mb-10">
         ‹ VOLTAR AO MENU
       </Link>
 

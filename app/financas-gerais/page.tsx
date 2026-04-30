@@ -7,7 +7,7 @@ const ANOS = [2025, 2026, 2027]
 export default function FinancasGeraisPage() {
   return (
     <main className="min-h-screen px-4 py-12 max-w-4xl mx-auto">
-      <Link href="/" className="inline-flex items-center gap-2 text-xs tracking-widest text-white/40 hover:text-gold transition-colors mb-10">
+      <Link href="/photo" className="inline-flex items-center gap-2 text-xs tracking-widest text-white/40 hover:text-gold transition-colors mb-10">
         ‹ VOLTAR AO MENU
       </Link>
       <header className="mb-10">

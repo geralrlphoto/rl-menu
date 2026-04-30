@@ -4,10 +4,11 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 
 const HIDDEN_PATHS = ['/login', '/portal-cliente', '/freelancer-view', '/r/', '/nova-lead']
+const HIDDEN_EXACT = ['/'] // brand selector — sem menu lateral
 
 const LINKS = [
   {
-    href: '/', label: 'Menu Principal',
+    href: '/photo', label: 'Menu Principal',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>,
   },
   {
@@ -56,7 +57,14 @@ export default function GlobalMenu() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
 
+  // Esconder em paths proibidos ou no selector de marca
+  if (HIDDEN_EXACT.includes(pathname)) return null
   if (HIDDEN_PATHS.some(p => pathname.startsWith(p))) return null
+
+  // Detectar marca activa
+  const isMedia = pathname.startsWith('/media')
+  const gold = 'rgba(201,168,76,'
+  const accent = (op: number) => isMedia ? `rgba(255,255,255,${op})` : `${gold}${op})`
 
   return (
     <>
@@ -67,16 +75,16 @@ export default function GlobalMenu() {
         style={{
           background: 'rgba(0,4,10,0.75)',
           backdropFilter: 'blur(12px)',
-          border: '1px solid rgba(201,168,76,0.2)',
-          boxShadow: '0 0 16px rgba(201,168,76,0.06)',
+          border: `1px solid ${accent(0.2)}`,
+          boxShadow: `0 0 16px ${accent(0.06)}`,
         }}
-        onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(201,168,76,0.45)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(201,168,76,0.12)' }}
-        onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(201,168,76,0.2)'; e.currentTarget.style.boxShadow = '0 0 16px rgba(201,168,76,0.06)' }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = accent(0.45); e.currentTarget.style.boxShadow = `0 0 20px ${accent(0.12)}` }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = accent(0.2);  e.currentTarget.style.boxShadow = `0 0 16px ${accent(0.06)}` }}
         aria-label="Menu"
       >
-        <span className="block rounded-full transition-all duration-200" style={{ width: '16px', height: '1px', background: 'rgba(201,168,76,0.8)' }} />
-        <span className="block rounded-full transition-all duration-200" style={{ width: '10px', height: '1px', background: 'rgba(201,168,76,0.5)' }} />
-        <span className="block rounded-full transition-all duration-200" style={{ width: '16px', height: '1px', background: 'rgba(201,168,76,0.8)' }} />
+        <span className="block rounded-full transition-all duration-200" style={{ width: '16px', height: '1px', background: accent(0.8) }} />
+        <span className="block rounded-full transition-all duration-200" style={{ width: '10px', height: '1px', background: accent(0.5) }} />
+        <span className="block rounded-full transition-all duration-200" style={{ width: '16px', height: '1px', background: accent(0.8) }} />
       </button>
 
       {/* Overlay */}
@@ -94,25 +102,25 @@ export default function GlobalMenu() {
         style={{
           width: '256px',
           background: 'rgba(0,4,10,0.98)',
-          borderRight: '1px solid rgba(201,168,76,0.12)',
-          boxShadow: '4px 0 40px rgba(201,168,76,0.06)',
+          borderRight: `1px solid ${accent(0.12)}`,
+          boxShadow: `4px 0 40px ${accent(0.06)}`,
         }}
       >
         {/* Grid bg */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden"
           style={{
-            backgroundImage: 'linear-gradient(rgba(201,168,76,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,0.025) 1px,transparent 1px)',
+            backgroundImage: `linear-gradient(${accent(0.025)} 1px,transparent 1px),linear-gradient(90deg,${accent(0.025)} 1px,transparent 1px)`,
             backgroundSize: '40px 40px',
           }}
         />
 
         {/* Header */}
         <div className="relative flex items-center justify-between px-5 py-5"
-          style={{ borderBottom: '1px solid rgba(201,168,76,0.1)' }}>
+          style={{ borderBottom: `1px solid ${accent(0.1)}` }}>
           <div>
             <p className="text-[9px] tracking-[0.5em] uppercase font-semibold"
-              style={{ color: 'rgba(201,168,76,0.6)' }}>
-              RL Photo · Video
+              style={{ color: accent(0.65) }}>
+              {isMedia ? 'RL Media · Audiovisual' : 'RL Photo · Video'}
             </p>
             <p className="text-[10px] tracking-[0.3em] uppercase mt-1"
               style={{ color: 'rgba(255,255,255,0.2)' }}>
@@ -132,47 +140,97 @@ export default function GlobalMenu() {
           </button>
         </div>
 
-        {/* Links */}
-        <nav className="relative flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-0.5">
-          {LINKS.map(({ href, label, icon }) => {
-            const active = pathname === href || (href !== '/' && pathname.startsWith(href))
+        {/* Links de navegação */}
+        <nav className="relative flex-1 min-h-0 overflow-y-auto px-3 pb-4 pt-3 flex flex-col gap-0.5">
+
+          {/* Links normais — RL PHOTO */}
+          {!isMedia && LINKS.map(({ href, label, icon }) => {
+            const active = pathname === href || (href !== '/photo' && pathname.startsWith(href))
             return (
               <a
                 key={href}
                 href={href}
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150"
                 style={active ? {
-                  background: 'rgba(201,168,76,0.08)',
-                  border: '1px solid rgba(201,168,76,0.22)',
-                  boxShadow: '0 0 16px rgba(201,168,76,0.06)',
-                } : {
-                  border: '1px solid transparent',
-                }}
+                  background: `${gold}0.08)`,
+                  border: `1px solid ${gold}0.22)`,
+                  boxShadow: `0 0 16px ${gold}0.06)`,
+                } : { border: '1px solid transparent' }}
                 onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}
                 onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
               >
-                <span style={{ color: active ? 'rgba(201,168,76,0.85)' : 'rgba(255,255,255,0.3)' }}
-                  className="shrink-0 transition-colors duration-150">
+                <span style={{ color: active ? `${gold}0.85)` : 'rgba(255,255,255,0.3)' }} className="shrink-0">
                   {icon}
                 </span>
-                <span className="text-[12px] tracking-wide transition-colors duration-150"
-                  style={{ color: active ? 'rgba(201,168,76,0.9)' : 'rgba(255,255,255,0.45)' }}>
+                <span className="text-[12px] tracking-wide" style={{ color: active ? `${gold}0.9)` : 'rgba(255,255,255,0.45)' }}>
                   {label}
                 </span>
                 {active && (
                   <span className="ml-auto w-1 h-1 rounded-full shrink-0"
-                    style={{ background: 'rgba(201,168,76,0.8)', boxShadow: '0 0 6px rgba(201,168,76,0.6)' }} />
+                    style={{ background: `${gold}0.8)`, boxShadow: `0 0 6px ${gold}0.6)` }} />
                 )}
               </a>
             )
           })}
+
+          {/* Link Menu RL MEDIA — dentro de /media */}
+          {isMedia && (
+            <a
+              href="/media"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150"
+              style={pathname === '/media' ? {
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.18)',
+              } : { border: '1px solid transparent' }}
+              onMouseEnter={e => { if (pathname !== '/media') e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}
+              onMouseLeave={e => { if (pathname !== '/media') e.currentTarget.style.background = 'transparent' }}
+            >
+              <span style={{ color: 'rgba(255,255,255,0.4)' }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+              </span>
+              <span className="text-[12px] tracking-wide" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                Menu RL Media
+              </span>
+              {pathname === '/media' && (
+                <span className="ml-auto w-1 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.7)' }} />
+              )}
+            </a>
+          )}
+
+          {/* ── Separador ── */}
+          <div className="relative" style={{ height: '1px', background: 'rgba(255,255,255,0.08)', margin: '6px 4px' }} />
+
+          {/* ── Botão RL MEDIA / RL PHOTO ── mesmo estilo dos links normais ── */}
+          <a
+            href={isMedia ? '/photo' : '/media'}
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150"
+            style={{
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.18)',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.35)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)' }}
+          >
+            <span className="shrink-0" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/>
+              </svg>
+            </span>
+            <span className="text-[12px] tracking-wide font-medium flex-1" style={{ color: 'rgba(255,255,255,0.75)' }}>
+              {isMedia ? 'RL Photo.Video' : 'RL Media'}
+            </span>
+            <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px' }}>→</span>
+          </a>
+
         </nav>
 
         {/* Footer */}
-        <div className="relative px-5 py-4" style={{ borderTop: '1px solid rgba(201,168,76,0.06)' }}>
+        <div className="relative px-5 py-3" style={{ borderTop: `1px solid ${accent(0.05)}` }}>
           <p className="text-[8px] tracking-[0.4em] uppercase" style={{ color: 'rgba(255,255,255,0.1)' }}>
-            © RL Photo · Video
+            {isMedia ? '© RL Media · Audiovisual' : '© RL Photo · Video'}
           </p>
         </div>
       </div>

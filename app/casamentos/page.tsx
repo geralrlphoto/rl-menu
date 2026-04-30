@@ -40,7 +40,7 @@ export default function CasamentosPage() {
   return (
     <main className="min-h-screen bg-[#0a0a0a] px-4 py-12 max-w-5xl mx-auto">
       <div className="mb-12">
-        <Link href="/" className="text-xs tracking-[0.3em] text-white/20 hover:text-gold transition-colors uppercase">‹ Menu</Link>
+        <Link href="/photo" className="text-xs tracking-[0.3em] text-white/20 hover:text-gold transition-colors uppercase">‹ Menu</Link>
         <h1 className="text-4xl sm:text-6xl font-extralight tracking-[0.15em] text-white uppercase mt-3">Casamentos</h1>
         <p className="text-white/20 text-xs tracking-[0.3em] mt-2 uppercase">Seleciona o ano</p>
       </div>

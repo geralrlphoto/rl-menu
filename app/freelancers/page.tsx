@@ -282,7 +282,7 @@ export default function FreelancersPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-10">
         <div>
-          <Link href="/" className="text-[10px] tracking-[0.3em] text-white/25 hover:text-white/50 uppercase transition-colors">
+          <Link href="/photo" className="text-[10px] tracking-[0.3em] text-white/25 hover:text-white/50 uppercase transition-colors">
             ← Dashboard
           </Link>
           <h1 className="text-xl font-bold tracking-widest text-gold uppercase mt-1">Equipas de Trabalho</h1>

@@ -153,7 +153,7 @@ export default function RelatorioDiarioPage() {
     <main className="min-h-screen bg-[#080808] px-4 py-10 max-w-3xl mx-auto">
 
       {/* Voltar */}
-      <Link href="/" className="inline-flex items-center gap-2 text-xs tracking-widest text-white/30 hover:text-gold transition-colors uppercase">
+      <Link href="/photo" className="inline-flex items-center gap-2 text-xs tracking-widest text-white/30 hover:text-gold transition-colors uppercase">
         ‹ MENU
       </Link>
 

@@ -154,7 +154,7 @@ export default async function SecaoPage({ params }: Props) {
     <main className="min-h-screen px-4 py-12 max-w-4xl mx-auto">
       {/* Voltar */}
       <Link
-        href="/"
+        href="/photo"
         className="inline-flex items-center gap-2 text-[10px] tracking-[0.35em] text-white/30 hover:text-gold transition-colors mb-12 uppercase"
       >
         ‹ Voltar ao Menu

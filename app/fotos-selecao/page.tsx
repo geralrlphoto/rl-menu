@@ -789,7 +789,7 @@ function FotosSelecaoPageInner() {
 
   return (
     <main className="min-h-screen px-4 py-12 max-w-5xl mx-auto">
-      <Link href="/" className="inline-flex items-center gap-2 text-[10px] tracking-[0.3em] text-white/30 hover:text-gold transition-colors mb-12 uppercase">
+      <Link href="/photo" className="inline-flex items-center gap-2 text-[10px] tracking-[0.3em] text-white/30 hover:text-gold transition-colors mb-12 uppercase">
         ‹ Voltar ao Menu
       </Link>
 

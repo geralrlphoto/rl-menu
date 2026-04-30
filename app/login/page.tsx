@@ -32,10 +32,14 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-[#080808] flex flex-col items-center justify-center">
 
-      <div className="mb-10 text-center">
-        <h1 className="text-sm font-light tracking-[0.5em] text-white uppercase">
+      <div className="mb-10 text-center flex flex-col items-center gap-2">
+        <p className="text-[8px] tracking-[0.7em] text-white/20 uppercase">Acesso Interno</p>
+        <h1 className="text-sm font-light tracking-[0.45em] text-white uppercase">
           RL <span className="text-[#C9A84C]">PHOTO</span>.VIDEO
         </h1>
+        <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">
+          & RL MEDIA · AUDIOVISUAL
+        </p>
       </div>
 
       <form onSubmit={handleSubmit}

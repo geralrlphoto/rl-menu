@@ -338,7 +338,7 @@ export default function CRMPage() {
       {/* ── HEADER ── */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8 sm:mb-12">
         <div>
-          <Link href="/" className="text-xs tracking-[0.3em] text-white/20 hover:text-gold transition-colors uppercase">
+          <Link href="/photo" className="text-xs tracking-[0.3em] text-white/20 hover:text-gold transition-colors uppercase">
             ‹ Menu
           </Link>
           <h1 className="text-3xl sm:text-5xl font-extralight tracking-[0.15em] sm:tracking-[0.2em] text-white uppercase mt-3">CRM</h1>
