@@ -258,6 +258,10 @@ export default function FichaClientePage() {
                 <label className={labelCls}>Orçamento (€)</label>
                 <input value={form.orcamento} onChange={set('orcamento')} placeholder="0.00" className={inputCls} />
               </div>
+              <div>
+                <label className={labelCls}>Local de Assinatura</label>
+                <input value={form.localAssinatura} onChange={set('localAssinatura')} placeholder="Lisboa" className={inputCls} />
+              </div>
             </div>
             <div className="mt-4">
               <label className={labelCls}>Descrição do Projeto</label>
@@ -285,10 +289,6 @@ export default function FichaClientePage() {
                 <textarea value={form.profissionaisList} onChange={set('profissionaisList')}
                   placeholder={"1 VIDEÓGRAFO\n1 FOTÓGRAFO\n1 ASSISTENTE"}
                   rows={4} className={inputCls + ' resize-none leading-relaxed font-mono text-xs'} />
-              </div>
-              <div>
-                <label className={labelCls}>Local de Assinatura</label>
-                <input value={form.localAssinatura} onChange={set('localAssinatura')} placeholder="Lisboa" className={inputCls} />
               </div>
             </div>
           </div>
