@@ -6,6 +6,25 @@ import { useState } from 'react'
 const HIDDEN_PATHS = ['/login', '/portal-cliente', '/freelancer-view', '/r/', '/nova-lead']
 const HIDDEN_EXACT = ['/'] // brand selector — sem menu lateral
 
+const MEDIA_LINKS = [
+  {
+    href: '/media/crm', label: 'CRM',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path strokeLinecap="round" strokeLinejoin="round" d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>,
+  },
+  {
+    href: '/media/recursos-humanos', label: 'Recursos Humanos',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197"/></svg>,
+  },
+  {
+    href: '/media/financas', label: 'Finanças',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>,
+  },
+  {
+    href: '/media/portal-cliente', label: 'Portal Cliente',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><circle cx="12" cy="12" r="10"/><path strokeLinecap="round" d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>,
+  },
+]
+
 const LINKS = [
   {
     href: '/photo', label: 'Menu Principal',
@@ -174,29 +193,59 @@ export default function GlobalMenu() {
             )
           })}
 
-          {/* Link Menu RL MEDIA — dentro de /media */}
+          {/* Links RL MEDIA — dentro de /media */}
           {isMedia && (
-            <a
-              href="/media"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150"
-              style={pathname === '/media' ? {
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.18)',
-              } : { border: '1px solid transparent' }}
-              onMouseEnter={e => { if (pathname !== '/media') e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}
-              onMouseLeave={e => { if (pathname !== '/media') e.currentTarget.style.background = 'transparent' }}
-            >
-              <span style={{ color: 'rgba(255,255,255,0.4)' }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-              </span>
-              <span className="text-[12px] tracking-wide" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                Menu RL Media
-              </span>
-              {pathname === '/media' && (
-                <span className="ml-auto w-1 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.7)' }} />
-              )}
-            </a>
+            <>
+              <a
+                href="/media"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150"
+                style={pathname === '/media' ? {
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.18)',
+                } : { border: '1px solid transparent' }}
+                onMouseEnter={e => { if (pathname !== '/media') e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}
+                onMouseLeave={e => { if (pathname !== '/media') e.currentTarget.style.background = 'transparent' }}
+              >
+                <span style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                </span>
+                <span className="text-[12px] tracking-wide" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  Menu RL Media
+                </span>
+                {pathname === '/media' && (
+                  <span className="ml-auto w-1 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.7)' }} />
+                )}
+              </a>
+
+              {MEDIA_LINKS.map(({ href, label, icon }) => {
+                const active = pathname === href || pathname.startsWith(href)
+                return (
+                  <a
+                    key={href}
+                    href={href}
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150"
+                    style={active ? {
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid rgba(255,255,255,0.18)',
+                    } : { border: '1px solid transparent' }}
+                    onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}
+                    onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+                  >
+                    <span style={{ color: active ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.3)' }} className="shrink-0">
+                      {icon}
+                    </span>
+                    <span className="text-[12px] tracking-wide" style={{ color: active ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.45)' }}>
+                      {label}
+                    </span>
+                    {active && (
+                      <span className="ml-auto w-1 h-1 rounded-full shrink-0" style={{ background: 'rgba(255,255,255,0.7)' }} />
+                    )}
+                  </a>
+                )
+              })}
+            </>
           )}
 
           {/* ── Separador ── */}
