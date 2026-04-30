@@ -70,7 +70,7 @@ export default function NovaLeadPage() {
   }
 
   const labelCls = "block text-[8px] tracking-[0.5em] text-white/25 uppercase mb-2"
-  const inputCls = "w-full bg-white/[0.03] border border-white/[0.08] focus:border-white/25 focus:outline-none px-4 py-3 text-[13px] text-white/75 placeholder:text-white/15 transition-colors duration-200"
+  const inputCls = "w-full bg-white/[0.03] border border-white/[0.08] focus:border-white/25 focus:outline-none px-4 py-3 text-[14px] text-white/75 placeholder:text-white/15 transition-colors duration-200"
   const selectCls = inputCls + " appearance-none cursor-pointer [color-scheme:dark]"
 
   return (
@@ -101,7 +101,7 @@ export default function NovaLeadPage() {
             style={{ filter: 'drop-shadow(0 0 16px rgba(255,255,255,0.1))' }}
           />
           <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · Audiovisual</p>
-          <h1 className="text-2xl font-extralight tracking-[0.4em] text-white/80 uppercase">Nova Lead</h1>
+          <h1 className="text-2xl font-extralight tracking-[0.4em] text-white/80 uppercase">Formulário</h1>
           <div className="mt-4 flex items-center gap-3 w-full max-w-xs">
             <div className="h-px flex-1 bg-white/[0.06]" />
             <div className="w-1 h-1 rounded-full bg-white/20" />
