@@ -70,7 +70,7 @@ export default function NovaLeadPage() {
   }
 
   const labelCls = "block text-[8px] tracking-[0.5em] text-white/25 uppercase mb-2"
-  const inputCls = "w-full bg-white/[0.03] border border-white/[0.08] focus:border-white/25 focus:outline-none px-4 py-3 text-[14px] text-white/75 placeholder:text-white/15 transition-colors duration-200"
+  const inputCls = "w-full bg-white/[0.03] border border-white/[0.08] focus:border-white/25 focus:outline-none px-4 py-3 text-[15px] text-white/75 placeholder:text-white/15 transition-colors duration-200"
   const selectCls = inputCls + " appearance-none cursor-pointer [color-scheme:dark]"
 
   return (
