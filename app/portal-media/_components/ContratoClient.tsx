@@ -23,6 +23,8 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
   const [projeto, setProjeto] = useState(initial)
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [gerando, setGerando] = useState(false)
+  const [contratoLocal, setContratoLocal] = useState(contratoGerado)
 
   const save = async () => {
     setSaving(true)
@@ -41,7 +43,36 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
   const set = (field: keyof Projeto, value: string) =>
     setProjeto(p => ({ ...p, [field]: value }))
 
-  const temContratoGerado = contratoGerado?.gerado && contratoGerado?.url
+  async function gerarContrato() {
+    setGerando(true)
+    try {
+      const valorTotal = (projeto.pagamentos || []).reduce((s: number, p: any) => s + (p.valor || 0), 0)
+      const servicosList = (projeto.entregas || []).map((e: any) => e.titulo).join('\n')
+      const res = await fetch('/api/media-portal/gerar-contrato', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ref: projeto.ref,
+          nome: projeto.nome,
+          empresa: projeto.cliente,
+          morada: projeto.local,
+          telefone: projeto.gestorTelefone,
+          email: projeto.gestorEmail,
+          orcamento: valorTotal > 0 ? String(valorTotal) : '',
+          servicosList,
+          contratoEstado: 'Por Elaborar',
+        }),
+      })
+      const data = await res.json()
+      if (data.ok) {
+        setContratoLocal({ gerado: true, url: data.contratoUrl, ref: `CPS-${new Date().getFullYear()}-${projeto.ref}`, estado: 'Por Elaborar', geradoEm: new Date().toLocaleDateString('pt-PT') })
+        window.open(data.contratoUrl, '_blank')
+      }
+    } catch {}
+    setGerando(false)
+  }
+
+  const temContratoGerado = contratoLocal?.gerado && contratoLocal?.url
 
   return (
     <>
@@ -71,22 +102,22 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-[8px] tracking-[0.5em] text-white/25 uppercase mb-1">Contrato de Prestação de Serviços</p>
-                  <p className="text-[13px] tracking-[0.2em] text-white/75 font-light mb-1">{contratoGerado?.ref}</p>
+                  <p className="text-[13px] tracking-[0.2em] text-white/75 font-light mb-1">{contratoLocal?.ref}</p>
                   <div className="flex items-center gap-3 mt-2">
                     <span className={`text-[8px] tracking-[0.35em] uppercase px-2 py-0.5 border ${
-                      contratoGerado?.estado === 'Assinado'
+                      contratoLocal?.estado === 'Assinado'
                         ? 'border-emerald-400/30 text-emerald-400/60'
-                        : contratoGerado?.estado === 'Enviado ao Cliente'
+                        : contratoLocal?.estado === 'Enviado ao Cliente'
                         ? 'border-blue-400/30 text-blue-400/60'
                         : 'border-white/10 text-white/25'
-                    }`}>{contratoGerado?.estado}</span>
-                    {contratoGerado?.geradoEm && (
-                      <span className="text-[8px] text-white/15 tracking-[0.2em]">Gerado em {contratoGerado.geradoEm}</span>
+                    }`}>{contratoLocal?.estado}</span>
+                    {contratoLocal?.geradoEm && (
+                      <span className="text-[8px] text-white/15 tracking-[0.2em]">Gerado em {contratoLocal.geradoEm}</span>
                     )}
                   </div>
                 </div>
                 <a
-                  href={contratoGerado!.url}
+                  href={contratoLocal!.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="shrink-0 border border-white/15 bg-white/[0.04] hover:bg-white/[0.09] hover:border-white/30
@@ -133,14 +164,18 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                     />
                   )}
                 </div>
-                <div className="shrink-0">
+                <div className="shrink-0 flex flex-col gap-2 items-end">
                   {!isEditing && (
                     projeto.contratoUrl ? (
                       <a href={projeto.contratoUrl} target="_blank" rel="noopener noreferrer"
                         className="text-xs tracking-[0.3em] text-white/35 hover:text-white/60 uppercase transition-colors">Ver →</a>
-                    ) : (
-                      <span className="text-xs tracking-[0.3em] text-white/15 uppercase">Em breve</span>
-                    )
+                    ) : null
+                  )}
+                  {isAdmin && !isEditing && !projeto.contratoUrl && (
+                    <button onClick={gerarContrato} disabled={gerando}
+                      className="border border-white/20 hover:border-white/40 bg-white/[0.04] hover:bg-white/[0.08] px-5 py-2.5 text-[9px] tracking-[0.4em] text-white/50 hover:text-white/80 uppercase transition-all disabled:opacity-40">
+                      {gerando ? 'A gerar...' : '⊕ Gerar Contrato'}
+                    </button>
                   )}
                 </div>
               </div>
