@@ -308,20 +308,36 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
       </div>
     </div>,
 
-    // ── SLIDE 4 — PROCESSO ──────────────────────────────────────────────────
-    <div key={4} className="flex flex-col justify-center h-full px-8 sm:px-20 gap-8 max-w-4xl mx-auto w-full">
-      <p className={labelCls}>04 — Processo de Trabalho</p>
-      <div className="flex flex-col">
-        {PROCESSO.map((step, i) => (
-          <div key={i} className={`flex items-start gap-8 py-5 ${i < PROCESSO.length - 1 ? 'border-b border-white/[0.07]' : ''}`}>
-            <span className={`${T.xs} tracking-[0.5em] text-white/40 uppercase font-mono mt-0.5 shrink-0 w-8`}>{step.n}</span>
-            <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-8 flex-1">
-              <h3 className={`${T.md} font-light tracking-[0.3em] text-white/70 uppercase shrink-0 sm:w-40`}>{step.titulo}</h3>
-              <p className={`${T.sm} font-light text-white/55 tracking-wide`}>{step.desc}</p>
-            </div>
+    // ── SLIDE 4 — CHECKPOINT ────────────────────────────────────────────────
+    <div key={4} className="flex flex-col items-center justify-center h-full px-8 sm:px-20 text-center gap-10 max-w-3xl mx-auto w-full">
+      {/* Pergunta principal */}
+      <div className="flex flex-col items-center gap-4">
+        <p className={labelCls}>Pausa Estratégica</p>
+        <h2 className="text-[38px] font-extrabold tracking-[0.06em] text-white/90 uppercase leading-tight">
+          Até aqui,<br />faz sentido?
+        </h2>
+        <div className="flex items-center gap-4 mt-1">
+          <div className="h-px w-12 bg-white/20" />
+          <div className="w-1.5 h-1.5 bg-white/30 rotate-45" />
+          <div className="h-px w-12 bg-white/20" />
+        </div>
+      </div>
+      {/* Perguntas guia */}
+      <div className="flex flex-col gap-4 w-full max-w-xl">
+        {[
+          'Esta abordagem alinha-se com a visão da vossa marca?',
+          'Os objetivos apresentados refletem as vossas necessidades?',
+          'Há algo que queiras ajustar ou aprofundar?',
+        ].map((q, i) => (
+          <div key={i} className="flex items-start gap-4 text-left border border-white/[0.07] bg-white/[0.02] px-5 py-4">
+            <span className="text-[17px] text-white/30 shrink-0 mt-0.5">—</span>
+            <p className="text-[17px] font-light text-white/65 leading-snug">{q}</p>
           </div>
         ))}
       </div>
+      <p className="text-[15px] font-light text-white/35 tracking-wide">
+        Este é o momento para falar abertamente. Estamos aqui para ouvir.
+      </p>
     </div>,
 
     // ── SLIDE 5 — PRÓXIMOS PASSOS ───────────────────────────────────────────
