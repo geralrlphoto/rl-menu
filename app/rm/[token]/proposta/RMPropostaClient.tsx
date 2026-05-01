@@ -660,7 +660,7 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
           <p className="text-[15px] tracking-[0.5em] text-white/40 uppercase font-mono">
             {new Date().toLocaleDateString('pt-PT', { day:'2-digit', month:'long', year:'numeric' })}
           </p>
-          <div className="mt-2 leading-tight text-left">
+          <div className="mt-2 leading-tight text-center">
             <p className="text-[26px] sm:text-[30px] tracking-[0.18em] uppercase font-normal" style={{ color: '#b044d4' }}>More Than a Product,</p>
             <p className="text-[26px] sm:text-[30px] tracking-[0.18em] uppercase font-black text-white">An Experience.</p>
           </div>
