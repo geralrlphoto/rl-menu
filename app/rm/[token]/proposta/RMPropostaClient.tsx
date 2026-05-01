@@ -120,6 +120,40 @@ const COMO_FUNCIONA = [
   { n: '8', titulo: 'Feedback e Resultados',      desc: 'Dás-nos o teu feedback sobre todo o percurso do projeto e analisamos o impacto.' },
 ]
 
+// ─── Descrições dos serviços ──────────────────────────────────────────────────
+const SERVICOS_DESC: Record<string, string> = {
+  '1 reunião':                              'Sessão de briefing e alinhamento com a equipa criativa para definir objetivos, visão e expectativas do projeto.',
+  '2 reuniões':                             'Duas sessões de briefing e acompanhamento para garantir total alinhamento criativo ao longo de todo o projeto.',
+  '1 dia de captação':                      'Um dia completo de filmagem e/ou fotografia em locação, com equipamento profissional e equipa dedicada.',
+  '2 dias de captação':                     'Dois dias de produção em locação para projetos com maior escala ou diversidade de ambientes.',
+  '3 dias de captação':                     'Três dias de produção intensiva para campanhas abrangentes com múltiplos cenários e conteúdos.',
+  '1 dia opcional':                         'Dia adicional de captação flexível, a agendar conforme as necessidades específicas do projeto.',
+  'filmagem 4k':                            'Captação de vídeo em resolução 4K Ultra HD para máxima qualidade visual e flexibilidade total na pós-produção.',
+  'drone':                                  'Captação aérea com drone profissional para perspetivas cinematográficas únicas e planos de grande escala.',
+  'fotografia':                             'Sessão fotográfica profissional com seleção, retoque e entrega das imagens editadas em alta resolução.',
+  '1 videografo':                           'Operador de câmara especializado em vídeo para cobrir todos os ângulos e momentos essenciais do projeto.',
+  '2 videografos':                          'Dois operadores de câmara para cobertura simultânea de múltiplos ângulos e momentos em paralelo.',
+  '1 assistente':                           'Assistente de produção para apoio logístico, gestão de equipamento e fluidez operacional no set.',
+  '2 assistentes':                          'Dois assistentes de produção para projetos de maior dimensão que requerem mais apoio operacional.',
+  'diretor criativo':                       'Supervisão criativa de todo o projeto: conceito, narrativa visual, direção artística e consistência estética.',
+  '1 fotografo':                            'Fotógrafo profissional dedicado à captação de imagens estáticas de alta qualidade ao longo do dia.',
+  '2 fotografos':                           'Dois fotógrafos para cobertura abrangente e simultânea de diferentes momentos e perspetivas.',
+  '1 editor':                               'Editor de vídeo dedicado à montagem, correção de cor, sound design e entrega final do projeto.',
+  '1 video horizontal 1 min':               'Vídeo final editado em formato 16:9 com duração até 1 minuto — ideal para YouTube, apresentações e publicidade.',
+  '1 video horizontal 2 min':               'Vídeo final em formato 16:9 com até 2 minutos para histórias mais desenvolvidas e conteúdo institucional.',
+  '1 video horizontal 3 min':               'Vídeo institucional ou de campanha em formato 16:9 com até 3 minutos de duração completa.',
+  '1 video vertical 59seg':                 'Vídeo editado em formato 9:16 com até 59 segundos — otimizado para Instagram Reels, TikTok e Shorts.',
+  '1 video vertical 90seg':                 'Conteúdo vertical 9:16 com até 90 segundos para máximo impacto e engagement nas redes sociais.',
+  '1 video vertical 2min':                  'Vídeo vertical 9:16 com até 2 minutos para histórias mais detalhadas em formato mobile-first.',
+  'direitos musicais':                      'Licenciamento de música profissional para uso comercial dos conteúdos, sem restrições de copyright ou direitos de autor.',
+  'cedência de fotografias uso media social':'Licença de utilização das imagens captadas para publicação em redes sociais e todos os meios digitais da marca.',
+  'voz off estúdio':                        'Gravação de locução profissional em estúdio para narração do vídeo, com seleção de voz, dicção e masterização de áudio.',
+}
+
+function getServDesc(nome: string): string {
+  return SERVICOS_DESC[nome.toLowerCase().trim()] || ''
+}
+
 const EDITABLE_SLIDES = [0, 1, 2, 3, 4, 5, 6]
 const TOTAL_SLIDES = 10
 
@@ -151,6 +185,16 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
   const [dir,      setDir]      = useState<1 | -1>(1)
 
   // ── Inline edit ────────────────────────────────────────────────────────────
+  const [expandedServicos, setExpandedServicos] = useState<Set<string>>(new Set())
+
+  function toggleServico(key: string) {
+    setExpandedServicos(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key) else next.add(key)
+      return next
+    })
+  }
+
   const [editingSlide, setEditingSlide] = useState<number | null>(null)
   const [draft,        setDraft]        = useState<RMPageContent['proposta'] | null>(null)
   const [saving,       setSaving]       = useState(false)
@@ -336,13 +380,37 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
 
             {prop.servicos.length > 0 ? (
               <div className="flex flex-col gap-0">
-                {prop.servicos.map((s, i) => (
-                  <div key={i} className="flex items-center gap-4 py-3 border-b border-white/[0.055] last:border-0">
-                    <span className="text-[11px] font-bold text-white/20 shrink-0 w-5 text-right tabular-nums">{String(i + 1).padStart(2,'0')}</span>
-                    <div className="w-px h-3 bg-white/10 shrink-0" />
-                    <p className="text-[15px] font-light text-white/75 leading-snug">{s}</p>
-                  </div>
-                ))}
+                {prop.servicos.map((s, i) => {
+                  const key  = `${propIdx}-${i}`
+                  const open = expandedServicos.has(key)
+                  const desc = getServDesc(s)
+                  return (
+                    <div key={i} className="border-b border-white/[0.055] last:border-0">
+                      {/* Linha principal */}
+                      <div className="flex items-center gap-4 py-3">
+                        <span className="text-[11px] font-bold text-white/20 shrink-0 w-5 text-right tabular-nums">{String(i + 1).padStart(2,'0')}</span>
+                        <div className="w-px h-3 bg-white/10 shrink-0" />
+                        <p className="text-[15px] font-light text-white/75 leading-snug flex-1">{s}</p>
+                        {desc && (
+                          <button
+                            onClick={() => toggleServico(key)}
+                            className="shrink-0 w-6 h-6 flex items-center justify-center border border-white/[0.15] hover:border-white/40 text-white/40 hover:text-white/80 transition-all"
+                            style={{ fontSize: 16, lineHeight: 1, transform: open ? 'rotate(45deg)' : 'none', transition: 'transform 0.25s ease, border-color 0.2s, color 0.2s' }}
+                            title="Saber mais"
+                          >+</button>
+                        )}
+                      </div>
+                      {/* Descrição expandível */}
+                      <div style={{
+                        maxHeight: open ? 120 : 0,
+                        overflow: 'hidden',
+                        transition: 'max-height 0.35s cubic-bezier(0.4,0,0.2,1)',
+                      }}>
+                        <p className="text-[13px] font-light text-white/45 leading-relaxed pb-4 pl-9 pr-2">{desc}</p>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             ) : (
               <div className="flex-1 flex items-center justify-center">
