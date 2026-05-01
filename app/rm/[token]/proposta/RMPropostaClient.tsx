@@ -310,33 +310,17 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
 
     // ── SLIDE 4 — CHECKPOINT ────────────────────────────────────────────────
     <div key={4} className="flex flex-col items-center justify-center h-full px-8 sm:px-20 text-center gap-10 max-w-3xl mx-auto w-full">
-      {/* Pergunta principal */}
-      <div className="flex flex-col items-center gap-4">
-        <p className={labelCls}>Pausa Estratégica</p>
-        <h2 className="text-[38px] font-extrabold tracking-[0.06em] text-white/90 uppercase leading-tight">
-          Até aqui,<br />faz sentido?
-        </h2>
-        <div className="flex items-center gap-4 mt-1">
-          <div className="h-px w-12 bg-white/20" />
-          <div className="w-1.5 h-1.5 bg-white/30 rotate-45" />
-          <div className="h-px w-12 bg-white/20" />
-        </div>
+      <p className={labelCls}>A Tua Opinião</p>
+      <h2 className="text-[38px] font-extrabold tracking-[0.06em] text-white/90 uppercase leading-tight">
+        Momento de<br />Reflexão
+      </h2>
+      <div className="flex items-center gap-4">
+        <div className="h-px w-12 bg-white/20" />
+        <div className="w-1.5 h-1.5 bg-white/30 rotate-45" />
+        <div className="h-px w-12 bg-white/20" />
       </div>
-      {/* Perguntas guia */}
-      <div className="flex flex-col gap-4 w-full max-w-xl">
-        {[
-          'Esta abordagem alinha-se com a visão da vossa marca?',
-          'Os objetivos apresentados refletem as vossas necessidades?',
-          'Há algo que queiras ajustar ou aprofundar?',
-        ].map((q, i) => (
-          <div key={i} className="flex items-start gap-4 text-left border border-white/[0.07] bg-white/[0.02] px-5 py-4">
-            <span className="text-[17px] text-white/30 shrink-0 mt-0.5">—</span>
-            <p className="text-[17px] font-light text-white/65 leading-snug">{q}</p>
-          </div>
-        ))}
-      </div>
-      <p className="text-[15px] font-light text-white/35 tracking-wide">
-        Este é o momento para falar abertamente. Estamos aqui para ouvir.
+      <p className="text-[24px] font-light text-white/70 leading-relaxed max-w-xl">
+        Esta abordagem alinha-se com a visão da vossa marca?
       </p>
     </div>,
 
