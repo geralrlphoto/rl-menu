@@ -88,6 +88,41 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
   const [creatingPortal,  setCreatingPortal]  = useState(false)
   const [copiedId,        setCopiedId]        = useState<string | null>(null)
 
+  // Portal cliente
+  const [creatingPortalCliente, setCreatingPortalCliente] = useState<Record<string, boolean>>({})
+  const [createdPortalCliente,  setCreatedPortalCliente]  = useState<Record<string, boolean>>({})
+
+  async function criarPortalCliente(lead: Lead) {
+    if (!lead.page_token) return
+    setCreatingPortalCliente(s => ({ ...s, [lead.id]: true }))
+    try {
+      const existing = contentCache[lead.id] || {}
+      const newContent = {
+        ...existing,
+        portal_cliente: {
+          ativo: true,
+          fases: [
+            { titulo: 'Briefing e Contrato Assinado', concluida: false },
+            { titulo: 'Reunião de Pré-Produção',      concluida: false },
+            { titulo: 'Dia(s) de Captação',           concluida: false },
+            { titulo: 'Edição e Pós-Produção',        concluida: false },
+            { titulo: 'Revisão e Aprovação',           concluida: false },
+            { titulo: 'Entrega Final',                 concluida: false },
+          ],
+          notas: '', links: [], mensagem: '',
+        },
+      }
+      const res = await fetch('/api/media-portal/save-content', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: lead.page_token, page_content: newContent }),
+      })
+      if (!res.ok) throw new Error('save failed')
+      setContentCache(c => ({ ...c, [lead.id]: newContent }))
+      setCreatedPortalCliente(s => ({ ...s, [lead.id]: true }))
+    } catch { alert('Erro ao criar portal. Tenta novamente.') }
+    finally { setCreatingPortalCliente(s => ({ ...s, [lead.id]: false })) }
+  }
+
   // Propostas
   const [contentCache,    setContentCache]    = useState<Record<string, any>>({})
   const [propostas,       setPropostas]       = useState<Record<string, PropostaItem[]>>({})
@@ -436,10 +471,19 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                           className="text-[12px] tracking-[0.25em] text-amber-400/60 hover:text-amber-400/90 border border-amber-400/25 hover:border-amber-400/55 px-4 py-2.5 uppercase transition-all">
                           Editar Proposta ✎
                         </a>
-                        <a href={`/rm/${lead.page_token}/cliente`} target="_blank" rel="noopener noreferrer"
-                          className="text-[12px] tracking-[0.25em] text-sky-400/60 hover:text-sky-400/90 border border-sky-400/25 hover:border-sky-400/55 px-4 py-2.5 uppercase transition-all">
-                          Portal Cliente →
-                        </a>
+                        {contentCache[lead.id]?.portal_cliente?.ativo || createdPortalCliente[lead.id] ? (
+                          <a href={`/rm/${lead.page_token}/cliente`} target="_blank" rel="noopener noreferrer"
+                            className="text-[12px] tracking-[0.25em] text-sky-400/65 hover:text-sky-400/95 border border-sky-400/30 hover:border-sky-400/60 px-4 py-2.5 uppercase transition-all">
+                            Ver Portal Cliente →
+                          </a>
+                        ) : (
+                          <button
+                            onClick={() => criarPortalCliente(lead)}
+                            disabled={creatingPortalCliente[lead.id]}
+                            className="text-[12px] tracking-[0.25em] text-sky-400/50 hover:text-sky-400/80 border border-sky-400/20 hover:border-sky-400/45 px-4 py-2.5 uppercase transition-all disabled:opacity-40">
+                            {creatingPortalCliente[lead.id] ? 'A criar...' : '+ Criar Portal Cliente'}
+                          </button>
+                        )}
                         <button onClick={() => copyLink(lead.page_token!)}
                           className="text-[12px] tracking-[0.25em] text-white/35 hover:text-white/60 border border-white/[0.10] hover:border-white/20 px-4 py-2.5 uppercase transition-all">
                           {copiedId === lead.page_token ? '✓ Copiado' : 'Copiar Link'}

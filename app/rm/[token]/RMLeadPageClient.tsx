@@ -631,6 +631,34 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
 
         <div className="w-full h-px bg-white/[0.04]" />
 
+        {/* ── PORTAL DO CLIENTE — card ── */}
+        {(content as any).portal_cliente?.ativo && (
+          <>
+            <div className="w-full h-px bg-white/[0.04]" />
+            <section className="px-6 py-16 max-w-3xl mx-auto">
+              <FadeIn>
+                <div className="relative border border-sky-400/20 bg-sky-400/[0.03] px-8 sm:px-14 py-12 flex flex-col sm:flex-row items-center justify-between gap-8">
+                  <div className="absolute top-0 left-0 w-6 h-6 border-t border-l border-sky-400/25" />
+                  <div className="absolute top-0 right-0 w-6 h-6 border-t border-r border-sky-400/25" />
+                  <div className="absolute bottom-0 left-0 w-6 h-6 border-b border-l border-sky-400/25" />
+                  <div className="absolute bottom-0 right-0 w-6 h-6 border-b border-r border-sky-400/25" />
+                  <div className="flex flex-col gap-3 text-center sm:text-left">
+                    <p className="text-[9px] tracking-[0.5em] text-sky-400/60 uppercase">Área do Cliente</p>
+                    <p className="text-[13px] font-extralight text-white/50 tracking-wider leading-relaxed">
+                      Acompanha o progresso do teu projeto, consulta as entregas e acede aos teus ficheiros.
+                    </p>
+                  </div>
+                  <a href={`/rm/${token}/cliente`}
+                    className="shrink-0 flex items-center gap-3 border border-sky-400/30 bg-sky-400/[0.04] hover:bg-sky-400/[0.09] hover:border-sky-400/55 px-8 py-4 text-[9px] tracking-[0.5em] text-sky-400/60 hover:text-sky-400/90 uppercase transition-all duration-300 group whitespace-nowrap">
+                    <span>Portal Cliente</span>
+                    <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
+                  </a>
+                </div>
+              </FadeIn>
+            </section>
+          </>
+        )}
+
         {/* ── SOBRE ── */}
         <section className="py-16 px-6 flex flex-col items-center max-w-lg mx-auto text-center">
           <FadeIn>
