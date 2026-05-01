@@ -15,7 +15,6 @@ interface Lead {
   mensagem?: string
   estado: string
   created_at: string
-  // Portal fields
   page_token?: string
   page_publicada?: boolean
   reuniao_data?: string
@@ -26,35 +25,111 @@ interface Lead {
   page_views?: number
 }
 
+interface PropostaItem {
+  titulo: string
+  valor: string
+  servicos: string[]
+}
+
 interface Props {
   leads: Lead[]
   estadoColors: Record<string, string>
 }
 
+const DEFAULT_PROPOSTAS: PropostaItem[] = [
+  { titulo: 'Proposta 1', valor: '', servicos: [] },
+  { titulo: 'Proposta 2', valor: '', servicos: [] },
+  { titulo: 'Proposta 3', valor: '', servicos: [] },
+]
+
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://rl-menu-lake.vercel.app'
 
 export default function LeadsClient({ leads: initial, estadoColors }: Props) {
-  const [leads, setLeads] = useState(initial)
-  const [expanded, setExpanded] = useState<string | null>(null)
-  const [updatingId, setUpdatingId] = useState<string | null>(null)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [leads,        setLeads]        = useState(initial)
+  const [expanded,     setExpanded]     = useState<string | null>(null)
+  const [updatingId,   setUpdatingId]   = useState<string | null>(null)
+  const [deletingId,   setDeletingId]   = useState<string | null>(null)
   const [filtroEstado, setFiltroEstado] = useState('Todos')
 
-  // Portal form state
-  const [portalFormId, setPortalFormId] = useState<string | null>(null)
-  const [portalForm, setPortalForm] = useState({ reuniao_data: '', reuniao_hora: '', reuniao_tipo: 'Presencial', reuniao_link: '' })
-  const [creatingPortal, setCreatingPortal] = useState(false)
-  const [copiedId, setCopiedId] = useState<string | null>(null)
+  // Portal form
+  const [portalFormId,    setPortalFormId]    = useState<string | null>(null)
+  const [portalForm,      setPortalForm]      = useState({ reuniao_data: '', reuniao_hora: '', reuniao_tipo: 'Presencial', reuniao_link: '' })
+  const [creatingPortal,  setCreatingPortal]  = useState(false)
+  const [copiedId,        setCopiedId]        = useState<string | null>(null)
+
+  // Propostas
+  const [contentCache,    setContentCache]    = useState<Record<string, any>>({})
+  const [propostas,       setPropostas]       = useState<Record<string, PropostaItem[]>>({})
+  const [propostasLoading,setPropostasLoading]= useState<Record<string, boolean>>({})
+  const [propostaOpen,    setPropostaOpen]    = useState<Record<string, number | null>>({}) // leadId → 0|1|2|null
+  const [newServico,      setNewServico]      = useState<Record<string, string>>({})         // `${leadId}_${idx}`
+  const [savingProposta,  setSavingProposta]  = useState<Record<string, boolean>>({})
+  const [savedProposta,   setSavedProposta]   = useState<Record<string, boolean>>({})
 
   const filtered = filtroEstado === 'Todos' ? leads : leads.filter(l => l.estado === filtroEstado)
 
+  // ── Propostas: carregar conteúdo ──────────────────────────────────────────
+  async function loadContent(lead: Lead) {
+    if (!lead.page_token || contentCache[lead.id] !== undefined) return
+    setPropostasLoading(s => ({ ...s, [lead.id]: true }))
+    try {
+      const res  = await fetch(`/api/media-portal/view?token=${lead.page_token}`)
+      const data = await res.json()
+      const content = data.lead?.page_content || {}
+      setContentCache(c => ({ ...c, [lead.id]: content }))
+      setPropostas(p => ({
+        ...p,
+        [lead.id]: content.propostas || DEFAULT_PROPOSTAS.map(p => ({ ...p })),
+      }))
+    } finally {
+      setPropostasLoading(s => ({ ...s, [lead.id]: false }))
+    }
+  }
+
+  // ── Propostas: guardar ────────────────────────────────────────────────────
+  async function saveProposta(lead: Lead, idx: number) {
+    if (!lead.page_token) return
+    const key = `${lead.id}_${idx}`
+    setSavingProposta(s => ({ ...s, [key]: true }))
+    const content  = { ...(contentCache[lead.id] || {}), propostas: propostas[lead.id] }
+    await fetch('/api/media-portal/save-content', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ token: lead.page_token, page_content: content }),
+    })
+    setContentCache(c => ({ ...c, [lead.id]: content }))
+    setSavingProposta(s => ({ ...s, [key]: false }))
+    setSavedProposta(s => ({ ...s, [key]: true }))
+    setTimeout(() => setSavedProposta(s => ({ ...s, [key]: false })), 2000)
+  }
+
+  // ── Propostas: helpers de edição ─────────────────────────────────────────
+  function updateProposta(leadId: string, idx: number, patch: Partial<PropostaItem>) {
+    setPropostas(p => {
+      const arr = [...(p[leadId] || DEFAULT_PROPOSTAS.map(x => ({ ...x })))]
+      arr[idx]  = { ...arr[idx], ...patch }
+      return { ...p, [leadId]: arr }
+    })
+  }
+
+  function addServico(leadId: string, idx: number) {
+    const key = `${leadId}_${idx}`
+    const val = (newServico[key] || '').trim()
+    if (!val) return
+    const cur = propostas[leadId]?.[idx]?.servicos || []
+    updateProposta(leadId, idx, { servicos: [...cur, val] })
+    setNewServico(s => ({ ...s, [key]: '' }))
+  }
+
+  function removeServico(leadId: string, idx: number, si: number) {
+    const cur = propostas[leadId]?.[idx]?.servicos || []
+    updateProposta(leadId, idx, { servicos: cur.filter((_, i) => i !== si) })
+  }
+
+  // ── Portal ────────────────────────────────────────────────────────────────
   async function deleteLead(id: string) {
     setDeletingId(id)
-    await fetch('/api/media-leads', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    })
+    await fetch('/api/media-leads', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
     setLeads(ls => ls.filter(l => l.id !== id))
     setExpanded(null)
     setDeletingId(null)
@@ -62,11 +137,7 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
 
   async function updateEstado(id: string, estado: string) {
     setUpdatingId(id)
-    await fetch('/api/media-leads', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, estado }),
-    })
+    await fetch('/api/media-leads', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, estado }) })
     setLeads(ls => ls.map(l => l.id === id ? { ...l, estado } : l))
     setUpdatingId(null)
   }
@@ -74,25 +145,13 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
   async function criarPortal(lead: Lead) {
     setCreatingPortal(true)
     try {
-      const res = await fetch('/api/media-portal/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lead_id: lead.id, ...portalForm }),
-      })
+      const res  = await fetch('/api/media-portal/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lead_id: lead.id, ...portalForm }) })
       const data = await res.json()
       if (data.ok) {
-        setLeads(ls => ls.map(l => l.id === lead.id ? {
-          ...l,
-          page_token: data.token,
-          page_publicada: true,
-          reuniao_data: portalForm.reuniao_data || undefined,
-          reuniao_hora: portalForm.reuniao_hora || undefined,
-          reuniao_tipo: portalForm.reuniao_tipo,
-          reuniao_link: portalForm.reuniao_link || undefined,
-        } : l))
+        setLeads(ls => ls.map(l => l.id === lead.id ? { ...l, page_token: data.token, page_publicada: true, reuniao_data: portalForm.reuniao_data || undefined, reuniao_hora: portalForm.reuniao_hora || undefined, reuniao_tipo: portalForm.reuniao_tipo, reuniao_link: portalForm.reuniao_link || undefined } : l))
         setPortalFormId(null)
       }
-    } catch (_e) { /* silent */ }
+    } catch { /* silent */ }
     setCreatingPortal(false)
   }
 
@@ -111,14 +170,12 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
 
   return (
     <div>
-      {/* Filtro por estado */}
+      {/* Filtro */}
       <div className="flex items-center gap-2 mb-6 flex-wrap">
         {['Todos', ...ESTADOS].map(e => (
           <button key={e} onClick={() => setFiltroEstado(e)}
             className={`text-[8px] tracking-[0.35em] uppercase px-3 py-1.5 border transition-all duration-200 ${
-              filtroEstado === e
-                ? 'border-white/30 text-white/60 bg-white/[0.06]'
-                : 'border-white/[0.07] text-white/20 hover:border-white/20 hover:text-white/40'
+              filtroEstado === e ? 'border-white/30 text-white/60 bg-white/[0.06]' : 'border-white/[0.07] text-white/20 hover:border-white/20 hover:text-white/40'
             }`}>
             {e}
           </button>
@@ -128,19 +185,18 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
       {/* Cards */}
       <div className="flex flex-col gap-2">
         {filtered.map(lead => (
-          <div key={lead.id}
-            className="border border-white/[0.07] hover:border-white/14 bg-white/[0.02] transition-all duration-300">
+          <div key={lead.id} className="border border-white/[0.07] hover:border-white/14 bg-white/[0.02] transition-all duration-300">
 
-            {/* Row principal */}
+            {/* Row */}
             <div className="flex items-center gap-4 px-5 py-4 cursor-pointer"
-              onClick={() => setExpanded(expanded === lead.id ? null : lead.id)}>
-
-              {/* Estado badge */}
+              onClick={() => {
+                const next = expanded === lead.id ? null : lead.id
+                setExpanded(next)
+                if (next) loadContent(lead)
+              }}>
               <span className={`shrink-0 text-[8px] tracking-[0.3em] uppercase px-2 py-1 border ${estadoColors[lead.estado] ?? 'border-white/10 text-white/25'}`}>
                 {lead.estado}
               </span>
-
-              {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3">
                   <p className="text-[12px] tracking-[0.15em] text-white/70 font-medium truncate">{lead.nome}</p>
@@ -148,117 +204,169 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                 </div>
                 <div className="flex items-center gap-3 mt-1 flex-wrap">
                   {lead.tipo && <span className="text-[8px] tracking-[0.2em] text-white/20 uppercase">{lead.tipo}</span>}
-                  {lead.fonte && (
-                    <>
-                      <span className="text-white/10">·</span>
-                      <span className="text-[8px] tracking-[0.2em] text-white/20 uppercase">{lead.fonte}</span>
-                    </>
-                  )}
-                  {lead.page_token && (
-                    <>
-                      <span className="text-white/10">·</span>
-                      <span className="text-[8px] tracking-[0.2em] text-emerald-400/40 uppercase">Portal Ativo</span>
-                    </>
-                  )}
+                  {lead.fonte && (<><span className="text-white/10">·</span><span className="text-[8px] tracking-[0.2em] text-white/20 uppercase">{lead.fonte}</span></>)}
+                  {lead.page_token && (<><span className="text-white/10">·</span><span className="text-[8px] tracking-[0.2em] text-emerald-400/40 uppercase">Portal Ativo</span></>)}
                 </div>
               </div>
-
-              {/* Data + expand */}
               <div className="shrink-0 text-right">
                 <p className="text-[9px] text-white/20 font-mono">{formatDate(lead.created_at)}</p>
                 <p className="text-[8px] text-white/12 mt-1">{expanded === lead.id ? '▲' : '▼'}</p>
               </div>
             </div>
 
-            {/* Detalhe expandido */}
+            {/* Detalhe */}
             {expanded === lead.id && (
               <div className="border-t border-white/[0.05] px-5 py-5 flex flex-col gap-5">
 
                 {/* Contacto */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  {lead.email && (
-                    <div>
-                      <p className={labelCls}>Email</p>
-                      <a href={`mailto:${lead.email}`} className="text-[11px] text-white/50 hover:text-white/75 transition-colors mt-1 block">{lead.email}</a>
-                    </div>
-                  )}
-                  {lead.telefone && (
-                    <div>
-                      <p className={labelCls}>Telefone</p>
-                      <a href={`tel:${lead.telefone}`} className="text-[11px] text-white/50 hover:text-white/75 transition-colors mt-1 block">{lead.telefone}</a>
-                    </div>
-                  )}
-                  {lead.tipo && (
-                    <div>
-                      <p className={labelCls}>Serviço</p>
-                      <p className="text-[11px] text-white/50 mt-1">{lead.tipo}</p>
-                    </div>
-                  )}
-                  {lead.fonte && (
-                    <div>
-                      <p className={labelCls}>Origem</p>
-                      <p className="text-[11px] text-white/50 mt-1">{lead.fonte}</p>
-                    </div>
-                  )}
+                  {lead.email && (<div><p className={labelCls}>Email</p><a href={`mailto:${lead.email}`} className="text-[11px] text-white/50 hover:text-white/75 transition-colors mt-1 block">{lead.email}</a></div>)}
+                  {lead.telefone && (<div><p className={labelCls}>Telefone</p><a href={`tel:${lead.telefone}`} className="text-[11px] text-white/50 hover:text-white/75 transition-colors mt-1 block">{lead.telefone}</a></div>)}
+                  {lead.tipo && (<div><p className={labelCls}>Serviço</p><p className="text-[11px] text-white/50 mt-1">{lead.tipo}</p></div>)}
+                  {lead.fonte && (<div><p className={labelCls}>Origem</p><p className="text-[11px] text-white/50 mt-1">{lead.fonte}</p></div>)}
                 </div>
 
                 {/* Mensagem */}
                 {lead.mensagem && (
                   <div>
                     <p className={labelCls + ' mb-2'}>Mensagem</p>
-                    <p className="text-[12px] text-white/40 leading-relaxed bg-white/[0.02] border border-white/[0.05] px-4 py-3">
-                      {lead.mensagem}
-                    </p>
+                    <p className="text-[12px] text-white/40 leading-relaxed bg-white/[0.02] border border-white/[0.05] px-4 py-3">{lead.mensagem}</p>
                   </div>
                 )}
 
-                {/* Mudar estado */}
+                {/* Estado */}
                 <div>
                   <p className={labelCls + ' mb-2'}>Atualizar Estado</p>
                   <div className="flex items-center gap-2 flex-wrap">
                     {ESTADOS.map(e => (
-                      <button key={e}
-                        disabled={lead.estado === e || updatingId === lead.id}
-                        onClick={() => updateEstado(lead.id, e)}
-                        className={`text-[8px] tracking-[0.3em] uppercase px-3 py-1.5 border transition-all duration-200
-                          ${lead.estado === e
-                            ? `${estadoColors[e]} cursor-default`
-                            : 'border-white/[0.07] text-white/20 hover:border-white/20 hover:text-white/45 disabled:opacity-30'
-                          }`}>
+                      <button key={e} disabled={lead.estado === e || updatingId === lead.id} onClick={() => updateEstado(lead.id, e)}
+                        className={`text-[8px] tracking-[0.3em] uppercase px-3 py-1.5 border transition-all duration-200 ${lead.estado === e ? `${estadoColors[e]} cursor-default` : 'border-white/[0.07] text-white/20 hover:border-white/20 hover:text-white/45 disabled:opacity-30'}`}>
                         {e}
                       </button>
                     ))}
-                    {updatingId === lead.id && (
-                      <span className="text-[8px] text-white/20 tracking-widest">A guardar...</span>
-                    )}
+                    {updatingId === lead.id && <span className="text-[8px] text-white/20 tracking-widest">A guardar...</span>}
                   </div>
                 </div>
 
-                {/* ── Portal de Reunião ── */}
+                {/* ── PROPOSTAS CRIATIVAS ── */}
+                {lead.page_token && (
+                  <div className="border-t border-white/[0.04] pt-4">
+                    <p className={labelCls + ' mb-3'}>Propostas Criativas</p>
+
+                    {propostasLoading[lead.id] ? (
+                      <p className="text-[9px] text-white/20 tracking-widest animate-pulse">A carregar...</p>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        {(propostas[lead.id] || DEFAULT_PROPOSTAS).map((prop, idx) => {
+                          const isOpen = propostaOpen[lead.id] === idx
+                          const key    = `${lead.id}_${idx}`
+                          const nKey   = key
+                          const isSaving = savingProposta[key]
+                          const isSaved  = savedProposta[key]
+
+                          return (
+                            <div key={idx} className="border border-white/[0.07] bg-white/[0.01]">
+
+                              {/* Cabeçalho accordeão */}
+                              <button
+                                className="w-full flex items-center justify-between px-4 py-3 text-left"
+                                onClick={() => setPropostaOpen(s => ({ ...s, [lead.id]: isOpen ? null : idx }))}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <span className="text-[9px] tracking-[0.45em] text-white/55 uppercase font-medium">{prop.titulo}</span>
+                                  {prop.servicos.length > 0 && (
+                                    <span className="text-[8px] text-white/25 tracking-wide">{prop.servicos.length} serviço{prop.servicos.length !== 1 ? 's' : ''}</span>
+                                  )}
+                                  {prop.valor && (
+                                    <span className="text-[9px] text-emerald-400/50 font-mono">{prop.valor}</span>
+                                  )}
+                                </div>
+                                <span className="text-[9px] text-white/20">{isOpen ? '▲' : '▼'}</span>
+                              </button>
+
+                              {/* Corpo */}
+                              {isOpen && (
+                                <div className="border-t border-white/[0.05] px-4 py-4 flex flex-col gap-4">
+
+                                  {/* Serviços existentes */}
+                                  {prop.servicos.length > 0 && (
+                                    <div className="flex flex-col gap-1.5">
+                                      <p className={labelCls + ' mb-1'}>Serviços</p>
+                                      {prop.servicos.map((s, si) => (
+                                        <div key={si} className="flex items-center justify-between gap-2 px-3 py-2 bg-white/[0.02] border border-white/[0.05]">
+                                          <span className="text-[11px] text-white/55 flex-1">{s}</span>
+                                          <button onClick={() => removeServico(lead.id, idx, si)}
+                                            className="text-[9px] text-white/20 hover:text-red-400/60 transition-colors shrink-0">✕</button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+
+                                  {/* Adicionar serviço */}
+                                  <div>
+                                    <p className={labelCls + ' mb-1.5'}>Adicionar Serviço</p>
+                                    <div className="flex gap-2">
+                                      <input
+                                        className={inputCls}
+                                        placeholder="Nome do serviço..."
+                                        value={newServico[nKey] || ''}
+                                        onChange={e => setNewServico(s => ({ ...s, [nKey]: e.target.value }))}
+                                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addServico(lead.id, idx) } }}
+                                      />
+                                      <button onClick={() => addServico(lead.id, idx)}
+                                        className="shrink-0 px-4 border border-white/[0.12] hover:border-white/25 text-[11px] text-white/40 hover:text-white/65 transition-all">
+                                        +
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {/* Valor */}
+                                  <div>
+                                    <p className={labelCls + ' mb-1.5'}>Valor / Investimento</p>
+                                    <input
+                                      className={inputCls}
+                                      placeholder="Ex: 2.500€"
+                                      value={prop.valor}
+                                      onChange={e => updateProposta(lead.id, idx, { valor: e.target.value })}
+                                    />
+                                  </div>
+
+                                  {/* Guardar */}
+                                  <button
+                                    onClick={() => saveProposta(lead, idx)}
+                                    disabled={isSaving}
+                                    className={`w-full py-2.5 text-[9px] tracking-[0.45em] uppercase transition-all border disabled:opacity-40 ${
+                                      isSaved
+                                        ? 'border-emerald-400/40 text-emerald-400/60 bg-emerald-400/[0.04]'
+                                        : 'border-white/15 hover:border-white/30 text-white/40 hover:text-white/65 bg-white/[0.02] hover:bg-white/[0.05]'
+                                    }`}>
+                                    {isSaved ? '✓ Guardado' : isSaving ? 'A guardar...' : `✓ Guardar ${prop.titulo}`}
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ── PORTAL ── */}
                 <div className="border-t border-white/[0.04] pt-4">
                   <p className={labelCls + ' mb-3'}>Portal de Reunião</p>
-
                   {lead.page_token ? (
-                    // Portal já criado
                     <div className="flex flex-col gap-3">
-                      {/* Info da reunião */}
                       {(lead.reuniao_data || lead.reuniao_hora || lead.reuniao_tipo) && (
                         <div className="flex items-center gap-4 flex-wrap text-[10px] text-white/30 font-mono">
                           {lead.reuniao_data && <span>{lead.reuniao_data}</span>}
                           {lead.reuniao_hora && <span>{lead.reuniao_hora.slice(0,5)}</span>}
                           {lead.reuniao_tipo && <span>{lead.reuniao_tipo}</span>}
-                          {lead.page_confirmacao === 'confirmada' && (
-                            <span className="text-emerald-400/50">✓ Confirmada</span>
-                          )}
-                          {lead.page_confirmacao === 'alteracao_pedida' && (
-                            <span className="text-amber-400/50">⏳ Alteração pedida</span>
-                          )}
-                          {lead.page_views ? (
-                            <span className="text-white/15">{lead.page_views} visualizações</span>
-                          ) : null}
+                          {lead.page_confirmacao === 'confirmada' && <span className="text-emerald-400/50">✓ Confirmada</span>}
+                          {lead.page_confirmacao === 'alteracao_pedida' && <span className="text-amber-400/50">⏳ Alteração pedida</span>}
+                          {lead.page_views ? <span className="text-white/15">{lead.page_views} visualizações</span> : null}
                         </div>
                       )}
-                      {/* Link + ações */}
                       <div className="flex items-center gap-2 flex-wrap">
                         <a href={`/rm/${lead.page_token}`} target="_blank" rel="noopener noreferrer"
                           className="text-[9px] tracking-[0.35em] text-white/30 hover:text-white/60 border border-white/[0.07] hover:border-white/20 px-3 py-1.5 uppercase transition-all">
@@ -272,82 +380,44 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                           className="text-[9px] tracking-[0.35em] text-white/20 hover:text-white/50 border border-white/[0.07] hover:border-white/15 px-3 py-1.5 uppercase transition-all">
                           {copiedId === lead.page_token ? '✓ Copiado' : 'Copiar Link'}
                         </button>
-                        <button onClick={() => {
-                          setPortalForm({
-                            reuniao_data: lead.reuniao_data || '',
-                            reuniao_hora: lead.reuniao_hora || '',
-                            reuniao_tipo: lead.reuniao_tipo || 'Presencial',
-                            reuniao_link: lead.reuniao_link || '',
-                          })
-                          setPortalFormId(portalFormId === lead.id ? null : lead.id)
-                        }}
+                        <button onClick={() => { setPortalForm({ reuniao_data: lead.reuniao_data || '', reuniao_hora: lead.reuniao_hora || '', reuniao_tipo: lead.reuniao_tipo || 'Presencial', reuniao_link: lead.reuniao_link || '' }); setPortalFormId(portalFormId === lead.id ? null : lead.id) }}
                           className="text-[9px] tracking-[0.35em] text-white/20 hover:text-white/50 border border-white/[0.07] hover:border-white/15 px-3 py-1.5 uppercase transition-all">
                           Editar Reunião
                         </button>
                       </div>
                     </div>
                   ) : (
-                    // Sem portal
-                    <button
-                      onClick={() => {
-                        setPortalForm({ reuniao_data: '', reuniao_hora: '', reuniao_tipo: 'Presencial', reuniao_link: '' })
-                        setPortalFormId(portalFormId === lead.id ? null : lead.id)
-                      }}
+                    <button onClick={() => { setPortalForm({ reuniao_data: '', reuniao_hora: '', reuniao_tipo: 'Presencial', reuniao_link: '' }); setPortalFormId(portalFormId === lead.id ? null : lead.id) }}
                       className="text-[9px] tracking-[0.4em] text-white/30 hover:text-white/60 border border-white/[0.08] hover:border-white/20 px-4 py-2 uppercase transition-all">
                       + Criar Portal de Reunião
                     </button>
                   )}
 
-                  {/* Form de criação / edição do portal */}
                   {portalFormId === lead.id && (
                     <div className="mt-4 border border-white/[0.07] bg-white/[0.02] p-4 flex flex-col gap-4">
-                      <p className="text-[8px] tracking-[0.5em] text-white/20 uppercase">
-                        {lead.page_token ? 'Atualizar Reunião' : 'Dados da Reunião'}
-                      </p>
+                      <p className="text-[8px] tracking-[0.5em] text-white/20 uppercase">{lead.page_token ? 'Atualizar Reunião' : 'Dados da Reunião'}</p>
                       <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className={labelCls + ' mb-1.5 block'}>Data</label>
-                          <input type="date" value={portalForm.reuniao_data}
-                            onChange={e => setPortalForm(f => ({ ...f, reuniao_data: e.target.value }))}
-                            className={inputCls} />
-                        </div>
-                        <div>
-                          <label className={labelCls + ' mb-1.5 block'}>Hora</label>
-                          <input type="time" value={portalForm.reuniao_hora}
-                            onChange={e => setPortalForm(f => ({ ...f, reuniao_hora: e.target.value }))}
-                            className={inputCls} />
-                        </div>
+                        <div><label className={labelCls + ' mb-1.5 block'}>Data</label><input type="date" value={portalForm.reuniao_data} onChange={e => setPortalForm(f => ({ ...f, reuniao_data: e.target.value }))} className={inputCls} /></div>
+                        <div><label className={labelCls + ' mb-1.5 block'}>Hora</label><input type="time" value={portalForm.reuniao_hora} onChange={e => setPortalForm(f => ({ ...f, reuniao_hora: e.target.value }))} className={inputCls} /></div>
                       </div>
                       <div>
                         <label className={labelCls + ' mb-1.5 block'}>Modo</label>
                         <div className="flex gap-2">
                           {['Presencial', 'Videochamada'].map(tipo => (
                             <button key={tipo} onClick={() => setPortalForm(f => ({ ...f, reuniao_tipo: tipo }))}
-                              className={`flex-1 py-2 text-[9px] tracking-[0.3em] uppercase border transition-all ${
-                                portalForm.reuniao_tipo === tipo
-                                  ? 'border-white/25 text-white/60 bg-white/[0.04]'
-                                  : 'border-white/[0.07] text-white/20 hover:border-white/15'
-                              }`}>
+                              className={`flex-1 py-2 text-[9px] tracking-[0.3em] uppercase border transition-all ${portalForm.reuniao_tipo === tipo ? 'border-white/25 text-white/60 bg-white/[0.04]' : 'border-white/[0.07] text-white/20 hover:border-white/15'}`}>
                               {tipo}
                             </button>
                           ))}
                         </div>
                       </div>
-                      <div>
-                        <label className={labelCls + ' mb-1.5 block'}>Link (Google Meet, Maps, etc.)</label>
-                        <input type="url" value={portalForm.reuniao_link} placeholder="https://..."
-                          onChange={e => setPortalForm(f => ({ ...f, reuniao_link: e.target.value }))}
-                          className={inputCls} />
-                      </div>
+                      <div><label className={labelCls + ' mb-1.5 block'}>Link</label><input type="url" value={portalForm.reuniao_link} placeholder="https://..." onChange={e => setPortalForm(f => ({ ...f, reuniao_link: e.target.value }))} className={inputCls} /></div>
                       <div className="flex items-center gap-2 pt-1">
                         <button onClick={() => criarPortal(lead)} disabled={creatingPortal}
                           className="flex-1 py-2.5 border border-white/20 bg-white/[0.03] hover:bg-white/[0.07] hover:border-white/30 text-[9px] tracking-[0.45em] text-white/50 hover:text-white/70 uppercase transition-all disabled:opacity-30">
                           {creatingPortal ? 'A criar...' : lead.page_token ? '✓ Atualizar' : '✓ Criar Portal'}
                         </button>
-                        <button onClick={() => setPortalFormId(null)}
-                          className="px-4 py-2.5 border border-white/[0.07] text-[9px] tracking-[0.35em] text-white/20 hover:text-white/40 uppercase transition-all">
-                          Cancelar
-                        </button>
+                        <button onClick={() => setPortalFormId(null)} className="px-4 py-2.5 border border-white/[0.07] text-[9px] tracking-[0.35em] text-white/20 hover:text-white/40 uppercase transition-all">Cancelar</button>
                       </div>
                     </div>
                   )}
@@ -358,16 +428,12 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                   {deletingId === lead.id ? (
                     <span className="text-[8px] text-white/20 tracking-widest">A apagar...</span>
                   ) : (
-                    <button
-                      onClick={() => {
-                        if (confirm(`Apagar lead de ${lead.nome}?`)) deleteLead(lead.id)
-                      }}
+                    <button onClick={() => { if (confirm(`Apagar lead de ${lead.nome}?`)) deleteLead(lead.id) }}
                       className="text-[8px] tracking-[0.35em] uppercase text-red-400/40 hover:text-red-400/70 transition-colors">
                       Apagar Lead
                     </button>
                   )}
                 </div>
-
               </div>
             )}
           </div>

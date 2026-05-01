@@ -12,6 +12,12 @@ export type RMPackage = {
   preco: string
 }
 
+export type RMProposta = {
+  titulo: string
+  valor: string
+  servicos: string[]
+}
+
 export type RMPageContent = {
   hero:    { titulo: string; subtitulo: string }
   videos:  { label: string; titulo: string; urls: string[] }
@@ -34,6 +40,7 @@ export type RMPageContent = {
     slideImages: string[]
   }
   sobre: { label: string; titulo: string; texto: string }
+  propostas: RMProposta[]
 }
 
 const DEFAULT_CONTENT: RMPageContent = {
@@ -112,7 +119,7 @@ const DEFAULT_CONTENT: RMPageContent = {
     ],
     videoUrls: ['', '', ''],
     checkpointPergunta: 'Esta abordagem alinha-se com a visão da vossa marca?',
-    slideImages: ['', '', '', '', '', '', ''],
+    slideImages: ['', '', '', '', '', '', '', '', ''],
   },
   sobre: {
     label: 'Quem Somos',
@@ -120,6 +127,11 @@ const DEFAULT_CONTENT: RMPageContent = {
     texto:
       'Produzimos conteúdo audiovisual que comunica com clareza e impacto. Trabalhamos com marcas que entendem o valor da narrativa visual — desde vídeos institucionais a campanhas digitais. A nossa abordagem é estratégica, estética e orientada para resultados concretos.',
   },
+  propostas: [
+    { titulo: 'Proposta 1', valor: '', servicos: [] },
+    { titulo: 'Proposta 2', valor: '', servicos: [] },
+    { titulo: 'Proposta 3', valor: '', servicos: [] },
+  ],
 }
 
 function merge(saved: any): RMPageContent {
@@ -140,6 +152,7 @@ function merge(saved: any): RMPageContent {
       slideImages:         saved.proposta?.slideImages         || DEFAULT_CONTENT.proposta.slideImages,
     },
     sobre: { ...DEFAULT_CONTENT.sobre, ...(saved.sobre || {}) },
+    propostas: saved.propostas || DEFAULT_CONTENT.propostas,
   }
 }
 

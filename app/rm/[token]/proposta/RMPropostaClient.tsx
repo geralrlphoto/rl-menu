@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import type { RMPageContent, RMPackage } from '../RMLeadPageClient'
+import type { RMPageContent, RMPackage, RMProposta } from '../RMLeadPageClient'
 
 // ─── Comprime imagem no browser → base64 JPEG ────────────────────────────────
 function compressImage(file: File, maxWidth = 1400, quality = 0.80): Promise<string> {
@@ -81,7 +81,7 @@ function merge(saved: any): RMPageContent {
       propostaAtiva: 1, cta: 'Iniciar Produção', password: '',
       planoEtapas: DEFAULT_PLANO, incluido: DEFAULT_INCLUIDO,
       videoUrls: ['','',''], checkpointPergunta: 'Esta abordagem alinha-se com a visão da vossa marca?',
-      slideImages: ['','','','','','','',''],
+      slideImages: ['','','','','','','','','',''],
     },
     sobre:   { label: 'Quem Somos', titulo: 'RL Media', texto: '' },
   }
@@ -101,6 +101,11 @@ function merge(saved: any): RMPageContent {
       slideImages:        saved.proposta?.slideImages        || d.proposta.slideImages,
     },
     sobre:   { ...d.sobre,   ...(saved.sobre   || {}) },
+    propostas: saved.propostas || [
+      { titulo: 'Proposta 1', valor: '', servicos: [] },
+      { titulo: 'Proposta 2', valor: '', servicos: [] },
+      { titulo: 'Proposta 3', valor: '', servicos: [] },
+    ],
   }
 }
 
@@ -116,7 +121,7 @@ const COMO_FUNCIONA = [
 ]
 
 const EDITABLE_SLIDES = [0, 1, 2, 3, 4, 5, 6]
-const TOTAL_SLIDES = 8
+const TOTAL_SLIDES = 10
 
 const T = {
   xs:  'text-[13px]',
@@ -276,6 +281,59 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
             WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 35%, transparent 100%)',
           }}
         />
+      </div>
+    )
+  }
+
+  // ── Slide de Proposta (1, 2 ou 3) ─────────────────────────────────────────
+  function PropostaSlide({ idx, propIdx }: { idx: number; propIdx: number }) {
+    const prop: RMProposta = (content!.propostas || [])[propIdx] || { titulo: `Proposta ${propIdx + 1}`, valor: '', servicos: [] }
+    const temConteudo = prop.servicos.length > 0 || prop.valor
+    return (
+      <div className="flex flex-col h-full w-full">
+        <SlideHeader idx={idx} />
+        <div className="flex-1 flex flex-col items-center justify-center px-8 sm:px-20 text-center gap-10 py-8">
+
+          {/* Número da proposta */}
+          <div className="flex flex-col items-center gap-4">
+            <p className={labelCls}>Opção</p>
+            <h1 className="text-[72px] sm:text-[96px] font-extralight tracking-[0.3em] text-white/90 uppercase leading-none">
+              {prop.titulo}
+            </h1>
+            <div className="flex items-center gap-5">
+              <div className="h-px w-20 bg-white/20" />
+              <div className="w-2 h-2 bg-white/30 rotate-45" />
+              <div className="h-px w-20 bg-white/20" />
+            </div>
+          </div>
+
+          {/* Serviços */}
+          {prop.servicos.length > 0 && (
+            <div className="flex flex-col gap-3 w-full max-w-md">
+              {prop.servicos.map((s, i) => (
+                <div key={i} className="flex items-center gap-4 border-b border-white/[0.06] pb-3 last:border-0">
+                  <span className="text-[14px] text-white/30 shrink-0">—</span>
+                  <p className="text-[17px] font-light text-white/75 text-left leading-snug">{s}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Valor */}
+          {prop.valor && (
+            <div className="flex flex-col items-center gap-2">
+              <p className={labelCls}>Investimento</p>
+              <p className="text-[48px] sm:text-[64px] font-extralight tracking-[0.15em] text-white/90 leading-none">
+                {prop.valor}
+              </p>
+            </div>
+          )}
+
+          {/* Placeholder se vazio */}
+          {!temConteudo && (
+            <p className="text-[13px] text-white/20 tracking-[0.3em] uppercase">A definir</p>
+          )}
+        </div>
       </div>
     )
   }
@@ -622,14 +680,13 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
     </div>,
 
     // 7 — PROPOSTA 1
-    <div key={7} className="flex flex-col h-full w-full">
-      <SlideHeader idx={7} />
-      <div className="flex-1 flex items-center justify-center px-8 text-center">
-        <h1 className="text-[80px] sm:text-[110px] font-extralight tracking-[0.3em] text-white/90 uppercase leading-none">
-          PROPOSTA 1
-        </h1>
-      </div>
-    </div>,
+    <PropostaSlide key={7} idx={7} propIdx={0} />,
+
+    // 8 — PROPOSTA 2
+    <PropostaSlide key={8} idx={8} propIdx={1} />,
+
+    // 9 — PROPOSTA 3
+    <PropostaSlide key={9} idx={9} propIdx={2} />,
   ]
 
   // ── RENDER ─────────────────────────────────────────────────────────────────
