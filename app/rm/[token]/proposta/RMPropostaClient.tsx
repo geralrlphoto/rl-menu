@@ -611,22 +611,25 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
       </div>
     </div>,
 
-    // 6 — PRÓXIMOS PASSOS
+    // 6 — INVESTIMENTO
     <div key={6} className="flex flex-col h-full w-full">
       <SlideHeader idx={6} />
-      <div className="flex-1 flex flex-col items-center justify-center gap-10 px-8 text-center py-8">
-        <p className={labelCls}>Próximos Passos</p>
-        <div className="flex flex-col items-center gap-5">
-          <p className={`${T.xxl} font-extralight text-white/70 tracking-wide leading-relaxed`}>
-            Estamos prontos para começar.<br />Basta dar o próximo passo.
-          </p>
-          <a href={`/rm/${token}`}
-            className={`flex items-center gap-3 border border-white/30 bg-white/[0.04] hover:bg-white/[0.09] hover:border-white/50 px-10 py-5 ${T.xs} tracking-[0.5em] text-white/65 hover:text-white/90 uppercase transition-all duration-300 group`}>
-            <span>{proposta.cta}</span>
-            <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
-          </a>
+      <div className="flex-1 flex flex-col items-center justify-center gap-8 px-8 text-center py-8">
+        <p className={labelCls}>Proposta Criativa</p>
+        <h1 className="text-[64px] sm:text-[80px] font-extralight tracking-[0.25em] text-white/90 uppercase leading-none">
+          Investi<br />mento
+        </h1>
+        <div className="flex items-center gap-5">
+          <div className="h-px w-16 bg-white/25" />
+          <div className="w-2 h-2 bg-white/35 rotate-45" />
+          <div className="h-px w-16 bg-white/25" />
         </div>
-        <p className={`${T.xs} font-light text-white/45 tracking-wider leading-relaxed max-w-sm`}>
+        <a href={`/rm/${token}`}
+          className={`flex items-center gap-3 border border-white/30 bg-white/[0.04] hover:bg-white/[0.09] hover:border-white/50 px-10 py-5 ${T.xs} tracking-[0.5em] text-white/65 hover:text-white/90 uppercase transition-all duration-300 group`}>
+          <span>{proposta.cta}</span>
+          <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
+        </a>
+        <p className={`${T.xs} font-light text-white/35 tracking-wider leading-relaxed max-w-sm`}>
           Esta proposta foi preparada especificamente para {empresa || 'a vossa empresa'}.<br />
           É confidencial e destinada exclusivamente ao seu destinatário.
         </p>
