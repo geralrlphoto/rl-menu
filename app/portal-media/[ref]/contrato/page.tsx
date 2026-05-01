@@ -4,29 +4,31 @@ import { createClient } from '@supabase/supabase-js'
 import { getProjeto } from '@/app/portal-media/_data/mockProject'
 import ContratoClient from '@/app/portal-media/_components/ContratoClient'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+export const dynamic = 'force-dynamic'
 
 type Props = { params: Promise<{ ref: string }> }
 
 export default async function ContratoPage({ params }: Props) {
   const { ref } = await params
-  const projeto = getProjeto(ref)
-  if (!projeto) notFound()
 
-  const cookieStore = await cookies()
-  const isAdmin = cookieStore.get('rl_auth')?.value === process.env.AUTH_SECRET
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
 
-  // Verificar se há contrato gerado no Supabase
-  const { data } = await supabase
+  const { data: row } = await supabase
     .from('media_portais')
     .select('dados')
     .eq('ref', ref.toUpperCase())
     .single()
 
-  const contratoGerado = data?.dados?.contrato ?? null
+  const projeto = row?.dados ?? getProjeto(ref)
+  if (!projeto) notFound()
+
+  const cookieStore = await cookies()
+  const isAdmin = cookieStore.get('rl_auth')?.value === process.env.AUTH_SECRET
+
+  const contratoGerado = row?.dados?.contrato ?? null
 
   return (
     <main className="min-h-screen bg-[#050507] relative">
