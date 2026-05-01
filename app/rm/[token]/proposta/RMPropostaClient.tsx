@@ -236,13 +236,13 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
 
     // ── SLIDE 2 — O QUE NOS DISTINGUE ──────────────────────────────────────
     <div key={2} className="flex flex-col justify-center h-full px-8 sm:px-20 gap-8 max-w-5xl mx-auto w-full">
-      <p className={labelCls}>02 — O Que Nos Distingue</p>
+      <p className="text-[11px] tracking-[0.55em] text-white/50 uppercase">02 — O Que Nos Distingue</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {DIFERENCIAIS.map((d, i) => (
           <div key={i} className="border border-white/[0.08] bg-white/[0.02] p-6 flex flex-col gap-3">
-            <p className="text-[10px] tracking-[0.5em] text-white/40 uppercase font-mono">{d.n}</p>
+            <p className="text-[11px] tracking-[0.5em] text-white/40 uppercase font-mono">{d.n}</p>
             <h3 className="text-[13px] font-light tracking-[0.25em] text-white/70 uppercase">{d.titulo}</h3>
-            <p className="text-[12px] font-light text-white/55 leading-relaxed">{d.texto}</p>
+            <p className="text-[13px] font-light text-white/55 leading-relaxed">{d.texto}</p>
           </div>
         ))}
       </div>
