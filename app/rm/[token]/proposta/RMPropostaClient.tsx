@@ -121,12 +121,13 @@ const COMO_FUNCIONA = [
 ]
 
 // ─── Descrições dos serviços ──────────────────────────────────────────────────
+// Chaves em minúsculas SEM acentos — a função getServDesc normaliza o input da mesma forma
 const SERVICOS_DESC: Record<string, string> = {
-  '1 reunião':                              'Sessão de briefing e alinhamento com a equipa criativa para definir objetivos, visão e expectativas do projeto.',
-  '2 reuniões':                             'Duas sessões de briefing e acompanhamento para garantir total alinhamento criativo ao longo de todo o projeto.',
-  '1 dia de captação':                      'Um dia completo de filmagem e/ou fotografia em locação, com equipamento profissional e equipa dedicada.',
-  '2 dias de captação':                     'Dois dias de produção em locação para projetos com maior escala ou diversidade de ambientes.',
-  '3 dias de captação':                     'Três dias de produção intensiva para campanhas abrangentes com múltiplos cenários e conteúdos.',
+  '1 reuniao':                              'Sessão de briefing e alinhamento com a equipa criativa para definir objetivos, visão e expectativas do projeto.',
+  '2 reunioes':                             'Duas sessões de briefing e acompanhamento para garantir total alinhamento criativo ao longo de todo o projeto.',
+  '1 dia de captacao':                      'Um dia completo de filmagem e/ou fotografia em locação, com equipamento profissional e equipa dedicada.',
+  '2 dias de captacao':                     'Dois dias de produção em locação para projetos com maior escala ou diversidade de ambientes.',
+  '3 dias de captacao':                     'Três dias de produção intensiva para campanhas abrangentes com múltiplos cenários e conteúdos.',
   '1 dia opcional':                         'Dia adicional de captação flexível, a agendar conforme as necessidades específicas do projeto.',
   'filmagem 4k':                            'Captação de vídeo em resolução 4K Ultra HD para máxima qualidade visual e flexibilidade total na pós-produção.',
   'drone':                                  'Captação aérea com drone profissional para perspetivas cinematográficas únicas e planos de grande escala.',
@@ -146,12 +147,17 @@ const SERVICOS_DESC: Record<string, string> = {
   '1 video vertical 90seg':                 'Vídeo em formato 9:16 com até 90 segundos para social media — máximo impacto e engagement em Instagram Reels e TikTok.',
   '1 video vertical 2min':                  'Vídeo em formato 9:16 com até 2 minutos para social media — ideal para histórias mais completas no feed vertical do Instagram e TikTok.',
   'direitos musicais':                      'Licenciamento de música profissional para uso comercial dos conteúdos, sem restrições de copyright ou direitos de autor.',
-  'cedência de fotografias uso media social':'Licença de utilização das imagens captadas para publicação em redes sociais e todos os meios digitais da marca.',
-  'voz off estúdio':                        'Gravação de locução profissional em estúdio para narração do vídeo, com seleção de voz, dicção e masterização de áudio.',
+  'cedencia de fotografias uso media social':'Licença de utilização das imagens captadas para publicação em redes sociais e todos os meios digitais da marca.',
+  'voz off estudio':                        'Gravação de locução profissional em estúdio para narração do vídeo, com seleção de voz, dicção e masterização de áudio.',
+}
+
+// Remove acentos e normaliza para comparação — resolve diferenças entre "Videógrafo" e "videografo"
+function normalizeKey(s: string): string {
+  return s.toLowerCase().trim().normalize('NFD').replace(/[̀-ͯ]/g, '')
 }
 
 function getServDesc(nome: string): string {
-  return SERVICOS_DESC[nome.toLowerCase().trim()] || ''
+  return SERVICOS_DESC[normalizeKey(nome)] || ''
 }
 
 const EDITABLE_SLIDES = [0, 1, 2, 3, 4, 5, 6]
