@@ -185,14 +185,12 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
   const [dir,      setDir]      = useState<1 | -1>(1)
 
   // ── Inline edit ────────────────────────────────────────────────────────────
-  const [expandedServicos, setExpandedServicos] = useState<Set<string>>(new Set())
+  const [expandedServicos, setExpandedServicos] = useState<string[]>([])
 
   function toggleServico(key: string) {
-    setExpandedServicos(prev => {
-      const next = new Set(prev)
-      if (next.has(key)) next.delete(key) else next.add(key)
-      return next
-    })
+    setExpandedServicos(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    )
   }
 
   const [editingSlide, setEditingSlide] = useState<number | null>(null)
@@ -382,7 +380,7 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
               <div className="flex flex-col gap-0">
                 {prop.servicos.map((s, i) => {
                   const key  = `${propIdx}-${i}`
-                  const open = expandedServicos.has(key)
+                  const open = expandedServicos.includes(key)
                   const desc = getServDesc(s)
                   return (
                     <div key={i} className="border-b border-white/[0.055] last:border-0">
