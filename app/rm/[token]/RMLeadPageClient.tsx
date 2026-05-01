@@ -22,6 +22,14 @@ export type RMPageContent = {
     propostaAtiva: number
     cta: string
     password: string
+    // Slide 1 — Plano de Ação
+    planoEtapas: { titulo: string; texto: string }[]
+    // Slide 3 — O Que Está Incluído
+    incluido: string[]
+    // Slide 4 — Vídeos da Proposta
+    videoUrls: string[]
+    // Slide 5 — Checkpoint
+    checkpointPergunta: string
   }
   sobre: { label: string; titulo: string; texto: string }
 }
@@ -87,6 +95,21 @@ const DEFAULT_CONTENT: RMPageContent = {
     propostaAtiva: 1,
     cta: 'Iniciar Produção',
     password: '',
+    planoEtapas: [
+      { titulo: 'Definir a Visão Estratégica',        texto: 'Começamos por explorar em conjunto o potencial único da marca. Vamos identificar oportunidades e definir um caminho claro para melhorar a presença visual no mercado.' },
+      { titulo: 'Alinhar a Narrativa e Storytelling', texto: 'Mergulhamos na essência da marca para desenvolver uma narrativa visual autêntica para se conectar naturalmente com o público.' },
+      { titulo: 'Acompanhamento Contínuo',            texto: 'Por fim, desenvolvemos em conjunto um plano de produção personalizado para elevar a comunicação a um novo patamar, para potenciar o crescimento da Marca e fortalecer genuinamente a ligação com o público.' },
+    ],
+    incluido: [
+      'Planeamento estratégico',
+      'Gestor de conta dedicado à tua Marca',
+      'Desenvolvimento da Narrativa & Storytelling',
+      'Produção de fotografias e vídeos personalizado',
+      'Edição de fotografias e vídeos personalizado e website',
+      'Acompanhamento contínuo durante todo o projeto',
+    ],
+    videoUrls: ['', '', ''],
+    checkpointPergunta: 'Esta abordagem alinha-se com a visão da vossa marca?',
   },
   sobre: {
     label: 'Quem Somos',
@@ -104,9 +127,13 @@ function merge(saved: any): RMPageContent {
     proposta: {
       ...DEFAULT_CONTENT.proposta,
       ...(saved.proposta || {}),
-      packages: saved.proposta?.packages || DEFAULT_CONTENT.proposta.packages,
-      propostaAtiva: saved.proposta?.propostaAtiva ?? 1,
-      password: saved.proposta?.password || '',
+      packages:            saved.proposta?.packages            || DEFAULT_CONTENT.proposta.packages,
+      propostaAtiva:       saved.proposta?.propostaAtiva       ?? 1,
+      password:            saved.proposta?.password            || '',
+      planoEtapas:         saved.proposta?.planoEtapas         || DEFAULT_CONTENT.proposta.planoEtapas,
+      incluido:            saved.proposta?.incluido            || DEFAULT_CONTENT.proposta.incluido,
+      videoUrls:           saved.proposta?.videoUrls           || DEFAULT_CONTENT.proposta.videoUrls,
+      checkpointPergunta:  saved.proposta?.checkpointPergunta  || DEFAULT_CONTENT.proposta.checkpointPergunta,
     },
     sobre: { ...DEFAULT_CONTENT.sobre, ...(saved.sobre || {}) },
   }
@@ -652,41 +679,14 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
                 ))}
               </AccordionSection>
 
-              <AccordionSection title="Proposta">
+              <AccordionSection title="Proposta — Geral">
                 <EditorField label="Título">
                   <TInput value={proposta.titulo} onChange={v => setProposta('titulo', v)} />
                 </EditorField>
-                <EditorField label="Intro">
+                <EditorField label="Intro (banner no portal)">
                   <TInput value={proposta.intro} onChange={v => setProposta('intro', v)} rows={3} />
                 </EditorField>
-                <EditorField label="Pacote recomendado (0, 1 ou 2)">
-                  <div className="flex gap-1">
-                    {[0,1,2].map(n => (
-                      <button key={n} onClick={() => setProposta('propostaAtiva', n)}
-                        className={`flex-1 py-2 text-xs transition-all border ${proposta.propostaAtiva === n ? 'border-white/25 text-white/60 bg-white/[0.05]' : 'border-white/[0.07] text-white/20 hover:border-white/15'}`}>
-                        {n+1}
-                      </button>
-                    ))}
-                  </div>
-                </EditorField>
-                {proposta.packages.map((pkg, i) => (
-                  <div key={i} className="border border-white/[0.05] p-3 flex flex-col gap-2">
-                    <p className="text-[8px] tracking-[0.4em] text-white/20 uppercase">Pacote {i+1} — {pkg.titulo}</p>
-                    <EditorField label="Título">
-                      <TInput value={pkg.titulo} onChange={v => setPackage(i, 'titulo', v)} />
-                    </EditorField>
-                    <EditorField label="Descrição">
-                      <TInput value={pkg.descricao} onChange={v => setPackage(i, 'descricao', v)} rows={2} />
-                    </EditorField>
-                    <EditorField label="Itens (um por linha)">
-                      <TInput value={pkg.itens.join('\n')} onChange={v => setPackage(i, 'itens', v.split('\n'))} rows={5} />
-                    </EditorField>
-                    <EditorField label="Preço">
-                      <TInput value={pkg.preco} onChange={v => setPackage(i, 'preco', v)} />
-                    </EditorField>
-                  </div>
-                ))}
-                <EditorField label="CTA">
+                <EditorField label="CTA (slide final)">
                   <TInput value={proposta.cta} onChange={v => setProposta('cta', v)} />
                 </EditorField>
                 <EditorField label="Password de acesso">
@@ -695,6 +695,55 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
                 {!proposta.password && (
                   <p className="text-[8px] text-amber-400/50 tracking-wider">Sem password → acesso livre a quem tiver o link</p>
                 )}
+              </AccordionSection>
+
+              <AccordionSection title="Slide 1 — Plano de Ação">
+                {proposta.planoEtapas.map((etapa, i) => (
+                  <div key={i} className="border border-white/[0.05] p-3 flex flex-col gap-2">
+                    <p className="text-[8px] tracking-[0.4em] text-white/20 uppercase">Etapa {i+1}</p>
+                    <EditorField label="Título">
+                      <TInput value={etapa.titulo} onChange={v => {
+                        const arr = [...proposta.planoEtapas]; arr[i] = { ...arr[i], titulo: v }; setProposta('planoEtapas', arr)
+                      }} />
+                    </EditorField>
+                    <EditorField label="Texto">
+                      <TInput value={etapa.texto} onChange={v => {
+                        const arr = [...proposta.planoEtapas]; arr[i] = { ...arr[i], texto: v }; setProposta('planoEtapas', arr)
+                      }} rows={3} />
+                    </EditorField>
+                  </div>
+                ))}
+              </AccordionSection>
+
+              <AccordionSection title="Slide 3 — O Que Está Incluído">
+                <EditorField label="Itens (um por linha)">
+                  <TInput
+                    value={proposta.incluido.join('\n')}
+                    onChange={v => setProposta('incluido', v.split('\n').filter(Boolean))}
+                    rows={8}
+                  />
+                </EditorField>
+              </AccordionSection>
+
+              <AccordionSection title="Slide 4 — Vídeos da Proposta">
+                {[0,1,2].map(i => (
+                  <EditorField key={i} label={`URL Vídeo ${i+1}`}>
+                    <TInput value={proposta.videoUrls[i] || ''} onChange={v => {
+                      const arr = [...proposta.videoUrls]; arr[i] = v; setProposta('videoUrls', arr)
+                    }} />
+                    {proposta.videoUrls[i] && (
+                      <span className={`text-[9px] ${toEmbedUrl(proposta.videoUrls[i]) ? 'text-emerald-400/60' : 'text-red-400/60'}`}>
+                        {toEmbedUrl(proposta.videoUrls[i]) ? '✓ Válido' : '✕ Inválido'}
+                      </span>
+                    )}
+                  </EditorField>
+                ))}
+              </AccordionSection>
+
+              <AccordionSection title="Slide 5 — Checkpoint">
+                <EditorField label="Pergunta">
+                  <TInput value={proposta.checkpointPergunta} onChange={v => setProposta('checkpointPergunta', v)} rows={2} />
+                </EditorField>
               </AccordionSection>
 
               <AccordionSection title="Sobre">

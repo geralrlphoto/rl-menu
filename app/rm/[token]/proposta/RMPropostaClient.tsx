@@ -3,6 +3,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { RMPageContent, RMPackage } from '../RMLeadPageClient'
 
+// ─── Embed helper (YouTube + Vimeo) ──────────────────────────────────────────
+function toEmbedUrl(url: string): string | null {
+  if (!url) return null
+  const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+  if (yt) return `https://www.youtube.com/embed/${yt[1]}?rel=0&modestbranding=1`
+  const vm = url.match(/vimeo\.com\/(\d+)/)
+  if (vm) return `https://player.vimeo.com/video/${vm[1]}?title=0&byline=0&portrait=0`
+  if (url.includes('/embed/') || url.includes('player.vimeo')) return url
+  return null
+}
+
 // ─── Defaults ────────────────────────────────────────────────────────────────
 const DEFAULT_PACKAGES: RMPackage[] = [
   {
@@ -25,39 +36,50 @@ const DEFAULT_PACKAGES: RMPackage[] = [
   },
 ]
 
+const DEFAULT_PLANO: { titulo: string; texto: string }[] = [
+  { titulo: 'Definir a Visão Estratégica',        texto: 'Começamos por explorar em conjunto o potencial único da marca. Vamos identificar oportunidades e definir um caminho claro para melhorar a presença visual no mercado.' },
+  { titulo: 'Alinhar a Narrativa e Storytelling', texto: 'Mergulhamos na essência da marca para desenvolver uma narrativa visual autêntica para se conectar naturalmente com o público.' },
+  { titulo: 'Acompanhamento Contínuo',            texto: 'Por fim, desenvolvemos em conjunto um plano de produção personalizado para elevar a comunicação a um novo patamar, para potenciar o crescimento da Marca e fortalecer genuinamente a ligação com o público.' },
+]
+
+const DEFAULT_INCLUIDO = [
+  'Planeamento estratégico',
+  'Gestor de conta dedicado à tua Marca',
+  'Desenvolvimento da Narrativa & Storytelling',
+  'Produção de fotografias e vídeos personalizado',
+  'Edição de fotografias e vídeos personalizado e website',
+  'Acompanhamento contínuo durante todo o projeto',
+]
+
 function merge(saved: any): RMPageContent {
   const d: RMPageContent = {
     hero:    { titulo: 'Reunião Marcada', subtitulo: 'RL Media · Audiovisual' },
     videos:  { label: '', titulo: '', urls: ['','',''] },
-    proposta: { titulo: 'Proposta Criativa', intro: '', packages: DEFAULT_PACKAGES, propostaAtiva: 1, cta: 'Iniciar Produção', password: '' },
+    proposta: {
+      titulo: 'Proposta Criativa', intro: '', packages: DEFAULT_PACKAGES,
+      propostaAtiva: 1, cta: 'Iniciar Produção', password: '',
+      planoEtapas: DEFAULT_PLANO, incluido: DEFAULT_INCLUIDO,
+      videoUrls: ['','',''], checkpointPergunta: 'Esta abordagem alinha-se com a visão da vossa marca?',
+    },
     sobre:   { label: 'Quem Somos', titulo: 'RL Media', texto: '' },
   }
   if (!saved) return d
   return {
     hero:    { ...d.hero,    ...(saved.hero    || {}) },
     videos:  { ...d.videos,  ...(saved.videos  || {}), urls: saved.videos?.urls || d.videos.urls },
-    proposta: { ...d.proposta, ...(saved.proposta || {}), packages: saved.proposta?.packages || d.proposta.packages, propostaAtiva: saved.proposta?.propostaAtiva ?? 1, password: saved.proposta?.password || '' },
+    proposta: {
+      ...d.proposta, ...(saved.proposta || {}),
+      packages:           saved.proposta?.packages           || d.proposta.packages,
+      propostaAtiva:      saved.proposta?.propostaAtiva      ?? 1,
+      password:           saved.proposta?.password           || '',
+      planoEtapas:        saved.proposta?.planoEtapas        || d.proposta.planoEtapas,
+      incluido:           saved.proposta?.incluido           || d.proposta.incluido,
+      videoUrls:          saved.proposta?.videoUrls          || d.proposta.videoUrls,
+      checkpointPergunta: saved.proposta?.checkpointPergunta || d.proposta.checkpointPergunta,
+    },
     sobre:   { ...d.sobre,   ...(saved.sobre   || {}) },
   }
 }
-
-const PLANO_ETAPAS = [
-  {
-    n: '1.',
-    titulo: 'Definir a Visão Estratégica',
-    texto: 'Começamos por explorar em conjunto o potencial único da marca. Vamos identificar oportunidades e definir um caminho claro para melhorar a presença visual no mercado.',
-  },
-  {
-    n: '2.',
-    titulo: 'Alinhar a Narrativa e Storytelling',
-    texto: 'Mergulhamos na essência da marca para desenvolver uma narrativa visual autêntica para se conectar naturalmente com o público.',
-  },
-  {
-    n: '3.',
-    titulo: 'Acompanhamento Contínuo',
-    texto: 'Por fim, desenvolvemos em conjunto um plano de produção personalizado para elevar a comunicação a um novo patamar, para potenciar o crescimento da Marca e fortalecer genuinamente a ligação com o público.',
-  },
-]
 
 const COMO_FUNCIONA = [
   { n: '1', titulo: 'Briefing e Imersão',         desc: 'Recebemos o teu briefing, analisamos a marca, o mercado e a concorrência.' },
@@ -70,15 +92,8 @@ const COMO_FUNCIONA = [
   { n: '8', titulo: 'Feedback e Resultados',      desc: 'Dás-nos o teu feedback sobre todo o percurso do projeto e analisamos o impacto.' },
 ]
 
-const PROCESSO = [
-  { n: '01', titulo: 'Briefing',       desc: 'Alinhamento de objetivos, audiência e mensagem-chave.' },
-  { n: '02', titulo: 'Pré-Produção',   desc: 'Moodboard, storyboard, scouting e logística.' },
-  { n: '03', titulo: 'Produção',       desc: 'Dia(s) de filmagem com equipa especializada.' },
-  { n: '04', titulo: 'Pós-Produção',   desc: 'Edição, correção de cor, sound design e motion graphics.' },
-  { n: '05', titulo: 'Entrega',        desc: 'Revisões, aprovação e entrega em todos os formatos.' },
-]
 
-const TOTAL_SLIDES = 6
+const TOTAL_SLIDES = 7
 
 // Escala tipográfica: mín 13px — máx 18px
 const T = {
@@ -252,10 +267,10 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
         Plano de Ação<br />Personalizado<br />com 3 Etapas
       </h2>
       <div className="flex flex-col gap-6">
-        {PLANO_ETAPAS.map((etapa, i) => (
-          <div key={i} className={`flex flex-col gap-2 ${i < PLANO_ETAPAS.length - 1 ? 'pb-6 border-b border-white/[0.07]' : ''}`}>
+        {proposta.planoEtapas.map((etapa, i) => (
+          <div key={i} className={`flex flex-col gap-2 ${i < proposta.planoEtapas.length - 1 ? 'pb-6 border-b border-white/[0.07]' : ''}`}>
             <h3 className="text-[22px] font-bold text-white/85">
-              {etapa.n} {etapa.titulo}
+              {i + 1}. {etapa.titulo}
             </h3>
             <p className="text-[17px] font-light text-white/60 leading-relaxed">{etapa.texto}</p>
           </div>
@@ -292,14 +307,7 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
         O Que Está Incluído?
       </h2>
       <div className="flex flex-col gap-5">
-        {[
-          'Planeamento estratégico',
-          'Gestor de conta dedicado à tua Marca',
-          'Desenvolvimento da Narrativa & Storytelling',
-          'Produção de fotografias e vídeos personalizado',
-          'Edição de fotografias e vídeos personalizado e website',
-          'Acompanhamento contínuo durante todo o projeto',
-        ].map((item, i) => (
+        {proposta.incluido.map((item, i) => (
           <div key={i} className="flex items-start gap-4">
             <span className="text-[22px] font-bold text-white/50 shrink-0 leading-tight">✓</span>
             <p className="text-[22px] font-bold text-white/85 leading-tight">{item}</p>
@@ -308,8 +316,31 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
       </div>
     </div>,
 
-    // ── SLIDE 4 — CHECKPOINT ────────────────────────────────────────────────
-    <div key={4} className="flex flex-col items-center justify-center h-full px-8 sm:px-20 text-center gap-10 max-w-3xl mx-auto w-full">
+    // ── SLIDE 4 — VÍDEOS ────────────────────────────────────────────────────
+    <div key={4} className="flex flex-col justify-center h-full px-8 sm:px-16 gap-8 max-w-5xl mx-auto w-full">
+      <h2 className="text-[32px] font-extrabold tracking-[0.08em] text-white/90 uppercase text-center">
+        O Nosso Trabalho
+      </h2>
+      <div className="grid grid-cols-1 gap-4">
+        {proposta.videoUrls.map((url, i) => {
+          const embed = toEmbedUrl(url)
+          if (embed) return (
+            <div key={i} className="border border-white/[0.08] w-full" style={{ aspectRatio: '16/9' }}>
+              <iframe src={embed} className="w-full h-full" allowFullScreen
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" />
+            </div>
+          )
+          return (
+            <div key={i} className="border border-dashed border-white/[0.08] flex items-center justify-center" style={{ aspectRatio: '16/9' }}>
+              <p className={`${T.xs} text-white/20 tracking-widest uppercase`}>Vídeo {i + 1} — adicionar URL no editor</p>
+            </div>
+          )
+        })}
+      </div>
+    </div>,
+
+    // ── SLIDE 5 — CHECKPOINT ────────────────────────────────────────────────
+    <div key={5} className="flex flex-col items-center justify-center h-full px-8 sm:px-20 text-center gap-10 max-w-3xl mx-auto w-full">
       <p className={labelCls}>A Tua Opinião</p>
       <h2 className="text-[38px] font-extrabold tracking-[0.06em] text-white/90 uppercase leading-tight">
         Momento de<br />Reflexão
@@ -320,13 +351,13 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
         <div className="h-px w-12 bg-white/20" />
       </div>
       <p className="text-[24px] font-light text-white/70 leading-relaxed max-w-xl">
-        Esta abordagem alinha-se com a visão da vossa marca?
+        {proposta.checkpointPergunta}
       </p>
     </div>,
 
-    // ── SLIDE 5 — PRÓXIMOS PASSOS ───────────────────────────────────────────
-    <div key={5} className="flex flex-col items-center justify-center h-full px-8 text-center gap-10">
-      <p className={labelCls}>05 — Próximos Passos</p>
+    // ── SLIDE 6 — PRÓXIMOS PASSOS ───────────────────────────────────────────
+    <div key={6} className="flex flex-col items-center justify-center h-full px-8 text-center gap-10">
+      <p className={labelCls}>Próximos Passos</p>
       <div className="flex flex-col items-center gap-5">
         <p className={`${T.xxl} font-extralight text-white/70 tracking-wide leading-relaxed`}>
           Estamos prontos para começar.<br />Basta dar o próximo passo.
