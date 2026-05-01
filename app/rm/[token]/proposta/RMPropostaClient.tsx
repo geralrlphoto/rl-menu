@@ -81,7 +81,7 @@ function merge(saved: any): RMPageContent {
       propostaAtiva: 1, cta: 'Iniciar Produção', password: '',
       planoEtapas: DEFAULT_PLANO, incluido: DEFAULT_INCLUIDO,
       videoUrls: ['','',''], checkpointPergunta: 'Esta abordagem alinha-se com a visão da vossa marca?',
-      slideImages: ['','','','','','',''],
+      slideImages: ['','','','','','','',''],
     },
     sobre:   { label: 'Quem Somos', titulo: 'RL Media', texto: '' },
   }
@@ -116,7 +116,7 @@ const COMO_FUNCIONA = [
 ]
 
 const EDITABLE_SLIDES = [0, 1, 2, 3, 4, 5, 6]
-const TOTAL_SLIDES = 7
+const TOTAL_SLIDES = 8
 
 const T = {
   xs:  'text-[13px]',
@@ -617,6 +617,16 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
       <div className="flex-1 flex items-center justify-center px-8 text-center">
         <h1 className="text-[80px] sm:text-[110px] font-extralight tracking-[0.3em] text-white/90 uppercase leading-none">
           INVESTIMENTO
+        </h1>
+      </div>
+    </div>,
+
+    // 7 — PROPOSTA 1
+    <div key={7} className="flex flex-col h-full w-full">
+      <SlideHeader idx={7} />
+      <div className="flex-1 flex items-center justify-center px-8 text-center">
+        <h1 className="text-[80px] sm:text-[110px] font-extralight tracking-[0.3em] text-white/90 uppercase leading-none">
+          PROPOSTA 1
         </h1>
       </div>
     </div>,
