@@ -15,6 +15,15 @@ interface Lead {
   mensagem?: string
   estado: string
   created_at: string
+  // Portal fields
+  page_token?: string
+  page_publicada?: boolean
+  reuniao_data?: string
+  reuniao_hora?: string
+  reuniao_tipo?: string
+  reuniao_link?: string
+  page_confirmacao?: string
+  page_views?: number
 }
 
 interface Props {
@@ -22,12 +31,20 @@ interface Props {
   estadoColors: Record<string, string>
 }
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://rl-menu-lake.vercel.app'
+
 export default function LeadsClient({ leads: initial, estadoColors }: Props) {
   const [leads, setLeads] = useState(initial)
   const [expanded, setExpanded] = useState<string | null>(null)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [filtroEstado, setFiltroEstado] = useState('Todos')
+
+  // Portal form state
+  const [portalFormId, setPortalFormId] = useState<string | null>(null)
+  const [portalForm, setPortalForm] = useState({ reuniao_data: '', reuniao_hora: '', reuniao_tipo: 'Presencial', reuniao_link: '' })
+  const [creatingPortal, setCreatingPortal] = useState(false)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
 
   const filtered = filtroEstado === 'Todos' ? leads : leads.filter(l => l.estado === filtroEstado)
 
@@ -54,11 +71,43 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
     setUpdatingId(null)
   }
 
+  async function criarPortal(lead: Lead) {
+    setCreatingPortal(true)
+    try {
+      const res = await fetch('/api/media-portal/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lead_id: lead.id, ...portalForm }),
+      })
+      const data = await res.json()
+      if (data.ok) {
+        setLeads(ls => ls.map(l => l.id === lead.id ? {
+          ...l,
+          page_token: data.token,
+          page_publicada: true,
+          reuniao_data: portalForm.reuniao_data || undefined,
+          reuniao_hora: portalForm.reuniao_hora || undefined,
+          reuniao_tipo: portalForm.reuniao_tipo,
+          reuniao_link: portalForm.reuniao_link || undefined,
+        } : l))
+        setPortalFormId(null)
+      }
+    } catch (_e) { /* silent */ }
+    setCreatingPortal(false)
+  }
+
+  function copyLink(token: string) {
+    navigator.clipboard.writeText(`${BASE_URL}/rm/${token}`)
+    setCopiedId(token)
+    setTimeout(() => setCopiedId(null), 2000)
+  }
+
   function formatDate(iso: string) {
     return new Date(iso).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' })
   }
 
   const labelCls = "text-[8px] tracking-[0.4em] text-white/20 uppercase"
+  const inputCls = "w-full bg-white/[0.03] border border-white/[0.08] focus:border-white/20 focus:outline-none px-3 py-2 text-[11px] text-white/60 placeholder:text-white/15 transition-colors [color-scheme:dark]"
 
   return (
     <div>
@@ -103,6 +152,12 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                     <>
                       <span className="text-white/10">·</span>
                       <span className="text-[8px] tracking-[0.2em] text-white/20 uppercase">{lead.fonte}</span>
+                    </>
+                  )}
+                  {lead.page_token && (
+                    <>
+                      <span className="text-white/10">·</span>
+                      <span className="text-[8px] tracking-[0.2em] text-emerald-400/40 uppercase">Portal Ativo</span>
                     </>
                   )}
                 </div>
@@ -177,6 +232,121 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                       <span className="text-[8px] text-white/20 tracking-widest">A guardar...</span>
                     )}
                   </div>
+                </div>
+
+                {/* ── Portal de Reunião ── */}
+                <div className="border-t border-white/[0.04] pt-4">
+                  <p className={labelCls + ' mb-3'}>Portal de Reunião</p>
+
+                  {lead.page_token ? (
+                    // Portal já criado
+                    <div className="flex flex-col gap-3">
+                      {/* Info da reunião */}
+                      {(lead.reuniao_data || lead.reuniao_hora || lead.reuniao_tipo) && (
+                        <div className="flex items-center gap-4 flex-wrap text-[10px] text-white/30 font-mono">
+                          {lead.reuniao_data && <span>{lead.reuniao_data}</span>}
+                          {lead.reuniao_hora && <span>{lead.reuniao_hora.slice(0,5)}</span>}
+                          {lead.reuniao_tipo && <span>{lead.reuniao_tipo}</span>}
+                          {lead.page_confirmacao === 'confirmada' && (
+                            <span className="text-emerald-400/50">✓ Confirmada</span>
+                          )}
+                          {lead.page_confirmacao === 'alteracao_pedida' && (
+                            <span className="text-amber-400/50">⏳ Alteração pedida</span>
+                          )}
+                          {lead.page_views ? (
+                            <span className="text-white/15">{lead.page_views} visualizações</span>
+                          ) : null}
+                        </div>
+                      )}
+                      {/* Link + ações */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <a href={`/rm/${lead.page_token}`} target="_blank" rel="noopener noreferrer"
+                          className="text-[9px] tracking-[0.35em] text-white/30 hover:text-white/60 border border-white/[0.07] hover:border-white/20 px-3 py-1.5 uppercase transition-all">
+                          Ver Portal →
+                        </a>
+                        <button onClick={() => copyLink(lead.page_token!)}
+                          className="text-[9px] tracking-[0.35em] text-white/20 hover:text-white/50 border border-white/[0.07] hover:border-white/15 px-3 py-1.5 uppercase transition-all">
+                          {copiedId === lead.page_token ? '✓ Copiado' : 'Copiar Link'}
+                        </button>
+                        <button onClick={() => {
+                          setPortalForm({
+                            reuniao_data: lead.reuniao_data || '',
+                            reuniao_hora: lead.reuniao_hora || '',
+                            reuniao_tipo: lead.reuniao_tipo || 'Presencial',
+                            reuniao_link: lead.reuniao_link || '',
+                          })
+                          setPortalFormId(portalFormId === lead.id ? null : lead.id)
+                        }}
+                          className="text-[9px] tracking-[0.35em] text-white/20 hover:text-white/50 border border-white/[0.07] hover:border-white/15 px-3 py-1.5 uppercase transition-all">
+                          Editar Reunião
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    // Sem portal
+                    <button
+                      onClick={() => {
+                        setPortalForm({ reuniao_data: '', reuniao_hora: '', reuniao_tipo: 'Presencial', reuniao_link: '' })
+                        setPortalFormId(portalFormId === lead.id ? null : lead.id)
+                      }}
+                      className="text-[9px] tracking-[0.4em] text-white/30 hover:text-white/60 border border-white/[0.08] hover:border-white/20 px-4 py-2 uppercase transition-all">
+                      + Criar Portal de Reunião
+                    </button>
+                  )}
+
+                  {/* Form de criação / edição do portal */}
+                  {portalFormId === lead.id && (
+                    <div className="mt-4 border border-white/[0.07] bg-white/[0.02] p-4 flex flex-col gap-4">
+                      <p className="text-[8px] tracking-[0.5em] text-white/20 uppercase">
+                        {lead.page_token ? 'Atualizar Reunião' : 'Dados da Reunião'}
+                      </p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className={labelCls + ' mb-1.5 block'}>Data</label>
+                          <input type="date" value={portalForm.reuniao_data}
+                            onChange={e => setPortalForm(f => ({ ...f, reuniao_data: e.target.value }))}
+                            className={inputCls} />
+                        </div>
+                        <div>
+                          <label className={labelCls + ' mb-1.5 block'}>Hora</label>
+                          <input type="time" value={portalForm.reuniao_hora}
+                            onChange={e => setPortalForm(f => ({ ...f, reuniao_hora: e.target.value }))}
+                            className={inputCls} />
+                        </div>
+                      </div>
+                      <div>
+                        <label className={labelCls + ' mb-1.5 block'}>Modo</label>
+                        <div className="flex gap-2">
+                          {['Presencial', 'Videochamada'].map(tipo => (
+                            <button key={tipo} onClick={() => setPortalForm(f => ({ ...f, reuniao_tipo: tipo }))}
+                              className={`flex-1 py-2 text-[9px] tracking-[0.3em] uppercase border transition-all ${
+                                portalForm.reuniao_tipo === tipo
+                                  ? 'border-white/25 text-white/60 bg-white/[0.04]'
+                                  : 'border-white/[0.07] text-white/20 hover:border-white/15'
+                              }`}>
+                              {tipo}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label className={labelCls + ' mb-1.5 block'}>Link (Google Meet, Maps, etc.)</label>
+                        <input type="url" value={portalForm.reuniao_link} placeholder="https://..."
+                          onChange={e => setPortalForm(f => ({ ...f, reuniao_link: e.target.value }))}
+                          className={inputCls} />
+                      </div>
+                      <div className="flex items-center gap-2 pt-1">
+                        <button onClick={() => criarPortal(lead)} disabled={creatingPortal}
+                          className="flex-1 py-2.5 border border-white/20 bg-white/[0.03] hover:bg-white/[0.07] hover:border-white/30 text-[9px] tracking-[0.45em] text-white/50 hover:text-white/70 uppercase transition-all disabled:opacity-30">
+                          {creatingPortal ? 'A criar...' : lead.page_token ? '✓ Atualizar' : '✓ Criar Portal'}
+                        </button>
+                        <button onClick={() => setPortalFormId(null)}
+                          className="px-4 py-2.5 border border-white/[0.07] text-[9px] tracking-[0.35em] text-white/20 hover:text-white/40 uppercase transition-all">
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Apagar */}
