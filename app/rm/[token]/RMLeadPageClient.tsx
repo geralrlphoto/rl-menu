@@ -365,7 +365,7 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
           <a href="/media/crm/leads" className="text-[9px] tracking-[0.4em] text-white/20 hover:text-white/50 transition-colors uppercase">‹ Leads</a>
           <span className="text-[8px] tracking-[0.5em] text-white/15 uppercase">Admin · Portal de Reunião</span>
           <button onClick={() => setEditorOpen(true)}
-            className="text-[9px] tracking-[0.35em] text-white/30 hover:text-white/60 border border-white/[0.08] hover:border-white/20 px-3 py-1.5 uppercase transition-all">
+            className="text-[11px] tracking-[0.35em] text-white/70 hover:text-white/90 border border-white/25 hover:border-white/50 bg-white/[0.05] hover:bg-white/[0.10] px-4 py-2 uppercase transition-all font-medium">
             ✎ Editar
           </button>
         </div>
