@@ -21,6 +21,7 @@ export type RMPageContent = {
     packages: RMPackage[]
     propostaAtiva: number
     cta: string
+    password: string
   }
   sobre: { label: string; titulo: string; texto: string }
 }
@@ -85,6 +86,7 @@ const DEFAULT_CONTENT: RMPageContent = {
     ],
     propostaAtiva: 1,
     cta: 'Iniciar Produção',
+    password: '',
   },
   sobre: {
     label: 'Quem Somos',
@@ -104,6 +106,7 @@ function merge(saved: any): RMPageContent {
       ...(saved.proposta || {}),
       packages: saved.proposta?.packages || DEFAULT_CONTENT.proposta.packages,
       propostaAtiva: saved.proposta?.propostaAtiva ?? 1,
+      password: saved.proposta?.password || '',
     },
     sobre: { ...DEFAULT_CONTENT.sobre, ...(saved.sobre || {}) },
   }
@@ -549,90 +552,28 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
           </section>
         )}
 
-        {/* ── PROPOSTA CRIATIVA ── */}
-        <section className="py-20 px-6 max-w-5xl mx-auto">
-
-          {/* Header */}
+        {/* ── PROPOSTA CRIATIVA — banner ── */}
+        <section className="px-6 py-16 max-w-3xl mx-auto">
           <FadeIn>
-            <div className="mb-14">
-              <p className={`${labelCls} mb-4`}>
-                <span>03 — Proposta Criativa</span>
-              </p>
-              <h2 className="text-2xl sm:text-3xl font-extralight tracking-[0.2em] text-white/80 uppercase mb-6">
-                {proposta.titulo}
-              </h2>
-              <p className="text-sm font-light text-white/35 leading-relaxed max-w-xl tracking-wide">
-                {proposta.intro}
-              </p>
-            </div>
-          </FadeIn>
-
-          {/* Packages */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
-            {proposta.packages.map((pkg, i) => {
-              const isActive = i === proposta.propostaAtiva
-              return (
-                <FadeIn key={i} delay={i * 100}>
-                  <div className={`flex flex-col h-full border p-6 transition-all ${
-                    isActive
-                      ? 'border-white/25 bg-white/[0.03]'
-                      : 'border-white/[0.07] bg-white/[0.01]'
-                  }`}>
-                    {isActive && (
-                      <div className="mb-4">
-                        <span className="text-[7px] tracking-[0.55em] text-white/30 uppercase border border-white/15 px-2 py-1">
-                          Recomendado
-                        </span>
-                      </div>
-                    )}
-                    <p className="text-[10px] tracking-[0.5em] text-white/20 uppercase mb-2">Pacote {String(i + 1).padStart(2, '0')}</p>
-                    <h3 className="text-xl font-extralight tracking-[0.25em] text-white/75 uppercase mb-3">{pkg.titulo}</h3>
-                    <p className="text-[11px] font-light text-white/30 leading-relaxed mb-6 flex-none">{pkg.descricao}</p>
-                    <div className="flex flex-col gap-2 flex-1 mb-8">
-                      {pkg.itens.map((item, j) => (
-                        <div key={j} className="flex items-start gap-3">
-                          <span className="text-white/20 text-[8px] mt-0.5 shrink-0">—</span>
-                          <span className="text-[11px] text-white/40 font-light leading-snug">{item}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="border-t border-white/[0.06] pt-4 mt-auto">
-                      <p className={`text-[9px] tracking-[0.4em] uppercase ${isActive ? 'text-white/50' : 'text-white/20'}`}>
-                        {pkg.preco}
-                      </p>
-                    </div>
-                  </div>
-                </FadeIn>
-              )
-            })}
-          </div>
-
-          {/* Process steps */}
-          <FadeIn>
-            <div className="border border-white/[0.05] bg-white/[0.01] px-6 py-6 mb-12">
-              <p className={`${labelCls} mb-5`}>Processo</p>
-              <div className="flex flex-wrap gap-0 divide-x divide-white/[0.06]">
-                {['Briefing', 'Pré-Produção', 'Produção', 'Pós-Produção', 'Entrega'].map((step, i) => (
-                  <div key={i} className="flex-1 min-w-[120px] px-5 py-2 first:pl-0 last:pr-0">
-                    <p className="text-[8px] tracking-[0.35em] text-white/15 uppercase mb-1">{String(i + 1).padStart(2,'0')}</p>
-                    <p className="text-[11px] font-light text-white/40 tracking-wide">{step}</p>
-                  </div>
-                ))}
+            <div className="relative border border-white/[0.08] bg-white/[0.02] px-8 sm:px-14 py-12 flex flex-col sm:flex-row items-center justify-between gap-8">
+              {/* Cantos ornamentais */}
+              <div className="absolute top-0 left-0 w-6 h-6 border-t border-l border-white/20" />
+              <div className="absolute top-0 right-0 w-6 h-6 border-t border-r border-white/20" />
+              <div className="absolute bottom-0 left-0 w-6 h-6 border-b border-l border-white/20" />
+              <div className="absolute bottom-0 right-0 w-6 h-6 border-b border-r border-white/20" />
+              <div className="flex flex-col gap-3 text-center sm:text-left">
+                <p className={labelCls}>Proposta Criativa</p>
+                <p className="text-[13px] font-extralight text-white/50 tracking-wider leading-relaxed">
+                  {proposta.intro}
+                </p>
               </div>
-            </div>
-          </FadeIn>
-
-          {/* CTA */}
-          <FadeIn>
-            <div className="flex justify-center">
-              <button
-                className="flex items-center gap-3 border border-white/20 bg-white/[0.03] hover:bg-white/[0.07] hover:border-white/35 px-10 py-4 text-[9px] tracking-[0.5em] text-white/55 hover:text-white/80 uppercase transition-all duration-300 group">
-                <span>{proposta.cta}</span>
+              <a href={`/rm/${token}/proposta`}
+                className="shrink-0 flex items-center gap-3 border border-white/20 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/35 px-8 py-4 text-[9px] tracking-[0.5em] text-white/55 hover:text-white/80 uppercase transition-all duration-300 group whitespace-nowrap">
+                <span>Ver Proposta</span>
                 <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
-              </button>
+              </a>
             </div>
           </FadeIn>
-
         </section>
 
         <div className="w-full h-px bg-white/[0.04]" />
@@ -748,6 +689,12 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
                 <EditorField label="CTA">
                   <TInput value={proposta.cta} onChange={v => setProposta('cta', v)} />
                 </EditorField>
+                <EditorField label="Password de acesso">
+                  <TInput value={proposta.password} onChange={v => setProposta('password', v)} />
+                </EditorField>
+                {!proposta.password && (
+                  <p className="text-[8px] text-amber-400/50 tracking-wider">Sem password → acesso livre a quem tiver o link</p>
+                )}
               </AccordionSection>
 
               <AccordionSection title="Sobre">
