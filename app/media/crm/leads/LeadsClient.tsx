@@ -264,6 +264,10 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                           className="text-[9px] tracking-[0.35em] text-white/30 hover:text-white/60 border border-white/[0.07] hover:border-white/20 px-3 py-1.5 uppercase transition-all">
                           Ver Portal →
                         </a>
+                        <a href={`/rm/${lead.page_token}/proposta`} target="_blank" rel="noopener noreferrer"
+                          className="text-[9px] tracking-[0.35em] text-amber-400/50 hover:text-amber-400/80 border border-amber-400/20 hover:border-amber-400/45 px-3 py-1.5 uppercase transition-all">
+                          Editar Proposta ✎
+                        </a>
                         <button onClick={() => copyLink(lead.page_token!)}
                           className="text-[9px] tracking-[0.35em] text-white/20 hover:text-white/50 border border-white/[0.07] hover:border-white/15 px-3 py-1.5 uppercase transition-all">
                           {copiedId === lead.page_token ? '✓ Copiado' : 'Copiar Link'}
