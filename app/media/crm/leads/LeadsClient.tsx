@@ -187,17 +187,17 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
     return new Date(iso).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' })
   }
 
-  const labelCls = "text-[8px] tracking-[0.4em] text-white/20 uppercase"
-  const inputCls = "w-full bg-white/[0.03] border border-white/[0.08] focus:border-white/20 focus:outline-none px-3 py-2 text-[11px] text-white/60 placeholder:text-white/15 transition-colors [color-scheme:dark]"
+  const labelCls = "text-[11px] tracking-[0.3em] text-white/40 uppercase"
+  const inputCls = "w-full bg-white/[0.03] border border-white/[0.08] focus:border-white/25 focus:outline-none px-4 py-3 text-[14px] text-white/70 placeholder:text-white/25 transition-colors [color-scheme:dark]"
 
   return (
     <div>
       {/* Filtro */}
-      <div className="flex items-center gap-2 mb-6 flex-wrap">
+      <div className="flex items-center gap-2 mb-8 flex-wrap">
         {['Todos', ...ESTADOS].map(e => (
           <button key={e} onClick={() => setFiltroEstado(e)}
-            className={`text-[8px] tracking-[0.35em] uppercase px-3 py-1.5 border transition-all duration-200 ${
-              filtroEstado === e ? 'border-white/30 text-white/60 bg-white/[0.06]' : 'border-white/[0.07] text-white/20 hover:border-white/20 hover:text-white/40'
+            className={`text-[11px] tracking-[0.2em] uppercase px-4 py-2 border transition-all duration-200 ${
+              filtroEstado === e ? 'border-white/35 text-white/70 bg-white/[0.07]' : 'border-white/[0.10] text-white/35 hover:border-white/25 hover:text-white/55'
             }`}>
             {e}
           </button>
@@ -205,80 +205,80 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
       </div>
 
       {/* Cards */}
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-3">
         {filtered.map(lead => (
-          <div key={lead.id} className="border border-white/[0.07] hover:border-white/14 bg-white/[0.02] transition-all duration-300">
+          <div key={lead.id} className="border border-white/[0.09] hover:border-white/20 bg-white/[0.02] transition-all duration-300">
 
             {/* Row */}
-            <div className="flex items-center gap-4 px-5 py-4 cursor-pointer"
+            <div className="flex items-center gap-5 px-6 py-5 cursor-pointer"
               onClick={() => {
                 const next = expanded === lead.id ? null : lead.id
                 setExpanded(next)
                 if (next) loadContent(lead)
               }}>
-              <span className={`shrink-0 text-[8px] tracking-[0.3em] uppercase px-2 py-1 border ${estadoColors[lead.estado] ?? 'border-white/10 text-white/25'}`}>
+              <span className={`shrink-0 text-[10px] tracking-[0.25em] uppercase px-3 py-1.5 border ${estadoColors[lead.estado] ?? 'border-white/10 text-white/30'}`}>
                 {lead.estado}
               </span>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3">
-                  <p className="text-[12px] tracking-[0.15em] text-white/70 font-medium truncate">{lead.nome}</p>
-                  {lead.empresa && <p className="text-[10px] text-white/30 truncate hidden sm:block">{lead.empresa}</p>}
+                <div className="flex items-center gap-4">
+                  <p className="text-[15px] tracking-[0.08em] text-white/80 font-medium truncate">{lead.nome}</p>
+                  {lead.empresa && <p className="text-[13px] text-white/40 truncate hidden sm:block">{lead.empresa}</p>}
                 </div>
-                <div className="flex items-center gap-3 mt-1 flex-wrap">
-                  {lead.tipo && <span className="text-[8px] tracking-[0.2em] text-white/20 uppercase">{lead.tipo}</span>}
-                  {lead.fonte && (<><span className="text-white/10">·</span><span className="text-[8px] tracking-[0.2em] text-white/20 uppercase">{lead.fonte}</span></>)}
-                  {lead.page_token && (<><span className="text-white/10">·</span><span className="text-[8px] tracking-[0.2em] text-emerald-400/40 uppercase">Portal Ativo</span></>)}
+                <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                  {lead.tipo && <span className="text-[11px] tracking-[0.15em] text-white/30 uppercase">{lead.tipo}</span>}
+                  {lead.fonte && (<><span className="text-white/15">·</span><span className="text-[11px] tracking-[0.15em] text-white/30 uppercase">{lead.fonte}</span></>)}
+                  {lead.page_token && (<><span className="text-white/15">·</span><span className="text-[11px] tracking-[0.15em] text-emerald-400/50 uppercase">Portal Ativo</span></>)}
                 </div>
               </div>
               <div className="shrink-0 text-right">
-                <p className="text-[9px] text-white/20 font-mono">{formatDate(lead.created_at)}</p>
-                <p className="text-[8px] text-white/12 mt-1">{expanded === lead.id ? '▲' : '▼'}</p>
+                <p className="text-[11px] text-white/30 font-mono">{formatDate(lead.created_at)}</p>
+                <p className="text-[11px] text-white/25 mt-1.5">{expanded === lead.id ? '▲' : '▼'}</p>
               </div>
             </div>
 
             {/* Detalhe */}
             {expanded === lead.id && (
-              <div className="border-t border-white/[0.05] px-5 py-5 flex flex-col gap-5">
+              <div className="border-t border-white/[0.06] px-6 py-6 flex flex-col gap-6">
 
                 {/* Contacto */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  {lead.email && (<div><p className={labelCls}>Email</p><a href={`mailto:${lead.email}`} className="text-[11px] text-white/50 hover:text-white/75 transition-colors mt-1 block">{lead.email}</a></div>)}
-                  {lead.telefone && (<div><p className={labelCls}>Telefone</p><a href={`tel:${lead.telefone}`} className="text-[11px] text-white/50 hover:text-white/75 transition-colors mt-1 block">{lead.telefone}</a></div>)}
-                  {lead.tipo && (<div><p className={labelCls}>Serviço</p><p className="text-[11px] text-white/50 mt-1">{lead.tipo}</p></div>)}
-                  {lead.fonte && (<div><p className={labelCls}>Origem</p><p className="text-[11px] text-white/50 mt-1">{lead.fonte}</p></div>)}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
+                  {lead.email && (<div><p className={labelCls}>Email</p><a href={`mailto:${lead.email}`} className="text-[13px] text-white/60 hover:text-white/85 transition-colors mt-2 block">{lead.email}</a></div>)}
+                  {lead.telefone && (<div><p className={labelCls}>Telefone</p><a href={`tel:${lead.telefone}`} className="text-[13px] text-white/60 hover:text-white/85 transition-colors mt-2 block">{lead.telefone}</a></div>)}
+                  {lead.tipo && (<div><p className={labelCls}>Serviço</p><p className="text-[13px] text-white/60 mt-2">{lead.tipo}</p></div>)}
+                  {lead.fonte && (<div><p className={labelCls}>Origem</p><p className="text-[13px] text-white/60 mt-2">{lead.fonte}</p></div>)}
                 </div>
 
                 {/* Mensagem */}
                 {lead.mensagem && (
                   <div>
                     <p className={labelCls + ' mb-2'}>Mensagem</p>
-                    <p className="text-[12px] text-white/40 leading-relaxed bg-white/[0.02] border border-white/[0.05] px-4 py-3">{lead.mensagem}</p>
+                    <p className="text-[14px] text-white/50 leading-relaxed bg-white/[0.02] border border-white/[0.06] px-5 py-4">{lead.mensagem}</p>
                   </div>
                 )}
 
                 {/* Estado */}
                 <div>
-                  <p className={labelCls + ' mb-2'}>Atualizar Estado</p>
+                  <p className={labelCls + ' mb-3'}>Atualizar Estado</p>
                   <div className="flex items-center gap-2 flex-wrap">
                     {ESTADOS.map(e => (
                       <button key={e} disabled={lead.estado === e || updatingId === lead.id} onClick={() => updateEstado(lead.id, e)}
-                        className={`text-[8px] tracking-[0.3em] uppercase px-3 py-1.5 border transition-all duration-200 ${lead.estado === e ? `${estadoColors[e]} cursor-default` : 'border-white/[0.07] text-white/20 hover:border-white/20 hover:text-white/45 disabled:opacity-30'}`}>
+                        className={`text-[11px] tracking-[0.2em] uppercase px-4 py-2 border transition-all duration-200 ${lead.estado === e ? `${estadoColors[e]} cursor-default` : 'border-white/[0.09] text-white/30 hover:border-white/25 hover:text-white/55 disabled:opacity-30'}`}>
                         {e}
                       </button>
                     ))}
-                    {updatingId === lead.id && <span className="text-[8px] text-white/20 tracking-widest">A guardar...</span>}
+                    {updatingId === lead.id && <span className="text-[11px] text-white/30 tracking-widest">A guardar...</span>}
                   </div>
                 </div>
 
                 {/* ── PROPOSTAS CRIATIVAS ── */}
                 {lead.page_token && (
-                  <div className="border-t border-white/[0.04] pt-4">
-                    <p className={labelCls + ' mb-3'}>Propostas Criativas</p>
+                  <div className="border-t border-white/[0.05] pt-5">
+                    <p className={labelCls + ' mb-4'}>Propostas Criativas</p>
 
                     {propostasLoading[lead.id] ? (
-                      <p className="text-[9px] text-white/20 tracking-widest animate-pulse">A carregar...</p>
+                      <p className="text-[12px] text-white/30 tracking-widest animate-pulse">A carregar...</p>
                     ) : (
-                      <div className="flex flex-col gap-2">
+                      <div className="flex flex-col gap-3">
                         {(propostas[lead.id] || DEFAULT_PROPOSTAS).map((prop, idx) => {
                           const isOpen = propostaOpen[lead.id] === idx
                           const key      = `${lead.id}_${idx}`
@@ -286,28 +286,28 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                           const isSaved  = savedProposta[key]
 
                           return (
-                            <div key={idx} className="border border-white/[0.07] bg-white/[0.01]">
+                            <div key={idx} className="border border-white/[0.09] bg-white/[0.01]">
 
                               {/* Cabeçalho accordeão */}
                               <button
-                                className="w-full flex items-center justify-between px-4 py-3 text-left"
+                                className="w-full flex items-center justify-between px-5 py-4 text-left"
                                 onClick={() => setPropostaOpen(s => ({ ...s, [lead.id]: isOpen ? null : idx }))}
                               >
-                                <div className="flex items-center gap-3">
-                                  <span className="text-[9px] tracking-[0.45em] text-white/55 uppercase font-medium">{prop.titulo}</span>
+                                <div className="flex items-center gap-4">
+                                  <span className="text-[13px] tracking-[0.3em] text-white/65 uppercase font-medium">{prop.titulo}</span>
                                   {prop.servicos.length > 0 && (
-                                    <span className="text-[8px] text-white/25 tracking-wide">{prop.servicos.length} serviço{prop.servicos.length !== 1 ? 's' : ''}</span>
+                                    <span className="text-[11px] text-white/35 tracking-wide">{prop.servicos.length} serviço{prop.servicos.length !== 1 ? 's' : ''}</span>
                                   )}
                                   {prop.valor && (
-                                    <span className="text-[9px] text-emerald-400/50 font-mono">{prop.valor}</span>
+                                    <span className="text-[13px] text-emerald-400/60 font-mono">{prop.valor}</span>
                                   )}
                                 </div>
-                                <span className="text-[9px] text-white/20">{isOpen ? '▲' : '▼'}</span>
+                                <span className="text-[12px] text-white/30">{isOpen ? '▲' : '▼'}</span>
                               </button>
 
                               {/* Corpo */}
                               {isOpen && (
-                                <div className="border-t border-white/[0.05] px-4 py-4 flex flex-col gap-5">
+                                <div className="border-t border-white/[0.06] px-5 py-5 flex flex-col gap-6">
 
                                   {/* Serviços — toggle grid */}
                                   <div>
@@ -326,13 +326,13 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                                                   : [...cur, s],
                                               })
                                             }}
-                                            className={`text-[9px] tracking-[0.25em] uppercase px-3 py-1.5 border transition-all duration-150 ${
+                                            className={`text-[11px] tracking-[0.15em] uppercase px-3 py-2 border transition-all duration-150 ${
                                               active
-                                                ? 'border-white/40 text-white/80 bg-white/[0.08]'
-                                                : 'border-white/[0.08] text-white/25 hover:border-white/20 hover:text-white/45'
+                                                ? 'border-white/45 text-white/85 bg-white/[0.09]'
+                                                : 'border-white/[0.10] text-white/35 hover:border-white/25 hover:text-white/55'
                                             }`}
                                           >
-                                            {active && <span className="mr-1.5 text-emerald-400/70">✓</span>}
+                                            {active && <span className="mr-1.5 text-emerald-400/80">✓</span>}
                                             {s}
                                           </button>
                                         )
@@ -342,7 +342,7 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
 
                                   {/* Valor */}
                                   <div>
-                                    <p className={labelCls + ' mb-1.5'}>Valor / Investimento</p>
+                                    <p className={labelCls + ' mb-2'}>Valor / Investimento</p>
                                     <input
                                       className={inputCls}
                                       placeholder="Ex: 2.500€"
@@ -355,7 +355,7 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                                   <button
                                     onClick={() => saveProposta(lead, idx)}
                                     disabled={isSaving}
-                                    className={`w-full py-3 text-[10px] tracking-[0.5em] uppercase font-medium transition-all border disabled:opacity-40 ${
+                                    className={`w-full py-3.5 text-[12px] tracking-[0.4em] uppercase font-medium transition-all border disabled:opacity-40 ${
                                       isSaved
                                         ? 'border-emerald-400/50 text-emerald-400/80 bg-emerald-400/[0.07]'
                                         : 'border-white/30 text-white/70 bg-white/[0.05] hover:bg-white/[0.10] hover:border-white/50 hover:text-white/90'
@@ -377,83 +377,83 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                 )}
 
                 {/* ── PORTAL ── */}
-                <div className="border-t border-white/[0.04] pt-4">
-                  <p className={labelCls + ' mb-3'}>Portal de Reunião</p>
+                <div className="border-t border-white/[0.05] pt-5">
+                  <p className={labelCls + ' mb-4'}>Portal de Reunião</p>
                   {lead.page_token ? (
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-4">
                       {(lead.reuniao_data || lead.reuniao_hora || lead.reuniao_tipo) && (
-                        <div className="flex items-center gap-4 flex-wrap text-[10px] text-white/30 font-mono">
+                        <div className="flex items-center gap-5 flex-wrap text-[12px] text-white/40 font-mono">
                           {lead.reuniao_data && <span>{lead.reuniao_data}</span>}
                           {lead.reuniao_hora && <span>{lead.reuniao_hora.slice(0,5)}</span>}
                           {lead.reuniao_tipo && <span>{lead.reuniao_tipo}</span>}
-                          {lead.page_confirmacao === 'confirmada' && <span className="text-emerald-400/50">✓ Confirmada</span>}
-                          {lead.page_confirmacao === 'alteracao_pedida' && <span className="text-amber-400/50">⏳ Alteração pedida</span>}
-                          {lead.page_views ? <span className="text-white/15">{lead.page_views} visualizações</span> : null}
+                          {lead.page_confirmacao === 'confirmada' && <span className="text-emerald-400/60">✓ Confirmada</span>}
+                          {lead.page_confirmacao === 'alteracao_pedida' && <span className="text-amber-400/60">⏳ Alteração pedida</span>}
+                          {lead.page_views ? <span className="text-white/25">{lead.page_views} visualizações</span> : null}
                         </div>
                       )}
-                      <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-3 flex-wrap">
                         <a href={`/rm/${lead.page_token}`} target="_blank" rel="noopener noreferrer"
-                          className="text-[9px] tracking-[0.35em] text-white/30 hover:text-white/60 border border-white/[0.07] hover:border-white/20 px-3 py-1.5 uppercase transition-all">
+                          className="text-[12px] tracking-[0.25em] text-white/45 hover:text-white/70 border border-white/[0.10] hover:border-white/25 px-4 py-2.5 uppercase transition-all">
                           Ver Portal →
                         </a>
                         <a href={`/rm/${lead.page_token}/proposta`} target="_blank" rel="noopener noreferrer"
-                          className="text-[9px] tracking-[0.35em] text-amber-400/50 hover:text-amber-400/80 border border-amber-400/20 hover:border-amber-400/45 px-3 py-1.5 uppercase transition-all">
+                          className="text-[12px] tracking-[0.25em] text-amber-400/60 hover:text-amber-400/90 border border-amber-400/25 hover:border-amber-400/55 px-4 py-2.5 uppercase transition-all">
                           Editar Proposta ✎
                         </a>
                         <button onClick={() => copyLink(lead.page_token!)}
-                          className="text-[9px] tracking-[0.35em] text-white/20 hover:text-white/50 border border-white/[0.07] hover:border-white/15 px-3 py-1.5 uppercase transition-all">
+                          className="text-[12px] tracking-[0.25em] text-white/35 hover:text-white/60 border border-white/[0.10] hover:border-white/20 px-4 py-2.5 uppercase transition-all">
                           {copiedId === lead.page_token ? '✓ Copiado' : 'Copiar Link'}
                         </button>
                         <button onClick={() => { setPortalForm({ reuniao_data: lead.reuniao_data || '', reuniao_hora: lead.reuniao_hora || '', reuniao_tipo: lead.reuniao_tipo || 'Presencial', reuniao_link: lead.reuniao_link || '' }); setPortalFormId(portalFormId === lead.id ? null : lead.id) }}
-                          className="text-[9px] tracking-[0.35em] text-white/20 hover:text-white/50 border border-white/[0.07] hover:border-white/15 px-3 py-1.5 uppercase transition-all">
+                          className="text-[12px] tracking-[0.25em] text-white/35 hover:text-white/60 border border-white/[0.10] hover:border-white/20 px-4 py-2.5 uppercase transition-all">
                           Editar Reunião
                         </button>
                       </div>
                     </div>
                   ) : (
                     <button onClick={() => { setPortalForm({ reuniao_data: '', reuniao_hora: '', reuniao_tipo: 'Presencial', reuniao_link: '' }); setPortalFormId(portalFormId === lead.id ? null : lead.id) }}
-                      className="text-[9px] tracking-[0.4em] text-white/30 hover:text-white/60 border border-white/[0.08] hover:border-white/20 px-4 py-2 uppercase transition-all">
+                      className="text-[12px] tracking-[0.25em] text-white/40 hover:text-white/65 border border-white/[0.10] hover:border-white/25 px-5 py-3 uppercase transition-all">
                       + Criar Portal de Reunião
                     </button>
                   )}
 
                   {portalFormId === lead.id && (
-                    <div className="mt-4 border border-white/[0.07] bg-white/[0.02] p-4 flex flex-col gap-4">
-                      <p className="text-[8px] tracking-[0.5em] text-white/20 uppercase">{lead.page_token ? 'Atualizar Reunião' : 'Dados da Reunião'}</p>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div><label className={labelCls + ' mb-1.5 block'}>Data</label><input type="date" value={portalForm.reuniao_data} onChange={e => setPortalForm(f => ({ ...f, reuniao_data: e.target.value }))} className={inputCls} /></div>
-                        <div><label className={labelCls + ' mb-1.5 block'}>Hora</label><input type="time" value={portalForm.reuniao_hora} onChange={e => setPortalForm(f => ({ ...f, reuniao_hora: e.target.value }))} className={inputCls} /></div>
+                    <div className="mt-5 border border-white/[0.09] bg-white/[0.02] p-5 flex flex-col gap-5">
+                      <p className="text-[11px] tracking-[0.4em] text-white/35 uppercase">{lead.page_token ? 'Atualizar Reunião' : 'Dados da Reunião'}</p>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div><label className={labelCls + ' mb-2 block'}>Data</label><input type="date" value={portalForm.reuniao_data} onChange={e => setPortalForm(f => ({ ...f, reuniao_data: e.target.value }))} className={inputCls} /></div>
+                        <div><label className={labelCls + ' mb-2 block'}>Hora</label><input type="time" value={portalForm.reuniao_hora} onChange={e => setPortalForm(f => ({ ...f, reuniao_hora: e.target.value }))} className={inputCls} /></div>
                       </div>
                       <div>
-                        <label className={labelCls + ' mb-1.5 block'}>Modo</label>
-                        <div className="flex gap-2">
+                        <label className={labelCls + ' mb-2 block'}>Modo</label>
+                        <div className="flex gap-3">
                           {['Presencial', 'Videochamada'].map(tipo => (
                             <button key={tipo} onClick={() => setPortalForm(f => ({ ...f, reuniao_tipo: tipo }))}
-                              className={`flex-1 py-2 text-[9px] tracking-[0.3em] uppercase border transition-all ${portalForm.reuniao_tipo === tipo ? 'border-white/25 text-white/60 bg-white/[0.04]' : 'border-white/[0.07] text-white/20 hover:border-white/15'}`}>
+                              className={`flex-1 py-3 text-[12px] tracking-[0.2em] uppercase border transition-all ${portalForm.reuniao_tipo === tipo ? 'border-white/30 text-white/70 bg-white/[0.05]' : 'border-white/[0.09] text-white/30 hover:border-white/20'}`}>
                               {tipo}
                             </button>
                           ))}
                         </div>
                       </div>
-                      <div><label className={labelCls + ' mb-1.5 block'}>Link</label><input type="url" value={portalForm.reuniao_link} placeholder="https://..." onChange={e => setPortalForm(f => ({ ...f, reuniao_link: e.target.value }))} className={inputCls} /></div>
-                      <div className="flex items-center gap-2 pt-1">
+                      <div><label className={labelCls + ' mb-2 block'}>Link</label><input type="url" value={portalForm.reuniao_link} placeholder="https://..." onChange={e => setPortalForm(f => ({ ...f, reuniao_link: e.target.value }))} className={inputCls} /></div>
+                      <div className="flex items-center gap-3 pt-1">
                         <button onClick={() => criarPortal(lead)} disabled={creatingPortal}
-                          className="flex-1 py-2.5 border border-white/20 bg-white/[0.03] hover:bg-white/[0.07] hover:border-white/30 text-[9px] tracking-[0.45em] text-white/50 hover:text-white/70 uppercase transition-all disabled:opacity-30">
+                          className="flex-1 py-3 border border-white/25 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/35 text-[12px] tracking-[0.35em] text-white/60 hover:text-white/80 uppercase transition-all disabled:opacity-30">
                           {creatingPortal ? 'A criar...' : lead.page_token ? '✓ Atualizar' : '✓ Criar Portal'}
                         </button>
-                        <button onClick={() => setPortalFormId(null)} className="px-4 py-2.5 border border-white/[0.07] text-[9px] tracking-[0.35em] text-white/20 hover:text-white/40 uppercase transition-all">Cancelar</button>
+                        <button onClick={() => setPortalFormId(null)} className="px-5 py-3 border border-white/[0.09] text-[12px] tracking-[0.25em] text-white/30 hover:text-white/55 uppercase transition-all">Cancelar</button>
                       </div>
                     </div>
                   )}
                 </div>
 
                 {/* Apagar */}
-                <div className="flex justify-end pt-2 border-t border-white/[0.04]">
+                <div className="flex justify-end pt-2 border-t border-white/[0.05]">
                   {deletingId === lead.id ? (
-                    <span className="text-[8px] text-white/20 tracking-widest">A apagar...</span>
+                    <span className="text-[11px] text-white/30 tracking-widest">A apagar...</span>
                   ) : (
                     <button onClick={() => { if (confirm(`Apagar lead de ${lead.nome}?`)) deleteLead(lead.id) }}
-                      className="text-[8px] tracking-[0.35em] uppercase text-red-400/40 hover:text-red-400/70 transition-colors">
+                      className="text-[11px] tracking-[0.3em] uppercase text-red-400/45 hover:text-red-400/75 transition-colors">
                       Apagar Lead
                     </button>
                   )}
