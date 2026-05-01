@@ -243,7 +243,7 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
       </p>
       <div className="h-px w-16 bg-white/30" />
       <p className={`${T.md} font-light text-white/55 leading-relaxed tracking-wide max-w-xl`}>
-        {proposta.intro || 'Uma proposta desenvolvida com base nos objetivos da vossa marca. Foco em resultados, narrativa estratégica e produção de excelência — do briefing à entrega final.'}
+        Uma proposta desenvolvida com base nos objetivos da vossa marca. Foco em resultados, narrativa estratégica e produção de excelência do briefing à entrega final.
       </p>
     </div>,
 
