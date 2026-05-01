@@ -648,7 +648,7 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
                       Acompanha o progresso do teu projeto, consulta as entregas e acede aos teus ficheiros.
                     </p>
                   </div>
-                  <a href={`/rm/${token}/cliente`}
+                  <a href={`/portal-media/${(content as any).portal_cliente?.ref || token}`}
                     className="shrink-0 flex items-center gap-3 border border-sky-400/30 bg-sky-400/[0.04] hover:bg-sky-400/[0.09] hover:border-sky-400/55 px-8 py-4 text-[9px] tracking-[0.5em] text-sky-400/60 hover:text-sky-400/90 uppercase transition-all duration-300 group whitespace-nowrap">
                     <span>Portal Cliente</span>
                     <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>

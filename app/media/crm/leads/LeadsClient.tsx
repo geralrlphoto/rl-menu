@@ -96,28 +96,81 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
     if (!lead.page_token) return
     setCreatingPortalCliente(s => ({ ...s, [lead.id]: true }))
     try {
-      const existing = contentCache[lead.id] || {}
-      const newContent = {
-        ...existing,
-        portal_cliente: {
-          ativo: true,
-          fases: [
-            { titulo: 'Briefing e Contrato Assinado', concluida: false },
-            { titulo: 'Reunião de Pré-Produção',      concluida: false },
-            { titulo: 'Dia(s) de Captação',           concluida: false },
-            { titulo: 'Edição e Pós-Produção',        concluida: false },
-            { titulo: 'Revisão e Aprovação',           concluida: false },
-            { titulo: 'Entrega Final',                 concluida: false },
-          ],
-          notas: '', links: [], mensagem: '',
-        },
+      const conf    = contentCache[lead.id]?.confirmacao_proposta?.dados || {}
+      const props   = contentCache[lead.id]?.propostas || []
+      const propIdx = props.findIndex((p: any) => p.titulo === conf.proposta_escolhida)
+      const prop    = propIdx >= 0 ? props[propIdx] : null
+      const valor   = prop?.valor ? parseFloat(prop.valor.replace(/[^\d.]/g, '')) || 0 : 0
+      const servicos: string[] = prop?.servicos || []
+
+      // Construir entregas a partir dos serviços
+      const entregasServicos = servicos
+        .filter((s: string) => s.toLowerCase().includes('vídeo') || s.toLowerCase().includes('video'))
+        .map((s: string) => ({ titulo: s, formato: 'MP4', duracao: '', estado: 'pendente' as const }))
+
+      const ref = lead.page_token.toUpperCase()
+      const projeto = {
+        ref,
+        nome:            lead.empresa || lead.nome,
+        cliente:         lead.empresa || lead.nome,
+        tipo:            lead.tipo || 'Produção Audiovisual',
+        local:           conf.local_evento || '',
+        dataFilmagem:    conf.data_evento  || '',
+        dataEntrega:     '',
+        gestorNome:      'Rui Lima',
+        gestorEmail:     'geral@rlmedia.pt',
+        gestorTelefone:  '+351 912 345 678',
+        status:          'Em Produção',
+        revisoes:        { usadas: 0, total: 3 },
+        fases: [
+          { id: 'primeiro-contato',  nome: 'Primeiro Contacto',      descricao: 'Quando nos contactaste e falámos pela primeira vez.',                                         estado: 'concluido' },
+          { id: 'briefing-inicial',  nome: 'Briefing Inicial',        descricao: 'Briefing realizado durante a nossa primeira reunião.',                                       estado: 'concluido' },
+          { id: 'proposta-base',     nome: 'Proposta',                descricao: 'Enviámos a proposta com base nas informações recolhidas.',                                  estado: 'concluido' },
+          { id: 'adjudicacao',       nome: 'Adjudicação',             descricao: 'A proposta foi aprovada e vamos iniciar o processo.',                                        estado: 'concluido' },
+          { id: 'elaboracao-cps',    nome: 'Elaboração do CPS',       descricao: 'Recolha de todos os dados para o contrato de prestação de serviços.',                       estado: 'em_curso'  },
+          { id: 'cps',               nome: 'CPS — Contrato',          descricao: 'Contrato de Prestação de Serviços a assinar e devolver.',                                    estado: 'pendente'  },
+          { id: 'planeamento',       nome: 'Planeamento',             descricao: 'Definição de como e quando tudo vai acontecer.',                                             estado: 'pendente'  },
+          { id: 'producao',          nome: 'Produção',                descricao: 'Dia de filmagem em locação.',                                                                estado: 'pendente', data: conf.data_evento || '' },
+          { id: 'pos-producao',      nome: 'Pós-Produção',            descricao: 'Edição e criação dos conteúdos captados.',                                                   estado: 'pendente'  },
+          { id: 'aprovacao',         nome: 'Aprovação',               descricao: 'Avaliação dos conteúdos e ronda de revisões.',                                               estado: 'pendente'  },
+          { id: 'entrega',           nome: 'Entrega Final',           descricao: 'Entrega de todos os conteúdos acordados.',                                                   estado: 'pendente'  },
+        ],
+        pagamentos: valor > 0 ? [
+          { descricao: 'Sinal — 50%',    valor: valor / 2, estado: 'pendente', data: '' },
+          { descricao: 'Restante — 50%', valor: valor / 2, estado: 'pendente', data: '' },
+        ] : [],
+        entregas: entregasServicos.length > 0 ? entregasServicos : [
+          { titulo: 'Conteúdos a definir', formato: 'MP4', duracao: '', estado: 'pendente' },
+        ],
+        briefingItems: [
+          ...(conf.empresa   ? [{ label: 'Empresa / Marca',   desc: conf.empresa }]          : []),
+          ...(conf.observacoes ? [{ label: 'Observações',     desc: conf.observacoes }]       : []),
+          ...(conf.local_evento ? [{ label: 'Local do Evento', desc: conf.local_evento }]     : []),
+        ],
+        heroImageUrl:   '',
+        briefingUrl:    undefined,
+        contratoUrl:    undefined,
+        cpsFormUrl:     undefined,
+        satisfacaoUrl:  undefined,
       }
-      const res = await fetch('/api/media-portal/save-content', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: lead.page_token, page_content: newContent }),
+
+      // Gravar na tabela media_portais
+      const res = await fetch(`/api/media-portal/${ref}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(projeto),
       })
       if (!res.ok) throw new Error('save failed')
-      setContentCache(c => ({ ...c, [lead.id]: newContent }))
+
+      // Marcar portal_cliente.ativo no lead para persistir o estado
+      const currentContent = contentCache[lead.id] || {}
+      await fetch('/api/media-portal/save-content', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: lead.page_token,
+          page_content: { ...currentContent, portal_cliente: { ativo: true, ref } },
+        }),
+      })
+
       setCreatedPortalCliente(s => ({ ...s, [lead.id]: true }))
     } catch { alert('Erro ao criar portal. Tenta novamente.') }
     finally { setCreatingPortalCliente(s => ({ ...s, [lead.id]: false })) }
@@ -472,7 +525,7 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                           Editar Proposta ✎
                         </a>
                         {contentCache[lead.id]?.portal_cliente?.ativo || createdPortalCliente[lead.id] ? (
-                          <a href={`/rm/${lead.page_token}/cliente`} target="_blank" rel="noopener noreferrer"
+                          <a href={`/portal-media/${lead.page_token}`} target="_blank" rel="noopener noreferrer"
                             className="text-[12px] tracking-[0.25em] text-sky-400/65 hover:text-sky-400/95 border border-sky-400/30 hover:border-sky-400/60 px-4 py-2.5 uppercase transition-all">
                             Ver Portal Cliente →
                           </a>
