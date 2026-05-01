@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { RMPageContent, RMPackage, RMProposta } from '../RMLeadPageClient'
 
 // ─── Comprime imagem no browser → base64 JPEG ────────────────────────────────
-function compressImage(file: File, maxWidth = 1400, quality = 0.80): Promise<string> {
+function compressImage(file: File, maxWidth = 1400, quality = 0.82): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new Image()
     const url = URL.createObjectURL(file)
@@ -35,60 +35,67 @@ function toEmbedUrl(url: string): string | null {
   return null
 }
 
+// ─── Palette ──────────────────────────────────────────────────────────────────
+const GOLD     = '#c4a46a'
+const GOLD_50  = 'rgba(196,164,106,0.50)'
+const GOLD_30  = 'rgba(196,164,106,0.30)'
+const GOLD_15  = 'rgba(196,164,106,0.15)'
+const GOLD_06  = 'rgba(196,164,106,0.06)'
+const GOLD_04  = 'rgba(196,164,106,0.04)'
+const BG       = '#07080f'
+
 // ─── Defaults ─────────────────────────────────────────────────────────────────
 const DEFAULT_PACKAGES: RMPackage[] = [
-  {
-    titulo: 'Essencial',
-    descricao: 'Produção focada e objetiva para uma peça de comunicação impactante.',
-    itens: ['1 dia de produção (8h)','1 vídeo final (até 3 min)','Correção de cor profissional','Sound design + música licenciada','1 ronda de revisões','Entrega digital em 15 dias úteis'],
-    preco: 'Sob consulta',
-  },
-  {
-    titulo: 'Profissional',
-    descricao: 'Produção completa com cortes adaptados para múltiplas plataformas.',
-    itens: ['2 dias de produção','1 vídeo principal (até 5 min)','3 cortes para redes sociais (16:9, 9:16, 1:1)','Pós-produção premium + motion graphics','2 rondas de revisões','Música premium licenciada','Entrega em 21 dias úteis'],
-    preco: 'Sob consulta',
-  },
-  {
-    titulo: 'Estratégico',
-    descricao: 'Estratégia de conteúdo completa para uma presença de marca consistente.',
-    itens: ['Sessão de estratégia + moodboard','3+ dias de produção','Vídeo institucional + série de conteúdos','Pós-produção premium + efeitos visuais','Copywriting integrado','Revisões ilimitadas','Calendário editorial de publicação','Entrega faseada'],
-    preco: 'Sob consulta',
-  },
+  { titulo:'Essencial',   descricao:'', itens:[], preco:'Sob consulta' },
+  { titulo:'Profissional',descricao:'', itens:[], preco:'Sob consulta' },
+  { titulo:'Estratégico', descricao:'', itens:[], preco:'Sob consulta' },
 ]
-
-const DEFAULT_PLANO: { titulo: string; texto: string }[] = [
-  { titulo: 'Definir a Visão Estratégica',        texto: 'Começamos por explorar em conjunto o potencial único da marca. Vamos identificar oportunidades e definir um caminho claro para melhorar a presença visual no mercado.' },
-  { titulo: 'Alinhar a Narrativa e Storytelling', texto: 'Mergulhamos na essência da marca para desenvolver uma narrativa visual autêntica para se conectar naturalmente com o público.' },
-  { titulo: 'Acompanhamento Contínuo',            texto: 'Por fim, desenvolvemos em conjunto um plano de produção personalizado para elevar a comunicação a um novo patamar, para potenciar o crescimento da Marca e fortalecer genuinamente a ligação com o público.' },
+const DEFAULT_PLANO = [
+  { titulo:'Definir a Visão Estratégica',        texto:'Começamos por explorar em conjunto o potencial único da marca. Identificamos oportunidades e definimos um caminho claro para melhorar a presença visual no mercado.' },
+  { titulo:'Alinhar a Narrativa e Storytelling', texto:'Mergulhamos na essência da marca para desenvolver uma narrativa visual autêntica que se conecta naturalmente com o público.' },
+  { titulo:'Acompanhamento Contínuo',            texto:'Desenvolvemos em conjunto um plano de produção personalizado para elevar a comunicação a um novo patamar e fortalecer genuinamente a ligação com o público.' },
 ]
-
 const DEFAULT_INCLUIDO = [
   'Planeamento estratégico',
   'Gestor de conta dedicado à tua Marca',
   'Desenvolvimento da Narrativa & Storytelling',
   'Produção de fotografias e vídeos personalizado',
-  'Edição de fotografias e vídeos personalizado e website',
+  'Edição de fotografias e vídeos personalizado',
   'Acompanhamento contínuo durante todo o projeto',
+]
+const COMO_FUNCIONA = [
+  { n:'01', t:'Briefing e Imersão',       d:'Recebemos o teu briefing, analisamos a marca, o mercado e a concorrência.' },
+  { n:'02', t:'Proposta',                 d:'Desenvolvemos a nossa proposta com uma visão completa e estratégica.' },
+  { n:'03', t:'Planeamento',              d:'Definimos como e quando tudo vai acontecer.' },
+  { n:'04', t:'Pré-Produção e Produção',  d:'Preparamos tudo para que não falte nada na captação de conteúdos.' },
+  { n:'05', t:'Edição',                   d:'Editamos o conteúdo captado com rigor e estética.' },
+  { n:'06', t:'Aprovação',                d:'Recebemos feedback, fazemos ajustes e obtemos a tua validação.' },
+  { n:'07', t:'Entrega',                  d:'Garantimos que tens os conteúdos prontos a serem usados.' },
+  { n:'08', t:'Feedback e Resultados',    d:'Analisamos o impacto e refinamos a estratégia futura.' },
 ]
 
 function merge(saved: any): RMPageContent {
   const d: RMPageContent = {
-    hero:    { titulo: 'Reunião Marcada', subtitulo: 'RL Media · Audiovisual' },
-    videos:  { label: '', titulo: '', urls: ['','',''] },
+    hero:    { titulo:'Reunião Marcada', subtitulo:'RL Media · Audiovisual' },
+    videos:  { label:'', titulo:'', urls:['','',''] },
     proposta: {
-      titulo: 'Proposta Criativa', intro: '', packages: DEFAULT_PACKAGES,
-      propostaAtiva: 1, cta: 'Iniciar Produção', password: '',
-      planoEtapas: DEFAULT_PLANO, incluido: DEFAULT_INCLUIDO,
-      videoUrls: ['','',''], checkpointPergunta: 'Esta abordagem alinha-se com a visão da vossa marca?',
-      slideImages: ['','','','','','','','','',''],
+      titulo:'Proposta Criativa', intro:'', packages:DEFAULT_PACKAGES,
+      propostaAtiva:1, cta:'Iniciar Produção', password:'',
+      planoEtapas:DEFAULT_PLANO, incluido:DEFAULT_INCLUIDO,
+      videoUrls:['','',''], checkpointPergunta:'Esta abordagem alinha-se com a visão da vossa marca?',
+      slideImages:['','','','','','','','','',''],
     },
-    sobre:   { label: 'Quem Somos', titulo: 'RL Media', texto: '' },
+    sobre: { label:'Quem Somos', titulo:'RL Media', texto:'' },
+    propostas: [
+      { titulo:'Proposta 1', valor:'', servicos:[] },
+      { titulo:'Proposta 2', valor:'', servicos:[] },
+      { titulo:'Proposta 3', valor:'', servicos:[] },
+    ],
   }
   if (!saved) return d
   return {
-    hero:    { ...d.hero,    ...(saved.hero    || {}) },
-    videos:  { ...d.videos,  ...(saved.videos  || {}), urls: saved.videos?.urls || d.videos.urls },
+    hero:   { ...d.hero,   ...(saved.hero   || {}) },
+    videos: { ...d.videos, ...(saved.videos || {}), urls: saved.videos?.urls || d.videos.urls },
     proposta: {
       ...d.proposta, ...(saved.proposta || {}),
       packages:           saved.proposta?.packages           || d.proposta.packages,
@@ -100,121 +107,86 @@ function merge(saved: any): RMPageContent {
       checkpointPergunta: saved.proposta?.checkpointPergunta || d.proposta.checkpointPergunta,
       slideImages:        saved.proposta?.slideImages        || d.proposta.slideImages,
     },
-    sobre:   { ...d.sobre,   ...(saved.sobre   || {}) },
-    propostas: saved.propostas || [
-      { titulo: 'Proposta 1', valor: '', servicos: [] },
-      { titulo: 'Proposta 2', valor: '', servicos: [] },
-      { titulo: 'Proposta 3', valor: '', servicos: [] },
-    ],
+    sobre:    { ...d.sobre, ...(saved.sobre || {}) },
+    propostas: saved.propostas || d.propostas,
   }
 }
 
-const COMO_FUNCIONA = [
-  { n: '1', titulo: 'Briefing e Imersão',         desc: 'Recebemos o teu briefing, analisamos a marca, o mercado e a concorrência.' },
-  { n: '2', titulo: 'Proposta',                   desc: 'Desenvolvemos a nossa proposta com uma visão completa e estratégica.' },
-  { n: '3', titulo: 'Planeamento',                desc: 'Definimos como e quando tudo vai acontecer.' },
-  { n: '4', titulo: 'Pré-Produção e Produção',    desc: 'Preparamos tudo para que não falte nada na captação de conteúdos.' },
-  { n: '5', titulo: 'Edição',                     desc: 'Nesta fase, editamos o conteúdo que captámos.' },
-  { n: '6', titulo: 'Aprovação',                  desc: 'Recebemos feedback aos conteúdos, fazemos ajustes e temos a tua validação.' },
-  { n: '7', titulo: 'Entrega',                    desc: 'Garantimos que tens os conteúdos do teu lado, prontos a serem usados.' },
-  { n: '8', titulo: 'Feedback e Resultados',      desc: 'Dás-nos o teu feedback sobre todo o percurso do projeto e analisamos o impacto.' },
-]
-
-const EDITABLE_SLIDES = [0, 1, 2, 3, 4, 5, 6]
 const TOTAL_SLIDES = 10
 
-const T = {
-  xs:  'text-[13px]',
-  sm:  'text-[14px]',
-  md:  'text-[15px]',
-  lg:  'text-[16px]',
-  xl:  'text-[17px]',
-  xxl: 'text-[18px]',
-}
-
-const INP  = 'w-full bg-white/[0.04] border border-white/[0.12] px-3 py-2.5 text-[13px] text-white/80 placeholder:text-white/25 focus:outline-none focus:border-white/30 transition-colors'
+// Editor input styles
+const INP  = 'w-full bg-white/[0.04] border border-white/[0.10] px-3 py-2.5 text-[13px] text-white/75 placeholder:text-white/20 focus:outline-none focus:border-white/25 transition-colors'
 const AREA = INP + ' resize-none leading-relaxed'
-const LBL  = 'text-[10px] tracking-[0.5em] text-white/40 uppercase mb-1.5 block'
+const LBL  = 'text-[9px] tracking-[0.55em] uppercase mb-1.5 block' + ' ' + `text-[${GOLD_50}]`
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function RMPropostaClient({ token, isAdmin }: { token: string; isAdmin: boolean }) {
-  const [lead,     setLead]     = useState<Record<string, any> | null>(null)
-  const [loading,  setLoading]  = useState(true)
-  const [notFound, setNotFound] = useState(false)
-  const [content,  setContent]  = useState<RMPageContent | null>(null)
+  const [lead,    setLead]    = useState<Record<string,any>|null>(null)
+  const [loading, setLoading] = useState(true)
+  const [notFound,setNotFound]= useState(false)
+  const [content, setContent] = useState<RMPageContent|null>(null)
 
-  const [unlocked, setUnlocked] = useState(false)
-  const [pwInput,  setPwInput]  = useState('')
-  const [pwError,  setPwError]  = useState(false)
+  const [unlocked,setUnlocked]= useState(false)
+  const [pwInput, setPwInput] = useState('')
+  const [pwError, setPwError] = useState(false)
 
-  const [current,  setCurrent]  = useState(0)
-  const [dir,      setDir]      = useState<1 | -1>(1)
+  const [current, setCurrent] = useState(0)
+  const [dir,     setDir]     = useState<1|-1>(1)
 
-  // ── Inline edit ────────────────────────────────────────────────────────────
-  const [editingSlide, setEditingSlide] = useState<number | null>(null)
-  const [draft,        setDraft]        = useState<RMPageContent['proposta'] | null>(null)
-  const [saving,       setSaving]       = useState(false)
-  const [savedOk,      setSavedOk]      = useState(false)
-  const [uploading,    setUploading]    = useState(false)
-  const [uploadErr,    setUploadErr]    = useState(false)
+  const [editingSlide,setEditingSlide]= useState<number|null>(null)
+  const [draft,       setDraft]       = useState<RMPageContent['proposta']|null>(null)
+  const [saving,      setSaving]      = useState(false)
+  const [savedOk,     setSavedOk]     = useState(false)
+  const [uploading,   setUploading]   = useState(false)
+  const [uploadErr,   setUploadErr]   = useState(false)
 
   function startEdit(idx: number) {
     if (!content) return
     setDraft(JSON.parse(JSON.stringify(content.proposta)))
-    setEditingSlide(idx)
-    setSavedOk(false)
+    setEditingSlide(idx); setSavedOk(false)
   }
-
   function cancelEdit() { setEditingSlide(null); setDraft(null) }
 
   async function saveEdit() {
     if (!content || !draft) return
     setSaving(true)
-    const newContent: RMPageContent = { ...content, proposta: draft }
+    const nc: RMPageContent = { ...content, proposta: draft }
     try {
       await fetch('/api/media-portal/save-content', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, page_content: newContent }),
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ token, page_content: nc }),
       })
-      setContent(newContent)
-      setSavedOk(true)
+      setContent(nc); setSavedOk(true)
       setTimeout(() => { setEditingSlide(null); setDraft(null); setSavedOk(false) }, 900)
     } finally { setSaving(false) }
   }
 
   async function handleImageFile(file: File, idx: number) {
     if (!draft) return
-    setUploading(true)
-    setUploadErr(false)
+    setUploading(true); setUploadErr(false)
     try {
       const dataUrl = await compressImage(file)
-      const imgs = [...(draft.slideImages || ['','','','','','',''])]
+      const imgs = [...(draft.slideImages || Array(10).fill(''))]
       imgs[idx] = dataUrl
       setDraft({ ...draft, slideImages: imgs })
-    } catch {
-      setUploadErr(true)
-    } finally {
-      setUploading(false)
-    }
+    } catch { setUploadErr(true) }
+    finally { setUploading(false) }
   }
 
   function setSlideImage(idx: number, val: string) {
     if (!draft) return
-    const imgs = [...(draft.slideImages || ['','','','','','',''])]
+    const imgs = [...(draft.slideImages || Array(10).fill(''))]
     imgs[idx] = val
     setDraft({ ...draft, slideImages: imgs })
   }
 
-  // ── Load ────────────────────────────────────────────────────────────────────
   useEffect(() => {
     fetch(`/api/media-portal/view?token=${token}`)
       .then(r => r.json())
       .then(data => {
         if (!data.lead) { setNotFound(true); setLoading(false); return }
         const c = merge(data.lead.page_content)
-        setLead(data.lead)
-        setContent(c)
+        setLead(data.lead); setContent(c)
         if (typeof window !== 'undefined') {
           const stored = sessionStorage.getItem(`rm_proposta_${token}`)
           if (stored === c.proposta.password || !c.proposta.password || isAdmin) setUnlocked(true)
@@ -226,8 +198,7 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
 
   const goTo = useCallback((next: number) => {
     if (next < 0 || next >= TOTAL_SLIDES || editingSlide !== null) return
-    setDir(next > current ? 1 : -1)
-    setCurrent(next)
+    setDir(next > current ? 1 : -1); setCurrent(next)
   }, [current, editingSlide])
 
   useEffect(() => {
@@ -250,258 +221,196 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
     } else { setPwError(true); setPwInput('') }
   }
 
-  const labelCls = `${T.xs} tracking-[0.55em] text-white/50 uppercase`
-
+  // ── Loading / Not found ────────────────────────────────────────────────────
   if (loading) return (
-    <main className="min-h-screen flex items-center justify-center" style={{ background: '#04080f' }}>
-      <p className={`${T.xs} tracking-[0.6em] text-white/40 uppercase animate-pulse`}>A carregar...</p>
+    <main className="min-h-screen flex items-center justify-center" style={{ background: BG }}>
+      <p className="text-[9px] tracking-[0.7em] animate-pulse uppercase" style={{ color: GOLD_30 }}>A carregar...</p>
     </main>
   )
   if (notFound) return (
-    <main className="min-h-screen flex items-center justify-center" style={{ background: '#04080f' }}>
-      <p className={`${T.xs} tracking-[0.6em] text-white/40 uppercase`}>Página não disponível</p>
+    <main className="min-h-screen flex items-center justify-center" style={{ background: BG }}>
+      <p className="text-[9px] tracking-[0.7em] uppercase" style={{ color: GOLD_30 }}>Página não disponível</p>
     </main>
   )
 
   const { proposta } = content!
   const empresa = lead!.empresa || lead!.nome || ''
 
-  // ── Cabeçalho de imagem do slide ───────────────────────────────────────────
-  function SlideHeader({ idx }: { idx: number }) {
-    const img = proposta.slideImages?.[idx]
-    if (!img) return null
-    return (
-      <div className="w-full shrink-0 overflow-hidden" style={{ height: 280 }}>
-        <img
-          src={img}
-          alt=""
-          className="w-full h-full object-cover object-center"
-          style={{
-            maskImage: 'linear-gradient(to bottom, black 0%, black 35%, transparent 100%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 35%, transparent 100%)',
-          }}
-        />
-      </div>
-    )
-  }
-
-  // ── Slide de Proposta (1, 2 ou 3) ─────────────────────────────────────────
-  function PropostaSlide({ idx, propIdx }: { idx: number; propIdx: number }) {
-    const prop: RMProposta = (content!.propostas || [])[propIdx] || { titulo: `Proposta ${propIdx + 1}`, valor: '', servicos: [] }
-    const temConteudo = prop.servicos.length > 0 || prop.valor
-    return (
-      <div className="flex flex-col h-full w-full">
-        <SlideHeader idx={idx} />
-        <div className="flex-1 flex flex-col items-center justify-center px-8 sm:px-20 text-center gap-10 py-8">
-
-          {/* Número da proposta */}
-          <div className="flex flex-col items-center gap-4">
-            <p className={labelCls}>Opção</p>
-            <h1 className="text-[72px] sm:text-[96px] font-extralight tracking-[0.3em] text-white/90 uppercase leading-none">
-              {prop.titulo}
-            </h1>
-            <div className="flex items-center gap-5">
-              <div className="h-px w-20 bg-white/20" />
-              <div className="w-2 h-2 bg-white/30 rotate-45" />
-              <div className="h-px w-20 bg-white/20" />
-            </div>
-          </div>
-
-          {/* Serviços */}
-          {prop.servicos.length > 0 && (
-            <div className="flex flex-col gap-3 w-full max-w-md">
-              {prop.servicos.map((s, i) => (
-                <div key={i} className="flex items-center gap-4 border-b border-white/[0.06] pb-3 last:border-0">
-                  <span className="text-[14px] text-white/30 shrink-0">—</span>
-                  <p className="text-[17px] font-light text-white/75 text-left leading-snug">{s}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Valor */}
-          {prop.valor && (
-            <div className="flex flex-col items-center gap-2">
-              <p className={labelCls}>Investimento</p>
-              <p className="text-[48px] sm:text-[64px] font-extralight tracking-[0.15em] text-white/90 leading-none">
-                {prop.valor}
-              </p>
-            </div>
-          )}
-
-          {/* Placeholder se vazio */}
-          {!temConteudo && (
-            <p className="text-[13px] text-white/20 tracking-[0.3em] uppercase">A definir</p>
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  // ── Bloco de edição de imagem (usado em todos os slides) ──────────────────
-  function ImageEditBlock({ idx }: { idx: number }) {
-    if (!draft) return null
-    const img = draft.slideImages?.[idx] || ''
-    return (
-      <div className="border-t border-white/[0.06] pt-5 mt-5">
-        <label className={LBL}>Foto do Cabeçalho</label>
-
-        {/* Upload por ficheiro */}
-        <label className={`relative mb-3 flex items-center justify-center gap-2 w-full py-4 border border-dashed cursor-pointer transition-all ${uploading ? 'border-white/10 text-white/25' : 'border-white/20 hover:border-white/40 text-white/45 hover:text-white/65'}`}>
-          <span style={{ fontSize: 16 }}>↑</span>
-          <span className="text-[11px] tracking-[0.4em] uppercase">
-            {uploading ? 'A processar...' : 'Carregar imagem'}
-          </span>
-          <input
-            type="file"
-            accept="image/*"
-            className="absolute inset-0 opacity-0 cursor-pointer"
-            disabled={uploading}
-            onChange={e => {
-              const f = e.target.files?.[0]
-              if (f) handleImageFile(f, idx)
-              e.target.value = ''
-            }}
-          />
-        </label>
-
-        {uploadErr && (
-          <p className="mb-3 text-[11px] text-red-400/60 tracking-wide">Erro ao processar imagem. Tenta novamente.</p>
-        )}
-
-        {/* URL manual */}
-        <div className="mb-3">
-          <label className={LBL}>Ou cole um URL</label>
-          <input
-            className={INP}
-            placeholder="https://..."
-            value={img.startsWith('data:') ? '' : img}
-            onChange={e => setSlideImage(idx, e.target.value)}
-          />
-        </div>
-
-        {/* Preview */}
-        {img ? (
-          <div className="relative overflow-hidden" style={{ height: 110 }}>
-            <img src={img} alt="" className="w-full h-full object-cover object-center" />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 50%, rgba(4,8,15,0.9) 100%)' }} />
-            <button
-              onClick={() => { setSlideImage(idx, ''); setUploadErr(false) }}
-              className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center bg-black/60 hover:bg-black/80 text-white/60 hover:text-white text-[11px] border border-white/15 transition-all"
-            >✕</button>
-          </div>
-        ) : (
-          <div className="border border-dashed border-white/[0.07] flex items-center justify-center" style={{ height: 50 }}>
-            <p className="text-[10px] tracking-widest text-white/20 uppercase">Sem imagem</p>
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  // ── PASSWORD GATE ──────────────────────────────────────────────────────────
+  // ── Password Gate ──────────────────────────────────────────────────────────
   if (!unlocked) return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-6 relative" style={{ background: '#04080f' }}>
-      <div className="pointer-events-none fixed inset-0" style={{
-        backgroundImage: `linear-gradient(rgba(70,120,255,0.055) 1px,transparent 1px),linear-gradient(90deg,rgba(70,120,255,0.055) 1px,transparent 1px)`,
-        backgroundSize: '64px 64px',
-      }} />
-      <div className="pointer-events-none fixed inset-0" style={{
-        background: 'radial-gradient(ellipse 110% 55% at 50% -8%, rgba(50,110,255,0.13) 0%, rgba(30,70,200,0.05) 45%, transparent 70%)',
-      }} />
-      <div className="pointer-events-none fixed inset-0" style={{
-        background: 'radial-gradient(ellipse 45% 55% at -6% 45%, rgba(60,130,255,0.07) 0%, transparent 55%)',
-      }} />
-      <div className="pointer-events-none fixed inset-0" style={{
-        background: 'radial-gradient(ellipse 45% 55% at 106% 55%, rgba(40,100,255,0.06) 0%, transparent 52%)',
-      }} />
+    <main className="min-h-screen flex flex-col items-center justify-center px-6 relative" style={{ background: BG }}>
+      <BgLayer />
       <div className="relative z-10 w-full max-w-sm flex flex-col items-center gap-10 text-center">
-        <div className="flex flex-col items-center gap-3">
-          <p className={labelCls}>RL Media · Audiovisual</p>
-          <h1 className={`${T.xxl} font-extralight tracking-[0.3em] text-white/80 uppercase`}>Proposta Criativa</h1>
-          <div className="flex items-center gap-3 mt-2">
-            <div className="h-px w-8 bg-white/30" />
-            <div className="w-1 h-1 bg-white/40 rotate-45" />
-            <div className="h-px w-8 bg-white/30" />
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-[9px] tracking-[0.7em] uppercase" style={{ color: GOLD_50 }}>RL Media · Audiovisual</p>
+          <h1 className="text-[22px] font-extralight tracking-[0.35em] text-white/80 uppercase">Proposta Criativa</h1>
+          <div className="flex items-center gap-4 mt-1">
+            <div className="h-px w-10" style={{ background: GOLD_30 }} />
+            <div className="w-1.5 h-1.5 rotate-45" style={{ background: GOLD_30 }} />
+            <div className="h-px w-10" style={{ background: GOLD_30 }} />
           </div>
-          {empresa && <p className={`${T.xs} tracking-[0.5em] text-white/50 uppercase mt-2`}>{empresa}</p>}
+          {empresa && <p className="text-[11px] tracking-[0.45em] text-white/40 uppercase mt-1">{empresa}</p>}
         </div>
-        <form onSubmit={handleUnlock} className="w-full flex flex-col gap-4">
-          <div>
-            <input type="password" value={pwInput}
-              onChange={e => { setPwInput(e.target.value); setPwError(false) }}
-              placeholder="Password de acesso" autoFocus
-              className={`w-full bg-white/[0.03] border px-5 py-4 ${T.sm} text-white/70 placeholder:text-white/30 tracking-wider text-center focus:outline-none transition-colors ${pwError ? 'border-red-400/40' : 'border-white/[0.12] focus:border-white/30'}`}
-            />
-            {pwError && <p className={`mt-2 ${T.xs} tracking-[0.4em] text-red-400/70 uppercase text-center`}>Password incorreta</p>}
-          </div>
-          <button type="submit" className={`w-full border border-white/30 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/45 py-4 ${T.xs} tracking-[0.5em] text-white/60 hover:text-white/80 uppercase transition-all`}>
+        <form onSubmit={handleUnlock} className="w-full flex flex-col gap-3">
+          <input type="password" value={pwInput} onChange={e => { setPwInput(e.target.value); setPwError(false) }}
+            placeholder="Password de acesso" autoFocus
+            className={`w-full px-5 py-4 text-[13px] text-white/70 placeholder:text-white/25 tracking-wider text-center focus:outline-none transition-colors ${pwError ? 'border border-red-400/40' : 'border'}`}
+            style={{ background:'rgba(255,255,255,0.03)', borderColor: pwError ? undefined : GOLD_15 }}
+          />
+          {pwError && <p className="text-[10px] tracking-[0.4em] text-red-400/60 uppercase text-center">Password incorreta</p>}
+          <button type="submit" className="w-full py-4 text-[10px] tracking-[0.55em] uppercase transition-all"
+            style={{ border: `1px solid ${GOLD_30}`, color: GOLD, background: GOLD_06 }}>
             Aceder →
           </button>
         </form>
-        <a href={`/rm/${token}`} className={`${T.xs} tracking-[0.4em] text-white/40 hover:text-white/60 uppercase transition-colors`}>‹ Voltar ao Portal</a>
+        <a href={`/rm/${token}`} className="text-[9px] tracking-[0.4em] text-white/30 hover:text-white/55 uppercase transition-colors">‹ Voltar ao Portal</a>
       </div>
     </main>
   )
 
-  // ── FORMULÁRIO DE EDIÇÃO por slide ─────────────────────────────────────────
-  function renderEditForm(idx: number) {
-    if (!draft) return null
-
-    // Bloco de imagem é comum a todos os slides
-    const imgBlock = <ImageEditBlock idx={idx} />
-
-    if (idx === 0) return (
-      <div className="flex flex-col gap-1">
-        <p className="text-[12px] text-white/35 leading-relaxed mb-4">
-          O slide de capa usa o logo e o nome do cliente automaticamente.<br />Podes adicionar uma foto de fundo aqui em baixo.
-        </p>
-        {imgBlock}
+  // ── Slide header image ─────────────────────────────────────────────────────
+  function SlideHeader({ idx }: { idx: number }) {
+    const img = proposta.slideImages?.[idx]
+    if (!img) return null
+    return (
+      <div className="w-full shrink-0 overflow-hidden" style={{ height: 260 }}>
+        <img src={img} alt="" className="w-full h-full object-cover object-center"
+          style={{ maskImage:'linear-gradient(to bottom, black 0%, black 35%, transparent 100%)', WebkitMaskImage:'linear-gradient(to bottom, black 0%, black 35%, transparent 100%)' }}
+        />
       </div>
     )
+  }
+
+  // ── Slide title block ──────────────────────────────────────────────────────
+  function SlideMeta({ label, title }: { label: string; title: string }) {
+    return (
+      <div className="mb-8 sm:mb-10">
+        <p className="text-[9px] tracking-[0.7em] uppercase mb-3" style={{ color: GOLD_50 }}>{label}</p>
+        <h2 className="text-[34px] sm:text-[40px] font-extralight tracking-[0.12em] text-white/88 uppercase leading-tight mb-5">{title}</h2>
+        <div className="h-px w-14" style={{ background: GOLD_30 }} />
+      </div>
+    )
+  }
+
+  // ── PropostaSlide ──────────────────────────────────────────────────────────
+  function PropostaSlide({ idx, propIdx }: { idx: number; propIdx: number }) {
+    const prop: RMProposta = (content!.propostas || [])[propIdx] || { titulo:`Proposta ${propIdx+1}`, valor:'', servicos:[] }
+    return (
+      <div className="flex flex-col h-full w-full">
+        <SlideHeader idx={idx} />
+        <div className="flex-1 flex flex-col sm:flex-row overflow-hidden">
+
+          {/* Left panel */}
+          <div className="sm:w-[38%] flex flex-col justify-between px-8 sm:px-12 py-10 border-b sm:border-b-0 sm:border-r" style={{ borderColor: GOLD_15 }}>
+            <div>
+              <p className="text-[9px] tracking-[0.7em] uppercase mb-4" style={{ color: GOLD_50 }}>Opção</p>
+              <div className="text-[80px] sm:text-[100px] font-extralight leading-none mb-3 select-none"
+                style={{ color: GOLD_06, letterSpacing: '-0.02em' }}>
+                0{propIdx + 1}
+              </div>
+              <h2 className="text-[26px] sm:text-[32px] font-extralight tracking-[0.15em] text-white/85 uppercase leading-tight">
+                {prop.titulo}
+              </h2>
+              <div className="h-px w-10 mt-4" style={{ background: GOLD_30 }} />
+            </div>
+
+            {prop.valor ? (
+              <div className="mt-6 pt-6 border-t" style={{ borderColor: GOLD_15 }}>
+                <p className="text-[9px] tracking-[0.7em] uppercase mb-2" style={{ color: GOLD_50 }}>Investimento</p>
+                <p className="text-[38px] sm:text-[48px] font-extralight leading-none" style={{ color: GOLD }}>
+                  {prop.valor}
+                </p>
+              </div>
+            ) : (
+              <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase mt-6">Valor a definir</p>
+            )}
+          </div>
+
+          {/* Right panel — services */}
+          <div className="flex-1 flex flex-col justify-center px-8 sm:px-12 py-10 overflow-y-auto">
+            {prop.servicos.length > 0 ? (
+              <div className="flex flex-col">
+                {prop.servicos.map((s, i) => (
+                  <div key={i} className="flex items-center gap-4 py-3 border-b" style={{ borderColor:'rgba(255,255,255,0.055)' }}>
+                    <div className="w-1 h-1 rounded-full shrink-0" style={{ background: GOLD_50 }} />
+                    <p className="text-[14px] font-light text-white/65">{s}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full gap-3 opacity-30">
+                <div className="w-8 h-px" style={{ background: GOLD_30 }} />
+                <p className="text-[10px] tracking-[0.4em] text-white/40 uppercase">Serviços a definir</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Image edit block ───────────────────────────────────────────────────────
+  function ImageEditBlock({ idx }: { idx: number }) {
+    if (!draft) return null
+    const img = draft.slideImages?.[idx] || ''
+    return (
+      <div className="border-t pt-5 mt-5" style={{ borderColor: GOLD_15 }}>
+        <p className="text-[9px] tracking-[0.55em] uppercase mb-3" style={{ color: GOLD_50 }}>Foto do Cabeçalho</p>
+        <label className="relative mb-3 flex items-center justify-center gap-2 w-full py-4 border border-dashed cursor-pointer transition-all"
+          style={{ borderColor: uploading ? 'rgba(255,255,255,0.06)' : GOLD_15 }}>
+          <span className="text-[11px] tracking-[0.4em] uppercase" style={{ color: uploading ? 'rgba(255,255,255,0.2)' : GOLD_50 }}>
+            {uploading ? 'A processar...' : '↑ Carregar imagem'}
+          </span>
+          <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" disabled={uploading}
+            onChange={e => { const f = e.target.files?.[0]; if (f) handleImageFile(f, idx); e.target.value = '' }} />
+        </label>
+        {uploadErr && <p className="mb-2 text-[11px] text-red-400/60">Erro. Tenta novamente.</p>}
+        <div className="mb-3">
+          <p className="text-[9px] tracking-[0.5em] uppercase mb-1.5" style={{ color: GOLD_50 }}>Ou cole um URL</p>
+          <input className={INP} placeholder="https://..." value={img.startsWith('data:') ? '' : img}
+            onChange={e => setSlideImage(idx, e.target.value)} />
+        </div>
+        {img ? (
+          <div className="relative overflow-hidden" style={{ height: 100 }}>
+            <img src={img} alt="" className="w-full h-full object-cover" />
+            <button onClick={() => { setSlideImage(idx, ''); setUploadErr(false) }}
+              className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center bg-black/70 text-white/60 hover:text-white text-[11px] border border-white/15 transition-all">✕</button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center border border-dashed" style={{ height:50, borderColor: GOLD_06 }}>
+            <p className="text-[9px] tracking-widest text-white/15 uppercase">Sem imagem</p>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // ── Edit form per slide ────────────────────────────────────────────────────
+  function renderEditForm(idx: number) {
+    if (!draft) return null
+    const imgBlock = <ImageEditBlock idx={idx} />
+    const lbl = (t: string) => <p className="text-[9px] tracking-[0.55em] uppercase mb-1.5 block" style={{ color: GOLD_50 }}>{t}</p>
+
+    if (idx === 0) return <>{lbl('Slide de capa — apenas foto de cabeçalho')}{imgBlock}</>
 
     if (idx === 1) return (
       <div className="flex flex-col gap-6">
-        {draft.planoEtapas.map((etapa, i) => (
-          <div key={i} className="flex flex-col gap-3 pb-6 border-b border-white/[0.06] last:border-0 last:pb-0">
-            <label className={LBL}>Etapa {i + 1} — Título</label>
-            <input className={INP} value={etapa.titulo}
-              onChange={e => { const n = [...draft.planoEtapas]; n[i] = { ...n[i], titulo: e.target.value }; setDraft({ ...draft, planoEtapas: n }) }}
-            />
-            <label className={LBL}>Etapa {i + 1} — Texto</label>
-            <textarea rows={3} className={AREA} value={etapa.texto}
-              onChange={e => { const n = [...draft.planoEtapas]; n[i] = { ...n[i], texto: e.target.value }; setDraft({ ...draft, planoEtapas: n }) }}
-            />
+        {draft.planoEtapas.map((e, i) => (
+          <div key={i} className="flex flex-col gap-3 pb-6 border-b last:border-0 last:pb-0" style={{ borderColor: GOLD_06 }}>
+            {lbl(`Etapa ${i+1} — Título`)}<input className={INP} value={e.titulo} onChange={x => { const n=[...draft.planoEtapas]; n[i]={...n[i],titulo:x.target.value}; setDraft({...draft,planoEtapas:n}) }} />
+            {lbl(`Etapa ${i+1} — Texto`)}<textarea rows={3} className={AREA} value={e.texto} onChange={x => { const n=[...draft.planoEtapas]; n[i]={...n[i],texto:x.target.value}; setDraft({...draft,planoEtapas:n}) }} />
           </div>
         ))}
-        <div>
-          <label className={LBL}>Frase final do slide</label>
-          <textarea rows={2} className={AREA}
-            value={(draft as any).planoFrase ?? 'Uma proposta desenvolvida com base nos objetivos da vossa marca. Foco em resultados, narrativa estratégica e produção de excelência do briefing à entrega final.'}
-            onChange={e => setDraft({ ...draft, planoFrase: e.target.value } as any)}
-          />
-        </div>
         {imgBlock}
       </div>
     )
 
-    if (idx === 2) return (
-      <div className="flex flex-col gap-1">
-        <p className="text-[12px] text-white/35 leading-relaxed mb-4">
-          O slide "Como Funciona?" tem conteúdo fixo. Podes adicionar uma foto de cabeçalho.
-        </p>
-        {imgBlock}
-      </div>
-    )
+    if (idx === 2) return <>{lbl('Slide fixo — apenas foto de cabeçalho')}{imgBlock}</>
 
     if (idx === 3) return (
       <div className="flex flex-col gap-3">
-        <label className={LBL}>Itens incluídos — um por linha</label>
-        <textarea rows={10} className={AREA}
-          value={draft.incluido.join('\n')}
-          onChange={e => setDraft({ ...draft, incluido: e.target.value.split('\n') })}
-        />
-        <p className="text-[11px] text-white/25">Cada linha torna-se um item com ✓</p>
+        {lbl('Itens incluídos — um por linha')}
+        <textarea rows={10} className={AREA} value={draft.incluido.join('\n')} onChange={e => setDraft({...draft, incluido:e.target.value.split('\n')})} />
         {imgBlock}
       </div>
     )
@@ -512,12 +421,11 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
           const valid = !!toEmbedUrl(url)
           return (
             <div key={i}>
-              <label className={LBL}>Vídeo {i + 1} — URL (YouTube ou Vimeo)</label>
+              {lbl(`Vídeo ${i+1} — URL YouTube ou Vimeo`)}
               <div className="relative">
-                <input className={INP + ' pr-8'} placeholder="https://youtu.be/... ou https://vimeo.com/..." value={url}
-                  onChange={e => { const n = [...draft.videoUrls]; n[i] = e.target.value; setDraft({ ...draft, videoUrls: n }) }}
-                />
-                {url && <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[13px] ${valid ? 'text-emerald-400/70' : 'text-red-400/60'}`}>{valid ? '✓' : '✕'}</span>}
+                <input className={INP+' pr-8'} placeholder="https://youtu.be/..." value={url}
+                  onChange={e => { const n=[...draft.videoUrls]; n[i]=e.target.value; setDraft({...draft,videoUrls:n}) }} />
+                {url && <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[13px] ${valid?'text-emerald-400/70':'text-red-400/60'}`}>{valid?'✓':'✕'}</span>}
               </div>
             </div>
           )
@@ -528,20 +436,8 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
 
     if (idx === 5) return (
       <div className="flex flex-col gap-3">
-        <label className={LBL}>Pergunta de reflexão</label>
-        <textarea rows={4} className={AREA} value={draft.checkpointPergunta}
-          onChange={e => setDraft({ ...draft, checkpointPergunta: e.target.value })}
-        />
-        {imgBlock}
-      </div>
-    )
-
-    if (idx === 6) return (
-      <div className="flex flex-col gap-3">
-        <label className={LBL}>Texto do botão CTA</label>
-        <input className={INP} value={draft.cta}
-          onChange={e => setDraft({ ...draft, cta: e.target.value })}
-        />
+        {lbl('Pergunta de reflexão')}
+        <textarea rows={4} className={AREA} value={draft.checkpointPergunta} onChange={e => setDraft({...draft,checkpointPergunta:e.target.value})} />
         {imgBlock}
       </div>
     )
@@ -549,26 +445,28 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
     return imgBlock
   }
 
-  // ── SLIDES ─────────────────────────────────────────────────────────────────
+  // ── Slides ─────────────────────────────────────────────────────────────────
   const slides = [
 
     // 0 — CAPA
     <div key={0} className="flex flex-col h-full w-full">
       <SlideHeader idx={0} />
-      <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-8 py-8">
-        <div style={{ background:'#04080f', borderRadius:'9999px', padding:'6px', boxShadow:'0 0 24px rgba(255,255,255,0.22), 0 0 56px rgba(255,255,255,0.09)' }}>
-          <img src="/logo-rl-media-branco.png" alt="RL Media" className="w-36 h-36 object-contain block" style={{ mixBlendMode:'screen', borderRadius:'9999px' }} />
+      <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-8 py-12">
+        <div style={{ borderRadius:'9999px', padding:'8px', background:BG, boxShadow:`0 0 0 1px ${GOLD_15}, 0 0 40px ${GOLD_06}, 0 0 80px rgba(196,164,106,0.04)` }}>
+          <img src="/logo-rl-media-branco.png" alt="RL Media" className="w-32 h-32 object-contain block" style={{ mixBlendMode:'screen', borderRadius:'9999px' }} />
         </div>
-        <div className="flex flex-col items-center gap-5">
-          <p className="text-[16px] tracking-[0.55em] text-white/55 uppercase">RL Media · Audiovisual</p>
-          <h1 className="text-[42px] font-extralight tracking-[0.35em] text-white/90 uppercase leading-snug">Proposta<br />Criativa</h1>
-          <div className="flex items-center gap-5 my-1">
-            <div className="h-px w-16 bg-white/30" />
-            <div className="w-2 h-2 bg-white/40 rotate-45" />
-            <div className="h-px w-16 bg-white/30" />
+        <div className="flex flex-col items-center gap-5 max-w-lg">
+          <p className="text-[10px] tracking-[0.7em] uppercase" style={{ color: GOLD_50 }}>RL Media · Audiovisual</p>
+          <h1 className="text-[52px] sm:text-[64px] font-extralight tracking-[0.3em] text-white/90 uppercase leading-none">
+            Proposta<br />Criativa
+          </h1>
+          <div className="flex items-center gap-5">
+            <div className="h-px w-16" style={{ background: GOLD_30 }} />
+            <div className="w-2 h-2 rotate-45" style={{ background: GOLD_30 }} />
+            <div className="h-px w-16" style={{ background: GOLD_30 }} />
           </div>
-          {empresa && <p className="text-[20px] font-extralight tracking-[0.4em] text-white/65 uppercase">{empresa}</p>}
-          <p className="text-[15px] tracking-[0.5em] text-white/40 uppercase font-mono">
+          {empresa && <p className="text-[18px] font-extralight tracking-[0.4em] text-white/60 uppercase">{empresa}</p>}
+          <p className="text-[11px] tracking-[0.5em] text-white/30 uppercase font-mono">
             {new Date().toLocaleDateString('pt-PT', { day:'2-digit', month:'long', year:'numeric' })}
           </p>
         </div>
@@ -578,39 +476,43 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
     // 1 — PLANO DE AÇÃO
     <div key={1} className="flex flex-col h-full w-full">
       <SlideHeader idx={1} />
-      <div className="flex-1 flex flex-col justify-center gap-8 px-8 sm:px-20 py-8 max-w-3xl mx-auto w-full">
-        <h2 className="text-[32px] font-extrabold tracking-[0.12em] text-white/90 uppercase leading-tight text-center">
-          Plano de Ação<br />Personalizado<br />com 3 Etapas
-        </h2>
-        <div className="flex flex-col gap-6">
-          {proposta.planoEtapas.map((etapa, i) => (
-            <div key={i} className={`flex flex-col gap-2 ${i < proposta.planoEtapas.length - 1 ? 'pb-6 border-b border-white/[0.07]' : ''}`}>
-              <h3 className="text-[22px] font-bold text-white/85">{i + 1}. {etapa.titulo}</h3>
-              <p className="text-[17px] font-light text-white/60 leading-relaxed">{etapa.texto}</p>
-            </div>
-          ))}
+      <div className="flex-1 flex flex-col justify-center px-10 sm:px-16 lg:px-24 py-8 relative overflow-hidden">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[200px] font-bold leading-none select-none pointer-events-none" style={{ color: GOLD_04, letterSpacing:'-0.04em' }}>01</div>
+        <div className="relative z-10 max-w-3xl">
+          <SlideMeta label="Proposta Criativa" title="Plano de Ação" />
+          <div className="flex flex-col gap-6">
+            {proposta.planoEtapas.map((e, i) => (
+              <div key={i} className="flex gap-5 pb-6 border-b last:border-0 last:pb-0" style={{ borderColor:'rgba(255,255,255,0.06)' }}>
+                <div className="shrink-0 w-7 h-7 flex items-center justify-center text-[10px] font-medium border" style={{ border:`1px solid ${GOLD_15}`, color: GOLD }}>
+                  {String(i+1).padStart(2,'0')}
+                </div>
+                <div>
+                  <h3 className="text-[16px] font-medium text-white/80 mb-1.5">{e.titulo}</h3>
+                  <p className="text-[14px] font-light text-white/50 leading-relaxed">{e.texto}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-        <p className="text-[16px] font-light text-white/45 leading-relaxed tracking-wide">
-          {(proposta as any).planoFrase ?? 'Uma proposta desenvolvida com base nos objetivos da vossa marca. Foco em resultados, narrativa estratégica e produção de excelência do briefing à entrega final.'}
-        </p>
       </div>
     </div>,
 
     // 2 — COMO FUNCIONA
     <div key={2} className="flex flex-col h-full w-full">
       <SlideHeader idx={2} />
-      <div className="flex-1 flex flex-col justify-center gap-8 px-8 sm:px-16 py-8 max-w-5xl mx-auto w-full">
-        <h2 className="text-[32px] font-extrabold tracking-[0.12em] text-white/90 uppercase text-center">Como Funciona?</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
-          {COMO_FUNCIONA.map((item, i) => (
-            <div key={i} className="flex flex-col gap-1">
-              <div className="flex items-center gap-3 pb-2 border-b border-white/[0.10]">
-                <span className="w-7 h-7 flex items-center justify-center bg-white/[0.08] border border-white/[0.15] text-[13px] font-bold text-white/70 shrink-0">{item.n}</span>
-                <h3 className="text-[22px] font-bold text-white/85 uppercase tracking-wide leading-tight">{item.titulo}</h3>
+      <div className="flex-1 flex flex-col justify-center px-10 sm:px-16 lg:px-24 py-8 relative overflow-hidden">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[200px] font-bold leading-none select-none pointer-events-none" style={{ color: GOLD_04, letterSpacing:'-0.04em' }}>02</div>
+        <div className="relative z-10 max-w-5xl w-full">
+          <SlideMeta label="Processo" title="Como Funciona?" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-8 gap-y-5">
+            {COMO_FUNCIONA.map((item, i) => (
+              <div key={i} className="flex flex-col gap-2">
+                <p className="text-[11px] font-medium" style={{ color: GOLD }}>{item.n}</p>
+                <p className="text-[13px] font-medium text-white/70 leading-snug">{item.t}</p>
+                <p className="text-[12px] font-light text-white/40 leading-relaxed">{item.d}</p>
               </div>
-              <p className="text-[17px] font-light text-white/55 leading-relaxed pt-1">{item.desc}</p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>,
@@ -618,15 +520,18 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
     // 3 — O QUE ESTÁ INCLUÍDO
     <div key={3} className="flex flex-col h-full w-full">
       <SlideHeader idx={3} />
-      <div className="flex-1 flex flex-col justify-center gap-8 px-8 sm:px-20 py-8 max-w-3xl mx-auto w-full">
-        <h2 className="text-[32px] font-extrabold tracking-[0.08em] text-white/90 uppercase">O Que Está Incluído?</h2>
-        <div className="flex flex-col gap-5">
-          {proposta.incluido.map((item, i) => (
-            <div key={i} className="flex items-start gap-4">
-              <span className="text-[22px] font-bold text-white/50 shrink-0 leading-tight">✓</span>
-              <p className="text-[22px] font-bold text-white/85 leading-tight">{item}</p>
-            </div>
-          ))}
+      <div className="flex-1 flex flex-col justify-center px-10 sm:px-16 lg:px-24 py-8 relative overflow-hidden">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[200px] font-bold leading-none select-none pointer-events-none" style={{ color: GOLD_04, letterSpacing:'-0.04em' }}>03</div>
+        <div className="relative z-10 max-w-3xl">
+          <SlideMeta label="Serviços" title="O Que Está Incluído?" />
+          <div className="flex flex-col gap-4">
+            {proposta.incluido.map((item, i) => (
+              <div key={i} className="flex items-center gap-4 pb-4 border-b last:border-0 last:pb-0" style={{ borderColor:'rgba(255,255,255,0.06)' }}>
+                <div className="w-5 h-5 flex items-center justify-center shrink-0 text-[11px]" style={{ border:`1px solid ${GOLD_30}`, color: GOLD }}>✓</div>
+                <p className="text-[16px] font-light text-white/75">{item}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>,
@@ -634,22 +539,25 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
     // 4 — VÍDEOS
     <div key={4} className="flex flex-col h-full w-full">
       <SlideHeader idx={4} />
-      <div className="flex-1 flex flex-col justify-center gap-8 px-8 sm:px-16 py-8 max-w-5xl mx-auto w-full">
-        <h2 className="text-[32px] font-extrabold tracking-[0.08em] text-white/90 uppercase text-center">O Nosso Trabalho</h2>
-        <div className="grid grid-cols-1 gap-4">
-          {proposta.videoUrls.map((url, i) => {
-            const embed = toEmbedUrl(url)
-            if (embed) return (
-              <div key={i} className="border border-white/[0.08] w-full" style={{ aspectRatio:'16/9' }}>
-                <iframe src={embed} className="w-full h-full" allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" />
-              </div>
-            )
-            return (
-              <div key={i} className="border border-dashed border-white/[0.08] flex items-center justify-center" style={{ aspectRatio:'16/9' }}>
-                <p className={`${T.xs} text-white/20 tracking-widest uppercase`}>Vídeo {i + 1}</p>
-              </div>
-            )
-          })}
+      <div className="flex-1 flex flex-col justify-center px-10 sm:px-16 py-8 relative overflow-hidden">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[200px] font-bold leading-none select-none pointer-events-none" style={{ color: GOLD_04, letterSpacing:'-0.04em' }}>04</div>
+        <div className="relative z-10 max-w-5xl w-full">
+          <SlideMeta label="Portfólio" title="O Nosso Trabalho" />
+          <div className="grid grid-cols-1 gap-4">
+            {proposta.videoUrls.map((url, i) => {
+              const embed = toEmbedUrl(url)
+              if (embed) return (
+                <div key={i} className="border w-full" style={{ aspectRatio:'16/9', borderColor: GOLD_15 }}>
+                  <iframe src={embed} className="w-full h-full" allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" />
+                </div>
+              )
+              return (
+                <div key={i} className="border border-dashed flex items-center justify-center" style={{ aspectRatio:'16/9', borderColor: GOLD_06 }}>
+                  <p className="text-[10px] tracking-widest uppercase" style={{ color: GOLD_30 }}>Vídeo {i+1}</p>
+                </div>
+              )
+            })}
+          </div>
         </div>
       </div>
     </div>,
@@ -657,108 +565,91 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
     // 5 — CHECKPOINT
     <div key={5} className="flex flex-col h-full w-full">
       <SlideHeader idx={5} />
-      <div className="flex-1 flex flex-col items-center justify-center gap-10 px-8 sm:px-20 text-center py-8 max-w-3xl mx-auto w-full">
-        <p className={labelCls}>A Tua Opinião</p>
-        <h2 className="text-[38px] font-extrabold tracking-[0.06em] text-white/90 uppercase leading-tight">Momento de<br />Reflexão</h2>
-        <div className="flex items-center gap-4">
-          <div className="h-px w-12 bg-white/20" />
-          <div className="w-1.5 h-1.5 bg-white/30 rotate-45" />
-          <div className="h-px w-12 bg-white/20" />
+      <div className="flex-1 flex flex-col items-center justify-center px-10 sm:px-20 text-center py-12 gap-8 max-w-3xl mx-auto w-full">
+        <p className="text-[9px] tracking-[0.7em] uppercase" style={{ color: GOLD_50 }}>Reflexão</p>
+        <h2 className="text-[40px] sm:text-[52px] font-extralight tracking-[0.12em] text-white/88 uppercase leading-tight">
+          Momento de<br />Reflexão
+        </h2>
+        <div className="flex items-center gap-5">
+          <div className="h-px w-12" style={{ background: GOLD_30 }} />
+          <div className="w-1.5 h-1.5 rotate-45" style={{ background: GOLD_30 }} />
+          <div className="h-px w-12" style={{ background: GOLD_30 }} />
         </div>
-        <p className="text-[24px] font-light text-white/70 leading-relaxed max-w-xl">{proposta.checkpointPergunta}</p>
+        <p className="text-[20px] sm:text-[24px] font-extralight text-white/60 leading-relaxed max-w-xl italic">
+          "{proposta.checkpointPergunta}"
+        </p>
       </div>
     </div>,
 
     // 6 — INVESTIMENTO
     <div key={6} className="flex flex-col h-full w-full">
       <SlideHeader idx={6} />
-      <div className="flex-1 flex items-center justify-center px-8 text-center">
-        <h1 className="text-[80px] sm:text-[110px] font-extralight tracking-[0.3em] text-white/90 uppercase leading-none">
-          INVESTIMENTO
+      <div className="flex-1 flex flex-col items-center justify-center px-8 text-center py-12 gap-6">
+        <p className="text-[9px] tracking-[0.7em] uppercase" style={{ color: GOLD_50 }}>Valor</p>
+        <h1 className="text-[72px] sm:text-[100px] font-extralight tracking-[0.25em] text-white/90 uppercase leading-none">
+          INVESTI<br />MENTO
         </h1>
+        <div className="h-px w-20 mt-2" style={{ background: GOLD_30 }} />
       </div>
     </div>,
 
-    // 7 — PROPOSTA 1
+    // 7–9 — PROPOSTAS
     <PropostaSlide key={7} idx={7} propIdx={0} />,
-
-    // 8 — PROPOSTA 2
     <PropostaSlide key={8} idx={8} propIdx={1} />,
-
-    // 9 — PROPOSTA 3
     <PropostaSlide key={9} idx={9} propIdx={2} />,
   ]
 
   // ── RENDER ─────────────────────────────────────────────────────────────────
   return (
-    <div className="h-screen relative overflow-hidden flex flex-col" style={{ background: '#04080f' }}>
+    <div className="h-screen flex flex-col relative overflow-hidden" style={{ background: BG }}>
+      <BgLayer />
 
-      {/* Background */}
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        backgroundImage: `linear-gradient(rgba(70,120,255,0.055) 1px,transparent 1px),linear-gradient(90deg,rgba(70,120,255,0.055) 1px,transparent 1px)`,
-        backgroundSize: '64px 64px',
-      }} />
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 110% 55% at 50% -8%, rgba(50,110,255,0.13) 0%, rgba(30,70,200,0.05) 45%, transparent 70%)',
-      }} />
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 45% 55% at -6% 45%, rgba(60,130,255,0.07) 0%, transparent 55%)',
-      }} />
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 45% 55% at 106% 55%, rgba(40,100,255,0.06) 0%, transparent 52%)',
-      }} />
-
-      {/* Top bar */}
-      <div className="relative z-20 flex items-center justify-between px-6 py-4 border-b border-white/[0.06] shrink-0">
-        <a href={`/rm/${token}`} className={`${T.xs} tracking-[0.4em] text-white/45 hover:text-white/65 uppercase transition-colors`}>‹ Portal</a>
-        <p className={`${T.xs} tracking-[0.5em] text-white/40 uppercase`}>RL Media · Proposta Criativa</p>
-        <p className={`${T.xs} tracking-widest text-white/45 font-mono`}>
-          {String(current + 1).padStart(2,'0')} / {String(TOTAL_SLIDES).padStart(2,'0')}
+      {/* ── Top bar ── */}
+      <div className="relative z-20 flex items-center justify-between px-8 py-4 shrink-0 border-b" style={{ borderColor: GOLD_15 }}>
+        <a href={`/rm/${token}`} className="text-[9px] tracking-[0.5em] uppercase transition-colors hover:opacity-80" style={{ color: GOLD_50 }}>
+          ‹ Portal
+        </a>
+        <div className="flex items-center gap-3">
+          <div className="h-px w-6" style={{ background: GOLD_30 }} />
+          <p className="text-[9px] tracking-[0.6em] uppercase" style={{ color: GOLD_50 }}>Proposta Criativa</p>
+          <div className="h-px w-6" style={{ background: GOLD_30 }} />
+        </div>
+        <p className="text-[9px] tracking-widest font-mono text-white/30">
+          {String(current+1).padStart(2,'0')} / {String(TOTAL_SLIDES).padStart(2,'0')}
         </p>
       </div>
 
-      {/* Slides */}
+      {/* ── Slides ── */}
       <div className="relative flex-1 z-10 overflow-hidden">
         {slides.map((slide, i) => (
-          <div
-            key={i}
-            className="absolute inset-0 overflow-y-auto"
+          <div key={i} className="absolute inset-0 overflow-y-auto"
             style={{
               opacity:       current === i ? 1 : 0,
               pointerEvents: current === i ? 'auto' : 'none',
-              transform:     current === i ? 'translateX(0px)' : `translateX(${(i - current) * dir > 0 ? '32px' : '-32px'})`,
-              transition:    'opacity 0.45s cubic-bezier(0.22,1,0.36,1), transform 0.45s cubic-bezier(0.22,1,0.36,1)',
-            }}
-          >
+              transform:     current === i ? 'translateX(0)' : `translateX(${(i-current)*dir > 0 ? '28px' : '-28px'})`,
+              transition:    'opacity 0.5s cubic-bezier(0.22,1,0.36,1), transform 0.5s cubic-bezier(0.22,1,0.36,1)',
+            }}>
             {slide}
 
-            {/* ── Botão ✎ Editar ── */}
+            {/* ✎ Edit button */}
             {isAdmin && editingSlide !== i && (
-              <button
-                onClick={() => startEdit(i)}
-                className="absolute bottom-5 right-5 z-40 flex items-center gap-2 px-4 py-2.5 border border-white/25 hover:border-white/50 bg-[#0d1120] hover:bg-[#141a2e] text-white/60 hover:text-white/90 transition-all"
-              >
-                <span style={{ fontSize: 15 }}>✎</span>
-                <span className="text-[10px] tracking-[0.45em] uppercase">Editar</span>
+              <button onClick={() => startEdit(i)}
+                className="absolute bottom-5 right-5 z-40 flex items-center gap-2 px-4 py-2 text-[9px] tracking-[0.45em] uppercase transition-all border"
+                style={{ background:`rgba(7,8,15,0.85)`, borderColor: GOLD_30, color: GOLD_50 }}>
+                <span style={{ fontSize:14 }}>✎</span> Editar
               </button>
             )}
 
-            {/* ── Overlay de edição ── */}
+            {/* Edit overlay */}
             {isAdmin && editingSlide === i && draft && (
-              <div className="absolute inset-0 z-50 flex flex-col overflow-y-auto" style={{ background: '#04080f' }}>
-                <div className="sticky top-0 z-10 flex items-center justify-between px-8 py-4 border-b border-white/[0.08]" style={{ background: '#04080f' }}>
-                  <p className="text-[10px] tracking-[0.6em] text-white/40 uppercase">✎ Slide {i + 1}</p>
+              <div className="absolute inset-0 z-50 flex flex-col overflow-y-auto" style={{ background: BG }}>
+                <div className="sticky top-0 z-10 flex items-center justify-between px-8 py-4 border-b" style={{ background: BG, borderColor: GOLD_15 }}>
+                  <p className="text-[9px] tracking-[0.6em] uppercase" style={{ color: GOLD_50 }}>✎ Slide {i+1}</p>
                   <div className="flex items-center gap-2">
-                    <button onClick={cancelEdit}
-                      className="px-4 py-2 text-[10px] tracking-[0.4em] text-white/40 hover:text-white/65 border border-white/[0.08] hover:border-white/20 uppercase transition-all">
-                      ✕ Cancelar
-                    </button>
+                    <button onClick={cancelEdit} className="px-4 py-2 text-[9px] tracking-[0.4em] text-white/35 hover:text-white/60 border border-white/[0.08] hover:border-white/20 uppercase transition-all">✕ Cancelar</button>
                     <button onClick={saveEdit} disabled={saving}
-                      className={`px-6 py-2 text-[10px] tracking-[0.4em] uppercase transition-all border disabled:opacity-40 ${
-                        savedOk
-                          ? 'border-emerald-400/50 text-emerald-400/80 bg-emerald-400/[0.06]'
-                          : 'border-white/30 text-white/70 hover:text-white/90 hover:border-white/50 bg-white/[0.04] hover:bg-white/[0.08]'
-                      }`}>
+                      className={`px-6 py-2 text-[9px] tracking-[0.4em] uppercase transition-all border disabled:opacity-40 ${savedOk ? 'text-emerald-400/80' : 'text-white/65 hover:text-white/90'}`}
+                      style={{ borderColor: savedOk ? 'rgba(52,211,153,0.4)' : GOLD_30, background: savedOk ? 'rgba(52,211,153,0.05)' : GOLD_06 }}>
                       {savedOk ? '✓ Guardado' : saving ? 'A guardar...' : '✓ Guardar'}
                     </button>
                   </div>
@@ -772,29 +663,51 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
         ))}
       </div>
 
-      {/* Bottom nav */}
-      <div className="relative z-20 shrink-0 flex items-center justify-between px-6 py-5 border-t border-white/[0.06]">
-        <button onClick={() => goTo(current - 1)} disabled={current === 0 || editingSlide !== null}
-          className="flex items-center gap-2 border border-white/[0.12] hover:border-white/30 bg-white/[0.02] hover:bg-white/[0.07] px-5 py-3 text-white/50 hover:text-white/80 transition-all disabled:opacity-20 disabled:cursor-not-allowed">
-          <span className={`${T.xxl} leading-none`}>‹</span>
-          <span className={`${T.xs} tracking-[0.4em] uppercase hidden sm:inline`}>Anterior</span>
+      {/* ── Bottom nav ── */}
+      <div className="relative z-20 shrink-0 flex items-center justify-between px-8 py-5 border-t" style={{ borderColor: GOLD_15 }}>
+        <button onClick={() => goTo(current-1)} disabled={current===0 || editingSlide!==null}
+          className="flex items-center gap-2 px-5 py-3 border transition-all disabled:opacity-20 disabled:cursor-not-allowed text-white/45 hover:text-white/75"
+          style={{ borderColor: current===0 ? 'rgba(255,255,255,0.07)' : GOLD_15 }}>
+          <span className="text-[18px] leading-none">‹</span>
+          <span className="text-[9px] tracking-[0.4em] uppercase hidden sm:inline">Anterior</span>
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {Array.from({ length: TOTAL_SLIDES }).map((_, i) => (
-            <button key={i} onClick={() => goTo(i)} disabled={editingSlide !== null}
+            <button key={i} onClick={() => goTo(i)} disabled={editingSlide!==null}
               className="transition-all duration-300 disabled:cursor-not-allowed"
-              style={{ width: current === i ? 20 : 6, height: 6, background: current === i ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.18)' }}
-            />
+              style={{ width: current===i ? 22 : 7, height: 1, background: current===i ? GOLD : 'rgba(255,255,255,0.15)' }} />
           ))}
         </div>
 
-        <button onClick={() => goTo(current + 1)} disabled={current === TOTAL_SLIDES - 1 || editingSlide !== null}
-          className="flex items-center gap-2 border border-white/[0.12] hover:border-white/30 bg-white/[0.02] hover:bg-white/[0.07] px-5 py-3 text-white/50 hover:text-white/80 transition-all disabled:opacity-20 disabled:cursor-not-allowed">
-          <span className={`${T.xs} tracking-[0.4em] uppercase hidden sm:inline`}>Seguinte</span>
-          <span className={`${T.xxl} leading-none`}>›</span>
+        <button onClick={() => goTo(current+1)} disabled={current===TOTAL_SLIDES-1 || editingSlide!==null}
+          className="flex items-center gap-2 px-5 py-3 border transition-all disabled:opacity-20 disabled:cursor-not-allowed text-white/45 hover:text-white/75"
+          style={{ borderColor: current===TOTAL_SLIDES-1 ? 'rgba(255,255,255,0.07)' : GOLD_15 }}>
+          <span className="text-[9px] tracking-[0.4em] uppercase hidden sm:inline">Seguinte</span>
+          <span className="text-[18px] leading-none">›</span>
         </button>
       </div>
     </div>
+  )
+}
+
+// ── Background layer ─────────────────────────────────────────────────────────
+function BgLayer() {
+  return (
+    <>
+      <div className="pointer-events-none fixed inset-0 z-0" style={{
+        backgroundImage: `linear-gradient(rgba(180,150,90,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(180,150,90,0.035) 1px,transparent 1px)`,
+        backgroundSize: '72px 72px',
+      }} />
+      <div className="pointer-events-none fixed inset-0 z-0" style={{
+        background: 'radial-gradient(ellipse 100% 50% at 50% -10%, rgba(180,140,60,0.09) 0%, rgba(150,110,40,0.04) 40%, transparent 70%)',
+      }} />
+      <div className="pointer-events-none fixed inset-0 z-0" style={{
+        background: 'radial-gradient(ellipse 50% 60% at -5% 50%, rgba(180,140,60,0.05) 0%, transparent 55%)',
+      }} />
+      <div className="pointer-events-none fixed inset-0 z-0" style={{
+        background: 'radial-gradient(ellipse 50% 60% at 105% 50%, rgba(180,140,60,0.04) 0%, transparent 55%)',
+      }} />
+    </>
   )
 }
