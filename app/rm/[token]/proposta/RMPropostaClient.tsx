@@ -189,9 +189,16 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
   const slides = [
 
     // ── SLIDE 0 — CAPA ──────────────────────────────────────────────────────
-    <div key={0} className="flex flex-col items-center justify-center h-full px-8 text-center gap-8">
-      <p className={labelCls}>RL Media · Audiovisual</p>
+    <div key={0} className="flex flex-col items-center justify-center h-full px-8 text-center gap-6">
+      {/* Logo */}
+      <img
+        src="/logo%20rl%20media%20branco.png"
+        alt="RL Media"
+        className="w-20 h-20 object-contain"
+        style={{ filter: 'drop-shadow(0 0 12px rgba(255,255,255,0.35)) drop-shadow(0 0 32px rgba(255,255,255,0.15))' }}
+      />
       <div className="flex flex-col items-center gap-4">
+        <p className={labelCls}>RL Media · Audiovisual</p>
         <h1 className="text-5xl sm:text-7xl font-extralight tracking-[0.2em] text-white/85 uppercase leading-none">
           Proposta<br />Criativa
         </h1>
