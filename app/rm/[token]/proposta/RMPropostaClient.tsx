@@ -288,51 +288,68 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
   // ── Slide de Proposta (1, 2 ou 3) ─────────────────────────────────────────
   function PropostaSlide({ idx, propIdx }: { idx: number; propIdx: number }) {
     const prop: RMProposta = (content!.propostas || [])[propIdx] || { titulo: `Proposta ${propIdx + 1}`, valor: '', servicos: [] }
-    const temConteudo = prop.servicos.length > 0 || prop.valor
+    const num = String(propIdx + 1).padStart(2, '0')
+
     return (
       <div className="flex flex-col h-full w-full">
         <SlideHeader idx={idx} />
-        <div className="flex-1 flex flex-col items-center justify-center px-8 sm:px-20 text-center gap-10 py-8">
 
-          {/* Número da proposta */}
-          <div className="flex flex-col items-center gap-4">
-            <p className={labelCls}>Opção</p>
-            <h1 className="text-[72px] sm:text-[96px] font-extralight tracking-[0.3em] text-white/90 uppercase leading-none">
-              {prop.titulo}
-            </h1>
-            <div className="flex items-center gap-5">
-              <div className="h-px w-20 bg-white/20" />
-              <div className="w-2 h-2 bg-white/30 rotate-45" />
-              <div className="h-px w-20 bg-white/20" />
+        {/* ── Layout principal: dois painéis ── */}
+        <div className="flex-1 flex flex-col sm:flex-row min-h-0">
+
+          {/* Painel esquerdo — identidade + valor */}
+          <div className="flex flex-col justify-between px-8 sm:px-12 py-10 sm:py-14 border-b sm:border-b-0 sm:border-r border-white/[0.07]"
+            style={{ minWidth: 0, flex: '0 0 auto', width: '100%', maxWidth: 320 }}>
+
+            {/* Número de fundo */}
+            <div className="relative select-none pointer-events-none mb-6" style={{ lineHeight: 1 }}>
+              <span className="font-black text-white/[0.04]" style={{ fontSize: 'clamp(80px, 14vw, 130px)', letterSpacing: '-0.02em' }}>
+                {num}
+              </span>
+            </div>
+
+            {/* Título */}
+            <div className="flex flex-col gap-3 mb-auto">
+              <p className="text-[10px] tracking-[0.6em] text-white/35 uppercase">Opção {num}</p>
+              <h2 className="text-[26px] sm:text-[30px] font-extrabold tracking-[0.04em] text-white/90 uppercase leading-tight">
+                {prop.titulo}
+              </h2>
+              <div className="h-px w-10 bg-white/25 mt-1" />
+            </div>
+
+            {/* Valor */}
+            <div className="mt-8 flex flex-col gap-1.5">
+              <p className="text-[10px] tracking-[0.55em] text-white/35 uppercase">Investimento</p>
+              {prop.valor ? (
+                <p className="text-[36px] sm:text-[42px] font-extralight tracking-[0.06em] text-white/90 leading-none">
+                  {prop.valor}
+                </p>
+              ) : (
+                <p className="text-[28px] font-extralight tracking-[0.06em] text-white/30 leading-none">—</p>
+              )}
             </div>
           </div>
 
-          {/* Serviços */}
-          {prop.servicos.length > 0 && (
-            <div className="flex flex-col gap-3 w-full max-w-md">
-              {prop.servicos.map((s, i) => (
-                <div key={i} className="flex items-center gap-4 border-b border-white/[0.06] pb-3 last:border-0">
-                  <span className="text-[14px] text-white/30 shrink-0">—</span>
-                  <p className="text-[17px] font-light text-white/75 text-left leading-snug">{s}</p>
-                </div>
-              ))}
-            </div>
-          )}
+          {/* Painel direito — serviços */}
+          <div className="flex-1 flex flex-col px-8 sm:px-12 py-10 sm:py-14 min-h-0 overflow-y-auto">
+            <p className="text-[10px] tracking-[0.6em] text-white/35 uppercase mb-6 shrink-0">Serviços Incluídos</p>
 
-          {/* Valor */}
-          {prop.valor && (
-            <div className="flex flex-col items-center gap-2">
-              <p className={labelCls}>Investimento</p>
-              <p className="text-[48px] sm:text-[64px] font-extralight tracking-[0.15em] text-white/90 leading-none">
-                {prop.valor}
-              </p>
-            </div>
-          )}
-
-          {/* Placeholder se vazio */}
-          {!temConteudo && (
-            <p className="text-[13px] text-white/20 tracking-[0.3em] uppercase">A definir</p>
-          )}
+            {prop.servicos.length > 0 ? (
+              <div className="flex flex-col gap-0">
+                {prop.servicos.map((s, i) => (
+                  <div key={i} className="flex items-center gap-4 py-3 border-b border-white/[0.055] last:border-0">
+                    <span className="text-[11px] font-bold text-white/20 shrink-0 w-5 text-right tabular-nums">{String(i + 1).padStart(2,'0')}</span>
+                    <div className="w-px h-3 bg-white/10 shrink-0" />
+                    <p className="text-[15px] font-light text-white/75 leading-snug">{s}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex-1 flex items-center justify-center">
+                <p className="text-[12px] tracking-[0.4em] text-white/20 uppercase">A definir</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     )
