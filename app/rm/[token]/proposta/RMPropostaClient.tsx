@@ -41,11 +41,22 @@ function merge(saved: any): RMPageContent {
   }
 }
 
-const DIFERENCIAIS = [
-  { n: '01', titulo: 'Estratégia Primeiro',           texto: 'Cada projeto começa com uma sessão de alinhamento. Definimos objetivos, audiência e mensagem antes de ligar qualquer câmara.' },
-  { n: '02', titulo: 'Produção de Excelência',        texto: 'Equipamento profissional, diretores de fotografia experientes e pós-produção nativa — em cada entrega, sem exceção.' },
-  { n: '03', titulo: 'Formatos para Todos os Canais', texto: 'Entregamos conteúdo otimizado para LinkedIn, Instagram, YouTube, site e apresentações — em todos os formatos nativos.' },
-  { n: '04', titulo: 'Resultados Mensuráveis',        texto: 'Acompanhamos o desempenho do conteúdo e ajustamos a estratégia com base em dados reais, não em intuição.' },
+const PLANO_ETAPAS = [
+  {
+    n: '1.',
+    titulo: 'Definir a Visão Estratégica',
+    texto: 'Começamos por explorar em conjunto o potencial único da marca. Vamos identificar oportunidades e definir um caminho claro para melhorar a presença visual no mercado.',
+  },
+  {
+    n: '2.',
+    titulo: 'Alinhar a Narrativa e Storytelling',
+    texto: 'Mergulhamos na essência da marca para desenvolver uma narrativa visual autêntica para se conectar naturalmente com o público.',
+  },
+  {
+    n: '3.',
+    titulo: 'Acompanhamento Contínuo',
+    texto: 'Por fim, desenvolvemos em conjunto um plano de produção personalizado para elevar a comunicação a um novo patamar, para potenciar o crescimento da Marca e fortalecer genuinamente a ligação com o público.',
+  },
 ]
 
 const PROCESSO = [
@@ -236,15 +247,20 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
       </p>
     </div>,
 
-    // ── SLIDE 2 — O QUE NOS DISTINGUE ──────────────────────────────────────
-    <div key={2} className="flex flex-col justify-center h-full px-8 sm:px-20 gap-8 max-w-5xl mx-auto w-full">
-      <p className={labelCls}>02 — O Que Nos Distingue</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {DIFERENCIAIS.map((d, i) => (
-          <div key={i} className="border border-white/[0.08] bg-white/[0.02] p-6 flex flex-col gap-3">
-            <p className={`${T.xs} tracking-[0.5em] text-white/40 uppercase font-mono`}>{d.n}</p>
-            <h3 className={`${T.lg} font-light tracking-[0.25em] text-white/70 uppercase`}>{d.titulo}</h3>
-            <p className={`${T.sm} font-light text-white/55 leading-relaxed`}>{d.texto}</p>
+    // ── SLIDE 2 — PLANO DE AÇÃO ─────────────────────────────────────────────
+    <div key={2} className="flex flex-col justify-center h-full px-8 sm:px-20 gap-10 max-w-3xl mx-auto w-full">
+      {/* Título principal */}
+      <h2 className="text-[24px] font-extrabold tracking-[0.12em] text-white/90 uppercase leading-tight text-center">
+        Plano de Ação<br />Personalizado<br />com 3 Etapas
+      </h2>
+      {/* Etapas */}
+      <div className="flex flex-col gap-7">
+        {PLANO_ETAPAS.map((etapa, i) => (
+          <div key={i} className={`flex flex-col gap-2 ${i < PLANO_ETAPAS.length - 1 ? 'pb-7 border-b border-white/[0.07]' : ''}`}>
+            <h3 className={`${T.xl} font-bold text-white/85`}>
+              {etapa.n} {etapa.titulo}
+            </h3>
+            <p className={`${T.sm} font-light text-white/55 leading-relaxed`}>{etapa.texto}</p>
           </div>
         ))}
       </div>
