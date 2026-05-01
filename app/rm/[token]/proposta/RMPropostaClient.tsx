@@ -266,12 +266,16 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
     const img = proposta.slideImages?.[idx]
     if (!img) return null
     return (
-      <div className="relative w-full shrink-0 overflow-hidden" style={{ height: 220 }}>
-        <img src={img} alt="" className="w-full h-full object-cover object-center" />
-        {/* fade para o fundo */}
-        <div className="absolute inset-0" style={{
-          background: 'linear-gradient(to bottom, rgba(4,8,15,0.15) 0%, rgba(4,8,15,0.60) 60%, rgba(4,8,15,0.98) 100%)',
-        }} />
+      <div className="w-full shrink-0 overflow-hidden" style={{ height: 280 }}>
+        <img
+          src={img}
+          alt=""
+          className="w-full h-full object-cover object-center"
+          style={{
+            maskImage: 'linear-gradient(to bottom, black 0%, black 35%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 35%, transparent 100%)',
+          }}
+        />
       </div>
     )
   }
