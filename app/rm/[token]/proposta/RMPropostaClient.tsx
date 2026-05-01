@@ -204,32 +204,32 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
   const slides = [
 
     // ── SLIDE 0 — CAPA ──────────────────────────────────────────────────────
-    <div key={0} className="flex flex-col items-center justify-center h-full px-8 text-center gap-6">
+    <div key={0} className="flex flex-col items-center justify-center h-full px-8 text-center gap-8">
       <div style={{
         background: '#050507',
         borderRadius: '9999px',
-        padding: '4px',
-        boxShadow: '0 0 18px rgba(255,255,255,0.20), 0 0 40px rgba(255,255,255,0.08)',
+        padding: '6px',
+        boxShadow: '0 0 24px rgba(255,255,255,0.22), 0 0 56px rgba(255,255,255,0.09)',
       }}>
         <img
           src="/logo-rl-media-branco.png"
           alt="RL Media"
-          className="w-24 h-24 object-contain block"
+          className="w-36 h-36 object-contain block"
           style={{ mixBlendMode: 'screen', borderRadius: '9999px' }}
         />
       </div>
-      <div className="flex flex-col items-center gap-4">
-        <p className={labelCls}>RL Media · Audiovisual</p>
-        <h1 className={`${T.xxl} font-extralight tracking-[0.35em] text-white/85 uppercase leading-snug`}>
+      <div className="flex flex-col items-center gap-5">
+        <p className="text-[16px] tracking-[0.55em] text-white/55 uppercase">RL Media · Audiovisual</p>
+        <h1 className="text-[42px] font-extralight tracking-[0.35em] text-white/90 uppercase leading-snug">
           Proposta<br />Criativa
         </h1>
-        <div className="flex items-center gap-4 my-2">
-          <div className="h-px w-12 bg-white/30" />
-          <div className="w-1.5 h-1.5 bg-white/40 rotate-45" />
-          <div className="h-px w-12 bg-white/30" />
+        <div className="flex items-center gap-5 my-1">
+          <div className="h-px w-16 bg-white/30" />
+          <div className="w-2 h-2 bg-white/40 rotate-45" />
+          <div className="h-px w-16 bg-white/30" />
         </div>
-        {empresa && <p className={`${T.sm} font-extralight tracking-[0.4em] text-white/60 uppercase`}>{empresa}</p>}
-        <p className={`${T.xs} tracking-[0.5em] text-white/40 uppercase font-mono`}>
+        {empresa && <p className="text-[20px] font-extralight tracking-[0.4em] text-white/65 uppercase">{empresa}</p>}
+        <p className="text-[15px] tracking-[0.5em] text-white/40 uppercase font-mono">
           {new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })}
         </p>
       </div>
