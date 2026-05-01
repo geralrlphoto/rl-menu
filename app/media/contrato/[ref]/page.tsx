@@ -81,32 +81,90 @@ export default async function ContratoPage({ params }: Props) {
       `}</style>
 
       {/* ═══ CAPA ═══ */}
-      <div style={{ background: '#000', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', padding: '60px 80px', fontFamily: 'Arial, sans-serif' }}>
-        {/* Logo círculo */}
-        <div style={{ width: 100, height: 100, borderRadius: '50%', border: '2px solid #fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', alignSelf: 'flex-start' }}>
-          <div style={{ color: '#fff', fontWeight: 900, fontSize: 18, letterSpacing: 1, lineHeight: 1.1, textAlign: 'center' }}>RL<br/>MEDIA</div>
-          <div style={{ color: '#fff', fontSize: 6, letterSpacing: 3, marginTop: 2 }}>AUDIOVISUAL</div>
+      <div style={{
+        background: '#0a0a0a',
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        fontFamily: 'Arial, Helvetica, sans-serif',
+        padding: '48px 56px',
+      }}>
+        {/* Logo top-left */}
+        <div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://rl-menu-lake.vercel.app/logo_marca_advocacia__8_-removebg-preview.png"
+            alt="RL Media"
+            width={90}
+            height={90}
+            style={{
+              width: 90,
+              height: 90,
+              borderRadius: '50%',
+              border: '1px solid rgba(255,255,255,0.3)',
+              objectFit: 'contain',
+            }}
+          />
         </div>
 
         {/* Centro */}
-        <div style={{ textAlign: 'center', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
-          <div style={{ color: '#fff', fontWeight: 900, fontSize: 96, letterSpacing: 8, lineHeight: 1, textTransform: 'uppercase' }}>RL MEDIA</div>
-          <div style={{ color: '#fff', fontSize: 22, letterSpacing: 14, fontWeight: 300 }}>AUDIOVISUAL</div>
-          <div style={{ marginTop: 24 }}>
-            <div style={{ color: '#9B59B6', fontSize: 22, fontWeight: 400, letterSpacing: 2 }}>MORE THAN A PRODUCT,</div>
-            <div style={{ color: '#fff', fontSize: 22, fontWeight: 900, letterSpacing: 2 }}>AN EXPERIENCE.</div>
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+        }}>
+          <div style={{
+            fontSize: 11,
+            letterSpacing: 4,
+            color: 'rgba(255,255,255,0.4)',
+            textTransform: 'uppercase',
+            marginBottom: 32,
+          }}>
+            Contrato de Prestação de Serviços
+          </div>
+
+          <div style={{
+            fontSize: 52,
+            fontWeight: 100,
+            letterSpacing: 8,
+            color: '#ffffff',
+            textTransform: 'uppercase',
+            lineHeight: 1.1,
+          }}>
+            {(ficha.empresa || ficha.nome || refUp).toUpperCase()}
+          </div>
+
+          <div style={{
+            width: 60,
+            height: 1,
+            background: 'rgba(255,255,255,0.3)',
+            margin: '24px auto',
+          }} />
+
+          <div style={{
+            fontSize: 9,
+            letterSpacing: 8,
+            color: 'rgba(255,255,255,0.3)',
+          }}>
+            RL MEDIA · AUDIOVISUAL
           </div>
         </div>
 
-        {/* Rodapé capa */}
+        {/* Rodapé */}
         <div style={{ textAlign: 'center' }}>
-          <div style={{ color: '#fff', fontWeight: 900, fontSize: 16, letterSpacing: 2, marginBottom: 4 }}>CONTRATO DE PRESTAÇÃO DE SERVIÇOS</div>
-          <div style={{ color: '#fff', fontWeight: 900, fontSize: 16, letterSpacing: 2 }}>({(ficha.empresa || ficha.nome || refUp).toUpperCase()})</div>
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace', marginBottom: 6 }}>
+            {contrato.ref}
+          </div>
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>
+            {contrato.geradoEm}
+          </div>
         </div>
       </div>
 
-      {/* ═══ TEMPLATE PÁGINA (reutilizável) ═══ */}
-      {/* Página 2 — Partes */}
+      {/* ═══ Página 2 — Partes ═══ */}
       <ContentPage>
         <SectionTitle>CONTRATANTE SEGUNDA OUTORGANTE:</SectionTitle>
         <InfoBlock>
@@ -128,17 +186,17 @@ export default async function ContratoPage({ params }: Props) {
           <InfoLine>Telefone: {PRESTADORA.telefone}</InfoLine>
         </InfoBlock>
 
-        <p style={{ fontSize: 13, color: '#222', lineHeight: 1.9, textAlign: 'justify', marginTop: 24 }}>
+        <p style={{ fontSize: 13, color: '#333', lineHeight: 1.9, textAlign: 'justify', marginTop: 24 }}>
           Por este acordo, as partes têm entre si, contratante e contratado o que segue. A CONTRATADA é ajustada, para realizar os serviços a seguir discriminados com seus respectivos valores, o serviço de videografia e fotografia será realizado pela RL Media - Audiovisual.
         </p>
       </ContentPage>
 
-      {/* Página 3 — Considerandos + Cláusulas 1ª e 2ª */}
+      {/* ═══ Página 3 — Considerandos + Cláusulas 1ª e 2ª ═══ */}
       <ContentPage>
-        <p style={{ fontSize: 13, color: '#222', lineHeight: 1.9, marginBottom: 16 }}>Considerando que:</p>
-        <p style={{ fontSize: 13, color: '#222', lineHeight: 1.9, marginBottom: 4 }}>i. A Prestadora de Serviços, entre outros, dedica-se à prestação de produção de vídeos e fotografia bem como a criação de um website.</p>
-        <p style={{ fontSize: 13, color: '#222', lineHeight: 1.9, marginBottom: 16 }}>ii. O Cliente pretende contratar os serviços de produção de vídeo, fotografia e website.</p>
-        <p style={{ fontSize: 13, color: '#222', lineHeight: 1.9, marginBottom: 24, textAlign: 'justify' }}>
+        <p style={{ fontSize: 13, color: '#333', lineHeight: 1.9, marginBottom: 16 }}>Considerando que:</p>
+        <p style={{ fontSize: 13, color: '#333', lineHeight: 1.9, marginBottom: 4 }}>i. A Prestadora de Serviços, entre outros, dedica-se à prestação de produção de vídeos e fotografia bem como a criação de um website.</p>
+        <p style={{ fontSize: 13, color: '#333', lineHeight: 1.9, marginBottom: 16 }}>ii. O Cliente pretende contratar os serviços de produção de vídeo, fotografia e website.</p>
+        <p style={{ fontSize: 13, color: '#333', lineHeight: 1.9, marginBottom: 24, textAlign: 'justify' }}>
           É livremente estabelecido e mutuamente aceite, nos termos e condições aqui estabelecidos, o presente Contrato de Prestação de Serviços (doravante, o &quot;Contrato&quot;) que se regerá pelos considerados acima e pelas seguintes cláusulas:
         </p>
 
@@ -147,18 +205,18 @@ export default async function ContratoPage({ params }: Props) {
 
         <ClauseTitle>SEGUNDA CLÁUSULA</ClauseTitle>
         <ClauseText>Os serviços prestados pela primeira parte estão sujeitos a regras de utilização que visam o bom funcionamento dos mesmos, nomeadamente:</ClauseText>
-        <p style={{ fontSize: 13, color: '#222', lineHeight: 1.9, margin: '12px 0 8px' }}>1. Relativas aos serviços prestados:</p>
+        <p style={{ fontSize: 13, color: '#333', lineHeight: 1.9, margin: '12px 0 8px' }}>1. Relativas aos serviços prestados:</p>
         <ClauseText>a) No caso de atrasos na entrega de dados ou informação necessária à realização dos serviços contratados pelo cliente, a prestadora não se responsabiliza pelo incumprimento do prazo de entrega e declina todas e quaisquer responsabilidades por erros ou omissões que possam existir e não tenham sido devidamente identificados e anotados pelo cliente nos suportes documentais apresentados e comunicados por escrito para a prestadora.</ClauseText>
       </ContentPage>
 
-      {/* Página 4 */}
+      {/* ═══ Página 4 ═══ */}
       <ContentPage>
         <ClauseText>b) A aprovação ou pedido de alterações aos planeamentos devem ser comunicados por escrito no prazo máximo de 3 (três) dias úteis após a sua boa receção. No caso de solicitar alterações, a prestadora compromete-se com o prazo máximo de 10 (dez) dias úteis para alterações e o envio do novo conteúdo por e-mail para aprovação.</ClauseText>
         <ClauseText>c) Na falta de resposta dentro do prazo, ao exposto nas anteriores alíneas a prestadora considera o trabalho aprovado e não se responsabilizando por demais alterações.</ClauseText>
         <ClauseText>d) As avenças mensais serão faturadas na última semana de cada mês com prazo de pagamento de 5 dias úteis para efetuar o mesmo.</ClauseText>
         <ClauseText>e) No caso da contratação para a cobertura de eventos e os mesmos sofrerem alterações de qualquer natureza, é obrigação do cliente informar via e-mail à produtora as alterações. O novo agendamento ficará sujeito a confirmação, mediante disponibilidade de datas da produtora.</ClauseText>
 
-        <p style={{ fontSize: 13, color: '#222', lineHeight: 1.9, margin: '16px 0 8px' }}>2. Cancelamento na prestação dos serviços:</p>
+        <p style={{ fontSize: 13, color: '#333', lineHeight: 1.9, margin: '16px 0 8px' }}>2. Cancelamento na prestação dos serviços:</p>
         <ClauseText>O cliente ficará sujeito ao cancelamento da prestação de serviços sempre que:</ClauseText>
         <ClauseText>a) Publique conteúdos ilegais ou impróprios associados ao nome da prestadora.</ClauseText>
         <ClauseText>b) Seja insultuosa com entidades coletivas, particulares ou quaisquer outras.</ClauseText>
@@ -171,7 +229,7 @@ export default async function ContratoPage({ params }: Props) {
         <ClauseText>a) Produções extras: Todas as propostas apresentadas pela produtora que não sejam aprovadas pelo cliente e/ou não resultem em aprovação de proposta com valores e contrato validado, são propriedade exclusiva da prestadora.</ClauseText>
       </ContentPage>
 
-      {/* Página 5 */}
+      {/* ═══ Página 5 ═══ */}
       <ContentPage>
         <ClauseTitle>QUARTA CLÁUSULA</ClauseTitle>
         <ClauseText>a) O incumprimento pelo cliente das regras de utilização, mencionadas nas cláusulas anteriores, traduzem-se no cancelamento dos serviços prestados, ficando aquela sem direito a devolução do valor pago pela mesma.</ClauseText>
@@ -193,7 +251,7 @@ export default async function ContratoPage({ params }: Props) {
         <ClauseText>O não consumo dos serviços prestados pelo presente contrato, por incumprimento da parte do cliente, é da responsabilidade do mesmo e não são acumuláveis com outros, nem podem ser trocados por quaisquer outros serviços da prestadora.</ClauseText>
       </ContentPage>
 
-      {/* Página 6 */}
+      {/* ═══ Página 6 ═══ */}
       <ContentPage>
         <ClauseTitle>DÉCIMA CLÁUSULA</ClauseTitle>
         <ClauseText>O presente contrato inicia-se imediatamente após assinatura por parte do cliente, e tem a duração pelo prazo de execução dos serviços apresentados na proposta e até a entrega final do conteúdo contratado.</ClauseText>
@@ -208,12 +266,12 @@ export default async function ContratoPage({ params }: Props) {
         <ClauseTitle>DOS SERVIÇOS CONTRATADOS</ClauseTitle>
         <ClauseText>Descritivo dos Serviços: O descritivo de todos os serviços contemplados neste contrato encontrar-se-ão no ANEXO I deste contrato.</ClauseText>
 
-        <p style={{ fontSize: 13, color: '#222', lineHeight: 1.9, margin: '20px 0 8px' }}>Preços e métodos de pagamento:</p>
+        <p style={{ fontSize: 13, color: '#333', lineHeight: 1.9, margin: '20px 0 8px' }}>Preços e métodos de pagamento:</p>
         {valorNum > 0 ? (
           <>
             <ClauseText>a) Pelo serviço contratado, o cliente pagará à prestadora o montante de {valorTotal} Euros, ao qual acresce IVA à taxa legal em vigor.</ClauseText>
             <ClauseText>b) O montante indicado no número anterior, será pago através de transferência bancária, para o IBAN {PRESTADORA.iban}, da seguinte forma:</ClauseText>
-            <ul style={{ fontSize: 13, color: '#222', lineHeight: 2, paddingLeft: 28, margin: '8px 0' }}>
+            <ul style={{ fontSize: 13, color: '#333', lineHeight: 2, paddingLeft: 28, margin: '8px 0' }}>
               <li>Em duas prestações, de acordo com as seguintes fases de execução do serviço:</li>
               <li>80% (oitenta por cento) — {val80} € — com a adjudicação do serviço, na data de celebração do presente contrato;</li>
               <li>20% (vinte por cento) — {val20} € — passados sessenta dias após o primeiro dia do contrato.</li>
@@ -226,7 +284,7 @@ export default async function ContratoPage({ params }: Props) {
         <ClauseText>d) O não pagamento ou atraso de qualquer uma das prestações, implica a suspensão da execução do serviço, podendo a prestadora proceder à cobrança do remanescente do valor em dívida, conforme fase de desenvolvimento.</ClauseText>
       </ContentPage>
 
-      {/* Página 7 — Confidencialidade + Lei */}
+      {/* ═══ Página 7 — Confidencialidade + Lei ═══ */}
       <ContentPage>
         <ClauseTitle>CONFIDENCIALIDADE</ClauseTitle>
         <ClauseText>a) Todas as comunicações trocadas entre a prestadora e o cliente, são confidenciais.</ClauseText>
@@ -246,7 +304,7 @@ export default async function ContratoPage({ params }: Props) {
         <ClauseText>Este presente contrato segue devidamente preenchido com os dados fornecidos e deve ser assinado pelo representante legal da segunda outorgante, bem como constar o carimbo da empresa no local indicado abaixo. Após assinatura e carimbo, o documento deverá ser digitalizado e encaminhado para o e-mail indicado acima para que seja realizado o mesmo procedimento pela parte da prestadora, formalizando-se, em duas vias de igual teor, o contrato entre as partes.</ClauseText>
       </ContentPage>
 
-      {/* Página 8 — ANEXO I */}
+      {/* ═══ Página 8 — ANEXO I ═══ */}
       <ContentPage>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <p style={{ fontWeight: 700, fontSize: 14, letterSpacing: 2, color: '#111' }}>ANEXO I</p>
@@ -255,9 +313,9 @@ export default async function ContratoPage({ params }: Props) {
 
         <ClauseText>Esse ANEXO I é parte integrante do Contrato de Prestação de Serviços. O descritivo abaixo refere-se a todos os serviços contemplados no contrato, conforme mencionado no item DOS SERVIÇOS CONTRATADOS.</ClauseText>
 
-        <p style={{ fontSize: 13, color: '#222', margin: '20px 0 8px' }}>Que contempla:</p>
+        <p style={{ fontSize: 13, color: '#333', margin: '20px 0 8px' }}>Que contempla:</p>
         {servicosList.length > 0 ? (
-          <ul style={{ fontSize: 13, color: '#222', lineHeight: 2, paddingLeft: 28 }}>
+          <ul style={{ fontSize: 13, color: '#333', lineHeight: 2, paddingLeft: 28 }}>
             {servicosList.map((s, i) => <li key={i}>{s}</li>)}
           </ul>
         ) : (
@@ -266,15 +324,15 @@ export default async function ContratoPage({ params }: Props) {
 
         {profissionaisList.length > 0 && (
           <>
-            <p style={{ fontSize: 13, color: '#222', margin: '20px 0 8px' }}>Profissionais envolvidos:</p>
-            <ul style={{ fontSize: 13, color: '#222', lineHeight: 2, paddingLeft: 28 }}>
+            <p style={{ fontSize: 13, color: '#333', margin: '20px 0 8px' }}>Profissionais envolvidos:</p>
+            <ul style={{ fontSize: 13, color: '#333', lineHeight: 2, paddingLeft: 28 }}>
               {profissionaisList.map((p, i) => <li key={i}>{p}</li>)}
             </ul>
           </>
         )}
 
         {valorNum > 0 && (
-          <p style={{ fontSize: 13, color: '#222', margin: '20px 0', fontWeight: 500 }}>
+          <p style={{ fontSize: 13, color: '#333', margin: '20px 0', fontWeight: 500 }}>
             Investimento = {valorTotal} Euros + iva
           </p>
         )}
@@ -284,29 +342,36 @@ export default async function ContratoPage({ params }: Props) {
         </p>
       </ContentPage>
 
-      {/* Página 9 — Assinaturas */}
+      {/* ═══ Página 9 — Assinaturas ═══ */}
       <ContentPage>
         <ClauseText>E por assim estarem ambas as partes de acordo, firmam o presente ANEXO I que integra o contrato principal, em duas vias de igual teor.</ClauseText>
 
-        <p style={{ fontSize: 13, color: '#222', margin: '24px 0 48px' }}>
+        <p style={{ fontSize: 13, color: '#333', margin: '24px 0 48px' }}>
           {ficha.localAssinatura || 'Lisboa'}, {contrato.geradoEm || new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })}.
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, marginTop: 60 }}>
           <div>
-            <div style={{ borderTop: '1px solid #999', paddingTop: 12, marginBottom: 8 }} />
-            <p style={{ fontSize: 13, color: '#444', fontWeight: 600 }}>{ficha.empresa || ficha.nome || 'O Cliente'}</p>
-            <p style={{ fontSize: 12, color: '#888' }}>{ficha.representanteLegal || 'Representante Legal'}</p>
-            <p style={{ fontSize: 11, color: '#aaa' }}>(Representante Legal)</p>
-            <div style={{ marginTop: 32, border: '1px solid #ddd', height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <p style={{ fontSize: 10, color: '#ccc', letterSpacing: 2 }}>CARIMBO</p>
+            <div style={{ borderTop: '1.5px solid #333', paddingTop: 12, marginBottom: 8 }} />
+            <p style={{ fontSize: 13, color: '#333', fontWeight: 600 }}>{ficha.empresa || ficha.nome || 'O Cliente'}</p>
+            <p style={{ fontSize: 12, color: '#666' }}>{ficha.representanteLegal || 'Representante Legal'}</p>
+            <p style={{ fontSize: 11, color: '#999' }}>(Representante Legal)</p>
+            <div style={{
+              marginTop: 32,
+              border: '1px solid #ccc',
+              height: 90,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <p style={{ fontSize: 9, color: '#ddd', letterSpacing: 3 }}>CARIMBO</p>
             </div>
           </div>
           <div>
-            <div style={{ borderTop: '1px solid #999', paddingTop: 12, marginBottom: 8 }} />
-            <p style={{ fontSize: 13, color: '#444', fontWeight: 600 }}>RL Media - Audiovisual</p>
-            <p style={{ fontSize: 12, color: '#888' }}>Liliana Sofia Fernandes Barreto Gonçalves</p>
-            <p style={{ fontSize: 11, color: '#aaa' }}>(Representante Legal)</p>
+            <div style={{ borderTop: '1.5px solid #333', paddingTop: 12, marginBottom: 8 }} />
+            <p style={{ fontSize: 13, color: '#333', fontWeight: 600 }}>RL Media - Audiovisual</p>
+            <p style={{ fontSize: 12, color: '#666' }}>Liliana Sofia Fernandes Barreto Gonçalves</p>
+            <p style={{ fontSize: 11, color: '#999' }}>(Representante Legal)</p>
           </div>
         </div>
       </ContentPage>
@@ -319,67 +384,115 @@ export default async function ContratoPage({ params }: Props) {
 function ContentPage({ children }: { children: React.ReactNode }) {
   return (
     <div className="page-break" style={{
-      background: '#fff',
+      background: '#ffffff',
       minHeight: '100vh',
       fontFamily: 'Arial, Helvetica, sans-serif',
       position: 'relative',
       display: 'flex',
       flexDirection: 'column',
+      borderTop: '2px solid #111',
     }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '32px 60px 0', position: 'relative' }}>
-        {/* Logo */}
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <div style={{ fontWeight: 900, fontSize: 28, letterSpacing: 2, color: '#111', lineHeight: 1 }}>RL MEDIA</div>
-          <div style={{ fontSize: 8, letterSpacing: 8, color: '#555', marginTop: 2 }}>A U D I O V I S U A L</div>
+      <div style={{
+        display: 'flex',
+        alignItems: 'flex-end',
+        justifyContent: 'space-between',
+        padding: '28px 64px 20px',
+      }}>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 14, color: '#111', letterSpacing: 0, lineHeight: 1 }}>RL MEDIA</div>
+          <div style={{ fontSize: 7, letterSpacing: 6, color: '#666', marginTop: 4 }}>A U D I O V I S U A L</div>
         </div>
-        {/* Diagonal corner */}
-        <div style={{
-          width: 0, height: 0,
-          borderStyle: 'solid',
-          borderWidth: '0 140px 140px 0',
-          borderColor: 'transparent #111 transparent transparent',
-          position: 'absolute',
-          top: 0, right: 0,
-        }} />
+        <div style={{ fontSize: 8, letterSpacing: 2, color: '#888', textTransform: 'uppercase' }}>
+          Contrato de Prestação de Serviços
+        </div>
       </div>
 
+      {/* Header divider */}
+      <div style={{ height: 1, background: '#e8e8e8', margin: '0 64px' }} />
+
       {/* Content */}
-      <div style={{ flex: 1, padding: '32px 60px 80px', maxWidth: '100%' }}>
+      <div style={{ flex: 1, padding: '28px 64px 60px' }}>
         {children}
       </div>
 
       {/* Footer */}
-      <div style={{ padding: '16px 60px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-        <div />
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ color: '#9B59B6', fontSize: 10, letterSpacing: 1 }}>MORE THAN A PRODUCT</div>
-          <div style={{ fontWeight: 900, fontSize: 10, letterSpacing: 1, color: '#111' }}>AN EXPERIENCE.</div>
+      <div style={{ borderTop: '1px solid #e8e8e8', margin: '0 0' }}>
+        <div style={{
+          padding: '14px 64px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}>
+          <span style={{ fontSize: 8, letterSpacing: 2, color: '#bbb' }}>Documento Confidencial</span>
+          <span style={{ fontSize: 8, letterSpacing: 2, color: '#bbb' }}>rlmedia.pt</span>
         </div>
-      </div>
-      <div style={{ textAlign: 'center', paddingBottom: 16, fontSize: 9, letterSpacing: 3, color: '#aaa' }}>
-        WWW.RLMEDIA.PT
       </div>
     </div>
   )
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <p style={{ fontWeight: 700, fontSize: 13, color: '#111', marginBottom: 8, marginTop: 20 }}>{children}</p>
+  return (
+    <p style={{
+      fontSize: 11,
+      fontWeight: 700,
+      color: '#111',
+      letterSpacing: 2,
+      textTransform: 'uppercase',
+      marginBottom: 10,
+      marginTop: 24,
+      paddingBottom: 6,
+      borderBottom: '1px solid #e8e8e8',
+    }}>
+      {children}
+    </p>
+  )
 }
 
 function ClauseTitle({ children }: { children: React.ReactNode }) {
-  return <p style={{ fontWeight: 700, fontSize: 13, color: '#111', marginTop: 20, marginBottom: 6 }}>{children}</p>
+  return (
+    <p style={{
+      fontSize: 12,
+      fontWeight: 700,
+      color: '#111',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      marginTop: 24,
+      marginBottom: 8,
+    }}>
+      {children}
+    </p>
+  )
 }
 
 function ClauseText({ children }: { children: React.ReactNode }) {
-  return <p style={{ fontSize: 13, color: '#222', lineHeight: 1.9, textAlign: 'justify', marginBottom: 8 }}>{children}</p>
+  return (
+    <p style={{
+      fontSize: 13,
+      color: '#333',
+      lineHeight: 1.9,
+      textAlign: 'justify',
+      marginBottom: 10,
+    }}>
+      {children}
+    </p>
+  )
 }
 
 function InfoBlock({ children }: { children: React.ReactNode }) {
-  return <div style={{ marginBottom: 20 }}>{children}</div>
+  return (
+    <div style={{
+      marginBottom: 20,
+      padding: '16px 20px',
+      background: '#f8f8f8',
+      borderLeft: '3px solid #111',
+    }}>
+      {children}
+    </div>
+  )
 }
 
 function InfoLine({ children }: { children: React.ReactNode }) {
-  return <p style={{ fontSize: 13, color: '#222', lineHeight: 1.8 }}>{children}</p>
+  return <p style={{ fontSize: 13, color: '#333', lineHeight: 1.8 }}>{children}</p>
 }
