@@ -59,6 +59,17 @@ const PLANO_ETAPAS = [
   },
 ]
 
+const COMO_FUNCIONA = [
+  { n: '1', titulo: 'Briefing e Imersão',         desc: 'Recebemos o teu briefing, analisamos a marca, o mercado e a concorrência.' },
+  { n: '2', titulo: 'Proposta',                   desc: 'Desenvolvemos a nossa proposta com uma visão completa e estratégica.' },
+  { n: '3', titulo: 'Planeamento',                desc: 'Definimos como e quando tudo vai acontecer.' },
+  { n: '4', titulo: 'Pré-Produção e Produção',    desc: 'Preparamos tudo para que não falte nada na captação de conteúdos.' },
+  { n: '5', titulo: 'Edição',                     desc: 'Nesta fase, editamos o conteúdo que captámos.' },
+  { n: '6', titulo: 'Aprovação',                  desc: 'Recebemos feedback aos conteúdos, fazemos ajustes e temos a tua validação.' },
+  { n: '7', titulo: 'Entrega',                    desc: 'Garantimos que tens os conteúdos do teu lado, prontos a serem usados.' },
+  { n: '8', titulo: 'Feedback e Resultados',      desc: 'Dás-nos o teu feedback sobre todo o percurso do projeto e analisamos o impacto.' },
+]
+
 const PROCESSO = [
   { n: '01', titulo: 'Briefing',       desc: 'Alinhamento de objetivos, audiência e mensagem-chave.' },
   { n: '02', titulo: 'Pré-Produção',   desc: 'Moodboard, storyboard, scouting e logística.' },
@@ -263,39 +274,23 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
       </p>
     </div>,
 
-    // ── SLIDE 3 — PACOTES ───────────────────────────────────────────────────
-    <div key={3} className="flex flex-col justify-center h-full px-8 sm:px-20 gap-8 max-w-5xl mx-auto w-full">
-      <div className="flex flex-col gap-2">
-        <p className={labelCls}>03 — Pacotes</p>
-        <p className={`${T.xs} font-light text-white/50 tracking-wide`}>O pacote assinalado é o recomendado para a vossa situação.</p>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {proposta.packages.map((pkg, i) => {
-          const isActive = i === proposta.propostaAtiva
-          return (
-            <div key={i} className={`relative flex flex-col border p-6 ${isActive ? 'border-white/30 bg-white/[0.04]' : 'border-white/[0.08] bg-white/[0.01]'}`}>
-              {isActive && <div className="absolute -top-px left-0 right-0 h-px bg-white/40" />}
-              {isActive && (
-                <div className="mb-4">
-                  <span className={`${T.xs} tracking-[0.5em] text-white/55 uppercase border border-white/25 px-2 py-1`}>Recomendado</span>
-                </div>
-              )}
-              <p className={labelCls + ' mb-2'}>{pkg.titulo}</p>
-              <p className={`${T.sm} font-light text-white/55 leading-relaxed mb-5`}>{pkg.descricao}</p>
-              <div className="flex flex-col gap-2 flex-1 mb-5">
-                {pkg.itens.map((item, j) => (
-                  <div key={j} className="flex items-start gap-2">
-                    <span className={`text-white/40 ${T.xs} mt-0.5 shrink-0`}>—</span>
-                    <span className={`${T.sm} text-white/60 font-light leading-snug`}>{item}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="border-t border-white/[0.08] pt-4 mt-auto">
-                <p className={`${T.xs} tracking-[0.45em] uppercase font-light ${isActive ? 'text-white/65' : 'text-white/45'}`}>{pkg.preco}</p>
-              </div>
+    // ── SLIDE 3 — COMO FUNCIONA ─────────────────────────────────────────────
+    <div key={3} className="flex flex-col justify-center h-full px-8 sm:px-16 gap-8 max-w-5xl mx-auto w-full">
+      <h2 className="text-[32px] font-extrabold tracking-[0.12em] text-white/90 uppercase text-center">
+        Como Funciona?
+      </h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
+        {COMO_FUNCIONA.map((item, i) => (
+          <div key={i} className="flex flex-col gap-1">
+            <div className="flex items-center gap-3 pb-2 border-b border-white/[0.10]">
+              <span className="w-7 h-7 flex items-center justify-center bg-white/[0.08] border border-white/[0.15] text-[13px] font-bold text-white/70 shrink-0">
+                {item.n}
+              </span>
+              <h3 className="text-[22px] font-bold text-white/85 uppercase tracking-wide leading-tight">{item.titulo}</h3>
             </div>
-          )
-        })}
+            <p className="text-[17px] font-light text-white/55 leading-relaxed pt-1">{item.desc}</p>
+          </div>
+        ))}
       </div>
     </div>,
 
