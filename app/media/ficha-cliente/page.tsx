@@ -133,7 +133,7 @@ export default function FichaClientePage() {
     }
   }
 
-  const labelCls = "block text-[8px] tracking-[0.5em] text-white/55 uppercase mb-2"
+  const labelCls = "block text-[10px] tracking-[0.5em] text-white/55 uppercase mb-2"
   const inputCls = "w-full bg-white/[0.03] border border-white/[0.08] focus:border-white/25 focus:outline-none px-4 py-3 text-[13px] text-white/75 placeholder:text-white/15 transition-colors duration-200"
   const selectCls = inputCls + " appearance-none cursor-pointer [color-scheme:dark]"
 
@@ -153,14 +153,14 @@ export default function FichaClientePage() {
 
         {/* Back */}
         <Link href="/media"
-          className="inline-flex items-center gap-2 text-[9px] tracking-[0.4em] text-white/45 hover:text-white/75 transition-colors uppercase mb-12 group">
+          className="inline-flex items-center gap-2 text-[10px] tracking-[0.4em] text-white/45 hover:text-white/75 transition-colors uppercase mb-12 group">
           <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
           Menu RL Media
         </Link>
 
         {/* Header */}
         <div className="mb-12">
-          <p className="text-[8px] tracking-[0.6em] text-white/40 uppercase mb-2">RL Media · Audiovisual</p>
+          <p className="text-[10px] tracking-[0.6em] text-white/40 uppercase mb-2">RL Media · Audiovisual</p>
           <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Ficha de Cliente</h1>
           <div className="mt-4 flex items-center gap-3">
             <div className="h-px w-12 bg-white/25" />
@@ -173,7 +173,7 @@ export default function FichaClientePage() {
 
           {/* Secção — Identificação */}
           <div>
-            <p className="text-[8px] tracking-[0.55em] text-white/50 uppercase mb-5 flex items-center gap-3">
+            <p className="text-[10px] tracking-[0.55em] text-white/50 uppercase mb-5 flex items-center gap-3">
               <span>01 — Identificação</span>
               <span className="flex-1 h-px bg-white/[0.05]" />
             </p>
@@ -185,7 +185,7 @@ export default function FichaClientePage() {
                 placeholder="Ex: OLEOBIO"
                 className={inputCls + ' uppercase tracking-widest'}
               />
-              <p className="mt-1.5 text-[9px] text-white/40">Referência única do projeto — liga a ficha ao portal do cliente.</p>
+              <p className="mt-1.5 text-[10px] text-white/40">Referência única do projeto — liga a ficha ao portal do cliente.</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -221,7 +221,7 @@ export default function FichaClientePage() {
 
           {/* Secção — Projeto */}
           <div>
-            <p className="text-[8px] tracking-[0.55em] text-white/50 uppercase mb-5 flex items-center gap-3">
+            <p className="text-[10px] tracking-[0.55em] text-white/50 uppercase mb-5 flex items-center gap-3">
               <span>02 — Projeto</span>
               <span className="flex-1 h-px bg-white/[0.05]" />
             </p>
@@ -263,7 +263,7 @@ export default function FichaClientePage() {
 
           {/* Secção — Anexo I */}
           <div>
-            <p className="text-[8px] tracking-[0.55em] text-white/50 uppercase mb-5 flex items-center gap-3">
+            <p className="text-[10px] tracking-[0.55em] text-white/50 uppercase mb-5 flex items-center gap-3">
               <span>03 — Anexo I · Serviços & Profissionais</span>
               <span className="flex-1 h-px bg-white/[0.05]" />
             </p>
@@ -285,7 +285,7 @@ export default function FichaClientePage() {
 
           {/* Secção — Contrato */}
           <div>
-            <p className="text-[8px] tracking-[0.55em] text-white/50 uppercase mb-5 flex items-center gap-3">
+            <p className="text-[10px] tracking-[0.55em] text-white/50 uppercase mb-5 flex items-center gap-3">
               <span>04 — Contrato</span>
               <span className="flex-1 h-px bg-white/[0.05]" />
             </p>
@@ -323,7 +323,7 @@ export default function FichaClientePage() {
 
           {/* Secção — Notas */}
           <div>
-            <p className="text-[8px] tracking-[0.55em] text-white/50 uppercase mb-5 flex items-center gap-3">
+            <p className="text-[10px] tracking-[0.55em] text-white/50 uppercase mb-5 flex items-center gap-3">
               <span>05 — Notas Internas</span>
               <span className="flex-1 h-px bg-white/[0.05]" />
             </p>
@@ -341,7 +341,7 @@ export default function FichaClientePage() {
           {contratoGerado && (
             <div className="border border-emerald-400/20 bg-emerald-400/5 px-5 py-4 flex items-center justify-between gap-4">
               <div>
-                <p className="text-[9px] tracking-[0.4em] text-emerald-400/70 uppercase mb-1">✓ Contrato Gerado</p>
+                <p className="text-[10px] tracking-[0.4em] text-emerald-400/70 uppercase mb-1">✓ Contrato Gerado</p>
                 <p className="text-xs text-white/30">Disponível na ficha e no portal do cliente.</p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -349,7 +349,7 @@ export default function FichaClientePage() {
                   href={contratoGerado}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[9px] tracking-[0.4em] text-white/40 hover:text-white/70 border border-white/10
+                  className="text-[10px] tracking-[0.4em] text-white/40 hover:text-white/70 border border-white/10
                              hover:border-white/25 px-4 py-2 uppercase transition-all duration-200"
                 >
                   Ver Contrato →
@@ -361,7 +361,7 @@ export default function FichaClientePage() {
           {/* Actions */}
           <div className="flex items-center justify-between pt-2 border-t border-white/[0.05]">
             <button type="button" onClick={() => { setForm(EMPTY); setContratoGerado(null) }}
-              className="text-[9px] tracking-[0.4em] text-white/20 hover:text-white/45 uppercase transition-colors">
+              className="text-[10px] tracking-[0.4em] text-white/20 hover:text-white/45 uppercase transition-colors">
               Limpar
             </button>
             <div className="flex items-center gap-3">
@@ -374,13 +374,13 @@ export default function FichaClientePage() {
                            hover:border-white/30 px-6 py-4 transition-all duration-300 disabled:opacity-40"
               >
                 {gerando ? (
-                  <span className="text-[9px] tracking-[0.4em] text-white/35 uppercase">A gerar...</span>
+                  <span className="text-[10px] tracking-[0.4em] text-white/35 uppercase">A gerar...</span>
                 ) : (
                   <>
                     <svg className="w-3 h-3 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0121 9.414V19a2 2 0 01-2 2z"/>
                     </svg>
-                    <span className="text-[9px] tracking-[0.4em] text-white/40 uppercase">Gerar Contrato</span>
+                    <span className="text-[10px] tracking-[0.4em] text-white/40 uppercase">Gerar Contrato</span>
                   </>
                 )}
               </button>
@@ -390,11 +390,11 @@ export default function FichaClientePage() {
                 className="flex items-center gap-3 border border-white/20 bg-white/[0.04] hover:bg-white/[0.09] hover:border-white/35
                            px-8 py-4 transition-all duration-300 disabled:opacity-40">
                 {saving ? (
-                  <span className="text-[9px] tracking-[0.5em] text-white/40 uppercase">A guardar...</span>
+                  <span className="text-[10px] tracking-[0.5em] text-white/40 uppercase">A guardar...</span>
                 ) : saved ? (
-                  <span className="text-[9px] tracking-[0.5em] text-emerald-400/70 uppercase">✓ Guardado</span>
+                  <span className="text-[10px] tracking-[0.5em] text-emerald-400/70 uppercase">✓ Guardado</span>
                 ) : (
-                  <span className="text-[9px] tracking-[0.5em] text-white/55 uppercase">Guardar Ficha →</span>
+                  <span className="text-[10px] tracking-[0.5em] text-white/55 uppercase">Guardar Ficha →</span>
                 )}
               </button>
             </div>
