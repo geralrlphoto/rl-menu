@@ -191,13 +191,18 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
     // ── SLIDE 0 — CAPA ──────────────────────────────────────────────────────
     <div key={0} className="flex flex-col items-center justify-center h-full px-8 text-center gap-6">
       {/* Logo */}
-      {/* wrapper aplica o glow; img aplica o blend para remover fundo preto */}
-      <div style={{ filter: 'drop-shadow(0 0 14px rgba(255,255,255,0.30)) drop-shadow(0 0 36px rgba(255,255,255,0.12))' }}>
+      {/* bg=#050507 igual à página → mix-blend-mode:screen remove o preto mesmo dentro de stacking context isolado */}
+      <div style={{
+        background: '#050507',
+        borderRadius: '9999px',
+        padding: '4px',
+        boxShadow: '0 0 18px rgba(255,255,255,0.20), 0 0 40px rgba(255,255,255,0.08)',
+      }}>
         <img
           src="/logo-rl-media-branco.png"
           alt="RL Media"
           className="w-24 h-24 object-contain block"
-          style={{ mixBlendMode: 'screen' }}
+          style={{ mixBlendMode: 'screen', borderRadius: '9999px' }}
         />
       </div>
       <div className="flex flex-col items-center gap-4">
