@@ -65,7 +65,8 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/portal-media') ||
     pathname.startsWith('/rm/') ||
     pathname.startsWith('/api/media-portal/view') ||
-    pathname.startsWith('/api/media-portal/confirm')
+    pathname.startsWith('/api/media-portal/confirm') ||
+    pathname.startsWith('/api/test-portal-card')
   ) {
     return NextResponse.next()
   }
