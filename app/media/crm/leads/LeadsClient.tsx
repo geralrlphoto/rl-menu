@@ -26,9 +26,22 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
   const [leads, setLeads] = useState(initial)
   const [expanded, setExpanded] = useState<string | null>(null)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const [filtroEstado, setFiltroEstado] = useState('Todos')
 
   const filtered = filtroEstado === 'Todos' ? leads : leads.filter(l => l.estado === filtroEstado)
+
+  async function deleteLead(id: string) {
+    setDeletingId(id)
+    await fetch('/api/media-leads', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    setLeads(ls => ls.filter(l => l.id !== id))
+    setExpanded(null)
+    setDeletingId(null)
+  }
 
   async function updateEstado(id: string, estado: string) {
     setUpdatingId(id)
@@ -164,6 +177,21 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                       <span className="text-[8px] text-white/20 tracking-widest">A guardar...</span>
                     )}
                   </div>
+                </div>
+
+                {/* Apagar */}
+                <div className="flex justify-end pt-2 border-t border-white/[0.04]">
+                  {deletingId === lead.id ? (
+                    <span className="text-[8px] text-white/20 tracking-widest">A apagar...</span>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        if (confirm(`Apagar lead de ${lead.nome}?`)) deleteLead(lead.id)
+                      }}
+                      className="text-[8px] tracking-[0.35em] uppercase text-red-400/40 hover:text-red-400/70 transition-colors">
+                      Apagar Lead
+                    </button>
+                  )}
                 </div>
 
               </div>
