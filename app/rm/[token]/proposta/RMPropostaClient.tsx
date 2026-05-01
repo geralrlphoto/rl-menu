@@ -237,20 +237,20 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
 
     // ── SLIDE 1 — PLANO DE AÇÃO ─────────────────────────────────────────────
     <div key={1} className="flex flex-col justify-center h-full px-8 sm:px-20 gap-8 max-w-3xl mx-auto w-full">
-      <h2 className="text-[24px] font-extrabold tracking-[0.12em] text-white/90 uppercase leading-tight text-center">
+      <h2 className="text-[32px] font-extrabold tracking-[0.12em] text-white/90 uppercase leading-tight text-center">
         Plano de Ação<br />Personalizado<br />com 3 Etapas
       </h2>
       <div className="flex flex-col gap-6">
         {PLANO_ETAPAS.map((etapa, i) => (
           <div key={i} className={`flex flex-col gap-2 ${i < PLANO_ETAPAS.length - 1 ? 'pb-6 border-b border-white/[0.07]' : ''}`}>
-            <h3 className={`${T.xl} font-bold text-white/85`}>
+            <h3 className="text-[22px] font-bold text-white/85">
               {etapa.n} {etapa.titulo}
             </h3>
-            <p className={`${T.sm} font-light text-white/55 leading-relaxed`}>{etapa.texto}</p>
+            <p className="text-[17px] font-light text-white/60 leading-relaxed">{etapa.texto}</p>
           </div>
         ))}
       </div>
-      <p className={`${T.sm} font-light text-white/45 leading-relaxed tracking-wide`}>
+      <p className="text-[16px] font-light text-white/45 leading-relaxed tracking-wide">
         Uma proposta desenvolvida com base nos objetivos da vossa marca. Foco em resultados, narrativa estratégica e produção de excelência do briefing à entrega final.
       </p>
     </div>,
