@@ -194,8 +194,11 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
       <img
         src="/logo-rl-media-branco.png"
         alt="RL Media"
-        className="w-20 h-20 object-contain"
-        style={{ filter: 'drop-shadow(0 0 12px rgba(255,255,255,0.35)) drop-shadow(0 0 32px rgba(255,255,255,0.15))' }}
+        className="w-24 h-24 object-contain"
+        style={{
+          mixBlendMode: 'screen',
+          filter: 'drop-shadow(0 0 14px rgba(255,255,255,0.30)) drop-shadow(0 0 36px rgba(255,255,255,0.12))',
+        }}
       />
       <div className="flex flex-col items-center gap-4">
         <p className={labelCls}>RL Media · Audiovisual</p>
