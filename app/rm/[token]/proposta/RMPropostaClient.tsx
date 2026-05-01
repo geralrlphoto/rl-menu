@@ -1,7 +1,28 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { RMPageContent, RMPackage } from '../RMLeadPageClient'
+
+// ─── Comprime imagem no browser → base64 JPEG ────────────────────────────────
+function compressImage(file: File, maxWidth = 1400, quality = 0.80): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      let w = img.width, h = img.height
+      if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth }
+      const canvas = document.createElement('canvas')
+      canvas.width = w; canvas.height = h
+      const ctx = canvas.getContext('2d')
+      if (!ctx) { reject(new Error('canvas')); return }
+      ctx.drawImage(img, 0, 0, w, h)
+      resolve(canvas.toDataURL('image/jpeg', quality))
+    }
+    img.onerror = reject
+    img.src = url
+  })
+}
 
 // ─── Embed helper ─────────────────────────────────────────────────────────────
 function toEmbedUrl(url: string): string | null {
@@ -130,7 +151,7 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
   const [saving,       setSaving]       = useState(false)
   const [savedOk,      setSavedOk]      = useState(false)
   const [uploading,    setUploading]    = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [uploadErr,    setUploadErr]    = useState(false)
 
   function startEdit(idx: number) {
     if (!content) return
@@ -157,20 +178,20 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
     } finally { setSaving(false) }
   }
 
-  async function uploadImage(file: File, idx: number) {
+  async function handleImageFile(file: File, idx: number) {
     if (!draft) return
     setUploading(true)
+    setUploadErr(false)
     try {
-      const fd = new FormData()
-      fd.append('file', file)
-      const res  = await fetch('/api/media-portal/upload-image', { method: 'POST', body: fd })
-      const data = await res.json()
-      if (data.url) {
-        const imgs = [...(draft.slideImages || ['','','','','','',''])]
-        imgs[idx] = data.url
-        setDraft({ ...draft, slideImages: imgs })
-      }
-    } finally { setUploading(false) }
+      const dataUrl = await compressImage(file)
+      const imgs = [...(draft.slideImages || ['','','','','','',''])]
+      imgs[idx] = dataUrl
+      setDraft({ ...draft, slideImages: imgs })
+    } catch {
+      setUploadErr(true)
+    } finally {
+      setUploading(false)
+    }
   }
 
   function setSlideImage(idx: number, val: string) {
@@ -262,40 +283,53 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
     return (
       <div className="border-t border-white/[0.06] pt-5 mt-5">
         <label className={LBL}>Foto do Cabeçalho</label>
-        <div className="flex gap-2 mb-3">
+
+        {/* Upload por ficheiro */}
+        <label className={`relative mb-3 flex items-center justify-center gap-2 w-full py-4 border border-dashed cursor-pointer transition-all ${uploading ? 'border-white/10 text-white/25' : 'border-white/20 hover:border-white/40 text-white/45 hover:text-white/65'}`}>
+          <span style={{ fontSize: 16 }}>↑</span>
+          <span className="text-[11px] tracking-[0.4em] uppercase">
+            {uploading ? 'A processar...' : 'Carregar imagem'}
+          </span>
+          <input
+            type="file"
+            accept="image/*"
+            className="absolute inset-0 opacity-0 cursor-pointer"
+            disabled={uploading}
+            onChange={e => {
+              const f = e.target.files?.[0]
+              if (f) handleImageFile(f, idx)
+              e.target.value = ''
+            }}
+          />
+        </label>
+
+        {uploadErr && (
+          <p className="mb-3 text-[11px] text-red-400/60 tracking-wide">Erro ao processar imagem. Tenta novamente.</p>
+        )}
+
+        {/* URL manual */}
+        <div className="mb-3">
+          <label className={LBL}>Ou cole um URL</label>
           <input
             className={INP}
-            placeholder="Cole um URL de imagem..."
-            value={img}
+            placeholder="https://..."
+            value={img.startsWith('data:') ? '' : img}
             onChange={e => setSlideImage(idx, e.target.value)}
           />
-          <label className={`relative shrink-0 cursor-pointer flex items-center gap-1.5 px-3 py-2 border text-[10px] tracking-[0.35em] uppercase transition-all ${uploading ? 'border-white/10 text-white/25' : 'border-white/20 hover:border-white/40 text-white/45 hover:text-white/70'}`}>
-            {uploading ? '...' : '↑ Upload'}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="absolute inset-0 opacity-0 cursor-pointer"
-              disabled={uploading}
-              onChange={e => {
-                const f = e.target.files?.[0]
-                if (f) uploadImage(f, idx)
-                e.target.value = ''
-              }}
-            />
-          </label>
         </div>
+
+        {/* Preview */}
         {img ? (
           <div className="relative overflow-hidden" style={{ height: 110 }}>
             <img src={img} alt="" className="w-full h-full object-cover object-center" />
             <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 50%, rgba(4,8,15,0.9) 100%)' }} />
             <button
-              onClick={() => setSlideImage(idx, '')}
+              onClick={() => { setSlideImage(idx, ''); setUploadErr(false) }}
               className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center bg-black/60 hover:bg-black/80 text-white/60 hover:text-white text-[11px] border border-white/15 transition-all"
             >✕</button>
           </div>
         ) : (
-          <div className="border border-dashed border-white/[0.07] flex items-center justify-center" style={{ height: 60 }}>
+          <div className="border border-dashed border-white/[0.07] flex items-center justify-center" style={{ height: 50 }}>
             <p className="text-[10px] tracking-widest text-white/20 uppercase">Sem imagem</p>
           </div>
         )}
