@@ -245,7 +245,7 @@ export default function FichaClientePage() {
                   className={inputCls + ' [color-scheme:dark]'} />
               </div>
               <div>
-                <label className={labelCls}>Orçamento (€)</label>
+                <label className={labelCls}>Valor do Serviço (€)</label>
                 <input value={form.orcamento} onChange={set('orcamento')} placeholder="0.00" className={inputCls} />
               </div>
               <div>
