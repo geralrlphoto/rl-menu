@@ -202,12 +202,12 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
   const labelCls = `${T.xs} tracking-[0.55em] text-white/50 uppercase`
 
   if (loading) return (
-    <main className="min-h-screen flex items-center justify-center bg-[#050507]">
+    <main className="min-h-screen flex items-center justify-center bg-[#04080f]">
       <p className={`${T.xs} tracking-[0.6em] text-white/40 uppercase animate-pulse`}>A carregar...</p>
     </main>
   )
   if (notFound) return (
-    <main className="min-h-screen flex items-center justify-center bg-[#050507]">
+    <main className="min-h-screen flex items-center justify-center bg-[#04080f]">
       <p className={`${T.xs} tracking-[0.6em] text-white/40 uppercase`}>Página não disponível</p>
     </main>
   )
@@ -217,10 +217,19 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
 
   // ── PASSWORD GATE ──────────────────────────────────────────────────────────
   if (!unlocked) return (
-    <main className="min-h-screen bg-[#050507] flex flex-col items-center justify-center px-6 relative">
+    <main className="min-h-screen flex flex-col items-center justify-center px-6 relative" style={{ background: '#04080f' }}>
       <div className="pointer-events-none fixed inset-0" style={{
-        backgroundImage: `linear-gradient(rgba(255,255,255,0.013) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.013) 1px,transparent 1px)`,
-        backgroundSize: '60px 60px',
+        backgroundImage: `linear-gradient(rgba(70,120,255,0.055) 1px,transparent 1px),linear-gradient(90deg,rgba(70,120,255,0.055) 1px,transparent 1px)`,
+        backgroundSize: '64px 64px',
+      }} />
+      <div className="pointer-events-none fixed inset-0" style={{
+        background: 'radial-gradient(ellipse 110% 55% at 50% -8%, rgba(50,110,255,0.13) 0%, rgba(30,70,200,0.05) 45%, transparent 70%)',
+      }} />
+      <div className="pointer-events-none fixed inset-0" style={{
+        background: 'radial-gradient(ellipse 45% 55% at -6% 45%, rgba(60,130,255,0.07) 0%, transparent 55%)',
+      }} />
+      <div className="pointer-events-none fixed inset-0" style={{
+        background: 'radial-gradient(ellipse 45% 55% at 106% 55%, rgba(40,100,255,0.06) 0%, transparent 52%)',
       }} />
       <div className="relative z-10 w-full max-w-sm flex flex-col items-center gap-10 text-center">
         <div className="flex flex-col items-center gap-3">
@@ -448,14 +457,21 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
 
   // ── RENDER ─────────────────────────────────────────────────────────────────
   return (
-    <div className="h-screen bg-[#050507] relative overflow-hidden flex flex-col">
+    <div className="h-screen relative overflow-hidden flex flex-col" style={{ background: '#04080f' }}>
 
+      {/* ── Background: grelha + neon azul ── */}
       <div className="pointer-events-none fixed inset-0 z-0" style={{
-        backgroundImage: `linear-gradient(rgba(255,255,255,0.013) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.013) 1px,transparent 1px)`,
-        backgroundSize: '60px 60px',
+        backgroundImage: `linear-gradient(rgba(70,120,255,0.055) 1px,transparent 1px),linear-gradient(90deg,rgba(70,120,255,0.055) 1px,transparent 1px)`,
+        backgroundSize: '64px 64px',
       }} />
       <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 70% 45% at 50% -5%, rgba(180,200,255,0.04) 0%, transparent 65%)',
+        background: 'radial-gradient(ellipse 110% 55% at 50% -8%, rgba(50,110,255,0.13) 0%, rgba(30,70,200,0.05) 45%, transparent 70%)',
+      }} />
+      <div className="pointer-events-none fixed inset-0 z-0" style={{
+        background: 'radial-gradient(ellipse 45% 55% at -6% 45%, rgba(60,130,255,0.07) 0%, transparent 55%)',
+      }} />
+      <div className="pointer-events-none fixed inset-0 z-0" style={{
+        background: 'radial-gradient(ellipse 45% 55% at 106% 55%, rgba(40,100,255,0.06) 0%, transparent 52%)',
       }} />
 
       {/* Top bar */}
@@ -495,9 +511,9 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
 
             {/* ── OVERLAY DE EDIÇÃO ── */}
             {isAdmin && editingSlide === i && draft && (
-              <div className="absolute inset-0 z-50 bg-[#050507] flex flex-col overflow-y-auto">
+              <div className="absolute inset-0 z-50 bg-[#04080f] flex flex-col overflow-y-auto">
                 {/* Barra topo */}
-                <div className="sticky top-0 z-10 flex items-center justify-between px-8 py-4 border-b border-white/[0.08] bg-[#050507]">
+                <div className="sticky top-0 z-10 flex items-center justify-between px-8 py-4 border-b border-white/[0.08] bg-[#04080f]">
                   <p className="text-[10px] tracking-[0.6em] text-white/40 uppercase">✎ Editar Slide {i + 1}</p>
                   <div className="flex items-center gap-2">
                     <button onClick={cancelEdit}

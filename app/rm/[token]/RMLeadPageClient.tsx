@@ -348,15 +348,24 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
   const labelCls = "text-[8px] tracking-[0.5em] text-white/20 uppercase"
 
   return (
-    <div className="min-h-screen bg-[#050507] relative">
+    <div className="min-h-screen relative" style={{ background: '#04080f' }}>
 
-      {/* Grid bg */}
+      {/* ── Background: grelha + neon azul ── */}
       <div className="pointer-events-none fixed inset-0 z-0" style={{
-        backgroundImage: `linear-gradient(rgba(255,255,255,0.013) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.013) 1px,transparent 1px)`,
-        backgroundSize: '60px 60px',
+        backgroundImage: `linear-gradient(rgba(70,120,255,0.055) 1px,transparent 1px),linear-gradient(90deg,rgba(70,120,255,0.055) 1px,transparent 1px)`,
+        backgroundSize: '64px 64px',
       }} />
+      {/* halo topo centro */}
       <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 70% 50% at 50% -10%, rgba(180,200,255,0.04) 0%, transparent 70%)',
+        background: 'radial-gradient(ellipse 110% 55% at 50% -8%, rgba(50,110,255,0.13) 0%, rgba(30,70,200,0.05) 45%, transparent 70%)',
+      }} />
+      {/* halo lateral esquerdo */}
+      <div className="pointer-events-none fixed inset-0 z-0" style={{
+        background: 'radial-gradient(ellipse 45% 55% at -6% 45%, rgba(60,130,255,0.07) 0%, transparent 55%)',
+      }} />
+      {/* halo lateral direito */}
+      <div className="pointer-events-none fixed inset-0 z-0" style={{
+        background: 'radial-gradient(ellipse 45% 55% at 106% 55%, rgba(40,100,255,0.06) 0%, transparent 52%)',
       }} />
 
       {/* ── ADMIN BAR ── */}
