@@ -161,7 +161,7 @@ function getServDesc(nome: string): string {
 }
 
 const EDITABLE_SLIDES = [0, 1, 2, 3, 4, 5, 6]
-const TOTAL_SLIDES = 10
+const TOTAL_SLIDES = 11
 
 const T = {
   xs:  'text-[13px]',
@@ -192,6 +192,39 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
 
   // ── Inline edit ────────────────────────────────────────────────────────────
   const [expandedServicos, setExpandedServicos] = useState<string[]>([])
+
+  // ── Confirmação de proposta ────────────────────────────────────────────────
+  type ConfirmStatus = 'idle' | 'form' | 'submitting' | 'aceite' | 'rejeitada'
+  const [confirmStatus, setConfirmStatus] = useState<ConfirmStatus>('idle')
+  const [confirmErr,    setConfirmErr]    = useState('')
+  const [confirmForm,   setConfirmForm]   = useState({
+    nome: '', email: '', telefone: '', nif: '', empresa: '',
+    morada: '', data_evento: '', local_evento: '',
+    proposta_escolhida: 'Proposta 1', observacoes: '',
+  })
+
+  async function submitConfirm(acao: 'aceite' | 'rejeitada') {
+    if (acao === 'aceite') {
+      if (!confirmForm.nome.trim() || !confirmForm.email.trim() || !confirmForm.telefone.trim()) {
+        setConfirmErr('Por favor preenche Nome, Email e Telefone.')
+        return
+      }
+    }
+    setConfirmStatus('submitting')
+    setConfirmErr('')
+    try {
+      const res = await fetch('/api/media-portal/confirm-proposta', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ token, acao, dados: confirmForm }),
+      })
+      if (!res.ok) throw new Error('Erro no servidor')
+      setConfirmStatus(acao)
+    } catch {
+      setConfirmErr('Ocorreu um erro. Tenta novamente.')
+      setConfirmStatus(acao === 'aceite' ? 'form' : 'idle')
+    }
+  }
 
   function toggleServico(key: string) {
     setExpandedServicos(prev =>
@@ -780,6 +813,174 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
 
     // 9 — PROPOSTA 3
     <PropostaSlide key={9} idx={9} propIdx={2} />,
+
+    // 10 — CONFIRMAR PROPOSTA
+    <div key={10} className="flex flex-col h-full w-full overflow-y-auto">
+      <div className="flex-1 flex flex-col items-center justify-start px-6 sm:px-16 pt-12 pb-10 max-w-2xl mx-auto w-full gap-8">
+
+        {/* ── ESTADO: ACEITE ── */}
+        {confirmStatus === 'aceite' && (
+          <div className="flex flex-col items-center gap-6 text-center pt-8">
+            <div className="w-16 h-16 rounded-full border-2 border-emerald-400/60 flex items-center justify-center">
+              <span className="text-emerald-400 text-[28px]">✓</span>
+            </div>
+            <div className="flex flex-col gap-2">
+              <h2 className="text-[28px] font-extrabold tracking-[0.08em] text-white/90 uppercase">Proposta Confirmada</h2>
+              <p className="text-[15px] font-light text-white/55 leading-relaxed">Recebemos a vossa confirmação. Entraremos em contacto brevemente para dar início ao projeto.</p>
+            </div>
+            <div className="h-px w-16 bg-white/20" />
+            <p className="text-[12px] tracking-[0.4em] text-white/35 uppercase">RL Media · Obrigado</p>
+          </div>
+        )}
+
+        {/* ── ESTADO: REJEITADA ── */}
+        {confirmStatus === 'rejeitada' && (
+          <div className="flex flex-col items-center gap-6 text-center pt-8">
+            <div className="flex flex-col gap-3">
+              <h2 className="text-[28px] font-extrabold tracking-[0.08em] text-white/90 uppercase">Recebido</h2>
+              <p className="text-[15px] font-light text-white/55 leading-relaxed max-w-sm">Obrigado pelo vosso tempo. Se mudarem de ideias ou tiverem questões, estamos disponíveis.</p>
+            </div>
+            <a href={`/rm/${token}`} className="text-[12px] tracking-[0.35em] text-white/40 hover:text-white/65 uppercase transition-colors border border-white/10 hover:border-white/25 px-5 py-3">‹ Voltar ao Portal</a>
+          </div>
+        )}
+
+        {/* ── ESTADO: IDLE ou FORM ── */}
+        {(confirmStatus === 'idle' || confirmStatus === 'form' || confirmStatus === 'submitting') && (<>
+
+          {/* Cabeçalho */}
+          <div className="flex flex-col gap-3 text-center">
+            <p className="text-[11px] tracking-[0.55em] text-white/35 uppercase">A Vossa Decisão</p>
+            <h2 className="text-[30px] sm:text-[36px] font-extrabold tracking-[0.08em] text-white/90 uppercase leading-tight">
+              Esta Proposta<br />Alinha-se com<br />o Que Procuram?
+            </h2>
+            <div className="flex items-center justify-center gap-4 mt-1">
+              <div className="h-px w-10 bg-white/20" />
+              <div className="w-1.5 h-1.5 bg-white/30 rotate-45" />
+              <div className="h-px w-10 bg-white/20" />
+            </div>
+          </div>
+
+          {/* Botões de decisão (sempre visíveis) */}
+          {confirmStatus === 'idle' && (
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
+              <button
+                onClick={() => setConfirmStatus('form')}
+                className="flex-1 py-4 border-2 border-white/30 hover:border-white/60 bg-white/[0.04] hover:bg-white/[0.09] text-[13px] tracking-[0.4em] text-white/80 hover:text-white uppercase font-medium transition-all">
+                ✓ Aceitar Proposta
+              </button>
+              <button
+                onClick={() => submitConfirm('rejeitada')}
+                className="flex-1 py-4 border border-white/[0.10] hover:border-red-400/30 text-[13px] tracking-[0.4em] text-white/30 hover:text-red-400/60 uppercase transition-all">
+                ✕ Não, Obrigado
+              </button>
+            </div>
+          )}
+
+          {/* Formulário de aceitação */}
+          {(confirmStatus === 'form' || confirmStatus === 'submitting') && (
+            <div className="flex flex-col gap-5 w-full">
+              <p className="text-[11px] tracking-[0.4em] text-white/35 uppercase border-b border-white/[0.07] pb-3">Dados para a Ficha de Cliente</p>
+
+              {/* Nome + Empresa */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={LBL}>Nome Completo <span className="text-white/25">*</span></label>
+                  <input className={INP} placeholder="Nome completo" value={confirmForm.nome}
+                    onChange={e => setConfirmForm(f => ({ ...f, nome: e.target.value }))} />
+                </div>
+                <div>
+                  <label className={LBL}>Empresa / Marca</label>
+                  <input className={INP} placeholder="Nome da empresa" value={confirmForm.empresa}
+                    onChange={e => setConfirmForm(f => ({ ...f, empresa: e.target.value }))} />
+                </div>
+              </div>
+
+              {/* Email + Telefone */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={LBL}>Email <span className="text-white/25">*</span></label>
+                  <input className={INP} type="email" placeholder="email@exemplo.com" value={confirmForm.email}
+                    onChange={e => setConfirmForm(f => ({ ...f, email: e.target.value }))} />
+                </div>
+                <div>
+                  <label className={LBL}>Telefone <span className="text-white/25">*</span></label>
+                  <input className={INP} type="tel" placeholder="+351 9XX XXX XXX" value={confirmForm.telefone}
+                    onChange={e => setConfirmForm(f => ({ ...f, telefone: e.target.value }))} />
+                </div>
+              </div>
+
+              {/* NIF + Morada */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={LBL}>NIF</label>
+                  <input className={INP} placeholder="Número de contribuinte" value={confirmForm.nif}
+                    onChange={e => setConfirmForm(f => ({ ...f, nif: e.target.value }))} />
+                </div>
+                <div>
+                  <label className={LBL}>Morada</label>
+                  <input className={INP} placeholder="Rua, cidade, código postal" value={confirmForm.morada}
+                    onChange={e => setConfirmForm(f => ({ ...f, morada: e.target.value }))} />
+                </div>
+              </div>
+
+              {/* Data evento + Local */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={LBL}>Data do Evento</label>
+                  <input className={INP} type="date" value={confirmForm.data_evento}
+                    onChange={e => setConfirmForm(f => ({ ...f, data_evento: e.target.value }))} />
+                </div>
+                <div>
+                  <label className={LBL}>Local do Evento</label>
+                  <input className={INP} placeholder="Local / Quinta / Espaço" value={confirmForm.local_evento}
+                    onChange={e => setConfirmForm(f => ({ ...f, local_evento: e.target.value }))} />
+                </div>
+              </div>
+
+              {/* Proposta escolhida */}
+              <div>
+                <label className={LBL}>Proposta Escolhida</label>
+                <div className="flex gap-2">
+                  {(content!.propostas || []).map((p, i) => (
+                    <button key={i}
+                      onClick={() => setConfirmForm(f => ({ ...f, proposta_escolhida: p.titulo }))}
+                      className={`flex-1 py-2.5 text-[12px] tracking-[0.25em] uppercase border transition-all ${confirmForm.proposta_escolhida === p.titulo ? 'border-white/40 text-white/85 bg-white/[0.07]' : 'border-white/[0.10] text-white/35 hover:border-white/25'}`}>
+                      {p.titulo}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Observações */}
+              <div>
+                <label className={LBL}>Observações / Notas</label>
+                <textarea className={AREA} rows={3} placeholder="Alguma nota ou pedido especial..." value={confirmForm.observacoes}
+                  onChange={e => setConfirmForm(f => ({ ...f, observacoes: e.target.value }))} />
+              </div>
+
+              {/* Erro */}
+              {confirmErr && <p className="text-[12px] text-red-400/70 tracking-wide">{confirmErr}</p>}
+
+              {/* Botões */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <button
+                  onClick={() => submitConfirm('aceite')}
+                  disabled={confirmStatus === 'submitting'}
+                  className="flex-1 py-4 border-2 border-white/30 hover:border-white/60 bg-white/[0.04] hover:bg-white/[0.09] text-[13px] tracking-[0.4em] text-white/80 hover:text-white uppercase font-medium transition-all disabled:opacity-40">
+                  {confirmStatus === 'submitting' ? 'A enviar...' : '✓ Confirmar e Enviar'}
+                </button>
+                <button
+                  onClick={() => { setConfirmStatus('idle'); setConfirmErr('') }}
+                  disabled={confirmStatus === 'submitting'}
+                  className="px-6 py-4 border border-white/[0.10] text-[12px] tracking-[0.3em] text-white/30 hover:text-white/55 uppercase transition-all disabled:opacity-40">
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
+        </>)}
+      </div>
+    </div>,
   ]
 
   // ── RENDER ─────────────────────────────────────────────────────────────────
