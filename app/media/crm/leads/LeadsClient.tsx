@@ -272,6 +272,40 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                   </div>
                 </div>
 
+                {/* ── CONFIRMAÇÃO DE PROPOSTA ── */}
+                {lead.page_token && contentCache[lead.id]?.confirmacao_proposta && (() => {
+                  const conf = contentCache[lead.id].confirmacao_proposta
+                  const d    = conf.dados || {}
+                  const isAceite = conf.acao === 'aceite'
+                  return (
+                    <div className="border-t border-white/[0.05] pt-5">
+                      <div className="flex items-center gap-3 mb-4">
+                        <p className={labelCls}>Confirmação de Proposta</p>
+                        <span className={`text-[11px] tracking-[0.2em] uppercase px-3 py-1 border ${isAceite ? 'border-emerald-400/40 text-emerald-400/70' : 'border-red-400/30 text-red-400/50'}`}>
+                          {isAceite ? '✓ Aceite' : '✕ Rejeitada'}
+                        </span>
+                      </div>
+                      {isAceite && (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4 bg-white/[0.02] border border-white/[0.06] px-5 py-4">
+                          {d.proposta_escolhida && <div><p className={labelCls}>Proposta Escolhida</p><p className="text-[14px] text-emerald-400/80 font-medium mt-1">{d.proposta_escolhida}</p></div>}
+                          {d.nome              && <div><p className={labelCls}>Nome</p><p className="text-[13px] text-white/65 mt-1">{d.nome}</p></div>}
+                          {d.email             && <div><p className={labelCls}>Email</p><p className="text-[13px] text-white/65 mt-1">{d.email}</p></div>}
+                          {d.telefone          && <div><p className={labelCls}>Telefone</p><p className="text-[13px] text-white/65 mt-1">{d.telefone}</p></div>}
+                          {d.empresa           && <div><p className={labelCls}>Empresa</p><p className="text-[13px] text-white/65 mt-1">{d.empresa}</p></div>}
+                          {d.nif               && <div><p className={labelCls}>NIF</p><p className="text-[13px] text-white/65 mt-1">{d.nif}</p></div>}
+                          {d.morada            && <div><p className={labelCls}>Morada</p><p className="text-[13px] text-white/65 mt-1">{d.morada}</p></div>}
+                          {d.data_evento       && <div><p className={labelCls}>Data do Evento</p><p className="text-[13px] text-white/65 mt-1">{d.data_evento}</p></div>}
+                          {d.local_evento      && <div><p className={labelCls}>Local do Evento</p><p className="text-[13px] text-white/65 mt-1">{d.local_evento}</p></div>}
+                          {d.observacoes       && <div className="col-span-2 sm:col-span-3"><p className={labelCls}>Observações</p><p className="text-[13px] text-white/60 mt-1 leading-relaxed">{d.observacoes}</p></div>}
+                          <div className="col-span-2 sm:col-span-3 border-t border-white/[0.05] pt-3 mt-1">
+                            <p className="text-[11px] text-white/20 font-mono">{new Date(conf.timestamp).toLocaleString('pt-PT')}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()}
+
                 {/* ── PROPOSTAS CRIATIVAS ── */}
                 {lead.page_token && (
                   <div className="border-t border-white/[0.05] pt-5">
