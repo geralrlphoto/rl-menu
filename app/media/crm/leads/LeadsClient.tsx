@@ -71,7 +71,9 @@ const DEFAULT_PROPOSTAS: PropostaItem[] = [
   { titulo: 'Proposta 3', valor: '', servicos: [] },
 ]
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://rl-menu-lake.vercel.app'
+const BASE_URL  = process.env.NEXT_PUBLIC_BASE_URL || 'https://rl-menu-lake.vercel.app'
+const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
+const MAPS_LINK = 'https://www.google.com/maps/place/RL+Photo.Video+(Casamentos,Batizados,Eventos)/@38.634382,-8.9147077,212m/data=!3m2!1e3!4b1!4m6!3m5!1s0xd19414ebaa9e467:0x1d9b63c70ffe06a!8m2!3d38.634381!4d-8.914064!16s%2Fg%2F11w219lx62?authuser=0&entry=ttu&g_ep=EgoyMDI2MDQxMi4wIKXMDSoASAFQAw%3D%3D'
 
 export default function LeadsClient({ leads: initial, estadoColors }: Props) {
   const [leads,        setLeads]        = useState(initial)
@@ -404,14 +406,14 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                           className="text-[12px] tracking-[0.25em] text-white/35 hover:text-white/60 border border-white/[0.10] hover:border-white/20 px-4 py-2.5 uppercase transition-all">
                           {copiedId === lead.page_token ? '✓ Copiado' : 'Copiar Link'}
                         </button>
-                        <button onClick={() => { setPortalForm({ reuniao_data: lead.reuniao_data || '', reuniao_hora: lead.reuniao_hora || '', reuniao_tipo: lead.reuniao_tipo || 'Presencial', reuniao_link: lead.reuniao_link || '' }); setPortalFormId(portalFormId === lead.id ? null : lead.id) }}
+                        <button onClick={() => { const tipo = lead.reuniao_tipo || 'Presencial'; setPortalForm({ reuniao_data: lead.reuniao_data || '', reuniao_hora: lead.reuniao_hora || '', reuniao_tipo: tipo, reuniao_link: lead.reuniao_link || (tipo === 'Videochamada' ? MEET_LINK : MAPS_LINK) }); setPortalFormId(portalFormId === lead.id ? null : lead.id) }}
                           className="text-[12px] tracking-[0.25em] text-white/35 hover:text-white/60 border border-white/[0.10] hover:border-white/20 px-4 py-2.5 uppercase transition-all">
                           Editar Reunião
                         </button>
                       </div>
                     </div>
                   ) : (
-                    <button onClick={() => { setPortalForm({ reuniao_data: '', reuniao_hora: '', reuniao_tipo: 'Presencial', reuniao_link: '' }); setPortalFormId(portalFormId === lead.id ? null : lead.id) }}
+                    <button onClick={() => { setPortalForm({ reuniao_data: '', reuniao_hora: '', reuniao_tipo: 'Presencial', reuniao_link: MAPS_LINK }); setPortalFormId(portalFormId === lead.id ? null : lead.id) }}
                       className="text-[12px] tracking-[0.25em] text-white/40 hover:text-white/65 border border-white/[0.10] hover:border-white/25 px-5 py-3 uppercase transition-all">
                       + Criar Portal de Reunião
                     </button>
@@ -428,14 +430,14 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                         <label className={labelCls + ' mb-2 block'}>Modo</label>
                         <div className="flex gap-3">
                           {['Presencial', 'Videochamada'].map(tipo => (
-                            <button key={tipo} onClick={() => setPortalForm(f => ({ ...f, reuniao_tipo: tipo }))}
+                            <button key={tipo} onClick={() => setPortalForm(f => ({ ...f, reuniao_tipo: tipo, reuniao_link: tipo === 'Videochamada' ? MEET_LINK : MAPS_LINK }))}
                               className={`flex-1 py-3 text-[12px] tracking-[0.2em] uppercase border transition-all ${portalForm.reuniao_tipo === tipo ? 'border-white/30 text-white/70 bg-white/[0.05]' : 'border-white/[0.09] text-white/30 hover:border-white/20'}`}>
                               {tipo}
                             </button>
                           ))}
                         </div>
                       </div>
-                      <div><label className={labelCls + ' mb-2 block'}>Link</label><input type="url" value={portalForm.reuniao_link} placeholder="https://..." onChange={e => setPortalForm(f => ({ ...f, reuniao_link: e.target.value }))} className={inputCls} /></div>
+                      <div><label className={labelCls + ' mb-2 block'}>{portalForm.reuniao_tipo === 'Videochamada' ? 'Link Google Meet' : 'Link Google Maps'}</label><input type="url" value={portalForm.reuniao_link} placeholder="https://..." onChange={e => setPortalForm(f => ({ ...f, reuniao_link: e.target.value }))} className={inputCls} /></div>
                       <div className="flex items-center gap-3 pt-1">
                         <button onClick={() => criarPortal(lead)} disabled={creatingPortal}
                           className="flex-1 py-3 border border-white/25 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/35 text-[12px] tracking-[0.35em] text-white/60 hover:text-white/80 uppercase transition-all disabled:opacity-30">
