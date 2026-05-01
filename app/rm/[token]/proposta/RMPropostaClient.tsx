@@ -671,7 +671,7 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
     // 1 — PLANO DE AÇÃO
     <div key={1} className="flex flex-col h-full w-full">
       <SlideHeader idx={1} />
-      <div className="flex-1 flex flex-col justify-center gap-8 px-8 sm:px-20 py-8 max-w-3xl mx-auto w-full">
+      <div className="flex-1 flex flex-col justify-start gap-8 px-8 sm:px-20 pt-10 sm:pt-14 pb-8 max-w-3xl mx-auto w-full">
         <h2 className="text-[32px] font-extrabold tracking-[0.12em] text-white/90 uppercase leading-tight text-center">
           Plano de Ação<br />Personalizado<br />com 3 Etapas
         </h2>
@@ -692,7 +692,7 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
     // 2 — COMO FUNCIONA
     <div key={2} className="flex flex-col h-full w-full">
       <SlideHeader idx={2} />
-      <div className="flex-1 flex flex-col justify-center gap-8 px-8 sm:px-16 py-8 max-w-5xl mx-auto w-full">
+      <div className="flex-1 flex flex-col justify-start gap-8 px-8 sm:px-16 pt-10 sm:pt-14 pb-8 max-w-5xl mx-auto w-full">
         <h2 className="text-[32px] font-extrabold tracking-[0.12em] text-white/90 uppercase text-center">Como Funciona?</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
           {COMO_FUNCIONA.map((item, i) => (
@@ -711,7 +711,7 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
     // 3 — O QUE ESTÁ INCLUÍDO
     <div key={3} className="flex flex-col h-full w-full">
       <SlideHeader idx={3} />
-      <div className="flex-1 flex flex-col justify-center gap-8 px-8 sm:px-20 py-8 max-w-3xl mx-auto w-full">
+      <div className="flex-1 flex flex-col justify-start gap-8 px-8 sm:px-20 pt-10 sm:pt-14 pb-8 max-w-3xl mx-auto w-full">
         <h2 className="text-[32px] font-extrabold tracking-[0.08em] text-white/90 uppercase">O Que Está Incluído?</h2>
         <div className="flex flex-col gap-5">
           {proposta.incluido.map((item, i) => (
@@ -727,7 +727,7 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
     // 4 — VÍDEOS
     <div key={4} className="flex flex-col h-full w-full">
       <SlideHeader idx={4} />
-      <div className="flex-1 flex flex-col justify-center gap-8 px-8 sm:px-16 py-8 max-w-5xl mx-auto w-full">
+      <div className="flex-1 flex flex-col justify-start gap-8 px-8 sm:px-16 pt-10 sm:pt-14 pb-8 max-w-5xl mx-auto w-full">
         <h2 className="text-[32px] font-extrabold tracking-[0.08em] text-white/90 uppercase text-center">O Nosso Trabalho</h2>
         <div className="grid grid-cols-1 gap-4">
           {proposta.videoUrls.map((url, i) => {
@@ -750,7 +750,7 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
     // 5 — CHECKPOINT
     <div key={5} className="flex flex-col h-full w-full">
       <SlideHeader idx={5} />
-      <div className="flex-1 flex flex-col items-center justify-center gap-10 px-8 sm:px-20 text-center py-8 max-w-3xl mx-auto w-full">
+      <div className="flex-1 flex flex-col items-center justify-start gap-10 px-8 sm:px-20 text-center pt-10 sm:pt-14 pb-8 max-w-3xl mx-auto w-full">
         <p className={labelCls}>A Tua Opinião</p>
         <h2 className="text-[38px] font-extrabold tracking-[0.06em] text-white/90 uppercase leading-tight">Momento de<br />Reflexão</h2>
         <div className="flex items-center gap-4">
