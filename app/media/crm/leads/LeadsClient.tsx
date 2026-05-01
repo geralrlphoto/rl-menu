@@ -36,6 +36,35 @@ interface Props {
   estadoColors: Record<string, string>
 }
 
+const SERVICOS_LISTA = [
+  '1 Reunião',
+  '2 Reuniões',
+  '1 Dia de Captação',
+  '2 Dias de Captação',
+  '3 Dias de Captação',
+  '1 Dia Opcional',
+  'Filmagem 4K',
+  'Drone',
+  'Fotografia',
+  '1 Videógrafo',
+  '2 Videógrafos',
+  '1 Assistente',
+  '2 Assistentes',
+  'Diretor Criativo',
+  '1 Fotógrafo',
+  '2 Fotógrafos',
+  '1 Editor',
+  '1 Vídeo Horizontal 1 Min',
+  '1 Vídeo Horizontal 2 Min',
+  '1 Vídeo Horizontal 3 Min',
+  '1 Vídeo Vertical 59seg',
+  '1 Vídeo Vertical 90seg',
+  '1 Vídeo Vertical 2min',
+  'Direitos Musicais',
+  'Cedência de Fotografias Uso Media Social',
+  'Voz Off Estúdio',
+]
+
 const DEFAULT_PROPOSTAS: PropostaItem[] = [
   { titulo: 'Proposta 1', valor: '', servicos: [] },
   { titulo: 'Proposta 2', valor: '', servicos: [] },
@@ -62,7 +91,6 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
   const [propostas,       setPropostas]       = useState<Record<string, PropostaItem[]>>({})
   const [propostasLoading,setPropostasLoading]= useState<Record<string, boolean>>({})
   const [propostaOpen,    setPropostaOpen]    = useState<Record<string, number | null>>({}) // leadId → 0|1|2|null
-  const [newServico,      setNewServico]      = useState<Record<string, string>>({})         // `${leadId}_${idx}`
   const [savingProposta,  setSavingProposta]  = useState<Record<string, boolean>>({})
   const [savedProposta,   setSavedProposta]   = useState<Record<string, boolean>>({})
 
@@ -110,20 +138,6 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
       arr[idx]  = { ...arr[idx], ...patch }
       return { ...p, [leadId]: arr }
     })
-  }
-
-  function addServico(leadId: string, idx: number) {
-    const key = `${leadId}_${idx}`
-    const val = (newServico[key] || '').trim()
-    if (!val) return
-    const cur = propostas[leadId]?.[idx]?.servicos || []
-    updateProposta(leadId, idx, { servicos: [...cur, val] })
-    setNewServico(s => ({ ...s, [key]: '' }))
-  }
-
-  function removeServico(leadId: string, idx: number, si: number) {
-    const cur = propostas[leadId]?.[idx]?.servicos || []
-    updateProposta(leadId, idx, { servicos: cur.filter((_, i) => i !== si) })
   }
 
   // ── Portal ────────────────────────────────────────────────────────────────
@@ -259,8 +273,7 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                       <div className="flex flex-col gap-2">
                         {(propostas[lead.id] || DEFAULT_PROPOSTAS).map((prop, idx) => {
                           const isOpen = propostaOpen[lead.id] === idx
-                          const key    = `${lead.id}_${idx}`
-                          const nKey   = key
+                          const key      = `${lead.id}_${idx}`
                           const isSaving = savingProposta[key]
                           const isSaved  = savedProposta[key]
 
@@ -286,37 +299,36 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
 
                               {/* Corpo */}
                               {isOpen && (
-                                <div className="border-t border-white/[0.05] px-4 py-4 flex flex-col gap-4">
+                                <div className="border-t border-white/[0.05] px-4 py-4 flex flex-col gap-5">
 
-                                  {/* Serviços existentes */}
-                                  {prop.servicos.length > 0 && (
-                                    <div className="flex flex-col gap-1.5">
-                                      <p className={labelCls + ' mb-1'}>Serviços</p>
-                                      {prop.servicos.map((s, si) => (
-                                        <div key={si} className="flex items-center justify-between gap-2 px-3 py-2 bg-white/[0.02] border border-white/[0.05]">
-                                          <span className="text-[11px] text-white/55 flex-1">{s}</span>
-                                          <button onClick={() => removeServico(lead.id, idx, si)}
-                                            className="text-[9px] text-white/20 hover:text-red-400/60 transition-colors shrink-0">✕</button>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-
-                                  {/* Adicionar serviço */}
+                                  {/* Serviços — toggle grid */}
                                   <div>
-                                    <p className={labelCls + ' mb-1.5'}>Adicionar Serviço</p>
-                                    <div className="flex gap-2">
-                                      <input
-                                        className={inputCls}
-                                        placeholder="Nome do serviço..."
-                                        value={newServico[nKey] || ''}
-                                        onChange={e => setNewServico(s => ({ ...s, [nKey]: e.target.value }))}
-                                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addServico(lead.id, idx) } }}
-                                      />
-                                      <button onClick={() => addServico(lead.id, idx)}
-                                        className="shrink-0 px-4 border border-white/[0.12] hover:border-white/25 text-[11px] text-white/40 hover:text-white/65 transition-all">
-                                        +
-                                      </button>
+                                    <p className={labelCls + ' mb-3'}>Serviços</p>
+                                    <div className="flex flex-wrap gap-2">
+                                      {SERVICOS_LISTA.map(s => {
+                                        const active = prop.servicos.includes(s)
+                                        return (
+                                          <button
+                                            key={s}
+                                            onClick={() => {
+                                              const cur = prop.servicos
+                                              updateProposta(lead.id, idx, {
+                                                servicos: active
+                                                  ? cur.filter(x => x !== s)
+                                                  : [...cur, s],
+                                              })
+                                            }}
+                                            className={`text-[9px] tracking-[0.25em] uppercase px-3 py-1.5 border transition-all duration-150 ${
+                                              active
+                                                ? 'border-white/40 text-white/80 bg-white/[0.08]'
+                                                : 'border-white/[0.08] text-white/25 hover:border-white/20 hover:text-white/45'
+                                            }`}
+                                          >
+                                            {active && <span className="mr-1.5 text-emerald-400/70">✓</span>}
+                                            {s}
+                                          </button>
+                                        )
+                                      })}
                                     </div>
                                   </div>
 
