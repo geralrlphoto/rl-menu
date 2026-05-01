@@ -114,21 +114,29 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
     }
   }
 
-  // ── Propostas: guardar ────────────────────────────────────────────────────
+  // ── Propostas: guardar + redirecionar ────────────────────────────────────
   async function saveProposta(lead: Lead, idx: number) {
     if (!lead.page_token) return
     const key = `${lead.id}_${idx}`
     setSavingProposta(s => ({ ...s, [key]: true }))
-    const content  = { ...(contentCache[lead.id] || {}), propostas: propostas[lead.id] }
-    await fetch('/api/media-portal/save-content', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ token: lead.page_token, page_content: content }),
-    })
-    setContentCache(c => ({ ...c, [lead.id]: content }))
-    setSavingProposta(s => ({ ...s, [key]: false }))
-    setSavedProposta(s => ({ ...s, [key]: true }))
-    setTimeout(() => setSavedProposta(s => ({ ...s, [key]: false })), 2000)
+    try {
+      const content = { ...(contentCache[lead.id] || {}), propostas: propostas[lead.id] }
+      const res = await fetch('/api/media-portal/save-content', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ token: lead.page_token, page_content: content }),
+      })
+      if (!res.ok) throw new Error('save failed')
+      setContentCache(c => ({ ...c, [lead.id]: content }))
+      setSavedProposta(s => ({ ...s, [key]: true }))
+      // redirecionar para proposta criativa em novo tab
+      window.open(`${BASE_URL}/rm/${lead.page_token}/proposta`, '_blank')
+      setTimeout(() => setSavedProposta(s => ({ ...s, [key]: false })), 3000)
+    } catch {
+      alert('Erro ao guardar. Tenta novamente.')
+    } finally {
+      setSavingProposta(s => ({ ...s, [key]: false }))
+    }
   }
 
   // ── Propostas: helpers de edição ─────────────────────────────────────────
@@ -347,12 +355,16 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                                   <button
                                     onClick={() => saveProposta(lead, idx)}
                                     disabled={isSaving}
-                                    className={`w-full py-2.5 text-[9px] tracking-[0.45em] uppercase transition-all border disabled:opacity-40 ${
+                                    className={`w-full py-3 text-[10px] tracking-[0.5em] uppercase font-medium transition-all border disabled:opacity-40 ${
                                       isSaved
-                                        ? 'border-emerald-400/40 text-emerald-400/60 bg-emerald-400/[0.04]'
-                                        : 'border-white/15 hover:border-white/30 text-white/40 hover:text-white/65 bg-white/[0.02] hover:bg-white/[0.05]'
+                                        ? 'border-emerald-400/50 text-emerald-400/80 bg-emerald-400/[0.07]'
+                                        : 'border-white/30 text-white/70 bg-white/[0.05] hover:bg-white/[0.10] hover:border-white/50 hover:text-white/90'
                                     }`}>
-                                    {isSaved ? '✓ Guardado' : isSaving ? 'A guardar...' : `✓ Guardar ${prop.titulo}`}
+                                    {isSaved
+                                      ? '✓ Guardado — A abrir Proposta Criativa...'
+                                      : isSaving
+                                      ? 'A guardar...'
+                                      : `Guardar e Ver ${prop.titulo} →`}
                                   </button>
                                 </div>
                               )}
