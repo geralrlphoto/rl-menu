@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { RMPageContent, RMPackage } from '../RMLeadPageClient'
 
 // ─── Embed helper ─────────────────────────────────────────────────────────────
@@ -60,6 +60,7 @@ function merge(saved: any): RMPageContent {
       propostaAtiva: 1, cta: 'Iniciar Produção', password: '',
       planoEtapas: DEFAULT_PLANO, incluido: DEFAULT_INCLUIDO,
       videoUrls: ['','',''], checkpointPergunta: 'Esta abordagem alinha-se com a visão da vossa marca?',
+      slideImages: ['','','','','','',''],
     },
     sobre:   { label: 'Quem Somos', titulo: 'RL Media', texto: '' },
   }
@@ -76,6 +77,7 @@ function merge(saved: any): RMPageContent {
       incluido:           saved.proposta?.incluido           || d.proposta.incluido,
       videoUrls:          saved.proposta?.videoUrls          || d.proposta.videoUrls,
       checkpointPergunta: saved.proposta?.checkpointPergunta || d.proposta.checkpointPergunta,
+      slideImages:        saved.proposta?.slideImages        || d.proposta.slideImages,
     },
     sobre:   { ...d.sobre,   ...(saved.sobre   || {}) },
   }
@@ -92,9 +94,7 @@ const COMO_FUNCIONA = [
   { n: '8', titulo: 'Feedback e Resultados',      desc: 'Dás-nos o teu feedback sobre todo o percurso do projeto e analisamos o impacto.' },
 ]
 
-// Slides que têm edição inline (índice do slide)
-const EDITABLE_SLIDES = [1, 3, 4, 5, 6]
-
+const EDITABLE_SLIDES = [0, 1, 2, 3, 4, 5, 6]
 const TOTAL_SLIDES = 7
 
 const T = {
@@ -129,6 +129,8 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
   const [draft,        setDraft]        = useState<RMPageContent['proposta'] | null>(null)
   const [saving,       setSaving]       = useState(false)
   const [savedOk,      setSavedOk]      = useState(false)
+  const [uploading,    setUploading]    = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   function startEdit(idx: number) {
     if (!content) return
@@ -153,6 +155,29 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
       setSavedOk(true)
       setTimeout(() => { setEditingSlide(null); setDraft(null); setSavedOk(false) }, 900)
     } finally { setSaving(false) }
+  }
+
+  async function uploadImage(file: File, idx: number) {
+    if (!draft) return
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res  = await fetch('/api/media-portal/upload-image', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (data.url) {
+        const imgs = [...(draft.slideImages || ['','','','','','',''])]
+        imgs[idx] = data.url
+        setDraft({ ...draft, slideImages: imgs })
+      }
+    } finally { setUploading(false) }
+  }
+
+  function setSlideImage(idx: number, val: string) {
+    if (!draft) return
+    const imgs = [...(draft.slideImages || ['','','','','','',''])]
+    imgs[idx] = val
+    setDraft({ ...draft, slideImages: imgs })
   }
 
   // ── Load ────────────────────────────────────────────────────────────────────
@@ -202,18 +227,81 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
   const labelCls = `${T.xs} tracking-[0.55em] text-white/50 uppercase`
 
   if (loading) return (
-    <main className="min-h-screen flex items-center justify-center bg-[#04080f]">
+    <main className="min-h-screen flex items-center justify-center" style={{ background: '#04080f' }}>
       <p className={`${T.xs} tracking-[0.6em] text-white/40 uppercase animate-pulse`}>A carregar...</p>
     </main>
   )
   if (notFound) return (
-    <main className="min-h-screen flex items-center justify-center bg-[#04080f]">
+    <main className="min-h-screen flex items-center justify-center" style={{ background: '#04080f' }}>
       <p className={`${T.xs} tracking-[0.6em] text-white/40 uppercase`}>Página não disponível</p>
     </main>
   )
 
   const { proposta } = content!
   const empresa = lead!.empresa || lead!.nome || ''
+
+  // ── Cabeçalho de imagem do slide ───────────────────────────────────────────
+  function SlideHeader({ idx }: { idx: number }) {
+    const img = proposta.slideImages?.[idx]
+    if (!img) return null
+    return (
+      <div className="relative w-full shrink-0 overflow-hidden" style={{ height: 220 }}>
+        <img src={img} alt="" className="w-full h-full object-cover object-center" />
+        {/* fade para o fundo */}
+        <div className="absolute inset-0" style={{
+          background: 'linear-gradient(to bottom, rgba(4,8,15,0.15) 0%, rgba(4,8,15,0.60) 60%, rgba(4,8,15,0.98) 100%)',
+        }} />
+      </div>
+    )
+  }
+
+  // ── Bloco de edição de imagem (usado em todos os slides) ──────────────────
+  function ImageEditBlock({ idx }: { idx: number }) {
+    if (!draft) return null
+    const img = draft.slideImages?.[idx] || ''
+    return (
+      <div className="border-t border-white/[0.06] pt-5 mt-5">
+        <label className={LBL}>Foto do Cabeçalho</label>
+        <div className="flex gap-2 mb-3">
+          <input
+            className={INP}
+            placeholder="Cole um URL de imagem..."
+            value={img}
+            onChange={e => setSlideImage(idx, e.target.value)}
+          />
+          <label className={`relative shrink-0 cursor-pointer flex items-center gap-1.5 px-3 py-2 border text-[10px] tracking-[0.35em] uppercase transition-all ${uploading ? 'border-white/10 text-white/25' : 'border-white/20 hover:border-white/40 text-white/45 hover:text-white/70'}`}>
+            {uploading ? '...' : '↑ Upload'}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="absolute inset-0 opacity-0 cursor-pointer"
+              disabled={uploading}
+              onChange={e => {
+                const f = e.target.files?.[0]
+                if (f) uploadImage(f, idx)
+                e.target.value = ''
+              }}
+            />
+          </label>
+        </div>
+        {img ? (
+          <div className="relative overflow-hidden" style={{ height: 110 }}>
+            <img src={img} alt="" className="w-full h-full object-cover object-center" />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 50%, rgba(4,8,15,0.9) 100%)' }} />
+            <button
+              onClick={() => setSlideImage(idx, '')}
+              className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center bg-black/60 hover:bg-black/80 text-white/60 hover:text-white text-[11px] border border-white/15 transition-all"
+            >✕</button>
+          </div>
+        ) : (
+          <div className="border border-dashed border-white/[0.07] flex items-center justify-center" style={{ height: 60 }}>
+            <p className="text-[10px] tracking-widest text-white/20 uppercase">Sem imagem</p>
+          </div>
+        )}
+      </div>
+    )
+  }
 
   // ── PASSWORD GATE ──────────────────────────────────────────────────────────
   if (!unlocked) return (
@@ -260,9 +348,22 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
     </main>
   )
 
-  // ── EDIT FORM por slide ────────────────────────────────────────────────────
+  // ── FORMULÁRIO DE EDIÇÃO por slide ─────────────────────────────────────────
   function renderEditForm(idx: number) {
     if (!draft) return null
+
+    // Bloco de imagem é comum a todos os slides
+    const imgBlock = <ImageEditBlock idx={idx} />
+
+    if (idx === 0) return (
+      <div className="flex flex-col gap-1">
+        <p className="text-[12px] text-white/35 leading-relaxed mb-4">
+          O slide de capa usa o logo e o nome do cliente automaticamente.<br />Podes adicionar uma foto de fundo aqui em baixo.
+        </p>
+        {imgBlock}
+      </div>
+    )
+
     if (idx === 1) return (
       <div className="flex flex-col gap-6">
         {draft.planoEtapas.map((etapa, i) => (
@@ -284,8 +385,19 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
             onChange={e => setDraft({ ...draft, planoFrase: e.target.value } as any)}
           />
         </div>
+        {imgBlock}
       </div>
     )
+
+    if (idx === 2) return (
+      <div className="flex flex-col gap-1">
+        <p className="text-[12px] text-white/35 leading-relaxed mb-4">
+          O slide "Como Funciona?" tem conteúdo fixo. Podes adicionar uma foto de cabeçalho.
+        </p>
+        {imgBlock}
+      </div>
+    )
+
     if (idx === 3) return (
       <div className="flex flex-col gap-3">
         <label className={LBL}>Itens incluídos — um por linha</label>
@@ -294,8 +406,10 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
           onChange={e => setDraft({ ...draft, incluido: e.target.value.split('\n') })}
         />
         <p className="text-[11px] text-white/25">Cada linha torna-se um item com ✓</p>
+        {imgBlock}
       </div>
     )
+
     if (idx === 4) return (
       <div className="flex flex-col gap-5">
         {draft.videoUrls.map((url, i) => {
@@ -312,146 +426,173 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
             </div>
           )
         })}
+        {imgBlock}
       </div>
     )
+
     if (idx === 5) return (
       <div className="flex flex-col gap-3">
         <label className={LBL}>Pergunta de reflexão</label>
         <textarea rows={4} className={AREA} value={draft.checkpointPergunta}
           onChange={e => setDraft({ ...draft, checkpointPergunta: e.target.value })}
         />
+        {imgBlock}
       </div>
     )
+
     if (idx === 6) return (
       <div className="flex flex-col gap-3">
         <label className={LBL}>Texto do botão CTA</label>
         <input className={INP} value={draft.cta}
           onChange={e => setDraft({ ...draft, cta: e.target.value })}
         />
+        {imgBlock}
       </div>
     )
-    return null
+
+    return imgBlock
   }
 
-  // ── SLIDES (só display) ────────────────────────────────────────────────────
+  // ── SLIDES ─────────────────────────────────────────────────────────────────
   const slides = [
 
     // 0 — CAPA
-    <div key={0} className="flex flex-col items-center justify-center h-full px-8 text-center gap-8">
-      <div style={{ background:'#050507', borderRadius:'9999px', padding:'6px', boxShadow:'0 0 24px rgba(255,255,255,0.22), 0 0 56px rgba(255,255,255,0.09)' }}>
-        <img src="/logo-rl-media-branco.png" alt="RL Media" className="w-36 h-36 object-contain block" style={{ mixBlendMode:'screen', borderRadius:'9999px' }} />
-      </div>
-      <div className="flex flex-col items-center gap-5">
-        <p className="text-[16px] tracking-[0.55em] text-white/55 uppercase">RL Media · Audiovisual</p>
-        <h1 className="text-[42px] font-extralight tracking-[0.35em] text-white/90 uppercase leading-snug">Proposta<br />Criativa</h1>
-        <div className="flex items-center gap-5 my-1">
-          <div className="h-px w-16 bg-white/30" />
-          <div className="w-2 h-2 bg-white/40 rotate-45" />
-          <div className="h-px w-16 bg-white/30" />
+    <div key={0} className="flex flex-col h-full w-full">
+      <SlideHeader idx={0} />
+      <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-8 py-8">
+        <div style={{ background:'#04080f', borderRadius:'9999px', padding:'6px', boxShadow:'0 0 24px rgba(255,255,255,0.22), 0 0 56px rgba(255,255,255,0.09)' }}>
+          <img src="/logo-rl-media-branco.png" alt="RL Media" className="w-36 h-36 object-contain block" style={{ mixBlendMode:'screen', borderRadius:'9999px' }} />
         </div>
-        {empresa && <p className="text-[20px] font-extralight tracking-[0.4em] text-white/65 uppercase">{empresa}</p>}
-        <p className="text-[15px] tracking-[0.5em] text-white/40 uppercase font-mono">
-          {new Date().toLocaleDateString('pt-PT', { day:'2-digit', month:'long', year:'numeric' })}
-        </p>
+        <div className="flex flex-col items-center gap-5">
+          <p className="text-[16px] tracking-[0.55em] text-white/55 uppercase">RL Media · Audiovisual</p>
+          <h1 className="text-[42px] font-extralight tracking-[0.35em] text-white/90 uppercase leading-snug">Proposta<br />Criativa</h1>
+          <div className="flex items-center gap-5 my-1">
+            <div className="h-px w-16 bg-white/30" />
+            <div className="w-2 h-2 bg-white/40 rotate-45" />
+            <div className="h-px w-16 bg-white/30" />
+          </div>
+          {empresa && <p className="text-[20px] font-extralight tracking-[0.4em] text-white/65 uppercase">{empresa}</p>}
+          <p className="text-[15px] tracking-[0.5em] text-white/40 uppercase font-mono">
+            {new Date().toLocaleDateString('pt-PT', { day:'2-digit', month:'long', year:'numeric' })}
+          </p>
+        </div>
       </div>
     </div>,
 
     // 1 — PLANO DE AÇÃO
-    <div key={1} className="flex flex-col justify-center h-full px-8 sm:px-20 gap-8 max-w-3xl mx-auto w-full">
-      <h2 className="text-[32px] font-extrabold tracking-[0.12em] text-white/90 uppercase leading-tight text-center">
-        Plano de Ação<br />Personalizado<br />com 3 Etapas
-      </h2>
-      <div className="flex flex-col gap-6">
-        {proposta.planoEtapas.map((etapa, i) => (
-          <div key={i} className={`flex flex-col gap-2 ${i < proposta.planoEtapas.length - 1 ? 'pb-6 border-b border-white/[0.07]' : ''}`}>
-            <h3 className="text-[22px] font-bold text-white/85">{i + 1}. {etapa.titulo}</h3>
-            <p className="text-[17px] font-light text-white/60 leading-relaxed">{etapa.texto}</p>
-          </div>
-        ))}
+    <div key={1} className="flex flex-col h-full w-full">
+      <SlideHeader idx={1} />
+      <div className="flex-1 flex flex-col justify-center gap-8 px-8 sm:px-20 py-8 max-w-3xl mx-auto w-full">
+        <h2 className="text-[32px] font-extrabold tracking-[0.12em] text-white/90 uppercase leading-tight text-center">
+          Plano de Ação<br />Personalizado<br />com 3 Etapas
+        </h2>
+        <div className="flex flex-col gap-6">
+          {proposta.planoEtapas.map((etapa, i) => (
+            <div key={i} className={`flex flex-col gap-2 ${i < proposta.planoEtapas.length - 1 ? 'pb-6 border-b border-white/[0.07]' : ''}`}>
+              <h3 className="text-[22px] font-bold text-white/85">{i + 1}. {etapa.titulo}</h3>
+              <p className="text-[17px] font-light text-white/60 leading-relaxed">{etapa.texto}</p>
+            </div>
+          ))}
+        </div>
+        <p className="text-[16px] font-light text-white/45 leading-relaxed tracking-wide">
+          {(proposta as any).planoFrase ?? 'Uma proposta desenvolvida com base nos objetivos da vossa marca. Foco em resultados, narrativa estratégica e produção de excelência do briefing à entrega final.'}
+        </p>
       </div>
-      <p className="text-[16px] font-light text-white/45 leading-relaxed tracking-wide">
-        {(proposta as any).planoFrase ?? 'Uma proposta desenvolvida com base nos objetivos da vossa marca. Foco em resultados, narrativa estratégica e produção de excelência do briefing à entrega final.'}
-      </p>
     </div>,
 
     // 2 — COMO FUNCIONA
-    <div key={2} className="flex flex-col justify-center h-full px-8 sm:px-16 gap-8 max-w-5xl mx-auto w-full">
-      <h2 className="text-[32px] font-extrabold tracking-[0.12em] text-white/90 uppercase text-center">Como Funciona?</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
-        {COMO_FUNCIONA.map((item, i) => (
-          <div key={i} className="flex flex-col gap-1">
-            <div className="flex items-center gap-3 pb-2 border-b border-white/[0.10]">
-              <span className="w-7 h-7 flex items-center justify-center bg-white/[0.08] border border-white/[0.15] text-[13px] font-bold text-white/70 shrink-0">{item.n}</span>
-              <h3 className="text-[22px] font-bold text-white/85 uppercase tracking-wide leading-tight">{item.titulo}</h3>
+    <div key={2} className="flex flex-col h-full w-full">
+      <SlideHeader idx={2} />
+      <div className="flex-1 flex flex-col justify-center gap-8 px-8 sm:px-16 py-8 max-w-5xl mx-auto w-full">
+        <h2 className="text-[32px] font-extrabold tracking-[0.12em] text-white/90 uppercase text-center">Como Funciona?</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
+          {COMO_FUNCIONA.map((item, i) => (
+            <div key={i} className="flex flex-col gap-1">
+              <div className="flex items-center gap-3 pb-2 border-b border-white/[0.10]">
+                <span className="w-7 h-7 flex items-center justify-center bg-white/[0.08] border border-white/[0.15] text-[13px] font-bold text-white/70 shrink-0">{item.n}</span>
+                <h3 className="text-[22px] font-bold text-white/85 uppercase tracking-wide leading-tight">{item.titulo}</h3>
+              </div>
+              <p className="text-[17px] font-light text-white/55 leading-relaxed pt-1">{item.desc}</p>
             </div>
-            <p className="text-[17px] font-light text-white/55 leading-relaxed pt-1">{item.desc}</p>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>,
 
     // 3 — O QUE ESTÁ INCLUÍDO
-    <div key={3} className="flex flex-col justify-center h-full px-8 sm:px-20 gap-8 max-w-3xl mx-auto w-full">
-      <h2 className="text-[32px] font-extrabold tracking-[0.08em] text-white/90 uppercase">O Que Está Incluído?</h2>
-      <div className="flex flex-col gap-5">
-        {proposta.incluido.map((item, i) => (
-          <div key={i} className="flex items-start gap-4">
-            <span className="text-[22px] font-bold text-white/50 shrink-0 leading-tight">✓</span>
-            <p className="text-[22px] font-bold text-white/85 leading-tight">{item}</p>
-          </div>
-        ))}
+    <div key={3} className="flex flex-col h-full w-full">
+      <SlideHeader idx={3} />
+      <div className="flex-1 flex flex-col justify-center gap-8 px-8 sm:px-20 py-8 max-w-3xl mx-auto w-full">
+        <h2 className="text-[32px] font-extrabold tracking-[0.08em] text-white/90 uppercase">O Que Está Incluído?</h2>
+        <div className="flex flex-col gap-5">
+          {proposta.incluido.map((item, i) => (
+            <div key={i} className="flex items-start gap-4">
+              <span className="text-[22px] font-bold text-white/50 shrink-0 leading-tight">✓</span>
+              <p className="text-[22px] font-bold text-white/85 leading-tight">{item}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>,
 
     // 4 — VÍDEOS
-    <div key={4} className="flex flex-col justify-center h-full px-8 sm:px-16 gap-8 max-w-5xl mx-auto w-full">
-      <h2 className="text-[32px] font-extrabold tracking-[0.08em] text-white/90 uppercase text-center">O Nosso Trabalho</h2>
-      <div className="grid grid-cols-1 gap-4">
-        {proposta.videoUrls.map((url, i) => {
-          const embed = toEmbedUrl(url)
-          if (embed) return (
-            <div key={i} className="border border-white/[0.08] w-full" style={{ aspectRatio:'16/9' }}>
-              <iframe src={embed} className="w-full h-full" allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" />
-            </div>
-          )
-          return (
-            <div key={i} className="border border-dashed border-white/[0.08] flex items-center justify-center" style={{ aspectRatio:'16/9' }}>
-              <p className={`${T.xs} text-white/20 tracking-widest uppercase`}>Vídeo {i + 1}</p>
-            </div>
-          )
-        })}
+    <div key={4} className="flex flex-col h-full w-full">
+      <SlideHeader idx={4} />
+      <div className="flex-1 flex flex-col justify-center gap-8 px-8 sm:px-16 py-8 max-w-5xl mx-auto w-full">
+        <h2 className="text-[32px] font-extrabold tracking-[0.08em] text-white/90 uppercase text-center">O Nosso Trabalho</h2>
+        <div className="grid grid-cols-1 gap-4">
+          {proposta.videoUrls.map((url, i) => {
+            const embed = toEmbedUrl(url)
+            if (embed) return (
+              <div key={i} className="border border-white/[0.08] w-full" style={{ aspectRatio:'16/9' }}>
+                <iframe src={embed} className="w-full h-full" allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" />
+              </div>
+            )
+            return (
+              <div key={i} className="border border-dashed border-white/[0.08] flex items-center justify-center" style={{ aspectRatio:'16/9' }}>
+                <p className={`${T.xs} text-white/20 tracking-widest uppercase`}>Vídeo {i + 1}</p>
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>,
 
     // 5 — CHECKPOINT
-    <div key={5} className="flex flex-col items-center justify-center h-full px-8 sm:px-20 text-center gap-10 max-w-3xl mx-auto w-full">
-      <p className={labelCls}>A Tua Opinião</p>
-      <h2 className="text-[38px] font-extrabold tracking-[0.06em] text-white/90 uppercase leading-tight">Momento de<br />Reflexão</h2>
-      <div className="flex items-center gap-4">
-        <div className="h-px w-12 bg-white/20" />
-        <div className="w-1.5 h-1.5 bg-white/30 rotate-45" />
-        <div className="h-px w-12 bg-white/20" />
+    <div key={5} className="flex flex-col h-full w-full">
+      <SlideHeader idx={5} />
+      <div className="flex-1 flex flex-col items-center justify-center gap-10 px-8 sm:px-20 text-center py-8 max-w-3xl mx-auto w-full">
+        <p className={labelCls}>A Tua Opinião</p>
+        <h2 className="text-[38px] font-extrabold tracking-[0.06em] text-white/90 uppercase leading-tight">Momento de<br />Reflexão</h2>
+        <div className="flex items-center gap-4">
+          <div className="h-px w-12 bg-white/20" />
+          <div className="w-1.5 h-1.5 bg-white/30 rotate-45" />
+          <div className="h-px w-12 bg-white/20" />
+        </div>
+        <p className="text-[24px] font-light text-white/70 leading-relaxed max-w-xl">{proposta.checkpointPergunta}</p>
       </div>
-      <p className="text-[24px] font-light text-white/70 leading-relaxed max-w-xl">{proposta.checkpointPergunta}</p>
     </div>,
 
     // 6 — PRÓXIMOS PASSOS
-    <div key={6} className="flex flex-col items-center justify-center h-full px-8 text-center gap-10">
-      <p className={labelCls}>Próximos Passos</p>
-      <div className="flex flex-col items-center gap-5">
-        <p className={`${T.xxl} font-extralight text-white/70 tracking-wide leading-relaxed`}>
-          Estamos prontos para começar.<br />Basta dar o próximo passo.
+    <div key={6} className="flex flex-col h-full w-full">
+      <SlideHeader idx={6} />
+      <div className="flex-1 flex flex-col items-center justify-center gap-10 px-8 text-center py-8">
+        <p className={labelCls}>Próximos Passos</p>
+        <div className="flex flex-col items-center gap-5">
+          <p className={`${T.xxl} font-extralight text-white/70 tracking-wide leading-relaxed`}>
+            Estamos prontos para começar.<br />Basta dar o próximo passo.
+          </p>
+          <a href={`/rm/${token}`}
+            className={`flex items-center gap-3 border border-white/30 bg-white/[0.04] hover:bg-white/[0.09] hover:border-white/50 px-10 py-5 ${T.xs} tracking-[0.5em] text-white/65 hover:text-white/90 uppercase transition-all duration-300 group`}>
+            <span>{proposta.cta}</span>
+            <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
+          </a>
+        </div>
+        <p className={`${T.xs} font-light text-white/45 tracking-wider leading-relaxed max-w-sm`}>
+          Esta proposta foi preparada especificamente para {empresa || 'a vossa empresa'}.<br />
+          É confidencial e destinada exclusivamente ao seu destinatário.
         </p>
-        <a href={`/rm/${token}`}
-          className={`flex items-center gap-3 border border-white/30 bg-white/[0.04] hover:bg-white/[0.09] hover:border-white/50 px-10 py-5 ${T.xs} tracking-[0.5em] text-white/65 hover:text-white/90 uppercase transition-all duration-300 group`}>
-          <span>{proposta.cta}</span>
-          <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
-        </a>
       </div>
-      <p className={`${T.xs} font-light text-white/45 tracking-wider leading-relaxed max-w-sm`}>
-        Esta proposta foi preparada especificamente para {empresa || 'a vossa empresa'}.<br />
-        É confidencial e destinada exclusivamente ao seu destinatário.
-      </p>
     </div>,
   ]
 
@@ -459,7 +600,7 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
   return (
     <div className="h-screen relative overflow-hidden flex flex-col" style={{ background: '#04080f' }}>
 
-      {/* ── Background: grelha + neon azul ── */}
+      {/* Background */}
       <div className="pointer-events-none fixed inset-0 z-0" style={{
         backgroundImage: `linear-gradient(rgba(70,120,255,0.055) 1px,transparent 1px),linear-gradient(90deg,rgba(70,120,255,0.055) 1px,transparent 1px)`,
         backgroundSize: '64px 64px',
@@ -498,8 +639,8 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
           >
             {slide}
 
-            {/* ── BOTÃO ✎ — posicionado no wrapper, cobre sempre o slide inteiro ── */}
-            {isAdmin && EDITABLE_SLIDES.includes(i) && editingSlide !== i && (
+            {/* ── Botão ✎ Editar ── */}
+            {isAdmin && editingSlide !== i && (
               <button
                 onClick={() => startEdit(i)}
                 className="absolute bottom-5 right-5 z-40 flex items-center gap-2 px-4 py-2.5 border border-white/25 hover:border-white/50 bg-[#0d1120] hover:bg-[#141a2e] text-white/60 hover:text-white/90 transition-all"
@@ -509,12 +650,11 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
               </button>
             )}
 
-            {/* ── OVERLAY DE EDIÇÃO ── */}
+            {/* ── Overlay de edição ── */}
             {isAdmin && editingSlide === i && draft && (
-              <div className="absolute inset-0 z-50 bg-[#04080f] flex flex-col overflow-y-auto">
-                {/* Barra topo */}
-                <div className="sticky top-0 z-10 flex items-center justify-between px-8 py-4 border-b border-white/[0.08] bg-[#04080f]">
-                  <p className="text-[10px] tracking-[0.6em] text-white/40 uppercase">✎ Editar Slide {i + 1}</p>
+              <div className="absolute inset-0 z-50 flex flex-col overflow-y-auto" style={{ background: '#04080f' }}>
+                <div className="sticky top-0 z-10 flex items-center justify-between px-8 py-4 border-b border-white/[0.08]" style={{ background: '#04080f' }}>
+                  <p className="text-[10px] tracking-[0.6em] text-white/40 uppercase">✎ Slide {i + 1}</p>
                   <div className="flex items-center gap-2">
                     <button onClick={cancelEdit}
                       className="px-4 py-2 text-[10px] tracking-[0.4em] text-white/40 hover:text-white/65 border border-white/[0.08] hover:border-white/20 uppercase transition-all">
@@ -530,7 +670,6 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
                     </button>
                   </div>
                 </div>
-                {/* Formulário */}
                 <div className="flex-1 px-8 sm:px-16 py-8 max-w-2xl w-full mx-auto">
                   {renderEditForm(i)}
                 </div>

@@ -30,6 +30,8 @@ export type RMPageContent = {
     videoUrls: string[]
     // Slide 5 — Checkpoint
     checkpointPergunta: string
+    // Imagens de cabeçalho por slide (índice 0–6)
+    slideImages: string[]
   }
   sobre: { label: string; titulo: string; texto: string }
 }
@@ -110,6 +112,7 @@ const DEFAULT_CONTENT: RMPageContent = {
     ],
     videoUrls: ['', '', ''],
     checkpointPergunta: 'Esta abordagem alinha-se com a visão da vossa marca?',
+    slideImages: ['', '', '', '', '', '', ''],
   },
   sobre: {
     label: 'Quem Somos',
@@ -134,6 +137,7 @@ function merge(saved: any): RMPageContent {
       incluido:            saved.proposta?.incluido            || DEFAULT_CONTENT.proposta.incluido,
       videoUrls:           saved.proposta?.videoUrls           || DEFAULT_CONTENT.proposta.videoUrls,
       checkpointPergunta:  saved.proposta?.checkpointPergunta  || DEFAULT_CONTENT.proposta.checkpointPergunta,
+      slideImages:         saved.proposta?.slideImages         || DEFAULT_CONTENT.proposta.slideImages,
     },
     sobre: { ...DEFAULT_CONTENT.sobre, ...(saved.sobre || {}) },
   }
