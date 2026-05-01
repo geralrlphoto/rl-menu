@@ -286,12 +286,26 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
       </div>
     </div>,
 
-    // ── SLIDE 3 — VISÃO ESTRATÉGICA ─────────────────────────────────────────
-    <div key={3} className="flex flex-col justify-center h-full px-8 sm:px-20 gap-10 max-w-4xl mx-auto w-full">
-      <p className={labelCls}>03 — Visão Estratégica</p>
-      <p className="text-[24px] font-extralight text-white/75 leading-relaxed tracking-wide">
-        "Não produzimos apenas vídeos. Construímos narrativas visuais que comunicam com precisão, envolvem audiências e trabalham para a vossa marca a longo prazo."
-      </p>
+    // ── SLIDE 3 — O QUE ESTÁ INCLUÍDO ───────────────────────────────────────
+    <div key={3} className="flex flex-col justify-center h-full px-8 sm:px-20 gap-8 max-w-3xl mx-auto w-full">
+      <h2 className="text-[32px] font-extrabold tracking-[0.08em] text-white/90 uppercase">
+        O Que Está Incluído?
+      </h2>
+      <div className="flex flex-col gap-5">
+        {[
+          'Planeamento estratégico',
+          'Gestor de conta dedicado à tua Marca',
+          'Desenvolvimento da Narrativa & Storytelling',
+          'Produção de fotografias e vídeos personalizado',
+          'Edição de fotografias e vídeos personalizado e website',
+          'Acompanhamento contínuo durante todo o projeto',
+        ].map((item, i) => (
+          <div key={i} className="flex items-start gap-4">
+            <span className="text-[22px] font-bold text-white/50 shrink-0 leading-tight">✓</span>
+            <p className="text-[22px] font-bold text-white/85 leading-tight">{item}</p>
+          </div>
+        ))}
+      </div>
     </div>,
 
     // ── SLIDE 4 — PROCESSO ──────────────────────────────────────────────────
