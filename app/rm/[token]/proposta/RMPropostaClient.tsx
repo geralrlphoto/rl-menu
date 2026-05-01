@@ -266,16 +266,8 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
       </p>
     </div>,
 
-    // ── SLIDE 2 — VISÃO ESTRATÉGICA ─────────────────────────────────────────
-    <div key={2} className="flex flex-col justify-center h-full px-8 sm:px-20 gap-10 max-w-4xl mx-auto w-full">
-      <p className={labelCls}>02 — Visão Estratégica</p>
-      <p className="text-[24px] font-extralight text-white/75 leading-relaxed tracking-wide">
-        "Não produzimos apenas vídeos. Construímos narrativas visuais que comunicam com precisão, envolvem audiências e trabalham para a vossa marca a longo prazo."
-      </p>
-    </div>,
-
-    // ── SLIDE 3 — COMO FUNCIONA ─────────────────────────────────────────────
-    <div key={3} className="flex flex-col justify-center h-full px-8 sm:px-16 gap-8 max-w-5xl mx-auto w-full">
+    // ── SLIDE 2 — COMO FUNCIONA ─────────────────────────────────────────────
+    <div key={2} className="flex flex-col justify-center h-full px-8 sm:px-16 gap-8 max-w-5xl mx-auto w-full">
       <h2 className="text-[32px] font-extrabold tracking-[0.12em] text-white/90 uppercase text-center">
         Como Funciona?
       </h2>
@@ -292,6 +284,14 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
           </div>
         ))}
       </div>
+    </div>,
+
+    // ── SLIDE 3 — VISÃO ESTRATÉGICA ─────────────────────────────────────────
+    <div key={3} className="flex flex-col justify-center h-full px-8 sm:px-20 gap-10 max-w-4xl mx-auto w-full">
+      <p className={labelCls}>03 — Visão Estratégica</p>
+      <p className="text-[24px] font-extralight text-white/75 leading-relaxed tracking-wide">
+        "Não produzimos apenas vídeos. Construímos narrativas visuais que comunicam com precisão, envolvem audiências e trabalham para a vossa marca a longo prazo."
+      </p>
     </div>,
 
     // ── SLIDE 4 — PROCESSO ──────────────────────────────────────────────────
