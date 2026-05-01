@@ -227,7 +227,7 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
     // ── SLIDE 1 — VISÃO ESTRATÉGICA ─────────────────────────────────────────
     <div key={1} className="flex flex-col justify-center h-full px-8 sm:px-20 gap-10 max-w-4xl mx-auto w-full">
       <p className={labelCls}>01 — Visão Estratégica</p>
-      <p className={`${T.xxl} font-extralight text-white/75 leading-relaxed tracking-wide`}>
+      <p className="text-[24px] font-extralight text-white/75 leading-relaxed tracking-wide">
         "Não produzimos apenas vídeos. Construímos narrativas visuais que comunicam com precisão, envolvem audiências e trabalham para a vossa marca a longo prazo."
       </p>
       <div className="h-px w-16 bg-white/30" />
