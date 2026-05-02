@@ -45,6 +45,14 @@ export interface FichaCliente {
   metodoPagamento?: string
 }
 
+export interface ContaBancaria {
+  prazo?: string
+  metodo?: string
+  titular?: string
+  iban?: string
+  email?: string
+}
+
 export interface Projeto {
   ref: string
   nome: string
@@ -69,6 +77,7 @@ export interface Projeto {
   cpsFormUrl?: string
   satisfacaoUrl?: string
   fichaCliente?: FichaCliente
+  contaBancaria?: ContaBancaria
 }
 
 const PROJETOS: Record<string, Projeto> = {

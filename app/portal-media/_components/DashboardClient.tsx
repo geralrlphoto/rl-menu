@@ -74,14 +74,25 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
           <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#050507] to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-[#050507] via-[#050507]/70 to-transparent" />
           {isEditing && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 w-80">
-              <p className="text-sm text-white/40 text-center mb-1">URL da imagem de fundo</p>
-              <EditableField
-                value={projeto.heroImageUrl ?? ''}
-                isEditing={true}
-                onChange={v => set('heroImageUrl', v)}
-                placeholder="https://..."
-              />
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 w-80 flex flex-col gap-2">
+              <div>
+                <p className="text-sm text-white/40 text-center mb-1">URL da imagem de fundo</p>
+                <EditableField
+                  value={projeto.heroImageUrl ?? ''}
+                  isEditing={true}
+                  onChange={v => set('heroImageUrl', v)}
+                  placeholder="https://..."
+                />
+              </div>
+              <div>
+                <p className="text-sm text-white/40 text-center mb-1">URL do logo (centro)</p>
+                <EditableField
+                  value={projeto.heroLogoUrl ?? ''}
+                  isEditing={true}
+                  onChange={v => set('heroLogoUrl', v)}
+                  placeholder="https://... (logo do cliente)"
+                />
+              </div>
             </div>
           )}
           {projeto.heroLogoUrl && (
@@ -116,6 +127,12 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
               className="text-[clamp(2rem,6vw,3.5rem)] font-extralight tracking-[0.4em] text-white/85 uppercase leading-none block" />
             <EditableField value={projeto.cliente} isEditing={isEditing} onChange={v => set('cliente', v)}
               className="text-sm tracking-[0.3em] text-white/30 uppercase mt-2 block" />
+            <div className="mt-2 flex items-center gap-2">
+              {!isEditing && <span className="text-sm tracking-[0.25em] text-white/20 uppercase">Estado:</span>}
+              <EditableField value={projeto.status} isEditing={isEditing} onChange={v => set('status', v)}
+                className="text-sm tracking-[0.25em] text-white/40 uppercase block"
+                placeholder="Estado do projeto" />
+            </div>
           </div>
         </div>
 

@@ -32,7 +32,12 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
       await fetch(`/api/media-portal/${projeto.ref}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contratoUrl: projeto.contratoUrl, cpsFormUrl: projeto.cpsFormUrl }),
+        body: JSON.stringify({
+          contratoUrl:    projeto.contratoUrl,
+          cpsFormUrl:     projeto.cpsFormUrl,
+          fichaCliente:   projeto.fichaCliente,
+          contaBancaria:  projeto.contaBancaria,
+        }),
       })
     } catch {}
     setSaving(false)
@@ -42,6 +47,18 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
   const cancel = () => { setProjeto(initial); setIsEditing(false) }
   const set = (field: keyof Projeto, value: string) =>
     setProjeto(p => ({ ...p, [field]: value }))
+
+  const setFicha = (field: keyof FichaCliente, value: string) =>
+    setProjeto(p => ({
+      ...p,
+      fichaCliente: { ...(p.fichaCliente ?? {}), [field]: value },
+    }))
+
+  const setConta = (field: string, value: string) =>
+    setProjeto(p => ({
+      ...p,
+      contaBancaria: { ...(p.contaBancaria ?? {}), [field]: value },
+    }))
 
   async function gerarContrato() {
     setGerando(true)
@@ -77,6 +94,28 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
   }
 
   const temContratoGerado = contratoLocal?.gerado && contratoLocal?.url
+
+  // Conta bancária com defaults
+  const conta = {
+    prazo:   projeto.contaBancaria?.prazo   ?? '48 horas após confirmação em reunião',
+    metodo:  projeto.contaBancaria?.metodo  ?? 'Transferência Bancária',
+    titular: projeto.contaBancaria?.titular ?? 'Liliana Sofia Barreto Gonçalves',
+    iban:    projeto.contaBancaria?.iban    ?? 'PT50 0036 0167 9910 0068 3001 0',
+    email:   projeto.contaBancaria?.email   ?? 'geral.rlmedia@gmail.com',
+  }
+
+  const fichaFields: { label: string; field: keyof FichaCliente; placeholder?: string }[] = [
+    { label: 'Nome',            field: 'nome',             placeholder: 'Nome do cliente' },
+    { label: 'Empresa / Marca', field: 'empresa',          placeholder: 'Nome da empresa' },
+    { label: 'NIF / NIPC',      field: 'nif',              placeholder: '000 000 000' },
+    { label: 'Email',           field: 'email',            placeholder: 'email@empresa.pt' },
+    { label: 'Telefone',        field: 'telefone',         placeholder: '+351 900 000 000' },
+    { label: 'Morada',          field: 'morada',           placeholder: 'Rua, cidade' },
+    { label: 'Rep. Legal',      field: 'representanteLegal', placeholder: 'Nome do representante' },
+    { label: 'Data do Evento',  field: 'dataEvento',       placeholder: '15 Jul 2025' },
+    { label: 'Local do Evento', field: 'localEvento',      placeholder: 'Lisboa' },
+    { label: 'Orçamento',       field: 'orcamento',        placeholder: '3000 €' },
+  ]
 
   return (
     <>
@@ -127,48 +166,83 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
           <p className="text-[11px] tracking-[0.5em] text-white/20 uppercase mb-5">Método de Pagamento</p>
 
-          {/* Prazo — destaque */}
+          {/* Prazo */}
           <div className="bg-white/[0.04] border border-white/[0.08] px-4 py-3 mb-5">
-            <p className="text-[13px] text-white/50 font-light leading-relaxed">
-              Prazo de pagamento:{' '}
-              <span className="text-white/80 font-medium">48 horas após confirmação em reunião</span>
-            </p>
+            <p className="text-[11px] tracking-[0.3em] text-white/25 uppercase mb-1">Prazo</p>
+            <EditableField
+              value={conta.prazo}
+              isEditing={isEditing}
+              onChange={v => setConta('prazo', v)}
+              className="text-[14px] text-white/80 font-medium"
+              placeholder="Ex: 48 horas após confirmação"
+            />
           </div>
 
-          {/* Método + Titular — grid 2 col */}
+          {/* Método + Titular */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
             <div>
               <p className="text-[11px] tracking-[0.3em] text-white/25 uppercase mb-1">Método</p>
-              <p className="text-[14px] text-white/65">Transferência Bancária</p>
+              <EditableField
+                value={conta.metodo}
+                isEditing={isEditing}
+                onChange={v => setConta('metodo', v)}
+                className="text-[14px] text-white/65"
+                placeholder="Transferência Bancária"
+              />
             </div>
             <div>
               <p className="text-[11px] tracking-[0.3em] text-white/25 uppercase mb-1">Titular</p>
-              <p className="text-[14px] text-white/65">Liliana Sofia Barreto Gonçalves</p>
+              <EditableField
+                value={conta.titular}
+                isEditing={isEditing}
+                onChange={v => setConta('titular', v)}
+                className="text-[14px] text-white/65"
+                placeholder="Nome do titular"
+              />
             </div>
           </div>
 
-          {/* IBAN — bloco próprio */}
+          {/* IBAN */}
           <div className="border border-white/[0.10] bg-white/[0.02] px-4 py-4 mb-5">
             <p className="text-[11px] tracking-[0.3em] text-white/25 uppercase mb-2">IBAN</p>
-            <p className="text-[16px] text-white/80 font-mono tracking-widest">PT50 0036 0167 9910 0068 3001 0</p>
+            <EditableField
+              value={conta.iban}
+              isEditing={isEditing}
+              onChange={v => setConta('iban', v)}
+              className="text-[16px] text-white/80 font-mono tracking-widest"
+              placeholder="PT50 0000 0000 0000 0000 0000 0"
+            />
           </div>
 
           {/* Comprovativo */}
           <div className="border-t border-white/[0.06] pt-4">
             <p className="text-[11px] tracking-[0.3em] text-white/25 uppercase mb-2">Após Transferência</p>
-            <p className="text-[13px] text-white/45 leading-relaxed">
-              Envie o comprovativo para{' '}
-              <a href="mailto:geral.rlmedia@gmail.com" className="text-white/70 hover:text-white/90 transition-colors underline underline-offset-2">
-                geral.rlmedia@gmail.com
-              </a>
-              {' '}— a validação só é confirmada após receção do comprovativo.
-            </p>
+            {isEditing ? (
+              <div>
+                <p className="text-[12px] text-white/30 mb-1">Email para comprovativo</p>
+                <EditableField
+                  value={conta.email}
+                  isEditing={true}
+                  onChange={v => setConta('email', v)}
+                  className="text-[13px] text-white/65"
+                  placeholder="email@rlmedia.pt"
+                />
+              </div>
+            ) : (
+              <p className="text-[13px] text-white/45 leading-relaxed">
+                Envie o comprovativo para{' '}
+                <a href={`mailto:${conta.email}`} className="text-white/70 hover:text-white/90 transition-colors underline underline-offset-2">
+                  {conta.email}
+                </a>
+                {' '}— a validação só é confirmada após receção do comprovativo.
+              </p>
+            )}
           </div>
         </div>
 
         <div className="flex flex-col gap-3 mb-8">
 
-          {/* Contrato gerado — destaque */}
+          {/* Contrato gerado */}
           {temContratoGerado ? (
             <div className="border border-white/[0.12] bg-white/[0.03] px-6 py-5 relative overflow-hidden">
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
@@ -205,11 +279,12 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
               </div>
               {isEditing && (
                 <div className="mt-4">
+                  <p className="text-[12px] text-white/30 mb-1">URL externo do contrato (opcional)</p>
                   <EditableField
                     value={projeto.contratoUrl ?? ''}
                     isEditing={true}
                     onChange={v => set('contratoUrl', v)}
-                    placeholder="URL externo do contrato (opcional)"
+                    placeholder="https://drive.google.com/..."
                     className="text-sm text-white/40"
                   />
                 </div>
@@ -228,21 +303,22 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                     {projeto.contratoUrl ? 'Assinado' : 'A aguardar geração'}
                   </p>
                   {isEditing && (
-                    <EditableField
-                      value={projeto.contratoUrl ?? ''}
-                      isEditing={true}
-                      onChange={v => set('contratoUrl', v)}
-                      placeholder="URL do contrato (Google Drive, etc.)"
-                      className="text-sm text-white/40"
-                    />
+                    <div>
+                      <p className="text-[12px] text-white/30 mb-1">URL do contrato (Google Drive, etc.)</p>
+                      <EditableField
+                        value={projeto.contratoUrl ?? ''}
+                        isEditing={true}
+                        onChange={v => set('contratoUrl', v)}
+                        placeholder="https://..."
+                        className="text-sm text-white/40"
+                      />
+                    </div>
                   )}
                 </div>
                 <div className="shrink-0 flex flex-col gap-2 items-end">
-                  {!isEditing && (
-                    projeto.contratoUrl ? (
-                      <a href={projeto.contratoUrl} target="_blank" rel="noopener noreferrer"
-                        className="text-sm tracking-[0.3em] text-white/35 hover:text-white/60 uppercase transition-colors">Ver →</a>
-                    ) : null
+                  {!isEditing && projeto.contratoUrl && (
+                    <a href={projeto.contratoUrl} target="_blank" rel="noopener noreferrer"
+                      className="text-sm tracking-[0.3em] text-white/35 hover:text-white/60 uppercase transition-colors">Ver →</a>
                   )}
                   {isAdmin && !isEditing && (
                     <button onClick={gerarContrato} disabled={gerando}
@@ -255,43 +331,65 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
             </div>
           )}
 
-          {/* Dados do cliente para o contrato */}
-          {projeto.fichaCliente && (
+          {/* ── Dados do Cliente ── */}
+          {(isEditing || projeto.fichaCliente) && (
             <div className="border border-white/[0.07] bg-white/[0.02] px-6 py-6">
-              <p className="text-[15px] tracking-[0.5em] text-white/25 uppercase mb-4">Dados do Cliente</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
-                {[
-                  { label: 'Nome',               val: projeto.fichaCliente.nome },
-                  { label: 'Empresa / Marca',    val: projeto.fichaCliente.empresa },
-                  { label: 'NIF / NIPC',         val: projeto.fichaCliente.nif },
-                  { label: 'Email',              val: projeto.fichaCliente.email },
-                  { label: 'Telefone',           val: projeto.fichaCliente.telefone },
-                  { label: 'Morada',             val: projeto.fichaCliente.morada },
-                  { label: 'Data do Evento',     val: projeto.fichaCliente.dataEvento },
-                  { label: 'Local do Evento',    val: projeto.fichaCliente.localEvento },
-                ].filter(r => r.val).map(({ label, val }) => (
-                  <div key={label} className="flex flex-col gap-0.5">
-                    <p className="text-[15px] tracking-[0.35em] text-white/20 uppercase">{label}</p>
-                    <p className="text-[14px] text-white/55 font-light">{val}</p>
-                  </div>
-                ))}
+              <p className="text-[15px] tracking-[0.5em] text-white/25 uppercase mb-5">Dados do Cliente</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+                {fichaFields
+                  .filter(({ field }) => isEditing || !!(projeto.fichaCliente as any)?.[field])
+                  .map(({ label, field, placeholder }) => (
+                    <div key={field} className="flex flex-col gap-0.5">
+                      <p className="text-[11px] tracking-[0.35em] text-white/20 uppercase">{label}</p>
+                      <EditableField
+                        value={(projeto.fichaCliente as any)?.[field] ?? ''}
+                        isEditing={isEditing}
+                        onChange={v => setFicha(field, v)}
+                        className="text-[14px] text-white/55 font-light"
+                        placeholder={placeholder}
+                      />
+                    </div>
+                  ))}
               </div>
-              {projeto.fichaCliente.servicosList && (
-                <div className="mt-4 pt-4 border-t border-white/[0.06]">
-                  <p className="text-[15px] tracking-[0.35em] text-white/20 uppercase mb-2">Serviços Incluídos</p>
-                  <div className="flex flex-col gap-1">
-                    {projeto.fichaCliente.servicosList.split('\n').filter(Boolean).map((s, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <span className="w-1 h-1 rounded-full bg-white/15 shrink-0" />
-                        <p className="text-[14px] text-white/50 font-light">{s}</p>
-                      </div>
-                    ))}
-                  </div>
-                  {projeto.fichaCliente.orcamento && (
-                    <p className="mt-3 text-[15px] text-white/60 font-mono">
-                      Total: <span className="text-white/80">{projeto.fichaCliente.orcamento}</span>
-                    </p>
+
+              {/* Serviços Incluídos */}
+              {(isEditing || projeto.fichaCliente?.servicosList) && (
+                <div className="mt-5 pt-4 border-t border-white/[0.06]">
+                  <p className="text-[11px] tracking-[0.35em] text-white/20 uppercase mb-2">Serviços Incluídos</p>
+                  {isEditing ? (
+                    <EditableField
+                      value={projeto.fichaCliente?.servicosList ?? ''}
+                      isEditing={true}
+                      onChange={v => setFicha('servicosList', v)}
+                      className="text-[14px] text-white/50 font-light"
+                      placeholder="Um serviço por linha..."
+                      multiline
+                    />
+                  ) : (
+                    <div className="flex flex-col gap-1">
+                      {projeto.fichaCliente?.servicosList?.split('\n').filter(Boolean).map((s, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <span className="w-1 h-1 rounded-full bg-white/15 shrink-0" />
+                          <p className="text-[14px] text-white/50 font-light">{s}</p>
+                        </div>
+                      ))}
+                    </div>
                   )}
+                </div>
+              )}
+
+              {/* Observações */}
+              {(isEditing || projeto.fichaCliente?.observacoes) && (
+                <div className="mt-4 pt-4 border-t border-white/[0.06]">
+                  <p className="text-[11px] tracking-[0.35em] text-white/20 uppercase mb-2">Observações</p>
+                  <EditableField
+                    value={projeto.fichaCliente?.observacoes ?? ''}
+                    isEditing={isEditing}
+                    onChange={v => setFicha('observacoes', v)}
+                    className="text-[14px] text-white/45 font-light leading-relaxed"
+                    placeholder="Notas adicionais..."
+                    multiline
+                  />
                 </div>
               )}
             </div>
@@ -305,7 +403,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
             </p>
             {isEditing && (
               <div className="mb-4">
-                <p className="text-sm text-white/30 mb-1">URL do formulário CPS</p>
+                <p className="text-[12px] text-white/30 mb-1">URL do formulário CPS</p>
                 <EditableField
                   value={projeto.cpsFormUrl ?? ''}
                   isEditing={true}
