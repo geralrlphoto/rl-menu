@@ -31,10 +31,10 @@ export default async function ContratoPage({ params }: Props) {
   const contratoGerado = row?.dados?.contrato ?? null
 
   return (
-    <main className="min-h-screen bg-[#050507] relative">
+    <main className="min-h-screen bg-[#04080f] relative">
       <div className="pointer-events-none fixed inset-0 z-0" style={{
-        backgroundImage: `linear-gradient(rgba(30,100,255,0.09) 1px,transparent 1px),linear-gradient(90deg,rgba(30,100,255,0.09) 1px,transparent 1px)`,
-        backgroundSize: '60px 60px',
+        backgroundImage: `linear-gradient(rgba(70,120,255,0.055) 1px,transparent 1px),linear-gradient(90deg,rgba(70,120,255,0.055) 1px,transparent 1px)`,
+        backgroundSize: '64px 64px',
       }} />
       <ContratoClient projeto={projeto} isAdmin={isAdmin} contratoGerado={contratoGerado} />
     </main>

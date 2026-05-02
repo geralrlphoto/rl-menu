@@ -10,12 +10,12 @@ export default async function CardPage({ params }: Props) {
   if (!projeto) notFound()
 
   return (
-    <main className="min-h-screen bg-[#050507] relative overflow-hidden flex flex-col items-center justify-center px-6 py-16">
+    <main className="min-h-screen bg-[#04080f] relative overflow-hidden flex flex-col items-center justify-center px-6 py-16">
 
       {/* Grid bg */}
       <div className="pointer-events-none fixed inset-0 z-0" style={{
         backgroundImage: `linear-gradient(rgba(255,255,255,0.014) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.014) 1px,transparent 1px)`,
-        backgroundSize: '60px 60px',
+        backgroundSize: '64px 64px',
       }} />
 
       {/* Radial glow center */}

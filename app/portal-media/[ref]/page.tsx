@@ -31,13 +31,13 @@ export default async function PortalMediaPage({ params }: Props) {
   const isAdmin = cookieStore.get('rl_auth')?.value === process.env.AUTH_SECRET
 
   return (
-    <main className="min-h-screen bg-[#050507] relative overflow-x-hidden">
+    <main className="min-h-screen bg-[#04080f] relative overflow-x-hidden">
       <div className="pointer-events-none fixed inset-0 z-0" style={{
-        backgroundImage: `linear-gradient(rgba(30,100,255,0.09) 1px,transparent 1px),linear-gradient(90deg,rgba(30,100,255,0.09) 1px,transparent 1px)`,
-        backgroundSize: '60px 60px',
+        backgroundImage: `linear-gradient(rgba(70,120,255,0.055) 1px,transparent 1px),linear-gradient(90deg,rgba(70,120,255,0.055) 1px,transparent 1px)`,
+        backgroundSize: '64px 64px',
       }} />
       <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 90% 50% at 50% -5%, rgba(20,80,255,0.10) 0%, transparent 70%)',
+        background: 'radial-gradient(ellipse 90% 50% at 50% -5%, rgba(50,110,255,0.13) 0%, transparent 70%)',
       }} />
       <DashboardClient projeto={projeto} isAdmin={isAdmin} />
       <div className="fixed bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.05] to-transparent pointer-events-none z-20" />

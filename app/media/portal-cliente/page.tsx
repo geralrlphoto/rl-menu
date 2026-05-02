@@ -47,12 +47,12 @@ export default async function PortalClientePage() {
   const todos: Projeto[] = [...supabaseProjetos, ...mockProjetos]
 
   return (
-    <main className="min-h-screen bg-[#050507] relative">
+    <main className="min-h-screen bg-[#04080f] relative">
 
       {/* Grid bg */}
       <div className="pointer-events-none fixed inset-0 z-0" style={{
-        backgroundImage: `linear-gradient(rgba(30,100,255,0.09) 1px,transparent 1px),linear-gradient(90deg,rgba(30,100,255,0.09) 1px,transparent 1px)`,
-        backgroundSize: '60px 60px',
+        backgroundImage: `linear-gradient(rgba(70,120,255,0.055) 1px,transparent 1px),linear-gradient(90deg,rgba(70,120,255,0.055) 1px,transparent 1px)`,
+        backgroundSize: '64px 64px',
       }} />
       <div className="pointer-events-none fixed inset-0 z-0" style={{
         background: 'radial-gradient(ellipse 70% 50% at 50% -10%, rgba(20,80,255,0.10) 0%, transparent 70%)',
