@@ -93,7 +93,7 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
   const [createdPortalCliente,  setCreatedPortalCliente]  = useState<Record<string, boolean>>({})
 
   // Formas de pagamento
-  const [formasPagamento, setFormasPagamento] = useState<Record<string, { adjudicacao: number; reforcao: number; final: number }>>({})
+  const [formasPagamento, setFormasPagamento] = useState<Record<string, { adjudicacao: number; reforcao: number; final: number; guardadoEm?: string }>>({})
   const [savingPagamento, setSavingPagamento] = useState<Record<string, boolean>>({})
   const [savedPagamento,  setSavedPagamento]  = useState<Record<string, boolean>>({})
 
@@ -101,7 +101,8 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
     if (!lead.page_token) return
     setSavingPagamento(s => ({ ...s, [lead.id]: true }))
     try {
-      const fp = formasPagamento[lead.id] || contentCache[lead.id]?.formas_pagamento || { adjudicacao: 50, reforcao: 0, final: 50 }
+      const guardadoEm = new Date().toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      const fp = { ...(formasPagamento[lead.id] || contentCache[lead.id]?.formas_pagamento || { adjudicacao: 50, reforcao: 0, final: 50 }), guardadoEm }
       const content = { ...(contentCache[lead.id] || {}), formas_pagamento: fp }
       await fetch('/api/media-portal/save-content', {
         method: 'POST',
@@ -487,17 +488,26 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                             <span className="text-[13px] font-mono text-white/40">{valorNum.toLocaleString('pt-PT', { minimumFractionDigits: 2 })}€</span>
                           )}
                         </div>
-                        <button
-                          onClick={() => savePagamento(lead)}
-                          disabled={savingPagamento[lead.id]}
-                          className={`py-3 text-[12px] tracking-[0.35em] uppercase border transition-all disabled:opacity-40 ${
-                            savedPagamento[lead.id]
-                              ? 'border-emerald-400/50 text-emerald-400/70 bg-emerald-400/[0.05]'
-                              : 'border-white/20 text-white/50 hover:border-white/35 hover:text-white/75 bg-white/[0.02] hover:bg-white/[0.06]'
-                          }`}
-                        >
-                          {savedPagamento[lead.id] ? '✓ Guardado' : savingPagamento[lead.id] ? 'A guardar...' : 'Guardar Pagamentos'}
-                        </button>
+                        <div className="flex items-center gap-4">
+                          <button
+                            onClick={() => savePagamento(lead)}
+                            disabled={savingPagamento[lead.id]}
+                            className={`flex-1 py-3 text-[12px] tracking-[0.35em] uppercase border transition-all disabled:opacity-40 ${
+                              savedPagamento[lead.id]
+                                ? 'border-emerald-400/50 text-emerald-400/70 bg-emerald-400/[0.05]'
+                                : 'border-white/20 text-white/50 hover:border-white/35 hover:text-white/75 bg-white/[0.02] hover:bg-white/[0.06]'
+                            }`}
+                          >
+                            {savedPagamento[lead.id] ? '✓ Guardado' : savingPagamento[lead.id] ? 'A guardar...' : 'Guardar Pagamentos'}
+                          </button>
+                          {(fp.guardadoEm || savedPagamento[lead.id]) && (
+                            <span className="text-[10px] font-mono text-white/25 shrink-0">
+                              {savedPagamento[lead.id]
+                                ? new Date().toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                                : fp.guardadoEm}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )
