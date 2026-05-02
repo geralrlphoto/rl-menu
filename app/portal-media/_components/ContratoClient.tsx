@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import type { Projeto } from '@/app/portal-media/_data/mockProject'
+import type { Projeto, FichaCliente } from '@/app/portal-media/_data/mockProject'
 import AdminBar from './AdminBar'
 import EditableField from './EditableField'
 
@@ -46,21 +46,25 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
   async function gerarContrato() {
     setGerando(true)
     try {
+      const ficha: FichaCliente = projeto.fichaCliente || {}
       const valorTotal = (projeto.pagamentos || []).reduce((s: number, p: any) => s + (p.valor || 0), 0)
-      const servicosList = (projeto.entregas || []).map((e: any) => e.titulo).join('\n')
+      const servicosList = ficha.servicosList || (projeto.entregas || []).map((e: any) => e.titulo).join('\n')
       const res = await fetch('/api/media-portal/gerar-contrato', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ref: projeto.ref,
-          nome: projeto.nome,
-          empresa: projeto.cliente,
-          morada: projeto.local,
-          telefone: projeto.gestorTelefone,
-          email: projeto.gestorEmail,
-          orcamento: valorTotal > 0 ? String(valorTotal) : '',
+          ref:                projeto.ref,
+          nome:               ficha.nome               || projeto.nome,
+          empresa:            ficha.empresa            || projeto.cliente,
+          nif:                ficha.nif                || '',
+          morada:             ficha.morada             || projeto.local,
+          telefone:           ficha.telefone           || '',
+          email:              ficha.email              || '',
+          representanteLegal: ficha.representanteLegal || ficha.nome || projeto.nome,
+          orcamento:          ficha.orcamento          || (valorTotal > 0 ? String(valorTotal) : ''),
           servicosList,
-          contratoEstado: 'Por Elaborar',
+          localAssinatura:    ficha.localEvento        || projeto.local || 'Lisboa',
+          contratoEstado:     'Por Elaborar',
         }),
       })
       const data = await res.json()
@@ -179,6 +183,48 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                   )}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Dados do cliente para o contrato */}
+          {projeto.fichaCliente && (
+            <div className="border border-white/[0.07] bg-white/[0.02] px-6 py-6">
+              <p className="text-[8px] tracking-[0.5em] text-white/25 uppercase mb-4">Dados do Cliente</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
+                {[
+                  { label: 'Nome',               val: projeto.fichaCliente.nome },
+                  { label: 'Empresa / Marca',    val: projeto.fichaCliente.empresa },
+                  { label: 'NIF / NIPC',         val: projeto.fichaCliente.nif },
+                  { label: 'Email',              val: projeto.fichaCliente.email },
+                  { label: 'Telefone',           val: projeto.fichaCliente.telefone },
+                  { label: 'Morada',             val: projeto.fichaCliente.morada },
+                  { label: 'Data do Evento',     val: projeto.fichaCliente.dataEvento },
+                  { label: 'Local do Evento',    val: projeto.fichaCliente.localEvento },
+                ].filter(r => r.val).map(({ label, val }) => (
+                  <div key={label} className="flex flex-col gap-0.5">
+                    <p className="text-[8px] tracking-[0.35em] text-white/20 uppercase">{label}</p>
+                    <p className="text-[12px] text-white/55 font-light">{val}</p>
+                  </div>
+                ))}
+              </div>
+              {projeto.fichaCliente.servicosList && (
+                <div className="mt-4 pt-4 border-t border-white/[0.06]">
+                  <p className="text-[8px] tracking-[0.35em] text-white/20 uppercase mb-2">Serviços Incluídos</p>
+                  <div className="flex flex-col gap-1">
+                    {projeto.fichaCliente.servicosList.split('\n').filter(Boolean).map((s, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <span className="w-1 h-1 rounded-full bg-white/15 shrink-0" />
+                        <p className="text-[12px] text-white/50 font-light">{s}</p>
+                      </div>
+                    ))}
+                  </div>
+                  {projeto.fichaCliente.orcamento && (
+                    <p className="mt-3 text-[13px] text-white/60 font-mono">
+                      Total: <span className="text-white/80">{projeto.fichaCliente.orcamento}</span>
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

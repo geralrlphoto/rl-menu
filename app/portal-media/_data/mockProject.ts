@@ -29,6 +29,21 @@ export interface BriefingItem {
   desc: string
 }
 
+export interface FichaCliente {
+  nome?: string
+  empresa?: string
+  nif?: string
+  email?: string
+  telefone?: string
+  morada?: string
+  representanteLegal?: string
+  orcamento?: string
+  servicosList?: string
+  dataEvento?: string
+  localEvento?: string
+  observacoes?: string
+}
+
 export interface Projeto {
   ref: string
   nome: string
@@ -52,6 +67,7 @@ export interface Projeto {
   contratoUrl?: string
   cpsFormUrl?: string
   satisfacaoUrl?: string
+  fichaCliente?: FichaCliente
 }
 
 const PROJETOS: Record<string, Projeto> = {
