@@ -31,7 +31,7 @@ export default async function PagamentosPage({ params }: Props) {
   return (
     <main className="min-h-screen bg-[#050507] relative">
       <div className="pointer-events-none fixed inset-0 z-0" style={{
-        backgroundImage: `linear-gradient(rgba(255,255,255,0.016) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.016) 1px,transparent 1px)`,
+        backgroundImage: `linear-gradient(rgba(30,100,255,0.09) 1px,transparent 1px),linear-gradient(90deg,rgba(30,100,255,0.09) 1px,transparent 1px)`,
         backgroundSize: '60px 60px',
       }} />
       <PagamentosClient projeto={projeto} isAdmin={isAdmin} />

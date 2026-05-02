@@ -1,4 +1,4 @@
-import Link from 'next/link'
+﻿import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 import { getProjeto, type Projeto } from '@/app/portal-media/_data/mockProject'
 
@@ -51,11 +51,11 @@ export default async function PortalClientePage() {
 
       {/* Grid bg */}
       <div className="pointer-events-none fixed inset-0 z-0" style={{
-        backgroundImage: `linear-gradient(rgba(255,255,255,0.016) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.016) 1px,transparent 1px)`,
+        backgroundImage: `linear-gradient(rgba(30,100,255,0.09) 1px,transparent 1px),linear-gradient(90deg,rgba(30,100,255,0.09) 1px,transparent 1px)`,
         backgroundSize: '60px 60px',
       }} />
       <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 70% 50% at 50% -10%, rgba(180,200,255,0.045) 0%, transparent 70%)',
+        background: 'radial-gradient(ellipse 70% 50% at 50% -10%, rgba(20,80,255,0.10) 0%, transparent 70%)',
       }} />
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 sm:px-10 py-10">
