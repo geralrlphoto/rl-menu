@@ -69,6 +69,7 @@ export async function POST(req: NextRequest) {
         ...pagamentos[idx],
         estado: 'pago',
         data: dataPagamento,
+        valor: parseFloat(valor) || pagamentos[idx].valor,
         comprativoUrl: comprativoUrl || pagamentos[idx].comprativoUrl,
       }
 
