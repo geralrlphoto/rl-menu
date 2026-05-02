@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
     },
     body: JSON.stringify({
       from: 'RL Media <geral@rlphotovideo.pt>',
-      to: ['rl@rlmedia.pt'],
+      to: ['geral.rlmedia@gmail.com'],
       subject: `Pagamento Registado — ${empresa} · ${referencia}`,
       html,
     }),
