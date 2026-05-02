@@ -125,32 +125,43 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
         {/* ── Método de Pagamento ── */}
         <div className="border border-white/[0.12] bg-white/[0.03] px-6 py-6 mb-6 relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-          <p className="text-[15px] tracking-[0.5em] text-white/20 uppercase mb-4">Método de Pagamento</p>
-          <p className="text-[14px] text-white/50 font-light leading-relaxed mb-4">
-            O pagamento deverá ser efetuado no prazo máximo de{' '}
-            <span className="text-white/75 font-medium">48 horas após a confirmação em reunião</span>.
-          </p>
-          <div className="flex flex-col gap-3">
-            <div className="flex items-start gap-3">
-              <span className="text-[15px] tracking-[0.3em] text-white/20 uppercase shrink-0 mt-1 w-16">Método</span>
-              <p className="text-[14px] text-white/55">Transferência bancária</p>
+          <p className="text-[11px] tracking-[0.5em] text-white/20 uppercase mb-5">Método de Pagamento</p>
+
+          {/* Prazo — destaque */}
+          <div className="bg-white/[0.04] border border-white/[0.08] px-4 py-3 mb-5">
+            <p className="text-[13px] text-white/50 font-light leading-relaxed">
+              Prazo de pagamento:{' '}
+              <span className="text-white/80 font-medium">48 horas após confirmação em reunião</span>
+            </p>
+          </div>
+
+          {/* Método + Titular — grid 2 col */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+            <div>
+              <p className="text-[11px] tracking-[0.3em] text-white/25 uppercase mb-1">Método</p>
+              <p className="text-[14px] text-white/65">Transferência Bancária</p>
             </div>
-            <div className="flex items-start gap-3">
-              <span className="text-[15px] tracking-[0.3em] text-white/20 uppercase shrink-0 mt-1 w-16">IBAN</span>
-              <p className="text-[14px] text-white/75 font-mono tracking-wide">PT50 0036 0167 9910 0068 3001 0</p>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="text-[15px] tracking-[0.3em] text-white/20 uppercase shrink-0 mt-1 w-16">Titular</span>
-              <p className="text-[14px] text-white/55">Liliana Sofia Barreto Gonçalves</p>
+            <div>
+              <p className="text-[11px] tracking-[0.3em] text-white/25 uppercase mb-1">Titular</p>
+              <p className="text-[14px] text-white/65">Liliana Sofia Barreto Gonçalves</p>
             </div>
           </div>
-          <div className="mt-5 border-t border-white/[0.06] pt-4">
-            <p className="text-[15px] text-white/35 leading-relaxed">
-              Após a transferência, envie o comprovativo para{' '}
-              <a href="mailto:geral.rlmedia@gmail.com" className="text-white/60 hover:text-white/85 transition-colors underline underline-offset-2">
+
+          {/* IBAN — bloco próprio */}
+          <div className="border border-white/[0.10] bg-white/[0.02] px-4 py-4 mb-5">
+            <p className="text-[11px] tracking-[0.3em] text-white/25 uppercase mb-2">IBAN</p>
+            <p className="text-[16px] text-white/80 font-mono tracking-widest">PT50 0036 0167 9910 0068 3001 0</p>
+          </div>
+
+          {/* Comprovativo */}
+          <div className="border-t border-white/[0.06] pt-4">
+            <p className="text-[11px] tracking-[0.3em] text-white/25 uppercase mb-2">Após Transferência</p>
+            <p className="text-[13px] text-white/45 leading-relaxed">
+              Envie o comprovativo para{' '}
+              <a href="mailto:geral.rlmedia@gmail.com" className="text-white/70 hover:text-white/90 transition-colors underline underline-offset-2">
                 geral.rlmedia@gmail.com
               </a>
-              . A validação do pagamento apenas será considerada após a receção e confirmação do respetivo comprovativo.
+              {' '}— a validação só é confirmada após receção do comprovativo.
             </p>
           </div>
         </div>
