@@ -175,7 +175,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                         className="text-xs tracking-[0.3em] text-white/35 hover:text-white/60 uppercase transition-colors">Ver →</a>
                     ) : null
                   )}
-                  {isAdmin && !isEditing && !projeto.contratoUrl && (
+                  {isAdmin && !isEditing && (
                     <button onClick={gerarContrato} disabled={gerando}
                       className="border border-white/20 hover:border-white/40 bg-white/[0.04] hover:bg-white/[0.08] px-5 py-2.5 text-[9px] tracking-[0.4em] text-white/50 hover:text-white/80 uppercase transition-all disabled:opacity-40">
                       {gerando ? 'A gerar...' : '⊕ Gerar Contrato'}
