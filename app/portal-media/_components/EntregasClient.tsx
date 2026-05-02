@@ -53,13 +53,13 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
       <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 py-10">
 
         <Link href={`/portal-media/${projeto.ref}`}
-          className="inline-flex items-center gap-2 text-xs tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
+          className="inline-flex items-center gap-2 text-sm tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
           <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
           Portal {projeto.nome}
         </Link>
 
         <div className="mb-10">
-          <p className="text-xs tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · {projeto.nome}</p>
+          <p className="text-sm tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · {projeto.nome}</p>
           <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Entregas</h1>
           <div className="mt-4 flex items-center gap-3">
             <div className="h-px w-12 bg-white/25" />
@@ -74,13 +74,13 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                 ${e.estado === 'disponivel' ? 'border-emerald-400/25 bg-emerald-400/5' : 'border-white/[0.06] bg-white/[0.015]'}`}>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-4 flex-1 min-w-0">
-                  <span className="text-xs font-mono text-white/15 mt-0.5 shrink-0">{String(i + 1).padStart(2, '0')}</span>
+                  <span className="text-sm font-mono text-white/15 mt-0.5 shrink-0">{String(i + 1).padStart(2, '0')}</span>
                   <div className="flex-1 min-w-0">
                     <EditableField
                       value={e.titulo}
                       isEditing={isEditing}
                       onChange={v => updateEntrega(i, 'titulo', v)}
-                      className="text-xs tracking-[0.25em] text-white/65 uppercase font-medium block"
+                      className="text-sm tracking-[0.25em] text-white/65 uppercase font-medium block"
                       placeholder="Título"
                     />
                     <div className="flex items-center gap-2 mt-1">
@@ -88,7 +88,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                         value={e.formato}
                         isEditing={isEditing}
                         onChange={v => updateEntrega(i, 'formato', v)}
-                        className="text-xs tracking-[0.15em] text-white/25 block"
+                        className="text-sm tracking-[0.15em] text-white/25 block"
                         placeholder="Formato (ex: MP4 · 16:9 · 4K)"
                       />
                       {!isEditing && e.duracao && <span className="text-white/15">·</span>}
@@ -96,7 +96,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                         value={e.duracao}
                         isEditing={isEditing}
                         onChange={v => updateEntrega(i, 'duracao', v)}
-                        className="text-xs tracking-[0.15em] text-white/25 block"
+                        className="text-sm tracking-[0.15em] text-white/25 block"
                         placeholder="Duração (ex: 2–3 min)"
                       />
                     </div>
@@ -105,7 +105,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                         value={e.linkUrl ?? ''}
                         isEditing={isEditing}
                         onChange={v => updateEntrega(i, 'linkUrl', v)}
-                        className="text-xs text-white/30 block mt-2"
+                        className="text-sm text-white/30 block mt-2"
                         placeholder="URL de download (opcional)"
                       />
                     )}
@@ -115,11 +115,11 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                   {!isEditing ? (
                     e.estado === 'disponivel' && e.linkUrl ? (
                       <a href={e.linkUrl} target="_blank" rel="noopener noreferrer"
-                        className="border border-white/20 bg-white/5 hover:bg-white/10 px-4 py-2 text-xs tracking-[0.3em] text-white/60 uppercase transition-colors">
+                        className="border border-white/20 bg-white/5 hover:bg-white/10 px-4 py-2 text-sm tracking-[0.3em] text-white/60 uppercase transition-colors">
                         Descarregar →
                       </a>
                     ) : (
-                      <span className="text-xs tracking-[0.35em] text-white/20 uppercase">Pendente</span>
+                      <span className="text-sm tracking-[0.35em] text-white/20 uppercase">Pendente</span>
                     )
                   ) : (
                     <>
@@ -128,10 +128,10 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                         options={ESTADO_OPTIONS}
                         isEditing={isEditing}
                         onChange={v => updateEntrega(i, 'estado', v)}
-                        className="text-xs tracking-[0.3em] text-white/50 uppercase"
+                        className="text-sm tracking-[0.3em] text-white/50 uppercase"
                       />
                       <button onClick={() => removeEntrega(i)}
-                        className="text-xs tracking-[0.3em] text-red-400/50 hover:text-red-400/80 uppercase transition-colors">
+                        className="text-sm tracking-[0.3em] text-red-400/50 hover:text-red-400/80 uppercase transition-colors">
                         — Remover
                       </button>
                     </>
@@ -145,13 +145,13 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
         {isEditing && (
           <button onClick={addEntrega}
             className="mt-4 w-full border border-dashed border-white/15 hover:border-white/30 bg-white/[0.01] hover:bg-white/[0.03] py-3
-                       text-xs tracking-[0.4em] text-white/30 uppercase transition-colors">
+                       text-sm tracking-[0.4em] text-white/30 uppercase transition-colors">
             + Adicionar Entrega
           </button>
         )}
 
         <div className="mt-8 border border-white/[0.05] bg-white/[0.01] px-5 py-4">
-          <p className="text-xs tracking-[0.2em] text-white/20 leading-relaxed">
+          <p className="text-sm tracking-[0.2em] text-white/20 leading-relaxed">
             Os ficheiros ficarão disponíveis após a aprovação da entrega final. Os links expiram 30 dias após disponibilização.
           </p>
         </div>

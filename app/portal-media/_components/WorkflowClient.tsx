@@ -98,13 +98,13 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
       <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 py-10">
 
         <Link href={`/portal-media/${projeto.ref}`}
-          className="inline-flex items-center gap-2 text-xs tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
+          className="inline-flex items-center gap-2 text-sm tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
           <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
           Portal {projeto.nome}
         </Link>
 
         <div className="mb-8">
-          <p className="text-xs tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · {projeto.nome}</p>
+          <p className="text-sm tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · {projeto.nome}</p>
           <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Workflow</h1>
           <div className="mt-4 flex items-center gap-3">
             <div className="h-px w-12 bg-white/25" />
@@ -142,12 +142,12 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
                   <div className={`flex-1 border ${cfg.border} ${cfg.bg} p-5`}>
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <span className="text-xs font-mono text-white/15 shrink-0">{String(i + 1).padStart(2, '0')}</span>
+                        <span className="text-sm font-mono text-white/15 shrink-0">{String(i + 1).padStart(2, '0')}</span>
                         <EditableField
                           value={fase.nome}
                           isEditing={isEditing}
                           onChange={v => updateFase(i, 'nome', v)}
-                          className={`text-xs tracking-[0.3em] font-medium uppercase ${fase.estado === 'pendente' ? 'text-white/35' : 'text-white/75'}`}
+                          className={`text-sm tracking-[0.3em] font-medium uppercase ${fase.estado === 'pendente' ? 'text-white/35' : 'text-white/75'}`}
                         />
                       </div>
                       <div className="shrink-0">
@@ -156,7 +156,7 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
                           options={ESTADO_OPTIONS}
                           isEditing={isEditing}
                           onChange={v => updateFase(i, 'estado', v)}
-                          className={`text-xs tracking-[0.3em] uppercase ${cfg.text}`}
+                          className={`text-sm tracking-[0.3em] uppercase ${cfg.text}`}
                         />
                       </div>
                     </div>
@@ -164,7 +164,7 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
                       value={fase.descricao}
                       isEditing={isEditing}
                       onChange={v => updateFase(i, 'descricao', v)}
-                      className="text-xs text-white/25 leading-relaxed pl-7 block"
+                      className="text-sm text-white/25 leading-relaxed pl-7 block"
                       placeholder="Descrição da fase"
                       multiline
                     />
@@ -172,14 +172,14 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
                       value={fase.data ?? ''}
                       isEditing={isEditing}
                       onChange={v => updateFase(i, 'data', v)}
-                      className={`text-xs tracking-[0.2em] mt-2 pl-7 block ${fase.estado === 'pendente' ? 'text-white/15' : 'text-white/35'}`}
+                      className={`text-sm tracking-[0.2em] mt-2 pl-7 block ${fase.estado === 'pendente' ? 'text-white/15' : 'text-white/35'}`}
                       placeholder="Data estimada"
                     />
                     {/* Notification button — always visible for admin */}
                     {isAdmin && (
                       <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between gap-3">
                         {fase.notificacaoEnviada ? (
-                          <span className="flex items-center gap-1.5 text-xs tracking-[0.25em] text-emerald-400/70 uppercase">
+                          <span className="flex items-center gap-1.5 text-sm tracking-[0.25em] text-emerald-400/70 uppercase">
                             <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
                             </svg>
@@ -189,7 +189,7 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
                           <button
                             onClick={() => sendNotification(i)}
                             disabled={sendingId === fase.id}
-                            className="flex items-center gap-1.5 text-xs tracking-[0.25em] text-white/30
+                            className="flex items-center gap-1.5 text-sm tracking-[0.25em] text-white/30
                                        hover:text-white/65 border border-white/10 hover:border-white/25
                                        bg-white/[0.02] hover:bg-white/[0.05] px-3 py-1.5 uppercase
                                        transition-all disabled:opacity-40 disabled:cursor-not-allowed"
@@ -204,7 +204,7 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
                     )}
                     {isEditing && (
                       <button onClick={() => removeFase(i)}
-                        className="mt-3 text-xs tracking-[0.3em] text-red-400/50 hover:text-red-400/80 uppercase transition-colors">
+                        className="mt-3 text-sm tracking-[0.3em] text-red-400/50 hover:text-red-400/80 uppercase transition-colors">
                         — Remover fase
                       </button>
                     )}
@@ -218,13 +218,13 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
         {isEditing && (
           <button onClick={addFase}
             className="mt-4 w-full border border-dashed border-white/15 hover:border-white/30 bg-white/[0.01] hover:bg-white/[0.03] py-3
-                       text-xs tracking-[0.4em] text-white/30 uppercase transition-colors">
+                       text-sm tracking-[0.4em] text-white/30 uppercase transition-colors">
             + Adicionar Fase
           </button>
         )}
 
         <div className="mt-12 border border-white/[0.05] bg-white/[0.01] px-5 py-4">
-          <p className="text-xs tracking-[0.2em] text-white/20 leading-relaxed">
+          <p className="text-sm tracking-[0.2em] text-white/20 leading-relaxed">
             As datas indicadas são estimativas e podem ser ajustadas conforme o avanço do projeto.
             Serás notificado em cada transição de fase.
           </p>

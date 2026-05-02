@@ -75,7 +75,7 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
           <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-[#050507] via-[#050507]/70 to-transparent" />
           {isEditing && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 w-80">
-              <p className="text-xs text-white/40 text-center mb-1">URL da imagem de fundo</p>
+              <p className="text-sm text-white/40 text-center mb-1">URL da imagem de fundo</p>
               <EditableField
                 value={projeto.heroImageUrl ?? ''}
                 isEditing={true}
@@ -91,13 +91,13 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
           )}
           <div className="absolute top-5 right-6 flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400/70 animate-pulse" />
-            <span className="text-xs tracking-[0.4em] text-white/30 uppercase">Activo</span>
+            <span className="text-sm tracking-[0.4em] text-white/30 uppercase">Activo</span>
           </div>
           <div className="absolute top-5 left-6 flex items-center gap-3">
             <div className="flex flex-col gap-[3px]">
               <div className="h-px w-5 bg-white/30" /><div className="h-px w-3 bg-white/15" /><div className="h-px w-5 bg-white/30" />
             </div>
-            <span className="text-xs tracking-[0.45em] text-white/25 uppercase">RL Media · Portal do Cliente</span>
+            <span className="text-sm tracking-[0.45em] text-white/25 uppercase">RL Media · Portal do Cliente</span>
           </div>
         </div>
       )}
@@ -111,7 +111,7 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
           </div>
           <div className="flex-1">
             <EditableField value={projeto.tipo} isEditing={isEditing} onChange={v => set('tipo', v)}
-              className="text-xs tracking-[0.6em] text-white/20 uppercase mb-1 block" />
+              className="text-sm tracking-[0.6em] text-white/20 uppercase mb-1 block" />
             <EditableField value={projeto.nome} isEditing={isEditing} onChange={v => set('nome', v)}
               className="text-[clamp(2rem,6vw,3.5rem)] font-extralight tracking-[0.4em] text-white/85 uppercase leading-none block" />
             <EditableField value={projeto.cliente} isEditing={isEditing} onChange={v => set('cliente', v)}
@@ -165,28 +165,28 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
           {/* Local */}
           <div className="border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-            <p className="text-xs tracking-[0.4em] text-white/25 uppercase mb-1">Local</p>
+            <p className="text-sm tracking-[0.4em] text-white/25 uppercase mb-1">Local</p>
             <EditableField value={projeto.local} isEditing={isEditing}
               onChange={v => set('local', v)}
               className="text-sm tracking-[0.15em] text-white/65 font-light block" />
           </div>
           {/* Filmagem */}
           <div className="border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-            <p className="text-xs tracking-[0.4em] text-white/25 uppercase mb-1">Filmagem</p>
+            <p className="text-sm tracking-[0.4em] text-white/25 uppercase mb-1">Filmagem</p>
             <EditableDateField value={projeto.dataFilmagem} isEditing={isEditing}
               onChange={v => set('dataFilmagem', v)}
               className="text-sm tracking-[0.15em] text-white/65 font-light block" />
           </div>
           {/* Revisões */}
           <div className="border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-            <p className="text-xs tracking-[0.4em] text-white/25 uppercase mb-1">Revisões</p>
+            <p className="text-sm tracking-[0.4em] text-white/25 uppercase mb-1">Revisões</p>
             <p className="text-sm tracking-[0.15em] text-white/65 font-light">
               {projeto.revisoes.usadas} / {projeto.revisoes.total}
             </p>
           </div>
           {/* Entrega Final */}
           <div className="border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-            <p className="text-xs tracking-[0.4em] text-white/25 uppercase mb-1">Entrega Final</p>
+            <p className="text-sm tracking-[0.4em] text-white/25 uppercase mb-1">Entrega Final</p>
             <EditableDateField value={projeto.dataEntrega} isEditing={isEditing}
               onChange={v => set('dataEntrega', v)}
               className="text-sm tracking-[0.15em] text-white/65 font-light block" />
@@ -195,14 +195,14 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
 
         {/* Progress */}
         <div className="mb-2 flex items-center justify-between">
-          <p className="text-xs tracking-[0.4em] text-white/25 uppercase">Fase Actual — {faseAtual?.nome ?? 'Concluído'}</p>
-          <p className="text-xs tracking-[0.4em] text-white/25 uppercase">{progresso}%</p>
+          <p className="text-sm tracking-[0.4em] text-white/25 uppercase">Fase Actual — {faseAtual?.nome ?? 'Concluído'}</p>
+          <p className="text-sm tracking-[0.4em] text-white/25 uppercase">{progresso}%</p>
         </div>
         <div className="h-px w-full bg-white/[0.06] relative overflow-hidden mb-4">
           <div className="absolute left-0 top-0 h-full bg-gradient-to-r from-white/30 to-white/10" style={{ width: `${progresso}%` }} />
         </div>
         {isAdmin && (
-          <p className="text-xs tracking-[0.3em] text-white/15 uppercase mb-2">
+          <p className="text-sm tracking-[0.3em] text-white/15 uppercase mb-2">
             ↑ clica numa fase para definir a fase actual
           </p>
         )}
@@ -222,7 +222,7 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
                     ${isAdmin ? 'hover:scale-150' : ''}
                     ${fase.estado === 'em_curso' ? 'animate-pulse' : ''}`}
                   />
-                  <span className={`text-xs tracking-[0.2em] uppercase whitespace-nowrap ${cfg.color}`}>
+                  <span className={`text-sm tracking-[0.2em] uppercase whitespace-nowrap ${cfg.color}`}>
                     {fase.nome}
                   </span>
                 </div>
@@ -235,7 +235,7 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
         {/* Divider */}
         <div className="mb-10 flex items-center gap-4">
           <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
-          <span className="text-xs tracking-[0.5em] text-white/15 uppercase">Menu</span>
+          <span className="text-sm tracking-[0.5em] text-white/15 uppercase">Menu</span>
           <div className="h-px flex-1 bg-gradient-to-l from-white/10 to-transparent" />
         </div>
 
@@ -246,11 +246,11 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
               className="group relative border border-white/[0.07] hover:border-white/18 bg-white/[0.015] hover:bg-white/[0.035] transition-all duration-400 p-5 flex flex-col gap-3">
               <div className="flex items-start justify-between">
                 <span className="text-lg text-white/10 group-hover:text-white/25 transition-colors select-none leading-none">{item.icon}</span>
-                <span className="text-xs font-mono text-white/12 group-hover:text-white/25 transition-colors">{String(i + 1).padStart(2, '0')}</span>
+                <span className="text-sm font-mono text-white/12 group-hover:text-white/25 transition-colors">{String(i + 1).padStart(2, '0')}</span>
               </div>
               <div>
-                <p className="text-xs tracking-[0.3em] font-medium text-white/55 group-hover:text-white/80 uppercase transition-colors leading-tight">{item.label}</p>
-                <p className="text-xs text-white/20 mt-1 leading-tight">{item.desc}</p>
+                <p className="text-sm tracking-[0.3em] font-medium text-white/55 group-hover:text-white/80 uppercase transition-colors leading-tight">{item.label}</p>
+                <p className="text-sm text-white/20 mt-1 leading-tight">{item.desc}</p>
               </div>
             </Link>
           ))}
@@ -258,8 +258,8 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
 
         {/* Footer */}
         <div className="border-t border-white/[0.04] pt-5 flex items-center justify-between">
-          <p className="text-xs tracking-[0.5em] text-white/10 uppercase">© RL Media · Audiovisual · 2026</p>
-          <p className="text-xs tracking-[0.3em] text-white/10 uppercase font-mono">REF: {projeto.ref}</p>
+          <p className="text-sm tracking-[0.5em] text-white/10 uppercase">© RL Media · Audiovisual · 2026</p>
+          <p className="text-sm tracking-[0.3em] text-white/10 uppercase font-mono">REF: {projeto.ref}</p>
         </div>
       </div>
 
