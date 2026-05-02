@@ -105,6 +105,10 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
       })
       const data = await res.json()
       if (data.ok) {
+        // Atualizar pagamentos na página automaticamente
+        if (data.pagamentos?.length) {
+          setProjeto(p => ({ ...p, pagamentos: data.pagamentos }))
+        }
         setSubmitted(true)
       } else {
         setSubmitError(data.error || 'Erro ao enviar. Tenta novamente.')
