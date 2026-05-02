@@ -102,29 +102,14 @@ export default async function ContratoPage({ params }: Props) {
         position: 'relative',
         overflow: 'hidden',
       }}>
-        {/* Logo topo centro */}
+        {/* Logo branco topo centro */}
         <div style={{ textAlign: 'center' }}>
-          <div style={{
-            fontSize: 72,
-            fontWeight: 900,
-            color: '#ffffff',
-            letterSpacing: -2,
-            lineHeight: 0.9,
-            textTransform: 'uppercase',
-            fontFamily: "'Arial Black', Arial, sans-serif",
-          }}>
-            RL MEDIA
-          </div>
-          <div style={{
-            fontSize: 13,
-            fontWeight: 400,
-            color: '#ffffff',
-            letterSpacing: 10,
-            marginTop: 10,
-            fontFamily: 'Arial, sans-serif',
-          }}>
-            AUDIOVISUAL
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-rl-media-branco.png"
+            alt="RL Media"
+            style={{ width: 220, height: 'auto', objectFit: 'contain' }}
+          />
         </div>
 
         {/* Slogan centro */}
@@ -451,35 +436,21 @@ function ContentPage({ children, purple }: { children: React.ReactNode; purple: 
       display: 'flex',
       flexDirection: 'column',
     }}>
-      {/* Header diagonal preto */}
+      {/* Header diagonal preto — compacto */}
       <div style={{
         background: '#000000',
-        padding: '28px 64px 44px',
+        padding: '14px 56px 22px',
         position: 'relative',
-        clipPath: 'polygon(0 0, 100% 0, 80% 100%, 0 100%)',
+        clipPath: 'polygon(0 0, 100% 0, 82% 100%, 0 100%)',
         marginBottom: -2,
       }}>
-        <div style={{ textAlign: 'center', paddingRight: '18%' }}>
-          <div style={{
-            fontSize: 32,
-            fontWeight: 900,
-            color: '#ffffff',
-            letterSpacing: -1,
-            lineHeight: 1,
-            fontFamily: "'Arial Black', Arial, sans-serif",
-            textTransform: 'uppercase',
-          }}>
-            RL MEDIA
-          </div>
-          <div style={{
-            fontSize: 9,
-            color: '#ffffff',
-            letterSpacing: 8,
-            marginTop: 6,
-            fontFamily: 'Arial, sans-serif',
-          }}>
-            AUDIOVISUAL
-          </div>
+        <div style={{ textAlign: 'center', paddingRight: '16%' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-rl-media-branco.png"
+            alt="RL Media"
+            style={{ height: 32, width: 'auto', objectFit: 'contain' }}
+          />
         </div>
       </div>
 
