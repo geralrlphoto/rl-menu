@@ -97,6 +97,64 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
           </div>
         </div>
 
+        {/* ── Texto de boas-vindas ── */}
+        <div className="border border-white/[0.07] bg-white/[0.02] px-6 py-6 mb-6">
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+          <p className="text-[8px] tracking-[0.5em] text-white/20 uppercase mb-4">Área Exclusiva</p>
+          <p className="text-[13px] text-white/60 font-light leading-relaxed mb-4">
+            Encontra-se na área exclusiva do seu contrato.
+          </p>
+          <div className="flex flex-col gap-2.5 mb-4">
+            {[
+              { icon: '↓', text: 'Descarregar o contrato completo em formato digital, sempre que necessitar.' },
+              { icon: '€', text: 'Consultar de forma prática e transparente os valores já liquidados.' },
+              { icon: '◎', text: 'Acompanhar o histórico de pagamentos associados ao seu processo.' },
+            ].map(({ icon, text }) => (
+              <div key={icon} className="flex items-start gap-3">
+                <span className="text-[10px] text-white/25 mt-0.5 shrink-0 w-4">{icon}</span>
+                <p className="text-[12px] text-white/45 font-light leading-relaxed">{text}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-[11px] text-white/30 font-light leading-relaxed">
+            O nosso objetivo é <span className="text-white/55">simplificar o acesso à informação essencial</span>, garantindo-lhe mais comodidade e transparência.
+          </p>
+          <p className="text-[10px] text-white/20 mt-3 tracking-[0.15em]">Obrigado pela confiança — RL Media</p>
+        </div>
+
+        {/* ── Método de Pagamento ── */}
+        <div className="border border-white/[0.12] bg-white/[0.03] px-6 py-6 mb-6 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+          <p className="text-[8px] tracking-[0.5em] text-white/20 uppercase mb-4">Método de Pagamento</p>
+          <p className="text-[12px] text-white/50 font-light leading-relaxed mb-4">
+            O pagamento deverá ser efetuado no prazo máximo de{' '}
+            <span className="text-white/75 font-medium">48 horas após a confirmação em reunião</span>.
+          </p>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-start gap-3">
+              <span className="text-[8px] tracking-[0.3em] text-white/20 uppercase shrink-0 mt-1 w-16">Método</span>
+              <p className="text-[12px] text-white/55">Transferência bancária</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-[8px] tracking-[0.3em] text-white/20 uppercase shrink-0 mt-1 w-16">IBAN</span>
+              <p className="text-[12px] text-white/75 font-mono tracking-wide">PT50 0036 0167 9910 0068 3001 0</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-[8px] tracking-[0.3em] text-white/20 uppercase shrink-0 mt-1 w-16">Titular</span>
+              <p className="text-[12px] text-white/55">Liliana Sofia Barreto Gonçalves</p>
+            </div>
+          </div>
+          <div className="mt-5 border-t border-white/[0.06] pt-4">
+            <p className="text-[11px] text-white/35 leading-relaxed">
+              Após a transferência, envie o comprovativo para{' '}
+              <a href="mailto:geral.rlmedia@gmail.com" className="text-white/60 hover:text-white/85 transition-colors underline underline-offset-2">
+                geral.rlmedia@gmail.com
+              </a>
+              . A validação do pagamento apenas será considerada após a receção e confirmação do respetivo comprovativo.
+            </p>
+          </div>
+        </div>
+
         <div className="flex flex-col gap-3 mb-8">
 
           {/* Contrato gerado — destaque */}
