@@ -44,8 +44,8 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ── 2. Atualizar pagamento no Supabase ──────────────────────────────
-  let pagamentosAtualizados: any[] = []
+  // ── 2. Adicionar registo de pagamento no Supabase ──────────────────
+  let registosAtualizados: any[] = []
   try {
     const { data: existing } = await supabase
       .from('media_portais')
@@ -54,32 +54,27 @@ export async function POST(req: NextRequest) {
       .single()
 
     const dados = existing?.dados ?? {}
-    const pagamentos: any[] = dados.pagamentos ?? []
+    const registos: any[] = dados.registosPagamento ?? []
 
-    if (pagamentos.length > 0 && fase) {
-      // Mapeamento fase → índice
-      let idx = 0
-      if (fase === 'Adjudicação') idx = 0
-      else if (fase === 'Reforço')   idx = Math.min(1, pagamentos.length - 1)
-      else if (fase === 'Final')     idx = pagamentos.length - 1
+    const dataPagamento = dataISO ? formatDatePT(dataISO) : formatDatePT(new Date().toISOString())
 
-      const dataPagamento = dataISO ? formatDatePT(dataISO) : formatDatePT(new Date().toISOString())
-
-      pagamentos[idx] = {
-        ...pagamentos[idx],
-        estado: 'pago',
-        data: dataPagamento,
-        valor: parseFloat(valor) || pagamentos[idx].valor,
-        comprativoUrl: comprativoUrl || pagamentos[idx].comprativoUrl,
-      }
-
-      const merged = { ...dados, pagamentos }
-      await supabase
-        .from('media_portais')
-        .upsert({ ref, dados: merged, updated_at: new Date().toISOString() }, { onConflict: 'ref' })
-
-      pagamentosAtualizados = pagamentos
+    const novoRegisto = {
+      data:          dataPagamento,
+      valor:         parseFloat(valor) || 0,
+      fase:          fase || '',
+      metodo:        metodo || '',
+      empresa:       empresa || '',
+      comprativoUrl: comprativoUrl || '',
     }
+
+    registos.push(novoRegisto)
+
+    const merged = { ...dados, registosPagamento: registos }
+    await supabase
+      .from('media_portais')
+      .upsert({ ref, dados: merged, updated_at: new Date().toISOString() }, { onConflict: 'ref' })
+
+    registosAtualizados = registos
   } catch {}
 
   // ── 3. Email admin ─────────────────────────────────────────────────
@@ -144,5 +139,5 @@ export async function POST(req: NextRequest) {
     }),
   })
 
-  return NextResponse.json({ ok: true, comprativoUrl, pagamentos: pagamentosAtualizados })
+  return NextResponse.json({ ok: true, comprativoUrl, registosPagamento: registosAtualizados })
 }

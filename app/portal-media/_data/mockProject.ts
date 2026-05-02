@@ -53,6 +53,15 @@ export interface ContaBancaria {
   email?: string
 }
 
+export interface RegistoPagamento {
+  data: string
+  valor: number
+  fase?: string
+  metodo?: string
+  empresa?: string
+  comprativoUrl?: string
+}
+
 export interface Projeto {
   ref: string
   nome: string
@@ -78,6 +87,7 @@ export interface Projeto {
   satisfacaoUrl?: string
   fichaCliente?: FichaCliente
   contaBancaria?: ContaBancaria
+  registosPagamento?: RegistoPagamento[]
 }
 
 const PROJETOS: Record<string, Projeto> = {

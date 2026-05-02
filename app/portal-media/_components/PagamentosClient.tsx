@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef } from 'react'
 import Link from 'next/link'
-import type { Projeto } from '@/app/portal-media/_data/mockProject'
+import type { Projeto, RegistoPagamento } from '@/app/portal-media/_data/mockProject'
 import AdminBar from './AdminBar'
 import EditableField from './EditableField'
 import EditableSelect from './EditableSelect'
@@ -45,13 +45,14 @@ interface Props { projeto: Projeto; isAdmin: boolean }
 
 export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
   const [projeto, setProjeto] = useState(initial)
+  const [registos, setRegistos] = useState<RegistoPagamento[]>(initial.registosPagamento ?? [])
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
 
   /* ── Registar Pagamento ── */
-  const [showForm, setShowForm]     = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [submitted, setSubmitted]   = useState(false)
+  const [showForm, setShowForm]       = useState(false)
+  const [submitting, setSubmitting]   = useState(false)
+  const [submitted, setSubmitted]     = useState(false)
   const [submitError, setSubmitError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -105,9 +106,8 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
       })
       const data = await res.json()
       if (data.ok) {
-        // Atualizar pagamentos na página automaticamente
-        if (data.pagamentos?.length) {
-          setProjeto(p => ({ ...p, pagamentos: data.pagamentos }))
+        if (data.registosPagamento?.length) {
+          setRegistos(data.registosPagamento)
         }
         setSubmitted(true)
       } else {
@@ -150,8 +150,10 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
   const removePagamento = (idx: number) =>
     setProjeto(p => ({ ...p, pagamentos: p.pagamentos.filter((_, i) => i !== idx) }))
 
-  const total = projeto.pagamentos.reduce((s, pg) => s + pg.valor, 0)
-  const pago  = projeto.pagamentos.filter(pg => pg.estado === 'pago').reduce((s, pg) => s + pg.valor, 0)
+  /* ── Cálculos ── */
+  const total    = projeto.pagamentos.reduce((s, pg) => s + pg.valor, 0)
+  const pago     = registos.reduce((s, r) => s + r.valor, 0)
+  const restante = Math.max(0, total - pago)
 
   return (
     <>
@@ -172,7 +174,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
           </div>
         </div>
 
-        {/* ── Registar Pagamento CTA ── */}
+        {/* ── Botão Registar ── */}
         <button
           onClick={openForm}
           className="w-full mb-8 relative overflow-hidden border border-white/20 hover:border-white/40
@@ -192,7 +194,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                   Registar Pagamento
                 </p>
                 <p className="text-sm text-white/25 group-hover:text-white/40 mt-0.5 transition-colors">
-                  Submete o comprovativo e regista o pagamento
+                  Submete o comprovativo e regista o valor pago
                 </p>
               </div>
             </div>
@@ -200,85 +202,133 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
           </div>
         </button>
 
-        {/* Summary */}
+        {/* ── Resumo ── */}
         <div className="grid grid-cols-3 gap-3 mb-10">
-          {[
-            { label: 'Total',    value: `${total.toLocaleString('pt-PT')} €`         },
-            { label: 'Pago',     value: `${pago.toLocaleString('pt-PT')} €`          },
-            { label: 'Restante', value: `${(total - pago).toLocaleString('pt-PT')} €` },
-          ].map(s => (
-            <div key={s.label} className="border border-white/[0.07] bg-white/[0.02] px-4 py-4 text-center">
-              <p className="text-sm tracking-[0.4em] text-white/25 uppercase mb-1">{s.label}</p>
-              <p className="text-sm tracking-[0.1em] text-white/65 font-light">{s.value}</p>
-            </div>
-          ))}
+          <div className="border border-white/[0.07] bg-white/[0.02] px-4 py-5 text-center">
+            <p className="text-sm tracking-[0.4em] text-white/25 uppercase mb-1">Total</p>
+            <p className="text-sm tracking-[0.1em] text-white/65 font-light">{total.toLocaleString('pt-PT')} €</p>
+            <p className="text-[10px] tracking-[0.3em] text-white/15 uppercase mt-1">Serviço</p>
+          </div>
+          <div className={`border px-4 py-5 text-center ${pago > 0 ? 'border-emerald-400/20 bg-emerald-400/[0.03]' : 'border-white/[0.07] bg-white/[0.02]'}`}>
+            <p className="text-sm tracking-[0.4em] text-white/25 uppercase mb-1">Pago</p>
+            <p className={`text-sm tracking-[0.1em] font-light ${pago > 0 ? 'text-emerald-400/80' : 'text-white/65'}`}>
+              {pago.toLocaleString('pt-PT')} €
+            </p>
+            <p className="text-[10px] tracking-[0.3em] text-white/15 uppercase mt-1">{registos.length} registo{registos.length !== 1 ? 's' : ''}</p>
+          </div>
+          <div className={`border px-4 py-5 text-center ${restante > 0 ? 'border-white/[0.07] bg-white/[0.02]' : 'border-emerald-400/20 bg-emerald-400/[0.03]'}`}>
+            <p className="text-sm tracking-[0.4em] text-white/25 uppercase mb-1">Restante</p>
+            <p className={`text-sm tracking-[0.1em] font-light ${restante > 0 ? 'text-white/65' : 'text-emerald-400/80'}`}>
+              {restante.toLocaleString('pt-PT')} €
+            </p>
+            <p className="text-[10px] tracking-[0.3em] text-white/15 uppercase mt-1">{restante === 0 ? 'Liquidado' : 'Em falta'}</p>
+          </div>
         </div>
 
-        {/* Payments list */}
-        <div className="flex flex-col gap-3">
-          {projeto.pagamentos.map((pag, i) => {
-            const cfg = PAG_CFG[pag.estado]
-            return (
-              <div key={i} className={`border ${cfg.border} ${cfg.bg} px-6 py-5`}>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <EditableField
-                      value={pag.descricao}
-                      isEditing={isEditing}
-                      onChange={v => updatePag(i, 'descricao', v)}
-                      className="text-sm tracking-[0.2em] text-white/60 uppercase font-medium block"
-                      placeholder="Descrição"
-                    />
-                    <EditableDateField
-                      value={pag.data}
-                      isEditing={isEditing}
-                      onChange={v => updatePag(i, 'data', v)}
-                      className="text-sm tracking-[0.2em] text-white/20 mt-1 block"
-                      placeholder="Data"
-                    />
+        {/* ── Histórico de pagamentos registados ── */}
+        {registos.length > 0 && (
+          <div className="mb-10">
+            <p className="text-[11px] tracking-[0.5em] text-white/20 uppercase mb-3">Histórico de Pagamentos</p>
+            <div className="flex flex-col gap-2">
+              {[...registos].reverse().map((r, i) => (
+                <div key={i} className="border border-emerald-400/15 bg-emerald-400/[0.02] px-5 py-3.5
+                                        flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400/50 shrink-0" />
+                    <div>
+                      <p className="text-sm tracking-[0.2em] text-white/55">{r.data}</p>
+                      {r.fase && (
+                        <p className="text-[11px] tracking-[0.3em] text-white/25 uppercase mt-0.5">
+                          {r.fase}{r.metodo ? ` · ${r.metodo}` : ''}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="flex items-center justify-end gap-1">
-                      <EditableField
-                        value={String(pag.valor)}
-                        isEditing={isEditing}
-                        onChange={v => updatePag(i, 'valor', Number(v) || 0)}
-                        type="number"
-                        className="text-sm tracking-[0.1em] text-white/60 font-light block text-right"
-                      />
-                      {!isEditing && <span className="text-sm text-white/60 font-light">€</span>}
-                    </div>
-                    <div className="mt-1">
-                      <EditableSelect
-                        value={pag.estado}
-                        options={ESTADO_OPTIONS}
-                        isEditing={isEditing}
-                        onChange={v => updatePag(i, 'estado', v)}
-                        className={`text-sm tracking-[0.3em] uppercase ${cfg.color}`}
-                      />
-                    </div>
-                    {isEditing && (
-                      <button onClick={() => removePagamento(i)}
-                        className="mt-2 text-sm tracking-[0.3em] text-red-400/50 hover:text-red-400/80 uppercase transition-colors">
-                        — Remover
-                      </button>
+                    <p className="text-sm tracking-[0.15em] text-emerald-400/80 font-light">
+                      {r.valor.toLocaleString('pt-PT')} €
+                    </p>
+                    {r.comprativoUrl && (
+                      <a href={r.comprativoUrl} target="_blank" rel="noopener noreferrer"
+                        className="text-[10px] tracking-[0.3em] text-white/25 hover:text-white/50 uppercase transition-colors">
+                        Ver comprovativo ↗
+                      </a>
                     )}
                   </div>
                 </div>
-              </div>
-            )
-          })}
-        </div>
-
-        {isEditing && (
-          <button onClick={addPagamento}
-            className="mt-4 w-full border border-dashed border-white/15 hover:border-white/30 bg-white/[0.01] hover:bg-white/[0.03] py-3
-                       text-sm tracking-[0.4em] text-white/30 uppercase transition-colors">
-            + Adicionar Pagamento
-          </button>
+              ))}
+            </div>
+          </div>
         )}
 
-        <p className="mt-8 text-sm tracking-[0.2em] text-white/15 leading-relaxed">
+        {/* ── Plano de Pagamento (admin edita) ── */}
+        <div className="mb-6">
+          <p className="text-[11px] tracking-[0.5em] text-white/20 uppercase mb-3">Plano de Pagamento</p>
+          <div className="flex flex-col gap-3">
+            {projeto.pagamentos.map((pag, i) => {
+              const cfg = PAG_CFG[pag.estado]
+              return (
+                <div key={i} className={`border ${cfg.border} ${cfg.bg} px-6 py-4`}>
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <EditableField
+                        value={pag.descricao}
+                        isEditing={isEditing}
+                        onChange={v => updatePag(i, 'descricao', v)}
+                        className="text-sm tracking-[0.2em] text-white/60 uppercase font-medium block"
+                        placeholder="Descrição"
+                      />
+                      <EditableDateField
+                        value={pag.data}
+                        isEditing={isEditing}
+                        onChange={v => updatePag(i, 'data', v)}
+                        className="text-sm tracking-[0.2em] text-white/20 mt-0.5 block"
+                        placeholder="Data prevista"
+                      />
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="flex items-center justify-end gap-1">
+                        <EditableField
+                          value={String(pag.valor)}
+                          isEditing={isEditing}
+                          onChange={v => updatePag(i, 'valor', Number(v) || 0)}
+                          type="number"
+                          className="text-sm tracking-[0.1em] text-white/60 font-light block text-right"
+                        />
+                        {!isEditing && <span className="text-sm text-white/60 font-light">€</span>}
+                      </div>
+                      <div className="mt-1">
+                        <EditableSelect
+                          value={pag.estado}
+                          options={ESTADO_OPTIONS}
+                          isEditing={isEditing}
+                          onChange={v => updatePag(i, 'estado', v)}
+                          className={`text-sm tracking-[0.3em] uppercase ${cfg.color}`}
+                        />
+                      </div>
+                      {isEditing && (
+                        <button onClick={() => removePagamento(i)}
+                          className="mt-2 text-sm tracking-[0.3em] text-red-400/50 hover:text-red-400/80 uppercase transition-colors">
+                          — Remover
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {isEditing && (
+            <button onClick={addPagamento}
+              className="mt-3 w-full border border-dashed border-white/15 hover:border-white/30 bg-white/[0.01] hover:bg-white/[0.03] py-3
+                         text-sm tracking-[0.4em] text-white/30 uppercase transition-colors">
+              + Adicionar Linha
+            </button>
+          )}
+        </div>
+
+        <p className="text-sm tracking-[0.2em] text-white/15 leading-relaxed">
           Para questões relacionadas com faturação contacta financeiro@rlmedia.pt
         </p>
       </div>
@@ -296,11 +346,9 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
           <div className="relative w-full max-w-lg border border-white/[0.12] bg-[#04080f]"
             style={{ boxShadow: '0 0 60px rgba(50,110,255,0.08)' }}>
 
-            {/* Top accent */}
             <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
             {submitted ? (
-              /* ── Sucesso ── */
               <div className="px-8 py-12 flex flex-col items-center text-center gap-5">
                 <div className="w-12 h-12 border border-emerald-400/30 bg-emerald-400/5 flex items-center justify-center">
                   <svg className="w-5 h-5 text-emerald-400/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -311,7 +359,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                   <p className="text-sm tracking-[0.5em] text-white/65 uppercase mb-2">Pagamento Registado</p>
                   <p className="text-sm text-white/35 leading-relaxed">
                     A informação foi enviada com sucesso para a RL Media.<br />
-                    Entraremos em contacto em caso de dúvida.
+                    O registo já está visível na página.
                   </p>
                 </div>
                 <button onClick={closeForm}
@@ -321,7 +369,6 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                 </button>
               </div>
             ) : (
-              /* ── Formulário ── */
               <>
                 <div className="px-8 pt-7 pb-2 flex items-center justify-between">
                   <div>
@@ -361,7 +408,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                     </div>
                   </div>
 
-                  {/* Fase de Pagamento */}
+                  {/* Fase */}
                   <div>
                     <label className="text-[11px] tracking-[0.4em] text-white/25 uppercase block mb-2">Fase do Pagamento</label>
                     <div className="grid grid-cols-3 gap-2">
@@ -426,7 +473,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                     />
                   </div>
 
-                  {/* Comprovativo upload */}
+                  {/* Comprovativo */}
                   <div>
                     <label className="text-[11px] tracking-[0.4em] text-white/25 uppercase block mb-1.5">
                       Comprovativo <span className="text-white/15 normal-case tracking-normal text-[10px]">(foto ou PDF)</span>
@@ -442,9 +489,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                           </svg>
                           <p className="text-sm text-white/55">{form.file.name}</p>
-                          <p className="text-[11px] text-white/25">
-                            {(form.file.size / 1024).toFixed(0)} KB · clica para alterar
-                          </p>
+                          <p className="text-[11px] text-white/25">{(form.file.size / 1024).toFixed(0)} KB · clica para alterar</p>
                         </>
                       ) : (
                         <>
@@ -465,12 +510,10 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                     />
                   </div>
 
-                  {/* Error */}
                   {submitError && (
                     <p className="text-sm text-red-400/70 tracking-[0.2em]">{submitError}</p>
                   )}
 
-                  {/* Submit */}
                   <button
                     onClick={submitPagamento}
                     disabled={submitting || !form.valor}
@@ -480,12 +523,10 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                   >
                     {submitting ? 'A enviar...' : 'Enviar Registo'}
                   </button>
-
                 </div>
               </>
             )}
 
-            {/* Bottom accent */}
             <div className="h-px w-full bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
           </div>
         </div>
