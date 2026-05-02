@@ -34,6 +34,7 @@ function todayISO() {
 interface FormState {
   empresa:    string
   referencia: string
+  fase:       string
   valor:      string
   metodo:     string
   data:       string
@@ -57,6 +58,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
   const [form, setForm] = useState<FormState>({
     empresa:    projeto.fichaCliente?.empresa || projeto.cliente,
     referencia: projeto.ref,
+    fase:       '',
     valor:      '',
     metodo:     'Transferência Bancária',
     data:       todayISO(),
@@ -72,6 +74,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
     setForm({
       empresa:    projeto.fichaCliente?.empresa || projeto.cliente,
       referencia: projeto.ref,
+      fase:       '',
       valor:      '',
       metodo:     'Transferência Bancária',
       data:       todayISO(),
@@ -90,6 +93,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
       const fd = new FormData()
       fd.append('empresa',    form.empresa)
       fd.append('referencia', form.referencia)
+      fd.append('fase',       form.fase)
       fd.append('valor',      form.valor)
       fd.append('metodo',     form.metodo)
       fd.append('data',       form.data)
@@ -350,6 +354,27 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                         className="w-full bg-white/[0.02] border border-white/[0.06] text-white/35 text-sm px-3 py-2.5
                                    outline-none font-mono tracking-wider cursor-default"
                       />
+                    </div>
+                  </div>
+
+                  {/* Fase de Pagamento */}
+                  <div>
+                    <label className="text-[11px] tracking-[0.4em] text-white/25 uppercase block mb-2">Fase do Pagamento</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {['Adjudicação', 'Reforço', 'Final'].map(f => (
+                        <button
+                          key={f}
+                          type="button"
+                          onClick={() => setField('fase', f)}
+                          className={`py-2.5 border text-sm tracking-[0.3em] uppercase transition-all
+                            ${form.fase === f
+                              ? 'border-white/40 bg-white/[0.10] text-white/80'
+                              : 'border-white/[0.08] bg-white/[0.02] text-white/30 hover:border-white/20 hover:text-white/50'
+                            }`}
+                        >
+                          {f}
+                        </button>
+                      ))}
                     </div>
                   </div>
 

@@ -7,6 +7,7 @@ export async function POST(req: NextRequest) {
 
   const empresa    = (formData.get('empresa')    as string) || ''
   const referencia = (formData.get('referencia') as string) || ''
+  const fase       = (formData.get('fase')       as string) || ''
   const valor      = (formData.get('valor')      as string) || ''
   const metodo     = (formData.get('metodo')     as string) || ''
   const data       = (formData.get('data')       as string) || ''
@@ -70,6 +71,7 @@ export async function POST(req: NextRequest) {
           <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.02);">
             ${[
               ['Referência',  referencia],
+              ['Fase',        fase || '—'],
               ['Valor',       `${valor} €`],
               ['Método',      metodo],
               ['Data',        dataPT],
@@ -119,7 +121,7 @@ export async function POST(req: NextRequest) {
     body: JSON.stringify({
       from: 'RL Media <geral@rlphotovideo.pt>',
       to: ['geral.rlmedia@gmail.com'],
-      subject: `Pagamento Registado — ${empresa} · ${referencia}`,
+      subject: `Pagamento Registado — ${empresa} · ${fase ? fase + ' · ' : ''}${referencia}`,
       html,
     }),
   })
