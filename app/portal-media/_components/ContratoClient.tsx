@@ -229,13 +229,26 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                 />
               </div>
             ) : (
-              <p className="text-[13px] text-white/45 leading-relaxed">
-                Envie o comprovativo para{' '}
-                <a href={`mailto:${conta.email}`} className="text-white/70 hover:text-white/90 transition-colors underline underline-offset-2">
-                  {conta.email}
-                </a>
-                {' '}— a validação só é confirmada após receção do comprovativo.
-              </p>
+              <div className="flex flex-col gap-3">
+                <p className="text-[13px] text-white/45 leading-relaxed">
+                  Envie o comprovativo para{' '}
+                  <a href={`mailto:${conta.email}`} className="text-white/70 hover:text-white/90 transition-colors underline underline-offset-2">
+                    {conta.email}
+                  </a>
+                  {' '}— a validação só é confirmada após receção do comprovativo.
+                </p>
+                <div className="flex items-start gap-3 border border-white/[0.08] bg-white/[0.02] px-4 py-3">
+                  <span className="text-white/30 shrink-0 mt-0.5">◉</span>
+                  <p className="text-[13px] text-white/40 leading-relaxed">
+                    Após cada pagamento, regista o estado na{' '}
+                    <a href={`/portal-media/${projeto.ref}/pagamentos`}
+                      className="text-white/65 hover:text-white/90 transition-colors underline underline-offset-2">
+                      página de Pagamentos
+                    </a>
+                    {' '}para manter o registo financeiro do projeto atualizado.
+                  </p>
+                </div>
+              </div>
             )}
           </div>
         </div>
