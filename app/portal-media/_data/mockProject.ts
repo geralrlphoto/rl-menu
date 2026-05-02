@@ -42,6 +42,7 @@ export interface FichaCliente {
   dataEvento?: string
   localEvento?: string
   observacoes?: string
+  metodoPagamento?: string
 }
 
 export interface Projeto {

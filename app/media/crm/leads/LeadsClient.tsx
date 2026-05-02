@@ -92,6 +92,29 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
   const [creatingPortalCliente, setCreatingPortalCliente] = useState<Record<string, boolean>>({})
   const [createdPortalCliente,  setCreatedPortalCliente]  = useState<Record<string, boolean>>({})
 
+  // Formas de pagamento
+  const [formasPagamento, setFormasPagamento] = useState<Record<string, { adjudicacao: number; reforcao: number; final: number }>>({})
+  const [savingPagamento, setSavingPagamento] = useState<Record<string, boolean>>({})
+  const [savedPagamento,  setSavedPagamento]  = useState<Record<string, boolean>>({})
+
+  async function savePagamento(lead: Lead) {
+    if (!lead.page_token) return
+    setSavingPagamento(s => ({ ...s, [lead.id]: true }))
+    try {
+      const fp = formasPagamento[lead.id] || contentCache[lead.id]?.formas_pagamento || { adjudicacao: 50, reforcao: 0, final: 50 }
+      const content = { ...(contentCache[lead.id] || {}), formas_pagamento: fp }
+      await fetch('/api/media-portal/save-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: lead.page_token, page_content: content }),
+      })
+      setContentCache(c => ({ ...c, [lead.id]: content }))
+      setSavedPagamento(s => ({ ...s, [lead.id]: true }))
+      setTimeout(() => setSavedPagamento(s => ({ ...s, [lead.id]: false })), 2500)
+    } catch { alert('Erro ao guardar.') }
+    finally { setSavingPagamento(s => ({ ...s, [lead.id]: false })) }
+  }
+
   async function criarPortalCliente(lead: Lead) {
     if (!lead.page_token) return
     setCreatingPortalCliente(s => ({ ...s, [lead.id]: true }))
@@ -109,6 +132,14 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
         .map((s: string) => ({ titulo: s, formato: 'MP4', duracao: '', estado: 'pendente' as const }))
 
       const ref = lead.page_token.toUpperCase()
+      const fp = contentCache[lead.id]?.formas_pagamento || formasPagamento[lead.id] || { adjudicacao: 50, reforcao: 0, final: 50 }
+      const fmtVal = (pct: number) => valor > 0 ? ` — ${(valor * pct / 100).toLocaleString('pt-PT', { minimumFractionDigits: 2 })}€` : ''
+      const metodoPagamento = [
+        fp.adjudicacao > 0 ? `Adjudicação ${fp.adjudicacao}%${fmtVal(fp.adjudicacao)}` : '',
+        fp.reforcao    > 0 ? `Reforço ${fp.reforcao}%${fmtVal(fp.reforcao)}`           : '',
+        fp.final       > 0 ? `Final ${fp.final}%${fmtVal(fp.final)}`                   : '',
+      ].filter(Boolean).join('\n')
+
       const projeto = {
         ref,
         nome:            lead.empresa || lead.nome,
@@ -161,6 +192,7 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
           dataEvento:         conf.data_evento || '',
           localEvento:        conf.local_evento|| '',
           observacoes:        conf.observacoes || '',
+          metodoPagamento,
         },
         heroImageUrl:   '',
         briefingUrl:    undefined,
@@ -405,6 +437,68 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                           </div>
                         </div>
                       )}
+                    </div>
+                  )
+                })()}
+
+                {/* ── FORMAS DE PAGAMENTO ── */}
+                {lead.page_token && contentCache[lead.id]?.confirmacao_proposta?.acao === 'aceite' && (() => {
+                  const conf     = contentCache[lead.id].confirmacao_proposta.dados || {}
+                  const props    = contentCache[lead.id]?.propostas || []
+                  const propIdx  = props.findIndex((p: any) => p.titulo === conf.proposta_escolhida)
+                  const prop     = propIdx >= 0 ? props[propIdx] : null
+                  const valorNum = parseFloat((prop?.valor || '').replace(/[^\d.,]/g, '').replace(',', '.')) || 0
+                  const fp       = formasPagamento[lead.id] ?? (contentCache[lead.id]?.formas_pagamento ?? { adjudicacao: 50, reforcao: 0, final: 50 })
+                  const total    = (fp.adjudicacao || 0) + (fp.reforcao || 0) + (fp.final || 0)
+                  const calcVal  = (pct: number) =>
+                    valorNum > 0 ? (valorNum * pct / 100).toLocaleString('pt-PT', { minimumFractionDigits: 2 }) + '€' : '—'
+
+                  return (
+                    <div className="border-t border-white/[0.05] pt-5">
+                      <p className={labelCls + ' mb-4'}>Formas de Pagamento</p>
+                      <div className="border border-white/[0.09] bg-white/[0.01] p-5 flex flex-col gap-4">
+                        {([
+                          { key: 'adjudicacao', label: 'Adjudicação' },
+                          { key: 'reforcao',    label: 'Reforço'     },
+                          { key: 'final',       label: 'Final'       },
+                        ] as const).map(({ key, label }) => (
+                          <div key={key} className="flex items-center gap-4">
+                            <span className="text-[12px] tracking-[0.2em] text-white/40 uppercase w-28 shrink-0">{label}</span>
+                            <select
+                              value={fp[key] ?? 0}
+                              onChange={e => setFormasPagamento(s => ({
+                                ...s,
+                                [lead.id]: { ...(s[lead.id] ?? fp), [key]: parseInt(e.target.value) },
+                              }))}
+                              className="bg-white/[0.03] border border-white/[0.08] text-white/70 text-[13px] px-3 py-2 [color-scheme:dark] focus:outline-none focus:border-white/25"
+                            >
+                              {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map(p => (
+                                <option key={p} value={p}>{p}%</option>
+                              ))}
+                            </select>
+                            <span className="text-[14px] font-mono text-white/60 w-28 text-right">{calcVal(fp[key] ?? 0)}</span>
+                          </div>
+                        ))}
+                        <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
+                          <span className={`text-[11px] tracking-[0.2em] uppercase ${total === 100 ? 'text-emerald-400/60' : 'text-amber-400/60'}`}>
+                            Total: {total}% {total === 100 ? '✓' : `· faltam ${100 - total}%`}
+                          </span>
+                          {valorNum > 0 && (
+                            <span className="text-[13px] font-mono text-white/40">{valorNum.toLocaleString('pt-PT', { minimumFractionDigits: 2 })}€</span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => savePagamento(lead)}
+                          disabled={savingPagamento[lead.id]}
+                          className={`py-3 text-[12px] tracking-[0.35em] uppercase border transition-all disabled:opacity-40 ${
+                            savedPagamento[lead.id]
+                              ? 'border-emerald-400/50 text-emerald-400/70 bg-emerald-400/[0.05]'
+                              : 'border-white/20 text-white/50 hover:border-white/35 hover:text-white/75 bg-white/[0.02] hover:bg-white/[0.06]'
+                          }`}
+                        >
+                          {savedPagamento[lead.id] ? '✓ Guardado' : savingPagamento[lead.id] ? 'A guardar...' : 'Guardar Pagamentos'}
+                        </button>
+                      </div>
                     </div>
                   )
                 })()}

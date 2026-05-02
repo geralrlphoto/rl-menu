@@ -52,6 +52,10 @@ export default async function ContratoPage({ params }: Props) {
     ? ficha.profissionaisList.split('\n').map((s: string) => s.trim()).filter(Boolean)
     : []
 
+  const metodoPagamentoList: string[] = ficha.metodoPagamento
+    ? ficha.metodoPagamento.split('\n').map((s: string) => s.trim()).filter(Boolean)
+    : []
+
   const clienteNome = ficha.nome || ficha.empresa || refUp
   const clienteEmpresa = ficha.empresa || ficha.nome || ''
 
@@ -362,6 +366,22 @@ export default async function ContratoPage({ params }: Props) {
             <span style={{ fontSize: 14, color: '#fff', fontWeight: 900, letterSpacing: 2, fontFamily: "'Arial Black', Arial, sans-serif" }}>
               INVESTIMENTO = {valorTotal} EUROS + IVA
             </span>
+          </div>
+        )}
+
+        {metodoPagamentoList.length > 0 && (
+          <div style={{ marginTop: 20 }}>
+            <BodyText style={{ fontWeight: 700 }}>Plano de Pagamentos:</BodyText>
+            <div style={{ borderLeft: '4px solid #000', paddingLeft: 16, marginTop: 8 }}>
+              {metodoPagamentoList.map((linha, i) => (
+                <p key={i} style={{ fontSize: 13, color: '#333', lineHeight: 2, fontFamily: 'Arial, sans-serif' }}>
+                  — {linha}
+                </p>
+              ))}
+              <p style={{ fontSize: 12, color: '#555', marginTop: 8, fontFamily: 'Arial, sans-serif' }}>
+                IBAN: {PRESTADORA.iban}
+              </p>
+            </div>
           </div>
         )}
 
