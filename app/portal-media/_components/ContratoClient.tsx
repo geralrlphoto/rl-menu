@@ -399,44 +399,6 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
             </div>
           )}
 
-          {/* CPS form */}
-          <div className="border border-white/[0.07] bg-white/[0.02] px-6 py-6">
-            <p className="text-sm tracking-[0.4em] text-white/25 uppercase mb-2">Dados para CPS</p>
-            <p className="text-sm text-white/30 leading-relaxed mb-4">
-              Para emissão do contrato precisamos dos dados fiscais da tua empresa. Preenche o formulário abaixo.
-            </p>
-            {isEditing && (
-              <div className="mb-4">
-                <p className="text-[12px] text-white/30 mb-1">URL do formulário CPS</p>
-                <EditableField
-                  value={projeto.cpsFormUrl ?? ''}
-                  isEditing={true}
-                  onChange={v => set('cpsFormUrl', v)}
-                  placeholder="https://tally.so/... ou outro link"
-                  className="text-sm text-white/40"
-                />
-              </div>
-            )}
-            {!isEditing && projeto.cpsFormUrl ? (
-              <a href={projeto.cpsFormUrl} target="_blank" rel="noopener noreferrer"
-                className="inline-block border border-white/15 bg-white/[0.04] hover:bg-white/[0.08] px-5 py-2.5
-                           text-sm tracking-[0.4em] text-white/45 hover:text-white/70 uppercase transition-all">
-                Preencher Formulário →
-              </a>
-            ) : !isEditing ? (
-              <button disabled
-                className="border border-white/15 bg-white/[0.04] px-5 py-2.5
-                           text-sm tracking-[0.4em] text-white/25 uppercase cursor-not-allowed">
-                Preencher Formulário →
-              </button>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="border border-white/[0.05] bg-white/[0.01] px-5 py-4">
-          <p className="text-sm tracking-[0.2em] text-white/20 leading-relaxed">
-            Dúvidas sobre o contrato? Contacta <span className="text-white/35">rl@rlmedia.pt</span>
-          </p>
         </div>
       </div>
 
