@@ -29,6 +29,14 @@ export interface BriefingItem {
   desc: string
 }
 
+export interface BriefingSessao {
+  id: string
+  titulo: string
+  data: string
+  resumo: string
+  notificacaoEnviada?: string
+}
+
 export interface FichaCliente {
   nome?: string
   empresa?: string
@@ -90,6 +98,7 @@ export interface Projeto {
   revisoesImageUrl?: string
   briefingUrl?: string
   briefingItems?: BriefingItem[]
+  briefingSessoes?: BriefingSessao[]
   contratoUrl?: string
   cpsFormUrl?: string
   satisfacaoUrl?: string
