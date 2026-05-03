@@ -174,13 +174,12 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
     <>
       {/* ── Hero com foto a desvanecer ── */}
       {heroUrl && (
-        <div className="relative z-10 w-full overflow-hidden shrink-0" style={{ height: '320px' }}>
-          <div className="absolute inset-0 bg-cover bg-center scale-105"
+        <div className="relative z-10 w-full overflow-hidden shrink-0" style={{ height: '360px' }}>
+          <div className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: `url(${heroUrl})` }} />
-          <div className="absolute inset-0 bg-black/30" />
-          <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#050507] to-transparent" />
+          <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-[#050507] to-transparent" />
           <div className="absolute inset-0"
-            style={{ background: 'linear-gradient(to top, #050507 0%, #050507 15%, rgba(5,5,7,0.85) 35%, rgba(5,5,7,0.4) 55%, transparent 100%)' }} />
+            style={{ background: 'linear-gradient(to top, #050507 0%, #050507 8%, rgba(5,5,7,0.95) 20%, rgba(5,5,7,0.7) 40%, rgba(5,5,7,0.2) 65%, transparent 100%)' }} />
         </div>
       )}
       {isEditing && (
