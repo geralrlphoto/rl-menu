@@ -56,6 +56,13 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
   const sendNotification = async (faseIdx: number) => {
     const fase = projeto.fases[faseIdx]
     if (fase.notificacaoEnviada) return
+
+    const emailCliente = projeto.fichaCliente?.email
+    if (!emailCliente) {
+      alert('Sem email do cliente definido. Adiciona o email na secção Contrato & CPS.')
+      return
+    }
+
     setSendingId(fase.id)
     const date = nowPT()
     const updatedFases = projeto.fases.map((f, i) =>
@@ -65,11 +72,27 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
     setProjeto(updated)
     baseRef.current = { ...baseRef.current, fases: updatedFases }
     try {
-      await fetch(`/api/media-portal/${projeto.ref}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fases: updatedFases }),
-      })
+      await Promise.all([
+        fetch('/api/media-portal/notify-workflow', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: emailCliente,
+            ref: projeto.ref,
+            nomeProjeto: projeto.nome,
+            cliente: projeto.cliente,
+            faseNome: fase.nome,
+            faseDescricao: fase.descricao,
+            faseData: fase.data ?? '',
+            faseEstado: fase.estado,
+          }),
+        }),
+        fetch(`/api/media-portal/${projeto.ref}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fases: updatedFases }),
+        }),
+      ])
     } catch {}
     setSendingId(null)
   }
