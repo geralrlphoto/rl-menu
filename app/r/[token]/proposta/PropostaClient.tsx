@@ -669,6 +669,18 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                   <p className="text-[10px] tracking-[0.4em] uppercase opacity-25 text-center" style={{ color: typo.bodyColor }}>Serviços a definir no CRM</p>
                 )}
 
+                {/* Notas da proposta */}
+                {proposta.notas && (
+                  <div className="px-4 py-3 rounded-lg"
+                    style={{ background: `${typo.accentColor}08`, border: `0.5px solid ${typo.accentColor}25` }}>
+                    <p className="text-[9px] tracking-[0.4em] uppercase mb-2" style={{ color: `${typo.accentColor}70` }}>Notas</p>
+                    <p className={`${fontClass(typo.bodyFont)} font-light italic leading-relaxed`}
+                      style={{ fontSize: '15px', color: typo.bodyColor, opacity: 0.75, whiteSpace: 'pre-wrap' }}>
+                      {proposta.notas}
+                    </p>
+                  </div>
+                )}
+
                 {/* Serviços Extras — accordion selecionável */}
                 <div>
                   <button
