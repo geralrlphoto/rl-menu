@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import Link from 'next/link'
 import type { Projeto } from '@/app/portal-media/_data/mockProject'
 import AdminBar from './AdminBar'
@@ -29,9 +29,23 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
   const [projeto, setProjeto] = useState(initial)
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const heroFileRef = useRef<HTMLInputElement>(null)
+  const [heroUploading, setHeroUploading] = useState(false)
 
   const set = (field: keyof Projeto, value: any) =>
     setProjeto(p => ({ ...p, [field]: value }))
+
+  const handleHeroUpload = async (file: File) => {
+    setHeroUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (data.url) set('heroImageUrl', data.url)
+    } catch {}
+    setHeroUploading(false)
+  }
 
   const save = async () => {
     setSaving(true)
@@ -67,36 +81,18 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
     <>
       {/* Hero image */}
       {projeto.heroImageUrl && (
-        <div className="relative z-10 w-full overflow-hidden shrink-0" style={{ height: '320px' }}>
-          <div className="absolute inset-0 bg-cover bg-center scale-105"
-            style={{ backgroundImage: `url(${projeto.heroImageUrl})` }} />
-          <div className="absolute inset-0 bg-black/55" />
-          <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#050507] to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-[#050507] via-[#050507]/70 to-transparent" />
-          {isEditing && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 w-80 flex flex-col gap-2">
-              <div>
-                <p className="text-sm text-white/40 text-center mb-1">URL da imagem de fundo</p>
-                <EditableField
-                  value={projeto.heroImageUrl ?? ''}
-                  isEditing={true}
-                  onChange={v => set('heroImageUrl', v)}
-                  placeholder="https://..."
-                />
-              </div>
-              <div>
-                <p className="text-sm text-white/40 text-center mb-1">URL do logo (centro)</p>
-                <EditableField
-                  value={projeto.heroLogoUrl ?? ''}
-                  isEditing={true}
-                  onChange={v => set('heroLogoUrl', v)}
-                  placeholder="https://... (logo do cliente)"
-                />
-              </div>
-            </div>
-          )}
+        <div className="relative w-full shrink-0 overflow-hidden" style={{ height: 320 }}>
+          <img
+            src={projeto.heroImageUrl}
+            alt=""
+            className="w-full h-full object-cover object-center"
+            style={{
+              maskImage: 'linear-gradient(to bottom, black 0%, black 30%, transparent 100%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 30%, transparent 100%)',
+            }}
+          />
           {projeto.heroLogoUrl && (
-            <div className="absolute inset-0 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <img src={projeto.heroLogoUrl} alt={projeto.nome} className="max-h-16 max-w-[200px] object-contain opacity-80" />
             </div>
           )}
@@ -109,6 +105,47 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
               <div className="h-px w-5 bg-white/30" /><div className="h-px w-3 bg-white/15" /><div className="h-px w-5 bg-white/30" />
             </div>
             <span className="text-sm tracking-[0.45em] text-white/25 uppercase">RL Media · Portal do Cliente</span>
+          </div>
+        </div>
+      )}
+
+      {/* Hero upload controls (edit mode) */}
+      {isEditing && (
+        <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 pt-4 flex flex-col gap-2">
+          <input
+            ref={heroFileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={e => { const f = e.target.files?.[0]; if (f) handleHeroUpload(f) }}
+          />
+          <div className="flex items-center gap-3 border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+            <span className="text-sm tracking-[0.4em] text-white/25 uppercase shrink-0">🖼 Foto cabeçalho</span>
+            <button
+              onClick={() => heroFileRef.current?.click()}
+              disabled={heroUploading}
+              className="flex-1 text-left text-sm text-white/40 hover:text-white/70 transition-colors disabled:opacity-40"
+            >
+              {heroUploading ? '⏳ A carregar...' : projeto.heroImageUrl ? '✓ Trocar foto' : '⬆ Carregar foto'}
+            </button>
+            {projeto.heroImageUrl && !heroUploading && (
+              <button
+                onClick={() => set('heroImageUrl', '')}
+                className="text-white/20 hover:text-white/50 text-sm transition-colors shrink-0"
+              >
+                ✕ Remover
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-3 border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+            <span className="text-sm tracking-[0.4em] text-white/25 uppercase shrink-0">Logo</span>
+            <EditableField
+              value={projeto.heroLogoUrl ?? ''}
+              isEditing={true}
+              onChange={v => set('heroLogoUrl', v)}
+              placeholder="URL do logo do cliente (opcional)"
+              className="flex-1 text-sm text-white/40"
+            />
           </div>
         </div>
       )}
