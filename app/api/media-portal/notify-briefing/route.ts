@@ -18,19 +18,19 @@ export async function POST(req: NextRequest) {
   style="background-color:#020810;min-height:100vh;">
 <tr><td align="center" style="padding:0;">
 
-  <!-- Grid overlay table (creates the neon blue quadricula) -->
+  <!-- Outer wrapper — plain dark, no grid -->
   <table width="100%" cellpadding="0" cellspacing="0" border="0"
-    style="position:relative;background-color:#020810;
-           background-image:
-             linear-gradient(rgba(30,80,220,0.12) 1px, transparent 1px),
-             linear-gradient(90deg, rgba(30,80,220,0.12) 1px, transparent 1px);
-           background-size:44px 44px;
-           padding:56px 16px;">
+    style="background-color:#020810;padding:56px 16px;">
   <tr><td align="center">
 
-    <!-- CARD -->
+    <!-- CARD — grid lives here -->
     <table width="460" cellpadding="0" cellspacing="0" border="0"
-      style="max-width:460px;width:100%;background:#07101f;
+      style="max-width:460px;width:100%;
+             background-color:#07101f;
+             background-image:
+               linear-gradient(rgba(30,80,220,0.13) 1px, transparent 1px),
+               linear-gradient(90deg, rgba(30,80,220,0.13) 1px, transparent 1px);
+             background-size:44px 44px;
              border:1px solid rgba(40,100,255,0.22);
              border-top:none;">
 
