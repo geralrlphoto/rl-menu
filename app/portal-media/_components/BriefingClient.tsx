@@ -66,11 +66,35 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
   }
 
   const notificar = async (id: string) => {
+    const sessao = sessoes.find(s => s.id === id)
+    if (!sessao) return
+
+    const emailCliente = initial.fichaCliente?.email
+    if (!emailCliente) {
+      alert('Sem email do cliente definido. Adiciona o email na secção Contrato & CPS.')
+      return
+    }
+
     setNotifying(id)
-    const agora = new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' })
-    const updated = sessoes.map(ses => ses.id === id ? { ...ses, notificacaoEnviada: agora } : ses)
-    setSessoes(updated)
-    try { await saveData(updated) } catch {}
+    try {
+      await fetch('/api/media-portal/notify-briefing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: emailCliente,
+          ref: initial.ref,
+          nomeProjeto: initial.nome,
+          cliente: initial.cliente,
+          sessaoTitulo: sessao.titulo,
+          sessaoData: sessao.data,
+          resumo: sessao.resumo,
+        }),
+      })
+      const agora = new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' })
+      const updated = sessoes.map(ses => ses.id === id ? { ...ses, notificacaoEnviada: agora } : ses)
+      setSessoes(updated)
+      await saveData(updated)
+    } catch {}
     setNotifying(null)
   }
 
