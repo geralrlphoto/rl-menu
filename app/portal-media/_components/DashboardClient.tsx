@@ -105,11 +105,6 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
               WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 30%, transparent 100%)',
             }}
           />
-          {projeto.heroLogoUrl && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <img src={projeto.heroLogoUrl} alt={projeto.nome} className="max-h-16 max-w-[200px] object-contain opacity-80" />
-            </div>
-          )}
           <div className="absolute top-5 right-6 flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400/70 animate-pulse" />
             <span className="text-sm tracking-[0.4em] text-white/30 uppercase">Activo</span>
@@ -183,8 +178,18 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
 
         {/* Project name */}
         <div className="flex items-start gap-6 mb-6">
-          <div className="mt-2 w-12 h-12 border border-white/10 flex items-center justify-center shrink-0">
-            <span className="text-xl text-white/20 select-none">◈</span>
+          <div
+            className={`mt-2 w-14 h-14 rounded-full border border-white/10 flex items-center justify-center shrink-0 overflow-hidden
+              ${isEditing && !projeto.heroLogoUrl ? 'cursor-pointer hover:border-white/25 transition-colors' : ''}
+              ${isEditing && projeto.heroLogoUrl ? 'cursor-pointer' : ''}`}
+            onClick={isEditing ? () => logoFileRef.current?.click() : undefined}
+            title={isEditing ? (projeto.heroLogoUrl ? 'Trocar logo' : 'Carregar logo') : undefined}
+          >
+            {projeto.heroLogoUrl ? (
+              <img src={projeto.heroLogoUrl} alt={projeto.nome} className="w-full h-full object-contain p-1.5" />
+            ) : (
+              <span className="text-xl text-white/20 select-none">◈</span>
+            )}
           </div>
           <div className="flex-1">
             <EditableField value={projeto.tipo} isEditing={isEditing} onChange={v => set('tipo', v)}
