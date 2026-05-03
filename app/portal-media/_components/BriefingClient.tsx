@@ -87,7 +87,6 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
           cliente: initial.cliente,
           sessaoTitulo: sessao.titulo,
           sessaoData: sessao.data,
-          resumo: sessao.resumo,
         }),
       })
       const agora = new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' })

@@ -1,116 +1,131 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
-  const { to, ref, nomeProjeto, cliente, sessaoTitulo, sessaoData, resumo } = await req.json()
+  const { to, ref, nomeProjeto, cliente, sessaoTitulo, sessaoData } = await req.json()
 
   if (!to) return NextResponse.json({ ok: false, error: 'Email do cliente em falta' }, { status: 400 })
-
-  const portalUrl = `https://rl-menu-lake.vercel.app/portal-media/${ref}/briefing`
-
-  // Grid SVG encoded for email background
-  const gridSvg = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' fill='%23030810'/%3E%3Cpath d='M40 0L0 0 0 40' fill='none' stroke='%230d1f4a' stroke-width='0.6'/%3E%3C/svg%3E")`
-
-  const resumoHtml = resumo
-    ? `<tr><td style="padding:0 40px 32px;">
-        <table cellpadding="0" cellspacing="0" width="100%">
-          <tr><td height="1" style="background:rgba(59,130,246,0.12);font-size:0;">&nbsp;</td></tr>
-        </table>
-        <p style="margin:20px 0 8px;font-size:8px;letter-spacing:5px;color:rgba(59,130,246,0.5);text-transform:uppercase;">Resumo</p>
-        <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.4);line-height:1.85;font-weight:300;white-space:pre-wrap;">${resumo.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
-      </td></tr>`
-    : ''
 
   const html = `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#030810;font-family:Arial,Helvetica,sans-serif;">
+<body style="margin:0;padding:0;background:#020810;font-family:Arial,Helvetica,sans-serif;">
 
-  <table width="100%" cellpadding="0" cellspacing="0"
-    style="background-color:#030810;background-image:${gridSvg};background-size:40px 40px;padding:48px 16px;">
-    <tr><td align="center">
+<!--
+  OUTER WRAPPER — dark background + neon blue grid
+  Grid is built with nested tables (100% email-client compatible)
+-->
+<table width="100%" cellpadding="0" cellspacing="0" border="0"
+  style="background-color:#020810;min-height:100vh;">
+<tr><td align="center" style="padding:0;">
 
-      <!-- Card -->
-      <table width="480" cellpadding="0" cellspacing="0"
-        style="max-width:480px;width:100%;background:#060c1e;border:1px solid rgba(59,130,246,0.18);">
+  <!-- Grid overlay table (creates the neon blue quadricula) -->
+  <table width="100%" cellpadding="0" cellspacing="0" border="0"
+    style="position:relative;background-color:#020810;
+           background-image:
+             linear-gradient(rgba(30,80,220,0.12) 1px, transparent 1px),
+             linear-gradient(90deg, rgba(30,80,220,0.12) 1px, transparent 1px);
+           background-size:44px 44px;
+           padding:56px 16px;">
+  <tr><td align="center">
 
-        <!-- Top neon line -->
-        <tr><td height="2" style="background:linear-gradient(90deg,transparent,#3b82f6,transparent);font-size:0;line-height:0;">&nbsp;</td></tr>
+    <!-- CARD -->
+    <table width="460" cellpadding="0" cellspacing="0" border="0"
+      style="max-width:460px;width:100%;background:#07101f;
+             border:1px solid rgba(40,100,255,0.22);
+             border-top:none;">
 
-        <!-- Logo area -->
-        <tr><td style="padding:48px 40px 32px;text-align:center;">
+      <!-- Top neon line (strong blue) -->
+      <tr>
+        <td height="3"
+          style="background:linear-gradient(90deg,#020810,#2563eb,#020810);
+                 font-size:0;line-height:0;">&nbsp;</td>
+      </tr>
 
-          <!-- RL Media Logo -->
-          <img src="https://rl-menu-lake.vercel.app/logo_marca_advocacia__8_-removebg-preview.png"
-            width="72" alt="RL Media"
-            style="display:block;margin:0 auto 28px;width:72px;height:72px;object-fit:contain;opacity:0.9;" />
+      <!-- Content area -->
+      <tr><td style="padding:52px 44px 44px;text-align:center;">
 
-          <!-- Badge -->
-          <table cellpadding="0" cellspacing="0" style="margin:0 auto 28px;">
-            <tr><td style="border:1px solid rgba(59,130,246,0.35);background:rgba(59,130,246,0.07);padding:7px 22px;text-align:center;">
-              <p style="margin:0;font-size:8px;letter-spacing:6px;color:rgba(59,130,246,0.85);text-transform:uppercase;">Novo Briefing</p>
-            </td></tr>
-          </table>
+        <!-- RL Media white logo -->
+        <img src="https://rl-menu-lake.vercel.app/logo-rl-media-branco.png"
+          width="80" alt="RL Media"
+          style="display:block;margin:0 auto 36px;width:80px;height:auto;opacity:0.92;" />
 
-          <!-- Project name -->
-          <p style="margin:0 0 4px;font-size:9px;letter-spacing:5px;color:rgba(255,255,255,0.2);text-transform:uppercase;">Projeto</p>
-          <p style="margin:0 0 4px;font-size:24px;font-weight:200;letter-spacing:5px;color:rgba(255,255,255,0.88);text-transform:uppercase;">${nomeProjeto}</p>
-          <p style="margin:0 0 36px;font-size:10px;letter-spacing:3px;color:rgba(255,255,255,0.25);text-transform:uppercase;">${cliente}</p>
+        <!-- Thin divider -->
+        <table cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 28px;">
+          <tr><td height="1"
+            style="background:linear-gradient(90deg,transparent,rgba(37,99,235,0.4),transparent);
+                   font-size:0;">&nbsp;</td></tr>
+        </table>
 
-          <!-- Divider -->
-          <table cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 28px;">
-            <tr><td height="1" style="background:linear-gradient(90deg,transparent,rgba(59,130,246,0.25),transparent);font-size:0;">&nbsp;</td></tr>
-          </table>
+        <!-- NOVO BRIEFING badge -->
+        <table cellpadding="0" cellspacing="0" style="margin:0 auto 30px;">
+          <tr><td style="border:1px solid rgba(37,99,235,0.45);
+                         background:rgba(37,99,235,0.09);
+                         padding:8px 24px;text-align:center;">
+            <p style="margin:0;font-size:8px;letter-spacing:7px;
+                      color:rgba(96,165,250,0.9);text-transform:uppercase;">
+              Novo Briefing
+            </p>
+          </td></tr>
+        </table>
 
-          <!-- Session info box -->
-          <table cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 28px;">
-            <tr>
-              <td style="border:1px solid rgba(59,130,246,0.15);background:rgba(59,130,246,0.04);padding:16px 20px;">
-                <p style="margin:0 0 6px;font-size:8px;letter-spacing:5px;color:rgba(59,130,246,0.55);text-transform:uppercase;">Sessão</p>
-                <p style="margin:0;font-size:15px;font-weight:300;letter-spacing:2px;color:rgba(255,255,255,0.75);text-transform:uppercase;">${sessaoTitulo}</p>
-                ${sessaoData ? `<p style="margin:6px 0 0;font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.3);">${sessaoData}</p>` : ''}
-              </td>
-            </tr>
-          </table>
+        <!-- Project name -->
+        <p style="margin:0 0 3px;font-size:9px;letter-spacing:5px;
+                  color:rgba(255,255,255,0.18);text-transform:uppercase;">Projeto</p>
+        <p style="margin:0 0 5px;font-size:26px;font-weight:200;letter-spacing:5px;
+                  color:rgba(255,255,255,0.88);text-transform:uppercase;">${nomeProjeto}</p>
+        <p style="margin:0 0 36px;font-size:10px;letter-spacing:3px;
+                  color:rgba(255,255,255,0.22);text-transform:uppercase;">${cliente}</p>
 
-          <!-- Message -->
-          <p style="margin:0 0 8px;font-size:14px;color:rgba(255,255,255,0.5);line-height:1.85;font-weight:300;">
-            Foi adicionado um novo registo de briefing ao teu portal de projeto.
-          </p>
-          <p style="margin:0 0 36px;font-size:13px;color:rgba(255,255,255,0.25);line-height:1.85;font-weight:300;">
-            Consulta todos os detalhes e resumo no portal.
-          </p>
+        <!-- Session info box -->
+        <table cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 32px;">
+          <tr>
+            <td style="border:1px solid rgba(37,99,235,0.2);
+                       background:rgba(37,99,235,0.05);
+                       padding:18px 22px;text-align:left;">
+              <p style="margin:0 0 8px;font-size:8px;letter-spacing:5px;
+                        color:rgba(96,165,250,0.6);text-transform:uppercase;">Sessão</p>
+              <p style="margin:0 0 4px;font-size:16px;font-weight:300;letter-spacing:2px;
+                        color:rgba(255,255,255,0.78);text-transform:uppercase;">${sessaoTitulo}</p>
+              ${sessaoData ? `<p style="margin:0;font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.28);">${sessaoData}</p>` : ''}
+            </td>
+          </tr>
+        </table>
 
-          <!-- CTA -->
-          <table cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 8px;">
-            <tr><td style="border:1px solid rgba(59,130,246,0.4);background:rgba(59,130,246,0.08);text-align:center;">
-              <a href="${portalUrl}"
-                style="display:block;padding:17px 32px;font-size:9px;letter-spacing:7px;color:rgba(59,130,246,0.9);text-decoration:none;text-transform:uppercase;">
-                Ver Briefing &rarr;
-              </a>
-            </td></tr>
-          </table>
+        <!-- Message -->
+        <p style="margin:0;font-size:14px;color:rgba(255,255,255,0.42);
+                  line-height:1.9;font-weight:300;">
+          Foi adicionado um novo registo de briefing ao teu portal de projeto.<br>
+          Podes consultar todos os detalhes a qualquer momento.
+        </p>
 
-          <p style="margin:0;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.1);font-family:monospace;">
-            rl-menu-lake.vercel.app/portal-media/${ref.toLowerCase()}/briefing
-          </p>
+      </td></tr>
 
-        </td></tr>
+      <!-- Bottom neon line -->
+      <tr>
+        <td height="1"
+          style="background:linear-gradient(90deg,transparent,rgba(37,99,235,0.35),transparent);
+                 font-size:0;line-height:0;">&nbsp;</td>
+      </tr>
 
-        ${resumoHtml}
-
-        <!-- Bottom neon line -->
-        <tr><td height="1" style="background:linear-gradient(90deg,transparent,rgba(59,130,246,0.3),transparent);font-size:0;">&nbsp;</td></tr>
-
-        <!-- Footer -->
-        <tr><td style="padding:18px 40px;text-align:center;background:#040a18;">
-          <p style="margin:0;font-size:8px;letter-spacing:5px;color:rgba(255,255,255,0.1);text-transform:uppercase;">
+      <!-- Footer -->
+      <tr>
+        <td style="padding:18px 44px;text-align:center;background:#040c1c;">
+          <p style="margin:0;font-size:8px;letter-spacing:5px;
+                    color:rgba(255,255,255,0.1);text-transform:uppercase;">
             RL Media &middot; Audiovisual &middot; rlmedia.pt
           </p>
-        </td></tr>
+        </td>
+      </tr>
 
-      </table>
-    </td></tr>
+    </table>
+    <!-- /CARD -->
+
+  </td></tr>
   </table>
+  <!-- /Grid overlay -->
+
+</td></tr>
+</table>
 
 </body>
 </html>`
