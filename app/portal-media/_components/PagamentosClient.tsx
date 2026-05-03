@@ -197,7 +197,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
             ].map(step => (
               <div key={step.n} className="flex items-start gap-3">
                 <span className="w-5 h-5 border border-white/15 flex items-center justify-center shrink-0
-                                 text-[11px] tracking-widest text-white/25 mt-0.5">{step.n}</span>
+                                 text-sm tracking-widest text-white/25 mt-0.5">{step.n}</span>
                 <p className="text-sm font-light text-white/35 leading-relaxed">{step.text}</p>
               </div>
             ))}
@@ -237,28 +237,28 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
           <div className="border border-white/[0.07] bg-white/[0.02] px-4 py-5 text-center">
             <p className="text-sm tracking-[0.4em] text-white/25 uppercase mb-1">Total</p>
             <p className="text-sm tracking-[0.1em] text-white/65 font-light">{total.toLocaleString('pt-PT')} €</p>
-            <p className="text-[10px] tracking-[0.3em] text-white/15 uppercase mt-1">Serviço</p>
+            <p className="text-sm tracking-[0.3em] text-white/15 uppercase mt-1">Serviço</p>
           </div>
           <div className={`border px-4 py-5 text-center ${pago > 0 ? 'border-emerald-400/20 bg-emerald-400/[0.03]' : 'border-white/[0.07] bg-white/[0.02]'}`}>
             <p className="text-sm tracking-[0.4em] text-white/25 uppercase mb-1">Pago</p>
             <p className={`text-sm tracking-[0.1em] font-light ${pago > 0 ? 'text-emerald-400/80' : 'text-white/65'}`}>
               {pago.toLocaleString('pt-PT')} €
             </p>
-            <p className="text-[10px] tracking-[0.3em] text-white/15 uppercase mt-1">{registos.length} registo{registos.length !== 1 ? 's' : ''}</p>
+            <p className="text-sm tracking-[0.3em] text-white/15 uppercase mt-1">{registos.length} registo{registos.length !== 1 ? 's' : ''}</p>
           </div>
           <div className={`border px-4 py-5 text-center ${restante > 0 ? 'border-white/[0.07] bg-white/[0.02]' : 'border-emerald-400/20 bg-emerald-400/[0.03]'}`}>
             <p className="text-sm tracking-[0.4em] text-white/25 uppercase mb-1">Restante</p>
             <p className={`text-sm tracking-[0.1em] font-light ${restante > 0 ? 'text-white/65' : 'text-emerald-400/80'}`}>
               {restante.toLocaleString('pt-PT')} €
             </p>
-            <p className="text-[10px] tracking-[0.3em] text-white/15 uppercase mt-1">{restante === 0 ? 'Liquidado' : 'Em falta'}</p>
+            <p className="text-sm tracking-[0.3em] text-white/15 uppercase mt-1">{restante === 0 ? 'Liquidado' : 'Em falta'}</p>
           </div>
         </div>
 
         {/* ── Histórico de pagamentos registados ── */}
         {registos.length > 0 && (
           <div className="mb-10">
-            <p className="text-[11px] tracking-[0.5em] text-white/20 uppercase mb-3">Histórico de Pagamentos</p>
+            <p className="text-sm tracking-[0.5em] text-white/20 uppercase mb-3">Histórico de Pagamentos</p>
             <div className="flex flex-col gap-2">
               {[...registos].reverse().map((r, i) => (
                 <div key={i} className="border border-emerald-400/15 bg-emerald-400/[0.02] px-5 py-3.5
@@ -268,7 +268,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                     <div>
                       <p className="text-sm tracking-[0.2em] text-white/55">{r.data}</p>
                       {r.fase && (
-                        <p className="text-[11px] tracking-[0.3em] text-white/25 uppercase mt-0.5">
+                        <p className="text-sm tracking-[0.3em] text-white/25 uppercase mt-0.5">
                           {r.fase}{r.metodo ? ` · ${r.metodo}` : ''}
                         </p>
                       )}
@@ -280,7 +280,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                     </p>
                     {r.comprativoUrl && (
                       <a href={r.comprativoUrl} target="_blank" rel="noopener noreferrer"
-                        className="text-[10px] tracking-[0.3em] text-white/25 hover:text-white/50 uppercase transition-colors">
+                        className="text-sm tracking-[0.3em] text-white/25 hover:text-white/50 uppercase transition-colors">
                         Ver comprovativo ↗
                       </a>
                     )}
@@ -293,7 +293,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
 
         {/* ── Plano de Pagamento (admin edita) ── */}
         <div className="mb-6">
-          <p className="text-[11px] tracking-[0.5em] text-white/20 uppercase mb-3">Plano de Pagamento</p>
+          <p className="text-sm tracking-[0.5em] text-white/20 uppercase mb-3">Plano de Pagamento</p>
           <div className="flex flex-col gap-3">
             {projeto.pagamentos.map((pag, i) => {
               const cfg = PAG_CFG[pag.estado]
@@ -399,7 +399,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
               <>
                 <div className="px-8 pt-7 pb-2 flex items-center justify-between">
                   <div>
-                    <p className="text-[11px] tracking-[0.5em] text-white/20 uppercase mb-1">RL Media · {projeto.nome}</p>
+                    <p className="text-sm tracking-[0.5em] text-white/20 uppercase mb-1">RL Media · {projeto.nome}</p>
                     <h2 className="text-lg font-extralight tracking-[0.3em] text-white/75 uppercase">Registar Pagamento</h2>
                   </div>
                   <button onClick={closeForm}
@@ -415,7 +415,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                   {/* Empresa + Referência */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-[11px] tracking-[0.4em] text-white/25 uppercase block mb-1.5">Empresa</label>
+                      <label className="text-sm tracking-[0.4em] text-white/25 uppercase block mb-1.5">Empresa</label>
                       <input
                         value={form.empresa}
                         onChange={e => setField('empresa', e.target.value)}
@@ -425,7 +425,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] tracking-[0.4em] text-white/25 uppercase block mb-1.5">Referência</label>
+                      <label className="text-sm tracking-[0.4em] text-white/25 uppercase block mb-1.5">Referência</label>
                       <input
                         value={form.referencia}
                         readOnly
@@ -437,7 +437,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
 
                   {/* Fase */}
                   <div>
-                    <label className="text-[11px] tracking-[0.4em] text-white/25 uppercase block mb-2">Fase do Pagamento</label>
+                    <label className="text-sm tracking-[0.4em] text-white/25 uppercase block mb-2">Fase do Pagamento</label>
                     <div className="grid grid-cols-3 gap-2">
                       {['Adjudicação', 'Reforço', 'Final'].map(f => (
                         <button
@@ -459,7 +459,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                   {/* Valor + Método */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-[11px] tracking-[0.4em] text-white/25 uppercase block mb-1.5">Valor (€)</label>
+                      <label className="text-sm tracking-[0.4em] text-white/25 uppercase block mb-1.5">Valor (€)</label>
                       <input
                         type="number"
                         value={form.valor}
@@ -472,7 +472,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] tracking-[0.4em] text-white/25 uppercase block mb-1.5">Método</label>
+                      <label className="text-sm tracking-[0.4em] text-white/25 uppercase block mb-1.5">Método</label>
                       <select
                         value={form.metodo}
                         onChange={e => setField('metodo', e.target.value)}
@@ -489,7 +489,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
 
                   {/* Data */}
                   <div>
-                    <label className="text-[11px] tracking-[0.4em] text-white/25 uppercase block mb-1.5">Data do Pagamento</label>
+                    <label className="text-sm tracking-[0.4em] text-white/25 uppercase block mb-1.5">Data do Pagamento</label>
                     <input
                       type="date"
                       value={form.data}
@@ -502,8 +502,8 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
 
                   {/* Comprovativo */}
                   <div>
-                    <label className="text-[11px] tracking-[0.4em] text-white/25 uppercase block mb-1.5">
-                      Comprovativo <span className="text-white/15 normal-case tracking-normal text-[10px]">(foto ou PDF)</span>
+                    <label className="text-sm tracking-[0.4em] text-white/25 uppercase block mb-1.5">
+                      Comprovativo <span className="text-white/15 normal-case tracking-normal text-sm">(foto ou PDF)</span>
                     </label>
                     <div
                       onClick={() => fileInputRef.current?.click()}
@@ -516,7 +516,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                           </svg>
                           <p className="text-sm text-white/55">{form.file.name}</p>
-                          <p className="text-[11px] text-white/25">{(form.file.size / 1024).toFixed(0)} KB · clica para alterar</p>
+                          <p className="text-sm text-white/25">{(form.file.size / 1024).toFixed(0)} KB · clica para alterar</p>
                         </>
                       ) : (
                         <>
@@ -524,7 +524,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
                           </svg>
                           <p className="text-sm text-white/30">Clica para fazer upload</p>
-                          <p className="text-[11px] text-white/20">JPG, PNG, PDF</p>
+                          <p className="text-sm text-white/20">JPG, PNG, PDF</p>
                         </>
                       )}
                     </div>

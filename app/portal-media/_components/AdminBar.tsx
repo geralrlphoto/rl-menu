@@ -16,7 +16,7 @@ export default function AdminBar({ isEditing, saving, onToggle, onSave, onCancel
         <>
           <button
             onClick={onCancel}
-            className="px-4 py-2 border border-white/15 bg-[#050507] text-white/40 hover:text-white/60 text-xs tracking-[0.3em] uppercase transition-colors"
+            className="px-4 py-2 border border-white/15 bg-[#050507] text-white/40 hover:text-white/60 text-sm tracking-[0.3em] uppercase transition-colors"
           >
             Cancelar
           </button>
@@ -24,7 +24,7 @@ export default function AdminBar({ isEditing, saving, onToggle, onSave, onCancel
             onClick={onSave}
             disabled={saving}
             className="px-5 py-2 border border-emerald-400/40 bg-emerald-400/10 hover:bg-emerald-400/20
-                       text-emerald-400/80 hover:text-emerald-400 text-xs tracking-[0.3em] uppercase
+                       text-emerald-400/80 hover:text-emerald-400 text-sm tracking-[0.3em] uppercase
                        transition-all disabled:opacity-40"
           >
             {saving ? 'A guardar...' : '✓ Guardar'}
@@ -35,7 +35,7 @@ export default function AdminBar({ isEditing, saving, onToggle, onSave, onCancel
           onClick={onToggle}
           className="flex items-center gap-2 px-4 py-2 border border-white/10 bg-[#050507]/90
                      hover:border-white/25 backdrop-blur-sm text-white/30 hover:text-white/60
-                     text-xs tracking-[0.3em] uppercase transition-all"
+                     text-sm tracking-[0.3em] uppercase transition-all"
           style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }}
         >
           <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

@@ -169,11 +169,11 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
         {/* ── Método de Pagamento ── */}
         <div className="border border-white/[0.12] bg-white/[0.03] px-6 py-6 mb-6 relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-          <p className="text-[11px] tracking-[0.5em] text-white/20 uppercase mb-5">Método de Pagamento</p>
+          <p className="text-sm tracking-[0.5em] text-white/20 uppercase mb-5">Método de Pagamento</p>
 
           {/* Prazo */}
           <div className="bg-white/[0.04] border border-white/[0.08] px-4 py-3 mb-5">
-            <p className="text-[11px] tracking-[0.3em] text-white/25 uppercase mb-1">Prazo</p>
+            <p className="text-sm tracking-[0.3em] text-white/25 uppercase mb-1">Prazo</p>
             <EditableField
               value={conta.prazo}
               isEditing={isEditing}
@@ -186,7 +186,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
           {/* Método + Titular */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
             <div>
-              <p className="text-[11px] tracking-[0.3em] text-white/25 uppercase mb-1">Método</p>
+              <p className="text-sm tracking-[0.3em] text-white/25 uppercase mb-1">Método</p>
               <EditableField
                 value={conta.metodo}
                 isEditing={isEditing}
@@ -196,7 +196,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
               />
             </div>
             <div>
-              <p className="text-[11px] tracking-[0.3em] text-white/25 uppercase mb-1">Titular</p>
+              <p className="text-sm tracking-[0.3em] text-white/25 uppercase mb-1">Titular</p>
               <EditableField
                 value={conta.titular}
                 isEditing={isEditing}
@@ -209,7 +209,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
 
           {/* IBAN */}
           <div className="border border-white/[0.10] bg-white/[0.02] px-4 py-4 mb-5">
-            <p className="text-[11px] tracking-[0.3em] text-white/25 uppercase mb-2">IBAN</p>
+            <p className="text-sm tracking-[0.3em] text-white/25 uppercase mb-2">IBAN</p>
             <EditableField
               value={conta.iban}
               isEditing={isEditing}
@@ -221,22 +221,22 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
 
           {/* Comprovativo */}
           <div className="border-t border-white/[0.06] pt-4">
-            <p className="text-[11px] tracking-[0.3em] text-white/25 uppercase mb-2">Após Transferência</p>
+            <p className="text-sm tracking-[0.3em] text-white/25 uppercase mb-2">Após Transferência</p>
             {isEditing ? (
               <div>
-                <p className="text-[12px] text-white/30 mb-1">Email para comprovativo</p>
+                <p className="text-sm text-white/30 mb-1">Email para comprovativo</p>
                 <EditableField
                   value={conta.email}
                   isEditing={true}
                   onChange={v => setConta('email', v)}
-                  className="text-[13px] text-white/65"
+                  className="text-sm text-white/65"
                   placeholder="email@rlmedia.pt"
                 />
               </div>
             ) : (
               <div className="flex items-start gap-3 border border-white/[0.08] bg-white/[0.02] px-4 py-3">
                 <span className="text-white/30 shrink-0 mt-0.5">◉</span>
-                <p className="text-[13px] text-white/40 leading-relaxed">
+                <p className="text-sm text-white/40 leading-relaxed">
                   Após cada pagamento, regista o estado na{' '}
                   <a href={`/portal-media/${projeto.ref}/pagamentos`}
                     className="text-white/65 hover:text-white/90 transition-colors underline underline-offset-2">
@@ -288,7 +288,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
               </div>
               {isEditing && (
                 <div className="mt-4">
-                  <p className="text-[12px] text-white/30 mb-1">URL externo do contrato (opcional)</p>
+                  <p className="text-sm text-white/30 mb-1">URL externo do contrato (opcional)</p>
                   <EditableField
                     value={projeto.contratoUrl ?? ''}
                     isEditing={true}
@@ -313,7 +313,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                   </p>
                   {isEditing && (
                     <div>
-                      <p className="text-[12px] text-white/30 mb-1">URL do contrato (Google Drive, etc.)</p>
+                      <p className="text-sm text-white/30 mb-1">URL do contrato (Google Drive, etc.)</p>
                       <EditableField
                         value={projeto.contratoUrl ?? ''}
                         isEditing={true}
@@ -349,7 +349,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                   .filter(({ field }) => isEditing || !!(projeto.fichaCliente as any)?.[field])
                   .map(({ label, field, placeholder, isDate }) => (
                     <div key={field} className="flex flex-col gap-0.5">
-                      <p className="text-[11px] tracking-[0.35em] text-white/20 uppercase">{label}</p>
+                      <p className="text-sm tracking-[0.35em] text-white/20 uppercase">{label}</p>
                       {isDate ? (
                         <EditableDateField
                           value={(projeto.fichaCliente as any)?.[field] ?? ''}
@@ -374,7 +374,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
               {/* Serviços Incluídos */}
               {(isEditing || projeto.fichaCliente?.servicosList) && (
                 <div className="mt-5 pt-4 border-t border-white/[0.06]">
-                  <p className="text-[11px] tracking-[0.35em] text-white/20 uppercase mb-2">Serviços Incluídos</p>
+                  <p className="text-sm tracking-[0.35em] text-white/20 uppercase mb-2">Serviços Incluídos</p>
                   {isEditing ? (
                     <EditableField
                       value={projeto.fichaCliente?.servicosList ?? ''}
@@ -400,7 +400,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
               {/* Observações */}
               {(isEditing || projeto.fichaCliente?.observacoes) && (
                 <div className="mt-4 pt-4 border-t border-white/[0.06]">
-                  <p className="text-[11px] tracking-[0.35em] text-white/20 uppercase mb-2">Observações</p>
+                  <p className="text-sm tracking-[0.35em] text-white/20 uppercase mb-2">Observações</p>
                   <EditableField
                     value={projeto.fichaCliente?.observacoes ?? ''}
                     isEditing={isEditing}
