@@ -178,18 +178,27 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
 
         {/* Project name */}
         <div className="flex items-start gap-6 mb-6">
-          <div
-            className={`mt-2 w-20 h-20 rounded-full border border-white/10 flex items-center justify-center shrink-0 overflow-hidden
-              ${isEditing && !projeto.heroLogoUrl ? 'cursor-pointer hover:border-white/25 transition-colors' : ''}
-              ${isEditing && projeto.heroLogoUrl ? 'cursor-pointer' : ''}`}
-            onClick={isEditing ? () => logoFileRef.current?.click() : undefined}
-            title={isEditing ? (projeto.heroLogoUrl ? 'Trocar logo' : 'Carregar logo') : undefined}
-          >
-            {projeto.heroLogoUrl ? (
-              <img src={projeto.heroLogoUrl} alt={projeto.nome} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-xl text-white/20 select-none">◈</span>
+          {/* Logo circle with color neon glow */}
+          <div className="mt-2 relative shrink-0 flex items-center justify-center">
+            {/* Neon glow — blurred copy of logo picks up its colors */}
+            {projeto.heroLogoUrl && (
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full overflow-hidden blur-2xl opacity-80 pointer-events-none">
+                <img src={projeto.heroLogoUrl} aria-hidden className="w-full h-full object-cover" />
+              </div>
             )}
+            {/* Circle */}
+            <div
+              className={`relative z-10 w-20 h-20 rounded-full border border-white/10 flex items-center justify-center overflow-hidden
+                ${isEditing ? 'cursor-pointer hover:border-white/30 transition-colors' : ''}`}
+              onClick={isEditing ? () => logoFileRef.current?.click() : undefined}
+              title={isEditing ? (projeto.heroLogoUrl ? 'Trocar logo' : 'Carregar logo') : undefined}
+            >
+              {projeto.heroLogoUrl ? (
+                <img src={projeto.heroLogoUrl} alt={projeto.nome} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-xl text-white/20 select-none">◈</span>
+              )}
+            </div>
           </div>
           <div className="flex-1">
             <EditableField value={projeto.tipo} isEditing={isEditing} onChange={v => set('tipo', v)}
