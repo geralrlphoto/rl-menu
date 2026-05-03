@@ -4,6 +4,7 @@ import Link from 'next/link'
 import type { Projeto, FichaCliente } from '@/app/portal-media/_data/mockProject'
 import AdminBar from './AdminBar'
 import EditableField from './EditableField'
+import EditableDateField from './EditableDateField'
 import HeroUploadBlock from './HeroUploadBlock'
 
 interface ContratoGerado {
@@ -107,7 +108,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
     email:   projeto.contaBancaria?.email   ?? 'geral.rlmedia@gmail.com',
   }
 
-  const fichaFields: { label: string; field: keyof FichaCliente; placeholder?: string }[] = [
+  const fichaFields: { label: string; field: keyof FichaCliente; placeholder?: string; isDate?: boolean }[] = [
     { label: 'Nome',            field: 'nome',             placeholder: 'Nome do cliente' },
     { label: 'Empresa / Marca', field: 'empresa',          placeholder: 'Nome da empresa' },
     { label: 'NIF / NIPC',      field: 'nif',              placeholder: '000 000 000' },
@@ -115,7 +116,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
     { label: 'Telefone',        field: 'telefone',         placeholder: '+351 900 000 000' },
     { label: 'Morada',          field: 'morada',           placeholder: 'Rua, cidade' },
     { label: 'Rep. Legal',      field: 'representanteLegal', placeholder: 'Nome do representante' },
-    { label: 'Data do Evento',  field: 'dataEvento',       placeholder: '15 Jul 2025' },
+    { label: 'Data do Evento',  field: 'dataEvento',       placeholder: '15 Jul 2025', isDate: true },
     { label: 'Local do Evento', field: 'localEvento',      placeholder: 'Lisboa' },
     { label: 'Orçamento',       field: 'orcamento',        placeholder: '3000 €' },
   ]
@@ -346,16 +347,26 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
                 {fichaFields
                   .filter(({ field }) => isEditing || !!(projeto.fichaCliente as any)?.[field])
-                  .map(({ label, field, placeholder }) => (
+                  .map(({ label, field, placeholder, isDate }) => (
                     <div key={field} className="flex flex-col gap-0.5">
                       <p className="text-[11px] tracking-[0.35em] text-white/20 uppercase">{label}</p>
-                      <EditableField
-                        value={(projeto.fichaCliente as any)?.[field] ?? ''}
-                        isEditing={isEditing}
-                        onChange={v => setFicha(field, v)}
-                        className="text-[14px] text-white/55 font-light"
-                        placeholder={placeholder}
-                      />
+                      {isDate ? (
+                        <EditableDateField
+                          value={(projeto.fichaCliente as any)?.[field] ?? ''}
+                          isEditing={isEditing}
+                          onChange={v => setFicha(field, v)}
+                          className="text-[14px] text-white/55 font-light"
+                          placeholder={placeholder}
+                        />
+                      ) : (
+                        <EditableField
+                          value={(projeto.fichaCliente as any)?.[field] ?? ''}
+                          isEditing={isEditing}
+                          onChange={v => setFicha(field, v)}
+                          className="text-[14px] text-white/55 font-light"
+                          placeholder={placeholder}
+                        />
+                      )}
                     </div>
                   ))}
               </div>

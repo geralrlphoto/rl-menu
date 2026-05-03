@@ -4,6 +4,7 @@ import Link from 'next/link'
 import type { Projeto, BriefingSessao } from '@/app/portal-media/_data/mockProject'
 import AdminBar from './AdminBar'
 import EditableField from './EditableField'
+import EditableDateField from './EditableDateField'
 import HeroUploadBlock from './HeroUploadBlock'
 
 interface Props { projeto: Projeto; isAdmin: boolean }
@@ -122,7 +123,7 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
                   className="flex-1 text-sm tracking-[0.3em] text-white/65 uppercase font-medium"
                   placeholder="Título do briefing"
                 />
-                <EditableField
+                <EditableDateField
                   value={sessao.data}
                   isEditing={isEditing}
                   onChange={v => update(sessao.id, 'data', v)}
