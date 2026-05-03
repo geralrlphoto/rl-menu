@@ -177,9 +177,10 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
         <div className="relative z-10 w-full overflow-hidden shrink-0" style={{ height: '260px' }}>
           <div className="absolute inset-0 bg-cover bg-center scale-105"
             style={{ backgroundImage: `url(${heroUrl})` }} />
-          <div className="absolute inset-0 bg-black/50" />
+          <div className="absolute inset-0 bg-black/45" />
           <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-[#050507] to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#050507] via-[#050507]/70 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-56 bg-gradient-to-t from-[#050507] via-[#050507]/80 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#050507] to-transparent" />
         </div>
       )}
       {isEditing && (
