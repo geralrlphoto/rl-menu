@@ -30,7 +30,9 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const heroFileRef = useRef<HTMLInputElement>(null)
+  const logoFileRef = useRef<HTMLInputElement>(null)
   const [heroUploading, setHeroUploading] = useState(false)
+  const [logoUploading, setLogoUploading] = useState(false)
 
   const set = (field: keyof Projeto, value: any) =>
     setProjeto(p => ({ ...p, [field]: value }))
@@ -45,6 +47,18 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
       if (data.url) set('heroImageUrl', data.url)
     } catch {}
     setHeroUploading(false)
+  }
+
+  const handleLogoUpload = async (file: File) => {
+    setLogoUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (data.url) set('heroLogoUrl', data.url)
+    } catch {}
+    setLogoUploading(false)
   }
 
   const save = async () => {
@@ -137,15 +151,30 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
               </button>
             )}
           </div>
+          <input
+            ref={logoFileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={e => { const f = e.target.files?.[0]; if (f) handleLogoUpload(f) }}
+          />
           <div className="flex items-center gap-3 border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-            <span className="text-sm tracking-[0.4em] text-white/25 uppercase shrink-0">Logo</span>
-            <EditableField
-              value={projeto.heroLogoUrl ?? ''}
-              isEditing={true}
-              onChange={v => set('heroLogoUrl', v)}
-              placeholder="URL do logo do cliente (opcional)"
-              className="flex-1 text-sm text-white/40"
-            />
+            <span className="text-sm tracking-[0.4em] text-white/25 uppercase shrink-0">Logo cliente</span>
+            <button
+              onClick={() => logoFileRef.current?.click()}
+              disabled={logoUploading}
+              className="flex-1 text-left text-sm text-white/40 hover:text-white/70 transition-colors disabled:opacity-40"
+            >
+              {logoUploading ? '⏳ A carregar...' : projeto.heroLogoUrl ? '✓ Trocar logo' : '⬆ Carregar logo'}
+            </button>
+            {projeto.heroLogoUrl && !logoUploading && (
+              <button
+                onClick={() => set('heroLogoUrl', '')}
+                className="text-white/20 hover:text-white/50 text-sm transition-colors shrink-0"
+              >
+                ✕ Remover
+              </button>
+            )}
           </div>
         </div>
       )}
