@@ -182,7 +182,7 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
           <div className="mt-2 relative shrink-0 flex items-center justify-center">
             {/* Neon glow — blurred copy of logo picks up its colors */}
             {projeto.heroLogoUrl && (
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full overflow-hidden blur-2xl opacity-80 pointer-events-none">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full overflow-hidden blur-lg opacity-45 pointer-events-none">
                 <img src={projeto.heroLogoUrl} aria-hidden className="w-full h-full object-cover" />
               </div>
             )}
