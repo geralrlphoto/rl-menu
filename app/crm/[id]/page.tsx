@@ -136,7 +136,12 @@ export default function ClientePage() {
     setSaving(false)
   }
 
-  const isDirty = JSON.stringify(form) !== JSON.stringify(original)
+  const originalPc = typeof original.page_content === 'string'
+    ? JSON.parse(original.page_content || '{}')
+    : (original.page_content || {})
+  const propostasDirty = JSON.stringify(propostas) !== JSON.stringify(originalPc.propostas ?? DEFAULT_PROPOSTAS)
+  const extrasDirty    = JSON.stringify(extrasGlobais) !== JSON.stringify(originalPc.extras_proposta ?? [])
+  const isDirty = JSON.stringify(form) !== JSON.stringify(original) || propostasDirty || extrasDirty
 
   const [deleting, setDeleting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
