@@ -4,6 +4,7 @@ import Link from 'next/link'
 import type { Projeto, FichaCliente } from '@/app/portal-media/_data/mockProject'
 import AdminBar from './AdminBar'
 import EditableField from './EditableField'
+import HeroUploadBlock from './HeroUploadBlock'
 
 interface ContratoGerado {
   gerado: boolean
@@ -25,6 +26,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
   const [saving, setSaving] = useState(false)
   const [gerando, setGerando] = useState(false)
   const [contratoLocal, setContratoLocal] = useState(contratoGerado)
+  const [heroUrl, setHeroUrl] = useState(initial.contratoImageUrl ?? '')
 
   const save = async () => {
     setSaving(true)
@@ -37,6 +39,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
           cpsFormUrl:     projeto.cpsFormUrl,
           fichaCliente:   projeto.fichaCliente,
           contaBancaria:  projeto.contaBancaria,
+          contratoImageUrl: heroUrl,
         }),
       })
     } catch {}
@@ -119,6 +122,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
 
   return (
     <>
+      <HeroUploadBlock url={heroUrl} isEditing={isEditing} onChange={setHeroUrl} />
       <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 py-10">
 
         <Link href={`/portal-media/${projeto.ref}`}

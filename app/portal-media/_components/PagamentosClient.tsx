@@ -6,6 +6,7 @@ import AdminBar from './AdminBar'
 import EditableField from './EditableField'
 import EditableSelect from './EditableSelect'
 import EditableDateField from './EditableDateField'
+import HeroUploadBlock from './HeroUploadBlock'
 
 const PAG_CFG = {
   pago:      { label: 'Pago',      color: 'text-emerald-400/80', border: 'border-emerald-400/20', bg: 'bg-emerald-400/5'  },
@@ -49,20 +50,6 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [heroUrl, setHeroUrl] = useState(initial.pagamentosImageUrl ?? '')
-  const [uploadingHero, setUploadingHero] = useState(false)
-  const heroFileRef = useRef<HTMLInputElement>(null)
-
-  const handleHeroUpload = async (file: File) => {
-    setUploadingHero(true)
-    try {
-      const fd = new FormData()
-      fd.append('file', file)
-      const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
-      const data = await res.json()
-      if (data.url) setHeroUrl(data.url)
-    } catch {}
-    setUploadingHero(false)
-  }
 
   /* ── Registar Pagamento ── */
   const [showForm, setShowForm]       = useState(false)
@@ -172,44 +159,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
 
   return (
     <>
-      {/* ── Hero com foto a desvanecer ── */}
-      {heroUrl && (
-        <div className="w-full shrink-0 overflow-hidden" style={{ height: 320 }}>
-          <img
-            src={heroUrl}
-            alt=""
-            className="w-full h-full object-cover object-center"
-            style={{
-              maskImage: 'linear-gradient(to bottom, black 0%, black 30%, transparent 100%)',
-              WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 30%, transparent 100%)',
-            }}
-          />
-        </div>
-      )}
-      {isEditing && (
-        <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 pt-4">
-          <input
-            ref={heroFileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={e => { const f = e.target.files?.[0]; if (f) handleHeroUpload(f) }}
-          />
-          <div className="flex items-center gap-3 border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-            <span className="text-[11px] tracking-[0.4em] text-white/25 uppercase shrink-0">🖼 Foto cabeçalho</span>
-            <button
-              onClick={() => heroFileRef.current?.click()}
-              disabled={uploadingHero}
-              className="flex-1 text-left text-sm text-white/40 hover:text-white/70 transition-colors disabled:opacity-40"
-            >
-              {uploadingHero ? '⏳ A carregar...' : heroUrl ? '✓ Trocar foto' : '⬆ Carregar foto'}
-            </button>
-            {heroUrl && !uploadingHero && (
-              <button onClick={() => setHeroUrl('')} className="text-white/20 hover:text-white/50 text-sm transition-colors shrink-0">✕ Remover</button>
-            )}
-          </div>
-        </div>
-      )}
+      <HeroUploadBlock url={heroUrl} isEditing={isEditing} onChange={setHeroUrl} />
 
       <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 py-10">
 

@@ -6,6 +6,7 @@ import AdminBar from './AdminBar'
 import EditableField from './EditableField'
 import EditableSelect from './EditableSelect'
 import EditableDateField from './EditableDateField'
+import HeroUploadBlock from './HeroUploadBlock'
 
 const ESTADO_CFG = {
   concluido: { label: 'Concluído', bg: 'bg-emerald-400/10', border: 'border-emerald-400/30', dot: 'bg-emerald-400',  text: 'text-emerald-400/80' },
@@ -34,6 +35,7 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [sendingId, setSendingId] = useState<string | null>(null)
+  const [heroUrl, setHeroUrl] = useState(initial.workflowImageUrl ?? '')
 
   const save = async () => {
     setSaving(true)
@@ -41,7 +43,7 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
       await fetch(`/api/media-portal/${projeto.ref}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fases: projeto.fases }),
+        body: JSON.stringify({ fases: projeto.fases, workflowImageUrl: heroUrl }),
       })
       baseRef.current = { ...baseRef.current, fases: projeto.fases }
     } catch {}
@@ -95,6 +97,7 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
 
   return (
     <>
+      <HeroUploadBlock url={heroUrl} isEditing={isEditing} onChange={setHeroUrl} />
       <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 py-10">
 
         <Link href={`/portal-media/${projeto.ref}`}

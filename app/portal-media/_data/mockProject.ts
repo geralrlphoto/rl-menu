@@ -81,6 +81,13 @@ export interface Projeto {
   heroImageUrl?: string
   heroLogoUrl?: string
   pagamentosImageUrl?: string
+  contratoImageUrl?: string
+  briefingImageUrl?: string
+  entregasImageUrl?: string
+  workflowImageUrl?: string
+  atendimentoImageUrl?: string
+  satisfacaoImageUrl?: string
+  revisoesImageUrl?: string
   briefingUrl?: string
   briefingItems?: BriefingItem[]
   contratoUrl?: string

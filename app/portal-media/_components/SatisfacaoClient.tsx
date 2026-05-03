@@ -4,6 +4,7 @@ import Link from 'next/link'
 import type { Projeto } from '@/app/portal-media/_data/mockProject'
 import AdminBar from './AdminBar'
 import EditableField from './EditableField'
+import HeroUploadBlock from './HeroUploadBlock'
 
 interface Props { projeto: Projeto; isAdmin: boolean }
 
@@ -11,6 +12,7 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
   const [projeto, setProjeto] = useState(initial)
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [heroUrl, setHeroUrl] = useState(initial.satisfacaoImageUrl ?? '')
 
   const save = async () => {
     setSaving(true)
@@ -18,7 +20,7 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
       await fetch(`/api/media-portal/${projeto.ref}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ satisfacaoUrl: projeto.satisfacaoUrl }),
+        body: JSON.stringify({ satisfacaoUrl: projeto.satisfacaoUrl, satisfacaoImageUrl: heroUrl }),
       })
     } catch {}
     setSaving(false)
@@ -29,6 +31,7 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
 
   return (
     <>
+      <HeroUploadBlock url={heroUrl} isEditing={isEditing} onChange={setHeroUrl} />
       <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 py-10">
 
         <Link href={`/portal-media/${projeto.ref}`}
