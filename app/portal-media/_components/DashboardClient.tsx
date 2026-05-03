@@ -179,14 +179,14 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
         {/* Project name */}
         <div className="flex items-start gap-6 mb-6">
           <div
-            className={`mt-2 w-14 h-14 rounded-full border border-white/10 flex items-center justify-center shrink-0 overflow-hidden
+            className={`mt-2 w-20 h-20 rounded-full border border-white/10 flex items-center justify-center shrink-0 overflow-hidden
               ${isEditing && !projeto.heroLogoUrl ? 'cursor-pointer hover:border-white/25 transition-colors' : ''}
               ${isEditing && projeto.heroLogoUrl ? 'cursor-pointer' : ''}`}
             onClick={isEditing ? () => logoFileRef.current?.click() : undefined}
             title={isEditing ? (projeto.heroLogoUrl ? 'Trocar logo' : 'Carregar logo') : undefined}
           >
             {projeto.heroLogoUrl ? (
-              <img src={projeto.heroLogoUrl} alt={projeto.nome} className="w-full h-full object-contain p-1.5" />
+              <img src={projeto.heroLogoUrl} alt={projeto.nome} className="w-full h-full object-cover" />
             ) : (
               <span className="text-xl text-white/20 select-none">◈</span>
             )}
