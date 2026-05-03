@@ -181,6 +181,7 @@ export default function ClientePage() {
   const [propostaOpen, setPropostaOpen] = useState<Record<number, boolean>>({ 0: true, 1: false, 2: false })
   const [savingPropostas, setSavingPropostas] = useState(false)
   const [savedPropostas, setSavedPropostas] = useState(false)
+  const [propostaPassword, setPropostaPassword] = useState('')
 
   const originalPc = typeof original.page_content === 'string'
     ? JSON.parse(original.page_content || '{}')
@@ -200,6 +201,7 @@ export default function ClientePage() {
       const primeiraComExtras = (pc?.propostas || []).find((p: any) => p.extras?.length > 0)
       if (primeiraComExtras?.extras) setExtrasGlobais(primeiraComExtras.extras)
     }
+    if (pc?.proposta?.password !== undefined) setPropostaPassword(pc.proposta.password)
   }, [form.page_content])
 
   const handleSavePropostas = async () => {
@@ -207,7 +209,7 @@ export default function ClientePage() {
     const pc = typeof form.page_content === 'string'
       ? JSON.parse(form.page_content || '{}')
       : (form.page_content || {})
-    const newPc = { ...pc, propostas, extras_proposta: extrasGlobais }
+    const newPc = { ...pc, propostas, extras_proposta: extrasGlobais, proposta: { ...(pc.proposta || {}), password: propostaPassword } }
     const { error } = await supabase.from('crm_contacts').update({ page_content: newPc }).eq('id', id)
     if (!error) {
       setForm((f: Contact) => ({ ...f, page_content: newPc }))
@@ -481,6 +483,21 @@ export default function ClientePage() {
             >
               {savingPropostas ? 'A guardar...' : savedPropostas ? '✓ Guardado' : 'Guardar Propostas'}
             </button>
+          </div>
+
+          {/* Password da Proposta Criativa */}
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <span className="text-[10px] tracking-[0.35em] text-white/30 uppercase shrink-0">🔒 Password</span>
+            <input
+              type="text"
+              value={propostaPassword}
+              onChange={e => setPropostaPassword(e.target.value)}
+              placeholder="Sem password (acesso livre)"
+              className="flex-1 bg-transparent border-none outline-none text-sm text-white placeholder-white/20 font-mono"
+            />
+            {propostaPassword && (
+              <button onClick={() => setPropostaPassword('')} className="text-white/20 hover:text-white/50 text-xs transition-colors">✕</button>
+            )}
           </div>
 
           {propostas.map((proposta, pi) => (
