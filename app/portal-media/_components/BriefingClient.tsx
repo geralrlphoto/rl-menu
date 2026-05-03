@@ -15,6 +15,7 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
   const [saving, setSaving] = useState(false)
   const [heroUrl, setHeroUrl] = useState(initial.briefingImageUrl ?? '')
   const [notifying, setNotifying] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 
   const saveData = async (updatedSessoes?: BriefingSessao[]) => {
     await fetch(`/api/media-portal/${initial.ref}`, {
@@ -56,6 +57,13 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
 
   const remove = (id: string) =>
     setSessoes(s => s.filter(ses => ses.id !== id))
+
+  const eliminar = async (id: string) => {
+    const updated = sessoes.filter(ses => ses.id !== id)
+    setSessoes(updated)
+    setConfirmDelete(null)
+    try { await saveData(updated) } catch {}
+  }
 
   const notificar = async (id: string) => {
     setNotifying(id)
@@ -130,14 +138,6 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
                   className="text-sm tracking-[0.2em] text-white/30 shrink-0"
                   placeholder="Data"
                 />
-                {isEditing && (
-                  <button
-                    onClick={() => remove(sessao.id)}
-                    className="text-white/15 hover:text-red-400/60 text-sm transition-colors ml-1 shrink-0"
-                  >
-                    ✕
-                  </button>
-                )}
               </div>
 
               {/* Resumo */}
@@ -158,26 +158,56 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
                 )}
               </div>
 
-              {/* Notification footer */}
+              {/* Notification + delete footer */}
               {isAdmin && (
-                <div className="px-6 py-4 border-t border-white/[0.06] flex items-center justify-between gap-4">
-                  <span className={`text-sm tracking-[0.25em] uppercase ${sessao.notificacaoEnviada ? 'text-emerald-400/60' : 'text-white/18'}`}>
-                    {sessao.notificacaoEnviada
-                      ? `✓ Notificado em ${sessao.notificacaoEnviada}`
-                      : 'Cliente não notificado'}
-                  </span>
-                  <button
-                    onClick={() => !sessao.notificacaoEnviada && notificar(sessao.id)}
-                    disabled={!!sessao.notificacaoEnviada || notifying === sessao.id}
-                    className={`px-5 py-2 text-sm tracking-[0.35em] uppercase border transition-colors shrink-0
-                      ${sessao.notificacaoEnviada
-                        ? 'border-emerald-400/20 text-emerald-400/40 cursor-default'
-                        : 'border-white/25 text-white/50 hover:border-white/50 hover:text-white/80 cursor-pointer'}
-                      disabled:opacity-50`}
-                  >
-                    {notifying === sessao.id ? '⏳ A enviar...' : sessao.notificacaoEnviada ? '✓ Enviado' : 'Notificar Cliente'}
-                  </button>
-                </div>
+                <>
+                  <div className="px-6 py-4 border-t border-white/[0.06] flex items-center justify-between gap-4">
+                    <span className={`text-sm tracking-[0.25em] uppercase ${sessao.notificacaoEnviada ? 'text-emerald-400/60' : 'text-white/18'}`}>
+                      {sessao.notificacaoEnviada
+                        ? `✓ Notificado em ${sessao.notificacaoEnviada}`
+                        : 'Cliente não notificado'}
+                    </span>
+                    <button
+                      onClick={() => !sessao.notificacaoEnviada && notificar(sessao.id)}
+                      disabled={!!sessao.notificacaoEnviada || notifying === sessao.id}
+                      className={`px-5 py-2 text-sm tracking-[0.35em] uppercase border transition-colors shrink-0
+                        ${sessao.notificacaoEnviada
+                          ? 'border-emerald-400/20 text-emerald-400/40 cursor-default'
+                          : 'border-white/25 text-white/50 hover:border-white/50 hover:text-white/80 cursor-pointer'}
+                        disabled:opacity-50`}
+                    >
+                      {notifying === sessao.id ? '⏳ A enviar...' : sessao.notificacaoEnviada ? '✓ Enviado' : 'Notificar Cliente'}
+                    </button>
+                  </div>
+
+                  {/* Delete row */}
+                  <div className="px-6 py-3 border-t border-white/[0.04] flex items-center justify-end">
+                    {confirmDelete === sessao.id ? (
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm text-white/35 tracking-[0.2em]">Tens a certeza?</span>
+                        <button
+                          onClick={() => eliminar(sessao.id)}
+                          className="px-4 py-1.5 text-sm tracking-[0.3em] uppercase border border-red-400/40 text-red-400/70 hover:border-red-400/70 hover:text-red-400 transition-colors"
+                        >
+                          Eliminar
+                        </button>
+                        <button
+                          onClick={() => setConfirmDelete(null)}
+                          className="text-sm tracking-[0.3em] text-white/25 hover:text-white/50 uppercase transition-colors"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmDelete(sessao.id)}
+                        className="text-sm tracking-[0.3em] text-white/15 hover:text-red-400/50 uppercase transition-colors"
+                      >
+                        — Eliminar Sessão
+                      </button>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           ))}
