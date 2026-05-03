@@ -408,9 +408,6 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
           )}
         </div>
 
-        <p className="text-sm tracking-[0.2em] text-white/15 leading-relaxed">
-          Para questões relacionadas com faturação contacta financeiro@rlmedia.pt
-        </p>
       </div>
 
       {isAdmin && (
