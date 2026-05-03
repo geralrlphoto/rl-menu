@@ -80,6 +80,7 @@ export interface Projeto {
   entregas: Entrega[]
   heroImageUrl?: string
   heroLogoUrl?: string
+  pagamentosImageUrl?: string
   briefingUrl?: string
   briefingItems?: BriefingItem[]
   contratoUrl?: string

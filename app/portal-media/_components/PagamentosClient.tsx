@@ -48,6 +48,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
   const [registos, setRegistos] = useState<RegistoPagamento[]>(initial.registosPagamento ?? [])
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [heroUrl, setHeroUrl] = useState(initial.pagamentosImageUrl ?? '')
 
   /* ── Registar Pagamento ── */
   const [showForm, setShowForm]       = useState(false)
@@ -126,7 +127,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
       await fetch(`/api/media-portal/${projeto.ref}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pagamentos: projeto.pagamentos }),
+        body: JSON.stringify({ pagamentos: projeto.pagamentos, pagamentosImageUrl: heroUrl }),
       })
     } catch {}
     setSaving(false)
@@ -157,6 +158,34 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
 
   return (
     <>
+      {/* ── Hero com foto a desvanecer ── */}
+      {heroUrl && (
+        <div className="relative z-10 w-full overflow-hidden shrink-0" style={{ height: '260px' }}>
+          <div className="absolute inset-0 bg-cover bg-center scale-105"
+            style={{ backgroundImage: `url(${heroUrl})` }} />
+          <div className="absolute inset-0 bg-black/50" />
+          <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-[#050507] to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#050507] via-[#050507]/70 to-transparent" />
+        </div>
+      )}
+      {isEditing && (
+        <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 pt-4">
+          <div className="flex items-center gap-3 border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+            <span className="text-[11px] tracking-[0.4em] text-white/25 uppercase shrink-0">🖼 Foto cabeçalho</span>
+            <input
+              type="text"
+              value={heroUrl}
+              onChange={e => setHeroUrl(e.target.value)}
+              placeholder="https://… (deixar vazio para remover)"
+              className="flex-1 bg-transparent border-none outline-none text-sm text-white/60 placeholder-white/20"
+            />
+            {heroUrl && (
+              <button onClick={() => setHeroUrl('')} className="text-white/20 hover:text-white/50 text-xs transition-colors shrink-0">✕</button>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 py-10">
 
         <Link href={`/portal-media/${projeto.ref}`}
