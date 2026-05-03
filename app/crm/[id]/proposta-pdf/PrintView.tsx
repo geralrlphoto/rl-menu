@@ -285,6 +285,17 @@ export default function PrintView({ contact, content, autoPrint = true }: { cont
                     </div>
                   </div>
                 )}
+
+                {/* Notas da proposta */}
+                {proposta.notas && (
+                  <>
+                    <div style={{ height: 1, background: `${GOLD}30` }} />
+                    <div style={{ padding: '14px 18px', background: `${GOLD}08`, border: `1px solid ${GOLD}25`, borderRadius: 4 }}>
+                      <p style={{ margin: '0 0 8px', fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: 8, letterSpacing: '0.4em', color: GOLD, textTransform: 'uppercase' }}>Notas</p>
+                      <p style={{ margin: 0, fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 15, color: '#3a3228', lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>{proposta.notas}</p>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 

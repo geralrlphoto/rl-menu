@@ -145,7 +145,7 @@ export default function ClientePage() {
 
   // ── Propostas ────────────────────────────────────────────────────────────────
   type ExtraServico = { nome: string; valor: string }
-  type Proposta = { nome: string; servicos_foto: string[]; servicos_video: string[]; valor: string }
+  type Proposta = { nome: string; servicos_foto: string[]; servicos_video: string[]; valor: string; notas?: string }
 
   const SERVICOS_FOTO = [
     '1 Fotógrafo', '2 Fotógrafos', 'Rep. Todo Evento',
@@ -599,6 +599,18 @@ export default function ClientePage() {
                       onChange={e => setProposta(pi, 'valor', e.target.value)}
                       placeholder="Ex: 3 500 €"
                       className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50"
+                    />
+                  </div>
+
+                  {/* Notas */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs tracking-widest text-white/30 uppercase">Notas da Proposta</label>
+                    <textarea
+                      value={proposta.notas ?? ''}
+                      onChange={e => setProposta(pi, 'notas', e.target.value)}
+                      placeholder="Observações, condições especiais, detalhes adicionais…"
+                      rows={3}
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50 resize-none"
                     />
                   </div>
                 </div>
