@@ -174,6 +174,32 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
           </div>
         </div>
 
+        {/* ── Texto explicativo ── */}
+        <div className="mb-8 border border-white/[0.06] bg-white/[0.02] px-6 py-5 flex flex-col gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-px h-10 bg-white/20 shrink-0" />
+            <p className="text-[11px] tracking-[0.5em] text-white/30 uppercase">Como funciona</p>
+          </div>
+          <p className="text-sm font-light leading-relaxed text-white/45">
+            Esta página é o registo oficial de todos os pagamentos realizados no âmbito do vosso projecto.
+            Cada vez que efectuarem um pagamento — seja adjudicação, reforço ou valor final — devem submetê-lo aqui para que fique documentado e a nossa equipa seja notificada de imediato.
+          </p>
+          <div className="flex flex-col gap-2 mt-1">
+            {[
+              { n: '1', text: 'Cliquem em «Registar Pagamento» abaixo' },
+              { n: '2', text: 'Preencham o valor, método e data do pagamento' },
+              { n: '3', text: 'Anexem o comprovativo (transferência, MB Way, etc.)' },
+              { n: '4', text: 'Cliquem em Enviar — a equipa RL Media recebe a confirmação' },
+            ].map(step => (
+              <div key={step.n} className="flex items-start gap-3">
+                <span className="w-5 h-5 border border-white/15 flex items-center justify-center shrink-0
+                                 text-[9px] tracking-widest text-white/25 mt-0.5">{step.n}</span>
+                <p className="text-xs font-light text-white/35 leading-relaxed">{step.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* ── Botão Registar ── */}
         <button
           onClick={openForm}
