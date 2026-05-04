@@ -112,9 +112,9 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
 
   return (
     <>
-      {/* Hero image */}
-      {projeto.heroImageUrl && (
-        <div className="relative w-full shrink-0 overflow-hidden" style={{ height: 320 }}>
+      {/* Hero image — sempre visível; fallback gradient quando sem foto */}
+      <div className="relative w-full shrink-0 overflow-hidden" style={{ height: 320 }}>
+        {projeto.heroImageUrl ? (
           <img
             src={projeto.heroImageUrl}
             alt=""
@@ -124,8 +124,31 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
               WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 30%, transparent 100%)',
             }}
           />
-        </div>
-      )}
+        ) : (
+          /* Fallback gradient enquanto não há foto */
+          <div className="w-full h-full" style={{
+            background: 'linear-gradient(160deg, #0e1520 0%, #080e1a 40%, #04080f 100%)',
+            maskImage: 'linear-gradient(to bottom, black 0%, black 40%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 40%, transparent 100%)',
+          }}>
+            {/* Grid neon subtil */}
+            <div className="absolute inset-0 pointer-events-none" style={{
+              backgroundImage: 'linear-gradient(rgba(50,100,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(50,100,255,0.03) 1px,transparent 1px)',
+              backgroundSize: '60px 60px',
+            }} />
+            {/* Neon glow topo */}
+            <div className="absolute inset-0 pointer-events-none" style={{
+              background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(40,90,255,0.10) 0%, transparent 70%)',
+            }} />
+            {/* Texto placeholder — admin pode substituir com foto */}
+            {isAdmin && !isEditing && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <p className="text-[9px] tracking-[0.5em] text-white/12 uppercase">Adicionar foto de cabeçalho</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Hero upload controls (edit mode) */}
       {isEditing && (

@@ -25,8 +25,9 @@ export default function HeroUploadBlock({ url, isEditing, onChange }: Props) {
 
   return (
     <>
-      {url && (
-        <div className="w-full shrink-0 overflow-hidden" style={{ height: 320 }}>
+      {/* Hero — sempre visível; fallback gradient quando sem foto */}
+      <div className="w-full shrink-0 overflow-hidden" style={{ height: url ? 260 : 120 }}>
+        {url ? (
           <img
             src={url}
             alt=""
@@ -36,8 +37,22 @@ export default function HeroUploadBlock({ url, isEditing, onChange }: Props) {
               WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 30%, transparent 100%)',
             }}
           />
-        </div>
-      )}
+        ) : (
+          <div className="w-full h-full relative" style={{
+            background: 'linear-gradient(160deg, #0c1220 0%, #070c18 50%, #04080f 100%)',
+            maskImage: 'linear-gradient(to bottom, black 0%, black 50%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 50%, transparent 100%)',
+          }}>
+            <div className="absolute inset-0 pointer-events-none" style={{
+              background: 'radial-gradient(ellipse 100% 80% at 50% 0%, rgba(40,90,255,0.08) 0%, transparent 70%)',
+            }} />
+            <div className="absolute inset-0 pointer-events-none" style={{
+              backgroundImage: 'linear-gradient(rgba(50,100,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(50,100,255,0.025) 1px,transparent 1px)',
+              backgroundSize: '50px 50px',
+            }} />
+          </div>
+        )}
+      </div>
 
       {isEditing && (
         <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 pt-4">
