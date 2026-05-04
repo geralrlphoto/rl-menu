@@ -57,6 +57,40 @@ export default function AtendimentoClient({ projeto: initial, isAdmin }: Props) 
           </div>
         </div>
 
+        {/* Explicação */}
+        <div className="mb-8 border border-white/[0.07] bg-white/[0.02] px-6 py-6 flex flex-col gap-4">
+          <p className="text-sm tracking-[0.5em] text-white/20 uppercase">O que é o Atendimento?</p>
+          <p className="text-sm text-white/55 font-light leading-relaxed">
+            Esta é a tua linha direta com a nossa equipa. Aqui encontras os contactos do teu gestor de conta e podes enviar mensagens sobre o projeto a qualquer momento.
+          </p>
+          <div className="flex flex-col gap-3">
+            {[
+              { n: '01', t: 'Gestor dedicado',      d: 'Tens um gestor de conta atribuído ao teu projeto, responsável por acompanhar todo o processo e responder às tuas questões.' },
+              { n: '02', t: 'Horário de atendimento', d: 'O atendimento é feito de segunda a sexta-feira, entre as 10h00 e as 18h00. Fora deste horário, as mensagens são respondidas no próximo dia útil.' },
+              { n: '03', t: 'Chat do projeto',       d: 'Usa o chat em baixo para comunicares diretamente com a equipa sobre o projeto, sem precisares de usar email ou WhatsApp.' },
+              { n: '04', t: 'Contacto direto',       d: 'Se preferires, podes também contactar por email ou telefone. Todos os contactos estão disponíveis nesta página.' },
+            ].map(({ n, t, d }) => (
+              <div key={n} className="flex items-start gap-4 border-t border-white/[0.05] pt-3">
+                <span className="text-sm font-mono text-white/15 shrink-0 mt-0.5">{n}</span>
+                <div>
+                  <p className="text-sm text-white/55 font-medium mb-1">{t}</p>
+                  <p className="text-sm text-white/30 font-light leading-relaxed">{d}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Horário destaque */}
+          <div className="border border-white/[0.07] bg-white/[0.02] px-5 py-4 flex items-center gap-4 mt-1">
+            <div className="flex flex-col items-center gap-0.5 shrink-0">
+              <span className="text-lg">🕙</span>
+            </div>
+            <div>
+              <p className="text-sm tracking-[0.3em] text-white/40 uppercase mb-0.5">Horário de Atendimento</p>
+              <p className="text-sm text-white/65 font-light">Segunda a Sexta-feira · 10h00 às 18h00</p>
+            </div>
+          </div>
+        </div>
+
         {/* Gestor de conta */}
         <div className="border border-white/[0.08] bg-white/[0.02] p-7 mb-4">
           <p className="text-sm tracking-[0.5em] text-white/20 uppercase mb-5">Gestor de Conta</p>
@@ -87,7 +121,7 @@ export default function AtendimentoClient({ projeto: initial, isAdmin }: Props) 
                   isEditing={true}
                   onChange={v => set('gestorEmail', v)}
                   className="text-sm tracking-[0.15em] text-white/45"
-                  placeholder="email@rlmedia.pt"
+                  placeholder="geral.rlmedia@gmail.com"
                   type="email"
                 />
               ) : (
