@@ -23,9 +23,11 @@ export default async function RoadmapPage({ params }: Props) {
     .single()
 
   const mock = getProjeto(ref)
-  if (!mock) notFound()
-  /* Supabase sobrepõe o mock, mas campos novos do mock ficam disponíveis */
-  const projeto = row?.dados ? { ...mock, ...row.dados } : mock
+  /* Supabase sobrepõe o mock; campos novos do mock (ex: roadmap) ficam como fallback */
+  const projeto = row?.dados
+    ? { ...(mock ?? {}), ...row.dados }
+    : mock
+  if (!projeto) notFound()
 
   const cookieStore = await cookies()
   const isAdmin = cookieStore.get('rl_auth')?.value === process.env.AUTH_SECRET

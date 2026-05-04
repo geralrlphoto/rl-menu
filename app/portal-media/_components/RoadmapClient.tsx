@@ -6,6 +6,20 @@ import AdminBar from './AdminBar'
 import HeroUploadBlock from './HeroUploadBlock'
 
 /* ────────────────────────────────────────────────────────── */
+/*  DEFAULT — 7 colunas padrão para qualquer projeto          */
+/* ────────────────────────────────────────────────────────── */
+
+const DEFAULT_ROADMAP: RoadmapColuna[] = [
+  { id: 'briefing',      titulo: 'Briefing',       cor: 'blue',    tarefas: [] },
+  { id: 'proposta',      titulo: 'Proposta',        cor: 'cyan',    tarefas: [] },
+  { id: 'planeamento',   titulo: 'Planeamento',     cor: 'yellow',  tarefas: [] },
+  { id: 'pre-producao',  titulo: 'Pré-Produção',    cor: 'purple',  tarefas: [] },
+  { id: 'producao',      titulo: 'Produção',        cor: 'orange',  tarefas: [] },
+  { id: 'pos-producao',  titulo: 'Pós-Produção',    cor: 'violet',  tarefas: [] },
+  { id: 'entrega',       titulo: 'Entrega',         cor: 'emerald', tarefas: [] },
+]
+
+/* ────────────────────────────────────────────────────────── */
 /*  CONFIG                                                    */
 /* ────────────────────────────────────────────────────────── */
 
@@ -69,7 +83,9 @@ const fmtDate = (iso: string) => {
 interface Props { projeto: Projeto; isAdmin: boolean }
 
 export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
-  const [colunas, setColunas] = useState<RoadmapColuna[]>(initial.roadmap ?? [])
+  const [colunas, setColunas] = useState<RoadmapColuna[]>(
+    (initial.roadmap && initial.roadmap.length > 0) ? initial.roadmap : DEFAULT_ROADMAP
+  )
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving]       = useState(false)
   const [heroUrl, setHeroUrl]     = useState(initial.roadmapImageUrl ?? '')
@@ -94,7 +110,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
   }
 
   const cancel = () => {
-    setColunas(initial.roadmap ?? [])
+    setColunas((initial.roadmap && initial.roadmap.length > 0) ? initial.roadmap : DEFAULT_ROADMAP)
     setHeroUrl(initial.roadmapImageUrl ?? '')
     setIsEditing(false)
   }
