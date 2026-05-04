@@ -22,7 +22,8 @@ export default async function EntregasPage({ params }: Props) {
     .eq('ref', ref.toUpperCase())
     .single()
 
-  const projeto = row?.dados ?? getProjeto(ref)
+  const mock = getProjeto(ref)
+  const projeto = row?.dados ? { ...(mock ?? {}), ...row.dados } : mock
   if (!projeto) notFound()
 
   const cookieStore = await cookies()
