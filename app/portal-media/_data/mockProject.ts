@@ -70,6 +70,14 @@ export interface RegistoPagamento {
   comprativoUrl?: string
 }
 
+export interface ChatMensagem {
+  id: string
+  texto: string
+  autor: string
+  isAdmin: boolean
+  criadoEm: string
+}
+
 export type TarefaEstado = 'concluido' | 'em_andamento' | 'nao_iniciada' | 'aguardar' | 'enviado'
 
 export interface RoadmapTarefa {
@@ -123,6 +131,7 @@ export interface Projeto {
   registosPagamento?: RegistoPagamento[]
   roadmap?: RoadmapColuna[]
   roadmapImageUrl?: string
+  chatMensagens?: ChatMensagem[]
 }
 
 const PROJETOS: Record<string, Projeto> = {

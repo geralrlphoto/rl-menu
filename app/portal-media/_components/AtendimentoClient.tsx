@@ -5,6 +5,7 @@ import type { Projeto } from '@/app/portal-media/_data/mockProject'
 import AdminBar from './AdminBar'
 import EditableField from './EditableField'
 import HeroUploadBlock from './HeroUploadBlock'
+import ChatBox from './ChatBox'
 
 interface Props { projeto: Projeto; isAdmin: boolean }
 
@@ -123,13 +124,30 @@ export default function AtendimentoClient({ projeto: initial, isAdmin }: Props) 
 
         {/* Site */}
         <a href="https://www.rlmedia.pt" target="_blank" rel="noopener noreferrer"
-          className="group flex items-center justify-between border border-white/[0.06] bg-white/[0.01] hover:bg-white/[0.04] hover:border-white/15 px-6 py-4 transition-all">
+          className="group flex items-center justify-between border border-white/[0.06] bg-white/[0.01] hover:bg-white/[0.04] hover:border-white/15 px-6 py-4 transition-all mb-10">
           <div>
             <p className="text-sm tracking-[0.3em] text-white/40 uppercase group-hover:text-white/60 transition-colors">RL Media · Audiovisual</p>
             <p className="text-sm tracking-[0.15em] text-white/20 mt-0.5">www.rlmedia.pt</p>
           </div>
           <span className="text-white/15 group-hover:text-white/40 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all">↗</span>
         </a>
+
+        {/* ── Chat ── */}
+        <div className="mb-10">
+          <div className="mb-6 flex items-center gap-4">
+            <div className="h-px flex-1 bg-white/[0.06]" />
+            <span className="text-sm tracking-[0.5em] text-white/15 uppercase">Mensagens</span>
+            <div className="h-px flex-1 bg-white/[0.06]" />
+          </div>
+          <p className="text-sm text-white/30 leading-relaxed mb-5">
+            Usa este chat para colocares questões, partilhares ideias ou acompanhares o andamento do projeto em tempo real. A nossa equipa responde assim que possível.
+          </p>
+          <ChatBox
+            projetoRef={projeto.ref}
+            isAdmin={isAdmin}
+            clienteNome={projeto.cliente}
+          />
+        </div>
       </div>
 
       {isAdmin && (
