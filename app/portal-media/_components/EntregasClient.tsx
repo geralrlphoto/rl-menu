@@ -670,21 +670,6 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 mb-12">
-          {Array.from({ length: total }).map((_, i) => (
-            <div key={i}
-              className={`flex items-center gap-4 border px-6 py-4
-                ${i < usadas ? 'border-emerald-400/20 bg-emerald-400/5' : 'border-white/[0.06] bg-white/[0.015]'}`}>
-              <div className={`w-2 h-2 rounded-full shrink-0 ${i < usadas ? 'bg-emerald-400' : 'bg-white/10'}`} />
-              <p className={`text-sm tracking-[0.25em] uppercase ${i < usadas ? 'text-white/55' : 'text-white/20'}`}>
-                Revisão {i + 1}
-              </p>
-              <span className={`ml-auto text-sm tracking-[0.35em] uppercase ${i < usadas ? 'text-emerald-400/70' : 'text-white/15'}`}>
-                {i < usadas ? 'Concluída' : 'Disponível'}
-              </span>
-            </div>
-          ))}
-        </div>
 
       </div>
 
