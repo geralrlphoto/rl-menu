@@ -359,14 +359,14 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-16">
           {NAV.map((item, i) => (
             <Link key={item.slug} href={`/portal-media/${projeto.ref}/${item.slug}`}
-              className="group relative border border-white/[0.07] hover:border-white/18 bg-white/[0.015] hover:bg-white/[0.035] transition-all duration-400 p-5 flex flex-col gap-3">
-              <div className="flex items-start justify-between">
+              className="group relative border border-white/[0.07] hover:border-white/18 bg-white/[0.015] hover:bg-white/[0.035] transition-all duration-400 p-5 flex flex-col justify-between min-h-[110px]">
+              <div className="flex items-start justify-between mb-3">
                 <span className="text-lg text-white/10 group-hover:text-white/25 transition-colors select-none leading-none">{item.icon}</span>
                 <span className="text-[10px] font-mono text-white/12 group-hover:text-white/25 transition-colors">{String(i + 1).padStart(2, '0')}</span>
               </div>
               <div>
-                <p className="text-[10px] tracking-[0.3em] font-medium text-white/55 group-hover:text-white/80 uppercase transition-colors leading-tight">{item.label}</p>
-                <p className="text-[10px] text-white/20 mt-1 leading-tight">{item.desc}</p>
+                <p className="text-[11px] tracking-[0.25em] font-medium text-white/55 group-hover:text-white/80 uppercase transition-colors leading-snug">{item.label}</p>
+                <p className="text-[10px] text-white/20 mt-1 leading-snug">{item.desc}</p>
               </div>
             </Link>
           ))}
