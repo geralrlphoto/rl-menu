@@ -353,11 +353,6 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
           ))}
         </div>
 
-        {/* Footer */}
-        <div className="border-t border-white/[0.04] pt-5 flex items-center justify-between">
-          <p className="text-sm tracking-[0.5em] text-white/10 uppercase">© RL Media · Audiovisual · 2026</p>
-          <p className="text-sm tracking-[0.3em] text-white/10 uppercase font-mono">REF: {projeto.ref}</p>
-        </div>
       </div>
 
       {isAdmin && (
