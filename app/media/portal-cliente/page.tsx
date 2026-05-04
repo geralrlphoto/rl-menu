@@ -1,6 +1,7 @@
-﻿import Link from 'next/link'
+import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 import { getProjeto, type Projeto } from '@/app/portal-media/_data/mockProject'
+import PortalSenhaInput from './PortalSenhaInput'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,12 +37,22 @@ export default async function PortalClientePage() {
 
   // 2. Montar lista: Supabase primeiro, depois mocks que não existam já
   const supabaseRefs = new Set((rows || []).map((r: any) => r.ref.toUpperCase()))
+
+  // Mapa ref → senha (raw from Supabase, not merged)
+  const senhaMap: Record<string, string | undefined> = {}
+  ;(rows || []).forEach((r: any) => {
+    senhaMap[r.ref.toUpperCase()] = r.dados?.senha as string | undefined
+  })
+
   const mockProjetos: Projeto[] = []
   const oleobio = getProjeto('OLEOBIO')
   if (oleobio && !supabaseRefs.has('OLEOBIO')) mockProjetos.push(oleobio)
 
   const supabaseProjetos: Projeto[] = (rows || [])
-    .map((r: any) => r.dados as Projeto)
+    .map((r: any) => {
+      const mock = getProjeto(r.ref)
+      return mock ? { ...mock, ...r.dados } : (r.dados as Projeto)
+    })
     .filter(Boolean)
 
   const todos: Projeto[] = [...supabaseProjetos, ...mockProjetos]
@@ -142,6 +153,16 @@ export default async function PortalClientePage() {
                       <span className="text-white/25 group-hover/btn:text-white/60 group-hover/btn:translate-x-0.5 transition-all duration-200">→</span>
                     </Link>
                   </div>
+                </div>
+
+                {/* Senha do portal */}
+                <div className="mt-4 pt-4 border-t border-white/[0.04] flex items-center gap-3">
+                  <span className="text-[8px] tracking-[0.4em] text-white/15 uppercase shrink-0">Senha</span>
+                  <div className="h-px flex-1 bg-white/[0.03]" />
+                  <PortalSenhaInput
+                    portalRef={portal.ref}
+                    senhaInicial={senhaMap[portal.ref?.toUpperCase()] ?? (portal as any).senha}
+                  />
                 </div>
               </div>
             )

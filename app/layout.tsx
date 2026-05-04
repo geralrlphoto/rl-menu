@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import './globals.css'
 import GlobalMenu from './components/GlobalMenu'
+import AdminContentShift from './components/AdminContentShift'
 
 export const metadata: Metadata = {
   title: 'RL PHOTO.VIDEO',
@@ -17,7 +18,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="pt">
       <body className="bg-dark text-white min-h-screen">
         {isAdmin && <GlobalMenu />}
-        {children}
+        {isAdmin
+          ? <AdminContentShift>{children}</AdminContentShift>
+          : children
+        }
       </body>
     </html>
   )

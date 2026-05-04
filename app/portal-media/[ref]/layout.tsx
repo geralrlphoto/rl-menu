@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { getProjeto } from '@/app/portal-media/_data/mockProject'
 import PortalLoginClient from '@/app/portal-media/_components/PortalLoginClient'
+import PortalHamburger from '@/app/portal-media/_components/PortalHamburger'
 
 type Props = {
   children: React.ReactNode
@@ -62,6 +63,10 @@ export default async function PortalMediaLayout({ children, params }: Props) {
       <div className="pointer-events-none fixed inset-0 z-0" style={{
         background: 'radial-gradient(ellipse 45% 55% at 106% 55%, rgba(40,100,255,0.06) 0%, transparent 52%)',
       }} />
+
+      {/* Hambúrguer de navegação do portal */}
+      <PortalHamburger portalRef={ref.toUpperCase()} nomeProjeto={nomeProjeto} />
+
       {children}
 
       {/* Rodapé global */}
