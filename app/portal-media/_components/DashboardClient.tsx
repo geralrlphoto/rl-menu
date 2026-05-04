@@ -233,7 +233,7 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
                 {[['Workflow do Projeto','Etapas concluídas, em curso e próximas fases'],['Cronograma','Progresso detalhado de cada fase'],['Contactos Dedicados','A quem falar em cada momento'],['Documentos & Entregas','Ficheiros e registos importantes']].map(([t, d]) => (
                   <li key={t} className="flex items-start gap-2">
                     <span className="text-white/20 mt-1 shrink-0">—</span>
-                    <span className="text-sm text-white/40 leading-relaxed"><span className="text-white/60 font-medium">{t}</span> — {d}</span>
+                    <span className="text-sm text-white/40 leading-relaxed"><span className="text-white/60 font-medium">{t}:</span> {d}</span>
                   </li>
                 ))}
               </ul>
@@ -292,7 +292,7 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
 
         {/* Progress */}
         <div className="mb-2 flex items-center justify-between">
-          <p className="text-sm tracking-[0.4em] text-white/25 uppercase">Fase Actual — {faseAtual?.nome ?? 'Concluído'}</p>
+          <p className="text-sm tracking-[0.4em] text-white/25 uppercase">Fase Actual · {faseAtual?.nome ?? 'Concluído'}</p>
           <p className="text-sm tracking-[0.4em] text-white/25 uppercase">{progresso}%</p>
         </div>
         <div className="h-px w-full bg-white/[0.06] relative overflow-hidden mb-4">

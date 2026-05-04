@@ -250,7 +250,7 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
                         onClick={() => setConfirmDelete(sessao.id)}
                         className="text-sm tracking-[0.3em] text-white/15 hover:text-red-400/50 uppercase transition-colors"
                       >
-                        — Eliminar Sessão
+                        Eliminar Sessão
                       </button>
                     )}
                   </div>

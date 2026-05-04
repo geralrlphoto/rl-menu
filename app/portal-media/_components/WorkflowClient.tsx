@@ -209,7 +209,7 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
                             <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
                             </svg>
-                            Notificado — {fase.notificacaoEnviada}
+                            Notificado em {fase.notificacaoEnviada}
                           </span>
                         ) : (
                           <button
@@ -231,7 +231,7 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
                     {isEditing && (
                       <button onClick={() => removeFase(i)}
                         className="mt-3 text-sm tracking-[0.3em] text-red-400/50 hover:text-red-400/80 uppercase transition-colors">
-                        — Remover fase
+                        Remover fase
                       </button>
                     )}
                   </div>

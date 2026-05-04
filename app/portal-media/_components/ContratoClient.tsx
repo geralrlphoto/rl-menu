@@ -163,7 +163,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
           <p className="text-[15px] text-white/30 font-light leading-relaxed">
             O nosso objetivo é <span className="text-white/55">simplificar o acesso à informação essencial</span>, garantindo-lhe mais comodidade e transparência.
           </p>
-          <p className="text-[15px] text-white/20 mt-3 tracking-[0.15em]">Obrigado pela confiança — RL Media</p>
+          <p className="text-[15px] text-white/20 mt-3 tracking-[0.15em]">Obrigado pela confiança · RL Media</p>
         </div>
 
         {/* ── Método de Pagamento ── */}

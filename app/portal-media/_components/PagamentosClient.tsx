@@ -339,7 +339,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                       {isEditing && (
                         <button onClick={() => removePagamento(i)}
                           className="mt-2 text-sm tracking-[0.3em] text-red-400/50 hover:text-red-400/80 uppercase transition-colors">
-                          — Remover
+                          Remover
                         </button>
                       )}
                     </div>

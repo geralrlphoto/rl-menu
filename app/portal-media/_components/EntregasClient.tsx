@@ -135,7 +135,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                       />
                       <button onClick={() => removeEntrega(i)}
                         className="text-sm tracking-[0.3em] text-red-400/50 hover:text-red-400/80 uppercase transition-colors">
-                        — Remover
+                        Remover
                       </button>
                     </>
                   )}
