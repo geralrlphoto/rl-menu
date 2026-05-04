@@ -370,6 +370,21 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
               </div>
             </Link>
           ))}
+
+          {/* Card Reprodução — apenas admin */}
+          {isAdmin && (
+            <Link href={`/portal-media/${projeto.ref}/reproducao`}
+              className="group relative border border-amber-400/15 hover:border-amber-400/35 bg-amber-400/[0.02] hover:bg-amber-400/[0.05] transition-all duration-400 p-5 flex flex-col justify-between min-h-[110px]">
+              <div className="flex items-start justify-between mb-3">
+                <span className="text-lg text-amber-400/20 group-hover:text-amber-400/50 transition-colors select-none leading-none">✦</span>
+                <span className="text-[9px] tracking-[0.2em] text-amber-400/30 uppercase">Interno</span>
+              </div>
+              <div>
+                <p className="text-[11px] tracking-[0.25em] font-medium text-amber-400/50 group-hover:text-amber-400/80 uppercase transition-colors leading-snug">Reprodução</p>
+                <p className="text-[10px] text-white/18 mt-1 leading-snug">Storytelling · Storyboard · Moodboard</p>
+              </div>
+            </Link>
+          )}
         </div>
 
       </div>

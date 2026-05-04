@@ -90,6 +90,25 @@ export interface ChatMensagem {
   criadoEm: string
 }
 
+export type StoryboardTipo = 'abertura' | 'cerimonia' | 'momento_chave' | 'detalhe' | 'final' | 'outro'
+
+export interface StoryboardCena {
+  id: string
+  momento: string
+  descricao: string
+  tipo?: StoryboardTipo
+  duracao?: string
+}
+
+export type MoodboardCategoria = 'referencia' | 'paleta' | 'composicao' | 'luz' | 'outro'
+
+export interface MoodboardItem {
+  id: string
+  url: string
+  legenda?: string
+  categoria?: MoodboardCategoria
+}
+
 export type TarefaEstado = 'concluido' | 'em_andamento' | 'nao_iniciada' | 'aguardar' | 'enviado'
 
 export interface RoadmapTarefa {
@@ -145,6 +164,12 @@ export interface Projeto {
   roadmap?: RoadmapColuna[]
   roadmapImageUrl?: string
   chatMensagens?: ChatMensagem[]
+  reproducaoStorytelling?: string
+  reproducaoPalavrasChave?: string
+  reproducaoTomEmocional?: string
+  reproducaoStoryboard?: StoryboardCena[]
+  reproducaoMoodboard?: MoodboardItem[]
+  reproducaoImageUrl?: string
 }
 
 const PROJETOS: Record<string, Projeto> = {
