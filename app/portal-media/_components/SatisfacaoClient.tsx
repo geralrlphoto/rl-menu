@@ -172,17 +172,7 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
             )}
           </div>
 
-        /* ── Admin: sem resposta ainda ── */
-        ) : isAdmin ? (
-          <div className="border border-white/[0.07] bg-white/[0.02] px-8 py-12 flex flex-col items-center text-center gap-4">
-            <span className="text-4xl opacity-10 select-none">◒</span>
-            <p className="text-[9px] tracking-[0.5em] text-white/20 uppercase">Sem resposta ainda</p>
-            <p className="text-[12px] font-light text-white/15 leading-relaxed max-w-xs">
-              O cliente ainda não preencheu o formulário de satisfação.
-            </p>
-          </div>
-
-        /* ── Cliente: formulário ── */
+        /* ── Formulário (admin e cliente) ── */
         ) : (
           <div className="border border-white/[0.07] bg-white/[0.02] px-8 py-10 flex flex-col items-center text-center gap-8">
 
