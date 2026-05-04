@@ -72,6 +72,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/api/test-portal-card') ||
     /^\/api\/media-portal\/[^/]+\/feedback/.test(pathname) ||
     /^\/api\/media-portal\/[^/]+\/chat/.test(pathname) ||
+    /^\/api\/media-portal\/[^/]+\/auth/.test(pathname) ||
     /^\/api\/media-portal\/[^/]+$/.test(pathname)
   ) {
     return NextResponse.next()

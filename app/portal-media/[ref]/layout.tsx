@@ -1,4 +1,53 @@
-export default function PortalMediaLayout({ children }: { children: React.ReactNode }) {
+import { cookies } from 'next/headers'
+import { createClient } from '@supabase/supabase-js'
+import { getProjeto } from '@/app/portal-media/_data/mockProject'
+import PortalLoginClient from '@/app/portal-media/_components/PortalLoginClient'
+
+type Props = {
+  children: React.ReactNode
+  params: Promise<{ ref: string }>
+}
+
+export default async function PortalMediaLayout({ children, params }: Props) {
+  const { ref } = await params
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  const { data: row } = await supabase
+    .from('media_portais')
+    .select('dados')
+    .eq('ref', ref.toUpperCase())
+    .single()
+
+  const mock = getProjeto(ref)
+  const dados = row?.dados ? { ...(mock ?? {}), ...row.dados } : mock
+
+  const senha      = (dados as any)?.senha as string | undefined
+  const nomeProjeto = (dados as any)?.nome  ?? ref
+  const cliente    = (dados as any)?.cliente ?? ''
+
+  const cookieStore = await cookies()
+  const isAdmin     = cookieStore.get('rl_auth')?.value === process.env.AUTH_SECRET
+
+  /* ── Protecção por senha ── */
+  if (senha && !isAdmin) {
+    const portalCookie = cookieStore.get(`pm_${ref.toUpperCase()}`)?.value
+    if (portalCookie !== senha) {
+      return (
+        <div className="min-h-screen bg-[#04080f]">
+          <PortalLoginClient
+            portalRef={ref.toUpperCase()}
+            nomeProjeto={nomeProjeto}
+            cliente={cliente}
+          />
+        </div>
+      )
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#04080f]">
       {/* Neon topo */}

@@ -110,6 +110,7 @@ export interface Projeto {
   ref: string
   nome: string
   cliente: string
+  senha?: string
   tipo: string
   local: string
   dataFilmagem: string

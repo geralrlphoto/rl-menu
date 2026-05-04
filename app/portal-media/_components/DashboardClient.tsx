@@ -34,6 +34,25 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
   const [heroUploading, setHeroUploading] = useState(false)
   const [logoUploading, setLogoUploading] = useState(false)
 
+  /* ── senha do portal ── */
+  const [senhaInput, setSenhaInput]   = useState('')
+  const [savingSenha, setSavingSenha] = useState(false)
+  const [senhaSaved, setSenhaSaved]   = useState(false)
+
+  const saveSenha = async () => {
+    setSavingSenha(true)
+    setSenhaSaved(false)
+    await fetch(`/api/media-portal/${projeto.ref}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ senha: senhaInput.trim() || null }),
+    })
+    setProjeto(p => ({ ...p, senha: senhaInput.trim() || undefined }))
+    setSenhaSaved(true)
+    setSavingSenha(false)
+    setTimeout(() => setSenhaSaved(false), 3000)
+  }
+
   const set = (field: keyof Projeto, value: any) =>
     setProjeto(p => ({ ...p, [field]: value }))
 
@@ -354,6 +373,43 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
         </div>
 
       </div>
+
+      {/* ── Painel de senha (só admin) ── */}
+      {isAdmin && (
+        <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 pb-10">
+          <div className="border border-white/[0.06] bg-white/[0.015] px-5 py-5">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div>
+                <p className="text-sm tracking-[0.4em] text-white/30 uppercase mb-1">🔑 Senha do Portal</p>
+                <p className="text-xs text-white/20 leading-relaxed">
+                  {projeto.senha
+                    ? `Senha activa · ${projeto.senha.replace(/./g, '●')}`
+                    : 'Sem senha · acesso livre'}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 flex-1 min-w-[200px] max-w-xs">
+                <input
+                  type="text"
+                  value={senhaInput}
+                  onChange={e => { setSenhaInput(e.target.value); setSenhaSaved(false) }}
+                  placeholder={projeto.senha ? 'Nova senha...' : 'Definir senha...'}
+                  className="flex-1 bg-black/20 border border-white/[0.08] px-3 py-2 text-sm text-white/60
+                             placeholder:text-white/15 focus:outline-none focus:border-white/20 tracking-[0.15em]"
+                />
+                <button
+                  onClick={saveSenha}
+                  disabled={savingSenha || (!senhaInput.trim() && !projeto.senha)}
+                  className="shrink-0 border border-white/15 bg-white/[0.03] hover:bg-white/[0.07] px-4 py-2
+                             text-sm tracking-[0.3em] text-white/40 hover:text-white/70 uppercase transition-colors
+                             disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  {savingSenha ? '...' : senhaSaved ? '✓' : senhaInput.trim() ? 'Guardar' : projeto.senha ? 'Remover' : 'Guardar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isAdmin && (
         <AdminBar isEditing={isEditing} saving={saving}
