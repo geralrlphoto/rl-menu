@@ -31,6 +31,7 @@ export default function ChatBox({ projetoRef, isAdmin, clienteNome }: Props) {
   const [loading, setLoading]       = useState(true)
   const bottomRef                   = useRef<HTMLDivElement>(null)
   const inputRef                    = useRef<HTMLInputElement>(null)
+  const scrollAfterSend             = useRef(false)
 
   const fetchMensagens = async (silent = false) => {
     try {
@@ -48,8 +49,12 @@ export default function ChatBox({ projetoRef, isAdmin, clienteNome }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  /* Só faz scroll quando o utilizador envia uma mensagem */
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (scrollAfterSend.current) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+      scrollAfterSend.current = false
+    }
   }, [mensagens])
 
   const enviar = async () => {
@@ -64,6 +69,7 @@ export default function ChatBox({ projetoRef, isAdmin, clienteNome }: Props) {
         body: JSON.stringify({ texto: txt, autor, isAdmin }),
       })
       setTexto('')
+      scrollAfterSend.current = true
       await fetchMensagens(true)
     } catch {}
     setSending(false)
