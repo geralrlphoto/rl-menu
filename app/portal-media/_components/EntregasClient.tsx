@@ -40,9 +40,11 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
   const [feedbackAberto, setFeedbackAberto]   = useState<number | null>(null)
   const [feedbackTexto, setFeedbackTexto]     = useState('')
   const [enviandoFeedback, setEnviandoFeedback] = useState(false)
+  const [feedbackErro, setFeedbackErro]       = useState<string | null>(null)
   const [respostaAberta, setRespostaAberta]   = useState<string | null>(null)  // `${entregaIdx}-${feedbackId}`
   const [respostaTexto, setRespostaTexto]     = useState('')
   const [enviandoResposta, setEnviandoResposta] = useState(false)
+  const [respostaErro, setRespostaErro]       = useState<string | null>(null)
 
   /* ── persistência ── */
   const save = async () => {
@@ -118,6 +120,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
   const submitFeedback = async (entregaIdx: number) => {
     if (!feedbackTexto.trim()) return
     setEnviandoFeedback(true)
+    setFeedbackErro(null)
     const novoFeedback: EntregaFeedback = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
       texto: feedbackTexto.trim(),
@@ -143,8 +146,13 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
         }))
         setFeedbackTexto('')
         setFeedbackAberto(null)
+      } else {
+        const err = await res.json().catch(() => ({}))
+        setFeedbackErro(err?.error ?? 'Erro ao enviar. Tenta novamente.')
       }
-    } catch {}
+    } catch {
+      setFeedbackErro('Sem ligação. Verifica a internet e tenta novamente.')
+    }
     setEnviandoFeedback(false)
   }
 
@@ -226,8 +234,14 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
         }))
         setRespostaTexto('')
         setRespostaAberta(null)
+        setRespostaErro(null)
+      } else {
+        const err = await res.json().catch(() => ({}))
+        setRespostaErro(err?.error ?? 'Erro ao enviar resposta. Tenta novamente.')
       }
-    } catch {}
+    } catch {
+      setRespostaErro('Sem ligação. Verifica a internet e tenta novamente.')
+    }
     setEnviandoResposta(false)
   }
 
@@ -429,6 +443,9 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                                  placeholder:text-white/15 px-4 py-3 focus:outline-none focus:border-white/20
                                  resize-none leading-relaxed"
                     />
+                    {feedbackErro && (
+                      <p className="text-xs text-red-400/70 mb-3 leading-relaxed">⚠ {feedbackErro}</p>
+                    )}
                     <div className="flex items-center gap-3 mt-3">
                       <button
                         onClick={() => submitFeedback(i)}
@@ -440,7 +457,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                         {enviandoFeedback ? '⏳ A enviar...' : '✓ Enviar Feedback'}
                       </button>
                       <button
-                        onClick={() => { setFeedbackAberto(null); setFeedbackTexto('') }}
+                        onClick={() => { setFeedbackAberto(null); setFeedbackTexto(''); setFeedbackErro(null) }}
                         className="px-4 py-2 text-sm tracking-[0.35em] uppercase text-white/25 hover:text-white/50 transition-colors"
                       >
                         Cancelar
@@ -514,6 +531,9 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                                              placeholder:text-white/15 px-4 py-3 focus:outline-none focus:border-white/20
                                              resize-none leading-relaxed mb-3"
                                 />
+                                {respostaErro && (
+                                  <p className="text-xs text-red-400/70 mb-3">⚠ {respostaErro}</p>
+                                )}
                                 <div className="flex gap-3">
                                   <button
                                     onClick={() => submitResposta(i, fb.id)}
@@ -525,7 +545,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                                     {enviandoResposta ? '⏳ A enviar...' : '↩ Responder'}
                                   </button>
                                   <button
-                                    onClick={() => { setRespostaAberta(null); setRespostaTexto('') }}
+                                    onClick={() => { setRespostaAberta(null); setRespostaTexto(''); setRespostaErro(null) }}
                                     className="px-4 py-2 text-sm tracking-[0.35em] uppercase text-white/25 hover:text-white/50 transition-colors"
                                   >
                                     Cancelar
