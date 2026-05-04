@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { getProjeto } from '@/app/portal-media/_data/mockProject'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -84,15 +85,27 @@ function neonCard(badge: string, badgeColor: string, title: string, body: string
 </html>`
 }
 
-async function sendEmail(to: string, subject: string, html: string) {
-  await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ from: 'RL Media <geral@rlphotovideo.pt>', to: [to], subject, html }),
-  })
+async function sendEmail(to: string, subject: string, html: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ from: 'RL Media <geral@rlphotovideo.pt>', to: [to], subject, html }),
+    })
+    const data = await res.json()
+    if (!res.ok) {
+      console.error('[feedback] Resend error:', data)
+      return { ok: false, error: data?.message ?? 'Resend error' }
+    }
+    console.log('[feedback] Email enviado para', to, '| id:', data.id)
+    return { ok: true }
+  } catch (e: any) {
+    console.error('[feedback] sendEmail exception:', e?.message)
+    return { ok: false, error: e?.message }
+  }
 }
 
 /* ─────────────────── POST ─────────────────── */
@@ -101,18 +114,14 @@ export async function POST(req: NextRequest, { params }: Params) {
   const { ref } = await params
   const body = await req.json()
   const {
-    action,          // 'feedback' | 'resposta'
+    action,          // 'feedback' | 'resposta' | 'remover-feedback' | 'remover-resposta'
     entregaIndex,
     feedbackId,
     texto,
-    entregaTitulo,
-    nomeProjeto,
-    cliente,
-    adminEmail,
-    clienteEmail,
   } = body
 
-  if (!texto?.trim()) return NextResponse.json({ error: 'Texto vazio' }, { status: 400 })
+  if ((action === 'feedback' || action === 'resposta') && !texto?.trim())
+    return NextResponse.json({ error: 'Texto vazio' }, { status: 400 })
 
   /* ── ler dados actuais ── */
   const { data: existing } = await supabase
@@ -123,12 +132,27 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   if (!existing?.dados) return NextResponse.json({ error: 'Projeto não encontrado' }, { status: 404 })
 
-  const dados = existing.dados
+  /* ── dados brutos do Supabase (para gravar) ── */
+  const rawDados = existing.dados
+
+  /* ── merge mock + supabase para ter todos os campos (leitura) ── */
+  const mock = getProjeto(ref)
+  const dados = mock ? { ...mock, ...rawDados } : rawDados
+
   const entregas: any[] = [...(dados.entregas ?? [])]
   const entrega = entregas[entregaIndex]
   if (!entrega) return NextResponse.json({ error: 'Entrega não encontrada' }, { status: 404 })
 
+  /* ── campos do projecto resolvidos no servidor ── */
+  const nomeProjeto   = dados.nome     ?? ref
+  const cliente       = dados.cliente  ?? ''
+  const entregaTitulo = entrega.titulo ?? `Entrega ${entregaIndex + 1}`
+  const adminEmail    = dados.gestorEmail ?? process.env.ADMIN_EMAIL ?? ''
+  const clienteEmail  = dados.fichaCliente?.email ?? ''
+
   const portalUrl = `https://rl-menu-lake.vercel.app/portal-media/${ref.toUpperCase()}/entregas`
+
+  console.log('[feedback] action:', action, '| adminEmail:', adminEmail, '| clienteEmail:', clienteEmail)
 
   /* ── FEEDBACK do cliente ── */
   if (action === 'feedback') {
@@ -145,13 +169,14 @@ export async function POST(req: NextRequest, { params }: Params) {
     const { error } = await supabase
       .from('media_portais')
       .upsert(
-        { ref: ref.toUpperCase(), dados: { ...dados, entregas }, updated_at: new Date().toISOString() },
+        { ref: ref.toUpperCase(), dados: { ...rawDados, entregas }, updated_at: new Date().toISOString() },
         { onConflict: 'ref' }
       )
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
     /* notificar admin */
+    let emailResult = { ok: false, error: 'adminEmail vazio' }
     if (adminEmail) {
       const html = neonCard(
         'Novo Feedback',
@@ -163,14 +188,14 @@ export async function POST(req: NextRequest, { params }: Params) {
         nomeProjeto,
         cliente
       )
-      await sendEmail(
+      emailResult = await sendEmail(
         adminEmail,
         `${nomeProjeto} · Novo feedback do cliente — RL Media`,
         html
       )
     }
 
-    return NextResponse.json({ ok: true, feedback: novoFeedback })
+    return NextResponse.json({ ok: true, feedback: novoFeedback, emailAdmin: emailResult })
   }
 
   /* ── RESPOSTA do admin ── */
@@ -186,13 +211,14 @@ export async function POST(req: NextRequest, { params }: Params) {
     const { error } = await supabase
       .from('media_portais')
       .upsert(
-        { ref: ref.toUpperCase(), dados: { ...dados, entregas }, updated_at: new Date().toISOString() },
+        { ref: ref.toUpperCase(), dados: { ...rawDados, entregas }, updated_at: new Date().toISOString() },
         { onConflict: 'ref' }
       )
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
     /* notificar cliente */
+    let emailResult = { ok: false, error: 'clienteEmail vazio' }
     if (clienteEmail) {
       const html = neonCard(
         'Resposta da RL Media',
@@ -204,14 +230,14 @@ export async function POST(req: NextRequest, { params }: Params) {
         nomeProjeto,
         cliente
       )
-      await sendEmail(
+      emailResult = await sendEmail(
         clienteEmail,
         `${nomeProjeto} · A RL Media respondeu ao teu feedback — RL Media`,
         html
       )
     }
 
-    return NextResponse.json({ ok: true })
+    return NextResponse.json({ ok: true, emailCliente: emailResult })
   }
 
   /* ── REMOVER feedback completo (admin) ── */
@@ -224,7 +250,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     const { error } = await supabase
       .from('media_portais')
       .upsert(
-        { ref: ref.toUpperCase(), dados: { ...dados, entregas }, updated_at: new Date().toISOString() },
+        { ref: ref.toUpperCase(), dados: { ...rawDados, entregas }, updated_at: new Date().toISOString() },
         { onConflict: 'ref' }
       )
 
@@ -244,7 +270,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     const { error } = await supabase
       .from('media_portais')
       .upsert(
-        { ref: ref.toUpperCase(), dados: { ...dados, entregas }, updated_at: new Date().toISOString() },
+        { ref: ref.toUpperCase(), dados: { ...rawDados, entregas }, updated_at: new Date().toISOString() },
         { onConflict: 'ref' }
       )
 

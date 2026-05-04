@@ -131,10 +131,6 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
           action: 'feedback',
           entregaIndex: entregaIdx,
           texto: feedbackTexto.trim(),
-          entregaTitulo: projeto.entregas[entregaIdx].titulo,
-          nomeProjeto: projeto.nome,
-          cliente: projeto.cliente,
-          adminEmail: projeto.gestorEmail,
         }),
       })
       if (res.ok) {
@@ -213,10 +209,6 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
           entregaIndex: entregaIdx,
           feedbackId,
           texto: respostaTexto.trim(),
-          entregaTitulo: projeto.entregas[entregaIdx].titulo,
-          nomeProjeto: projeto.nome,
-          cliente: projeto.cliente,
-          clienteEmail: projeto.fichaCliente?.email,
         }),
       })
       if (res.ok) {
