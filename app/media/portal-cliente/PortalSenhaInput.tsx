@@ -12,6 +12,9 @@ export default function PortalSenhaInput({ portalRef, senhaInicial }: Props) {
   const [saved, setSaved]       = useState(false)
   const [editing, setEditing]   = useState(false)
 
+  const [sending, setSending]   = useState(false)
+  const [sendMsg, setSendMsg]   = useState<{ ok: boolean; text: string } | null>(null)
+
   const temSenha = !!senhaInicial
 
   const handleSave = async () => {
@@ -47,6 +50,29 @@ export default function PortalSenhaInput({ portalRef, senhaInicial }: Props) {
     }
   }
 
+  const handleEnviarPortal = async () => {
+    setSending(true)
+    setSendMsg(null)
+    try {
+      const res = await fetch('/api/media-portal/send-portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ref: portalRef }),
+      })
+      const data = await res.json()
+      if (data.ok) {
+        setSendMsg({ ok: true, text: '✓ Portal enviado' })
+      } else {
+        setSendMsg({ ok: false, text: data.error ?? 'Erro ao enviar' })
+      }
+    } catch {
+      setSendMsg({ ok: false, text: 'Erro de ligação' })
+    } finally {
+      setSending(false)
+      setTimeout(() => setSendMsg(null), 4000)
+    }
+  }
+
   return (
     <div className="flex items-center gap-2 flex-wrap">
       {!editing ? (
@@ -70,11 +96,30 @@ export default function PortalSenhaInput({ portalRef, senhaInicial }: Props) {
             <span className="text-[8px] tracking-[0.25em] text-emerald-400/60 uppercase">✓ Guardado</span>
           )}
 
+          {sendMsg && (
+            <span className={`text-[8px] tracking-[0.25em] uppercase ${sendMsg.ok ? 'text-emerald-400/70' : 'text-red-400/70'}`}>
+              {sendMsg.text}
+            </span>
+          )}
+
+          {/* Alterar senha */}
           <button
             onClick={() => setEditing(true)}
             className="text-[8px] tracking-[0.3em] text-white/20 hover:text-white/50 uppercase transition-colors border border-white/[0.06] hover:border-white/20 px-2 py-1"
           >
-            {temSenha || senha ? 'Alterar' : 'Definir senha'}
+            {temSenha || senha ? 'Alterar senha' : 'Definir senha'}
+          </button>
+
+          {/* Enviar portal */}
+          <button
+            onClick={handleEnviarPortal}
+            disabled={sending}
+            className="flex items-center gap-1.5 text-[8px] tracking-[0.3em] text-blue-400/60 hover:text-blue-400/90 uppercase transition-colors border border-blue-400/20 hover:border-blue-400/45 bg-blue-400/[0.04] hover:bg-blue-400/[0.08] px-3 py-1 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            {sending ? 'A enviar...' : 'Enviar portal'}
           </button>
         </>
       ) : (
