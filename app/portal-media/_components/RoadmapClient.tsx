@@ -208,6 +208,30 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
           />
         </div>
 
+        {/* ── Explicação para o cliente ── */}
+        <div className="mb-10 border border-white/[0.07] bg-white/[0.02] px-6 py-6 flex flex-col gap-4">
+          <p className="text-sm tracking-[0.5em] text-white/20 uppercase">O que é o Road Map?</p>
+          <p className="text-sm text-white/55 font-light leading-relaxed">
+            O Road Map é o quadro visual que mostra, em tempo real, o estado de cada fase do seu projeto. Está organizado em colunas que representam as grandes etapas do processo, desde o briefing inicial até à entrega final.
+          </p>
+          <div className="flex flex-col gap-3">
+            {[
+              { n: '01', t: 'Visão geral do projeto',   d: 'Num único ecrã tens o panorama completo: o que já foi concluído, o que está em curso e o que ainda está por fazer.' },
+              { n: '02', t: 'Fases e tarefas',          d: 'Cada coluna é uma fase do projeto. Dentro de cada fase existem tarefas específicas, cada uma com o seu estado e data prevista.' },
+              { n: '03', t: 'Estados em tempo real',    d: 'As tarefas atualizam o estado à medida que o trabalho avança: Concluído, Em andamento, Aguardar, Enviado ou Não iniciada.' },
+              { n: '04', t: 'Transparência total',      d: 'O objetivo é garantir que estás sempre informado sobre o progresso, sem teres de perguntar. Tens acesso ao mesmo quadro que a nossa equipa.' },
+            ].map(({ n, t, d }) => (
+              <div key={n} className="flex items-start gap-4 border-t border-white/[0.05] pt-3">
+                <span className="text-sm font-mono text-white/15 shrink-0 mt-0.5">{n}</span>
+                <div>
+                  <p className="text-sm text-white/55 font-medium mb-1">{t}</p>
+                  <p className="text-sm text-white/30 font-light leading-relaxed">{d}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* ── Legenda de estados ── */}
         <div className="flex flex-wrap items-center gap-3 mb-10">
           {ESTADO_OPTIONS.map(opt => {
