@@ -270,6 +270,31 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
           </div>
         </div>
 
+        {/* Explicação ao cliente */}
+        {!isEditing && (
+          <div className="mb-10 border border-white/[0.07] bg-white/[0.02] px-6 py-6 flex flex-col gap-4">
+            <p className="text-[9px] tracking-[0.5em] text-white/30 uppercase">As tuas entregas</p>
+            <p className="text-[13px] font-light text-white/55 leading-relaxed tracking-wide">
+              Aqui encontras todos os ficheiros que fazem parte do teu projeto. Cada entrega fica disponível com um botão de download assim que estiver pronta da nossa parte.
+            </p>
+            <div className="flex flex-col gap-3">
+              {[
+                { n: '01', t: 'Download disponível',  d: 'Quando o ficheiro estiver pronto, o botão de download fica activo. Até lá, o estado aparece a vermelho.' },
+                { n: '02', t: 'Feedback',              d: 'Depois de fazer o download, podes deixar o teu feedback directamente em cada entrega. Estamos atentos a cada comentário.' },
+                { n: '03', t: 'Revisões',              d: 'O número de revisões incluídas no teu projeto está visível na parte inferior desta página. Usa-as quando necessário.' },
+              ].map(({ n, t, d }) => (
+                <div key={n} className="flex items-start gap-4 border-t border-white/[0.05] pt-3">
+                  <span className="text-[10px] font-mono text-white/15 shrink-0 mt-0.5">{n}</span>
+                  <div>
+                    <p className="text-[11px] tracking-[0.2em] text-white/55 font-medium mb-1">{t}</p>
+                    <p className="text-[12px] font-light text-white/30 leading-relaxed">{d}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col gap-0 mb-4">
           {projeto.entregas.map((e, i) => {
             const temUrl    = !!e.linkUrl
