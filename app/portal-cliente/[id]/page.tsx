@@ -921,6 +921,13 @@ function PortalSubPageContent() {
   const [sendingBriefing, setSendingBriefing] = useState(false)
   const [briefingSent, setBriefingSent] = useState(false)
   const [cronogramaStatus, setCronogramaStatus] = useState<Record<string, boolean>>({})
+  const [satisfacao, setSatisfacao] = useState<{ nota: number; comentario: string; submetidoEm: string } | null>(null)
+  const [notaSat, setNotaSat] = useState(0)
+  const [hoverNotaSat, setHoverNotaSat] = useState(0)
+  const [comentarioSat, setComentarioSat] = useState('')
+  const [enviandoSat, setEnviandoSat] = useState(false)
+  const [enviadoSat, setEnviadoSat] = useState(false)
+  const [erroSat, setErroSat] = useState<string | null>(null)
 
   const isPaymentsPage    = title.toUpperCase().includes('PAGAMENTO')
   const isGuiaPage        = title.toUpperCase().includes('GUIA') && !title.toUpperCase().includes('WEDDING')
@@ -991,6 +998,7 @@ function PortalSubPageContent() {
       setPageHeaders(ps.pageHeaders ?? {})
       setBriefingInfo(ps.briefingInfo ?? {})
       setCronogramaStatus(ps.cronogramaStatus ?? {})
+      setSatisfacao(ps.satisfacao ?? null)
 
       // Proposta token (links portal to CRM lead proposal)
       const propToken = ps.propostaToken ?? ''
@@ -1195,6 +1203,42 @@ function PortalSubPageContent() {
     const newStatus = { ...cronogramaStatus, [blockId]: !cronogramaStatus[blockId] }
     setCronogramaStatus(newStatus)
     await savePortalSettings({ ...portalSettingsObj, cronogramaStatus: newStatus })
+  }
+
+  const SAT_LABELS = ['', 'Fraco', 'Razoável', 'Bom', 'Muito Bom', 'Excelente']
+
+  async function submeterSatisfacao() {
+    if (notaSat === 0) { setErroSat('Seleciona uma classificação.'); return }
+    setEnviandoSat(true)
+    setErroSat(null)
+    try {
+      const resposta = { nota: notaSat, comentario: comentarioSat.trim(), submetidoEm: new Date().toISOString() }
+      const newSettings = { ...portalSettingsObj, satisfacao: resposta }
+      await savePortalSettings(newSettings)
+      setPortalSettingsObj(newSettings)
+
+      // Notificar admin
+      const nomePortal = portalSettingsObj.noiva && portalSettingsObj.noivo
+        ? `${portalSettingsObj.noiva} & ${portalSettingsObj.noivo}`
+        : portalRef || refParam || 'Portal Cliente'
+      fetch('/api/media-portal/notify-satisfacao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nomeProjeto: nomePortal,
+          cliente:     nomePortal,
+          ref:         portalRef || refParam || '',
+          nota:        notaSat,
+          comentario:  comentarioSat.trim(),
+        }),
+      }).catch(() => {})
+
+      setSatisfacao(resposta)
+      setEnviadoSat(true)
+    } catch {
+      setErroSat('Erro ao enviar. Tenta novamente.')
+    }
+    setEnviandoSat(false)
   }
 
   async function handleSaveBriefing() {
@@ -1731,16 +1775,97 @@ function PortalSubPageContent() {
                       return (
                         <>
                           <NotionBlocks blocks={textBlocks} hiddenNav={settings.hiddenNav} backUrl={backUrlSat} />
-                          <div className="mt-6 rounded-xl border border-white/40 bg-black overflow-hidden"
-                            style={{ boxShadow: '0 0 14px 3px rgba(255,255,255,0.12), inset 0 0 16px 0 rgba(255,255,255,0.03)' }}>
-                            <div className="px-5 py-4 flex items-center justify-between gap-4">
-                              <span className="text-xs font-bold tracking-[0.25em] uppercase text-white/70">Dar Satisfação</span>
-                              <a href="https://tally.so/r/pbKJry" target="_blank" rel="noopener noreferrer"
-                                className="flex-shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-white/20 bg-white/[0.03] text-white/50 text-xs font-medium hover:text-white/80 hover:border-white/40 transition-all">
-                                DAR SATISFAÇÃO →
-                              </a>
+                          {/* ── Satisfação ── */}
+                          {(satisfacao || enviadoSat) ? (
+                            /* Já submetido */
+                            <div className="mt-6 rounded-xl border border-emerald-400/30 bg-black overflow-hidden"
+                              style={{ boxShadow: '0 0 18px 2px rgba(52,211,153,0.08), inset 0 0 16px 0 rgba(52,211,153,0.03)' }}>
+                              <div className="px-6 py-6 flex flex-col items-center text-center gap-4">
+                                <span className="text-emerald-400/70 text-2xl">✓</span>
+                                <p className="text-[10px] font-bold tracking-[0.35em] uppercase text-emerald-400/70">Obrigado pelo teu feedback</p>
+                                <div className="flex gap-1">
+                                  {[1,2,3,4,5].map(i => (
+                                    <span key={i} className="text-2xl leading-none select-none"
+                                      style={{ color: i <= (satisfacao?.nota ?? notaSat) ? '#f59e0b' : 'rgba(255,255,255,0.10)' }}>★</span>
+                                  ))}
+                                </div>
+                                {(satisfacao?.nota ?? notaSat) > 0 && (
+                                  <p className="text-[10px] tracking-[0.3em] text-amber-400/60 uppercase -mt-1">
+                                    {SAT_LABELS[satisfacao?.nota ?? notaSat]}
+                                  </p>
+                                )}
+                                {(satisfacao?.comentario || (enviadoSat && comentarioSat.trim())) && (
+                                  <div className="border border-white/10 bg-white/[0.02] rounded-lg px-5 py-4 max-w-sm w-full text-left">
+                                    <p className="text-[9px] tracking-[0.35em] uppercase text-white/25 mb-2">Comentário</p>
+                                    <p className="text-[13px] font-light text-white/50 leading-relaxed italic">
+                                      &ldquo;{satisfacao?.comentario || comentarioSat.trim()}&rdquo;
+                                    </p>
+                                  </div>
+                                )}
+                                <p className="text-[11px] text-white/25 font-light">A tua avaliação foi registada. Obrigado pela confiança.</p>
+                              </div>
                             </div>
-                          </div>
+                          ) : (
+                            /* Formulário */
+                            <div className="mt-6 rounded-xl border border-white/40 bg-black overflow-hidden"
+                              style={{ boxShadow: '0 0 14px 3px rgba(255,255,255,0.12), inset 0 0 16px 0 rgba(255,255,255,0.03)' }}>
+                              <div className="px-6 py-6 flex flex-col items-center gap-6">
+                                <p className="text-xs font-bold tracking-[0.25em] uppercase text-white/70 self-start">Dar Satisfação</p>
+
+                                {/* Estrelas */}
+                                <div className="flex flex-col items-center gap-2">
+                                  <p className="text-[9px] tracking-[0.4em] uppercase text-white/30">Classificação</p>
+                                  <div className="flex gap-1.5">
+                                    {[1,2,3,4,5].map(i => (
+                                      <button key={i}
+                                        onClick={() => setNotaSat(i)}
+                                        onMouseEnter={() => setHoverNotaSat(i)}
+                                        onMouseLeave={() => setHoverNotaSat(0)}
+                                        className="text-4xl leading-none transition-all duration-100"
+                                        style={{ color: i <= (hoverNotaSat || notaSat) ? '#f59e0b' : 'rgba(255,255,255,0.12)' }}
+                                      >★</button>
+                                    ))}
+                                  </div>
+                                  <p className={`text-[10px] tracking-[0.3em] uppercase transition-all duration-150 ${
+                                    (hoverNotaSat || notaSat) > 0 ? 'text-amber-400/60 opacity-100' : 'opacity-0'
+                                  }`}>
+                                    {SAT_LABELS[hoverNotaSat || notaSat] ?? ''}
+                                  </p>
+                                </div>
+
+                                {/* Comentário */}
+                                <div className="w-full max-w-md">
+                                  <p className="text-[9px] tracking-[0.4em] uppercase text-white/30 mb-2">
+                                    Comentário <span className="normal-case tracking-normal text-white/15">(opcional)</span>
+                                  </p>
+                                  <textarea
+                                    value={comentarioSat}
+                                    onChange={e => setComentarioSat(e.target.value)}
+                                    placeholder="Partilha a tua experiência..."
+                                    rows={4}
+                                    className="w-full rounded-lg bg-white/[0.04] border border-white/10 px-4 py-3
+                                               text-[13px] font-light text-white/60 placeholder:text-white/15
+                                               focus:outline-none focus:border-white/25 resize-none leading-relaxed transition-colors"
+                                  />
+                                </div>
+
+                                {erroSat && (
+                                  <p className="text-[11px] text-red-400/70 -mt-2">⚠ {erroSat}</p>
+                                )}
+
+                                <button
+                                  onClick={submeterSatisfacao}
+                                  disabled={enviandoSat || notaSat === 0}
+                                  className="rounded-lg border border-white/30 bg-white/[0.05] hover:bg-white/[0.12]
+                                             px-10 py-3 text-[9px] tracking-[0.45em] text-white/70 hover:text-white
+                                             uppercase transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                                  style={{ boxShadow: notaSat > 0 ? '0 0 16px rgba(255,255,255,0.07)' : 'none' }}
+                                >
+                                  {enviandoSat ? '⏳ A enviar...' : 'Submeter Avaliação'}
+                                </button>
+                              </div>
+                            </div>
+                          )}
                           {afterTextBlocks.length > 0 && (
                             <NotionBlocks blocks={afterTextBlocks} hiddenNav={settings.hiddenNav} backUrl={backUrlSat} />
                           )}

@@ -180,6 +180,11 @@ export interface Projeto {
   reproducaoMoodboard?: MoodboardItem[]
   reproducaoImageUrl?: string
   ultimaVisitaCliente?: string
+  satisfacao?: {
+    nota: number
+    comentario: string
+    submetidoEm: string
+  }
 }
 
 const PROJETOS: Record<string, Projeto> = {
