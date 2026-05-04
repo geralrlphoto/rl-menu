@@ -133,13 +133,13 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
         <div className="mb-10 border border-white/[0.07] bg-white/[0.02] px-6 py-6 flex flex-col gap-4">
           <p className="text-sm tracking-[0.5em] text-white/20 uppercase">O que é o Briefing?</p>
           <p className="text-sm text-white/60 font-light leading-relaxed">
-            O briefing é a base de tudo o que fazemos juntos. É o momento em que nos sentamos contigo — presencialmente ou à distância — para perceber exatamente o que precisas, o que sentes e o que esperas do projeto.
+            O briefing é a base de tudo o que fazemos juntos. É o momento em que nos sentamos contigo, presencialmente ou à distância, para perceber exatamente o que precisas, o que sentes e o que esperas do projeto.
           </p>
           <div className="flex flex-col gap-3">
             {[
               { n: '01', t: 'Primeira sessão', d: 'Recolhemos os objetivos, o tom, as referências visuais e tudo o que define a tua visão para o projeto.' },
               { n: '02', t: 'Sessões seguintes', d: 'À medida que o projeto avança, podemos fazer sessões adicionais para afinar detalhes, validar decisões ou ajustar o rumo.' },
-              { n: '03', t: 'Resumo registado', d: 'Cada sessão fica registada aqui com data e resumo — tens sempre acesso ao histórico completo do que foi discutido.' },
+              { n: '03', t: 'Resumo registado', d: 'Cada sessão fica registada aqui com data e resumo. Tens sempre acesso ao histórico completo do que foi discutido.' },
               { n: '04', t: 'Notificação', d: 'Sempre que adicionarmos um novo registo de briefing, recebes uma notificação por email para ficares a par.' },
             ].map(({ n, t, d }) => (
               <div key={n} className="flex items-start gap-4 border-t border-white/[0.05] pt-3">
@@ -194,7 +194,7 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
                   <textarea
                     value={sessao.resumo}
                     onChange={e => update(sessao.id, 'resumo', e.target.value)}
-                    placeholder="Escreve aqui o resumo do briefing com o cliente — objetivos, referências, decisões tomadas..."
+                    placeholder="Escreve aqui o resumo do briefing com o cliente: objetivos, referências, decisões tomadas..."
                     rows={7}
                     className="w-full bg-white/[0.03] border border-white/[0.08] px-4 py-3 text-sm text-white/55 leading-relaxed resize-none focus:outline-none focus:border-white/20 placeholder:text-white/15"
                   />
