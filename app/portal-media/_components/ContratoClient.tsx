@@ -36,10 +36,11 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contratoUrl:    projeto.contratoUrl,
-          cpsFormUrl:     projeto.cpsFormUrl,
-          fichaCliente:   projeto.fichaCliente,
-          contaBancaria:  projeto.contaBancaria,
+          contratoUrl:      projeto.contratoUrl,
+          reciboFaturaUrl:  projeto.reciboFaturaUrl,
+          cpsFormUrl:       projeto.cpsFormUrl,
+          fichaCliente:     projeto.fichaCliente,
+          contaBancaria:    projeto.contaBancaria,
           contratoImageUrl: heroUrl,
         }),
       })
@@ -336,6 +337,51 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                     </button>
                   )}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Recibo / Fatura ── */}
+          {(isEditing || projeto.reciboFaturaUrl) && (
+            <div className={`border px-6 py-5 transition-colors ${
+              projeto.reciboFaturaUrl
+                ? 'border-emerald-400/20 bg-emerald-400/[0.03]'
+                : 'border-white/[0.07] bg-white/[0.02]'
+            }`}>
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <p className="text-[9px] tracking-[0.5em] text-white/30 uppercase mb-1">Recibo / Fatura</p>
+                  {isEditing ? (
+                    <div className="mt-2">
+                      <p className="text-[11px] font-light text-white/25 mb-2">URL do PDF (Google Drive, Dropbox, etc.)</p>
+                      <EditableField
+                        value={projeto.reciboFaturaUrl ?? ''}
+                        isEditing={true}
+                        onChange={v => set('reciboFaturaUrl', v)}
+                        placeholder="https://drive.google.com/..."
+                        className="text-[12px] font-light text-white/45"
+                      />
+                    </div>
+                  ) : (
+                    <p className="text-[12px] font-light text-emerald-400/50 mt-0.5">Disponível para download</p>
+                  )}
+                </div>
+                {projeto.reciboFaturaUrl && !isEditing && (
+                  <a
+                    href={projeto.reciboFaturaUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 flex items-center gap-2 border border-emerald-400/30 bg-emerald-400/[0.07]
+                               hover:bg-emerald-400/[0.14] hover:border-emerald-400/50 px-5 py-3
+                               text-[9px] tracking-[0.4em] text-emerald-400/70 hover:text-emerald-400
+                               uppercase transition-all duration-200"
+                  >
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M12 16l-4-4m4 4l4-4m-4 4V4M4 20h16" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Recibo / Fatura
+                  </a>
+                )}
               </div>
             </div>
           )}

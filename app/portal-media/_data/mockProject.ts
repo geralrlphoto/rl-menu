@@ -163,6 +163,7 @@ export interface Projeto {
   briefingItems?: BriefingItem[]
   briefingSessoes?: BriefingSessao[]
   contratoUrl?: string
+  reciboFaturaUrl?: string
   cpsFormUrl?: string
   satisfacaoUrl?: string
   fichaCliente?: FichaCliente
