@@ -1,5 +1,5 @@
 'use client'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import type { Projeto } from '@/app/portal-media/_data/mockProject'
 import AdminBar from './AdminBar'
@@ -33,6 +33,28 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
   const logoFileRef = useRef<HTMLInputElement>(null)
   const [heroUploading, setHeroUploading] = useState(false)
   const [logoUploading, setLogoUploading] = useState(false)
+
+  /* ── copiar link ── */
+  const [copiado, setCopiado] = useState(false)
+
+  const copiarLink = () => {
+    const link = `${window.location.origin}/portal-media/${projeto.ref}`
+    navigator.clipboard.writeText(link).catch(() => {})
+    setCopiado(true)
+    setTimeout(() => setCopiado(false), 2500)
+  }
+
+  /* ── última visita cliente ── */
+  useEffect(() => {
+    if (!isAdmin) {
+      fetch(`/api/media-portal/${projeto.ref}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ultimaVisitaCliente: new Date().toISOString() }),
+      }).catch(() => {})
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   /* ── senha do portal ── */
   const [senhaInput, setSenhaInput]   = useState('')
@@ -402,9 +424,40 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
 
       </div>
 
-      {/* ── Painel de senha (só admin) ── */}
+      {/* ── Painel admin: link + senha + última visita ── */}
       {isAdmin && (
         <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 pb-10">
+
+          {/* Copiar link do portal */}
+          <div className="border border-white/[0.06] bg-white/[0.015] px-5 py-4 mb-3">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div>
+                <p className="text-[9px] tracking-[0.4em] text-white/30 uppercase mb-1">⎘ Link do Portal</p>
+                <p className="text-[10px] text-white/20 font-mono tracking-[0.1em] truncate max-w-[220px]">
+                  /portal-media/{projeto.ref.toLowerCase()}
+                </p>
+                {projeto.ultimaVisitaCliente && (
+                  <p className="text-[9px] text-white/15 mt-1 tracking-[0.15em]">
+                    Última visita · {new Date(projeto.ultimaVisitaCliente).toLocaleString('pt-PT', {
+                      day: '2-digit', month: 'short', year: 'numeric',
+                      hour: '2-digit', minute: '2-digit',
+                    })}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={copiarLink}
+                className={`shrink-0 border px-4 py-2 text-[9px] tracking-[0.35em] uppercase transition-colors
+                  ${copiado
+                    ? 'border-emerald-400/30 text-emerald-400/60 bg-emerald-400/[0.05]'
+                    : 'border-white/15 bg-white/[0.03] hover:bg-white/[0.07] text-white/40 hover:text-white/70'
+                  }`}
+              >
+                {copiado ? '✓ Copiado' : 'Copiar Link'}
+              </button>
+            </div>
+          </div>
+
           <div className="border border-white/[0.06] bg-white/[0.015] px-5 py-5">
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div>

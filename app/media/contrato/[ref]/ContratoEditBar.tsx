@@ -51,6 +51,7 @@ export default function ContratoEditBar({
   const [removidas, setRemovidas] = useState<string[]>(removidas_init ?? [])
   const [custom, setCustom]     = useState<ClausulaCustom[]>(custom_init ?? [])
   const [saving, setSaving]     = useState(false)
+  const [marcandoAssinado, setMarcandoAssinado] = useState(false)
 
   // Nova cláusula
   const [addingNew, setAddingNew] = useState(false)
@@ -69,6 +70,19 @@ export default function ContratoEditBar({
     setCustom(c => [...c, { id: `custom_${Date.now()}`, titulo: novaClausula.titulo, texto: novaClausula.texto }])
     setNovaClausula({ titulo: '', texto: '' })
     setAddingNew(false)
+  }
+
+  const marcarAssinado = async () => {
+    setMarcandoAssinado(true)
+    try {
+      await fetch(`/api/media-portal/${refUp}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contrato: { ...contrato, estado: 'Assinado' } }),
+      })
+      window.location.reload()
+    } catch {}
+    setMarcandoAssinado(false)
   }
 
   const save = async () => {
@@ -120,6 +134,17 @@ export default function ContratoEditBar({
         <div className="flex items-center gap-3">
           <span className="text-[8px] tracking-[0.4em] text-white/20 uppercase font-mono">{contrato.ref}</span>
           <span className={`text-[8px] tracking-[0.3em] uppercase px-2 py-1 border ${estadoBadge}`}>{estadoLabel}</span>
+          {isAdmin && contrato.estado === 'disponivel' && (
+            <button
+              onClick={marcarAssinado}
+              disabled={marcandoAssinado}
+              className="border border-emerald-400/30 bg-emerald-400/[0.05] hover:bg-emerald-400/[0.12]
+                         px-3 py-1.5 text-[8px] tracking-[0.35em] text-emerald-400/60 hover:text-emerald-400/90
+                         uppercase transition-colors disabled:opacity-40"
+            >
+              {marcandoAssinado ? '⏳' : '✓ Marcar Assinado'}
+            </button>
+          )}
           {isAdmin && (
             <button
               onClick={() => { setTab('dados'); setEditing(true) }}

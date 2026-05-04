@@ -35,6 +35,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
   const [heroUrl, setHeroUrl]       = useState(initial.entregasImageUrl ?? '')
   const [notifying, setNotifying]   = useState(false)
   const [notificado, setNotificado] = useState<string | null>(null)
+  const [notificandoIdx, setNotificandoIdx] = useState<number | null>(null)
 
   /* ── feedback state ── */
   const [feedbackAberto, setFeedbackAberto]   = useState<number | null>(null)
@@ -114,6 +115,32 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
       setNotificado(agora)
     } catch {}
     setNotifying(false)
+  }
+
+  /* ── notificação por entrega individual (admin) ── */
+  const notificarEntrega = async (idx: number) => {
+    const emailCliente = initial.fichaCliente?.email
+    if (!emailCliente) {
+      alert('Sem email do cliente definido. Adiciona o email na secção Contrato & CPS.')
+      return
+    }
+    const e = projeto.entregas[idx]
+    if (!e.linkUrl) return
+    setNotificandoIdx(idx)
+    try {
+      await fetch('/api/media-portal/notify-entregas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: emailCliente,
+          ref: initial.ref,
+          nomeProjeto: initial.nome,
+          cliente: initial.cliente,
+          entregas: [e],
+        }),
+      })
+    } catch {}
+    setNotificandoIdx(null)
   }
 
   /* ── feedback do cliente ── */
@@ -458,14 +485,26 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                         )
                       )}
 
-                      {/* Admin — estado (só informação) */}
+                      {/* Admin — estado + notificação individual */}
                       {isAdmin && (
                         temUrl ? (
-                          <span className="shrink-0 inline-flex items-center gap-2 border border-emerald-400/20
-                                           bg-emerald-400/[0.04] px-4 py-2 text-[9px] tracking-[0.35em]
-                                           text-emerald-400/45 uppercase">
-                            ◎ Feedback Activo
-                          </span>
+                          <div className="flex items-center gap-2 flex-wrap justify-end">
+                            <span className="shrink-0 inline-flex items-center gap-2 border border-emerald-400/20
+                                             bg-emerald-400/[0.04] px-3 py-2 text-[9px] tracking-[0.35em]
+                                             text-emerald-400/45 uppercase">
+                              ◎ Activo
+                            </span>
+                            <button
+                              onClick={() => notificarEntrega(i)}
+                              disabled={notificandoIdx === i}
+                              className="shrink-0 inline-flex items-center gap-2 border border-white/18
+                                         hover:border-white/35 bg-white/[0.02] hover:bg-white/[0.06]
+                                         px-3 py-2 text-[9px] tracking-[0.3em] text-white/35 hover:text-white/65
+                                         uppercase transition-colors disabled:opacity-40 cursor-pointer"
+                            >
+                              {notificandoIdx === i ? '⏳' : '✉ Notificar'}
+                            </button>
+                          </div>
                         ) : (
                           <span className="shrink-0 inline-flex items-center gap-2 border border-white/[0.07]
                                            bg-white/[0.02] px-4 py-2 text-[9px] tracking-[0.35em]

@@ -13,6 +13,7 @@ interface ContratoGerado {
   ref?: string
   estado?: string
   url?: string
+  portalUrl?: string
 }
 
 interface Props {
@@ -112,6 +113,21 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
         body: JSON.stringify({ contrato: updated }),
       })
       setContratoLocal(updated)
+      // Notificar cliente por email
+      const emailCliente = projeto.fichaCliente?.email
+      if (emailCliente) {
+        fetch('/api/media-portal/notify-contrato', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: emailCliente,
+            nomeProjeto: projeto.nome,
+            cliente: projeto.cliente,
+            contratoUrl: updated.url,
+            portalUrl: updated.portalUrl ?? `/portal-media/${projeto.ref}/contrato`,
+          }),
+        }).catch(() => {})
+      }
     } catch {}
     setConfirmando(false)
   }

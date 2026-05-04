@@ -179,6 +179,7 @@ export interface Projeto {
   reproducaoStoryboard?: StoryboardCena[]
   reproducaoMoodboard?: MoodboardItem[]
   reproducaoImageUrl?: string
+  ultimaVisitaCliente?: string
 }
 
 const PROJETOS: Record<string, Projeto> = {
