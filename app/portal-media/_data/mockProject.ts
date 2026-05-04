@@ -16,6 +16,16 @@ export interface Pagamento {
   data: string
 }
 
+export interface EntregaFeedback {
+  id: string
+  texto: string
+  criadoEm: string
+  resposta?: {
+    texto: string
+    criadoEm: string
+  }
+}
+
 export interface Entrega {
   titulo: string
   tipo?: 'video' | 'fotografia' | 'outro'
@@ -23,6 +33,7 @@ export interface Entrega {
   duracao: string
   linkUrl?: string
   estado: 'disponivel' | 'pendente'
+  feedbacks?: EntregaFeedback[]
 }
 
 export interface BriefingItem {
