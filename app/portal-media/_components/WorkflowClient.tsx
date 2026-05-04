@@ -11,7 +11,7 @@ import HeroUploadBlock from './HeroUploadBlock'
 const ESTADO_CFG = {
   concluido: { label: 'Concluído', bg: 'bg-emerald-400/10', border: 'border-emerald-400/30', dot: 'bg-emerald-400',  text: 'text-emerald-400/80' },
   em_curso:  { label: 'Em Curso',  bg: 'bg-blue-400/10',    border: 'border-blue-400/30',    dot: 'bg-blue-400',     text: 'text-blue-400/80'   },
-  pendente:  { label: 'Pendente',  bg: 'bg-white/[0.02]',   border: 'border-white/[0.06]',   dot: 'bg-white/15',     text: 'text-white/25'      },
+  pendente:  { label: 'Pendente',  bg: 'bg-red-400/[0.03]',  border: 'border-red-400/20',    dot: 'bg-red-400/40',   text: 'text-red-400/50'    },
 }
 
 const ESTADO_OPTIONS = [

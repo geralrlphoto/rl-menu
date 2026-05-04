@@ -261,15 +261,22 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
         </div>
 
         {/* Briefing doc link */}
-        {initial.briefingUrl && (
-          <div className="mt-6">
+        <div className="mt-6">
+          {initial.briefingUrl ? (
             <a href={initial.briefingUrl} target="_blank" rel="noopener noreferrer"
-              className="flex items-center justify-between border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] px-6 py-4 transition-colors group">
-              <span className="text-[10px] tracking-[0.3em] text-white/40 uppercase">Ver Briefing Completo</span>
-              <span className="text-white/20 group-hover:text-white/50 transition-colors">↗</span>
+              className="flex items-center justify-between border border-white/20 bg-white/[0.03] hover:bg-white/[0.07]
+                         hover:border-white/35 px-6 py-4 transition-all duration-200 group"
+              style={{ boxShadow: '0 0 18px rgba(255,255,255,0.04)' }}>
+              <span className="text-[10px] tracking-[0.4em] text-white/55 group-hover:text-white/80 uppercase transition-colors">Ver Mais</span>
+              <span className="text-white/25 group-hover:text-white/55 transition-colors">↗</span>
             </a>
-          </div>
-        )}
+          ) : (
+            <div className="flex items-center justify-between border border-white/[0.06] bg-white/[0.01] px-6 py-4 cursor-not-allowed">
+              <span className="text-[10px] tracking-[0.4em] text-white/18 uppercase">Aguardar</span>
+              <span className="text-white/10">↗</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {isAdmin && (

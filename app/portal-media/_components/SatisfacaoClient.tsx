@@ -64,30 +64,29 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
 
           {isEditing ? (
             <div className="w-full max-w-sm text-left">
-              <p className="text-[12px] font-light text-white/30 mb-1">URL do formulário de satisfação</p>
+              <p className="text-[12px] font-light text-white/30 mb-1">URL do formulário de satisfação (opcional)</p>
               <EditableField
                 value={projeto.satisfacaoUrl ?? ''}
                 isEditing={true}
                 onChange={v => setProjeto(p => ({ ...p, satisfacaoUrl: v }))}
-                placeholder="https://tally.so/... ou outro link"
+                placeholder="https://tally.so/r/pbKJry"
                 className="text-[13px] font-light text-white/40"
               />
               <p className="text-[10px] text-white/20 mt-2">
-                Quando preenchido, o botão fica activo para o cliente.
+                Deixa vazio para usar o link padrão (tally.so/r/pbKJry).
               </p>
             </div>
-          ) : projeto.satisfacaoUrl ? (
-            <a href={projeto.satisfacaoUrl} target="_blank" rel="noopener noreferrer"
-              className="border border-white/20 bg-white/[0.04] hover:bg-white/[0.08] px-6 py-3
-                         text-[9px] tracking-[0.4em] text-white/50 hover:text-white/80 uppercase transition-all">
-              Avaliar Experiência →
-            </a>
           ) : (
-            <button disabled
-              className="border border-white/[0.08] bg-white/[0.02] px-6 py-3
-                         text-[9px] tracking-[0.4em] text-white/20 uppercase cursor-not-allowed">
-              Disponível após entrega final
-            </button>
+            <a
+              href={projeto.satisfacaoUrl ?? 'https://tally.so/r/pbKJry'}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="border border-white/30 bg-white/[0.04] hover:bg-white/[0.10] px-8 py-4
+                         text-[9px] tracking-[0.5em] text-white/70 hover:text-white uppercase transition-all duration-200"
+              style={{ boxShadow: '0 0 18px rgba(255,255,255,0.06)' }}
+            >
+              Dar Satisfação →
+            </a>
           )}
         </div>
       </div>

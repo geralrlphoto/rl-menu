@@ -326,9 +326,19 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                   )}
                 </div>
                 <div className="shrink-0 flex flex-col gap-2 items-end">
-                  {!isEditing && projeto.contratoUrl && (
-                    <a href={projeto.contratoUrl} target="_blank" rel="noopener noreferrer"
-                      className="text-[9px] tracking-[0.3em] text-white/35 hover:text-white/60 uppercase transition-colors">Ver →</a>
+                  {!isEditing && (
+                    projeto.contratoUrl ? (
+                      <a href={projeto.contratoUrl} target="_blank" rel="noopener noreferrer"
+                        className="border border-white/20 bg-white/[0.04] hover:bg-white/[0.09] px-4 py-2
+                                   text-[9px] tracking-[0.35em] text-white/50 hover:text-white/80 uppercase transition-all">
+                        Ver Mais →
+                      </a>
+                    ) : (
+                      <span className="border border-white/[0.07] px-4 py-2
+                                       text-[9px] tracking-[0.35em] text-white/18 uppercase cursor-not-allowed">
+                        Aguardar
+                      </span>
+                    )
                   )}
                   {isAdmin && !isEditing && (
                     <button onClick={gerarContrato} disabled={gerando}

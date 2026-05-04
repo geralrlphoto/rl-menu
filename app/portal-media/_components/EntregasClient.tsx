@@ -295,6 +295,29 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
           </div>
         )}
 
+        {/* ── Estado das Entregas ── */}
+        {!isEditing && (
+          <div className="mb-8 border border-white/[0.08] bg-white/[0.02] px-6 py-5">
+            <p className="text-[9px] tracking-[0.5em] text-white/30 uppercase mb-4">Estado das Entregas</p>
+            <div className="flex flex-col gap-2">
+              {projeto.entregas.map((e, i) => {
+                const disponivel = !!e.linkUrl
+                return (
+                  <div key={i} className="flex items-center justify-between gap-3 py-2 border-t border-white/[0.04] first:border-t-0 first:pt-0">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${disponivel ? 'bg-emerald-400/70' : 'bg-red-400/50'}`} />
+                      <span className="text-[11px] font-light text-white/50 truncate">{e.titulo}</span>
+                    </div>
+                    <span className={`text-[9px] tracking-[0.3em] uppercase shrink-0 ${disponivel ? 'text-emerald-400/60' : 'text-red-400/45'}`}>
+                      {disponivel ? 'Disponível' : 'Pendente'}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col gap-0 mb-4">
           {projeto.entregas.map((e, i) => {
             const temUrl    = !!e.linkUrl
