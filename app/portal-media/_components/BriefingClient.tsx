@@ -169,13 +169,13 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
             <div key={sessao.id} className="border border-white/[0.08] bg-white/[0.02]">
 
               {/* Session header */}
-              <div className="flex items-center gap-4 px-6 py-4 border-b border-white/[0.06]">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-6 py-4 border-b border-white/[0.06]">
                 <span className="text-[10px] font-mono text-white/15 shrink-0">{String(i + 1).padStart(2, '0')}</span>
                 <EditableField
                   value={sessao.titulo}
                   isEditing={isEditing}
                   onChange={v => update(sessao.id, 'titulo', v)}
-                  className="flex-1 text-[11px] tracking-[0.3em] text-white/65 uppercase font-medium"
+                  className="flex-1 min-w-[120px] text-[11px] tracking-[0.3em] text-white/65 uppercase font-medium"
                   placeholder="Título do briefing"
                 />
                 <EditableDateField
@@ -208,7 +208,7 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
               {/* Notification + delete footer */}
               {isAdmin && (
                 <>
-                  <div className="px-6 py-4 border-t border-white/[0.06] flex items-center justify-between gap-4">
+                  <div className="px-6 py-4 border-t border-white/[0.06] flex flex-wrap items-center justify-between gap-3">
                     <span className={`text-[9px] tracking-[0.25em] uppercase ${sessao.notificacaoEnviada ? 'text-emerald-400/60' : 'text-white/18'}`}>
                       {sessao.notificacaoEnviada
                         ? `✓ Notificado em ${sessao.notificacaoEnviada}`

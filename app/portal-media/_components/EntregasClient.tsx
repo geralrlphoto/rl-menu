@@ -381,7 +381,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
 
                   {/* ── Linha de feedback ── */}
                   {!isEditing && (
-                    <div className="mt-4 pt-4 border-t border-white/[0.04] flex items-center justify-between gap-4">
+                    <div className="mt-4 pt-4 border-t border-white/[0.04] flex flex-wrap items-center justify-between gap-3">
                       <p className="text-[9px] tracking-[0.3em] text-white/18 uppercase">
                         {feedbacks.length > 0
                           ? `${feedbacks.length} feedback${feedbacks.length !== 1 ? 's' : ''} registado${feedbacks.length !== 1 ? 's' : ''}`
@@ -605,7 +605,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
 
         {/* ── Notificação ao cliente (admin) ── */}
         {isAdmin && !isEditing && (
-          <div className="mb-8 border border-white/[0.07] bg-white/[0.02] px-5 py-5 flex items-center justify-between gap-4">
+          <div className="mb-8 border border-white/[0.07] bg-white/[0.02] px-5 py-5 flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-[9px] tracking-[0.35em] text-white/35 uppercase mb-1">Notificar Cliente</p>
               <p className="text-[13px] font-light text-white/20 leading-relaxed">

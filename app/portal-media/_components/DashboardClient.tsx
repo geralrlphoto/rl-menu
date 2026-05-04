@@ -310,9 +310,9 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
         </div>
 
         {/* Progress */}
-        <div className="mb-2 flex items-center justify-between">
-          <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase">Fase Actual · {faseAtual?.nome ?? 'Concluído'}</p>
-          <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase">{progresso}%</p>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase truncate min-w-0">Fase Actual · {faseAtual?.nome ?? 'Concluído'}</p>
+          <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase shrink-0">{progresso}%</p>
         </div>
         <div className="h-px w-full bg-white/[0.06] relative overflow-hidden mb-4">
           <div className="absolute left-0 top-0 h-full bg-gradient-to-r from-white/30 to-white/10" style={{ width: `${progresso}%` }} />
@@ -387,7 +387,7 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
                     : 'Sem senha · acesso livre'}
                 </p>
               </div>
-              <div className="flex items-center gap-2 flex-1 min-w-[200px] max-w-xs">
+              <div className="flex items-center gap-2 w-full sm:flex-1 sm:max-w-xs">
                 <input
                   type="text"
                   value={senhaInput}

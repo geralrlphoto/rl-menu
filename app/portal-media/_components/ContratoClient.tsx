@@ -208,13 +208,13 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
           </div>
 
           {/* IBAN */}
-          <div className="border border-white/[0.10] bg-white/[0.02] px-4 py-4 mb-5">
+          <div className="border border-white/[0.10] bg-white/[0.02] px-4 py-4 mb-5 overflow-x-auto">
             <p className="text-[9px] tracking-[0.3em] text-white/25 uppercase mb-2">IBAN</p>
             <EditableField
               value={conta.iban}
               isEditing={isEditing}
               onChange={v => setConta('iban', v)}
-              className="text-[16px] text-white/80 font-mono tracking-widest"
+              className="text-[13px] sm:text-[16px] text-white/80 font-mono tracking-wider sm:tracking-widest whitespace-nowrap"
               placeholder="PT50 0000 0000 0000 0000 0000 0"
             />
           </div>
@@ -255,11 +255,11 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
           {temContratoGerado ? (
             <div className="border border-white/[0.12] bg-white/[0.03] px-6 py-5 relative overflow-hidden">
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <p className="text-[9px] tracking-[0.5em] text-white/25 uppercase mb-1">Contrato de Prestação de Serviços</p>
                   <p className="text-[12px] tracking-[0.2em] text-white/75 font-light mb-1">{contratoLocal?.ref}</p>
-                  <div className="flex items-center gap-3 mt-2">
+                  <div className="flex flex-wrap items-center gap-3 mt-2">
                     <span className={`text-[9px] tracking-[0.35em] uppercase px-2 py-0.5 border ${
                       contratoLocal?.estado === 'Assinado'
                         ? 'border-emerald-400/30 text-emerald-400/60'

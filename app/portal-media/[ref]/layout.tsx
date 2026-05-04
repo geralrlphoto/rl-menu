@@ -67,7 +67,10 @@ export default async function PortalMediaLayout({ children, params }: Props) {
       {/* Hambúrguer de navegação do portal */}
       <PortalHamburger portalRef={ref.toUpperCase()} nomeProjeto={nomeProjeto} />
 
-      {children}
+      {/* Espaço top no mobile para não sobrepor o botão hambúrguer */}
+      <div className="pt-14 sm:pt-0">
+        {children}
+      </div>
 
       {/* Rodapé global */}
       <div className="relative z-10 w-full border-t border-white/[0.04] py-10 px-6 flex flex-col items-center gap-1">
@@ -79,7 +82,7 @@ export default async function PortalMediaLayout({ children, params }: Props) {
             An Experience.
           </span>
         </p>
-        <p className="text-sm tracking-[0.4em] text-white/12 uppercase mt-1">RL Media · Audiovisual</p>
+        <p className="text-[9px] tracking-[0.4em] text-white/12 uppercase mt-1">RL Media · Audiovisual</p>
       </div>
     </div>
   )

@@ -262,13 +262,13 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
             <div className="flex flex-col gap-2">
               {[...registos].reverse().map((r, i) => (
                 <div key={i} className="border border-emerald-400/15 bg-emerald-400/[0.02] px-5 py-3.5
-                                        flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
+                                        flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-400/50 shrink-0" />
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-[11px] tracking-[0.2em] text-white/55">{r.data}</p>
                       {r.fase && (
-                        <p className="text-[9px] tracking-[0.3em] text-white/25 uppercase mt-0.5">
+                        <p className="text-[9px] tracking-[0.3em] text-white/25 uppercase mt-0.5 truncate">
                           {r.fase}{r.metodo ? ` · ${r.metodo}` : ''}
                         </p>
                       )}
@@ -397,7 +397,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
               </div>
             ) : (
               <>
-                <div className="px-8 pt-7 pb-2 flex items-center justify-between">
+                <div className="px-5 sm:px-8 pt-5 sm:pt-7 pb-2 flex items-center justify-between">
                   <div>
                     <p className="text-[8px] tracking-[0.5em] text-white/20 uppercase mb-1">RL Media · {projeto.nome}</p>
                     <h2 className="text-lg font-extralight tracking-[0.3em] text-white/75 uppercase">Registar Pagamento</h2>
@@ -410,10 +410,10 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                   </button>
                 </div>
 
-                <div className="px-8 py-6 flex flex-col gap-4">
+                <div className="px-5 sm:px-8 py-5 sm:py-6 flex flex-col gap-4">
 
                   {/* Empresa + Referência */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <label className="text-[9px] tracking-[0.4em] text-white/25 uppercase block mb-1.5">Empresa</label>
                       <input
