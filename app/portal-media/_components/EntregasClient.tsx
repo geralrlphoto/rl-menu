@@ -152,6 +152,53 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
     setEnviandoFeedback(false)
   }
 
+  /* ── remover feedback completo (admin) ── */
+  const removerFeedback = async (entregaIdx: number, feedbackId: string) => {
+    if (!confirm('Remover este feedback e resposta? Não é possível desfazer.')) return
+    try {
+      const res = await fetch(`/api/media-portal/${projeto.ref}/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'remover-feedback', entregaIndex: entregaIdx, feedbackId }),
+      })
+      if (res.ok) {
+        setProjeto(p => ({
+          ...p,
+          entregas: p.entregas.map((e, i) => i === entregaIdx
+            ? { ...e, feedbacks: (e.feedbacks ?? []).filter(f => f.id !== feedbackId) }
+            : e
+          ),
+        }))
+      }
+    } catch {}
+  }
+
+  /* ── remover resposta do admin ── */
+  const removerResposta = async (entregaIdx: number, feedbackId: string) => {
+    if (!confirm('Remover a tua resposta?')) return
+    try {
+      const res = await fetch(`/api/media-portal/${projeto.ref}/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'remover-resposta', entregaIndex: entregaIdx, feedbackId }),
+      })
+      if (res.ok) {
+        setProjeto(p => ({
+          ...p,
+          entregas: p.entregas.map((e, i) => i === entregaIdx
+            ? {
+                ...e,
+                feedbacks: (e.feedbacks ?? []).map(f =>
+                  f.id === feedbackId ? { ...f, resposta: undefined } : f
+                ),
+              }
+            : e
+          ),
+        }))
+      }
+    } catch {}
+  }
+
   /* ── resposta do admin ── */
   const submitResposta = async (entregaIdx: number, feedbackId: string) => {
     if (!respostaTexto.trim()) return
@@ -427,7 +474,16 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                               <span className="text-xs tracking-[0.35em] text-amber-400/60 uppercase shrink-0">
                                 ◎ Cliente
                               </span>
-                              <span className="text-xs text-white/18 font-mono">{formatDateTime(fb.criadoEm)}</span>
+                              <div className="flex items-center gap-3">
+                                <span className="text-xs text-white/18 font-mono">{formatDateTime(fb.criadoEm)}</span>
+                                {isAdmin && (
+                                  <button
+                                    onClick={() => removerFeedback(i, fb.id)}
+                                    title="Remover feedback"
+                                    className="text-xs text-red-400/30 hover:text-red-400/70 transition-colors leading-none"
+                                  >✕</button>
+                                )}
+                              </div>
                             </div>
                             <p className="text-sm text-white/55 leading-relaxed">{fb.texto}</p>
                           </div>
@@ -439,7 +495,16 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                                 <span className="text-xs tracking-[0.35em] text-blue-400/70 uppercase shrink-0">
                                   ↩ RL Media
                                 </span>
-                                <span className="text-xs text-white/18 font-mono">{formatDateTime(fb.resposta.criadoEm)}</span>
+                                <div className="flex items-center gap-3">
+                                  <span className="text-xs text-white/18 font-mono">{formatDateTime(fb.resposta.criadoEm)}</span>
+                                  {isAdmin && (
+                                    <button
+                                      onClick={() => removerResposta(i, fb.id)}
+                                      title="Remover resposta"
+                                      className="text-xs text-red-400/30 hover:text-red-400/70 transition-colors leading-none"
+                                    >✕</button>
+                                  )}
+                                </div>
                               </div>
                               <p className="text-sm text-white/55 leading-relaxed">{fb.resposta.texto}</p>
                             </div>

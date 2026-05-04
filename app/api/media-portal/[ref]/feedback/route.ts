@@ -214,5 +214,43 @@ export async function POST(req: NextRequest, { params }: Params) {
     return NextResponse.json({ ok: true })
   }
 
+  /* ── REMOVER feedback completo (admin) ── */
+  if (action === 'remover-feedback') {
+    entregas[entregaIndex] = {
+      ...entrega,
+      feedbacks: (entrega.feedbacks ?? []).filter((f: any) => f.id !== feedbackId),
+    }
+
+    const { error } = await supabase
+      .from('media_portais')
+      .upsert(
+        { ref: ref.toUpperCase(), dados: { ...dados, entregas }, updated_at: new Date().toISOString() },
+        { onConflict: 'ref' }
+      )
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  }
+
+  /* ── REMOVER resposta do admin ── */
+  if (action === 'remover-resposta') {
+    entregas[entregaIndex] = {
+      ...entrega,
+      feedbacks: (entrega.feedbacks ?? []).map((f: any) =>
+        f.id === feedbackId ? { ...f, resposta: undefined } : f
+      ),
+    }
+
+    const { error } = await supabase
+      .from('media_portais')
+      .upsert(
+        { ref: ref.toUpperCase(), dados: { ...dados, entregas }, updated_at: new Date().toISOString() },
+        { onConflict: 'ref' }
+      )
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  }
+
   return NextResponse.json({ error: 'Acção inválida' }, { status: 400 })
 }
