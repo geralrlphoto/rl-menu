@@ -326,31 +326,52 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                     </div>
                   </div>
 
-                  {/* ── Botão Feedback (cliente) ── */}
-                  {!isEditing && !isAdmin && (
+                  {/* ── Linha de feedback ── */}
+                  {!isEditing && (
                     <div className="mt-4 pt-4 border-t border-white/[0.04] flex items-center justify-between gap-4">
                       <p className="text-xs tracking-[0.3em] text-white/18 uppercase">
                         {feedbacks.length > 0
                           ? `${feedbacks.length} feedback${feedbacks.length !== 1 ? 's' : ''} registado${feedbacks.length !== 1 ? 's' : ''}`
                           : 'Sem feedback ainda'}
                       </p>
-                      {temUrl ? (
-                        feedbackAberto !== i && (
-                          <button
-                            onClick={() => { setFeedbackAberto(i); setFeedbackTexto('') }}
-                            className="shrink-0 inline-flex items-center gap-2 border border-emerald-400/40
-                                       bg-emerald-400/08 hover:bg-emerald-400/15 px-4 py-2
-                                       text-sm tracking-[0.35em] text-emerald-400/80 uppercase transition-colors"
-                          >
-                            ◎ Dar Feedback
-                          </button>
+
+                      {/* Cliente — botão activo/inactivo */}
+                      {!isAdmin && (
+                        temUrl ? (
+                          feedbackAberto !== i && (
+                            <button
+                              onClick={() => { setFeedbackAberto(i); setFeedbackTexto('') }}
+                              className="shrink-0 inline-flex items-center gap-2 border border-emerald-400/40
+                                         bg-emerald-400/[0.08] hover:bg-emerald-400/15 px-4 py-2
+                                         text-sm tracking-[0.35em] text-emerald-400/80 uppercase transition-colors"
+                            >
+                              ◎ Dar Feedback
+                            </button>
+                          )
+                        ) : (
+                          <span className="shrink-0 inline-flex items-center gap-2 border border-red-500/20
+                                           bg-red-500/[0.03] px-4 py-2 text-sm tracking-[0.35em]
+                                           text-red-400/35 uppercase cursor-not-allowed">
+                            ⏳ Aguardar Ficheiro
+                          </span>
                         )
-                      ) : (
-                        <span className="shrink-0 inline-flex items-center gap-2 border border-red-500/20
-                                         bg-red-500/[0.03] px-4 py-2 text-sm tracking-[0.35em]
-                                         text-red-400/35 uppercase cursor-not-allowed">
-                          ⏳ Aguardar Ficheiro
-                        </span>
+                      )}
+
+                      {/* Admin — estado (só informação) */}
+                      {isAdmin && (
+                        temUrl ? (
+                          <span className="shrink-0 inline-flex items-center gap-2 border border-emerald-400/20
+                                           bg-emerald-400/[0.04] px-4 py-2 text-sm tracking-[0.35em]
+                                           text-emerald-400/45 uppercase">
+                            ◎ Feedback Activo
+                          </span>
+                        ) : (
+                          <span className="shrink-0 inline-flex items-center gap-2 border border-white/[0.07]
+                                           bg-white/[0.02] px-4 py-2 text-sm tracking-[0.35em]
+                                           text-white/20 uppercase">
+                            ⊘ Sem URL · Feedback Bloqueado
+                          </span>
+                        )
                       )}
                     </div>
                   )}
@@ -390,9 +411,12 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                 )}
 
                 {/* ── Histórico de feedbacks ── */}
-                {hasFeedbacks && (
+                {(hasFeedbacks || isAdmin) && (
                   <div className="border-x border-b border-white/[0.05] bg-white/[0.01] px-5 py-4">
                     <p className="text-xs tracking-[0.45em] text-white/15 uppercase mb-4">Registos de Feedback</p>
+                    {!hasFeedbacks && isAdmin && (
+                      <p className="text-xs text-white/15 italic">Sem feedbacks do cliente ainda.</p>
+                    )}
                     <div className="flex flex-col gap-4">
                       {feedbacks.map((fb, fi) => (
                         <div key={fb.id} className="flex flex-col gap-2">
