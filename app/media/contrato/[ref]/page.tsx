@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
+import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
-import PrintButton from './PrintButton'
+import ContratoEditBar from './ContratoEditBar'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -36,6 +36,9 @@ export default async function ContratoPage({ params }: Props) {
 
   if (!data?.dados?.contrato?.gerado) notFound()
 
+  const cookieStore = await cookies()
+  const isAdmin = cookieStore.get('rl_auth')?.value === process.env.AUTH_SECRET
+
   const ficha = data.dados.ficha ?? {}
   const contrato = data.dados.contrato ?? {}
 
@@ -61,24 +64,12 @@ export default async function ContratoPage({ params }: Props) {
 
   return (
     <>
-      {/* ── Barra topo — só ecrã ── */}
-      <div className="print:hidden bg-black border-b border-white/10 px-6 py-3 flex items-center justify-between sticky top-0 z-50">
-        <Link href={`/portal-media/${refUp}/contrato`}
-          className="text-[9px] tracking-[0.4em] text-white/30 hover:text-white/60 uppercase transition-colors">
-          ‹ Voltar ao Portal
-        </Link>
-        <div className="flex items-center gap-3">
-          <span className="text-[8px] tracking-[0.4em] text-white/20 uppercase font-mono">{contrato.ref}</span>
-          <span className={`text-[8px] tracking-[0.3em] uppercase px-2 py-1 border ${
-            contrato.estado === 'Assinado'
-              ? 'border-emerald-400/30 text-emerald-400/60'
-              : contrato.estado === 'Enviado ao Cliente'
-              ? 'border-blue-400/30 text-blue-400/60'
-              : 'border-white/10 text-white/25'
-          }`}>{contrato.estado}</span>
-          <PrintButton />
-        </div>
-      </div>
+      <ContratoEditBar
+        refUp={refUp}
+        contrato={contrato}
+        fichaInit={ficha}
+        isAdmin={isAdmin}
+      />
 
       <style>{`
         @media print {
