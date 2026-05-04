@@ -342,31 +342,33 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
           )}
 
           {/* ── Recibo / Fatura ── */}
-          {(isEditing || projeto.reciboFaturaUrl) && (
-            <div className={`border px-6 py-5 transition-colors ${
-              projeto.reciboFaturaUrl
-                ? 'border-emerald-400/20 bg-emerald-400/[0.03]'
-                : 'border-white/[0.07] bg-white/[0.02]'
-            }`}>
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <p className="text-[9px] tracking-[0.5em] text-white/30 uppercase mb-1">Recibo / Fatura</p>
-                  {isEditing ? (
-                    <div className="mt-2">
-                      <p className="text-[11px] font-light text-white/25 mb-2">URL do PDF (Google Drive, Dropbox, etc.)</p>
-                      <EditableField
-                        value={projeto.reciboFaturaUrl ?? ''}
-                        isEditing={true}
-                        onChange={v => set('reciboFaturaUrl', v)}
-                        placeholder="https://drive.google.com/..."
-                        className="text-[12px] font-light text-white/45"
-                      />
-                    </div>
-                  ) : (
-                    <p className="text-[12px] font-light text-emerald-400/50 mt-0.5">Disponível para download</p>
-                  )}
-                </div>
-                {projeto.reciboFaturaUrl && !isEditing && (
+          <div className={`border px-6 py-5 transition-colors ${
+            projeto.reciboFaturaUrl
+              ? 'border-emerald-400/20 bg-emerald-400/[0.03]'
+              : 'border-white/[0.07] bg-white/[0.02]'
+          }`}>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="text-[9px] tracking-[0.5em] text-white/30 uppercase mb-1">Recibo / Fatura</p>
+                {isEditing ? (
+                  <div className="mt-2">
+                    <p className="text-[11px] font-light text-white/25 mb-2">URL do PDF (Google Drive, Dropbox, etc.)</p>
+                    <EditableField
+                      value={projeto.reciboFaturaUrl ?? ''}
+                      isEditing={true}
+                      onChange={v => set('reciboFaturaUrl', v)}
+                      placeholder="https://drive.google.com/..."
+                      className="text-[12px] font-light text-white/45"
+                    />
+                  </div>
+                ) : (
+                  <p className={`text-[12px] font-light mt-0.5 ${projeto.reciboFaturaUrl ? 'text-emerald-400/50' : 'text-white/18'}`}>
+                    {projeto.reciboFaturaUrl ? 'Disponível para download' : 'A aguardar emissão'}
+                  </p>
+                )}
+              </div>
+              {!isEditing && (
+                projeto.reciboFaturaUrl ? (
                   <a
                     href={projeto.reciboFaturaUrl}
                     target="_blank"
@@ -381,10 +383,18 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                     </svg>
                     Recibo / Fatura
                   </a>
-                )}
-              </div>
+                ) : (
+                  <span className="shrink-0 flex items-center gap-2 border border-white/[0.08] bg-white/[0.02]
+                                   px-5 py-3 text-[9px] tracking-[0.4em] text-white/18 uppercase cursor-not-allowed">
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M12 16l-4-4m4 4l4-4m-4 4V4M4 20h16" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Recibo / Fatura
+                  </span>
+                )
+              )}
             </div>
-          )}
+          </div>
 
           {/* ── Dados do Cliente ── */}
           {(isEditing || projeto.fichaCliente) && (
