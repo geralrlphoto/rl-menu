@@ -246,49 +246,6 @@ export default function ReproducaoClient({ projeto: initial }: Props) {
         {tab === 'storytelling' && (
           <div className="flex flex-col gap-6">
 
-            {/* Tom Emocional */}
-            <div className="border border-white/[0.08] bg-white/[0.02] px-6 py-5">
-              <p className="text-[9px] tracking-[0.5em] text-white/30 uppercase mb-3">Tom Emocional</p>
-              {isEditing ? (
-                <input
-                  value={tomEmocional}
-                  onChange={e => setTomEmocional(e.target.value)}
-                  placeholder="Ex: Intimista, cinematográfico, nostálgico..."
-                  className="w-full bg-white/[0.03] border border-white/[0.08] px-4 py-3 text-[13px] font-light text-white/55
-                             placeholder:text-white/15 focus:outline-none focus:border-white/20 tracking-wide"
-                />
-              ) : tomEmocional ? (
-                <p className="text-[13px] font-light text-white/55 leading-relaxed">{tomEmocional}</p>
-              ) : (
-                <p className="text-[12px] font-light text-white/18 italic">Sem tom emocional definido.</p>
-              )}
-            </div>
-
-            {/* Palavras-chave */}
-            <div className="border border-white/[0.08] bg-white/[0.02] px-6 py-5">
-              <p className="text-[9px] tracking-[0.5em] text-white/30 uppercase mb-3">Palavras-chave</p>
-              {isEditing ? (
-                <input
-                  value={palavrasChave}
-                  onChange={e => setPalavrasChave(e.target.value)}
-                  placeholder="Ex: luz dourada, silêncios, olhares, movimento lento..."
-                  className="w-full bg-white/[0.03] border border-white/[0.08] px-4 py-3 text-[13px] font-light text-white/55
-                             placeholder:text-white/15 focus:outline-none focus:border-white/20 tracking-wide"
-                />
-              ) : palavrasChave ? (
-                <div className="flex flex-wrap gap-2">
-                  {palavrasChave.split(',').map((kw, i) => (
-                    <span key={i}
-                      className="border border-white/[0.10] bg-white/[0.03] px-3 py-1 text-[10px] tracking-[0.2em] text-white/40">
-                      {kw.trim()}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-[12px] font-light text-white/18 italic">Sem palavras-chave definidas.</p>
-              )}
-            </div>
-
             {/* Narrativa */}
             <div className="border border-white/[0.08] bg-white/[0.02] px-6 py-5">
               <p className="text-[9px] tracking-[0.5em] text-white/30 uppercase mb-3">Narrativa Geral</p>
