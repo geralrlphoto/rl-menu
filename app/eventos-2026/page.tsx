@@ -23,6 +23,10 @@ type Evento = {
   valor_video: number | null
   data_entrega: string | null
   fotos_enviadas: boolean
+  sel_fotos_estado:    string | null
+  video_estado:        string | null
+  fotos_edicao_estado: string | null
+  album_estado:        string | null
 }
 
 const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
@@ -476,12 +480,30 @@ function Eventos2026Inner() {
                         </div>
                       )}
 
-                      {/* Fotos enviadas */}
-                      <div className="shrink-0 hidden sm:block">
-                        {e.fotos_enviadas
-                          ? <span className="text-[10px] text-green-400/70 tracking-wider">✓ ENTREGUE</span>
-                          : <span className="text-[10px] text-white/15 tracking-wider">PENDENTE</span>
-                        }
+                      {/* Estado das entregas */}
+                      <div className="shrink-0 hidden sm:flex items-center gap-1">
+                        {(() => {
+                          const isE = (v: string | null) => v === 'Entregue' || v === 'S/SERVIÇO'
+                          const items = [
+                            { label: '📷', val: e.fotos_edicao_estado, title: 'Fotos' },
+                            { label: '🎬', val: e.video_estado,        title: 'Vídeo' },
+                            { label: '📚', val: e.album_estado,        title: 'Álbum' },
+                          ]
+                          // se ainda sem colunas Supabase, mostrar o boolean legado
+                          const semColunas = items.every(i => i.val === null)
+                          if (semColunas) {
+                            return e.fotos_enviadas
+                              ? <span className="text-[10px] text-green-400/70 tracking-wider">✓ Entregue</span>
+                              : <span className="text-[10px] text-white/15 tracking-wider">Pendente</span>
+                          }
+                          return items.map(({ label, val, title }) => (
+                            <span
+                              key={title}
+                              title={`${title}: ${val ?? 'Aguardar'}`}
+                              className={`text-[11px] ${isE(val) ? 'opacity-90' : 'opacity-20 grayscale'}`}
+                            >{label}</span>
+                          ))
+                        })()}
                       </div>
 
                       {/* Valor */}

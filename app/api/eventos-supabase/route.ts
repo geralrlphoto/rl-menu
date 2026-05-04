@@ -54,6 +54,11 @@ export async function GET(req: NextRequest) {
         valor_video: row.valor_liquido, // mapping pedido: valor_video = valor_liquido
         valor_liquido: row.valor_liquido,
         fotos_enviadas: row.fotos_enviadas ?? false,
+        // Estado das Entregas (colunas podem não existir ainda — retornam null até migração)
+        sel_fotos_estado:    row.sel_fotos_estado    ?? null,
+        video_estado:        row.video_estado        ?? null,
+        fotos_edicao_estado: row.fotos_edicao_estado ?? null,
+        album_estado:        row.album_estado        ?? null,
       }
     })
 

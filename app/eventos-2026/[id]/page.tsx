@@ -1497,10 +1497,14 @@ export default function EventoPage() {
                 'ENTREGUE':      'Entregue',
               }
               const albumEstadoMapped = a.status ? (toEventoEstado[a.status] ?? null) : null
-              if (albumEstadoMapped && albumEstadoMapped !== ev.album_estado) {
+              // Só avança de estado — nunca reverte um valor definido manualmente
+              const ESTADO_ORDER = ['Aguardar', 'Em Edição', 'Em Aprovação', 'Aprovado', 'Entregue']
+              const mappedPri  = ESTADO_ORDER.indexOf(albumEstadoMapped ?? '')
+              const currentPri = ESTADO_ORDER.indexOf(ev.album_estado ?? '')
+              if (albumEstadoMapped && mappedPri > currentPri) {
                 // Actualiza UI imediatamente
                 setEvento(prev => prev ? { ...prev, album_estado: albumEstadoMapped } : prev)
-                // Sincroniza no Notion
+                // Sincroniza no Notion + Supabase
                 fetch(`/api/eventos-notion/${ev.id}`, {
                   method: 'PATCH',
                   headers: { 'Content-Type': 'application/json' },

@@ -121,12 +121,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     // ── Sync campos relevantes para Supabase evento_equipa ─────────────────
     const syncMap: Record<string, string> = {
-      sel_fotos_estado: 'estado_sel_fotos',
-      video_estado:     'estado_video',
-      cliente:          'cliente',
-      status:           'status',
-      local:            'local',
-      data_evento:      'data_casamento',
+      sel_fotos_estado:    'estado_sel_fotos',
+      video_estado:        'estado_video',
+      fotos_edicao_estado: 'fotos_edicao_estado',
+      album_estado:        'album_estado',
+      cliente:             'cliente',
+      status:              'status',
+      local:               'local',
+      data_evento:         'data_casamento',
     }
     const sbFields: Record<string, any> = {}
     for (const [internal, col] of Object.entries(syncMap)) {
@@ -142,19 +144,24 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     // Mas o "Total Vídeo" da página /eventos-2026 soma `valor_liquido` no Supabase.
     // Mapeamento pedido pelo user: valor_video (ficha) → valor_liquido (Supabase)
     const eventosSyncMap: Record<string, string> = {
-      cliente:        'cliente',
-      local:          'local',
-      data_evento:    'data_evento',
-      status:         'status',
-      valor_foto:      'valor_foto',
-      valor_real_foto: 'valor_real_foto',
-      valor_video:     'valor_liquido',  // valor_video na ficha → valor_liquido no Supabase
-      valor_liquido:  'valor_liquido',  // se também editado diretamente
-      fotografo:      'fotografo',
-      tipo_evento:    'tipo_evento',
-      tipo_servico:   'tipo_servico',
-      referencia:     'referencia',
-      fotos_enviadas: 'fotos_enviadas',
+      cliente:             'cliente',
+      local:               'local',
+      data_evento:         'data_evento',
+      status:              'status',
+      valor_foto:          'valor_foto',
+      valor_real_foto:     'valor_real_foto',
+      valor_video:         'valor_liquido',  // valor_video na ficha → valor_liquido no Supabase
+      valor_liquido:       'valor_liquido',  // se também editado diretamente
+      fotografo:           'fotografo',
+      tipo_evento:         'tipo_evento',
+      tipo_servico:        'tipo_servico',
+      referencia:          'referencia',
+      fotos_enviadas:      'fotos_enviadas',
+      // Estado das Entregas — guardados em Supabase para fiabilidade
+      sel_fotos_estado:    'sel_fotos_estado',
+      video_estado:        'video_estado',
+      fotos_edicao_estado: 'fotos_edicao_estado',
+      album_estado:        'album_estado',
     }
     const evFields: Record<string, any> = {}
     // Colunas que são text (guardam JSON string)
@@ -227,10 +234,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const page = await res.json()
     const p = page.properties ?? {}
 
-    // Buscar campos Supabase-only (não existem no Notion)
+    // Buscar campos do Supabase (mais fiável que Notion para campos de estado)
     const { data: sbRow } = await supabase()
       .from('eventos_2026')
-      .select('valor_real_foto')
+      .select('*')
       .eq('notion_id', id)
       .maybeSingle()
 
@@ -251,6 +258,11 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       valor_liquido:    getProp(p, 'VALOR LIQUIDO A RECEBER', 'number'),
       valor_foto:       getProp(p, 'VALOR SERVIÇO FOTO', 'number'),
       valor_real_foto:  sbRow?.valor_real_foto ?? null,
+      // Estado das entregas — Supabase como fonte primária; Notion como fallback
+      fotos_edicao_estado:  (sbRow as any)?.fotos_edicao_estado ?? getProp(p, 'FOTOS P/ EDIÇÃO', 'select'),
+      sel_fotos_estado:     (sbRow as any)?.sel_fotos_estado    ?? getProp(p, 'ESTADO SEL. FOTOS', 'select'),
+      video_estado:         (sbRow as any)?.video_estado        ?? getProp(p, 'ESTADO DO VIDEO', 'select'),
+      album_estado:         (sbRow as any)?.album_estado        ?? getProp(p, 'ESTADO ÁLBUM', 'select'),
       valor_video:      getProp(p, 'VALOR DO SERVIÇO VÍDEO', 'number'),
       valor_extras:     getProp(p, 'VALOR DOS EXTRAS', 'number'),
       data_entrega:     getProp(p, 'DATA FINAL ENTREGA FOTOS', 'date'),
@@ -277,10 +289,6 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       servico_video:    getProp(p, 'serviço de video', 'multi_select'),
       nome_disco:           getProp(p, 'NOME DO DISCO', 'multi_select'),
       backup_disco:         getProp(p, 'BACKUP DISCO', 'multi_select'),
-      fotos_edicao_estado:  getProp(p, 'FOTOS P/ EDIÇÃO', 'select'),
-      sel_fotos_estado:     getProp(p, 'ESTADO SEL. FOTOS', 'select'),
-      video_estado:         getProp(p, 'ESTADO DO VIDEO', 'select'),
-      album_estado:         getProp(p, 'ESTADO ÁLBUM', 'select'),
       notion_url:           page.url,
     }
 
