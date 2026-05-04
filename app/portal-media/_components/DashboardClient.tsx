@@ -126,13 +126,13 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
           />
           <div className="absolute top-5 right-6 flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400/70 animate-pulse" />
-            <span className="text-sm tracking-[0.4em] text-white/30 uppercase">Activo</span>
+            <span className="text-[9px] tracking-[0.4em] text-white/30 uppercase">Activo</span>
           </div>
           <div className="absolute top-5 left-6 flex items-center gap-3">
             <div className="flex flex-col gap-[3px]">
               <div className="h-px w-5 bg-white/30" /><div className="h-px w-3 bg-white/15" /><div className="h-px w-5 bg-white/30" />
             </div>
-            <span className="text-sm tracking-[0.45em] text-white/25 uppercase">RL Media · Portal do Cliente</span>
+            <span className="text-[9px] tracking-[0.45em] text-white/25 uppercase">RL Media · Portal do Cliente</span>
           </div>
         </div>
       )}
@@ -148,18 +148,18 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
             onChange={e => { const f = e.target.files?.[0]; if (f) handleHeroUpload(f) }}
           />
           <div className="flex items-center gap-3 border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-            <span className="text-sm tracking-[0.4em] text-white/25 uppercase shrink-0">🖼 Foto cabeçalho</span>
+            <span className="text-[9px] tracking-[0.4em] text-white/25 uppercase shrink-0">🖼 Foto cabeçalho</span>
             <button
               onClick={() => heroFileRef.current?.click()}
               disabled={heroUploading}
-              className="flex-1 text-left text-sm text-white/40 hover:text-white/70 transition-colors disabled:opacity-40"
+              className="flex-1 text-left text-[11px] text-white/40 hover:text-white/70 transition-colors disabled:opacity-40"
             >
               {heroUploading ? '⏳ A carregar...' : projeto.heroImageUrl ? '✓ Trocar foto' : '⬆ Carregar foto'}
             </button>
             {projeto.heroImageUrl && !heroUploading && (
               <button
                 onClick={() => set('heroImageUrl', '')}
-                className="text-white/20 hover:text-white/50 text-sm transition-colors shrink-0"
+                className="text-white/20 hover:text-white/50 text-[11px] transition-colors shrink-0"
               >
                 ✕ Remover
               </button>
@@ -173,18 +173,18 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
             onChange={e => { const f = e.target.files?.[0]; if (f) handleLogoUpload(f) }}
           />
           <div className="flex items-center gap-3 border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-            <span className="text-sm tracking-[0.4em] text-white/25 uppercase shrink-0">Logo cliente</span>
+            <span className="text-[9px] tracking-[0.4em] text-white/25 uppercase shrink-0">Logo cliente</span>
             <button
               onClick={() => logoFileRef.current?.click()}
               disabled={logoUploading}
-              className="flex-1 text-left text-sm text-white/40 hover:text-white/70 transition-colors disabled:opacity-40"
+              className="flex-1 text-left text-[11px] text-white/40 hover:text-white/70 transition-colors disabled:opacity-40"
             >
               {logoUploading ? '⏳ A carregar...' : projeto.heroLogoUrl ? '✓ Trocar logo' : '⬆ Carregar logo'}
             </button>
             {projeto.heroLogoUrl && !logoUploading && (
               <button
                 onClick={() => set('heroLogoUrl', '')}
-                className="text-white/20 hover:text-white/50 text-sm transition-colors shrink-0"
+                className="text-white/20 hover:text-white/50 text-[11px] transition-colors shrink-0"
               >
                 ✕ Remover
               </button>
@@ -221,15 +221,15 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
           </div>
           <div className="flex-1">
             <EditableField value={projeto.tipo} isEditing={isEditing} onChange={v => set('tipo', v)}
-              className="text-sm tracking-[0.6em] text-white/20 uppercase mb-1 block" />
+              className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-1 block" />
             <EditableField value={projeto.nome} isEditing={isEditing} onChange={v => set('nome', v)}
               className="text-[clamp(2rem,6vw,3.5rem)] font-extralight tracking-[0.4em] text-white/85 uppercase leading-none block" />
             <EditableField value={projeto.cliente} isEditing={isEditing} onChange={v => set('cliente', v)}
-              className="text-sm tracking-[0.3em] text-white/30 uppercase mt-2 block" />
+              className="text-[9px] tracking-[0.3em] text-white/30 uppercase mt-2 block" />
             <div className="mt-2 flex items-center gap-2">
-              {!isEditing && <span className="text-sm tracking-[0.25em] text-white/20 uppercase">Estado:</span>}
+              {!isEditing && <span className="text-[9px] tracking-[0.25em] text-white/20 uppercase">Estado:</span>}
               <EditableField value={projeto.status} isEditing={isEditing} onChange={v => set('status', v)}
-                className="text-sm tracking-[0.25em] text-white/40 uppercase block"
+                className="text-[10px] tracking-[0.25em] text-white/40 uppercase block"
                 placeholder="Estado do projeto" />
             </div>
           </div>
@@ -239,31 +239,31 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
         <div className="mb-8 border border-white/[0.07] bg-white/[0.02] px-7 py-7">
           <div className="flex items-start gap-3 mb-5">
             <span className="text-2xl leading-none mt-1">👋</span>
-            <h2 className="text-xl font-light text-white/75">Bem-vindo ao Portal do Cliente</h2>
+            <h2 className="text-[15px] font-light text-white/75">Bem-vindo ao Portal do Cliente</h2>
           </div>
-          <p className="text-sm text-white/45 leading-relaxed mb-6">
+          <p className="text-[13px] font-light text-white/45 leading-relaxed mb-6">
             Olá, seja bem-vindo ao <span className="text-white/65">Portal do Cliente</span>.<br />
             Aqui encontra <span className="text-white/65">tudo o que precisa saber sobre o andamento do seu projeto</span> de forma clara, organizada e transparente.
           </p>
           <div className="grid sm:grid-cols-2 gap-6 mb-6">
             <div>
-              <p className="text-sm text-white/40 font-medium mb-3 flex items-center gap-2"><span>🔎</span> O que pode acompanhar</p>
+              <p className="text-[10px] tracking-[0.2em] text-white/40 font-medium mb-3 flex items-center gap-2"><span>🔎</span> O que pode acompanhar</p>
               <ul className="flex flex-col gap-3">
                 {[['Workflow do Projeto','Etapas concluídas, em curso e próximas fases'],['Cronograma','Progresso detalhado de cada fase'],['Contactos Dedicados','A quem falar em cada momento'],['Documentos & Entregas','Ficheiros e registos importantes']].map(([t, d]) => (
                   <li key={t} className="flex items-start gap-2">
                     <span className="text-white/20 mt-1 shrink-0">—</span>
-                    <span className="text-sm text-white/40 leading-relaxed"><span className="text-white/60 font-medium">{t}:</span> {d}</span>
+                    <span className="text-[12px] font-light text-white/40 leading-relaxed"><span className="text-white/60 font-medium">{t}:</span> {d}</span>
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <p className="text-sm text-white/40 font-medium mb-3 flex items-center gap-2"><span>✅</span> Como usar</p>
+              <p className="text-[10px] tracking-[0.2em] text-white/40 font-medium mb-3 flex items-center gap-2"><span>✅</span> Como usar</p>
               <ol className="flex flex-col gap-3">
                 {['Navegue pelo menu para explorar cada secção.','Clique na fase do projeto para ver detalhes, prazos e status.','Use a área de contactos para falar diretamente com os responsáveis.'].map((s, i) => (
                   <li key={i} className="flex items-start gap-3">
-                    <span className="text-sm font-mono text-white/20 shrink-0 mt-0.5">{i + 1}.</span>
-                    <span className="text-sm text-white/40 leading-relaxed">{s}</span>
+                    <span className="text-[10px] font-mono text-white/20 shrink-0 mt-0.5">{i + 1}.</span>
+                    <span className="text-[12px] font-light text-white/40 leading-relaxed">{s}</span>
                   </li>
                 ))}
               </ol>
@@ -271,7 +271,7 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
           </div>
           <div className="border-t border-white/[0.05] pt-5 flex items-start gap-2">
             <span className="text-base shrink-0">👉</span>
-            <p className="text-sm text-white/35 leading-relaxed">
+            <p className="text-[12px] font-light text-white/35 leading-relaxed">
               Este portal foi criado para <span className="text-white/45">garantir transparência, confiança e proximidade</span> durante todo o processo. Obrigado pela confiança na nossa equipa.
             </p>
           </div>
@@ -281,44 +281,44 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
           {/* Local */}
           <div className="border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-            <p className="text-sm tracking-[0.4em] text-white/25 uppercase mb-1">Local</p>
+            <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-1">Local</p>
             <EditableField value={projeto.local} isEditing={isEditing}
               onChange={v => set('local', v)}
-              className="text-sm tracking-[0.15em] text-white/65 font-light block" />
+              className="text-[12px] tracking-[0.15em] text-white/65 font-light block" />
           </div>
           {/* Filmagem */}
           <div className="border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-            <p className="text-sm tracking-[0.4em] text-white/25 uppercase mb-1">Filmagem</p>
+            <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-1">Filmagem</p>
             <EditableDateField value={projeto.dataFilmagem} isEditing={isEditing}
               onChange={v => set('dataFilmagem', v)}
-              className="text-sm tracking-[0.15em] text-white/65 font-light block" />
+              className="text-[12px] tracking-[0.15em] text-white/65 font-light block" />
           </div>
           {/* Revisões */}
           <div className="border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-            <p className="text-sm tracking-[0.4em] text-white/25 uppercase mb-1">Revisões</p>
-            <p className="text-sm tracking-[0.15em] text-white/65 font-light">
+            <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-1">Revisões</p>
+            <p className="text-[12px] tracking-[0.15em] text-white/65 font-light">
               {projeto.revisoes.usadas} / {projeto.revisoes.total}
             </p>
           </div>
           {/* Entrega Final */}
           <div className="border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-            <p className="text-sm tracking-[0.4em] text-white/25 uppercase mb-1">Entrega Final</p>
+            <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-1">Entrega Final</p>
             <EditableDateField value={projeto.dataEntrega} isEditing={isEditing}
               onChange={v => set('dataEntrega', v)}
-              className="text-sm tracking-[0.15em] text-white/65 font-light block" />
+              className="text-[12px] tracking-[0.15em] text-white/65 font-light block" />
           </div>
         </div>
 
         {/* Progress */}
         <div className="mb-2 flex items-center justify-between">
-          <p className="text-sm tracking-[0.4em] text-white/25 uppercase">Fase Actual · {faseAtual?.nome ?? 'Concluído'}</p>
-          <p className="text-sm tracking-[0.4em] text-white/25 uppercase">{progresso}%</p>
+          <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase">Fase Actual · {faseAtual?.nome ?? 'Concluído'}</p>
+          <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase">{progresso}%</p>
         </div>
         <div className="h-px w-full bg-white/[0.06] relative overflow-hidden mb-4">
           <div className="absolute left-0 top-0 h-full bg-gradient-to-r from-white/30 to-white/10" style={{ width: `${progresso}%` }} />
         </div>
         {isAdmin && (
-          <p className="text-sm tracking-[0.3em] text-white/15 uppercase mb-2">
+          <p className="text-[9px] tracking-[0.3em] text-white/15 uppercase mb-2">
             ↑ clica numa fase para definir a fase actual
           </p>
         )}
@@ -338,7 +338,7 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
                     ${isAdmin ? 'hover:scale-150' : ''}
                     ${fase.estado === 'em_curso' ? 'animate-pulse' : ''}`}
                   />
-                  <span className={`text-sm tracking-[0.2em] uppercase whitespace-nowrap ${cfg.color}`}>
+                  <span className={`text-[9px] tracking-[0.2em] uppercase whitespace-nowrap ${cfg.color}`}>
                     {fase.nome}
                   </span>
                 </div>
@@ -351,7 +351,7 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
         {/* Divider */}
         <div className="mb-10 flex items-center gap-4">
           <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
-          <span className="text-sm tracking-[0.5em] text-white/15 uppercase">Menu</span>
+          <span className="text-[9px] tracking-[0.5em] text-white/15 uppercase">Menu</span>
           <div className="h-px flex-1 bg-gradient-to-l from-white/10 to-transparent" />
         </div>
 
@@ -362,11 +362,11 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
               className="group relative border border-white/[0.07] hover:border-white/18 bg-white/[0.015] hover:bg-white/[0.035] transition-all duration-400 p-5 flex flex-col gap-3">
               <div className="flex items-start justify-between">
                 <span className="text-lg text-white/10 group-hover:text-white/25 transition-colors select-none leading-none">{item.icon}</span>
-                <span className="text-sm font-mono text-white/12 group-hover:text-white/25 transition-colors">{String(i + 1).padStart(2, '0')}</span>
+                <span className="text-[10px] font-mono text-white/12 group-hover:text-white/25 transition-colors">{String(i + 1).padStart(2, '0')}</span>
               </div>
               <div>
-                <p className="text-sm tracking-[0.3em] font-medium text-white/55 group-hover:text-white/80 uppercase transition-colors leading-tight">{item.label}</p>
-                <p className="text-sm text-white/20 mt-1 leading-tight">{item.desc}</p>
+                <p className="text-[10px] tracking-[0.3em] font-medium text-white/55 group-hover:text-white/80 uppercase transition-colors leading-tight">{item.label}</p>
+                <p className="text-[10px] text-white/20 mt-1 leading-tight">{item.desc}</p>
               </div>
             </Link>
           ))}
@@ -380,8 +380,8 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
           <div className="border border-white/[0.06] bg-white/[0.015] px-5 py-5">
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div>
-                <p className="text-sm tracking-[0.4em] text-white/30 uppercase mb-1">🔑 Senha do Portal</p>
-                <p className="text-xs text-white/20 leading-relaxed">
+                <p className="text-[9px] tracking-[0.4em] text-white/30 uppercase mb-1">🔑 Senha do Portal</p>
+                <p className="text-[10px] text-white/20 leading-relaxed">
                   {projeto.senha
                     ? `Senha activa · ${projeto.senha.replace(/./g, '●')}`
                     : 'Sem senha · acesso livre'}
@@ -393,14 +393,14 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
                   value={senhaInput}
                   onChange={e => { setSenhaInput(e.target.value); setSenhaSaved(false) }}
                   placeholder={projeto.senha ? 'Nova senha...' : 'Definir senha...'}
-                  className="flex-1 bg-black/20 border border-white/[0.08] px-3 py-2 text-sm text-white/60
+                  className="flex-1 bg-black/20 border border-white/[0.08] px-3 py-2 text-[11px] text-white/60
                              placeholder:text-white/15 focus:outline-none focus:border-white/20 tracking-[0.15em]"
                 />
                 <button
                   onClick={saveSenha}
                   disabled={savingSenha || (!senhaInput.trim() && !projeto.senha)}
                   className="shrink-0 border border-white/15 bg-white/[0.03] hover:bg-white/[0.07] px-4 py-2
-                             text-sm tracking-[0.3em] text-white/40 hover:text-white/70 uppercase transition-colors
+                             text-[9px] tracking-[0.3em] text-white/40 hover:text-white/70 uppercase transition-colors
                              disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   {savingSenha ? '...' : senhaSaved ? '✓' : senhaInput.trim() ? 'Guardar' : projeto.senha ? 'Remover' : 'Guardar'}

@@ -255,14 +255,14 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
       <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 py-10">
 
         <Link href={`/portal-media/${projeto.ref}`}
-          className="inline-flex items-center gap-2 text-sm tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
+          className="inline-flex items-center gap-2 text-[9px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
           <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
           Portal {projeto.nome}
         </Link>
 
         {/* ── ENTREGAS ── */}
         <div className="mb-10">
-          <p className="text-sm tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · {projeto.nome}</p>
+          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · {projeto.nome}</p>
           <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Entregas</h1>
           <div className="mt-4 flex items-center gap-3">
             <div className="h-px w-12 bg-white/25" />
@@ -290,23 +290,23 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
 
                     {/* Esquerdo */}
                     <div className="flex items-start gap-4 flex-1 min-w-0">
-                      <span className="text-sm font-mono text-white/15 mt-0.5 shrink-0">{String(i + 1).padStart(2, '0')}</span>
+                      <span className="text-[10px] font-mono text-white/15 mt-0.5 shrink-0">{String(i + 1).padStart(2, '0')}</span>
                       <div className="flex-1 min-w-0">
 
                         <div className="flex items-center gap-2 mb-0.5">
                           {e.tipo && !isEditing && (
-                            <span className="text-sm opacity-60">{TIPO_ICON[e.tipo] ?? '📁'}</span>
+                            <span className="text-[13px] opacity-60">{TIPO_ICON[e.tipo] ?? '📁'}</span>
                           )}
                           {isEditing ? (
                             <select
                               value={e.tipo ?? ''}
                               onChange={ev => updateEntrega(i, 'tipo', ev.target.value)}
-                              className="bg-[#04080f] border border-white/[0.08] text-sm text-white/45 px-2 py-1 focus:outline-none focus:border-white/20 mr-2"
+                              className="bg-[#04080f] border border-white/[0.08] text-[11px] text-white/45 px-2 py-1 focus:outline-none focus:border-white/20 mr-2"
                             >
                               {TIPO_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                             </select>
                           ) : e.tipo ? (
-                            <span className="text-sm tracking-[0.2em] text-white/25 uppercase">{e.tipo}</span>
+                            <span className="text-[9px] tracking-[0.2em] text-white/25 uppercase">{e.tipo}</span>
                           ) : null}
                         </div>
 
@@ -314,7 +314,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                           value={e.titulo}
                           isEditing={isEditing}
                           onChange={v => updateEntrega(i, 'titulo', v)}
-                          className="text-sm tracking-[0.25em] text-white/65 uppercase font-medium block"
+                          className="text-[11px] tracking-[0.25em] text-white/65 uppercase font-medium block"
                           placeholder="Título"
                         />
                         <div className="flex items-center gap-2 mt-1">
@@ -322,7 +322,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                             value={e.formato}
                             isEditing={isEditing}
                             onChange={v => updateEntrega(i, 'formato', v)}
-                            className="text-sm tracking-[0.15em] text-white/25 block"
+                            className="text-[10px] tracking-[0.15em] text-white/25 block"
                             placeholder="Formato (ex: MP4 · 16:9 · 4K)"
                           />
                           {!isEditing && e.duracao && <span className="text-white/15">·</span>}
@@ -330,23 +330,23 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                             value={e.duracao}
                             isEditing={isEditing}
                             onChange={v => updateEntrega(i, 'duracao', v)}
-                            className="text-sm tracking-[0.15em] text-white/25 block"
+                            className="text-[10px] tracking-[0.15em] text-white/25 block"
                             placeholder="Duração (ex: 2–3 min)"
                           />
                         </div>
 
                         {isEditing && (
                           <div className="mt-3 flex items-center gap-2 border border-white/[0.08] bg-white/[0.02] px-3 py-2">
-                            <span className="text-sm text-white/20 shrink-0">🔗</span>
+                            <span className="text-[13px] text-white/20 shrink-0">🔗</span>
                             <input
                               value={e.linkUrl ?? ''}
                               onChange={ev => updateEntrega(i, 'linkUrl', ev.target.value)}
                               placeholder="URL de download (https://...)"
-                              className="flex-1 bg-transparent text-sm text-white/50 placeholder:text-white/15 focus:outline-none"
+                              className="flex-1 bg-transparent text-[11px] text-white/50 placeholder:text-white/15 focus:outline-none"
                             />
                             {e.linkUrl && (
                               <button onClick={() => updateEntrega(i, 'linkUrl', '')}
-                                className="text-white/20 hover:text-white/50 text-sm shrink-0">✕</button>
+                                className="text-white/20 hover:text-white/50 text-[11px] shrink-0">✕</button>
                             )}
                           </div>
                         )}
@@ -359,20 +359,20 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                         temUrl ? (
                           <a href={e.linkUrl} target="_blank" rel="noopener noreferrer"
                             className="inline-flex items-center gap-2 border border-emerald-400/50 bg-emerald-400/10
-                                       hover:bg-emerald-400/20 px-4 py-2 text-sm tracking-[0.3em]
+                                       hover:bg-emerald-400/20 px-4 py-2 text-[9px] tracking-[0.3em]
                                        text-emerald-400 uppercase transition-colors">
                             ↓ Download
                           </a>
                         ) : (
                           <span className="inline-flex items-center gap-2 border border-red-500/35
-                                           bg-red-500/5 px-4 py-2 text-sm tracking-[0.3em]
+                                           bg-red-500/5 px-4 py-2 text-[9px] tracking-[0.3em]
                                            text-red-400/55 uppercase cursor-not-allowed">
                             ↓ Download
                           </span>
                         )
                       ) : (
                         <button onClick={() => removeEntrega(i)}
-                          className="text-sm tracking-[0.3em] text-red-400/50 hover:text-red-400/80 uppercase transition-colors">
+                          className="text-[9px] tracking-[0.3em] text-red-400/50 hover:text-red-400/80 uppercase transition-colors">
                           Remover
                         </button>
                       )}
@@ -382,7 +382,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                   {/* ── Linha de feedback ── */}
                   {!isEditing && (
                     <div className="mt-4 pt-4 border-t border-white/[0.04] flex items-center justify-between gap-4">
-                      <p className="text-xs tracking-[0.3em] text-white/18 uppercase">
+                      <p className="text-[9px] tracking-[0.3em] text-white/18 uppercase">
                         {feedbacks.length > 0
                           ? `${feedbacks.length} feedback${feedbacks.length !== 1 ? 's' : ''} registado${feedbacks.length !== 1 ? 's' : ''}`
                           : 'Sem feedback ainda'}
@@ -396,14 +396,14 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                               onClick={() => { setFeedbackAberto(i); setFeedbackTexto('') }}
                               className="shrink-0 inline-flex items-center gap-2 border border-emerald-400/40
                                          bg-emerald-400/[0.08] hover:bg-emerald-400/15 px-4 py-2
-                                         text-sm tracking-[0.35em] text-emerald-400/80 uppercase transition-colors"
+                                         text-[9px] tracking-[0.35em] text-emerald-400/80 uppercase transition-colors"
                             >
                               ◎ Dar Feedback
                             </button>
                           )
                         ) : (
                           <span className="shrink-0 inline-flex items-center gap-2 border border-red-500/20
-                                           bg-red-500/[0.03] px-4 py-2 text-sm tracking-[0.35em]
+                                           bg-red-500/[0.03] px-4 py-2 text-[9px] tracking-[0.35em]
                                            text-red-400/35 uppercase cursor-not-allowed">
                             ⏳ Aguardar Ficheiro
                           </span>
@@ -414,13 +414,13 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                       {isAdmin && (
                         temUrl ? (
                           <span className="shrink-0 inline-flex items-center gap-2 border border-emerald-400/20
-                                           bg-emerald-400/[0.04] px-4 py-2 text-sm tracking-[0.35em]
+                                           bg-emerald-400/[0.04] px-4 py-2 text-[9px] tracking-[0.35em]
                                            text-emerald-400/45 uppercase">
                             ◎ Feedback Activo
                           </span>
                         ) : (
                           <span className="shrink-0 inline-flex items-center gap-2 border border-white/[0.07]
-                                           bg-white/[0.02] px-4 py-2 text-sm tracking-[0.35em]
+                                           bg-white/[0.02] px-4 py-2 text-[9px] tracking-[0.35em]
                                            text-white/20 uppercase">
                             ⊘ Sem URL · Feedback Bloqueado
                           </span>
@@ -433,24 +433,24 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                 {/* ── Formulário de feedback (cliente) ── */}
                 {!isAdmin && feedbackAberto === i && (
                   <div className="border-x border-b border-emerald-400/15 bg-emerald-400/[0.02] px-5 py-4">
-                    <p className="text-xs tracking-[0.4em] text-white/25 uppercase mb-3">O teu feedback</p>
+                    <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-3">O teu feedback</p>
                     <textarea
                       value={feedbackTexto}
                       onChange={ev => setFeedbackTexto(ev.target.value)}
                       placeholder="Escreve aqui os teus comentários, aprovação ou sugestões de alteração..."
                       rows={4}
-                      className="w-full bg-white/[0.03] border border-white/[0.08] text-sm text-white/60
+                      className="w-full bg-white/[0.03] border border-white/[0.08] text-[13px] font-light text-white/60
                                  placeholder:text-white/15 px-4 py-3 focus:outline-none focus:border-white/20
                                  resize-none leading-relaxed"
                     />
                     {feedbackErro && (
-                      <p className="text-xs text-red-400/70 mb-3 leading-relaxed">⚠ {feedbackErro}</p>
+                      <p className="text-[10px] text-red-400/70 mb-3 leading-relaxed">⚠ {feedbackErro}</p>
                     )}
                     <div className="flex items-center gap-3 mt-3">
                       <button
                         onClick={() => submitFeedback(i)}
                         disabled={enviandoFeedback || !feedbackTexto.trim()}
-                        className="px-5 py-2 text-sm tracking-[0.35em] uppercase border border-emerald-400/40
+                        className="px-5 py-2 text-[9px] tracking-[0.35em] uppercase border border-emerald-400/40
                                    bg-emerald-400/10 text-emerald-400/80 hover:bg-emerald-400/20 transition-colors
                                    disabled:opacity-40 disabled:cursor-not-allowed"
                       >
@@ -458,7 +458,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                       </button>
                       <button
                         onClick={() => { setFeedbackAberto(null); setFeedbackTexto(''); setFeedbackErro(null) }}
-                        className="px-4 py-2 text-sm tracking-[0.35em] uppercase text-white/25 hover:text-white/50 transition-colors"
+                        className="px-4 py-2 text-[9px] tracking-[0.35em] uppercase text-white/25 hover:text-white/50 transition-colors"
                       >
                         Cancelar
                       </button>
@@ -469,9 +469,9 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                 {/* ── Histórico de feedbacks ── */}
                 {(hasFeedbacks || isAdmin) && (
                   <div className="border-x border-b border-white/[0.05] bg-white/[0.01] px-5 py-4">
-                    <p className="text-xs tracking-[0.45em] text-white/15 uppercase mb-4">Registos de Feedback</p>
+                    <p className="text-[9px] tracking-[0.45em] text-white/15 uppercase mb-4">Registos de Feedback</p>
                     {!hasFeedbacks && isAdmin && (
-                      <p className="text-xs text-white/15 italic">Sem feedbacks do cliente ainda.</p>
+                      <p className="text-[10px] text-white/15 italic">Sem feedbacks do cliente ainda.</p>
                     )}
                     <div className="flex flex-col gap-4">
                       {feedbacks.map((fb, fi) => (
@@ -480,65 +480,65 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                           {/* Mensagem do cliente */}
                           <div className="border border-amber-400/15 bg-amber-400/[0.03] px-4 py-3">
                             <div className="flex items-center justify-between mb-2 gap-4">
-                              <span className="text-xs tracking-[0.35em] text-amber-400/60 uppercase shrink-0">
+                              <span className="text-[9px] tracking-[0.35em] text-amber-400/60 uppercase shrink-0">
                                 ◎ Cliente
                               </span>
                               <div className="flex items-center gap-3">
-                                <span className="text-xs text-white/18 font-mono">{formatDateTime(fb.criadoEm)}</span>
+                                <span className="text-[9px] text-white/18 font-mono">{formatDateTime(fb.criadoEm)}</span>
                                 {isAdmin && (
                                   <button
                                     onClick={() => removerFeedback(i, fb.id)}
                                     title="Remover feedback"
-                                    className="text-xs text-red-400/30 hover:text-red-400/70 transition-colors leading-none"
+                                    className="text-[10px] text-red-400/30 hover:text-red-400/70 transition-colors leading-none"
                                   >✕</button>
                                 )}
                               </div>
                             </div>
-                            <p className="text-sm text-white/55 leading-relaxed">{fb.texto}</p>
+                            <p className="text-[13px] font-light text-white/50 leading-relaxed">{fb.texto}</p>
                           </div>
 
                           {/* Resposta do admin */}
                           {fb.resposta ? (
                             <div className="border border-blue-500/18 bg-blue-500/[0.03] px-4 py-3 ml-5">
                               <div className="flex items-center justify-between mb-2 gap-4">
-                                <span className="text-xs tracking-[0.35em] text-blue-400/70 uppercase shrink-0">
+                                <span className="text-[9px] tracking-[0.35em] text-blue-400/70 uppercase shrink-0">
                                   ↩ RL Media
                                 </span>
                                 <div className="flex items-center gap-3">
-                                  <span className="text-xs text-white/18 font-mono">{formatDateTime(fb.resposta.criadoEm)}</span>
+                                  <span className="text-[9px] text-white/18 font-mono">{formatDateTime(fb.resposta.criadoEm)}</span>
                                   {isAdmin && (
                                     <button
                                       onClick={() => removerResposta(i, fb.id)}
                                       title="Remover resposta"
-                                      className="text-xs text-red-400/30 hover:text-red-400/70 transition-colors leading-none"
+                                      className="text-[10px] text-red-400/30 hover:text-red-400/70 transition-colors leading-none"
                                     >✕</button>
                                   )}
                                 </div>
                               </div>
-                              <p className="text-sm text-white/55 leading-relaxed">{fb.resposta.texto}</p>
+                              <p className="text-[13px] font-light text-white/50 leading-relaxed">{fb.resposta.texto}</p>
                             </div>
                           ) : isAdmin ? (
                             /* Admin — responder */
                             respostaAberta === `${i}-${fb.id}` ? (
                               <div className="ml-5 border border-blue-500/20 bg-blue-500/[0.03] px-4 py-4">
-                                <p className="text-xs tracking-[0.4em] text-blue-400/50 uppercase mb-3">Resposta</p>
+                                <p className="text-[9px] tracking-[0.4em] text-blue-400/50 uppercase mb-3">Resposta</p>
                                 <textarea
                                   value={respostaTexto}
                                   onChange={ev => setRespostaTexto(ev.target.value)}
                                   placeholder="Escreve a tua resposta ao cliente..."
                                   rows={3}
-                                  className="w-full bg-white/[0.03] border border-white/[0.08] text-sm text-white/60
+                                  className="w-full bg-white/[0.03] border border-white/[0.08] text-[13px] font-light text-white/60
                                              placeholder:text-white/15 px-4 py-3 focus:outline-none focus:border-white/20
                                              resize-none leading-relaxed mb-3"
                                 />
                                 {respostaErro && (
-                                  <p className="text-xs text-red-400/70 mb-3">⚠ {respostaErro}</p>
+                                  <p className="text-[10px] text-red-400/70 mb-3">⚠ {respostaErro}</p>
                                 )}
                                 <div className="flex gap-3">
                                   <button
                                     onClick={() => submitResposta(i, fb.id)}
                                     disabled={enviandoResposta || !respostaTexto.trim()}
-                                    className="px-5 py-2 text-sm tracking-[0.35em] uppercase border border-blue-400/40
+                                    className="px-5 py-2 text-[9px] tracking-[0.35em] uppercase border border-blue-400/40
                                                bg-blue-400/10 text-blue-400/80 hover:bg-blue-400/20 transition-colors
                                                disabled:opacity-40 disabled:cursor-not-allowed"
                                   >
@@ -546,7 +546,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                                   </button>
                                   <button
                                     onClick={() => { setRespostaAberta(null); setRespostaTexto(''); setRespostaErro(null) }}
-                                    className="px-4 py-2 text-sm tracking-[0.35em] uppercase text-white/25 hover:text-white/50 transition-colors"
+                                    className="px-4 py-2 text-[9px] tracking-[0.35em] uppercase text-white/25 hover:text-white/50 transition-colors"
                                   >
                                     Cancelar
                                   </button>
@@ -556,7 +556,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                               <div className="ml-5">
                                 <button
                                   onClick={() => { setRespostaAberta(`${i}-${fb.id}`); setRespostaTexto('') }}
-                                  className="text-sm tracking-[0.35em] uppercase text-blue-400/50 hover:text-blue-400/80
+                                  className="text-[9px] tracking-[0.35em] uppercase text-blue-400/50 hover:text-blue-400/80
                                              border border-blue-400/20 hover:border-blue-400/40 px-4 py-2 transition-colors"
                                 >
                                   ↩ Responder
@@ -566,7 +566,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                           ) : (
                             /* Cliente — aguardar resposta */
                             <div className="ml-5 px-4 py-3 border border-white/[0.04] bg-white/[0.01]">
-                              <p className="text-xs text-white/20 tracking-[0.25em]">⏳ Aguardar resposta da RL Media</p>
+                              <p className="text-[9px] text-white/20 tracking-[0.25em]">⏳ Aguardar resposta da RL Media</p>
                             </div>
                           )}
                         </div>
@@ -583,7 +583,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
         {isEditing && (
           <button onClick={addEntrega}
             className="w-full border border-dashed border-white/15 hover:border-white/30 bg-white/[0.01]
-                       hover:bg-white/[0.03] py-3 text-sm tracking-[0.4em] text-white/30 uppercase
+                       hover:bg-white/[0.03] py-3 text-[9px] tracking-[0.4em] text-white/30 uppercase
                        transition-colors mb-4">
             + Adicionar Entrega
           </button>
@@ -594,11 +594,11 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
           <div className="flex items-center gap-4 flex-1 flex-wrap">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-              <span className="text-sm text-white/30">Com download ({entregasComUrl})</span>
+              <span className="text-[10px] text-white/30">Com download ({entregasComUrl})</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-red-500/60 shrink-0" />
-              <span className="text-sm text-white/30">Aguarda link ({projeto.entregas.length - entregasComUrl})</span>
+              <span className="text-[10px] text-white/30">Aguarda link ({projeto.entregas.length - entregasComUrl})</span>
             </div>
           </div>
         </div>
@@ -607,8 +607,8 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
         {isAdmin && !isEditing && (
           <div className="mb-8 border border-white/[0.07] bg-white/[0.02] px-5 py-5 flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm tracking-[0.35em] text-white/35 uppercase mb-1">Notificar Cliente</p>
-              <p className="text-sm text-white/20 leading-relaxed">
+              <p className="text-[9px] tracking-[0.35em] text-white/35 uppercase mb-1">Notificar Cliente</p>
+              <p className="text-[13px] font-light text-white/20 leading-relaxed">
                 {notificado
                   ? `✓ Notificação enviada em ${notificado}`
                   : `Envia um email ao cliente com os links de download disponíveis (${entregasComUrl} entrega${entregasComUrl !== 1 ? 's' : ''}).`}
@@ -617,7 +617,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
             <button
               onClick={notificarCliente}
               disabled={notifying || entregasComUrl === 0}
-              className={`shrink-0 px-5 py-2.5 text-sm tracking-[0.35em] uppercase border transition-colors
+              className={`shrink-0 px-5 py-2.5 text-[9px] tracking-[0.35em] uppercase border transition-colors
                 ${notificado
                   ? 'border-emerald-400/20 text-emerald-400/40 cursor-default'
                   : entregasComUrl === 0
@@ -631,7 +631,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
         )}
 
         <div className="mb-12 border border-white/[0.05] bg-white/[0.01] px-5 py-4">
-          <p className="text-sm tracking-[0.2em] text-white/20 leading-relaxed">
+          <p className="text-[10px] tracking-[0.2em] text-white/20 leading-relaxed">
             Os ficheiros ficarão disponíveis após a aprovação da entrega final. Os links expiram 30 dias após disponibilização.
           </p>
         </div>
@@ -639,13 +639,13 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
         {/* ── REVISÕES ── */}
         <div className="mb-10 flex items-center gap-4">
           <div className="h-px flex-1 bg-white/[0.06]" />
-          <span className="text-sm tracking-[0.5em] text-white/15 uppercase">Revisões</span>
+          <span className="text-[9px] tracking-[0.5em] text-white/15 uppercase">Revisões</span>
           <div className="h-px flex-1 bg-white/[0.06]" />
         </div>
 
         <div className="grid grid-cols-3 gap-3 mb-8">
           <div className="border border-white/[0.07] bg-white/[0.02] px-4 py-5 text-center">
-            <p className="text-sm tracking-[0.4em] text-white/25 uppercase mb-2">Incluídas</p>
+            <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-2">Incluídas</p>
             {isEditing ? (
               <EditableField value={String(total)} isEditing={true} type="number"
                 onChange={v => setRevisoes('total', v)}
@@ -655,7 +655,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
             )}
           </div>
           <div className="border border-white/[0.07] bg-white/[0.02] px-4 py-5 text-center">
-            <p className="text-sm tracking-[0.4em] text-white/25 uppercase mb-2">Usadas</p>
+            <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-2">Usadas</p>
             {isEditing ? (
               <EditableField value={String(usadas)} isEditing={true} type="number"
                 onChange={v => setRevisoes('usadas', v)}
@@ -665,7 +665,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
             )}
           </div>
           <div className="border border-white/[0.07] bg-white/[0.02] px-4 py-5 text-center">
-            <p className="text-sm tracking-[0.4em] text-white/25 uppercase mb-2">Restantes</p>
+            <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-2">Restantes</p>
             <p className="text-3xl font-extralight text-white/60">{restantes}</p>
           </div>
         </div>
