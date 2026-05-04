@@ -3,6 +3,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import type {
   Projeto,
+  StorytellingSena,
   StoryboardCena,
   StoryboardTipo,
   MoodboardItem,
@@ -53,6 +54,7 @@ export default function ReproducaoClient({ projeto: initial }: Props) {
   const [storytelling, setStorytelling]         = useState(initial.reproducaoStorytelling ?? '')
   const [palavrasChave, setPalavrasChave]       = useState(initial.reproducaoPalavrasChave ?? '')
   const [tomEmocional, setTomEmocional]         = useState(initial.reproducaoTomEmocional ?? '')
+  const [senas, setSenas]                       = useState<StorytellingSena[]>(initial.reproducaoSenas ?? [])
 
   /* storyboard */
   const [cenas, setCenas] = useState<StoryboardCena[]>(initial.reproducaoStoryboard ?? [])
@@ -69,6 +71,7 @@ export default function ReproducaoClient({ projeto: initial }: Props) {
     reproducaoStorytelling: storytelling,
     reproducaoPalavrasChave: palavrasChave,
     reproducaoTomEmocional: tomEmocional,
+    reproducaoSenas: senas,
     reproducaoStoryboard: cenas,
     reproducaoMoodboard: items,
     reproducaoImageUrl: heroUrl,
@@ -93,10 +96,32 @@ export default function ReproducaoClient({ projeto: initial }: Props) {
     setStorytelling(initial.reproducaoStorytelling ?? '')
     setPalavrasChave(initial.reproducaoPalavrasChave ?? '')
     setTomEmocional(initial.reproducaoTomEmocional ?? '')
+    setSenas(initial.reproducaoSenas ?? [])
     setCenas(initial.reproducaoStoryboard ?? [])
     setItems(initial.reproducaoMoodboard ?? [])
     setHeroUrl(initial.reproducaoImageUrl ?? '')
     setIsEditing(false)
+  }
+
+  /* ── storytelling senas helpers ── */
+  const addSena = () => {
+    const n = senas.length + 1
+    setSenas(s => [...s, { id: Date.now().toString(), titulo: `Cena ${n}`, texto: '', concluido: false }])
+    setIsEditing(true)
+  }
+
+  const updateSena = (id: string, field: keyof StorytellingSena, value: string | boolean) =>
+    setSenas(s => s.map(s2 => s2.id === id ? { ...s2, [field]: value } : s2))
+
+  const removeSena = (id: string) =>
+    setSenas(s => s.filter(s2 => s2.id !== id))
+
+  const toggleSena = async (id: string) => {
+    const updated = senas.map(s => s.id === id ? { ...s, concluido: !s.concluido } : s)
+    setSenas(updated)
+    try {
+      await saveData({ ...buildPayload(), reproducaoSenas: updated })
+    } catch {}
   }
 
   /* ── storyboard helpers ── */
@@ -221,15 +246,6 @@ export default function ReproducaoClient({ projeto: initial }: Props) {
         {tab === 'storytelling' && (
           <div className="flex flex-col gap-6">
 
-            {/* Explicação */}
-            <div className="border border-white/[0.07] bg-white/[0.02] px-6 py-5 flex flex-col gap-3">
-              <p className="text-[9px] tracking-[0.5em] text-white/25 uppercase">O que é o Storytelling?</p>
-              <p className="text-[13px] font-light text-white/50 leading-relaxed">
-                A narrativa criativa do projeto — a história, as emoções e o tom que guiam toda a produção.
-                Este documento é interno e não é visível para o cliente.
-              </p>
-            </div>
-
             {/* Tom Emocional */}
             <div className="border border-white/[0.08] bg-white/[0.02] px-6 py-5">
               <p className="text-[9px] tracking-[0.5em] text-white/30 uppercase mb-3">Tom Emocional</p>
@@ -275,13 +291,13 @@ export default function ReproducaoClient({ projeto: initial }: Props) {
 
             {/* Narrativa */}
             <div className="border border-white/[0.08] bg-white/[0.02] px-6 py-5">
-              <p className="text-[9px] tracking-[0.5em] text-white/30 uppercase mb-3">Narrativa</p>
+              <p className="text-[9px] tracking-[0.5em] text-white/30 uppercase mb-3">Narrativa Geral</p>
               {isEditing ? (
                 <textarea
                   value={storytelling}
                   onChange={e => setStorytelling(e.target.value)}
                   placeholder="Escreve aqui a história e a narrativa do projeto: quem são, o que os une, o que querem sentir quando veem o resultado, os momentos que não podem faltar, a essência do dia..."
-                  rows={12}
+                  rows={6}
                   className="w-full bg-white/[0.03] border border-white/[0.08] px-4 py-3 text-[13px] font-light text-white/55
                              placeholder:text-white/15 focus:outline-none focus:border-white/20 leading-relaxed resize-none tracking-wide"
                 />
@@ -291,6 +307,117 @@ export default function ReproducaoClient({ projeto: initial }: Props) {
                 <p className="text-[12px] font-light text-white/18 italic">Sem narrativa escrita ainda.</p>
               )}
             </div>
+
+            {/* ── Divisor Cenas ── */}
+            <div className="flex items-center justify-between gap-4 pt-2">
+              <div className="flex items-center gap-4 flex-1">
+                <span className="text-[9px] tracking-[0.5em] text-white/25 uppercase">Cenas</span>
+                <div className="h-px flex-1 bg-white/[0.06]" />
+                <span className="text-[9px] font-mono text-white/15">{senas.filter(s => s.concluido).length}/{senas.length}</span>
+              </div>
+              <button
+                onClick={addSena}
+                className="border border-dashed border-white/20 hover:border-white/40 px-4 py-1.5
+                           text-[9px] tracking-[0.3em] text-white/30 hover:text-white/60 uppercase transition-colors shrink-0"
+              >
+                + Cena
+              </button>
+            </div>
+
+            {/* Empty */}
+            {senas.length === 0 && (
+              <div className="border border-dashed border-white/[0.06] px-6 py-10 text-center">
+                <p className="text-[9px] tracking-[0.4em] text-white/18 uppercase mb-2">Sem cenas</p>
+                <p className="text-[12px] font-light text-white/12">Clica em "+ Cena" para adicionar</p>
+              </div>
+            )}
+
+            {/* Lista de cenas */}
+            <div className="flex flex-col gap-3">
+              {senas.map((sena, i) => (
+                <div
+                  key={sena.id}
+                  className={`border transition-colors duration-300 ${
+                    sena.concluido
+                      ? 'border-emerald-400/30 bg-emerald-400/[0.05]'
+                      : 'border-white/[0.08] bg-white/[0.02]'
+                  }`}
+                >
+                  {/* Header da cena */}
+                  <div className="flex items-center gap-3 px-5 py-3 border-b border-white/[0.05]">
+
+                    {/* Checkbox */}
+                    <button
+                      onClick={() => toggleSena(sena.id)}
+                      className={`w-5 h-5 shrink-0 border flex items-center justify-center transition-all duration-200
+                        ${sena.concluido
+                          ? 'border-emerald-400/60 bg-emerald-400/20'
+                          : 'border-white/20 bg-white/[0.03] hover:border-white/40'}`}
+                      title={sena.concluido ? 'Marcar como não efectuado' : 'Marcar como efectuado'}
+                    >
+                      {sena.concluido && (
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                          <path d="M1.5 5L4 7.5L8.5 2.5" stroke="rgb(52 211 153 / 0.9)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </button>
+
+                    <span className="text-[10px] font-mono text-white/15 shrink-0">{String(i + 1).padStart(2, '0')}</span>
+
+                    {/* Título */}
+                    {isEditing ? (
+                      <input
+                        value={sena.titulo}
+                        onChange={e => updateSena(sena.id, 'titulo', e.target.value)}
+                        placeholder="Título da cena"
+                        className="flex-1 bg-transparent text-[11px] tracking-[0.25em] text-white/65 uppercase
+                                   placeholder:text-white/15 focus:outline-none border-b border-white/[0.08] focus:border-white/25 pb-0.5"
+                      />
+                    ) : (
+                      <span className={`flex-1 text-[11px] tracking-[0.25em] uppercase font-medium
+                        ${sena.concluido ? 'text-emerald-400/70 line-through decoration-emerald-400/30' : 'text-white/65'}`}>
+                        {sena.titulo}
+                      </span>
+                    )}
+
+                    {/* Estado + delete */}
+                    <div className="flex items-center gap-3 shrink-0">
+                      {sena.concluido && (
+                        <span className="text-[9px] tracking-[0.25em] text-emerald-400/60 uppercase">✓ Efectuado</span>
+                      )}
+                      {isEditing && (
+                        <button
+                          onClick={() => removeSena(sena.id)}
+                          className="text-[9px] tracking-[0.25em] text-red-400/40 hover:text-red-400/70 uppercase transition-colors"
+                        >✕</button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Texto / Resumo */}
+                  <div className="px-5 py-4">
+                    {isEditing ? (
+                      <textarea
+                        value={sena.texto}
+                        onChange={e => updateSena(sena.id, 'texto', e.target.value)}
+                        placeholder="Resumo desta cena: o que acontece, emoção, momentos-chave..."
+                        rows={4}
+                        className="w-full bg-white/[0.03] border border-white/[0.08] px-4 py-3 text-[13px] font-light text-white/55
+                                   placeholder:text-white/15 focus:outline-none focus:border-white/20 leading-relaxed resize-none"
+                      />
+                    ) : sena.texto ? (
+                      <p className={`text-[13px] font-light leading-relaxed whitespace-pre-wrap
+                        ${sena.concluido ? 'text-emerald-400/40' : 'text-white/40'}`}>
+                        {sena.texto}
+                      </p>
+                    ) : (
+                      <p className="text-[12px] font-light text-white/15 italic">Sem resumo.</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
           </div>
         )}
 

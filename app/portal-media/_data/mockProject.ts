@@ -90,6 +90,13 @@ export interface ChatMensagem {
   criadoEm: string
 }
 
+export interface StorytellingSena {
+  id: string
+  titulo: string
+  texto: string
+  concluido: boolean
+}
+
 export type StoryboardTipo = 'abertura' | 'cerimonia' | 'momento_chave' | 'detalhe' | 'final' | 'outro'
 
 export interface StoryboardCena {
@@ -167,6 +174,7 @@ export interface Projeto {
   reproducaoStorytelling?: string
   reproducaoPalavrasChave?: string
   reproducaoTomEmocional?: string
+  reproducaoSenas?: StorytellingSena[]
   reproducaoStoryboard?: StoryboardCena[]
   reproducaoMoodboard?: MoodboardItem[]
   reproducaoImageUrl?: string
