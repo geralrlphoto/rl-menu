@@ -2,11 +2,13 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import PrintButton from './PrintButton'
+import { CLAUSULAS_EDITAVEIS, CLAUSULAS_DEFAULT, type ClausulasMap } from './clausulas-defaults'
 
 interface Props {
   refUp: string
   contrato: { ref?: string; estado?: string; geradoEm?: string }
   fichaInit: Record<string, string>
+  clausulasInit: ClausulasMap
   isAdmin: boolean
 }
 
@@ -20,21 +22,26 @@ const FIELDS: { key: string; label: string; placeholder?: string }[] = [
   { key: 'representanteLegal', label: 'Representante Legal',   placeholder: 'Nome do representante' },
   { key: 'localEvento',        label: 'Local do Evento',       placeholder: 'Lisboa' },
   { key: 'orcamento',          label: 'Orçamento (€)',         placeholder: '3000' },
-  { key: 'localAssinatura',    label: 'Local de Assinatura',  placeholder: 'Lisboa' },
+  { key: 'localAssinatura',    label: 'Local de Assinatura',   placeholder: 'Lisboa' },
 ]
 
 const TEXT_AREAS: { key: string; label: string; placeholder: string; rows: number }[] = [
-  { key: 'servicosList',       label: 'Serviços Contratados', placeholder: 'Um serviço por linha\nEx: Fotografia — 8h\nEx: Vídeo Highlights', rows: 5 },
-  { key: 'profissionaisList',  label: 'Profissionais',        placeholder: 'Um por linha\nEx: Fotógrafo Principal', rows: 3 },
-  { key: 'metodoPagamento',    label: 'Plano de Pagamentos',  placeholder: '80% na assinatura — 2400€\n20% após entrega — 600€', rows: 3 },
+  { key: 'servicosList',      label: 'Serviços Contratados', placeholder: 'Um serviço por linha\nEx: Fotografia — 8h', rows: 5 },
+  { key: 'profissionaisList', label: 'Profissionais',        placeholder: 'Um por linha\nEx: Fotógrafo Principal', rows: 3 },
+  { key: 'metodoPagamento',   label: 'Plano de Pagamentos',  placeholder: '80% na assinatura — 2400€\n20% após entrega — 600€', rows: 3 },
 ]
 
-export default function ContratoEditBar({ refUp, contrato, fichaInit, isAdmin }: Props) {
+type Tab = 'dados' | 'conteudo' | 'clausulas'
+
+export default function ContratoEditBar({ refUp, contrato, fichaInit, clausulasInit, isAdmin }: Props) {
   const [editing, setEditing] = useState(false)
+  const [tab, setTab] = useState<Tab>('dados')
   const [ficha, setFicha] = useState<Record<string, string>>(fichaInit ?? {})
+  const [clausulas, setClausulas] = useState<ClausulasMap>(clausulasInit ?? {})
   const [saving, setSaving] = useState(false)
 
-  const set = (key: string, value: string) => setFicha(f => ({ ...f, [key]: value }))
+  const setFichaField = (key: string, value: string) => setFicha(f => ({ ...f, [key]: value }))
+  const setClausula = (key: string, value: string) => setClausulas(c => ({ ...c, [key]: value }))
 
   const save = async () => {
     setSaving(true)
@@ -42,7 +49,10 @@ export default function ContratoEditBar({ refUp, contrato, fichaInit, isAdmin }:
       await fetch(`/api/media-portal/${refUp}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ficha: { ...ficha, ref: refUp } }),
+        body: JSON.stringify({
+          ficha: { ...ficha, ref: refUp },
+          clausulas,
+        }),
       })
       setEditing(false)
       window.location.reload()
@@ -63,6 +73,12 @@ export default function ContratoEditBar({ refUp, contrato, fichaInit, isAdmin }:
     : contrato.estado === 'disponivel' ? 'Disponível'
     : contrato.estado ?? '—'
 
+  const TABS: { id: Tab; label: string }[] = [
+    { id: 'dados',     label: 'Dados' },
+    { id: 'conteudo',  label: 'Conteúdo' },
+    { id: 'clausulas', label: 'Cláusulas' },
+  ]
+
   return (
     <>
       {/* ── Barra topo ── */}
@@ -80,7 +96,7 @@ export default function ContratoEditBar({ refUp, contrato, fichaInit, isAdmin }:
           </span>
           {isAdmin && (
             <button
-              onClick={() => setEditing(true)}
+              onClick={() => { setTab('dados'); setEditing(true) }}
               className="border border-white/20 hover:border-white/40 px-3 py-1.5
                          text-[8px] tracking-[0.35em] text-white/40 hover:text-white/70 uppercase transition-colors"
             >
@@ -101,9 +117,10 @@ export default function ContratoEditBar({ refUp, contrato, fichaInit, isAdmin }:
           />
 
           {/* Drawer */}
-          <div className="fixed inset-y-0 right-0 z-[100] w-full max-w-md flex flex-col"
-            style={{ background: '#06090f', borderLeft: '1px solid rgba(255,255,255,0.07)' }}>
-
+          <div
+            className="fixed inset-y-0 right-0 z-[100] w-full max-w-lg flex flex-col"
+            style={{ background: '#06090f', borderLeft: '1px solid rgba(255,255,255,0.07)' }}
+          >
             {/* Drawer header */}
             <div className="flex items-center justify-between px-6 py-4"
               style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
@@ -119,45 +136,100 @@ export default function ContratoEditBar({ refUp, contrato, fichaInit, isAdmin }:
               </button>
             </div>
 
+            {/* Tabs */}
+            <div className="flex" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              {TABS.map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  className={`flex-1 py-3 text-[9px] tracking-[0.35em] uppercase transition-colors ${
+                    tab === t.id
+                      ? 'text-white/70 border-b border-white/30'
+                      : 'text-white/25 hover:text-white/50'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
             {/* Scroll area */}
-            <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-6">
+            <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5">
 
-              {/* ── Dados do cliente ── */}
-              <div className="flex flex-col gap-4">
-                <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase">Dados do Cliente</p>
-                {FIELDS.map(({ key, label, placeholder }) => (
-                  <div key={key} className="flex flex-col gap-1.5">
-                    <label className="text-[9px] tracking-[0.3em] text-white/25 uppercase">{label}</label>
-                    <input
-                      value={ficha[key] ?? ''}
-                      onChange={e => set(key, e.target.value)}
-                      placeholder={placeholder}
-                      className="bg-white/[0.03] border border-white/[0.08] px-3 py-2
-                                 text-[12px] font-light text-white/70 focus:outline-none focus:border-white/20
-                                 placeholder:text-white/15 transition-colors w-full"
-                    />
-                  </div>
-                ))}
-              </div>
+              {/* ── Tab: Dados ── */}
+              {tab === 'dados' && (
+                <>
+                  <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase">Dados do Cliente</p>
+                  {FIELDS.map(({ key, label, placeholder }) => (
+                    <div key={key} className="flex flex-col gap-1.5">
+                      <label className="text-[9px] tracking-[0.3em] text-white/25 uppercase">{label}</label>
+                      <input
+                        value={ficha[key] ?? ''}
+                        onChange={e => setFichaField(key, e.target.value)}
+                        placeholder={placeholder}
+                        className="bg-white/[0.03] border border-white/[0.08] px-3 py-2
+                                   text-[12px] font-light text-white/70 focus:outline-none focus:border-white/20
+                                   placeholder:text-white/15 transition-colors w-full"
+                      />
+                    </div>
+                  ))}
+                </>
+              )}
 
-              {/* ── Conteúdo do contrato ── */}
-              <div className="flex flex-col gap-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase">Conteúdo do Contrato</p>
-                {TEXT_AREAS.map(({ key, label, placeholder, rows }) => (
-                  <div key={key} className="flex flex-col gap-1.5">
-                    <label className="text-[9px] tracking-[0.3em] text-white/25 uppercase">{label}</label>
-                    <textarea
-                      value={ficha[key] ?? ''}
-                      onChange={e => set(key, e.target.value)}
-                      placeholder={placeholder}
-                      rows={rows}
-                      className="bg-white/[0.03] border border-white/[0.08] px-3 py-2
-                                 text-[12px] font-light text-white/70 focus:outline-none focus:border-white/20
-                                 placeholder:text-white/15 resize-none transition-colors w-full"
-                    />
-                  </div>
-                ))}
-              </div>
+              {/* ── Tab: Conteúdo ── */}
+              {tab === 'conteudo' && (
+                <>
+                  <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase">Conteúdo do Contrato</p>
+                  {TEXT_AREAS.map(({ key, label, placeholder, rows }) => (
+                    <div key={key} className="flex flex-col gap-1.5">
+                      <label className="text-[9px] tracking-[0.3em] text-white/25 uppercase">{label}</label>
+                      <textarea
+                        value={ficha[key] ?? ''}
+                        onChange={e => setFichaField(key, e.target.value)}
+                        placeholder={placeholder}
+                        rows={rows}
+                        className="bg-white/[0.03] border border-white/[0.08] px-3 py-2
+                                   text-[12px] font-light text-white/70 focus:outline-none focus:border-white/20
+                                   placeholder:text-white/15 resize-none transition-colors w-full"
+                      />
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {/* ── Tab: Cláusulas ── */}
+              {tab === 'clausulas' && (
+                <>
+                  <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-1">
+                    Texto das Cláusulas
+                  </p>
+                  <p className="text-[10px] font-light text-white/20 leading-relaxed mb-2">
+                    Edita cada cláusula livremente. Linhas que começam com número (ex: &quot;1.&quot;) ficam a bold no contrato. Deixa em branco para usar o texto padrão.
+                  </p>
+                  {CLAUSULAS_EDITAVEIS.map(({ key, titulo }) => (
+                    <div key={key} className="flex flex-col gap-1.5">
+                      <label className="text-[9px] tracking-[0.25em] text-white/30 uppercase">{titulo}</label>
+                      <textarea
+                        value={clausulas[key] ?? ''}
+                        onChange={e => setClausula(key, e.target.value)}
+                        placeholder={CLAUSULAS_DEFAULT[key] ?? ''}
+                        rows={5}
+                        className="bg-white/[0.03] border border-white/[0.08] px-3 py-2
+                                   text-[11px] font-light text-white/65 focus:outline-none focus:border-white/20
+                                   placeholder:text-white/10 resize-y transition-colors w-full leading-relaxed"
+                      />
+                      {clausulas[key] && clausulas[key] !== CLAUSULAS_DEFAULT[key] && (
+                        <button
+                          onClick={() => setClausula(key, '')}
+                          className="self-start text-[9px] text-white/20 hover:text-white/45 tracking-[0.2em] uppercase transition-colors"
+                        >
+                          ↺ Repor padrão
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </>
+              )}
 
             </div>
 
