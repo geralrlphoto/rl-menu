@@ -11,8 +11,7 @@ const NAV = [
   { slug: 'briefing',        label: 'Briefing',        desc: 'Objetivos e referências', icon: '◎' },
   { slug: 'contrato',        label: 'Contrato & CPS',  desc: 'Documentos e dados',      icon: '◇' },
   { slug: 'pagamentos',      label: 'Pagamentos',      desc: 'Estado financeiro',       icon: '◉' },
-  { slug: 'revisoes',        label: 'Revisões',        desc: 'Feedback e aprovações',   icon: '⬡' },
-  { slug: 'entregas',        label: 'Entregas',        desc: 'Ficheiros finais',         icon: '◐' },
+  { slug: 'entregas',        label: 'Entregas',        desc: 'Ficheiros e revisões',    icon: '◐' },
   { slug: 'atendimento',     label: 'Atendimento',     desc: 'Equipa e contactos',      icon: '◑' },
   { slug: 'satisfacao',      label: 'Satisfação',      desc: 'Avaliação do projeto',    icon: '◒' },
 ]
