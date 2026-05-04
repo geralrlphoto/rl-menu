@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import type { Projeto, RoadmapColuna, RoadmapTarefa, TarefaEstado } from '@/app/portal-media/_data/mockProject'
 import AdminBar from './AdminBar'
@@ -89,6 +89,19 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving]       = useState(false)
   const [heroUrl, setHeroUrl]     = useState(initial.roadmapImageUrl ?? '')
+
+  /* Auto-inicializar: guarda as 7 colunas default no Supabase
+     na primeira vez que o portal não tem roadmap ainda */
+  useEffect(() => {
+    if (!initial.roadmap || initial.roadmap.length === 0) {
+      fetch(`/api/media-portal/${initial.ref}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roadmap: DEFAULT_ROADMAP }),
+      }).catch(() => {})
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   /* totais para o header */
   const totalTarefas   = colunas.reduce((s, c) => s + c.tarefas.length, 0)
