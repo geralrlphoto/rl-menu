@@ -124,16 +124,6 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
               WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 30%, transparent 100%)',
             }}
           />
-          <div className="absolute top-5 right-6 flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400/70 animate-pulse" />
-            <span className="text-[9px] tracking-[0.4em] text-white/30 uppercase">Activo</span>
-          </div>
-          <div className="absolute top-5 left-6 flex items-center gap-3">
-            <div className="flex flex-col gap-[3px]">
-              <div className="h-px w-5 bg-white/30" /><div className="h-px w-3 bg-white/15" /><div className="h-px w-5 bg-white/30" />
-            </div>
-            <span className="text-[9px] tracking-[0.45em] text-white/25 uppercase">RL Media · Portal do Cliente</span>
-          </div>
         </div>
       )}
 
@@ -315,7 +305,7 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
           <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase shrink-0">{progresso}%</p>
         </div>
         <div className="h-px w-full bg-white/[0.06] relative overflow-hidden mb-4">
-          <div className="absolute left-0 top-0 h-full bg-gradient-to-r from-white/30 to-white/10" style={{ width: `${progresso}%` }} />
+          <div className="absolute left-0 top-0 h-full bg-gradient-to-r from-amber-400/70 to-amber-400/25" style={{ width: `${progresso}%` }} />
         </div>
         {isAdmin && (
           <p className="text-[9px] tracking-[0.3em] text-white/15 uppercase mb-2">

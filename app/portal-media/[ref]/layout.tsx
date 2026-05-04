@@ -67,8 +67,8 @@ export default async function PortalMediaLayout({ children, params }: Props) {
       {/* Hambúrguer de navegação do portal */}
       <PortalHamburger portalRef={ref.toUpperCase()} nomeProjeto={nomeProjeto} />
 
-      {/* Espaço top no mobile para não sobrepor o botão hambúrguer */}
-      <div className="pt-14 sm:pt-0">
+      {/* Espaço top para a barra fixa de cabeçalho */}
+      <div className="pt-11">
         {children}
       </div>
 

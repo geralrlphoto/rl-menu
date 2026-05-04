@@ -33,30 +33,38 @@ export default function PortalHamburger({ portalRef, nomeProjeto }: Props) {
 
   return (
     <>
-      {/* Hambúrguer */}
-      <button
-        onClick={() => setOpen(true)}
-        aria-label="Menu do portal"
-        className="fixed top-4 left-4 z-40 w-10 h-10 flex flex-col items-center justify-center gap-[5px] transition-all duration-200"
+      {/* ── Barra de cabeçalho fixa ── */}
+      <div
+        className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4"
         style={{
-          background: 'rgba(0,4,14,0.75)',
-          backdropFilter: 'blur(12px)',
-          border: '1px solid rgba(255,255,255,0.12)',
-          boxShadow: '0 0 16px rgba(50,110,255,0.10)',
-        }}
-        onMouseEnter={e => {
-          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.30)'
-          e.currentTarget.style.boxShadow   = '0 0 20px rgba(50,110,255,0.18)'
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'
-          e.currentTarget.style.boxShadow   = '0 0 16px rgba(50,110,255,0.10)'
+          height: '44px',
+          background: 'rgba(2,5,14,0.88)',
+          backdropFilter: 'blur(14px)',
+          borderBottom: '1px solid rgba(255,255,255,0.05)',
         }}
       >
-        <span className="block" style={{ width: '16px', height: '1px', background: 'rgba(255,255,255,0.7)' }} />
-        <span className="block" style={{ width: '10px', height: '1px', background: 'rgba(255,255,255,0.4)' }} />
-        <span className="block" style={{ width: '16px', height: '1px', background: 'rgba(255,255,255,0.7)' }} />
-      </button>
+        {/* Esquerda: hamburger + nome */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setOpen(true)}
+            aria-label="Menu do portal"
+            className="w-8 h-8 flex flex-col items-center justify-center gap-[4px] shrink-0 transition-opacity duration-150 hover:opacity-70"
+          >
+            <span className="block" style={{ width: '16px', height: '1px', background: 'rgba(255,255,255,0.65)' }} />
+            <span className="block" style={{ width: '10px', height: '1px', background: 'rgba(255,255,255,0.35)' }} />
+            <span className="block" style={{ width: '16px', height: '1px', background: 'rgba(255,255,255,0.65)' }} />
+          </button>
+          <span className="text-[9px] tracking-[0.45em] text-white/22 uppercase hidden sm:block">
+            RL Media &nbsp;·&nbsp; Portal do Cliente
+          </span>
+        </div>
+
+        {/* Direita: indicador activo */}
+        <div className="flex items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400/70 animate-pulse" />
+          <span className="text-[9px] tracking-[0.4em] text-white/25 uppercase">Activo</span>
+        </div>
+      </div>
 
       {/* Overlay */}
       {open && (
