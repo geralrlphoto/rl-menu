@@ -43,17 +43,28 @@ export default async function ContratoPage({ params }: Props) {
   const ficha = data.dados.ficha ?? {}
   const contrato = data.dados.contrato ?? {}
   const clausulas: ClausulasMap = data.dados.clausulas ?? {}
+  const clausulasRemovidas: string[] = data.dados.clausulasRemovidas ?? []
+  const clausulasCustom: { id: string; titulo: string; texto: string }[] = data.dados.clausulasCustom ?? []
 
-  // Helper: renderiza cláusula — linhas "1." ficam a bold, resto ClauseText
-  const rc = (key: string) =>
-    getClausula(clausulas, key)
-      .split('\n')
-      .filter(Boolean)
-      .map((line, i) =>
-        /^\d+\./.test(line.trim())
-          ? <BodyText key={i} style={{ fontWeight: 600, marginTop: 12 }}>{line}</BodyText>
-          : <ClauseText key={i}>{line}</ClauseText>
-      )
+  // Renderiza linhas de uma cláusula — "1." → bold, resto → ClauseText
+  const renderLines = (text: string) =>
+    text.split('\n').filter(Boolean).map((line, i) =>
+      /^\d+\./.test(line.trim())
+        ? <BodyText key={i} style={{ fontWeight: 600, marginTop: 12 }}>{line}</BodyText>
+        : <ClauseText key={i}>{line}</ClauseText>
+    )
+
+  // Renderiza cláusula com override do Supabase ou texto padrão
+  const rc = (key: string) => renderLines(getClausula(clausulas, key))
+
+  // Renderiza cláusula com título — devolve null se removida
+  const rct = (key: string, titulo: string) =>
+    clausulasRemovidas.includes(key) ? null : (
+      <>{<ClauseTitle>{titulo}</ClauseTitle>}{rc(key)}</>
+    )
+
+  // Renderiza cláusula sem título — devolve null se removida
+  const rcm = (key: string) => clausulasRemovidas.includes(key) ? null : rc(key)
 
   const valorNum = parseFloat(String(ficha.orcamento || '').replace(/[^\d.,]/g, '').replace(',', '.')) || 0
   const val80 = (valorNum * 0.8).toLocaleString('pt-PT', { minimumFractionDigits: 2 })
@@ -82,6 +93,8 @@ export default async function ContratoPage({ params }: Props) {
         contrato={contrato}
         fichaInit={ficha}
         clausulasInit={clausulas}
+        removidas_init={clausulasRemovidas}
+        custom_init={clausulasCustom}
         isAdmin={isAdmin}
       />
 
@@ -213,52 +226,39 @@ export default async function ContratoPage({ params }: Props) {
           PÁG 3 — Considerandos + Cláusulas 1ª e 2ª início
       ══════════════════════════════════════════ */}
       <ContentPage purple={PURPLE}>
-        {rc('considerandos')}
-        <ClauseTitle>PRIMEIRA CLÁUSULA</ClauseTitle>
-        {rc('c1')}
-        <ClauseTitle>SEGUNDA CLÁUSULA</ClauseTitle>
-        {rc('c2_servicos')}
+        {rcm('considerandos')}
+        {rct('c1', 'PRIMEIRA CLÁUSULA')}
+        {rct('c2_servicos', 'SEGUNDA CLÁUSULA')}
       </ContentPage>
 
       {/* ══════════════════════════════════════════
           PÁG 4 — Segunda Cláusula cont. + Terceira
       ══════════════════════════════════════════ */}
       <ContentPage purple={PURPLE}>
-        {rc('c2_cancelamento')}
-        <ClauseTitle>TERCEIRA CLÁUSULA</ClauseTitle>
-        {rc('c3')}
+        {rcm('c2_cancelamento')}
+        {rct('c3', 'TERCEIRA CLÁUSULA')}
       </ContentPage>
 
       {/* ══════════════════════════════════════════
           PÁG 5 — Quarta a Nona Cláusula
       ══════════════════════════════════════════ */}
       <ContentPage purple={PURPLE}>
-        <ClauseTitle>QUARTA CLÁUSULA</ClauseTitle>
-        {rc('c4')}
-        <ClauseTitle>QUINTA CLÁUSULA</ClauseTitle>
-        {rc('c5')}
-        <ClauseTitle>SEXTA CLÁUSULA</ClauseTitle>
-        {rc('c6')}
-        <ClauseTitle>SÉTIMA CLÁUSULA</ClauseTitle>
-        {rc('c7')}
-        <ClauseTitle>OITAVA CLÁUSULA</ClauseTitle>
-        {rc('c8')}
-        <ClauseTitle>NONA CLÁUSULA</ClauseTitle>
-        {rc('c9')}
+        {rct('c4', 'QUARTA CLÁUSULA')}
+        {rct('c5', 'QUINTA CLÁUSULA')}
+        {rct('c6', 'SEXTA CLÁUSULA')}
+        {rct('c7', 'SÉTIMA CLÁUSULA')}
+        {rct('c8', 'OITAVA CLÁUSULA')}
+        {rct('c9', 'NONA CLÁUSULA')}
       </ContentPage>
 
       {/* ══════════════════════════════════════════
           PÁG 6 — Décima a Décima Segunda + Serviços
       ══════════════════════════════════════════ */}
       <ContentPage purple={PURPLE}>
-        <ClauseTitle>DÉCIMA CLÁUSULA</ClauseTitle>
-        {rc('c10')}
-        <ClauseTitle>DÉCIMA PRIMEIRA CLÁUSULA</ClauseTitle>
-        {rc('c11')}
-        <ClauseTitle>DÉCIMA SEGUNDA CLÁUSULA</ClauseTitle>
-        {rc('c12')}
-        <ClauseTitle>DOS SERVIÇOS CONTRATADOS</ClauseTitle>
-        {rc('dos_servicos')}
+        {rct('c10', 'DÉCIMA CLÁUSULA')}
+        {rct('c11', 'DÉCIMA PRIMEIRA CLÁUSULA')}
+        {rct('c12', 'DÉCIMA SEGUNDA CLÁUSULA')}
+        {rct('dos_servicos', 'DOS SERVIÇOS CONTRATADOS')}
         <BodyText style={{ fontWeight: 600, marginTop: 20 }}>Preços e métodos de pagamento:</BodyText>
         {valorNum > 0 ? (
           <>
@@ -278,17 +278,21 @@ export default async function ContratoPage({ params }: Props) {
       </ContentPage>
 
       {/* ══════════════════════════════════════════
-          PÁG 7 — Confidencialidade + Lei
+          PÁG 7 — Confidencialidade + Lei + Cláusulas Custom
       ══════════════════════════════════════════ */}
       <ContentPage purple={PURPLE}>
-        <ClauseTitle>CONFIDENCIALIDADE</ClauseTitle>
-        {rc('confidencialidade')}
-        <ClauseTitle>DADOS PESSOAIS</ClauseTitle>
-        {rc('dados_pessoais')}
-        <ClauseTitle>LEI E FORO</ClauseTitle>
-        {rc('lei_foro')}
-        <ClauseTitle>DISPOSIÇÕES FINAIS</ClauseTitle>
-        {rc('disposicoes_finais')}
+        {rct('confidencialidade', 'CONFIDENCIALIDADE')}
+        {rct('dados_pessoais', 'DADOS PESSOAIS')}
+        {rct('lei_foro', 'LEI E FORO')}
+        {rct('disposicoes_finais', 'DISPOSIÇÕES FINAIS')}
+
+        {/* Cláusulas adicionadas pelo admin */}
+        {clausulasCustom.map(c => (
+          <div key={c.id}>
+            <ClauseTitle>{c.titulo.toUpperCase()}</ClauseTitle>
+            {renderLines(c.texto)}
+          </div>
+        ))}
       </ContentPage>
 
       {/* ══════════════════════════════════════════
