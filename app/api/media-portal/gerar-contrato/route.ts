@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       gerado: true,
       geradoEm: agora,
       ref: ficha.contratoRef || `CPS-${new Date().getFullYear()}-${refUp}`,
-      estado: ficha.contratoEstado || 'Por Elaborar',
+      estado: ficha.contratoEstado || 'rascunho',
       url: `/media/contrato/${refUp}`,
       portalUrl: `/portal-media/${refUp}/contrato`,
     },

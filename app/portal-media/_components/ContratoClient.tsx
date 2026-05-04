@@ -26,6 +26,9 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [gerando, setGerando] = useState(false)
+  const [confirmando, setConfirmando] = useState(false)
+  const [confirmAnular, setConfirmAnular] = useState(false)
+  const [anulando, setAnulando] = useState(false)
   const [contratoLocal, setContratoLocal] = useState(contratoGerado)
   const [heroUrl, setHeroUrl] = useState(initial.contratoImageUrl ?? '')
 
@@ -86,19 +89,51 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
           orcamento:          ficha.orcamento          || (valorTotal > 0 ? String(valorTotal) : ''),
           servicosList,
           localAssinatura:    ficha.localEvento        || projeto.local || 'Lisboa',
-          contratoEstado:     'Por Elaborar',
+          contratoEstado:     'rascunho',
         }),
       })
       const data = await res.json()
       if (data.ok) {
-        setContratoLocal({ gerado: true, url: data.contratoUrl, ref: `CPS-${new Date().getFullYear()}-${projeto.ref}`, estado: 'Por Elaborar', geradoEm: new Date().toLocaleDateString('pt-PT') })
+        setContratoLocal({ gerado: true, url: data.contratoUrl, ref: `CPS-${new Date().getFullYear()}-${projeto.ref}`, estado: 'rascunho', geradoEm: new Date().toLocaleDateString('pt-PT') })
         window.open(data.contratoUrl, '_blank')
       }
     } catch {}
     setGerando(false)
   }
 
-  const temContratoGerado = contratoLocal?.gerado && contratoLocal?.url
+  const confirmarContrato = async () => {
+    if (!contratoLocal) return
+    setConfirmando(true)
+    try {
+      const updated: ContratoGerado = { ...contratoLocal, estado: 'disponivel' }
+      await fetch(`/api/media-portal/${projeto.ref}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contrato: updated }),
+      })
+      setContratoLocal(updated)
+    } catch {}
+    setConfirmando(false)
+  }
+
+  const anularContrato = async () => {
+    setAnulando(true)
+    try {
+      await fetch(`/api/media-portal/${projeto.ref}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contrato: { gerado: false } }),
+      })
+      setContratoLocal(null)
+      setConfirmAnular(false)
+    } catch {}
+    setAnulando(false)
+  }
+
+  const temContratoGerado = !!(contratoLocal?.gerado && contratoLocal?.url)
+  const estaDisponivelCliente = contratoLocal?.estado === 'disponivel' || contratoLocal?.estado === 'Assinado'
+  // Admin vê sempre que gerado; cliente só vê após confirmação
+  const mostrarBlocoContrato = temContratoGerado && (isAdmin || estaDisponivelCliente)
 
   // Conta bancária com defaults
   const conta = {
@@ -253,7 +288,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
         <div className="flex flex-col gap-3 mb-8">
 
           {/* Contrato gerado */}
-          {temContratoGerado ? (
+          {mostrarBlocoContrato ? (
             <div className="border border-white/[0.12] bg-white/[0.03] px-6 py-5 relative overflow-hidden">
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
               <div className="flex flex-wrap items-start justify-between gap-4">
@@ -264,10 +299,16 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                     <span className={`text-[9px] tracking-[0.35em] uppercase px-2 py-0.5 border ${
                       contratoLocal?.estado === 'Assinado'
                         ? 'border-emerald-400/30 text-emerald-400/60'
-                        : contratoLocal?.estado === 'Enviado ao Cliente'
-                        ? 'border-blue-400/30 text-blue-400/60'
+                        : contratoLocal?.estado === 'disponivel'
+                        ? 'border-emerald-400/20 text-emerald-400/50'
+                        : contratoLocal?.estado === 'rascunho'
+                        ? 'border-amber-400/30 text-amber-400/50'
                         : 'border-white/10 text-white/25'
-                    }`}>{contratoLocal?.estado}</span>
+                    }`}>
+                      {contratoLocal?.estado === 'rascunho' ? 'Rascunho'
+                        : contratoLocal?.estado === 'disponivel' ? 'Disponível'
+                        : contratoLocal?.estado}
+                    </span>
                     {contratoLocal?.geradoEm && (
                       <span className="text-[10px] text-white/15 tracking-[0.2em]">Gerado em {contratoLocal.geradoEm}</span>
                     )}
@@ -287,6 +328,25 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                   Ver Contrato
                 </a>
               </div>
+              {/* Admin: rascunho warning + confirm button */}
+              {isAdmin && !estaDisponivelCliente && (
+                <div className="mt-4 pt-4 border-t border-white/[0.06] flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-[10px] tracking-[0.2em] text-amber-400/50 font-light">
+                    ⚠ Não visível para o cliente
+                  </p>
+                  <button
+                    onClick={confirmarContrato}
+                    disabled={confirmando}
+                    className="border border-white/30 bg-white/[0.04] hover:bg-white/[0.10] px-5 py-2.5
+                               text-[9px] tracking-[0.4em] text-white/70 hover:text-white uppercase
+                               transition-all duration-200 disabled:opacity-40 shrink-0"
+                    style={{ boxShadow: '0 0 14px rgba(255,255,255,0.05)' }}
+                  >
+                    {confirmando ? '⏳ A confirmar...' : '✓ Confirmar e Disponibilizar'}
+                  </button>
+                </div>
+              )}
+
               {isEditing && (
                 <div className="mt-4">
                   <p className="text-[12px] font-light text-white/30 mb-1">URL externo do contrato (opcional)</p>
@@ -299,6 +359,39 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                   />
                 </div>
               )}
+
+              {/* Admin: anular contrato */}
+              {isAdmin && (
+                <div className="mt-3 pt-3 border-t border-white/[0.04] flex items-center justify-end">
+                  {confirmAnular ? (
+                    <div className="flex items-center gap-3">
+                      <span className="text-[11px] text-white/35 tracking-[0.15em]">Tens a certeza?</span>
+                      <button
+                        onClick={anularContrato}
+                        disabled={anulando}
+                        className="px-4 py-1.5 text-[9px] tracking-[0.3em] uppercase border border-red-400/40
+                                   text-red-400/70 hover:border-red-400/70 hover:text-red-400
+                                   transition-colors disabled:opacity-40"
+                      >
+                        {anulando ? 'A anular...' : 'Anular'}
+                      </button>
+                      <button
+                        onClick={() => setConfirmAnular(false)}
+                        className="text-[9px] tracking-[0.3em] text-white/25 hover:text-white/50 uppercase transition-colors"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmAnular(true)}
+                      className="text-[9px] tracking-[0.3em] text-white/15 hover:text-red-400/50 uppercase transition-colors"
+                    >
+                      Anular Contrato
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             /* Contrato sem gerar */
@@ -309,8 +402,12 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                   <p className="text-[9px] tracking-[0.25em] text-white/60 uppercase font-medium mb-1">
                     Contrato de Prestação de Serviços
                   </p>
-                  <p className={`text-[9px] tracking-[0.3em] uppercase mb-3 ${projeto.contratoUrl ? 'text-emerald-400/60' : 'text-white/20'}`}>
-                    {projeto.contratoUrl ? 'Assinado' : 'A aguardar geração'}
+                  <p className={`text-[9px] tracking-[0.3em] uppercase mb-3 ${
+                    projeto.contratoUrl ? 'text-emerald-400/60'
+                    : temContratoGerado ? 'text-amber-400/40'
+                    : 'text-white/20'
+                  }`}>
+                    {projeto.contratoUrl ? 'Assinado' : temContratoGerado ? 'Em elaboração' : 'A aguardar geração'}
                   </p>
                   {isEditing && (
                     <div>
@@ -340,7 +437,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                       </span>
                     )
                   )}
-                  {isAdmin && !isEditing && (
+                  {isAdmin && !isEditing && !temContratoGerado && (
                     <button onClick={gerarContrato} disabled={gerando}
                       className="border border-white/20 hover:border-white/40 bg-white/[0.04] hover:bg-white/[0.08] px-5 py-2.5 text-[9px] tracking-[0.4em] text-white/50 hover:text-white/80 uppercase transition-all disabled:opacity-40">
                       {gerando ? 'A gerar...' : '⊕ Gerar Contrato'}
