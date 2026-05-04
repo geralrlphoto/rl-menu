@@ -8,6 +8,7 @@ import EditableDateField from './EditableDateField'
 
 const NAV = [
   { slug: 'workflow',        label: 'Workflow',        desc: 'Fases do projeto',        icon: '◈' },
+  { slug: 'roadmap',         label: 'Road Map',        desc: 'Planeamento e tarefas',   icon: '⬡' },
   { slug: 'briefing',        label: 'Briefing',        desc: 'Objetivos e referências', icon: '◎' },
   { slug: 'contrato',        label: 'Contrato & CPS',  desc: 'Documentos e dados',      icon: '◇' },
   { slug: 'pagamentos',      label: 'Pagamentos',      desc: 'Estado financeiro',       icon: '◉' },

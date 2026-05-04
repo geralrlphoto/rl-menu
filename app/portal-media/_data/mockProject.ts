@@ -70,6 +70,22 @@ export interface RegistoPagamento {
   comprativoUrl?: string
 }
 
+export type TarefaEstado = 'concluido' | 'em_andamento' | 'nao_iniciada' | 'aguardar' | 'enviado'
+
+export interface RoadmapTarefa {
+  id: string
+  titulo: string
+  estado: TarefaEstado
+  data?: string
+}
+
+export interface RoadmapColuna {
+  id: string
+  titulo: string
+  cor: string
+  tarefas: RoadmapTarefa[]
+}
+
 export interface Projeto {
   ref: string
   nome: string
@@ -105,6 +121,8 @@ export interface Projeto {
   fichaCliente?: FichaCliente
   contaBancaria?: ContaBancaria
   registosPagamento?: RegistoPagamento[]
+  roadmap?: RoadmapColuna[]
+  roadmapImageUrl?: string
 }
 
 const PROJETOS: Record<string, Projeto> = {
@@ -157,6 +175,66 @@ const PROJETOS: Record<string, Projeto> = {
     contratoUrl: undefined,
     cpsFormUrl: undefined,
     satisfacaoUrl: undefined,
+    roadmap: [
+      {
+        id: 'briefing', titulo: 'Briefing', cor: 'blue',
+        tarefas: [
+          { id: 'b1', titulo: 'Contato',             estado: 'concluido',    data: '2025-09-26' },
+          { id: 'b2', titulo: 'Formulário Briefing', estado: 'concluido',    data: '2025-09-26' },
+        ],
+      },
+      {
+        id: 'proposta', titulo: 'Proposta', cor: 'cyan',
+        tarefas: [
+          { id: 'p1', titulo: 'Análise',             estado: 'concluido', data: '2025-09-26' },
+          { id: 'p2', titulo: 'Criação da Proposta', estado: 'concluido', data: '2025-09-26' },
+          { id: 'p3', titulo: 'Apresentação',        estado: 'concluido', data: '2025-09-26' },
+          { id: 'p4', titulo: 'Adjudicação',         estado: 'concluido', data: '' },
+          { id: 'p5', titulo: 'CPS',                 estado: 'enviado',   data: '2025-10-07' },
+        ],
+      },
+      {
+        id: 'planeamento', titulo: 'Planeamento', cor: 'yellow',
+        tarefas: [
+          { id: 'pl1', titulo: 'Data Captação de Conteúdo', estado: 'em_andamento', data: '2025-12-05' },
+          { id: 'pl2', titulo: 'Seleção de Staff',          estado: 'concluido',    data: '' },
+          { id: 'pl3', titulo: 'Logística',                 estado: 'concluido',    data: '' },
+          { id: 'pl4', titulo: 'Storytelling',              estado: 'concluido',    data: '' },
+          { id: 'pl5', titulo: 'Vistoria ao Local',         estado: 'concluido',    data: '2025-10-28' },
+        ],
+      },
+      {
+        id: 'pre-producao', titulo: 'Pré-Produção', cor: 'purple',
+        tarefas: [
+          { id: 'pr1', titulo: 'Briefing Staff',             estado: 'concluido', data: '' },
+          { id: 'pr2', titulo: 'Organização Equipamento',    estado: 'concluido', data: '' },
+          { id: 'pr3', titulo: 'Confirmar datas com Cliente',estado: 'concluido', data: '' },
+        ],
+      },
+      {
+        id: 'producao', titulo: 'Produção', cor: 'orange',
+        tarefas: [
+          { id: 'prod1', titulo: 'Captação de Conteúdo', estado: 'em_andamento', data: '' },
+        ],
+      },
+      {
+        id: 'pos-producao', titulo: 'Pós-Produção', cor: 'white',
+        tarefas: [
+          { id: 'pp1', titulo: 'Arquivo de Ficheiros',   estado: 'em_andamento', data: '' },
+          { id: 'pp2', titulo: 'Edição de Vídeo',        estado: 'nao_iniciada', data: '' },
+          { id: 'pp3', titulo: 'Edição de Fotografias',  estado: 'aguardar',     data: '' },
+          { id: 'pp4', titulo: 'WebSite',                estado: 'nao_iniciada', data: '' },
+        ],
+      },
+      {
+        id: 'aprovacao', titulo: 'Aprovação', cor: 'emerald',
+        tarefas: [
+          { id: 'ap1', titulo: 'Revisão Interna',    estado: 'nao_iniciada', data: '' },
+          { id: 'ap2', titulo: 'Testes',             estado: 'nao_iniciada', data: '' },
+          { id: 'ap3', titulo: 'Revisão do Cliente', estado: 'nao_iniciada', data: '' },
+        ],
+      },
+    ],
   },
 }
 
