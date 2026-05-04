@@ -18,6 +18,7 @@ export interface Pagamento {
 
 export interface Entrega {
   titulo: string
+  tipo?: 'video' | 'fotografia' | 'outro'
   formato: string
   duracao: string
   linkUrl?: string
