@@ -191,15 +191,27 @@ export async function POST(req: NextRequest) {
 
     const distritosAlvo = distritos?.length ? distritos : ['Lisboa', 'Setúbal', 'Évora']
 
-    // Construir queries para cada distrito
+    // Domínios a excluir — diretórios, portais de emprego, agregadores
+    const BLACKLIST = [
+      'google', 'facebook', 'linkedin', 'youtube', 'wikipedia', 'infopedia',
+      'bing.com', 'olx.', 'infoempresas', 'europages', 'listagem.pt',
+      'michaelpage', 'racius', 'einforma', 'guiamais', 'paginas-amarelas',
+      'sapo.pt', 'dn.pt', 'publico.pt', 'jn.pt', 'rtp.pt', 'sic.pt',
+      'record.pt', 'expresso.pt', 'observador.pt', 'idealista', 'imovirtual',
+      'net-empregos', 'itjobs', 'glassdoor', 'indeed', 'trovit',
+      'tripadvisor', 'booking.com', 'airbnb', 'zomato', 'yelp',
+      'pordata', 'ine.pt', 'dgae', 'iapmei', 'gov.pt',
+    ]
+
+    // Construir queries específicas por distrito — focadas em empresas individuais
     const queries: { query: string; distrito: string }[] = []
     for (const distrito of distritosAlvo) {
       queries.push({
-        query: `${tipoQuery ?? sector} empresa ${distrito} Portugal site:.pt`,
+        query: `${tipoQuery ?? sector} lda ${distrito} -site:infoempresas.com.pt -site:europages.pt -site:racius.com`,
         distrito,
       })
       queries.push({
-        query: `"${sector}" "${distrito}" lda empresa contacto`,
+        query: `empresa ${tipoQuery ?? sector} ${distrito} site:.pt -intitle:"empresas" -intitle:"listagem"`,
         distrito,
       })
     }
@@ -209,18 +221,20 @@ export async function POST(req: NextRequest) {
 
     // Executar pesquisas (máx 3 queries para poupar quota)
     for (const { query, distrito } of queries.slice(0, 3)) {
-      const { items, error } = await serperSearch(query, 5)
+      const { items, error } = await serperSearch(query, 6)
       if (error) searchErrors.push(`[${distrito}] ${error}`)
       for (const item of items) {
         const domain = extractDomain(item.link)
         if (allResults.find(r => r.domain === domain)) continue
-        if (!domain || domain.includes('google') || domain.includes('facebook') ||
-            domain.includes('linkedin') || domain.includes('youtube') ||
-            domain.includes('wikipedia') || domain.includes('infopedia') ||
-            domain.includes('bing.com') || domain.includes('olx.')) continue
+        if (!domain) continue
+        if (BLACKLIST.some(b => domain.includes(b))) continue
+
+        // Filtrar títulos que parecem diretórios ou listas
+        const title = item.title ?? ''
+        if (/\d+ empresa|zona industrial|maiores empresas|indústrias em |empresas em |listagem/i.test(title)) continue
 
         allResults.push({
-          empresa: item.title?.replace(/ [-|–].*/,'').trim() ?? '',
+          empresa: title.replace(/ [-|–|·].*/,'').trim(),
           website: item.link,
           domain,
           descricao: item.snippet ?? '',
