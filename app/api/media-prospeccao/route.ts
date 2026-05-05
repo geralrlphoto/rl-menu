@@ -1,25 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const GOOGLE_KEY  = process.env.GOOGLE_SEARCH_API_KEY!
-const GOOGLE_CX   = process.env.GOOGLE_SEARCH_ENGINE_ID!
+const BING_KEY    = process.env.BING_SEARCH_API_KEY!
 const HUNTER_KEY  = process.env.HUNTER_API_KEY!
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY!
 
-// ─── Google Custom Search ─────────────────────────────────────────────────────
+// ─── Bing Web Search ──────────────────────────────────────────────────────────
 
-async function googleSearch(query: string, num = 10): Promise<{ items: any[]; error?: string }> {
-  const url = new URL('https://www.googleapis.com/customsearch/v1')
-  url.searchParams.set('key', GOOGLE_KEY)
-  url.searchParams.set('cx', GOOGLE_CX)
-  url.searchParams.set('q', query)
-  url.searchParams.set('num', String(num))
-  url.searchParams.set('gl', 'pt')
-  url.searchParams.set('hl', 'pt')
+async function bingSearch(query: string, count = 10): Promise<{ items: any[]; error?: string }> {
+  if (!BING_KEY) return { items: [], error: 'BING_SEARCH_API_KEY não configurada' }
+  try {
+    const url = new URL('https://api.bing.microsoft.com/v7.0/search')
+    url.searchParams.set('q', query)
+    url.searchParams.set('count', String(count))
+    url.searchParams.set('mkt', 'pt-PT')
+    url.searchParams.set('responseFilter', 'Webpages')
 
-  const res = await fetch(url.toString())
-  const data = await res.json()
-  if (!res.ok) return { items: [], error: data?.error?.message ?? `HTTP ${res.status}` }
-  return { items: data.items ?? [] }
+    const res = await fetch(url.toString(), {
+      headers: { 'Ocp-Apim-Subscription-Key': BING_KEY },
+    })
+    const data = await res.json()
+    if (!res.ok) return { items: [], error: data?.error?.message ?? `HTTP ${res.status}` }
+
+    const pages = data.webPages?.value ?? []
+    return {
+      items: pages.map((p: any) => ({
+        title:   p.name,
+        link:    p.url,
+        snippet: p.snippet,
+      }))
+    }
+  } catch (e: any) {
+    return { items: [], error: e.message }
+  }
 }
 
 // ─── Hunter.io domain search ──────────────────────────────────────────────────
@@ -138,11 +150,11 @@ export async function POST(req: NextRequest) {
     const queries: { query: string; distrito: string }[] = []
     for (const distrito of distritosAlvo) {
       queries.push({
-        query: `${tipoQuery ?? sector} empresa ${distrito} Portugal`,
+        query: `${tipoQuery ?? sector} empresa ${distrito} Portugal site:.pt`,
         distrito,
       })
       queries.push({
-        query: `${sector} ${distrito} lda contacto site:*.pt`,
+        query: `"${sector}" "${distrito}" lda empresa contacto`,
         distrito,
       })
     }
@@ -152,15 +164,15 @@ export async function POST(req: NextRequest) {
 
     // Executar pesquisas (máx 3 queries para poupar quota)
     for (const { query, distrito } of queries.slice(0, 3)) {
-      const { items, error } = await googleSearch(query, 5)
+      const { items, error } = await bingSearch(query, 5)
       if (error) searchErrors.push(`[${distrito}] ${error}`)
       for (const item of items) {
-        // Evitar duplicados
         const domain = extractDomain(item.link)
         if (allResults.find(r => r.domain === domain)) continue
         if (!domain || domain.includes('google') || domain.includes('facebook') ||
             domain.includes('linkedin') || domain.includes('youtube') ||
-            domain.includes('wikipedia') || domain.includes('infopedia')) continue
+            domain.includes('wikipedia') || domain.includes('infopedia') ||
+            domain.includes('bing.com') || domain.includes('olx.')) continue
 
         allResults.push({
           empresa: item.title?.replace(/ [-|–].*/,'').trim() ?? '',
@@ -180,9 +192,9 @@ export async function POST(req: NextRequest) {
         debug: {
           searchErrors,
           keys: {
-            google: GOOGLE_KEY ? `...${GOOGLE_KEY.slice(-6)}` : 'MISSING',
-            cx: GOOGLE_CX ? `...${GOOGLE_CX.slice(-6)}` : 'MISSING',
+            bing: BING_KEY ? `...${BING_KEY.slice(-6)}` : 'MISSING',
             hunter: HUNTER_KEY ? 'OK' : 'MISSING',
+            anthropic: ANTHROPIC_KEY ? 'OK' : 'MISSING',
           }
         }
       })
