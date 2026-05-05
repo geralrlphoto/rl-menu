@@ -98,6 +98,18 @@ export default async function CrmPage() {
             </span>
           </Link>
 
+          {/* Botão Agente Prospeção */}
+          <Link href="/media/crm/prospeccao"
+            className="group flex items-center gap-3 border border-violet-500/30 bg-violet-500/[0.05] hover:bg-violet-500/[0.12]
+                       hover:border-violet-400/50 px-6 py-4 transition-all duration-300">
+            <svg className="w-3.5 h-3.5 text-violet-400/50 group-hover:text-violet-300/80 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35M11 8v6M8 11h6"/>
+            </svg>
+            <span className="text-[9px] tracking-[0.45em] text-violet-400/50 group-hover:text-violet-300/80 uppercase transition-colors whitespace-nowrap">
+              Agente Prospeção IA
+            </span>
+          </Link>
+
         </div>
       </div>
 
