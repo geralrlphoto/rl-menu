@@ -7,7 +7,7 @@ const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY!
 
 // ─── Google Custom Search ─────────────────────────────────────────────────────
 
-async function googleSearch(query: string, num = 10): Promise<any[]> {
+async function googleSearch(query: string, num = 10): Promise<{ items: any[]; error?: string }> {
   const url = new URL('https://www.googleapis.com/customsearch/v1')
   url.searchParams.set('key', GOOGLE_KEY)
   url.searchParams.set('cx', GOOGLE_CX)
@@ -17,9 +17,9 @@ async function googleSearch(query: string, num = 10): Promise<any[]> {
   url.searchParams.set('hl', 'pt')
 
   const res = await fetch(url.toString())
-  if (!res.ok) return []
   const data = await res.json()
-  return data.items ?? []
+  if (!res.ok) return { items: [], error: data?.error?.message ?? `HTTP ${res.status}` }
+  return { items: data.items ?? [] }
 }
 
 // ─── Hunter.io domain search ──────────────────────────────────────────────────
@@ -148,10 +148,12 @@ export async function POST(req: NextRequest) {
     }
 
     const allResults: any[] = []
+    const searchErrors: string[] = []
 
-    // Executar pesquisas (máx 2 queries para poupar quota)
+    // Executar pesquisas (máx 3 queries para poupar quota)
     for (const { query, distrito } of queries.slice(0, 3)) {
-      const items = await googleSearch(query, 5)
+      const { items, error } = await googleSearch(query, 5)
+      if (error) searchErrors.push(`[${distrito}] ${error}`)
       for (const item of items) {
         // Evitar duplicados
         const domain = extractDomain(item.link)
@@ -168,6 +170,22 @@ export async function POST(req: NextRequest) {
           distrito,
         })
       }
+    }
+
+    // Se não encontrou nada, devolver erro detalhado
+    if (allResults.length === 0) {
+      return NextResponse.json({
+        prospects: [],
+        total: 0,
+        debug: {
+          searchErrors,
+          keys: {
+            google: GOOGLE_KEY ? `...${GOOGLE_KEY.slice(-6)}` : 'MISSING',
+            cx: GOOGLE_CX ? `...${GOOGLE_CX.slice(-6)}` : 'MISSING',
+            hunter: HUNTER_KEY ? 'OK' : 'MISSING',
+          }
+        }
+      })
     }
 
     // Para cada empresa, buscar contactos + análise IA (máx 6)
