@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 const SERPER_KEY  = process.env.SERPER_API_KEY!
-const HUNTER_KEY  = process.env.HUNTER_API_KEY!
+const APOLLO_KEY  = process.env.APOLLO_API_KEY!
+const HUNTER_KEY  = process.env.HUNTER_API_KEY!   // fallback
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY!
 
 // ─── Serper.dev (Google Search) ───────────────────────────────────────────────
@@ -33,17 +34,62 @@ async function serperSearch(query: string, num = 10): Promise<{ items: any[]; er
   }
 }
 
-// ─── Hunter.io domain search ──────────────────────────────────────────────────
+// ─── Apollo.io people search ──────────────────────────────────────────────────
+
+async function apolloSearch(domain: string): Promise<any[]> {
+  if (!domain || !APOLLO_KEY) return hunterSearch(domain)
+  try {
+    const res = await fetch('https://api.apollo.io/api/v1/mixed_people/search', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
+        'X-Api-Key': APOLLO_KEY,
+      },
+      body: JSON.stringify({
+        q_organization_domains_list: [domain],
+        person_titles: [
+          'CEO', 'Chief Executive Officer',
+          'CMO', 'Chief Marketing Officer',
+          'Marketing Director', 'Director of Marketing',
+          'Marketing Manager', 'Head of Marketing',
+          'Founder', 'Co-Founder', 'Owner',
+          'Director Geral', 'Diretor de Marketing',
+        ],
+        page: 1,
+        per_page: 5,
+      }),
+    })
+    if (!res.ok) return hunterSearch(domain)
+    const data = await res.json()
+    const people = data.people ?? []
+
+    return people
+      .filter((p: any) => p.email)
+      .slice(0, 3)
+      .map((p: any) => ({
+        first_name: p.first_name ?? '',
+        last_name:  p.last_name ?? '',
+        value:      p.email ?? '',
+        position:   p.title ?? '',
+        department: p.departments?.[0] ?? '',
+        linkedin:   p.linkedin_url ?? '',
+      }))
+  } catch {
+    return hunterSearch(domain)
+  }
+}
+
+// ─── Hunter.io domain search (fallback) ──────────────────────────────────────
 
 async function hunterSearch(domain: string): Promise<any[]> {
-  if (!domain) return []
+  if (!domain || !HUNTER_KEY) return []
   try {
     const url = `https://api.hunter.io/v2/domain-search?domain=${domain}&api_key=${HUNTER_KEY}&limit=5`
     const res = await fetch(url)
     if (!res.ok) return []
     const data = await res.json()
     const emails = data.data?.emails ?? []
-    // Priorizar CEO, Marketing, Director, Founder
     const priority = ['ceo', 'marketing', 'director', 'founder', 'owner', 'manager', 'head']
     return emails
       .filter((e: any) => {
@@ -203,7 +249,7 @@ export async function POST(req: NextRequest) {
     const prospects = await Promise.all(
       allResults.slice(0, 6).map(async (r) => {
         const [contacts, analise] = await Promise.all([
-          hunterSearch(r.domain),
+          apolloSearch(r.domain),
           claudeAnalise(r.empresa, sector, r.descricao, r.distrito),
         ])
 
