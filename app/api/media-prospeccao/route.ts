@@ -150,6 +150,34 @@ Sê direto e prático. Máximo 200 palavras total.`,
   }
 }
 
+// ─── enriquecer prospeto: Instagram + interesse em vídeo ─────────────────────
+
+async function enrichProspect(empresa: string): Promise<{ instagramUrl: string | null; interesseVideo: boolean }> {
+  try {
+    const query = `"${empresa}" (site:instagram.com OR "vídeo corporativo" OR "fotografia profissional" OR "produção vídeo" OR "conteúdo visual")`
+    const { items } = await serperSearch(query, 6)
+
+    let instagramUrl: string | null = null
+    let interesseVideo = false
+
+    for (const item of items) {
+      // Detectar Instagram
+      if (!instagramUrl && item.link?.includes('instagram.com')) {
+        instagramUrl = item.link
+      }
+      // Detectar interesse em vídeo/foto
+      const text = ((item.title ?? '') + ' ' + (item.snippet ?? '')).toLowerCase()
+      if (/v[íi]deo|fotografia|audiovisual|produ[çc][ãa]o visual|marketing visual|filmagem|fotogr[áa]f/.test(text)) {
+        interesseVideo = true
+      }
+    }
+
+    return { instagramUrl, interesseVideo }
+  } catch {
+    return { instagramUrl: null, interesseVideo: false }
+  }
+}
+
 // ─── extrair domínio ──────────────────────────────────────────────────────────
 
 function extractDomain(url: string): string {
@@ -259,12 +287,13 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Para cada empresa, buscar contactos + análise IA (máx 6)
+    // Para cada empresa, buscar contactos + análise IA + enriquecimento (máx 6)
     const prospects = await Promise.all(
       allResults.slice(0, 6).map(async (r) => {
-        const [contacts, analise] = await Promise.all([
+        const [contacts, analise, enrichment] = await Promise.all([
           apolloSearch(r.domain),
           claudeAnalise(r.empresa, sector, r.descricao, r.distrito),
+          enrichProspect(r.empresa),
         ])
 
         const contactoPrincipal = contacts[0] ?? null
@@ -289,6 +318,8 @@ export async function POST(req: NextRequest) {
             cargo: c.position ?? c.department ?? '',
           })),
           analise,
+          instagramUrl:   enrichment.instagramUrl,
+          interesseVideo: enrichment.interesseVideo,
         }
       })
     )

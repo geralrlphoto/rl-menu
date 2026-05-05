@@ -14,6 +14,8 @@ type Prospect = {
   contacto: Contacto | null
   todosContatos: Contacto[]
   analise: string
+  instagramUrl: string | null
+  interesseVideo: boolean
 }
 
 // ─── constantes ───────────────────────────────────────────────────────────────
@@ -250,6 +252,21 @@ export default function ProspeccaoPage() {
                             </span>
                           ) : (
                             <span className="text-[10px] text-white/20">✉ Sem contacto direto encontrado</span>
+                          )}
+                          {/* Instagram */}
+                          {p.instagramUrl ? (
+                            <a href={p.instagramUrl} target="_blank" rel="noopener noreferrer"
+                              className="text-[10px] text-pink-400/70 hover:text-pink-400 transition-colors">
+                              📸 Instagram ↗
+                            </a>
+                          ) : (
+                            <span className="text-[10px] text-white/15">📸 Sem Instagram</span>
+                          )}
+                          {/* Interesse em vídeo */}
+                          {p.interesseVideo && (
+                            <span className="text-[10px] text-cyan-400/70 border border-cyan-400/25 px-2 py-0.5">
+                              🎬 Interesse em vídeo/foto
+                            </span>
                           )}
                         </div>
                       </div>
