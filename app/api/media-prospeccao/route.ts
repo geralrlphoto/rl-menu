@@ -310,6 +310,7 @@ export async function POST(req: NextRequest) {
 
     const queries: { query: string; distrito: string }[] = []
     for (const distrito of distritosAlvo) {
+      // 3 queries por distrito para maximizar resultados únicos
       queries.push({
         query: `${tipoQuery ?? sector} lda ${distrito} -site:infoempresas.com.pt -site:europages.pt -site:racius.com`,
         distrito,
@@ -318,13 +319,24 @@ export async function POST(req: NextRequest) {
         query: `empresa ${tipoQuery ?? sector} ${distrito} site:.pt -intitle:"empresas" -intitle:"listagem"`,
         distrito,
       })
+      queries.push({
+        query: `"${tipoQuery ?? sector}" ${distrito} Portugal contacto sobre nós`,
+        distrito,
+      })
     }
 
     const allResults: any[] = []
     const searchErrors: string[] = []
 
-    for (const { query, distrito } of queries.slice(0, 3)) {
-      const { items, error } = await serperSearch(query, 6)
+    // Executar todas as queries em paralelo (até 6 para cobrir 2 distritos × 3 queries)
+    const querySlice = queries.slice(0, Math.min(queries.length, 6))
+    const searchResults = await Promise.all(
+      querySlice.map(({ query, distrito }) =>
+        serperSearch(query, 10).then(r => ({ ...r, distrito }))
+      )
+    )
+
+    for (const { items, error, distrito } of searchResults) {
       if (error) searchErrors.push(`[${distrito}] ${error}`)
       for (const item of items) {
         const domain = extractDomain(item.link)
@@ -350,9 +362,9 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Para cada empresa — tudo em paralelo
+    // Para cada empresa — tudo em paralelo (máx 10)
     const prospects = await Promise.all(
-      allResults.slice(0, 6).map(async (r) => {
+      allResults.slice(0, 10).map(async (r) => {
         const [apolloResult, analise, enrichment] = await Promise.all([
           apolloSearch(r.domain),
           claudeAnalise(r.empresa, sector, r.descricao, r.distrito),
