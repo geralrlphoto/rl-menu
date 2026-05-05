@@ -1,32 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const BING_KEY    = process.env.BING_SEARCH_API_KEY!
+const BRAVE_KEY   = process.env.BRAVE_SEARCH_API_KEY!
 const HUNTER_KEY  = process.env.HUNTER_API_KEY!
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY!
 
-// ─── Bing Web Search ──────────────────────────────────────────────────────────
+// ─── Brave Web Search ─────────────────────────────────────────────────────────
 
-async function bingSearch(query: string, count = 10): Promise<{ items: any[]; error?: string }> {
-  if (!BING_KEY) return { items: [], error: 'BING_SEARCH_API_KEY não configurada' }
+async function braveSearch(query: string, count = 10): Promise<{ items: any[]; error?: string }> {
+  if (!BRAVE_KEY) return { items: [], error: 'BRAVE_SEARCH_API_KEY não configurada' }
   try {
-    const url = new URL('https://api.bing.microsoft.com/v7.0/search')
+    const url = new URL('https://api.search.brave.com/res/v1/web/search')
     url.searchParams.set('q', query)
     url.searchParams.set('count', String(count))
-    url.searchParams.set('mkt', 'pt-PT')
-    url.searchParams.set('responseFilter', 'Webpages')
+    url.searchParams.set('country', 'PT')
+    url.searchParams.set('lang', 'pt')
 
     const res = await fetch(url.toString(), {
-      headers: { 'Ocp-Apim-Subscription-Key': BING_KEY },
+      headers: {
+        'Accept': 'application/json',
+        'Accept-Encoding': 'gzip',
+        'X-Subscription-Token': BRAVE_KEY,
+      },
     })
     const data = await res.json()
-    if (!res.ok) return { items: [], error: data?.error?.message ?? `HTTP ${res.status}` }
+    if (!res.ok) return { items: [], error: data?.message ?? `HTTP ${res.status}` }
 
-    const pages = data.webPages?.value ?? []
+    const pages = data.web?.results ?? []
     return {
       items: pages.map((p: any) => ({
-        title:   p.name,
+        title:   p.title,
         link:    p.url,
-        snippet: p.snippet,
+        snippet: p.description,
       }))
     }
   } catch (e: any) {
@@ -164,7 +168,7 @@ export async function POST(req: NextRequest) {
 
     // Executar pesquisas (máx 3 queries para poupar quota)
     for (const { query, distrito } of queries.slice(0, 3)) {
-      const { items, error } = await bingSearch(query, 5)
+      const { items, error } = await braveSearch(query, 5)
       if (error) searchErrors.push(`[${distrito}] ${error}`)
       for (const item of items) {
         const domain = extractDomain(item.link)
@@ -192,7 +196,7 @@ export async function POST(req: NextRequest) {
         debug: {
           searchErrors,
           keys: {
-            bing: BING_KEY ? `...${BING_KEY.slice(-6)}` : 'MISSING',
+            brave: BRAVE_KEY ? `...${BRAVE_KEY.slice(-6)}` : 'MISSING',
             hunter: HUNTER_KEY ? 'OK' : 'MISSING',
             anthropic: ANTHROPIC_KEY ? 'OK' : 'MISSING',
           }
