@@ -1,36 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const BRAVE_KEY   = process.env.BRAVE_SEARCH_API_KEY!
+const SERPER_KEY  = process.env.SERPER_API_KEY!
 const HUNTER_KEY  = process.env.HUNTER_API_KEY!
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY!
 
-// ─── Brave Web Search ─────────────────────────────────────────────────────────
+// ─── Serper.dev (Google Search) ───────────────────────────────────────────────
 
-async function braveSearch(query: string, count = 10): Promise<{ items: any[]; error?: string }> {
-  if (!BRAVE_KEY) return { items: [], error: 'BRAVE_SEARCH_API_KEY não configurada' }
+async function serperSearch(query: string, num = 10): Promise<{ items: any[]; error?: string }> {
+  if (!SERPER_KEY) return { items: [], error: 'SERPER_API_KEY não configurada' }
   try {
-    const url = new URL('https://api.search.brave.com/res/v1/web/search')
-    url.searchParams.set('q', query)
-    url.searchParams.set('count', String(count))
-    url.searchParams.set('country', 'PT')
-    url.searchParams.set('lang', 'pt')
-
-    const res = await fetch(url.toString(), {
+    const res = await fetch('https://google.serper.dev/search', {
+      method: 'POST',
       headers: {
-        'Accept': 'application/json',
-        'Accept-Encoding': 'gzip',
-        'X-Subscription-Token': BRAVE_KEY,
+        'X-API-KEY': SERPER_KEY,
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({ q: query, num, gl: 'pt', hl: 'pt' }),
     })
     const data = await res.json()
     if (!res.ok) return { items: [], error: data?.message ?? `HTTP ${res.status}` }
 
-    const pages = data.web?.results ?? []
+    const results = data.organic ?? []
     return {
-      items: pages.map((p: any) => ({
-        title:   p.title,
-        link:    p.url,
-        snippet: p.description,
+      items: results.map((r: any) => ({
+        title:   r.title,
+        link:    r.link,
+        snippet: r.snippet,
       }))
     }
   } catch (e: any) {
@@ -168,7 +163,7 @@ export async function POST(req: NextRequest) {
 
     // Executar pesquisas (máx 3 queries para poupar quota)
     for (const { query, distrito } of queries.slice(0, 3)) {
-      const { items, error } = await braveSearch(query, 5)
+      const { items, error } = await serperSearch(query, 5)
       if (error) searchErrors.push(`[${distrito}] ${error}`)
       for (const item of items) {
         const domain = extractDomain(item.link)
@@ -196,7 +191,7 @@ export async function POST(req: NextRequest) {
         debug: {
           searchErrors,
           keys: {
-            brave: BRAVE_KEY ? `...${BRAVE_KEY.slice(-6)}` : 'MISSING',
+            serper: SERPER_KEY ? `...${SERPER_KEY.slice(-6)}` : 'MISSING',
             hunter: HUNTER_KEY ? 'OK' : 'MISSING',
             anthropic: ANTHROPIC_KEY ? 'OK' : 'MISSING',
           }
