@@ -16,6 +16,7 @@ type Prospect = {
   analise: string
   instagramUrl: string | null
   interesseVideo: boolean
+  premios: string[]
 }
 
 // ─── constantes ───────────────────────────────────────────────────────────────
@@ -268,7 +269,23 @@ export default function ProspeccaoPage() {
                               🎬 Interesse em vídeo/foto
                             </span>
                           )}
+                          {/* Prémios */}
+                          {p.premios?.length > 0 && (
+                            <span className="text-[10px] text-yellow-400/70 border border-yellow-400/25 px-2 py-0.5">
+                              🏆 Empresa premiada
+                            </span>
+                          )}
                         </div>
+                        {/* Detalhes dos prémios */}
+                        {p.premios?.length > 0 && (
+                          <div className="mt-2 flex flex-col gap-1">
+                            {p.premios.map((pr, i) => (
+                              <p key={i} className="text-[9px] text-yellow-400/40 italic leading-relaxed">
+                                🏅 {pr}
+                              </p>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
                       {/* Acções */}

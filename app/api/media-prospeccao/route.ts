@@ -152,29 +152,43 @@ Sê direto e prático. Máximo 200 palavras total.`,
 
 // ─── enriquecer prospeto: Instagram + interesse em vídeo ─────────────────────
 
-async function enrichProspect(empresa: string): Promise<{ instagramUrl: string | null; interesseVideo: boolean }> {
+async function enrichProspect(empresa: string): Promise<{ instagramUrl: string | null; interesseVideo: boolean; premios: string[] }> {
   try {
-    const query = `"${empresa}" (site:instagram.com OR "vídeo corporativo" OR "fotografia profissional" OR "produção vídeo" OR "conteúdo visual")`
-    const { items } = await serperSearch(query, 6)
+    // Query combinada: Instagram + vídeo + prémios
+    const query = `"${empresa}" (site:instagram.com OR "vídeo corporativo" OR "fotografia profissional" OR "produção vídeo" OR "prémio" OR "premiada" OR "award" OR "melhor empresa")`
+    const { items } = await serperSearch(query, 8)
 
     let instagramUrl: string | null = null
     let interesseVideo = false
+    const premios: string[] = []
 
     for (const item of items) {
       // Detectar Instagram
       if (!instagramUrl && item.link?.includes('instagram.com')) {
         instagramUrl = item.link
       }
-      // Detectar interesse em vídeo/foto
+
       const text = ((item.title ?? '') + ' ' + (item.snippet ?? '')).toLowerCase()
+      const rawText = (item.title ?? '') + ' ' + (item.snippet ?? '')
+
+      // Detectar interesse em vídeo/foto
       if (/v[íi]deo|fotografia|audiovisual|produ[çc][ãa]o visual|marketing visual|filmagem|fotogr[áa]f/.test(text)) {
         interesseVideo = true
       }
+
+      // Detectar prémios
+      if (/pr[ée]mio|premiada|premiado|award|melhor empresa|melhor marca|reconhecida|distinção|galardão|certificad/i.test(rawText)) {
+        // Extrair trecho relevante do snippet
+        const match = rawText.match(/[^.]*(?:pr[ée]mio|award|galardão|distinção|melhor empresa|melhor marca|reconhecida)[^.]*/i)
+        if (match && !premios.includes(match[0].trim())) {
+          premios.push(match[0].trim().slice(0, 120))
+        }
+      }
     }
 
-    return { instagramUrl, interesseVideo }
+    return { instagramUrl, interesseVideo, premios: premios.slice(0, 2) }
   } catch {
-    return { instagramUrl: null, interesseVideo: false }
+    return { instagramUrl: null, interesseVideo: false, premios: [] }
   }
 }
 
@@ -320,6 +334,7 @@ export async function POST(req: NextRequest) {
           analise,
           instagramUrl:   enrichment.instagramUrl,
           interesseVideo: enrichment.interesseVideo,
+          premios:        enrichment.premios,
         }
       })
     )
