@@ -11,12 +11,18 @@ type Prospect = {
   empresa: string; website: string; domain: string
   descricao: string; distrito: string; sector: string
   faturacaoEstimada: string
+  numFuncionarios: number | null
   contacto: Contacto | null
   todosContatos: Contacto[]
   analise: string
   instagramUrl: string | null
+  facebookUrl: string | null
+  tiktokUrl: string | null
   interesseVideo: boolean
   premios: string[]
+  eventosRecentes: string[]
+  isHiringMarketing: boolean
+  score: number
 }
 
 // ─── constantes ───────────────────────────────────────────────────────────────
@@ -224,6 +230,8 @@ export default function ProspeccaoPage() {
                     {/* Linha principal */}
                     <div className="px-6 py-5 flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
+
+                        {/* Cabeçalho com score */}
                         <div className="flex items-center gap-3 mb-1 flex-wrap">
                           <p className="text-[15px] font-light text-white/80">{p.empresa || p.domain}</p>
                           <span className="text-[9px] px-2 py-0.5 border border-violet-400/25 text-violet-400/60 bg-violet-400/[0.05]">
@@ -232,57 +240,85 @@ export default function ProspeccaoPage() {
                           <span className="text-[9px] px-2 py-0.5 border border-white/10 text-white/30">
                             📍 {p.distrito}
                           </span>
+                          {/* Score de prioridade */}
+                          <span className={`text-[9px] px-2 py-0.5 border font-mono font-medium ${
+                            p.score >= 70 ? 'border-emerald-400/40 text-emerald-400/80 bg-emerald-400/[0.06]' :
+                            p.score >= 40 ? 'border-amber-400/40 text-amber-400/80 bg-amber-400/[0.06]' :
+                                            'border-white/10 text-white/30'
+                          }`}>
+                            Score {p.score}/100
+                          </span>
                         </div>
 
                         <p className="text-[11px] text-white/30 mb-3 line-clamp-2">{p.descricao}</p>
 
-                        <div className="flex items-center gap-5 flex-wrap">
-                          {/* Website */}
+                        {/* Linha 1: website + faturação + funcionários + contacto */}
+                        <div className="flex items-center gap-4 flex-wrap mb-2">
                           <a href={p.website} target="_blank" rel="noopener noreferrer"
                             className="text-[10px] text-violet-400/50 hover:text-violet-400/80 transition-colors">
                             🌐 {p.domain}
                           </a>
-                          {/* Faturação */}
-                          <span className="text-[10px] text-amber-400/50">
-                            💰 {p.faturacaoEstimada}
-                          </span>
-                          {/* Contacto */}
+                          <span className="text-[10px] text-amber-400/50">💰 {p.faturacaoEstimada}</span>
+                          {p.numFuncionarios && (
+                            <span className="text-[10px] text-white/35">
+                              👥 {p.numFuncionarios} funcionários
+                            </span>
+                          )}
                           {p.contacto ? (
                             <span className="text-[10px] text-emerald-400/60">
                               ✉ {p.contacto.nome} · {p.contacto.cargo}
                             </span>
                           ) : (
-                            <span className="text-[10px] text-white/20">✉ Sem contacto direto encontrado</span>
+                            <span className="text-[10px] text-white/20">✉ Sem contacto direto</span>
                           )}
-                          {/* Instagram */}
+                        </div>
+
+                        {/* Linha 2: redes sociais + badges de sinal */}
+                        <div className="flex items-center gap-3 flex-wrap">
                           {p.instagramUrl ? (
                             <a href={p.instagramUrl} target="_blank" rel="noopener noreferrer"
-                              className="text-[10px] text-pink-400/70 hover:text-pink-400 transition-colors">
-                              📸 Instagram ↗
-                            </a>
+                              className="text-[10px] text-pink-400/70 hover:text-pink-400 transition-colors">📸 Instagram ↗</a>
                           ) : (
                             <span className="text-[10px] text-white/15">📸 Sem Instagram</span>
                           )}
-                          {/* Interesse em vídeo */}
+                          {p.facebookUrl && (
+                            <a href={p.facebookUrl} target="_blank" rel="noopener noreferrer"
+                              className="text-[10px] text-blue-400/60 hover:text-blue-400 transition-colors">👍 Facebook ↗</a>
+                          )}
+                          {p.tiktokUrl && (
+                            <a href={p.tiktokUrl} target="_blank" rel="noopener noreferrer"
+                              className="text-[10px] text-white/50 hover:text-white/80 transition-colors">🎵 TikTok ↗</a>
+                          )}
                           {p.interesseVideo && (
                             <span className="text-[10px] text-cyan-400/70 border border-cyan-400/25 px-2 py-0.5">
-                              🎬 Interesse em vídeo/foto
+                              🎬 Interesse em vídeo
                             </span>
                           )}
-                          {/* Prémios */}
+                          {p.isHiringMarketing && (
+                            <span className="text-[10px] text-orange-400/70 border border-orange-400/25 px-2 py-0.5">
+                              💼 A contratar Marketing
+                            </span>
+                          )}
                           {p.premios?.length > 0 && (
                             <span className="text-[10px] text-yellow-400/70 border border-yellow-400/25 px-2 py-0.5">
                               🏆 Empresa premiada
                             </span>
                           )}
+                          {p.eventosRecentes?.length > 0 && (
+                            <span className="text-[10px] text-violet-300/70 border border-violet-300/25 px-2 py-0.5">
+                              ⚡ Evento recente
+                            </span>
+                          )}
                         </div>
-                        {/* Detalhes dos prémios */}
-                        {p.premios?.length > 0 && (
+
+                        {/* Detalhes expandidos: prémios + eventos */}
+                        {(p.premios?.length > 0 || p.eventosRecentes?.length > 0) && (
                           <div className="mt-2 flex flex-col gap-1">
-                            {p.premios.map((pr, i) => (
-                              <p key={i} className="text-[9px] text-yellow-400/40 italic leading-relaxed">
-                                🏅 {pr}
-                              </p>
+                            {p.premios?.map((pr, i) => (
+                              <p key={`p${i}`} className="text-[9px] text-yellow-400/40 italic">🏅 {pr}</p>
+                            ))}
+                            {p.eventosRecentes?.map((ev, i) => (
+                              <p key={`e${i}`} className="text-[9px] text-violet-300/40 italic">⚡ {ev}</p>
                             ))}
                           </div>
                         )}
