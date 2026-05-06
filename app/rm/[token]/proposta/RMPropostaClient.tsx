@@ -679,7 +679,7 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
       <SlideHeader idx={0} />
       <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-8 py-8">
         <div style={{ background:'#04080f', borderRadius:'9999px', padding:'6px', boxShadow:'0 0 24px rgba(255,255,255,0.22), 0 0 56px rgba(255,255,255,0.09)' }}>
-          <img src="/logo-rl-media-branco.png" alt="RL PROD" className="w-36 h-36 object-contain block" style={{ mixBlendMode:'screen', borderRadius:'9999px' }} />
+          <img src="/logo-rl-prod-branco.png" alt="RL PROD" className="w-36 h-36 object-contain block" style={{ mixBlendMode:'screen', borderRadius:'9999px' }} />
         </div>
         <div className="flex flex-col items-center gap-5">
           <p className="text-[16px] tracking-[0.55em] text-white/55 uppercase">RL PROD · Photography & Video</p>

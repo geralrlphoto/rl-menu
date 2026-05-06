@@ -62,7 +62,7 @@ export default async function MediaDashboard() {
           {/* Logo */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logo-rl-media-branco.png"
+            src="/logo-rl-prod-branco.png"
             alt="RL PROD"
             className="w-16 h-16 object-contain opacity-80"
             style={{ filter: 'brightness(1.2)' }}

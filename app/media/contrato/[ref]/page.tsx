@@ -128,7 +128,7 @@ export default async function ContratoPage({ params }: Props) {
         <div style={{ textAlign: 'center' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logo-rl-media-branco.png"
+            src="/logo-rl-prod-branco.png"
             alt="RL PROD"
             style={{ width: 220, height: 'auto', objectFit: 'contain' }}
           />
@@ -435,7 +435,7 @@ function ContentPage({ children, purple }: { children: React.ReactNode; purple: 
         <div style={{ textAlign: 'center', paddingRight: '16%' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logo-rl-media-branco.png"
+            src="/logo-rl-prod-branco.png"
             alt="RL PROD"
             style={{ height: 32, width: 'auto', objectFit: 'contain' }}
           />

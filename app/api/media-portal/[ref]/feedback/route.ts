@@ -34,7 +34,7 @@ function neonCard(badge: string, badgeColor: string, title: string, body: string
       <tr><td style="width:90px;height:90px;border-radius:50%;border:1px solid rgba(255,255,255,0.22);
                      box-shadow:0 0 18px rgba(255,255,255,0.1),inset 0 0 12px rgba(255,255,255,0.04);
                      background:rgba(255,255,255,0.04);text-align:center;vertical-align:middle;padding:0;">
-        <img src="https://rl-menu-lake.vercel.app/logo-rl-media-branco.png" width="58" alt="RL PROD"
+        <img src="https://rl-menu-lake.vercel.app/logo-rl-prod-branco.png" width="58" alt="RL PROD"
           style="display:block;margin:16px auto;width:58px;height:auto;mix-blend-mode:screen;opacity:0.95;" />
       </td></tr>
     </table>

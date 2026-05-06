@@ -230,7 +230,7 @@ export async function POST(req: NextRequest) {
                        box-shadow:0 0 18px rgba(255,255,255,0.1),inset 0 0 12px rgba(255,255,255,0.04);
                        background:rgba(255,255,255,0.04);
                        text-align:center;vertical-align:middle;">
-              <img src="https://rl-menu-lake.vercel.app/logo-rl-media-branco.png"
+              <img src="https://rl-menu-lake.vercel.app/logo-rl-prod-branco.png"
                 width="52" alt="RL PROD"
                 style="display:block;margin:14px auto;width:52px;height:auto;
                        mix-blend-mode:screen;opacity:0.95;" />

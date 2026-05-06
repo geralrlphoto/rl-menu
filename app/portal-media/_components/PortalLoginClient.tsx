@@ -56,7 +56,7 @@ export default function PortalLoginClient({ portalRef, nomeProjeto, cliente }: P
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full border border-white/15 bg-white/[0.03] mb-8"
             style={{ boxShadow: '0 0 24px rgba(255,255,255,0.06), inset 0 0 12px rgba(255,255,255,0.03)' }}>
-            <img src="/logo-rl-media-branco.png" alt="RL PROD" className="w-11 opacity-90" style={{ mixBlendMode: 'screen' }} />
+            <img src="/logo-rl-prod-branco.png" alt="RL PROD" className="w-11 opacity-90" style={{ mixBlendMode: 'screen' }} />
           </div>
 
           {/* Neon line */}
