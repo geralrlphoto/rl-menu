@@ -60,8 +60,8 @@ export async function POST(req: NextRequest) {
       headers: RESEND_HEADERS,
       body: JSON.stringify({
         from: FROM,
-        to: 'geral.rlmedia@gmail.com',
-        subject: `Nova Lead — ${body.nome}`,
+        to: ['geral.rlmedia@gmail.com', 'ruimngpro@gmail.com'],
+        subject: `${body.tipo?.toLowerCase().includes('batizado') ? '🕊 Batizado' : '✦ Nova Lead'} — ${body.nome}`,
         html: `
           <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#222;">
             <div style="background:#0a0a0f;padding:24px 28px;">
