@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 const ADMIN_EMAIL = 'geral.rlphoto@gmail.com'
@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+      from: 'RL Photo.Video <geral@rlprod.pt>',
       to: [ADMIN_EMAIL],
       subject: `🔄 Pedido de alteração de reunião — ${nome}`,
       html,

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 // Tally webhook — Registo de Pagamento (https://tally.so/r/A72PQB)
@@ -290,7 +290,7 @@ async function sendEmail(to: string, subject: string, html: string) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+      from: 'RL Photo.Video <geral@rlprod.pt>',
       to: [to],
       subject,
       html,

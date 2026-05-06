@@ -1,4 +1,4 @@
-import Link from 'next/link'
+﻿import Link from 'next/link'
 
 const REDES = [
   {
@@ -42,8 +42,8 @@ const REDES = [
   {
     id: 'site',
     label: 'Website',
-    handle: 'rlphotovideo.pt',
-    href: 'https://rlphotovideo.pt',
+    handle: 'www.rlprod.pt',
+    href: 'https://www.rlprod.pt',
     color: '#C9A84C',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">

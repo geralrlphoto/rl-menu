@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { buildNewsletterHtml } from '../_lib/newsletterTemplate'
 
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     for (let i = 0; i < subs.length; i += batchSize) {
       const batch = subs.slice(i, i + batchSize)
       const emails = batch.map(sub => ({
-        from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+        from: 'RL Photo.Video <geral@rlprod.pt>',
         to: [sub.email],
         subject: nl.subject,
         html: html.replace(/\{\{unsubscribe_url\}\}/g, `${baseUrl}/api/newsletter-unsubscribe?token=${sub.confirmation_token}`),

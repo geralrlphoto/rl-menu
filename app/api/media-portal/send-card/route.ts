@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
 
           <!-- URL hint -->
           <p style="margin:0;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.12);font-family:monospace;">
-            rlphotovideo.pt/portal-media/${ref.toLowerCase()}
+            www.rlprod.pt/portal-media/${ref.toLowerCase()}
           </p>
 
         </td></tr>
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
         <!-- Footer -->
         <tr><td style="padding:20px 48px;text-align:center;">
           <p style="margin:0;font-size:8px;letter-spacing:5px;color:rgba(255,255,255,0.12);text-transform:uppercase;">
-            RL PROD &middot; Photography &amp; Video &middot; rlphotovideo.pt
+            RL PROD &middot; Photography &amp; Video &middot; www.rlprod.pt
           </p>
         </td></tr>
 
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL PROD <geral@rlphotovideo.pt>',
+      from: 'RL PROD <geral@rlprod.pt>',
       to: [to],
       subject: `${nome} · Portal do Cliente — RL PROD`,
       html,

@@ -179,7 +179,7 @@ export async function POST(req: NextRequest) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'RL PROD <geral@rlphotovideo.pt>',
+          from: 'RL PROD <geral@rlprod.pt>',
           to: [lead.email.trim()],
           subject: isNew
             ? `RL PROD — Reunião marcada${dataFmt ? `, ${dataFmt}` : ''}`

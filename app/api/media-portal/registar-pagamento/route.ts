@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
         </td></tr>
         <tr><td height="1" style="background:linear-gradient(90deg,#050507,rgba(255,255,255,0.1),#050507);font-size:0;line-height:0;">&nbsp;</td></tr>
         <tr><td style="padding:18px 48px;text-align:center;">
-          <p style="margin:0;font-size:8px;letter-spacing:5px;color:rgba(255,255,255,0.1);text-transform:uppercase;">RL PROD &middot; Portal do Cliente &middot; rlphotovideo.pt</p>
+          <p style="margin:0;font-size:8px;letter-spacing:5px;color:rgba(255,255,255,0.1);text-transform:uppercase;">RL PROD &middot; Portal do Cliente &middot; www.rlprod.pt</p>
         </td></tr>
       </table>
     </td></tr>
@@ -155,7 +155,7 @@ export async function POST(req: NextRequest) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL PROD <geral@rlphotovideo.pt>',
+      from: 'RL PROD <geral@rlprod.pt>',
       to: ['geral.rlmedia@gmail.com'],
       subject: `Pagamento Registado — ${empresa} · ${fase ? fase + ' · ' : ''}${ref}`,
       html: htmlAdmin,
@@ -373,7 +373,7 @@ export async function POST(req: NextRequest) {
         <td style="padding:18px 44px;text-align:center;background:#040c1c;">
           <p style="margin:0;font-size:8px;letter-spacing:5px;
                     color:rgba(255,255,255,0.1);text-transform:uppercase;">
-            RL PROD &middot; Photography &amp; Video &middot; rlphotovideo.pt
+            RL PROD &middot; Photography &amp; Video &middot; www.rlprod.pt
           </p>
         </td>
       </tr>
@@ -394,7 +394,7 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'RL PROD <geral@rlphotovideo.pt>',
+        from: 'RL PROD <geral@rlprod.pt>',
         to: [emailCliente],
         subject: `${nomeProjeto} · Pagamento de ${fmtEur(valorPago)} confirmado — RL PROD`,
         html: htmlCliente,

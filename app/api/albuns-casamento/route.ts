@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
@@ -134,7 +134,7 @@ export async function PATCH(req: NextRequest) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+          from: 'RL Photo.Video <geral@rlprod.pt>',
           to: [emailNoiva],
           subject: 'O seu álbum está pronto para aprovação',
           html: `
@@ -143,7 +143,7 @@ export async function PATCH(req: NextRequest) {
               <h1 style="font-size: 24px; font-weight: 300; letter-spacing: 0.15em; text-transform: uppercase; margin: 0 0 24px; color: #fff;">Álbum para Aprovação</h1>
               <p style="font-size: 15px; color: #bbb; line-height: 1.7; margin: 0 0 16px;">Olá ${nomeNoiva},</p>
               <p style="font-size: 15px; color: #bbb; line-height: 1.7; margin: 0 0 32px;">O seu álbum de casamento está pronto e aguarda a sua aprovação. Por favor aceda ao seu portal para visualizar e aprovar.</p>
-              <p style="font-size: 10px; color: #555; letter-spacing: 0.3em; text-transform: uppercase; margin: 48px 0 0;">RL Photo.Video · rlphotovideo.pt</p>
+              <p style="font-size: 10px; color: #555; letter-spacing: 0.3em; text-transform: uppercase; margin: 48px 0 0;">RL Photo.Video · www.rlprod.pt</p>
             </div>
           `,
         }),

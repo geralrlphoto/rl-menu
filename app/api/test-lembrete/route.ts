@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 
 export async function GET() {
   const html = `<!DOCTYPE html>
@@ -85,7 +85,7 @@ export async function GET() {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+      from: 'RL Photo.Video <geral@rlprod.pt>',
       to: ['ruimngpro@gmail.com'],
       subject: '⏰ A vossa reunião começa em 30 minutos',
       html,

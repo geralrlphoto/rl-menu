@@ -136,14 +136,14 @@ export function buildNewsletterHtml(d: any) {
 
       <table cellpadding="0" cellspacing="0" style="margin:0 auto;"><tr>
         <td style="background:#c9a84c;padding:16px 44px;">
-          <a href="https://rlphotovideo.pt" style="display:block;color:#0c0907;text-decoration:none;font-family:'Montserrat',Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;">
+          <a href="https://www.rlprod.pt" style="display:block;color:#0c0907;text-decoration:none;font-family:'Montserrat',Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;">
             Visitar o nosso site
           </a>
         </td>
       </tr></table>
 
       <p style="margin:20px 0 0;font-family:'Montserrat',Arial,sans-serif;font-size:11px;color:#6a5a3e;">
-        rlphotovideo.pt
+        www.rlprod.pt
       </p>
 
     </td></tr>
@@ -278,7 +278,7 @@ export function buildNewsletterHtml(d: any) {
         RL PHOTO &amp; VIDEO
       </p>
       <p style="margin:0 0 14px;font-family:'Montserrat',Arial,sans-serif;font-size:11px;color:#a09585;line-height:1.7;">
-        <a href="https://rlphotovideo.pt" style="color:#a09585;text-decoration:none;">rlphotovideo.pt</a>
+        <a href="https://www.rlprod.pt" style="color:#a09585;text-decoration:none;">www.rlprod.pt</a>
         &nbsp;·&nbsp;
         <a href="https://www.instagram.com/rlphoto_fotografia.video/" style="color:#a09585;text-decoration:none;">Instagram</a>
       </p>

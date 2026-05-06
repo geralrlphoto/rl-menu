@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
     'Content-Type': 'application/json',
   }
-  const FROM = 'RL PROD <geral@rlphotovideo.pt>'
+  const FROM = 'RL PROD <geral@rlprod.pt>'
 
   // ── 1. Notificação interna para o admin ──────────────────────────────
   try {
@@ -197,7 +197,7 @@ export async function POST(req: NextRequest) {
         <td style="padding:18px 44px;text-align:center;background:#040c1c;">
           <p style="margin:0;font-size:8px;letter-spacing:5px;
                     color:rgba(255,255,255,0.1);text-transform:uppercase;">
-            RL PROD &middot; Photography &amp; Video &middot; rlphotovideo.pt
+            RL PROD &middot; Photography &amp; Video &middot; www.rlprod.pt
           </p>
         </td>
       </tr>

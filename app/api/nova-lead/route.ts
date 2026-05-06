@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+        from: 'RL Photo.Video <geral@rlprod.pt>',
         to: ['geral.rlphoto@gmail.com'],
         subject: `Nova Lead — ${nome}${data_casamento ? ' · ' + data_casamento : ''}`,
         html: `
@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
             <table style="width:100%;border-collapse:collapse;margin-bottom:32px;">
               ${rows}
             </table>
-            <p style="font-size:10px;color:#333;letter-spacing:0.3em;text-transform:uppercase;">RL Photo.Video · rlphotovideo.pt</p>
+            <p style="font-size:10px;color:#333;letter-spacing:0.3em;text-transform:uppercase;">RL Photo.Video · www.rlprod.pt</p>
           </div>
         `,
       }),
@@ -205,7 +205,7 @@ export async function POST(req: NextRequest) {
       <!-- CTA -->
       <table cellpadding="0" cellspacing="0"><tr>
         <td style="background:#c9a84c;padding:15px 36px;">
-          <a href="https://rlphotovideo.pt/blog-list1"
+          <a href="https://www.rlprod.pt/blog-list1"
             style="display:block;color:#0c0907;text-decoration:none;font-family:'Montserrat',Arial,sans-serif;font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;">
             Ver o Blog
           </a>
@@ -217,7 +217,7 @@ export async function POST(req: NextRequest) {
     <!-- Footer -->
     <tr><td style="padding:24px 48px 32px;background:rgba(0,0,0,0.3);border-top:1px solid rgba(201,168,76,0.08);" class="mobile-pad">
       <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:9px;letter-spacing:3px;color:#4a3d2a;text-transform:uppercase;text-align:center;">
-        RL Photo.Video &nbsp;·&nbsp; rlphotovideo.pt
+        RL Photo.Video &nbsp;·&nbsp; www.rlprod.pt
       </p>
     </td></tr>
 
@@ -239,7 +239,7 @@ export async function POST(req: NextRequest) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+          from: 'RL Photo.Video <geral@rlprod.pt>',
           to: [email],
           subject: `Recebemos o vosso contacto — RL Photo.Video`,
           html: emailHtml,

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import React, { useEffect, useState, useCallback } from 'react'
 import { DEFAULT_CONTENT, PageContent, Proposta, ExtraServico, FONTS, TITLE_SIZES } from '../LeadPageClient'
@@ -825,10 +825,10 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
           <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="opacity-75" style={{ width: '200px' }} />
           <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-          <a href="https://www.rlphotovideo.pt" target="_blank" rel="noopener noreferrer"
+          <a href="https://www.www.rlprod.pt" target="_blank" rel="noopener noreferrer"
             className={`${fontClass(typo.titleFont)} font-light italic hover:opacity-80 transition-opacity`}
             style={{ fontSize: 'clamp(1.4rem,3vw,2.4rem)', color: typo.titleColor }}>
-            www.rlphotovideo.pt
+            www.www.rlprod.pt
           </a>
           <a href="tel:912932768" className="font-light tracking-[0.15em]"
             style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.75 }}>

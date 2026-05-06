@@ -102,7 +102,7 @@ export default async function CardPage({ params }: Props) {
               Aceder ao Portal →
             </Link>
             <p className="mt-3 text-center text-[9px] tracking-[0.2em] text-white/15 font-mono">
-              rlphotovideo.pt/portal-media/{projeto.ref.toLowerCase()}
+              www.rlprod.pt/portal-media/{projeto.ref.toLowerCase()}
             </p>
           </div>
 
@@ -113,7 +113,7 @@ export default async function CardPage({ params }: Props) {
         {/* Footer */}
         <div className="mt-8 flex items-center justify-between">
           <p className="text-[8px] tracking-[0.5em] text-white/10 uppercase">RL PROD · Photography & Video</p>
-          <p className="text-[8px] tracking-[0.3em] text-white/10 uppercase">www.rlphotovideo.pt</p>
+          <p className="text-[8px] tracking-[0.3em] text-white/10 uppercase">www.www.rlprod.pt</p>
         </div>
       </div>
     </main>

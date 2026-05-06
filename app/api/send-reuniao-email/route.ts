@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 
 const IMG_BASE  = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
 const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+      from: 'RL Photo.Video <geral@rlprod.pt>',
       to: [email],
       subject: `Tens uma reunião marcada · ${dataFmt} às ${reuniao_hora}`,
       html,

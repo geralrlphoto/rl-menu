@@ -432,10 +432,10 @@ function buildEmailHtml(d: any) {
     </p>
     <table cellpadding="0" cellspacing="0" style="margin:0 auto;"><tr>
       <td style="background:#c9a84c;padding:16px 44px;">
-        <a href="https://rlphotovideo.pt" style="display:block;color:#0c0907;text-decoration:none;font-family:'Montserrat',Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;">Visitar o nosso site</a>
+        <a href="https://www.rlprod.pt" style="display:block;color:#0c0907;text-decoration:none;font-family:'Montserrat',Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;">Visitar o nosso site</a>
       </td>
     </tr></table>
-    <p style="margin:20px 0 0;font-family:'Montserrat',Arial,sans-serif;font-size:11px;color:#6a5a3e;">rlphotovideo.pt</p>
+    <p style="margin:20px 0 0;font-family:'Montserrat',Arial,sans-serif;font-size:11px;color:#6a5a3e;">www.rlprod.pt</p>
   </td></tr>
   <tr><td style="padding:0 40px;"><table width="100%"><tr><td style="border-top:1px solid rgba(201,168,76,0.15);height:1px;font-size:1px;">&nbsp;</td></tr></table></td></tr>
   <tr><td style="padding:48px 40px;background:#0c0907;">
@@ -492,7 +492,7 @@ function buildEmailHtml(d: any) {
   <tr><td style="padding:28px 40px 36px;text-align:center;background:rgba(12,9,7,0.5);border-top:1px solid rgba(201,168,76,0.1);">
     <p style="margin:0 0 14px;font-family:'Cormorant Garamond',Georgia,serif;font-size:14px;color:#c9a84c;letter-spacing:3px;">RL PHOTO &amp; VIDEO</p>
     <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:11px;color:#a09585;line-height:1.7;">
-      <a href="https://rlphotovideo.pt" style="color:#a09585;text-decoration:none;">rlphotovideo.pt</a> &middot;
+      <a href="https://www.rlprod.pt" style="color:#a09585;text-decoration:none;">www.rlprod.pt</a> &middot;
       <a href="https://www.instagram.com/rlphoto_fotografia.video/" style="color:#a09585;text-decoration:none;">Instagram</a>
     </p>
     <p style="margin:16px 0 0;font-family:'Montserrat',Arial,sans-serif;font-size:10px;color:#6a5a3e;line-height:1.6;">

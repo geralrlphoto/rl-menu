@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN!
@@ -139,7 +139,7 @@ export async function POST(req: NextRequest) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+            from: 'RL Photo.Video <geral@rlprod.pt>',
             to: [email],
             subject: 'Recebemos a tua candidatura · RL Photo.Video',
             html: buildConfirmacaoHtml(nome),

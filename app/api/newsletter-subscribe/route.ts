@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseAdmin = createClient(
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Enviar email de confirmação (double opt-in)
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://newsletter.rlphotovideo.pt'
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://newsletter.www.rlprod.pt'
     const confirmUrl = `${baseUrl}/api/newsletter-confirm?token=${subscriber.confirmation_token}`
 
     await fetch('https://api.resend.com/emails', {
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+        from: 'RL Photo.Video <geral@rlprod.pt>',
         to: [emailLower],
         subject: 'Confirma a tua subscrição',
         html: buildConfirmEmail({ nome, confirmUrl }),
@@ -120,7 +120,7 @@ function buildConfirmEmail({ nome, confirmUrl }: { nome?: string; confirmUrl: st
           </tr>
         </table>
         <p style="margin:24px 0 0;font-size:10px;color:#4a3f28;font-family:Arial,sans-serif;letter-spacing:0.15em;">
-          RL PHOTO & VIDEO &middot; rlphotovideo.pt
+          RL PHOTO & VIDEO &middot; www.rlprod.pt
         </p>
       </td>
     </tr>

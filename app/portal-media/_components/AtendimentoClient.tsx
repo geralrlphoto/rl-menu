@@ -157,11 +157,11 @@ export default function AtendimentoClient({ projeto: initial, isAdmin }: Props) 
         </div>
 
         {/* Site */}
-        <a href="https://www.rlphotovideo.pt" target="_blank" rel="noopener noreferrer"
+        <a href="https://www.www.rlprod.pt" target="_blank" rel="noopener noreferrer"
           className="group flex items-center justify-between border border-white/[0.06] bg-white/[0.01] hover:bg-white/[0.04] hover:border-white/15 px-6 py-4 transition-all mb-10">
           <div>
             <p className="text-[9px] tracking-[0.3em] text-white/40 uppercase group-hover:text-white/60 transition-colors">RL PROD · Photography & Video</p>
-            <p className="text-[9px] tracking-[0.15em] text-white/20 mt-0.5">www.rlphotovideo.pt</p>
+            <p className="text-[9px] tracking-[0.15em] text-white/20 mt-0.5">www.www.rlprod.pt</p>
           </div>
           <span className="text-white/15 group-hover:text-white/40 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all">↗</span>
         </a>

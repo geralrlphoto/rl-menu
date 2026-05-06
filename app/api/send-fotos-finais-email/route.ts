@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { resolveEmailNoiva } from '../_lib/emailNoiva'
 
 export async function POST(req: NextRequest) {
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+      from: 'RL Photo.Video <geral@rlprod.pt>',
       to: [resolvedEmail],
       subject: 'As vossas fotos já estão editadas',
       html: `<!DOCTYPE html>

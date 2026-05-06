@@ -72,7 +72,7 @@ function neonCard(badge: string, badgeColor: string, title: string, body: string
   <tr><td height="1" style="background:linear-gradient(90deg,transparent,rgba(37,99,235,0.35),transparent);font-size:0;line-height:0;">&nbsp;</td></tr>
   <tr><td style="padding:18px 44px;text-align:center;background:#040c1c;">
     <p style="margin:0;font-size:8px;letter-spacing:5px;color:rgba(255,255,255,0.1);text-transform:uppercase;">
-      RL PROD &middot; Photography & Video &middot; rlphotovideo.pt
+      RL PROD &middot; Photography & Video &middot; www.rlprod.pt
     </p>
   </td></tr>
 
@@ -93,7 +93,7 @@ async function sendEmail(to: string, subject: string, html: string): Promise<{ o
         Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ from: 'RL PROD <geral@rlphotovideo.pt>', to: [to], subject, html }),
+      body: JSON.stringify({ from: 'RL PROD <geral@rlprod.pt>', to: [to], subject, html }),
     })
     const data = await res.json()
     if (!res.ok) {

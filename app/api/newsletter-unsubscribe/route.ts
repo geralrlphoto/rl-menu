@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseAdmin = createClient(
@@ -8,7 +8,7 @@ const supabaseAdmin = createClient(
 
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get('token')
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://newsletter.rlphotovideo.pt'
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://newsletter.www.rlprod.pt'
 
   if (!token) {
     return NextResponse.redirect(`${baseUrl}/newsletter/erro?msg=token-invalido`)

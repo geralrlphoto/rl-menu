@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
         await supabase.rpc('increment_sends_field', {
           send_id: send.id, field: 'ig_clicks',
         }).catch(() => {})
-      } else if (url && url.includes('rlphotovideo.pt')) {
+      } else if (url && url.includes('www.rlprod.pt')) {
         await incrementNewsletter(send.newsletter_id, 'share_clicks')
       }
     }

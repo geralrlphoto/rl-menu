@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect } from 'react'
 import type { PageContent } from '@/app/r/[token]/LeadPageClient'
@@ -11,11 +11,11 @@ const BODY_COLOR = '#1e1a14'
 // ── Dados da empresa ─────────────────────────────────────────────────────────
 const EMPRESA = {
   nome:      'RL Photo · Video',
-  email:     'geral@rlphotovideo.pt',
+  email:     'geral@rlprod.pt',
   telefone:  '+351 912 932 768',
   whatsapp:  'https://wa.me/351912932768',
   instagram: '@rlphotovideo',
-  website:   'www.rlphotovideo.pt',
+  website:   'www.www.rlprod.pt',
   morada:    'Portugal',
   nif:       '',
 }

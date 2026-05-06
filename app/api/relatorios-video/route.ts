@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+      from: 'RL Photo.Video <geral@rlprod.pt>',
       to: ['geral.rlphoto@gmail.com'],
       subject: `Relatório Vídeo — ${referencia}${nome_operador ? ' · ' + nome_operador : ''}`,
       html: `
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
           <table style="width:100%;border-collapse:collapse;margin-bottom:32px;">
             ${rows}
           </table>
-          <p style="font-size:10px;color:#333;letter-spacing:0.3em;text-transform:uppercase;">RL Photo.Video · rlphotovideo.pt</p>
+          <p style="font-size:10px;color:#333;letter-spacing:0.3em;text-transform:uppercase;">RL Photo.Video · www.rlprod.pt</p>
         </div>
       `,
     }),

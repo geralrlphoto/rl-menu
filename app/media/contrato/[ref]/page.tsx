@@ -456,7 +456,7 @@ function ContentPage({ children, purple }: { children: React.ReactNode; purple: 
         borderTop: '1px solid #e8e8e8',
       }}>
         <div style={{ fontSize: 8, letterSpacing: 3, color: '#bbb', textTransform: 'uppercase' }}>
-          WWW.rlphotovideo.pt
+          WWW.www.rlprod.pt
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: 10, color: purple, fontStyle: 'italic', lineHeight: 1.3 }}>MORE THAN A PRODUCT,</div>

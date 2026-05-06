@@ -145,7 +145,7 @@ export async function POST(req: NextRequest) {
         <td style="padding:18px 44px;text-align:center;background:#040c1c;">
           <p style="margin:0;font-size:8px;letter-spacing:5px;
                     color:rgba(255,255,255,0.1);text-transform:uppercase;">
-            RL PROD &middot; Photography &amp; Video &middot; rlphotovideo.pt
+            RL PROD &middot; Photography &amp; Video &middot; www.rlprod.pt
           </p>
         </td>
       </tr>
@@ -168,7 +168,7 @@ export async function POST(req: NextRequest) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL PROD <geral@rlphotovideo.pt>',
+      from: 'RL PROD <geral@rlprod.pt>',
       to: [to],
       subject: `${nomeProjeto} · As tuas entregas estão disponíveis — RL PROD`,
       html,

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import React, { useEffect, useState, useCallback, Suspense } from 'react'
 import Link from 'next/link'
@@ -859,7 +859,7 @@ function PortalSubPageContent() {
   const [portalExtras, setPortalExtras] = useState<number | null>(null)
   const [pagRefreshing, setPagRefreshing] = useState(false)
   const DEFAULT_GUIA_LINKS = {
-    blogUrl: 'https://rlphotovideo.pt/blog-list1',
+    blogUrl: 'https://www.rlprod.pt/blog-list1',
     fotosSelecaoUrl: 'https://tally.so/r/448PrO',
     fotosVerMaisUrl: '',
     fotosConvidadosUrl: 'https://tally.so/r/w56N86',

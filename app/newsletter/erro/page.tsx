@@ -1,4 +1,4 @@
-export default function Erro() {
+﻿export default function Erro() {
   return (
     <div style={{
       minHeight: '100vh', background: '#0e0b06', color: '#fff',
@@ -11,7 +11,7 @@ export default function Erro() {
         </h1>
         <p style={{ color: '#b3a082', lineHeight: 1.7, fontFamily: 'Arial, sans-serif' }}>
           O link que usaste não é válido ou expirou.<br />
-          Se precisares de ajuda, contacta-nos em geral@rlphotovideo.pt
+          Se precisares de ajuda, contacta-nos em geral@rlprod.pt
         </p>
       </div>
     </div>

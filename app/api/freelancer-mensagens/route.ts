@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
@@ -65,7 +65,7 @@ export async function POST(req: Request) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+          from: 'RL Photo.Video <geral@rlprod.pt>',
           to: [ADMIN_EMAIL],
           subject: `💬 Nova mensagem de ${nomeFree} — ${localEvento}`,
           html: `<!DOCTYPE html>
@@ -170,7 +170,7 @@ export async function POST(req: Request) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+            from: 'RL Photo.Video <geral@rlprod.pt>',
             to: [freelancer.email],
             subject: 'Tens uma nova mensagem no portal',
             html: `<!DOCTYPE html>

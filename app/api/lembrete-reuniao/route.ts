@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 const IMG_URL = 'https://rl-menu-lake.vercel.app/card_alerta_reuniao_desktop.png'
@@ -101,7 +101,7 @@ export async function GET(req: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+        from: 'RL Photo.Video <geral@rlprod.pt>',
         to: [c.email],
         subject: '⏰ A vossa reunião começa em 30 minutos',
         html,

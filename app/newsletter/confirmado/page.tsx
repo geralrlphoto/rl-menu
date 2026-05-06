@@ -1,4 +1,4 @@
-export default function Confirmado() {
+﻿export default function Confirmado() {
   return (
     <div style={{
       minHeight: '100vh',
@@ -23,7 +23,7 @@ export default function Confirmado() {
         <p style={{ color: '#b3a082', lineHeight: 1.7, fontFamily: 'Arial, sans-serif' }}>
           Obrigado! A partir de agora vais receber a nossa newsletter com dicas, tendências e bastidores do mundo dos casamentos.
         </p>
-        <a href="https://rlphotovideo.pt" style={{
+        <a href="https://www.rlprod.pt" style={{
           display: 'inline-block', marginTop: 40,
           padding: '16px 44px', background: '#c9a96e', color: '#0e0b06',
           textDecoration: 'none', fontFamily: 'Arial, sans-serif',

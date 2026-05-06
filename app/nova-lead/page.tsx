@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef } from 'react'
 
@@ -290,7 +290,7 @@ export default function NovaLeadPage() {
         </div>
         <div className="h-px" style={{ background: 'linear-gradient(90deg,transparent,rgba(201,168,76,0.3),transparent)' }} />
         <p className="text-[10px] tracking-[0.3em] uppercase" style={{ color: 'rgba(255,255,255,0.2)' }}>
-          rlphotovideo.pt
+          www.rlprod.pt
         </p>
       </div>
     </div>

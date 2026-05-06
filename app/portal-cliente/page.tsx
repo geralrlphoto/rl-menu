@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
@@ -414,7 +414,7 @@ function SettingsPanel({
   onCancel: () => void
 }) {
   const DEFAULT_GUIA_LINKS = {
-    blogUrl: 'https://rlphotovideo.pt/blog-list1',
+    blogUrl: 'https://www.rlprod.pt/blog-list1',
     fotosSelecaoUrl: 'https://tally.so/r/448PrO',
     fotosVerMaisUrl: '',
     fotosConvidadosUrl: 'https://tally.so/r/w56N86',

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 
 const ADMIN_EMAIL  = 'geral.rlphoto@gmail.com'
 const IMG_BASE     = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
@@ -185,7 +185,7 @@ export async function POST(req: NextRequest) {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+        from: 'RL Photo.Video <geral@rlprod.pt>',
         to: [ADMIN_EMAIL],
         subject: `📅 Pré-wedding reservado — ${nome_noivos ?? referencia ?? ''}`,
         html: htmlAdmin,
@@ -198,7 +198,7 @@ export async function POST(req: NextRequest) {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+          from: 'RL Photo.Video <geral@rlprod.pt>',
           to: [emailNoivaFinal],
           subject: `📅 Pré-wedding reservado — ${nome_noivos ?? ''}`,
           html: htmlNoivos,
@@ -216,7 +216,7 @@ export async function POST(req: NextRequest) {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+        from: 'RL Photo.Video <geral@rlprod.pt>',
         to: [ADMIN_EMAIL],
         subject: `✓ Maquete aprovada — ${nome_noivos ?? referencia ?? ''}`,
         html: buildAlbumAprovadoEmail(nome_noivos ?? referencia ?? 'Noivos', referencia ?? ''),
@@ -243,7 +243,7 @@ export async function POST(req: NextRequest) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+      from: 'RL Photo.Video <geral@rlprod.pt>',
       to: [ADMIN_EMAIL],
       subject: confirmou
         ? `✓ ${freelancer_nome} confirmou a data — ${referencia ?? ''}`

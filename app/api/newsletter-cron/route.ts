@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { buildNewsletterHtml } from '../_lib/newsletterTemplate'
 
@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
     .in('status', ['draft', 'approved'])
     .eq('scheduled_for', tomorrowStr)
 
-  const adminEmail = process.env.NEWSLETTER_ADMIN_EMAIL || 'geral@rlphotovideo.pt'
+  const adminEmail = process.env.NEWSLETTER_ADMIN_EMAIL || 'geral@rlprod.pt'
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://rl-menu-lake.vercel.app'
 
   for (const n of (upcoming ?? [])) {
@@ -102,7 +102,7 @@ export async function GET(req: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+        from: 'RL Photo.Video <geral@rlprod.pt>',
         to: [adminEmail],
         subject: `🔔 Newsletter para enviar amanhã: ${n.title}`,
         html,
@@ -154,7 +154,7 @@ export async function GET(req: NextRequest) {
       for (let i = 0; i < subs.length; i += batchSize) {
         const batch = subs.slice(i, i + batchSize)
         const emails = batch.map((sub: any) => ({
-          from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+          from: 'RL Photo.Video <geral@rlprod.pt>',
           to: [sub.email],
           subject: nl.subject,
           html: html.replace(/\{\{unsubscribe_url\}\}/g, `${baseUrl}/api/newsletter-unsubscribe?token=${sub.confirmation_token}`),
@@ -205,7 +205,7 @@ export async function GET(req: NextRequest) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+          from: 'RL Photo.Video <geral@rlprod.pt>',
           to: [adminEmail],
           subject: `✓ Batch 2 enviado: ${nl.title}`,
           html: `<p style="font-family:Arial,sans-serif;font-size:14px;color:#333;">

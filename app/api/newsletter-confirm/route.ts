@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseAdmin = createClient(
@@ -8,7 +8,7 @@ const supabaseAdmin = createClient(
 
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get('token')
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://newsletter.rlphotovideo.pt'
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://newsletter.www.rlprod.pt'
 
   if (!token) {
     return NextResponse.redirect(`${baseUrl}/newsletter/erro?msg=token-invalido`)
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+      from: 'RL Photo.Video <geral@rlprod.pt>',
       to: [subscriber.email],
       subject: 'Bem-vindo à nossa newsletter',
       html: buildWelcomeEmail(),
@@ -75,7 +75,7 @@ function buildWelcomeEmail() {
                 Obrigado por confirmares a tua subscrição.<br>
                 Em breve receberás a nossa primeira newsletter com dicas, tendências e inspiração para o teu grande dia.
               </p>
-              <a href="https://rlphotovideo.pt" style="display:inline-block;margin-top:20px;padding:16px 44px;background:#c9a96e;color:#0e0b06;text-decoration:none;font-family:Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.25em;text-transform:uppercase;">
+              <a href="https://www.rlprod.pt" style="display:inline-block;margin-top:20px;padding:16px 44px;background:#c9a96e;color:#0e0b06;text-decoration:none;font-family:Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.25em;text-transform:uppercase;">
                 Visitar Website
               </a>
             </td>

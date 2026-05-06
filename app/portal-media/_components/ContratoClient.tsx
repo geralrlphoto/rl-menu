@@ -282,7 +282,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                   isEditing={true}
                   onChange={v => setConta('email', v)}
                   className="text-[13px] font-light text-white/65"
-                  placeholder="email@rlphotovideo.pt"
+                  placeholder="email@www.rlprod.pt"
                 />
               </div>
             ) : (
