@@ -79,13 +79,15 @@ export default function NovaLeadPage() {
 
   if (enviado) {
     return (
-      <main className="min-h-screen bg-[#050507] relative flex items-center justify-center">
+      <main className="min-h-screen relative flex items-center justify-center" style={{ background: '#02060f' }}>
+        {/* Grelha azul neon */}
         <div className="pointer-events-none fixed inset-0 z-0" style={{
-          backgroundImage: `linear-gradient(rgba(255,255,255,0.016) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.016) 1px,transparent 1px)`,
-          backgroundSize: '60px 60px',
+          backgroundImage: `linear-gradient(rgba(30,100,255,0.10) 1px,transparent 1px),linear-gradient(90deg,rgba(30,100,255,0.10) 1px,transparent 1px)`,
+          backgroundSize: '44px 44px',
         }} />
+        {/* Glow central azul */}
         <div className="pointer-events-none fixed inset-0 z-0" style={{
-          background: 'radial-gradient(ellipse 70% 50% at 50% -10%, rgba(180,200,255,0.04) 0%, transparent 70%)',
+          background: 'radial-gradient(ellipse 70% 55% at 50% 50%, rgba(37,99,235,0.12) 0%, transparent 70%)',
         }} />
         <div className="relative z-10 flex flex-col items-center text-center px-6">
           <img
@@ -113,13 +115,15 @@ export default function NovaLeadPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#050507] relative">
+    <main className="min-h-screen relative" style={{ background: '#02060f' }}>
+      {/* Grelha azul neon */}
       <div className="pointer-events-none fixed inset-0 z-0" style={{
-        backgroundImage: `linear-gradient(rgba(255,255,255,0.016) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.016) 1px,transparent 1px)`,
-        backgroundSize: '60px 60px',
+        backgroundImage: `linear-gradient(rgba(30,100,255,0.10) 1px,transparent 1px),linear-gradient(90deg,rgba(30,100,255,0.10) 1px,transparent 1px)`,
+        backgroundSize: '44px 44px',
       }} />
+      {/* Glow topo azul */}
       <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 70% 50% at 50% -10%, rgba(180,200,255,0.04) 0%, transparent 70%)',
+        background: 'radial-gradient(ellipse 80% 50% at 50% -5%, rgba(37,99,235,0.18) 0%, transparent 65%)',
       }} />
 
       <div className="relative z-10 max-w-2xl mx-auto px-6 sm:px-10 py-10">
