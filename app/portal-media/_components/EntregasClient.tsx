@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState } from 'react'
 import Link from 'next/link'
 import type { Projeto, EntregaFeedback } from '@/app/portal-media/_data/mockProject'
@@ -289,7 +289,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
 
         {/* ── ENTREGAS ── */}
         <div className="mb-10">
-          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · {projeto.nome}</p>
+          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD · {projeto.nome}</p>
           <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Entregas</h1>
           <div className="mt-4 flex items-center gap-3">
             <div className="h-px w-12 bg-white/25" />
@@ -589,7 +589,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                             <div className="border border-blue-500/18 bg-blue-500/[0.03] px-4 py-3 ml-5">
                               <div className="flex items-center justify-between mb-2 gap-4">
                                 <span className="text-[9px] tracking-[0.35em] text-blue-400/70 uppercase shrink-0">
-                                  ↩ RL Media
+                                  ↩ RL PROD
                                 </span>
                                 <div className="flex items-center gap-3">
                                   <span className="text-[9px] text-white/18 font-mono">{formatDateTime(fb.resposta.criadoEm)}</span>
@@ -653,7 +653,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                           ) : (
                             /* Cliente — aguardar resposta */
                             <div className="ml-5 px-4 py-3 border border-white/[0.04] bg-white/[0.01]">
-                              <p className="text-[9px] text-white/20 tracking-[0.25em]">⏳ Aguardar resposta da RL Media</p>
+                              <p className="text-[9px] text-white/20 tracking-[0.25em]">⏳ Aguardar resposta da RL PROD</p>
                             </div>
                           )}
                         </div>
@@ -767,3 +767,4 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
     </>
   )
 }
+

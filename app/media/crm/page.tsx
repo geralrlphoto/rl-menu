@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+﻿import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -42,7 +42,7 @@ export default async function CrmPage() {
         <Link href="/media"
           className="inline-flex items-center gap-3 text-[9px] tracking-[0.4em] text-white/25 hover:text-white/60 transition-colors uppercase group">
           <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
-          Menu RL Media
+          Menu RL PROD
         </Link>
       </div>
 
@@ -54,7 +54,7 @@ export default async function CrmPage() {
             <span className="text-lg text-white/30 select-none">◈</span>
           </div>
           <div className="flex-1">
-            <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL MEDIA · AUDIOVISUAL</p>
+            <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD · Photography & Video</p>
             <h1 className="text-[clamp(1.8rem,4vw,3rem)] font-extralight tracking-[0.3em] text-white/80 uppercase leading-none">CRM</h1>
             <div className="mt-5 flex items-center gap-3">
               <div className="h-px w-16 bg-gradient-to-r from-white/40 to-white/10" />
@@ -147,3 +147,4 @@ export default async function CrmPage() {
     </main>
   )
 }
+

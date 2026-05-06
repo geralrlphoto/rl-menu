@@ -1,4 +1,4 @@
-import Link from 'next/link'
+﻿import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getProjeto } from '@/app/portal-media/_data/mockProject'
 
@@ -60,7 +60,7 @@ export default async function CardPage({ params }: Props) {
               style={{ filter: 'drop-shadow(0 0 20px rgba(255,255,255,0.12))' }}>
               <img
                 src="/logo_marca_advocacia__8_-removebg-preview.png"
-                alt="RL Media"
+                alt="RL PROD"
                 className="w-full h-full object-contain"
               />
             </div>
@@ -102,7 +102,7 @@ export default async function CardPage({ params }: Props) {
               Aceder ao Portal →
             </Link>
             <p className="mt-3 text-center text-[9px] tracking-[0.2em] text-white/15 font-mono">
-              rlmedia.pt/portal-media/{projeto.ref.toLowerCase()}
+              rlphotovideo.pt/portal-media/{projeto.ref.toLowerCase()}
             </p>
           </div>
 
@@ -112,8 +112,8 @@ export default async function CardPage({ params }: Props) {
 
         {/* Footer */}
         <div className="mt-8 flex items-center justify-between">
-          <p className="text-[8px] tracking-[0.5em] text-white/10 uppercase">RL Media · Audiovisual</p>
-          <p className="text-[8px] tracking-[0.3em] text-white/10 uppercase">www.rlmedia.pt</p>
+          <p className="text-[8px] tracking-[0.5em] text-white/10 uppercase">RL PROD · Photography & Video</p>
+          <p className="text-[8px] tracking-[0.3em] text-white/10 uppercase">www.rlphotovideo.pt</p>
         </div>
       </div>
     </main>

@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+﻿import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 
 const supabase = createClient(
@@ -50,7 +50,7 @@ export default async function MediaSectionTemplate({ sectionName }: Props) {
           className="inline-flex items-center gap-3 text-[9px] tracking-[0.4em] text-white/25 hover:text-white/60 transition-colors uppercase group"
         >
           <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
-          Menu RL Media
+          Menu RL PROD
         </Link>
       </div>
 
@@ -63,7 +63,7 @@ export default async function MediaSectionTemplate({ sectionName }: Props) {
             <span className="text-lg text-white/30 select-none">{icon}</span>
           </div>
           <div className="flex-1">
-            <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL MEDIA · AUDIOVISUAL</p>
+            <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD · Photography & Video</p>
             <h1 className="text-[clamp(1.8rem,4vw,3rem)] font-extralight tracking-[0.3em] text-white/80 uppercase leading-none">
               {sectionName}
             </h1>
@@ -143,3 +143,4 @@ export default async function MediaSectionTemplate({ sectionName }: Props) {
     </main>
   )
 }
+

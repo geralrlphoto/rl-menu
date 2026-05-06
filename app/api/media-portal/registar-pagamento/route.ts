@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getProjeto } from '@/app/portal-media/_data/mockProject'
 
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
         <tr><td height="1" style="background:linear-gradient(90deg,#050507,rgba(255,255,255,0.25),#050507);font-size:0;line-height:0;">&nbsp;</td></tr>
         <tr><td style="padding:44px 48px 40px;text-align:center;">
           <img src="https://rl-menu-lake.vercel.app/logo_marca_advocacia__8_-removebg-preview.png"
-            width="72" alt="RL Media"
+            width="72" alt="RL PROD"
             style="display:block;margin:0 auto 28px;width:72px;height:72px;object-fit:contain;" />
           <p style="margin:0 0 4px;font-size:8px;letter-spacing:6px;color:rgba(255,255,255,0.18);text-transform:uppercase;">Registo de Pagamento</p>
           <p style="margin:0 0 28px;font-size:20px;font-weight:200;letter-spacing:5px;color:rgba(255,255,255,0.85);text-transform:uppercase;">${empresa}</p>
@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
         </td></tr>
         <tr><td height="1" style="background:linear-gradient(90deg,#050507,rgba(255,255,255,0.1),#050507);font-size:0;line-height:0;">&nbsp;</td></tr>
         <tr><td style="padding:18px 48px;text-align:center;">
-          <p style="margin:0;font-size:8px;letter-spacing:5px;color:rgba(255,255,255,0.1);text-transform:uppercase;">RL Media &middot; Portal do Cliente &middot; rlmedia.pt</p>
+          <p style="margin:0;font-size:8px;letter-spacing:5px;color:rgba(255,255,255,0.1);text-transform:uppercase;">RL PROD &middot; Portal do Cliente &middot; rlphotovideo.pt</p>
         </td></tr>
       </table>
     </td></tr>
@@ -155,7 +155,7 @@ export async function POST(req: NextRequest) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL Media <geral@rlphotovideo.pt>',
+      from: 'RL PROD <geral@rlphotovideo.pt>',
       to: ['geral.rlmedia@gmail.com'],
       subject: `Pagamento Registado — ${empresa} · ${fase ? fase + ' · ' : ''}${ref}`,
       html: htmlAdmin,
@@ -231,7 +231,7 @@ export async function POST(req: NextRequest) {
                        background:rgba(255,255,255,0.04);
                        text-align:center;vertical-align:middle;">
               <img src="https://rl-menu-lake.vercel.app/logo-rl-media-branco.png"
-                width="52" alt="RL Media"
+                width="52" alt="RL PROD"
                 style="display:block;margin:14px auto;width:52px;height:auto;
                        mix-blend-mode:screen;opacity:0.95;" />
             </td>
@@ -356,7 +356,7 @@ export async function POST(req: NextRequest) {
         <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.25);
                   line-height:1.8;font-weight:300;">
           Qualquer questão, estamos disponíveis.<br>
-          <span style="color:rgba(255,255,255,0.35);">Equipa RL Media</span>
+          <span style="color:rgba(255,255,255,0.35);">Equipa RL PROD</span>
         </p>
 
       </td></tr>
@@ -373,7 +373,7 @@ export async function POST(req: NextRequest) {
         <td style="padding:18px 44px;text-align:center;background:#040c1c;">
           <p style="margin:0;font-size:8px;letter-spacing:5px;
                     color:rgba(255,255,255,0.1);text-transform:uppercase;">
-            RL Media &middot; Audiovisual &middot; rlmedia.pt
+            RL PROD &middot; Photography &amp; Video &middot; rlphotovideo.pt
           </p>
         </td>
       </tr>
@@ -394,9 +394,9 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'RL Media <geral@rlphotovideo.pt>',
+        from: 'RL PROD <geral@rlphotovideo.pt>',
         to: [emailCliente],
-        subject: `${nomeProjeto} · Pagamento de ${fmtEur(valorPago)} confirmado — RL Media`,
+        subject: `${nomeProjeto} · Pagamento de ${fmtEur(valorPago)} confirmado — RL PROD`,
         html: htmlCliente,
       }),
     })
@@ -404,3 +404,4 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ ok: true, comprativoUrl, registosPagamento: registosAtualizados })
 }
+

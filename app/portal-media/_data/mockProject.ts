@@ -1,4 +1,4 @@
-export type FaseEstado = 'concluido' | 'em_curso' | 'pendente'
+﻿export type FaseEstado = 'concluido' | 'em_curso' | 'pendente'
 
 export interface Fase {
   id: string
@@ -192,7 +192,7 @@ const PROJETOS: Record<string, Projeto> = {
     ref: 'OLEOBIO',
     nome: 'OLEOBIO',
     cliente: 'Oleobio, Lda',
-    tipo: 'Produção Audiovisual',
+    tipo: 'Produção Photography & Video',
     local: 'Lisboa',
     dataFilmagem: '15 Jul 2025',
     dataEntrega: '25 Set 2025',

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
@@ -55,7 +55,7 @@ export default function PortalHamburger({ portalRef, nomeProjeto }: Props) {
             <span className="block" style={{ width: '16px', height: '1px', background: 'rgba(255,255,255,0.65)' }} />
           </button>
           <span className="text-[9px] tracking-[0.45em] text-white/22 uppercase hidden sm:block">
-            RL Media &nbsp;·&nbsp; Portal do Cliente
+            RL PROD &nbsp;·&nbsp; Portal do Cliente
           </span>
         </div>
 
@@ -158,10 +158,11 @@ export default function PortalHamburger({ portalRef, nomeProjeto }: Props) {
         {/* Footer */}
         <div className="relative px-5 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
           <p className="text-[8px] tracking-[0.4em] uppercase" style={{ color: 'rgba(255,255,255,0.08)' }}>
-            RL Media · Audiovisual
+            RL PROD · Photography & Video
           </p>
         </div>
       </div>
     </>
   )
 }
+

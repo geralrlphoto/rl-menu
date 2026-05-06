@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+﻿import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   const novaMensagem = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     texto: texto.trim(),
-    autor: adminReal ? (autor || 'RL Media') : (autor || 'Cliente'),
+    autor: adminReal ? (autor || 'RL PROD') : (autor || 'Cliente'),
     isAdmin: adminReal,
     criadoEm: new Date().toISOString(),
   }

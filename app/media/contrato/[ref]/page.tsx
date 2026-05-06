@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+﻿import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 import ContratoEditBar from './ContratoEditBar'
@@ -11,9 +11,9 @@ const supabase = createClient(
 
 type Props = { params: Promise<{ ref: string }> }
 
-// Prestadora (dados fixos RL Media)
+// Prestadora (dados fixos RL PROD)
 const PRESTADORA = {
-  nome: 'Liliana Sofia Fernandes Barreto Gonçalves (RL MEDIA - AUDIOVISUAL)',
+  nome: 'Liliana Sofia Fernandes Barreto Gonçalves (RL PROD - Photography & Video)',
   nif: '238076415',
   cae: '74200 (Atividades Fotográficas/Vídeo)',
   morada: 'Centro Comercial os Mochos Loja 136 - 2955-185 Pinhal Novo',
@@ -129,7 +129,7 @@ export default async function ContratoPage({ params }: Props) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo-rl-media-branco.png"
-            alt="RL Media"
+            alt="RL PROD"
             style={{ width: 220, height: 'auto', objectFit: 'contain' }}
           />
         </div>
@@ -218,7 +218,7 @@ export default async function ContratoPage({ params }: Props) {
         </InfoBlock>
 
         <BodyText>
-          Por este acordo, as partes têm entre si, contratante e contratado o que segue. A CONTRATADA é ajustada, para realizar os serviços a seguir discriminados com seus respectivos valores, o serviço de videografia e fotografia será realizado pela RL Media - Audiovisual.
+          Por este acordo, as partes têm entre si, contratante e contratado o que segue. A CONTRATADA é ajustada, para realizar os serviços a seguir discriminados com seus respectivos valores, o serviço de videografia e fotografia será realizado pela RL PROD - Photography & Video.
         </BodyText>
       </ContentPage>
 
@@ -394,13 +394,13 @@ export default async function ContratoPage({ params }: Props) {
             </div>
           </div>
 
-          {/* RL Media */}
+          {/* RL PROD */}
           <div>
             <div style={{ marginBottom: 60, borderBottom: '2px solid #000', paddingBottom: 4 }}>
               <span style={{ fontSize: 9, letterSpacing: 3, color: '#999', textTransform: 'uppercase' }}>Assinatura</span>
             </div>
             <p style={{ fontSize: 14, color: '#000', fontWeight: 900, fontFamily: "'Arial Black', Arial, sans-serif", textTransform: 'uppercase', marginBottom: 4 }}>
-              RL MEDIA — AUDIOVISUAL
+              RL PROD — Photography & Video
             </p>
             <p style={{ fontSize: 12, color: '#555', marginBottom: 2 }}>Liliana Sofia Fernandes Barreto Gonçalves</p>
             <p style={{ fontSize: 10, color: '#999', letterSpacing: 1, textTransform: 'uppercase' }}>Representante Legal</p>
@@ -436,7 +436,7 @@ function ContentPage({ children, purple }: { children: React.ReactNode; purple: 
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo-rl-media-branco.png"
-            alt="RL Media"
+            alt="RL PROD"
             style={{ height: 32, width: 'auto', objectFit: 'contain' }}
           />
         </div>
@@ -456,7 +456,7 @@ function ContentPage({ children, purple }: { children: React.ReactNode; purple: 
         borderTop: '1px solid #e8e8e8',
       }}>
         <div style={{ fontSize: 8, letterSpacing: 3, color: '#bbb', textTransform: 'uppercase' }}>
-          WWW.RLMEDIA.PT
+          WWW.rlphotovideo.pt
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: 10, color: purple, fontStyle: 'italic', lineHeight: 1.3 }}>MORE THAN A PRODUCT,</div>

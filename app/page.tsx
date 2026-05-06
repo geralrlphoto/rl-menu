@@ -1,4 +1,4 @@
-import Link from 'next/link'
+﻿import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
@@ -60,7 +60,7 @@ export default function BrandSelector() {
         <div className="relative z-10 w-1.5 h-1.5 rounded-full bg-white/20 ring-1 ring-white/10" />
       </div>
 
-      {/* ─── RL MEDIA - AUDIOVISUAL ──────────────────────────────── */}
+      {/* ─── RL PROD - Photography & Video ──────────────────────────────── */}
       <Link
         href="/media"
         className="flex-1 relative overflow-hidden group cursor-pointer
@@ -81,13 +81,13 @@ export default function BrandSelector() {
 
         {/* Conteúdo */}
         <div className="relative z-10 flex flex-col px-10 sm:px-14 pb-14 sm:pb-20 gap-4">
-          <p className="text-[8px] tracking-[0.65em] text-white/25 uppercase">Produção Audiovisual</p>
+          <p className="text-[8px] tracking-[0.65em] text-white/25 uppercase">Produção Photography & Video</p>
           <div>
             <h2 className="text-[clamp(2.2rem,5vw,3.5rem)] font-extralight tracking-[0.35em] text-white/90 uppercase leading-tight">
               RL <span className="text-white/60">MEDIA</span>
             </h2>
             <h2 className="text-[clamp(1.2rem,2.8vw,1.8rem)] font-extralight tracking-[0.25em] text-white/40 uppercase leading-tight mt-1">
-              AUDIOVISUAL
+              Photography & Video
             </h2>
           </div>
           <div className="flex items-center gap-4 mt-1">
@@ -113,3 +113,4 @@ export default function BrandSelector() {
     </main>
   )
 }
+

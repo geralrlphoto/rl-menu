@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+﻿import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { getProjeto } from '@/app/portal-media/_data/mockProject'
 
@@ -34,7 +34,7 @@ function neonCard(badge: string, badgeColor: string, title: string, body: string
       <tr><td style="width:90px;height:90px;border-radius:50%;border:1px solid rgba(255,255,255,0.22);
                      box-shadow:0 0 18px rgba(255,255,255,0.1),inset 0 0 12px rgba(255,255,255,0.04);
                      background:rgba(255,255,255,0.04);text-align:center;vertical-align:middle;padding:0;">
-        <img src="https://rl-menu-lake.vercel.app/logo-rl-media-branco.png" width="58" alt="RL Media"
+        <img src="https://rl-menu-lake.vercel.app/logo-rl-media-branco.png" width="58" alt="RL PROD"
           style="display:block;margin:16px auto;width:58px;height:auto;mix-blend-mode:screen;opacity:0.95;" />
       </td></tr>
     </table>
@@ -72,7 +72,7 @@ function neonCard(badge: string, badgeColor: string, title: string, body: string
   <tr><td height="1" style="background:linear-gradient(90deg,transparent,rgba(37,99,235,0.35),transparent);font-size:0;line-height:0;">&nbsp;</td></tr>
   <tr><td style="padding:18px 44px;text-align:center;background:#040c1c;">
     <p style="margin:0;font-size:8px;letter-spacing:5px;color:rgba(255,255,255,0.1);text-transform:uppercase;">
-      RL Media &middot; Audiovisual &middot; rlmedia.pt
+      RL PROD &middot; Photography & Video &middot; rlphotovideo.pt
     </p>
   </td></tr>
 
@@ -93,7 +93,7 @@ async function sendEmail(to: string, subject: string, html: string): Promise<{ o
         Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ from: 'RL Media <geral@rlphotovideo.pt>', to: [to], subject, html }),
+      body: JSON.stringify({ from: 'RL PROD <geral@rlphotovideo.pt>', to: [to], subject, html }),
     })
     const data = await res.json()
     if (!res.ok) {
@@ -190,7 +190,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       )
       emailResult = await sendEmail(
         adminEmail,
-        `${nomeProjeto} · Novo feedback do cliente — RL Media`,
+        `${nomeProjeto} · Novo feedback do cliente — RL PROD`,
         html
       )
     }
@@ -221,7 +221,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     let emailResult = { ok: false, error: 'clienteEmail vazio' }
     if (clienteEmail) {
       const html = neonCard(
-        'Resposta da RL Media',
+        'Resposta da RL PROD',
         'rgba(96,165,250,0.9)',
         `Entrega · ${entregaTitulo}`,
         texto.trim(),
@@ -232,7 +232,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       )
       emailResult = await sendEmail(
         clienteEmail,
-        `${nomeProjeto} · A RL Media respondeu ao teu feedback — RL Media`,
+        `${nomeProjeto} · A RL PROD respondeu ao teu feedback — RL PROD`,
         html
       )
     }

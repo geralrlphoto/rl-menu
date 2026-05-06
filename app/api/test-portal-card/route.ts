@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 
 const IMG_BASE = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
 
@@ -110,9 +110,9 @@ export async function GET() {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL Media <geral@rlphotovideo.pt>',
+      from: 'RL PROD <geral@rlphotovideo.pt>',
       to: 'geral.rlmedia@gmail.com',
-      subject: 'RL Media — Reunião marcada, 15 de Maio de 2026 [TESTE]',
+      subject: 'RL PROD — Reunião marcada, 15 de Maio de 2026 [TESTE]',
       html: cardHtml,
     }),
   })
@@ -121,3 +121,4 @@ export async function GET() {
   if (!res.ok) return NextResponse.json({ ok: false, error: data }, { status: 500 })
   return NextResponse.json({ ok: true, message: 'Card enviado para geral.rlmedia@gmail.com' })
 }
+

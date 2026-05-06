@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 
 export async function GET() {
   const primeiroNome = 'Rui'
@@ -19,12 +19,12 @@ export async function GET() {
 
       <!-- Logo circular com neon -->
       <img src="https://rl-menu-lake.vercel.app/logo_marca_advocacia__8_-removebg-preview.png"
-        width="88" height="88" alt="RL Media"
+        width="88" height="88" alt="RL PROD"
         style="display:block;margin:0 auto 32px;width:88px;height:88px;object-fit:cover;border-radius:50%;border:1.5px solid rgba(200,170,100,0.65);box-shadow:0 0 10px rgba(200,170,100,0.7),0 0 24px rgba(200,170,100,0.35),0 0 50px rgba(200,170,100,0.15);" />
 
       <!-- Brand -->
       <p style="margin:0 0 36px;font-size:9px;letter-spacing:7px;color:rgba(180,150,90,0.6);text-transform:uppercase;">
-        RL MEDIA &nbsp;&middot;&nbsp; AUDIOVISUAL
+        RL PROD &nbsp;&middot;&nbsp; Photography & Video
       </p>
 
       <!-- Nome — elemento principal -->
@@ -59,7 +59,7 @@ export async function GET() {
     <!-- Footer -->
     <tr><td style="background:#060a12;border-top:1px solid rgba(180,150,90,0.12);padding:20px 52px;text-align:center;">
       <p style="margin:0;font-size:8px;letter-spacing:6px;color:rgba(180,150,90,0.32);text-transform:uppercase;">
-        RL MEDIA &nbsp;&middot;&nbsp; AUDIOVISUAL
+        RL PROD &nbsp;&middot;&nbsp; Photography & Video
       </p>
     </td></tr>
 
@@ -78,9 +78,9 @@ export async function GET() {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL Media <geral@rlphotovideo.pt>',
+      from: 'RL PROD <geral@rlphotovideo.pt>',
       to: 'geral.rlmedia@gmail.com',
-      subject: 'RL Media — Recebemos o teu pedido, Rui [TESTE]',
+      subject: 'RL PROD — Recebemos o teu pedido, Rui [TESTE]',
       html: cardHtml,
     }),
   })
@@ -89,3 +89,4 @@ export async function GET() {
   if (!res.ok) return NextResponse.json({ ok: false, error: data }, { status: 500 })
   return NextResponse.json({ ok: true, message: 'Card enviado para geral.rlmedia@gmail.com' })
 }
+

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState } from 'react'
 import Link from 'next/link'
 import type { Projeto, BriefingSessao } from '@/app/portal-media/_data/mockProject'
@@ -112,7 +112,7 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
         {/* Title + add button */}
         <div className="flex items-end justify-between mb-10">
           <div>
-            <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · {initial.nome}</p>
+            <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD · {initial.nome}</p>
             <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Briefing</h1>
             <div className="mt-4 flex items-center gap-3">
               <div className="h-px w-12 bg-white/25" />
@@ -286,3 +286,4 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
     </>
   )
 }
+

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
   const { to, ref, nome, cliente, tipo } = await req.json()
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 
           <!-- Logo -->
           <img src="https://rl-menu-lake.vercel.app/logo_marca_advocacia__8_-removebg-preview.png"
-            width="88" alt="RL Media"
+            width="88" alt="RL PROD"
             style="display:block;margin:0 auto 32px;width:88px;height:88px;object-fit:contain;" />
 
           <!-- Label -->
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
           <table cellpadding="0" cellspacing="0" style="margin:0 auto 24px;width:40px;"><tr><td height="1" style="background:rgba(255,255,255,0.15);font-size:0;line-height:0;">&nbsp;</td></tr></table>
 
           <!-- Project -->
-          <p style="margin:0 0 4px;font-size:9px;letter-spacing:5px;color:rgba(255,255,255,0.25);text-transform:uppercase;">${tipo ?? 'Produção Audiovisual'}</p>
+          <p style="margin:0 0 4px;font-size:9px;letter-spacing:5px;color:rgba(255,255,255,0.25);text-transform:uppercase;">${tipo ?? 'Photography & Video'}</p>
           <p style="margin:0 0 4px;font-size:26px;font-weight:200;letter-spacing:6px;color:rgba(255,255,255,0.9);text-transform:uppercase;">${nome}</p>
           <p style="margin:0 0 32px;font-size:10px;letter-spacing:4px;color:rgba(255,255,255,0.3);text-transform:uppercase;">${cliente}</p>
 
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
 
           <!-- URL hint -->
           <p style="margin:0;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.12);font-family:monospace;">
-            rlmedia.pt/portal-media/${ref.toLowerCase()}
+            rlphotovideo.pt/portal-media/${ref.toLowerCase()}
           </p>
 
         </td></tr>
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
         <!-- Footer -->
         <tr><td style="padding:20px 48px;text-align:center;">
           <p style="margin:0;font-size:8px;letter-spacing:5px;color:rgba(255,255,255,0.12);text-transform:uppercase;">
-            RL Media &middot; Audiovisual &middot; rlmedia.pt
+            RL PROD &middot; Photography &amp; Video &middot; rlphotovideo.pt
           </p>
         </td></tr>
 
@@ -84,9 +84,9 @@ export async function POST(req: NextRequest) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL Media <geral@rlphotovideo.pt>',
+      from: 'RL PROD <geral@rlphotovideo.pt>',
       to: [to],
-      subject: `${nome} · Portal do Cliente — RL Media`,
+      subject: `${nome} · Portal do Cliente — RL PROD`,
       html,
     }),
   })
@@ -95,3 +95,4 @@ export async function POST(req: NextRequest) {
   if (!res.ok) return NextResponse.json({ ok: false, error: data.message }, { status: 500 })
   return NextResponse.json({ ok: true, id: data.id })
 }
+

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useRef, useState } from 'react'
 
@@ -46,11 +46,11 @@ export type RMPageContent = {
 const DEFAULT_CONTENT: RMPageContent = {
   hero: {
     titulo: 'Reunião Marcada',
-    subtitulo: 'RL Media · Audiovisual',
+    subtitulo: 'RL PROD · Photography & Video',
   },
   videos: {
     label: 'O Nosso Trabalho',
-    titulo: 'Produção audiovisual com propósito.',
+    titulo: 'Produção Photography & Video com propósito.',
     urls: ['', '', ''],
   },
   proposta: {
@@ -123,9 +123,9 @@ const DEFAULT_CONTENT: RMPageContent = {
   },
   sobre: {
     label: 'Quem Somos',
-    titulo: 'RL Media',
+    titulo: 'RL PROD',
     texto:
-      'Produzimos conteúdo audiovisual que comunica com clareza e impacto. Trabalhamos com marcas que entendem o valor da narrativa visual — desde vídeos institucionais a campanhas digitais. A nossa abordagem é estratégica, estética e orientada para resultados concretos.',
+      'Produzimos conteúdo Photography & Video que comunica com clareza e impacto. Trabalhamos com marcas que entendem o valor da narrativa visual — desde vídeos institucionais a campanhas digitais. A nossa abordagem é estratégica, estética e orientada para resultados concretos.',
   },
   propostas: [
     { titulo: 'Proposta 1', valor: '', servicos: [] },
@@ -533,15 +533,15 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
               const fmt = (d: string, h: string) => `${d.replace(/-/g,'')}T${h.replace(':','')}00`
               const start = fmt(lead!.reuniao_data, horaFmt)
               const end   = fmt(lead!.reuniao_data, String(parseInt(horaFmt.split(':')[0])+1).padStart(2,'0') + ':' + horaFmt.split(':')[1])
-              const title = encodeURIComponent('Reunião RL Media · Audiovisual')
+              const title = encodeURIComponent('Reunião RL PROD · Photography & Video')
               const loc   = encodeURIComponent(lead!.reuniao_link || (isVideo ? 'Videochamada' : 'Presencial'))
               const gcal  = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&location=${loc}`
               const downloadIcs = () => {
                 const ics = [
-                  'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//RL Media//Audiovisual//PT',
+                  'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//RL PROD//Photography & Video//PT',
                   'BEGIN:VEVENT',
                   `DTSTART:${start}`, `DTEND:${end}`,
-                  `SUMMARY:Reunião RL Media · Audiovisual`,
+                  `SUMMARY:Reunião RL PROD · Photography & Video`,
                   `LOCATION:${decodeURIComponent(loc)}`,
                   'END:VEVENT','END:VCALENDAR',
                 ].join('\r\n')
@@ -675,7 +675,7 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
         {/* ── FOOTER ── */}
         <footer className="border-t border-white/[0.04] px-6 py-8 text-center">
           <FadeIn>
-            <p className="text-[8px] tracking-[0.6em] text-white/12 uppercase">© RL Media · Audiovisual</p>
+            <p className="text-[8px] tracking-[0.6em] text-white/12 uppercase">© RL PROD · Photography & Video</p>
           </FadeIn>
         </footer>
 

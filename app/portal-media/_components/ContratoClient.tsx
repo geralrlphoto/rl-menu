@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState } from 'react'
 import Link from 'next/link'
 import type { Projeto, FichaCliente } from '@/app/portal-media/_data/mockProject'
@@ -185,7 +185,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
         </Link>
 
         <div className="mb-10">
-          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · {projeto.nome}</p>
+          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD · {projeto.nome}</p>
           <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Contrato & CPS</h1>
           <div className="mt-4 flex items-center gap-3">
             <div className="h-px w-12 bg-white/25" />
@@ -215,7 +215,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
           <p className="text-[13px] font-light text-white/30 leading-relaxed">
             O nosso objetivo é <span className="text-white/55">simplificar o acesso à informação essencial</span>, garantindo-lhe mais comodidade e transparência.
           </p>
-          <p className="text-[10px] text-white/20 mt-3 tracking-[0.15em]">Obrigado pela confiança · RL Media</p>
+          <p className="text-[10px] text-white/20 mt-3 tracking-[0.15em]">Obrigado pela confiança · RL PROD</p>
         </div>
 
         {/* ── Método de Pagamento ── */}
@@ -282,7 +282,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                   isEditing={true}
                   onChange={v => setConta('email', v)}
                   className="text-[13px] font-light text-white/65"
-                  placeholder="email@rlmedia.pt"
+                  placeholder="email@rlphotovideo.pt"
                 />
               </div>
             ) : (
@@ -603,3 +603,4 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
     </>
   )
 }
+

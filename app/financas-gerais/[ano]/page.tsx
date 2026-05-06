@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import { useState, useEffect, use } from 'react'
@@ -160,7 +160,7 @@ const DESPESAS_2025 = [
   { data: '09/2025', mes: 'Setembro', item: 'LUZ LOJA', valor: 18.79, notas: '' },
   { data: '09/2025', mes: 'Setembro', item: 'SEGURO RC', valor: 64.72, notas: '' },
   { data: '09/2025', mes: 'Setembro', item: 'PUBLICIDADE FACEBOOK', valor: 16.64, notas: '' },
-  { data: '09/2025', mes: 'Setembro', item: 'T-SHIRTS RL MEDIA', valor: 95, notas: '' },
+  { data: '09/2025', mes: 'Setembro', item: 'T-SHIRTS RL PROD', valor: 95, notas: '' },
   // Outubro
   { data: '10/2025', mes: 'Outubro', item: 'GO PRO 5', valor: 55, notas: '' },
   { data: '10/2025', mes: 'Outubro', item: 'HOSTINGER SITES', valor: 147.45, notas: '' },
@@ -169,8 +169,8 @@ const DESPESAS_2025 = [
   { data: '10/2025', mes: 'Outubro', item: 'RENDA LOJA', valor: 200, notas: '' },
   { data: '10/2025', mes: 'Outubro', item: 'ALUGUER LENTE QUIM', valor: 26, notas: '' },
   { data: '10/2025', mes: 'Outubro', item: 'EDITOR VÍDEO', valor: 150, notas: '' },
-  { data: '10/2025', mes: 'Outubro', item: 'PERSONALIZAÇÃO CASACOS', valor: 18, notas: 'RL MEDIA' },
-  { data: '10/2025', mes: 'Outubro', item: 'CASACOS RL MEDIA', valor: 55.50, notas: '' },
+  { data: '10/2025', mes: 'Outubro', item: 'PERSONALIZAÇÃO CASACOS', valor: 18, notas: 'RL PROD' },
+  { data: '10/2025', mes: 'Outubro', item: 'CASACOS RL PROD', valor: 55.50, notas: '' },
   { data: '10/2025', mes: 'Outubro', item: 'HOTSPOT INTERNET', valor: 20, notas: '' },
   { data: '10/2025', mes: 'Outubro', item: 'VÍDEO BTS', valor: 200, notas: 'Projeto NAFAS' },
   { data: '10/2025', mes: 'Outubro', item: 'LUZ LOJA', valor: 19.74, notas: '' },
@@ -217,7 +217,7 @@ const DESPESAS_2026 = [
   { data: '15/01/2026', mes: 'Janeiro', item: 'INTERNET HOTSPOT', valor: 20, notas: '' },
   { data: '19/01/2026', mes: 'Janeiro', item: 'CARTÕES DE VISITA', valor: 20, notas: '' },
   { data: '20/01/2026', mes: 'Janeiro', item: 'LUZ ESTÚDIO', valor: 10.80, notas: '' },
-  { data: '24/01/2026', mes: 'Janeiro', item: 'DOMINIO SITE (RL MEDIA)', valor: 48.59, notas: '' },
+  { data: '24/01/2026', mes: 'Janeiro', item: 'DOMINIO SITE (RL PROD)', valor: 48.59, notas: '' },
   { data: '31/01/2026', mes: 'Janeiro', item: 'DOMINIO SITE (KAPPA)', valor: 48.59, notas: '' },
   { data: '31/01/2026', mes: 'Janeiro', item: 'ESTACIONAMENTO LISBOA', valor: 5, notas: 'Mentoria João Seagull' },
   { data: '31/01/2026', mes: 'Janeiro', item: 'ALIMENTAÇÃO PORTO', valor: 7.48, notas: 'Mentoria João Seagull' },

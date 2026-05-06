@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+﻿import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
@@ -98,7 +98,7 @@ export default async function MediaSecaoPage({ params }: Props) {
 
       {/* Título */}
       <header className="mb-12">
-        <p className="text-[9px] tracking-[0.5em] text-white/20 uppercase mb-2">RL MEDIA · AUDIOVISUAL</p>
+        <p className="text-[9px] tracking-[0.5em] text-white/20 uppercase mb-2">RL PROD · Photography & Video</p>
         <h1 className="text-3xl font-extralight tracking-[0.2em] text-white/80 uppercase">
           {section.name}
         </h1>

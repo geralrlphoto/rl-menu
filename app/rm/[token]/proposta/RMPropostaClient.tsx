@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useCallback, useEffect, useState } from 'react'
 import type { RMPageContent, RMPackage, RMProposta } from '../RMLeadPageClient'
@@ -74,7 +74,7 @@ const DEFAULT_INCLUIDO = [
 
 function merge(saved: any): RMPageContent {
   const d: RMPageContent = {
-    hero:    { titulo: 'Reunião Marcada', subtitulo: 'RL Media · Audiovisual' },
+    hero:    { titulo: 'Reunião Marcada', subtitulo: 'RL PROD · Photography & Video' },
     videos:  { label: '', titulo: '', urls: ['','',''] },
     proposta: {
       titulo: 'Proposta Criativa', intro: '', packages: DEFAULT_PACKAGES,
@@ -83,7 +83,7 @@ function merge(saved: any): RMPageContent {
       videoUrls: ['','',''], checkpointPergunta: 'Esta abordagem alinha-se com a visão da vossa marca?',
       slideImages: ['','','','','','','','','',''],
     },
-    sobre:   { label: 'Quem Somos', titulo: 'RL Media', texto: '' },
+    sobre:   { label: 'Quem Somos', titulo: 'RL PROD', texto: '' },
   }
   if (!saved) return d
   return {
@@ -539,7 +539,7 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
       }} />
       <div className="relative z-10 w-full max-w-sm flex flex-col items-center gap-10 text-center">
         <div className="flex flex-col items-center gap-3">
-          <p className={labelCls}>RL Media · Audiovisual</p>
+          <p className={labelCls}>RL PROD · Photography & Video</p>
           <h1 className={`${T.xxl} font-extralight tracking-[0.3em] text-white/80 uppercase`}>Proposta Criativa</h1>
           <div className="flex items-center gap-3 mt-2">
             <div className="h-px w-8 bg-white/30" />
@@ -679,10 +679,10 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
       <SlideHeader idx={0} />
       <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-8 py-8">
         <div style={{ background:'#04080f', borderRadius:'9999px', padding:'6px', boxShadow:'0 0 24px rgba(255,255,255,0.22), 0 0 56px rgba(255,255,255,0.09)' }}>
-          <img src="/logo-rl-media-branco.png" alt="RL Media" className="w-36 h-36 object-contain block" style={{ mixBlendMode:'screen', borderRadius:'9999px' }} />
+          <img src="/logo-rl-media-branco.png" alt="RL PROD" className="w-36 h-36 object-contain block" style={{ mixBlendMode:'screen', borderRadius:'9999px' }} />
         </div>
         <div className="flex flex-col items-center gap-5">
-          <p className="text-[16px] tracking-[0.55em] text-white/55 uppercase">RL Media · Audiovisual</p>
+          <p className="text-[16px] tracking-[0.55em] text-white/55 uppercase">RL PROD · Photography & Video</p>
           <h1 className="text-[42px] font-extralight tracking-[0.35em] text-white/90 uppercase leading-snug">Proposta<br />Criativa</h1>
           <div className="flex items-center gap-5 my-1">
             <div className="h-px w-16 bg-white/30" />
@@ -829,7 +829,7 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
               <p className="text-[15px] font-light text-white/55 leading-relaxed">Recebemos a vossa confirmação. Entraremos em contacto brevemente para dar início ao projeto.</p>
             </div>
             <div className="h-px w-16 bg-white/20" />
-            <p className="text-[12px] tracking-[0.4em] text-white/35 uppercase">RL Media · Obrigado</p>
+            <p className="text-[12px] tracking-[0.4em] text-white/35 uppercase">RL PROD · Obrigado</p>
           </div>
         )}
 
@@ -1005,7 +1005,7 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
       {/* Top bar */}
       <div className="relative z-20 flex items-center justify-between px-6 py-4 border-b border-white/[0.06] shrink-0">
         <a href={`/rm/${token}`} className={`${T.xs} tracking-[0.4em] text-white/45 hover:text-white/65 uppercase transition-colors`}>‹ Portal</a>
-        <p className={`${T.xs} tracking-[0.5em] text-white/40 uppercase`}>RL Media · Proposta Criativa</p>
+        <p className={`${T.xs} tracking-[0.5em] text-white/40 uppercase`}>RL PROD · Proposta Criativa</p>
         <p className={`${T.xs} tracking-widest text-white/45 font-mono`}>
           {String(current + 1).padStart(2,'0')} / {String(TOTAL_SLIDES).padStart(2,'0')}
         </p>

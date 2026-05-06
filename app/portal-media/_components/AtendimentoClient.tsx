@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState } from 'react'
 import Link from 'next/link'
 import type { Projeto } from '@/app/portal-media/_data/mockProject'
@@ -49,7 +49,7 @@ export default function AtendimentoClient({ projeto: initial, isAdmin }: Props) 
         </Link>
 
         <div className="mb-10">
-          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · {projeto.nome}</p>
+          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD · {projeto.nome}</p>
           <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Atendimento</h1>
           <div className="mt-4 flex items-center gap-3">
             <div className="h-px w-12 bg-white/25" />
@@ -107,7 +107,7 @@ export default function AtendimentoClient({ projeto: initial, isAdmin }: Props) 
                 className="text-[12px] tracking-[0.2em] text-white/65 uppercase font-light block"
                 placeholder="Nome do gestor"
               />
-              <p className="text-[9px] tracking-[0.2em] text-white/25 mt-0.5">RL Media · Audiovisual</p>
+              <p className="text-[9px] tracking-[0.2em] text-white/25 mt-0.5">RL PROD · Photography & Video</p>
             </div>
           </div>
           <div className="flex flex-col gap-3">
@@ -157,11 +157,11 @@ export default function AtendimentoClient({ projeto: initial, isAdmin }: Props) 
         </div>
 
         {/* Site */}
-        <a href="https://www.rlmedia.pt" target="_blank" rel="noopener noreferrer"
+        <a href="https://www.rlphotovideo.pt" target="_blank" rel="noopener noreferrer"
           className="group flex items-center justify-between border border-white/[0.06] bg-white/[0.01] hover:bg-white/[0.04] hover:border-white/15 px-6 py-4 transition-all mb-10">
           <div>
-            <p className="text-[9px] tracking-[0.3em] text-white/40 uppercase group-hover:text-white/60 transition-colors">RL Media · Audiovisual</p>
-            <p className="text-[9px] tracking-[0.15em] text-white/20 mt-0.5">www.rlmedia.pt</p>
+            <p className="text-[9px] tracking-[0.3em] text-white/40 uppercase group-hover:text-white/60 transition-colors">RL PROD · Photography & Video</p>
+            <p className="text-[9px] tracking-[0.15em] text-white/20 mt-0.5">www.rlphotovideo.pt</p>
           </div>
           <span className="text-white/15 group-hover:text-white/40 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all">↗</span>
         </a>
@@ -191,3 +191,4 @@ export default function AtendimentoClient({ projeto: initial, isAdmin }: Props) 
     </>
   )
 }
+

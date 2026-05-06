@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
@@ -223,12 +223,12 @@ function FinancasMediaContent() {
           <Link href="/media" className="inline-flex items-center gap-2 text-[9px] tracking-[0.45em]
             text-white/20 hover:text-white/50 uppercase transition-colors mb-8 group">
             <span className="group-hover:-translate-x-1 transition-transform">‹</span>
-            RL Media
+            RL PROD
           </Link>
 
           <div className="flex items-end justify-between gap-4 flex-wrap">
             <div>
-              <p className="text-[8px] tracking-[0.6em] text-amber-400/40 uppercase mb-1">RL Media · Financeiro</p>
+              <p className="text-[8px] tracking-[0.6em] text-amber-400/40 uppercase mb-1">RL PROD · Financeiro</p>
               <h1 className="text-3xl font-extralight tracking-[0.35em] text-white/85 uppercase">Finanças</h1>
               <div className="mt-3 flex items-center gap-3">
                 <div className="h-px w-10 bg-amber-400/40" />
@@ -766,3 +766,4 @@ export default function FinancasMediaPage() {
     </Suspense>
   )
 }
+

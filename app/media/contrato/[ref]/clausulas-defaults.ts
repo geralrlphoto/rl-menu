@@ -1,4 +1,4 @@
-export type ClausulasMap = Record<string, string>
+﻿export type ClausulasMap = Record<string, string>
 
 export const CLAUSULAS_EDITAVEIS: { key: string; titulo: string }[] = [
   { key: 'c1',                 titulo: 'Primeira Cláusula' },
@@ -32,7 +32,7 @@ ii. O Cliente pretende contratar os serviços de produção de vídeo, fotografi
 É livremente estabelecido e mutuamente aceite, nos termos e condições aqui estabelecidos, o presente Contrato de Prestação de Serviços (doravante, o "Contrato") que se regerá pelos considerados acima e pelas seguintes cláusulas:`,
 
   c1:
-`A prestadora de serviço compromete-se a executar os serviços de produção de conteúdo audiovisual ao cliente, assumindo a correspondente responsabilidade técnica pela elaboração dos mesmos. A prestação dos serviços é realizada com autonomia técnica e criativa, sendo as estratégias e sugestões de desenvolvimento, elaboradas com base no conhecimento da equipa da prestadora, as quais são discutidas e partilhadas com o cliente.`,
+`A prestadora de serviço compromete-se a executar os serviços de produção de conteúdo Photography & Video ao cliente, assumindo a correspondente responsabilidade técnica pela elaboração dos mesmos. A prestação dos serviços é realizada com autonomia técnica e criativa, sendo as estratégias e sugestões de desenvolvimento, elaboradas com base no conhecimento da equipa da prestadora, as quais são discutidas e partilhadas com o cliente.`,
 
   c2_servicos:
 `Os serviços prestados pela primeira parte estão sujeitos a regras de utilização que visam o bom funcionamento dos mesmos, nomeadamente:

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 
 const SERPER_KEY    = process.env.SERPER_API_KEY!
 const APOLLO_KEY    = process.env.APOLLO_API_KEY!
@@ -117,9 +117,9 @@ async function claudeAnalise(empresa: string, sector: string, descricao: string,
         max_tokens: 600,
         messages: [{
           role: 'user',
-          content: `És um especialista em marketing e produção audiovisual em Portugal.
+          content: `És um especialista em marketing e produção Photography & Video em Portugal.
 
-Analisa esta empresa como potencial cliente para a RL Media (fotografia e vídeo corporativo):
+Analisa esta empresa como potencial cliente para a RL PROD (fotografia e vídeo corporativo):
 
 Empresa: ${empresa}
 Sector: ${sector}
@@ -134,7 +134,7 @@ Responde em português europeu com um relatório estruturado em 4 partes curtas:
 
 **NECESSIDADE:** Que tipo de fotografia/vídeo precisam especificamente e porquê.
 
-**ABORDAGEM:** Como a RL Media deve contactar esta empresa — ângulo de venda recomendado em 1-2 frases.
+**ABORDAGEM:** Como a RL PROD deve contactar esta empresa — ângulo de venda recomendado em 1-2 frases.
 
 Sê direto e prático. Máximo 200 palavras total.`,
         }],
@@ -193,7 +193,7 @@ async function enrichProspect(empresa: string): Promise<Enrichment> {
       const text    = ((item.title ?? '') + ' ' + (item.snippet ?? '')).toLowerCase()
       const rawText =  (item.title ?? '') + ' ' + (item.snippet ?? '')
 
-      if (/v[íi]deo|fotografia|audiovisual|produ[çc][ãa]o visual|marketing visual|filmagem|fotogr[áa]f/.test(text)) {
+      if (/v[íi]deo|fotografia|Photography & Video|produ[çc][ãa]o visual|marketing visual|filmagem|fotogr[áa]f/.test(text)) {
         interesseVideo = true
       }
 
@@ -429,3 +429,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
+

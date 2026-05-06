@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+﻿import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { getProjeto } from '@/app/portal-media/_data/mockProject'
 
@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
                        background:rgba(255,255,255,0.04);
                        text-align:center;vertical-align:middle;padding:0;">
               <img src="https://rl-menu-lake.vercel.app/logo-rl-media-branco.png"
-                width="58" alt="RL Media"
+                width="58" alt="RL PROD"
                 style="display:block;margin:16px auto;width:58px;height:auto;
                        mix-blend-mode:screen;opacity:0.95;" />
             </td>
@@ -175,7 +175,7 @@ export async function POST(req: NextRequest) {
         <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.25);
                   line-height:1.8;font-weight:300;">
           Qualquer questão, estamos disponíveis.<br>
-          <span style="color:rgba(255,255,255,0.35);">Equipa RL Media</span>
+          <span style="color:rgba(255,255,255,0.35);">Equipa RL PROD</span>
         </p>
 
       </td></tr>
@@ -192,7 +192,7 @@ export async function POST(req: NextRequest) {
         <td style="padding:18px 44px;text-align:center;background:#040c1c;">
           <p style="margin:0;font-size:8px;letter-spacing:5px;
                     color:rgba(255,255,255,0.1);text-transform:uppercase;">
-            RL Media &middot; Audiovisual &middot; rlmedia.pt
+            RL PROD &middot; Photography &amp; Video &middot; rlphotovideo.pt
           </p>
         </td>
       </tr>
@@ -213,9 +213,9 @@ export async function POST(req: NextRequest) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL Media <geral@rlphotovideo.pt>',
+      from: 'RL PROD <geral@rlphotovideo.pt>',
       to: [emailCliente],
-      subject: `${nomeProjeto} · O vosso Portal do Cliente está pronto — RL Media`,
+      subject: `${nomeProjeto} · O vosso Portal do Cliente está pronto — RL PROD`,
       html,
     }),
   })
@@ -224,3 +224,4 @@ export async function POST(req: NextRequest) {
   if (!resendRes.ok) return NextResponse.json({ ok: false, error: data.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }
+

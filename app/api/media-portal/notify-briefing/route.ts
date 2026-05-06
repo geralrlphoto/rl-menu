@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
   const { to, ref, nomeProjeto, cliente, sessaoTitulo, sessaoData } = await req.json()
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
       <!-- Content area -->
       <tr><td style="padding:52px 44px 44px;text-align:center;">
 
-        <!-- RL Media logo — círculo com neon branco suave -->
+        <!-- RL PROD logo — círculo com neon branco suave -->
         <table cellpadding="0" cellspacing="0" style="margin:0 auto 36px;">
           <tr>
             <td style="width:90px;height:90px;
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
                        background:rgba(255,255,255,0.04);
                        text-align:center;vertical-align:middle;padding:0;">
               <img src="https://rl-menu-lake.vercel.app/logo-rl-media-branco.png"
-                width="58" alt="RL Media"
+                width="58" alt="RL PROD"
                 style="display:block;margin:16px auto;width:58px;height:auto;
                        mix-blend-mode:screen;opacity:0.95;" />
             </td>
@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
         <td style="padding:18px 44px;text-align:center;background:#040c1c;">
           <p style="margin:0;font-size:8px;letter-spacing:5px;
                     color:rgba(255,255,255,0.1);text-transform:uppercase;">
-            RL Media &middot; Audiovisual &middot; rlmedia.pt
+            RL PROD &middot; Photography &amp; Video &middot; rlphotovideo.pt
           </p>
         </td>
       </tr>
@@ -149,9 +149,9 @@ export async function POST(req: NextRequest) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL Media <geral@rlphotovideo.pt>',
+      from: 'RL PROD <geral@rlphotovideo.pt>',
       to: [to],
-      subject: `${nomeProjeto} · Novo Briefing Adicionado — RL Media`,
+      subject: `${nomeProjeto} · Novo Briefing Adicionado — RL PROD`,
       html,
     }),
   })
@@ -160,3 +160,4 @@ export async function POST(req: NextRequest) {
   if (!res.ok) return NextResponse.json({ ok: false, error: data.message }, { status: 500 })
   return NextResponse.json({ ok: true, id: data.id })
 }
+

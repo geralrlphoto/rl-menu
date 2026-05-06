@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState } from 'react'
 import Link from 'next/link'
 import type { Projeto } from '@/app/portal-media/_data/mockProject'
@@ -98,7 +98,7 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
         </Link>
 
         <div className="mb-10">
-          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · {projeto.nome}</p>
+          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD · {projeto.nome}</p>
           <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Satisfação</h1>
           <div className="mt-4 flex items-center gap-3">
             <div className="h-px w-12 bg-white/25" />
@@ -138,7 +138,7 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
                 <>
                   <p className="text-[9px] tracking-[0.5em] text-emerald-400/60 uppercase mb-2">Obrigado pelo teu feedback</p>
                   <p className="text-[13px] font-light text-white/35 leading-relaxed max-w-sm">
-                    A tua avaliação foi registada. A equipa RL Media agradece a confiança.
+                    A tua avaliação foi registada. A equipa RL PROD agradece a confiança.
                   </p>
                 </>
               )}
@@ -185,7 +185,7 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
               <p className="text-[9px] tracking-[0.3em] text-white/50 uppercase mb-2">Avaliação do Projeto</p>
               <p className="text-[13px] font-light text-white/25 leading-relaxed max-w-sm">
                 A tua opinião é importante para nós.<br />
-                Avalia a tua experiência com a RL Media.
+                Avalia a tua experiência com a RL PROD.
               </p>
             </div>
 
@@ -218,7 +218,7 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
               <textarea
                 value={comentario}
                 onChange={e => setComentario(e.target.value)}
-                placeholder="Partilha a tua experiência com a RL Media..."
+                placeholder="Partilha a tua experiência com a RL PROD..."
                 rows={4}
                 className="w-full bg-white/[0.03] border border-white/[0.08] px-4 py-3 text-[13px] font-light
                            text-white/60 placeholder:text-white/12 focus:outline-none focus:border-white/20
@@ -252,3 +252,4 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
     </>
   )
 }
+

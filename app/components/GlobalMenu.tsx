@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
@@ -10,7 +10,7 @@ const HIDDEN_EXACT = ['/'] // brand selector — sem menu lateral
 
 const MEDIA_LINKS = [
   {
-    href: '/media', label: 'RL Media', sub: 'Menu principal',
+    href: '/media', label: 'RL PROD', sub: 'Menu principal',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>,
     exact: true,
   },
@@ -150,7 +150,7 @@ export default function GlobalMenu() {
         </svg>
       </span>
       <span className="text-[12px] tracking-wide font-medium flex-1" style={{ color: 'rgba(255,255,255,0.75)' }}>
-        {isMedia ? 'RL Photo.Video' : 'RL Media'}
+        {isMedia ? 'RL Photo.Video' : 'RL PROD'}
       </span>
       <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px' }}>→</span>
     </Link>
@@ -173,7 +173,7 @@ export default function GlobalMenu() {
         <div>
           <p className="text-[9px] tracking-[0.5em] uppercase font-semibold"
             style={{ color: accent(0.65) }}>
-            {isMedia ? 'RL Media · Audiovisual' : 'RL Photo · Video'}
+            {isMedia ? 'RL PROD · Photography & Video' : 'RL Photo · Video'}
           </p>
           <p className="text-[10px] tracking-[0.3em] uppercase mt-1"
             style={{ color: 'rgba(255,255,255,0.2)' }}>
@@ -210,7 +210,7 @@ export default function GlobalMenu() {
       {/* Footer */}
       <div className="relative px-5 py-3" style={{ borderTop: `1px solid ${accent(0.05)}` }}>
         <p className="text-[8px] tracking-[0.4em] uppercase" style={{ color: 'rgba(255,255,255,0.1)' }}>
-          {isMedia ? '© RL Media · Audiovisual' : '© RL Photo · Video'}
+          {isMedia ? '© RL PROD · Photography & Video' : '© RL Photo · Video'}
         </p>
       </div>
     </>
@@ -274,3 +274,4 @@ export default function GlobalMenu() {
     </>
   )
 }
+

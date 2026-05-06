@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
   const { to, nomeProjeto, cliente, entregas } = await req.json()
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
 
       <tr><td style="padding:52px 44px 44px;text-align:center;">
 
-        <!-- Logo RL Media -->
+        <!-- Logo RL PROD -->
         <table cellpadding="0" cellspacing="0" style="margin:0 auto 36px;">
           <tr>
             <td style="width:90px;height:90px;
@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
                        background:rgba(255,255,255,0.04);
                        text-align:center;vertical-align:middle;padding:0;">
               <img src="https://rl-menu-lake.vercel.app/logo-rl-media-branco.png"
-                width="58" alt="RL Media"
+                width="58" alt="RL PROD"
                 style="display:block;margin:16px auto;width:58px;height:auto;
                        mix-blend-mode:screen;opacity:0.95;" />
             </td>
@@ -145,7 +145,7 @@ export async function POST(req: NextRequest) {
         <td style="padding:18px 44px;text-align:center;background:#040c1c;">
           <p style="margin:0;font-size:8px;letter-spacing:5px;
                     color:rgba(255,255,255,0.1);text-transform:uppercase;">
-            RL Media &middot; Audiovisual &middot; rlmedia.pt
+            RL PROD &middot; Photography &amp; Video &middot; rlphotovideo.pt
           </p>
         </td>
       </tr>
@@ -168,9 +168,9 @@ export async function POST(req: NextRequest) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL Media <geral@rlphotovideo.pt>',
+      from: 'RL PROD <geral@rlphotovideo.pt>',
       to: [to],
-      subject: `${nomeProjeto} · As tuas entregas estão disponíveis — RL Media`,
+      subject: `${nomeProjeto} · As tuas entregas estão disponíveis — RL PROD`,
       html,
     }),
   })
@@ -179,3 +179,4 @@ export async function POST(req: NextRequest) {
   if (!res.ok) return NextResponse.json({ ok: false, error: data.message }, { status: 500 })
   return NextResponse.json({ ok: true, id: data.id })
 }
+

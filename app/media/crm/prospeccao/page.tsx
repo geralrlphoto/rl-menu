@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -135,9 +135,9 @@ export default function ProspeccaoPage() {
           <Link href="/media/crm" className="inline-flex items-center gap-2 text-[9px] tracking-[0.45em]
             text-white/20 hover:text-white/50 uppercase transition-colors mb-8 group">
             <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
-            CRM RL Media
+            CRM RL PROD
           </Link>
-          <p className="text-[8px] tracking-[0.6em] text-violet-400/50 uppercase mb-1">RL Media · Agente IA</p>
+          <p className="text-[8px] tracking-[0.6em] text-violet-400/50 uppercase mb-1">RL PROD · Agente IA</p>
           <h1 className="text-3xl font-extralight tracking-[0.35em] text-white/85 uppercase">Prospeção</h1>
           <p className="text-[12px] font-light text-white/25 mt-2">
             Encontra automaticamente empresas com potencial para investir em fotografia e vídeo.
@@ -351,7 +351,7 @@ export default function ProspeccaoPage() {
                         {p.analise && (
                           <div>
                             <p className="text-[9px] tracking-[0.45em] text-violet-400/50 uppercase mb-3">
-                              ◈ Análise RL Media
+                              ◈ Análise RL PROD
                             </p>
                             <div className="border border-violet-400/10 bg-violet-400/[0.03] px-5 py-5">
                               <p className="text-[12px] font-light text-white/55 leading-relaxed whitespace-pre-line">
@@ -427,3 +427,4 @@ export default function ProspeccaoPage() {
     </main>
   )
 }
+

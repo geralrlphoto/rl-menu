@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+﻿import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
 const supabase = createClient(
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
     'Content-Type': 'application/json',
   }
-  const FROM = 'RL Media <geral@rlphotovideo.pt>'
+  const FROM = 'RL PROD <geral@rlphotovideo.pt>'
 
   // ── 1. Notificação interna para o admin ──────────────────────────────
   try {
@@ -65,14 +65,14 @@ export async function POST(req: NextRequest) {
         html: `
           <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#222;">
             <div style="background:#0a0a0f;padding:24px 28px;">
-              <p style="margin:0;font-size:10px;letter-spacing:0.4em;color:#aaa;text-transform:uppercase;">RL Media · Audiovisual</p>
+              <p style="margin:0;font-size:10px;letter-spacing:0.4em;color:#aaa;text-transform:uppercase;">RL PROD · Photography & Video</p>
               <h1 style="margin:8px 0 0;font-size:20px;font-weight:300;letter-spacing:0.2em;color:#fff;text-transform:uppercase;">Nova Lead</h1>
             </div>
             <div style="background:#f9f9f9;padding:28px;">
               <p style="font-size:13px;line-height:1.8;color:#333;">${linhas}</p>
             </div>
             <div style="background:#0a0a0f;padding:14px 28px;">
-              <p style="margin:0;font-size:10px;color:#555;letter-spacing:0.2em;">RL Media CRM · Notificação automática</p>
+              <p style="margin:0;font-size:10px;color:#555;letter-spacing:0.2em;">RL PROD CRM · Notificação automática</p>
             </div>
           </div>
         `,
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
     if (!body.email || !body.email.trim()) return NextResponse.json({ ok: true, lead: data })
 
     const primeiroNome = String(body.nome).split(' ')[0]
-    const tipoTxt = body.tipo || 'Produção Audiovisual'
+    const tipoTxt = body.tipo || 'Produção Photography & Video'
 
     const cardHtml = `<!DOCTYPE html>
 <html lang="pt">
@@ -102,12 +102,12 @@ export async function POST(req: NextRequest) {
 
       <!-- Logo circular com neon -->
       <img src="https://rl-menu-lake.vercel.app/logo_marca_advocacia__8_-removebg-preview.png"
-        width="88" height="88" alt="RL Media"
+        width="88" height="88" alt="RL PROD"
         style="display:block;margin:0 auto 32px;width:88px;height:88px;object-fit:cover;border-radius:50%;border:1.5px solid rgba(200,170,100,0.65);box-shadow:0 0 10px rgba(200,170,100,0.7),0 0 24px rgba(200,170,100,0.35),0 0 50px rgba(200,170,100,0.15);" />
 
       <!-- Brand -->
       <p style="margin:0 0 36px;font-size:9px;letter-spacing:7px;color:rgba(180,150,90,0.6);text-transform:uppercase;">
-        RL MEDIA &nbsp;&middot;&nbsp; AUDIOVISUAL
+        RL PROD &nbsp;&middot;&nbsp; Photography & Video
       </p>
 
       <!-- Nome — elemento principal -->
@@ -142,7 +142,7 @@ export async function POST(req: NextRequest) {
     <!-- Footer -->
     <tr><td style="background:#060a12;border-top:1px solid rgba(180,150,90,0.12);padding:20px 52px;text-align:center;">
       <p style="margin:0;font-size:8px;letter-spacing:6px;color:rgba(180,150,90,0.32);text-transform:uppercase;">
-        RL MEDIA &nbsp;&middot;&nbsp; AUDIOVISUAL
+        RL PROD &nbsp;&middot;&nbsp; Photography & Video
       </p>
     </td></tr>
 
@@ -160,7 +160,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         from: FROM,
         to: [body.email.trim()],
-        subject: `RL Media — Recebemos o teu pedido, ${primeiroNome}`,
+        subject: `RL PROD — Recebemos o teu pedido, ${primeiroNome}`,
         html: cardHtml,
       }),
     })
@@ -194,3 +194,4 @@ export async function DELETE(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }
+

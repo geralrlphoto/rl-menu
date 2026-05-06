@@ -1,4 +1,4 @@
-import Link from 'next/link'
+﻿import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 import { getProjeto, type Projeto } from '@/app/portal-media/_data/mockProject'
 import PortalSenhaInput from './PortalSenhaInput'
@@ -75,12 +75,12 @@ export default async function PortalClientePage() {
         <Link href="/media"
           className="inline-flex items-center gap-2 text-[9px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
           <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
-          Menu RL Media
+          Menu RL PROD
         </Link>
 
         {/* Header */}
         <div className="mb-12">
-          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · Audiovisual</p>
+          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD · Photography & Video</p>
           <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Portal Cliente</h1>
           <div className="mt-4 flex items-center gap-3">
             <div className="h-px w-12 bg-white/25" />
@@ -185,3 +185,4 @@ export default async function PortalClientePage() {
     </main>
   )
 }
+

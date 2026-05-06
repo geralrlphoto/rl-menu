@@ -1,11 +1,11 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import CustomSelect from '@/app/components/CustomSelect'
 
 const TIPOS = [
   'Vídeo Institucional',
-  'Produção Audiovisual',
+  'Produção Photography & Video',
   'Vídeo Casamento',
   'Vídeo Evento',
   'Fotografia Comercial',
@@ -90,14 +90,14 @@ export default function NovaLeadPage() {
         <div className="relative z-10 flex flex-col items-center text-center px-6">
           <img
             src="/logo_marca_advocacia__8_-removebg-preview.png"
-            alt="RL Media"
+            alt="RL PROD"
             className="w-16 h-16 object-contain mb-8"
             style={{ filter: 'drop-shadow(0 0 16px rgba(255,255,255,0.1))' }}
           />
           <div className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center mb-6">
             <span className="text-white/50 text-lg">✓</span>
           </div>
-          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-3">RL Media · Audiovisual</p>
+          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-3">RL PROD · Photography & Video</p>
           <h2 className="text-xl font-extralight tracking-[0.4em] text-white/70 uppercase mb-4">Mensagem Enviada</h2>
           <p className="text-[12px] text-white/30 tracking-wider max-w-xs leading-relaxed">
             Recebemos o teu contacto. Entraremos em breve em contacto contigo.
@@ -128,11 +128,11 @@ export default function NovaLeadPage() {
         <div className="mb-12 flex flex-col items-center text-center">
           <img
             src="/logo_marca_advocacia__8_-removebg-preview.png"
-            alt="RL Media"
+            alt="RL PROD"
             className="w-20 h-20 object-contain mb-6"
             style={{ filter: 'drop-shadow(0 0 16px rgba(255,255,255,0.1))' }}
           />
-          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · Audiovisual</p>
+          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD · Photography & Video</p>
           <h1 className="text-2xl font-extralight tracking-[0.4em] text-white/80 uppercase">Formulário</h1>
           <div className="mt-4 flex items-center gap-3 w-full max-w-xs">
             <div className="h-px flex-1 bg-white/[0.06]" />
@@ -226,3 +226,4 @@ export default function NovaLeadPage() {
     </main>
   )
 }
+

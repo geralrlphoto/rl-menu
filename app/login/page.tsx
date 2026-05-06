@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -38,7 +38,7 @@ export default function LoginPage() {
           RL <span className="text-[#C9A84C]">PHOTO</span>.VIDEO
         </h1>
         <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">
-          & RL MEDIA · AUDIOVISUAL
+          & RL PROD · Photography & Video
         </p>
       </div>
 
@@ -71,3 +71,4 @@ export default function LoginPage() {
     </main>
   )
 }
+

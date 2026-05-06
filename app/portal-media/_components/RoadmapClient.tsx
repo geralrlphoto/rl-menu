@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import type { Projeto, RoadmapColuna, RoadmapTarefa, TarefaEstado } from '@/app/portal-media/_data/mockProject'
@@ -173,7 +173,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
         {/* ── Board header ── */}
         <div className="border border-white/[0.07] bg-white/[0.015] px-6 py-5 mb-8 flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex-1">
-            <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-1">RL Media · {initial.nome}</p>
+            <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-1">RL PROD · {initial.nome}</p>
             <h1 className="text-2xl font-extralight tracking-[0.35em] text-white/80 uppercase">Road Map</h1>
           </div>
 
@@ -404,3 +404,4 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
     </>
   )
 }
+

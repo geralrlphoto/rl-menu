@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useEffect, useRef, useState } from 'react'
 import type { ChatMensagem } from '@/app/portal-media/_data/mockProject'
 
@@ -61,7 +61,7 @@ export default function ChatBox({ projetoRef, isAdmin, clienteNome }: Props) {
     const txt = texto.trim()
     if (!txt || sending) return
     setSending(true)
-    const autor = isAdmin ? 'RL Media' : clienteNome
+    const autor = isAdmin ? 'RL PROD' : clienteNome
     try {
       await fetch(`/api/media-portal/${projetoRef}/chat`, {
         method: 'POST',
@@ -187,3 +187,4 @@ export default function ChatBox({ projetoRef, isAdmin, clienteNome }: Props) {
     </div>
   )
 }
+

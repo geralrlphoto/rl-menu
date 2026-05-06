@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import { useState } from 'react'
@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import CustomSelect from '@/app/components/CustomSelect'
 
 const TIPOS = [
-  'Produção Audiovisual',
+  'Produção Photography & Video',
   'Vídeo Institucional',
   'Vídeo Casamento',
   'Vídeo Evento',
@@ -155,12 +155,12 @@ export default function FichaClientePage() {
         <Link href="/media"
           className="inline-flex items-center gap-2 text-[10px] tracking-[0.4em] text-white/45 hover:text-white/75 transition-colors uppercase mb-12 group">
           <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
-          Menu RL Media
+          Menu RL PROD
         </Link>
 
         {/* Header */}
         <div className="mb-12">
-          <p className="text-[10px] tracking-[0.6em] text-white/40 uppercase mb-2">RL Media · Audiovisual</p>
+          <p className="text-[10px] tracking-[0.6em] text-white/40 uppercase mb-2">RL PROD · Photography & Video</p>
           <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Ficha de Cliente</h1>
           <div className="mt-4 flex items-center gap-3">
             <div className="h-px w-12 bg-white/25" />
@@ -406,3 +406,4 @@ export default function FichaClientePage() {
     </main>
   )
 }
+

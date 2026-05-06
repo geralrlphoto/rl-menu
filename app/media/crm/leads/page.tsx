@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+﻿import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import LeadsClient from './LeadsClient'
 
@@ -49,7 +49,7 @@ export default async function LeadsPage() {
         {/* Header */}
         <div className="mb-10 flex items-end justify-between gap-6">
           <div>
-            <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL Media · CRM</p>
+            <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD · CRM</p>
             <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Leads</h1>
             <div className="mt-4 flex items-center gap-3">
               <div className="h-px w-12 bg-white/25" />
@@ -89,3 +89,4 @@ export default async function LeadsPage() {
     </main>
   )
 }
+

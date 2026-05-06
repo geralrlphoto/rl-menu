@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers'
+﻿import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { getProjeto } from '@/app/portal-media/_data/mockProject'
 import PortalLoginClient from '@/app/portal-media/_components/PortalLoginClient'
@@ -82,7 +82,7 @@ export default async function PortalMediaLayout({ children, params }: Props) {
             An Experience.
           </span>
         </p>
-        <p className="text-[9px] tracking-[0.4em] text-white/12 uppercase mt-1">RL Media · Audiovisual</p>
+        <p className="text-[9px] tracking-[0.4em] text-white/12 uppercase mt-1">RL PROD · Photography & Video</p>
       </div>
     </div>
   )

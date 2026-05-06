@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 
@@ -145,12 +145,12 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
         ref,
         nome:            lead.empresa || lead.nome,
         cliente:         lead.empresa || lead.nome,
-        tipo:            lead.tipo || 'Produção Audiovisual',
+        tipo:            lead.tipo || 'Produção Photography & Video',
         local:           conf.local_evento || '',
         dataFilmagem:    conf.data_evento  || '',
         dataEntrega:     '',
         gestorNome:      'Rui Lima',
-        gestorEmail:     'geral@rlmedia.pt',
+        gestorEmail:     'geral@rlphotovideo.pt',
         gestorTelefone:  '+351 912 345 678',
         status:          'Em Produção',
         revisoes:        { usadas: 0, total: 3 },

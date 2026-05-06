@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 
@@ -226,7 +226,7 @@ export default function ClientPortalClient({ token, isAdmin }: { token: string; 
       {/* Top bar */}
       <div className="relative z-20 flex items-center justify-between px-6 py-4 border-b border-white/[0.06] shrink-0">
         <a href={`/rm/${token}`} className="text-[11px] tracking-[0.4em] text-white/35 hover:text-white/60 uppercase transition-colors">‹ Portal</a>
-        <p className="text-[11px] tracking-[0.5em] text-white/35 uppercase">RL Media · Portal Cliente</p>
+        <p className="text-[11px] tracking-[0.5em] text-white/35 uppercase">RL PROD · Portal Cliente</p>
         {isAdmin && (
           <button onClick={startEdit} className="flex items-center gap-2 px-4 py-2 border border-white/20 hover:border-white/40 text-white/50 hover:text-white/80 text-[10px] tracking-[0.4em] uppercase transition-all">
             <span style={{ fontSize: 14 }}>✎</span> Editar
@@ -333,7 +333,7 @@ export default function ClientPortalClient({ token, isAdmin }: { token: string; 
               <div className="flex flex-col gap-1.5">
                 <p className="text-[13px] text-white/50">geral@rlphoto.video</p>
                 <p className="text-[13px] text-white/50">+351 912 345 678</p>
-                <p className="text-[12px] text-white/30 mt-1">RL Media · Audiovisual</p>
+                <p className="text-[12px] text-white/30 mt-1">RL PROD · Photography & Video</p>
               </div>
             </div>
           </div>
