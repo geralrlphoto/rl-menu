@@ -73,8 +73,8 @@ export default function NovaLeadPage() {
     }
   }
 
-  const labelCls = "block text-[8px] tracking-[0.5em] text-white/25 uppercase mb-2"
-  const inputCls = "w-full bg-white/[0.03] border border-white/[0.08] focus:border-white/25 focus:outline-none px-4 py-3 text-[15px] text-white/75 placeholder:text-white/15 transition-colors duration-200"
+  const labelCls = "block text-[11px] tracking-[0.4em] text-white/60 uppercase mb-2 font-medium"
+  const inputCls = "w-full bg-white/[0.06] border border-white/[0.15] focus:border-white/50 focus:outline-none px-4 py-3.5 text-[15px] text-white placeholder:text-white/30 transition-colors duration-200"
   const selectCls = inputCls + " appearance-none cursor-pointer [color-scheme:dark]"
 
   if (enviado) {
@@ -136,8 +136,8 @@ export default function NovaLeadPage() {
             className="w-20 h-20 object-contain mb-6"
             style={{ filter: 'drop-shadow(0 0 16px rgba(255,255,255,0.1))' }}
           />
-          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD · Photography & Video</p>
-          <h1 className="text-2xl font-extralight tracking-[0.4em] text-white/80 uppercase">Formulário</h1>
+          <p className="text-[10px] tracking-[0.5em] text-white/40 uppercase mb-2">RL PROD · Photography & Video</p>
+          <h1 className="text-2xl font-extralight tracking-[0.4em] text-white uppercase">Formulário</h1>
           <div className="mt-4 flex items-center gap-3 w-full max-w-xs">
             <div className="h-px flex-1 bg-white/[0.06]" />
             <div className="w-1 h-1 rounded-full bg-white/20" />
@@ -149,7 +149,7 @@ export default function NovaLeadPage() {
 
           {/* Contacto */}
           <div>
-            <p className="text-[8px] tracking-[0.55em] text-white/20 uppercase mb-5 flex items-center gap-3">
+            <p className="text-[10px] tracking-[0.45em] text-white/45 uppercase mb-5 flex items-center gap-3">
               <span>01 — Contacto</span>
               <span className="flex-1 h-px bg-white/[0.05]" />
             </p>
@@ -175,7 +175,7 @@ export default function NovaLeadPage() {
 
           {/* Projeto */}
           <div>
-            <p className="text-[8px] tracking-[0.55em] text-white/20 uppercase mb-5 flex items-center gap-3">
+            <p className="text-[10px] tracking-[0.45em] text-white/45 uppercase mb-5 flex items-center gap-3">
               <span>02 — Projeto</span>
               <span className="flex-1 h-px bg-white/[0.05]" />
             </p>
@@ -208,18 +208,18 @@ export default function NovaLeadPage() {
           </div>
 
           {/* Error */}
-          {error && <p className="text-[10px] tracking-[0.3em] text-red-400/70 uppercase">{error}</p>}
+          {error && <p className="text-[13px] tracking-[0.2em] text-red-400/80 uppercase">{error}</p>}
 
           {/* Actions */}
-          <div className="flex items-center justify-between pt-2 border-t border-white/[0.05]">
+          <div className="flex items-center justify-between pt-4 border-t border-white/[0.10]">
             <button type="button" onClick={() => setForm(EMPTY)}
-              className="text-[9px] tracking-[0.4em] text-white/20 hover:text-white/45 uppercase transition-colors">
+              className="text-[11px] tracking-[0.35em] text-white/35 hover:text-white/65 uppercase transition-colors">
               Limpar
             </button>
             <button type="submit" disabled={saving}
-              className="flex items-center gap-3 border border-white/20 bg-white/[0.04] hover:bg-white/[0.09] hover:border-white/35
+              className="flex items-center gap-3 border border-white/40 bg-white/[0.07] hover:bg-white/[0.14] hover:border-white/60
                          px-8 py-4 transition-all duration-300 disabled:opacity-40">
-              <span className="text-[9px] tracking-[0.5em] text-white/55 uppercase">
+              <span className="text-[11px] tracking-[0.45em] text-white uppercase font-medium">
                 {saving ? 'A enviar...' : 'Enviar →'}
               </span>
             </button>
