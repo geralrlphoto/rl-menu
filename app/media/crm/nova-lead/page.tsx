@@ -89,7 +89,7 @@ export default function NovaLeadPage() {
         }} />
         <div className="relative z-10 flex flex-col items-center text-center px-6">
           <img
-            src="/logo_marca_advocacia__8_-removebg-preview.png"
+            src="/logo-rl-prod-branco.png"
             alt="RL PROD"
             className="w-16 h-16 object-contain mb-8"
             style={{ filter: 'drop-shadow(0 0 16px rgba(255,255,255,0.1))' }}
@@ -127,7 +127,7 @@ export default function NovaLeadPage() {
         {/* Header */}
         <div className="mb-12 flex flex-col items-center text-center">
           <img
-            src="/logo_marca_advocacia__8_-removebg-preview.png"
+            src="/logo-rl-prod-branco.png"
             alt="RL PROD"
             className="w-20 h-20 object-contain mb-6"
             style={{ filter: 'drop-shadow(0 0 16px rgba(255,255,255,0.1))' }}
