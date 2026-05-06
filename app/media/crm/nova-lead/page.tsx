@@ -133,8 +133,8 @@ export default function NovaLeadPage() {
           <img
             src="/logo-rl-prod-branco.png"
             alt="RL PROD"
-            className="w-20 h-20 object-contain mb-6"
-            style={{ filter: 'drop-shadow(0 0 16px rgba(255,255,255,0.1))' }}
+            className="w-32 h-32 object-contain mb-6"
+            style={{ filter: 'drop-shadow(0 0 24px rgba(255,255,255,0.15))' }}
           />
           <p className="text-[10px] tracking-[0.5em] text-white/40 uppercase mb-2">RL PROD · Photography & Video</p>
           <h1 className="text-2xl font-extralight tracking-[0.4em] text-white uppercase">Formulário</h1>
