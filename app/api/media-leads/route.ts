@@ -90,62 +90,120 @@ export async function POST(req: NextRequest) {
     const cardHtml = `<!DOCTYPE html>
 <html lang="pt">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#080d18;font-family:Arial,Helvetica,sans-serif;">
+<body style="margin:0;padding:0;background:#020810;font-family:Arial,Helvetica,sans-serif;">
 
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#080d18;">
-<tr><td align="center" style="padding:36px 12px 44px;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0"
+  style="background-color:#020810;min-height:100vh;">
+<tr><td align="center" style="padding:0;">
 
-  <table width="500" cellpadding="0" cellspacing="0" style="max-width:500px;width:100%;border-radius:12px;overflow:hidden;border:1px solid rgba(180,150,90,0.18);">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0"
+    style="background-color:#020810;padding:56px 16px;">
+  <tr><td align="center">
 
-    <!-- Corpo principal -->
-    <tr><td style="background:radial-gradient(ellipse 100% 85% at 50% 10%,#1c2a4a 0%,#101928 50%,#080d18 100%);padding:52px 52px 48px;text-align:center;">
+    <table width="460" cellpadding="0" cellspacing="0" border="0"
+      style="max-width:460px;width:100%;
+             background-color:#07101f;
+             background-image:
+               linear-gradient(rgba(30,80,220,0.13) 1px, transparent 1px),
+               linear-gradient(90deg, rgba(30,80,220,0.13) 1px, transparent 1px);
+             background-size:44px 44px;
+             border:1px solid rgba(40,100,255,0.22);
+             border-top:none;">
 
-      <!-- Logo circular com neon -->
-      <img src="https://rl-menu-lake.vercel.app/logo_marca_advocacia__8_-removebg-preview.png"
-        width="88" height="88" alt="RL PROD"
-        style="display:block;margin:0 auto 32px;width:88px;height:88px;object-fit:cover;border-radius:50%;border:1.5px solid rgba(200,170,100,0.65);box-shadow:0 0 10px rgba(200,170,100,0.7),0 0 24px rgba(200,170,100,0.35),0 0 50px rgba(200,170,100,0.15);" />
+      <!-- Linha neon topo -->
+      <tr>
+        <td height="3"
+          style="background:linear-gradient(90deg,#020810,#2563eb,#020810);
+                 font-size:0;line-height:0;">&nbsp;</td>
+      </tr>
 
-      <!-- Brand -->
-      <p style="margin:0 0 36px;font-size:9px;letter-spacing:7px;color:rgba(180,150,90,0.6);text-transform:uppercase;">
-        RL PROD &nbsp;&middot;&nbsp; Photography & Video
-      </p>
+      <tr><td style="padding:52px 44px 44px;text-align:center;">
 
-      <!-- Nome — elemento principal -->
-      <h1 style="margin:0 0 10px;font-size:52px;font-weight:400;letter-spacing:12px;color:#c4a46a;text-transform:uppercase;line-height:1;font-family:Georgia,'Times New Roman',serif;">
-        ${primeiroNome}
-      </h1>
+        <!-- Logo -->
+        <table cellpadding="0" cellspacing="0" style="margin:0 auto 36px;">
+          <tr>
+            <td style="width:100px;height:100px;
+                       border-radius:50%;
+                       border:1px solid rgba(255,255,255,0.22);
+                       box-shadow:0 0 18px rgba(255,255,255,0.1),inset 0 0 12px rgba(255,255,255,0.04);
+                       background:rgba(255,255,255,0.04);
+                       text-align:center;vertical-align:middle;padding:0;">
+              <img src="https://rl-menu-lake.vercel.app/logo-rl-prod-branco.png"
+                width="68" alt="RL PROD"
+                style="display:block;margin:16px auto;width:68px;height:auto;
+                       mix-blend-mode:screen;opacity:0.95;" />
+            </td>
+          </tr>
+        </table>
 
-      <!-- Tipo de serviço -->
-      <p style="margin:0 0 40px;font-size:10px;letter-spacing:5px;color:rgba(180,150,90,0.4);text-transform:uppercase;">
-        ${tipoTxt}
-      </p>
+        <!-- Divider -->
+        <table cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 28px;">
+          <tr><td height="1"
+            style="background:linear-gradient(90deg,transparent,rgba(37,99,235,0.4),transparent);
+                   font-size:0;">&nbsp;</td></tr>
+        </table>
 
-      <!-- Separador com diamante -->
-      <table cellpadding="0" cellspacing="0" style="margin:0 auto 36px;width:200px;">
-        <tr>
-          <td style="border-top:1px solid rgba(180,150,90,0.3);vertical-align:middle;">&nbsp;</td>
-          <td style="padding:0 12px;color:rgba(180,150,90,0.6);font-size:9px;white-space:nowrap;line-height:1;">&#9670;</td>
-          <td style="border-top:1px solid rgba(180,150,90,0.3);vertical-align:middle;">&nbsp;</td>
-        </tr>
-      </table>
+        <!-- Badge -->
+        <table cellpadding="0" cellspacing="0" style="margin:0 auto 30px;">
+          <tr><td style="border:1px solid rgba(96,165,250,0.35);
+                         background:rgba(96,165,250,0.07);
+                         padding:8px 24px;text-align:center;">
+            <p style="margin:0;font-size:8px;letter-spacing:7px;
+                      color:rgba(96,165,250,0.9);text-transform:uppercase;">
+              Pedido Recebido
+            </p>
+          </td></tr>
+        </table>
 
-      <!-- Mensagem -->
-      <p style="margin:0 0 14px;font-size:17px;font-weight:300;color:rgba(255,255,255,0.80);line-height:1.4;">
-        Recebemos o teu pedido.
-      </p>
-      <p style="margin:0;font-size:13px;font-weight:300;color:rgba(255,255,255,0.33);line-height:1.9;">
-        A nossa equipa vai entrar em contacto<br>contigo muito em breve.
-      </p>
+        <!-- Nome -->
+        <p style="margin:0 0 6px;font-size:9px;letter-spacing:5px;
+                  color:rgba(255,255,255,0.18);text-transform:uppercase;">Olá,</p>
+        <p style="margin:0 0 36px;font-size:28px;font-weight:200;letter-spacing:6px;
+                  color:rgba(255,255,255,0.88);text-transform:uppercase;">${primeiroNome}</p>
 
-    </td></tr>
+        <!-- Tipo serviço -->
+        <table cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 32px;">
+          <tr>
+            <td style="border:1px solid rgba(37,99,235,0.2);
+                       background:rgba(37,99,235,0.05);
+                       padding:14px 22px;text-align:center;">
+              <p style="margin:0;font-size:10px;letter-spacing:4px;
+                        color:rgba(96,165,250,0.7);text-transform:uppercase;">${tipoTxt}</p>
+            </td>
+          </tr>
+        </table>
 
-    <!-- Footer -->
-    <tr><td style="background:#060a12;border-top:1px solid rgba(180,150,90,0.12);padding:20px 52px;text-align:center;">
-      <p style="margin:0;font-size:8px;letter-spacing:6px;color:rgba(180,150,90,0.32);text-transform:uppercase;">
-        RL PROD &nbsp;&middot;&nbsp; Photography & Video
-      </p>
-    </td></tr>
+        <!-- Mensagem -->
+        <p style="margin:0 0 10px;font-size:15px;font-weight:300;
+                  color:rgba(255,255,255,0.75);line-height:1.7;">
+          Recebemos o teu pedido.
+        </p>
+        <p style="margin:0;font-size:13px;font-weight:300;
+                  color:rgba(255,255,255,0.35);line-height:1.9;">
+          A nossa equipa vai entrar em contacto<br>contigo muito em breve.
+        </p>
 
+      </td></tr>
+
+      <!-- Linha neon fundo -->
+      <tr>
+        <td height="1"
+          style="background:linear-gradient(90deg,transparent,rgba(37,99,235,0.35),transparent);
+                 font-size:0;line-height:0;">&nbsp;</td>
+      </tr>
+
+      <!-- Footer -->
+      <tr>
+        <td style="padding:18px 44px;text-align:center;background:#040c1c;">
+          <p style="margin:0;font-size:8px;letter-spacing:5px;
+                    color:rgba(255,255,255,0.1);text-transform:uppercase;">
+            RL PROD &middot; Photography &amp; Video &middot; rlphotovideo.pt
+          </p>
+        </td>
+      </tr>
+
+    </table>
+  </td></tr>
   </table>
 
 </td></tr>
