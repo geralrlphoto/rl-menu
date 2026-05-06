@@ -2,7 +2,6 @@ import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { DashboardCarousel, type DashCol } from '@/app/components/DashboardCarousel'
 import { LogoutButton } from '@/app/components/LogoutButton'
-import { BatizadoButton } from '@/app/components/BatizadoButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -467,15 +466,8 @@ export default async function PhotoDashboard() {
         ))}
       </div>
 
-      {/* ── Botão Formulário Batizado ─────────────────────────────────────────── */}
-      <div className="border-t border-white/[0.06] bg-[#060606] px-4 sm:px-10 py-6 sm:py-8">
-        <div className="w-full max-w-6xl mx-auto">
-          <BatizadoButton />
-        </div>
-      </div>
-
       {/* ── Relatório Diário Banner ─────────────────────────────────────────── */}
-      <div className="bg-[#060606] px-4 sm:px-10 py-12 sm:py-16">
+      <div className="border-t border-white/[0.06] bg-[#060606] px-4 sm:px-10 py-12 sm:py-16">
         <div className="w-full max-w-6xl mx-auto">
           <div className="relative rounded-2xl border border-white/[0.08] bg-[#0d0d0d] px-8 sm:px-12 pt-10 pb-10 overflow-hidden">
             <div className="absolute top-0 left-0 w-2/3 h-[2px] bg-gradient-to-r from-[#C9A84C]/70 via-[#C9A84C]/20 to-transparent" />
