@@ -220,6 +220,29 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
       ? { ...col, tarefas: col.tarefas.map(t => t.id === tarefaId ? { ...t, [field]: value } : t) }
       : col))
 
+  const moveTarefa = async (colunaId: string, tarefaId: string, dir: 'up' | 'down') => {
+    let novasColunas: RoadmapColuna[] = []
+    setColunas(prev => {
+      novasColunas = prev.map(col => {
+        if (col.id !== colunaId) return col
+        const idx = col.tarefas.findIndex(t => t.id === tarefaId)
+        if (idx === -1) return col
+        const newIdx = dir === 'up' ? idx - 1 : idx + 1
+        if (newIdx < 0 || newIdx >= col.tarefas.length) return col
+        const tarefas = [...col.tarefas]
+        ;[tarefas[idx], tarefas[newIdx]] = [tarefas[newIdx], tarefas[idx]]
+        return { ...col, tarefas }
+      })
+      return novasColunas
+    })
+    // Auto-save
+    await fetch(`/api/media-portal/${initial.ref}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ roadmap: novasColunas }),
+    }).catch(() => {})
+  }
+
   /* ────────────────────────────────────────────────────────── */
   /*  RENDER                                                    */
   /* ────────────────────────────────────────────────────────── */
@@ -372,59 +395,104 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
                         const cfg = ESTADO_CFG[tarefa.estado]
                         return (
                           <div key={tarefa.id}
-                            className="bg-[#060b15] border border-white/[0.07] hover:border-white/[0.14] transition-all duration-200 px-4 py-4">
+                            className="bg-[#060b15] border border-white/[0.07] hover:border-white/[0.14] transition-all duration-200 px-3 py-3 group/card">
 
                             {isEditing ? (
                               /* ── Modo edição ── */
-                              <div className="flex flex-col gap-2.5">
-                                <input
-                                  value={tarefa.titulo}
-                                  onChange={e => updateTarefa(coluna.id, tarefa.id, 'titulo', e.target.value)}
-                                  className="w-full bg-transparent text-[11px] text-white/70 focus:outline-none border-b border-white/[0.08] focus:border-white/25 pb-0.5 placeholder:text-white/15"
-                                  placeholder="Título da tarefa"
-                                />
-                                <select
-                                  value={tarefa.estado}
-                                  onChange={e => updateTarefa(coluna.id, tarefa.id, 'estado', e.target.value)}
-                                  className="bg-[#04080f] border border-white/[0.08] text-[11px] text-white/50 px-2 py-1.5 focus:outline-none focus:border-white/25 w-full rounded-none"
-                                >
-                                  {ESTADO_OPTIONS.map(o => (
-                                    <option key={o.value} value={o.value}>{o.label}</option>
-                                  ))}
-                                </select>
-                                <input
-                                  type="date"
-                                  value={tarefa.data ?? ''}
-                                  onChange={e => updateTarefa(coluna.id, tarefa.id, 'data', e.target.value)}
-                                  className="bg-[#04080f] border border-white/[0.08] text-[11px] text-white/40 px-2 py-1.5 focus:outline-none focus:border-white/25 w-full"
-                                />
-                                <button onClick={() => removeTarefa(coluna.id, tarefa.id)}
-                                  className="text-[9px] tracking-[0.25em] text-red-400/40 hover:text-red-400/70 uppercase transition-colors self-end">
-                                  Remover
-                                </button>
+                              <div className="flex gap-2">
+                                {/* Setas de reordenação */}
+                                <div className="flex flex-col gap-1 shrink-0 pt-0.5">
+                                  <button
+                                    onClick={() => moveTarefa(coluna.id, tarefa.id, 'up')}
+                                    className="w-5 h-5 flex items-center justify-center border border-white/[0.08] hover:border-white/25 bg-white/[0.02] hover:bg-white/[0.06] transition-all text-white/25 hover:text-white/70"
+                                    title="Mover para cima"
+                                  >
+                                    <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M2 7l3-4 3 4"/>
+                                    </svg>
+                                  </button>
+                                  <button
+                                    onClick={() => moveTarefa(coluna.id, tarefa.id, 'down')}
+                                    className="w-5 h-5 flex items-center justify-center border border-white/[0.08] hover:border-white/25 bg-white/[0.02] hover:bg-white/[0.06] transition-all text-white/25 hover:text-white/70"
+                                    title="Mover para baixo"
+                                  >
+                                    <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M2 3l3 4 3-4"/>
+                                    </svg>
+                                  </button>
+                                </div>
+                                {/* Campos de edição */}
+                                <div className="flex flex-col gap-2 flex-1 min-w-0">
+                                  <input
+                                    value={tarefa.titulo}
+                                    onChange={e => updateTarefa(coluna.id, tarefa.id, 'titulo', e.target.value)}
+                                    className="w-full bg-transparent text-[11px] text-white/70 focus:outline-none border-b border-white/[0.08] focus:border-white/25 pb-0.5 placeholder:text-white/15"
+                                    placeholder="Título da tarefa"
+                                  />
+                                  <select
+                                    value={tarefa.estado}
+                                    onChange={e => updateTarefa(coluna.id, tarefa.id, 'estado', e.target.value)}
+                                    className="bg-[#04080f] border border-white/[0.08] text-[11px] text-white/50 px-2 py-1.5 focus:outline-none focus:border-white/25 w-full rounded-none"
+                                  >
+                                    {ESTADO_OPTIONS.map(o => (
+                                      <option key={o.value} value={o.value}>{o.label}</option>
+                                    ))}
+                                  </select>
+                                  <input
+                                    type="date"
+                                    value={tarefa.data ?? ''}
+                                    onChange={e => updateTarefa(coluna.id, tarefa.id, 'data', e.target.value)}
+                                    className="bg-[#04080f] border border-white/[0.08] text-[11px] text-white/40 px-2 py-1.5 focus:outline-none focus:border-white/25 w-full"
+                                  />
+                                  <button onClick={() => removeTarefa(coluna.id, tarefa.id)}
+                                    className="text-[9px] tracking-[0.25em] text-red-400/40 hover:text-red-400/70 uppercase transition-colors self-end">
+                                    Remover
+                                  </button>
+                                </div>
                               </div>
                             ) : (
                               /* ── Modo visualização ── */
-                              <>
-                                <p className="text-[12px] font-light text-white/65 leading-snug mb-3">{tarefa.titulo}</p>
-
-                                {/* Status pill arredondado */}
-                                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[9px] ${cfg.pill} ${cfg.text}`}>
-                                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
-                                  {cfg.label}
-                                </span>
-
-                                {/* Data */}
-                                {tarefa.data && (
-                                  <p className="flex items-center gap-1.5 text-[9px] text-white/20 mt-2.5">
-                                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="shrink-0 opacity-50">
-                                      <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
-                                      <path d="M5 1.5V4M11 1.5V4M2 7h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-                                    </svg>
-                                    {fmtDate(tarefa.data)}
-                                  </p>
+                              <div className="flex gap-2 items-start">
+                                {/* Setas — só visíveis para admin */}
+                                {isAdmin && (
+                                  <div className="flex flex-col gap-1 shrink-0 opacity-0 group-hover/card:opacity-100 transition-opacity duration-150">
+                                    <button
+                                      onClick={() => moveTarefa(coluna.id, tarefa.id, 'up')}
+                                      className="w-5 h-5 flex items-center justify-center border border-white/[0.08] hover:border-white/30 bg-white/[0.02] hover:bg-white/[0.08] transition-all text-white/25 hover:text-white/80"
+                                      title="Mover para cima"
+                                    >
+                                      <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M2 7l3-4 3 4"/>
+                                      </svg>
+                                    </button>
+                                    <button
+                                      onClick={() => moveTarefa(coluna.id, tarefa.id, 'down')}
+                                      className="w-5 h-5 flex items-center justify-center border border-white/[0.08] hover:border-white/30 bg-white/[0.02] hover:bg-white/[0.08] transition-all text-white/25 hover:text-white/80"
+                                      title="Mover para baixo"
+                                    >
+                                      <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M2 3l3 4 3-4"/>
+                                      </svg>
+                                    </button>
+                                  </div>
                                 )}
-                              </>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[12px] font-light text-white/65 leading-snug mb-3">{tarefa.titulo}</p>
+                                  <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[9px] ${cfg.pill} ${cfg.text}`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
+                                    {cfg.label}
+                                  </span>
+                                  {tarefa.data && (
+                                    <p className="flex items-center gap-1.5 text-[9px] text-white/20 mt-2.5">
+                                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="shrink-0 opacity-50">
+                                        <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
+                                        <path d="M5 1.5V4M11 1.5V4M2 7h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                                      </svg>
+                                      {fmtDate(tarefa.data)}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
                             )}
                           </div>
                         )
