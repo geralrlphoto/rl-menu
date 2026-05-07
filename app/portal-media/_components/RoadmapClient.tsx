@@ -141,24 +141,29 @@ const fmtDate = (iso: string) => {
 /*  COMPONENT                                                 */
 /* ────────────────────────────────────────────────────────── */
 
+/* Roadmap válido = tem pelo menos uma coluna com pelo menos uma tarefa */
+function roadmapValido(rm: RoadmapColuna[] | undefined): boolean {
+  return !!(rm && rm.length > 0 && rm.some(c => c.tarefas && c.tarefas.length > 0))
+}
+
 interface Props { projeto: Projeto; isAdmin: boolean }
 
 export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
   const [colunas, setColunas] = useState<RoadmapColuna[]>(
-    (initial.roadmap && initial.roadmap.length > 0) ? initial.roadmap : DEFAULT_ROADMAP
+    roadmapValido(initial.roadmap) ? initial.roadmap! : DEFAULT_ROADMAP
   )
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving]       = useState(false)
   const [heroUrl, setHeroUrl]     = useState(initial.roadmapImageUrl || DEFAULT_ROADMAP_IMAGE)
 
-  /* Auto-inicializar: guarda as 7 colunas default no Supabase
-     na primeira vez que o portal não tem roadmap ainda */
+  /* Auto-inicializar: guarda as colunas+tarefas default no Supabase
+     quando o roadmap está ausente ou tem colunas mas sem tarefas */
   useEffect(() => {
-    if (!initial.roadmap || initial.roadmap.length === 0) {
+    if (!roadmapValido(initial.roadmap)) {
       fetch(`/api/media-portal/${initial.ref}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roadmap: DEFAULT_ROADMAP }),
+        body: JSON.stringify({ roadmap: DEFAULT_ROADMAP, roadmapImageUrl: initial.roadmapImageUrl || DEFAULT_ROADMAP_IMAGE }),
       }).catch(() => {})
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -184,7 +189,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
   }
 
   const cancel = () => {
-    setColunas((initial.roadmap && initial.roadmap.length > 0) ? initial.roadmap : DEFAULT_ROADMAP)
+    setColunas(roadmapValido(initial.roadmap) ? initial.roadmap! : DEFAULT_ROADMAP)
     setHeroUrl(initial.roadmapImageUrl || DEFAULT_ROADMAP_IMAGE)
     setIsEditing(false)
   }
