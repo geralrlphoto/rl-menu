@@ -115,6 +115,8 @@ const CORES = [
 
 const corDot: Record<string, string> = Object.fromEntries(CORES.map(c => [c.value, c.cls]))
 
+const DEFAULT_ROADMAP_IMAGE = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&q=80'
+
 /* Cor suave do lane (background da coluna) */
 const corLane: Record<string, string> = {
   blue:    'bg-blue-400/[0.03]    border-blue-400/[0.08]',
@@ -147,7 +149,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
   )
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving]       = useState(false)
-  const [heroUrl, setHeroUrl]     = useState(initial.roadmapImageUrl ?? '')
+  const [heroUrl, setHeroUrl]     = useState(initial.roadmapImageUrl || DEFAULT_ROADMAP_IMAGE)
 
   /* Auto-inicializar: guarda as 7 colunas default no Supabase
      na primeira vez que o portal não tem roadmap ainda */
@@ -183,7 +185,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
 
   const cancel = () => {
     setColunas((initial.roadmap && initial.roadmap.length > 0) ? initial.roadmap : DEFAULT_ROADMAP)
-    setHeroUrl(initial.roadmapImageUrl ?? '')
+    setHeroUrl(initial.roadmapImageUrl || DEFAULT_ROADMAP_IMAGE)
     setIsEditing(false)
   }
 

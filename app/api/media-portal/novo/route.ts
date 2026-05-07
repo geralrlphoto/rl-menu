@@ -130,7 +130,8 @@ export async function POST(req: NextRequest) {
     fases:        DEFAULT_FASES,
     pagamentos:   [],
     entregas:     [],
-    roadmap:      DEFAULT_ROADMAP,
+    roadmap:         DEFAULT_ROADMAP,
+    roadmapImageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&q=80',
   }
 
   const { error } = await supabase
