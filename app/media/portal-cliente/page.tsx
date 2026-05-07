@@ -39,10 +39,12 @@ export default async function PortalClientePage() {
   // 2. Montar lista: Supabase primeiro, depois mocks que não existam já
   const supabaseRefs = new Set((rows || []).map((r: any) => r.ref.toUpperCase()))
 
-  // Mapa ref → senha (raw from Supabase, not merged)
+  // Mapa ref → senha e portalEnviadoEm (raw from Supabase, not merged)
   const senhaMap: Record<string, string | undefined> = {}
+  const enviadoEmMap: Record<string, string | undefined> = {}
   ;(rows || []).forEach((r: any) => {
     senhaMap[r.ref.toUpperCase()] = r.dados?.senha as string | undefined
+    enviadoEmMap[r.ref.toUpperCase()] = r.dados?.portalEnviadoEm as string | undefined
   })
 
   const mockProjetos: Projeto[] = []
@@ -163,6 +165,7 @@ export default async function PortalClientePage() {
                   <PortalSenhaInput
                     portalRef={portal.ref}
                     senhaInicial={senhaMap[portal.ref?.toUpperCase()] ?? (portal as any).senha}
+                    portalEnviadoEm={enviadoEmMap[portal.ref?.toUpperCase()] ?? (portal as any).portalEnviadoEm}
                   />
                 </div>
               </div>

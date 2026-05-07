@@ -222,6 +222,23 @@ export async function POST(req: NextRequest) {
 
   const data = await resendRes.json()
   if (!resendRes.ok) return NextResponse.json({ ok: false, error: data.message }, { status: 500 })
-  return NextResponse.json({ ok: true })
+
+  // ── Persistir timestamp do envio ──────────────────────────────────────────
+  const portalEnviadoEm = new Date().toISOString()
+  try {
+    const { data: existing } = await supabase
+      .from('media_portais')
+      .select('dados')
+      .eq('ref', ref.toUpperCase())
+      .single()
+    if (existing?.dados) {
+      await supabase
+        .from('media_portais')
+        .update({ dados: { ...existing.dados, portalEnviadoEm }, updated_at: portalEnviadoEm })
+        .eq('ref', ref.toUpperCase())
+    }
+  } catch (_e) { /* não bloqueia */ }
+
+  return NextResponse.json({ ok: true, portalEnviadoEm })
 }
 

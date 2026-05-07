@@ -4,9 +4,10 @@ import { useState } from 'react'
 interface Props {
   portalRef: string
   senhaInicial?: string
+  portalEnviadoEm?: string
 }
 
-export default function PortalSenhaInput({ portalRef, senhaInicial }: Props) {
+export default function PortalSenhaInput({ portalRef, senhaInicial, portalEnviadoEm: enviadoEmInicial }: Props) {
   const [senha, setSenha]       = useState(senhaInicial ?? '')
   const [saving, setSaving]     = useState(false)
   const [saved, setSaved]       = useState(false)
@@ -14,6 +15,11 @@ export default function PortalSenhaInput({ portalRef, senhaInicial }: Props) {
 
   const [sending, setSending]   = useState(false)
   const [sendMsg, setSendMsg]   = useState<{ ok: boolean; text: string } | null>(null)
+  const [enviadoEm, setEnviadoEm] = useState<string | null>(
+    enviadoEmInicial
+      ? new Date(enviadoEmInicial).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      : null
+  )
 
   const temSenha = !!senhaInicial
 
@@ -62,6 +68,11 @@ export default function PortalSenhaInput({ portalRef, senhaInicial }: Props) {
       const data = await res.json()
       if (data.ok) {
         setSendMsg({ ok: true, text: '✓ Portal enviado' })
+        if (data.portalEnviadoEm) {
+          setEnviadoEm(new Date(data.portalEnviadoEm).toLocaleString('pt-PT', {
+            day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+          }))
+        }
       } else {
         setSendMsg({ ok: false, text: data.error ?? 'Erro ao enviar' })
       }
@@ -111,16 +122,23 @@ export default function PortalSenhaInput({ portalRef, senhaInicial }: Props) {
           </button>
 
           {/* Enviar portal */}
-          <button
-            onClick={handleEnviarPortal}
-            disabled={sending}
-            className="flex items-center gap-1.5 text-[8px] tracking-[0.3em] text-blue-400/60 hover:text-blue-400/90 uppercase transition-colors border border-blue-400/20 hover:border-blue-400/45 bg-blue-400/[0.04] hover:bg-blue-400/[0.08] px-3 py-1 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-            </svg>
-            {sending ? 'A enviar...' : 'Enviar portal'}
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={handleEnviarPortal}
+              disabled={sending}
+              className="flex items-center gap-1.5 text-[8px] tracking-[0.3em] text-blue-400/60 hover:text-blue-400/90 uppercase transition-colors border border-blue-400/20 hover:border-blue-400/45 bg-blue-400/[0.04] hover:bg-blue-400/[0.08] px-3 py-1 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+              </svg>
+              {sending ? 'A enviar...' : 'Enviar portal'}
+            </button>
+            {enviadoEm && (
+              <span className="text-[8px] tracking-[0.2em] text-emerald-400/50 uppercase">
+                ✓ enviado {enviadoEm}
+              </span>
+            )}
+          </div>
         </>
       ) : (
         <>
