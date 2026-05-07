@@ -111,6 +111,15 @@ export default async function PortalClientePage() {
                   <div className="w-px h-3 bg-white/30" /><div className="w-3 h-px bg-white/30" />
                 </div>
 
+                {/* ACTIVO badge — aparece quando o portal foi enviado ao cliente */}
+                {enviadoEmMap[portal.ref?.toUpperCase()] && (
+                  <div className="absolute top-0 right-0 flex items-center gap-2 border-l border-b border-emerald-400/30 bg-emerald-400/[0.07] px-4 py-2"
+                    style={{ boxShadow: '0 0 18px rgba(52,211,153,0.12), inset 0 0 12px rgba(52,211,153,0.04)' }}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                    <span className="text-[8px] tracking-[0.6em] text-emerald-400/85 uppercase font-semibold">Activo</span>
+                  </div>
+                )}
+
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
                   {/* Info */}
                   <div className="flex items-start gap-5">

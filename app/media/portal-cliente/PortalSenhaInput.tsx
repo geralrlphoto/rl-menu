@@ -121,7 +121,7 @@ export default function PortalSenhaInput({ portalRef, senhaInicial, portalEnviad
             {temSenha || senha ? 'Alterar senha' : 'Definir senha'}
           </button>
 
-          {/* Enviar portal */}
+          {/* Enviar portal + badge ACTIVO */}
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={handleEnviarPortal}
@@ -134,9 +134,12 @@ export default function PortalSenhaInput({ portalRef, senhaInicial, portalEnviad
               {sending ? 'A enviar...' : 'Enviar portal'}
             </button>
             {enviadoEm && (
-              <span className="text-[8px] tracking-[0.2em] text-emerald-400/50 uppercase">
-                ✓ enviado {enviadoEm}
-              </span>
+              <div className="flex items-center gap-2 border border-emerald-400/30 bg-emerald-400/[0.07] px-3 py-1"
+                style={{ boxShadow: '0 0 10px rgba(52,211,153,0.12)' }}>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                <span className="text-[8px] tracking-[0.5em] text-emerald-400/85 uppercase font-semibold">Activo</span>
+                <span className="text-[7px] text-emerald-400/35 tracking-[0.1em] ml-1">{enviadoEm}</span>
+              </div>
             )}
           </div>
         </>
