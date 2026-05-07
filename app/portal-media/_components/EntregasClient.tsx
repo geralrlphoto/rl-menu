@@ -34,8 +34,19 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
   const [saving, setSaving]         = useState(false)
   const [heroUrl, setHeroUrl]       = useState(initial.entregasImageUrl ?? '')
   const [notifying, setNotifying]   = useState(false)
-  const [notificado, setNotificado] = useState<string | null>(null)
   const [notificandoIdx, setNotificandoIdx] = useState<number | null>(null)
+
+  // Inicializar da data persistida (entrega mais recente notificada)
+  const lastNotifIso = initial.entregas
+    .map(e => e.notificacaoEnviada)
+    .filter(Boolean)
+    .sort()
+    .at(-1) ?? null
+  const [notificado, setNotificado] = useState<string | null>(
+    lastNotifIso
+      ? new Date(lastNotifIso).toLocaleString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      : null
+  )
 
   /* ── feedback state ── */
   const [feedbackAberto, setFeedbackAberto]   = useState<number | null>(null)
@@ -93,14 +104,17 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
       alert('Sem email do cliente definido. Adiciona o email na secção Contrato & CPS.')
       return
     }
-    const disponiveis = projeto.entregas.filter(e => e.linkUrl)
+    const indices = projeto.entregas
+      .map((e, i) => e.linkUrl ? i : -1)
+      .filter(i => i !== -1)
+    const disponiveis = indices.map(i => projeto.entregas[i])
     if (disponiveis.length === 0) {
       alert('Nenhuma entrega tem URL de download. Adiciona pelo menos um link antes de notificar.')
       return
     }
     setNotifying(true)
     try {
-      await fetch('/api/media-portal/notify-entregas', {
+      const res = await fetch('/api/media-portal/notify-entregas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -109,10 +123,20 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
           nomeProjeto: initial.nome,
           cliente: initial.cliente,
           entregas: disponiveis,
+          entregaIndices: indices,
         }),
       })
-      const agora = new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' })
-      setNotificado(agora)
+      const json = await res.json().catch(() => ({}))
+      const iso = json.notificadoEm ?? new Date().toISOString()
+      const label = new Date(iso).toLocaleString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      setNotificado(label)
+      // Actualizar estado local das entregas
+      setProjeto(p => ({
+        ...p,
+        entregas: p.entregas.map((e, i) =>
+          indices.includes(i) ? { ...e, notificacaoEnviada: iso } : e
+        ),
+      }))
     } catch {}
     setNotifying(false)
   }
@@ -128,7 +152,7 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
     if (!e.linkUrl) return
     setNotificandoIdx(idx)
     try {
-      await fetch('/api/media-portal/notify-entregas', {
+      const res = await fetch('/api/media-portal/notify-entregas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -137,8 +161,17 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
           nomeProjeto: initial.nome,
           cliente: initial.cliente,
           entregas: [e],
+          entregaIndices: [idx],
         }),
       })
+      const json = await res.json().catch(() => ({}))
+      const iso = json.notificadoEm ?? new Date().toISOString()
+      setProjeto(p => ({
+        ...p,
+        entregas: p.entregas.map((ent, i) =>
+          i === idx ? { ...ent, notificacaoEnviada: iso } : ent
+        ),
+      }))
     } catch {}
     setNotificandoIdx(null)
   }
@@ -488,22 +521,29 @@ export default function EntregasClient({ projeto: initial, isAdmin }: Props) {
                       {/* Admin — estado + notificação individual */}
                       {isAdmin && (
                         temUrl ? (
-                          <div className="flex items-center gap-2 flex-wrap justify-end">
-                            <span className="shrink-0 inline-flex items-center gap-2 border border-emerald-400/20
-                                             bg-emerald-400/[0.04] px-3 py-2 text-[9px] tracking-[0.35em]
-                                             text-emerald-400/45 uppercase">
-                              ◎ Activo
-                            </span>
-                            <button
-                              onClick={() => notificarEntrega(i)}
-                              disabled={notificandoIdx === i}
-                              className="shrink-0 inline-flex items-center gap-2 border border-white/18
-                                         hover:border-white/35 bg-white/[0.02] hover:bg-white/[0.06]
-                                         px-3 py-2 text-[9px] tracking-[0.3em] text-white/35 hover:text-white/65
-                                         uppercase transition-colors disabled:opacity-40 cursor-pointer"
-                            >
-                              {notificandoIdx === i ? '⏳' : '✉ Notificar'}
-                            </button>
+                          <div className="flex flex-col items-end gap-1.5">
+                            <div className="flex items-center gap-2 flex-wrap justify-end">
+                              <span className="shrink-0 inline-flex items-center gap-2 border border-emerald-400/20
+                                               bg-emerald-400/[0.04] px-3 py-2 text-[9px] tracking-[0.35em]
+                                               text-emerald-400/45 uppercase">
+                                ◎ Activo
+                              </span>
+                              <button
+                                onClick={() => notificarEntrega(i)}
+                                disabled={notificandoIdx === i}
+                                className="shrink-0 inline-flex items-center gap-2 border border-white/18
+                                           hover:border-white/35 bg-white/[0.02] hover:bg-white/[0.06]
+                                           px-3 py-2 text-[9px] tracking-[0.3em] text-white/35 hover:text-white/65
+                                           uppercase transition-colors disabled:opacity-40 cursor-pointer"
+                              >
+                                {notificandoIdx === i ? '⏳' : '✉ Notificar'}
+                              </button>
+                            </div>
+                            {e.notificacaoEnviada && (
+                              <p className="text-[8px] font-mono text-white/18">
+                                ✓ Notificado em {new Date(e.notificacaoEnviada).toLocaleString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            )}
                           </div>
                         ) : (
                           <span className="shrink-0 inline-flex items-center gap-2 border border-white/[0.07]

@@ -1,7 +1,8 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
 export async function POST(req: NextRequest) {
-  const { to, nomeProjeto, cliente, entregas } = await req.json()
+  const { to, ref, nomeProjeto, cliente, entregas, entregaIndices } = await req.json()
 
   if (!to) return NextResponse.json({ ok: false, error: 'Email do cliente em falta' }, { status: 400 })
 
@@ -177,6 +178,39 @@ export async function POST(req: NextRequest) {
 
   const data = await res.json()
   if (!res.ok) return NextResponse.json({ ok: false, error: data.message }, { status: 500 })
-  return NextResponse.json({ ok: true, id: data.id })
+
+  const notificadoEm = new Date().toISOString()
+
+  // ── Persistir timestamps em Supabase ──────────────────────────────────────
+  if (ref && Array.isArray(entregaIndices) && entregaIndices.length > 0) {
+    try {
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      )
+      const { data: row } = await supabase
+        .from('media_portais')
+        .select('dados')
+        .eq('ref', String(ref).toUpperCase())
+        .single()
+
+      if (row?.dados) {
+        const dados = { ...row.dados }
+        const entregasArr = Array.isArray(dados.entregas) ? [...dados.entregas] : []
+        for (const idx of entregaIndices) {
+          if (entregasArr[idx]) {
+            entregasArr[idx] = { ...entregasArr[idx], notificacaoEnviada: notificadoEm }
+          }
+        }
+        dados.entregas = entregasArr
+        await supabase
+          .from('media_portais')
+          .update({ dados, updated_at: notificadoEm })
+          .eq('ref', String(ref).toUpperCase())
+      }
+    } catch (_e) { /* não bloqueia */ }
+  }
+
+  return NextResponse.json({ ok: true, id: data.id, notificadoEm })
 }
 
