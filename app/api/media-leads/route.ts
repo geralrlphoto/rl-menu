@@ -44,6 +44,28 @@ export async function POST(req: NextRequest) {
 
   const isBatizado = body.tipo?.toLowerCase().includes('batizado')
 
+  // ── 0. Se for batizado → inserir também no CRM RL Photo Video ────────
+  if (isBatizado) {
+    try {
+      await supabase.from('crm_contacts').insert({
+        nome:            body.nome         ?? '',
+        email:           body.email        ?? '',
+        contato:         body.telefone     ?? '',
+        tipo_evento:     body.tipo         ?? 'Batizado',
+        como_chegou:     body.fonte        ?? '',
+        mensagem:        body.mensagem     ?? '',
+        servicos:        body.tipo         ?? '',
+        data_casamento:  '',
+        local_casamento: '',
+        orcamento:       '',
+        num_convidados:  '',
+        status:          'Por Contactar',
+        lead_prioridade: 'Alta',
+        data_entrada:    new Date().toISOString().slice(0, 10),
+      })
+    } catch (_e) { console.error('[media-leads] crm_contacts insert error:', _e) }
+  }
+
   // ── 1. Notificação interna para o admin ──────────────────────────────
   try {
     const linhas = [
