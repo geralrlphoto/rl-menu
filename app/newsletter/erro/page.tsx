@@ -11,7 +11,7 @@
         </h1>
         <p style={{ color: '#b3a082', lineHeight: 1.7, fontFamily: 'Arial, sans-serif' }}>
           O link que usaste não é válido ou expirou.<br />
-          Se precisares de ajuda, contacta-nos em geral@rlprod.pt
+          Se precisares de ajuda, contacta-nos em geral@rlphotovideo.pt
         </p>
       </div>
     </div>

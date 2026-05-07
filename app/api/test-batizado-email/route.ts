@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 
 // GET /api/test-batizado-email
 // Testa o envio de email de batizado e devolve a resposta real do Resend
@@ -15,7 +15,7 @@ export async function GET() {
     method: 'POST',
     headers: RESEND_HEADERS,
     body: JSON.stringify({
-      from: 'RL Photo.Video <geral@rlprod.pt>',
+      from: 'RL Photo.Video <geral@rlphotovideo.pt>',
       to: ['geral.rlphoto@gmail.com'],
       subject: '🕊 [TESTE] Batizado — Ana e João',
       html: `
@@ -47,7 +47,7 @@ export async function GET() {
     method: 'POST',
     headers: RESEND_HEADERS,
     body: JSON.stringify({
-      from: 'RL Photo.Video <geral@rlprod.pt>',
+      from: 'RL Photo.Video <geral@rlphotovideo.pt>',
       to: ['geral.rlphoto@gmail.com'],
       subject: 'RL Photo.Video — [TESTE] Recebemos o vosso pedido, Ana',
       html: `<!DOCTYPE html>

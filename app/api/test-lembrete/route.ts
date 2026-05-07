@@ -85,7 +85,7 @@ export async function GET() {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL Photo.Video <geral@rlprod.pt>',
+      from: 'RL Photo.Video <geral@rlphotovideo.pt>',
       to: ['ruimngpro@gmail.com'],
       subject: '⏰ A vossa reunião começa em 30 minutos',
       html,

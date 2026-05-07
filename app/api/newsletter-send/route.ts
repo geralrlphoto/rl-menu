@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     for (let i = 0; i < subs.length; i += batchSize) {
       const batch = subs.slice(i, i + batchSize)
       const emails = batch.map(sub => ({
-        from: 'RL Photo.Video <geral@rlprod.pt>',
+        from: 'RL Photo.Video <geral@rlphotovideo.pt>',
         to: [sub.email],
         subject: nl.subject,
         html: html.replace(/\{\{unsubscribe_url\}\}/g, `${baseUrl}/api/newsletter-unsubscribe?token=${sub.confirmation_token}`),

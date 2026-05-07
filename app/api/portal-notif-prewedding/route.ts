@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'RL Photo.Video <geral@rlprod.pt>',
+        from: 'RL Photo.Video <geral@rlphotovideo.pt>',
         to: [email],
         subject: 'O seu Pré-Wedding — RL Photo.Video',
         html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#000000;"><img src="cid:card_prewedding" alt="Pré-Wedding" style="display:block;width:100%;max-width:100%;height:auto;" /></body></html>`,

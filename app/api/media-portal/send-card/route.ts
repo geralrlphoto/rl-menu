@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL PROD <geral@rlprod.pt>',
+      from: 'RL PROD <geral@rlphotovideo.pt>',
       to: [to],
       subject: `${nome} · Portal do Cliente — RL PROD`,
       html,

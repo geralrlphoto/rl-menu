@@ -110,7 +110,7 @@ export async function GET() {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL PROD <geral@rlprod.pt>',
+      from: 'RL PROD <geral@rlphotovideo.pt>',
       to: 'geral.rlmedia@gmail.com',
       subject: 'RL PROD — Reunião marcada, 15 de Maio de 2026 [TESTE]',
       html: cardHtml,

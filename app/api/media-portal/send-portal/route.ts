@@ -213,7 +213,7 @@ export async function POST(req: NextRequest) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL PROD <geral@rlprod.pt>',
+      from: 'RL PROD <geral@rlphotovideo.pt>',
       to: [emailCliente],
       subject: `${nomeProjeto} · O vosso Portal do Cliente está pronto — RL PROD`,
       html,

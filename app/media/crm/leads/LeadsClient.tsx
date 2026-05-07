@@ -150,7 +150,7 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
         dataFilmagem:    conf.data_evento  || '',
         dataEntrega:     '',
         gestorNome:      'Rui Lima',
-        gestorEmail:     'geral@rlprod.pt',
+        gestorEmail:     'geral@rlphotovideo.pt',
         gestorTelefone:  '+351 912 345 678',
         status:          'Em Produção',
         revisoes:        { usadas: 0, total: 3 },

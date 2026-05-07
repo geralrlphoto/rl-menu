@@ -101,7 +101,7 @@ export async function GET(req: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'RL Photo.Video <geral@rlprod.pt>',
+        from: 'RL Photo.Video <geral@rlphotovideo.pt>',
         to: [c.email],
         subject: '⏰ A vossa reunião começa em 30 minutos',
         html,

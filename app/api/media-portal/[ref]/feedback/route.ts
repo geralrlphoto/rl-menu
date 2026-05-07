@@ -93,7 +93,7 @@ async function sendEmail(to: string, subject: string, html: string): Promise<{ o
         Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ from: 'RL PROD <geral@rlprod.pt>', to: [to], subject, html }),
+      body: JSON.stringify({ from: 'RL PROD <geral@rlphotovideo.pt>', to: [to], subject, html }),
     })
     const data = await res.json()
     if (!res.ok) {

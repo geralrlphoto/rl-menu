@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL Photo.Video <geral@rlprod.pt>',
+      from: 'RL Photo.Video <geral@rlphotovideo.pt>',
       to: [resolvedEmail],
       subject: 'O vosso Same Day Edit está pronto',
       html: `<!DOCTYPE html>

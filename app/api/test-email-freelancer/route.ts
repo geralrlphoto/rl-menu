@@ -8,7 +8,7 @@ export async function GET() {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL Photo.Video <geral@rlprod.pt>',
+      from: 'RL Photo.Video <geral@rlphotovideo.pt>',
       to: ['ruimngpro@gmail.com'],
       subject: 'Teste Email Freelancer',
       html: '<p>Teste a funcionar</p>',

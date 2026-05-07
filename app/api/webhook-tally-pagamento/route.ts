@@ -290,7 +290,7 @@ async function sendEmail(to: string, subject: string, html: string) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL Photo.Video <geral@rlprod.pt>',
+      from: 'RL Photo.Video <geral@rlphotovideo.pt>',
       to: [to],
       subject,
       html,

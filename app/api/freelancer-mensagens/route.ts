@@ -65,7 +65,7 @@ export async function POST(req: Request) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'RL Photo.Video <geral@rlprod.pt>',
+          from: 'RL Photo.Video <geral@rlphotovideo.pt>',
           to: [ADMIN_EMAIL],
           subject: `💬 Nova mensagem de ${nomeFree} — ${localEvento}`,
           html: `<!DOCTYPE html>
@@ -170,7 +170,7 @@ export async function POST(req: Request) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'RL Photo.Video <geral@rlprod.pt>',
+            from: 'RL Photo.Video <geral@rlphotovideo.pt>',
             to: [freelancer.email],
             subject: 'Tens uma nova mensagem no portal',
             html: `<!DOCTYPE html>

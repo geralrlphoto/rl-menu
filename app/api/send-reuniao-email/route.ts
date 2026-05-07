@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL Photo.Video <geral@rlprod.pt>',
+      from: 'RL Photo.Video <geral@rlphotovideo.pt>',
       to: [email],
       subject: `Tens uma reunião marcada · ${dataFmt} às ${reuniao_hora}`,
       html,

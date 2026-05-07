@@ -155,7 +155,7 @@ export async function POST(req: NextRequest) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL PROD <geral@rlprod.pt>',
+      from: 'RL PROD <geral@rlphotovideo.pt>',
       to: ['geral.rlmedia@gmail.com'],
       subject: `Pagamento Registado — ${empresa} · ${fase ? fase + ' · ' : ''}${ref}`,
       html: htmlAdmin,
@@ -394,7 +394,7 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'RL PROD <geral@rlprod.pt>',
+        from: 'RL PROD <geral@rlphotovideo.pt>',
         to: [emailCliente],
         subject: `${nomeProjeto} · Pagamento de ${fmtEur(valorPago)} confirmado — RL PROD`,
         html: htmlCliente,

@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'RL Photo.Video <geral@rlprod.pt>',
+      from: 'RL Photo.Video <geral@rlphotovideo.pt>',
       to: ['geral.rlphoto@gmail.com'],
       subject: `Relatório Vídeo — ${referencia}${nome_operador ? ' · ' + nome_operador : ''}`,
       html: `

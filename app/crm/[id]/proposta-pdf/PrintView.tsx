@@ -11,7 +11,7 @@ const BODY_COLOR = '#1e1a14'
 // ── Dados da empresa ─────────────────────────────────────────────────────────
 const EMPRESA = {
   nome:      'RL Photo · Video',
-  email:     'geral@rlprod.pt',
+  email:     'geral@rlphotovideo.pt',
   telefone:  '+351 912 932 768',
   whatsapp:  'https://wa.me/351912932768',
   instagram: '@rlphotovideo',
