@@ -2,6 +2,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { getProjeto, type Projeto } from '@/app/portal-media/_data/mockProject'
 import PortalSenhaInput from './PortalSenhaInput'
+import NovoPortalMediaButton from './NovoPortalMediaButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -169,16 +170,19 @@ export default async function PortalClientePage() {
           })}
         </div>
 
-        {/* Novo portal placeholder */}
+        {/* Novo portal */}
         <div className="border border-dashed border-white/[0.06] px-6 py-5 flex items-center justify-between">
           <div>
             <p className="text-[10px] tracking-[0.3em] text-white/20 uppercase">Novo Portal</p>
-            <p className="text-[9px] text-white/[0.12] mt-1">Criado automaticamente ao converter um lead no CRM</p>
+            <p className="text-[9px] text-white/[0.12] mt-1">Criar manualmente ou via CRM</p>
           </div>
-          <Link href="/media/crm/leads"
-            className="text-[9px] tracking-[0.3em] text-white/20 hover:text-white/45 uppercase transition-colors">
-            Ir para CRM →
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/media/crm/leads"
+              className="text-[9px] tracking-[0.3em] text-white/20 hover:text-white/45 uppercase transition-colors">
+              CRM →
+            </Link>
+            <NovoPortalMediaButton />
+          </div>
         </div>
 
       </div>
