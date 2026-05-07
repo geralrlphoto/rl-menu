@@ -92,120 +92,89 @@ export async function POST(req: NextRequest) {
     const primeiroNome = String(body.nome).split(' ')[0]
     const tipoTxt = body.tipo || 'Produção Photography & Video'
 
-    // Card dourado — RL Photo Video (Batizados) — template idêntico ao nova-lead/casamentos
+    // Card RL Photo Video (Batizados) — template igual ao card reunião
+    const IMG_BASE = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
     const cardBatizadoHtml = `<!DOCTYPE html>
 <html lang="pt">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="format-detection" content="telephone=no">
-<!--[if !mso]><!-->
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
-<!--<![endif]-->
-<style>
-  @media only screen and (max-width:620px){
-    .container{width:100%!important;max-width:100%!important;}
-    .mobile-pad{padding-left:24px!important;padding-right:24px!important;}
-    .h1{font-size:30px!important;}
-  }
-</style>
-</head>
-<body style="margin:0;padding:0;background:#0c0907;-webkit-font-smoothing:antialiased;">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0e0b07;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0e0b07;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#120e09;border:0.5px solid #4a3a1e;">
 
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0c0907;">
-<tr><td align="center" style="padding:32px 16px 48px;">
-
-  <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0"
-    style="max-width:600px;width:100%;background:#13100c;border:1px solid rgba(201,168,76,0.18);border-radius:4px;overflow:hidden;">
-
-    <!-- Topo dourado fino -->
-    <tr><td style="background:linear-gradient(90deg,transparent,rgba(201,168,76,0.5),transparent);height:1px;font-size:1px;line-height:1px;">&nbsp;</td></tr>
-
-    <!-- Header logo -->
-    <tr><td align="center" style="padding:40px 40px 32px;background:rgba(201,168,76,0.03);" class="mobile-pad">
-      <img src="https://rl-menu-lake.vercel.app/logo-rl-prod-branco.png" alt="RL Photo.Video"
-        width="72" style="display:block;margin:0 auto 14px;width:72px;height:auto;border:0;" />
-      <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:9px;letter-spacing:5px;color:#c9a84c;text-transform:uppercase;">
-        RL PHOTO &amp; VIDEO
-      </p>
-    </td></tr>
-
-    <!-- Divisor -->
-    <tr><td style="padding:0 40px;">
-      <table width="100%" cellpadding="0" cellspacing="0"><tr>
-        <td style="border-top:1px solid rgba(201,168,76,0.12);height:1px;font-size:1px;line-height:1px;">&nbsp;</td>
-      </tr></table>
-    </td></tr>
-
-    <!-- Corpo principal -->
-    <tr><td style="padding:48px 48px 40px;" class="mobile-pad">
-
-      <!-- Etiqueta -->
-      <p style="margin:0 0 20px;font-family:'Montserrat',Arial,sans-serif;font-size:9px;letter-spacing:4px;color:#c9a84c;text-transform:uppercase;">
-        Mensagem recebida
-      </p>
-
-      <!-- Título -->
-      <h1 class="h1" style="margin:0 0 20px;font-family:'Cormorant Garamond',Georgia,serif;font-size:38px;font-weight:300;line-height:1.2;color:#f5f0e8;">
-        Obrigado pelo<br><em style="font-style:italic;color:#c9a84c;">vosso contacto</em>
-      </h1>
-
-      <!-- Linha dourada -->
-      <table cellpadding="0" cellspacing="0" style="margin:0 0 28px;"><tr>
-        <td style="width:40px;border-top:1px solid #c9a84c;height:1px;font-size:1px;line-height:1px;">&nbsp;</td>
-      </tr></table>
-
-      <!-- Texto -->
-      <p style="margin:0 0 16px;font-family:'Montserrat',Arial,sans-serif;font-size:14px;font-weight:300;line-height:1.85;color:#a09585;">
-        Recebemos a vossa mensagem e entraremos em contacto convosco em breve.
-      </p>
-      <p style="margin:0 0 32px;font-family:'Cormorant Garamond',Georgia,serif;font-size:18px;font-weight:300;font-style:italic;line-height:1.6;color:#c9a84c;">${primeiroNome}</p>
-
-      <!-- Serviço -->
-      <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 32px;border:1px solid rgba(201,168,76,0.2);border-radius:2px;">
-        <tr><td style="padding:18px 22px;">
-          <p style="margin:0 0 6px;font-family:'Montserrat',Arial,sans-serif;font-size:8px;letter-spacing:4px;text-transform:uppercase;color:#c9a84c;">Serviços</p>
-          <p style="margin:0;font-family:'Cormorant Garamond',Georgia,serif;font-size:16px;font-weight:300;color:#d4c9b0;line-height:1.6;">${tipoTxt}</p>
+        <!-- Cantos decorativos topo -->
+        <tr><td style="padding:0;">
+          <table width="100%" cellpadding="0" cellspacing="0"><tr>
+            <td style="width:50px;height:50px;border-top:0.5px solid #3a2a12;border-left:0.5px solid #3a2a12;"></td>
+            <td></td>
+            <td style="width:50px;height:50px;border-top:0.5px solid #3a2a12;border-right:0.5px solid #3a2a12;"></td>
+          </tr></table>
         </td></tr>
+
+        <tr><td style="padding:8px 56px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
+
+          <!-- Logo RL Photo Video -->
+          <img src="${IMG_BASE}/logo_rl_gold.png"
+            width="80" alt="RL Photo Video"
+            style="display:block;margin:0 auto 24px;width:80px;height:auto;opacity:0.9;" />
+
+          <!-- Ícone batizado -->
+          <table cellpadding="0" cellspacing="0" style="margin:0 auto 20px;width:52px;height:52px;border-radius:50%;border:1.5px solid #c9a96e;"><tr><td align="center" valign="middle">
+            <span style="font-size:22px;">🕊</span>
+          </td></tr></table>
+
+          <!-- Saudação -->
+          <p style="margin:0 0 4px;font-size:28px;font-style:italic;font-weight:300;color:#c9a96e;line-height:1.2;">Ol&aacute;, ${primeiroNome}!</p>
+
+          <!-- Título principal -->
+          <p style="margin:0;font-size:38px;font-weight:400;color:#f0e8d8;line-height:1.1;">O vosso pedido</p>
+          <p style="margin:0 0 24px;font-size:38px;font-weight:400;font-style:italic;color:#c9a96e;line-height:1.2;">foi recebido.</p>
+
+          <!-- Divider -->
+          <div style="margin:0 0 24px;color:#6a5430;font-size:12px;letter-spacing:0.35em;">&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</div>
+
+          <!-- Caixa serviço -->
+          <table cellpadding="0" cellspacing="0" style="margin:0 auto 28px;border:0.5px solid #6a5430;width:100%;max-width:380px;background:rgba(201,169,110,0.04);">
+            <tr><td style="padding:24px 32px;text-align:center;">
+              <p style="margin:0 0 4px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;">Servi&ccedil;o</p>
+              <p style="margin:0 0 16px;font-size:18px;font-weight:400;color:#c9a96e;line-height:1.3;">${tipoTxt}</p>
+              <table cellpadding="0" cellspacing="0" style="margin:0 auto 16px;width:60%;border-top:0.5px solid #3a2a12;"><tr><td></td></tr></table>
+              <p style="margin:0;font-size:13px;color:#d4c9b0;line-height:1.7;">Recebemos a vossa mensagem e<br>entraremos em contacto muito em breve.</p>
+            </td></tr>
+          </table>
+
+          <!-- CTA -->
+          <table cellpadding="0" cellspacing="0" style="margin:0 auto 20px;">
+            <tr>
+              <td style="background:rgba(201,169,110,0.08);border:0.5px solid #6a5430;">
+                <a href="https://www.rlprod.pt"
+                  style="display:block;padding:16px 44px;font-size:9px;letter-spacing:0.5em;color:#c9a96e;text-decoration:none;text-transform:uppercase;white-space:nowrap;font-family:Georgia,'Times New Roman',serif;">
+                  Ver Portef&oacute;lio &rarr;
+                </a>
+              </td>
+            </tr>
+          </table>
+
+          <p style="margin:0;font-size:13px;color:#7a6340;line-height:1.8;">
+            Mal podemos esperar para eternizar<br>este momento especial convosco.
+          </p>
+
+        </td></tr>
+
+        <!-- Cantos decorativos fundo -->
+        <tr><td style="padding:0;">
+          <table width="100%" cellpadding="0" cellspacing="0"><tr>
+            <td style="width:50px;height:50px;border-bottom:0.5px solid #3a2a12;border-left:0.5px solid #3a2a12;"></td>
+            <td style="text-align:center;vertical-align:bottom;padding-bottom:20px;">
+              <p style="margin:0;font-size:9px;letter-spacing:0.4em;color:#3a2a12;text-transform:uppercase;font-family:Georgia,'Times New Roman',serif;">RL PHOTO &middot; VIDEO</p>
+            </td>
+            <td style="width:50px;height:50px;border-bottom:0.5px solid #3a2a12;border-right:0.5px solid #3a2a12;"></td>
+          </tr></table>
+        </td></tr>
+
       </table>
-
-      <!-- Divisor -->
-      <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px;"><tr>
-        <td style="border-top:1px solid rgba(201,168,76,0.1);height:1px;font-size:1px;line-height:1px;">&nbsp;</td>
-      </tr></table>
-
-      <!-- Texto CTA -->
-      <p style="margin:0 0 24px;font-family:'Montserrat',Arial,sans-serif;font-size:13px;font-weight:300;line-height:1.8;color:#7a6a55;">
-        Enquanto aguardam, inspirem-se no nosso portefólio de fotografia e vídeo.
-      </p>
-
-      <!-- Botão CTA -->
-      <table cellpadding="0" cellspacing="0"><tr>
-        <td style="background:#c9a84c;padding:15px 36px;">
-          <a href="https://www.rlprod.pt"
-            style="display:block;color:#0c0907;text-decoration:none;font-family:'Montserrat',Arial,sans-serif;font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;">
-            Ver o Portefólio
-          </a>
-        </td>
-      </tr></table>
-
     </td></tr>
-
-    <!-- Footer -->
-    <tr><td style="padding:24px 48px 32px;background:rgba(0,0,0,0.3);border-top:1px solid rgba(201,168,76,0.08);" class="mobile-pad">
-      <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:9px;letter-spacing:3px;color:#4a3d2a;text-transform:uppercase;text-align:center;">
-        RL Photo.Video &nbsp;·&nbsp; www.rlprod.pt
-      </p>
-    </td></tr>
-
-    <!-- Base dourada -->
-    <tr><td style="background:linear-gradient(90deg,transparent,rgba(201,168,76,0.5),transparent);height:1px;font-size:1px;line-height:1px;">&nbsp;</td></tr>
-
   </table>
-
-</td></tr>
-</table>
-
 </body>
 </html>`
 
