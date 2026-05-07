@@ -41,7 +41,8 @@ export async function POST(req: NextRequest) {
     'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
     'Content-Type': 'application/json',
   }
-  const FROM = 'RL PROD <geral@rlprod.pt>'
+
+  const isBatizado = body.tipo?.toLowerCase().includes('batizado')
 
   // ── 1. Notificação interna para o admin ──────────────────────────────
   try {
@@ -59,20 +60,20 @@ export async function POST(req: NextRequest) {
       method: 'POST',
       headers: RESEND_HEADERS,
       body: JSON.stringify({
-        from: FROM,
-        to: ['geral.rlmedia@gmail.com'],
-        subject: `${body.tipo?.toLowerCase().includes('batizado') ? '🕊 Batizado' : '✦ Nova Lead'} — ${body.nome}`,
+        from: isBatizado ? 'RL Photo.Video <geral@rlprod.pt>' : 'RL PROD <geral@rlprod.pt>',
+        to: isBatizado ? ['geral.rlphoto@gmail.com'] : ['geral.rlmedia@gmail.com'],
+        subject: `${isBatizado ? '🕊 Batizado' : '✦ Nova Lead'} — ${body.nome}`,
         html: `
           <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#222;">
             <div style="background:#0a0a0f;padding:24px 28px;">
-              <p style="margin:0;font-size:10px;letter-spacing:0.4em;color:#aaa;text-transform:uppercase;">RL PROD · Photography & Video</p>
-              <h1 style="margin:8px 0 0;font-size:20px;font-weight:300;letter-spacing:0.2em;color:#fff;text-transform:uppercase;">Nova Lead</h1>
+              <p style="margin:0;font-size:10px;letter-spacing:0.4em;color:#aaa;text-transform:uppercase;">${isBatizado ? 'RL Photo.Video · Batizados' : 'RL PROD · Photography & Video'}</p>
+              <h1 style="margin:8px 0 0;font-size:20px;font-weight:300;letter-spacing:0.2em;color:#fff;text-transform:uppercase;">${isBatizado ? 'Novo Batizado' : 'Nova Lead'}</h1>
             </div>
             <div style="background:#f9f9f9;padding:28px;">
               <p style="font-size:13px;line-height:1.8;color:#333;">${linhas}</p>
             </div>
             <div style="background:#0a0a0f;padding:14px 28px;">
-              <p style="margin:0;font-size:10px;color:#555;letter-spacing:0.2em;">RL PROD CRM · Notificação automática</p>
+              <p style="margin:0;font-size:10px;color:#555;letter-spacing:0.2em;">${isBatizado ? 'RL Photo.Video CRM' : 'RL PROD CRM'} · Notificação automática</p>
             </div>
           </div>
         `,
@@ -87,7 +88,105 @@ export async function POST(req: NextRequest) {
     const primeiroNome = String(body.nome).split(' ')[0]
     const tipoTxt = body.tipo || 'Produção Photography & Video'
 
-    const cardHtml = `<!DOCTYPE html>
+    // Card dourado — RL Photo Video (Batizados)
+    const cardBatizadoHtml = `<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="format-detection" content="telephone=no">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;background:#0c0907;-webkit-font-smoothing:antialiased;">
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0c0907;">
+<tr><td align="center" style="padding:32px 16px 48px;">
+
+  <table role="presentation" width="560" cellpadding="0" cellspacing="0"
+    style="max-width:560px;width:100%;background:#13100c;border:1px solid rgba(201,168,76,0.18);overflow:hidden;">
+
+    <!-- Linha dourada topo -->
+    <tr><td style="background:linear-gradient(90deg,transparent,rgba(201,168,76,0.55),transparent);height:1px;font-size:1px;line-height:1px;">&nbsp;</td></tr>
+
+    <!-- Header logo -->
+    <tr><td align="center" style="padding:44px 40px 32px;background:rgba(201,168,76,0.03);">
+      <img src="https://rl-menu-lake.vercel.app/logo-rl-prod-branco.png" alt="RL Photo.Video"
+        width="72" style="display:block;margin:0 auto 16px;width:72px;height:auto;border:0;" />
+      <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:9px;letter-spacing:5px;color:#c9a84c;text-transform:uppercase;">
+        RL PHOTO &amp; VIDEO
+      </p>
+    </td></tr>
+
+    <!-- Divisor -->
+    <tr><td style="padding:0 40px;">
+      <table width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td style="border-top:1px solid rgba(201,168,76,0.12);height:1px;font-size:1px;line-height:1px;">&nbsp;</td>
+      </tr></table>
+    </td></tr>
+
+    <!-- Corpo -->
+    <tr><td style="padding:44px 48px 40px;">
+
+      <!-- Etiqueta -->
+      <p style="margin:0 0 20px;font-family:'Montserrat',Arial,sans-serif;font-size:9px;letter-spacing:4px;color:#c9a84c;text-transform:uppercase;">
+        Pedido Recebido
+      </p>
+
+      <!-- Título -->
+      <h1 style="margin:0 0 20px;font-family:'Cormorant Garamond',Georgia,serif;font-size:36px;font-weight:300;line-height:1.2;color:#f5f0e8;">
+        Obrigado pelo<br><em style="font-style:italic;color:#c9a84c;">vosso contacto</em>
+      </h1>
+
+      <!-- Linha dourada -->
+      <table cellpadding="0" cellspacing="0" style="margin:0 0 28px;"><tr>
+        <td style="width:40px;border-top:1px solid #c9a84c;height:1px;font-size:1px;line-height:1px;">&nbsp;</td>
+      </tr></table>
+
+      <!-- Nome -->
+      <p style="margin:0 0 16px;font-family:'Montserrat',Arial,sans-serif;font-size:14px;font-weight:300;line-height:1.85;color:#a09585;">
+        Recebemos o vosso pedido e entraremos em contacto convosco em breve.
+      </p>
+      <p style="margin:0 0 32px;font-family:'Cormorant Garamond',Georgia,serif;font-size:20px;font-weight:300;font-style:italic;line-height:1.6;color:#c9a84c;">${primeiroNome}</p>
+
+      <!-- Serviço -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 32px;border:1px solid rgba(201,168,76,0.2);">
+        <tr><td style="padding:16px 22px;">
+          <p style="margin:0 0 6px;font-family:'Montserrat',Arial,sans-serif;font-size:8px;letter-spacing:4px;text-transform:uppercase;color:#c9a84c;">Serviço</p>
+          <p style="margin:0;font-family:'Cormorant Garamond',Georgia,serif;font-size:16px;font-weight:300;color:#d4c9b0;line-height:1.6;">${tipoTxt}</p>
+        </td></tr>
+      </table>
+
+      <!-- Divisor -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px;"><tr>
+        <td style="border-top:1px solid rgba(201,168,76,0.1);height:1px;font-size:1px;line-height:1px;">&nbsp;</td>
+      </tr></table>
+
+      <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:13px;font-weight:300;line-height:1.8;color:#7a6a55;">
+        Enquanto aguardam, inspirem-se no nosso portefólio em www.rlprod.pt
+      </p>
+
+    </td></tr>
+
+    <!-- Footer -->
+    <tr><td style="padding:22px 48px;background:rgba(0,0,0,0.3);border-top:1px solid rgba(201,168,76,0.08);">
+      <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:9px;letter-spacing:3px;color:#4a3d2a;text-transform:uppercase;text-align:center;">
+        RL Photo.Video &nbsp;&middot;&nbsp; www.rlprod.pt
+      </p>
+    </td></tr>
+
+    <!-- Linha dourada fundo -->
+    <tr><td style="background:linear-gradient(90deg,transparent,rgba(201,168,76,0.55),transparent);height:1px;font-size:1px;line-height:1px;">&nbsp;</td></tr>
+
+  </table>
+
+</td></tr>
+</table>
+
+</body>
+</html>`
+
+    // Card neon azul — RL Media (outros tipos de lead)
+    const cardMediaHtml = `<!DOCTYPE html>
 <html lang="pt">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#020810;font-family:Arial,Helvetica,sans-serif;">
@@ -110,7 +209,6 @@ export async function POST(req: NextRequest) {
              border:1px solid rgba(40,100,255,0.22);
              border-top:none;">
 
-      <!-- Linha neon topo -->
       <tr>
         <td height="3"
           style="background:linear-gradient(90deg,#020810,#2563eb,#020810);
@@ -119,7 +217,6 @@ export async function POST(req: NextRequest) {
 
       <tr><td style="padding:52px 44px 44px;text-align:center;">
 
-        <!-- Logo -->
         <table cellpadding="0" cellspacing="0" style="margin:0 auto 36px;">
           <tr>
             <td style="width:100px;height:100px;
@@ -136,14 +233,12 @@ export async function POST(req: NextRequest) {
           </tr>
         </table>
 
-        <!-- Divider -->
         <table cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 28px;">
           <tr><td height="1"
             style="background:linear-gradient(90deg,transparent,rgba(37,99,235,0.4),transparent);
                    font-size:0;">&nbsp;</td></tr>
         </table>
 
-        <!-- Badge -->
         <table cellpadding="0" cellspacing="0" style="margin:0 auto 30px;">
           <tr><td style="border:1px solid rgba(96,165,250,0.35);
                          background:rgba(96,165,250,0.07);
@@ -155,13 +250,11 @@ export async function POST(req: NextRequest) {
           </td></tr>
         </table>
 
-        <!-- Nome -->
         <p style="margin:0 0 6px;font-size:9px;letter-spacing:5px;
                   color:rgba(255,255,255,0.18);text-transform:uppercase;">Olá,</p>
         <p style="margin:0 0 36px;font-size:28px;font-weight:200;letter-spacing:6px;
                   color:rgba(255,255,255,0.88);text-transform:uppercase;">${primeiroNome}</p>
 
-        <!-- Tipo serviço -->
         <table cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 32px;">
           <tr>
             <td style="border:1px solid rgba(37,99,235,0.2);
@@ -173,7 +266,6 @@ export async function POST(req: NextRequest) {
           </tr>
         </table>
 
-        <!-- Mensagem -->
         <p style="margin:0 0 10px;font-size:15px;font-weight:300;
                   color:rgba(255,255,255,0.75);line-height:1.7;">
           Recebemos o teu pedido.
@@ -185,14 +277,12 @@ export async function POST(req: NextRequest) {
 
       </td></tr>
 
-      <!-- Linha neon fundo -->
       <tr>
         <td height="1"
           style="background:linear-gradient(90deg,transparent,rgba(37,99,235,0.35),transparent);
                  font-size:0;line-height:0;">&nbsp;</td>
       </tr>
 
-      <!-- Footer -->
       <tr>
         <td style="padding:18px 44px;text-align:center;background:#040c1c;">
           <p style="margin:0;font-size:8px;letter-spacing:5px;
@@ -216,10 +306,12 @@ export async function POST(req: NextRequest) {
       method: 'POST',
       headers: RESEND_HEADERS,
       body: JSON.stringify({
-        from: FROM,
+        from: isBatizado ? 'RL Photo.Video <geral@rlprod.pt>' : 'RL PROD <geral@rlprod.pt>',
         to: [body.email.trim()],
-        subject: `RL PROD — Recebemos o teu pedido, ${primeiroNome}`,
-        html: cardHtml,
+        subject: isBatizado
+          ? `RL Photo.Video — Recebemos o vosso pedido, ${primeiroNome}`
+          : `RL PROD — Recebemos o teu pedido, ${primeiroNome}`,
+        html: isBatizado ? cardBatizadoHtml : cardMediaHtml,
       }),
     })
   } catch (_e) { /* não bloqueia */ }
