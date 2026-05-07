@@ -62,6 +62,8 @@ export default async function PhotoDashboard() {
     })),
     { id: 'crm', name: 'CRM', href: '/crm',
       img: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=1200&q=80' },
+    { id: 'portais-clientes', name: 'PORTAIS CLIENTES', href: '/portais-clientes',
+      img: 'https://images.unsplash.com/photo-1590725121839-892b458a74fe?w=1200&q=80' },
   ]
 
   // ── Datas de referência ───────────────────────────────────────────────────
