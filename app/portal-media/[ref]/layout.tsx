@@ -1,4 +1,5 @@
-﻿import { cookies } from 'next/headers'
+﻿import type { Metadata } from 'next'
+import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { getProjeto } from '@/app/portal-media/_data/mockProject'
 import PortalLoginClient from '@/app/portal-media/_components/PortalLoginClient'
@@ -7,6 +8,39 @@ import PortalHamburger from '@/app/portal-media/_components/PortalHamburger'
 type Props = {
   children: React.ReactNode
   params: Promise<{ ref: string }>
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ ref: string }> }): Promise<Metadata> {
+  const { ref } = await params
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+  const { data: row } = await supabase
+    .from('media_portais')
+    .select('dados')
+    .eq('ref', ref.toUpperCase())
+    .single()
+
+  const mock = getProjeto(ref)
+  const dados = row?.dados ? { ...(mock ?? {}), ...row.dados } : mock
+  const nomeProjeto = (dados as any)?.nome ?? ref
+
+  return {
+    title: `${nomeProjeto} · RL PROD`,
+    description: 'Portal exclusivo RL PROD · Photography & Video',
+    openGraph: {
+      title: `${nomeProjeto} · RL PROD`,
+      description: 'Portal exclusivo RL PROD · Photography & Video',
+      siteName: 'RL PROD',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${nomeProjeto} · RL PROD`,
+      description: 'Portal exclusivo RL PROD · Photography & Video',
+    },
+  }
 }
 
 export default async function PortalMediaLayout({ children, params }: Props) {
