@@ -143,18 +143,6 @@ export async function POST(req: NextRequest) {
             </td></tr>
           </table>
 
-          <!-- CTA -->
-          <table cellpadding="0" cellspacing="0" style="margin:0 auto 20px;">
-            <tr>
-              <td style="background:rgba(201,169,110,0.08);border:0.5px solid #6a5430;">
-                <a href="https://www.rlprod.pt"
-                  style="display:block;padding:16px 44px;font-size:9px;letter-spacing:0.5em;color:#c9a96e;text-decoration:none;text-transform:uppercase;white-space:nowrap;font-family:Georgia,'Times New Roman',serif;">
-                  Ver Portef&oacute;lio &rarr;
-                </a>
-              </td>
-            </tr>
-          </table>
-
           <p style="margin:0;font-size:13px;color:#7a6340;line-height:1.8;">
             Mal podemos esperar para eternizar<br>este momento especial convosco.
           </p>
