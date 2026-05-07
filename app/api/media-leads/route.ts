@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
       headers: RESEND_HEADERS,
       body: JSON.stringify({
         from: isBatizado ? 'RL Photo.Video <geral@rlphotovideo.pt>' : 'RL PROD <geral@rlphotovideo.pt>',
-        to: isBatizado ? ['ruimngpro@gmail.com', 'geral.rlphoto@gmail.com'] : ['geral.rlmedia@gmail.com'],
+        to: isBatizado ? ['geral.rlphoto@gmail.com'] : ['geral.rlmedia@gmail.com'],
         subject: `${isBatizado ? '🕊 Batizado' : '✦ Nova Lead'} — ${body.nome}`,
         html: `
           <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#222;">
