@@ -519,12 +519,85 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
             </div>
           </div>
 
-          {/* ── Dados do Cliente ── */}
-          {(isEditing || projeto.fichaCliente) && (
+          {/* ── Dados do Cliente ── sempre visível para admin ── */}
+          {(isAdmin || projeto.fichaCliente) && (
             <div className="border border-white/[0.07] bg-white/[0.02] px-6 py-6">
-              <p className="text-[9px] tracking-[0.5em] text-white/25 uppercase mb-5">Dados do Cliente</p>
+              <div className="flex items-center justify-between mb-5">
+                <p className="text-[9px] tracking-[0.5em] text-white/25 uppercase">Dados do Cliente</p>
+                {isAdmin && !isEditing && !projeto.fichaCliente && (
+                  <p className="text-[9px] tracking-[0.25em] text-white/15 italic">Clica em Editar para preencher</p>
+                )}
+              </div>
+
+              {/* ── Valor do Serviço + Serviços (destaque) ── */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+                {/* Valor */}
+                <div className="border border-white/[0.10] bg-white/[0.03] px-4 py-4">
+                  <p className="text-[9px] tracking-[0.45em] text-white/20 uppercase mb-2">Valor do Serviço</p>
+                  {isEditing ? (
+                    <EditableField
+                      value={projeto.fichaCliente?.orcamento ?? ''}
+                      isEditing={true}
+                      onChange={v => setFicha('orcamento', v)}
+                      className="text-[18px] font-light text-white/70 tracking-wide"
+                      placeholder="Ex: 3 000 €"
+                    />
+                  ) : projeto.fichaCliente?.orcamento ? (
+                    <p className="text-[18px] font-light text-white/70 tracking-wide">{projeto.fichaCliente.orcamento}</p>
+                  ) : (
+                    <p className="text-[12px] text-white/15 italic">—</p>
+                  )}
+                </div>
+
+                {/* Método de pagamento rápido */}
+                <div className="border border-white/[0.10] bg-white/[0.03] px-4 py-4">
+                  <p className="text-[9px] tracking-[0.45em] text-white/20 uppercase mb-2">Método de Pagamento</p>
+                  {isEditing ? (
+                    <EditableField
+                      value={projeto.fichaCliente?.metodoPagamento ?? ''}
+                      isEditing={true}
+                      onChange={v => setFicha('metodoPagamento', v)}
+                      className="text-[13px] font-light text-white/60"
+                      placeholder="Ex: Transferência — 50%+50%"
+                    />
+                  ) : projeto.fichaCliente?.metodoPagamento ? (
+                    <p className="text-[13px] font-light text-white/60">{projeto.fichaCliente.metodoPagamento}</p>
+                  ) : (
+                    <p className="text-[12px] text-white/15 italic">—</p>
+                  )}
+                </div>
+              </div>
+
+              {/* ── Serviços Contratados ── */}
+              <div className="border border-white/[0.08] bg-white/[0.015] px-4 py-4 mb-5">
+                <p className="text-[9px] tracking-[0.45em] text-white/20 uppercase mb-3">Serviços Contratados</p>
+                {isEditing ? (
+                  <EditableField
+                    value={projeto.fichaCliente?.servicosList ?? ''}
+                    isEditing={true}
+                    onChange={v => setFicha('servicosList', v)}
+                    className="text-[12px] text-white/50 font-light"
+                    placeholder="Um serviço por linha&#10;Ex: Vídeo Institucional&#10;Fotografia de Produto"
+                    multiline
+                  />
+                ) : projeto.fichaCliente?.servicosList ? (
+                  <div className="flex flex-col gap-1.5">
+                    {projeto.fichaCliente.servicosList.split('\n').filter(Boolean).map((s, i) => (
+                      <div key={i} className="flex items-center gap-2.5">
+                        <span className="w-1 h-1 rounded-full bg-white/20 shrink-0" />
+                        <p className="text-[12px] text-white/55 font-light">{s}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[12px] text-white/15 italic">—</p>
+                )}
+              </div>
+
+              {/* ── Campos da ficha ── */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
                 {fichaFields
+                  .filter(({ field }) => field !== 'orcamento') // já está no bloco acima
                   .filter(({ field }) => isEditing || !!(projeto.fichaCliente as any)?.[field])
                   .map(({ label, field, placeholder, isDate }) => (
                     <div key={field} className="flex flex-col gap-0.5">
@@ -549,32 +622,6 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                     </div>
                   ))}
               </div>
-
-              {/* Serviços Incluídos */}
-              {(isEditing || projeto.fichaCliente?.servicosList) && (
-                <div className="mt-5 pt-4 border-t border-white/[0.06]">
-                  <p className="text-[9px] tracking-[0.35em] text-white/20 uppercase mb-2">Serviços Incluídos</p>
-                  {isEditing ? (
-                    <EditableField
-                      value={projeto.fichaCliente?.servicosList ?? ''}
-                      isEditing={true}
-                      onChange={v => setFicha('servicosList', v)}
-                      className="text-[12px] text-white/50 font-light"
-                      placeholder="Um serviço por linha..."
-                      multiline
-                    />
-                  ) : (
-                    <div className="flex flex-col gap-1">
-                      {projeto.fichaCliente?.servicosList?.split('\n').filter(Boolean).map((s, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                          <span className="w-1 h-1 rounded-full bg-white/15 shrink-0" />
-                          <p className="text-[12px] text-white/50 font-light">{s}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
 
               {/* Observações */}
               {(isEditing || projeto.fichaCliente?.observacoes) && (
