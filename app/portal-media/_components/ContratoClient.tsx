@@ -7,6 +7,17 @@ import EditableField from './EditableField'
 import EditableDateField from './EditableDateField'
 import HeroUploadBlock from './HeroUploadBlock'
 
+const SERVICOS_LISTA = [
+  '1 Reunião', '2 Reuniões',
+  '1 Dia de Captação', '2 Dias de Captação', '3 Dias de Captação', '1 Dia Opcional',
+  'Filmagem 4K', 'Drone', 'Fotografia',
+  '1 Videógrafo', '2 Videógrafos', '1 Assistente', '2 Assistentes',
+  'Diretor Criativo', '1 Fotógrafo', '2 Fotógrafos', '1 Editor',
+  '1 Vídeo Horizontal 1 Min', '1 Vídeo Horizontal 2 Min', '1 Vídeo Horizontal 3 Min',
+  '1 Vídeo Vertical 59seg', '1 Vídeo Vertical 90seg', '1 Vídeo Vertical 2min',
+  'Direitos Musicais', 'Cedência de Fotografias Uso Media Social', 'Voz Off Estúdio',
+]
+
 interface ContratoGerado {
   gerado: boolean
   geradoEm?: string
@@ -572,14 +583,32 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
               <div className="border border-white/[0.08] bg-white/[0.015] px-4 py-4 mb-5">
                 <p className="text-[9px] tracking-[0.45em] text-white/20 uppercase mb-3">Serviços Contratados</p>
                 {isEditing ? (
-                  <EditableField
-                    value={projeto.fichaCliente?.servicosList ?? ''}
-                    isEditing={true}
-                    onChange={v => setFicha('servicosList', v)}
-                    className="text-[12px] text-white/50 font-light"
-                    placeholder="Um serviço por linha&#10;Ex: Vídeo Institucional&#10;Fotografia de Produto"
-                    multiline
-                  />
+                  <div className="flex flex-wrap gap-2">
+                    {SERVICOS_LISTA.map(servico => {
+                      const selecionados = (projeto.fichaCliente?.servicosList ?? '').split('\n').filter(Boolean)
+                      const isSelected = selecionados.includes(servico)
+                      return (
+                        <button
+                          key={servico}
+                          type="button"
+                          onClick={() => {
+                            const next = isSelected
+                              ? selecionados.filter(s => s !== servico)
+                              : [...selecionados, servico]
+                            setFicha('servicosList', next.join('\n'))
+                          }}
+                          className={`px-3 py-1.5 text-[10px] tracking-[0.2em] uppercase transition-all duration-200 border ${
+                            isSelected
+                              ? 'border-white/40 bg-white/[0.12] text-white/80'
+                              : 'border-white/[0.07] bg-white/[0.02] text-white/25 hover:border-white/20 hover:text-white/45'
+                          }`}
+                        >
+                          {isSelected && <span className="mr-1.5 text-white/50">✓</span>}
+                          {servico}
+                        </button>
+                      )
+                    })}
+                  </div>
                 ) : projeto.fichaCliente?.servicosList ? (
                   <div className="flex flex-col gap-1.5">
                     {projeto.fichaCliente.servicosList.split('\n').filter(Boolean).map((s, i) => (
