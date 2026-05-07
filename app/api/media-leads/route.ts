@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
       body.mensagem ? `<b>Mensagem:</b><br>${String(body.mensagem).replace(/\n/g, '<br>')}` : null,
     ].filter(Boolean).join('<br><br>')
 
-    await fetch('https://api.resend.com/emails', {
+    const adminEmailRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: RESEND_HEADERS,
       body: JSON.stringify({
@@ -79,7 +79,11 @@ export async function POST(req: NextRequest) {
         `,
       }),
     })
-  } catch (_e) { /* não bloqueia */ }
+    if (!adminEmailRes.ok) {
+      const err = await adminEmailRes.json()
+      console.error('[media-leads] Resend admin email error:', JSON.stringify(err))
+    }
+  } catch (_e) { console.error('[media-leads] Admin email exception:', _e) }
 
   // ── 2. Card de confirmação → cliente ────────────────────────────────
   try {
@@ -302,7 +306,7 @@ export async function POST(req: NextRequest) {
 </body>
 </html>`
 
-    await fetch('https://api.resend.com/emails', {
+    const clientEmailRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: RESEND_HEADERS,
       body: JSON.stringify({
@@ -314,7 +318,11 @@ export async function POST(req: NextRequest) {
         html: isBatizado ? cardBatizadoHtml : cardMediaHtml,
       }),
     })
-  } catch (_e) { /* não bloqueia */ }
+    if (!clientEmailRes.ok) {
+      const err = await clientEmailRes.json()
+      console.error('[media-leads] Resend client card error:', JSON.stringify(err))
+    }
+  } catch (_e) { console.error('[media-leads] Client card exception:', _e) }
 
   return NextResponse.json({ ok: true, lead: data })
 }
