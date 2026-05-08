@@ -14,6 +14,7 @@ type PortalSettings = {
   hiddenNav: string[]
   noiva?: string
   noivo?: string
+  nomeCrianca?: string
   emailNoiva?: string
   dataFormatada?: string
   data?: string
@@ -486,6 +487,15 @@ function SettingsPanel({ settings, referencia, blocks, onSaved, onCancel }: {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="sm:col-span-2">
+          <label className="block text-[10px] text-white/40 tracking-widest uppercase mb-1">Nome da Criança</label>
+          <input
+            value={form.nomeCrianca ?? ''}
+            onChange={e => setForm(prev => ({ ...prev, nomeCrianca: e.target.value }))}
+            placeholder="ex: MARIA"
+            className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
+          />
+        </div>
         {(['noiva','noivo','dataFormatada','data','local'] as const).map((k) => {
           const labels: Record<string, string> = { noiva: 'Nome (Mãe/Pai 1)', noivo: 'Nome (Mãe/Pai 2)', dataFormatada: 'Data do Batizado', data: 'Data (para contagem)', local: 'Local' }
           const placeholders: Record<string, string> = { noiva: 'ex: ANA', noivo: 'ex: PEDRO', dataFormatada: 'ex: 25 de setembro de 2026', data: 'ex: 2026-09-25', local: 'ex: QUINTA DO BATIZADO' }
@@ -803,6 +813,7 @@ export default function PortalRefPage() {
     if (!heroEdit.field) return
     setHeroSaving(true)
     const patch: Partial<PortalSettings> =
+      heroEdit.field === 'nomeCrianca' ? { nomeCrianca: heroEdit.value } :
       heroEdit.field === 'noiva' ? { noiva: heroEdit.value } :
       heroEdit.field === 'noivo' ? { noivo: heroEdit.value } :
       { heroImageUrl: heroEdit.value }
@@ -1051,45 +1062,25 @@ export default function PortalRefPage() {
             <Leaf flip />
           </div>
 
-          <h1 className="font-playfair text-5xl sm:text-7xl lg:text-8xl font-black text-white leading-none tracking-tight mb-4 flex items-center justify-center gap-4 flex-wrap">
-            {isAdmin && heroEdit.field === 'noiva' ? (
+          <h1 className="font-playfair text-5xl sm:text-7xl lg:text-8xl font-black text-white leading-none tracking-tight mb-4 flex items-center justify-center">
+            {isAdmin && heroEdit.field === 'nomeCrianca' ? (
               <span className="flex items-center gap-2">
                 <input autoFocus value={heroEdit.value} onChange={e => setHeroEdit(prev => ({ ...prev, value: e.target.value }))}
                   onKeyDown={e => { if (e.key === 'Enter') saveHeroField(); if (e.key === 'Escape') setHeroEdit({ field: null, value: '' }) }}
-                  className="bg-white/10 border-b-2 border-gold outline-none text-white font-playfair text-5xl sm:text-7xl lg:text-8xl font-black text-center w-40 sm:w-56" />
+                  className="bg-white/10 border-b-2 border-gold outline-none text-white font-playfair text-5xl sm:text-7xl lg:text-8xl font-black text-center w-48 sm:w-64" />
                 <span className="flex flex-col gap-1">
                   <button onClick={saveHeroField} disabled={heroSaving} className="text-[10px] bg-gold/30 border border-gold/50 text-gold px-2 py-0.5 rounded hover:bg-gold/50 disabled:opacity-50">✓</button>
                   <button onClick={() => setHeroEdit({ field: null, value: '' })} className="text-[10px] border border-white/20 text-white/40 px-2 py-0.5 rounded hover:text-white/70">✕</button>
                 </span>
               </span>
             ) : isAdmin ? (
-              <button onClick={() => setHeroEdit({ field: 'noiva', value: settings.noiva || '' })}
+              <button onClick={() => setHeroEdit({ field: 'nomeCrianca', value: settings.nomeCrianca || '' })}
                 className="group relative hover:opacity-80 transition-opacity cursor-text">
-                {settings.noiva || 'NOIVA'}
+                {settings.nomeCrianca || 'NOME DA CRIANÇA'}
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] text-gold/0 group-hover:text-gold/80 transition-colors tracking-widest uppercase whitespace-nowrap">✎ editar</span>
               </button>
             ) : (
-              <span>{settings.noiva || 'NOIVA'}</span>
-            )}
-            <span className="text-gold font-cormorant italic font-normal">&</span>
-            {isAdmin && heroEdit.field === 'noivo' ? (
-              <span className="flex items-center gap-2">
-                <input autoFocus value={heroEdit.value} onChange={e => setHeroEdit(prev => ({ ...prev, value: e.target.value }))}
-                  onKeyDown={e => { if (e.key === 'Enter') saveHeroField(); if (e.key === 'Escape') setHeroEdit({ field: null, value: '' }) }}
-                  className="bg-white/10 border-b-2 border-gold outline-none text-white font-playfair text-5xl sm:text-7xl lg:text-8xl font-black text-center w-40 sm:w-56" />
-                <span className="flex flex-col gap-1">
-                  <button onClick={saveHeroField} disabled={heroSaving} className="text-[10px] bg-gold/30 border border-gold/50 text-gold px-2 py-0.5 rounded hover:bg-gold/50 disabled:opacity-50">✓</button>
-                  <button onClick={() => setHeroEdit({ field: null, value: '' })} className="text-[10px] border border-white/20 text-white/40 px-2 py-0.5 rounded hover:text-white/70">✕</button>
-                </span>
-              </span>
-            ) : isAdmin ? (
-              <button onClick={() => setHeroEdit({ field: 'noivo', value: settings.noivo || '' })}
-                className="group relative hover:opacity-80 transition-opacity cursor-text">
-                {settings.noivo || 'NOIVO'}
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] text-gold/0 group-hover:text-gold/80 transition-colors tracking-widest uppercase whitespace-nowrap">✎ editar</span>
-              </button>
-            ) : (
-              <span>{settings.noivo || 'NOIVO'}</span>
+              <span>{settings.nomeCrianca || 'NOME DA CRIANÇA'}</span>
             )}
           </h1>
 
