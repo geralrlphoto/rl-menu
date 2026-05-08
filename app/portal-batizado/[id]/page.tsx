@@ -831,15 +831,18 @@ function PortalSubPageContent() {
   const fromId = searchParams.get('from')
   const fromTitle = searchParams.get('fromTitle')
   const refParam = searchParams.get('portalRef')
+  const adminParam = searchParams.get('admin')
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [editing, setEditing] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(false)
+  // isAdmin: true immediately if ?admin=1 in URL (template navigation), else check sessionStorage
+  const [isAdmin, setIsAdmin] = useState(adminParam === '1')
 
   useEffect(() => {
+    if (adminParam === '1') { setIsAdmin(true); return }
     const key = refParam ? `portalAdmin_${refParam}` : null
     if (key && sessionStorage.getItem(key) === 'true') setIsAdmin(true)
-  }, [refParam])
+  }, [refParam, adminParam])
 
   const [editingPhotos, setEditingPhotos] = useState(false)
   // inline text + photo editing for default pages (SOBRE O MENU etc)

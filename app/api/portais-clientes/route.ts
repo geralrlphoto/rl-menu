@@ -6,13 +6,18 @@ const SETTINGS_PREFIX = '__PORTAL_SETTINGS__:'
 
 function extractSettings(blocks: any[]) {
   let settingsBlockId: string | null = null
-  let settings = { hiddenNav: [] as string[] }
+  let settings: any = { hiddenNav: [] }
   const content = blocks.filter(b => {
     if (b.type !== 'paragraph') return true
     const text: string = b.paragraph?.rich_text?.[0]?.plain_text ?? ''
     if (text.startsWith(SETTINGS_PREFIX)) {
-      settingsBlockId = b.id
-      try { settings = JSON.parse(text.slice(SETTINGS_PREFIX.length)) } catch {}
+      settingsBlockId = b.id // last block wins for the ID used on next save
+      try {
+        const parsed = JSON.parse(text.slice(SETTINGS_PREFIX.length))
+        // MERGE: later blocks overwrite earlier ones field-by-field.
+        // This ensures no data is lost when multiple settings blocks exist.
+        settings = { ...settings, ...parsed }
+      } catch {}
       return false // remove from visible blocks
     }
     return true
