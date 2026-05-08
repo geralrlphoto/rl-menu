@@ -939,11 +939,13 @@ export default function PortalClientePage() {
       while (newUrls.length < 3) newUrls.push('')
       newUrls[idx] = data.url
       const newSettings = { ...settings, galleryUrls: newUrls }
-      await fetch('/api/portal-settings', {
+      const saveRes = await fetch('/api/portal-settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pageId: PAGE_ID, settings: newSettings, settingsBlockId }),
       })
+      const saved = await saveRes.json()
+      if (saved.settingsBlockId) setSettingsBlockId(saved.settingsBlockId)
       setSettings(newSettings)
       syncPhotosToAllPortals(newSettings)
     } finally {
@@ -1169,9 +1171,9 @@ export default function PortalClientePage() {
                 </span>
               </span>
             ) : (
-              <button onClick={() => setHeroEdit({ field: 'nomeCrianca', value: settings.nomeCrianca || '' })}
+              <button onClick={() => setHeroEdit({ field: 'nomeCrianca', value: settings.nomeCrianca || settings.noiva || '' })}
                 className="group relative hover:opacity-80 transition-opacity cursor-text">
-                {settings.nomeCrianca || 'NOME DA CRIANÇA'}
+                {settings.nomeCrianca || settings.noiva || 'NOME DA CRIANÇA'}
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] text-gold/0 group-hover:text-gold/80 transition-colors tracking-widest uppercase whitespace-nowrap">✎ editar</span>
               </button>
             )}

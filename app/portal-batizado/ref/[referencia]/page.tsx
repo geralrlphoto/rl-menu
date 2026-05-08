@@ -1074,13 +1074,13 @@ export default function PortalRefPage() {
                 </span>
               </span>
             ) : isAdmin ? (
-              <button onClick={() => setHeroEdit({ field: 'nomeCrianca', value: settings.nomeCrianca || '' })}
+              <button onClick={() => setHeroEdit({ field: 'nomeCrianca', value: settings.nomeCrianca || settings.noiva || '' })}
                 className="group relative hover:opacity-80 transition-opacity cursor-text">
-                {settings.nomeCrianca || 'NOME DA CRIANÇA'}
+                {settings.nomeCrianca || settings.noiva || 'NOME DA CRIANÇA'}
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] text-gold/0 group-hover:text-gold/80 transition-colors tracking-widest uppercase whitespace-nowrap">✎ editar</span>
               </button>
             ) : (
-              <span>{settings.nomeCrianca || 'NOME DA CRIANÇA'}</span>
+              <span>{settings.nomeCrianca || settings.noiva || 'NOME DA CRIANÇA'}</span>
             )}
           </h1>
 
