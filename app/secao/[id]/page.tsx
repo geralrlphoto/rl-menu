@@ -1,6 +1,8 @@
 import { supabase } from '@/lib/supabase'
+import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import MagazineViewer from './MagazineViewer'
 
 export const revalidate = 60
 
@@ -73,6 +75,10 @@ function BtnExternal({ href, label, idx }: { href: string; label: string; idx: n
 
 export default async function SecaoPage({ params }: Props) {
   const { id } = await params
+
+  const cookieStore = await cookies()
+  const isAdmin = cookieStore.get('rl_auth')?.value === process.env.AUTH_SECRET
+
   const [{ data: section }, { data: pages }, { data: images }] = await Promise.all([
     supabase.from('menu_sections').select('*').eq('id', id).single(),
     supabase.from('pages').select('*').eq('section_id', id).order('order_index'),
@@ -172,19 +178,13 @@ export default async function SecaoPage({ params }: Props) {
         </div>
       </header>
 
-      {/* Imagens (se existirem) */}
-      {images && images.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
-          {images.map((img) => (
-            <a key={img.id} href={img.link_url ?? '#'} target="_blank" rel="noopener noreferrer">
-              <img
-                src={img.image_url}
-                alt=""
-                className="w-full rounded-sm object-cover hover:opacity-80 transition-opacity"
-              />
-            </a>
-          ))}
-        </div>
+      {/* Revista de fotos (sempre visível para admin, ou quando há fotos) */}
+      {(isAdmin || (images && images.length > 0)) && (
+        <MagazineViewer
+          images={images ?? []}
+          sectionId={id}
+          isAdmin={isAdmin}
+        />
       )}
 
       {/* Botões */}
