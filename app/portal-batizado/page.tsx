@@ -525,7 +525,7 @@ function SettingsPanel({
 
         {/* Guia Links */}
         <div className="pt-3 border-t border-white/[0.06]">
-          <p className="text-[10px] text-white/40 tracking-widest uppercase mb-3">Links do Guia dos Noivos</p>
+          <p className="text-[10px] text-white/40 tracking-widest uppercase mb-3">Links do Guia da Família</p>
           <div className="space-y-2">
             {([
               ['Blog', 'blogUrl', 'https://...'],
@@ -1110,7 +1110,7 @@ export default function PortalClientePage() {
           {/* Portal label */}
           <div className="flex items-center justify-center gap-3 mb-4">
             <Leaf />
-            <p className="font-cormorant text-gold text-sm sm:text-base tracking-[0.4em] uppercase italic">Portal dos Noivos</p>
+            <p className="font-cormorant text-gold text-sm sm:text-base tracking-[0.4em] uppercase italic">Portal de Batizado</p>
             <Leaf flip />
           </div>
 

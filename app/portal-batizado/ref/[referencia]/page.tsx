@@ -542,7 +542,7 @@ function SettingsPanel({ settings, referencia, blocks, onSaved, onCancel }: {
 
         {/* Guia Links */}
         <div className="pt-3 border-t border-white/[0.06]">
-          <p className="text-[10px] text-white/40 tracking-widest uppercase mb-3">Links do Guia dos Noivos</p>
+          <p className="text-[10px] text-white/40 tracking-widest uppercase mb-3">Links do Guia da Família</p>
           <div className="space-y-2">
             {([
               ['Blog', 'blogUrl', 'https://...'],
