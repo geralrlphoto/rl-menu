@@ -39,13 +39,64 @@ const EASE = 'cubic-bezier(0.42, 0, 0.58, 1)'
 /* ─── component ───────────────────────────────────────────────────────────── */
 export default function MagazineViewer({ images: init, sectionId, isAdmin }: Props) {
   const [images,    setImages]    = useState(init)
-  const [spread,    setSpread]    = useState(0)       // desktop (spread index)
-  const [mobilePg,  setMobilePg]  = useState(0)       // mobile (image index)
-  const [mFading,   setMFading]   = useState(false)   // mobile fade
+  const [spread,    setSpread]    = useState(0)
+  const [mobilePg,  setMobilePg]  = useState(0)
+  const [mFading,   setMFading]   = useState(false)
   const [flip,      setFlip]      = useState<Flip>(null)
   const [uploading, setUploading] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+
+  /* ── reorder mode ────────────────────────────────────────────────────────── */
+  const [reordering,   setReordering]   = useState(false)
+  const [reorderImgs,  setReorderImgs]  = useState<SectionImage[]>([])
+  const [savingOrder,  setSavingOrder]  = useState(false)
+  const [dragIdx,      setDragIdx]      = useState<number | null>(null)
+  const [dragOverIdx,  setDragOverIdx]  = useState<number | null>(null)
+  const [tapSelected,  setTapSelected]  = useState<number | null>(null)  // mobile tap-to-swap
+
+  function startReorder() {
+    setReorderImgs([...images])
+    setReordering(true)
+    setTapSelected(null)
+  }
+  function cancelReorder() {
+    setReordering(false); setDragIdx(null); setDragOverIdx(null); setTapSelected(null)
+  }
+
+  /* drag-and-drop (desktop) */
+  function onDragOver(e: React.DragEvent, i: number) { e.preventDefault(); setDragOverIdx(i) }
+  function onDrop(dropIdx: number) {
+    if (dragIdx === null || dragIdx === dropIdx) { setDragIdx(null); setDragOverIdx(null); return }
+    const next = [...reorderImgs]
+    const [moved] = next.splice(dragIdx, 1)
+    next.splice(dropIdx, 0, moved)
+    setReorderImgs(next); setDragIdx(null); setDragOverIdx(null)
+  }
+
+  /* tap-to-swap (mobile & desktop click) */
+  function onTap(i: number) {
+    if (tapSelected === null) { setTapSelected(i); return }
+    if (tapSelected === i)    { setTapSelected(null); return }
+    const next = [...reorderImgs];
+    [next[tapSelected], next[i]] = [next[i], next[tapSelected]]
+    setReorderImgs(next); setTapSelected(null)
+  }
+
+  async function saveOrder() {
+    setSavingOrder(true)
+    try {
+      const updates = reorderImgs.map((img, i) => ({ id: img.id, order_index: i }))
+      const res = await fetch('/api/section-images', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ updates }),
+      })
+      if (!res.ok) throw new Error()
+      const sorted = reorderImgs.map((img, i) => ({ ...img, order_index: i }))
+      setImages(sorted); setSpread(0); setMobilePg(0); setReordering(false)
+    } catch { alert('Erro ao guardar ordem') }
+    finally { setSavingOrder(false) }
+  }
 
   const totalSpreads = images.length <= 1 ? 0 : Math.ceil((images.length - 1) / 2)
 
@@ -158,6 +209,123 @@ export default function MagazineViewer({ images: init, sectionId, isAdmin }: Pro
   /* ════════════════════════════════════════════════════════════════════════
      RENDER
   ════════════════════════════════════════════════════════════════════════ */
+
+  /* ── REORDER MODE ── */
+  if (reordering) {
+    return (
+      <div className="w-full mb-14">
+        {/* header bar */}
+        <div
+          className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 border border-white/[0.07] mb-px"
+          style={{ background: '#020406', boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }}
+        >
+          <div>
+            <p className="text-[9px] tracking-[0.5em] text-white/70 uppercase font-medium">Dispor Revista</p>
+            <p className="text-[7px] tracking-[0.3em] text-white/25 uppercase mt-0.5 hidden sm:block">
+              Arrasta para reordenar · Toca numa foto e depois noutra para trocar
+            </p>
+            <p className="text-[7px] tracking-[0.3em] text-white/25 uppercase mt-0.5 sm:hidden">
+              Toca numa foto e depois noutra para trocar posições
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={cancelReorder}
+              className="px-4 py-2 text-[8px] tracking-[0.4em] text-white/35 hover:text-white/60
+                border border-white/[0.1] hover:border-white/25 uppercase transition-all duration-200"
+            >Cancelar</button>
+            <button
+              onClick={saveOrder} disabled={savingOrder}
+              className="px-4 py-2 text-[8px] tracking-[0.4em] text-emerald-400/80 hover:text-emerald-300
+                border border-emerald-400/30 hover:border-emerald-400/60
+                bg-emerald-400/[0.05] hover:bg-emerald-400/[0.10]
+                uppercase transition-all duration-200 disabled:opacity-50"
+            >
+              {savingOrder ? 'A guardar…' : '✓ Guardar Ordem'}
+            </button>
+          </div>
+        </div>
+
+        {/* layout guide */}
+        <div className="px-5 py-2 border border-t-0 border-white/[0.05] mb-4"
+          style={{ background: '#03060a' }}>
+          <p className="text-[7px] tracking-[0.4em] text-white/20 uppercase">
+            Pos. 1 = Capa &nbsp;·&nbsp; Pos. 2+3 = 1ª folha dupla &nbsp;·&nbsp; Pos. 4+5 = 2ª folha dupla
+          </p>
+        </div>
+
+        {/* thumbnail grid */}
+        <div
+          className="grid gap-2 p-4 border border-white/[0.07]"
+          style={{
+            gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))',
+            background: '#030608',
+          }}
+        >
+          {reorderImgs.map((img, i) => {
+            const isSelected  = tapSelected === i
+            const isDragging  = dragIdx === i
+            const isDragOver  = dragOverIdx === i && dragIdx !== i
+
+            return (
+              <div
+                key={img.id}
+                draggable
+                onDragStart={() => { setDragIdx(i); setTapSelected(null) }}
+                onDragOver={(e) => onDragOver(e, i)}
+                onDrop={() => onDrop(i)}
+                onDragEnd={() => { setDragIdx(null); setDragOverIdx(null) }}
+                onClick={() => onTap(i)}
+                className={`relative cursor-pointer select-none transition-all duration-150 ${
+                  isSelected  ? 'ring-2 ring-white/70 scale-[1.04] z-10' :
+                  isDragOver  ? 'ring-2 ring-blue-400/70 scale-[1.03]' :
+                  isDragging  ? 'opacity-40 scale-95' :
+                  'hover:ring-1 hover:ring-white/30 hover:scale-[1.02]'
+                }`}
+                style={{ aspectRatio: '2/3', background: '#060c14' }}
+              >
+                <img src={img.image_url} alt="" className="w-full h-full object-contain" draggable={false} />
+
+                {/* position badge */}
+                <div className="absolute top-1.5 left-1.5 bg-black/75 px-1.5 py-0.5 backdrop-blur-sm">
+                  <span className="text-[7px] tracking-[0.3em] text-white/80 uppercase font-medium">
+                    {i === 0 ? 'Capa' : `p.${i}`}
+                  </span>
+                </div>
+
+                {/* spread pair indicator */}
+                {i > 0 && (
+                  <div className="absolute bottom-1.5 right-1.5 bg-black/60 px-1 py-0.5">
+                    <span className="text-[6px] tracking-[0.2em] text-white/35 uppercase">
+                      {i % 2 === 1 ? '◧' : '◨'}
+                    </span>
+                  </div>
+                )}
+
+                {/* selected overlay */}
+                {isSelected && (
+                  <div className="absolute inset-0 bg-white/[0.08] flex items-end justify-center pb-2">
+                    <span className="text-[7px] tracking-[0.3em] text-white/80 uppercase bg-black/60 px-2 py-0.5">
+                      Seleccionada
+                    </span>
+                  </div>
+                )}
+
+                {/* drag handle */}
+                <div className="absolute top-1.5 right-1.5 text-white/20 text-[10px] hidden sm:block select-none">⠿</div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* spread preview legend */}
+        <div className="mt-3 flex flex-wrap gap-3 px-1">
+          <span className="text-[7px] tracking-[0.3em] text-white/15 uppercase">◧ página esquerda &nbsp; ◨ página direita da folha dupla</span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="w-full mb-14">
 
@@ -429,20 +597,35 @@ export default function MagazineViewer({ images: init, sectionId, isAdmin }: Pro
         </div>
       </div>
 
-      {/* ─── Admin upload (both views) ─── */}
+      {/* ─── Admin controls (both views) ─── */}
       {isAdmin && (
-        <div className="mt-4 flex items-center justify-center gap-3">
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+
+          {/* upload */}
           <button onClick={() => fileRef.current?.click()} disabled={uploading}
-            className="flex items-center gap-2.5 px-5 py-2.5 border border-white/[0.12] hover:border-white/30
-              bg-white/[0.03] hover:bg-white/[0.07] text-[9px] tracking-[0.5em] text-white/35
+            className="flex items-center gap-2 px-4 py-2.5 border border-white/[0.12] hover:border-white/30
+              bg-white/[0.03] hover:bg-white/[0.07] text-[9px] tracking-[0.45em] text-white/35
               hover:text-white/65 uppercase transition-all duration-200">
             {uploading
-              ? <><span className="inline-block w-2 h-2 rounded-full bg-white/30 animate-pulse" /> A carregar…</>
-              : <><span className="text-[13px] leading-none text-white/25">+</span> Adicionar Foto</>
+              ? <><span className="inline-block w-2 h-2 rounded-full bg-white/30 animate-pulse" />A carregar…</>
+              : <><span className="text-[13px] leading-none text-white/25">+</span>Adicionar Foto</>
             }
           </button>
-          <span className="text-[7px] tracking-[0.3em] text-white/15 uppercase">A 1ª foto = capa</span>
+
+          {/* reorder */}
+          {images.length > 1 && (
+            <button onClick={startReorder}
+              className="flex items-center gap-2 px-4 py-2.5 border border-white/[0.12] hover:border-white/30
+                bg-white/[0.03] hover:bg-white/[0.07] text-[9px] tracking-[0.45em] text-white/35
+                hover:text-white/65 uppercase transition-all duration-200">
+              <span className="text-[11px] leading-none text-white/25">⇅</span>Dispor Páginas
+            </button>
+          )}
+
+          <span className="text-[7px] tracking-[0.3em] text-white/12 uppercase w-full text-center mt-0.5">
+            A 1ª foto = capa
+          </span>
         </div>
       )}
     </div>

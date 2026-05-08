@@ -114,3 +114,25 @@ export async function DELETE(req: NextRequest) {
 
   return NextResponse.json({ ok: true })
 }
+
+/* ── PATCH — reorder photos ─────────────────────────────────────────────────── */
+export async function PATCH(req: NextRequest) {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const supabase = adminClient()
+  const { updates } = await req.json() as { updates: { id: string; order_index: number }[] }
+
+  if (!Array.isArray(updates) || updates.length === 0) {
+    return NextResponse.json({ error: 'Missing updates' }, { status: 400 })
+  }
+
+  await Promise.all(
+    updates.map(({ id, order_index }) =>
+      supabase.from('section_images').update({ order_index }).eq('id', id)
+    )
+  )
+
+  return NextResponse.json({ ok: true })
+}
