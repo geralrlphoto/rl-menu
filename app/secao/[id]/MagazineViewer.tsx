@@ -62,7 +62,8 @@ export default function MagazineViewer({ images: init, sectionId, isAdmin }: Pro
       const fd = new FormData(); fd.append('file', file); fd.append('sectionId', sectionId)
       const res = await fetch('/api/section-images', { method: 'POST', body: fd })
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Upload falhou')
-      setImages(p => [...p, await res.json()])
+      const row = await res.json()
+      setImages(p => [...p, row])
     } catch (err: any) { alert(`Erro: ${err.message}`) }
     finally { setUploading(false); if (fileRef.current) fileRef.current.value = '' }
   }
