@@ -48,6 +48,7 @@ export default function MagazineViewer({ images: init, sectionId, isAdmin }: Pro
   const fileRef = useRef<HTMLInputElement>(null)
 
   /* ── reorder mode ────────────────────────────────────────────────────────── */
+  const [copied,       setCopied]       = useState(false)
   const [reordering,   setReordering]   = useState(false)
   const [reorderImgs,  setReorderImgs]  = useState<SectionImage[]>([])
   const [savingOrder,  setSavingOrder]  = useState(false)
@@ -620,6 +621,29 @@ export default function MagazineViewer({ images: init, sectionId, isAdmin }: Pro
                 bg-white/[0.03] hover:bg-white/[0.07] text-[9px] tracking-[0.45em] text-white/35
                 hover:text-white/65 uppercase transition-all duration-200">
               <span className="text-[11px] leading-none text-white/25">⇅</span>Dispor Páginas
+            </button>
+          )}
+
+          {/* copy presentation link */}
+          {images.length > 0 && (
+            <button
+              onClick={() => {
+                const url = `${window.location.origin}/apresentacao/${sectionId}`
+                navigator.clipboard.writeText(url).then(() => {
+                  setCopied(true)
+                  setTimeout(() => setCopied(false), 2200)
+                })
+              }}
+              className={`flex items-center gap-2 px-4 py-2.5 border uppercase transition-all duration-200 text-[9px] tracking-[0.45em] ${
+                copied
+                  ? 'border-emerald-400/40 bg-emerald-400/[0.07] text-emerald-400/80'
+                  : 'border-white/[0.12] hover:border-white/30 bg-white/[0.03] hover:bg-white/[0.07] text-white/35 hover:text-white/65'
+              }`}
+            >
+              <span className="text-[11px] leading-none" style={{ opacity: 0.5 }}>
+                {copied ? '✓' : '⎘'}
+              </span>
+              {copied ? 'Link Copiado!' : 'Copiar Link Apresentação'}
             </button>
           )}
 
