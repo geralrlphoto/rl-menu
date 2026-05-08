@@ -842,6 +842,11 @@ function PortalSubPageContent() {
   }, [refParam])
 
   const [editingPhotos, setEditingPhotos] = useState(false)
+  // inline text + photo editing for default pages (SOBRE O MENU etc)
+  const [inlineEditText, setInlineEditText] = useState(false)
+  const [inlineDraft, setInlineDraft] = useState('')
+  const [savingInline, setSavingInline] = useState(false)
+  const [imgSwapping, setImgSwapping] = useState<string | null>(null) // block id
   const [error, setError] = useState('')
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
   const [portalRef, setPortalRef] = useState('')
@@ -1289,6 +1294,49 @@ function PortalSubPageContent() {
       }
     }
     return out
+  }
+
+  // ── inline text save ─────────────────────────────────────────────────────────
+  async function saveInlineText(pageId: string) {
+    setSavingInline(true)
+    try {
+      const toDelete = blocks.filter(b => b.type === 'heading_1' || b.type === 'heading_2' || b.type === 'heading_3' || b.type === 'paragraph')
+      await Promise.all(toDelete.map(b =>
+        fetch('/api/notion-block', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: b.id }) })
+      ))
+      const lines = inlineDraft.split('\n')
+      for (const line of lines) {
+        await fetch('/api/notion-block', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parentId: pageId, type: 'paragraph', text: line }) })
+      }
+      await fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}&bust=1`)
+      setBlocks(prev => {
+        const filtered = prev.filter(b => b.type !== 'heading_1' && b.type !== 'heading_2' && b.type !== 'heading_3' && b.type !== 'paragraph')
+        return filtered
+      })
+      handleRefresh()
+      setInlineEditText(false)
+    } catch { /* ignore */ } finally {
+      setSavingInline(false)
+    }
+  }
+
+  // ── inline image swap ─────────────────────────────────────────────────────────
+  async function swapImageInline(blockId: string, file: File, parentId: string | null, prevSiblingId: string | null) {
+    setImgSwapping(blockId)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const up = await fetch('/api/upload-image', { method: 'POST', body: fd })
+      const { url } = await up.json()
+      if (!url) return
+      // Delete old block
+      await fetch('/api/notion-block', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: blockId }) })
+      // Create new image block in same position
+      await fetch('/api/notion-block', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parentId: parentId ?? id, type: 'image', imageUrl: url, after: prevSiblingId ?? undefined }) })
+      setBlocks(prev => patchBlockUrl(prev, blockId, url))
+    } catch { /* ignore */ } finally {
+      setImgSwapping(null)
+    }
   }
 
   const hasImages = findImageBlocks(blocks).length > 0
@@ -2456,7 +2504,73 @@ function PortalSubPageContent() {
                       // Check if page has callout cards — render them with URL buttons
                       const pageCalloutLinks = calloutLinks[id as string] ?? {}
                       const calloutCards = findCalloutCards(blocks)
-                      if (calloutCards.length === 0) return <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : undefined} />
+                      if (calloutCards.length === 0) {
+                        // ── DEFAULT: text + images with inline admin editing ──────────────────
+                        const backUrl = fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : undefined
+                        const textBlocks = blocks.filter(b => b.type !== 'image')
+                        const imgBlocks  = findImageBlocks(blocks)
+                        const allText = textBlocks
+                          .filter(b => ['heading_1','heading_2','heading_3','paragraph'].includes(b.type))
+                          .map(b => {
+                            const data = b[b.type] as any
+                            return (data?.rich_text ?? []).map((t: any) => t.plain_text).join('')
+                          }).join('\n')
+                        return (
+                          <div className="space-y-2">
+                            {/* text blocks */}
+                            {inlineEditText ? (
+                              <div className="space-y-3 mb-6">
+                                <p className="text-[10px] tracking-[0.4em] uppercase text-gold/50">Editar texto</p>
+                                <textarea
+                                  value={inlineDraft}
+                                  onChange={e => setInlineDraft(e.target.value)}
+                                  rows={18}
+                                  className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3 text-sm text-white/70 outline-none focus:border-gold/40 transition-colors leading-relaxed resize-y"
+                                />
+                                <div className="flex gap-2 justify-end">
+                                  <button onClick={() => setInlineEditText(false)} disabled={savingInline} className="px-4 py-2 text-xs border border-white/15 rounded-lg text-white/40 hover:text-white/70 disabled:opacity-50 transition-colors">Cancelar</button>
+                                  <button onClick={() => saveInlineText(id as string)} disabled={savingInline} className="px-5 py-2 text-xs bg-gold/20 border border-gold/40 rounded-lg text-gold hover:bg-gold/30 disabled:opacity-50 transition-all">
+                                    {savingInline ? 'A guardar...' : '✓ Guardar'}
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="relative group/text mb-2">
+                                {isAdmin && (
+                                  <button
+                                    onClick={() => { setInlineDraft(allText); setInlineEditText(true) }}
+                                    className="absolute -top-1 right-0 z-10 opacity-0 group-hover/text:opacity-100 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.05] border border-white/10 text-[10px] text-white/40 hover:text-white/70 transition-all uppercase tracking-wider">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" /></svg>
+                                    Editar Texto
+                                  </button>
+                                )}
+                                <NotionBlocks blocks={textBlocks} hiddenNav={settings.hiddenNav} backUrl={backUrl} />
+                              </div>
+                            )}
+                            {/* image blocks with inline swap */}
+                            {imgBlocks.map(img => (
+                              <div key={img.id} className="relative group/img rounded-2xl overflow-hidden">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={img.url} alt="" className="w-full rounded-2xl object-cover" />
+                                {isAdmin && (
+                                  <label className={`absolute inset-0 flex flex-col items-center justify-center cursor-pointer rounded-2xl transition-all duration-200 ${imgSwapping === img.id ? 'bg-black/60' : 'bg-black/0 group-hover/img:bg-black/50'}`}>
+                                    <input type="file" accept="image/*" className="hidden" disabled={imgSwapping !== null}
+                                      onChange={e => { const f = e.target.files?.[0]; if (f) swapImageInline(img.id, f, img.parentId, img.prevSiblingId); e.target.value = '' }} />
+                                    {imgSwapping === img.id ? (
+                                      <span className="text-[11px] tracking-[0.3em] uppercase text-white/90">A guardar...</span>
+                                    ) : (
+                                      <span className="text-[11px] tracking-[0.3em] uppercase text-white opacity-0 group-hover/img:opacity-100 transition-opacity duration-200 flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                        Trocar Foto
+                                      </span>
+                                    )}
+                                  </label>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      }
 
                       // Build a flat list: non-callout blocks + callout cards
                       const getImgUrl = (b: Block) => {
