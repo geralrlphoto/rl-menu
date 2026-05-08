@@ -109,6 +109,11 @@ export default async function PortaisClientesPage() {
             style={{ color: 'rgba(255,255,255,0.4)', borderColor: 'rgba(255,255,255,0.1)' }}>
             Portal Principal
           </Link>
+          <Link href="/portal-batizado"
+            className="text-[10px] tracking-widest uppercase border px-3 py-1.5 rounded-lg transition-all"
+            style={{ color: 'rgba(201,168,76,0.6)', borderColor: 'rgba(201,168,76,0.2)' }}>
+            Portal Batizado
+          </Link>
           <NovoPortalButton />
         </div>
       </div>

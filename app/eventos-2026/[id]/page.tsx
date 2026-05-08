@@ -1073,7 +1073,8 @@ function PortalSection({ evento }: { evento: Evento }) {
       })
       if (res.ok) {
         setStatus('found')
-        window.open(`/portal-cliente/ref/${encodeURIComponent(referencia)}`, '_blank')
+        const portalBase = tipoPortal === 'batizado' ? '/portal-batizado' : '/portal-cliente'
+        window.open(`${portalBase}/ref/${encodeURIComponent(referencia)}`, '_blank')
       }
     } finally {
       setCreating(false)
