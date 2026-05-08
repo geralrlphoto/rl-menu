@@ -816,8 +816,12 @@ export default function PortalClientePage() {
   const [editing, setEditing] = useState(false)
   const [editingContent, setEditingContent] = useState(false)
   const [error, setError] = useState('')
+  // welcome text editor
+  const [editingWelcome, setEditingWelcome] = useState(false)
+  const [welcomeDraft, setWelcomeDraft] = useState({ heading: '', body: '' })
+  const [savingWelcome, setSavingWelcome] = useState(false)
   // inline hero editing
-  const [heroEdit, setHeroEdit] = useState<{ field: 'noiva' | 'noivo' | 'hero' | null; value: string }>({ field: null, value: '' })
+  const [heroEdit, setHeroEdit] = useState<{ field: 'nomeCrianca' | 'noiva' | 'noivo' | 'hero' | null; value: string }>({ field: null, value: '' })
   const [heroSaving, setHeroSaving] = useState(false)
   const [heroUploadProgress, setHeroUploadProgress] = useState<number | null>(null)
   const [galleryUploading, setGalleryUploading] = useState<number | null>(null)
@@ -924,6 +928,41 @@ export default function PortalClientePage() {
     setHeroSaving(false)
     fetch(`/api/portais-clientes?id=${PAGE_ID}&bust=1`)
     syncPhotosToAllPortals(newSettings)
+  }
+
+  function startEditWelcome() {
+    const { heading, paragraphs } = findWelcomeText(blocks)
+    setWelcomeDraft({
+      heading,
+      body: paragraphs.filter(p => p.trim()).join('\n\n'),
+    })
+    setEditingWelcome(true)
+  }
+
+  async function saveWelcomeText() {
+    setSavingWelcome(true)
+    try {
+      // Delete all heading_2 and paragraph blocks on the page
+      const toDelete = blocks.filter(b => b.type === 'heading_2' || b.type === 'paragraph')
+      await Promise.all(toDelete.map(b =>
+        fetch('/api/notion-block', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: b.id }) })
+      ))
+      // Create heading
+      if (welcomeDraft.heading.trim()) {
+        await fetch('/api/notion-block', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parentId: PAGE_ID, type: 'heading_2', text: welcomeDraft.heading.trim() }) })
+      }
+      // Create paragraphs (split by line, each non-empty line = paragraph)
+      const lines = welcomeDraft.body.split('\n')
+      for (const line of lines) {
+        await fetch('/api/notion-block', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parentId: PAGE_ID, type: 'paragraph', text: line }) })
+      }
+      // Bust cache and reload
+      await fetch(`/api/portais-clientes?id=${PAGE_ID}&bust=1`)
+      await loadBlocks(true)
+      setEditingWelcome(false)
+    } catch { /* ignore */ } finally {
+      setSavingWelcome(false)
+    }
   }
 
   async function swapGalleryPhoto(idx: number, file: File) {
@@ -1298,34 +1337,90 @@ export default function PortalClientePage() {
       {settings.referencia && <EntregasSectionPC referencia={settings.referencia} />}
 
       {/* ── WELCOME ── */}
-      <section className="py-12 sm:py-16 px-4 max-w-2xl mx-auto">
-        {welcomeHeading && (
-          <h2 className="font-playfair font-black text-2xl sm:text-3xl text-gold mb-3 leading-tight tracking-tight text-center">
-            {welcomeHeading}
-          </h2>
-        )}
-        <div className="flex justify-center mb-6">
-          <span className="text-gold/40 text-xl">♡</span>
-        </div>
-        {welcomeParas.map((p, i) =>
-          p.trim() === '' ? (
-            <div key={i} className="h-3" />
-          ) : (
-            <p key={i} className="text-sm sm:text-base text-white/50 leading-relaxed mb-3 text-justify">{p}</p>
-          )
-        )}
+      <section className="py-12 sm:py-16 px-4 max-w-2xl mx-auto relative">
 
-        {/* Feature bullets */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8">
-          {['Acompanhamento de todo o processo', 'Prazos e entregas organizados', 'Comunicação transparente', 'Acesso rápido a documentos'].map((f, i) => (
-            <div key={i} className="flex flex-col items-center gap-2 p-3">
-              <div className="w-6 h-6 rounded-full border border-gold/30 flex items-center justify-center">
-                <span className="text-gold text-xs">✓</span>
-              </div>
-              <span className="text-xs text-white/40 text-center leading-tight">{f}</span>
+        {editingWelcome ? (
+          /* ── EDIT MODE ── */
+          <div className="space-y-4">
+            <p className="text-[10px] tracking-[0.4em] uppercase text-gold/50 mb-2">Editar texto do portal</p>
+            <div>
+              <label className="block text-[10px] text-white/30 tracking-widest uppercase mb-1.5">Título</label>
+              <input
+                value={welcomeDraft.heading}
+                onChange={e => setWelcomeDraft(prev => ({ ...prev, heading: e.target.value }))}
+                placeholder="ex: Bem-vindos ao vosso portal!"
+                className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15"
+              />
             </div>
-          ))}
-        </div>
+            <div>
+              <label className="block text-[10px] text-white/30 tracking-widest uppercase mb-1.5">Texto (cada linha = parágrafo)</label>
+              <textarea
+                value={welcomeDraft.body}
+                onChange={e => setWelcomeDraft(prev => ({ ...prev, body: e.target.value }))}
+                rows={20}
+                className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-3 text-sm text-white/70 outline-none focus:border-gold/40 transition-colors leading-relaxed resize-y"
+              />
+            </div>
+            <div className="flex gap-2 justify-end pt-1">
+              <button
+                onClick={() => setEditingWelcome(false)}
+                disabled={savingWelcome}
+                className="px-4 py-2 text-xs border border-white/15 rounded-lg text-white/40 hover:text-white/70 disabled:opacity-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={saveWelcomeText}
+                disabled={savingWelcome}
+                className="px-5 py-2 text-xs bg-gold/20 border border-gold/40 rounded-lg text-gold hover:bg-gold/30 disabled:opacity-50 transition-all"
+              >
+                {savingWelcome ? 'A guardar...' : '✓ Guardar'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* ── VIEW MODE ── */
+          <>
+            {isAdmin && (
+              <button
+                onClick={startEditWelcome}
+                className="absolute top-10 right-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/10 text-[10px] text-white/30 hover:text-white/60 hover:border-white/20 transition-all uppercase tracking-wider"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+                </svg>
+                Editar Texto
+              </button>
+            )}
+            {welcomeHeading && (
+              <h2 className="font-playfair font-black text-2xl sm:text-3xl text-gold mb-3 leading-tight tracking-tight text-center">
+                {welcomeHeading}
+              </h2>
+            )}
+            <div className="flex justify-center mb-6">
+              <span className="text-gold/40 text-xl">♡</span>
+            </div>
+            {welcomeParas.map((p, i) =>
+              p.trim() === '' ? (
+                <div key={i} className="h-3" />
+              ) : (
+                <p key={i} className="text-sm sm:text-base text-white/50 leading-relaxed mb-3 text-justify">{p}</p>
+              )
+            )}
+
+            {/* Feature bullets */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8">
+              {['Acompanhamento de todo o processo', 'Prazos e entregas organizados', 'Comunicação transparente', 'Acesso rápido a documentos'].map((f, i) => (
+                <div key={i} className="flex flex-col items-center gap-2 p-3">
+                  <div className="w-6 h-6 rounded-full border border-gold/30 flex items-center justify-center">
+                    <span className="text-gold text-xs">✓</span>
+                  </div>
+                  <span className="text-xs text-white/40 text-center leading-tight">{f}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </section>
 
       {/* ── CARDS ── */}
