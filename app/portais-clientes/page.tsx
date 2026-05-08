@@ -168,6 +168,7 @@ export default async function PortaisClientesPage() {
                   <div key={portal.referencia} className="flex flex-col gap-1.5">
                     <AdminPortalLink
                       referencia={portal.referencia}
+                      tipoPortal={portal.settings?.tipoPortal}
                       className="group flex items-start justify-between gap-3 px-5 py-4 rounded-2xl text-left w-full transition-all duration-200"
                       style={{
                         background: 'rgba(255,255,255,0.02)',

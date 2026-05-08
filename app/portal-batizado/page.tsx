@@ -810,6 +810,8 @@ export default function PortalClientePage() {
   const [heroEdit, setHeroEdit] = useState<{ field: 'noiva' | 'noivo' | 'hero' | null; value: string }>({ field: null, value: '' })
   const [heroSaving, setHeroSaving] = useState(false)
   const [heroUploadProgress, setHeroUploadProgress] = useState<number | null>(null)
+  const [galleryUploading, setGalleryUploading] = useState<number | null>(null)
+  const isAdmin = true // page always accessed by admin (middleware-protected)
   // password gate
   const [hasPassword, setHasPassword] = useState(false)
   const [authenticated, setAuthenticated] = useState(false)
@@ -911,6 +913,31 @@ export default function PortalClientePage() {
     setHeroSaving(false)
     fetch(`/api/portais-clientes?id=${PAGE_ID}&bust=1`)
     syncPhotosToAllPortals(newSettings)
+  }
+
+  async function swapGalleryPhoto(idx: number, file: File) {
+    setGalleryUploading(idx)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (!data.url) return
+      const currentUrls = settings.galleryUrls ?? ['', '', '']
+      const newUrls = [...currentUrls]
+      while (newUrls.length < 3) newUrls.push('')
+      newUrls[idx] = data.url
+      const newSettings = { ...settings, galleryUrls: newUrls }
+      await fetch('/api/portal-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pageId: PAGE_ID, settings: newSettings, settingsBlockId }),
+      })
+      setSettings(newSettings)
+      syncPhotosToAllPortals(newSettings)
+    } finally {
+      setGalleryUploading(null)
+    }
   }
 
   if (loading) return (
@@ -1238,7 +1265,30 @@ export default function PortalClientePage() {
         <section className="px-4 pb-10 sm:pb-14">
           <div className="grid grid-cols-3 gap-2 sm:gap-3 max-w-3xl mx-auto rounded-2xl overflow-hidden">
             {galleryImages.map((url, i) => (
-              <div key={i} className="aspect-[3/4] sm:aspect-[2/3] bg-cover bg-center" style={{ backgroundImage: `url(${url})` }} />
+              <div key={i} className="relative group aspect-[3/4] sm:aspect-[2/3] bg-cover bg-center" style={{ backgroundImage: `url(${url})` }}>
+                {isAdmin && (
+                  <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer
+                    bg-black/0 group-hover:bg-black/50 transition-all duration-200">
+                    <input
+                      type="file" accept="image/*" className="hidden"
+                      disabled={galleryUploading !== null}
+                      onChange={e => { const f = e.target.files?.[0]; if (f) swapGalleryPhoto(i, f); e.target.value = '' }}
+                    />
+                    {galleryUploading === i ? (
+                      <span className="text-[10px] tracking-[0.3em] uppercase text-white/80 opacity-100">
+                        A guardar...
+                      </span>
+                    ) : (
+                      <span className="text-[10px] tracking-[0.3em] uppercase text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-1.5">
+                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        Trocar Foto
+                      </span>
+                    )}
+                  </label>
+                )}
+              </div>
             ))}
           </div>
         </section>

@@ -2,8 +2,9 @@
 
 import { useRouter } from 'next/navigation'
 
-export default function AdminPortalLink({ referencia, children, className, style }: {
+export default function AdminPortalLink({ referencia, tipoPortal, children, className, style }: {
   referencia: string
+  tipoPortal?: string
   children: React.ReactNode
   className?: string
   style?: React.CSSProperties
@@ -13,7 +14,8 @@ export default function AdminPortalLink({ referencia, children, className, style
   function handleClick() {
     // Mark this session as admin for this specific portal
     sessionStorage.setItem(`portalAdmin_${referencia}`, 'true')
-    router.push(`/portal-cliente/ref/${encodeURIComponent(referencia)}`)
+    const base = tipoPortal === 'batizado' ? '/portal-batizado' : '/portal-cliente'
+    router.push(`${base}/ref/${encodeURIComponent(referencia)}`)
   }
 
   return (
