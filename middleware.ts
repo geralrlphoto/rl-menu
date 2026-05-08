@@ -65,6 +65,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/api/test-batizado-email') ||
     pathname.startsWith('/api/webhook-tally-fotos-convidados') ||
     pathname.startsWith('/portal-media') ||
+    pathname.startsWith('/apresentacao') ||
     pathname.startsWith('/rm/') ||
     pathname.startsWith('/api/media-portal/view') ||
     pathname.startsWith('/api/media-portal/confirm') ||
