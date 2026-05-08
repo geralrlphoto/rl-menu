@@ -33,13 +33,15 @@ function pageLabel(s: number, imgs: SectionImage[]) {
 const SL = 'linear-gradient(to left,  rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.12) 55%, transparent 100%)'
 const SR = 'linear-gradient(to right, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.12) 55%, transparent 100%)'
 const SPINE_CSS = 'linear-gradient(to bottom, #050810, #0d1520, #050810)'
-const DUR = '0.75s'
+const DUR  = '0.75s'
 const EASE = 'cubic-bezier(0.42, 0, 0.58, 1)'
 
 /* ─── component ───────────────────────────────────────────────────────────── */
 export default function MagazineViewer({ images: init, sectionId, isAdmin }: Props) {
   const [images,    setImages]    = useState(init)
-  const [spread,    setSpread]    = useState(0)
+  const [spread,    setSpread]    = useState(0)       // desktop (spread index)
+  const [mobilePg,  setMobilePg]  = useState(0)       // mobile (image index)
+  const [mFading,   setMFading]   = useState(false)   // mobile fade
   const [flip,      setFlip]      = useState<Flip>(null)
   const [uploading, setUploading] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -47,11 +49,18 @@ export default function MagazineViewer({ images: init, sectionId, isAdmin }: Pro
 
   const totalSpreads = images.length <= 1 ? 0 : Math.ceil((images.length - 1) / 2)
 
-  /* ── navigation ─────────────────────────────────────────────────────────── */
+  /* ── desktop navigation ──────────────────────────────────────────────────── */
   function navigate(next: number) {
     if (flip !== null || next < 0 || next > totalSpreads) return
     setFlip({ dir: next > spread ? 'fwd' : 'bwd', from: spread, to: next })
     setTimeout(() => { setSpread(next); setFlip(null) }, 760)
+  }
+
+  /* ── mobile navigation ───────────────────────────────────────────────────── */
+  function mNavigate(next: number) {
+    if (mFading || next < 0 || next >= images.length) return
+    setMFading(true)
+    setTimeout(() => { setMobilePg(next); setMFading(false) }, 220)
   }
 
   /* ── upload / delete ─────────────────────────────────────────────────────── */
@@ -81,6 +90,7 @@ export default function MagazineViewer({ images: init, sectionId, isAdmin }: Pro
       setImages(next)
       const newTotal = next.length <= 1 ? 0 : Math.ceil((next.length - 1) / 2)
       if (spread > newTotal) { setSpread(0); setFlip(null) }
+      if (mobilePg >= next.length) setMobilePg(Math.max(0, next.length - 1))
     } catch { alert('Erro ao eliminar') }
     finally { setDeletingId(null) }
   }
@@ -89,7 +99,6 @@ export default function MagazineViewer({ images: init, sectionId, isAdmin }: Pro
   const [curL, curR] = getPages(spread, images)
   const isCover = spread === 0
 
-  // flip pages
   const fFromL = flip ? getPages(flip.from, images)[0] : null
   const fFromR = flip ? getPages(flip.from, images)[1] : null
   const fToL   = flip ? getPages(flip.to,   images)[0] : null
@@ -97,14 +106,18 @@ export default function MagazineViewer({ images: init, sectionId, isAdmin }: Pro
   const fFromIsCover = flip?.from === 0
   const fToIsCover   = flip?.to   === 0
 
-  /* ── render helpers (inlined JSX, no inner FC) ───────────────────────────── */
+  /* ── render helpers ──────────────────────────────────────────────────────── */
   const spine = (
-    <div className="w-[3px] shrink-0" style={{ background: SPINE_CSS, boxShadow: '0 0 14px rgba(0,0,0,0.9)', zIndex: 10 }} />
+    <div className="w-[3px] shrink-0 relative z-10"
+      style={{ background: SPINE_CSS, boxShadow: '0 0 14px rgba(0,0,0,0.9)' }} />
   )
 
-  function imgEl(img: SectionImage | null, objectFit = 'object-cover') {
+  /* object-contain = no cropping; dark bg shows letterbox/pillarbox */
+  function imgEl(img: SectionImage | null) {
     if (!img) return null
-    return <img src={img.image_url} alt="" className={`w-full h-full ${objectFit}`} draggable={false} />
+    return (
+      <img src={img.image_url} alt="" className="w-full h-full object-contain" draggable={false} />
+    )
   }
 
   function delBtn(img: SectionImage, side: 'l' | 'r') {
@@ -132,7 +145,6 @@ export default function MagazineViewer({ images: init, sectionId, isAdmin }: Pro
       </div>
     )
   }
-
   function rightHalf(img: SectionImage | null) {
     return (
       <div className="relative flex-1 h-full overflow-hidden group" style={{ background: '#050a12' }}>
@@ -143,264 +155,288 @@ export default function MagazineViewer({ images: init, sectionId, isAdmin }: Pro
     )
   }
 
-  /* ── full render ─────────────────────────────────────────────────────────── */
+  /* ════════════════════════════════════════════════════════════════════════
+     RENDER
+  ════════════════════════════════════════════════════════════════════════ */
   return (
     <div className="w-full mb-14">
 
-      <div
-        className="relative max-w-5xl mx-auto border border-white/[0.07]"
-        style={{ boxShadow: '0 24px 70px rgba(0,0,0,0.75), 0 6px 24px rgba(0,0,0,0.5)' }}
-      >
-        {/* ─── Magazine viewport ─── */}
+      {/* ══════════ MOBILE VIEW (< sm) ══════════ */}
+      <div className="block sm:hidden">
         <div
-          className="relative overflow-hidden"
-          style={{ height: '62vh', perspective: '2400px', perspectiveOrigin: '50% 50%' }}
+          className="relative w-full border border-white/[0.07]"
+          style={{
+            background: '#030507',
+            aspectRatio: '2/3',           /* portrait page */
+            maxHeight: '75vh',
+            boxShadow: '0 16px 48px rgba(0,0,0,0.7)',
+          }}
         >
-
-          {/* ══════════════ STATIC (no flip) ══════════════ */}
-          {!flip && isCover && (
-            <div className="absolute inset-0 flex" style={{ background: '#030507' }}>
-              {/* left half: dark */}
-              <div className="flex-1 h-full" style={{ background: '#030507' }} />
-              {spine}
-              {/* right half: cover */}
-              <div className="relative flex-1 h-full overflow-hidden group" style={{ background: '#030507' }}>
-                {curL ? (
-                  <>
-                    <img src={curL.image_url} alt="" className="w-full h-full object-cover" draggable={false} />
-                    <div className="absolute inset-0 pointer-events-none" style={{
-                      background: 'linear-gradient(to bottom, rgba(0,0,0,0.12) 0%, transparent 22%, transparent 70%, rgba(0,0,0,0.45) 100%)'
-                    }} />
-                    <div className="absolute bottom-5 inset-x-0 flex justify-center pointer-events-none">
-                      <span className="text-[7px] tracking-[0.75em] text-white/25 uppercase">Capa</span>
+          {/* image */}
+          {images.length > 0 ? (
+            <div
+              className="absolute inset-0 flex items-center justify-center"
+              style={{ opacity: mFading ? 0 : 1, transition: 'opacity 0.22s ease' }}
+            >
+              {images[mobilePg] && (
+                <div className="relative w-full h-full group">
+                  <img
+                    src={images[mobilePg].image_url}
+                    alt=""
+                    className="w-full h-full object-contain"
+                    draggable={false}
+                  />
+                  {/* cover label */}
+                  {mobilePg === 0 && (
+                    <div className="absolute bottom-4 inset-x-0 flex justify-center pointer-events-none">
+                      <span className="text-[7px] tracking-[0.7em] text-white/25 uppercase">Capa</span>
                     </div>
-                    {delBtn(curL, 'r')}
-                  </>
-                ) : (
-                  <div className="flex items-center justify-center h-full text-white/15 text-[10px] tracking-[0.5em] uppercase">
-                    Adicione uma foto
-                  </div>
-                )}
-              </div>
+                  )}
+                  {/* admin delete */}
+                  {isAdmin && (
+                    <button
+                      onClick={() => handleDelete(images[mobilePg])}
+                      disabled={deletingId === images[mobilePg].id}
+                      className="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200
+                        bg-black/60 hover:bg-red-900/80 backdrop-blur-sm text-white/50 hover:text-white
+                        text-[8px] tracking-[0.25em] px-2.5 py-1.5 border border-white/[0.08] hover:border-red-500/30 uppercase"
+                    >
+                      {deletingId === images[mobilePg].id ? '···' : '✕'}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center text-white/15 text-[10px] tracking-[0.5em] uppercase">
+              Adicione uma foto
             </div>
           )}
 
-          {!flip && !isCover && (
-            <div className="absolute inset-0 flex">
-              {leftHalf(curL)}
-              {spine}
-              {rightHalf(curR)}
-            </div>
-          )}
-
-          {/* ══════════════ FORWARD FLIP ══════════════ */}
-          {flip?.dir === 'fwd' && (
-            <>
-              {/* z=0 base: full destination spread */}
-              <div className="absolute inset-0 flex" style={{ zIndex: 0 }}>
-                {/* destination left half */}
-                <div className="relative flex-1 h-full overflow-hidden" style={{ background: '#040810' }}>
-                  {fToL && !fToIsCover && imgEl(fToL)}
-                  <div className="absolute right-0 top-0 bottom-0 w-16 pointer-events-none" style={{ background: SL }} />
-                </div>
-                {spine}
-                {/* destination right half */}
-                <div className="relative flex-1 h-full overflow-hidden" style={{ background: '#050a12' }}>
-                  {fToR && imgEl(fToR)}
-                  <div className="absolute left-0 top-0 bottom-0 w-16 pointer-events-none" style={{ background: SR }} />
-                </div>
-              </div>
-
-              {/* z=1: source LEFT half stays (doesn't flip) */}
-              <div
-                className="absolute top-0 left-0 bottom-0 overflow-hidden"
-                style={{ width: 'calc(50% - 1.5px)', background: '#040810', zIndex: 1 }}
-              >
-                {fFromL && !fFromIsCover && imgEl(fFromL)}
-                <div className="absolute right-0 top-0 bottom-0 w-16 pointer-events-none" style={{ background: SL }} />
-              </div>
-
-              {/* z=5: the flipping page (source right → dest left) */}
-              <div
-                className="absolute top-0 bottom-0"
-                style={{
-                  left: 'calc(50% + 1.5px)',
-                  width: 'calc(50% - 1.5px)',
-                  transformStyle: 'preserve-3d',
-                  transformOrigin: 'left center',
-                  animation: `pgFwd ${DUR} ${EASE} forwards`,
-                  zIndex: 5,
-                }}
-              >
-                {/* FRONT: source right page (or cover) */}
-                <div
-                  className="absolute inset-0 overflow-hidden"
-                  style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', background: '#050a12' }}
-                >
-                  {fFromIsCover
-                    ? (fFromL && imgEl(fFromL))
-                    : (fFromR && imgEl(fFromR))
-                  }
-                  {/* gradient at left edge (spine side) */}
-                  <div className="absolute left-0 top-0 bottom-0 w-8 pointer-events-none"
-                    style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.4) 0%, transparent 100%)' }} />
-                </div>
-                {/* BACK: destination left page */}
-                <div
-                  className="absolute inset-0 overflow-hidden"
-                  style={{
-                    backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden',
-                    transform: 'rotateY(180deg)',
-                    background: '#040810',
-                  }}
-                >
-                  {fToL && !fToIsCover && imgEl(fToL)}
-                  <div className="absolute right-0 top-0 bottom-0 w-8 pointer-events-none"
-                    style={{ background: 'linear-gradient(to left, rgba(0,0,0,0.4) 0%, transparent 100%)' }} />
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* ══════════════ BACKWARD FLIP ══════════════ */}
-          {flip?.dir === 'bwd' && (
-            <>
-              {/* z=0 base: full destination spread */}
-              <div className="absolute inset-0 flex" style={{ zIndex: 0 }}>
-                <div className="relative flex-1 h-full overflow-hidden" style={{ background: '#040810' }}>
-                  {fToIsCover ? null : (fToL && imgEl(fToL))}
-                  <div className="absolute right-0 top-0 bottom-0 w-16 pointer-events-none" style={{ background: SL }} />
-                </div>
-                {spine}
-                <div className="relative flex-1 h-full overflow-hidden" style={{ background: '#050a12' }}>
-                  {fToIsCover
-                    ? (fToL && imgEl(fToL))   /* cover shows on right half */
-                    : (fToR && imgEl(fToR))
-                  }
-                  <div className="absolute left-0 top-0 bottom-0 w-16 pointer-events-none" style={{ background: SR }} />
-                </div>
-              </div>
-
-              {/* z=1: source RIGHT half stays */}
-              <div
-                className="absolute top-0 right-0 bottom-0 overflow-hidden"
-                style={{ width: 'calc(50% - 1.5px)', background: '#050a12', zIndex: 1 }}
-              >
-                {fFromR && imgEl(fFromR)}
-                <div className="absolute left-0 top-0 bottom-0 w-16 pointer-events-none" style={{ background: SR }} />
-              </div>
-
-              {/* z=5: the flipping page (source left → dest right) */}
-              <div
-                className="absolute top-0 bottom-0"
-                style={{
-                  right: 'calc(50% + 1.5px)',
-                  width: 'calc(50% - 1.5px)',
-                  transformStyle: 'preserve-3d',
-                  transformOrigin: 'right center',
-                  animation: `pgBwd ${DUR} ${EASE} forwards`,
-                  zIndex: 5,
-                }}
-              >
-                {/* FRONT: source left page */}
-                <div
-                  className="absolute inset-0 overflow-hidden"
-                  style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', background: '#040810' }}
-                >
-                  {fFromL && imgEl(fFromL)}
-                  <div className="absolute right-0 top-0 bottom-0 w-8 pointer-events-none"
-                    style={{ background: 'linear-gradient(to left, rgba(0,0,0,0.4) 0%, transparent 100%)' }} />
-                </div>
-                {/* BACK: destination right page (or cover) */}
-                <div
-                  className="absolute inset-0 overflow-hidden"
-                  style={{
-                    backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden',
-                    transform: 'rotateY(180deg)',
-                    background: '#050a12',
-                  }}
-                >
-                  {fToIsCover
-                    ? (fToL && imgEl(fToL))
-                    : (fToR && imgEl(fToR))
-                  }
-                  <div className="absolute left-0 top-0 bottom-0 w-8 pointer-events-none"
-                    style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.4) 0%, transparent 100%)' }} />
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* ─── Navigation arrows ─── */}
+          {/* mobile arrows — large touch targets */}
           <button
-            onClick={() => navigate(spread - 1)}
-            disabled={spread === 0 || !!flip}
-            aria-label="Página anterior"
-            className="absolute left-3 top-1/2 -translate-y-1/2 z-30
-              w-10 h-10 flex items-center justify-center text-2xl leading-none
-              bg-black/25 hover:bg-black/55 backdrop-blur-[2px]
-              border border-white/[0.06] hover:border-white/20
-              text-white/40 hover:text-white
-              disabled:opacity-0 disabled:pointer-events-none
-              transition-all duration-200"
+            onClick={() => mNavigate(mobilePg - 1)}
+            disabled={mobilePg === 0 || mFading}
+            aria-label="Anterior"
+            className="absolute left-0 top-0 bottom-0 w-14 flex items-center justify-center z-30
+              text-white/30 hover:text-white/70 text-3xl
+              disabled:opacity-0 disabled:pointer-events-none transition-colors"
+            style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.25) 0%, transparent 100%)' }}
           >‹</button>
 
           <button
-            onClick={() => navigate(spread + 1)}
-            disabled={spread === totalSpreads || !!flip}
-            aria-label="Página seguinte"
-            className="absolute right-3 top-1/2 -translate-y-1/2 z-30
-              w-10 h-10 flex items-center justify-center text-2xl leading-none
-              bg-black/25 hover:bg-black/55 backdrop-blur-[2px]
-              border border-white/[0.06] hover:border-white/20
-              text-white/40 hover:text-white
-              disabled:opacity-0 disabled:pointer-events-none
-              transition-all duration-200"
+            onClick={() => mNavigate(mobilePg + 1)}
+            disabled={mobilePg >= images.length - 1 || mFading}
+            aria-label="Seguinte"
+            className="absolute right-0 top-0 bottom-0 w-14 flex items-center justify-center z-30
+              text-white/30 hover:text-white/70 text-3xl
+              disabled:opacity-0 disabled:pointer-events-none transition-colors"
+            style={{ background: 'linear-gradient(to left, rgba(0,0,0,0.25) 0%, transparent 100%)' }}
           >›</button>
         </div>
 
-        {/* ─── Bottom strip ─── */}
-        <div
-          className="flex items-center justify-between px-5 py-2.5 border-t border-white/[0.05]"
-          style={{ background: '#020406' }}
-        >
-          <span className="text-[8px] tracking-[0.55em] text-white/20 uppercase min-w-[60px]">
-            {pageLabel(spread, images)}
+        {/* mobile bottom strip */}
+        <div className="flex items-center justify-between px-4 py-2.5 border border-t-0 border-white/[0.05]"
+          style={{ background: '#020406' }}>
+          <span className="text-[8px] tracking-[0.5em] text-white/20 uppercase">
+            {mobilePg === 0 ? 'Capa' : `p. ${mobilePg}`}
           </span>
-
           <div className="flex items-center gap-1.5">
-            {Array.from({ length: totalSpreads + 1 }).map((_, i) => (
-              <button
-                key={i}
-                onClick={() => navigate(i)}
+            {images.map((_, i) => (
+              <button key={i} onClick={() => mNavigate(i)}
                 className={`rounded-full transition-all duration-200 ${
-                  i === spread
-                    ? 'w-4 h-[3px] bg-white/50'
-                    : 'w-[5px] h-[5px] bg-white/15 hover:bg-white/35'
+                  i === mobilePg ? 'w-4 h-[3px] bg-white/50' : 'w-[5px] h-[5px] bg-white/15'
                 }`}
               />
             ))}
           </div>
-
-          <span className="text-[8px] tracking-[0.4em] text-white/15 uppercase min-w-[60px] text-right">
-            {images.length} {images.length === 1 ? 'foto' : 'fotos'}
+          <span className="text-[8px] tracking-[0.4em] text-white/15 uppercase">
+            {images.length} fotos
           </span>
         </div>
       </div>
 
-      {/* ─── Admin upload ─── */}
-      {isAdmin && (
-        <div className="max-w-5xl mx-auto mt-4 flex items-center justify-center gap-3">
-          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
-          <button
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading}
-            className="flex items-center gap-2.5 px-5 py-2.5
-              border border-white/[0.12] hover:border-white/30
-              bg-white/[0.03] hover:bg-white/[0.07]
-              text-[9px] tracking-[0.5em] text-white/35 hover:text-white/65
-              uppercase transition-all duration-200"
+      {/* ══════════ DESKTOP VIEW (≥ sm) ══════════ */}
+      <div className="hidden sm:block">
+        <div
+          className="relative max-w-5xl mx-auto border border-white/[0.07]"
+          style={{ boxShadow: '0 24px 70px rgba(0,0,0,0.75), 0 6px 24px rgba(0,0,0,0.5)' }}
+        >
+          {/* Magazine viewport — aspect 3:2 for double-spread, capped at 68vh */}
+          <div
+            className="relative overflow-hidden"
+            style={{
+              height: 'min(68vh, 56vw)',   /* 56vw ≈ two portrait pages side-by-side */
+              perspective: '2400px',
+              perspectiveOrigin: '50% 50%',
+            }}
           >
+
+            {/* ── STATIC (no flip) ── */}
+            {!flip && isCover && (
+              <div className="absolute inset-0 flex" style={{ background: '#030507' }}>
+                <div className="flex-1 h-full" style={{ background: '#030507' }} />
+                {spine}
+                <div className="relative flex-1 h-full overflow-hidden group" style={{ background: '#030507' }}>
+                  {curL ? (
+                    <>
+                      <img src={curL.image_url} alt="" className="w-full h-full object-contain" draggable={false} />
+                      <div className="absolute inset-0 pointer-events-none" style={{
+                        background: 'linear-gradient(to bottom, rgba(0,0,0,0.12) 0%, transparent 22%, transparent 70%, rgba(0,0,0,0.45) 100%)'
+                      }} />
+                      <div className="absolute bottom-5 inset-x-0 flex justify-center pointer-events-none">
+                        <span className="text-[7px] tracking-[0.75em] text-white/25 uppercase">Capa</span>
+                      </div>
+                      {delBtn(curL, 'r')}
+                    </>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-white/15 text-[10px] tracking-[0.5em] uppercase">
+                      Adicione uma foto
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {!flip && !isCover && (
+              <div className="absolute inset-0 flex">
+                {leftHalf(curL)}
+                {spine}
+                {rightHalf(curR)}
+              </div>
+            )}
+
+            {/* ── FORWARD FLIP ── */}
+            {flip?.dir === 'fwd' && (
+              <>
+                <div className="absolute inset-0 flex" style={{ zIndex: 0 }}>
+                  <div className="relative flex-1 h-full overflow-hidden" style={{ background: '#040810' }}>
+                    {fToL && !fToIsCover && imgEl(fToL)}
+                    <div className="absolute right-0 top-0 bottom-0 w-16 pointer-events-none" style={{ background: SL }} />
+                  </div>
+                  {spine}
+                  <div className="relative flex-1 h-full overflow-hidden" style={{ background: '#050a12' }}>
+                    {fToR && imgEl(fToR)}
+                    <div className="absolute left-0 top-0 bottom-0 w-16 pointer-events-none" style={{ background: SR }} />
+                  </div>
+                </div>
+
+                <div className="absolute top-0 left-0 bottom-0 overflow-hidden"
+                  style={{ width: 'calc(50% - 1.5px)', background: '#040810', zIndex: 1 }}>
+                  {fFromL && !fFromIsCover && imgEl(fFromL)}
+                  <div className="absolute right-0 top-0 bottom-0 w-16 pointer-events-none" style={{ background: SL }} />
+                </div>
+
+                <div className="absolute top-0 bottom-0"
+                  style={{
+                    left: 'calc(50% + 1.5px)', width: 'calc(50% - 1.5px)',
+                    transformStyle: 'preserve-3d', transformOrigin: 'left center',
+                    animation: `pgFwd ${DUR} ${EASE} forwards`, zIndex: 5,
+                  }}>
+                  <div className="absolute inset-0 overflow-hidden"
+                    style={{ backfaceVisibility: 'hidden', background: '#050a12' }}>
+                    {fFromIsCover ? (fFromL && imgEl(fFromL)) : (fFromR && imgEl(fFromR))}
+                    <div className="absolute left-0 top-0 bottom-0 w-8 pointer-events-none"
+                      style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.4) 0%, transparent 100%)' }} />
+                  </div>
+                  <div className="absolute inset-0 overflow-hidden"
+                    style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', background: '#040810' }}>
+                    {fToL && !fToIsCover && imgEl(fToL)}
+                    <div className="absolute right-0 top-0 bottom-0 w-8 pointer-events-none"
+                      style={{ background: 'linear-gradient(to left, rgba(0,0,0,0.4) 0%, transparent 100%)' }} />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ── BACKWARD FLIP ── */}
+            {flip?.dir === 'bwd' && (
+              <>
+                <div className="absolute inset-0 flex" style={{ zIndex: 0 }}>
+                  <div className="relative flex-1 h-full overflow-hidden" style={{ background: '#040810' }}>
+                    {fToIsCover ? null : (fToL && imgEl(fToL))}
+                    <div className="absolute right-0 top-0 bottom-0 w-16 pointer-events-none" style={{ background: SL }} />
+                  </div>
+                  {spine}
+                  <div className="relative flex-1 h-full overflow-hidden" style={{ background: '#050a12' }}>
+                    {fToIsCover ? (fToL && imgEl(fToL)) : (fToR && imgEl(fToR))}
+                    <div className="absolute left-0 top-0 bottom-0 w-16 pointer-events-none" style={{ background: SR }} />
+                  </div>
+                </div>
+
+                <div className="absolute top-0 right-0 bottom-0 overflow-hidden"
+                  style={{ width: 'calc(50% - 1.5px)', background: '#050a12', zIndex: 1 }}>
+                  {fFromR && imgEl(fFromR)}
+                  <div className="absolute left-0 top-0 bottom-0 w-16 pointer-events-none" style={{ background: SR }} />
+                </div>
+
+                <div className="absolute top-0 bottom-0"
+                  style={{
+                    right: 'calc(50% + 1.5px)', width: 'calc(50% - 1.5px)',
+                    transformStyle: 'preserve-3d', transformOrigin: 'right center',
+                    animation: `pgBwd ${DUR} ${EASE} forwards`, zIndex: 5,
+                  }}>
+                  <div className="absolute inset-0 overflow-hidden"
+                    style={{ backfaceVisibility: 'hidden', background: '#040810' }}>
+                    {fFromL && imgEl(fFromL)}
+                    <div className="absolute right-0 top-0 bottom-0 w-8 pointer-events-none"
+                      style={{ background: 'linear-gradient(to left, rgba(0,0,0,0.4) 0%, transparent 100%)' }} />
+                  </div>
+                  <div className="absolute inset-0 overflow-hidden"
+                    style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', background: '#050a12' }}>
+                    {fToIsCover ? (fToL && imgEl(fToL)) : (fToR && imgEl(fToR))}
+                    <div className="absolute left-0 top-0 bottom-0 w-8 pointer-events-none"
+                      style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.4) 0%, transparent 100%)' }} />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* desktop arrows */}
+            <button onClick={() => navigate(spread - 1)} disabled={spread === 0 || !!flip}
+              aria-label="Página anterior"
+              className="absolute left-3 top-1/2 -translate-y-1/2 z-30 w-10 h-10 flex items-center
+                justify-center text-2xl leading-none bg-black/25 hover:bg-black/55 backdrop-blur-[2px]
+                border border-white/[0.06] hover:border-white/20 text-white/40 hover:text-white
+                disabled:opacity-0 disabled:pointer-events-none transition-all duration-200">‹</button>
+
+            <button onClick={() => navigate(spread + 1)} disabled={spread === totalSpreads || !!flip}
+              aria-label="Página seguinte"
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-30 w-10 h-10 flex items-center
+                justify-center text-2xl leading-none bg-black/25 hover:bg-black/55 backdrop-blur-[2px]
+                border border-white/[0.06] hover:border-white/20 text-white/40 hover:text-white
+                disabled:opacity-0 disabled:pointer-events-none transition-all duration-200">›</button>
+          </div>
+
+          {/* desktop bottom strip */}
+          <div className="flex items-center justify-between px-5 py-2.5 border-t border-white/[0.05]"
+            style={{ background: '#020406' }}>
+            <span className="text-[8px] tracking-[0.55em] text-white/20 uppercase min-w-[60px]">
+              {pageLabel(spread, images)}
+            </span>
+            <div className="flex items-center gap-1.5">
+              {Array.from({ length: totalSpreads + 1 }).map((_, i) => (
+                <button key={i} onClick={() => navigate(i)}
+                  className={`rounded-full transition-all duration-200 ${
+                    i === spread ? 'w-4 h-[3px] bg-white/50' : 'w-[5px] h-[5px] bg-white/15 hover:bg-white/35'
+                  }`} />
+              ))}
+            </div>
+            <span className="text-[8px] tracking-[0.4em] text-white/15 uppercase min-w-[60px] text-right">
+              {images.length} {images.length === 1 ? 'foto' : 'fotos'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ─── Admin upload (both views) ─── */}
+      {isAdmin && (
+        <div className="mt-4 flex items-center justify-center gap-3">
+          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+          <button onClick={() => fileRef.current?.click()} disabled={uploading}
+            className="flex items-center gap-2.5 px-5 py-2.5 border border-white/[0.12] hover:border-white/30
+              bg-white/[0.03] hover:bg-white/[0.07] text-[9px] tracking-[0.5em] text-white/35
+              hover:text-white/65 uppercase transition-all duration-200">
             {uploading
               ? <><span className="inline-block w-2 h-2 rounded-full bg-white/30 animate-pulse" /> A carregar…</>
               : <><span className="text-[13px] leading-none text-white/25">+</span> Adicionar Foto</>
