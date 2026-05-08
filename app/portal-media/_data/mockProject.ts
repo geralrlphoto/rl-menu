@@ -138,6 +138,7 @@ export interface Projeto {
   cliente: string
   senha?: string
   tipo: string
+  tipoPortal?: 'casamento' | 'batizado'
   local: string
   dataFilmagem: string
   dataEntrega: string

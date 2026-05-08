@@ -4,13 +4,14 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 type Step = 'idle' | 'form' | 'creating' | 'done'
+type TipoPortal = 'casamento' | 'batizado'
 
 export default function NovoPortalMediaButton() {
-  const [step, setStep]   = useState<Step>('idle')
-  const [ref, setRef]     = useState('')
-  const [nome, setNome]   = useState('')
-  const [tipo, setTipo]   = useState('')
-  const [err, setErr]     = useState('')
+  const [step, setStep]           = useState<Step>('idle')
+  const [ref, setRef]             = useState('')
+  const [nome, setNome]           = useState('')
+  const [tipoPortal, setTipoPortal] = useState<TipoPortal>('casamento')
+  const [err, setErr]             = useState('')
   const router = useRouter()
   const refInput = useRef<HTMLInputElement>(null)
 
@@ -27,7 +28,7 @@ export default function NovoPortalMediaButton() {
   }, [step])
 
   function reset() {
-    setStep('idle'); setRef(''); setNome(''); setTipo(''); setErr('')
+    setStep('idle'); setRef(''); setNome(''); setTipoPortal('casamento'); setErr('')
   }
 
   async function criar() {
@@ -38,7 +39,7 @@ export default function NovoPortalMediaButton() {
     const res = await fetch('/api/media-portal/novo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ref: ref.trim(), nome: nome.trim(), tipo: tipo.trim() }),
+      body: JSON.stringify({ ref: ref.trim(), nome: nome.trim(), tipoPortal }),
     })
 
     const data = await res.json()
@@ -170,24 +171,51 @@ export default function NovoPortalMediaButton() {
                       />
                     </div>
 
-                    {/* Tipo */}
+                    {/* Tipo de Portal */}
                     <div>
-                      <label className="block text-[8px] tracking-[0.45em] uppercase mb-2" style={{ color: 'rgba(130,170,255,0.45)' }}>
-                        Tipo de Serviço
+                      <label className="block text-[8px] tracking-[0.45em] uppercase mb-3" style={{ color: 'rgba(130,170,255,0.45)' }}>
+                        Tipo de Portal
                       </label>
-                      <input
-                        value={tipo}
-                        onChange={e => setTipo(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && criar()}
-                        placeholder="Produção Photography & Video"
-                        className="w-full bg-transparent outline-none text-sm tracking-wide placeholder:opacity-20"
-                        style={{
-                          border: 'none',
-                          borderBottom: '1px solid rgba(70,120,255,0.15)',
-                          color: 'rgba(255,255,255,0.75)',
-                          padding: '8px 0',
-                        }}
-                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        {([
+                          { key: 'casamento', label: 'CASAMENTO', icon: '◈' },
+                          { key: 'batizado',  label: 'BATIZADO',  icon: '◎' },
+                        ] as { key: TipoPortal; label: string; icon: string }[]).map(({ key, label, icon }) => {
+                          const active = tipoPortal === key
+                          return (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => setTipoPortal(key)}
+                              className="flex flex-col items-center gap-1.5 py-3 transition-all duration-200"
+                              style={{
+                                border: active
+                                  ? '1px solid rgba(70,120,255,0.55)'
+                                  : '1px solid rgba(70,120,255,0.12)',
+                                background: active
+                                  ? 'rgba(70,120,255,0.12)'
+                                  : 'rgba(70,120,255,0.03)',
+                                boxShadow: active
+                                  ? '0 0 18px rgba(70,120,255,0.15)'
+                                  : 'none',
+                              }}
+                            >
+                              <span
+                                className="text-base"
+                                style={{ color: active ? 'rgba(130,170,255,0.9)' : 'rgba(255,255,255,0.2)' }}
+                              >
+                                {icon}
+                              </span>
+                              <span
+                                className="text-[8px] tracking-[0.45em]"
+                                style={{ color: active ? 'rgba(130,170,255,0.85)' : 'rgba(255,255,255,0.2)' }}
+                              >
+                                {label}
+                              </span>
+                            </button>
+                          )
+                        })}
+                      </div>
                     </div>
                   </div>
 

@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { referencia, noiva, noivo, data, local, valorFoto, valorVideo, valorExtras } = body
+    const { referencia, noiva, noivo, data, local, valorFoto, valorVideo, valorExtras, tipoPortal } = body
     if (!referencia) return NextResponse.json({ error: 'referencia required' }, { status: 400 })
 
     const db = supabase()
@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
         valorFoto: valorFoto ?? null,
         valorVideo: valorVideo ?? null,
         valorExtras: valorExtras ?? null,
+        tipoPortal: tipoPortal ?? 'casamento',
         hiddenNav: [],
       },
       updated_at: new Date().toISOString(),
@@ -86,6 +87,20 @@ export async function POST(req: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ ok: true, portal: inserted })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
+
+// DELETE ?ref=CAS_034_26_KP  → eliminar portal definitivamente
+export async function DELETE(req: NextRequest) {
+  try {
+    const ref = req.nextUrl.searchParams.get('ref')
+    if (!ref) return NextResponse.json({ error: 'ref required' }, { status: 400 })
+    const db = supabase()
+    const { error } = await db.from('portais').delete().ilike('referencia', ref)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }

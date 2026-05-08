@@ -978,6 +978,8 @@ function PortalSection({ evento }: { evento: Evento }) {
   const [portalPassword, setPortalPassword] = useState<string>('')
   const [savingPassword, setSavingPassword] = useState(false)
   const [passwordSaved, setPasswordSaved] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`)
@@ -1049,6 +1051,11 @@ function PortalSection({ evento }: { evento: Evento }) {
   async function handleCriarPortal() {
     setCreating(true)
     try {
+      const tiposEvento = evento.tipo_evento ?? []
+      const tipoPortal = tiposEvento.map((t: string) => t.toUpperCase()).includes('BATIZADO')
+        ? 'batizado'
+        : 'casamento'
+
       const res = await fetch('/api/portais', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1061,6 +1068,7 @@ function PortalSection({ evento }: { evento: Evento }) {
           valorFoto: evento.valor_foto ?? null,
           valorVideo: evento.valor_video ?? null,
           valorExtras: evento.valor_extras ?? null,
+          tipoPortal,
         }),
       })
       if (res.ok) {
@@ -1069,6 +1077,17 @@ function PortalSection({ evento }: { evento: Evento }) {
       }
     } finally {
       setCreating(false)
+    }
+  }
+
+  async function handleEliminarPortal() {
+    setDeleting(true)
+    try {
+      await fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`, { method: 'DELETE' })
+      setStatus('not_found')
+      setConfirmDelete(false)
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -1179,6 +1198,38 @@ function PortalSection({ evento }: { evento: Evento }) {
               Editar como Admin ↗
             </button>
           </div>
+          {/* Eliminar portal */}
+          <div className="mt-1 pt-3 border-t border-white/[0.04]">
+            {!confirmDelete ? (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="flex items-center gap-1.5 text-[10px] tracking-[0.3em] text-red-400/40 hover:text-red-400/80 transition-colors uppercase"
+              >
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+                Eliminar Portal
+              </button>
+            ) : (
+              <div className="flex items-center gap-3">
+                <p className="text-[10px] text-red-400/70 tracking-wide">Eliminar definitivamente? Esta acção não pode ser revertida.</p>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="text-[10px] text-white/30 hover:text-white/60 transition-colors tracking-widest uppercase"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleEliminarPortal}
+                  disabled={deleting}
+                  className="text-[10px] text-red-400 hover:text-red-300 font-semibold tracking-widest uppercase transition-colors disabled:opacity-40"
+                >
+                  {deleting ? 'A eliminar...' : 'Confirmar'}
+                </button>
+              </div>
+            )}
+          </div>
+
           <div className="flex items-center gap-2 mt-3">
             <span className="text-[9px] tracking-[0.3em] text-white/25 uppercase shrink-0">Password</span>
             <input
