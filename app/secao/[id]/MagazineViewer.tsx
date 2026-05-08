@@ -146,20 +146,6 @@ export default function MagazineViewer({ images: init, sectionId, isAdmin }: Pro
   return (
     <div className="w-full mb-14">
 
-      {/* ── Keyframes ── */}
-      <style>{`
-        @keyframes pgFwd {
-          0%   { transform: rotateY(0deg);    box-shadow: -4px 0 10px rgba(0,0,0,0.4); }
-          40%  { box-shadow: -20px 0 40px rgba(0,0,0,0.85); }
-          100% { transform: rotateY(-180deg); box-shadow:  4px 0 10px rgba(0,0,0,0.4); }
-        }
-        @keyframes pgBwd {
-          0%   { transform: rotateY(0deg);   box-shadow:  4px 0 10px rgba(0,0,0,0.4); }
-          40%  { box-shadow: 20px 0 40px rgba(0,0,0,0.85); }
-          100% { transform: rotateY(180deg); box-shadow: -4px 0 10px rgba(0,0,0,0.4); }
-        }
-      `}</style>
-
       <div
         className="relative max-w-5xl mx-auto border border-white/[0.07]"
         style={{ boxShadow: '0 24px 70px rgba(0,0,0,0.75), 0 6px 24px rgba(0,0,0,0.5)' }}
