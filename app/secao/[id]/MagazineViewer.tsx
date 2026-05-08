@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 
 type SectionImage = {
   id: string
@@ -49,6 +49,71 @@ export default function MagazineViewer({ images: init, sectionId, isAdmin }: Pro
 
   /* ── reorder mode ────────────────────────────────────────────────────────── */
   const [copied,       setCopied]       = useState(false)
+
+  /* ── lightbox ────────────────────────────────────────────────────────────── */
+  const [lbIdx,    setLbIdx]    = useState<number | null>(null)  // index in images[]
+  const [zoom,     setZoom]     = useState(1)
+  const [pan,      setPan]      = useState({ x: 0, y: 0 })
+  const [panning,  setPanning]  = useState(false)
+  const panStart = useRef({ mx: 0, my: 0, px: 0, py: 0 })
+  const lbRef    = useRef<HTMLDivElement>(null)
+
+  const resetLb = useCallback(() => { setZoom(1); setPan({ x: 0, y: 0 }) }, [])
+
+  function openLightbox(img: SectionImage) {
+    const idx = images.findIndex(i => i.id === img.id)
+    if (idx < 0) return
+    setLbIdx(idx); setZoom(1); setPan({ x: 0, y: 0 })
+  }
+  function closeLightbox() { setLbIdx(null); setZoom(1); setPan({ x: 0, y: 0 }) }
+
+  /* wheel zoom — passive:false required */
+  useEffect(() => {
+    if (lbIdx === null || !lbRef.current) return
+    const el = lbRef.current
+    function onWheel(e: WheelEvent) {
+      e.preventDefault()
+      const rect = el.getBoundingClientRect()
+      const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12
+      setZoom(z => {
+        const nz = Math.max(0.8, Math.min(7, z * factor))
+        const cx = e.clientX - rect.left - rect.width  / 2
+        const cy = e.clientY - rect.top  - rect.height / 2
+        setPan(p => ({ x: cx + (p.x - cx) * (nz / z), y: cy + (p.y - cy) * (nz / z) }))
+        return nz
+      })
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [lbIdx])
+
+  /* keyboard navigation */
+  useEffect(() => {
+    if (lbIdx === null) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') { closeLightbox(); return }
+      if (e.key === 'ArrowLeft'  && lbIdx > 0)                    { setLbIdx(lbIdx - 1); resetLb() }
+      if (e.key === 'ArrowRight' && lbIdx < images.length - 1)    { setLbIdx(lbIdx + 1); resetLb() }
+      if (e.key === '+' || e.key === '=') setZoom(z => Math.min(7, z * 1.2))
+      if (e.key === '-')                  setZoom(z => Math.max(0.8, z / 1.2))
+      if (e.key === '0')                  resetLb()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [lbIdx, images.length, resetLb])
+
+  function lbMouseDown(e: React.MouseEvent) {
+    if (e.button !== 0) return
+    setPanning(true)
+    panStart.current = { mx: e.clientX, my: e.clientY, px: pan.x, py: pan.y }
+  }
+  function lbMouseMove(e: React.MouseEvent) {
+    if (!panning) return
+    setPan({ x: panStart.current.px + e.clientX - panStart.current.mx,
+              y: panStart.current.py + e.clientY - panStart.current.my })
+  }
+  function lbMouseUp() { setPanning(false) }
+
   const [reordering,   setReordering]   = useState(false)
   const [reorderImgs,  setReorderImgs]  = useState<SectionImage[]>([])
   const [savingOrder,  setSavingOrder]  = useState(false)
@@ -167,16 +232,15 @@ export default function MagazineViewer({ images: init, sectionId, isAdmin }: Pro
   /* object-contain = no cropping; dark bg shows letterbox/pillarbox */
   function imgEl(img: SectionImage | null) {
     if (!img) return null
-    return (
-      <img src={img.image_url} alt="" className="w-full h-full object-contain" draggable={false} />
-    )
+    return <img src={img.image_url} alt="" className="w-full h-full object-contain" draggable={false} />
   }
 
   function delBtn(img: SectionImage, side: 'l' | 'r') {
     if (!isAdmin) return null
     return (
       <button
-        onClick={() => handleDelete(img)} disabled={deletingId === img.id}
+        onClick={(e) => { e.stopPropagation(); handleDelete(img) }}
+        disabled={deletingId === img.id}
         className={`absolute ${side === 'l' ? 'top-3 right-3' : 'top-3 left-3'} z-20
           opacity-0 group-hover:opacity-100 transition-opacity duration-200
           bg-black/60 hover:bg-red-900/80 backdrop-blur-sm text-white/50 hover:text-white
@@ -190,7 +254,11 @@ export default function MagazineViewer({ images: init, sectionId, isAdmin }: Pro
 
   function leftHalf(img: SectionImage | null) {
     return (
-      <div className="relative flex-1 h-full overflow-hidden group" style={{ background: '#040810' }}>
+      <div
+        className="relative flex-1 h-full overflow-hidden group"
+        style={{ background: '#040810', cursor: img ? 'zoom-in' : 'default' }}
+        onClick={() => img && openLightbox(img)}
+      >
         {imgEl(img)}
         <div className="absolute right-0 top-0 bottom-0 w-16 pointer-events-none" style={{ background: SL }} />
         {img && delBtn(img, 'l')}
@@ -199,7 +267,11 @@ export default function MagazineViewer({ images: init, sectionId, isAdmin }: Pro
   }
   function rightHalf(img: SectionImage | null) {
     return (
-      <div className="relative flex-1 h-full overflow-hidden group" style={{ background: '#050a12' }}>
+      <div
+        className="relative flex-1 h-full overflow-hidden group"
+        style={{ background: '#050a12', cursor: img ? 'zoom-in' : 'default' }}
+        onClick={() => img && openLightbox(img)}
+      >
         {imgEl(img)}
         <div className="absolute left-0 top-0 bottom-0 w-16 pointer-events-none" style={{ background: SR }} />
         {img && delBtn(img, 'r')}
@@ -446,7 +518,11 @@ export default function MagazineViewer({ images: init, sectionId, isAdmin }: Pro
               <div className="absolute inset-0 flex" style={{ background: '#030507' }}>
                 <div className="flex-1 h-full" style={{ background: '#030507' }} />
                 {spine}
-                <div className="relative flex-1 h-full overflow-hidden group" style={{ background: '#030507' }}>
+                <div
+                  className="relative flex-1 h-full overflow-hidden group"
+                  style={{ background: '#030507', cursor: curL ? 'zoom-in' : 'default' }}
+                  onClick={() => curL && openLightbox(curL)}
+                >
                   {curL ? (
                     <>
                       <img src={curL.image_url} alt="" className="w-full h-full object-contain" draggable={false} />
@@ -456,7 +532,17 @@ export default function MagazineViewer({ images: init, sectionId, isAdmin }: Pro
                       <div className="absolute bottom-5 inset-x-0 flex justify-center pointer-events-none">
                         <span className="text-[7px] tracking-[0.75em] text-white/25 uppercase">Capa</span>
                       </div>
-                      {delBtn(curL, 'r')}
+                      {isAdmin && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDelete(curL) }}
+                          disabled={deletingId === curL.id}
+                          className="absolute top-3 left-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200
+                            bg-black/60 hover:bg-red-900/80 backdrop-blur-sm text-white/50 hover:text-white
+                            text-[8px] tracking-[0.25em] px-2.5 py-1.5 border border-white/[0.08] hover:border-red-500/30 uppercase"
+                        >
+                          {deletingId === curL.id ? '···' : '✕ Eliminar'}
+                        </button>
+                      )}
                     </>
                   ) : (
                     <div className="flex items-center justify-center h-full text-white/15 text-[10px] tracking-[0.5em] uppercase">
@@ -650,6 +736,95 @@ export default function MagazineViewer({ images: init, sectionId, isAdmin }: Pro
           <span className="text-[7px] tracking-[0.3em] text-white/12 uppercase w-full text-center mt-0.5">
             A 1ª foto = capa
           </span>
+        </div>
+      )}
+
+      {/* ════════ LIGHTBOX ════════ */}
+      {lbIdx !== null && images[lbIdx] && (
+        <div
+          ref={lbRef}
+          className="fixed inset-0 z-[999] select-none"
+          style={{
+            background: 'rgba(0,0,0,0.97)',
+            cursor: zoom > 1 ? (panning ? 'grabbing' : 'grab') : 'zoom-in',
+          }}
+          onMouseDown={lbMouseDown}
+          onMouseMove={lbMouseMove}
+          onMouseUp={lbMouseUp}
+          onMouseLeave={lbMouseUp}
+          onDoubleClick={resetLb}
+        >
+          {/* image */}
+          <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
+            <img
+              src={images[lbIdx].image_url}
+              alt=""
+              draggable={false}
+              style={{
+                transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                transition: panning ? 'none' : 'transform 0.1s ease',
+                maxWidth: '90vw',
+                maxHeight: '90vh',
+                objectFit: 'contain',
+              }}
+            />
+          </div>
+
+          {/* top bar */}
+          <div
+            className="absolute top-0 left-0 right-0 flex items-center justify-between px-5 py-4 z-10 pointer-events-none"
+            style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, transparent 100%)' }}
+          >
+            <span className="text-[8px] tracking-[0.5em] text-white/35 uppercase">
+              {lbIdx === 0 ? 'Capa' : `Foto ${lbIdx}`}
+              {' · '}{images.length} fotos
+              {zoom !== 1 && ` · ${Math.round(zoom * 100)}%`}
+            </span>
+            <button
+              onClick={closeLightbox}
+              className="pointer-events-auto text-white/40 hover:text-white text-xl w-10 h-10 flex items-center justify-center transition-colors"
+            >✕</button>
+          </div>
+
+          {/* prev / next */}
+          {lbIdx > 0 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setLbIdx(lbIdx - 1); resetLb() }}
+              className="pointer-events-auto absolute left-3 top-1/2 -translate-y-1/2 z-10
+                w-12 h-12 flex items-center justify-center text-2xl
+                bg-black/40 hover:bg-black/70 border border-white/[0.12] hover:border-white/35
+                text-white/45 hover:text-white transition-all duration-200"
+            >‹</button>
+          )}
+          {lbIdx < images.length - 1 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setLbIdx(lbIdx + 1); resetLb() }}
+              className="pointer-events-auto absolute right-3 top-1/2 -translate-y-1/2 z-10
+                w-12 h-12 flex items-center justify-center text-2xl
+                bg-black/40 hover:bg-black/70 border border-white/[0.12] hover:border-white/35
+                text-white/45 hover:text-white transition-all duration-200"
+            >›</button>
+          )}
+
+          {/* zoom controls + hint */}
+          <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center gap-2 pb-5 z-10"
+            style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%)' }}>
+            {zoom <= 1 && (
+              <p className="text-[7px] tracking-[0.45em] text-white/18 uppercase pointer-events-none">
+                Scroll para zoom · Arrastar para mover · Duplo-clique para reset · Esc para fechar
+              </p>
+            )}
+            <div className="flex items-center gap-2 pointer-events-auto">
+              <button onClick={(e) => { e.stopPropagation(); setZoom(z => Math.max(0.8, z / 1.3)) }}
+                className="w-9 h-9 flex items-center justify-center text-lg border border-white/15 hover:border-white/40 bg-black/50 text-white/50 hover:text-white transition-all">−</button>
+              <button onClick={(e) => { e.stopPropagation(); resetLb() }}
+                className="px-3 h-9 text-[8px] tracking-[0.35em] uppercase border border-white/15 hover:border-white/40 bg-black/50 text-white/40 hover:text-white transition-all">
+                {Math.round(zoom * 100)}%
+              </button>
+              <button onClick={(e) => { e.stopPropagation(); setZoom(z => Math.min(7, z * 1.3)) }}
+                className="w-9 h-9 flex items-center justify-center text-lg border border-white/15 hover:border-white/40 bg-black/50 text-white/50 hover:text-white transition-all">+</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
