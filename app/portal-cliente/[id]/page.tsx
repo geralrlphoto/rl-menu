@@ -2466,7 +2466,7 @@ function PortalSubPageContent() {
                             {_imgBlocks.map(img => (
                               <div key={img.id} className="rounded-2xl overflow-hidden">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={img.url} alt="" className="w-full rounded-2xl object-cover max-h-72" />
+                                <img src={img.url} alt="" className="w-full rounded-2xl object-cover max-h-96" />
                               </div>
                             ))}
                           </div>
