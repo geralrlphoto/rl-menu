@@ -2985,10 +2985,34 @@ function PortalSubPageContent() {
                           return c.length > 0
                         }
 
+                        const filmeHidden: string[] = (settings as any).filmeHiddenBlocks ?? []
+
+                        async function hideFilmeBlock(blockId: string) {
+                          const next = [...filmeHidden, blockId]
+                          const ns = { ...(settings as any), filmeHiddenBlocks: next }
+                          setSettings(ns as any)
+                          await fetch('/api/portal-settings', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ pageId: id, settings: ns }),
+                          })
+                        }
+                        async function restoreFilmeBlocks() {
+                          const ns = { ...(settings as any), filmeHiddenBlocks: [] }
+                          setSettings(ns as any)
+                          await fetch('/api/portal-settings', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ pageId: id, settings: ns }),
+                          })
+                        }
+
                         const filmeRendered: React.ReactNode[] = []
                         let filmeCardInserted = false
                         for (let fi = 0; fi < blocks.length; fi++) {
                           const b = blocks[fi]
+                          // Skip hidden blocks
+                          if (filmeHidden.includes(b.id)) continue
                           if (isCardBlockF(b)) {
                             if (!filmeCardInserted) {
                               filmeRendered.push(
@@ -3043,11 +3067,36 @@ function PortalSubPageContent() {
                               )
                               filmeCardInserted = true
                             }
+                          } else if (b.type === 'image' && isAdmin) {
+                            // Image block with admin delete overlay
+                            const imgSrc = b.image?.type === 'external' ? b.image.external?.url : b.image?.file?.url
+                            filmeRendered.push(
+                              <div key={`fblock-${fi}`} className="relative my-3 group">
+                                {imgSrc && (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={imgSrc} alt="" className="w-full rounded-xl" />
+                                )}
+                                <button
+                                  onClick={() => hideFilmeBlock(b.id)}
+                                  className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/70 flex items-center justify-center text-white/40 hover:text-red-400 hover:bg-black/90 transition-all text-sm opacity-0 group-hover:opacity-100"
+                                  title="Eliminar imagem"
+                                >×</button>
+                              </div>
+                            )
                           } else {
                             filmeRendered.push(
                               <NotionBlocks key={`fblock-${fi}`} blocks={[b]} hiddenNav={settings.hiddenNav} backUrl={filmeBackUrl} />
                             )
                           }
+                        }
+                        // Restore hidden images link
+                        if (isAdmin && filmeHidden.length > 0) {
+                          filmeRendered.push(
+                            <button key="filme-restore" onClick={restoreFilmeBlocks}
+                              className="w-full text-center text-[9px] text-white/20 hover:text-white/50 tracking-widest uppercase transition-colors mt-2">
+                              ↩ restaurar {filmeHidden.length} imagem{filmeHidden.length > 1 ? 'ns' : ''} eliminada{filmeHidden.length > 1 ? 's' : ''}
+                            </button>
+                          )
                         }
                         return <>{filmeRendered}</>
                       }
