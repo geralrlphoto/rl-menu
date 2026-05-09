@@ -77,6 +77,26 @@ async function getBlocks(blockId: string): Promise<any[]> {
   return all
 }
 
+// ── Content override helpers ──────────────────────────────────────────────────
+// Applies admin text edits (stored in Supabase settings.contentOverrides) onto
+// the Notion blocks so the rendered page reflects edits without touching Notion.
+function applyContentOverrides(blocks: any[], overrides: Record<string, string>): any[] {
+  return blocks.map(b => {
+    let updated = { ...b }
+    if (overrides[b.id] !== undefined) {
+      const text = overrides[b.id]
+      const rt = [{ type: 'text', text: { content: text }, plain_text: text,
+        annotations: { bold: false, italic: false, strikethrough: false, underline: false, code: false, color: 'default' },
+        href: null }]
+      updated = { ...updated, [b.type]: { ...(b[b.type] ?? {}), rich_text: rt } }
+    }
+    if (b.children && Array.isArray(b.children)) {
+      updated = { ...updated, children: applyContentOverrides(b.children, overrides) }
+    }
+    return updated
+  })
+}
+
 // ── GET handler ───────────────────────────────────────────────────────────────
 export async function GET(req: Request) {
   try {
@@ -101,11 +121,8 @@ export async function GET(req: Request) {
     }
 
     // ── 2. Fetch settings from Supabase (authoritative source) ────────────────
-    // If Supabase has a record for this page, it takes full priority over any
-    // legacy __PORTAL_SETTINGS__ blocks still present in Notion.
-    // If not (page not yet migrated), fall back to Notion-extracted settings.
     let settings: any = notionSettings
-    let settingsBlockId: string | null = notionSettingsBlockId // legacy, kept for compat
+    let settingsBlockId: string | null = notionSettingsBlockId
 
     try {
       const db = supabase()
@@ -116,13 +133,18 @@ export async function GET(req: Request) {
         .single()
 
       if (row?.settings) {
-        // Supabase has migrated settings — use them exclusively
         settings = row.settings
-        settingsBlockId = null // no longer relevant; frontend ignores null gracefully
+        settingsBlockId = null
       }
-      // If no Supabase row, keep notionSettings as fallback
     } catch {
       // Supabase unavailable — fall back to Notion settings silently
+    }
+
+    // ── 3. Apply content overrides saved by admin (Supabase-first edits) ──────
+    // Text edits made via BlockEditor are stored in contentOverrides rather than
+    // written back to Notion, so they're applied here before serving to the client.
+    if (settings.contentOverrides && typeof settings.contentOverrides === 'object') {
+      blocks = applyContentOverrides(blocks, settings.contentOverrides)
     }
 
     // Strip password before sending to client

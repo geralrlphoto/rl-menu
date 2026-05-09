@@ -213,7 +213,7 @@ export default function BlockEditor({
 }: {
   blocks: Block[]
   pageId: string
-  settings: { hiddenNav: string[] }
+  settings: { hiddenNav: string[]; contentOverrides?: Record<string, string>; [key: string]: any }
   settingsBlockId: string | null
   onSaved: () => void
 }) {
@@ -265,19 +265,26 @@ export default function BlockEditor({
     setSaving(true)
     setSaveError('')
     try {
-      // Save content blocks
+      // Build updated content overrides (column text → Supabase, no Notion writes)
+      const contentOverrides: Record<string, string> = { ...(settings.contentOverrides ?? {}) }
+
       for (const it of items) {
         if (it.rawBlock) continue
 
-        if (it.isDeleted && !it.isNew) {
-          await fetch('/api/notion-block', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: it.id }) })
+        // ── Column text items → Supabase contentOverrides (not Notion) ──────────
+        if (it.extraIds !== undefined) {
+          if (!it.isDeleted) {
+            contentOverrides[it.id] = it.text
+            it.extraIds.forEach(eid => delete contentOverrides[eid])
+          }
           continue
         }
-        if (it.isDeleted && it.isNew) continue
 
-        // Image blocks from columns — PATCH if URL changed
+        // ── Image blocks (column or top-level) → Notion PATCH / DELETE ──────────
         if (it.type === 'image') {
-          if (!it.isNew && it.imageUrl && it.imageUrl !== it.originalImageUrl) {
+          if (it.isDeleted && !it.isNew) {
+            await fetch('/api/notion-block', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: it.id }) })
+          } else if (!it.isNew && it.imageUrl && it.imageUrl !== it.originalImageUrl) {
             await fetch('/api/notion-block', {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
@@ -287,11 +294,16 @@ export default function BlockEditor({
           continue
         }
 
+        // ── Regular top-level blocks → Notion ────────────────────────────────────
+        if (it.isDeleted && !it.isNew) {
+          await fetch('/api/notion-block', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: it.id }) })
+          continue
+        }
+        if (it.isDeleted && it.isNew) continue
         if (it.isNew) {
           await fetch('/api/notion-block', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parentId: pageId, type: it.type, text: it.text, checked: it.checked }) })
           continue
         }
-
         const changed = it.text !== it.originalText || it.checked !== it.originalChecked
         if (changed) {
           const patchRes = await fetch('/api/notion-block', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: it.id, type: it.type, text: it.text, checked: it.checked }) })
@@ -299,26 +311,25 @@ export default function BlockEditor({
             const err = await patchRes.json().catch(() => ({}))
             throw new Error(err.error ?? `Erro ao guardar bloco (${patchRes.status})`)
           }
-          // For merged column text: delete the now-redundant extra blocks
-          if (it.extraIds && it.extraIds.length > 0) {
-            await Promise.all(it.extraIds.map(eid =>
-              fetch('/api/notion-block', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: eid }) })
-            ))
-          }
         }
       }
-      // Save nav settings
+
+      // Save nav + content overrides to Supabase in one call
       const navRes = await fetch('/api/portal-settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pageId, settings: { hiddenNav }, settingsBlockId: currentSettingsBlockId }),
+        body: JSON.stringify({
+          pageId,
+          settings: { ...settings, hiddenNav, contentOverrides },
+          settingsBlockId: currentSettingsBlockId,
+        }),
       }).then(r => r.json())
       if (navRes.settingsBlockId) setCurrentSettingsBlockId(navRes.settingsBlockId)
 
       await fetch(`/api/portais-clientes?id=${pageId}&bust=1`)
       onSaved()
-    } catch {
-      setSaveError('Erro ao guardar. Tenta novamente.')
+    } catch (e: any) {
+      setSaveError(e?.message ?? 'Erro ao guardar. Tenta novamente.')
     } finally {
       setSaving(false)
     }

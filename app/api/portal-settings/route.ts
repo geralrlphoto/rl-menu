@@ -95,15 +95,25 @@ export async function POST(req: Request) {
 
     // ── Try Supabase first ────────────────────────────────────────────────────
     const db = supabase()
+
+    // Merge with existing settings so partial saves (e.g. just hiddenNav or just
+    // subpageOwnHeader) don't overwrite unrelated fields saved by other actions.
+    const { data: existing } = await db
+      .from('portal_template_settings')
+      .select('settings')
+      .eq('page_id', pageId)
+      .single()
+
+    const merged = { ...(existing?.settings ?? {}), ...settings }
+
     const { error: sbError } = await db
       .from('portal_template_settings')
       .upsert(
-        { page_id: pageId, settings, updated_at: new Date().toISOString() },
+        { page_id: pageId, settings: merged, updated_at: new Date().toISOString() },
         { onConflict: 'page_id' }
       )
 
     if (!sbError) {
-      // Success — clear Notion cache too for clean state
       global.notionBlocksCache?.delete(pageId)
       return NextResponse.json({ ok: true, settingsBlockId: null }, {
         headers: { 'Cache-Control': 'no-store' },
