@@ -1173,9 +1173,32 @@ function PortalSubPageContent() {
     setUploadingPageHeader(true)
     try {
       const url = await uploadWithProgress(file, () => {})
-      const newPH = { ...pageHeaders, [id as string]: url }
-      await savePortalSettings({ ...portalSettingsObj, pageHeaders: newPH })
-      setPageHeaders(newPH)
+      if (!refParam) {
+        // Admin template: save header directly onto the sub-page's own Notion settings block.
+        // loadBlocks reads from this same sub-page (with bust=1), so the photo persists after refresh.
+        const newSubSettings = { ...settings, subpageOwnHeader: url }
+        const res = await fetch('/api/portal-settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pageId: id, settings: newSubSettings, settingsBlockId: settingsBlockId }),
+        })
+        const saved = await res.json().catch(() => ({}))
+        if (saved.settingsBlockId) setSettingsBlockId(saved.settingsBlockId)
+        setSettings(newSubSettings)
+        // Also sync pageHeaders to all Supabase batizado portals so clients see the update
+        const newPH = { ...pageHeaders, [id as string]: url }
+        fetch('/api/portais', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ photoSettings: { pageHeaders: newPH }, tipoPortal: 'batizado' }),
+        })
+        setPageHeaders(newPH)
+      } else {
+        // Client portal: save to Supabase settings
+        const newPH = { ...pageHeaders, [id as string]: url }
+        await savePortalSettings({ ...portalSettingsObj, pageHeaders: newPH })
+        setPageHeaders(newPH)
+      }
     } finally { setUploadingPageHeader(false) }
   }
 
@@ -1451,7 +1474,7 @@ function PortalSubPageContent() {
             </div>
           </div>
         ) : (() => {
-          const effectiveHeader = (id && pageHeaders[id as string]) || subpageHeaderUrl
+          const effectiveHeader = settings.subpageOwnHeader || (id && pageHeaders[id as string]) || subpageHeaderUrl
           return effectiveHeader ? (
           <div className="relative w-full h-48 sm:h-64 rounded-2xl overflow-hidden mb-6 group/header">
             {/* eslint-disable-next-line @next/next/no-img-element */}
