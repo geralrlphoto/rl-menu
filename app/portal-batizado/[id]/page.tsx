@@ -1077,7 +1077,8 @@ function PortalSubPageContent() {
 
   const loadBlocks = useCallback(async (bust = false) => {
     if (!id) return
-    const url = `/api/portais-clientes?id=${id}${bust ? '&bust=1' : ''}`
+    const url = `/api/portais-clientes?id=${id}&bust=1`
+    void bust
     try {
       const d = await fetch(url).then(r => r.json())
       if (d.error) {
@@ -1748,7 +1749,7 @@ function PortalSubPageContent() {
               : (
                 <>
                   <div className="mb-6">
-                    <Link href={fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : '/portal-cliente'}
+                    <Link href={fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : '/portal-batizado'}
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gold/30 bg-gold/10 text-gold hover:bg-gold/20 transition-all text-sm tracking-wide">
                       ‹ Voltar
                     </Link>
