@@ -818,7 +818,9 @@ export default function PortalClientePage() {
   const [checkingPassword, setCheckingPassword] = useState(false)
 
   const loadBlocks = useCallback(async (bust = false) => {
-    const url = bust ? `/api/portais-clientes?id=${PAGE_ID}&bust=1` : `/api/portais-clientes?id=${PAGE_ID}`
+    // Always bust on the admin template page — avoids stale cache across Vercel instances
+    const url = `/api/portais-clientes?id=${PAGE_ID}&bust=1`
+    void bust
     const d = await fetch(url).then(r => r.json())
     if (d.error) setError(d.error)
     else {
@@ -894,7 +896,7 @@ export default function PortalClientePage() {
     setSettings(newSettings)
     setHeroEdit({ field: null, value: '' })
     setHeroSaving(false)
-    fetch(`/api/portais-clientes?id=${PAGE_ID}&bust=1`)
+    await fetch(`/api/portais-clientes?id=${PAGE_ID}&bust=1`) // await so cache is warm before next reload
   }
 
   if (loading) return (
