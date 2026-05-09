@@ -1132,11 +1132,15 @@ function PortalSubPageContent() {
         body: JSON.stringify({ referencia: refParam, updates: { settings: newSettings } }),
       })
     } else {
-      await fetch('/api/portais-clientes', {
+      // Template sub-page: save to Notion via /api/portal-settings
+      const res = await fetch('/api/portal-settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: newSettings, settingsBlockId: portalSettingsBlockId }),
       })
+      const saved = await res.json().catch(() => ({}))
+      // Capture the block ID so future saves patch the same block (no duplicates)
+      if (saved.settingsBlockId) setPortalSettingsBlockId(saved.settingsBlockId)
     }
   }
 
