@@ -1496,8 +1496,8 @@ function PortalSubPageContent() {
                 </button>
               )}
             </div>
-            {/* Change photo button */}
-            {isAdmin && <label className="absolute top-3 right-3 opacity-0 group-hover/header:opacity-100 transition-opacity cursor-pointer">
+            {/* Change photo button — always visible for admin (hover-only fails on mobile) */}
+            {isAdmin && <label className="absolute top-3 right-3 cursor-pointer">
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/60 border border-white/20 text-white/70 text-xs hover:text-white transition-colors">
                 {uploadingPageHeader ? 'A carregar...' : (
                   <>
@@ -1529,6 +1529,21 @@ function PortalSubPageContent() {
                 </button>
               )}
             </div>
+            {/* Admin: add cover photo when none exists yet */}
+            {isAdmin && (
+              <label className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 text-white/30 hover:text-white/60 hover:border-white/20 text-xs cursor-pointer transition-all">
+                {uploadingPageHeader ? 'A carregar...' : (
+                  <>
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Adicionar foto de capa
+                  </>
+                )}
+                <input type="file" accept="image/*" className="hidden" disabled={uploadingPageHeader}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadPageHeader(f) }} />
+              </label>
+            )}
             <div className="mt-3 h-px w-16 bg-gold/40" />
           </>
         )}
