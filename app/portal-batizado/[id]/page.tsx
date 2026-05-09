@@ -832,17 +832,19 @@ function PortalSubPageContent() {
   const fromTitle = searchParams.get('fromTitle')
   const refParam = searchParams.get('portalRef')
   const adminParam = searchParams.get('admin')
+  // Admin when: explicit ?admin=1  OR  no portalRef (only clients have portalRef in URL)
+  const isAdminByUrl = adminParam === '1' || !refParam
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [editing, setEditing] = useState(false)
-  // isAdmin: true immediately if ?admin=1 in URL (template navigation), else check sessionStorage
-  const [isAdmin, setIsAdmin] = useState(adminParam === '1')
+  const [isAdmin, setIsAdmin] = useState(isAdminByUrl)
 
   useEffect(() => {
-    if (adminParam === '1') { setIsAdmin(true); return }
-    const key = refParam ? `portalAdmin_${refParam}` : null
-    if (key && sessionStorage.getItem(key) === 'true') setIsAdmin(true)
-  }, [refParam, adminParam])
+    if (isAdminByUrl) { setIsAdmin(true); return }
+    // Client portal: check sessionStorage
+    const key = `portalAdmin_${refParam}`
+    if (sessionStorage.getItem(key) === 'true') setIsAdmin(true)
+  }, [refParam, adminParam, isAdminByUrl])
 
   const [editingPhotos, setEditingPhotos] = useState(false)
   // inline text + photo editing for default pages (SOBRE O MENU etc)
