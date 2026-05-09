@@ -2456,7 +2456,22 @@ function PortalSubPageContent() {
                       // Check if page has callout cards — render them with URL buttons
                       const pageCalloutLinks = calloutLinks[id as string] ?? {}
                       const calloutCards = findCalloutCards(blocks)
-                      if (calloutCards.length === 0) return <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
+                      if (calloutCards.length === 0) {
+                        const _backUrl = fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined
+                        const _textBlocks = blocks.filter(b => b.type !== 'image')
+                        const _imgBlocks  = findImageBlocks(blocks)
+                        return (
+                          <div className="space-y-4">
+                            <NotionBlocks blocks={_textBlocks} hiddenNav={settings.hiddenNav} backUrl={_backUrl} />
+                            {_imgBlocks.map(img => (
+                              <div key={img.id} className="rounded-2xl overflow-hidden">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={img.url} alt="" className="w-full rounded-2xl object-cover" />
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      }
 
                       // Build a flat list: non-callout blocks + callout cards
                       const getImgUrl = (b: Block) => {
