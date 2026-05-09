@@ -864,12 +864,13 @@ export default function PortalClientePage() {
 
   useEffect(() => { loadBlocks().finally(() => setLoading(false)) }, [loadBlocks])
 
-  /** Sincroniza heroImageUrl, galleryUrls e subpageHeaderUrl do template para TODOS os portais dos noivos */
+  /** Sincroniza todas as fotos do template para TODOS os portais dos noivos */
   async function syncPhotosToAllPortals(updatedSettings: PortalSettings) {
     const photoSettings: Record<string, any> = {}
-    if (updatedSettings.heroImageUrl !== undefined) photoSettings.heroImageUrl = updatedSettings.heroImageUrl
-    if (updatedSettings.galleryUrls   !== undefined) photoSettings.galleryUrls   = updatedSettings.galleryUrls
+    if (updatedSettings.heroImageUrl     !== undefined) photoSettings.heroImageUrl     = updatedSettings.heroImageUrl
+    if (updatedSettings.galleryUrls      !== undefined) photoSettings.galleryUrls      = updatedSettings.galleryUrls
     if (updatedSettings.subpageHeaderUrl !== undefined) photoSettings.subpageHeaderUrl = updatedSettings.subpageHeaderUrl
+    if (updatedSettings.pageHeaders      !== undefined) photoSettings.pageHeaders      = updatedSettings.pageHeaders
     if (Object.keys(photoSettings).length === 0) return
     await fetch('/api/portais', {
       method: 'PUT',

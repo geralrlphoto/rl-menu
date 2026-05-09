@@ -1122,11 +1122,27 @@ function PortalSubPageContent() {
         body: JSON.stringify({ referencia: refParam, updates: { settings: newSettings } }),
       })
     } else {
-      await fetch('/api/portais-clientes', {
+      // Template sub-page: save to Notion
+      const res = await fetch('/api/portal-settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: newSettings, settingsBlockId: portalSettingsBlockId }),
       })
+      const saved = await res.json().catch(() => ({}))
+      if (saved.settingsBlockId) setPortalSettingsBlockId(saved.settingsBlockId)
+      // Sync all photo fields to every casamento portal in Supabase
+      const photoFields: Record<string, any> = {}
+      if (newSettings.heroImageUrl     !== undefined) photoFields.heroImageUrl     = newSettings.heroImageUrl
+      if (newSettings.galleryUrls      !== undefined) photoFields.galleryUrls      = newSettings.galleryUrls
+      if (newSettings.subpageHeaderUrl !== undefined) photoFields.subpageHeaderUrl = newSettings.subpageHeaderUrl
+      if (newSettings.pageHeaders      !== undefined) photoFields.pageHeaders      = newSettings.pageHeaders
+      if (Object.keys(photoFields).length > 0) {
+        fetch('/api/portais', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ photoSettings: photoFields, tipoPortal: 'casamento' }),
+        })
+      }
     }
   }
 

@@ -1139,8 +1139,20 @@ function PortalSubPageContent() {
         body: JSON.stringify({ pageId: PORTAL_PAGE_ID, settings: newSettings, settingsBlockId: portalSettingsBlockId }),
       })
       const saved = await res.json().catch(() => ({}))
-      // Capture the block ID so future saves patch the same block (no duplicates)
       if (saved.settingsBlockId) setPortalSettingsBlockId(saved.settingsBlockId)
+      // Sync all photo fields to every batizado portal in Supabase
+      const photoFields: Record<string, any> = {}
+      if (newSettings.heroImageUrl     !== undefined) photoFields.heroImageUrl     = newSettings.heroImageUrl
+      if (newSettings.galleryUrls      !== undefined) photoFields.galleryUrls      = newSettings.galleryUrls
+      if (newSettings.subpageHeaderUrl !== undefined) photoFields.subpageHeaderUrl = newSettings.subpageHeaderUrl
+      if (newSettings.pageHeaders      !== undefined) photoFields.pageHeaders      = newSettings.pageHeaders
+      if (Object.keys(photoFields).length > 0) {
+        fetch('/api/portais', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ photoSettings: photoFields, tipoPortal: 'batizado' }),
+        })
+      }
     }
   }
 
