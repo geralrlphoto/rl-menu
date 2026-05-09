@@ -895,6 +895,9 @@ function PortalSubPageContent() {
   const [editingGuia, setEditingGuia] = useState(false)
   const [guiaDraft, setGuiaDraft] = useState('')
   const [savingGuia, setSavingGuia] = useState(false)
+  const [editingFotoCards, setEditingFotoCards] = useState(false)
+  const [fotoCardsForm, setFotoCardsForm] = useState<Array<{ title: string; url: string; imageUrl: string }>>([])
+  const [savingFotoCards, setSavingFotoCards] = useState(false)
 
   const [eventoData, setEventoData] = useState<any>(null)
   const [contratoDisponivel, setContratoDisponivel] = useState<boolean | null>(null)
@@ -1177,6 +1180,24 @@ function PortalSubPageContent() {
       return { type: 'paragraph', text: t }
     })
   }
+  async function handleSaveFotoCards() {
+    if (!id) return
+    setSavingFotoCards(true)
+    try {
+      const newSettings = { ...(settings as any), fotoCards: fotoCardsForm }
+      await fetch('/api/portal-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pageId: id, settings: newSettings }),
+      })
+      setSettings(newSettings as any)
+      setEditingFotoCards(false)
+      fetch(`/api/portais-clientes?id=${id}&bust=1`)
+    } finally {
+      setSavingFotoCards(false)
+    }
+  }
+
   async function handleHideGuiaCard(titleText: string) {
     if (!id) return
     const hidden: string[] = (settings as any).hiddenGuiaCards ?? []
@@ -2659,73 +2680,134 @@ function PortalSubPageContent() {
                               </a>
                             </div>
                           </div>
-                          {/* ── BLOCKS com cards VER MAIS por card ── */}
+                          {/* ── FOTO CARDS (Supabase-first) ── */}
                           {(() => {
-                            if (calloutCards.length === 0) return <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={backUrl} />
-                            const renderedSections: React.ReactNode[] = []
-                            let i = 0
-                            while (i < blocks.length) {
-                              const b = blocks[i]
-                              const cardsInBlock = b.type === 'column_list'
-                                ? (b.children ?? []).flatMap((col: Block) =>
-                                    (col.children ?? []).filter((c: Block) =>
-                                      c.type === 'callout' && (c.children ?? []).some((ch: Block) => ch.type === 'image')
-                                    )
-                                  )
-                                : b.type === 'callout' && (b.children ?? []).some((c: Block) => c.type === 'image')
-                                  ? [b] : []
-                              if (cardsInBlock.length > 0) {
-                                renderedSections.push(
-                                  <div key={`cards-${i}`} className="grid grid-cols-2 gap-3 my-4">
-                                    {cardsInBlock.map((callout: Block) => {
-                                      const cardTitle = plainText(callout.callout?.rich_text ?? []).trim()
-                                      const imgUrl = getImgUrl(callout)
-                                      const _ct = cardTitle.toUpperCase()
-                                      const actionUrlFallback =
-                                        _ct.includes('SELEÇ') ? (portalSettingsObj?.selecao_url ?? '') :
-                                        _ct.includes('PRÉ-WEDDING') || _ct.includes('PRE-WEDDING') ? (portalSettingsObj?.prewedding_url ?? '') :
-                                        _ct.includes('EDITADAS') ? (portalSettingsObj?.fotos_finais_url ?? '') :
-                                        _ct.includes('GALERIA ON') || _ct.includes('ON-LINE') ? (portalSettingsObj?.galerias_url ?? '') :
-                                        _ct.includes('MAQUETE') ? (portalSettingsObj?.maquete_url ?? '') : ''
-                                      const url = pageCalloutLinks[cardTitle] || actionUrlFallback || ''
-                                      return (
-                                        <div key={cardTitle} className="flex flex-col rounded-2xl overflow-hidden border border-white/40 bg-black"
-                                          style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}>
-                                          <div className="px-3 pt-3 pb-2">
-                                            <span className="text-[10px] font-bold tracking-widest text-white/70 uppercase">{cardTitle}</span>
-                                          </div>
-                                          {imgUrl && (
-                                            // eslint-disable-next-line @next/next/no-img-element
-                                            <img src={imgUrl} alt={cardTitle} className="w-full object-contain" />
-                                          )}
-                                          {url ? (
-                                            <div className="p-3">
-                                              <a href={url} target="_blank" rel="noopener noreferrer"
-                                                className="block w-full text-center px-4 py-2.5 rounded-xl border border-white/40 bg-white/5 text-white font-semibold text-xs tracking-widest uppercase hover:bg-white/10 transition-all"
-                                                style={{ boxShadow: '0 0 10px 2px rgba(255,255,255,0.15)' }}>
-                                                VER MAIS →
-                                              </a>
-                                            </div>
-                                          ) : (
-                                            <div className="p-3">
-                                              <span className="block w-full text-center px-4 py-2.5 rounded-xl border border-white/15 bg-white/[0.03] text-white/25 font-semibold text-xs tracking-widest uppercase">
-                                                AGUARDAR
-                                              </span>
-                                            </div>
-                                          )}
-                                        </div>
-                                      )
-                                    })}
-                                  </div>
-                                )
-                              } else {
-                                renderedSections.push(
-                                  <NotionBlocks key={`block-${i}`} blocks={[b]} hiddenNav={settings.hiddenNav} backUrl={backUrl} />
-                                )
+                            // Build card list: prefer Supabase fotoCards, fall back to Notion callout blocks
+                            const sbCards: Array<{ title: string; url: string; imageUrl: string }> | undefined =
+                              Array.isArray((settings as any).fotoCards) ? (settings as any).fotoCards : undefined
+
+                            // Extract notion cards for fallback / initialisation
+                            const notionCards: Array<{ title: string; url: string; imageUrl: string }> = (() => {
+                              if (calloutCards.length === 0) return []
+                              const out: Array<{ title: string; url: string; imageUrl: string }> = []
+                              for (const callout of calloutCards) {
+                                const cardTitle = plainText(callout.callout?.rich_text ?? []).trim()
+                                const imgUrl = getImgUrl(callout) ?? ''
+                                const _ct = cardTitle.toUpperCase()
+                                const actionUrlFallback =
+                                  _ct.includes('SELEÇ') ? (portalSettingsObj?.selecao_url ?? '') :
+                                  _ct.includes('PRÉ-WEDDING') || _ct.includes('PRE-WEDDING') ? (portalSettingsObj?.prewedding_url ?? '') :
+                                  _ct.includes('EDITADAS') ? (portalSettingsObj?.fotos_finais_url ?? '') :
+                                  _ct.includes('GALERIA ON') || _ct.includes('ON-LINE') ? (portalSettingsObj?.galerias_url ?? '') :
+                                  _ct.includes('MAQUETE') ? (portalSettingsObj?.maquete_url ?? '') : ''
+                                const url = pageCalloutLinks[cardTitle] || actionUrlFallback || ''
+                                out.push({ title: cardTitle, url, imageUrl: imgUrl })
                               }
-                              i++
-                            }
-                            return <>{renderedSections}</>
+                              return out
+                            })()
+
+                            const activeCards = sbCards ?? notionCards
+
+                            const renderCards = (cards: Array<{ title: string; url: string; imageUrl: string }>) => (
+                              <div className="grid grid-cols-2 gap-3 my-4">
+                                {cards.map((card, idx) => (
+                                  <div key={idx} className="flex flex-col rounded-2xl overflow-hidden border border-white/40 bg-black"
+                                    style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}>
+                                    <div className="px-3 pt-3 pb-2">
+                                      <span className="text-[10px] font-bold tracking-widest text-white/70 uppercase">{card.title}</span>
+                                    </div>
+                                    {card.imageUrl && (
+                                      // eslint-disable-next-line @next/next/no-img-element
+                                      <img src={card.imageUrl} alt={card.title} className="w-full object-contain" />
+                                    )}
+                                    {card.url ? (
+                                      <div className="p-3">
+                                        <a href={card.url} target="_blank" rel="noopener noreferrer"
+                                          className="block w-full text-center px-4 py-2.5 rounded-xl border border-white/40 bg-white/5 text-white font-semibold text-xs tracking-widest uppercase hover:bg-white/10 transition-all"
+                                          style={{ boxShadow: '0 0 10px 2px rgba(255,255,255,0.15)' }}>
+                                          VER MAIS →
+                                        </a>
+                                      </div>
+                                    ) : (
+                                      <div className="p-3">
+                                        <span className="block w-full text-center px-4 py-2.5 rounded-xl border border-white/15 bg-white/[0.03] text-white/25 font-semibold text-xs tracking-widest uppercase">
+                                          AGUARDAR
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )
+
+                            return (
+                              <>
+                                {/* Admin toolbar */}
+                                {isAdmin && (
+                                  <div className="flex justify-end mb-2">
+                                    {!editingFotoCards ? (
+                                      <button
+                                        onClick={() => {
+                                          setFotoCardsForm(activeCards.map(c => ({ ...c })))
+                                          setEditingFotoCards(true)
+                                        }}
+                                        className="text-[9px] tracking-widest uppercase text-white/25 hover:text-white/60 transition-colors flex items-center gap-1"
+                                      >✏️ editar cards</button>
+                                    ) : null}
+                                  </div>
+                                )}
+
+                                {/* Edit form */}
+                                {isAdmin && editingFotoCards ? (
+                                  <div className="space-y-3 my-4">
+                                    <p className="text-[9px] text-white/25 tracking-widest uppercase">Editar cards de fotografias</p>
+                                    {fotoCardsForm.map((card, idx) => (
+                                      <div key={idx} className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3 space-y-2">
+                                        <div className="flex items-center justify-between">
+                                          <span className="text-[9px] text-white/25 tracking-widest uppercase">Card {idx + 1}</span>
+                                          <button
+                                            onClick={() => setFotoCardsForm(prev => prev.filter((_, i) => i !== idx))}
+                                            className="text-white/20 hover:text-red-400 transition-colors text-xs"
+                                          >× eliminar</button>
+                                        </div>
+                                        <input
+                                          type="text"
+                                          value={card.title}
+                                          onChange={e => setFotoCardsForm(prev => prev.map((c, i) => i === idx ? { ...c, title: e.target.value } : c))}
+                                          placeholder="Título do card"
+                                          className="w-full bg-white/[0.04] border border-white/[0.10] rounded-lg px-3 py-2 text-xs text-white/70 outline-none focus:border-white/25 uppercase tracking-widest"
+                                        />
+                                        <input
+                                          type="text"
+                                          value={card.url}
+                                          onChange={e => setFotoCardsForm(prev => prev.map((c, i) => i === idx ? { ...c, url: e.target.value } : c))}
+                                          placeholder="URL (deixar vazio = AGUARDAR)"
+                                          className="w-full bg-white/[0.04] border border-white/[0.10] rounded-lg px-3 py-2 text-xs text-white/50 outline-none focus:border-white/25"
+                                        />
+                                      </div>
+                                    ))}
+                                    <button
+                                      onClick={() => setFotoCardsForm(prev => [...prev, { title: 'NOVO CARD', url: '', imageUrl: fotoCardsForm[0]?.imageUrl ?? '' }])}
+                                      className="w-full py-2 rounded-xl border border-dashed border-white/[0.08] text-white/25 text-xs hover:text-white/40 hover:border-white/15 transition-colors"
+                                    >+ adicionar card</button>
+                                    <div className="flex gap-2 pt-1">
+                                      <button onClick={handleSaveFotoCards} disabled={savingFotoCards}
+                                        className="flex-1 py-2.5 rounded-xl bg-gold text-black text-xs font-bold tracking-widest uppercase disabled:opacity-50">
+                                        {savingFotoCards ? 'A guardar...' : 'Guardar'}
+                                      </button>
+                                      <button onClick={() => setEditingFotoCards(false)}
+                                        className="px-4 py-2.5 rounded-xl border border-white/10 text-white/40 text-xs">
+                                        Cancelar
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  activeCards.length > 0
+                                    ? renderCards(activeCards)
+                                    : <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={backUrl} />
+                                )}
+                              </>
+                            )
                           })()}
                           {/* ── MAQUETE ÁLBUM — regra obrigatória em todas as páginas FOTOGRAFIAS ── */}
                           {(portalRef || refParam) && (
