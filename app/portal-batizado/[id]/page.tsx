@@ -2905,7 +2905,154 @@ function PortalSubPageContent() {
                         )
                       }
 
-                      // Build a flat list: non-callout blocks + callout cards
+                      // ── FILME page: Supabase-first cards (same pattern as FOTOGRAFIAS) ──
+                      if (isFilmePage) {
+                        const filmeBackUrl = fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : undefined
+                        const sbFilmeCards: Array<{ title: string; url: string; imageUrl: string }> | undefined =
+                          Array.isArray((settings as any).fotoCards) ? (settings as any).fotoCards : undefined
+
+                        const getImgUrlF = (b: Block) => {
+                          const imgChild = (b.children ?? []).find((c: Block) => c.type === 'image')
+                          if (!imgChild) return null
+                          return imgChild.image?.type === 'external' ? imgChild.image.external?.url : imgChild.image?.file?.url
+                        }
+
+                        // Build notion cards as fallback
+                        const notionFilmeCards: Array<{ title: string; url: string; imageUrl: string }> = []
+                        for (const b of blocks) {
+                          const cardsHere = b.type === 'column_list'
+                            ? (b.children ?? []).flatMap((col: Block) =>
+                                (col.children ?? []).filter((c: Block) =>
+                                  c.type === 'callout' && (c.children ?? []).some((ch: Block) => ch.type === 'image')
+                                ))
+                            : b.type === 'callout' && (b.children ?? []).some((c: Block) => c.type === 'image')
+                              ? [b] : []
+                          for (const callout of cardsHere) {
+                            const cardTitle = plainText(callout.callout?.rich_text ?? []).trim()
+                            const imgUrl = getImgUrlF(callout) ?? ''
+                            const _ct = cardTitle.toUpperCase()
+                            const fallbackUrl =
+                              _ct.includes('WEDDING FILM') ? (portalSettingsObj?.wedding_film_url ?? '') :
+                              _ct.includes('PRÉ-WEDDING') || _ct.includes('PRE-WEDDING') ? (portalSettingsObj?.video_prewedding_url ?? '') :
+                              _ct.includes('SAME DAY') ? (portalSettingsObj?.same_day_edit_url ?? '') :
+                              _ct.includes('TEASER') || _ct.includes('TRAILER') ? (portalSettingsObj?.teaser_url ?? '') : ''
+                            notionFilmeCards.push({ title: cardTitle, url: pageCalloutLinks[cardTitle] || fallbackUrl, imageUrl: imgUrl })
+                          }
+                        }
+
+                        const activeFilmeCards = sbFilmeCards ?? notionFilmeCards
+
+                        const renderFilmeCards = (cards: Array<{ title: string; url: string; imageUrl: string }>) => (
+                          <div className="grid grid-cols-2 gap-3 my-4">
+                            {cards.map((card, idx) => (
+                              <div key={idx} className="flex flex-col rounded-2xl overflow-hidden border border-white/40 bg-black"
+                                style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}>
+                                <div className="px-3 pt-3 pb-2">
+                                  <span className="text-[10px] font-bold tracking-widest text-white/70 uppercase">{card.title}</span>
+                                </div>
+                                {card.imageUrl && (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={card.imageUrl} alt={card.title} className="w-full object-contain" />
+                                )}
+                                {card.url ? (
+                                  <div className="p-3">
+                                    <a href={card.url} target="_blank" rel="noopener noreferrer"
+                                      className="block w-full text-center px-4 py-2.5 rounded-xl border border-white/40 bg-white/5 text-white font-semibold text-xs tracking-widest uppercase hover:bg-white/10 transition-all"
+                                      style={{ boxShadow: '0 0 10px 2px rgba(255,255,255,0.15)' }}>
+                                      VER MAIS →
+                                    </a>
+                                  </div>
+                                ) : (
+                                  <div className="p-3">
+                                    <span className="block w-full text-center px-4 py-2.5 rounded-xl border border-white/15 bg-white/[0.03] text-white/25 font-semibold text-xs tracking-widest uppercase">
+                                      AGUARDAR
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )
+
+                        const isCardBlockF = (b: Block) => {
+                          const c = b.type === 'column_list'
+                            ? (b.children ?? []).flatMap((col: Block) =>
+                                (col.children ?? []).filter((c: Block) =>
+                                  c.type === 'callout' && (c.children ?? []).some((ch: Block) => ch.type === 'image')
+                                ))
+                            : b.type === 'callout' && (b.children ?? []).some((c: Block) => c.type === 'image')
+                              ? [b] : []
+                          return c.length > 0
+                        }
+
+                        const filmeRendered: React.ReactNode[] = []
+                        let filmeCardInserted = false
+                        for (let fi = 0; fi < blocks.length; fi++) {
+                          const b = blocks[fi]
+                          if (isCardBlockF(b)) {
+                            if (!filmeCardInserted) {
+                              filmeRendered.push(
+                                <div key="filme-cards">
+                                  {isAdmin && (
+                                    <div className="flex justify-end mb-2">
+                                      {!editingFotoCards && (
+                                        <button
+                                          onClick={() => { setFotoCardsForm(activeFilmeCards.map(c => ({ ...c }))); setEditingFotoCards(true) }}
+                                          className="text-[9px] tracking-widest uppercase text-white/25 hover:text-white/60 transition-colors"
+                                        >✏️ editar cards</button>
+                                      )}
+                                    </div>
+                                  )}
+                                  {isAdmin && editingFotoCards ? (
+                                    <div className="space-y-3 my-4">
+                                      <p className="text-[9px] text-white/25 tracking-widest uppercase">Editar cards de vídeo</p>
+                                      {fotoCardsForm.map((card, idx) => (
+                                        <div key={idx} className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3 space-y-2">
+                                          <div className="flex items-center justify-between">
+                                            <span className="text-[9px] text-white/25 tracking-widest uppercase">Card {idx + 1}</span>
+                                            <button onClick={() => setFotoCardsForm(prev => prev.filter((_, ii) => ii !== idx))}
+                                              className="text-white/20 hover:text-red-400 transition-colors text-xs">× eliminar</button>
+                                          </div>
+                                          <input type="text" value={card.title}
+                                            onChange={e => setFotoCardsForm(prev => prev.map((c, ii) => ii === idx ? { ...c, title: e.target.value } : c))}
+                                            placeholder="Título do card"
+                                            className="w-full bg-white/[0.04] border border-white/[0.10] rounded-lg px-3 py-2 text-xs text-white/70 outline-none focus:border-white/25 uppercase tracking-widest" />
+                                          <input type="text" value={card.url}
+                                            onChange={e => setFotoCardsForm(prev => prev.map((c, ii) => ii === idx ? { ...c, url: e.target.value } : c))}
+                                            placeholder="URL (deixar vazio = AGUARDAR)"
+                                            className="w-full bg-white/[0.04] border border-white/[0.10] rounded-lg px-3 py-2 text-xs text-white/50 outline-none focus:border-white/25" />
+                                        </div>
+                                      ))}
+                                      <button onClick={() => setFotoCardsForm(prev => [...prev, { title: 'NOVO CARD', url: '', imageUrl: fotoCardsForm[0]?.imageUrl ?? '' }])}
+                                        className="w-full py-2 rounded-xl border border-dashed border-white/[0.08] text-white/25 text-xs hover:text-white/40 transition-colors">
+                                        + adicionar card
+                                      </button>
+                                      <div className="flex gap-2 pt-1">
+                                        <button onClick={handleSaveFotoCards} disabled={savingFotoCards}
+                                          className="flex-1 py-2.5 rounded-xl bg-gold text-black text-xs font-bold tracking-widest uppercase disabled:opacity-50">
+                                          {savingFotoCards ? 'A guardar...' : 'Guardar'}
+                                        </button>
+                                        <button onClick={() => setEditingFotoCards(false)}
+                                          className="px-4 py-2.5 rounded-xl border border-white/10 text-white/40 text-xs">Cancelar</button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    renderFilmeCards(activeFilmeCards)
+                                  )}
+                                </div>
+                              )
+                              filmeCardInserted = true
+                            }
+                          } else {
+                            filmeRendered.push(
+                              <NotionBlocks key={`fblock-${fi}`} blocks={[b]} hiddenNav={settings.hiddenNav} backUrl={filmeBackUrl} />
+                            )
+                          }
+                        }
+                        return <>{filmeRendered}</>
+                      }
+
+                      // Build a flat list: non-callout blocks + callout cards (generic fallback)
                       const getImgUrl = (b: Block) => {
                         const imgChild = (b.children ?? []).find((c: Block) => c.type === 'image')
                         if (!imgChild) return null
@@ -2932,14 +3079,7 @@ function PortalSubPageContent() {
                               {cardsInBlock.map((callout: Block) => {
                                 const cardTitle = plainText(callout.callout?.rich_text ?? []).trim()
                                 const imgUrl = getImgUrl(callout)
-                                const _ct = cardTitle.toUpperCase()
-                                const videoActionFallback = isFilmePage ? (
-                                  _ct.includes('WEDDING FILM') ? (portalSettingsObj?.wedding_film_url ?? '') :
-                                  _ct.includes('PRÉ-WEDDING') || _ct.includes('PRE-WEDDING') ? (portalSettingsObj?.video_prewedding_url ?? '') :
-                                  _ct.includes('SAME DAY') ? (portalSettingsObj?.same_day_edit_url ?? '') :
-                                  _ct.includes('TEASER') || _ct.includes('TRAILER') ? (portalSettingsObj?.teaser_url ?? '') : ''
-                                ) : ''
-                                const url = pageCalloutLinks[cardTitle] || videoActionFallback || ''
+                                const url = pageCalloutLinks[cardTitle] || ''
                                 return (
                                   <div key={cardTitle} className="flex flex-col rounded-2xl overflow-hidden border border-white/40 bg-black"
                                     style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}>
