@@ -17,6 +17,8 @@ type EditItem = {
   // Image blocks extracted from column_list children
   imageUrl?: string
   originalImageUrl?: string
+  // Merged text: extra block IDs to delete when text changes
+  extraIds?: string[]
 }
 
 const TEXT_TYPES = ['paragraph', 'heading_1', 'heading_2', 'heading_3',
@@ -52,12 +54,15 @@ function blocksToItems(blocks: Block[]): EditItem[] {
   const items: EditItem[] = []
   for (const b of blocks) {
     if (b.type === 'column_list') {
-      // Flatten all children from all columns into editable items
+      // Separate images and text from all column children
+      const colImages: EditItem[] = []
+      const colTexts: Array<{ id: string; text: string }> = []
+
       for (const col of (b.children ?? []) as Block[]) {
         for (const child of (col.children ?? []) as Block[]) {
           if (child.type === 'image') {
             const url = getImageUrl(child)
-            items.push({
+            colImages.push({
               key: child.id,
               id: child.id,
               type: 'image',
@@ -70,24 +75,44 @@ function blocksToItems(blocks: Block[]): EditItem[] {
               imageUrl: url,
               originalImageUrl: url,
             })
+          } else if (TEXT_TYPES.includes(child.type) || child.type === 'divider') {
+            colTexts.push({ id: child.id, text: extractText(child) })
           } else {
-            const isEditable = TEXT_TYPES.includes(child.type) || child.type === 'divider'
-            const text = extractText(child)
-            const checked = child.to_do?.checked ?? false
+            // Non-text, non-image → non-editable placeholder
             items.push({
               key: child.id,
               id: child.id,
               type: child.type,
-              text,
-              checked,
+              text: '',
+              checked: false,
               isNew: false,
               isDeleted: false,
-              originalText: text,
-              originalChecked: checked,
-              rawBlock: isEditable ? undefined : child,
+              originalText: '',
+              originalChecked: false,
+              rawBlock: child,
             })
           }
         }
+      }
+
+      // Images: each gets its own card
+      items.push(...colImages)
+
+      // Text: merge ALL column text into ONE editable area
+      if (colTexts.length > 0) {
+        const combined = colTexts.map(t => t.text).join('\n')
+        items.push({
+          key: colTexts[0].id,
+          id: colTexts[0].id,
+          type: 'paragraph',
+          text: combined,
+          checked: false,
+          isNew: false,
+          isDeleted: false,
+          originalText: combined,
+          originalChecked: false,
+          extraIds: colTexts.slice(1).map(t => t.id),
+        })
       }
     } else {
       const isEditable = TEXT_TYPES.includes(b.type) || b.type === 'divider'
@@ -265,9 +290,16 @@ export default function BlockEditor({
           await fetch('/api/notion-block', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parentId: pageId, type: it.type, text: it.text, checked: it.checked }) })
           continue
         }
+
         const changed = it.text !== it.originalText || it.checked !== it.originalChecked
         if (changed) {
           await fetch('/api/notion-block', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: it.id, type: it.type, text: it.text, checked: it.checked }) })
+          // For merged column text: delete the now-redundant extra blocks
+          if (it.extraIds && it.extraIds.length > 0) {
+            await Promise.all(it.extraIds.map(eid =>
+              fetch('/api/notion-block', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: eid }) })
+            ))
+          }
         }
       }
       // Save nav settings
@@ -327,7 +359,6 @@ export default function BlockEditor({
                   <span className={`text-sm tracking-wide uppercase ${isHidden ? 'text-white/25 line-through' : 'text-white/70'}`}>
                     {page.title}
                   </span>
-                  {/* Toggle switch */}
                   <button
                     onClick={() => toggleNav(page.id)}
                     className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${isHidden ? 'bg-white/10' : 'bg-gold/50'}`}
@@ -353,7 +384,15 @@ export default function BlockEditor({
             const uploading = !!uploadingImages[it.key]
             return (
               <div key={it.key} className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3">
-                <p className="text-[9px] text-white/25 tracking-widest uppercase mb-2">📷 Fotografia</p>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[9px] text-white/25 tracking-widest uppercase">📷 Fotografia</p>
+                  <button
+                    onClick={() => markDeleted(it.key)}
+                    className="text-[9px] text-white/20 hover:text-red-400 transition-colors px-2 py-0.5 rounded hover:bg-red-400/10"
+                  >
+                    × eliminar
+                  </button>
+                </div>
                 {it.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={it.imageUrl} alt="" className="w-full rounded-lg object-cover max-h-48 mb-3" />
@@ -368,6 +407,21 @@ export default function BlockEditor({
                   <input type="file" accept="image/*" className="hidden" disabled={uploading}
                     onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadImage(it.key, f); e.target.value = '' }} />
                 </label>
+              </div>
+            )
+          }
+
+          /* ── Merged text block from column ── */
+          if (it.extraIds !== undefined) {
+            return (
+              <div key={it.key} className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3">
+                <p className="text-[9px] text-white/25 tracking-widest uppercase mb-2">✏️ Texto</p>
+                <AutoTextarea
+                  value={it.text}
+                  onChange={v => update(it.key, { text: v })}
+                  placeholder="Escreve aqui o texto..."
+                  className="text-sm text-white/70"
+                />
               </div>
             )
           }
@@ -389,7 +443,6 @@ export default function BlockEditor({
           /* ── Editable block ── */
           return (
             <div key={it.key} className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3">
-              {/* Top row: type selector + delete */}
               <div className="flex items-center gap-2 mb-2">
                 <select
                   value={it.type}
@@ -409,7 +462,6 @@ export default function BlockEditor({
                 </button>
               </div>
 
-              {/* Content */}
               {it.type === 'divider' ? (
                 <div className="border-t border-white/20 my-1" />
               ) : it.type === 'to_do' ? (
@@ -434,7 +486,6 @@ export default function BlockEditor({
                 />
               )}
 
-              {/* Add below button */}
               <button
                 onClick={() => addAfter(it.key)}
                 className="mt-2 w-full py-1 text-[10px] text-white/20 hover:text-gold/50 hover:bg-gold/5 rounded transition-all border border-transparent hover:border-gold/10"
