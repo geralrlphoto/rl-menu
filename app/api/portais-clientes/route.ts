@@ -1,28 +1,38 @@
 import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 
+// ── Supabase ──────────────────────────────────────────────────────────────────
+function supabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
+
+// ── Notion helpers ────────────────────────────────────────────────────────────
 const SETTINGS_PREFIX = '__PORTAL_SETTINGS__:'
 
-function extractSettings(blocks: any[]) {
-  let settingsBlockId: string | null = null
-  let settings: any = { hiddenNav: [] }
+// Strips legacy __PORTAL_SETTINGS__ blocks from visible content and extracts
+// their JSON as a fallback when Supabase has no record for this page yet.
+function extractNotionSettings(blocks: any[]) {
+  let notionSettingsBlockId: string | null = null
+  let notionSettings: any = { hiddenNav: [] }
   const content = blocks.filter(b => {
     if (b.type !== 'paragraph') return true
     const text: string = b.paragraph?.rich_text?.[0]?.plain_text ?? ''
     if (text.startsWith(SETTINGS_PREFIX)) {
-      settingsBlockId = b.id // last block wins for the ID used on next save
+      notionSettingsBlockId = b.id
       try {
         const parsed = JSON.parse(text.slice(SETTINGS_PREFIX.length))
-        // MERGE: later blocks overwrite earlier ones field-by-field.
-        // This ensures no data is lost when multiple settings blocks exist.
-        settings = { ...settings, ...parsed }
+        notionSettings = { ...notionSettings, ...parsed }
       } catch {}
-      return false // remove from visible blocks
+      return false // hide from visible blocks
     }
     return true
   })
-  return { content, settings, settingsBlockId }
+  return { content, notionSettings, notionSettingsBlockId }
 }
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN!
@@ -33,9 +43,9 @@ const notionHeaders = {
   'Notion-Version': '2022-06-28',
 }
 
-// In-memory cache shared via globalThis so clear-cache route can access it
+// ── In-memory block cache (content only — settings now come from Supabase) ───
 declare global {
-  var notionBlocksCache: Map<string, { blocks: any[]; settings: any; settingsBlockId: string | null; ts: number }> | undefined
+  var notionBlocksCache: Map<string, { blocks: any[]; notionSettings: any; notionSettingsBlockId: string | null; ts: number }> | undefined
 }
 if (!global.notionBlocksCache) global.notionBlocksCache = new Map()
 const cache = global.notionBlocksCache
@@ -52,7 +62,7 @@ async function getBlocks(blockId: string): Promise<any[]> {
 
     const res = await fetch(url.toString(), {
       headers: notionHeaders,
-      cache: 'no-store', // our own globalThis cache handles TTL — no Next.js layer
+      cache: 'no-store',
     })
     if (!res.ok) break
     const data = await res.json()
@@ -60,7 +70,6 @@ async function getBlocks(blockId: string): Promise<any[]> {
     cursor = data.has_more ? data.next_cursor : undefined
   } while (cursor)
 
-  // Fetch all children in parallel (much faster than sequential)
   const withChildren = all.filter(b => b.has_children)
   const childResults = await Promise.all(withChildren.map(b => getBlocks(b.id)))
   withChildren.forEach((b, i) => { b.children = childResults[i] })
@@ -68,31 +77,65 @@ async function getBlocks(blockId: string): Promise<any[]> {
   return all
 }
 
+// ── GET handler ───────────────────────────────────────────────────────────────
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url)
     const id = searchParams.get('id') || PAGE_ID
     const bust = searchParams.get('bust') === '1'
 
-    // Serve from in-memory cache if fresh (unless busting)
+    // ── 1. Fetch Notion blocks (cached, busted when requested) ────────────────
+    let blocks: any[]
+    let notionSettings: any = { hiddenNav: [] }
+    let notionSettingsBlockId: string | null = null
+
     const cached = cache.get(id)
     if (!bust && cached && Date.now() - cached.ts < CACHE_TTL) {
-      return NextResponse.json({ blocks: cached.blocks, settings: cached.settings, settingsBlockId: cached.settingsBlockId, cached: true })
+      blocks = cached.blocks
+      notionSettings = cached.notionSettings
+      notionSettingsBlockId = cached.notionSettingsBlockId
+    } else {
+      const raw = await getBlocks(id)
+      ;({ content: blocks, notionSettings, notionSettingsBlockId } = extractNotionSettings(raw))
+      cache.set(id, { blocks, notionSettings, notionSettingsBlockId, ts: Date.now() })
     }
 
-    const raw = await getBlocks(id)
-    const { content: blocks, settings, settingsBlockId } = extractSettings(raw)
-    cache.set(id, { blocks, settings, settingsBlockId, ts: Date.now() })
-    // Strip password before sending to client — expose only hasPassword boolean
+    // ── 2. Fetch settings from Supabase (authoritative source) ────────────────
+    // If Supabase has a record for this page, it takes full priority over any
+    // legacy __PORTAL_SETTINGS__ blocks still present in Notion.
+    // If not (page not yet migrated), fall back to Notion-extracted settings.
+    let settings: any = notionSettings
+    let settingsBlockId: string | null = notionSettingsBlockId // legacy, kept for compat
+
+    try {
+      const db = supabase()
+      const { data: row } = await db
+        .from('portal_template_settings')
+        .select('settings')
+        .eq('page_id', id)
+        .single()
+
+      if (row?.settings) {
+        // Supabase has migrated settings — use them exclusively
+        settings = row.settings
+        settingsBlockId = null // no longer relevant; frontend ignores null gracefully
+      }
+      // If no Supabase row, keep notionSettings as fallback
+    } catch {
+      // Supabase unavailable — fall back to Notion settings silently
+    }
+
+    // Strip password before sending to client
     const { portalPassword, ...safeSettings } = settings as any
-    return NextResponse.json({ blocks, settings: safeSettings, settingsBlockId, hasPassword: !!(portalPassword) }, {
-      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
-    })
+    return NextResponse.json(
+      { blocks, settings: safeSettings, settingsBlockId, hasPassword: !!(portalPassword) },
+      { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
+    )
   } catch (e: any) {
-    console.error('[portais-clientes] Notion API error:', e.message)
-    // Return empty blocks instead of propagating error — portal page should always render
-    return NextResponse.json({ blocks: [], settings: { hiddenNav: [] }, settingsBlockId: null }, {
-      headers: { 'Cache-Control': 'no-store' }
-    })
+    console.error('[portais-clientes] Error:', e.message)
+    return NextResponse.json(
+      { blocks: [], settings: { hiddenNav: [] }, settingsBlockId: null },
+      { headers: { 'Cache-Control': 'no-store' } }
+    )
   }
 }
