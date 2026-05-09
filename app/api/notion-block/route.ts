@@ -7,8 +7,16 @@ const headers = {
   'Content-Type': 'application/json',
 }
 
+// Notion limits each rich_text content element to 2000 characters.
+// Split long text into multiple elements so saves never get rejected.
 function makeRichText(text: string) {
-  return [{ type: 'text', text: { content: text } }]
+  const MAX = 2000
+  if (text.length <= MAX) return [{ type: 'text', text: { content: text } }]
+  const chunks: { type: string; text: { content: string } }[] = []
+  for (let i = 0; i < text.length; i += MAX) {
+    chunks.push({ type: 'text', text: { content: text.slice(i, i + MAX) } })
+  }
+  return chunks
 }
 
 function makeBlockBody(type: string, text: string, checked?: boolean) {

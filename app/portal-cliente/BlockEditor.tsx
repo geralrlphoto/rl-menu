@@ -294,7 +294,11 @@ export default function BlockEditor({
 
         const changed = it.text !== it.originalText || it.checked !== it.originalChecked
         if (changed) {
-          await fetch('/api/notion-block', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: it.id, type: it.type, text: it.text, checked: it.checked }) })
+          const patchRes = await fetch('/api/notion-block', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: it.id, type: it.type, text: it.text, checked: it.checked }) })
+          if (!patchRes.ok) {
+            const err = await patchRes.json().catch(() => ({}))
+            throw new Error(err.error ?? `Erro ao guardar bloco (${patchRes.status})`)
+          }
           // For merged column text: delete the now-redundant extra blocks
           if (it.extraIds && it.extraIds.length > 0) {
             await Promise.all(it.extraIds.map(eid =>
