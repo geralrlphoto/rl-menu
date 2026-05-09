@@ -864,6 +864,20 @@ export default function PortalClientePage() {
 
   useEffect(() => { loadBlocks().finally(() => setLoading(false)) }, [loadBlocks])
 
+  /** Sincroniza heroImageUrl, galleryUrls e subpageHeaderUrl do template para TODOS os portais dos noivos */
+  async function syncPhotosToAllPortals(updatedSettings: PortalSettings) {
+    const photoSettings: Record<string, any> = {}
+    if (updatedSettings.heroImageUrl !== undefined) photoSettings.heroImageUrl = updatedSettings.heroImageUrl
+    if (updatedSettings.galleryUrls   !== undefined) photoSettings.galleryUrls   = updatedSettings.galleryUrls
+    if (updatedSettings.subpageHeaderUrl !== undefined) photoSettings.subpageHeaderUrl = updatedSettings.subpageHeaderUrl
+    if (Object.keys(photoSettings).length === 0) return
+    await fetch('/api/portais', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ photoSettings }),
+    })
+  }
+
   async function handleSaved(newSettings?: PortalSettings, newSettingsBlockId?: string) {
     if (newSettings) {
       // Settings panel: apply state directly, bust cache in background
@@ -871,6 +885,8 @@ export default function PortalClientePage() {
       if (newSettingsBlockId) setSettingsBlockId(newSettingsBlockId)
       setEditing(false)
       fetch(`/api/portais-clientes?id=${PAGE_ID}&bust=1`) // background, no await
+      // Sync photos to all client portals whenever settings are saved
+      syncPhotosToAllPortals(newSettings)
     } else {
       // Block editor: need fresh blocks from Notion
       setEditingContent(false)
@@ -897,6 +913,8 @@ export default function PortalClientePage() {
     setHeroEdit({ field: null, value: '' })
     setHeroSaving(false)
     await fetch(`/api/portais-clientes?id=${PAGE_ID}&bust=1`) // await so cache is warm before next reload
+    // Sync photos to all client portals
+    syncPhotosToAllPortals(newSettings)
   }
 
   if (loading) return (
