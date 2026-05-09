@@ -2403,6 +2403,36 @@ function PortalSubPageContent() {
                               )
                             })}
                           </div>
+
+                          {/* ── Guia intro content (saved in Supabase settings.guiaIntroContent) ── */}
+                          {Array.isArray((settings as any).guiaIntroContent) && (settings as any).guiaIntroContent.length > 0 && (
+                            <div className="my-6 space-y-4">
+                              {((settings as any).guiaIntroContent as Array<{ type: string; text: string }>).map((block, idx) => {
+                                if (block.type === 'heading_2') {
+                                  return (
+                                    <h2 key={idx} className="text-sm font-bold text-white/90 tracking-widest uppercase pt-5 mt-5 border-t border-white/[0.07]">
+                                      {block.text}
+                                    </h2>
+                                  )
+                                }
+                                if (block.type === 'bullet') {
+                                  return (
+                                    <div key={idx} className="flex items-start gap-2.5 text-sm text-white/55 leading-relaxed pl-1">
+                                      <span className="text-gold/50 mt-[3px] shrink-0 text-xs">◆</span>
+                                      <span>{block.text}</span>
+                                    </div>
+                                  )
+                                }
+                                // paragraph (default)
+                                return (
+                                  <p key={idx} className="text-sm text-white/55 leading-relaxed">
+                                    {block.text}
+                                  </p>
+                                )
+                              })}
+                            </div>
+                          )}
+
                           {(() => {
                             const afterSections = blocks.slice(colListIdx + 1)
                             // find the parceiros column_list (has only image children)
