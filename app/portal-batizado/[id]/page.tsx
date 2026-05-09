@@ -1177,6 +1177,28 @@ function PortalSubPageContent() {
       return { type: 'paragraph', text: t }
     })
   }
+  async function handleHideGuiaCard(titleText: string) {
+    if (!id) return
+    const hidden: string[] = (settings as any).hiddenGuiaCards ?? []
+    const next = [...hidden, titleText]
+    const newSettings = { ...(settings as any), hiddenGuiaCards: next }
+    setSettings(newSettings as any)
+    await fetch('/api/portal-settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pageId: id, settings: newSettings }),
+    })
+  }
+  async function handleRestoreGuiaCards() {
+    if (!id) return
+    const newSettings = { ...(settings as any), hiddenGuiaCards: [] }
+    setSettings(newSettings as any)
+    await fetch('/api/portal-settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pageId: id, settings: newSettings }),
+    })
+  }
   async function handleSaveGuia() {
     if (!id) return
     setSavingGuia(true)
@@ -2498,38 +2520,64 @@ function PortalSubPageContent() {
                           )}
 
                           {/* ── 4-card grid ── */}
-                          <div className="grid grid-cols-2 gap-3 my-4">
-                            {sectionCallouts.map(callout => {
-                              const titleText = plainText(callout.callout?.rich_text ?? []).trim().toUpperCase()
-                              const meta = SECTION_META[titleText]
-                              if (!meta) return null
-                              const imgUrl = getImgUrl(callout)
-                              return (
-                                <div key={titleText} className="flex flex-col rounded-2xl overflow-hidden border border-white/[0.08] bg-white/[0.02]">
-                                  <div className="flex items-center gap-2 px-3 pt-3 pb-2">
-                                    <span className="text-lg">{meta.icon}</span>
-                                    <span className="text-[10px] font-bold tracking-widest text-white/60 uppercase">{titleText}</span>
+                          {(() => {
+                            const hiddenCards: string[] = (settings as any).hiddenGuiaCards ?? []
+                            const visible = sectionCallouts.filter(c => {
+                              const t = plainText(c.callout?.rich_text ?? []).trim().toUpperCase()
+                              return !hiddenCards.includes(t)
+                            })
+                            return (
+                              <>
+                                {visible.length > 0 && (
+                                  <div className="grid grid-cols-2 gap-3 my-4">
+                                    {visible.map(callout => {
+                                      const titleText = plainText(callout.callout?.rich_text ?? []).trim().toUpperCase()
+                                      const meta = SECTION_META[titleText]
+                                      if (!meta) return null
+                                      const imgUrl = getImgUrl(callout)
+                                      return (
+                                        <div key={titleText} className="relative flex flex-col rounded-2xl overflow-hidden border border-white/[0.08] bg-white/[0.02]">
+                                          {isAdmin && (
+                                            <button
+                                              onClick={() => handleHideGuiaCard(titleText)}
+                                              className="absolute top-2 right-2 z-10 w-5 h-5 rounded-full bg-black/70 flex items-center justify-center text-white/35 hover:text-red-400 transition-colors text-xs leading-none"
+                                              title="Eliminar card"
+                                            >×</button>
+                                          )}
+                                          <div className="flex items-center gap-2 px-3 pt-3 pb-2 pr-8">
+                                            <span className="text-lg">{meta.icon}</span>
+                                            <span className="text-[10px] font-bold tracking-widest text-white/60 uppercase">{titleText}</span>
+                                          </div>
+                                          {imgUrl && (
+                                            // eslint-disable-next-line @next/next/no-img-element
+                                            <img src={imgUrl} alt={titleText} className="w-full object-contain" />
+                                          )}
+                                          <div className="p-3">
+                                            {meta.url ? (
+                                              <a href={meta.url} target="_blank" rel="noopener noreferrer"
+                                                className="block w-full text-center px-4 py-2.5 rounded-xl bg-gold text-black font-semibold text-xs tracking-wide hover:bg-gold/80 transition-all">
+                                                {meta.label}
+                                              </a>
+                                            ) : (
+                                              <div className="block w-full text-center px-4 py-2.5 rounded-xl border border-gold/20 text-gold/40 text-xs tracking-wide">
+                                                {meta.label}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      )
+                                    })}
                                   </div>
-                                  {imgUrl && (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img src={imgUrl} alt={titleText} className="w-full object-contain" />
-                                  )}
-                                  <div className="p-3">
-                                    {meta.url ? (
-                                      <a href={meta.url} target="_blank" rel="noopener noreferrer"
-                                        className="block w-full text-center px-4 py-2.5 rounded-xl bg-gold text-black font-semibold text-xs tracking-wide hover:bg-gold/80 transition-all">
-                                        {meta.label}
-                                      </a>
-                                    ) : (
-                                      <div className="block w-full text-center px-4 py-2.5 rounded-xl border border-gold/20 text-gold/40 text-xs tracking-wide">
-                                        {meta.label}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              )
-                            })}
-                          </div>
+                                )}
+                                {isAdmin && hiddenCards.length > 0 && (
+                                  <button
+                                    onClick={handleRestoreGuiaCards}
+                                    className="w-full text-center text-[9px] text-white/20 hover:text-white/50 tracking-widest uppercase transition-colors mb-3"
+                                  >↩ restaurar {hiddenCards.length} card{hiddenCards.length > 1 ? 's' : ''}</button>
+                                )}
+                              </>
+                            )
+                          })()}
 
                           {(() => {
                             const afterSections = blocks.slice(colListIdx + 1)
