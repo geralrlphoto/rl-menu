@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { plainText, type Block } from './NotionRenderer'
 import BlockEditor from './BlockEditor'
 
-const PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
+const PAGE_ID = '35b220116d8a811b99b7f6f26648c017'
 
 type Task = { id: string; text: string; done: boolean }
 
@@ -1266,7 +1266,7 @@ export default function PortalClientePage() {
               const isActive = settings.activeNavId === page.id
               const displayTitle = settings.pageTitles?.[page.id] ?? page.title
               return (
-                <Link key={page.id} href={`/portal-batizado/${page.id}?title=${encodeURIComponent(displayTitle)}`}
+                <Link key={page.id} href={`/portal-batizado/${page.id}?title=${encodeURIComponent(displayTitle)}&admin=1`}
                   className={`snap-start shrink-0 flex flex-col items-center gap-2 px-4 py-4 rounded-2xl border transition-all duration-300 min-w-[80px] group
                     ${isActive ? 'bg-gold/15 border-gold/50 text-gold' : 'bg-black border-white/40 text-white/60 hover:border-white/70'}`}
                   style={isActive
@@ -1431,7 +1431,7 @@ export default function PortalClientePage() {
             {navPages.slice(0, 6).map(page => {
               const displayTitle = settings.pageTitles?.[page.id] ?? page.title
               return (
-                <Link key={page.id} href={`/portal-batizado/${page.id}?title=${encodeURIComponent(displayTitle)}`}
+                <Link key={page.id} href={`/portal-batizado/${page.id}?title=${encodeURIComponent(displayTitle)}&admin=1`}
                   className="group flex flex-col gap-3 p-4 rounded-xl border border-white/[0.07] bg-white/[0.02] hover:border-gold/30 hover:bg-gold/5 transition-all">
                   <span className="text-gold/40 group-hover:text-gold/70 transition-colors">
                     {getNavIcon(displayTitle)}

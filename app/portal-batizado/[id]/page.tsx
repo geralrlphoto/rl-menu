@@ -6,7 +6,7 @@ import { useParams, useSearchParams } from 'next/navigation'
 import { NotionBlocks, plainText, type Block } from '../NotionRenderer'
 import BlockEditor from '../BlockEditor'
 
-const PORTAL_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
+const PORTAL_PAGE_ID = '35b220116d8a811b99b7f6f26648c017'
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
