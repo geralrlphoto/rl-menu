@@ -2740,74 +2740,89 @@ function PortalSubPageContent() {
                               </div>
                             )
 
-                            return (
-                              <>
-                                {/* Admin toolbar */}
-                                {isAdmin && (
-                                  <div className="flex justify-end mb-2">
-                                    {!editingFotoCards ? (
-                                      <button
-                                        onClick={() => {
-                                          setFotoCardsForm(activeCards.map(c => ({ ...c })))
-                                          setEditingFotoCards(true)
-                                        }}
-                                        className="text-[9px] tracking-widest uppercase text-white/25 hover:text-white/60 transition-colors flex items-center gap-1"
-                                      >✏️ editar cards</button>
-                                    ) : null}
-                                  </div>
-                                )}
+                            // Loop through all blocks: text via NotionBlocks, card blocks replaced by Supabase grid
+                            const isCardBlock = (b: Block) => {
+                              const cardsInBlock = b.type === 'column_list'
+                                ? (b.children ?? []).flatMap((col: Block) =>
+                                    (col.children ?? []).filter((c: Block) =>
+                                      c.type === 'callout' && (c.children ?? []).some((ch: Block) => ch.type === 'image')
+                                    ))
+                                : b.type === 'callout' && (b.children ?? []).some((c: Block) => c.type === 'image')
+                                  ? [b] : []
+                              return cardsInBlock.length > 0
+                            }
 
-                                {/* Edit form */}
-                                {isAdmin && editingFotoCards ? (
-                                  <div className="space-y-3 my-4">
-                                    <p className="text-[9px] text-white/25 tracking-widest uppercase">Editar cards de fotografias</p>
-                                    {fotoCardsForm.map((card, idx) => (
-                                      <div key={idx} className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3 space-y-2">
-                                        <div className="flex items-center justify-between">
-                                          <span className="text-[9px] text-white/25 tracking-widest uppercase">Card {idx + 1}</span>
-                                          <button
-                                            onClick={() => setFotoCardsForm(prev => prev.filter((_, i) => i !== idx))}
-                                            className="text-white/20 hover:text-red-400 transition-colors text-xs"
-                                          >× eliminar</button>
+                            const renderedSections: React.ReactNode[] = []
+                            let cardGridInserted = false
+                            for (let i = 0; i < blocks.length; i++) {
+                              const b = blocks[i]
+                              if (isCardBlock(b)) {
+                                if (!cardGridInserted) {
+                                  // Render edit form OR card grid at the position of the first card block
+                                  renderedSections.push(
+                                    <div key="foto-cards-section">
+                                      {isAdmin && (
+                                        <div className="flex justify-end mb-2">
+                                          {!editingFotoCards && (
+                                            <button
+                                              onClick={() => { setFotoCardsForm(activeCards.map(c => ({ ...c }))); setEditingFotoCards(true) }}
+                                              className="text-[9px] tracking-widest uppercase text-white/25 hover:text-white/60 transition-colors"
+                                            >✏️ editar cards</button>
+                                          )}
                                         </div>
-                                        <input
-                                          type="text"
-                                          value={card.title}
-                                          onChange={e => setFotoCardsForm(prev => prev.map((c, i) => i === idx ? { ...c, title: e.target.value } : c))}
-                                          placeholder="Título do card"
-                                          className="w-full bg-white/[0.04] border border-white/[0.10] rounded-lg px-3 py-2 text-xs text-white/70 outline-none focus:border-white/25 uppercase tracking-widest"
-                                        />
-                                        <input
-                                          type="text"
-                                          value={card.url}
-                                          onChange={e => setFotoCardsForm(prev => prev.map((c, i) => i === idx ? { ...c, url: e.target.value } : c))}
-                                          placeholder="URL (deixar vazio = AGUARDAR)"
-                                          className="w-full bg-white/[0.04] border border-white/[0.10] rounded-lg px-3 py-2 text-xs text-white/50 outline-none focus:border-white/25"
-                                        />
-                                      </div>
-                                    ))}
-                                    <button
-                                      onClick={() => setFotoCardsForm(prev => [...prev, { title: 'NOVO CARD', url: '', imageUrl: fotoCardsForm[0]?.imageUrl ?? '' }])}
-                                      className="w-full py-2 rounded-xl border border-dashed border-white/[0.08] text-white/25 text-xs hover:text-white/40 hover:border-white/15 transition-colors"
-                                    >+ adicionar card</button>
-                                    <div className="flex gap-2 pt-1">
-                                      <button onClick={handleSaveFotoCards} disabled={savingFotoCards}
-                                        className="flex-1 py-2.5 rounded-xl bg-gold text-black text-xs font-bold tracking-widest uppercase disabled:opacity-50">
-                                        {savingFotoCards ? 'A guardar...' : 'Guardar'}
-                                      </button>
-                                      <button onClick={() => setEditingFotoCards(false)}
-                                        className="px-4 py-2.5 rounded-xl border border-white/10 text-white/40 text-xs">
-                                        Cancelar
-                                      </button>
+                                      )}
+                                      {isAdmin && editingFotoCards ? (
+                                        <div className="space-y-3 my-4">
+                                          <p className="text-[9px] text-white/25 tracking-widest uppercase">Editar cards de fotografias</p>
+                                          {fotoCardsForm.map((card, idx) => (
+                                            <div key={idx} className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3 space-y-2">
+                                              <div className="flex items-center justify-between">
+                                                <span className="text-[9px] text-white/25 tracking-widest uppercase">Card {idx + 1}</span>
+                                                <button onClick={() => setFotoCardsForm(prev => prev.filter((_, ii) => ii !== idx))}
+                                                  className="text-white/20 hover:text-red-400 transition-colors text-xs">× eliminar</button>
+                                              </div>
+                                              <input type="text" value={card.title}
+                                                onChange={e => setFotoCardsForm(prev => prev.map((c, ii) => ii === idx ? { ...c, title: e.target.value } : c))}
+                                                placeholder="Título do card"
+                                                className="w-full bg-white/[0.04] border border-white/[0.10] rounded-lg px-3 py-2 text-xs text-white/70 outline-none focus:border-white/25 uppercase tracking-widest" />
+                                              <input type="text" value={card.url}
+                                                onChange={e => setFotoCardsForm(prev => prev.map((c, ii) => ii === idx ? { ...c, url: e.target.value } : c))}
+                                                placeholder="URL (deixar vazio = AGUARDAR)"
+                                                className="w-full bg-white/[0.04] border border-white/[0.10] rounded-lg px-3 py-2 text-xs text-white/50 outline-none focus:border-white/25" />
+                                            </div>
+                                          ))}
+                                          <button onClick={() => setFotoCardsForm(prev => [...prev, { title: 'NOVO CARD', url: '', imageUrl: fotoCardsForm[0]?.imageUrl ?? '' }])}
+                                            className="w-full py-2 rounded-xl border border-dashed border-white/[0.08] text-white/25 text-xs hover:text-white/40 transition-colors">
+                                            + adicionar card
+                                          </button>
+                                          <div className="flex gap-2 pt-1">
+                                            <button onClick={handleSaveFotoCards} disabled={savingFotoCards}
+                                              className="flex-1 py-2.5 rounded-xl bg-gold text-black text-xs font-bold tracking-widest uppercase disabled:opacity-50">
+                                              {savingFotoCards ? 'A guardar...' : 'Guardar'}
+                                            </button>
+                                            <button onClick={() => setEditingFotoCards(false)}
+                                              className="px-4 py-2.5 rounded-xl border border-white/10 text-white/40 text-xs">Cancelar</button>
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        renderCards(activeCards)
+                                      )}
                                     </div>
-                                  </div>
-                                ) : (
-                                  activeCards.length > 0
-                                    ? renderCards(activeCards)
-                                    : <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={backUrl} />
-                                )}
-                              </>
-                            )
+                                  )
+                                  cardGridInserted = true
+                                }
+                                // Skip subsequent card blocks (already rendered above)
+                              } else {
+                                renderedSections.push(
+                                  <NotionBlocks key={`block-${i}`} blocks={[b]} hiddenNav={settings.hiddenNav} backUrl={backUrl} />
+                                )
+                              }
+                            }
+                            if (!cardGridInserted) {
+                              // No card blocks found — render everything normally
+                              renderedSections.push(<NotionBlocks key="all" blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={backUrl} />)
+                            }
+                            return <>{renderedSections}</>
                           })()}
                           {/* ── MAQUETE ÁLBUM — regra obrigatória em todas as páginas FOTOGRAFIAS ── */}
                           {(portalRef || refParam) && (
