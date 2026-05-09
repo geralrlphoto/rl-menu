@@ -2560,7 +2560,7 @@ function PortalSubPageContent() {
                             {imgBlocks.map(img => (
                               <div key={img.id} className="relative group/img rounded-2xl overflow-hidden">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={img.url} alt="" className="w-full rounded-2xl object-cover" />
+                                <img src={img.url} alt="" className="w-full rounded-2xl object-cover max-h-72" />
                                 {isAdmin && (
                                   <label className={`absolute inset-0 flex flex-col items-center justify-center cursor-pointer rounded-2xl transition-all duration-200 ${imgSwapping === img.id ? 'bg-black/60' : 'bg-black/0 group-hover/img:bg-black/50'}`}>
                                     <input type="file" accept="image/*" className="hidden" disabled={imgSwapping !== null}
