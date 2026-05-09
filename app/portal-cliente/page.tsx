@@ -874,7 +874,7 @@ export default function PortalClientePage() {
     await fetch('/api/portais', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ photoSettings }),
+      body: JSON.stringify({ photoSettings, tipoPortal: 'casamento' }),
     })
   }
 

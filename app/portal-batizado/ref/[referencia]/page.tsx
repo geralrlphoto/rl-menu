@@ -923,7 +923,7 @@ export default function PortalRefPage() {
 
   const images = findImages(blocks)
   const DEFAULT_HERO_IMAGE = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/1776042124014-05s55nxzmc4v.png'
-  const heroImage = settings.heroImageUrl || images[0] || DEFAULT_HERO_IMAGE
+  const heroImage = settings.heroImageUrl || DEFAULT_HERO_IMAGE
   const DEFAULT_GALLERY_IMAGES = [
     'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/default-gallery-1.jpg',
     'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/default-gallery-2.jpg',

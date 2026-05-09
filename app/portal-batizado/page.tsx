@@ -834,7 +834,9 @@ export default function PortalClientePage() {
   const [checkingPassword, setCheckingPassword] = useState(false)
 
   const loadBlocks = useCallback(async (bust = false) => {
-    const url = bust ? `/api/portais-clientes?id=${PAGE_ID}&bust=1` : `/api/portais-clientes?id=${PAGE_ID}`
+    // Always bust on the admin template page — avoids stale cache across Vercel instances
+    const url = `/api/portais-clientes?id=${PAGE_ID}&bust=1`
+    void bust
     const d = await fetch(url).then(r => r.json())
     if (d.error) setError(d.error)
     else {
@@ -879,6 +881,20 @@ export default function PortalClientePage() {
   useEffect(() => { loadBlocks().finally(() => setLoading(false)) }, [loadBlocks])
 
 
+  /** Sincroniza heroImageUrl, galleryUrls e subpageHeaderUrl do template para TODOS os portais de batizado */
+  async function syncPhotosToAllPortals(updatedSettings: PortalSettings) {
+    const photoSettings: Record<string, any> = {}
+    if (updatedSettings.heroImageUrl    !== undefined) photoSettings.heroImageUrl    = updatedSettings.heroImageUrl
+    if (updatedSettings.galleryUrls     !== undefined) photoSettings.galleryUrls     = updatedSettings.galleryUrls
+    if (updatedSettings.subpageHeaderUrl !== undefined) photoSettings.subpageHeaderUrl = updatedSettings.subpageHeaderUrl
+    if (Object.keys(photoSettings).length === 0) return
+    await fetch('/api/portais', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ photoSettings, tipoPortal: 'batizado' }),
+    })
+  }
+
   async function handleSaved(newSettings?: PortalSettings, newSettingsBlockId?: string) {
     if (newSettings) {
       // Settings panel: apply state directly, bust cache in background
@@ -886,6 +902,8 @@ export default function PortalClientePage() {
       if (newSettingsBlockId) setSettingsBlockId(newSettingsBlockId)
       setEditing(false)
       fetch(`/api/portais-clientes?id=${PAGE_ID}&bust=1`) // background, no await
+      // Sync photos to all baptism portals
+      syncPhotosToAllPortals(newSettings)
     } else {
       // Block editor: need fresh blocks from Notion
       setEditingContent(false)
@@ -912,7 +930,9 @@ export default function PortalClientePage() {
     setSettings(newSettings)
     setHeroEdit({ field: null, value: '' })
     setHeroSaving(false)
-    fetch(`/api/portais-clientes?id=${PAGE_ID}&bust=1`)
+    await fetch(`/api/portais-clientes?id=${PAGE_ID}&bust=1`) // await so cache is warm before next reload
+    // Sync photos to all baptism portals
+    syncPhotosToAllPortals(newSettings)
   }
 
   function startEditWelcome() {
@@ -1025,7 +1045,7 @@ export default function PortalClientePage() {
 
   const images = findImages(blocks)
   const DEFAULT_HERO_IMAGE = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/1776042124014-05s55nxzmc4v.png'
-  const heroImage = settings.heroImageUrl || images[0] || DEFAULT_HERO_IMAGE
+  const heroImage = settings.heroImageUrl || DEFAULT_HERO_IMAGE
   const DEFAULT_GALLERY_IMAGES = [
     'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/default-gallery-1.jpg',
     'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/default-gallery-2.jpg',

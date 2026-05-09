@@ -106,22 +106,29 @@ export async function DELETE(req: NextRequest) {
   }
 }
 
-// PUT { photoSettings: { heroImageUrl?, galleryUrls?, subpageHeaderUrl? } }
-// Sincroniza campos de foto em TODOS os portais
+// PUT { photoSettings: { heroImageUrl?, galleryUrls?, subpageHeaderUrl? }, tipoPortal?: 'casamento' | 'batizado' }
+// Sincroniza campos de foto nos portais do tipo indicado (omitir = todos)
 export async function PUT(req: NextRequest) {
   try {
-    const { photoSettings } = await req.json()
+    const { photoSettings, tipoPortal } = await req.json()
     if (!photoSettings) return NextResponse.json({ error: 'photoSettings required' }, { status: 400 })
     const db = supabase()
     const { data: all, error: fetchErr } = await db.from('portais').select('referencia, settings')
     if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 500 })
+    let updated = 0
     for (const portal of (all ?? [])) {
+      // Filter by tipoPortal when specified
+      if (tipoPortal) {
+        const portalTipo = portal.settings?.tipoPortal ?? 'casamento'
+        if (portalTipo !== tipoPortal) continue
+      }
       const newSettings = { ...(portal.settings ?? {}), ...photoSettings }
       await db.from('portais')
         .update({ settings: newSettings, updated_at: new Date().toISOString() })
         .ilike('referencia', portal.referencia)
+      updated++
     }
-    return NextResponse.json({ ok: true, updated: all?.length ?? 0 })
+    return NextResponse.json({ ok: true, updated })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
