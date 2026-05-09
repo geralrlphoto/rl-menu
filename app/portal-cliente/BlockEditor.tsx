@@ -14,6 +14,9 @@ type EditItem = {
   originalText: string
   originalChecked: boolean
   rawBlock?: Block
+  // Image blocks extracted from column_list children
+  imageUrl?: string
+  originalImageUrl?: string
 }
 
 const TEXT_TYPES = ['paragraph', 'heading_1', 'heading_2', 'heading_3',
@@ -38,24 +41,73 @@ function extractText(b: Block): string {
   return plainText(data.rich_text ?? [])
 }
 
+function getImageUrl(b: Block): string {
+  if (b.type !== 'image') return ''
+  return b.image?.type === 'external'
+    ? (b.image.external?.url ?? '')
+    : (b.image?.file?.url ?? '')
+}
+
 function blocksToItems(blocks: Block[]): EditItem[] {
-  return blocks.map((b) => {
-    const isEditable = TEXT_TYPES.includes(b.type) || b.type === 'divider'
-    const text = extractText(b)
-    const checked = b.to_do?.checked ?? false
-    return {
-      key: b.id,
-      id: b.id,
-      type: b.type,
-      text,
-      checked,
-      isNew: false,
-      isDeleted: false,
-      originalText: text,
-      originalChecked: checked,
-      rawBlock: isEditable ? undefined : b,
+  const items: EditItem[] = []
+  for (const b of blocks) {
+    if (b.type === 'column_list') {
+      // Flatten all children from all columns into editable items
+      for (const col of (b.children ?? []) as Block[]) {
+        for (const child of (col.children ?? []) as Block[]) {
+          if (child.type === 'image') {
+            const url = getImageUrl(child)
+            items.push({
+              key: child.id,
+              id: child.id,
+              type: 'image',
+              text: '',
+              checked: false,
+              isNew: false,
+              isDeleted: false,
+              originalText: '',
+              originalChecked: false,
+              imageUrl: url,
+              originalImageUrl: url,
+            })
+          } else {
+            const isEditable = TEXT_TYPES.includes(child.type) || child.type === 'divider'
+            const text = extractText(child)
+            const checked = child.to_do?.checked ?? false
+            items.push({
+              key: child.id,
+              id: child.id,
+              type: child.type,
+              text,
+              checked,
+              isNew: false,
+              isDeleted: false,
+              originalText: text,
+              originalChecked: checked,
+              rawBlock: isEditable ? undefined : child,
+            })
+          }
+        }
+      }
+    } else {
+      const isEditable = TEXT_TYPES.includes(b.type) || b.type === 'divider'
+      const text = extractText(b)
+      const checked = b.to_do?.checked ?? false
+      items.push({
+        key: b.id,
+        id: b.id,
+        type: b.type,
+        text,
+        checked,
+        isNew: false,
+        isDeleted: false,
+        originalText: text,
+        originalChecked: checked,
+        rawBlock: isEditable ? undefined : b,
+      })
     }
-  })
+  }
+  return items
 }
 
 let newCounter = 0
@@ -107,6 +159,25 @@ function findNavPages(blocks: Block[]): Array<{ id: string; title: string }> {
   return pages
 }
 
+function uploadWithProgress(file: File, onProgress: (pct: number) => void): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    const fd = new FormData()
+    fd.append('file', file)
+    xhr.upload.onprogress = e => { if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)) }
+    xhr.onload = () => {
+      try {
+        const data = JSON.parse(xhr.responseText)
+        if (data.url) resolve(data.url)
+        else reject(new Error(data.error ?? 'Upload falhou'))
+      } catch { reject(new Error('Resposta inválida')) }
+    }
+    xhr.onerror = () => reject(new Error('Erro de rede'))
+    xhr.open('POST', '/api/upload-image')
+    xhr.send(fd)
+  })
+}
+
 export default function BlockEditor({
   blocks,
   pageId,
@@ -125,6 +196,7 @@ export default function BlockEditor({
   const [currentSettingsBlockId, setCurrentSettingsBlockId] = useState(settingsBlockId)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
+  const [uploadingImages, setUploadingImages] = useState<Record<string, boolean>>({})
 
   const navPages = findNavPages(blocks)
 
@@ -151,6 +223,18 @@ export default function BlockEditor({
     )
   }
 
+  async function handleUploadImage(key: string, file: File) {
+    setUploadingImages(prev => ({ ...prev, [key]: true }))
+    try {
+      const url = await uploadWithProgress(file, () => {})
+      setItems(prev => prev.map(it => it.key === key ? { ...it, imageUrl: url } : it))
+    } catch {
+      setSaveError('Erro ao carregar foto. Tenta novamente.')
+    } finally {
+      setUploadingImages(prev => ({ ...prev, [key]: false }))
+    }
+  }
+
   async function handleSave() {
     setSaving(true)
     setSaveError('')
@@ -158,11 +242,25 @@ export default function BlockEditor({
       // Save content blocks
       for (const it of items) {
         if (it.rawBlock) continue
+
         if (it.isDeleted && !it.isNew) {
           await fetch('/api/notion-block', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: it.id }) })
           continue
         }
         if (it.isDeleted && it.isNew) continue
+
+        // Image blocks from columns — PATCH if URL changed
+        if (it.type === 'image') {
+          if (!it.isNew && it.imageUrl && it.imageUrl !== it.originalImageUrl) {
+            await fetch('/api/notion-block', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: it.id, type: 'image', imageUrl: it.imageUrl }),
+            })
+          }
+          continue
+        }
+
         if (it.isNew) {
           await fetch('/api/notion-block', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parentId: pageId, type: it.type, text: it.text, checked: it.checked }) })
           continue
@@ -249,6 +347,30 @@ export default function BlockEditor({
       {/* Blocks */}
       <div className="space-y-2">
         {visible.map((it) => {
+
+          /* ── Image block from column ── */
+          if (it.type === 'image') {
+            const uploading = !!uploadingImages[it.key]
+            return (
+              <div key={it.key} className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3">
+                <p className="text-[9px] text-white/25 tracking-widest uppercase mb-2">📷 Fotografia</p>
+                {it.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={it.imageUrl} alt="" className="w-full rounded-lg object-cover max-h-48 mb-3" />
+                ) : (
+                  <div className="h-16 bg-white/[0.03] rounded-lg mb-3 flex items-center justify-center">
+                    <span className="text-white/20 text-xs">sem imagem</span>
+                  </div>
+                )}
+                <label className={`flex items-center justify-center gap-2 py-2.5 w-full border border-dashed rounded-lg transition-all text-xs
+                  ${uploading ? 'border-gold/30 text-gold/50 cursor-wait' : 'border-gold/20 text-gold/40 hover:border-gold/50 hover:text-gold hover:bg-gold/5 cursor-pointer'}`}>
+                  {uploading ? '⏳ A carregar...' : '🔁 Trocar foto'}
+                  <input type="file" accept="image/*" className="hidden" disabled={uploading}
+                    onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadImage(it.key, f); e.target.value = '' }} />
+                </label>
+              </div>
+            )
+          }
 
           /* ── Non-editable block ── */
           if (it.rawBlock) {
