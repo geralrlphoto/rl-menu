@@ -892,6 +892,9 @@ function PortalSubPageContent() {
   const [savingSlots, setSavingSlots] = useState(false)
   const [sendingNotifNoivos, setSendingNotifNoivos] = useState(false)
   const [notifNoivosEnviado, setNotifNoivosEnviado] = useState(false)
+  const [editingGuia, setEditingGuia] = useState(false)
+  const [guiaDraft, setGuiaDraft] = useState('')
+  const [savingGuia, setSavingGuia] = useState(false)
 
   const [eventoData, setEventoData] = useState<any>(null)
   const [contratoDisponivel, setContratoDisponivel] = useState<boolean | null>(null)
@@ -1154,6 +1157,42 @@ function PortalSubPageContent() {
           body: JSON.stringify({ photoSettings: photoFields, tipoPortal: 'batizado' }),
         })
       }
+    }
+  }
+
+  function guiaToText(content: Array<{ type: string; text: string }>): string {
+    return content.map(b => {
+      if (b.type === 'photo_break') return '[FOTOS]'
+      if (b.type === 'heading_2') return `## ${b.text}`
+      if (b.type === 'bullet') return `- ${b.text}`
+      return b.text
+    }).join('\n')
+  }
+  function parseGuiaText(raw: string): Array<{ type: string; text: string }> {
+    return raw.split('\n').filter(l => l.trim()).map(line => {
+      const t = line.trim()
+      if (t === '[FOTOS]') return { type: 'photo_break', text: '' }
+      if (t.startsWith('## ')) return { type: 'heading_2', text: t.slice(3) }
+      if (t.startsWith('- ')) return { type: 'bullet', text: t.slice(2) }
+      return { type: 'paragraph', text: t }
+    })
+  }
+  async function handleSaveGuia() {
+    if (!id) return
+    setSavingGuia(true)
+    try {
+      const parsed = parseGuiaText(guiaDraft)
+      const newSettings = { ...(settings as any), guiaIntroContent: parsed }
+      await fetch('/api/portal-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pageId: id, settings: newSettings }),
+      })
+      setSettings(newSettings as any)
+      setEditingGuia(false)
+      fetch(`/api/portais-clientes?id=${id}&bust=1`)
+    } finally {
+      setSavingGuia(false)
     }
   }
 
@@ -2368,9 +2407,97 @@ function PortalSubPageContent() {
                         if (!imgChild) return null
                         return imgChild.image?.type === 'external' ? imgChild.image.external?.url : imgChild.image?.file?.url
                       }
+
+                      // Extract first 2 images from the image column_list (before the cards section)
+                      const guiaImgs: string[] = []
+                      for (const b of blocks.slice(0, colListIdx)) {
+                        if (b.type === 'column_list') {
+                          for (const col of (b.children ?? []) as Block[]) {
+                            for (const child of (col.children ?? []) as Block[]) {
+                              if (child.type === 'image') {
+                                const u = child.image?.type === 'external' ? child.image.external?.url : child.image?.file?.url
+                                if (u) guiaImgs.push(u)
+                                if (guiaImgs.length >= 2) break
+                              }
+                            }
+                            if (guiaImgs.length >= 2) break
+                          }
+                        }
+                        if (guiaImgs.length >= 2) break
+                      }
+
+                      const guiaContent = Array.isArray((settings as any).guiaIntroContent)
+                        ? (settings as any).guiaIntroContent as Array<{ type: string; text: string }>
+                        : []
+
+                      const renderGuiaBlock = (blk: { type: string; text: string }, idx: number) => {
+                        if (blk.type === 'photo_break') {
+                          return (
+                            <div key={idx} className="grid grid-cols-2 gap-2 my-2">
+                              {guiaImgs.slice(0, 2).map((url, i) => (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img key={i} src={url} alt="" className="w-full object-cover rounded-xl aspect-square" />
+                              ))}
+                            </div>
+                          )
+                        }
+                        if (blk.type === 'heading_2') {
+                          return <h2 key={idx} className="text-sm font-bold text-white/90 tracking-widest uppercase pt-5 mt-5 border-t border-white/[0.07]">{blk.text}</h2>
+                        }
+                        if (blk.type === 'bullet') {
+                          return (
+                            <div key={idx} className="flex items-start gap-2.5 text-sm text-white/55 leading-relaxed pl-1">
+                              <span className="text-gold/50 mt-[3px] shrink-0 text-xs">◆</span>
+                              <span>{blk.text}</span>
+                            </div>
+                          )
+                        }
+                        return <p key={idx} className="text-sm text-white/55 leading-relaxed">{blk.text}</p>
+                      }
+
+                      const guiaBackUrl = fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : undefined
+
                       return (
                         <>
-                          <NotionBlocks blocks={blocks.slice(0, colListIdx)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : undefined} />
+                          {/* ── Guia text at top ── */}
+                          {guiaContent.length > 0 && (
+                            <div className="relative mt-2 mb-6">
+                              {isAdmin && !editingGuia && (
+                                <button
+                                  onClick={() => { setGuiaDraft(guiaToText(guiaContent)); setEditingGuia(true) }}
+                                  className="absolute top-0 right-0 text-white/25 hover:text-white/60 transition-colors p-1 text-base z-10"
+                                  title="Editar texto"
+                                >✏️</button>
+                              )}
+                              {editingGuia ? (
+                                <div className="space-y-3">
+                                  <p className="text-[9px] text-white/25 tracking-widest uppercase">## Título &nbsp;·&nbsp; - Ponto &nbsp;·&nbsp; [FOTOS] para as fotos</p>
+                                  <textarea
+                                    value={guiaDraft}
+                                    onChange={e => setGuiaDraft(e.target.value)}
+                                    rows={22}
+                                    className="w-full bg-white/[0.04] border border-white/[0.12] rounded-xl p-3 text-sm text-white/70 leading-relaxed resize-y outline-none focus:border-white/25 font-mono"
+                                  />
+                                  <div className="flex gap-2">
+                                    <button onClick={handleSaveGuia} disabled={savingGuia}
+                                      className="flex-1 py-2.5 rounded-xl bg-gold text-black text-xs font-bold tracking-widest uppercase disabled:opacity-50">
+                                      {savingGuia ? 'A guardar...' : 'Guardar'}
+                                    </button>
+                                    <button onClick={() => setEditingGuia(false)}
+                                      className="px-4 py-2.5 rounded-xl border border-white/10 text-white/40 text-xs">
+                                      Cancelar
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="space-y-4">
+                                  {guiaContent.map(renderGuiaBlock)}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* ── 4-card grid ── */}
                           <div className="grid grid-cols-2 gap-3 my-4">
                             {sectionCallouts.map(callout => {
                               const titleText = plainText(callout.callout?.rich_text ?? []).trim().toUpperCase()
@@ -2404,35 +2531,6 @@ function PortalSubPageContent() {
                             })}
                           </div>
 
-                          {/* ── Guia intro content (saved in Supabase settings.guiaIntroContent) ── */}
-                          {Array.isArray((settings as any).guiaIntroContent) && (settings as any).guiaIntroContent.length > 0 && (
-                            <div className="my-6 space-y-4">
-                              {((settings as any).guiaIntroContent as Array<{ type: string; text: string }>).map((block, idx) => {
-                                if (block.type === 'heading_2') {
-                                  return (
-                                    <h2 key={idx} className="text-sm font-bold text-white/90 tracking-widest uppercase pt-5 mt-5 border-t border-white/[0.07]">
-                                      {block.text}
-                                    </h2>
-                                  )
-                                }
-                                if (block.type === 'bullet') {
-                                  return (
-                                    <div key={idx} className="flex items-start gap-2.5 text-sm text-white/55 leading-relaxed pl-1">
-                                      <span className="text-gold/50 mt-[3px] shrink-0 text-xs">◆</span>
-                                      <span>{block.text}</span>
-                                    </div>
-                                  )
-                                }
-                                // paragraph (default)
-                                return (
-                                  <p key={idx} className="text-sm text-white/55 leading-relaxed">
-                                    {block.text}
-                                  </p>
-                                )
-                              })}
-                            </div>
-                          )}
-
                           {(() => {
                             const afterSections = blocks.slice(colListIdx + 1)
                             // find the parceiros column_list (has only image children)
@@ -2458,7 +2556,7 @@ function PortalSubPageContent() {
                             const parcSectionEnd = parceiros.length > 0 ? (parcIdx !== -1 ? parcIdx : afterSections.length - 1) : parcIdx
                             return (
                               <>
-                                <NotionBlocks blocks={afterSections.slice(0, parcSectionEnd !== -1 ? parcSectionEnd : afterSections.length)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : undefined} />
+                                <NotionBlocks blocks={afterSections.slice(0, parcSectionEnd !== -1 ? parcSectionEnd : afterSections.length)} hiddenNav={settings.hiddenNav} backUrl={guiaBackUrl} />
                                 {parcList && parcList.length > 0 && (
                                   <div className="grid grid-cols-2 gap-3 my-4">
                                     {parcList.map((p, idx) => {
@@ -2476,7 +2574,7 @@ function PortalSubPageContent() {
                                     })}
                                   </div>
                                 )}
-                                {parcSectionEnd !== -1 && <NotionBlocks blocks={afterSections.slice(parcSectionEnd + 1)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : undefined} />}
+                                {parcSectionEnd !== -1 && <NotionBlocks blocks={afterSections.slice(parcSectionEnd + 1)} hiddenNav={settings.hiddenNav} backUrl={guiaBackUrl} />}
                               </>
                             )
                           })()}
