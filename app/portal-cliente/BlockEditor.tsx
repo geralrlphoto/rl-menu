@@ -56,7 +56,7 @@ function blocksToItems(blocks: Block[]): EditItem[] {
     if (b.type === 'column_list') {
       // Separate images and text from all column children
       const colImages: EditItem[] = []
-      const colTexts: Array<{ id: string; text: string }> = []
+      const colTexts: Array<{ id: string; text: string; type: string }> = []
 
       for (const col of (b.children ?? []) as Block[]) {
         for (const child of (col.children ?? []) as Block[]) {
@@ -76,7 +76,7 @@ function blocksToItems(blocks: Block[]): EditItem[] {
               originalImageUrl: url,
             })
           } else if (TEXT_TYPES.includes(child.type) || child.type === 'divider') {
-            colTexts.push({ id: child.id, text: extractText(child) })
+            colTexts.push({ id: child.id, text: extractText(child), type: child.type })
           } else {
             // Non-text, non-image → non-editable placeholder
             items.push({
@@ -99,12 +99,13 @@ function blocksToItems(blocks: Block[]): EditItem[] {
       items.push(...colImages)
 
       // Text: merge ALL column text into ONE editable area
+      // Use the real Notion block type of the first block so PATCH succeeds
       if (colTexts.length > 0) {
         const combined = colTexts.map(t => t.text).join('\n')
         items.push({
           key: colTexts[0].id,
           id: colTexts[0].id,
-          type: 'paragraph',
+          type: colTexts[0].type,   // ← real block type, not hardcoded 'paragraph'
           text: combined,
           checked: false,
           isNew: false,
