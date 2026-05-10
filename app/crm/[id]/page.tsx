@@ -84,6 +84,11 @@ export default function ClientePage() {
       if (!data) { router.push('/crm'); return }
       setForm(data)
       setOriginal(data)
+      // Inicializar pageTipo aqui (não no useEffect do page_content, para evitar resets)
+      const pc = typeof data.page_content === 'string'
+        ? JSON.parse(data.page_content || '{}')
+        : (data.page_content || {})
+      if (pc?.tipo === 'batizado' || pc?.tipo === 'casamento') setPageTipo(pc.tipo)
       setLoading(false)
     })
   }, [id])
@@ -204,7 +209,8 @@ export default function ClientePage() {
       if (primeiraComExtras?.extras) setExtrasGlobais(primeiraComExtras.extras)
     }
     if (pc?.proposta?.password !== undefined) setPropostaPassword(pc.proposta.password)
-    if (pc?.tipo === 'batizado' || pc?.tipo === 'casamento') setPageTipo(pc.tipo)
+    // Nota: pageTipo NÃO é inicializado aqui para evitar reset ao chamar setForm
+    // É inicializado no useEffect de carregamento e controlado por handleSetTipo
   }, [form.page_content])
 
   const handleSavePropostas = async () => {
