@@ -31,6 +31,7 @@ export type Proposta     = { nome: string; servicos_foto: string[]; servicos_vid
 export type BatizadoContent = {
   hero:         { title: string; titleFont: string; titleSize: string; titleColor: string; brandLine: string; brandColor: string; imageUrl: string }
   evento:       { nome: string; data: string; hora: string; local: string }
+  reuniao:      { data: string; hora: string; tipo: string; link: string }
   video:        { label: string; title: string; urls: string[] }
   portfolio:    { label: string; title: string; titleFont: string; titleColor: string; photos: string[] }
   revista:      { visible: boolean; label: string; title: string; subtitle: string; imageUrl: string; buttonLabel: string; linkUrl: string; paginas: { id: string; imageUrl: string; titulo: string; legenda: string }[] }
@@ -63,8 +64,9 @@ export const DEFAULT_BATIZADO_CONTENT: BatizadoContent = {
     titleColor: '#ffffff', brandLine: 'RL Photo · Video', brandColor: '#C9A84C',
     imageUrl: '',
   },
-  evento: { nome: '', data: '', hora: '', local: '' },
-  video:  { label: 'O nosso trabalho', title: 'Vê como captamos cada momento.', urls: ['', '', ''] },
+  evento:  { nome: '', data: '', hora: '', local: '' },
+  reuniao: { data: '', hora: '', tipo: 'Presencial', link: '' },
+  video:   { label: 'O nosso trabalho', title: 'Vê como captamos cada momento.', urls: ['', '', ''] },
   portfolio: {
     label: 'Portfólio', title: 'Momentos que ficam para sempre.',
     titleFont: 'cormorant', titleColor: '#ffffff', photos: ['', '', ''],
@@ -137,6 +139,7 @@ export function mergeBatizado(saved: any): BatizadoContent {
   return {
     hero:         { ...DEFAULT_BATIZADO_CONTENT.hero,         ...(saved.hero         || {}) },
     evento:       { ...DEFAULT_BATIZADO_CONTENT.evento,       ...(saved.evento       || {}) },
+    reuniao:      { ...DEFAULT_BATIZADO_CONTENT.reuniao,      ...(saved.reuniao      || {}) },
     video:        { ...DEFAULT_BATIZADO_CONTENT.video,        ...(saved.video        || {}), urls: saved.video?.urls || DEFAULT_BATIZADO_CONTENT.video.urls },
     portfolio:    { ...DEFAULT_BATIZADO_CONTENT.portfolio,    ...(saved.portfolio    || {}), photos: saved.portfolio?.photos || DEFAULT_BATIZADO_CONTENT.portfolio.photos },
     revista:      { ...DEFAULT_BATIZADO_CONTENT.revista, ...(saved.revista || {}), linkUrl: saved.revista?.linkUrl ?? DEFAULT_BATIZADO_CONTENT.revista.linkUrl, paginas: saved.revista?.paginas || [] },
@@ -293,6 +296,7 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
   // Confirmação de reunião e proposta
   const [status,             setStatus]             = useState<string | null>(null)
   const [confirming,         setConfirming]         = useState(false)
+  const [requesting,         setRequesting]         = useState(false)
   const [propostaResposta,   setPropostaResposta]   = useState<'confirmada' | 'rejeitada' | null>(null)
   const [submittingProposta, setSubmittingProposta] = useState(false)
 
@@ -342,6 +346,9 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
   function setEvento(k: keyof BatizadoContent['evento'], v: string) {
     setContent(c => ({ ...c, evento: { ...c.evento, [k]: v } }))
   }
+  function setReuniao(k: keyof BatizadoContent['reuniao'], v: string) {
+    setContent(c => ({ ...c, reuniao: { ...c.reuniao, [k]: v } }))
+  }
   function setVideo(k: keyof BatizadoContent['video'], v: any) {
     setContent(c => ({ ...c, video: { ...c.video, [k]: v } }))
   }
@@ -376,6 +383,18 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
     await fetch(`/api/batizado/confirm?token=${token}`, { method: 'POST' })
     setStatus('confirmada')
     setConfirming(false)
+  }
+
+  // ── Pedir alteração de reunião ──
+  const handleChangeRequest = async () => {
+    setRequesting(true)
+    await fetch('/api/batizado/request-change', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    })
+    setStatus('alteracao_pedida')
+    setRequesting(false)
   }
 
   // ── Resposta à proposta ──
@@ -454,7 +473,10 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
   )
 
   const heroImage = heroPreview || DEFAULT_HERO
-  const { hero, evento, video, portfolio, revista, testimonials, about, banner, proposta } = content
+  const { hero, evento, reuniao, video, portfolio, revista, testimonials, about, banner, proposta } = content
+  const isVideo     = reuniao.tipo === 'Videochamada'
+  const reuniaoData = reuniao.data ? fmtData(reuniao.data) : ''
+  const reuniaoHora = (reuniao.hora || '').slice(0, 5)
   const dataFmt = fmtData(evento.data)
 
   return (
@@ -611,9 +633,49 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
         </FadeIn>
       </section>
 
-      {/* ── CONFIRMAR REUNIÃO + PROPOSTA ── */}
+      {/* ── DETALHES DA REUNIÃO + CONFIRMAR ── */}
       <section className="flex flex-col items-center px-6 pb-6">
         <FadeIn delay={150} className="w-full max-w-sm">
+
+          {/* Card detalhes da reunião */}
+          {(reuniaoData || reuniaoHora || reuniao.tipo || reuniao.link || isAdmin) && (
+            <div className="w-full border border-white/10 rounded-2xl overflow-hidden mb-4" style={{ background: 'rgba(255,255,255,0.03)' }}>
+              <div className="px-6 py-4 border-b border-white/[0.06]">
+                <p className="text-xs tracking-[0.3em] text-white/25 uppercase">Detalhes da Reunião</p>
+              </div>
+              <div className="px-6 py-5 flex flex-col gap-4">
+                {reuniaoData ? (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs tracking-[0.2em] text-white/30 uppercase">Data</span>
+                    <span className="font-cormorant text-lg text-white/90">{reuniaoData}</span>
+                  </div>
+                ) : isAdmin ? (
+                  <p className="text-xs text-white/20 italic text-center">Preenche a data no editor</p>
+                ) : null}
+                {reuniaoHora && <><div className="h-px bg-white/5" />
+                <div className="flex items-center justify-between">
+                  <span className="text-xs tracking-[0.2em] text-white/30 uppercase">Hora</span>
+                  <span className="font-cormorant text-lg text-white/90">{reuniaoHora}</span>
+                </div></>}
+                {reuniao.tipo && <><div className="h-px bg-white/5" />
+                <div className="flex items-center justify-between">
+                  <span className="text-xs tracking-[0.2em] text-white/30 uppercase">Modo</span>
+                  <span className="font-cormorant text-lg text-white/90">{reuniao.tipo}</span>
+                </div></>}
+              </div>
+              {reuniao.link && (
+                <div className="px-6 pb-5">
+                  <a href={reuniao.link} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs tracking-widest uppercase transition-all"
+                    style={{ background: 'rgba(201,168,76,0.08)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.2)' }}>
+                    <span>{isVideo ? '🎥' : '📍'}</span>
+                    <span>{isVideo ? 'Entrar na videochamada' : 'Ver localização'}</span>
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="w-full flex flex-col gap-3">
 
             {/* Status badge reunião */}
@@ -621,6 +683,12 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
               <div className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl text-sm tracking-wider"
                 style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.2)' }}>
                 <span>✓</span><span>Reunião Confirmada — Até breve!</span>
+              </div>
+            )}
+            {status === 'alteracao_pedida' && (
+              <div className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl text-sm tracking-wider"
+                style={{ background: 'rgba(251,191,36,0.1)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.2)' }}>
+                <span>⏳</span><span>Pedido enviado — Entraremos em contacto</span>
               </div>
             )}
 
@@ -633,7 +701,14 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
               </button>
             )}
 
-            {isAdmin && status !== 'confirmada' && (
+            {/* Botão alterar reunião */}
+            <button onClick={handleChangeRequest} disabled={requesting || isAdmin}
+              className="w-full py-3.5 rounded-2xl text-sm tracking-[0.15em] uppercase transition-all disabled:opacity-50"
+              style={{ color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}>
+              {requesting ? 'A enviar...' : 'Alterar Reunião'}
+            </button>
+
+            {isAdmin && (
               <p className="text-center text-[10px] text-white/20 tracking-widest uppercase">Botões desativados em modo admin</p>
             )}
 
@@ -916,6 +991,23 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
                 <Field label="Data (AAAA-MM-DD)"><TInput value={evento.data} onChange={v => setEvento('data', v)} placeholder="2025-06-15" /></Field>
                 <Field label="Hora"><TInput value={evento.hora} onChange={v => setEvento('hora', v)} placeholder="15:00" /></Field>
                 <Field label="Local"><TInput value={evento.local} onChange={v => setEvento('local', v)} /></Field>
+              </AccordionSection>
+
+              {/* ── REUNIÃO ── */}
+              <AccordionSection title="Detalhes da Reunião">
+                <Field label="Data (AAAA-MM-DD)"><TInput value={reuniao.data} onChange={v => setReuniao('data', v)} placeholder="2025-06-15" /></Field>
+                <Field label="Hora"><TInput value={reuniao.hora} onChange={v => setReuniao('hora', v)} placeholder="14:00" /></Field>
+                <Field label="Modo">
+                  <div className="flex gap-1">
+                    {['Presencial', 'Videochamada'].map(t => (
+                      <button key={t} onClick={() => setReuniao('tipo', t)}
+                        className={`flex-1 py-1.5 rounded-lg text-xs transition-all ${reuniao.tipo === t ? 'bg-gold/20 text-gold border border-gold/30' : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10'}`}>
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </Field>
+                <Field label="Link (Google Meet / Maps)"><TInput value={reuniao.link} onChange={v => setReuniao('link', v)} placeholder="https://..." /></Field>
               </AccordionSection>
 
               {/* ── VÍDEO ── */}
