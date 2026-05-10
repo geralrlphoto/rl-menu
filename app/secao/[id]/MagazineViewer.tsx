@@ -515,41 +515,42 @@ export default function MagazineViewer({ images: init, sectionId, isAdmin }: Pro
 
             {/* ── STATIC (no flip) ── */}
             {!flip && isCover && (
-              <div className="absolute inset-0 flex" style={{ background: '#030507' }}>
-                <div className="flex-1 h-full" style={{ background: '#030507' }} />
-                {spine}
-                <div
-                  className="relative flex-1 h-full overflow-hidden group"
-                  style={{ background: '#030507', cursor: curL ? 'zoom-in' : 'default' }}
-                  onClick={() => curL && openLightbox(curL)}
-                >
-                  {curL ? (
-                    <>
-                      <img src={curL.image_url} alt="" className="w-full h-full object-contain" draggable={false} />
-                      <div className="absolute inset-0 pointer-events-none" style={{
-                        background: 'linear-gradient(to bottom, rgba(0,0,0,0.12) 0%, transparent 22%, transparent 70%, rgba(0,0,0,0.45) 100%)'
-                      }} />
-                      <div className="absolute bottom-5 inset-x-0 flex justify-center pointer-events-none">
-                        <span className="text-[7px] tracking-[0.75em] text-white/25 uppercase">Capa</span>
-                      </div>
-                      {isAdmin && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleDelete(curL) }}
-                          disabled={deletingId === curL.id}
-                          className="absolute top-3 left-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200
-                            bg-black/60 hover:bg-red-900/80 backdrop-blur-sm text-white/50 hover:text-white
-                            text-[8px] tracking-[0.25em] px-2.5 py-1.5 border border-white/[0.08] hover:border-red-500/30 uppercase"
-                        >
-                          {deletingId === curL.id ? '···' : '✕ Eliminar'}
-                        </button>
-                      )}
-                    </>
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-white/15 text-[10px] tracking-[0.5em] uppercase">
-                      Adicione uma foto
+              <div className="absolute inset-0 flex items-stretch justify-center" style={{ background: '#030507' }}>
+                {curL ? (
+                  <div
+                    className="relative h-full overflow-hidden group"
+                    style={{
+                      aspectRatio: '2/3',
+                      cursor: 'zoom-in',
+                      background: '#030507',
+                      boxShadow: '6px 0 24px rgba(0,0,0,0.6), -6px 0 24px rgba(0,0,0,0.6)',
+                    }}
+                    onClick={() => openLightbox(curL)}
+                  >
+                    <img src={curL.image_url} alt="" className="w-full h-full object-contain" draggable={false} />
+                    <div className="absolute inset-0 pointer-events-none" style={{
+                      background: 'linear-gradient(to bottom, rgba(0,0,0,0.12) 0%, transparent 22%, transparent 70%, rgba(0,0,0,0.45) 100%)'
+                    }} />
+                    <div className="absolute bottom-5 inset-x-0 flex justify-center pointer-events-none">
+                      <span className="text-[7px] tracking-[0.75em] text-white/25 uppercase">Capa</span>
                     </div>
-                  )}
-                </div>
+                    {isAdmin && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDelete(curL) }}
+                        disabled={deletingId === curL.id}
+                        className="absolute top-3 left-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200
+                          bg-black/60 hover:bg-red-900/80 backdrop-blur-sm text-white/50 hover:text-white
+                          text-[8px] tracking-[0.25em] px-2.5 py-1.5 border border-white/[0.08] hover:border-red-500/30 uppercase"
+                      >
+                        {deletingId === curL.id ? '···' : '✕ Eliminar'}
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-white/15 text-[10px] tracking-[0.5em] uppercase" style={{ width: '50%' }}>
+                    Adicione uma foto
+                  </div>
+                )}
               </div>
             )}
 
@@ -607,17 +608,28 @@ export default function MagazineViewer({ images: init, sectionId, isAdmin }: Pro
             {/* ── BACKWARD FLIP ── */}
             {flip?.dir === 'bwd' && (
               <>
+                {fToIsCover ? (
+                  /* destination = capa → mostrar centrada */
+                  <div className="absolute inset-0 flex items-stretch justify-center" style={{ zIndex: 0, background: '#030507' }}>
+                    {fToL && (
+                      <div className="relative h-full overflow-hidden" style={{ aspectRatio: '2/3', background: '#030507' }}>
+                        {imgEl(fToL)}
+                      </div>
+                    )}
+                  </div>
+                ) : (
                 <div className="absolute inset-0 flex" style={{ zIndex: 0 }}>
                   <div className="relative flex-1 h-full overflow-hidden" style={{ background: '#040810' }}>
-                    {fToIsCover ? null : (fToL && imgEl(fToL))}
+                    {fToL && imgEl(fToL)}
                     <div className="absolute right-0 top-0 bottom-0 w-16 pointer-events-none" style={{ background: SL }} />
                   </div>
                   {spine}
                   <div className="relative flex-1 h-full overflow-hidden" style={{ background: '#050a12' }}>
-                    {fToIsCover ? (fToL && imgEl(fToL)) : (fToR && imgEl(fToR))}
+                    {fToR && imgEl(fToR)}
                     <div className="absolute left-0 top-0 bottom-0 w-16 pointer-events-none" style={{ background: SR }} />
                   </div>
                 </div>
+                )}
 
                 <div className="absolute top-0 right-0 bottom-0 overflow-hidden"
                   style={{ width: 'calc(50% - 1.5px)', background: '#050a12', zIndex: 1 }}>
