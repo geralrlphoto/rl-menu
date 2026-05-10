@@ -378,8 +378,8 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
           <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="w-36 sm:w-44 opacity-80 mb-2" />
           <p className="text-[10px] tracking-[0.5em] text-white/25 uppercase">{nome || 'Para vocês'}</p>
           <div>
-            <h1 className={`${fontClass(typo.titleFont)} ${sizeClass(typo.titleSize)} font-light`} style={{ color: typo.titleColor, lineHeight: 1 }}>Proposta</h1>
-            <h1 className={`${fontClass(typo.titleFont)} ${sizeClass(typo.titleSize)} font-light italic`} style={{ color: typo.accentColor, lineHeight: 1.1 }}>Criativa</h1>
+            <h1 className={`${fontClass(typo.titleFont)} ${sizeClass(typo.titleSize)} font-light uppercase tracking-[0.18em]`} style={{ color: typo.titleColor, lineHeight: 1 }}>Proposta</h1>
+            <h1 className={`${fontClass(typo.titleFont)} ${sizeClass(typo.titleSize)} font-light uppercase tracking-[0.18em]`} style={{ color: typo.accentColor, lineHeight: 1.1 }}>Criativa</h1>
           </div>
           <p className="text-[11px] tracking-[0.5em]" style={{ color: `${typo.accentColor}66` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
           <p className={`${fontClass(typo.bodyFont)} text-lg sm:text-xl italic opacity-60`} style={{ color: typo.bodyColor }}>{pp.subtitle}</p>
@@ -391,7 +391,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
           {/* Título — posição editável */}
           <div className="absolute" style={titlePosStyle(pp.about?.titlePos || 'top-right', isAdmin)}>
-            <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
+            <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
               style={{ fontSize: 'clamp(1.6rem,3.5vw,2.6rem)', color: typo.titleColor, lineHeight: 1.1, whiteSpace: 'nowrap' }}>
               {pp.about?.title || 'Sobre Nós'}
             </h2>
@@ -469,7 +469,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
             {/* Esquerda — texto */}
             <div className="flex flex-col gap-6 flex-1">
-              <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
+              <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
                 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.1 }}>
                 Relive Wedding
               </h2>
@@ -514,7 +514,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
             {/* Esquerda — texto */}
             <div className="flex flex-col gap-5 flex-1">
-              <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
+              <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
                 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.1 }}>
                 {pp.grandeDia?.title || 'o grande dia'}
               </h2>
@@ -560,7 +560,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
           <div className={`relative z-10 flex flex-col gap-8 ${pp.reflexao?.imageUrl ? 'px-12 sm:px-20 text-left' : 'items-center text-center px-8 sm:px-20 mx-auto'}`}
             style={{ maxWidth: pp.reflexao?.imageUrl ? '52%' : '680px' }}>
             <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-            <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
+            <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
               style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.15 }}>
               Como imaginam o vosso dia?
             </h2>
@@ -591,7 +591,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
           {/* Texto — esquerda quando há foto, centrado quando não há */}
           {pp.couple?.imageUrl ? (
             <div className="relative z-10 h-full flex flex-col justify-center px-12 sm:px-20" style={{ maxWidth: '54%' }}>
-              <p className={`${fontClass(typo.titleFont)} font-light italic mb-6`}
+              <p className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em] mb-6`}
                 style={{ fontSize: 'clamp(1.5rem,3.5vw,2.6rem)', color: 'rgba(255,255,255,0.25)', lineHeight: 1.1 }}>
                 Quem são os meus noivos?
               </p>
@@ -602,8 +602,8 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-8 max-w-3xl mx-auto">
-              <p className={`${fontClass(typo.titleFont)} font-light italic`}
-                style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: 'rgba(255,255,255,0.2)', lineHeight: 1.1, whiteSpace: 'nowrap' }}>
+              <p className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+                style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: 'rgba(255,255,255,0.2)', lineHeight: 1.1 }}>
                 Quem são os meus noivos?
               </p>
               <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
@@ -619,8 +619,8 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       case 'invest': return (
         <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-8 max-w-2xl mx-auto">
           <p className="text-[10px] tracking-[0.5em] text-white/20 uppercase">&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-          <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
-            style={{ fontSize: 'clamp(2.5rem,7vw,5rem)', color: typo.titleColor, lineHeight: 1.0, letterSpacing: '0.06em' }}>
+          <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+            style={{ fontSize: 'clamp(2.5rem,7vw,5rem)', color: typo.titleColor, lineHeight: 1.0 }}>
             Investimento
           </h2>
           <p className="text-[10px] tracking-[0.5em] text-white/20 uppercase">&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
@@ -893,7 +893,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         <div className="flex items-center justify-center h-full w-full px-8 sm:px-16 py-8">
           <div className="w-full max-w-5xl flex flex-col gap-6">
 
-            <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
+            <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
               style={{ fontSize: 'clamp(1.6rem,3.5vw,2.8rem)', color: typo.titleColor, lineHeight: 1.1 }}>
               Informações Gerais
             </h2>
@@ -931,7 +931,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
           <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="opacity-75" style={{ width: '200px' }} />
           <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
           <a href="https://www.www.rlprod.pt" target="_blank" rel="noopener noreferrer"
-            className={`${fontClass(typo.titleFont)} font-light italic hover:opacity-80 transition-opacity`}
+            className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em] hover:opacity-80 transition-opacity`}
             style={{ fontSize: 'clamp(1.4rem,3vw,2.4rem)', color: typo.titleColor }}>
             www.www.rlprod.pt
           </a>
@@ -950,7 +950,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       case 'final': return (
         <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-10 max-w-3xl mx-auto">
           <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-          <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
+          <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
             style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.15 }}>
             O que gostaram mais até agora?
           </h2>
