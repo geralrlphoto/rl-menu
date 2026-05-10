@@ -39,7 +39,7 @@ function SlideIn({ children, dir }: { children: React.ReactNode; dir: 'right' | 
   const [vis, setVis] = useState(false)
   useEffect(() => { const t = setTimeout(() => setVis(true), 30); return () => clearTimeout(t) }, [])
   return (
-    <div style={{ opacity: vis ? 1 : 0, transform: vis ? 'translateX(0px)' : `translateX(${dir === 'right' ? '48px' : '-48px'})`, transition: 'opacity 0.5s cubic-bezier(0.22,1,0.36,1), transform 0.5s cubic-bezier(0.22,1,0.36,1)', height: '100%' }}>
+    <div style={{ opacity: vis ? 1 : 0, transform: vis ? 'translateX(0px)' : `translateX(${dir === 'right' ? '48px' : '-48px'})`, transition: 'opacity 0.5s cubic-bezier(0.22,1,0.36,1), transform 0.5s cubic-bezier(0.22,1,0.36,1)', height: '100%', width: '100%' }}>
       {children}
     </div>
   )
