@@ -49,6 +49,7 @@ export type PageContent = {
     couple: { imageUrl: string; title: string }
     reflexao: { imageUrl: string }
     final: { imageUrl: string }
+    slidePhotos: Record<string, string>
     grandeDia: { title: string; p1: string; p2: string; p3: string; note: string; imageUrl: string }
     packages: { title: string; description: string; price: string }[]
     propostaAtiva: number
@@ -130,6 +131,7 @@ export const DEFAULT_CONTENT: PageContent = {
     final: {
       imageUrl: '',
     },
+    slidePhotos: {},
     grandeDia: {
       title: 'o grande dia',
       p1: 'Nas preparações (sempre que possível), normalmente o que aconselhamos é reunir com as noivas 1 hora e 45 minutos e com os noivos cerca de 1 hora, antes da saída para a cerimónia.',

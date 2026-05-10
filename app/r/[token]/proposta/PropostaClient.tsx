@@ -47,7 +47,7 @@ function mergeContent(saved: any): PageContent {
     proposta:     { ...DEFAULT_CONTENT.proposta,     ...(saved.proposta     || {}) },
     propostas:       saved.propostas       || DEFAULT_CONTENT.propostas,
     extras_proposta: saved.extras_proposta || [],
-    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), about: { ...DEFAULT_CONTENT.propostaPage.about, ...(saved.propostaPage?.about || {}) }, relive: { ...DEFAULT_CONTENT.propostaPage.relive, ...(saved.propostaPage?.relive || {}) }, couple: { ...DEFAULT_CONTENT.propostaPage.couple, ...(saved.propostaPage?.couple || {}) }, reflexao: { ...DEFAULT_CONTENT.propostaPage.reflexao, ...(saved.propostaPage?.reflexao || {}) }, final: { ...DEFAULT_CONTENT.propostaPage.final, ...(saved.propostaPage?.final || {}) }, grandeDia: { ...DEFAULT_CONTENT.propostaPage.grandeDia, ...(saved.propostaPage?.grandeDia || {}) }, packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, propostaAtiva: saved.propostaPage?.propostaAtiva ?? 0, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
+    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), about: { ...DEFAULT_CONTENT.propostaPage.about, ...(saved.propostaPage?.about || {}) }, relive: { ...DEFAULT_CONTENT.propostaPage.relive, ...(saved.propostaPage?.relive || {}) }, couple: { ...DEFAULT_CONTENT.propostaPage.couple, ...(saved.propostaPage?.couple || {}) }, reflexao: { ...DEFAULT_CONTENT.propostaPage.reflexao, ...(saved.propostaPage?.reflexao || {}) }, final: { ...DEFAULT_CONTENT.propostaPage.final, ...(saved.propostaPage?.final || {}) }, slidePhotos: { ...(saved.propostaPage?.slidePhotos || {}) }, grandeDia: { ...DEFAULT_CONTENT.propostaPage.grandeDia, ...(saved.propostaPage?.grandeDia || {}) }, packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, propostaAtiva: saved.propostaPage?.propostaAtiva ?? 0, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
   }
 }
 
@@ -168,9 +168,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   const [editorTab,     setEditorTab]     = useState<'tipografia'|'texto'>('tipografia')
   const [uploadingAbout,  setUploadingAbout]  = useState(false)
   const [uploadingRelive, setUploadingRelive] = useState(false)
-  const [uploadingCouple,  setUploadingCouple]  = useState(false)
-  const [uploadingReflexao, setUploadingReflexao] = useState(false)
-  const [uploadingFinal,    setUploadingFinal]    = useState(false)
+  const [uploadingSlidePhoto, setUploadingSlidePhoto] = useState<string | null>(null)
 
   useEffect(() => {
     fetch(`/api/lead-page/view?token=${token}`)
@@ -261,44 +259,24 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   function setRelive(k: keyof PageContent['propostaPage']['relive'], v: string) {
     setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, relive: { ...c.propostaPage.relive, [k]: v } } }))
   }
-  function setCouple(k: keyof PageContent['propostaPage']['couple'], v: string) {
-    setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, couple: { ...c.propostaPage.couple, [k]: v } } }))
-  }
-  function setFinalSlide(k: keyof PageContent['propostaPage']['final'], v: string) {
-    setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, final: { ...c.propostaPage.final, [k]: v } } }))
-  }
-  const handleFinalUpload = async (file: File) => {
-    setUploadingFinal(true)
+  const handleSlidePhotoUpload = async (slideId: string, file: File) => {
+    setUploadingSlidePhoto(slideId)
     try {
       const fd = new FormData(); fd.append('file', file)
       const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
       const data = await res.json()
-      if (data.url) setFinalSlide('imageUrl', data.url)
+      if (data.url) {
+        setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, slidePhotos: { ...(c.propostaPage.slidePhotos || {}), [slideId]: data.url } } }))
+      }
     } catch {}
-    setUploadingFinal(false)
+    setUploadingSlidePhoto(null)
   }
-  function setReflexao(k: keyof PageContent['propostaPage']['reflexao'], v: string) {
-    setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, reflexao: { ...c.propostaPage.reflexao, [k]: v } } }))
-  }
-  const handleReflexaoUpload = async (file: File) => {
-    setUploadingReflexao(true)
-    try {
-      const fd = new FormData(); fd.append('file', file)
-      const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
-      const data = await res.json()
-      if (data.url) setReflexao('imageUrl', data.url)
-    } catch {}
-    setUploadingReflexao(false)
-  }
-  const handleCoupleUpload = async (file: File) => {
-    setUploadingCouple(true)
-    try {
-      const fd = new FormData(); fd.append('file', file)
-      const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
-      const data = await res.json()
-      if (data.url) setCouple('imageUrl', data.url)
-    } catch {}
-    setUploadingCouple(false)
+  function clearSlidePhoto(slideId: string) {
+    setContent(c => {
+      const sp = { ...(c.propostaPage.slidePhotos || {}) }
+      delete sp[slideId]
+      return { ...c, propostaPage: { ...c.propostaPage, slidePhotos: sp } }
+    })
   }
   function setGrandeDia(k: keyof PageContent['propostaPage']['grandeDia'], v: string) {
     setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, grandeDia: { ...c.propostaPage.grandeDia, [k]: v } } }))
@@ -1026,8 +1004,23 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       {/* Slide atual */}
       <div className={`absolute inset-0 flex items-center justify-center ${isAdmin ? 'pt-9' : ''}`}>
         <SlideIn key={current} dir={direction}>
-          <div className="w-full h-full flex items-center justify-center">
-            {renderSlide(slides[current])}
+          <div className="relative w-full h-full flex items-center justify-center">
+            {/* Foto com desvanecer — universal para todos os slides */}
+            {pp.slidePhotos?.[slides[current]] && (
+              <img
+                src={pp.slidePhotos[slides[current]]}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover object-right"
+                style={{
+                  maskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)',
+                  WebkitMaskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)',
+                  zIndex: 0,
+                }}
+              />
+            )}
+            <div className="relative w-full h-full flex items-center justify-center" style={{ zIndex: 1 }}>
+              {renderSlide(slides[current])}
+            </div>
           </div>
         </SlideIn>
       </div>
@@ -1181,61 +1174,45 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 </Field>
 
                 <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
-                <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Slide "O que gostaram mais?"</p>
-                <Field label="Foto lado direito (desvanece à esquerda)">
-                  <label className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-xs cursor-pointer transition-all ${uploadingFinal ? 'opacity-50 pointer-events-none' : ''}`}
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.35)' }}>
-                    <input type="file" accept="image/*" className="hidden"
-                      onChange={e => { const f = e.target.files?.[0]; if (f) handleFinalUpload(f) }} />
-                    {uploadingFinal ? '⏳ A carregar...' : pp.final?.imageUrl ? '✓ Trocar foto' : '⬆ Carregar foto'}
-                  </label>
-                  {pp.final?.imageUrl && (
-                    <div className="relative mt-1 rounded-lg overflow-hidden" style={{ height: '90px' }}>
-                      <img src={pp.final.imageUrl} alt="" className="w-full h-full object-cover opacity-70" />
-                      <button onClick={() => setFinalSlide('imageUrl', '')}
-                        className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px]"
-                        style={{ background: 'rgba(0,0,0,0.7)', color: 'rgba(255,255,255,0.5)' }}>✕</button>
-                    </div>
-                  )}
-                </Field>
-
-                <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
-                <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Slide "Como imaginam o vosso dia?"</p>
-                <Field label="Foto lado direito (desvanece à esquerda)">
-                  <label className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-xs cursor-pointer transition-all ${uploadingReflexao ? 'opacity-50 pointer-events-none' : ''}`}
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.35)' }}>
-                    <input type="file" accept="image/*" className="hidden"
-                      onChange={e => { const f = e.target.files?.[0]; if (f) handleReflexaoUpload(f) }} />
-                    {uploadingReflexao ? '⏳ A carregar...' : pp.reflexao?.imageUrl ? '✓ Trocar foto' : '⬆ Carregar foto'}
-                  </label>
-                  {pp.reflexao?.imageUrl && (
-                    <div className="relative mt-1 rounded-lg overflow-hidden" style={{ height: '90px' }}>
-                      <img src={pp.reflexao.imageUrl} alt="" className="w-full h-full object-cover opacity-70" />
-                      <button onClick={() => setReflexao('imageUrl', '')}
-                        className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px]"
-                        style={{ background: 'rgba(0,0,0,0.7)', color: 'rgba(255,255,255,0.5)' }}>✕</button>
-                    </div>
-                  )}
-                </Field>
-
-                <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
-                <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Slide "Quem são os meus noivos?"</p>
-                <Field label="Foto lado direito (desvanece à esquerda)">
-                  <label className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-xs cursor-pointer transition-all ${uploadingCouple ? 'opacity-50 pointer-events-none' : ''}`}
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.35)' }}>
-                    <input type="file" accept="image/*" className="hidden"
-                      onChange={e => { const f = e.target.files?.[0]; if (f) handleCoupleUpload(f) }} />
-                    {uploadingCouple ? '⏳ A carregar...' : pp.couple?.imageUrl ? '✓ Trocar foto' : '⬆ Carregar foto'}
-                  </label>
-                  {pp.couple?.imageUrl && (
-                    <div className="relative mt-1 rounded-lg overflow-hidden" style={{ height: '90px' }}>
-                      <img src={pp.couple.imageUrl} alt="" className="w-full h-full object-cover opacity-70" />
-                      <button onClick={() => setCouple('imageUrl', '')}
-                        className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px]"
-                        style={{ background: 'rgba(0,0,0,0.7)', color: 'rgba(255,255,255,0.5)' }}>✕</button>
-                    </div>
-                  )}
-                </Field>
+                <AccordionSection title="Fotos por Slide (desvanecer direita)">
+                  {([
+                    ['cover',  'Capa'],
+                    ['about',  'Sobre Nós'],
+                    ['intro',  'Quem são os noivos?'],
+                    ['relive', 'Relive Wedding'],
+                    ['blank',  'Como imaginam o dia?'],
+                    ['blank2', 'O Grande Dia'],
+                    ['invest', 'Investimento'],
+                    ['pkg-0',  'Proposta 1'],
+                    ['pkg-1',  'Proposta 2'],
+                    ['pkg-2',  'Proposta 3'],
+                    ['final',  'O que gostaram mais?'],
+                    ['cta',    'Informações Gerais'],
+                    ['contact','Contactos'],
+                  ] as [string, string][]).map(([id, label]) => {
+                    const imgUrl = pp.slidePhotos?.[id] || ''
+                    const isUploading = uploadingSlidePhoto === id
+                    return (
+                      <div key={id} className="flex flex-col gap-1.5">
+                        <p className="text-[10px] tracking-[0.2em] text-white/30 uppercase">{label}</p>
+                        <label className={`flex items-center justify-center gap-2 w-full py-2 rounded-lg text-xs cursor-pointer transition-all ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
+                          style={{ background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.35)' }}>
+                          <input type="file" accept="image/*" className="hidden"
+                            onChange={e => { const f = e.target.files?.[0]; if (f) handleSlidePhotoUpload(id, f) }} />
+                          {isUploading ? '⏳ A carregar...' : imgUrl ? '✓ Trocar foto' : '⬆ Foto'}
+                        </label>
+                        {imgUrl && (
+                          <div className="relative rounded-lg overflow-hidden" style={{ height: '70px' }}>
+                            <img src={imgUrl} alt="" className="w-full h-full object-cover object-right opacity-70" />
+                            <button onClick={() => clearSlidePhoto(id)}
+                              className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px]"
+                              style={{ background: 'rgba(0,0,0,0.7)', color: 'rgba(255,255,255,0.5)' }}>✕</button>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </AccordionSection>
 
                 <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
                 <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Slide Relive Wedding</p>
