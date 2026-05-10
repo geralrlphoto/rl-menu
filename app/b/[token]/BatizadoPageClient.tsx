@@ -607,6 +607,7 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
       </section>
 
       {/* ── CARD EVENTO ── */}
+      {(isAdmin || evento.nome || evento.data || evento.hora || evento.local) && (
       <section className="flex flex-col items-center px-6 py-10 sm:py-14">
         <FadeIn className="w-full max-w-sm">
           <div className="w-full border border-white/10 rounded-2xl overflow-hidden mb-8" style={{ background: 'rgba(255,255,255,0.03)' }}>
@@ -655,16 +656,15 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
                   <span className="text-xs tracking-[0.2em] text-white/30 uppercase">Local</span>
                   <span className="font-cormorant text-lg text-white/90 text-right max-w-[180px]">{evento.local}</span>
                 </div></>}
-                {!evento.nome && !evento.data && !evento.hora && !evento.local && (
-                  <p className="text-xs text-white/20 text-center py-2 italic">
-                    {isAdmin ? 'Clica em Editar para adicionar os detalhes do batizado' : 'Detalhes em breve'}
-                  </p>
+                {isAdmin && !evento.nome && !evento.data && !evento.hora && !evento.local && (
+                  <p className="text-xs text-white/20 text-center py-2 italic">Clica em Editar para adicionar os detalhes do batizado</p>
                 )}
               </div>
             )}
           </div>
         </FadeIn>
       </section>
+      )}
 
       {/* ── CONTAGEM REGRESSIVA ── */}
       {targetDate && (
