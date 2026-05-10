@@ -534,79 +534,88 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         </div>
       )
 
-      case 'blank': return (
-        <div className="relative h-full w-full overflow-hidden flex items-center">
-          {/* Foto com desvanecer para transparência */}
-          {pp.reflexao?.imageUrl && (
-            <img
-              src={pp.reflexao.imageUrl}
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover object-right"
-              style={{
-                maskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)',
-                WebkitMaskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)',
-              }}
-            />
-          )}
-          {/* Texto */}
-          <div className={`relative z-10 flex flex-col gap-8 ${pp.reflexao?.imageUrl ? 'px-12 sm:px-20 text-left' : 'items-center text-center px-8 sm:px-20 mx-auto'}`}
-            style={{ maxWidth: pp.reflexao?.imageUrl ? '52%' : '680px' }}>
-            <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-            <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
-              style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.15 }}>
-              Como imaginam o vosso dia?
-            </h2>
-            <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
-            <p className="font-light leading-relaxed" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.7 }}>
-              O que é que torna este dia verdadeiramente único para vocês?<br />
-              Qual é o momento, o detalhe, a emoção que não pode ficar por registar?
-            </p>
-            <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+      case 'blank': {
+        const blankPhoto = pp.slidePhotos?.['blank'] || pp.reflexao?.imageUrl || ''
+        return (
+          <div className="relative h-full w-full overflow-hidden flex items-center">
+            {blankPhoto && (
+              <img src={blankPhoto} alt=""
+                className="absolute inset-0 w-full h-full object-cover object-right"
+                style={{ maskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)', WebkitMaskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)' }}
+              />
+            )}
+            <div className={`relative z-10 flex flex-col gap-8 ${blankPhoto ? 'px-12 sm:px-20 text-left' : 'items-center text-center px-8 sm:px-20 mx-auto'}`}
+              style={{ maxWidth: blankPhoto ? '52%' : '680px' }}>
+              <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+              <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+                style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.15 }}>
+                Como imaginam o vosso dia?
+              </h2>
+              <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
+              <p className="font-light leading-relaxed" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.7 }}>
+                O que é que torna este dia verdadeiramente único para vocês?<br />
+                Qual é o momento, o detalhe, a emoção que não pode ficar por registar?
+              </p>
+              <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+            </div>
+            {/* Botão upload inline — só admin */}
+            {isAdmin && (
+              <label className="absolute bottom-6 right-6 z-20 flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-[10px] tracking-[0.2em] uppercase transition-all"
+                style={{ background: 'rgba(201,168,76,0.12)', border: '0.5px solid rgba(201,168,76,0.4)', color: 'rgba(201,168,76,0.8)' }}>
+                <input type="file" accept="image/*" className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleSlidePhotoUpload('blank', f) }} />
+                {uploadingSlidePhoto === 'blank' ? '⏳' : blankPhoto ? '✦ Trocar foto' : '⬆ Foto direita'}
+              </label>
+            )}
           </div>
-        </div>
-      )
+        )
+      }
 
-      case 'intro': return (
-        <div className="relative h-full w-full overflow-hidden">
-          {/* Foto com desvanecer para transparência */}
-          {pp.couple?.imageUrl && (
-            <img
-              src={pp.couple.imageUrl}
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover object-right"
-              style={{
-                maskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)',
-                WebkitMaskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)',
-              }}
-            />
-          )}
-          {/* Texto — esquerda quando há foto, centrado quando não há */}
-          {pp.couple?.imageUrl ? (
-            <div className="relative z-10 h-full flex flex-col justify-center px-12 sm:px-20" style={{ maxWidth: '54%' }}>
-              <p className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em] mb-6`}
-                style={{ fontSize: 'clamp(1.5rem,3.5vw,2.6rem)', color: 'rgba(255,255,255,0.25)', lineHeight: 1.1 }}>
-                Quem são os meus noivos?
-              </p>
-              <p className="text-[11px] tracking-[0.45em] mb-6" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
-              <p className={`${fontClass(typo.bodyFont)} text-xl italic font-light leading-relaxed`} style={{ color: typo.bodyColor }}>
-                &ldquo;{pp.intro}&rdquo;
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-8 max-w-3xl mx-auto">
-              <p className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
-                style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: 'rgba(255,255,255,0.2)', lineHeight: 1.1 }}>
-                Quem são os meus noivos?
-              </p>
-              <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
-              <p className={`${fontClass(typo.bodyFont)} text-2xl sm:text-3xl italic font-light leading-relaxed`} style={{ color: typo.bodyColor }}>
-                &ldquo;{pp.intro}&rdquo;
-              </p>
-              <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
-            </div>
-          )}
-        </div>
-      )
+      case 'intro': {
+        const introPhoto = pp.slidePhotos?.['intro'] || pp.couple?.imageUrl || ''
+        return (
+          <div className="relative h-full w-full overflow-hidden">
+            {introPhoto && (
+              <img src={introPhoto} alt=""
+                className="absolute inset-0 w-full h-full object-cover object-right"
+                style={{ maskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)', WebkitMaskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)' }}
+              />
+            )}
+            {introPhoto ? (
+              <div className="relative z-10 h-full flex flex-col justify-center px-12 sm:px-20" style={{ maxWidth: '54%' }}>
+                <p className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em] mb-6`}
+                  style={{ fontSize: 'clamp(1.5rem,3.5vw,2.6rem)', color: 'rgba(255,255,255,0.25)', lineHeight: 1.1 }}>
+                  Quem são os meus noivos?
+                </p>
+                <p className="text-[11px] tracking-[0.45em] mb-6" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
+                <p className={`${fontClass(typo.bodyFont)} text-xl italic font-light leading-relaxed`} style={{ color: typo.bodyColor }}>
+                  &ldquo;{pp.intro}&rdquo;
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-8 max-w-3xl mx-auto">
+                <p className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+                  style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: 'rgba(255,255,255,0.2)', lineHeight: 1.1 }}>
+                  Quem são os meus noivos?
+                </p>
+                <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
+                <p className={`${fontClass(typo.bodyFont)} text-2xl sm:text-3xl italic font-light leading-relaxed`} style={{ color: typo.bodyColor }}>
+                  &ldquo;{pp.intro}&rdquo;
+                </p>
+                <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
+              </div>
+            )}
+            {isAdmin && (
+              <label className="absolute bottom-6 right-6 z-20 flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-[10px] tracking-[0.2em] uppercase transition-all"
+                style={{ background: 'rgba(201,168,76,0.12)', border: '0.5px solid rgba(201,168,76,0.4)', color: 'rgba(201,168,76,0.8)' }}>
+                <input type="file" accept="image/*" className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleSlidePhotoUpload('intro', f) }} />
+                {uploadingSlidePhoto === 'intro' ? '⏳' : introPhoto ? '✦ Trocar foto' : '⬆ Foto direita'}
+              </label>
+            )}
+          </div>
+        )
+      }
 
       case 'invest': return (
         <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-8 max-w-2xl mx-auto">
@@ -939,35 +948,41 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         </div>
       )
 
-      case 'final': return (
-        <div className="relative h-full w-full overflow-hidden flex items-center">
-          {pp.final?.imageUrl && (
-            <img
-              src={pp.final.imageUrl}
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover object-right"
-              style={{
-                maskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)',
-                WebkitMaskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)',
-              }}
-            />
-          )}
-          <div className={`relative z-10 flex flex-col gap-8 ${pp.final?.imageUrl ? 'px-12 sm:px-20 text-left' : 'items-center text-center px-8 sm:px-20 mx-auto'}`}
-            style={{ maxWidth: pp.final?.imageUrl ? '52%' : '680px' }}>
-            <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-            <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
-              style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.15 }}>
-              O que gostaram mais até agora?
-            </h2>
-            <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
-            <p className="font-light leading-relaxed" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.7 }}>
-              Há algum momento, detalhe ou serviço que vos tocou de forma especial?<br />
-              A vossa opinião ajuda-nos a construir algo verdadeiramente único para vocês.
-            </p>
-            <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+      case 'final': {
+        const finalPhoto = pp.slidePhotos?.['final'] || pp.final?.imageUrl || ''
+        return (
+          <div className="relative h-full w-full overflow-hidden flex items-center">
+            {finalPhoto && (
+              <img src={finalPhoto} alt=""
+                className="absolute inset-0 w-full h-full object-cover object-right"
+                style={{ maskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)', WebkitMaskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)' }}
+              />
+            )}
+            <div className={`relative z-10 flex flex-col gap-8 ${finalPhoto ? 'px-12 sm:px-20 text-left' : 'items-center text-center px-8 sm:px-20 mx-auto'}`}
+              style={{ maxWidth: finalPhoto ? '52%' : '680px' }}>
+              <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+              <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+                style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.15 }}>
+                O que gostaram mais até agora?
+              </h2>
+              <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
+              <p className="font-light leading-relaxed" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.7 }}>
+                Há algum momento, detalhe ou serviço que vos tocou de forma especial?<br />
+                A vossa opinião ajuda-nos a construir algo verdadeiramente único para vocês.
+              </p>
+              <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+            </div>
+            {isAdmin && (
+              <label className="absolute bottom-6 right-6 z-20 flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-[10px] tracking-[0.2em] uppercase transition-all"
+                style={{ background: 'rgba(201,168,76,0.12)', border: '0.5px solid rgba(201,168,76,0.4)', color: 'rgba(201,168,76,0.8)' }}>
+                <input type="file" accept="image/*" className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleSlidePhotoUpload('final', f) }} />
+                {uploadingSlidePhoto === 'final' ? '⏳' : finalPhoto ? '✦ Trocar foto' : '⬆ Foto direita'}
+              </label>
+            )}
           </div>
-        </div>
-      )
+        )
+      }
 
       default: return null
     }
