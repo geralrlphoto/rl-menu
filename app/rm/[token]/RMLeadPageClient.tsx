@@ -476,9 +476,9 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
 
           {/* Hero background photo */}
           {hero.imageUrl && (
-            <div className="absolute inset-0 z-0" style={{
-              WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 45%, transparent 100%)',
-              maskImage: 'linear-gradient(to bottom, black 0%, black 45%, transparent 100%)',
+            <div className="absolute top-0 inset-x-0 h-1/2 z-0" style={{
+              WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 30%, transparent 100%)',
+              maskImage: 'linear-gradient(to bottom, black 0%, black 30%, transparent 100%)',
             }}>
               <img src={hero.imageUrl} alt="" className="w-full h-full object-cover" />
             </div>
