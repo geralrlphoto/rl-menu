@@ -12,7 +12,7 @@ function fmtData(d: string) {
 }
 
 export async function POST(req: NextRequest) {
-  const { email, nome, reuniao_data, reuniao_hora, reuniao_tipo, page_token } = await req.json().catch(() => ({}))
+  const { email, nome, reuniao_data, reuniao_hora, reuniao_tipo, page_token, page_tipo } = await req.json().catch(() => ({}))
 
   if (!email || !reuniao_data || !reuniao_hora) {
     return NextResponse.json({ error: 'email, reuniao_data e reuniao_hora são obrigatórios' }, { status: 400 })
@@ -21,8 +21,9 @@ export async function POST(req: NextRequest) {
   const dataFmt  = fmtData(reuniao_data)
   const isVideo  = reuniao_tipo === 'Videochamada'
   const modoTxt  = isVideo ? 'Videochamada' : 'Presencial'
+  const prefix   = page_tipo === 'batizado' ? 'b' : 'r'
   const pageLink = page_token
-    ? `https://rl-menu-lake.vercel.app/r/${page_token}`
+    ? `https://rl-menu-lake.vercel.app/${prefix}/${page_token}`
     : (isVideo ? MEET_LINK : MAPS_LINK)
   const saudacao = nome ? `Olá, ${nome}!` : 'Olá!'
 

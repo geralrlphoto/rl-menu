@@ -280,6 +280,7 @@ export default function ClientePage() {
             reuniao_tipo: tipo,
             reuniao_link: link,
             page_token:   form.page_token || null,
+            page_tipo:    pageTipo,
           }),
         }).catch(() => {})
       }
@@ -289,6 +290,17 @@ export default function ClientePage() {
       alert('Erro ao guardar reunião: ' + error.message)
     }
     setSendingReuniao(false)
+  }
+
+  const handleSetTipo = async (tipo: 'casamento' | 'batizado') => {
+    setPageTipo(tipo)
+    const pc = typeof form.page_content === 'string'
+      ? JSON.parse(form.page_content || '{}')
+      : (form.page_content || {})
+    const newPc = { ...pc, tipo }
+    await supabase.from('crm_contacts').update({ page_content: newPc }).eq('id', id)
+    setForm((f: Contact) => ({ ...f, page_content: newPc }))
+    setOriginal((f: Contact) => ({ ...f, page_content: newPc }))
   }
 
   const handleTogglePage = async (publish: boolean) => {
@@ -700,7 +712,7 @@ export default function ClientePage() {
             <label className="text-xs tracking-widest text-white/30 uppercase">Tipo de Maquete</label>
             <div className="flex rounded-xl overflow-hidden border border-white/10 self-start">
               <button
-                onClick={() => setPageTipo('casamento')}
+                onClick={() => handleSetTipo('casamento')}
                 className={`px-5 py-2 text-xs tracking-widest uppercase transition-all ${
                   pageTipo === 'casamento'
                     ? 'bg-gold/90 text-black font-semibold'
@@ -710,7 +722,7 @@ export default function ClientePage() {
                 Casamento
               </button>
               <button
-                onClick={() => setPageTipo('batizado')}
+                onClick={() => handleSetTipo('batizado')}
                 className={`px-5 py-2 text-xs tracking-widest uppercase transition-all ${
                   pageTipo === 'batizado'
                     ? 'bg-gold/90 text-black font-semibold'
