@@ -3,7 +3,38 @@ import { createClient } from '@supabase/supabase-js'
 
 const MASTER_TOKEN = 'batizado-maquete'
 
-// Copies propostaPage + typography from the master template to all other batizado tokens
+// Fields from the master template that propagate to ALL client pages.
+// 'evento' (baby name/date/local) is client-specific — never overwritten.
+// 'proposta.password' is client-specific — never overwritten.
+const DESIGN_FIELDS = [
+  'hero', 'video', 'portfolio', 'testimonials',
+  'about', 'banner', 'propostaPage', 'propostas', 'extras_proposta',
+]
+
+export function buildSyncedContent(
+  masterContent: Record<string, any>,
+  clientContent: Record<string, any>
+): Record<string, any> {
+  const synced: Record<string, any> = { ...clientContent }
+
+  for (const field of DESIGN_FIELDS) {
+    if (masterContent[field] !== undefined) {
+      synced[field] = masterContent[field]
+    }
+  }
+
+  // Preserve client's evento (baby name, date, hour, local)
+  synced.evento = clientContent.evento ?? masterContent.evento ?? {}
+
+  // Sync proposta button label from master; keep client's own password
+  synced.proposta = {
+    buttonLabel: masterContent.proposta?.buttonLabel ?? clientContent.proposta?.buttonLabel ?? '',
+    password: clientContent.proposta?.password ?? '',
+  }
+
+  return synced
+}
+
 export async function POST(req: NextRequest) {
   const auth = req.cookies.get('rl_auth')?.value
   if (auth !== process.env.AUTH_SECRET) {
@@ -27,13 +58,8 @@ export async function POST(req: NextRequest) {
   }
 
   const masterContent = master.settings.content
-  const designFields = {
-    propostaPage: masterContent.propostaPage,
-    propostas: masterContent.propostas,
-    extras_proposta: masterContent.extras_proposta,
-  }
 
-  // Get all other batizado rows
+  // Get all client batizado rows (excluding master)
   const { data: allRows } = await supabase
     .from('portal_template_settings')
     .select('page_id, settings')
@@ -46,12 +72,15 @@ export async function POST(req: NextRequest) {
 
   let synced = 0
   for (const row of allRows) {
-    const updatedContent = { ...(row.settings?.content || {}), ...designFields }
+    const clientContent = row.settings?.content || {}
+    const updatedContent = buildSyncedContent(masterContent, clientContent)
     const updatedSettings = { ...(row.settings || {}), content: updatedContent }
+
     const { error } = await supabase
       .from('portal_template_settings')
       .update({ settings: updatedSettings, updated_at: new Date().toISOString() })
       .eq('page_id', row.page_id)
+
     if (!error) synced++
   }
 

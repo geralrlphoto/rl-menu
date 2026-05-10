@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { buildSyncedContent } from '../sync-template/route'
+
+const MASTER_TOKEN = 'batizado-maquete'
 
 export async function POST(req: NextRequest) {
   const auth = req.cookies.get('rl_auth')?.value
@@ -28,8 +31,35 @@ export async function POST(req: NextRequest) {
 
   const { error } = await supabase
     .from('portal_template_settings')
-    .upsert({ page_id: pageId, settings: merged, updated_at: new Date().toISOString() }, { onConflict: 'page_id' })
+    .upsert(
+      { page_id: pageId, settings: merged, updated_at: new Date().toISOString() },
+      { onConflict: 'page_id' }
+    )
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // ── Auto-sync when saving the master template ──────────────────────────────
+  // Any change to /b/batizado-maquete propagates immediately to all client pages.
+  if (token === MASTER_TOKEN) {
+    const { data: allRows } = await supabase
+      .from('portal_template_settings')
+      .select('page_id, settings')
+      .like('page_id', 'batizado_%')
+      .neq('page_id', pageId)
+
+    if (allRows && allRows.length > 0) {
+      for (const row of allRows) {
+        const clientContent = row.settings?.content || {}
+        const updatedContent = buildSyncedContent(content, clientContent)
+        const updatedSettings = { ...(row.settings || {}), content: updatedContent }
+
+        await supabase
+          .from('portal_template_settings')
+          .update({ settings: updatedSettings, updated_at: new Date().toISOString() })
+          .eq('page_id', row.page_id)
+      }
+    }
+  }
+
   return NextResponse.json({ success: true })
 }
