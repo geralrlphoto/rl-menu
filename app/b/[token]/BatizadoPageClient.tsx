@@ -184,6 +184,33 @@ function fmtData(d: string) {
   } catch { return d }
 }
 
+function Countdown({ targetDate }: { targetDate: string }) {
+  const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0 })
+  useEffect(() => {
+    function tick() {
+      const diff = new Date(targetDate).getTime() - Date.now()
+      if (diff <= 0) return setT({ d: 0, h: 0, m: 0, s: 0 })
+      setT({ d: Math.floor(diff/86400000), h: Math.floor((diff%86400000)/3600000), m: Math.floor((diff%3600000)/60000), s: Math.floor((diff%60000)/1000) })
+    }
+    tick(); const id = setInterval(tick, 1000); return () => clearInterval(id)
+  }, [targetDate])
+  const Unit = ({ v, label }: { v: number; label: string }) => (
+    <div className="flex flex-col items-center">
+      <span className="font-playfair text-4xl sm:text-5xl font-bold text-white tabular-nums">{String(v).padStart(2,'0')}</span>
+      <span className="text-[10px] tracking-[0.25em] text-white/40 uppercase mt-1">{label}</span>
+    </div>
+  )
+  const Sep = () => <span className="font-playfair text-3xl text-gold/40 self-start mt-2">|</span>
+  return (
+    <div className="flex items-center justify-center gap-4 sm:gap-8">
+      <Unit v={t.d} label="Dias"/><Sep/>
+      <Unit v={t.h} label="Horas"/><Sep/>
+      <Unit v={t.m} label="Min"/><Sep/>
+      <Unit v={t.s} label="Seg"/>
+    </div>
+  )
+}
+
 // ─── UI helpers ───────────────────────────────────────────────────────────────
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -477,6 +504,8 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
   const isVideo     = reuniao.tipo === 'Videochamada'
   const reuniaoData = reuniao.data ? fmtData(reuniao.data) : ''
   const reuniaoHora = (reuniao.hora || '').slice(0, 5)
+  const targetDate  = reuniao.data && reuniao.hora
+    ? `${reuniao.data}T${reuniaoHora}:00` : null
   const dataFmt = fmtData(evento.data)
 
   return (
@@ -633,36 +662,45 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
         </FadeIn>
       </section>
 
+      {/* ── CONTAGEM REGRESSIVA ── */}
+      {targetDate && (
+        <section className="py-10 sm:py-14 border-y border-white/[0.05] bg-[#0d0d0d]">
+          <FadeIn>
+            <p className="font-playfair font-black text-xl sm:text-2xl text-center mb-6 tracking-tight" style={{ color: '#C9A84C' }}>
+              Contagem Regressiva
+            </p>
+          </FadeIn>
+          <FadeIn delay={150} className="flex items-center justify-center gap-2 sm:gap-4">
+            <Leaf /><Countdown targetDate={targetDate} /><Leaf flip />
+          </FadeIn>
+        </section>
+      )}
+
       {/* ── DETALHES DA REUNIÃO + CONFIRMAR ── */}
-      <section className="flex flex-col items-center px-6 pb-6">
+      <section className="flex flex-col items-center px-6 py-8">
         <FadeIn delay={150} className="w-full max-w-sm">
 
           {/* Card detalhes da reunião */}
-          {(reuniaoData || reuniaoHora || reuniao.tipo || reuniao.link || isAdmin) && (
-            <div className="w-full border border-white/10 rounded-2xl overflow-hidden mb-4" style={{ background: 'rgba(255,255,255,0.03)' }}>
-              <div className="px-6 py-4 border-b border-white/[0.06]">
-                <p className="text-xs tracking-[0.3em] text-white/25 uppercase">Detalhes da Reunião</p>
+          <div className="w-full border border-white/10 rounded-2xl overflow-hidden mb-4" style={{ background: 'rgba(255,255,255,0.03)' }}>
+            <div className="px-6 py-4 border-b border-white/[0.06]">
+              <p className="text-xs tracking-[0.3em] text-white/25 uppercase">Detalhes da Reunião</p>
+            </div>
+            <div className="px-6 py-5 flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs tracking-[0.2em] text-white/30 uppercase">Data</span>
+                <span className="font-cormorant text-lg text-white/90">{reuniaoData || '—'}</span>
               </div>
-              <div className="px-6 py-5 flex flex-col gap-4">
-                {reuniaoData ? (
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs tracking-[0.2em] text-white/30 uppercase">Data</span>
-                    <span className="font-cormorant text-lg text-white/90">{reuniaoData}</span>
-                  </div>
-                ) : isAdmin ? (
-                  <p className="text-xs text-white/20 italic text-center">Preenche a data no editor</p>
-                ) : null}
-                {reuniaoHora && <><div className="h-px bg-white/5" />
-                <div className="flex items-center justify-between">
-                  <span className="text-xs tracking-[0.2em] text-white/30 uppercase">Hora</span>
-                  <span className="font-cormorant text-lg text-white/90">{reuniaoHora}</span>
-                </div></>}
-                {reuniao.tipo && <><div className="h-px bg-white/5" />
-                <div className="flex items-center justify-between">
-                  <span className="text-xs tracking-[0.2em] text-white/30 uppercase">Modo</span>
-                  <span className="font-cormorant text-lg text-white/90">{reuniao.tipo}</span>
-                </div></>}
+              <div className="h-px bg-white/5" />
+              <div className="flex items-center justify-between">
+                <span className="text-xs tracking-[0.2em] text-white/30 uppercase">Hora</span>
+                <span className="font-cormorant text-lg text-white/90">{reuniaoHora || '—'}</span>
               </div>
+              <div className="h-px bg-white/5" />
+              <div className="flex items-center justify-between">
+                <span className="text-xs tracking-[0.2em] text-white/30 uppercase">Modo</span>
+                <span className="font-cormorant text-lg text-white/90">{reuniao.tipo || 'Presencial'}</span>
+              </div>
+            </div>
               {reuniao.link && (
                 <div className="px-6 pb-5">
                   <a href={reuniao.link} target="_blank" rel="noopener noreferrer"
