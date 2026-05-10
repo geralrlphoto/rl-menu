@@ -599,11 +599,11 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
             {introPhoto ? (
               <div className="relative z-10 h-full flex flex-col justify-center px-12 sm:px-20" style={{ maxWidth: '54%' }}>
                 <p className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em] mb-6`}
-                  style={{ fontSize: 'clamp(1.5rem,3.5vw,2.6rem)', color: 'rgba(255,255,255,0.25)', lineHeight: 1.1 }}>
+                  style={{ fontSize: 'clamp(1.5rem,3.5vw,2.6rem)', color: 'rgba(255,255,255,0.95)', lineHeight: 1.1 }}>
                   Quem são os meus noivos?
                 </p>
-                <p className="text-[11px] tracking-[0.45em] mb-6" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
-                <p className={`${fontClass(typo.bodyFont)} text-xl italic font-light leading-relaxed`} style={{ color: typo.bodyColor }}>
+                <p className="text-[11px] tracking-[0.45em] mb-6" style={{ color: typo.accentColor }}>&#9670;</p>
+                <p className={`${fontClass(typo.bodyFont)} text-xl italic font-light leading-relaxed`} style={{ color: 'rgba(255,255,255,0.85)' }}>
                   &ldquo;{pp.intro}&rdquo;
                 </p>
               </div>
