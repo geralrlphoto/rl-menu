@@ -414,7 +414,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
                   <div key={i} className="flex items-start gap-5">
                     <span style={{ color: typo.accentColor, fontSize: '0.55rem', flexShrink: 0, marginTop: '6px', opacity: 0.9 }}>♥</span>
                     <p className={`${fontClass(typo.bodyFont)} font-light leading-relaxed`}
-                      style={{ fontSize: '18px', color: typo.bodyColor, opacity: 0.85 }}>
+                      style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.85 }}>
                       {text}
                     </p>
                   </div>
@@ -440,7 +440,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
                 style={{ fontSize: 'clamp(1.4rem,3.2vw,2.4rem)', color: typo.titleColor, lineHeight: 1.15 }}>
                 {pp.grandeDia?.title || 'O Dia do Batizado'}
               </h2>
-              <div className="flex flex-col gap-4" style={{ fontSize: '18px', color: typo.bodyColor, opacity: 0.75, lineHeight: 1.75 }}>
+              <div className="flex flex-col gap-4" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.75, lineHeight: 1.75 }}>
                 <p>{pp.grandeDia?.p1 || ''}</p>
                 <p>{pp.grandeDia?.p2 || ''}</p>
                 <p>{pp.grandeDia?.p3 || ''}</p>
@@ -503,7 +503,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
                   <div key={i} className="flex items-center gap-3">
                     <span style={{ color: typo.accentColor, fontSize: '0.55rem', flexShrink: 0, opacity: 0.9 }}>♥</span>
                     <p className={`${fontClass(typo.bodyFont)} font-light leading-snug`}
-                      style={{ fontSize: '18px', color: typo.bodyColor, opacity: 0.85 }}>
+                      style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.85 }}>
                       {item}
                     </p>
                   </div>
@@ -541,7 +541,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
           </h2>
           <p className="text-[10px] tracking-[0.5em] text-white/20 uppercase">&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
           <p className={`${fontClass(typo.bodyFont)} font-light leading-relaxed`}
-            style={{ fontSize: '18px', color: typo.bodyColor, maxWidth: '480px' }}>
+            style={{ fontSize: '20px', color: typo.bodyColor, maxWidth: '480px' }}>
             As memórias que criamos juntos duram uma vida inteira. O valor que investem hoje é o retorno eterno de cada momento que nunca mais poderão reviver — apenas recordar.
           </p>
         </div>
@@ -632,7 +632,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
                           {(proposta.servicos_foto || []).map((s, i) => (
                             <div key={i} className="flex items-start gap-2.5">
                               <span style={{ color: typo.accentColor, fontSize: '0.5rem', marginTop: '5px', flexShrink: 0 }}>◆</span>
-                              <p className={`${fontClass(typo.bodyFont)} font-light leading-snug`} style={{ fontSize: '18px', color: typo.bodyColor }}>{s}</p>
+                              <p className={`${fontClass(typo.bodyFont)} font-light leading-snug`} style={{ fontSize: '20px', color: typo.bodyColor }}>{s}</p>
                             </div>
                           ))}
                         </div>
@@ -649,7 +649,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
                           {(proposta.servicos_video || []).map((s, i) => (
                             <div key={i} className="flex items-start gap-2.5">
                               <span style={{ color: typo.accentColor, fontSize: '0.5rem', marginTop: '5px', flexShrink: 0 }}>◆</span>
-                              <p className={`${fontClass(typo.bodyFont)} font-light leading-snug`} style={{ fontSize: '18px', color: typo.bodyColor }}>{s}</p>
+                              <p className={`${fontClass(typo.bodyFont)} font-light leading-snug`} style={{ fontSize: '20px', color: typo.bodyColor }}>{s}</p>
                             </div>
                           ))}
                         </div>
@@ -689,7 +689,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
                                 {isOn ? '✓' : ''}
                               </span>
                               <p className={`${fontClass(typo.bodyFont)} font-light flex-1 leading-snug`}
-                                style={{ fontSize: '18px', color: isOn ? typo.bodyColor : `${typo.bodyColor}99` }}>{e.nome}</p>
+                                style={{ fontSize: '20px', color: isOn ? typo.bodyColor : `${typo.bodyColor}99` }}>{e.nome}</p>
                             </button>
                           )
                         })
@@ -739,7 +739,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
               Informações Gerais
             </h2>
             <div className="h-px" style={{ background: `${typo.accentColor}25` }} />
-            <ul className="flex flex-col gap-2.5" style={{ fontSize: '18px', color: typo.bodyColor, opacity: 0.75, lineHeight: 1.65 }}>
+            <ul className="flex flex-col gap-2.5" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.75, lineHeight: 1.65 }}>
               <li className="flex gap-2"><span style={{ color: typo.accentColor, flexShrink: 0 }}>–</span><span>Adjudicação no valor de <strong style={{ color: typo.accentColor, fontWeight: 500 }}>400€</strong>;</span></li>
               <li className="flex gap-2"><span style={{ color: typo.accentColor, flexShrink: 0 }}>–</span><span><strong style={{ color: typo.accentColor, fontWeight: 500 }}>80%</strong> do valor em falta até 48 horas antes do evento;</span></li>
               <li className="flex gap-2"><span style={{ color: typo.accentColor, flexShrink: 0 }}>–</span><span>Entrega de fotografias para seleção <strong style={{ color: typo.accentColor, fontWeight: 500 }}>30 dias úteis</strong> após o evento;</span></li>
@@ -768,10 +768,10 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
             style={{ fontSize: 'clamp(1.4rem,3vw,2.4rem)', color: typo.titleColor }}>
             www.rlprod.pt
           </a>
-          <a href="tel:912932768" className="font-light tracking-[0.15em]" style={{ fontSize: '18px', color: typo.bodyColor, opacity: 0.75 }}>
+          <a href="tel:912932768" className="font-light tracking-[0.15em]" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.75 }}>
             912 932 768
           </a>
-          <p className="font-light tracking-[0.2em]" style={{ fontSize: '18px', color: typo.bodyColor, opacity: 0.5 }}>
+          <p className="font-light tracking-[0.2em]" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.5 }}>
             Pinhal Novo · Palmela
           </p>
         </div>
@@ -785,7 +785,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
             O que gostaram mais até agora?
           </h2>
           <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
-          <p className="font-light leading-relaxed" style={{ fontSize: '18px', color: typo.bodyColor, opacity: 0.7, maxWidth: '520px' }}>
+          <p className="font-light leading-relaxed" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.7, maxWidth: '520px' }}>
             Há algum momento, detalhe ou serviço que vos tocou de forma especial?<br />
             A vossa opinião ajuda-nos a construir algo verdadeiramente único para este dia.
           </p>
