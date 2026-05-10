@@ -231,42 +231,46 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
     setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, momentos: { ...c.propostaPage.momentos, [k]: v } } }))
   }
 
-  const handleReliveUpload = async (file: File) => {
-    setUploadingRelive(true)
+  // Auto-guarda após upload — usa o conteúdo actualizado directamente para não depender do estado async
+  const uploadAndSave = async (
+    file: File,
+    buildUpdated: (url: string) => BatizadoContent,
+    setUploading: (v: boolean) => void,
+  ) => {
+    setUploading(true)
     try {
       const fd = new FormData(); fd.append('file', file)
       const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
       const data = await res.json()
-      if (data.url) setRelive('imageUrl', data.url)
+      if (data.url) {
+        const updated = buildUpdated(data.url)
+        setContent(updated)
+        await fetch('/api/batizado/save-content', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, content: updated }),
+        })
+        setSaved(true); setTimeout(() => setSaved(false), 2000)
+      }
     } catch {}
-    setUploadingRelive(false)
+    setUploading(false)
   }
-  const handleMomentosUpload = async (file: File) => {
-    setUploadingRelive(true)
-    const fd = new FormData(); fd.append('file', file)
-    const r = await fetch('/api/upload-image', { method: 'POST', body: fd })
-    const d = await r.json()
-    if (d.url) setMomentos('imageUrl', d.url)
-    setUploadingRelive(false)
-  }
-  const handleGrandeDiaUpload = async (file: File) => {
-    setUploadingRelive(true)
-    const fd = new FormData(); fd.append('file', file)
-    const r = await fetch('/api/upload-image', { method: 'POST', body: fd })
-    const d = await r.json()
-    if (d.url) setGrandeDia('imageUrl', d.url)
-    setUploadingRelive(false)
-  }
-  const handleAboutUpload = async (file: File) => {
-    setUploadingAbout(true)
-    try {
-      const fd = new FormData(); fd.append('file', file)
-      const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
-      const data = await res.json()
-      if (data.url) setAboutSlide('photo', data.url)
-    } catch {}
-    setUploadingAbout(false)
-  }
+
+  const handleReliveUpload = (file: File) => uploadAndSave(file,
+    (url) => ({ ...content, propostaPage: { ...content.propostaPage, relive: { ...content.propostaPage.relive, imageUrl: url } } }),
+    setUploadingRelive,
+  )
+  const handleMomentosUpload = (file: File) => uploadAndSave(file,
+    (url) => ({ ...content, propostaPage: { ...content.propostaPage, momentos: { ...content.propostaPage.momentos, imageUrl: url } } }),
+    setUploadingRelive,
+  )
+  const handleGrandeDiaUpload = (file: File) => uploadAndSave(file,
+    (url) => ({ ...content, propostaPage: { ...content.propostaPage, grandeDia: { ...content.propostaPage.grandeDia, imageUrl: url } } }),
+    setUploadingRelive,
+  )
+  const handleAboutUpload = (file: File) => uploadAndSave(file,
+    (url) => ({ ...content, propostaPage: { ...content.propostaPage, about: { ...content.propostaPage.about, photo: url } } }),
+    setUploadingAbout,
+  )
 
   if (loading) return (
     <main className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
