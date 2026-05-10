@@ -192,12 +192,15 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 function TInput({ value, onChange, multiline, placeholder }: { value: string; onChange: (v: string) => void; multiline?: boolean; placeholder?: string }) {
   const cls = "w-full bg-white/[0.06] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-gold/40 placeholder:text-white/20 resize-none overflow-hidden"
+  const taRef = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => {
+    if (!multiline || !taRef.current) return
+    const el = taRef.current
+    el.style.height = 'auto'
+    el.style.height = el.scrollHeight + 'px'
+  })
   if (multiline) {
-    // Calcula linhas com base no conteúdo real para o textarea crescer automaticamente
-    const newlines = (value.match(/\n/g) || []).length
-    const wrapped  = Math.ceil(value.length / 42)
-    const rows     = Math.max(3, newlines + 1, wrapped)
-    return <textarea rows={rows} className={cls} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} />
+    return <textarea ref={taRef} className={cls} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={{ minHeight: '76px', overflow: 'hidden' }} />
   }
   return <input type="text" className={cls} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} />
 }
