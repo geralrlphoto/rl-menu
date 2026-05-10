@@ -884,9 +884,9 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
               </div>
             </div>
 
-            {/* Coluna direita — logo grande centrado */}
-            <div className="flex items-center justify-center flex-shrink-0" style={{ width: 'clamp(180px,28vw,320px)' }}>
-              <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL Photo Video" className="opacity-80 w-full" />
+            {/* Coluna direita — logo grande ao centro */}
+            <div className="flex-shrink-0 flex items-center justify-center self-stretch" style={{ width: 'clamp(200px,30vw,340px)' }}>
+              <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL Photo Video" className="opacity-80" style={{ width: '100%', display: 'block' }} />
             </div>
 
           </div>
