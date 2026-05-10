@@ -567,33 +567,6 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
         </FadeIn>
       </section>
 
-      {/* ── LINKS RÁPIDOS ── */}
-      {(() => {
-        const links: { label: string; href: string; icon: string }[] = []
-        links.push({ label: proposta.buttonLabel || 'Ver Proposta', href: `/b/${token}/proposta`, icon: '✦' })
-        if (revista.visible) {
-          links.push({ label: revista.buttonLabel || 'Ver Revista', href: revista.linkUrl || `/b/${token}/revista`, icon: '◈' })
-        }
-        if (links.length === 0) return null
-        return (
-          <section className="px-6 pb-4 flex flex-col items-center">
-            <FadeIn className="w-full max-w-sm flex flex-col gap-2">
-              {links.map((link, i) => (
-                <a key={i} href={link.href} target={link.href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer"
-                  className="group w-full flex items-center justify-between px-5 py-3.5 rounded-xl transition-all hover:scale-[1.01]"
-                  style={{ background: 'rgba(201,168,76,0.06)', border: '0.5px solid rgba(201,168,76,0.2)' }}>
-                  <div className="flex items-center gap-3">
-                    <span className="text-gold/40 text-xs">{link.icon}</span>
-                    <span className="text-xs tracking-[0.25em] text-white/50 uppercase group-hover:text-white/70 transition-colors">{link.label}</span>
-                  </div>
-                  <span className="text-gold/30 text-xs group-hover:translate-x-1 transition-transform">→</span>
-                </a>
-              ))}
-            </FadeIn>
-          </section>
-        )
-      })()}
-
       {/* ── VÍDEO ── */}
       {(video.urls.some(u => u) || isAdmin) && (
         <section className="px-6 py-14 flex flex-col items-center" style={{ background: '#0d0d0d' }}>
