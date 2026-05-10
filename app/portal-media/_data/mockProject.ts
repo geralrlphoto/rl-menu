@@ -309,6 +309,13 @@ const PROJETOS: Record<string, Projeto> = {
   },
 }
 
+export const MEDIA_MASTER_REF = 'MAQUETE'
+
 export function getProjeto(ref: string): Projeto | null {
+  if (ref.toUpperCase() === MEDIA_MASTER_REF) {
+    return PROJETOS['OLEOBIO']
+      ? { ...PROJETOS['OLEOBIO'], ref: MEDIA_MASTER_REF, nome: 'MAQUETE MESTRE', cliente: 'RL PROD — Template' }
+      : null
+  }
   return PROJETOS[ref.toUpperCase()] ?? null
 }

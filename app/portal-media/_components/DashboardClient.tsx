@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import type { Projeto } from '@/app/portal-media/_data/mockProject'
+import { MEDIA_MASTER_REF } from '@/app/portal-media/_data/mockProject'
 import AdminBar from './AdminBar'
 import EditableField from './EditableField'
 import EditableDateField from './EditableDateField'
@@ -494,7 +495,8 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
 
       {isAdmin && (
         <AdminBar isEditing={isEditing} saving={saving}
-          onToggle={() => setIsEditing(true)} onSave={save} onCancel={cancel} />
+          onToggle={() => setIsEditing(true)} onSave={save} onCancel={cancel}
+          isMaster={projeto.ref === MEDIA_MASTER_REF} />
       )}
     </>
   )

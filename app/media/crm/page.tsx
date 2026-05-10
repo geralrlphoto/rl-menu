@@ -110,6 +110,18 @@ export default async function CrmPage() {
             </span>
           </Link>
 
+          {/* Botão Maquete Mestre */}
+          <Link href="/portal-media/MAQUETE"
+            className="group flex items-center gap-3 border border-blue-400/25 bg-blue-400/[0.04] hover:bg-blue-400/[0.10]
+                       hover:border-blue-400/45 px-6 py-4 transition-all duration-300">
+            <svg className="w-3.5 h-3.5 text-blue-400/40 group-hover:text-blue-300/70 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
+            </svg>
+            <span className="text-[9px] tracking-[0.45em] text-blue-400/40 group-hover:text-blue-300/70 uppercase transition-colors whitespace-nowrap">
+              Maquete Portais
+            </span>
+          </Link>
+
         </div>
       </div>
 
