@@ -335,13 +335,14 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
     setContent(c => { const photos = [...c.portfolio.photos]; photos[i] = url; return { ...c, portfolio: { ...c.portfolio, photos } } })
   }
 
-  // ── Save ──
-  const handleSaveContent = async () => {
+  // ── Save (accepts optional explicit content to avoid stale-closure issues) ──
+  const saveToServer = async (overrideContent?: BatizadoContent) => {
+    const toSave = overrideContent ?? content
     setSaving(true); setSaveError(null)
     try {
       const res = await fetch('/api/batizado/save-content', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, content }),
+        body: JSON.stringify({ token, content: toSave }),
       })
       if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2000) }
       else { const d = await res.json().catch(() => ({})); setSaveError(d.error || `Erro ${res.status}`) }
@@ -349,16 +350,23 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
     setSaving(false)
   }
 
+  const handleSaveContent = () => saveToServer()
+
   // ── Hero save ──
   const handleSaveHero = async () => {
     const updatedContent = { ...content, hero: { ...content.hero, imageUrl: heroInput } }
     setContent(updatedContent)
     setHeroPreview(heroInput || DEFAULT_HERO)
-    const res = await fetch('/api/batizado/save-content', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, content: updatedContent }),
-    })
-    if (res.ok) { setTimeout(() => setEditingHero(false), 500) }
+    setSaving(true); setSaveError(null)
+    try {
+      const res = await fetch('/api/batizado/save-content', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, content: updatedContent }),
+      })
+      if (res.ok) { setEditingHero(false) }
+      else { const d = await res.json().catch(() => ({})); setSaveError(d.error || `Erro ${res.status}`) }
+    } catch { setSaveError('Erro de ligação') }
+    setSaving(false)
   }
 
   // ── Upload ──
@@ -424,7 +432,23 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
               <p className="text-[10px] text-gold/60 tracking-widest uppercase mb-3 text-center">Trocar fotografia de fundo</p>
               <label className="flex items-center justify-center w-full py-3 rounded-xl border border-dashed border-white/20 hover:border-gold/50 hover:bg-gold/5 text-white/40 hover:text-gold/80 cursor-pointer transition-all mb-3">
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
-                  onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(f, url => { setHeroInput(url); setHeroPreview(url) }) }} />
+                  onChange={e => {
+                    const f = e.target.files?.[0]
+                    if (!f) return
+                    handleUpload(f, url => {
+                      setHeroInput(url)
+                      setHeroPreview(url)
+                      // Auto-save hero image immediately after upload
+                      setContent(c => {
+                        const newContent = { ...c, hero: { ...c.hero, imageUrl: url } }
+                        fetch('/api/batizado/save-content', {
+                          method: 'POST', headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ token, content: newContent }),
+                        }).catch(() => {})
+                        return newContent
+                      })
+                    })
+                  }} />
                 <span className="text-sm">⬆ Carregar do dispositivo</span>
               </label>
               <input value={heroInput} onChange={e => { setHeroInput(e.target.value); setHeroPreview(e.target.value || DEFAULT_HERO) }}
@@ -730,7 +754,24 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
                         <label className="relative aspect-square rounded-lg overflow-hidden cursor-pointer border border-white/10 hover:border-gold/40 transition-all group"
                           style={{ background: portfolio.photos[i] ? undefined : 'rgba(255,255,255,0.04)' }}>
                           <input ref={photoRefs[i]} type="file" accept="image/*" className="hidden"
-                            onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(f, url => setPhoto(i, url), i) }} />
+                            onChange={e => {
+                              const f = e.target.files?.[0]
+                              if (!f) return
+                              handleUpload(f, url => {
+                                // Build new content immediately (avoids stale closure) and auto-save
+                                setContent(c => {
+                                  const photos = [...c.portfolio.photos]
+                                  photos[i] = url
+                                  const newContent = { ...c, portfolio: { ...c.portfolio, photos } }
+                                  // Fire-and-forget save with the brand-new content
+                                  fetch('/api/batizado/save-content', {
+                                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ token, content: newContent }),
+                                  }).catch(() => {})
+                                  return newContent
+                                })
+                              }, i)
+                            }} />
                           {portfolio.photos[i]
                             ? <img src={portfolio.photos[i]} alt="" className="w-full h-full object-cover" />
                             : <div className="w-full h-full flex flex-col items-center justify-center gap-1">

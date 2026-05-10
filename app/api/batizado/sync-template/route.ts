@@ -1,39 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-
-const MASTER_TOKEN = 'batizado-maquete'
-
-// Fields from the master template that propagate to ALL client pages.
-// 'evento' (baby name/date/local) is client-specific — never overwritten.
-// 'proposta.password' is client-specific — never overwritten.
-const DESIGN_FIELDS = [
-  'hero', 'video', 'portfolio', 'testimonials',
-  'about', 'banner', 'propostaPage', 'propostas', 'extras_proposta',
-]
-
-export function buildSyncedContent(
-  masterContent: Record<string, any>,
-  clientContent: Record<string, any>
-): Record<string, any> {
-  const synced: Record<string, any> = { ...clientContent }
-
-  for (const field of DESIGN_FIELDS) {
-    if (masterContent[field] !== undefined) {
-      synced[field] = masterContent[field]
-    }
-  }
-
-  // Preserve client's evento (baby name, date, hour, local)
-  synced.evento = clientContent.evento ?? masterContent.evento ?? {}
-
-  // Sync proposta button label from master; keep client's own password
-  synced.proposta = {
-    buttonLabel: masterContent.proposta?.buttonLabel ?? clientContent.proposta?.buttonLabel ?? '',
-    password: clientContent.proposta?.password ?? '',
-  }
-
-  return synced
-}
+import { MASTER_TOKEN, buildSyncedContent } from '../_lib'
 
 export async function POST(req: NextRequest) {
   const auth = req.cookies.get('rl_auth')?.value

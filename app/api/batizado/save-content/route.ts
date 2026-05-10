@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { buildSyncedContent } from '../sync-template/route'
-
-const MASTER_TOKEN = 'batizado-maquete'
+import { MASTER_TOKEN, buildSyncedContent } from '../_lib'
 
 export async function POST(req: NextRequest) {
   const auth = req.cookies.get('rl_auth')?.value

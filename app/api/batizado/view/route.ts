@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { MASTER_TOKEN, buildSyncedContent } from '../_lib'
 
 // Uses portal_template_settings table with key 'batizado_{token}'
 // settings shape: { content: BatizadoContent }
@@ -25,6 +26,34 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  // Return existing settings or empty object (client uses DEFAULT_BATIZADO_CONTENT)
-  return NextResponse.json({ maquete: { token, settings: data?.settings || {} } })
+  // Page exists — return it
+  if (data?.settings) {
+    return NextResponse.json({ maquete: { token, settings: data.settings } })
+  }
+
+  // ── New client page — initialise from master template ─────────────────────
+  // This ensures the client page inherits all design from the master,
+  // AND creates the DB row so future master syncs will reach it.
+  if (token !== MASTER_TOKEN) {
+    const { data: master } = await supabase
+      .from('portal_template_settings')
+      .select('settings')
+      .eq('page_id', `batizado_${MASTER_TOKEN}`)
+      .single()
+
+    if (master?.settings?.content) {
+      const initialContent = buildSyncedContent(master.settings.content, {})
+      const initialSettings = { content: initialContent }
+
+      // Create the row so future syncs pick it up
+      await supabase
+        .from('portal_template_settings')
+        .insert({ page_id: pageId, settings: initialSettings, updated_at: new Date().toISOString() })
+
+      return NextResponse.json({ maquete: { token, settings: initialSettings } })
+    }
+  }
+
+  // Master doesn't exist yet — return empty (client uses DEFAULT_BATIZADO_CONTENT)
+  return NextResponse.json({ maquete: { token, settings: {} } })
 }
