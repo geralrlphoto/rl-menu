@@ -363,32 +363,34 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
 
       case 'relive': return (
         <div className="flex items-center justify-center h-full w-full px-8 sm:px-16">
-          <div className="flex flex-row items-center gap-2 sm:gap-3 w-full max-w-5xl">
-            <div className="flex flex-col gap-6 flex-1">
-              <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
-                style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.1 }}>
-                Relive Wedding
+          <div className="w-full max-w-2xl flex flex-col gap-10">
+            <div>
+              <h2 className={`${fontClass(typo.titleFont)} font-light`}
+                style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.1, letterSpacing: '0.04em' }}>
+                O Que
               </h2>
-              <div className="flex flex-col gap-3">
-                {['Armazenamento seguro durante 10 anos','Acesso privado com palavra-passe','Todos os vídeos na plataforma','Experiência cinematográfica completa'].map((item, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <span style={{ color: typo.accentColor, fontSize: '0.7rem', marginTop: '3px', flexShrink: 0 }}>◆</span>
-                    <p className={`${fontClass(typo.bodyFont)} font-light`} style={{ color: typo.bodyColor, fontSize: '20px' }}>{item}</p>
-                  </div>
-                ))}
-              </div>
-              <a href={pp.relive?.buttonUrl || 'https://relive.wedding'} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center justify-center self-start px-8 py-3 text-[11px] tracking-[0.35em] uppercase transition-all hover:scale-[1.03]"
-                style={{ background: `${typo.accentColor}1F`, border: `0.5px solid ${typo.accentColor}73`, color: typo.accentColor }}>
-                Aceder
-              </a>
+              <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
+                style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.accentColor, lineHeight: 1.1, letterSpacing: '0.04em' }}>
+                Inclui
+              </h2>
+              <div className="mt-4 w-12 h-px" style={{ background: `${typo.accentColor}60` }} />
             </div>
-            <div className="flex-shrink-0" style={{ width: 'clamp(300px,48vw,580px)' }}>
-              {pp.relive?.imageUrl
-                ? <img src={pp.relive.imageUrl} alt="Relive" className="w-full h-auto" style={{ borderRadius: '8px' }} />
-                : <div className="w-full flex items-center justify-center" style={{ height: '260px', background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)' }}>
-                    <p className="text-[10px] tracking-widest text-white/15 uppercase">Imagem</p>
-                  </div>}
+            <div className="flex flex-col gap-6">
+              {[
+                { icon: '◎', text: 'Reunião de preparação' },
+                { icon: '⬡', text: 'Cobertura fotográfica e/ou vídeo durante todo o dia' },
+                { icon: '◻', text: 'Edição cuidada e profissional' },
+                { icon: '◈', text: 'Entrega em galeria online privada e/ou suporte físico (conforme plano selecionado)' },
+                { icon: '◇', text: 'Acompanhamento próximo e personalizado' },
+              ].map((item, i) => (
+                <div key={i} className="flex items-start gap-5">
+                  <span style={{ color: typo.accentColor, fontSize: '1.1rem', flexShrink: 0, marginTop: '2px', opacity: 0.8 }}>{item.icon}</span>
+                  <p className={`${fontClass(typo.bodyFont)} font-light leading-relaxed`}
+                    style={{ fontSize: 'clamp(16px,1.8vw,22px)', color: typo.bodyColor, opacity: 0.85 }}>
+                    {item.text}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
