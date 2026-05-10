@@ -375,11 +375,16 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
     </main>
   )
 
-  const isVideo  = lead!.reuniao_tipo === 'Videochamada'
-  const dataFmt  = fmtData(lead!.reuniao_data || '')
-  const horaFmt  = fmtHora(lead!.reuniao_hora || '')
-  const targetDate = lead!.reuniao_data && lead!.reuniao_hora
-    ? `${lead!.reuniao_data}T${horaFmt}:00` : null
+  // Na maquete mestre usamos dados de demonstração para ver todas as secções
+  const DEMO_DATA  = isMaster ? '2026-06-15' : lead!.reuniao_data || ''
+  const DEMO_HORA  = isMaster ? '14:30' : lead!.reuniao_hora || ''
+  const DEMO_TIPO  = isMaster ? 'Videochamada' : lead!.reuniao_tipo || ''
+
+  const isVideo  = DEMO_TIPO === 'Videochamada'
+  const dataFmt  = fmtData(DEMO_DATA)
+  const horaFmt  = fmtHora(DEMO_HORA)
+  const targetDate = DEMO_DATA && DEMO_HORA
+    ? `${DEMO_DATA}T${horaFmt}:00` : null
 
   const { hero, videos, proposta, sobre } = content
   const labelCls = "text-[8px] tracking-[0.5em] text-white/20 uppercase"
@@ -451,18 +456,21 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
             </div>
           </FadeIn>
           <FadeIn delay={440} className="flex flex-col items-center gap-2">
-            {lead!.nome && (
-              <p className="text-xl sm:text-2xl font-extralight tracking-[0.2em] text-white/60 uppercase">
-                {lead!.nome}
+            <p className="text-xl sm:text-2xl font-extralight tracking-[0.2em] text-white/60 uppercase">
+              {isMaster ? 'Nome do Cliente' : (lead!.nome || '')}
+            </p>
+            {(isMaster || lead!.empresa) && (
+              <p className="text-[11px] tracking-[0.4em] text-white/25 uppercase">
+                {isMaster ? 'Empresa / Marca' : lead!.empresa}
               </p>
-            )}
-            {lead!.empresa && (
-              <p className="text-[11px] tracking-[0.4em] text-white/25 uppercase">{lead!.empresa}</p>
             )}
             {dataFmt && (
               <p className="mt-3 text-[10px] tracking-[0.45em] text-white/20 uppercase font-mono">
-                {dataFmt}{horaFmt && ` · ${horaFmt}`}{lead!.reuniao_tipo && ` · ${lead!.reuniao_tipo}`}
+                {dataFmt}{horaFmt && ` · ${horaFmt}`}{DEMO_TIPO && ` · ${DEMO_TIPO}`}
               </p>
+            )}
+            {isMaster && (
+              <p className="mt-2 text-[8px] tracking-[0.4em] text-blue-400/30 uppercase">— dados de demonstração —</p>
             )}
           </FadeIn>
 
@@ -665,7 +673,7 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
         <div className="w-full h-px bg-white/[0.04]" />
 
         {/* ── PORTAL DO CLIENTE — card ── */}
-        {(content as any).portal_cliente?.ativo && (
+        {(isMaster || (content as any).portal_cliente?.ativo) && (
           <>
             <div className="w-full h-px bg-white/[0.04]" />
             <section className="px-6 py-16 max-w-3xl mx-auto">
