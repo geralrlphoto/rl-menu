@@ -75,7 +75,7 @@ export const DEFAULT_BATIZADO_CONTENT: BatizadoContent = {
     visible: false,
     label: 'Revista',
     title: 'A nossa revista de batizados',
-    subtitle: 'Descobre o nosso método de trabalho e os serviços disponíveis ao detalhe — para saberes exatamente o que esperar de um batizado com a RL Photo · Video.',
+    subtitle: 'Descobre o nosso método de trabalho e todos os serviços disponíveis ao detalhe. Fica a saber exatamente o que esperar de um batizado com a RL Photo · Video.',
     imageUrl: '',
     buttonLabel: 'Ver Revista',
     linkUrl: '',
