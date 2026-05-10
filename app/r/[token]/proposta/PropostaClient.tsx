@@ -186,7 +186,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       .catch(() => { setNotFound(true); setLoading(false) })
   }, [token, isAdmin])
 
-  const slides = ['cover', 'about', 'couple', 'intro', 'relive', 'blank', 'blank2', 'invest', 'pkg-0', 'pkg-1', 'pkg-2', 'final', 'cta', 'contact']
+  const slides = ['cover', 'about', 'intro', 'relive', 'blank', 'blank2', 'invest', 'pkg-0', 'pkg-1', 'pkg-2', 'final', 'cta', 'contact']
   const total  = slides.length
 
   const goTo = useCallback((idx: number) => {
@@ -545,13 +545,43 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       )
 
       case 'intro': return (
-        <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-8 max-w-3xl mx-auto">
-          <p className={`${fontClass(typo.titleFont)} font-light italic`} style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: 'rgba(255,255,255,0.2)', lineHeight: 1.1, whiteSpace: 'nowrap' }}>Quem são os meus noivos?</p>
-          <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
-          <p className={`${fontClass(typo.bodyFont)} text-2xl sm:text-3xl italic font-light leading-relaxed`} style={{ color: typo.bodyColor }}>
-            &ldquo;{pp.intro}&rdquo;
-          </p>
-          <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
+        <div className="relative h-full w-full overflow-hidden">
+          {/* Foto com desvanecer (opcional) */}
+          {pp.couple?.imageUrl && (
+            <>
+              <img
+                src={pp.couple.imageUrl}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover object-center"
+              />
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #0a0806 30%, rgba(10,8,6,0.65) 58%, transparent 100%)' }} />
+            </>
+          )}
+          {/* Texto — esquerda quando há foto, centrado quando não há */}
+          {pp.couple?.imageUrl ? (
+            <div className="relative z-10 h-full flex flex-col justify-center px-12 sm:px-20" style={{ maxWidth: '54%' }}>
+              <p className={`${fontClass(typo.titleFont)} font-light italic mb-6`}
+                style={{ fontSize: 'clamp(1.5rem,3.5vw,2.6rem)', color: 'rgba(255,255,255,0.25)', lineHeight: 1.1 }}>
+                Quem são os meus noivos?
+              </p>
+              <p className="text-[11px] tracking-[0.45em] mb-6" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
+              <p className={`${fontClass(typo.bodyFont)} text-xl italic font-light leading-relaxed`} style={{ color: typo.bodyColor }}>
+                &ldquo;{pp.intro}&rdquo;
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-8 max-w-3xl mx-auto">
+              <p className={`${fontClass(typo.titleFont)} font-light italic`}
+                style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: 'rgba(255,255,255,0.2)', lineHeight: 1.1, whiteSpace: 'nowrap' }}>
+                Quem são os meus noivos?
+              </p>
+              <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
+              <p className={`${fontClass(typo.bodyFont)} text-2xl sm:text-3xl italic font-light leading-relaxed`} style={{ color: typo.bodyColor }}>
+                &ldquo;{pp.intro}&rdquo;
+              </p>
+              <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
+            </div>
+          )}
         </div>
       )
 
@@ -1092,11 +1122,8 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 </Field>
 
                 <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
-                <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Slide "Foto com Desvanecer"</p>
-                <Field label="Título">
-                  <TInput value={pp.couple?.title || ''} onChange={v => setCouple('title', v)} placeholder="Os nossos noivos" />
-                </Field>
-                <Field label="Foto (ocupa o slide todo, desvanece à esquerda)">
+                <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Slide "Quem são os meus noivos?"</p>
+                <Field label="Foto lado direito (desvanece à esquerda)">
                   <label className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-xs cursor-pointer transition-all ${uploadingCouple ? 'opacity-50 pointer-events-none' : ''}`}
                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.35)' }}>
                     <input type="file" accept="image/*" className="hidden"
