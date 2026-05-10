@@ -45,6 +45,7 @@ export type BatizadoContent = {
     subtitle: string; intro: string
     about:    { title: string; text: string; photo: string; videoUrl: string; titlePos: string }
     relive:   { imageUrl: string; buttonUrl: string }
+    momentos: { imageUrl: string }
     grandeDia: { title: string; p1: string; p2: string; p3: string; note: string; imageUrl: string }
     packages:  { title: string; description: string; price: string }[]
     propostaAtiva: number
@@ -110,6 +111,7 @@ export const DEFAULT_BATIZADO_CONTENT: BatizadoContent = {
     intro: 'O batizado do vosso bebé é um momento único e especial — e é essa unicidade que merece ser preservada para sempre. Cada detalhe, cada sorriso, cada olhar é parte de algo que nunca mais se repetirá.',
     about: { title: 'Sobre Nós', text: '', photo: '', videoUrl: '', titlePos: 'top-right' },
     relive: { imageUrl: '', buttonUrl: 'https://relive.wedding' },
+    momentos: { imageUrl: '' },
     grandeDia: {
       title: 'o dia do batizado',
       p1: 'Nas preparações (sempre que possível), aconselhamos reunir com a família aproximadamente 1 hora antes do início da cerimónia.',
@@ -154,6 +156,7 @@ export function mergeBatizado(saved: any): BatizadoContent {
       ...(saved.propostaPage || {}),
       about:     { ...DEFAULT_BATIZADO_CONTENT.propostaPage.about,     ...(saved.propostaPage?.about     || {}) },
       relive:    { ...DEFAULT_BATIZADO_CONTENT.propostaPage.relive,    ...(saved.propostaPage?.relive    || {}) },
+      momentos:  { ...DEFAULT_BATIZADO_CONTENT.propostaPage.momentos,  ...(saved.propostaPage?.momentos  || {}) },
       grandeDia: { ...DEFAULT_BATIZADO_CONTENT.propostaPage.grandeDia, ...(saved.propostaPage?.grandeDia || {}) },
       packages:  saved.propostaPage?.packages  || DEFAULT_BATIZADO_CONTENT.propostaPage.packages,
       propostaAtiva: saved.propostaPage?.propostaAtiva ?? 0,

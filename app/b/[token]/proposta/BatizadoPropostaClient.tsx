@@ -227,6 +227,9 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
   function setGrandeDia(k: keyof BatizadoContent['propostaPage']['grandeDia'], v: string) {
     setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, grandeDia: { ...c.propostaPage.grandeDia, [k]: v } } }))
   }
+  function setMomentos(k: keyof BatizadoContent['propostaPage']['momentos'], v: string) {
+    setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, momentos: { ...c.propostaPage.momentos, [k]: v } } }))
+  }
 
   const handleReliveUpload = async (file: File) => {
     setUploadingRelive(true)
@@ -236,6 +239,14 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
       const data = await res.json()
       if (data.url) setRelive('imageUrl', data.url)
     } catch {}
+    setUploadingRelive(false)
+  }
+  const handleMomentosUpload = async (file: File) => {
+    setUploadingRelive(true)
+    const fd = new FormData(); fd.append('file', file)
+    const r = await fetch('/api/upload-image', { method: 'POST', body: fd })
+    const d = await r.json()
+    if (d.url) setMomentos('imageUrl', d.url)
     setUploadingRelive(false)
   }
   const handleGrandeDiaUpload = async (file: File) => {
@@ -444,18 +455,65 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
       )
 
       case 'blank': return (
-        <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-10 max-w-3xl mx-auto">
-          <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-          <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
-            style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.15 }}>
-            Como imaginam este dia?
-          </h2>
-          <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
-          <p className="font-light leading-relaxed" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.7, maxWidth: '520px' }}>
-            O que é que torna este batizado verdadeiramente único para vocês?<br />
-            Qual é o momento, o detalhe, a emoção que não pode ficar por registar?
-          </p>
-          <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+        <div className="relative flex items-center justify-center h-full w-full overflow-hidden">
+          {/* Foto de fundo opcional com desvanecer */}
+          {pp.momentos?.imageUrl && (
+            <>
+              <div className="absolute inset-0"
+                style={{ backgroundImage: `url(${pp.momentos.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center right' }} />
+              <div className="absolute inset-0"
+                style={{ background: 'linear-gradient(to right, #0a0a0a 35%, #0a0a0a99 60%, transparent 100%)' }} />
+              <div className="absolute inset-0"
+                style={{ background: 'linear-gradient(to right, #0a0a0a 20%, transparent 55%)' }} />
+            </>
+          )}
+          {/* Conteúdo */}
+          <div className="relative z-10 flex items-center justify-start w-full max-w-5xl px-8 sm:px-16">
+            <div className="flex flex-col gap-8 max-w-xl">
+              {/* Título */}
+              <div>
+                <h2 className={`${fontClass(typo.titleFont)} font-light tracking-[0.18em] uppercase`}
+                  style={{ fontSize: 'clamp(1.4rem,3.2vw,2.4rem)', color: typo.titleColor, lineHeight: 1.15 }}>
+                  Os Momentos
+                </h2>
+                <h2 className={`${fontClass(typo.titleFont)} font-light tracking-[0.18em] uppercase`}
+                  style={{ fontSize: 'clamp(1.4rem,3.2vw,2.4rem)', color: typo.accentColor, lineHeight: 1.2 }}>
+                  que Registamos
+                </h2>
+                <div className="mt-4 w-12 h-px" style={{ background: `${typo.accentColor}60` }} />
+              </div>
+              {/* Lista em duas colunas */}
+              <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                {[
+                  'Preparativos do bebé',
+                  'Detalhes e acessórios',
+                  'Família e padrinhos',
+                  'Cerimónia na igreja',
+                  'Momentos espontâneos',
+                  'Chegada à festa',
+                  'Ambiente e decoração',
+                  'Momentos especiais',
+                  'Corte do bolo',
+                  'Toda a emoção do dia',
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <span style={{ color: typo.accentColor, fontSize: '0.55rem', flexShrink: 0, opacity: 0.9 }}>♥</span>
+                    <p className={`${fontClass(typo.bodyFont)} font-light leading-snug`}
+                      style={{ fontSize: 'clamp(14px,1.5vw,18px)', color: typo.bodyColor, opacity: 0.85 }}>
+                      {item}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          {/* Indicador admin quando não há foto */}
+          {isAdmin && !pp.momentos?.imageUrl && (
+            <div className="absolute right-16 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 opacity-30">
+              <span style={{ color: typo.accentColor, fontSize: '2rem' }}>◻</span>
+              <p className="text-[10px] tracking-widest uppercase" style={{ color: typo.accentColor }}>Adiciona foto no editor</p>
+            </div>
+          )}
         </div>
       )
 
@@ -880,6 +938,24 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
                   </label>
                 </Field>
                 <Field label="URL botão ACEDER"><TInput value={pp.relive?.buttonUrl || ''} onChange={v => setRelive('buttonUrl', v)} placeholder="https://relive.wedding/..." /></Field>
+                <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Slide "Os Momentos que Registamos"</p>
+                <Field label="Foto de fundo (desvanece)">
+                  <label className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-xs cursor-pointer transition-all ${uploadingRelive ? 'opacity-50 pointer-events-none' : ''}`}
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.35)' }}>
+                    <input type="file" accept="image/*" className="hidden"
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleMomentosUpload(f) }} />
+                    {uploadingRelive ? '⏳ A carregar...' : pp.momentos?.imageUrl ? '✓ Trocar imagem' : '⬆ Carregar imagem'}
+                  </label>
+                  {pp.momentos?.imageUrl && (
+                    <div className="relative mt-1 rounded-lg overflow-hidden" style={{ height: '70px' }}>
+                      <img src={pp.momentos.imageUrl} alt="" className="w-full h-full object-cover opacity-60" />
+                      <button onClick={() => setMomentos('imageUrl', '')}
+                        className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px]"
+                        style={{ background: 'rgba(0,0,0,0.7)', color: 'rgba(255,255,255,0.5)' }}>✕</button>
+                    </div>
+                  )}
+                </Field>
                 <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
                 <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Slide "O Dia do Batizado"</p>
                 <Field label="Título"><TInput value={pp.grandeDia?.title || ''} onChange={v => setGrandeDia('title', v)} /></Field>
