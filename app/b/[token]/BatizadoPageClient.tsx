@@ -617,35 +617,8 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
         </div>
       </section>
 
-      {/* ── LINKS DO PORTAL (cliente) ── */}
-      {!isAdmin && revista.visible && (
-        <section className="px-6 pb-8 flex flex-col items-center">
-          <FadeIn className="w-full max-w-sm flex flex-col gap-2">
-            <a
-              href={revista.linkUrl || `/b/${token}/revista`}
-              target={revista.linkUrl ? '_blank' : undefined}
-              rel="noopener noreferrer"
-              className="group w-full flex items-center justify-between px-5 py-4 rounded-xl transition-all hover:scale-[1.01]"
-              style={{ background: 'rgba(201,168,76,0.06)', border: '0.5px solid rgba(201,168,76,0.2)' }}>
-              <div className="flex items-center gap-3">
-                {revista.imageUrl && (
-                  <div className="w-8 h-10 rounded overflow-hidden flex-shrink-0" style={{ border: '0.5px solid rgba(201,168,76,0.2)' }}>
-                    <img src={revista.imageUrl} alt="" className="w-full h-full object-cover" />
-                  </div>
-                )}
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-[9px] tracking-[0.3em] text-gold/35 uppercase">{revista.label}</span>
-                  <span className="text-xs tracking-[0.15em] text-white/55 group-hover:text-white/75 transition-colors">{revista.buttonLabel || 'Ver Revista'}</span>
-                </div>
-              </div>
-              <span className="text-gold/30 text-xs group-hover:translate-x-1 transition-transform">→</span>
-            </a>
-          </FadeIn>
-        </section>
-      )}
-
-      {/* ── REVISTA (admin / maquete) ── */}
-      {isAdmin && (revista.visible || isAdmin) && (
+      {/* ── REVISTA ── */}
+      {(revista.visible || isAdmin) && (
         <section className="px-6 py-14 flex flex-col items-center" style={{ background: '#0d0d0d' }}>
           {isAdmin && !revista.visible && (
             <div className="mb-6 px-4 py-2 rounded-full border border-dashed border-gold/20 text-[10px] tracking-[0.3em] text-gold/30 uppercase">
