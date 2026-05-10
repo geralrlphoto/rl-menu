@@ -826,7 +826,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
       case 'contact': return (
         <div className="relative flex items-center justify-center h-full w-full overflow-hidden">
           {/* Decoração floral canto inferior direito */}
-          <svg className="absolute bottom-0 right-0 pointer-events-none select-none" width="260" height="220" viewBox="0 0 260 220" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ opacity: 0.13 }}>
+          <svg className="absolute bottom-0 right-0 pointer-events-none select-none" width="480" height="420" viewBox="0 0 260 220" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ opacity: 0.18 }}>
             <g stroke={typo.accentColor} strokeWidth="0.8" fill="none">
               <path d="M220 210 Q180 160 140 120 Q100 80 60 30" strokeWidth="1"/>
               <path d="M220 210 Q200 170 170 150 Q140 130 120 100" strokeWidth="0.8"/>
