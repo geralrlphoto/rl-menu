@@ -47,7 +47,7 @@ function mergeContent(saved: any): PageContent {
     proposta:     { ...DEFAULT_CONTENT.proposta,     ...(saved.proposta     || {}) },
     propostas:       saved.propostas       || DEFAULT_CONTENT.propostas,
     extras_proposta: saved.extras_proposta || [],
-    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), about: { ...DEFAULT_CONTENT.propostaPage.about, ...(saved.propostaPage?.about || {}) }, relive: { ...DEFAULT_CONTENT.propostaPage.relive, ...(saved.propostaPage?.relive || {}) }, couple: { ...DEFAULT_CONTENT.propostaPage.couple, ...(saved.propostaPage?.couple || {}) }, reflexao: { ...DEFAULT_CONTENT.propostaPage.reflexao, ...(saved.propostaPage?.reflexao || {}) }, grandeDia: { ...DEFAULT_CONTENT.propostaPage.grandeDia, ...(saved.propostaPage?.grandeDia || {}) }, packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, propostaAtiva: saved.propostaPage?.propostaAtiva ?? 0, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
+    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), about: { ...DEFAULT_CONTENT.propostaPage.about, ...(saved.propostaPage?.about || {}) }, relive: { ...DEFAULT_CONTENT.propostaPage.relive, ...(saved.propostaPage?.relive || {}) }, couple: { ...DEFAULT_CONTENT.propostaPage.couple, ...(saved.propostaPage?.couple || {}) }, reflexao: { ...DEFAULT_CONTENT.propostaPage.reflexao, ...(saved.propostaPage?.reflexao || {}) }, final: { ...DEFAULT_CONTENT.propostaPage.final, ...(saved.propostaPage?.final || {}) }, grandeDia: { ...DEFAULT_CONTENT.propostaPage.grandeDia, ...(saved.propostaPage?.grandeDia || {}) }, packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, propostaAtiva: saved.propostaPage?.propostaAtiva ?? 0, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
   }
 }
 
@@ -170,6 +170,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   const [uploadingRelive, setUploadingRelive] = useState(false)
   const [uploadingCouple,  setUploadingCouple]  = useState(false)
   const [uploadingReflexao, setUploadingReflexao] = useState(false)
+  const [uploadingFinal,    setUploadingFinal]    = useState(false)
 
   useEffect(() => {
     fetch(`/api/lead-page/view?token=${token}`)
@@ -262,6 +263,19 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   }
   function setCouple(k: keyof PageContent['propostaPage']['couple'], v: string) {
     setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, couple: { ...c.propostaPage.couple, [k]: v } } }))
+  }
+  function setFinalSlide(k: keyof PageContent['propostaPage']['final'], v: string) {
+    setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, final: { ...c.propostaPage.final, [k]: v } } }))
+  }
+  const handleFinalUpload = async (file: File) => {
+    setUploadingFinal(true)
+    try {
+      const fd = new FormData(); fd.append('file', file)
+      const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (data.url) setFinalSlide('imageUrl', data.url)
+    } catch {}
+    setUploadingFinal(false)
   }
   function setReflexao(k: keyof PageContent['propostaPage']['reflexao'], v: string) {
     setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, reflexao: { ...c.propostaPage.reflexao, [k]: v } } }))
@@ -948,18 +962,32 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       )
 
       case 'final': return (
-        <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-10 max-w-3xl mx-auto">
-          <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-          <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
-            style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.15 }}>
-            O que gostaram mais até agora?
-          </h2>
-          <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
-          <p className="font-light leading-relaxed" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.7, maxWidth: '520px' }}>
-            Há algum momento, detalhe ou serviço que vos tocou de forma especial?<br />
-            A vossa opinião ajuda-nos a construir algo verdadeiramente único para vocês.
-          </p>
-          <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+        <div className="relative h-full w-full overflow-hidden flex items-center">
+          {pp.final?.imageUrl && (
+            <img
+              src={pp.final.imageUrl}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover object-center"
+              style={{
+                maskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)',
+                WebkitMaskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)',
+              }}
+            />
+          )}
+          <div className={`relative z-10 flex flex-col gap-8 ${pp.final?.imageUrl ? 'px-12 sm:px-20 text-left' : 'items-center text-center px-8 sm:px-20 mx-auto'}`}
+            style={{ maxWidth: pp.final?.imageUrl ? '52%' : '680px' }}>
+            <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+            <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+              style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.15 }}>
+              O que gostaram mais até agora?
+            </h2>
+            <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
+            <p className="font-light leading-relaxed" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.7 }}>
+              Há algum momento, detalhe ou serviço que vos tocou de forma especial?<br />
+              A vossa opinião ajuda-nos a construir algo verdadeiramente único para vocês.
+            </p>
+            <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+          </div>
         </div>
       )
 
@@ -1150,6 +1178,25 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 </Field>
                 <Field label="URL do vídeo (YouTube / Vimeo)">
                   <TInput value={pp.about?.videoUrl || ''} onChange={v => setAbout('videoUrl', v)} placeholder="https://youtu.be/..." />
+                </Field>
+
+                <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Slide "O que gostaram mais?"</p>
+                <Field label="Foto lado direito (desvanece à esquerda)">
+                  <label className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-xs cursor-pointer transition-all ${uploadingFinal ? 'opacity-50 pointer-events-none' : ''}`}
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.35)' }}>
+                    <input type="file" accept="image/*" className="hidden"
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleFinalUpload(f) }} />
+                    {uploadingFinal ? '⏳ A carregar...' : pp.final?.imageUrl ? '✓ Trocar foto' : '⬆ Carregar foto'}
+                  </label>
+                  {pp.final?.imageUrl && (
+                    <div className="relative mt-1 rounded-lg overflow-hidden" style={{ height: '90px' }}>
+                      <img src={pp.final.imageUrl} alt="" className="w-full h-full object-cover opacity-70" />
+                      <button onClick={() => setFinalSlide('imageUrl', '')}
+                        className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px]"
+                        style={{ background: 'rgba(0,0,0,0.7)', color: 'rgba(255,255,255,0.5)' }}>✕</button>
+                    </div>
+                  )}
                 </Field>
 
                 <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
