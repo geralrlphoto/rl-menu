@@ -28,7 +28,11 @@ export async function GET(req: NextRequest) {
 
   // Page exists — return it
   if (data?.settings) {
-    return NextResponse.json({ maquete: { token, settings: data.settings } })
+    return NextResponse.json({
+      maquete: { token, settings: data.settings },
+      page_confirmacao: data.settings.page_confirmacao ?? null,
+      proposta_resposta: data.settings.proposta_resposta ?? null,
+    })
   }
 
   // ── New client page — initialise from master template ─────────────────────
@@ -50,10 +54,14 @@ export async function GET(req: NextRequest) {
         .from('portal_template_settings')
         .insert({ page_id: pageId, settings: initialSettings, updated_at: new Date().toISOString() })
 
-      return NextResponse.json({ maquete: { token, settings: initialSettings } })
+      return NextResponse.json({
+        maquete: { token, settings: initialSettings },
+        page_confirmacao: null,
+        proposta_resposta: null,
+      })
     }
   }
 
   // Master doesn't exist yet — return empty (client uses DEFAULT_BATIZADO_CONTENT)
-  return NextResponse.json({ maquete: { token, settings: {} } })
+  return NextResponse.json({ maquete: { token, settings: {} }, page_confirmacao: null, proposta_resposta: null })
 }

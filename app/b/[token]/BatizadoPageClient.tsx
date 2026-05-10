@@ -290,6 +290,12 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
   const [saved,     setSaved]     = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
+  // Confirmação de reunião e proposta
+  const [status,             setStatus]             = useState<string | null>(null)
+  const [confirming,         setConfirming]         = useState(false)
+  const [propostaResposta,   setPropostaResposta]   = useState<'confirmada' | 'rejeitada' | null>(null)
+  const [submittingProposta, setSubmittingProposta] = useState(false)
+
   // Hero photo
   const [heroPreview,  setHeroPreview]  = useState('')
   const [heroInput,    setHeroInput]    = useState('')
@@ -318,6 +324,12 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
         const heroUrl = merged.hero.imageUrl || ''
         setHeroPreview(heroUrl || DEFAULT_HERO)
         setHeroInput(heroUrl)
+        setStatus(data.page_confirmacao || null)
+        setPropostaResposta(
+          data.proposta_resposta === 'confirmar' ? 'confirmada'
+          : data.proposta_resposta === 'rejeitar' ? 'rejeitada'
+          : null
+        )
         setLoading(false)
       })
       .catch(() => { setNotFound(true); setLoading(false) })
@@ -356,6 +368,30 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
   }
   function setPhoto(i: number, url: string) {
     setContent(c => { const photos = [...c.portfolio.photos]; photos[i] = url; return { ...c, portfolio: { ...c.portfolio, photos } } })
+  }
+
+  // ── Confirmar reunião ──
+  const handleConfirm = async () => {
+    setConfirming(true)
+    await fetch(`/api/batizado/confirm?token=${token}`, { method: 'POST' })
+    setStatus('confirmada')
+    setConfirming(false)
+  }
+
+  // ── Resposta à proposta ──
+  const handleProposta = async (action: 'confirmar' | 'rejeitar') => {
+    setSubmittingProposta(true)
+    try {
+      const res = await fetch('/api/batizado/proposta-response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, action }),
+      })
+      if (res.ok) {
+        setPropostaResposta(action === 'confirmar' ? 'confirmada' : 'rejeitada')
+      }
+    } catch { /* ignore */ }
+    setSubmittingProposta(false)
   }
 
   // ── Save (accepts optional explicit content to avoid stale-closure issues) ──
@@ -571,6 +607,100 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
                 )}
               </div>
             )}
+          </div>
+        </FadeIn>
+      </section>
+
+      {/* ── CONFIRMAR REUNIÃO + PROPOSTA ── */}
+      <section className="flex flex-col items-center px-6 pb-6">
+        <FadeIn delay={150} className="w-full max-w-sm">
+          <div className="w-full flex flex-col gap-3">
+
+            {/* Status badge reunião */}
+            {status === 'confirmada' && (
+              <div className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl text-sm tracking-wider"
+                style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.2)' }}>
+                <span>✓</span><span>Reunião Confirmada — Até breve!</span>
+              </div>
+            )}
+
+            {/* Botão confirmar reunião */}
+            {status !== 'confirmada' && (
+              <button onClick={handleConfirm} disabled={confirming || isAdmin}
+                className="w-full py-3.5 rounded-2xl text-sm font-semibold tracking-[0.15em] uppercase transition-all disabled:opacity-50"
+                style={{ background: '#C9A84C', color: '#0a0a0a' }}>
+                {confirming ? 'A confirmar...' : 'Confirmar Reunião'}
+              </button>
+            )}
+
+            {isAdmin && status !== 'confirmada' && (
+              <p className="text-center text-[10px] text-white/20 tracking-widest uppercase">Botões desativados em modo admin</p>
+            )}
+
+            {/* ── Proposta: Confirmar / Rejeitar ── */}
+            {(() => {
+              if (propostaResposta === 'confirmada') return (
+                <div className="mt-4 flex flex-col items-center gap-5 w-full px-2 py-8 rounded-2xl text-center"
+                  style={{ background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.15)' }}>
+                  <div style={{ width: 52, height: 52, borderRadius: '50%', border: '1.5px solid #4ade80', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
+                    <span style={{ color: '#4ade80', fontSize: 22 }}>✓</span>
+                  </div>
+                  <div>
+                    <p className="font-cormorant text-2xl font-light text-white/90 mb-1">Obrigado por nos escolherem</p>
+                    <p className="font-cormorant text-lg font-light" style={{ color: '#C9A84C' }}>para o batizado!</p>
+                  </div>
+                  <p className="text-white/40 text-xs tracking-wider leading-relaxed px-2">
+                    Estamos muito felizes por fazer parte deste momento tão especial.<br />Entraremos em contacto em breve para os próximos passos.
+                  </p>
+                </div>
+              )
+
+              if (propostaResposta === 'rejeitada') return (
+                <div className="mt-4 flex flex-col items-center gap-4 w-full px-2 py-8 rounded-2xl text-center"
+                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <p className="font-cormorant text-2xl font-light text-white/70">Obrigado pelo vosso tempo</p>
+                  <p className="text-white/30 text-xs tracking-wider leading-relaxed px-2">
+                    Foi um prazer conhecer-vos e esperamos poder trabalhar juntos no futuro.<br />Desejamos-vos o melhor para este dia especial.
+                  </p>
+                </div>
+              )
+
+              return (
+                <div className="mt-2 flex flex-col gap-3 w-full">
+                  {/* Card de destaque */}
+                  <div className="w-full rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(201,168,76,0.12) 0%, rgba(201,168,76,0.04) 100%)', border: '1px solid rgba(201,168,76,0.3)' }}>
+                    <div className="px-5 pt-5 pb-4 flex flex-col items-center gap-3 text-center">
+                      <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(201,168,76,0.15)', border: '1.5px solid rgba(201,168,76,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ color: '#C9A84C', fontSize: 18 }}>✦</span>
+                      </div>
+                      <div>
+                        <p className="text-[10px] tracking-[0.4em] uppercase mb-1" style={{ color: 'rgba(201,168,76,0.5)' }}>A vossa decisão</p>
+                        <p className="font-cormorant text-xl font-light text-white/90">Confirmam a nossa proposta?</p>
+                      </div>
+                    </div>
+                    <div className="px-4 pb-4">
+                      <button
+                        onClick={() => handleProposta('confirmar')}
+                        disabled={submittingProposta || isAdmin}
+                        className="w-full py-4 rounded-xl text-sm font-bold tracking-[0.2em] uppercase transition-all disabled:opacity-50 active:scale-[0.98]"
+                        style={{ background: 'linear-gradient(135deg, #C9A84C, #e6c46a)', color: '#0a0a0a', boxShadow: '0 4px 20px rgba(201,168,76,0.3)' }}>
+                        {submittingProposta ? 'A processar...' : '✓  Confirmar Proposta'}
+                      </button>
+                    </div>
+                  </div>
+                  {/* Rejeitar — discreto */}
+                  <button
+                    onClick={() => handleProposta('rejeitar')}
+                    disabled={submittingProposta || isAdmin}
+                    className="w-full py-3 rounded-xl text-xs tracking-[0.2em] uppercase transition-all disabled:opacity-40"
+                    style={{ color: '#ef4444', border: '1px solid rgba(239,68,68,0.5)', background: 'rgba(239,68,68,0.08)', boxShadow: '0 0 12px rgba(239,68,68,0.25), inset 0 0 12px rgba(239,68,68,0.05)' }}>
+                    {submittingProposta ? '...' : 'Rejeitar Proposta'}
+                  </button>
+                  {isAdmin && <p className="text-center text-[10px] text-white/20 tracking-widest uppercase">Botões desativados em modo admin</p>}
+                </div>
+              )
+            })()}
+
           </div>
         </FadeIn>
       </section>
