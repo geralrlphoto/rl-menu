@@ -6,7 +6,7 @@ export const MASTER_TOKEN = 'batizado-maquete'
 // Design fields that the master template propagates to ALL client pages.
 // 'evento' (baby name/date/local) and 'proposta.password' are client-specific — never overwritten.
 export const DESIGN_FIELDS = [
-  'hero', 'video', 'portfolio', 'testimonials',
+  'hero', 'video', 'portfolio', 'revista', 'testimonials',
   'about', 'banner', 'propostaPage', 'propostas', 'extras_proposta',
 ]
 

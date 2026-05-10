@@ -33,6 +33,7 @@ export type BatizadoContent = {
   evento:       { nome: string; data: string; hora: string; local: string }
   video:        { label: string; title: string; urls: string[] }
   portfolio:    { label: string; title: string; titleFont: string; titleColor: string; photos: string[] }
+  revista:      { visible: boolean; label: string; title: string; subtitle: string; imageUrl: string; linkUrl: string; buttonLabel: string }
   testimonials: { label: string; items: { text: string; author: string }[] }
   about:        { label: string; title: string; titleFont: string; titleColor: string; text: string; textColor: string }
   banner:       { message: string; signature: string }
@@ -67,6 +68,15 @@ export const DEFAULT_BATIZADO_CONTENT: BatizadoContent = {
   portfolio: {
     label: 'Portfólio', title: 'Momentos que ficam para sempre.',
     titleFont: 'cormorant', titleColor: '#ffffff', photos: ['', '', ''],
+  },
+  revista: {
+    visible: false,
+    label: 'Revista',
+    title: 'A nossa revista de batizados',
+    subtitle: 'Inspira-te com as histórias de outras famílias. Uma coleção de momentos únicos, captados com cuidado e emoção.',
+    imageUrl: '',
+    linkUrl: '',
+    buttonLabel: 'Ver Revista',
   },
   testimonials: {
     label: 'O que dizem',
@@ -128,6 +138,7 @@ export function mergeBatizado(saved: any): BatizadoContent {
     evento:       { ...DEFAULT_BATIZADO_CONTENT.evento,       ...(saved.evento       || {}) },
     video:        { ...DEFAULT_BATIZADO_CONTENT.video,        ...(saved.video        || {}), urls: saved.video?.urls || DEFAULT_BATIZADO_CONTENT.video.urls },
     portfolio:    { ...DEFAULT_BATIZADO_CONTENT.portfolio,    ...(saved.portfolio    || {}), photos: saved.portfolio?.photos || DEFAULT_BATIZADO_CONTENT.portfolio.photos },
+    revista:      { ...DEFAULT_BATIZADO_CONTENT.revista,      ...(saved.revista      || {}) },
     testimonials: { ...DEFAULT_BATIZADO_CONTENT.testimonials, ...(saved.testimonials || {}), items: saved.testimonials?.items || DEFAULT_BATIZADO_CONTENT.testimonials.items },
     about:        { ...DEFAULT_BATIZADO_CONTENT.about,        ...(saved.about        || {}) },
     banner:       { ...DEFAULT_BATIZADO_CONTENT.banner,       ...(saved.banner       || {}) },
@@ -319,6 +330,9 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
   function setPortfolio(k: keyof BatizadoContent['portfolio'], v: any) {
     setContent(c => ({ ...c, portfolio: { ...c.portfolio, [k]: v } }))
   }
+  function setRevista(k: keyof BatizadoContent['revista'], v: any) {
+    setContent(c => ({ ...c, revista: { ...c.revista, [k]: v } }))
+  }
   function setTestimonial(i: number, k: 'text' | 'author', v: string) {
     setContent(c => { const items = [...c.testimonials.items]; items[i] = { ...items[i], [k]: v }; return { ...c, testimonials: { ...c.testimonials, items } } })
   }
@@ -395,7 +409,7 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
   )
 
   const heroImage = heroPreview || DEFAULT_HERO
-  const { hero, evento, video, portfolio, testimonials, about, banner, proposta } = content
+  const { hero, evento, video, portfolio, revista, testimonials, about, banner, proposta } = content
   const dataFmt = fmtData(evento.data)
 
   return (
@@ -602,6 +616,67 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
         </div>
       </section>
 
+      {/* ── REVISTA ── */}
+      {(revista.visible || isAdmin) && (
+        <section className="px-6 py-14 flex flex-col items-center" style={{ background: '#0d0d0d' }}>
+          {isAdmin && !revista.visible && (
+            <div className="mb-6 px-4 py-2 rounded-full border border-dashed border-gold/20 text-[10px] tracking-[0.3em] text-gold/30 uppercase">
+              Secção Oculta — ativa no editor
+            </div>
+          )}
+          <FadeIn>
+            <p className="text-xs tracking-[0.35em] text-white/25 uppercase mb-2 text-center">{revista.label}</p>
+          </FadeIn>
+          <FadeIn delay={120}>
+            <h2 className="font-cormorant text-xl sm:text-3xl font-light mb-3 text-center text-white/90">{revista.title}</h2>
+          </FadeIn>
+          {revista.subtitle && (
+            <FadeIn delay={200}>
+              <p className="text-sm text-white/35 text-center mb-10 max-w-sm leading-relaxed font-light">{revista.subtitle}</p>
+            </FadeIn>
+          )}
+
+          <div className="flex flex-col sm:flex-row items-center gap-10 w-full max-w-2xl">
+            {/* Capa */}
+            <FadeIn delay={260} className="flex-shrink-0">
+              {revista.imageUrl ? (
+                <div className="relative rounded-xl overflow-hidden shadow-2xl"
+                  style={{ width: '180px', aspectRatio: '2/3', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <img src={revista.imageUrl} alt="Revista" className="w-full h-full object-cover" />
+                </div>
+              ) : isAdmin ? (
+                <div className="rounded-xl flex flex-col items-center justify-center gap-2"
+                  style={{ width: '180px', aspectRatio: '2/3', background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(201,168,76,0.15)' }}>
+                  <span className="text-gold/20 text-2xl">◻</span>
+                  <span className="text-white/15 text-[9px] tracking-widest uppercase">Capa</span>
+                </div>
+              ) : null}
+            </FadeIn>
+
+            {/* Texto + botão */}
+            <FadeIn delay={340} className="flex flex-col items-center sm:items-start gap-6 text-center sm:text-left">
+              <div className="flex flex-col gap-2">
+                <p className="text-[10px] tracking-[0.4em] text-gold/40 uppercase">◆ Edição Exclusiva</p>
+                <p className="font-cormorant text-2xl sm:text-3xl font-light text-white/80">{revista.title}</p>
+                {revista.subtitle && <p className="text-sm text-white/30 leading-relaxed font-light max-w-xs">{revista.subtitle}</p>}
+              </div>
+              {(revista.linkUrl || isAdmin) && (
+                <a
+                  href={revista.linkUrl || '#'}
+                  target={revista.linkUrl ? '_blank' : undefined}
+                  rel="noopener noreferrer"
+                  onClick={!revista.linkUrl ? (e) => e.preventDefault() : undefined}
+                  className="group flex items-center gap-3 px-8 py-3.5 text-[10px] tracking-[0.4em] uppercase transition-all duration-300 hover:scale-[1.04]"
+                  style={{ background: 'rgba(201,168,76,0.12)', border: '0.5px solid rgba(201,168,76,0.5)', color: '#C9A84C', opacity: revista.linkUrl ? 1 : 0.4 }}>
+                  <span>{revista.buttonLabel || 'Ver Revista'}</span>
+                  <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+                </a>
+              )}
+            </FadeIn>
+          </div>
+        </section>
+      )}
+
       <div className="w-full max-w-sm mx-auto h-px" style={{ background: 'rgba(201,168,76,0.15)' }} />
 
       {/* ── TESTEMUNHOS ── */}
@@ -797,6 +872,56 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
                     ))}
                   </div>
                 </Field>
+              </AccordionSection>
+
+              {/* ── REVISTA ── */}
+              <AccordionSection title="Revista">
+                {/* Toggle visível/oculto */}
+                <div className="flex items-center justify-between px-3 py-2.5 rounded-xl"
+                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <span className="text-xs text-white/50">Mostrar secção</span>
+                  <button
+                    onClick={() => setRevista('visible', !revista.visible)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                    style={revista.visible
+                      ? { background: 'rgba(201,168,76,0.2)', border: '1px solid rgba(201,168,76,0.4)', color: '#C9A84C' }
+                      : { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.3)' }}>
+                    {revista.visible ? '● Visível' : '○ Oculta'}
+                  </button>
+                </div>
+                <Field label="Etiqueta"><TInput value={revista.label} onChange={v => setRevista('label', v)} /></Field>
+                <Field label="Título"><TInput value={revista.title} onChange={v => setRevista('title', v)} /></Field>
+                <Field label="Subtítulo"><TInput value={revista.subtitle} onChange={v => setRevista('subtitle', v)} multiline /></Field>
+                <Field label="Capa (URL ou upload)">
+                  <div className="flex flex-col gap-2">
+                    <label className="flex items-center justify-center w-full py-2.5 rounded-lg border border-dashed border-white/15 hover:border-gold/40 hover:bg-gold/5 text-white/30 hover:text-gold/60 cursor-pointer transition-all text-xs">
+                      <input type="file" accept="image/*" className="hidden"
+                        onChange={e => {
+                          const f = e.target.files?.[0]
+                          if (!f) return
+                          handleUpload(f, url => {
+                            setContent(c => {
+                              const newContent = { ...c, revista: { ...c.revista, imageUrl: url } }
+                              fetch('/api/batizado/save-content', {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ token, content: newContent }),
+                              }).catch(() => {})
+                              return newContent
+                            })
+                          })
+                        }} />
+                      ⬆ Carregar capa
+                    </label>
+                    <TInput value={revista.imageUrl} onChange={v => setRevista('imageUrl', v)} placeholder="ou URL da imagem..." />
+                    {revista.imageUrl && (
+                      <div className="rounded-lg overflow-hidden border border-white/8" style={{ aspectRatio: '2/3', maxWidth: '80px' }}>
+                        <img src={revista.imageUrl} alt="" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                  </div>
+                </Field>
+                <Field label="Link da Revista"><TInput value={revista.linkUrl} onChange={v => setRevista('linkUrl', v)} placeholder="https://..." /></Field>
+                <Field label="Texto do botão"><TInput value={revista.buttonLabel} onChange={v => setRevista('buttonLabel', v)} /></Field>
               </AccordionSection>
 
               {/* ── TESTEMUNHOS ── */}
