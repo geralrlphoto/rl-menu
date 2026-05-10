@@ -361,7 +361,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
       case 'cover': return (
         <div className="flex flex-col items-center justify-center h-full text-center px-8 gap-6">
-          <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="w-28 sm:w-36 opacity-80 mb-2" />
+          <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="w-36 sm:w-44 opacity-80 mb-2" />
           <p className="text-[10px] tracking-[0.5em] text-white/25 uppercase">{nome || 'Para vocês'}</p>
           <div>
             <h1 className={`${fontClass(typo.titleFont)} ${sizeClass(typo.titleSize)} font-light`} style={{ color: typo.titleColor, lineHeight: 1 }}>Proposta</h1>
@@ -960,7 +960,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       {/* Logo topo — slides 1 a N (exceto contact) */}
       {current > 0 && slides[current] !== 'contact' && (
         <div className={`absolute left-0 right-0 flex justify-center z-20 pointer-events-none ${isAdmin ? 'top-11' : 'top-5'}`}>
-          <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="w-32 opacity-70" />
+          <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="w-40 opacity-70" />
         </div>
       )}
 
