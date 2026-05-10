@@ -20,10 +20,18 @@ export default async function Page({ params }: { params: Promise<{ token: string
     .order('order_index')
 
   return (
-    <main className="min-h-screen flex flex-col" style={{ background: '#04080f' }}>
+    <main className="min-h-screen flex flex-col" style={{ background: '#0a0a0a' }}>
+
+      {/* Fundo igual à Proposta Criativa */}
+      <div className="pointer-events-none fixed inset-0 z-0" style={{
+        background: 'linear-gradient(160deg, #0e0b07 0%, #1a1206 30%, #0e0b07 70%, #060504 100%)',
+      }} />
+      <div className="pointer-events-none fixed inset-0 z-0" style={{
+        background: 'radial-gradient(ellipse 75% 65% at 50% 48%, rgba(201,168,76,0.18) 0%, rgba(160,120,40,0.07) 45%, transparent 70%)',
+      }} />
 
       {/* Topo */}
-      <div className="py-3 px-6 flex items-center justify-between border-b border-white/[0.04]">
+      <div className="relative z-10 py-3 px-6 flex items-center justify-between border-b border-white/[0.04]">
         <Link
           href={`/b/${token}`}
           className="text-[9px] tracking-[0.4em] text-white/25 hover:text-gold/60 uppercase transition-colors"
@@ -36,12 +44,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
         <div className="w-16" />
       </div>
 
-      {/* Neon fundo */}
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 110% 45% at 50% -5%, rgba(50,110,255,0.08) 0%, transparent 65%)',
-      }} />
-
-      {/* MagazineViewer — exactamente igual ao de /apresentacao */}
+      {/* MagazineViewer */}
       <div className="relative z-10 flex-1 flex flex-col justify-center px-4 py-8 w-full max-w-5xl mx-auto">
         <MagazineViewer
           images={images ?? []}
