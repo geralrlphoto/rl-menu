@@ -162,7 +162,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
       .catch(() => { setNotFound(true); setLoading(false) })
   }, [token, isAdmin])
 
-  const slides = ['cover', 'about', 'intro', 'relive', 'blank', 'blank2', 'reflexao', 'invest', 'pkg-0', 'pkg-1', 'pkg-2', 'final', 'cta', 'contact']
+  const slides = ['cover', 'about', 'menino', 'intro', 'relive', 'blank', 'blank2', 'reflexao', 'invest', 'pkg-0', 'pkg-1', 'pkg-2', 'final', 'cta', 'contact']
   const total  = slides.length
 
   const goTo = useCallback((idx: number) => {
@@ -518,6 +518,24 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
               <p className="text-[10px] tracking-widest uppercase" style={{ color: typo.accentColor }}>Adiciona foto no editor</p>
             </div>
           )}
+        </div>
+      )
+
+      case 'menino': return (
+        <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-10 max-w-3xl mx-auto">
+          <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+          <div>
+            <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+              style={{ fontSize: 'clamp(1.6rem,3.8vw,3rem)', color: typo.titleColor, lineHeight: 1.2 }}>
+              Quem é o nosso
+            </h2>
+            <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+              style={{ fontSize: 'clamp(1.6rem,3.8vw,3rem)', color: typo.accentColor, lineHeight: 1.2 }}>
+              Menino/a?
+            </h2>
+            <div className="mt-5 mx-auto w-12 h-px" style={{ background: `${typo.accentColor}60` }} />
+          </div>
+          <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
         </div>
       )
 
