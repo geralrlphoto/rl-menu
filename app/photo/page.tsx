@@ -53,13 +53,16 @@ export default async function PhotoDashboard() {
     .select('*')
     .order('order_index')
 
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
   const allItems = [
-    ...(sections ?? []).map(s => ({
-      id: s.id,
-      name: s.name,
-      href: `/secao/${s.id}`,
-      img: sectionImages[s.name] ?? fallbackImage,
-    })),
+    ...(sections ?? [])
+      .filter(s => s.name && !UUID_RE.test(s.name.trim()))
+      .map(s => ({
+        id: s.id,
+        name: s.name,
+        href: `/secao/${s.id}`,
+        img: sectionImages[s.name] ?? fallbackImage,
+      })),
     { id: 'crm', name: 'CRM', href: '/crm',
       img: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=1200&q=80' },
   ]
@@ -406,29 +409,9 @@ export default async function PhotoDashboard() {
 
       {/* Grid principal — desktop */}
       <div className="hidden sm:flex flex-1 items-center justify-center px-10 py-12 pt-16">
-        <div className="w-full max-w-6xl flex flex-col gap-2">
+        <div className="w-full max-w-6xl">
           <div className="grid grid-cols-3 gap-2">
-            {allItems.slice(0, 3).map((item) => (
-              <Link key={item.id} href={item.href}
-                className="relative overflow-hidden group rounded-lg"
-                style={{ height: '160px' }}>
-                <div className="absolute inset-0 bg-cover bg-center scale-100 group-hover:scale-105 transition-transform duration-700 ease-out"
-                  style={{ backgroundImage: `url(${item.img})` }} />
-                <div className="absolute inset-0 bg-black/50 group-hover:bg-black/30 transition-colors duration-500" />
-                <div className="absolute bottom-0 left-0 right-0 h-2/3 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 px-5 py-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-[2px] bg-[#C9A84C]/60 group-hover:bg-[#C9A84C] transition-all duration-300" style={{ height: '12px' }} />
-                    <span className="text-[10px] tracking-[0.3em] font-medium text-white/70 group-hover:text-white uppercase transition-colors duration-200 whitespace-nowrap">{item.name}</span>
-                  </div>
-                  <span className="text-[#C9A84C]/40 group-hover:text-[#C9A84C] group-hover:translate-x-1 transition-all duration-300">→</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-          <div className="grid gap-2"
-            style={{ gridTemplateColumns: allItems.slice(3).length === 3 ? '1.2fr 0.9fr 1fr' : allItems.slice(3).length === 2 ? '3fr 2fr' : '1fr' }}>
-            {allItems.slice(3).map((item) => (
+            {allItems.map((item) => (
               <Link key={item.id} href={item.href}
                 className="relative overflow-hidden group rounded-lg"
                 style={{ height: '160px' }}>
