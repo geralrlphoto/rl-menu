@@ -673,7 +673,7 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
         <div className="w-full h-px bg-white/[0.04]" />
 
         {/* ── PORTAL DO CLIENTE — card ── */}
-        {(isMaster || (content as any).portal_cliente?.ativo) && (
+        {(!isMaster && (content as any).portal_cliente?.ativo) && (
           <>
             <div className="w-full h-px bg-white/[0.04]" />
             <section className="px-6 py-16 max-w-3xl mx-auto">
