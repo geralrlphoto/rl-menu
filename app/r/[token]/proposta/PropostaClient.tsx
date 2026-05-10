@@ -546,16 +546,17 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
       case 'intro': return (
         <div className="relative h-full w-full overflow-hidden">
-          {/* Foto com desvanecer (opcional) */}
+          {/* Foto com desvanecer para transparência */}
           {pp.couple?.imageUrl && (
-            <>
-              <img
-                src={pp.couple.imageUrl}
-                alt=""
-                className="absolute inset-0 w-full h-full object-cover object-center"
-              />
-              <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #0a0806 30%, rgba(10,8,6,0.65) 58%, transparent 100%)' }} />
-            </>
+            <img
+              src={pp.couple.imageUrl}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover object-center"
+              style={{
+                maskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)',
+                WebkitMaskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)',
+              }}
+            />
           )}
           {/* Texto — esquerda quando há foto, centrado quando não há */}
           {pp.couple?.imageUrl ? (
