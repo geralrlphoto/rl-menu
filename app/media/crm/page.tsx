@@ -1,5 +1,6 @@
 ﻿import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
+import NovoPortalRMButton from './NovoPortalRMButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -109,6 +110,9 @@ export default async function CrmPage() {
               Agente Prospeção IA
             </span>
           </Link>
+
+          {/* Botão Novo Portal Reunião */}
+          <NovoPortalRMButton />
 
           {/* Botão Maquete Mestre */}
           <Link href="/portal-media/MAQUETE"
