@@ -46,6 +46,11 @@ export async function POST(req: NextRequest) {
 
   const { data: { publicUrl } } = supabase.storage.from(BUCKET).getPublicUrl(path)
 
+  /* Garantir que a secção existe em menu_sections (cria automaticamente se não existir) */
+  await supabase
+    .from('menu_sections')
+    .upsert({ id: sectionId, name: sectionId, order_index: 0 }, { onConflict: 'id', ignoreDuplicates: true })
+
   /* next order_index */
   const { data: existing } = await supabase
     .from('section_images')
