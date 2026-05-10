@@ -942,23 +942,48 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       )
 
       case 'contact': return (
-        <div className="flex flex-col items-center w-full h-full px-8 sm:px-16 text-center gap-8" style={{ paddingTop: '12vh' }}>
+        <div className="flex items-center w-full h-full px-10 sm:px-16">
 
-          <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="opacity-75" style={{ width: '200px' }} />
-          <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-          <a href="https://www.www.rlprod.pt" target="_blank" rel="noopener noreferrer"
-            className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em] hover:opacity-80 transition-opacity`}
-            style={{ fontSize: 'clamp(1.4rem,3vw,2.4rem)', color: typo.titleColor }}>
-            www.www.rlprod.pt
-          </a>
-          <a href="tel:912932768" className="font-light tracking-[0.15em]"
-            style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.75 }}>
-            912 932 768
-          </a>
-          <p className="font-light tracking-[0.2em]"
-            style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.5 }}>
-            Pinhal Novo · Palmela
-          </p>
+          {/* Left — text content */}
+          <div className="flex flex-col gap-6 flex-1">
+            <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+              style={{ fontSize: 'clamp(1.8rem,4vw,3.2rem)', color: typo.titleColor, lineHeight: 1.1 }}>
+              Vamos contar<br />esta história<br />juntos?
+            </h2>
+
+            {/* divider */}
+            <div className="flex items-center gap-3" style={{ maxWidth: '260px' }}>
+              <div className="flex-1 h-px" style={{ background: `${typo.accentColor}40` }} />
+              <span className="text-[8px]" style={{ color: `${typo.accentColor}80` }}>&#9670;</span>
+              <div className="flex-1 h-px" style={{ background: `${typo.accentColor}40` }} />
+            </div>
+
+            <p className="font-light leading-relaxed" style={{ fontSize: 'clamp(0.85rem,1.4vw,1.1rem)', color: typo.bodyColor, opacity: 0.75, maxWidth: '380px' }}>
+              Será uma honra fazer parte deste dia tão especial e transformar cada momento em memórias que ficam para sempre.
+            </p>
+
+            <div className="flex flex-col gap-2 mt-2">
+              <a href="https://www.rlphotovideo.pt" target="_blank" rel="noopener noreferrer"
+                className="font-light tracking-[0.12em] hover:opacity-80 transition-opacity"
+                style={{ fontSize: 'clamp(0.8rem,1.3vw,1rem)', color: typo.accentColor }}>
+                www.rlphotovideo.pt
+              </a>
+              <a href="tel:912932768" className="font-light tracking-[0.15em] hover:opacity-80 transition-opacity"
+                style={{ fontSize: 'clamp(0.8rem,1.3vw,1rem)', color: typo.bodyColor, opacity: 0.75 }}>
+                912 932 768
+              </a>
+              <p className="font-light tracking-[0.2em]"
+                style={{ fontSize: 'clamp(0.75rem,1.2vw,0.95rem)', color: typo.bodyColor, opacity: 0.4 }}>
+                Pinhal Novo · Palmela
+              </p>
+            </div>
+          </div>
+
+          {/* Right — large logo */}
+          <div className="flex items-center justify-center" style={{ width: '38%', flexShrink: 0 }}>
+            <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL Photo Video" className="opacity-70"
+              style={{ width: 'clamp(160px, 22vw, 300px)' }} />
+          </div>
 
         </div>
       )
