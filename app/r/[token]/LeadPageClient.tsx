@@ -869,22 +869,6 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
 
       <div className="w-full max-w-sm mx-auto h-px" style={{ background: 'rgba(201,168,76,0.15)' }} />
 
-      {/* ── TESTEMUNHOS ── */}
-      <section id="sec-testemunhos" className="px-6 py-14 flex flex-col items-center gap-8 max-w-2xl mx-auto">
-        <FadeIn><p className="text-xs tracking-[0.35em] text-white/25 uppercase">{testimonials.label}</p></FadeIn>
-        {testimonials.items.map((item, i) => (
-          <FadeIn key={i} delay={i * 150} className="w-full">
-            <div className="flex flex-col items-center gap-4 w-full">
-              <blockquote className="text-center">
-                <p className="font-cormorant text-base sm:text-xl text-white/70 italic font-light leading-relaxed mb-3">"{item.text}"</p>
-                <cite className="text-xs tracking-[0.2em] text-gold/60 not-italic">{item.author}</cite>
-              </blockquote>
-              {i < testimonials.items.length - 1 && <div className="w-8 h-px" style={{ background: 'rgba(201,168,76,0.2)' }} />}
-            </div>
-          </FadeIn>
-        ))}
-      </section>
-
       {/* ── REVISTA ── */}
       {(revista.visible || isAdmin) && (
         <section className="px-6 py-14 flex flex-col items-center" style={{ background: '#0d0d0d' }}>
@@ -894,7 +878,6 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
             </div>
           )}
           <div className="flex flex-col sm:flex-row items-center gap-10 w-full max-w-2xl">
-            {/* Capa */}
             <FadeIn delay={260} className="flex-shrink-0">
               {revista.imageUrl ? (
                 <div className="relative rounded-xl overflow-hidden shadow-2xl"
@@ -909,7 +892,6 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
                 </div>
               ) : null}
             </FadeIn>
-            {/* Texto + botão */}
             <FadeIn delay={340} className="flex flex-col items-center sm:items-start gap-6 text-center sm:text-left">
               <div className="flex flex-col gap-2">
                 <p className="text-[10px] tracking-[0.4em] text-gold/40 uppercase">◆ Edição Exclusiva</p>
@@ -926,6 +908,24 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
           </div>
         </section>
       )}
+
+      <div className="w-full max-w-sm mx-auto h-px" style={{ background: 'rgba(201,168,76,0.15)' }} />
+
+      {/* ── TESTEMUNHOS ── */}
+      <section id="sec-testemunhos" className="px-6 py-14 flex flex-col items-center gap-8 max-w-2xl mx-auto">
+        <FadeIn><p className="text-xs tracking-[0.35em] text-white/25 uppercase">{testimonials.label}</p></FadeIn>
+        {testimonials.items.map((item, i) => (
+          <FadeIn key={i} delay={i * 150} className="w-full">
+            <div className="flex flex-col items-center gap-4 w-full">
+              <blockquote className="text-center">
+                <p className="font-cormorant text-base sm:text-xl text-white/70 italic font-light leading-relaxed mb-3">"{item.text}"</p>
+                <cite className="text-xs tracking-[0.2em] text-gold/60 not-italic">{item.author}</cite>
+              </blockquote>
+              {i < testimonials.items.length - 1 && <div className="w-8 h-px" style={{ background: 'rgba(201,168,76,0.2)' }} />}
+            </div>
+          </FadeIn>
+        ))}
+      </section>
 
       <div className="w-full max-w-sm mx-auto h-px" style={{ background: 'rgba(201,168,76,0.15)' }} />
 
