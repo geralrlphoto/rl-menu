@@ -824,50 +824,23 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
       )
 
       case 'contact': return (
-        <div className="flex flex-col items-center w-full h-full px-8 sm:px-16 text-center gap-8" style={{ paddingTop: '12vh' }}>
-          <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="opacity-75" style={{ width: '200px' }} />
-          <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-          <a href="https://www.rlprod.pt" target="_blank" rel="noopener noreferrer"
-            className={`${fontClass(typo.titleFont)} font-light italic hover:opacity-80 transition-opacity`}
-            style={{ fontSize: 'clamp(1.4rem,3vw,2.4rem)', color: typo.titleColor }}>
-            www.rlprod.pt
-          </a>
-          <a href="tel:912932768" className="font-light tracking-[0.15em]" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.75 }}>
-            912 932 768
-          </a>
-          <p className="font-light tracking-[0.2em]" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.5 }}>
-            Pinhal Novo · Palmela
-          </p>
-        </div>
-      )
-
-      case 'final': return (
         <div className="relative flex items-center justify-center h-full w-full overflow-hidden">
           {/* Decoração floral canto inferior direito */}
           <svg className="absolute bottom-0 right-0 pointer-events-none select-none" width="260" height="220" viewBox="0 0 260 220" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ opacity: 0.13 }}>
             <g stroke={typo.accentColor} strokeWidth="0.8" fill="none">
-              {/* Caule principal */}
               <path d="M220 210 Q180 160 140 120 Q100 80 60 30" strokeWidth="1"/>
               <path d="M220 210 Q200 170 170 150 Q140 130 120 100" strokeWidth="0.8"/>
-              {/* Ramos */}
               <path d="M140 120 Q155 100 170 95 Q185 90 195 80"/>
               <path d="M140 120 Q125 100 110 98 Q95 96 85 85"/>
               <path d="M170 150 Q185 135 198 130 Q210 125 218 115"/>
               <path d="M170 150 Q158 133 148 130"/>
               <path d="M100 80 Q115 65 128 62 Q140 58 148 48"/>
               <path d="M100 80 Q88 65 78 63 Q68 60 58 50"/>
-              {/* Flores pequenas */}
-              <circle cx="196" cy="79" r="3"/>
-              <circle cx="196" cy="79" r="6" strokeWidth="0.5"/>
-              <circle cx="85" cy="84" r="3"/>
-              <circle cx="85" cy="84" r="6" strokeWidth="0.5"/>
-              <circle cx="149" cy="47" r="3"/>
-              <circle cx="149" cy="47" r="6" strokeWidth="0.5"/>
-              <circle cx="218" cy="114" r="2.5"/>
-              <circle cx="218" cy="114" r="5" strokeWidth="0.5"/>
-              <circle cx="57" cy="49" r="2.5"/>
-              <circle cx="57" cy="49" r="5" strokeWidth="0.5"/>
-              {/* Folhas */}
+              <circle cx="196" cy="79" r="3"/><circle cx="196" cy="79" r="6" strokeWidth="0.5"/>
+              <circle cx="85" cy="84" r="3"/><circle cx="85" cy="84" r="6" strokeWidth="0.5"/>
+              <circle cx="149" cy="47" r="3"/><circle cx="149" cy="47" r="6" strokeWidth="0.5"/>
+              <circle cx="218" cy="114" r="2.5"/><circle cx="218" cy="114" r="5" strokeWidth="0.5"/>
+              <circle cx="57" cy="49" r="2.5"/><circle cx="57" cy="49" r="5" strokeWidth="0.5"/>
               <ellipse cx="160" cy="108" rx="6" ry="3" transform="rotate(-40 160 108)" strokeWidth="0.6"/>
               <ellipse cx="122" cy="108" rx="6" ry="3" transform="rotate(40 122 108)" strokeWidth="0.6"/>
               <ellipse cx="185" cy="142" rx="6" ry="3" transform="rotate(-30 185 142)" strokeWidth="0.6"/>
@@ -875,24 +848,60 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
             </g>
           </svg>
 
-          {/* Conteúdo centrado */}
-          <div className="relative z-10 flex flex-col items-start justify-center px-16 sm:px-24 gap-8 max-w-2xl">
-            <div>
+          {/* Conteúdo */}
+          <div className="relative z-10 flex flex-col items-start px-16 sm:px-24 gap-8 max-w-2xl w-full">
+            {/* Texto de fecho */}
+            <div className="flex flex-col gap-5">
               <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
                 style={{ fontSize: 'clamp(1.6rem,3.8vw,3rem)', color: typo.accentColor, lineHeight: 1.25 }}>
                 Vamos contar<br />esta história<br />juntos?
               </h2>
+              <div className="flex items-center gap-4">
+                <div className="h-px w-10" style={{ background: `${typo.accentColor}50` }} />
+                <span style={{ color: typo.accentColor, fontSize: '0.7rem', opacity: 0.8 }}>♥</span>
+                <div className="h-px w-10" style={{ background: `${typo.accentColor}50` }} />
+              </div>
+              <p className={`${fontClass(typo.bodyFont)} font-light leading-relaxed`}
+                style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.75, maxWidth: '400px' }}>
+                Será uma honra fazer parte deste dia tão especial e transformar cada momento em memórias que ficam para sempre.
+              </p>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="h-px w-10" style={{ background: `${typo.accentColor}50` }} />
-              <span style={{ color: typo.accentColor, fontSize: '0.7rem', opacity: 0.8 }}>♥</span>
-              <div className="h-px w-10" style={{ background: `${typo.accentColor}50` }} />
+            {/* Divisor */}
+            <div className="w-full h-px" style={{ background: `${typo.accentColor}20` }} />
+            {/* Contactos */}
+            <div className="flex flex-col gap-2">
+              <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="opacity-70 mb-1" style={{ width: '72px' }} />
+              <a href="https://www.rlprod.pt" target="_blank" rel="noopener noreferrer"
+                className="font-light tracking-[0.15em] hover:opacity-80 transition-opacity"
+                style={{ fontSize: '15px', color: typo.accentColor }}>
+                www.rlprod.pt
+              </a>
+              <a href="tel:912932768" className="font-light tracking-[0.15em]"
+                style={{ fontSize: '15px', color: typo.bodyColor, opacity: 0.6 }}>
+                912 932 768
+              </a>
+              <p className="font-light tracking-[0.2em]"
+                style={{ fontSize: '13px', color: typo.bodyColor, opacity: 0.35 }}>
+                Pinhal Novo · Palmela
+              </p>
             </div>
-            <p className={`${fontClass(typo.bodyFont)} font-light leading-relaxed`}
-              style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.75, maxWidth: '400px' }}>
-              Será uma honra fazer parte deste dia tão especial e transformar cada momento em memórias que ficam para sempre.
-            </p>
           </div>
+        </div>
+      )
+
+      case 'final': return (
+        <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-10 max-w-3xl mx-auto">
+          <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+          <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+            style={{ fontSize: 'clamp(1.3rem,3vw,2.2rem)', color: typo.titleColor, lineHeight: 1.3 }}>
+            O que gostaram mais até agora?
+          </h2>
+          <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
+          <p className="font-light leading-relaxed" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.7, maxWidth: '520px' }}>
+            Há algum momento, detalhe ou serviço que vos tocou de forma especial?<br />
+            A vossa opinião ajuda-nos a construir algo verdadeiramente único para este dia.
+          </p>
+          <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
         </div>
       )
 
