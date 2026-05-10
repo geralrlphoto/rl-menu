@@ -942,7 +942,30 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       )
 
       case 'contact': return (
-        <div className="flex items-center w-full h-full px-10 sm:px-16">
+        <div className="relative flex items-center w-full h-full px-10 sm:px-16 overflow-hidden">
+
+          {/* Decoração floral canto inferior direito */}
+          <svg className="absolute bottom-0 right-0 pointer-events-none select-none" width="480" height="420" viewBox="0 0 260 220" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ opacity: 0.18 }}>
+            <g stroke={typo.accentColor} strokeWidth="0.8" fill="none">
+              <path d="M220 210 Q180 160 140 120 Q100 80 60 30" strokeWidth="1"/>
+              <path d="M220 210 Q200 170 170 150 Q140 130 120 100" strokeWidth="0.8"/>
+              <path d="M140 120 Q155 100 170 95 Q185 90 195 80"/>
+              <path d="M140 120 Q125 100 110 98 Q95 96 85 85"/>
+              <path d="M170 150 Q185 135 198 130 Q210 125 218 115"/>
+              <path d="M170 150 Q158 133 148 130"/>
+              <path d="M100 80 Q115 65 128 62 Q140 58 148 48"/>
+              <path d="M100 80 Q88 65 78 63 Q68 60 58 50"/>
+              <circle cx="196" cy="79" r="3"/><circle cx="196" cy="79" r="6" strokeWidth="0.5"/>
+              <circle cx="85" cy="84" r="3"/><circle cx="85" cy="84" r="6" strokeWidth="0.5"/>
+              <circle cx="149" cy="47" r="3"/><circle cx="149" cy="47" r="6" strokeWidth="0.5"/>
+              <circle cx="218" cy="114" r="2.5"/><circle cx="218" cy="114" r="5" strokeWidth="0.5"/>
+              <circle cx="57" cy="49" r="2.5"/><circle cx="57" cy="49" r="5" strokeWidth="0.5"/>
+              <ellipse cx="160" cy="108" rx="6" ry="3" transform="rotate(-40 160 108)" strokeWidth="0.6"/>
+              <ellipse cx="122" cy="108" rx="6" ry="3" transform="rotate(40 122 108)" strokeWidth="0.6"/>
+              <ellipse cx="185" cy="142" rx="6" ry="3" transform="rotate(-30 185 142)" strokeWidth="0.6"/>
+              <ellipse cx="110" cy="65" rx="5" ry="2.5" transform="rotate(-50 110 65)" strokeWidth="0.6"/>
+            </g>
+          </svg>
 
           {/* Left — text content */}
           <div className="flex flex-col gap-6 flex-1">
