@@ -332,8 +332,8 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
           <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="w-28 sm:w-36 opacity-80 mb-2" />
           <p className="text-[10px] tracking-[0.5em] text-white/25 uppercase">{nome || 'Para vocês'}</p>
           <div>
-            <h1 className={`${fontClass(typo.titleFont)} ${sizeClass(typo.titleSize)} font-light`} style={{ color: typo.titleColor, lineHeight: 1 }}>Proposta</h1>
-            <h1 className={`${fontClass(typo.titleFont)} ${sizeClass(typo.titleSize)} font-light italic`} style={{ color: typo.accentColor, lineHeight: 1.1 }}>Criativa</h1>
+            <h1 className={`${fontClass(typo.titleFont)} ${sizeClass(typo.titleSize)} font-light uppercase tracking-[0.18em]`} style={{ color: typo.titleColor, lineHeight: 1 }}>Proposta</h1>
+            <h1 className={`${fontClass(typo.titleFont)} ${sizeClass(typo.titleSize)} font-light uppercase tracking-[0.18em]`} style={{ color: typo.accentColor, lineHeight: 1.1 }}>Criativa</h1>
           </div>
           <p className="text-[11px] tracking-[0.5em]" style={{ color: `${typo.accentColor}66` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
           <p className={`${fontClass(typo.bodyFont)} text-lg sm:text-xl italic opacity-60`} style={{ color: typo.bodyColor }}>{pp.subtitle}</p>
@@ -343,8 +343,8 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
       case 'about': return (
         <div className="relative h-full w-full flex items-center justify-center px-10 sm:px-16">
           <div className="absolute" style={titlePosStyle(pp.about?.titlePos || 'top-right', isAdmin)}>
-            <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
-              style={{ fontSize: 'clamp(1.6rem,3.5vw,2.6rem)', color: typo.titleColor, lineHeight: 1.1, whiteSpace: 'nowrap' }}>
+            <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+              style={{ fontSize: 'clamp(1.2rem,2.8vw,2rem)', color: typo.titleColor, lineHeight: 1.1, whiteSpace: 'nowrap' }}>
               {pp.about?.title || 'Sobre Nós'}
             </h2>
             <div className="mt-2" style={{ width: '36px', height: '1px', background: `${typo.accentColor}66`, marginLeft: 'auto' }} />
@@ -393,12 +393,12 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
           <div className="relative z-10 flex items-center justify-start w-full max-w-5xl px-8 sm:px-16">
             <div className="flex flex-col gap-10 max-w-xl">
               <div>
-                <h2 className={`${fontClass(typo.titleFont)} font-light`}
-                  style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.1, letterSpacing: '0.04em' }}>
+                <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+                  style={{ fontSize: 'clamp(1.6rem,3.8vw,3rem)', color: typo.titleColor, lineHeight: 1.1 }}>
                   O Que
                 </h2>
-                <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
-                  style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.accentColor, lineHeight: 1.1, letterSpacing: '0.04em' }}>
+                <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+                  style={{ fontSize: 'clamp(1.6rem,3.8vw,3rem)', color: typo.accentColor, lineHeight: 1.1 }}>
                   Inclui
                 </h2>
                 <div className="mt-4 w-12 h-px" style={{ background: `${typo.accentColor}60` }} />
@@ -436,9 +436,9 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
         <div className="flex items-center justify-center h-full w-full px-8 sm:px-16">
           <div className="flex flex-row items-center gap-2 sm:gap-3 w-full max-w-5xl">
             <div className="flex flex-col gap-5 flex-1">
-              <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
-                style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.1 }}>
-                {pp.grandeDia?.title || 'o dia do batizado'}
+              <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+                style={{ fontSize: 'clamp(1.4rem,3.2vw,2.4rem)', color: typo.titleColor, lineHeight: 1.15 }}>
+                {pp.grandeDia?.title || 'O Dia do Batizado'}
               </h2>
               <div className="flex flex-col gap-4" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.75, lineHeight: 1.75 }}>
                 <p>{pp.grandeDia?.p1 || ''}</p>
@@ -523,7 +523,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
 
       case 'intro': return (
         <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-8 max-w-3xl mx-auto">
-          <p className={`${fontClass(typo.titleFont)} font-light italic`} style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: 'rgba(255,255,255,0.2)', lineHeight: 1.1, whiteSpace: 'nowrap' }}>Sobre o Batizado</p>
+          <p className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`} style={{ fontSize: 'clamp(1.2rem,2.8vw,2rem)', color: 'rgba(255,255,255,0.2)', lineHeight: 1.1 }}>Sobre o Batizado</p>
           <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
           <p className={`${fontClass(typo.bodyFont)} text-2xl sm:text-3xl italic font-light leading-relaxed`} style={{ color: typo.bodyColor }}>
             &ldquo;{pp.intro}&rdquo;
@@ -535,8 +535,8 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
       case 'invest': return (
         <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-8 max-w-2xl mx-auto">
           <p className="text-[10px] tracking-[0.5em] text-white/20 uppercase">&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-          <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
-            style={{ fontSize: 'clamp(2.5rem,7vw,5rem)', color: typo.titleColor, lineHeight: 1.0, letterSpacing: '0.06em' }}>
+          <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+            style={{ fontSize: 'clamp(2rem,5.5vw,4rem)', color: typo.titleColor, lineHeight: 1.0 }}>
             Investimento
           </h2>
           <p className="text-[10px] tracking-[0.5em] text-white/20 uppercase">&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
@@ -734,8 +734,8 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
       case 'cta': return (
         <div className="flex items-center justify-center h-full w-full px-8 sm:px-16 py-8">
           <div className="w-full max-w-5xl flex flex-col gap-6">
-            <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
-              style={{ fontSize: 'clamp(1.6rem,3.5vw,2.8rem)', color: typo.titleColor, lineHeight: 1.1 }}>
+            <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+              style={{ fontSize: 'clamp(1.2rem,2.8vw,2rem)', color: typo.titleColor, lineHeight: 1.1 }}>
               Informações Gerais
             </h2>
             <div className="h-px" style={{ background: `${typo.accentColor}25` }} />
@@ -780,8 +780,8 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
       case 'final': return (
         <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-10 max-w-3xl mx-auto">
           <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-          <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
-            style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.15 }}>
+          <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+            style={{ fontSize: 'clamp(1.3rem,3vw,2.2rem)', color: typo.titleColor, lineHeight: 1.3 }}>
             O que gostaram mais até agora?
           </h2>
           <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
