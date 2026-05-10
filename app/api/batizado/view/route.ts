@@ -16,11 +16,27 @@ export async function GET(req: NextRequest) {
 
   const pageId = `batizado_${token}`
 
-  const { data, error } = await supabase
-    .from('portal_template_settings')
-    .select('settings')
-    .eq('page_id', pageId)
-    .single()
+  // Fetch settings and CRM contact in parallel
+  const [{ data, error }, { data: crmContact }] = await Promise.all([
+    supabase
+      .from('portal_template_settings')
+      .select('settings')
+      .eq('page_id', pageId)
+      .single(),
+    supabase
+      .from('crm_contacts')
+      .select('reuniao_data,reuniao_hora,reuniao_tipo,reuniao_link')
+      .eq('page_token', token)
+      .maybeSingle(),
+  ])
+
+  // CRM meeting data (auto-populates reunião card if admin saved it in CRM)
+  const crm_reuniao = crmContact ? {
+    data:  crmContact.reuniao_data  || '',
+    hora:  crmContact.reuniao_hora  ? String(crmContact.reuniao_hora).slice(0, 5) : '',
+    tipo:  crmContact.reuniao_tipo  || 'Presencial',
+    link:  crmContact.reuniao_link  || '',
+  } : null
 
   if (error && error.code !== 'PGRST116') {
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -32,12 +48,11 @@ export async function GET(req: NextRequest) {
       maquete: { token, settings: data.settings },
       page_confirmacao: data.settings.page_confirmacao ?? null,
       proposta_resposta: data.settings.proposta_resposta ?? null,
+      crm_reuniao,
     })
   }
 
   // ── New client page — initialise from master template ─────────────────────
-  // This ensures the client page inherits all design from the master,
-  // AND creates the DB row so future master syncs will reach it.
   if (token !== MASTER_TOKEN) {
     const { data: master } = await supabase
       .from('portal_template_settings')
@@ -49,7 +64,6 @@ export async function GET(req: NextRequest) {
       const initialContent = buildSyncedContent(master.settings.content, {})
       const initialSettings = { content: initialContent }
 
-      // Create the row so future syncs pick it up
       await supabase
         .from('portal_template_settings')
         .insert({ page_id: pageId, settings: initialSettings, updated_at: new Date().toISOString() })
@@ -58,10 +72,11 @@ export async function GET(req: NextRequest) {
         maquete: { token, settings: initialSettings },
         page_confirmacao: null,
         proposta_resposta: null,
+        crm_reuniao,
       })
     }
   }
 
-  // Master doesn't exist yet — return empty (client uses DEFAULT_BATIZADO_CONTENT)
-  return NextResponse.json({ maquete: { token, settings: {} }, page_confirmacao: null, proposta_resposta: null })
+  // Master doesn't exist yet
+  return NextResponse.json({ maquete: { token, settings: {} }, page_confirmacao: null, proposta_resposta: null, crm_reuniao })
 }

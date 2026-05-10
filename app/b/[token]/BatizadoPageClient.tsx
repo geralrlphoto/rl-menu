@@ -361,6 +361,10 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
           : data.proposta_resposta === 'rejeitar' ? 'rejeitada'
           : null
         )
+        // CRM meeting data overrides content.reuniao when available
+        if (data.crm_reuniao) {
+          setContent(c => ({ ...c, reuniao: { ...c.reuniao, ...data.crm_reuniao } }))
+        }
         setLoading(false)
       })
       .catch(() => { setNotFound(true); setLoading(false) })

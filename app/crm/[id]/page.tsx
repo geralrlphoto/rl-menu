@@ -115,7 +115,7 @@ export default function ClientePage() {
       reuniao_enviada_at: form.reuniao_enviada_at || current?.reuniao_enviada_at || null,
       // Preservar token e estado da página (geridos por handleTogglePage)
       page_token:         form.page_token         || current?.page_token         || null,
-      page_publicada:     form.page_publicada      ?? current?.page_publicada    ?? false,
+      page_publicada:     (form.page_publicada !== '' && form.page_publicada != null) ? Boolean(form.page_publicada) : Boolean(current?.page_publicada ?? false),
       page_views:         current?.page_views      ?? form.page_views            ?? 0,
       page_confirmacao:   current?.page_confirmacao ?? form.page_confirmacao     ?? null,
       page_content: { ...pc, propostas, extras_proposta: extrasGlobais, tipo: pageTipo },
