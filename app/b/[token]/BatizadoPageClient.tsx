@@ -76,7 +76,7 @@ export const DEFAULT_BATIZADO_CONTENT: BatizadoContent = {
     subtitle: 'Inspira-te com as histórias de outras famílias. Uma coleção de momentos únicos, captados com cuidado e emoção.',
     imageUrl: '',
     buttonLabel: 'Ver Revista',
-    linkUrl: '/apresentacao/ee958740-f53f-4417-ad11-c01d0c42efa5',
+    linkUrl: '',
     paginas: [],
   },
   testimonials: {
@@ -921,7 +921,7 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
                 <Field label="Texto do botão"><TInput value={revista.buttonLabel} onChange={v => setRevista('buttonLabel', v)} /></Field>
                 <Field label="Link da Revista">
                   <TInput value={revista.linkUrl} onChange={v => setRevista('linkUrl', v)} placeholder="/apresentacao/..." />
-                  <p className="text-[10px] text-white/20 mt-1">Deixa vazio para usar a revista interna. Gerir fotos em <a href="/secao/ee958740-f53f-4417-ad11-c01d0c42efa5" target="_blank" className="text-gold/50 underline">/secao/ee958740…</a></p>
+                  <p className="text-[10px] text-white/20 mt-1">Deixa vazio para usar a revista interna (/revista). Gere as fotos diretamente na <a href={`/b/${token}/revista`} target="_blank" className="text-gold/50 underline">página de edição da revista</a>.</p>
                 </Field>
               </AccordionSection>
 

@@ -3,8 +3,8 @@ import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import MagazineViewer from '@/app/secao/[id]/MagazineViewer'
 
-// Secção Supabase partilhada para a Revista de Batizados
-const REVISTA_SECTION_ID = 'ee958740-f53f-4417-ad11-c01d0c42efa5'
+// Secção Supabase exclusiva para a Revista de Batizados (independente de /secao e /apresentacao)
+const REVISTA_SECTION_ID = '4eb9eaa9-bebf-4c94-9b64-a8c2f2d39f61'
 
 export const revalidate = 30
 
