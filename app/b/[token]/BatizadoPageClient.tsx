@@ -191,16 +191,16 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 function TInput({ value, onChange, multiline, placeholder }: { value: string; onChange: (v: string) => void; multiline?: boolean; placeholder?: string }) {
-  const cls = "w-full bg-white/[0.06] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-gold/40 placeholder:text-white/20 resize-none overflow-hidden"
+  const cls = "w-full bg-white/[0.06] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-gold/40 placeholder:text-white/20 resize-none"
   const taRef = useRef<HTMLTextAreaElement>(null)
   useEffect(() => {
     if (!multiline || !taRef.current) return
     const el = taRef.current
-    el.style.height = 'auto'
+    el.style.height = '0px'
     el.style.height = el.scrollHeight + 'px'
-  })
+  }, [value, multiline])
   if (multiline) {
-    return <textarea ref={taRef} className={cls} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={{ minHeight: '76px', overflow: 'hidden' }} />
+    return <textarea ref={taRef} className={cls} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={{ minHeight: '76px', overflowY: 'hidden' }} />
   }
   return <input type="text" className={cls} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} />
 }
