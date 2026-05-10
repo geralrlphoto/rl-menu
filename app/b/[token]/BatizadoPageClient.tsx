@@ -758,9 +758,9 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
       {isAdmin && (
         <>
           {editorOpen && <div className="fixed inset-0 z-40 bg-black/40" onClick={() => setEditorOpen(false)} />}
-          <div className={`fixed top-0 right-0 h-full z-50 flex flex-col transition-transform duration-300 ease-in-out ${editorOpen ? 'translate-x-0' : 'translate-x-full'}`}
-            style={{ width: '320px', background: '#0d0d0d', borderLeft: '1px solid rgba(255,255,255,0.07)' }}>
-            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+          <div className={`fixed top-0 right-0 z-50 flex flex-col transition-transform duration-300 ease-in-out ${editorOpen ? 'translate-x-0' : 'translate-x-full'}`}
+            style={{ width: '320px', height: '100dvh', background: '#0d0d0d', borderLeft: '1px solid rgba(255,255,255,0.07)' }}>
+            <div className="shrink-0 flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
               <div>
                 <p className="text-xs tracking-widest text-white/60 uppercase">Editor · Batizado</p>
                 <p className="text-[10px] text-white/20 mt-0.5">Alterações em tempo real</p>
@@ -768,7 +768,7 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
               <button onClick={() => setEditorOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg text-white/30 hover:text-white hover:bg-white/5 transition-all">✕</button>
             </div>
 
-            <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 flex flex-col gap-3">
+            <div className="overflow-y-auto px-4 py-4 flex flex-col gap-3" style={{ flex: '1 1 0', minHeight: 0 }}>
 
               {/* ── HERO ── */}
               <AccordionSection title="Hero" defaultOpen>
