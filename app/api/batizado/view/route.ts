@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
       .single(),
     supabase
       .from('crm_contacts')
-      .select('reuniao_data,reuniao_hora,reuniao_tipo,reuniao_link')
+      .select('reuniao_data,reuniao_hora,reuniao_tipo,reuniao_link,nome')
       .eq('page_token', token)
       .maybeSingle(),
   ])
@@ -38,6 +38,8 @@ export async function GET(req: NextRequest) {
     link:  crmContact.reuniao_link  || '',
   } : null
 
+  const crm_nome = crmContact?.nome || ''
+
   if (error && error.code !== 'PGRST116') {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
@@ -49,6 +51,7 @@ export async function GET(req: NextRequest) {
       page_confirmacao: data.settings.page_confirmacao ?? null,
       proposta_resposta: data.settings.proposta_resposta ?? null,
       crm_reuniao,
+      crm_nome,
     })
   }
 
@@ -73,10 +76,11 @@ export async function GET(req: NextRequest) {
         page_confirmacao: null,
         proposta_resposta: null,
         crm_reuniao,
+        crm_nome,
       })
     }
   }
 
   // Master doesn't exist yet
-  return NextResponse.json({ maquete: { token, settings: {} }, page_confirmacao: null, proposta_resposta: null, crm_reuniao })
+  return NextResponse.json({ maquete: { token, settings: {} }, page_confirmacao: null, proposta_resposta: null, crm_reuniao, crm_nome })
 }

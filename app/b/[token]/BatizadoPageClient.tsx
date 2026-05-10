@@ -320,6 +320,9 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
   const [saved,     setSaved]     = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
+  // Nome do CRM (aparece no hero automaticamente)
+  const [crmNome, setCrmNome] = useState('')
+
   // Confirmação de reunião e proposta
   const [status,             setStatus]             = useState<string | null>(null)
   const [confirming,         setConfirming]         = useState(false)
@@ -365,6 +368,8 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
         if (data.crm_reuniao) {
           setContent(c => ({ ...c, reuniao: { ...c.reuniao, ...data.crm_reuniao } }))
         }
+        // Nome do CRM para o hero
+        if (data.crm_nome) setCrmNome(data.crm_nome)
         setLoading(false)
       })
       .catch(() => { setNotFound(true); setLoading(false) })
@@ -600,7 +605,11 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
             </h1>
           </FadeIn>
           <FadeIn delay={380} className="flex flex-col items-center gap-1 mt-2">
-            {evento.nome && <p className="font-cormorant text-white/60 text-lg sm:text-xl italic tracking-wide">{evento.nome}</p>}
+            {(crmNome || evento.nome) && (
+              <p className="font-cormorant text-white/60 text-lg sm:text-xl italic tracking-wide">
+                {crmNome || evento.nome}
+              </p>
+            )}
             {dataFmt && <p className="font-cormorant text-white/50 text-sm sm:text-base italic tracking-wide">✦ {dataFmt}{evento.hora ? ` · ${evento.hora}` : ''}{evento.local ? ` · ${evento.local}` : ''}</p>}
           </FadeIn>
         </div>
