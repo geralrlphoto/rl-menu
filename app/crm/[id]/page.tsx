@@ -118,7 +118,7 @@ export default function ClientePage() {
       page_publicada:     form.page_publicada      ?? current?.page_publicada    ?? false,
       page_views:         current?.page_views      ?? form.page_views            ?? 0,
       page_confirmacao:   current?.page_confirmacao ?? form.page_confirmacao     ?? null,
-      page_content: { ...pc, propostas, extras_proposta: extrasGlobais },
+      page_content: { ...pc, propostas, extras_proposta: extrasGlobais, tipo: pageTipo },
     }
     // Regista data_fecho automaticamente quando status = Fechou e ainda não tem
     if (form.status === 'Fechou' && !form.data_fecho) {
@@ -142,6 +142,7 @@ export default function ClientePage() {
   const [reuniaoSent, setReuniaoSent] = useState(false)
   const [togglingPage, setTogglingPage] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [pageTipo, setPageTipo] = useState<'casamento' | 'batizado'>('casamento')
 
   // ── Propostas ────────────────────────────────────────────────────────────────
   type ExtraServico = { nome: string; valor: string }
@@ -188,7 +189,8 @@ export default function ClientePage() {
     : (original.page_content || {})
   const propostasDirty = JSON.stringify(propostas) !== JSON.stringify(originalPc.propostas ?? DEFAULT_PROPOSTAS)
   const extrasDirty    = JSON.stringify(extrasGlobais) !== JSON.stringify(originalPc.extras_proposta ?? [])
-  const isDirty = JSON.stringify(form) !== JSON.stringify(original) || propostasDirty || extrasDirty
+  const tipoDirty      = pageTipo !== ((originalPc.tipo as string) || 'casamento')
+  const isDirty = JSON.stringify(form) !== JSON.stringify(original) || propostasDirty || extrasDirty || tipoDirty
 
   useEffect(() => {
     if (!form.page_content) return
@@ -202,6 +204,7 @@ export default function ClientePage() {
       if (primeiraComExtras?.extras) setExtrasGlobais(primeiraComExtras.extras)
     }
     if (pc?.proposta?.password !== undefined) setPropostaPassword(pc.proposta.password)
+    if (pc?.tipo === 'batizado' || pc?.tipo === 'casamento') setPageTipo(pc.tipo)
   }, [form.page_content])
 
   const handleSavePropostas = async () => {
@@ -209,7 +212,7 @@ export default function ClientePage() {
     const pc = typeof form.page_content === 'string'
       ? JSON.parse(form.page_content || '{}')
       : (form.page_content || {})
-    const newPc = { ...pc, propostas, extras_proposta: extrasGlobais, proposta: { ...(pc.proposta || {}), password: propostaPassword } }
+    const newPc = { ...pc, propostas, extras_proposta: extrasGlobais, proposta: { ...(pc.proposta || {}), password: propostaPassword }, tipo: pageTipo }
     const { error } = await supabase.from('crm_contacts').update({ page_content: newPc }).eq('id', id)
     if (!error) {
       setForm((f: Contact) => ({ ...f, page_content: newPc }))
@@ -304,7 +307,8 @@ export default function ClientePage() {
   }
 
   const handleCopyLink = () => {
-    const url = `${window.location.origin}/r/${form.page_token}`
+    const prefix = pageTipo === 'batizado' ? 'b' : 'r'
+    const url = `${window.location.origin}/${prefix}/${form.page_token}`
     navigator.clipboard.writeText(url)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
@@ -691,6 +695,33 @@ export default function ClientePage() {
             </span>
           </div>
 
+          {/* Tipo de Maquete */}
+          <div className="flex flex-col gap-2">
+            <label className="text-xs tracking-widest text-white/30 uppercase">Tipo de Maquete</label>
+            <div className="flex rounded-xl overflow-hidden border border-white/10 self-start">
+              <button
+                onClick={() => setPageTipo('casamento')}
+                className={`px-5 py-2 text-xs tracking-widest uppercase transition-all ${
+                  pageTipo === 'casamento'
+                    ? 'bg-gold/90 text-black font-semibold'
+                    : 'bg-white/5 text-white/40 hover:text-white/60'
+                }`}
+              >
+                Casamento
+              </button>
+              <button
+                onClick={() => setPageTipo('batizado')}
+                className={`px-5 py-2 text-xs tracking-widest uppercase transition-all ${
+                  pageTipo === 'batizado'
+                    ? 'bg-gold/90 text-black font-semibold'
+                    : 'bg-white/5 text-white/40 hover:text-white/60'
+                }`}
+              >
+                Batizado
+              </button>
+            </div>
+          </div>
+
           {/* Estatísticas */}
           {form.page_token && (
             <div className="grid grid-cols-2 gap-3">
@@ -736,7 +767,7 @@ export default function ClientePage() {
               }`}
             >
               <span className="truncate font-mono text-xs">
-                {window?.location?.origin}/r/{form.page_token}
+                {window?.location?.origin}/{pageTipo === 'batizado' ? 'b' : 'r'}/{form.page_token}
               </span>
               <span className="ml-3 shrink-0">{copied ? '✓ Copiado' : 'Copiar'}</span>
             </button>
