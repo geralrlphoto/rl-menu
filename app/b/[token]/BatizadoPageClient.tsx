@@ -768,7 +768,7 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
               <button onClick={() => setEditorOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg text-white/30 hover:text-white hover:bg-white/5 transition-all">✕</button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
+            <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 flex flex-col gap-3">
 
               {/* ── HERO ── */}
               <AccordionSection title="Hero" defaultOpen>
