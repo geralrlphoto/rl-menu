@@ -439,6 +439,14 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
 
         {/* ── HERO ── */}
         <section className="min-h-screen flex flex-col items-center justify-center px-6 pb-20">
+          <FadeIn delay={0}>
+            <img
+              src="/logo-rl-prod-branco.png"
+              alt="RL PROD"
+              className="opacity-70 mb-10"
+              style={{ height: '72px', width: 'auto' }}
+            />
+          </FadeIn>
           <FadeIn delay={80}>
             <p className={`${labelCls} text-center mb-3`}>{hero.subtitulo}</p>
           </FadeIn>
