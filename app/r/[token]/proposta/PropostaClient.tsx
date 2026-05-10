@@ -942,7 +942,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       )
 
       case 'contact': return (
-        <div className="relative flex items-center w-full h-full px-10 sm:px-16 overflow-hidden">
+        <div className="relative flex items-center w-full h-full overflow-hidden" style={{ paddingLeft: 'clamp(3rem, 8vw, 7rem)', paddingRight: 'clamp(3rem, 8vw, 7rem)' }}>
 
           {/* Decoração floral canto inferior direito */}
           <svg className="absolute bottom-0 right-0 pointer-events-none select-none" width="480" height="420" viewBox="0 0 260 220" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ opacity: 0.18 }}>
