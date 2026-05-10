@@ -712,7 +712,6 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
                 </div>
               )}
             </div>
-          )}
 
           <div className="w-full flex flex-col gap-3">
 
