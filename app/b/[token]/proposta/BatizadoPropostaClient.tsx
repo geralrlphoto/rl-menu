@@ -162,7 +162,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
       .catch(() => { setNotFound(true); setLoading(false) })
   }, [token, isAdmin])
 
-  const slides = ['cover', 'about', 'intro', 'relive', 'blank', 'blank2', 'invest', 'pkg-0', 'pkg-1', 'pkg-2', 'final', 'cta', 'contact']
+  const slides = ['cover', 'about', 'intro', 'relive', 'blank', 'blank2', 'reflexao', 'invest', 'pkg-0', 'pkg-1', 'pkg-2', 'final', 'cta', 'contact']
   const total  = slides.length
 
   const goTo = useCallback((idx: number) => {
@@ -529,6 +529,22 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
             &ldquo;{pp.intro}&rdquo;
           </p>
           <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
+        </div>
+      )
+
+      case 'reflexao': return (
+        <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-10 max-w-3xl mx-auto">
+          <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+          <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
+            style={{ fontSize: 'clamp(2rem,5vw,3.8rem)', color: typo.titleColor, lineHeight: 1.2 }}>
+            Como imaginam o vosso dia?
+          </h2>
+          <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
+          <p className="font-light leading-relaxed" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.7, maxWidth: '520px' }}>
+            O que é que torna este batizado verdadeiramente único para vocês?<br />
+            Qual é o momento, o detalhe, a emoção que não pode ficar por registar?
+          </p>
+          <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
         </div>
       )
 
