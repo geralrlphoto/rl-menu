@@ -559,8 +559,8 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 style={{ maskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)', WebkitMaskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)' }}
               />
             )}
-            <div className={`relative z-10 flex flex-col gap-8 ${blankPhoto ? 'px-12 sm:px-20 text-left' : 'items-center text-center px-8 sm:px-20 mx-auto'}`}
-              style={{ maxWidth: blankPhoto ? '52%' : '680px' }}>
+            <div className={`relative z-10 flex flex-col gap-8 ${blankPhoto ? 'text-left' : 'items-center text-center px-8 sm:px-20 mx-auto'}`}
+              style={{ maxWidth: blankPhoto ? '52%' : '680px', paddingLeft: blankPhoto ? 'clamp(5rem, 14vw, 12rem)' : undefined }}>
               <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
               <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
                 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.15 }}>
@@ -597,7 +597,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
               />
             )}
             {introPhoto ? (
-              <div className="relative z-10 h-full flex flex-col justify-center px-12 sm:px-20" style={{ maxWidth: '54%' }}>
+              <div className="relative z-10 h-full flex flex-col justify-center" style={{ maxWidth: '54%', paddingLeft: 'clamp(5rem, 14vw, 12rem)' }}>
                 <p className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em] mb-6`}
                   style={{ fontSize: 'clamp(1.5rem,3.5vw,2.6rem)', color: 'rgba(255,255,255,0.95)', lineHeight: 1.1 }}>
                   Quem são os meus noivos?
