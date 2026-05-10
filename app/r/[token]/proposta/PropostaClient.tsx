@@ -47,7 +47,7 @@ function mergeContent(saved: any): PageContent {
     proposta:     { ...DEFAULT_CONTENT.proposta,     ...(saved.proposta     || {}) },
     propostas:       saved.propostas       || DEFAULT_CONTENT.propostas,
     extras_proposta: saved.extras_proposta || [],
-    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), about: { ...DEFAULT_CONTENT.propostaPage.about, ...(saved.propostaPage?.about || {}) }, relive: { ...DEFAULT_CONTENT.propostaPage.relive, ...(saved.propostaPage?.relive || {}) }, grandeDia: { ...DEFAULT_CONTENT.propostaPage.grandeDia, ...(saved.propostaPage?.grandeDia || {}) }, packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, propostaAtiva: saved.propostaPage?.propostaAtiva ?? 0, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
+    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), about: { ...DEFAULT_CONTENT.propostaPage.about, ...(saved.propostaPage?.about || {}) }, relive: { ...DEFAULT_CONTENT.propostaPage.relive, ...(saved.propostaPage?.relive || {}) }, couple: { ...DEFAULT_CONTENT.propostaPage.couple, ...(saved.propostaPage?.couple || {}) }, grandeDia: { ...DEFAULT_CONTENT.propostaPage.grandeDia, ...(saved.propostaPage?.grandeDia || {}) }, packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, propostaAtiva: saved.propostaPage?.propostaAtiva ?? 0, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
   }
 }
 
@@ -168,6 +168,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   const [editorTab,     setEditorTab]     = useState<'tipografia'|'texto'>('tipografia')
   const [uploadingAbout,  setUploadingAbout]  = useState(false)
   const [uploadingRelive, setUploadingRelive] = useState(false)
+  const [uploadingCouple, setUploadingCouple] = useState(false)
 
   useEffect(() => {
     fetch(`/api/lead-page/view?token=${token}`)
@@ -185,7 +186,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       .catch(() => { setNotFound(true); setLoading(false) })
   }, [token, isAdmin])
 
-  const slides = ['cover', 'about', 'intro', 'relive', 'blank', 'blank2', 'invest', 'pkg-0', 'pkg-1', 'pkg-2', 'final', 'cta', 'contact']
+  const slides = ['cover', 'about', 'couple', 'intro', 'relive', 'blank', 'blank2', 'invest', 'pkg-0', 'pkg-1', 'pkg-2', 'final', 'cta', 'contact']
   const total  = slides.length
 
   const goTo = useCallback((idx: number) => {
@@ -257,6 +258,19 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   }
   function setRelive(k: keyof PageContent['propostaPage']['relive'], v: string) {
     setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, relive: { ...c.propostaPage.relive, [k]: v } } }))
+  }
+  function setCouple(k: keyof PageContent['propostaPage']['couple'], v: string) {
+    setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, couple: { ...c.propostaPage.couple, [k]: v } } }))
+  }
+  const handleCoupleUpload = async (file: File) => {
+    setUploadingCouple(true)
+    try {
+      const fd = new FormData(); fd.append('file', file)
+      const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (data.url) setCouple('imageUrl', data.url)
+    } catch {}
+    setUploadingCouple(false)
   }
   function setGrandeDia(k: keyof PageContent['propostaPage']['grandeDia'], v: string) {
     setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, grandeDia: { ...c.propostaPage.grandeDia, [k]: v } } }))
@@ -401,6 +415,36 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                   </div>
               }
             </div>
+          </div>
+        </div>
+      )
+
+      case 'couple': return (
+        <div className="relative h-full w-full overflow-hidden">
+          {pp.couple?.imageUrl && (
+            <>
+              <img
+                src={pp.couple.imageUrl}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover object-center"
+              />
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #0a0806 25%, rgba(10,8,6,0.55) 60%, transparent 100%)' }} />
+            </>
+          )}
+          {!pp.couple?.imageUrl && (
+            <div className="absolute inset-0" style={{ background: 'rgba(255,255,255,0.02)', border: '0.5px solid rgba(255,255,255,0.06)' }}>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <p className="text-[10px] tracking-[0.4em] uppercase text-white/15">Carregar foto no editor →</p>
+              </div>
+            </div>
+          )}
+          <div className="relative z-10 h-full flex flex-col justify-center px-12 sm:px-20" style={{ maxWidth: '58%' }}>
+            <p className="text-[10px] tracking-[0.5em] uppercase mb-5" style={{ color: `${typo.accentColor}66` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+            <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+              style={{ fontSize: 'clamp(1.4rem, 3.8vw, 3rem)', color: '#ffffff', lineHeight: 1.2 }}>
+              {pp.couple?.title || 'Os nossos noivos'}
+            </h2>
+            <div className="mt-4 w-10 h-px" style={{ background: typo.accentColor }} />
           </div>
         </div>
       )
@@ -1045,6 +1089,28 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 </Field>
                 <Field label="URL do vídeo (YouTube / Vimeo)">
                   <TInput value={pp.about?.videoUrl || ''} onChange={v => setAbout('videoUrl', v)} placeholder="https://youtu.be/..." />
+                </Field>
+
+                <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Slide "Foto com Desvanecer"</p>
+                <Field label="Título">
+                  <TInput value={pp.couple?.title || ''} onChange={v => setCouple('title', v)} placeholder="Os nossos noivos" />
+                </Field>
+                <Field label="Foto (ocupa o slide todo, desvanece à esquerda)">
+                  <label className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-xs cursor-pointer transition-all ${uploadingCouple ? 'opacity-50 pointer-events-none' : ''}`}
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.35)' }}>
+                    <input type="file" accept="image/*" className="hidden"
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleCoupleUpload(f) }} />
+                    {uploadingCouple ? '⏳ A carregar...' : pp.couple?.imageUrl ? '✓ Trocar foto' : '⬆ Carregar foto'}
+                  </label>
+                  {pp.couple?.imageUrl && (
+                    <div className="relative mt-1 rounded-lg overflow-hidden" style={{ height: '90px' }}>
+                      <img src={pp.couple.imageUrl} alt="" className="w-full h-full object-cover opacity-70" />
+                      <button onClick={() => setCouple('imageUrl', '')}
+                        className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px]"
+                        style={{ background: 'rgba(0,0,0,0.7)', color: 'rgba(255,255,255,0.5)' }}>✕</button>
+                    </div>
+                  )}
                 </Field>
 
                 <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
