@@ -33,7 +33,7 @@ export type BatizadoContent = {
   evento:       { nome: string; data: string; hora: string; local: string }
   video:        { label: string; title: string; urls: string[] }
   portfolio:    { label: string; title: string; titleFont: string; titleColor: string; photos: string[] }
-  revista:      { visible: boolean; label: string; title: string; subtitle: string; imageUrl: string; buttonLabel: string; paginas: { id: string; imageUrl: string; titulo: string; legenda: string }[] }
+  revista:      { visible: boolean; label: string; title: string; subtitle: string; imageUrl: string; buttonLabel: string; linkUrl: string; paginas: { id: string; imageUrl: string; titulo: string; legenda: string }[] }
   testimonials: { label: string; items: { text: string; author: string }[] }
   about:        { label: string; title: string; titleFont: string; titleColor: string; text: string; textColor: string }
   banner:       { message: string; signature: string }
@@ -76,6 +76,7 @@ export const DEFAULT_BATIZADO_CONTENT: BatizadoContent = {
     subtitle: 'Inspira-te com as histórias de outras famílias. Uma coleção de momentos únicos, captados com cuidado e emoção.',
     imageUrl: '',
     buttonLabel: 'Ver Revista',
+    linkUrl: '/apresentacao/ee958740-f53f-4417-ad11-c01d0c42efa5',
     paginas: [],
   },
   testimonials: {
@@ -138,7 +139,7 @@ export function mergeBatizado(saved: any): BatizadoContent {
     evento:       { ...DEFAULT_BATIZADO_CONTENT.evento,       ...(saved.evento       || {}) },
     video:        { ...DEFAULT_BATIZADO_CONTENT.video,        ...(saved.video        || {}), urls: saved.video?.urls || DEFAULT_BATIZADO_CONTENT.video.urls },
     portfolio:    { ...DEFAULT_BATIZADO_CONTENT.portfolio,    ...(saved.portfolio    || {}), photos: saved.portfolio?.photos || DEFAULT_BATIZADO_CONTENT.portfolio.photos },
-    revista:      { ...DEFAULT_BATIZADO_CONTENT.revista, ...(saved.revista || {}), paginas: saved.revista?.paginas || [] },
+    revista:      { ...DEFAULT_BATIZADO_CONTENT.revista, ...(saved.revista || {}), linkUrl: saved.revista?.linkUrl ?? DEFAULT_BATIZADO_CONTENT.revista.linkUrl, paginas: saved.revista?.paginas || [] },
     testimonials: { ...DEFAULT_BATIZADO_CONTENT.testimonials, ...(saved.testimonials || {}), items: saved.testimonials?.items || DEFAULT_BATIZADO_CONTENT.testimonials.items },
     about:        { ...DEFAULT_BATIZADO_CONTENT.about,        ...(saved.about        || {}) },
     banner:       { ...DEFAULT_BATIZADO_CONTENT.banner,       ...(saved.banner       || {}) },
@@ -661,7 +662,9 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
                 {revista.subtitle && <p className="text-sm text-white/30 leading-relaxed font-light max-w-xs">{revista.subtitle}</p>}
               </div>
               <a
-                href={`/b/${token}/revista`}
+                href={revista.linkUrl || `/b/${token}/revista`}
+                target={revista.linkUrl ? '_blank' : undefined}
+                rel={revista.linkUrl ? 'noopener noreferrer' : undefined}
                 className="group flex items-center gap-3 px-8 py-3.5 text-[10px] tracking-[0.4em] uppercase transition-all duration-300 hover:scale-[1.04]"
                 style={{ background: 'rgba(201,168,76,0.12)', border: '0.5px solid rgba(201,168,76,0.5)', color: '#C9A84C' }}>
                 <span>{revista.buttonLabel || 'Ver Revista'}</span>
@@ -916,7 +919,10 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
                   </div>
                 </Field>
                 <Field label="Texto do botão"><TInput value={revista.buttonLabel} onChange={v => setRevista('buttonLabel', v)} /></Field>
-                <p className="text-[10px] text-white/20 text-center">As páginas da revista editam-se em <span className="text-gold/50">/b/{token}/revista</span></p>
+                <Field label="Link da Revista">
+                  <TInput value={revista.linkUrl} onChange={v => setRevista('linkUrl', v)} placeholder="/apresentacao/..." />
+                  <p className="text-[10px] text-white/20 mt-1">Deixa vazio para usar a revista interna. Gerir fotos em <a href="/secao/ee958740-f53f-4417-ad11-c01d0c42efa5" target="_blank" className="text-gold/50 underline">/secao/ee958740…</a></p>
+                </Field>
               </AccordionSection>
 
               {/* ── TESTEMUNHOS ── */}
