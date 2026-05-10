@@ -61,6 +61,7 @@ function SlideIn({ children, dir }: { children: React.ReactNode; dir: 'right' | 
       transform: vis ? 'translateX(0px)' : `translateX(${dir === 'right' ? '48px' : '-48px'})`,
       transition: 'opacity 0.5s cubic-bezier(0.22,1,0.36,1), transform 0.5s cubic-bezier(0.22,1,0.36,1)',
       height: '100%',
+      width: '100%',
     }}>
       {children}
     </div>
