@@ -405,17 +405,17 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
               </div>
               <div className="flex flex-col gap-6">
                 {[
-                  { icon: '◎', text: 'Reunião de preparação' },
-                  { icon: '⬡', text: 'Cobertura fotográfica e/ou vídeo durante todo o dia' },
-                  { icon: '◻', text: 'Edição cuidada e profissional' },
-                  { icon: '◈', text: 'Entrega em galeria online privada e/ou suporte físico (conforme plano selecionado)' },
-                  { icon: '◇', text: 'Acompanhamento próximo e personalizado' },
-                ].map((item, i) => (
+                  'Reunião de preparação',
+                  'Cobertura fotográfica e/ou vídeo durante todo o dia',
+                  'Edição cuidada e profissional',
+                  'Entrega em galeria online privada e/ou suporte físico (conforme plano selecionado)',
+                  'Acompanhamento próximo e personalizado',
+                ].map((text, i) => (
                   <div key={i} className="flex items-start gap-5">
-                    <span style={{ color: typo.accentColor, fontSize: '1.1rem', flexShrink: 0, marginTop: '2px', opacity: 0.8 }}>{item.icon}</span>
+                    <span style={{ color: typo.accentColor, fontSize: '0.55rem', flexShrink: 0, marginTop: '6px', opacity: 0.9 }}>♥</span>
                     <p className={`${fontClass(typo.bodyFont)} font-light leading-relaxed`}
                       style={{ fontSize: 'clamp(16px,1.8vw,22px)', color: typo.bodyColor, opacity: 0.85 }}>
-                      {item.text}
+                      {text}
                     </p>
                   </div>
                 ))}
