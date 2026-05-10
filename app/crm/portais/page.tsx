@@ -21,11 +21,11 @@ type BatizadoPortal = {
 }
 
 export default function PortaisPage() {
-  const [weddings, setWeddings]     = useState<WeddingPortal[]>([])
-  const [batizados, setBatizados]   = useState<BatizadoPortal[]>([])
-  const [loading, setLoading]       = useState(true)
+  const [weddings, setWeddings]   = useState<WeddingPortal[]>([])
+  const [batizados, setBatizados] = useState<BatizadoPortal[]>([])
+  const [loading, setLoading]     = useState(true)
   const [confirmDelete, setConfirmDelete] = useState<{ type: 'wedding' | 'batizado'; id: string; label: string } | null>(null)
-  const [deleting, setDeleting]     = useState(false)
+  const [deleting, setDeleting]   = useState(false)
 
   async function load() {
     setLoading(true)
@@ -62,13 +62,11 @@ export default function PortaisPage() {
     setDeleting(true)
 
     if (confirmDelete.type === 'wedding') {
-      // Remove page_token from the contact (keeps the lead in CRM)
       await supabase
         .from('crm_contacts')
         .update({ page_token: null })
         .eq('page_token', confirmDelete.id)
     } else {
-      // Delete the batizado portal settings row entirely
       await supabase
         .from('portal_template_settings')
         .delete()
@@ -125,15 +123,15 @@ export default function PortaisPage() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {weddings.map(p => (
-                    <div key={p.page_token} className="group relative bg-white/[0.02] border border-white/8 hover:border-gold/20 rounded-2xl px-5 py-5 transition-all">
-                      {/* Badge + delete */}
-                      <div className="flex items-start justify-between mb-3">
+                    <div key={p.page_token} className="group bg-white/[0.02] border border-white/8 hover:border-gold/20 rounded-2xl px-5 py-5 transition-all flex flex-col gap-3">
+                      {/* Badge row */}
+                      <div className="flex items-center justify-between">
                         <span className="text-[9px] tracking-[0.4em] uppercase text-gold/40 border border-gold/20 rounded-full px-2 py-0.5">
                           Casamento
                         </span>
                         <button
                           onClick={() => setConfirmDelete({ type: 'wedding', id: p.page_token, label: p.nome || p.page_token })}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity text-white/20 hover:text-red-400 p-0.5"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-white/20 hover:text-red-400 p-1 rounded-lg hover:bg-red-400/10"
                           title="Eliminar portal"
                         >
                           <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -142,31 +140,33 @@ export default function PortaisPage() {
                         </button>
                       </div>
 
-                      {/* Name */}
-                      <p className="text-white font-light text-base tracking-wide mb-1">
-                        {p.nome || <span className="text-white/30 italic text-sm">Sem nome</span>}
-                      </p>
-                      {p.data_casamento && (
-                        <p className="text-white/30 text-xs tracking-wider">
-                          {new Date(p.data_casamento + 'T00:00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })}
+                      {/* Info */}
+                      <div>
+                        <p className="text-white font-light text-base tracking-wide mb-1">
+                          {p.nome || <span className="text-white/30 italic text-sm">Sem nome</span>}
                         </p>
-                      )}
-                      {p.status && (
-                        <p className="text-white/20 text-[10px] tracking-[0.3em] uppercase mt-2">{p.status}</p>
-                      )}
+                        {p.data_casamento && (
+                          <p className="text-white/30 text-xs tracking-wider">
+                            {new Date(p.data_casamento + 'T00:00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })}
+                          </p>
+                        )}
+                        {p.status && (
+                          <p className="text-white/20 text-[10px] tracking-[0.3em] uppercase mt-1">{p.status}</p>
+                        )}
+                      </div>
 
-                      {/* Open link */}
+                      {/* Open link — explicit button, not overlay */}
                       <a
                         href={`/r/${p.page_token}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="absolute inset-0 rounded-2xl"
-                        onClick={e => {
-                          // prevent link if clicking delete button area
-                          const t = e.target as HTMLElement
-                          if (t.closest('button')) e.preventDefault()
-                        }}
-                      />
+                        className="mt-auto flex items-center gap-1.5 text-[10px] tracking-[0.3em] uppercase text-white/20 hover:text-gold transition-colors"
+                      >
+                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                        </svg>
+                        Abrir Portal
+                      </a>
                     </div>
                   ))}
                 </div>
@@ -186,15 +186,15 @@ export default function PortaisPage() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {batizados.map(p => (
-                    <div key={p.page_id} className="group relative bg-white/[0.02] border border-white/8 hover:border-gold/20 rounded-2xl px-5 py-5 transition-all">
-                      {/* Badge + delete */}
-                      <div className="flex items-start justify-between mb-3">
+                    <div key={p.page_id} className="group bg-white/[0.02] border border-white/8 hover:border-gold/20 rounded-2xl px-5 py-5 transition-all flex flex-col gap-3">
+                      {/* Badge row */}
+                      <div className="flex items-center justify-between">
                         <span className="text-[9px] tracking-[0.4em] uppercase text-blue-400/50 border border-blue-400/20 rounded-full px-2 py-0.5">
                           Batizado
                         </span>
                         <button
                           onClick={() => setConfirmDelete({ type: 'batizado', id: p.page_id, label: p.clientName || p.token })}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity text-white/20 hover:text-red-400 p-0.5"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-white/20 hover:text-red-400 p-1 rounded-lg hover:bg-red-400/10"
                           title="Eliminar portal"
                         >
                           <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -203,23 +203,26 @@ export default function PortaisPage() {
                         </button>
                       </div>
 
-                      {/* Name */}
-                      <p className="text-white font-light text-base tracking-wide mb-1">
-                        {p.clientName || <span className="text-white/30 italic text-sm">Sem nome</span>}
-                      </p>
-                      <p className="text-white/20 text-[10px] tracking-[0.25em] font-mono mt-1">{p.token}</p>
+                      {/* Info */}
+                      <div>
+                        <p className="text-white font-light text-base tracking-wide mb-1">
+                          {p.clientName || <span className="text-white/30 italic text-sm">Sem nome</span>}
+                        </p>
+                        <p className="text-white/20 text-[10px] tracking-[0.25em] font-mono">{p.token}</p>
+                      </div>
 
                       {/* Open link */}
                       <a
                         href={`/b/${p.token}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="absolute inset-0 rounded-2xl"
-                        onClick={e => {
-                          const t = e.target as HTMLElement
-                          if (t.closest('button')) e.preventDefault()
-                        }}
-                      />
+                        className="mt-auto flex items-center gap-1.5 text-[10px] tracking-[0.3em] uppercase text-white/20 hover:text-gold transition-colors"
+                      >
+                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                        </svg>
+                        Abrir Portal
+                      </a>
                     </div>
                   ))}
                 </div>
@@ -229,7 +232,7 @@ export default function PortaisPage() {
         )}
       </div>
 
-      {/* ── Modal de confirmação ── */}
+      {/* ── Modal confirmação ── */}
       {confirmDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-6">
           <div className="bg-[#120e09] border border-white/10 rounded-2xl p-8 max-w-sm w-full shadow-2xl">
