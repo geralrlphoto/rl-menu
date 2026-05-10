@@ -267,7 +267,15 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
       const data = await res.json()
       if (data.url) {
-        setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, slidePhotos: { ...(c.propostaPage.slidePhotos || {}), [slideId]: data.url } } }))
+        setContent(c => {
+          const newContent = { ...c, propostaPage: { ...c.propostaPage, slidePhotos: { ...(c.propostaPage.slidePhotos || {}), [slideId]: data.url } } }
+          // Auto-save immediately so photo persists after refresh
+          fetch('/api/lead-page/save-content', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, page_content: newContent }),
+          })
+          return newContent
+        })
       }
     } catch {}
     setUploadingSlidePhoto(null)
@@ -276,7 +284,13 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
     setContent(c => {
       const sp = { ...(c.propostaPage.slidePhotos || {}) }
       delete sp[slideId]
-      return { ...c, propostaPage: { ...c.propostaPage, slidePhotos: sp } }
+      const newContent = { ...c, propostaPage: { ...c.propostaPage, slidePhotos: sp } }
+      // Auto-save so removal persists
+      fetch('/api/lead-page/save-content', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, page_content: newContent }),
+      })
+      return newContent
     })
   }
   function setGrandeDia(k: keyof PageContent['propostaPage']['grandeDia'], v: string) {
