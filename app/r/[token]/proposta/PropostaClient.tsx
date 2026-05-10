@@ -563,7 +563,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
             <img
               src={pp.reflexao.imageUrl}
               alt=""
-              className="absolute inset-0 w-full h-full object-cover object-center"
+              className="absolute inset-0 w-full h-full object-cover object-right"
               style={{
                 maskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)',
                 WebkitMaskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)',
@@ -595,7 +595,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
             <img
               src={pp.couple.imageUrl}
               alt=""
-              className="absolute inset-0 w-full h-full object-cover object-center"
+              className="absolute inset-0 w-full h-full object-cover object-right"
               style={{
                 maskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)',
                 WebkitMaskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)',
@@ -967,7 +967,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
             <img
               src={pp.final.imageUrl}
               alt=""
-              className="absolute inset-0 w-full h-full object-cover object-center"
+              className="absolute inset-0 w-full h-full object-cover object-right"
               style={{
                 maskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)',
                 WebkitMaskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)',
