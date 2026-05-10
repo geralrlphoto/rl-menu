@@ -19,7 +19,7 @@ export type RMProposta = {
 }
 
 export type RMPageContent = {
-  hero:    { titulo: string; subtitulo: string }
+  hero:    { titulo: string; subtitulo: string; imageUrl?: string }
   videos:  { label: string; titulo: string; urls: string[] }
   proposta: {
     titulo: string
@@ -47,6 +47,7 @@ const DEFAULT_CONTENT: RMPageContent = {
   hero: {
     titulo: 'Reunião Marcada',
     subtitulo: 'RL PROD · Photography & Video',
+    imageUrl: '',
   },
   videos: {
     label: 'O Nosso Trabalho',
@@ -284,6 +285,8 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
   const [saveError,   setSaveError]  = useState<string | null>(null)
   const [publishing,  setPublishing] = useState(false)
   const [published,   setPublished]  = useState(false)
+  const [uploadingHero, setUploadingHero] = useState(false)
+  const heroImageInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     fetch(`/api/media-portal/view?token=${token}`)
@@ -320,6 +323,22 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
       packages[i] = { ...packages[i], [k]: v }
       return { ...c, proposta: { ...c.proposta, packages } }
     })
+  }
+
+  // ── Hero image upload ──
+  async function handleHeroImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingHero(true)
+    const fd = new FormData()
+    fd.append('file', file)
+    try {
+      const res = await fetch('/api/media-portal/upload-image', { method: 'POST', body: fd })
+      const d = await res.json()
+      if (d.url) setHero('imageUrl', d.url)
+    } catch {}
+    setUploadingHero(false)
+    e.target.value = ''
   }
 
   // ── Save ──
@@ -427,6 +446,17 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
                 {published ? '✓ Publicado' : publishing ? 'A publicar...' : '⬆ Publicar'}
               </button>
             )}
+            {/* Botão foto hero — na admin bar para ser sempre visível */}
+            <button onClick={() => heroImageInputRef.current?.click()} disabled={uploadingHero}
+              className="flex items-center gap-1.5 text-[10px] tracking-[0.3em] border border-white/20 bg-white/[0.03] hover:bg-white/[0.09] text-white/45 hover:text-white/70 px-3 py-2 uppercase transition-all disabled:opacity-40">
+              <svg className="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                <circle cx="12" cy="13" r="3"/>
+              </svg>
+              <span className="whitespace-nowrap">
+                {uploadingHero ? '...' : hero.imageUrl ? 'Cabeçalho ✓' : 'Cabeçalho'}
+              </span>
+            </button>
             <button onClick={() => setEditorOpen(true)}
               className="text-[11px] tracking-[0.35em] text-white/70 hover:text-white/90 border border-white/25 hover:border-white/50 bg-white/[0.05] hover:bg-white/[0.10] px-4 py-2 uppercase transition-all font-medium">
               ✎ Editar
@@ -438,13 +468,39 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
       <div className={`relative z-10 ${isAdmin ? 'pt-10' : ''}`}>
 
         {/* ── HERO ── */}
-        <section className="min-h-screen flex flex-col items-center justify-center px-6 pb-20">
+        {/* Hidden file input for hero background */}
+        <input ref={heroImageInputRef} type="file" accept="image/*" className="hidden"
+          onChange={handleHeroImageUpload} />
+
+        <section className="min-h-screen flex flex-col items-center justify-center px-6 pb-20 relative overflow-hidden">
+
+          {/* Hero background photo */}
+          {hero.imageUrl && (
+            <div className="absolute inset-0 z-0" style={{
+              WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 45%, transparent 100%)',
+              maskImage: 'linear-gradient(to bottom, black 0%, black 45%, transparent 100%)',
+            }}>
+              <img src={hero.imageUrl} alt="" className="w-full h-full object-cover" />
+            </div>
+          )}
+
+          {/* Admin: remover foto hero (só quando tem foto) */}
+          {isAdmin && hero.imageUrl && (
+            <button
+              onClick={() => setHero('imageUrl', '')}
+              className="absolute top-4 right-4 z-20 flex items-center gap-1.5 border border-red-400/25 bg-black/60 backdrop-blur-sm hover:bg-red-900/40 hover:border-red-400/50 px-3 py-2 transition-all"
+            >
+              <span className="text-[8px] tracking-[0.4em] text-red-400/60 hover:text-red-400/90 uppercase whitespace-nowrap">✕ Remover Foto</span>
+            </button>
+          )}
+
+          <div className="relative z-10 flex flex-col items-center">
           <FadeIn delay={0}>
             <img
               src="/logo-rl-prod-branco.png"
               alt="RL PROD"
               className="opacity-70 mb-10"
-              style={{ height: '72px', width: 'auto' }}
+              style={{ height: '150px', width: 'auto' }}
             />
           </FadeIn>
           <FadeIn delay={80}>
@@ -481,9 +537,10 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
               <p className="mt-2 text-[8px] tracking-[0.4em] text-blue-400/30 uppercase">— dados de demonstração —</p>
             )}
           </FadeIn>
+          </div>{/* /relative z-10 content wrapper */}
 
-          {/* Scroll cue */}
-          <FadeIn delay={600} className="absolute bottom-10 left-1/2 -translate-x-1/2">
+          {/* Scroll cue — absolute relative to section */}
+          <FadeIn delay={600} className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10">
             <div className="flex flex-col items-center gap-2 opacity-30">
               <div className="w-px h-10 bg-white/40" />
               <span className="text-[7px] tracking-[0.6em] text-white uppercase">Scroll</span>
@@ -760,6 +817,22 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
                 </EditorField>
                 <EditorField label="Subtítulo">
                   <TInput value={hero.subtitulo} onChange={v => setHero('subtitulo', v)} />
+                </EditorField>
+                <EditorField label="Foto de Cabeçalho">
+                  {hero.imageUrl ? (
+                    <div className="relative">
+                      <img src={hero.imageUrl} alt="" className="w-full h-20 object-cover opacity-60" />
+                      <button onClick={() => setHero('imageUrl', '')}
+                        className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center bg-black/70 text-white/60 hover:text-red-400/80 text-[10px] border border-white/10 transition-colors">
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => heroImageInputRef.current?.click()} disabled={uploadingHero}
+                      className="w-full py-2.5 border border-dashed border-white/10 text-[9px] text-white/25 tracking-widest uppercase hover:border-white/20 hover:text-white/40 transition-colors disabled:opacity-40">
+                      {uploadingHero ? 'A carregar...' : '+ Carregar foto'}
+                    </button>
+                  )}
                 </EditorField>
               </AccordionSection>
 
