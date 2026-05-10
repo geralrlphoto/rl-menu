@@ -37,6 +37,7 @@ export type PageContent = {
   portfolio:    { label: string; title: string; titleFont: string; titleColor: string; photos: string[] }
   testimonials: { label: string; items: { text: string; author: string }[] }
   about:        { label: string; title: string; titleFont: string; titleColor: string; text: string; textColor: string }
+  revista:      { visible: boolean; label: string; title: string; subtitle: string; imageUrl: string; buttonLabel: string; linkUrl: string }
   banner:       { message: string; signature: string }
   proposta:     { password: string; buttonLabel: string }
   propostas:    Proposta[]
@@ -81,6 +82,15 @@ export const DEFAULT_CONTENT: PageContent = {
     titleColor: '#ffffff',
     text: 'Somos especializados em fotografia e vídeo de casamentos. O nosso objetivo é preservar a autenticidade de cada momento — a emoção, os detalhes, as histórias que só acontecem uma vez.',
     textColor: '#666666',
+  },
+  revista: {
+    visible: false,
+    label: 'Revista',
+    title: 'A nossa revista de casamentos',
+    subtitle: 'Descobre o nosso método de trabalho e todos os serviços disponíveis ao detalhe. Fica a saber exatamente o que esperar de um casamento com a RL Photo · Video.',
+    imageUrl: '',
+    buttonLabel: 'Ver Revista',
+    linkUrl: 'https://rl-menu-lake.vercel.app/secao/ee958740-f53f-4417-ad11-c01d0c42efa5',
   },
   banner: {
     message: 'Cada momento do vosso dia merece ser preservado para sempre. Estamos honrados em fazer parte desta história.',
@@ -140,6 +150,7 @@ function merge(saved: any): PageContent {
     portfolio:    { ...DEFAULT_CONTENT.portfolio,    ...(saved.portfolio    || {}), photos: saved.portfolio?.photos || DEFAULT_CONTENT.portfolio.photos },
     testimonials: { ...DEFAULT_CONTENT.testimonials, ...(saved.testimonials || {}), items: saved.testimonials?.items || DEFAULT_CONTENT.testimonials.items },
     about:        { ...DEFAULT_CONTENT.about,        ...(saved.about        || {}) },
+    revista:      { ...DEFAULT_CONTENT.revista,      ...(saved.revista      || {}), linkUrl: saved.revista?.linkUrl ?? DEFAULT_CONTENT.revista.linkUrl },
     banner:       { ...DEFAULT_CONTENT.banner,       ...(saved.banner       || {}) },
     proposta:     { ...DEFAULT_CONTENT.proposta,     ...(saved.proposta     || {}) },
     propostas:       saved.propostas       || DEFAULT_CONTENT.propostas,
@@ -388,6 +399,9 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
   function setAbout(k: keyof PageContent['about'], v: string) {
     setContent(c => ({ ...c, about: { ...c.about, [k]: v } }))
   }
+  function setRevista(k: keyof PageContent['revista'], v: any) {
+    setContent(c => ({ ...c, revista: { ...c.revista, [k]: v } }))
+  }
   function setBanner(k: keyof PageContent['banner'], v: string) {
     setContent(c => ({ ...c, banner: { ...c.banner, [k]: v } }))
   }
@@ -496,7 +510,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
   const targetDate = contact!.reuniao_data && contact!.reuniao_hora
     ? `${contact!.reuniao_data}T${horaFmt}:00` : null
 
-  const { hero, countdown, video, portfolio, testimonials, about, banner, proposta } = content
+  const { hero, countdown, video, portfolio, testimonials, about, revista, banner, proposta } = content
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
@@ -871,6 +885,50 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
         ))}
       </section>
 
+      {/* ── REVISTA ── */}
+      {(revista.visible || isAdmin) && (
+        <section className="px-6 py-14 flex flex-col items-center" style={{ background: '#0d0d0d' }}>
+          {isAdmin && !revista.visible && (
+            <div className="mb-6 px-4 py-2 rounded-full border border-dashed border-gold/20 text-[10px] tracking-[0.3em] text-gold/30 uppercase">
+              Secção Oculta — ativa no editor
+            </div>
+          )}
+          <div className="flex flex-col sm:flex-row items-center gap-10 w-full max-w-2xl">
+            {/* Capa */}
+            <FadeIn delay={260} className="flex-shrink-0">
+              {revista.imageUrl ? (
+                <div className="relative rounded-xl overflow-hidden shadow-2xl"
+                  style={{ width: '180px', aspectRatio: '2/3', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <img src={revista.imageUrl} alt="Revista" className="w-full h-full object-cover" />
+                </div>
+              ) : isAdmin ? (
+                <div className="rounded-xl flex flex-col items-center justify-center gap-2"
+                  style={{ width: '180px', aspectRatio: '2/3', background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(201,168,76,0.15)' }}>
+                  <span className="text-gold/20 text-2xl">◻</span>
+                  <span className="text-white/15 text-[9px] tracking-widest uppercase">Capa</span>
+                </div>
+              ) : null}
+            </FadeIn>
+            {/* Texto + botão */}
+            <FadeIn delay={340} className="flex flex-col items-center sm:items-start gap-6 text-center sm:text-left">
+              <div className="flex flex-col gap-2">
+                <p className="text-[10px] tracking-[0.4em] text-gold/40 uppercase">◆ Edição Exclusiva</p>
+                <p className="font-cormorant text-2xl sm:text-3xl font-light text-white/80">{revista.title}</p>
+                {revista.subtitle && <p className="text-sm text-white/30 leading-relaxed font-light max-w-xs">{revista.subtitle}</p>}
+              </div>
+              <a href={revista.linkUrl} target="_blank" rel="noopener noreferrer"
+                className="group flex items-center gap-3 px-8 py-3.5 text-[10px] tracking-[0.4em] uppercase transition-all duration-300 hover:scale-[1.04]"
+                style={{ background: 'rgba(201,168,76,0.12)', border: '0.5px solid rgba(201,168,76,0.5)', color: '#C9A84C' }}>
+                <span>{revista.buttonLabel || 'Ver Revista'}</span>
+                <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+              </a>
+            </FadeIn>
+          </div>
+        </section>
+      )}
+
+      <div className="w-full max-w-sm mx-auto h-px" style={{ background: 'rgba(201,168,76,0.15)' }} />
+
       {/* ── BANNER ── */}
       <section className="px-4 sm:px-8 py-10" style={{ background: '#0a0a0a' }}>
         <FadeIn>
@@ -1144,6 +1202,40 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
                 </Field>
                 <Field label="Assinatura (ex: Ana & Pedro ♡)">
                   <TInput value={banner.signature} onChange={v => setBanner('signature', v)} />
+                </Field>
+              </AccordionSection>
+
+              {/* ── REVISTA ── */}
+              <AccordionSection title="Revista">
+                <button onClick={() => setRevista('visible', !revista.visible)}
+                  className="w-full py-2 rounded-lg text-xs tracking-[0.2em] uppercase transition-all"
+                  style={revista.visible
+                    ? { background: 'rgba(201,168,76,0.15)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.3)' }
+                    : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  {revista.visible ? '● Visível' : '○ Oculta'}
+                </button>
+                <Field label="Etiqueta"><TInput value={revista.label} onChange={v => setRevista('label', v)} /></Field>
+                <Field label="Título"><TInput value={revista.title} onChange={v => setRevista('title', v)} /></Field>
+                <Field label="Subtítulo"><TInput value={revista.subtitle} onChange={v => setRevista('subtitle', v)} multiline /></Field>
+                <Field label="Capa (imagem)">
+                  <label className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-xs cursor-pointer transition-all"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.35)' }}>
+                    <input type="file" accept="image/*" className="hidden"
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(f, url => setRevista('imageUrl', url)) }} />
+                    {revista.imageUrl ? '✓ Trocar capa' : '⬆ Carregar capa'}
+                  </label>
+                  {revista.imageUrl && (
+                    <div className="relative mt-1 rounded-lg overflow-hidden" style={{ height: '90px' }}>
+                      <img src={revista.imageUrl} alt="" className="w-full h-full object-cover opacity-70" />
+                      <button onClick={() => setRevista('imageUrl', '')}
+                        className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px]"
+                        style={{ background: 'rgba(0,0,0,0.7)', color: 'rgba(255,255,255,0.5)' }}>✕</button>
+                    </div>
+                  )}
+                </Field>
+                <Field label="Texto do botão"><TInput value={revista.buttonLabel} onChange={v => setRevista('buttonLabel', v)} /></Field>
+                <Field label="Link da revista">
+                  <TInput value={revista.linkUrl} onChange={v => setRevista('linkUrl', v)} placeholder="https://..." />
                 </Field>
               </AccordionSection>
 
