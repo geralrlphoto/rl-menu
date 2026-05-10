@@ -625,18 +625,6 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
               Secção Oculta — ativa no editor
             </div>
           )}
-          <FadeIn>
-            <p className="text-xs tracking-[0.35em] text-white/25 uppercase mb-2 text-center">{revista.label}</p>
-          </FadeIn>
-          <FadeIn delay={120}>
-            <h2 className="font-cormorant text-xl sm:text-3xl font-light mb-3 text-center text-white/90">{revista.title}</h2>
-          </FadeIn>
-          {revista.subtitle && (
-            <FadeIn delay={200}>
-              <p className="text-sm text-white/35 text-center mb-10 max-w-sm leading-relaxed font-light">{revista.subtitle}</p>
-            </FadeIn>
-          )}
-
           <div className="flex flex-col sm:flex-row items-center gap-10 w-full max-w-2xl">
             {/* Capa */}
             <FadeIn delay={260} className="flex-shrink-0">
