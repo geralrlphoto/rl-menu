@@ -264,8 +264,11 @@ function EditorField({ label, children }: { label: string; children: React.React
   )
 }
 
+const MASTER_TOKEN = 'rm-master-rlprod'
+
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function RMLeadPageClient({ token, isAdmin }: { token: string; isAdmin: boolean }) {
+  const isMaster = token === MASTER_TOKEN
   const [lead,       setLead]       = useState<RMLead | null>(null)
   const [loading,    setLoading]    = useState(true)
   const [notFound,   setNotFound]   = useState(false)
@@ -276,9 +279,11 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
   // Editor
   const [editorOpen, setEditorOpen] = useState(false)
   const [content,    setContent]    = useState<RMPageContent>(DEFAULT_CONTENT)
-  const [saving,     setSaving]     = useState(false)
-  const [saved,      setSaved]      = useState(false)
-  const [saveError,  setSaveError]  = useState<string | null>(null)
+  const [saving,      setSaving]     = useState(false)
+  const [saved,       setSaved]      = useState(false)
+  const [saveError,   setSaveError]  = useState<string | null>(null)
+  const [publishing,  setPublishing] = useState(false)
+  const [published,   setPublished]  = useState(false)
 
   useEffect(() => {
     fetch(`/api/media-portal/view?token=${token}`)
@@ -329,6 +334,21 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
       else { const d = await res.json().catch(() => ({})); setSaveError(d.error || `Erro ${res.status}`) }
     } catch { setSaveError('Erro de ligação') }
     setSaving(false)
+  }
+
+  // ── Publicar (só maquete) ──
+  async function handlePublish() {
+    setPublishing(true)
+    try {
+      await fetch('/api/media-portal/save-content', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, page_content: content }),
+      })
+      const res = await fetch('/api/media-portal/sync-rm', { method: 'POST' })
+      const d = await res.json()
+      if (d.ok) { setPublished(true); setTimeout(() => setPublished(false), 3000) }
+    } catch {}
+    setPublishing(false)
   }
 
   // ── Confirm / Change ──
@@ -389,11 +409,24 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
       {isAdmin && (
         <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-5 py-2.5 bg-[#050507]/90 backdrop-blur-sm border-b border-white/[0.06]">
           <a href="/media/crm/leads" className="text-[9px] tracking-[0.4em] text-white/20 hover:text-white/50 transition-colors uppercase">‹ Leads</a>
-          <span className="text-[8px] tracking-[0.5em] text-white/15 uppercase">Admin · Portal de Reunião</span>
-          <button onClick={() => setEditorOpen(true)}
-            className="text-[11px] tracking-[0.35em] text-white/70 hover:text-white/90 border border-white/25 hover:border-white/50 bg-white/[0.05] hover:bg-white/[0.10] px-4 py-2 uppercase transition-all font-medium">
-            ✎ Editar
-          </button>
+          <div className="flex items-center gap-3">
+            <span className="text-[8px] tracking-[0.5em] text-white/15 uppercase">Admin · Portal de Reunião</span>
+            {isMaster && (
+              <span className="text-[8px] tracking-[0.4em] text-blue-400/60 border border-blue-400/20 px-2 py-0.5 uppercase">Maquete Mestre</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {isMaster && (
+              <button onClick={handlePublish} disabled={publishing}
+                className="text-[10px] tracking-[0.3em] border border-blue-400/40 bg-blue-400/10 hover:bg-blue-400/20 text-blue-400/80 hover:text-blue-400 px-4 py-2 uppercase transition-all disabled:opacity-40">
+                {published ? '✓ Publicado' : publishing ? 'A publicar...' : '⬆ Publicar'}
+              </button>
+            )}
+            <button onClick={() => setEditorOpen(true)}
+              className="text-[11px] tracking-[0.35em] text-white/70 hover:text-white/90 border border-white/25 hover:border-white/50 bg-white/[0.05] hover:bg-white/[0.10] px-4 py-2 uppercase transition-all font-medium">
+              ✎ Editar
+            </button>
+          </div>
         </div>
       )}
 
