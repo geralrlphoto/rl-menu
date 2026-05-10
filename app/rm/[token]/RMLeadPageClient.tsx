@@ -472,7 +472,7 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
         <input ref={heroImageInputRef} type="file" accept="image/*" className="hidden"
           onChange={handleHeroImageUpload} />
 
-        <section className="min-h-screen flex flex-col items-center justify-center px-6 pb-20 relative overflow-hidden">
+        <section className="flex flex-col items-center justify-center px-6 pt-20 pb-16 relative overflow-hidden">
 
           {/* Hero background photo */}
           {hero.imageUrl && (
@@ -539,13 +539,6 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
           </FadeIn>
           </div>{/* /relative z-10 content wrapper */}
 
-          {/* Scroll cue — absolute relative to section */}
-          <FadeIn delay={600} className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10">
-            <div className="flex flex-col items-center gap-2 opacity-30">
-              <div className="w-px h-10 bg-white/40" />
-              <span className="text-[7px] tracking-[0.6em] text-white uppercase">Scroll</span>
-            </div>
-          </FadeIn>
         </section>
 
         <div className="w-full h-px bg-white/[0.04]" />
