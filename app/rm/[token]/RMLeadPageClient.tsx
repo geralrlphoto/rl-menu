@@ -539,6 +539,12 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
           </FadeIn>
           </div>{/* /relative z-10 content wrapper */}
 
+          {/* Scroll cue */}
+          <div className="relative z-10 flex flex-col items-center gap-2 opacity-30 mt-10">
+            <div className="w-px h-10 bg-white/40" />
+            <span className="text-[7px] tracking-[0.6em] text-white uppercase">Scroll</span>
+          </div>
+
         </section>
 
         <div className="w-full h-px bg-white/[0.04]" />
