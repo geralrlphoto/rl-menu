@@ -848,10 +848,11 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
             </g>
           </svg>
 
-          {/* Conteúdo */}
-          <div className="relative z-10 flex flex-col items-start px-16 sm:px-24 gap-8 max-w-2xl w-full">
-            {/* Texto de fecho */}
-            <div className="flex flex-col gap-5">
+          {/* Conteúdo — layout duas colunas */}
+          <div className="relative z-10 flex flex-row items-center w-full h-full px-16 sm:px-20 gap-12">
+
+            {/* Coluna esquerda — texto */}
+            <div className="flex flex-col gap-6 flex-1">
               <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
                 style={{ fontSize: 'clamp(1.6rem,3.8vw,3rem)', color: typo.accentColor, lineHeight: 1.25 }}>
                 Vamos contar<br />esta história<br />juntos?
@@ -862,29 +863,32 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
                 <div className="h-px w-10" style={{ background: `${typo.accentColor}50` }} />
               </div>
               <p className={`${fontClass(typo.bodyFont)} font-light leading-relaxed`}
-                style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.75, maxWidth: '400px' }}>
+                style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.75, maxWidth: '360px' }}>
                 Será uma honra fazer parte deste dia tão especial e transformar cada momento em memórias que ficam para sempre.
               </p>
+              <div className="h-px" style={{ background: `${typo.accentColor}20`, maxWidth: '360px' }} />
+              <div className="flex flex-col gap-1.5">
+                <a href="https://www.rlphotovideo.pt" target="_blank" rel="noopener noreferrer"
+                  className="font-light tracking-[0.15em] hover:opacity-80 transition-opacity"
+                  style={{ fontSize: '15px', color: typo.accentColor }}>
+                  www.rlphotovideo.pt
+                </a>
+                <a href="tel:912932768" className="font-light tracking-[0.15em]"
+                  style={{ fontSize: '15px', color: typo.bodyColor, opacity: 0.6 }}>
+                  912 932 768
+                </a>
+                <p className="font-light tracking-[0.2em]"
+                  style={{ fontSize: '13px', color: typo.bodyColor, opacity: 0.35 }}>
+                  Pinhal Novo · Palmela
+                </p>
+              </div>
             </div>
-            {/* Divisor */}
-            <div className="w-full h-px" style={{ background: `${typo.accentColor}20` }} />
-            {/* Contactos */}
-            <div className="flex flex-col gap-2">
-              <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="opacity-70 mb-1" style={{ width: '72px' }} />
-              <a href="https://www.rlprod.pt" target="_blank" rel="noopener noreferrer"
-                className="font-light tracking-[0.15em] hover:opacity-80 transition-opacity"
-                style={{ fontSize: '15px', color: typo.accentColor }}>
-                www.rlprod.pt
-              </a>
-              <a href="tel:912932768" className="font-light tracking-[0.15em]"
-                style={{ fontSize: '15px', color: typo.bodyColor, opacity: 0.6 }}>
-                912 932 768
-              </a>
-              <p className="font-light tracking-[0.2em]"
-                style={{ fontSize: '13px', color: typo.bodyColor, opacity: 0.35 }}>
-                Pinhal Novo · Palmela
-              </p>
+
+            {/* Coluna direita — logo grande centrado */}
+            <div className="flex items-center justify-center flex-shrink-0" style={{ width: 'clamp(180px,28vw,320px)' }}>
+              <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL Photo Video" className="opacity-80 w-full" />
             </div>
+
           </div>
         </div>
       )
