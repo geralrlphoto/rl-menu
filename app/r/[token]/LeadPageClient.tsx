@@ -47,6 +47,7 @@ export type PageContent = {
     about: { title: string; text: string; photo: string; videoUrl: string; titlePos: string }
     relive: { imageUrl: string; buttonUrl: string }
     couple: { imageUrl: string; title: string }
+    reflexao: { imageUrl: string }
     grandeDia: { title: string; p1: string; p2: string; p3: string; note: string; imageUrl: string }
     packages: { title: string; description: string; price: string }[]
     propostaAtiva: number
@@ -121,6 +122,9 @@ export const DEFAULT_CONTENT: PageContent = {
     couple: {
       imageUrl: '',
       title: 'Os nossos noivos',
+    },
+    reflexao: {
+      imageUrl: '',
     },
     grandeDia: {
       title: 'o grande dia',
