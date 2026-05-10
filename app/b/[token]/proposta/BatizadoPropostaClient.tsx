@@ -230,6 +230,9 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
   function setMomentos(k: keyof BatizadoContent['propostaPage']['momentos'], v: string) {
     setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, momentos: { ...c.propostaPage.momentos, [k]: v } } }))
   }
+  function setMenino(k: keyof BatizadoContent['propostaPage']['menino'], v: string) {
+    setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, menino: { ...c.propostaPage.menino, [k]: v } } }))
+  }
 
   // Auto-guarda após upload — usa o conteúdo actualizado directamente para não depender do estado async
   const uploadAndSave = async (
@@ -261,6 +264,10 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
   )
   const handleMomentosUpload = (file: File) => uploadAndSave(file,
     (url) => ({ ...content, propostaPage: { ...content.propostaPage, momentos: { ...content.propostaPage.momentos, imageUrl: url } } }),
+    setUploadingRelive,
+  )
+  const handleMeninoUpload = (file: File) => uploadAndSave(file,
+    (url) => ({ ...content, propostaPage: { ...content.propostaPage, menino: { ...content.propostaPage.menino, imageUrl: url } } }),
     setUploadingRelive,
   )
   const handleGrandeDiaUpload = (file: File) => uploadAndSave(file,
@@ -522,20 +529,43 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
       )
 
       case 'menino': return (
-        <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-10 max-w-3xl mx-auto">
-          <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-          <div>
-            <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
-              style={{ fontSize: 'clamp(1.6rem,3.8vw,3rem)', color: typo.titleColor, lineHeight: 1.2 }}>
-              Quem é o nosso
-            </h2>
-            <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
-              style={{ fontSize: 'clamp(1.6rem,3.8vw,3rem)', color: typo.accentColor, lineHeight: 1.2 }}>
-              Menino/a?
-            </h2>
-            <div className="mt-5 mx-auto w-12 h-px" style={{ background: `${typo.accentColor}60` }} />
+        <div className="relative flex items-center justify-center h-full w-full overflow-hidden">
+          {/* Foto de fundo com desvanecer */}
+          {pp.menino?.imageUrl && (
+            <>
+              <div className="absolute inset-0"
+                style={{ backgroundImage: `url(${pp.menino.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center right' }} />
+              <div className="absolute inset-0"
+                style={{ background: 'linear-gradient(to right, #0a0a0a 35%, #0a0a0a99 60%, transparent 100%)' }} />
+              <div className="absolute inset-0"
+                style={{ background: 'linear-gradient(to right, #0a0a0a 20%, transparent 55%)' }} />
+            </>
+          )}
+          {/* Conteúdo */}
+          <div className="relative z-10 flex items-center justify-start w-full max-w-5xl px-8 sm:px-16">
+            <div className="flex flex-col gap-6">
+              <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+              <div>
+                <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+                  style={{ fontSize: 'clamp(1.6rem,3.8vw,3rem)', color: typo.titleColor, lineHeight: 1.2 }}>
+                  Quem é o nosso
+                </h2>
+                <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+                  style={{ fontSize: 'clamp(1.6rem,3.8vw,3rem)', color: typo.titleColor, lineHeight: 1.2 }}>
+                  Menino/a?
+                </h2>
+                <div className="mt-5 w-12 h-px" style={{ background: `${typo.accentColor}60` }} />
+              </div>
+              <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+            </div>
           </div>
-          <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
+          {/* Indicador admin quando não há foto */}
+          {isAdmin && !pp.menino?.imageUrl && (
+            <div className="absolute right-16 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 opacity-30">
+              <span style={{ color: typo.accentColor, fontSize: '2rem' }}>◻</span>
+              <p className="text-[10px] tracking-widest uppercase" style={{ color: typo.accentColor }}>Adiciona foto no editor</p>
+            </div>
+          )}
         </div>
       )
 
@@ -965,6 +995,24 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
                   </div>
                 </Field>
                 <Field label="URL do vídeo"><TInput value={pp.about?.videoUrl || ''} onChange={v => setAboutSlide('videoUrl', v)} placeholder="https://youtu.be/..." /></Field>
+                <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Slide "Quem é o Menino/a?"</p>
+                <Field label="Foto de fundo (desvanece)">
+                  <label className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-xs cursor-pointer transition-all ${uploadingRelive ? 'opacity-50 pointer-events-none' : ''}`}
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.35)' }}>
+                    <input type="file" accept="image/*" className="hidden"
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleMeninoUpload(f) }} />
+                    {uploadingRelive ? '⏳ A carregar...' : pp.menino?.imageUrl ? '✓ Trocar imagem' : '⬆ Carregar imagem'}
+                  </label>
+                  {pp.menino?.imageUrl && (
+                    <div className="relative mt-1 rounded-lg overflow-hidden" style={{ height: '70px' }}>
+                      <img src={pp.menino.imageUrl} alt="" className="w-full h-full object-cover opacity-60" />
+                      <button onClick={() => setMenino('imageUrl', '')}
+                        className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px]"
+                        style={{ background: 'rgba(0,0,0,0.7)', color: 'rgba(255,255,255,0.5)' }}>✕</button>
+                    </div>
+                  )}
+                </Field>
                 <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
                 <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Slide "O Que Inclui"</p>
                 <Field label="Foto de fundo (desvanece)">
