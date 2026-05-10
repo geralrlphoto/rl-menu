@@ -362,37 +362,58 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
       )
 
       case 'relive': return (
-        <div className="flex items-center justify-center h-full w-full px-8 sm:px-16">
-          <div className="w-full max-w-2xl flex flex-col gap-10">
-            <div>
-              <h2 className={`${fontClass(typo.titleFont)} font-light`}
-                style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.1, letterSpacing: '0.04em' }}>
-                O Que
-              </h2>
-              <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
-                style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.accentColor, lineHeight: 1.1, letterSpacing: '0.04em' }}>
-                Inclui
-              </h2>
-              <div className="mt-4 w-12 h-px" style={{ background: `${typo.accentColor}60` }} />
-            </div>
-            <div className="flex flex-col gap-6">
-              {[
-                { icon: '◎', text: 'Reunião de preparação' },
-                { icon: '⬡', text: 'Cobertura fotográfica e/ou vídeo durante todo o dia' },
-                { icon: '◻', text: 'Edição cuidada e profissional' },
-                { icon: '◈', text: 'Entrega em galeria online privada e/ou suporte físico (conforme plano selecionado)' },
-                { icon: '◇', text: 'Acompanhamento próximo e personalizado' },
-              ].map((item, i) => (
-                <div key={i} className="flex items-start gap-5">
-                  <span style={{ color: typo.accentColor, fontSize: '1.1rem', flexShrink: 0, marginTop: '2px', opacity: 0.8 }}>{item.icon}</span>
-                  <p className={`${fontClass(typo.bodyFont)} font-light leading-relaxed`}
-                    style={{ fontSize: 'clamp(16px,1.8vw,22px)', color: typo.bodyColor, opacity: 0.85 }}>
-                    {item.text}
-                  </p>
-                </div>
-              ))}
+        <div className="relative flex items-center justify-center h-full w-full overflow-hidden">
+          {/* Foto de fundo com desvanecer da direita para a esquerda */}
+          {pp.relive?.imageUrl && (
+            <>
+              <div className="absolute inset-0"
+                style={{ backgroundImage: `url(${pp.relive.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center right' }} />
+              <div className="absolute inset-0"
+                style={{ background: 'linear-gradient(to right, #0a0a0a 35%, #0a0a0a99 60%, transparent 100%)' }} />
+              <div className="absolute inset-0"
+                style={{ background: 'linear-gradient(to right, #0a0a0a 20%, transparent 55%)' }} />
+            </>
+          )}
+          {/* Conteúdo */}
+          <div className="relative z-10 flex items-center justify-start w-full max-w-5xl px-8 sm:px-16">
+            <div className="flex flex-col gap-10 max-w-xl">
+              <div>
+                <h2 className={`${fontClass(typo.titleFont)} font-light`}
+                  style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.1, letterSpacing: '0.04em' }}>
+                  O Que
+                </h2>
+                <h2 className={`${fontClass(typo.titleFont)} font-light italic`}
+                  style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.accentColor, lineHeight: 1.1, letterSpacing: '0.04em' }}>
+                  Inclui
+                </h2>
+                <div className="mt-4 w-12 h-px" style={{ background: `${typo.accentColor}60` }} />
+              </div>
+              <div className="flex flex-col gap-6">
+                {[
+                  { icon: '◎', text: 'Reunião de preparação' },
+                  { icon: '⬡', text: 'Cobertura fotográfica e/ou vídeo durante todo o dia' },
+                  { icon: '◻', text: 'Edição cuidada e profissional' },
+                  { icon: '◈', text: 'Entrega em galeria online privada e/ou suporte físico (conforme plano selecionado)' },
+                  { icon: '◇', text: 'Acompanhamento próximo e personalizado' },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-5">
+                    <span style={{ color: typo.accentColor, fontSize: '1.1rem', flexShrink: 0, marginTop: '2px', opacity: 0.8 }}>{item.icon}</span>
+                    <p className={`${fontClass(typo.bodyFont)} font-light leading-relaxed`}
+                      style={{ fontSize: 'clamp(16px,1.8vw,22px)', color: typo.bodyColor, opacity: 0.85 }}>
+                      {item.text}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
+          {/* Indicador de upload para admin quando não há foto */}
+          {isAdmin && !pp.relive?.imageUrl && (
+            <div className="absolute right-16 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 opacity-30">
+              <span style={{ color: typo.accentColor, fontSize: '2rem' }}>◻</span>
+              <p className="text-[10px] tracking-widest uppercase" style={{ color: typo.accentColor }}>Adiciona foto no editor</p>
+            </div>
+          )}
         </div>
       )
 
@@ -849,8 +870,8 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
                 </Field>
                 <Field label="URL do vídeo"><TInput value={pp.about?.videoUrl || ''} onChange={v => setAboutSlide('videoUrl', v)} placeholder="https://youtu.be/..." /></Field>
                 <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
-                <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Slide Relive</p>
-                <Field label="Imagem">
+                <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Slide "O Que Inclui"</p>
+                <Field label="Foto de fundo (desvanece)">
                   <label className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-xs cursor-pointer transition-all ${uploadingRelive ? 'opacity-50 pointer-events-none' : ''}`}
                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.35)' }}>
                     <input type="file" accept="image/*" className="hidden"
