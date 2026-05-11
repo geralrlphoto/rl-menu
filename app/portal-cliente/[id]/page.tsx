@@ -837,8 +837,9 @@ function PortalSubPageContent() {
   const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
-    const key = refParam ? `portalAdmin_${refParam}` : null
-    if (key && sessionStorage.getItem(key) === 'true') setIsAdmin(true)
+    // Template sub-pages (no refParam) are always admin
+    if (!refParam) { setIsAdmin(true); return }
+    if (sessionStorage.getItem(`portalAdmin_${refParam}`) === 'true') setIsAdmin(true)
   }, [refParam])
 
   const [editingPhotos, setEditingPhotos] = useState(false)
@@ -1114,6 +1115,25 @@ function PortalSubPageContent() {
     setTimeout(() => loadBlocks(true), 1500)
   }
 
+  const [publishing, setPublishing] = useState(false)
+  const [published,  setPublished]  = useState(false)
+
+  async function handlePublicar() {
+    setPublishing(true)
+    try {
+      await fetch('/api/portais', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          photoSettings: { subpageHeaderUrl, pageHeaders },
+          tipoPortal: 'casamento',
+        }),
+      })
+      setPublished(true)
+      setTimeout(() => setPublished(false), 3000)
+    } finally { setPublishing(false) }
+  }
+
   async function savePortalSettings(newSettings: Record<string, any>) {
     if (refParam) {
       await fetch('/api/portais', {
@@ -1361,13 +1381,22 @@ function PortalSubPageContent() {
               Agenda
             </button>
           )}
+          {isAdmin && !refParam && !editing && !editingPhotos && !loading && !error && (
+            <button onClick={handlePublicar} disabled={publishing}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-emerald-400/70 hover:text-emerald-400 border border-emerald-400/20 hover:border-emerald-400/40 transition-all disabled:opacity-40">
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 7.5m0 0L7.5 12M12 7.5v9"/>
+              </svg>
+              {published ? '✓ Publicado' : publishing ? 'A publicar...' : 'Publicar'}
+            </button>
+          )}
           {isAdmin && !editing && !editingPhotos && !loading && !error && (
             <button onClick={() => setEditing(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gold/60 hover:text-gold border border-gold/20 hover:border-gold/40 transition-all">
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              Editar
+              ✎ Editar
             </button>
           )}
         </div>
@@ -1453,6 +1482,17 @@ function PortalSubPageContent() {
               )}
             </div>
             <div className="mt-3 h-px w-16 bg-gold/40" />
+            {/* Admin: add header photo even when none exists */}
+            {isAdmin && (
+              <label className="mt-3 inline-flex items-center gap-1.5 cursor-pointer text-[10px] text-white/25 hover:text-white/50 border border-dashed border-white/10 hover:border-white/20 px-3 py-1.5 rounded-lg transition-all">
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                {uploadingPageHeader ? 'A carregar...' : '+ Foto de cabeçalho'}
+                <input type="file" accept="image/*" className="hidden" disabled={uploadingPageHeader}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadPageHeader(f) }} />
+              </label>
+            )}
           </>
         )}
       </header>
