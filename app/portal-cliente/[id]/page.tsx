@@ -1188,6 +1188,14 @@ function PortalSubPageContent() {
     } finally { setUploadingPageHeader(false) }
   }
 
+  async function handleRemovePageHeader() {
+    if (!id) return
+    // 'none' sentinel = explicitly no photo (overrides global default)
+    const newPH = { ...pageHeaders, [id as string]: 'none' }
+    await savePortalSettings({ ...portalSettingsObj, pageHeaders: newPH })
+    setPageHeaders(newPH)
+  }
+
   async function handleSaveBriefingInfo() {
     if (!id) return
     setSavingBriefingInfo(true)
@@ -1426,9 +1434,11 @@ function PortalSubPageContent() {
             </div>
           </div>
         ) : (() => {
-          const effectiveHeader = (id && pageHeaders[id as string]) || subpageHeaderUrl
+          // 'none' sentinel = user explicitly cleared the photo
+          const perPage = id ? pageHeaders[id as string] : undefined
+          const effectiveHeader = perPage === 'none' ? '' : (perPage || subpageHeaderUrl)
           return effectiveHeader ? (
-          <div className="relative w-full h-48 sm:h-64 rounded-2xl overflow-hidden mb-6 group/header">
+          <div className="relative w-full h-48 sm:h-64 rounded-2xl overflow-hidden mb-6">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={effectiveHeader} alt="" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -1448,24 +1458,33 @@ function PortalSubPageContent() {
                 </button>
               )}
             </div>
-            {/* Change photo button */}
-            {isAdmin && <label className="absolute top-3 right-3 opacity-0 group-hover/header:opacity-100 transition-opacity cursor-pointer">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/60 border border-white/20 text-white/70 text-xs hover:text-white transition-colors">
-                {uploadingPageHeader ? 'A carregar...' : (
-                  <>
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    Trocar foto
-                  </>
-                )}
+            {/* Admin photo controls — always visible */}
+            {isAdmin && (
+              <div className="absolute top-3 right-3 flex gap-2">
+                <label className="cursor-pointer">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/70 border border-white/25 text-white/75 text-xs hover:text-white transition-colors">
+                    {uploadingPageHeader ? 'A carregar...' : (
+                      <>
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Trocar
+                      </>
+                    )}
+                  </div>
+                  <input type="file" accept="image/*" className="hidden" disabled={uploadingPageHeader}
+                    onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadPageHeader(f) }} />
+                </label>
+                <button
+                  onClick={handleRemovePageHeader}
+                  disabled={uploadingPageHeader}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-black/70 border border-red-400/30 text-red-400/60 text-xs hover:text-red-400 hover:border-red-400/60 transition-colors disabled:opacity-40">
+                  ✕ Remover
+                </button>
               </div>
-              <input type="file" accept="image/*" className="hidden" disabled={uploadingPageHeader}
-                onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadPageHeader(f) }} />
-            </label>}
+            )}
           </div>
-          ) : null
-        })() || (
+          ) : (
           <>
             <p className="text-xs tracking-[0.4em] text-white/30 uppercase mb-1">RL PHOTO.VIDEO</p>
             <div className="flex items-center gap-2">
@@ -1482,7 +1501,7 @@ function PortalSubPageContent() {
               )}
             </div>
             <div className="mt-3 h-px w-16 bg-gold/40" />
-            {/* Admin: add header photo even when none exists */}
+            {/* Admin: add header photo */}
             {isAdmin && (
               <label className="mt-3 inline-flex items-center gap-1.5 cursor-pointer text-[10px] text-white/25 hover:text-white/50 border border-dashed border-white/10 hover:border-white/20 px-3 py-1.5 rounded-lg transition-all">
                 <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -1494,7 +1513,8 @@ function PortalSubPageContent() {
               </label>
             )}
           </>
-        )}
+          )
+        })()}
       </header>
 
       {loading && <div className="text-center py-24 text-white/20 text-xs tracking-widest uppercase">A carregar...</div>}
