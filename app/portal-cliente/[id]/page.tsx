@@ -1389,7 +1389,7 @@ function PortalSubPageContent() {
               Agenda
             </button>
           )}
-          {isAdmin && !refParam && !editing && !editingPhotos && !loading && !error && (
+          {isAdmin && !editing && !editingPhotos && !loading && !error && (
             <button onClick={handlePublicar} disabled={publishing}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-emerald-400/70 hover:text-emerald-400 border border-emerald-400/20 hover:border-emerald-400/40 transition-all disabled:opacity-40">
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

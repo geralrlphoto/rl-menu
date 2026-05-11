@@ -895,6 +895,18 @@ export default function PortalClientePage() {
     }
   }
 
+  const [publishing, setPublishing] = useState(false)
+  const [published,  setPublished]  = useState(false)
+
+  async function handlePublicar() {
+    setPublishing(true)
+    try {
+      await syncPhotosToAllPortals(settings)
+      setPublished(true)
+      setTimeout(() => setPublished(false), 3000)
+    } finally { setPublishing(false) }
+  }
+
   async function saveHeroField() {
     if (!heroEdit.field) return
     setHeroSaving(true)
@@ -1017,6 +1029,12 @@ export default function PortalClientePage() {
           </button>
           <button onClick={() => setEditing(true)} className="text-[10px] px-2.5 py-1 border border-gold/20 rounded text-gold/50 hover:text-gold hover:border-gold/40 transition-all uppercase tracking-wider">
             ✎ Configurar
+          </button>
+          <button onClick={handlePublicar} disabled={publishing} className="flex items-center gap-1 text-[10px] px-2.5 py-1 border border-emerald-400/20 rounded text-emerald-400/60 hover:text-emerald-400 hover:border-emerald-400/40 transition-all uppercase tracking-wider disabled:opacity-40">
+            <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 7.5m0 0L7.5 12M12 7.5v9"/>
+            </svg>
+            {published ? '✓ Publicado' : publishing ? 'A publicar...' : 'Publicar'}
           </button>
         </div>
       </div>
