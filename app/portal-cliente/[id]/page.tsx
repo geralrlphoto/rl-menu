@@ -2539,91 +2539,91 @@ function PortalSubPageContent() {
                       const sobrePer = id ? pageHeaders[id as string] : undefined
                       const sobrePhoto = sobrePer === 'none' ? '' : (sobrePer || subpageHeaderUrl)
                       return (
-                        /* Full-bleed section: photo covers background, dark gradient left → transparent right */
-                        <div className="relative min-h-[70vh] overflow-hidden -mx-3 sm:-mx-6">
-
+                        /* Full-viewport section — breaks out of max-w container */
+                        <div
+                          className="relative overflow-hidden"
+                          style={{
+                            minHeight: '100vh',
+                            width: '100vw',
+                            marginLeft: 'calc(-50vw + 50%)',
+                          }}
+                        >
                           {/* Background photo — full bleed */}
-                          {sobrePhoto && (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={sobrePhoto} alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
-                          )}
+                          {sobrePhoto
+                            ? <img src={sobrePhoto} alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
+                            : <div className="absolute inset-0 bg-[#0a0806]" />
+                          }
 
-                          {/* Gradient overlay: dark on left (text), transparent on right (photo visible) */}
-                          <div
-                            className="absolute inset-0"
-                            style={{
-                              background: sobrePhoto
-                                ? 'linear-gradient(to right, #0a0a0a 26%, rgba(10,10,10,0.80) 52%, rgba(10,10,10,0.18) 82%, transparent 100%)'
-                                : '#0a0a0a',
-                            }}
-                          />
+                          {/* Gradient: dark left → transparent right (same as couple slide) */}
+                          <div className="absolute inset-0" style={{
+                            background: sobrePhoto
+                              ? 'linear-gradient(to right, rgba(10,8,6,0.97) 0%, rgba(10,8,6,0.88) 28%, rgba(10,8,6,0.55) 55%, rgba(10,8,6,0.10) 80%, transparent 100%)'
+                              : 'rgba(10,8,6,1)',
+                          }} />
 
-                          {/* Text column — left side, vertically centred */}
-                          <div className="relative z-10 flex flex-col justify-center min-h-[70vh] px-6 sm:px-12 py-16" style={{ maxWidth: '60%' }}>
-
-                            <p className="text-[9px] tracking-[0.5em] uppercase mb-6" style={{ color: 'rgba(201,168,76,0.45)' }}>— · ◆ · —</p>
-
-                            <div className="space-y-4">
-                              {_textBlocks.map(b => {
-                                const type = b.type
-                                const data = b[type] ?? {}
-                                if (type === 'heading_1' || type === 'heading_2') {
-                                  const text = plainText(data.rich_text ?? [])
-                                  if (!text) return null
-                                  return (
-                                    <h2 key={b.id} className="font-cormorant font-light uppercase tracking-[0.18em] text-white leading-tight"
-                                      style={{ fontSize: 'clamp(1.6rem, 3.5vw, 2.8rem)' }}>
-                                      {richText(data.rich_text)}
-                                    </h2>
-                                  )
-                                }
-                                if (type === 'heading_3') {
-                                  const text = plainText(data.rich_text ?? [])
-                                  if (!text) return null
-                                  return (
-                                    <h3 key={b.id} className="font-cormorant font-light uppercase tracking-[0.25em] text-gold/70"
-                                      style={{ fontSize: 'clamp(1rem, 2vw, 1.3rem)' }}>
-                                      {richText(data.rich_text)}
-                                    </h3>
-                                  )
-                                }
-                                if (type === 'paragraph') {
-                                  const text = plainText(data.rich_text ?? [])
-                                  if (!text) return <div key={b.id} className="h-2" />
-                                  return (
-                                    <p key={b.id} className="font-cormorant font-light text-white/50 leading-relaxed tracking-wide"
-                                      style={{ fontSize: 'clamp(1rem, 1.8vw, 1.25rem)' }}>
+                          {/* Text — lower left, matching couple slide positioning */}
+                          <div className="absolute bottom-16 sm:bottom-20 z-10 px-8 sm:px-16" style={{ maxWidth: '58%' }}>
+                            {_textBlocks.map((b, idx) => {
+                              const type = b.type
+                              const data = b[type] ?? {}
+                              if (type === 'heading_1' || type === 'heading_2') {
+                                const text = plainText(data.rich_text ?? [])
+                                if (!text) return null
+                                return (
+                                  <h2 key={b.id} className="font-cormorant font-light uppercase text-white mb-3"
+                                    style={{ fontSize: 'clamp(1.8rem, 3.8vw, 3rem)', letterSpacing: '0.15em', lineHeight: 1.1 }}>
+                                    {richText(data.rich_text)}
+                                  </h2>
+                                )
+                              }
+                              if (type === 'heading_3') {
+                                const text = plainText(data.rich_text ?? [])
+                                if (!text) return null
+                                return (
+                                  <h3 key={b.id} className="font-cormorant font-light uppercase text-gold/70 mb-3"
+                                    style={{ fontSize: 'clamp(1rem, 2vw, 1.3rem)', letterSpacing: '0.25em' }}>
+                                    {richText(data.rich_text)}
+                                  </h3>
+                                )
+                              }
+                              if (type === 'paragraph') {
+                                const text = plainText(data.rich_text ?? [])
+                                if (!text) return <div key={b.id} className="h-2" />
+                                // First paragraph gets the gold dot above it
+                                const isFirst = _textBlocks.slice(0, idx).every(bb => bb.type !== 'paragraph')
+                                return (
+                                  <React.Fragment key={b.id}>
+                                    {isFirst && <div className="w-1.5 h-1.5 rounded-full bg-gold/60 mb-4" />}
+                                    <p className="font-cormorant font-light italic text-white/65 leading-relaxed mb-2"
+                                      style={{ fontSize: 'clamp(0.95rem, 1.7vw, 1.2rem)' }}>
                                       {richText(data.rich_text)}
                                     </p>
-                                  )
-                                }
-                                if (type === 'divider') return <div key={b.id} className="h-px w-10 bg-gold/30 my-1" />
-                                return null
-                              })}
-                            </div>
-
-                            <div className="mt-6 w-10 h-px bg-gold/50" />
-
-                            {/* Admin photo controls */}
-                            {isAdmin && (
-                              <div className="flex flex-wrap items-center gap-2 mt-6">
-                                <label className="inline-flex items-center gap-1.5 cursor-pointer text-[10px] text-white/30 hover:text-white/60 border border-dashed border-white/15 hover:border-white/25 px-3 py-1.5 rounded-lg transition-all bg-black/40 backdrop-blur-sm">
-                                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                  </svg>
-                                  {uploadingPageHeader ? 'A carregar...' : sobrePhoto ? '⟳ Trocar foto' : '+ Foto de fundo'}
-                                  <input type="file" accept="image/*" className="hidden" disabled={uploadingPageHeader}
-                                    onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadPageHeader(f) }} />
-                                </label>
-                                {sobrePhoto && (
-                                  <button onClick={handleRemovePageHeader} disabled={uploadingPageHeader}
-                                    className="text-[10px] text-red-400/40 hover:text-red-400 border border-dashed border-red-400/20 hover:border-red-400/40 px-3 py-1.5 rounded-lg transition-all bg-black/40 backdrop-blur-sm disabled:opacity-40">
-                                    ✕ Remover foto
-                                  </button>
-                                )}
-                              </div>
-                            )}
+                                  </React.Fragment>
+                                )
+                              }
+                              return null
+                            })}
                           </div>
+
+                          {/* Admin: Trocar/Remover foto — bottom right corner */}
+                          {isAdmin && (
+                            <div className="absolute bottom-6 right-6 z-20 flex items-center gap-2">
+                              {sobrePhoto && (
+                                <button onClick={handleRemovePageHeader} disabled={uploadingPageHeader}
+                                  className="flex items-center gap-1 px-3 py-2 rounded-lg bg-black/70 border border-red-400/30 text-red-400/60 text-xs hover:text-red-400 hover:border-red-400/60 transition-colors disabled:opacity-40 backdrop-blur-sm">
+                                  ✕
+                                </button>
+                              )}
+                              <label className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-black/70 border border-white/20 text-white/60 text-[11px] hover:text-white hover:border-white/40 transition-colors cursor-pointer backdrop-blur-sm">
+                                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                {uploadingPageHeader ? 'A carregar...' : sobrePhoto ? '+ Trocar foto' : '+ Foto de fundo'}
+                                <input type="file" accept="image/*" className="hidden" disabled={uploadingPageHeader}
+                                  onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadPageHeader(f) }} />
+                              </label>
+                            </div>
+                          )}
                         </div>
                       )
                     }
