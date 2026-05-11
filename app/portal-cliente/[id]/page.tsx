@@ -2539,23 +2539,10 @@ function PortalSubPageContent() {
                       const sobrePer = id ? pageHeaders[id as string] : undefined
                       const sobrePhoto = sobrePer === 'none' ? '' : (sobrePer || subpageHeaderUrl)
                       return (
-                        <div className="relative py-4">
-                          {/* Desktop: absolute photo on right; mobile: stacked below */}
-                          {sobrePhoto && (
-                            <div
-                              className="hidden md:block absolute right-0 top-0 bottom-0 w-[42%] pointer-events-none"
-                              style={{
-                                maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.6) 18%, black 42%)',
-                                WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.6) 18%, black 42%)',
-                              }}
-                            >
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={sobrePhoto} alt="" className="w-full h-full object-cover" />
-                            </div>
-                          )}
+                        <div className="flex flex-col md:flex-row md:items-stretch min-h-[65vh]">
 
-                          {/* Text column */}
-                          <div className="relative z-10 md:w-[72%] space-y-5">
+                          {/* ── Text column ── */}
+                          <div className="flex-1 md:pr-10 py-6 space-y-5 z-10">
                             {_textBlocks.map(b => {
                               const type = b.type
                               const data = b[type] ?? {}
@@ -2609,19 +2596,33 @@ function PortalSubPageContent() {
                                 )}
                               </div>
                             )}
+
+                            {/* Mobile: photo below text */}
+                            {sobrePhoto && (
+                              <div
+                                className="md:hidden mt-8 relative h-72 overflow-hidden"
+                                style={{
+                                  maskImage: 'linear-gradient(to bottom, black 65%, transparent 100%)',
+                                  WebkitMaskImage: 'linear-gradient(to bottom, black 65%, transparent 100%)',
+                                }}
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={sobrePhoto} alt="" className="w-full h-full object-cover" />
+                              </div>
+                            )}
                           </div>
 
-                          {/* Mobile: photo below text */}
+                          {/* ── Photo column: full height, flush to right edge ── */}
                           {sobrePhoto && (
                             <div
-                              className="md:hidden mt-8 relative h-64 rounded-2xl overflow-hidden"
+                              className="hidden md:block relative w-[42%] shrink-0 -mr-3 sm:-mr-6 overflow-hidden"
                               style={{
-                                maskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
-                                WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
+                                maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.65) 22%, black 50%)',
+                                WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.65) 22%, black 50%)',
                               }}
                             >
                               {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={sobrePhoto} alt="" className="w-full h-full object-cover" />
+                              <img src={sobrePhoto} alt="" className="absolute inset-0 w-full h-full object-cover" />
                             </div>
                           )}
                         </div>
