@@ -2543,10 +2543,10 @@ function PortalSubPageContent() {
                           {/* Desktop: absolute photo on right; mobile: stacked below */}
                           {sobrePhoto && (
                             <div
-                              className="hidden md:block absolute right-0 top-0 bottom-0 w-[52%] pointer-events-none"
+                              className="hidden md:block absolute right-0 top-0 bottom-0 w-[42%] pointer-events-none"
                               style={{
-                                maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.55) 28%, black 58%)',
-                                WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.55) 28%, black 58%)',
+                                maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.6) 18%, black 42%)',
+                                WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.6) 18%, black 42%)',
                               }}
                             >
                               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -2555,7 +2555,7 @@ function PortalSubPageContent() {
                           )}
 
                           {/* Text column */}
-                          <div className="relative z-10 md:w-[52%] space-y-5">
+                          <div className="relative z-10 md:w-[72%] space-y-5">
                             {_textBlocks.map(b => {
                               const type = b.type
                               const data = b[type] ?? {}
