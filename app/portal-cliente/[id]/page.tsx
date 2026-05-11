@@ -2539,92 +2539,91 @@ function PortalSubPageContent() {
                       const sobrePer = id ? pageHeaders[id as string] : undefined
                       const sobrePhoto = sobrePer === 'none' ? '' : (sobrePer || subpageHeaderUrl)
                       return (
-                        <div className="flex flex-col md:flex-row md:items-stretch min-h-[65vh]">
+                        /* Full-bleed section: photo covers background, dark gradient left → transparent right */
+                        <div className="relative min-h-[70vh] overflow-hidden -mx-3 sm:-mx-6">
 
-                          {/* ── Text column ── */}
-                          <div className="flex-1 md:pr-10 py-6 space-y-5 z-10">
-                            {_textBlocks.map(b => {
-                              const type = b.type
-                              const data = b[type] ?? {}
-                              if (type === 'heading_1' || type === 'heading_2') {
-                                const text = plainText(data.rich_text ?? [])
-                                if (!text) return null
-                                return (
-                                  <h2 key={b.id} className="font-cormorant text-3xl sm:text-4xl font-extralight text-white/85 tracking-[0.2em] leading-snug uppercase">
-                                    {richText(data.rich_text)}
-                                  </h2>
-                                )
-                              }
-                              if (type === 'heading_3') {
-                                const text = plainText(data.rich_text ?? [])
-                                if (!text) return null
-                                return (
-                                  <h3 key={b.id} className="font-cormorant text-xl font-light text-gold/70 tracking-widest uppercase">
-                                    {richText(data.rich_text)}
-                                  </h3>
-                                )
-                              }
-                              if (type === 'paragraph') {
-                                const text = plainText(data.rich_text ?? [])
-                                if (!text) return <div key={b.id} className="h-3" />
-                                return (
-                                  <p key={b.id} className="font-cormorant text-lg sm:text-xl font-light text-white/50 leading-loose tracking-wide">
-                                    {richText(data.rich_text)}
-                                  </p>
-                                )
-                              }
-                              if (type === 'divider') return <div key={b.id} className="h-px w-12 bg-gold/30 my-2" />
-                              return null
-                            })}
+                          {/* Background photo — full bleed */}
+                          {sobrePhoto && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={sobrePhoto} alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
+                          )}
+
+                          {/* Gradient overlay: dark on left (text), transparent on right (photo visible) */}
+                          <div
+                            className="absolute inset-0"
+                            style={{
+                              background: sobrePhoto
+                                ? 'linear-gradient(to right, #0a0a0a 26%, rgba(10,10,10,0.80) 52%, rgba(10,10,10,0.18) 82%, transparent 100%)'
+                                : '#0a0a0a',
+                            }}
+                          />
+
+                          {/* Text column — left side, vertically centred */}
+                          <div className="relative z-10 flex flex-col justify-center min-h-[70vh] px-6 sm:px-12 py-16" style={{ maxWidth: '60%' }}>
+
+                            <p className="text-[9px] tracking-[0.5em] uppercase mb-6" style={{ color: 'rgba(201,168,76,0.45)' }}>— · ◆ · —</p>
+
+                            <div className="space-y-4">
+                              {_textBlocks.map(b => {
+                                const type = b.type
+                                const data = b[type] ?? {}
+                                if (type === 'heading_1' || type === 'heading_2') {
+                                  const text = plainText(data.rich_text ?? [])
+                                  if (!text) return null
+                                  return (
+                                    <h2 key={b.id} className="font-cormorant font-light uppercase tracking-[0.18em] text-white leading-tight"
+                                      style={{ fontSize: 'clamp(1.6rem, 3.5vw, 2.8rem)' }}>
+                                      {richText(data.rich_text)}
+                                    </h2>
+                                  )
+                                }
+                                if (type === 'heading_3') {
+                                  const text = plainText(data.rich_text ?? [])
+                                  if (!text) return null
+                                  return (
+                                    <h3 key={b.id} className="font-cormorant font-light uppercase tracking-[0.25em] text-gold/70"
+                                      style={{ fontSize: 'clamp(1rem, 2vw, 1.3rem)' }}>
+                                      {richText(data.rich_text)}
+                                    </h3>
+                                  )
+                                }
+                                if (type === 'paragraph') {
+                                  const text = plainText(data.rich_text ?? [])
+                                  if (!text) return <div key={b.id} className="h-2" />
+                                  return (
+                                    <p key={b.id} className="font-cormorant font-light text-white/50 leading-relaxed tracking-wide"
+                                      style={{ fontSize: 'clamp(1rem, 1.8vw, 1.25rem)' }}>
+                                      {richText(data.rich_text)}
+                                    </p>
+                                  )
+                                }
+                                if (type === 'divider') return <div key={b.id} className="h-px w-10 bg-gold/30 my-1" />
+                                return null
+                              })}
+                            </div>
+
+                            <div className="mt-6 w-10 h-px bg-gold/50" />
 
                             {/* Admin photo controls */}
                             {isAdmin && (
-                              <div className="flex flex-wrap items-center gap-2 pt-4">
-                                <label className="inline-flex items-center gap-1.5 cursor-pointer text-[10px] text-white/30 hover:text-white/60 border border-dashed border-white/15 hover:border-white/30 px-3 py-1.5 rounded-lg transition-all">
+                              <div className="flex flex-wrap items-center gap-2 mt-6">
+                                <label className="inline-flex items-center gap-1.5 cursor-pointer text-[10px] text-white/30 hover:text-white/60 border border-dashed border-white/15 hover:border-white/25 px-3 py-1.5 rounded-lg transition-all bg-black/40 backdrop-blur-sm">
                                   <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
                                   </svg>
-                                  {uploadingPageHeader ? 'A carregar...' : sobrePhoto ? '⟳ Trocar foto' : '+ Foto lado direito'}
+                                  {uploadingPageHeader ? 'A carregar...' : sobrePhoto ? '⟳ Trocar foto' : '+ Foto de fundo'}
                                   <input type="file" accept="image/*" className="hidden" disabled={uploadingPageHeader}
                                     onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadPageHeader(f) }} />
                                 </label>
                                 {sobrePhoto && (
                                   <button onClick={handleRemovePageHeader} disabled={uploadingPageHeader}
-                                    className="text-[10px] text-red-400/40 hover:text-red-400 border border-dashed border-red-400/15 hover:border-red-400/30 px-3 py-1.5 rounded-lg transition-all disabled:opacity-40">
+                                    className="text-[10px] text-red-400/40 hover:text-red-400 border border-dashed border-red-400/20 hover:border-red-400/40 px-3 py-1.5 rounded-lg transition-all bg-black/40 backdrop-blur-sm disabled:opacity-40">
                                     ✕ Remover foto
                                   </button>
                                 )}
                               </div>
                             )}
-
-                            {/* Mobile: photo below text */}
-                            {sobrePhoto && (
-                              <div
-                                className="md:hidden mt-8 relative h-72 overflow-hidden"
-                                style={{
-                                  maskImage: 'linear-gradient(to bottom, black 65%, transparent 100%)',
-                                  WebkitMaskImage: 'linear-gradient(to bottom, black 65%, transparent 100%)',
-                                }}
-                              >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={sobrePhoto} alt="" className="w-full h-full object-cover" />
-                              </div>
-                            )}
                           </div>
-
-                          {/* ── Photo column: full height, flush to right edge ── */}
-                          {sobrePhoto && (
-                            <div
-                              className="hidden md:block relative w-[42%] shrink-0 -mr-3 sm:-mr-6 overflow-hidden"
-                              style={{
-                                maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.65) 22%, black 50%)',
-                                WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.65) 22%, black 50%)',
-                              }}
-                            >
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={sobrePhoto} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                            </div>
-                          )}
                         </div>
                       )
                     }
