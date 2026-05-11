@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, Suspense } from 'react'
 import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
-import { NotionBlocks, plainText, type Block } from '../NotionRenderer'
+import { NotionBlocks, plainText, richText, type Block } from '../NotionRenderer'
 import BlockEditor from '../BlockEditor'
 
 const PORTAL_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
@@ -930,6 +930,7 @@ function PortalSubPageContent() {
   const [enviadoSat, setEnviadoSat] = useState(false)
   const [erroSat, setErroSat] = useState<string | null>(null)
 
+  const isSobrePage       = title.toUpperCase().includes('SOBRE')
   const isPaymentsPage    = title.toUpperCase().includes('PAGAMENTO')
   const isGuiaPage        = title.toUpperCase().includes('GUIA') && !title.toUpperCase().includes('WEDDING')
   const isPreWeddingPage  = title.toUpperCase().includes('WEDDING')
@@ -1437,7 +1438,8 @@ function PortalSubPageContent() {
           // 'none' sentinel = user explicitly cleared the photo
           const perPage = id ? pageHeaders[id as string] : undefined
           const effectiveHeader = perPage === 'none' ? '' : (perPage || subpageHeaderUrl)
-          return effectiveHeader ? (
+          // SOBRE O MENU uses the photo in the content area — skip banner here
+          return effectiveHeader && !isSobrePage ? (
           <div className="relative w-full h-48 sm:h-64 rounded-2xl overflow-hidden mb-6">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={effectiveHeader} alt="" className="w-full h-full object-cover" />
@@ -1520,7 +1522,11 @@ function PortalSubPageContent() {
       {loading && <div className="text-center py-24 text-white/20 text-xs tracking-widest uppercase">A carregar...</div>}
       {error   && <div className="text-center py-24 text-red-400/60 text-sm">{error}</div>}
       {!loading && !error && (
-        <div className="bg-white/[0.02] border border-white/[0.07] rounded-2xl p-5 sm:p-8">
+        <div className={
+          isSobrePage && !editing && !editingPhotos && !editingParceiros && !editingBriefing && !editingCalloutLinks && !editingPreWedding
+            ? ''
+            : 'bg-white/[0.02] border border-white/[0.07] rounded-2xl p-5 sm:p-8'
+        }>
           {editingPhotos
             ? <ImageEditor blocks={blocks} pageId={id!} onBlocksUpdated={setBlocks} onDone={handlePhotosDone} />
             : editingParceiros
@@ -2528,6 +2534,100 @@ function PortalSubPageContent() {
                         </>
                       )
                     }
+                    if (isSobrePage) {
+                      const _textBlocks = blocks.filter(b => b.type !== 'image')
+                      const sobrePer = id ? pageHeaders[id as string] : undefined
+                      const sobrePhoto = sobrePer === 'none' ? '' : (sobrePer || subpageHeaderUrl)
+                      return (
+                        <div className="relative py-4">
+                          {/* Desktop: absolute photo on right; mobile: stacked below */}
+                          {sobrePhoto && (
+                            <div
+                              className="hidden md:block absolute right-0 top-0 bottom-0 w-[52%] pointer-events-none"
+                              style={{
+                                maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.55) 28%, black 58%)',
+                                WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.55) 28%, black 58%)',
+                              }}
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={sobrePhoto} alt="" className="w-full h-full object-cover" />
+                            </div>
+                          )}
+
+                          {/* Text column */}
+                          <div className="relative z-10 md:w-[52%] space-y-5">
+                            {_textBlocks.map(b => {
+                              const type = b.type
+                              const data = b[type] ?? {}
+                              if (type === 'heading_1' || type === 'heading_2') {
+                                const text = plainText(data.rich_text ?? [])
+                                if (!text) return null
+                                return (
+                                  <h2 key={b.id} className="font-cormorant text-3xl sm:text-4xl font-extralight text-white/85 tracking-[0.2em] leading-snug uppercase">
+                                    {richText(data.rich_text)}
+                                  </h2>
+                                )
+                              }
+                              if (type === 'heading_3') {
+                                const text = plainText(data.rich_text ?? [])
+                                if (!text) return null
+                                return (
+                                  <h3 key={b.id} className="font-cormorant text-xl font-light text-gold/70 tracking-widest uppercase">
+                                    {richText(data.rich_text)}
+                                  </h3>
+                                )
+                              }
+                              if (type === 'paragraph') {
+                                const text = plainText(data.rich_text ?? [])
+                                if (!text) return <div key={b.id} className="h-3" />
+                                return (
+                                  <p key={b.id} className="font-cormorant text-lg sm:text-xl font-light text-white/50 leading-loose tracking-wide">
+                                    {richText(data.rich_text)}
+                                  </p>
+                                )
+                              }
+                              if (type === 'divider') return <div key={b.id} className="h-px w-12 bg-gold/30 my-2" />
+                              return null
+                            })}
+
+                            {/* Admin photo controls */}
+                            {isAdmin && (
+                              <div className="flex flex-wrap items-center gap-2 pt-4">
+                                <label className="inline-flex items-center gap-1.5 cursor-pointer text-[10px] text-white/30 hover:text-white/60 border border-dashed border-white/15 hover:border-white/30 px-3 py-1.5 rounded-lg transition-all">
+                                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                  </svg>
+                                  {uploadingPageHeader ? 'A carregar...' : sobrePhoto ? '⟳ Trocar foto' : '+ Foto lado direito'}
+                                  <input type="file" accept="image/*" className="hidden" disabled={uploadingPageHeader}
+                                    onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadPageHeader(f) }} />
+                                </label>
+                                {sobrePhoto && (
+                                  <button onClick={handleRemovePageHeader} disabled={uploadingPageHeader}
+                                    className="text-[10px] text-red-400/40 hover:text-red-400 border border-dashed border-red-400/15 hover:border-red-400/30 px-3 py-1.5 rounded-lg transition-all disabled:opacity-40">
+                                    ✕ Remover foto
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Mobile: photo below text */}
+                          {sobrePhoto && (
+                            <div
+                              className="md:hidden mt-8 relative h-64 rounded-2xl overflow-hidden"
+                              style={{
+                                maskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
+                                WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
+                              }}
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={sobrePhoto} alt="" className="w-full h-full object-cover" />
+                            </div>
+                          )}
+                        </div>
+                      )
+                    }
+
                     if (!isPaymentsPage) {
                       // Check if page has callout cards — render them with URL buttons
                       const pageCalloutLinks = calloutLinks[id as string] ?? {}
