@@ -968,17 +968,10 @@ export default function PortalClientePage() {
   const images = findImages(blocks)
   const DEFAULT_HERO_IMAGE = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/1776042124014-05s55nxzmc4v.png'
   const heroImage = settings.heroImageUrl || DEFAULT_HERO_IMAGE
-  const DEFAULT_GALLERY_IMAGES = [
-    'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/default-gallery-1.jpg',
-    'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/default-gallery-2.jpg',
-    'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/default-gallery-3.jpg',
-  ]
   const galleryImages = (() => {
-    const saved = settings.galleryUrls ?? []
-    // merge: use saved value per slot if set, otherwise use default
-    const merged = DEFAULT_GALLERY_IMAGES.map((def, i) => saved[i] || def)
-    const notionFallback = images.slice(0, 3)
-    return merged.some(Boolean) ? merged.filter(Boolean) : notionFallback
+    const saved = (settings.galleryUrls ?? []).filter(Boolean)
+    if (saved.length > 0) return saved
+    return images.slice(0, 3)
   })()
   const navPages = findAllChildPages(blocks).filter(p => !(settings.hiddenNav ?? []).includes(p.id))
   const { heading: welcomeHeading, paragraphs: welcomeParas, reference: welcomeRef } = findWelcomeText(blocks)
