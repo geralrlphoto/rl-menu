@@ -178,8 +178,8 @@ export default async function SecaoPage({ params }: Props) {
         </div>
       </header>
 
-      {/* Revista de fotos (sempre visível para admin, ou quando há fotos) */}
-      {(isAdmin || (images && images.length > 0)) && (
+      {/* Revista de fotos (só quando há fotos) */}
+      {(images && images.length > 0) && (
         <MagazineViewer
           images={images ?? []}
           sectionId={id}
