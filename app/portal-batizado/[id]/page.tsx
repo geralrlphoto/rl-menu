@@ -1479,8 +1479,8 @@ function PortalSubPageContent() {
   const hasImages = findImageBlocks(blocks).length > 0
 
   return (
-    <main className="min-h-screen px-3 sm:px-6 py-6 sm:py-10 max-w-[860px] mx-auto">
-      <div className="flex items-center justify-end mb-8 gap-2 flex-wrap">
+    <main className={isSobreViewMode ? 'relative' : 'min-h-screen relative max-w-[860px] mx-auto px-3 sm:px-6 py-6 sm:py-10'}>
+      <div className={`flex items-center justify-end gap-2 flex-wrap z-30 ${isSobreViewMode ? 'fixed top-4 right-4' : 'mb-8'}`}>
         <div className="flex items-center gap-2">
           {isAdmin && !editing && !editingPhotos && (
             <button onClick={handleRefresh} disabled={refreshing}

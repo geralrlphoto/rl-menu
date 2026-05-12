@@ -5,7 +5,7 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 
-const HIDDEN_PATHS = ['/login', '/portal-cliente', '/freelancer-view', '/r/', '/nova-lead', '/portal-media']
+const HIDDEN_PATHS = ['/login', '/portal-cliente', '/portal-batizado', '/freelancer-view', '/r/', '/b/', '/nova-lead', '/portal-media']
 const HIDDEN_EXACT = ['/'] // brand selector — sem menu lateral
 
 const MEDIA_LINKS = [
