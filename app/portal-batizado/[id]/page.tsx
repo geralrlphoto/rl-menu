@@ -1268,6 +1268,26 @@ function PortalSubPageContent() {
     setSavingTitle(false)
   }
 
+  // ── Publicar — sincroniza TUDO do template para todos os portais de batizado ──
+  const [publishing, setPublishing] = useState(false)
+  const [published,  setPublished]  = useState(false)
+
+  async function handlePublicar() {
+    setPublishing(true)
+    try {
+      await fetch('/api/portais', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          photoSettings: { subpageHeaderUrl, pageHeaders },
+          tipoPortal: 'batizado',
+        }),
+      })
+      setPublished(true)
+      setTimeout(() => setPublished(false), 3000)
+    } finally { setPublishing(false) }
+  }
+
   async function handleUploadPageHeader(file: File) {
     if (!id) return
     setUploadingPageHeader(true)
@@ -1544,6 +1564,25 @@ function PortalSubPageContent() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
               </svg>
               Agenda
+            </button>
+          )}
+          {isAdmin && !editing && !editingPhotos && !loading && !error && isSobreViewMode && (
+            <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white/80 border border-white/15 hover:border-white/30 transition-all cursor-pointer">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              {uploadingPageHeader ? 'A carregar...' : 'Trocar foto'}
+              <input type="file" accept="image/*" className="hidden" disabled={uploadingPageHeader}
+                onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadPageHeader(f) }} />
+            </label>
+          )}
+          {isAdmin && !editing && !editingPhotos && !loading && !error && (
+            <button onClick={handlePublicar} disabled={publishing}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-emerald-400/70 hover:text-emerald-400 border border-emerald-400/20 hover:border-emerald-400/40 transition-all disabled:opacity-40">
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 7.5m0 0L7.5 12M12 7.5v9"/>
+              </svg>
+              {published ? '✓ Publicado' : publishing ? 'A publicar...' : 'Publicar'}
             </button>
           )}
           {isAdmin && !editing && !editingPhotos && !loading && !error && (
