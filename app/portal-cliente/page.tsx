@@ -1040,12 +1040,24 @@ export default function PortalClientePage() {
       </div>
 
       {/* ── HERO ── */}
-      <section className="relative min-h-[70vh] sm:min-h-[80vh] flex items-end justify-center pb-12 overflow-hidden">
+      <section className="relative min-h-screen flex items-end justify-center pb-16 overflow-hidden">
         {/* Background */}
         {heroImage ? (
-          <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${heroImage})` }}>
-            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-black/90" />
-          </div>
+          <>
+            {/* Foto com fade para baixo via CSS mask */}
+            <div className="absolute inset-0" style={{
+              WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 50%, transparent 100%)',
+              maskImage: 'linear-gradient(to bottom, black 0%, black 50%, transparent 100%)',
+            }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={heroImage} alt="" className="w-full h-full object-cover object-center" />
+            </div>
+            {/* Gradiente escuro esquerda → transparente direita (proposta) */}
+            <div className="absolute inset-x-0 top-0" style={{
+              height: '70%',
+              background: 'linear-gradient(to right, rgba(10,8,6,0.97) 0%, rgba(10,8,6,0.85) 28%, rgba(10,8,6,0.45) 58%, transparent 100%)',
+            }} />
+          </>
         ) : (
           <div className="absolute inset-0 bg-gradient-to-b from-[#1a1408] to-[#0a0a0a]" />
         )}
