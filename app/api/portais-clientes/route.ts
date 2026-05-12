@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-export const dynamic = 'force-dynamic'
+// Sem force-dynamic: a cache em memória do servidor gere a frescura dos dados
 
 // ── Supabase ──────────────────────────────────────────────────────────────────
 function supabase() {
@@ -156,7 +156,7 @@ export async function GET(req: Request) {
     const { portalPassword, ...safeSettings } = settings as any
     return NextResponse.json(
       { blocks, settings: safeSettings, settingsBlockId, hasPassword: !!(portalPassword), isAdmin },
-      { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
+      { headers: { 'Cache-Control': 'private, max-age=60, stale-while-revalidate=120' } }
     )
   } catch (e: any) {
     console.error('[portais-clientes] Error:', e.message)

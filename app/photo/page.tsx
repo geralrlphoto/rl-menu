@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { DashboardCarousel, type DashCol } from '@/app/components/DashboardCarousel'
 import { LogoutButton } from '@/app/components/LogoutButton'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 120 // cache 2 minutos — Notion é lento, não precisa de dados em tempo real
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -103,7 +103,7 @@ export default async function PhotoDashboard() {
       .order('data_entrada', { ascending: false }),
 
     fetch(`https://api.notion.com/v1/databases/${ALBUNS_DB}/query`, {
-      method: 'POST', headers: notionH, cache: 'no-store',
+      method: 'POST', headers: notionH, next: { revalidate: 120 },
       body: JSON.stringify({
         filter: { and: [
           { property: 'Data prevista de entrega', date: { on_or_after: todayStr } },
@@ -115,7 +115,7 @@ export default async function PhotoDashboard() {
     }).then(r => r.json()).catch(() => ({ results: [] })),
 
     fetch(`https://api.notion.com/v1/databases/${ALBUNS_DB}/query`, {
-      method: 'POST', headers: notionH, cache: 'no-store',
+      method: 'POST', headers: notionH, next: { revalidate: 120 },
       body: JSON.stringify({
         filter: { property: 'Status', status: { equals: 'PARA APROVAÇÃO' } },
         page_size: 8,
@@ -123,7 +123,7 @@ export default async function PhotoDashboard() {
     }).then(r => r.json()).catch(() => ({ results: [] })),
 
     fetch(`https://api.notion.com/v1/databases/${EVENTOS_DB}/query`, {
-      method: 'POST', headers: notionH, cache: 'no-store',
+      method: 'POST', headers: notionH, next: { revalidate: 120 },
       body: JSON.stringify({
         filter: { property: 'ESTADO DO VIDEO', select: { does_not_equal: 'ENTREGUE' } },
         sorts: [{ property: 'DATA DO EVENTO', direction: 'ascending' }],
@@ -132,7 +132,7 @@ export default async function PhotoDashboard() {
     }).then(r => r.json()).catch(() => ({ results: [] })),
 
     fetch(`https://api.notion.com/v1/databases/${EVENTOS_DB}/query`, {
-      method: 'POST', headers: notionH, cache: 'no-store',
+      method: 'POST', headers: notionH, next: { revalidate: 120 },
       body: JSON.stringify({
         filter: { or: [
           { and: [
@@ -152,7 +152,7 @@ export default async function PhotoDashboard() {
     }).then(r => r.json()).catch(() => ({ results: [] })),
 
     fetch(`https://api.notion.com/v1/blocks/${PORTAL_PAGE_ID}/children?page_size=100`, {
-      headers: notionH, cache: 'no-store',
+      headers: notionH, next: { revalidate: 120 },
     }).then(r => r.json()).catch(() => ({ results: [] })),
 
     supabase.from('portais').select('referencia, settings, noiva, noivo'),

@@ -820,8 +820,7 @@ export default function PortalClientePage() {
 
   const loadBlocks = useCallback(async (bust = false) => {
     // Always bust on the admin template page — avoids stale cache across Vercel instances
-    const url = `/api/portais-clientes?id=${PAGE_ID}&bust=1`
-    void bust
+    const url = `/api/portais-clientes?id=${PAGE_ID}${bust ? '&bust=1' : ''}`
     const d = await fetch(url).then(r => r.json())
     if (d.error) setError(d.error)
     else {
