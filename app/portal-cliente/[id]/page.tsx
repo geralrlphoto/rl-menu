@@ -935,6 +935,11 @@ function PortalSubPageContent() {
   const isSobrePage       = title.toUpperCase().includes('SOBRE')
   const isSobreViewMode   = isSobrePage && !editing && !editingPhotos && !editingParceiros && !editingBriefing && !editingCalloutLinks && !editingPreWedding
   const isDesignPremium   = !isSobrePage && (id ? designPremiumPages.includes(id) : false)
+  const dpEffectivePhoto  = (() => {
+    if (!isDesignPremium) return ''
+    const perPage = id ? pageHeaders[id as string] : undefined
+    return perPage === 'none' ? '' : (perPage || subpageHeaderUrl || portalHeroImageUrl)
+  })()
   const isPaymentsPage    = title.toUpperCase().includes('PAGAMENTO')
   const isGuiaPage        = title.toUpperCase().includes('GUIA') && !title.toUpperCase().includes('WEDDING')
   const isPreWeddingPage  = title.toUpperCase().includes('WEDDING')
@@ -1354,6 +1359,23 @@ function PortalSubPageContent() {
 
   return (
     <main className={isSobreViewMode ? 'relative' : 'min-h-screen relative max-w-[860px] mx-auto px-3 sm:px-6 py-6 sm:py-10'}>
+      {/* ── Design premium: fundo fixo cobre o viewport inteiro ── */}
+      {isDesignPremium && (
+        <>
+          <div className="fixed inset-0" style={{ zIndex: -2 }}>
+            {dpEffectivePhoto && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={dpEffectivePhoto} alt="" className="w-full h-full object-cover object-center" />
+            )}
+          </div>
+          <div className="fixed inset-0" style={{
+            zIndex: -1,
+            background: dpEffectivePhoto
+              ? 'linear-gradient(to right, rgba(10,8,6,0.97) 0%, rgba(10,8,6,0.88) 28%, rgba(10,8,6,0.55) 55%, rgba(10,8,6,0.10) 80%, transparent 100%)'
+              : 'rgba(10,8,6,0.96)',
+          }} />
+        </>
+      )}
       <div className={`flex items-center justify-end gap-2 flex-wrap z-30 ${isSobreViewMode ? 'fixed top-4 right-4' : 'mb-8'}`}>
         <div className="flex items-center gap-2">
           {isAdmin && !editing && !editingPhotos && (
@@ -1460,53 +1482,42 @@ function PortalSubPageContent() {
           const effectiveHeader = perPage === 'none' ? '' : (perPage || subpageHeaderUrl || portalHeroImageUrl)
           // SOBRE O MENU uses the photo in the content area — skip banner here
           if (isDesignPremium) {
-            const dpPhoto = effectiveHeader
             return (
-              <div className="relative overflow-hidden -mx-3 sm:-mx-6 mb-8"
-                style={{ height: '65vh', width: '100vw', marginLeft: 'calc(-50vw + 50%)' }}>
-                {dpPhoto
-                  ? <img src={dpPhoto} alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
-                  : <div className="absolute inset-0 bg-[#0a0806]" />
-                }
-                <div className="absolute inset-0" style={{
-                  background: dpPhoto
-                    ? 'linear-gradient(to right, rgba(10,8,6,0.97) 0%, rgba(10,8,6,0.88) 28%, rgba(10,8,6,0.55) 55%, rgba(10,8,6,0.10) 80%, transparent 100%)'
-                    : 'rgba(10,8,6,1)',
-                }} />
-                {/* ‹ Voltar */}
+              <>
+                {/* ‹ Voltar — fixed top-left */}
                 <Link href={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : '/portal-cliente'}
-                  className="absolute top-6 left-8 sm:top-8 sm:left-16 z-20 inline-flex items-center gap-2 text-[10px] tracking-[0.35em] text-white/40 hover:text-gold transition-colors uppercase">
+                  className="fixed top-6 left-6 z-50 inline-flex items-center gap-2 text-[10px] tracking-[0.35em] text-white/40 hover:text-gold transition-colors uppercase">
                   ‹ Voltar
                 </Link>
-                {/* Title centred-left */}
-                <div className="absolute inset-y-0 left-0 z-10 flex flex-col justify-center px-8 sm:px-16" style={{ maxWidth: '58%' }}>
+                {/* Title block — fluxo normal, conteúdo rola abaixo */}
+                <div className="mb-8 pt-10">
                   <p className="text-[9px] tracking-[0.5em] text-white/30 uppercase mb-3">RL PHOTO.VIDEO</p>
-                  <h1 className="font-cormorant font-light uppercase text-gold mb-2"
+                  <h1 className="font-cormorant font-light uppercase text-gold mb-3"
                     style={{ fontSize: 'clamp(1.6rem, 3.2vw, 2.6rem)', letterSpacing: '0.18em', lineHeight: 1.1 }}>
                     {title || '...'}
                   </h1>
                   <div className="w-10 h-px bg-gold/50" />
+                  {/* Admin: trocar foto de fundo */}
+                  {isAdmin && (
+                    <div className="mt-4 flex items-center gap-2">
+                      {dpEffectivePhoto && (
+                        <button onClick={handleRemovePageHeader} disabled={uploadingPageHeader}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-black/50 border border-red-400/30 text-red-400/50 text-xs hover:text-red-400 transition-colors backdrop-blur-sm">
+                          ✕ Remover foto
+                        </button>
+                      )}
+                      <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/50 border border-white/15 text-white/40 text-[11px] hover:text-white/70 transition-colors cursor-pointer backdrop-blur-sm">
+                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        {uploadingPageHeader ? 'A carregar...' : dpEffectivePhoto ? '+ Trocar foto' : '+ Foto de fundo'}
+                        <input type="file" accept="image/*" className="hidden" disabled={uploadingPageHeader}
+                          onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadPageHeader(f) }} />
+                      </label>
+                    </div>
+                  )}
                 </div>
-                {/* Admin photo controls */}
-                {isAdmin && (
-                  <div className="absolute bottom-6 right-6 z-20 flex items-center gap-2">
-                    {dpPhoto && (
-                      <button onClick={handleRemovePageHeader} disabled={uploadingPageHeader}
-                        className="flex items-center gap-1 px-3 py-2 rounded-lg bg-black/70 border border-red-400/30 text-red-400/60 text-xs hover:text-red-400 hover:border-red-400/60 transition-colors disabled:opacity-40 backdrop-blur-sm">
-                        ✕
-                      </button>
-                    )}
-                    <label className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-black/70 border border-white/20 text-white/60 text-[11px] hover:text-white hover:border-white/40 transition-colors cursor-pointer backdrop-blur-sm">
-                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
-                      </svg>
-                      {uploadingPageHeader ? 'A carregar...' : dpPhoto ? '+ Trocar foto' : '+ Foto de fundo'}
-                      <input type="file" accept="image/*" className="hidden" disabled={uploadingPageHeader}
-                        onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadPageHeader(f) }} />
-                    </label>
-                  </div>
-                )}
-              </div>
+              </>
             )
           }
           return effectiveHeader && !isSobrePage ? (
