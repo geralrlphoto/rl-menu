@@ -40,12 +40,19 @@ const FASE_CLS: Record<string, string> = {
   'FINAL':       'bg-gold/15 border-gold/30 text-gold',
 }
 
-async function patchRow(id: string, field: string, value: any) {
-  await fetch(`/api/pagamentos-noivos/${id}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ [field]: value }),
-  })
+async function patchRow(id: string, field: string, value: any): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`/api/pagamentos-noivos/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [field]: value }),
+    })
+    const data = await res.json()
+    if (!res.ok || data.error) return { ok: false, error: data.error ?? `HTTP ${res.status}` }
+    return { ok: true }
+  } catch (e: any) {
+    return { ok: false, error: e.message }
+  }
 }
 
 // ── Célula de texto/número/data editável ──────────────────────────────────────
@@ -57,6 +64,7 @@ function EditCell({ value, field, rowId, onSaved, type = 'text', className = '' 
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(String(value ?? ''))
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState(false)
   const ref = useRef<HTMLInputElement>(null)
 
   useEffect(() => { setDraft(String(value ?? '')) }, [value])
@@ -66,9 +74,17 @@ function EditCell({ value, field, rowId, onSaved, type = 'text', className = '' 
     setEditing(false)
     if (draft === String(value ?? '')) return
     setSaving(true)
+    setSaveError(false)
     const parsed = type === 'number' ? (draft === '' ? null : Number(draft)) : (draft || null)
-    await patchRow(rowId, field, parsed)
-    onSaved(field, parsed)
+    const result = await patchRow(rowId, field, parsed)
+    if (result.ok) {
+      onSaved(field, parsed)
+    } else {
+      // revert draft to original value on failure
+      setDraft(String(value ?? ''))
+      setSaveError(true)
+      setTimeout(() => setSaveError(false), 3000)
+    }
     setSaving(false)
   }
 
@@ -82,13 +98,14 @@ function EditCell({ value, field, rowId, onSaved, type = 'text', className = '' 
 
   return (
     <button onClick={() => setEditing(true)}
-      className={`text-left group/c flex items-center gap-1.5 hover:bg-white/5 rounded px-1 -mx-1 transition-colors w-full ${className}`}>
-      <span className={saving ? 'opacity-40' : ''}>
+      className={`text-left group/c flex items-center gap-1.5 hover:bg-white/5 rounded px-1 -mx-1 transition-colors w-full ${saveError ? 'ring-1 ring-red-500/40 rounded' : ''} ${className}`}>
+      <span className={saving ? 'opacity-40' : saveError ? 'text-red-400' : ''}>
         {type === 'date'
           ? fmt(value as string | null)
           : (value !== null && value !== '' ? String(value) : <span className="text-white/20 italic text-xs">—</span>)}
       </span>
-      {!saving && <span className="text-[9px] text-white/15 opacity-0 group-hover/c:opacity-100 shrink-0">✎</span>}
+      {saveError && <span className="text-[9px] text-red-400/70 shrink-0">✕ erro</span>}
+      {!saving && !saveError && <span className="text-[9px] text-white/15 opacity-0 group-hover/c:opacity-100 shrink-0">✎</span>}
       {saving  && <span className="text-[9px] text-white/20">...</span>}
     </button>
   )
@@ -105,8 +122,8 @@ function MultiCell({ value, field, rowId, options, colorMap, onSaved }: {
   async function toggle(opt: string) {
     const next = value.includes(opt) ? value.filter(v => v !== opt) : [...value, opt]
     setSaving(true)
-    await patchRow(rowId, field, next)
-    onSaved(field, next)
+    const result = await patchRow(rowId, field, next)
+    if (result.ok) onSaved(field, next)
     setSaving(false)
   }
 
@@ -145,8 +162,12 @@ function CheckCell({ value, field, rowId, onSaved }: {
 
   async function toggle() {
     const next = !val; setVal(next); setSaving(true)
-    await patchRow(rowId, field, next)
-    onSaved(field, next)
+    const result = await patchRow(rowId, field, next)
+    if (result.ok) {
+      onSaved(field, next)
+    } else {
+      setVal(val) // revert on failure
+    }
     setSaving(false)
   }
 
