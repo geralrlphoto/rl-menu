@@ -1040,22 +1040,18 @@ export default function PortalClientePage() {
       </div>
 
       {/* ── HERO ── */}
-      <section className="relative min-h-screen flex items-end justify-center pb-16 overflow-hidden">
+      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
         {/* Background */}
         {heroImage ? (
           <>
-            {/* Foto com fade para baixo via CSS mask */}
-            <div className="absolute inset-0" style={{
-              WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 50%, transparent 100%)',
-              maskImage: 'linear-gradient(to bottom, black 0%, black 50%, transparent 100%)',
-            }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={heroImage} alt="" className="w-full h-full object-cover object-center" />
-            </div>
-            {/* Gradiente escuro esquerda → transparente direita (proposta) */}
-            <div className="absolute inset-x-0 top-0" style={{
-              height: '70%',
-              background: 'linear-gradient(to right, rgba(10,8,6,0.97) 0%, rgba(10,8,6,0.85) 28%, rgba(10,8,6,0.45) 58%, transparent 100%)',
+            {/* Foto cobre toda a secção */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={heroImage} alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
+            {/* Overlay suave para legibilidade do texto */}
+            <div className="absolute inset-0 bg-black/45" />
+            {/* Fade inferior: foto dissolve-se na cor de fundo da página */}
+            <div className="absolute inset-x-0 bottom-0 h-72" style={{
+              background: 'linear-gradient(to bottom, transparent 0%, rgba(10,10,10,0.75) 60%, rgba(10,10,10,1) 100%)',
             }} />
           </>
         ) : (
@@ -1134,7 +1130,7 @@ export default function PortalClientePage() {
           </button>
         )}
 
-        <div className="relative z-10 text-center px-4 pt-20">
+        <div className="relative z-10 text-center px-4 pb-24">
           {/* Portal label */}
           <div className="flex items-center justify-center gap-3 mb-4">
             <Leaf />
