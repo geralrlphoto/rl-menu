@@ -98,27 +98,38 @@ function ChoiceCard({
 
       {/* Admin controls (overlay) */}
       {adminMode && (
-        <div className="absolute top-3 right-3 flex flex-col gap-2 z-10">
-          <button onClick={onEdit}
-            className="px-3 py-1.5 text-[10px] tracking-[0.3em] uppercase border border-gold/60 bg-black/70 text-gold hover:bg-gold/15">
-            ✎ Editar
-          </button>
-          <button onClick={() => fileInputRef.current?.click()}
-            className="px-3 py-1.5 text-[10px] tracking-[0.3em] uppercase border border-gold/60 bg-black/70 text-gold hover:bg-gold/15">
-            ⤴ Foto
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={e => {
-              const f = e.target.files?.[0]
-              if (f) onUpload(f)
-              e.target.value = ''
-            }}
-          />
-        </div>
+        <>
+          <div className="absolute top-3 right-3 flex flex-col gap-2 z-10">
+            <button onClick={onEdit}
+              className="px-4 py-2 text-[10px] tracking-[0.3em] uppercase border border-gold/60 bg-black/80 text-gold hover:bg-gold/20 shadow-lg">
+              ✎ Editar texto
+            </button>
+            <button onClick={() => fileInputRef.current?.click()}
+              className="px-4 py-2 text-[10px] tracking-[0.3em] uppercase border border-gold/60 bg-black/80 text-gold hover:bg-gold/20 shadow-lg">
+              📷 Trocar foto
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={e => {
+                const f = e.target.files?.[0]
+                if (f) onUpload(f)
+                e.target.value = ''
+              }}
+            />
+          </div>
+          {!photoUrl && (
+            <button onClick={() => fileInputRef.current?.click()}
+              className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10
+                         px-6 py-4 text-[11px] tracking-[0.35em] uppercase
+                         border border-dashed border-gold/60 bg-black/40 text-gold/90
+                         hover:bg-gold/15 hover:border-gold transition">
+              📷 Carregar Foto
+            </button>
+          )}
+        </>
       )}
     </div>
   )
@@ -252,6 +263,12 @@ export default function LandingContratoCPS({ initialConfig }: { initialConfig: P
 
         {/* Hero */}
         <header className="mb-16 text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
+            alt="RL Photo Video"
+            className="mx-auto mb-8 w-[110px] sm:w-[130px] h-auto opacity-90"
+          />
           <p className="text-[9px] tracking-[0.5em] text-gold/40 uppercase mb-4">{config.intro_kicker}</p>
           <h1 className="font-cormorant text-5xl sm:text-6xl font-light tracking-wide text-white/95 leading-[1.05] mb-4">
             {config.intro_title_1}
