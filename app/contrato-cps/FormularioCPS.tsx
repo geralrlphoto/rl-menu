@@ -12,15 +12,9 @@ const PROPOSTAS_DEFAULT = [
 ]
 
 const SERVICOS_DEFAULT = [
-  'Foto + Vídeo (4 Pessoas)',
-  'Foto + Vídeo (3 Pessoas)',
-  'Foto + Vídeo (2 Pessoas)',
-  'Apenas Fotografia',
-  'Apenas Vídeo',
-  'Pré-Wedding',
-  'Foto Booth',
-  'Drone',
-  'Filme em 24h',
+  'Proposta 1',
+  'Proposta 2',
+  'Proposta 3',
 ]
 
 type Form = {
