@@ -874,6 +874,7 @@ function PortalSubPageContent() {
   const [parceirosForm, setParceirosForm] = useState<Array<{imageUrl:string;url?:string}>>([])
   const [savingParceiros, setSavingParceiros] = useState(false)
   const [subpageHeaderUrl, setSubpageHeaderUrl] = useState('')
+  const [portalHeroImageUrl, setPortalHeroImageUrl] = useState('')
   const [preWeddingSlots, setPreWeddingSlots] = useState<Array<{id:string;date:string;time:string;local:string}>>([])
   const [reservedSlotId, setReservedSlotId] = useState<string | null>(null)
   const [reservingSlotId, setReservingSlotId] = useState<string | null>(null)
@@ -931,6 +932,7 @@ function PortalSubPageContent() {
   const [erroSat, setErroSat] = useState<string | null>(null)
 
   const isSobrePage       = title.toUpperCase().includes('SOBRE')
+  const isSobreViewMode   = isSobrePage && !editing && !editingPhotos && !editingParceiros && !editingBriefing && !editingCalloutLinks && !editingPreWedding
   const isPaymentsPage    = title.toUpperCase().includes('PAGAMENTO')
   const isGuiaPage        = title.toUpperCase().includes('GUIA') && !title.toUpperCase().includes('WEDDING')
   const isPreWeddingPage  = title.toUpperCase().includes('WEDDING')
@@ -984,6 +986,7 @@ function PortalSubPageContent() {
       setParceiros(ps.parceiros ?? [])
       setPortalSettingsBlockId(settingsBlockIdVal)
       setSubpageHeaderUrl(ps.subpageHeaderUrl ?? '')
+      setPortalHeroImageUrl(ps.heroImageUrl ?? '')
       const slots = ps.preWeddingSlots ?? []
       setPreWeddingSlots(slots)
       const savedId = ps.preWeddingReservedSlotId ?? null
@@ -1339,8 +1342,8 @@ function PortalSubPageContent() {
   const hasImages = findImageBlocks(blocks).length > 0
 
   return (
-    <main className="min-h-screen px-3 sm:px-6 py-6 sm:py-10 max-w-[860px] mx-auto">
-      <div className="flex items-center justify-end mb-8 gap-2 flex-wrap">
+    <main className={isSobreViewMode ? 'relative' : 'min-h-screen relative max-w-[860px] mx-auto px-3 sm:px-6 py-6 sm:py-10'}>
+      <div className={`flex items-center justify-end gap-2 flex-wrap z-30 ${isSobreViewMode ? 'fixed top-4 right-4' : 'mb-8'}`}>
         <div className="flex items-center gap-2">
           {isAdmin && !editing && !editingPhotos && (
             <button onClick={handleRefresh} disabled={refreshing}
@@ -1411,7 +1414,7 @@ function PortalSubPageContent() {
         </div>
       </div>
 
-      <header className="mb-8">
+      {!isSobreViewMode && <header className="mb-8">
         {editingTitle ? (
           <div className="flex flex-col gap-3 max-w-sm">
             <p className="text-xs tracking-[0.4em] text-white/30 uppercase mb-1">RL PHOTO.VIDEO</p>
@@ -1517,7 +1520,7 @@ function PortalSubPageContent() {
           </>
           )
         })()}
-      </header>
+      </header>}
 
       {loading && <div className="text-center py-24 text-white/20 text-xs tracking-widest uppercase">A carregar...</div>}
       {error   && <div className="text-center py-24 text-red-400/60 text-sm">{error}</div>}
@@ -1760,12 +1763,14 @@ function PortalSubPageContent() {
               ? <BlockEditor blocks={blocks} pageId={id} settings={settings} settingsBlockId={settingsBlockId} onSaved={handleSaved} />
               : (
                 <>
+                  {!isSobrePage && (
                   <div className="mb-6">
                     <Link href={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : '/portal-cliente'}
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gold/30 bg-gold/10 text-gold hover:bg-gold/20 transition-all text-sm tracking-wide">
                       ‹ Voltar
                     </Link>
                   </div>
+                  )}
                   {(() => {
                     if (isContratoPage && eventoData) {
                       return <ContratoPropostaSection evento={eventoData} blocks={blocks} settings={settings} contratoDisponivel={contratoDisponivel} contratoUrl={contratoUrl} portalRef={portalRef} pagamentos={pagamentos} loadPagamentos={loadPagamentos} pagRefreshing={pagRefreshing} />
@@ -2537,15 +2542,14 @@ function PortalSubPageContent() {
                     if (isSobrePage) {
                       const _textBlocks = blocks.filter(b => b.type !== 'image')
                       const sobrePer = id ? pageHeaders[id as string] : undefined
-                      const sobrePhoto = sobrePer === 'none' ? '' : (sobrePer || subpageHeaderUrl)
+                      const sobrePhoto = sobrePer === 'none' ? '' : (sobrePer || subpageHeaderUrl || portalHeroImageUrl)
                       return (
-                        /* Full-viewport section — breaks out of max-w container */
+                        /* Full-viewport section — true fullscreen, no gap */
                         <div
                           className="relative overflow-hidden"
                           style={{
-                            minHeight: '100vh',
+                            height: '100vh',
                             width: '100vw',
-                            marginLeft: 'calc(-50vw + 50%)',
                           }}
                         >
                           {/* Background photo — full bleed */}
@@ -2561,9 +2565,24 @@ function PortalSubPageContent() {
                               : 'rgba(10,8,6,1)',
                           }} />
 
-                          {/* Text — lower left, matching couple slide positioning */}
-                          <div className="absolute bottom-16 sm:bottom-20 z-10 px-8 sm:px-16" style={{ maxWidth: '58%' }}>
-                            {_textBlocks.map((b, idx) => {
+                          {/* ‹ Voltar — top left overlay */}
+                          <Link
+                            href={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : '/portal-cliente'}
+                            className="absolute top-6 left-8 sm:top-8 sm:left-16 z-20 inline-flex items-center gap-2 text-[10px] tracking-[0.35em] text-white/40 hover:text-gold transition-colors uppercase"
+                          >
+                            ‹ Voltar
+                          </Link>
+
+                          {/* Text — centered left, matching couple slide */}
+                          <div className="absolute inset-y-0 left-0 z-10 flex flex-col justify-center px-8 sm:px-16" style={{ maxWidth: '58%' }}>
+                            {/* Page title (from portal sub-page title) */}
+                            <p className="text-[9px] tracking-[0.5em] text-white/30 uppercase mb-3">RL PHOTO.VIDEO</p>
+                            <h1 className="font-cormorant font-light uppercase text-gold mb-2"
+                              style={{ fontSize: 'clamp(1.6rem, 3.2vw, 2.6rem)', letterSpacing: '0.18em', lineHeight: 1.1 }}>
+                              {title}
+                            </h1>
+                            <div className="mb-6 w-10 h-px bg-gold/50" />
+                            {_textBlocks.map((b) => {
                               const type = b.type
                               const data = b[type] ?? {}
                               if (type === 'heading_1' || type === 'heading_2') {
@@ -2571,7 +2590,7 @@ function PortalSubPageContent() {
                                 if (!text) return null
                                 return (
                                   <h2 key={b.id} className="font-cormorant font-light uppercase text-white mb-3"
-                                    style={{ fontSize: 'clamp(1.8rem, 3.8vw, 3rem)', letterSpacing: '0.15em', lineHeight: 1.1 }}>
+                                    style={{ fontSize: 'clamp(1.4rem, 2.8vw, 2.2rem)', letterSpacing: '0.15em', lineHeight: 1.15 }}>
                                     {richText(data.rich_text)}
                                   </h2>
                                 )
@@ -2589,13 +2608,10 @@ function PortalSubPageContent() {
                               if (type === 'paragraph') {
                                 const text = plainText(data.rich_text ?? [])
                                 if (!text) return <div key={b.id} className="h-2" />
-                                // First paragraph gets the gold dot above it
-                                const isFirst = _textBlocks.slice(0, idx).every(bb => bb.type !== 'paragraph')
                                 return (
                                   <React.Fragment key={b.id}>
-                                    {isFirst && <div className="w-1.5 h-1.5 rounded-full bg-gold/60 mb-4" />}
                                     <p className="font-cormorant font-light italic text-white/65 leading-relaxed mb-2"
-                                      style={{ fontSize: 'clamp(0.95rem, 1.7vw, 1.2rem)' }}>
+                                      style={{ fontSize: 'clamp(0.95rem, 1.7vw, 1.15rem)' }}>
                                       {richText(data.rich_text)}
                                     </p>
                                   </React.Fragment>
