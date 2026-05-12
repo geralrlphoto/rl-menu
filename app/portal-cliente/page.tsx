@@ -1016,7 +1016,7 @@ export default function PortalClientePage() {
 
   // ── portal view ─────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="min-h-screen" style={{ background: 'radial-gradient(ellipse at 50% 30%, #2b1b04 0%, #120b02 40%, #080503 100%)' }}>
 
       {/* Admin bar */}
       <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-2 bg-black/80 backdrop-blur-sm border-b border-white/5">
@@ -1055,7 +1055,7 @@ export default function PortalClientePage() {
             }} />
           </>
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-b from-[#1a1408] to-[#0a0a0a]" />
+          <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 38%, #2e1c06 0%, #150d03 45%, #090604 100%)' }} />
         )}
 
         {/* Trocar foto button */}
@@ -1201,7 +1201,7 @@ export default function PortalClientePage() {
 
       {/* ── COUNTDOWN ── */}
       {settings.data && (
-        <section className="py-10 sm:py-14 border-y border-white/[0.05] bg-[#0d0d0d]">
+        <section className="py-10 sm:py-14 border-y border-white/[0.05] bg-black/30 backdrop-blur-sm">
           <p className="font-cormorant font-light text-gold text-2xl sm:text-3xl text-center mb-6 tracking-[0.2em] uppercase">Contagem Regressiva</p>
           <div className="flex items-center justify-center gap-4">
             <Leaf />
