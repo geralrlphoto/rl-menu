@@ -833,6 +833,122 @@ const MESES_PW = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','N
 
 const PORTAL_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
 
+// ─── Contrato CPS recebido → Aprovar + Criar Portal ──────────────────────────
+function ContratoCPSAprovacaoSection({ referencia }: { referencia?: string }) {
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [data, setData] = useState<{
+    exists: boolean
+    contrato?: {
+      nome_noivos?: string
+      tipo_evento?: string
+      aprovado_em?: string | null
+      created_at?: string
+      email_noiva?: string | null
+      email_noivo?: string | null
+    }
+    portalUrl?: string | null
+  } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  async function load() {
+    if (!referencia) { setLoading(false); return }
+    setLoading(true)
+    try {
+      const r = await fetch(`/api/contrato-cps/aprovar?ref=${encodeURIComponent(referencia)}`)
+      const j = await r.json()
+      setData(j)
+    } catch (e: any) {
+      setError(e.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { load() }, [referencia])
+
+  async function handleAprovar() {
+    if (!referencia) return
+    if (!confirm(`Aprovar contrato e criar portal para "${data?.contrato?.nome_noivos}"?\n\nIsto envia um email automático ao cliente com o link do portal.`)) return
+    setSubmitting(true)
+    setError(null)
+    try {
+      const r = await fetch('/api/contrato-cps/aprovar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referencia }),
+      })
+      const j = await r.json()
+      if (!r.ok) throw new Error(j.error ?? 'erro')
+      await load()
+    } catch (e: any) {
+      setError(e.message ?? 'erro a aprovar')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  if (!referencia) return null
+  if (loading) return null
+  if (!data?.exists) return null // ainda não foi preenchido pelo cliente
+
+  const c = data.contrato!
+  const isBatizado = c.tipo_evento === 'batizado'
+  const aprovado = !!c.aprovado_em
+
+  if (aprovado) {
+    return (
+      <div className="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.04] p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[10px] tracking-[0.3em] text-emerald-400/80 uppercase mb-1">✓ Portal aprovado</p>
+            <p className="text-sm text-white/80">
+              Aprovado em {new Date(c.aprovado_em!).toLocaleString('pt-PT')}
+            </p>
+          </div>
+          {data.portalUrl && (
+            <a href={data.portalUrl} target="_blank" rel="noopener noreferrer"
+              className="px-4 py-2 text-[11px] tracking-[0.3em] uppercase border border-emerald-400/40 text-emerald-300 hover:bg-emerald-500/10 whitespace-nowrap">
+              Abrir portal →
+            </a>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/[0.05] p-4">
+      <div className="flex items-start gap-4">
+        <div className="text-3xl">📋</div>
+        <div className="flex-1">
+          <p className="text-[10px] tracking-[0.3em] text-amber-400/80 uppercase mb-1">
+            Contrato {isBatizado ? 'Batizado' : 'Casamento'} preenchido
+          </p>
+          <p className="text-sm text-white/85 mb-1">
+            <span className="font-medium">{c.nome_noivos}</span>
+            {c.created_at && (
+              <span className="text-white/40 text-xs ml-2">
+                · recebido {new Date(c.created_at).toLocaleString('pt-PT')}
+              </span>
+            )}
+          </p>
+          <p className="text-xs text-white/50">
+            Email: {c.email_noiva || c.email_noivo || '—'}
+          </p>
+        </div>
+        <button onClick={handleAprovar} disabled={submitting}
+          className="px-5 py-3 text-[11px] tracking-[0.3em] uppercase border border-gold/60 bg-gold/10 text-gold hover:bg-gold/20 disabled:opacity-50 whitespace-nowrap">
+          {submitting ? 'A criar...' : '✓ Aprovar e criar portal'}
+        </button>
+      </div>
+      {error && (
+        <p className="mt-3 text-xs text-red-400/80">{error}</p>
+      )}
+    </div>
+  )
+}
+
 function ContratoStatusSection({ eventoId, referencia }: { eventoId: string; referencia?: string }) {
   const [disponivel, setDisponivel] = useState<boolean | null>(null)
   const [settingsBlockId, setSettingsBlockId] = useState<string | null>(null)
@@ -2227,6 +2343,9 @@ export default function EventoPage() {
               )
             })()}
           </div>
+
+          {/* Contrato CPS recebido — banner de aprovação */}
+          <ContratoCPSAprovacaoSection referencia={e.referencia ?? undefined} />
 
           {/* Criar Contrato */}
           <ContratoStatusSection eventoId={e.id} referencia={e.referencia ?? undefined} />
