@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
       .single(),
     supabase
       .from('crm_contacts')
-      .select('reuniao_data,reuniao_hora,reuniao_tipo,reuniao_link,nome')
+      .select('reuniao_data,reuniao_hora,reuniao_tipo,reuniao_link,nome,page_content')
       .eq('page_token', token)
       .maybeSingle(),
   ])
@@ -40,16 +40,49 @@ export async function GET(req: NextRequest) {
 
   const crm_nome = crmContact?.nome || ''
 
+  // ── CRM page_content é a fonte autoritária dos propostas ──────────────────
+  // O admin edita propostas em /crm/[id] e a edição é guardada em
+  // crm_contacts.page_content. Aqui injectamos esses propostas no settings
+  // do batizado para que o portal mostre o que o admin selecionou no CRM.
+  const crmPc = typeof crmContact?.page_content === 'string'
+    ? JSON.parse(crmContact.page_content || '{}')
+    : (crmContact?.page_content || {})
+  const crmPropostas = Array.isArray(crmPc?.propostas) ? crmPc.propostas : null
+  const crmExtras    = Array.isArray(crmPc?.extras_proposta) ? crmPc.extras_proposta : null
+  const crmPropostaCfg = crmPc?.proposta || null  // password + buttonLabel
+  const crmPropostaAtiva = crmPc?.propostaPage?.propostaAtiva ?? crmPc?.proposta?.propostaAtiva
+
+  function injectCrmIntoSettings(settings: any) {
+    const s = settings || {}
+    const content = s.content || {}
+    const propostaPage = content.propostaPage || {}
+    const merged = {
+      ...s,
+      content: {
+        ...content,
+        ...(crmPropostas    ? { propostas: crmPropostas }            : {}),
+        ...(crmExtras       ? { extras_proposta: crmExtras }         : {}),
+        proposta: { ...(content.proposta || {}), ...(crmPropostaCfg || {}) },
+        propostaPage: {
+          ...propostaPage,
+          ...(crmPropostaAtiva !== undefined ? { propostaAtiva: crmPropostaAtiva } : {}),
+        },
+      },
+    }
+    return merged
+  }
+
   if (error && error.code !== 'PGRST116') {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
   // Page exists — return it
   if (data?.settings) {
+    const settings = injectCrmIntoSettings(data.settings)
     return NextResponse.json({
-      maquete: { token, settings: data.settings },
-      page_confirmacao: data.settings.page_confirmacao ?? null,
-      proposta_resposta: data.settings.proposta_resposta ?? null,
+      maquete: { token, settings },
+      page_confirmacao: settings.page_confirmacao ?? null,
+      proposta_resposta: settings.proposta_resposta ?? null,
       crm_reuniao,
       crm_nome,
     })
@@ -71,8 +104,9 @@ export async function GET(req: NextRequest) {
         .from('portal_template_settings')
         .insert({ page_id: pageId, settings: initialSettings, updated_at: new Date().toISOString() })
 
+      const settings = injectCrmIntoSettings(initialSettings)
       return NextResponse.json({
-        maquete: { token, settings: initialSettings },
+        maquete: { token, settings },
         page_confirmacao: null,
         proposta_resposta: null,
         crm_reuniao,
@@ -81,6 +115,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Master doesn't exist yet
-  return NextResponse.json({ maquete: { token, settings: {} }, page_confirmacao: null, proposta_resposta: null, crm_reuniao, crm_nome })
+  // Master doesn't exist yet — return empty settings but still inject CRM propostas if any
+  const fallback = injectCrmIntoSettings({ content: {} })
+  return NextResponse.json({ maquete: { token, settings: fallback }, page_confirmacao: null, proposta_resposta: null, crm_reuniao, crm_nome })
 }
