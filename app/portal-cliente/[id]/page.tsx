@@ -934,6 +934,23 @@ function PortalSubPageContent() {
 
   const isSobrePage       = title.toUpperCase().includes('SOBRE')
   const isSobreViewMode   = isSobrePage && !editing && !editingPhotos && !editingParceiros && !editingBriefing && !editingCalloutLinks && !editingPreWedding
+
+  // SOBRE O MENU é fullscreen 100vh/100vw — bloqueia scroll do body para garantir
+  // que nunca aparecem barras de scroll, independentemente do conteúdo dos blocos.
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    if (isSobreViewMode) {
+      const prevHtml = document.documentElement.style.overflow
+      const prevBody = document.body.style.overflow
+      document.documentElement.style.overflow = 'hidden'
+      document.body.style.overflow = 'hidden'
+      return () => {
+        document.documentElement.style.overflow = prevHtml
+        document.body.style.overflow = prevBody
+      }
+    }
+  }, [isSobreViewMode])
+
   const isDesignPremium   = !isSobrePage && (id ? designPremiumPages.includes(id) : false)
   const dpEffectivePhoto  = (() => {
     if (!isDesignPremium) return ''
