@@ -813,6 +813,7 @@ export default function PortalClientePage() {
   // password gate
   const [hasPassword, setHasPassword] = useState(false)
   const [authenticated, setAuthenticated] = useState(false)
+  const [isAdminUser, setIsAdminUser] = useState(false)
   const [passwordInput, setPasswordInput] = useState('')
   const [passwordError, setPasswordError] = useState(false)
   const [checkingPassword, setCheckingPassword] = useState(false)
@@ -827,6 +828,7 @@ export default function PortalClientePage() {
       setBlocks(d.blocks ?? [])
       setSettings(d.settings ?? { hiddenNav: [] })
       setSettingsBlockId(d.settingsBlockId ?? null)
+      if (d.isAdmin) setIsAdminUser(true)
       const hp = d.hasPassword ?? false
       setHasPassword(hp)
       if (hp) {
@@ -945,7 +947,7 @@ export default function PortalClientePage() {
     </div>
   )
 
-  if (hasPassword && !authenticated) return (
+  if (hasPassword && !authenticated && !isAdminUser) return (
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-8 text-center">
         <div>

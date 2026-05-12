@@ -102,6 +102,11 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url)
     const id = searchParams.get('id') || PAGE_ID
+
+    // Check if request comes from an authenticated admin
+    const cookieHeader = (req as any).headers?.get?.('cookie') ?? ''
+    const rlAuth = cookieHeader.split(';').map((c: string) => c.trim()).find((c: string) => c.startsWith('rl_auth='))?.split('=')?.[1]
+    const isAdmin = !!rlAuth && rlAuth === process.env.AUTH_SECRET
     const bust = searchParams.get('bust') === '1'
 
     // ── 1. Fetch Notion blocks (cached, busted when requested) ────────────────
@@ -150,7 +155,7 @@ export async function GET(req: Request) {
     // Strip password before sending to client
     const { portalPassword, ...safeSettings } = settings as any
     return NextResponse.json(
-      { blocks, settings: safeSettings, settingsBlockId, hasPassword: !!(portalPassword) },
+      { blocks, settings: safeSettings, settingsBlockId, hasPassword: !!(portalPassword), isAdmin },
       { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
     )
   } catch (e: any) {
