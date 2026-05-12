@@ -217,7 +217,7 @@ function EntregasSectionPC({ referencia }: { referencia: string }) {
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08]">
           <div className="flex items-center gap-2.5">
             <span className="w-2 h-2 rounded-full bg-white/50 animate-pulse shrink-0" />
-            <h2 className="font-playfair font-black text-xl sm:text-2xl tracking-wide text-white"
+            <h2 className="font-cormorant font-light text-2xl sm:text-3xl tracking-wide text-white"
               style={{ textShadow: '0 0 14px rgba(255,255,255,0.9), 0 0 28px rgba(255,255,255,0.5)' }}>Estado das Entregas</h2>
           </div>
           <span className="text-[9px] tracking-[0.3em] text-white/30 uppercase">Data de Entrega</span>
@@ -277,7 +277,7 @@ function Countdown({ targetDate }: { targetDate: string }) {
 
   const Unit = ({ v, label }: { v: number; label: string }) => (
     <div className="flex flex-col items-center">
-      <span className="font-playfair text-4xl sm:text-5xl font-bold text-white tabular-nums">{String(v).padStart(2, '0')}</span>
+      <span className="font-cormorant font-light text-4xl sm:text-5xl text-white tabular-nums">{String(v).padStart(2, '0')}</span>
       <span className="text-[10px] tracking-[0.25em] text-white/40 uppercase mt-1">{label}</span>
     </div>
   )
@@ -731,7 +731,7 @@ function TasksSection({
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08]">
           <div className="flex items-center gap-2.5">
             <span className="w-2 h-2 rounded-full bg-white/50 animate-pulse shrink-0" />
-            <h2 className="font-playfair font-black text-xl sm:text-2xl tracking-wide text-white"
+            <h2 className="font-cormorant font-light text-2xl sm:text-3xl tracking-wide text-white"
               style={{ textShadow: '0 0 14px rgba(255,255,255,0.9), 0 0 28px rgba(255,255,255,0.5)' }}>Gestão de Tarefas</h2>
           </div>
           <div className="flex items-center gap-2">
@@ -950,7 +950,7 @@ export default function PortalClientePage() {
       <div className="w-full max-w-sm space-y-8 text-center">
         <div>
           <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase mb-3">RL PHOTO.VIDEO</p>
-          <h1 className="font-playfair font-black text-4xl text-white mb-2">Portal Privado</h1>
+          <h1 className="font-cormorant font-light text-4xl text-white mb-2 tracking-[0.15em] uppercase">Portal Privado</h1>
           <p className="font-cormorant italic text-white/30 text-base">Introduz a password para continuar</p>
         </div>
         <div className="space-y-3">
@@ -1131,7 +1131,7 @@ export default function PortalClientePage() {
           </div>
 
           {/* Names — inline editable */}
-          <h1 className="font-playfair text-5xl sm:text-7xl lg:text-8xl font-black text-white leading-none tracking-tight mb-4 flex items-center justify-center gap-4 flex-wrap">
+          <h1 className="font-cormorant font-light text-5xl sm:text-7xl lg:text-8xl text-white leading-none tracking-wide mb-4 flex items-center justify-center gap-4 flex-wrap">
             {heroEdit.field === 'noiva' ? (
               <span className="flex items-center gap-2">
                 <input
@@ -1139,7 +1139,7 @@ export default function PortalClientePage() {
                   value={heroEdit.value}
                   onChange={e => setHeroEdit(prev => ({ ...prev, value: e.target.value }))}
                   onKeyDown={e => { if (e.key === 'Enter') saveHeroField(); if (e.key === 'Escape') setHeroEdit({ field: null, value: '' }) }}
-                  className="bg-white/10 border-b-2 border-gold outline-none text-white font-playfair text-5xl sm:text-7xl lg:text-8xl font-black text-center w-40 sm:w-56"
+                  className="bg-white/10 border-b-2 border-gold outline-none text-white font-cormorant font-light text-5xl sm:text-7xl lg:text-8xl text-center w-40 sm:w-56"
                 />
                 <span className="flex flex-col gap-1">
                   <button onClick={saveHeroField} disabled={heroSaving} className="text-[10px] bg-gold/30 border border-gold/50 text-gold px-2 py-0.5 rounded hover:bg-gold/50 disabled:opacity-50">✓</button>
@@ -1161,7 +1161,7 @@ export default function PortalClientePage() {
                   value={heroEdit.value}
                   onChange={e => setHeroEdit(prev => ({ ...prev, value: e.target.value }))}
                   onKeyDown={e => { if (e.key === 'Enter') saveHeroField(); if (e.key === 'Escape') setHeroEdit({ field: null, value: '' }) }}
-                  className="bg-white/10 border-b-2 border-gold outline-none text-white font-playfair text-5xl sm:text-7xl lg:text-8xl font-black text-center w-40 sm:w-56"
+                  className="bg-white/10 border-b-2 border-gold outline-none text-white font-cormorant font-light text-5xl sm:text-7xl lg:text-8xl text-center w-40 sm:w-56"
                 />
                 <span className="flex flex-col gap-1">
                   <button onClick={saveHeroField} disabled={heroSaving} className="text-[10px] bg-gold/30 border border-gold/50 text-gold px-2 py-0.5 rounded hover:bg-gold/50 disabled:opacity-50">✓</button>
@@ -1194,7 +1194,7 @@ export default function PortalClientePage() {
       {/* ── COUNTDOWN ── */}
       {settings.data && (
         <section className="py-10 sm:py-14 border-y border-white/[0.05] bg-[#0d0d0d]">
-          <p className="font-playfair font-black text-gold text-xl sm:text-2xl text-center mb-6 tracking-tight">Contagem Regressiva</p>
+          <p className="font-cormorant font-light text-gold text-2xl sm:text-3xl text-center mb-6 tracking-[0.2em] uppercase">Contagem Regressiva</p>
           <div className="flex items-center justify-center gap-4">
             <Leaf />
             <Countdown targetDate={settings.data} />
@@ -1211,7 +1211,7 @@ export default function PortalClientePage() {
         <div className="flex justify-center px-4 pb-6 pt-2">
           <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full border border-gold/40 bg-gold/10 backdrop-blur-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse shrink-0" />
-            <span className="font-playfair text-gold text-base sm:text-lg tracking-wide">{welcomeRef}</span>
+            <span className="font-cormorant font-light text-gold text-lg sm:text-xl tracking-[0.15em]">{welcomeRef}</span>
           </div>
         </div>
       )}
@@ -1219,7 +1219,7 @@ export default function PortalClientePage() {
       {/* ── QUICK ACCESS ── */}
       {navPages.length > 0 && (
         <section className="py-6 sm:py-10 px-4">
-          <p className="font-playfair font-black text-white/50 text-lg sm:text-xl text-center mb-8 tracking-tight">Acesso Rápido</p>
+          <p className="font-cormorant font-light text-white/50 text-xl sm:text-2xl text-center mb-8 tracking-[0.2em] uppercase">Acesso Rápido</p>
           <div className="flex gap-3 overflow-x-auto pb-2 justify-start sm:justify-center snap-x snap-mandatory scrollbar-none">
             {navPages.map(page => {
               const isActive = settings.activeNavId === page.id
@@ -1275,7 +1275,7 @@ export default function PortalClientePage() {
       {/* ── WELCOME ── */}
       <section className="py-12 sm:py-16 px-4 max-w-2xl mx-auto">
         {welcomeHeading && (
-          <h2 className="font-playfair font-black text-2xl sm:text-3xl text-gold mb-3 leading-tight tracking-tight text-center">
+          <h2 className="font-cormorant font-light text-2xl sm:text-3xl text-gold mb-3 leading-tight tracking-[0.15em] uppercase text-center">
             {welcomeHeading}
           </h2>
         )}
@@ -1306,7 +1306,7 @@ export default function PortalClientePage() {
       {/* ── CARDS ── */}
       {navPages.length > 0 && (
         <section className="py-10 sm:py-14 px-4 bg-[#0d0d0d] border-t border-white/[0.04]">
-          <p className="font-playfair font-black text-white/50 text-lg sm:text-xl text-center mb-8 tracking-tight">O que encontram aqui</p>
+          <p className="font-cormorant font-light text-white/50 text-xl sm:text-2xl text-center mb-8 tracking-[0.2em] uppercase">O que encontram aqui</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-2xl mx-auto">
             {navPages.slice(0, 6).map(page => {
               const displayTitle = settings.pageTitles?.[page.id] ?? page.title

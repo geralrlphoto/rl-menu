@@ -1450,7 +1450,7 @@ function PortalSubPageContent() {
             <div className="absolute bottom-0 left-0 p-5 flex items-end gap-3">
               <div>
                 <p className="text-[10px] tracking-[0.4em] text-white/50 uppercase mb-1">RL PHOTO.VIDEO</p>
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-widest text-white uppercase drop-shadow-lg">
+                <h1 className="font-cormorant font-light text-2xl sm:text-3xl tracking-[0.2em] text-white uppercase drop-shadow-lg">
                   {title || '...'}
                 </h1>
               </div>
@@ -1493,7 +1493,7 @@ function PortalSubPageContent() {
           <>
             <p className="text-xs tracking-[0.4em] text-white/30 uppercase mb-1">RL PHOTO.VIDEO</p>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-bold tracking-widest text-gold uppercase">
+              <h1 className="font-cormorant font-light text-xl sm:text-2xl tracking-[0.2em] text-gold uppercase">
                 {title || '...'}
               </h1>
               {isAdmin && (
