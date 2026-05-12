@@ -10,6 +10,8 @@ const PROPOSTAS_DEFAULT = [
   'Proposta 3',
 ]
 
+type Tipo = 'casamento' | 'batizado'
+
 type Form = {
   nome_noivos: string
   data_casamento: string
@@ -31,6 +33,9 @@ type Form = {
   email_noivo: string
   // Serviço
   servico: string
+  // Batizado — Criança (só usado quando tipo='batizado')
+  nome_crianca: string
+  idade_crianca: string
 }
 
 const EMPTY: Form = {
@@ -38,6 +43,64 @@ const EMPTY: Form = {
   nome_noiva: '', morada_noiva: '', tel_noiva: '', cc_noiva: '', nif_noiva: '', email_noiva: '',
   nome_noivo: '', morada_noivo: '', tel_noivo: '', cc_noivo: '', nif_noivo: '', email_noivo: '',
   servico: '',
+  nome_crianca: '', idade_crianca: '',
+}
+
+// ─── Labels condicionais por tipo ─────────────────────────────────────────────
+function getLabels(tipo: Tipo) {
+  if (tipo === 'batizado') {
+    return {
+      heroTitle: { line1: 'Dados para', line2: 'Contrato — Batizado' },
+      heroIntro: 'Caros pais,',
+      sec01Label: 'Dados Gerais',
+      sec02Label: 'Dados da Criança',
+      sec03Label: 'Dados da Mãe',
+      sec04Label: 'Dados do Pai',
+      nome_noivos: 'Nome dos Pais',
+      nome_noivos_placeholder: 'Ex.: Ana e João',
+      data_evento: 'Data do Batizado',
+      local_evento: 'Local da Cerimónia (Igreja)',
+      local_evento_placeholder: 'Ex.: Igreja de São José',
+      nome_noiva: 'Nome da Mãe',
+      morada_noiva: 'Morada Completa da Mãe',
+      tel_noiva: 'Contato da Mãe',
+      cc_noiva: 'N.º C. de Cidadão da Mãe',
+      nif_noiva: 'N.º Iden. Fiscal da Mãe',
+      email_noiva: 'E-mail da Mãe',
+      nome_noivo: 'Nome do Pai',
+      morada_noivo: 'Morada Completa do Pai',
+      tel_noivo: 'Contato do Pai',
+      cc_noivo: 'N.º C. de Cidadão do Pai',
+      nif_noivo: 'N.º Iden. Fiscal do Pai',
+      email_noivo: 'E-mail do Pai',
+    }
+  }
+  // casamento (default)
+  return {
+    heroTitle: { line1: 'Dados para', line2: 'Contrato CPS' },
+    heroIntro: 'Caros noivos,',
+    sec01Label: 'Dados Gerais',
+    sec02Label: 'Dados da Noiva',
+    sec03Label: 'Dados do Noivo',
+    sec04Label: '', // não usado
+    nome_noivos: 'Nome dos Noivos',
+    nome_noivos_placeholder: 'Ex.: Ana e João',
+    data_evento: 'Data do Casamento',
+    local_evento: 'Local da Cerimónia (Igreja + Quinta)',
+    local_evento_placeholder: 'Ex.: Igreja de São José + Quinta dos Lagos',
+    nome_noiva: 'Nome da Noiva',
+    morada_noiva: 'Morada Completa da Noiva',
+    tel_noiva: 'Contato Noiva',
+    cc_noiva: 'N.º C. de Cidadão Noiva',
+    nif_noiva: 'N.º Iden. Fiscal Noiva',
+    email_noiva: 'E-mail Noiva',
+    nome_noivo: 'Nome do Noivo',
+    morada_noivo: 'Morada Completa do Noivo',
+    tel_noivo: 'Contato do Noivo',
+    cc_noivo: 'N.º C. Cidadão Noivo',
+    nif_noivo: 'N.º Ide. Fiscal Noivo',
+    email_noivo: 'E-mail do Noivo',
+  }
 }
 
 // ─── Field wrapper premium ────────────────────────────────────────────────────
@@ -48,7 +111,7 @@ function Field({
   name: keyof Form
   value: string
   onChange: (k: keyof Form, v: string) => void
-  type?: 'text' | 'email' | 'tel' | 'date'
+  type?: 'text' | 'email' | 'tel' | 'date' | 'number'
   required?: boolean
   placeholder?: string
 }) {
@@ -118,14 +181,22 @@ function SectionTitle({ kicker, title }: { kicker: string; title: string }) {
   )
 }
 
-export default function FormularioCPS({ sectionName, backHref = '/photo' }: {
+export default function FormularioCPS({
+  sectionName,
+  backHref = '/contrato-cps',
+  tipo = 'casamento',
+}: {
   sectionName?: string
   backHref?: string
+  tipo?: Tipo
 }) {
   const [form, setForm] = useState<Form>(EMPTY)
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const L = getLabels(tipo)
+  const isBatizado = tipo === 'batizado'
 
   function update(k: keyof Form, v: string) {
     setForm(prev => ({ ...prev, [k]: v }))
@@ -139,7 +210,7 @@ export default function FormularioCPS({ sectionName, backHref = '/photo' }: {
       const res = await fetch('/api/contrato-cps', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, tipo_evento: tipo }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
@@ -198,13 +269,13 @@ export default function FormularioCPS({ sectionName, backHref = '/photo' }: {
         <header className="mb-16 text-center">
           <p className="text-[9px] tracking-[0.5em] text-gold/40 uppercase mb-4">RL PHOTO.VIDEO</p>
           <h1 className="font-cormorant text-5xl sm:text-6xl font-light tracking-wide text-white/95 leading-[1.05] mb-4">
-            Dados para
+            {L.heroTitle.line1}
             <br/>
-            <span className="italic text-gold">Contrato CPS</span>
+            <span className="italic text-gold">{L.heroTitle.line2}</span>
           </h1>
           <div className="mx-auto h-px w-16 bg-gold/50 my-6" />
           <p className="font-cormorant text-[19px] sm:text-[21px] text-white/65 leading-[1.7] max-w-lg mx-auto font-light">
-            <span className="italic text-gold/80">Caros noivos / pais,</span><br/>
+            <span className="italic text-gold/80">{L.heroIntro}</span><br/>
             espero que se encontrem bem. Quero expressar o nosso sincero <em className="text-white/85">muito obrigado</em> pela confiança que depositaram na nossa equipa ao escolher os nossos serviços.
           </p>
           <p className="font-cormorant mt-6 text-[17px] sm:text-[18px] text-white/50 leading-[1.7] max-w-lg mx-auto italic font-light">
@@ -221,29 +292,38 @@ export default function FormularioCPS({ sectionName, backHref = '/photo' }: {
         <form onSubmit={handleSubmit} className="space-y-6">
 
           {/* ── Dados Gerais ── */}
-          <SectionTitle kicker="Secção 01" title="Dados Gerais" />
-          <Field label="Nome dos Noivos / Pais" name="nome_noivos" value={form.nome_noivos} onChange={update} required placeholder="Ex.: Ana e João" />
-          <Field label="Data do Casamento / Batizado" name="data_casamento" value={form.data_casamento} onChange={update} type="date" required />
-          <Field label="Local da Cerimónia (Igreja + Quinta)" name="local_cerimonia" value={form.local_cerimonia} onChange={update} required placeholder="Ex.: Igreja de São José + Quinta dos Lagos" />
+          <SectionTitle kicker="Secção 01" title={L.sec01Label} />
+          <Field label={L.nome_noivos} name="nome_noivos" value={form.nome_noivos} onChange={update} required placeholder={L.nome_noivos_placeholder} />
+          <Field label={L.data_evento} name="data_casamento" value={form.data_casamento} onChange={update} type="date" required />
+          <Field label={L.local_evento} name="local_cerimonia" value={form.local_cerimonia} onChange={update} required placeholder={L.local_evento_placeholder} />
           <Select label="Proposta Escolhida" name="proposta" value={form.proposta} onChange={update} options={PROPOSTAS_DEFAULT} required />
 
+          {/* ── Secção 02: Dados da Criança (só batizado) ── */}
+          {isBatizado && (
+            <>
+              <SectionTitle kicker="Secção 02" title={L.sec02Label} />
+              <Field label="Nome da Criança" name="nome_crianca" value={form.nome_crianca} onChange={update} required placeholder="Nome completo" />
+              <Field label="Idade da Criança" name="idade_crianca" value={form.idade_crianca} onChange={update} required placeholder="Ex.: 6 meses, 2 anos" />
+            </>
+          )}
+
           {/* ── Noiva/Mãe ── */}
-          <SectionTitle kicker="Secção 02" title="Dados da Noiva / Mãe" />
-          <Field label="Nome da Noiva / Mãe" name="nome_noiva" value={form.nome_noiva} onChange={update} required />
-          <Field label="Morada Completa da Noiva / Mãe" name="morada_noiva" value={form.morada_noiva} onChange={update} required placeholder="Rua, número, código postal, localidade" />
-          <Field label="Contato Noiva / Mãe" name="tel_noiva" value={form.tel_noiva} onChange={update} type="tel" required placeholder="+351 9XX XXX XXX" />
-          <Field label="N.º C. de Cidadão Noiva / Mãe" name="cc_noiva" value={form.cc_noiva} onChange={update} required />
-          <Field label="N.º Iden. Fiscal Noiva / Mãe" name="nif_noiva" value={form.nif_noiva} onChange={update} required />
-          <Field label="E-mail Noiva / Mãe" name="email_noiva" value={form.email_noiva} onChange={update} type="email" required />
+          <SectionTitle kicker={isBatizado ? 'Secção 03' : 'Secção 02'} title={isBatizado ? L.sec03Label : L.sec02Label} />
+          <Field label={L.nome_noiva} name="nome_noiva" value={form.nome_noiva} onChange={update} required />
+          <Field label={L.morada_noiva} name="morada_noiva" value={form.morada_noiva} onChange={update} required placeholder="Rua, número, código postal, localidade" />
+          <Field label={L.tel_noiva} name="tel_noiva" value={form.tel_noiva} onChange={update} type="tel" required placeholder="+351 9XX XXX XXX" />
+          <Field label={L.cc_noiva} name="cc_noiva" value={form.cc_noiva} onChange={update} required />
+          <Field label={L.nif_noiva} name="nif_noiva" value={form.nif_noiva} onChange={update} required />
+          <Field label={L.email_noiva} name="email_noiva" value={form.email_noiva} onChange={update} type="email" required />
 
           {/* ── Noivo/Pai ── */}
-          <SectionTitle kicker="Secção 03" title="Dados do Noivo / Pai" />
-          <Field label="Nome do Noivo / Pai" name="nome_noivo" value={form.nome_noivo} onChange={update} required />
-          <Field label="Morada Completa do Noivo / Pai" name="morada_noivo" value={form.morada_noivo} onChange={update} required placeholder="Rua, número, código postal, localidade" />
-          <Field label="Contato do Noivo / Pai" name="tel_noivo" value={form.tel_noivo} onChange={update} type="tel" required placeholder="+351 9XX XXX XXX" />
-          <Field label="N.º C. Cidadão Noivo / Pai" name="cc_noivo" value={form.cc_noivo} onChange={update} required />
-          <Field label="N.º Ide. Fiscal Noivo / Pai" name="nif_noivo" value={form.nif_noivo} onChange={update} required />
-          <Field label="E-mail do Noivo / Pai" name="email_noivo" value={form.email_noivo} onChange={update} type="email" required />
+          <SectionTitle kicker={isBatizado ? 'Secção 04' : 'Secção 03'} title={isBatizado ? L.sec04Label : L.sec03Label} />
+          <Field label={L.nome_noivo} name="nome_noivo" value={form.nome_noivo} onChange={update} required />
+          <Field label={L.morada_noivo} name="morada_noivo" value={form.morada_noivo} onChange={update} required placeholder="Rua, número, código postal, localidade" />
+          <Field label={L.tel_noivo} name="tel_noivo" value={form.tel_noivo} onChange={update} type="tel" required placeholder="+351 9XX XXX XXX" />
+          <Field label={L.cc_noivo} name="cc_noivo" value={form.cc_noivo} onChange={update} required />
+          <Field label={L.nif_noivo} name="nif_noivo" value={form.nif_noivo} onChange={update} required />
+          <Field label={L.email_noivo} name="email_noivo" value={form.email_noivo} onChange={update} type="email" required />
 
           {/* ── Submit ── */}
           <div className="pt-12 pb-8">

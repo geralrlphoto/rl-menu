@@ -20,6 +20,17 @@ const DB_BY_YEAR: Record<number, string> = {
   2027: '2a6220116d8a80b4b439fe091b2ac804',
 }
 
+// Prefixo de referência por tipo de evento (CAS_001_26_RL, BAT_001_26_RL, ...)
+const PREFIX_BY_TIPO: Record<string, string> = {
+  casamento: 'CAS',
+  batizado:  'BAT',
+}
+
+const LABEL_BY_TIPO: Record<string, string> = {
+  casamento: 'CASAMENTO',
+  batizado:  'BATIZADO',
+}
+
 function db() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -35,9 +46,18 @@ async function saveToNotion(data: Record<string, any>) {
     const anoEvento = data.data_casamento ? parseInt(data.data_casamento.slice(0, 4)) : 2026
     const EVENTOS_DB = DB_BY_YEAR[anoEvento] ?? DB_BY_YEAR[2026]
 
+    const tipo_evento = data.tipo_evento ?? 'casamento'
+    const labelTipo = LABEL_BY_TIPO[tipo_evento] ?? 'CASAMENTO'
+
     const properties: Record<string, any> = {
       'REFERÊNCIA DO EVENTO': { title: [{ text: { content: `AGUARDAR — ${data.nome_noivos ?? ''}` } }] },
       'CLIENTE':              rt(data.nome_noivos),
+      'TIPO DE EVENTO':       { select: { name: labelTipo } },
+    }
+
+    if (tipo_evento === 'batizado') {
+      if (data.nome_crianca)  properties['NOME DA CRIANÇA']  = rt(data.nome_crianca)
+      if (data.idade_crianca) properties['IDADE DA CRIANÇA'] = rt(data.idade_crianca)
     }
 
     if (data.data_casamento)  properties['DATA DO EVENTO']          = { date: { start: data.data_casamento } }
@@ -186,6 +206,9 @@ function buildClienteEmail(data: { nome_noivos: string; data_casamento: string |
 
 // ─── Email admin: notificação de novos dados recebidos ───────────────────────
 function buildAdminEmail(data: Record<string, any>): string {
+  const isBatizado = data.tipo_evento === 'batizado'
+  const tipoLabel = isBatizado ? 'Batizado.' : 'para CPS.'
+  const noivosPaisLabel = isBatizado ? 'Pais' : 'Noivos / Pais'
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;background:#0e0b07;">
@@ -212,20 +235,21 @@ function buildAdminEmail(data: Record<string, any>): string {
 
           <p style="margin:0 0 4px;font-size:28px;font-style:italic;font-weight:300;color:#c9a96e;line-height:1.2;">Olá, Rui!</p>
           <p style="margin:0;font-size:38px;font-weight:400;color:#f0e8d8;line-height:1.1;">Novos dados</p>
-          <p style="margin:0 0 24px;font-size:38px;font-weight:400;font-style:italic;color:#c9a96e;line-height:1.2;">para CPS.</p>
+          <p style="margin:0 0 24px;font-size:38px;font-weight:400;font-style:italic;color:#c9a96e;line-height:1.2;">${tipoLabel}</p>
 
           <div style="margin:0 0 24px;color:#6a5430;font-size:12px;letter-spacing:0.35em;">&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</div>
 
           <table cellpadding="0" cellspacing="0" style="margin:0 auto 28px;border:0.5px solid #6a5430;width:100%;max-width:400px;background:rgba(201,169,110,0.04);">
             <tr><td style="padding:24px 32px;text-align:left;">
-              <p style="margin:0 0 4px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;text-align:center;">Noivos / Pais</p>
+              <p style="margin:0 0 4px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;text-align:center;">${noivosPaisLabel}</p>
               <p style="margin:0 0 20px;font-size:22px;font-style:italic;color:#c9a96e;line-height:1.2;text-align:center;">${data.nome_noivos ?? '—'}</p>
+              ${isBatizado && data.nome_crianca ? `<p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Criança</p><p style="margin:0 0 12px;font-size:13px;color:#d4c9b0;">${data.nome_crianca}${data.idade_crianca ? ` · ${data.idade_crianca}` : ''}</p>` : ''}
               ${data.data_casamento ? `<p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Data</p><p style="margin:0 0 12px;font-size:13px;color:#d4c9b0;">${data.data_casamento}</p>` : ''}
               ${data.local_cerimonia ? `<p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Local</p><p style="margin:0 0 12px;font-size:13px;color:#d4c9b0;">${data.local_cerimonia}</p>` : ''}
               ${data.proposta ? `<p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Proposta</p><p style="margin:0 0 12px;font-size:13px;color:#d4c9b0;">${data.proposta}</p>` : ''}
               ${data.servico ? `<p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Serviço</p><p style="margin:0 0 12px;font-size:13px;color:#d4c9b0;">${data.servico}</p>` : ''}
-              ${data.email_noiva ? `<p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Email Noiva/Mãe</p><p style="margin:0 0 12px;font-size:13px;color:#d4c9b0;">${data.email_noiva}</p>` : ''}
-              ${data.email_noivo ? `<p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Email Noivo/Pai</p><p style="margin:0;font-size:13px;color:#d4c9b0;">${data.email_noivo}</p>` : ''}
+              ${data.email_noiva ? `<p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Email ${isBatizado ? 'Mãe' : 'Noiva/Mãe'}</p><p style="margin:0 0 12px;font-size:13px;color:#d4c9b0;">${data.email_noiva}</p>` : ''}
+              ${data.email_noivo ? `<p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Email ${isBatizado ? 'Pai' : 'Noivo/Pai'}</p><p style="margin:0;font-size:13px;color:#d4c9b0;">${data.email_noivo}</p>` : ''}
             </td></tr>
           </table>
 
@@ -274,7 +298,11 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
 
+    // Tipo de evento (default 'casamento' para retrocompatibilidade)
+    const tipo_evento = body.tipo_evento === 'batizado' ? 'batizado' : 'casamento'
+
     const data = {
+      tipo_evento,
       nome_noivos:     body.nome_noivos     ?? null,
       data_casamento:  body.data_casamento  ?? null,
       local_cerimonia: body.local_cerimonia ?? null,
@@ -295,10 +323,14 @@ export async function POST(req: NextRequest) {
       email_noivo:     body.email_noivo  ?? null,
       // Serviço
       servico:         body.servico ?? null,
+      // Criança (só usado se batizado)
+      nome_crianca:    body.nome_crianca  ?? null,
+      idade_crianca:   body.idade_crianca ?? null,
     }
 
     if (!data.nome_noivos) {
-      return NextResponse.json({ error: 'NOME DOS NOIVOS é obrigatório' }, { status: 400 })
+      const labelObrigatorio = tipo_evento === 'batizado' ? 'NOME DOS PAIS' : 'NOME DOS NOIVOS'
+      return NextResponse.json({ error: `${labelObrigatorio} é obrigatório` }, { status: 400 })
     }
 
     // ── Guardar em paralelo ──────────────────────────────────────────────────
@@ -323,14 +355,20 @@ export async function POST(req: NextRequest) {
     // ── Cria registo em eventos_YYYY ─────────────────────────────────────────
     try {
       const ano = data.data_casamento ? parseInt(data.data_casamento.slice(0, 4)) : 2026
-      const TABLE_BY_YEAR: Record<number, string> = { 2026: 'eventos_2026' }
+      const TABLE_BY_YEAR: Record<number, string> = { 2026: 'eventos_2026', 2027: 'eventos_2027' }
       const table = TABLE_BY_YEAR[ano]
       if (table) {
         const sb = db()
-        const { count } = await sb.from(table).select('*', { count: 'exact', head: true })
+        // Só conta registos do MESMO tipo para a numeração da referência
+        // (CAS_001, CAS_002... e BAT_001, BAT_002... separados)
+        const prefix = PREFIX_BY_TIPO[tipo_evento]
+        const { count } = await sb
+          .from(table)
+          .select('*', { count: 'exact', head: true })
+          .ilike('referencia', `${prefix}_%`)
         const anoSufixo = String(ano).slice(2)
         const proximoNum = String((count ?? 0) + 1).padStart(3, '0')
-        const referencia = `CAS_${proximoNum}_${anoSufixo}_RL`
+        const referencia = `${prefix}_${proximoNum}_${anoSufixo}_RL`
 
         await sb.from(table).insert({
           notion_id: notionVal?.ok ? notionVal.id : null,
@@ -340,11 +378,13 @@ export async function POST(req: NextRequest) {
           local: data.local_cerimonia ?? '',
           status: 'Não iniciada',
           fotos_enviadas: false,
-          tipo_evento: JSON.stringify(['CASAMENTO']),
+          tipo_evento: JSON.stringify([LABEL_BY_TIPO[tipo_evento]]),
           tipo_servico: data.servico ? [data.servico] : null,
           fotografo: JSON.stringify([]),
           valor_foto: null,
           valor_liquido: null,
+          nome_crianca:  data.nome_crianca  ?? null,
+          idade_crianca: data.idade_crianca ?? null,
         })
       }
     } catch (e) {
@@ -362,9 +402,11 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Email admin ──────────────────────────────────────────────────────────
+    const emojiTipo = tipo_evento === 'batizado' ? '👶' : '💍'
+    const labelTipoMaiusculo = LABEL_BY_TIPO[tipo_evento] ?? 'CASAMENTO'
     await sendEmail(
       ADMIN_EMAIL,
-      `📋 Novos dados CPS — ${data.nome_noivos}`,
+      `${emojiTipo} Novo ${labelTipoMaiusculo.toLowerCase()} — ${data.nome_noivos}`,
       buildAdminEmail(data)
     )
 
