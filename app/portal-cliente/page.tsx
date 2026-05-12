@@ -1047,11 +1047,9 @@ export default function PortalClientePage() {
             {/* Foto cobre toda a secção */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={heroImage} alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
-            {/* Overlay suave para legibilidade do texto */}
-            <div className="absolute inset-0 bg-black/45" />
-            {/* Fade inferior: foto dissolve-se na cor de fundo da página */}
-            <div className="absolute inset-x-0 bottom-0 h-72" style={{
-              background: 'linear-gradient(to bottom, transparent 0%, rgba(10,10,10,0.75) 60%, rgba(10,10,10,1) 100%)',
+            {/* Gradiente único: transparente no topo → fundo da página em baixo */}
+            <div className="absolute inset-0" style={{
+              background: 'linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 25%, rgba(8,5,3,0.55) 60%, rgba(8,5,3,0.92) 80%, rgba(8,5,3,1) 100%)',
             }} />
           </>
         ) : (
