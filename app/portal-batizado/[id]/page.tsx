@@ -873,7 +873,7 @@ function PortalSubPageContent() {
     fotosSelecaoUrl: 'https://tally.so/r/448PrO',
     fotosVerMaisUrl: '',
     fotosConvidadosUrl: 'https://tally.so/r/w56N86',
-    dadosContratoUrl: 'https://tally.so/r/3XXZIV',
+    dadosContratoUrl: '/contrato-cps/batizado',
     pagamentosRegistoUrl: 'https://tally.so/r/A72PQB',
   }
   const [guiaLinks, setGuiaLinks] = useState<{blogUrl?:string,fotosSelecaoUrl?:string,fotosVerMaisUrl?:string,fotosConvidadosUrl?:string,dadosContratoUrl?:string,pagamentosRegistoUrl?:string}>(DEFAULT_GUIA_LINKS)
@@ -2557,10 +2557,17 @@ function PortalSubPageContent() {
                       // ── GUIA DOS NOIVOS: the 4 sections live inside a column_list ──
                       // Structure: column_list → [column[BLOG, FOTOS], column[DADOS, PAGAMENTOS]]
                       // Each section is a callout with title in rich_text + image in children
+                      // Helper: anexa ?ref=portalRef quando a URL é interna /contrato-cps
+                      const withRef = (u: string | undefined): string | undefined => {
+                        if (!u || !portalRef) return u
+                        if (!u.startsWith('/contrato-cps')) return u
+                        const sep = u.includes('?') ? '&' : '?'
+                        return `${u}${sep}ref=${encodeURIComponent(portalRef)}`
+                      }
                       const SECTION_META: Record<string, { icon: string; label: string; url: string | undefined }> = {
                         'BLOG':                     { icon: '✍️', label: 'Ver Blog',             url: guiaLinks.blogUrl },
                         'FOTOS CONVIDADOS':          { icon: '📷', label: 'Solicitar Fotos',      url: guiaLinks.fotosConvidadosUrl },
-                        'DADOS PARA CONTRATO - CPS': { icon: '📋', label: 'Preencher Dados',      url: guiaLinks.dadosContratoUrl },
+                        'DADOS PARA CONTRATO - CPS': { icon: '📋', label: 'Preencher Dados',      url: withRef(guiaLinks.dadosContratoUrl) },
                         'PAGAMENTOS/REGISTO':        { icon: '💳', label: 'Registar Pagamento',   url: guiaLinks.pagamentosRegistoUrl },
                       }
                       // find the column_list that contains the 4 section callouts

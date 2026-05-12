@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 
 // Opções dos selects (default — o admin pode editar e gravamos em settings se necessário)
 const PROPOSTAS_DEFAULT = [
@@ -199,6 +200,15 @@ export default function FormularioCPS({
 
   const L = getLabels(tipo)
   const isBatizado = tipo === 'batizado'
+
+  // Pre-fill da referência via ?ref=XXX (vinda do portal ou link da proposta)
+  const searchParams = useSearchParams()
+  useEffect(() => {
+    const ref = searchParams.get('ref')
+    if (ref) {
+      setForm(prev => prev.referencia_evento ? prev : { ...prev, referencia_evento: ref })
+    }
+  }, [searchParams])
 
   function update(k: keyof Form, v: string) {
     setForm(prev => ({ ...prev, [k]: v }))

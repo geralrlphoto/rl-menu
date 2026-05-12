@@ -418,7 +418,7 @@ function SettingsPanel({
     fotosSelecaoUrl: 'https://tally.so/r/448PrO',
     fotosVerMaisUrl: '',
     fotosConvidadosUrl: 'https://tally.so/r/w56N86',
-    dadosContratoUrl: 'https://tally.so/r/3XXZIV',
+    dadosContratoUrl: '/contrato-cps/casamento',
     pagamentosRegistoUrl: 'https://tally.so/r/A72PQB',
   }
   const [form, setForm] = useState({ hiddenNav: [] as string[], ...settings, guiaLinks: { ...DEFAULT_GUIA_LINKS, ...(settings.guiaLinks ?? {}) } })
@@ -532,7 +532,7 @@ function SettingsPanel({
               ['Formulário Seleção de Fotos', 'fotosSelecaoUrl', 'https://tally.so/...'],
               ['Ver Mais (sub-página Fotografias)', 'fotosVerMaisUrl', 'https://...'],
               ['Fotos Convidados', 'fotosConvidadosUrl', 'https://tally.so/...'],
-              ['Dados para Contrato', 'dadosContratoUrl', 'https://tally.so/...'],
+              ['Dados para Contrato', 'dadosContratoUrl', '/contrato-cps/casamento'],
               ['Pagamentos / Registo', 'pagamentosRegistoUrl', 'https://tally.so/...'],
             ] as const).map(([lbl, key, ph]) => (
               <div key={key}>

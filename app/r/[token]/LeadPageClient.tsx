@@ -767,7 +767,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
                 <p className="text-white/40 text-xs tracking-wider leading-relaxed px-2">
                   Estamos muito felizes por fazer parte deste momento tão especial.<br />Para dar seguimento ao contrato, cliquem no botão abaixo.
                 </p>
-                <a href="https://tally.so/r/3XXZlV" target="_blank" rel="noopener noreferrer"
+                <a href="/contrato-cps/casamento"
                   className="w-full py-4 rounded-2xl text-sm font-semibold tracking-[0.15em] uppercase text-center block"
                   style={{ background: '#C9A84C', color: '#0a0a0a' }}>
                   Próximo Passo →

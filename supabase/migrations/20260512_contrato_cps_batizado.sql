@@ -21,14 +21,20 @@ COMMENT ON COLUMN dados_contrato_cps.tipo_evento   IS 'casamento ou batizado';
 COMMENT ON COLUMN dados_contrato_cps.nome_crianca  IS 'Só para batizado';
 COMMENT ON COLUMN dados_contrato_cps.idade_crianca IS 'Só para batizado';
 
--- ── 2. Tabelas eventos_2026 / eventos_2027: campos da criança ────────────────
-ALTER TABLE eventos_2026
-  ADD COLUMN IF NOT EXISTS nome_crianca   TEXT,
-  ADD COLUMN IF NOT EXISTS idade_crianca  TEXT;
-
-ALTER TABLE eventos_2027
-  ADD COLUMN IF NOT EXISTS nome_crianca   TEXT,
-  ADD COLUMN IF NOT EXISTS idade_crianca  TEXT;
+-- ── 2. Tabelas eventos_YYYY: campos da criança ───────────────────────────────
+-- Aplica a cada tabela existente; ignora as que ainda não foram criadas.
+DO $$
+DECLARE
+  t TEXT;
+BEGIN
+  FOREACH t IN ARRAY ARRAY['eventos_2026', 'eventos_2027']
+  LOOP
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = t) THEN
+      EXECUTE format('ALTER TABLE %I ADD COLUMN IF NOT EXISTS nome_crianca  TEXT', t);
+      EXECUTE format('ALTER TABLE %I ADD COLUMN IF NOT EXISTS idade_crianca TEXT', t);
+    END IF;
+  END LOOP;
+END $$;
 
 -- ── 3. Tabela de configuração da landing /contrato-cps ───────────────────────
 CREATE TABLE IF NOT EXISTS contrato_cps_landing (
