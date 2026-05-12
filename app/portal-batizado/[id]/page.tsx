@@ -1579,15 +1579,23 @@ function PortalSubPageContent() {
               Agenda
             </button>
           )}
-          {isAdmin && !editing && !editingPhotos && !loading && !error && isSobreViewMode && (
-            <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white/80 border border-white/15 hover:border-white/30 transition-all cursor-pointer">
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              {uploadingPageHeader ? 'A carregar...' : 'Trocar foto'}
-              <input type="file" accept="image/*" className="hidden" disabled={uploadingPageHeader}
-                onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadPageHeader(f) }} />
-            </label>
+          {isAdmin && !editing && !editingPhotos && !loading && !error && (isSobreViewMode || isDesignPremium) && (
+            <>
+              <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-amber-300/80 hover:text-amber-300 border border-amber-300/30 hover:border-amber-300/60 bg-amber-300/5 hover:bg-amber-300/10 transition-all cursor-pointer">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                {uploadingPageHeader ? 'A carregar...' : (isDesignPremium && dpEffectivePhoto) || (isSobreViewMode && (id ? pageHeaders[id as string] : '')) ? 'Trocar foto' : '+ Foto'}
+                <input type="file" accept="image/*" className="hidden" disabled={uploadingPageHeader}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadPageHeader(f) }} />
+              </label>
+              {((isDesignPremium && dpEffectivePhoto) || (isSobreViewMode && (id ? pageHeaders[id as string] : ''))) && (
+                <button onClick={handleRemovePageHeader} disabled={uploadingPageHeader}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs text-red-400/60 hover:text-red-400 border border-red-400/20 hover:border-red-400/40 transition-all disabled:opacity-40">
+                  ✕ Remover
+                </button>
+              )}
+            </>
           )}
           {isAdmin && !editing && !editingPhotos && !loading && !error && (
             <button onClick={handlePublicar} disabled={publishing}
