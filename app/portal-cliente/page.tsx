@@ -866,18 +866,31 @@ export default function PortalClientePage() {
 
   useEffect(() => { loadBlocks().finally(() => setLoading(false)) }, [loadBlocks])
 
-  /** Sincroniza todas as fotos do template para TODOS os portais dos noivos */
+  /**
+   * Sincroniza TODAS as definições de template para TODOS os portais de casamento.
+   * Preserva sempre os dados pessoais de cada casal:
+   * noiva, noivo, emailNoiva, data, dataFormatada, local, referencia,
+   * valorTotal/Foto/Video/Extras, tasks, activeNavId, portalPassword,
+   * preWeddingReservedSlotId/At, guiaLinks, calloutLinks, briefingLinks,
+   * briefingInfo, parceiros.
+   */
   async function syncPhotosToAllPortals(updatedSettings: PortalSettings) {
-    const photoSettings: Record<string, any> = {}
-    if (updatedSettings.heroImageUrl     !== undefined) photoSettings.heroImageUrl     = updatedSettings.heroImageUrl
-    if (updatedSettings.galleryUrls      !== undefined) photoSettings.galleryUrls      = updatedSettings.galleryUrls
-    if (updatedSettings.subpageHeaderUrl !== undefined) photoSettings.subpageHeaderUrl = updatedSettings.subpageHeaderUrl
-    if (updatedSettings.pageHeaders      !== undefined) photoSettings.pageHeaders      = updatedSettings.pageHeaders
-    if (Object.keys(photoSettings).length === 0) return
+    // Campos de template a sincronizar (excluir dados pessoais)
+    const PERSONAL_KEYS = new Set([
+      'noiva','noivo','emailNoiva','data','dataFormatada','local','referencia',
+      'valorTotal','valorFoto','valorVideo','valorExtras','tasks','activeNavId',
+      'portalPassword','preWeddingReservedSlotId','preWeddingReservedAt',
+      'guiaLinks','calloutLinks','briefingLinks','briefingInfo','parceiros',
+    ])
+    const templateSettings: Record<string, any> = {}
+    for (const [k, v] of Object.entries(updatedSettings)) {
+      if (!PERSONAL_KEYS.has(k) && v !== undefined) templateSettings[k] = v
+    }
+    if (Object.keys(templateSettings).length === 0) return
     await fetch('/api/portais', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ photoSettings, tipoPortal: 'casamento' }),
+      body: JSON.stringify({ photoSettings: templateSettings, tipoPortal: 'casamento' }),
     })
   }
 
