@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, Suspense } from 'react'
 import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
-import { NotionBlocks, plainText, type Block } from '../NotionRenderer'
+import { NotionBlocks, plainText, richText, type Block } from '../NotionRenderer'
 import BlockEditor from '../BlockEditor'
 
 const PORTAL_PAGE_ID = '35b220116d8a811b99b7f6f26648c017'
@@ -945,6 +945,8 @@ function PortalSubPageContent() {
   const [enviadoSat, setEnviadoSat] = useState(false)
   const [erroSat, setErroSat] = useState<string | null>(null)
 
+  const isSobrePage       = title.toUpperCase().includes('SOBRE')
+  const isSobreViewMode   = isSobrePage && !editing && !editingPhotos && !editingParceiros && !editingBriefing && !editingCalloutLinks && !editingPreWedding
   const isPaymentsPage    = title.toUpperCase().includes('PAGAMENTO')
   const isGuiaPage        = title.toUpperCase().includes('GUIA') && !title.toUpperCase().includes('WEDDING')
   const isPreWeddingPage  = title.toUpperCase().includes('WEDDING')
@@ -1284,6 +1286,14 @@ function PortalSubPageContent() {
     } finally { setUploadingPageHeader(false) }
   }
 
+  async function handleRemovePageHeader() {
+    if (!id) return
+    // 'none' sentinel = explicitly no photo (overrides global default)
+    const newPH = { ...pageHeaders, [id as string]: 'none' }
+    await savePortalSettings({ ...portalSettingsObj, pageHeaders: newPH })
+    setPageHeaders(newPH)
+  }
+
   async function handleSaveBriefingInfo() {
     if (!id) return
     setSavingBriefingInfo(true)
@@ -1532,7 +1542,7 @@ function PortalSubPageContent() {
         </div>
       </div>
 
-      <header className="mb-8">
+      {!isSobreViewMode && <header className="mb-8">
         {editingTitle ? (
           <div className="flex flex-col gap-3 max-w-sm">
             <p className="text-xs tracking-[0.4em] text-white/30 uppercase mb-1">RL PHOTO.VIDEO</p>
@@ -1629,12 +1639,16 @@ function PortalSubPageContent() {
             <div className="mt-3 h-px w-16 bg-gold/40" />
           </>
         )}
-      </header>
+      </header>}
 
       {loading && <div className="text-center py-24 text-white/20 text-xs tracking-widest uppercase">A carregar...</div>}
       {error   && <div className="text-center py-24 text-red-400/60 text-sm">{error}</div>}
       {!loading && !error && (
-        <div className="bg-white/[0.02] border border-white/[0.07] rounded-2xl p-5 sm:p-8">
+        <div className={
+          isSobrePage && !editing && !editingPhotos && !editingParceiros && !editingBriefing && !editingCalloutLinks && !editingPreWedding
+            ? ''
+            : 'bg-white/[0.02] border border-white/[0.07] rounded-2xl p-5 sm:p-8'
+        }>
           {editingPhotos
             ? <ImageEditor blocks={blocks} pageId={id!} onBlocksUpdated={setBlocks} onDone={handlePhotosDone} />
             : editingParceiros
@@ -2831,6 +2845,110 @@ function PortalSubPageContent() {
                             </div>
                           )}
                         </>
+                      )
+                    }
+                    if (isSobrePage) {
+                      const _textBlocks = blocks.filter(b => b.type !== 'image')
+                      const sobrePer = id ? pageHeaders[id as string] : undefined
+                      const sobrePhoto = sobrePer === 'none' ? '' : (sobrePer || subpageHeaderUrl)
+                      return (
+                        /* Full-viewport section — true fullscreen, no gap */
+                        <div
+                          className="relative overflow-hidden"
+                          style={{
+                            height: '100vh',
+                            width: '100vw',
+                          }}
+                        >
+                          {/* Background photo — full bleed */}
+                          {sobrePhoto
+                            ? <img src={sobrePhoto} alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
+                            : <div className="absolute inset-0 bg-[#0a0806]" />
+                          }
+
+                          {/* Gradient: dark left → transparent right (same as couple slide) */}
+                          <div className="absolute inset-0" style={{
+                            background: sobrePhoto
+                              ? 'linear-gradient(to right, rgba(10,8,6,0.97) 0%, rgba(10,8,6,0.88) 28%, rgba(10,8,6,0.55) 55%, rgba(10,8,6,0.10) 80%, transparent 100%)'
+                              : 'rgba(10,8,6,1)',
+                          }} />
+
+                          {/* ‹ Voltar — top left overlay */}
+                          <Link
+                            href={fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : '/portal-batizado'}
+                            className="absolute top-6 left-8 sm:top-8 sm:left-16 z-20 inline-flex items-center gap-2 text-[10px] tracking-[0.35em] text-white/40 hover:text-gold transition-colors uppercase"
+                          >
+                            ‹ Voltar
+                          </Link>
+
+                          {/* Text — centered left, matching couple slide */}
+                          <div className="absolute inset-y-0 left-0 z-10 flex flex-col justify-center px-8 sm:px-16" style={{ maxWidth: '58%' }}>
+                            {/* Page title (from portal sub-page title) */}
+                            <p className="text-[9px] tracking-[0.5em] text-white/30 uppercase mb-3">RL PHOTO.VIDEO</p>
+                            <h1 className="font-cormorant font-light uppercase text-gold mb-2"
+                              style={{ fontSize: 'clamp(1.6rem, 3.2vw, 2.6rem)', letterSpacing: '0.18em', lineHeight: 1.1 }}>
+                              {title}
+                            </h1>
+                            <div className="mb-6 w-10 h-px bg-gold/50" />
+                            {_textBlocks.map((b) => {
+                              const type = b.type
+                              const data = b[type] ?? {}
+                              if (type === 'heading_1' || type === 'heading_2') {
+                                const text = plainText(data.rich_text ?? [])
+                                if (!text) return null
+                                return (
+                                  <h2 key={b.id} className="font-cormorant font-light uppercase text-white mb-3"
+                                    style={{ fontSize: 'clamp(1.4rem, 2.8vw, 2.2rem)', letterSpacing: '0.15em', lineHeight: 1.15 }}>
+                                    {richText(data.rich_text)}
+                                  </h2>
+                                )
+                              }
+                              if (type === 'heading_3') {
+                                const text = plainText(data.rich_text ?? [])
+                                if (!text) return null
+                                return (
+                                  <h3 key={b.id} className="font-cormorant font-light uppercase text-gold/70 mb-3"
+                                    style={{ fontSize: 'clamp(1rem, 2vw, 1.3rem)', letterSpacing: '0.25em' }}>
+                                    {richText(data.rich_text)}
+                                  </h3>
+                                )
+                              }
+                              if (type === 'paragraph') {
+                                const text = plainText(data.rich_text ?? [])
+                                if (!text) return <div key={b.id} className="h-2" />
+                                return (
+                                  <React.Fragment key={b.id}>
+                                    <p className="font-cormorant font-light italic text-white/65 leading-relaxed mb-2"
+                                      style={{ fontSize: 'clamp(0.95rem, 1.7vw, 1.15rem)' }}>
+                                      {richText(data.rich_text)}
+                                    </p>
+                                  </React.Fragment>
+                                )
+                              }
+                              return null
+                            })}
+                          </div>
+
+                          {/* Admin: Trocar/Remover foto — bottom right corner */}
+                          {isAdmin && (
+                            <div className="absolute bottom-6 right-6 z-20 flex items-center gap-2">
+                              {sobrePhoto && (
+                                <button onClick={handleRemovePageHeader} disabled={uploadingPageHeader}
+                                  className="flex items-center gap-1 px-3 py-2 rounded-lg bg-black/70 border border-red-400/30 text-red-400/60 text-xs hover:text-red-400 hover:border-red-400/60 transition-colors disabled:opacity-40 backdrop-blur-sm">
+                                  ✕
+                                </button>
+                              )}
+                              <label className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-black/70 border border-white/20 text-white/60 text-[11px] hover:text-white hover:border-white/40 transition-colors cursor-pointer backdrop-blur-sm">
+                                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                {uploadingPageHeader ? 'A carregar...' : sobrePhoto ? '+ Trocar foto' : '+ Foto de fundo'}
+                                <input type="file" accept="image/*" className="hidden" disabled={uploadingPageHeader}
+                                  onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadPageHeader(f) }} />
+                              </label>
+                            </div>
+                          )}
+                        </div>
                       )
                     }
                     if (!isPaymentsPage) {
