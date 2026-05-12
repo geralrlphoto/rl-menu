@@ -29,10 +29,12 @@ export async function GET(req: NextRequest) {
       .single(),
     supabase
       .from('crm_contacts')
-      .select('reuniao_data,reuniao_hora,reuniao_tipo,reuniao_link,nome,page_content')
+      .select('reuniao_data,reuniao_hora,reuniao_tipo,reuniao_link,nome,page_content,proposta_pdf_url')
       .eq('page_token', token)
       .maybeSingle(),
   ])
+
+  const crm_proposta_pdf_url = crmContact?.proposta_pdf_url || null
 
   // CRM meeting data (auto-populates reunião card if admin saved it in CRM)
   // Se o admin marcou data/hora/tipo mas deixou o link em branco, usar o
@@ -94,6 +96,7 @@ export async function GET(req: NextRequest) {
       proposta_resposta: settings.proposta_resposta ?? null,
       crm_reuniao,
       crm_nome,
+      crm_proposta_pdf_url,
     })
   }
 
@@ -126,5 +129,5 @@ export async function GET(req: NextRequest) {
 
   // Master doesn't exist yet — return empty settings but still inject CRM propostas if any
   const fallback = injectCrmIntoSettings({ content: {} })
-  return NextResponse.json({ maquete: { token, settings: fallback }, page_confirmacao: null, proposta_resposta: null, crm_reuniao, crm_nome })
+  return NextResponse.json({ maquete: { token, settings: fallback }, page_confirmacao: null, proposta_resposta: null, crm_reuniao, crm_nome, crm_proposta_pdf_url })
 }

@@ -329,6 +329,9 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
   // Nome do CRM (aparece no hero automaticamente)
   const [crmNome, setCrmNome] = useState('')
 
+  // URL público do PDF da proposta (gerado pelo admin em /crm/[id]/proposta-pdf)
+  const [propostaPdfUrl, setPropostaPdfUrl] = useState<string | null>(null)
+
   // Confirmação de reunião e proposta
   const [status,             setStatus]             = useState<string | null>(null)
   const [confirming,         setConfirming]         = useState(false)
@@ -376,6 +379,8 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
         }
         // Nome do CRM para o hero
         if (data.crm_nome) setCrmNome(data.crm_nome)
+        // URL do PDF da proposta (mostra botão "Ver Proposta PDF" quando existe)
+        if (data.crm_proposta_pdf_url) setPropostaPdfUrl(data.crm_proposta_pdf_url)
         setLoading(false)
       })
       .catch(() => { setNotFound(true); setLoading(false) })
@@ -975,6 +980,17 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
                   <span>{proposta.buttonLabel}</span>
                   <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
                 </a>
+                {propostaPdfUrl && (
+                  <a href={propostaPdfUrl} target="_blank" rel="noopener noreferrer"
+                    className="group flex items-center gap-2 px-6 py-3 text-[10px] tracking-[0.35em] uppercase transition-all duration-300 hover:scale-[1.04] whitespace-nowrap"
+                    style={{ background: 'rgba(201,168,76,0.07)', border: '0.5px solid rgba(201,168,76,0.3)', color: 'rgba(201,168,76,0.75)' }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+                    </svg>
+                    <span>Ver Proposta PDF</span>
+                    <span className="transition-transform duration-300 group-hover:translate-x-1">↗</span>
+                  </a>
+                )}
               </div>
             </div>
           </div>
