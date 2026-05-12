@@ -204,10 +204,17 @@ function mergeConfig(defaults: Config, override: Partial<Config> | null): Config
 }
 
 // ─── Main landing ─────────────────────────────────────────────────────────────
-export default function LandingContratoCPS({ initialConfig }: { initialConfig: Partial<Config> | null }) {
+export default function LandingContratoCPS({
+  initialConfig,
+  isAdminUser = false,
+}: {
+  initialConfig: Partial<Config> | null
+  isAdminUser?: boolean
+}) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const adminMode = searchParams.get('admin') === '1'
+  // Admin mode: cookie de admin (auto) OU ?admin=1 (manual / override)
+  const adminMode = isAdminUser || searchParams.get('admin') === '1'
 
   const [config, setConfig] = useState<Config>(mergeConfig(DEFAULTS, initialConfig))
   const [editing, setEditing] = useState<null | 'casamento' | 'batizado'>(null)
@@ -268,10 +275,13 @@ export default function LandingContratoCPS({ initialConfig }: { initialConfig: P
             <span className="text-[10px] tracking-[0.4em] text-gold/70 uppercase border border-gold/40 px-3 py-1.5">
               ⚙ Modo Admin
             </span>
-            <button onClick={() => router.push('/contrato-cps')}
-              className="text-[10px] tracking-[0.3em] text-white/40 hover:text-white/80 uppercase">
-              Sair do admin
-            </button>
+            {/* Só mostra "Sair do admin" se foi ativado via ?admin=1 (sem cookie) */}
+            {!isAdminUser && (
+              <button onClick={() => router.push('/contrato-cps')}
+                className="text-[10px] tracking-[0.3em] text-white/40 hover:text-white/80 uppercase">
+                Sair do admin
+              </button>
+            )}
           </div>
         )}
 
