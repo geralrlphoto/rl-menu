@@ -1046,8 +1046,8 @@ export default function PortalClientePage() {
           <>
             {/* Foto com fade de cima para baixo até transparência total */}
             <div className="absolute inset-0" style={{
-              WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 15%, transparent 70%)',
-              maskImage: 'linear-gradient(to bottom, black 0%, black 15%, transparent 70%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 50%, transparent 90%)',
+              maskImage: 'linear-gradient(to bottom, black 0%, black 50%, transparent 90%)',
             }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={heroImage} alt="" className="w-full h-full object-cover object-center" />
