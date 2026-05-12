@@ -189,13 +189,27 @@ function EditModal({
   )
 }
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+// Junta defaults + valores da BD, IGNORANDO null/undefined/string vazia
+// (evita que valores null da BD sobrescrevam defaults sensatos)
+function mergeConfig(defaults: Config, override: Partial<Config> | null): Config {
+  if (!override) return { ...defaults }
+  const merged: Config = { ...defaults }
+  for (const [k, v] of Object.entries(override)) {
+    if (v != null && v !== '') {
+      (merged as Record<string, any>)[k] = v
+    }
+  }
+  return merged
+}
+
 // ─── Main landing ─────────────────────────────────────────────────────────────
 export default function LandingContratoCPS({ initialConfig }: { initialConfig: Partial<Config> | null }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const adminMode = searchParams.get('admin') === '1'
 
-  const [config, setConfig] = useState<Config>({ ...DEFAULTS, ...(initialConfig ?? {}) })
+  const [config, setConfig] = useState<Config>(mergeConfig(DEFAULTS, initialConfig))
   const [editing, setEditing] = useState<null | 'casamento' | 'batizado'>(null)
   const [savingMsg, setSavingMsg] = useState<string | null>(null)
 
