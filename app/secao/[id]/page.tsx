@@ -3,14 +3,8 @@ import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import MagazineViewer from './MagazineViewer'
-import FormularioCPS from './FormularioCPS'
 
 export const revalidate = 60
-
-// Secções especiais que renderizam um formulário interno em vez do menu padrão
-const FORM_SECTIONS: Record<string, 'cps'> = {
-  'c3db95a8-67c5-4339-81c6-891af683f907': 'cps',
-}
 
 type Props = {
   params: Promise<{ id: string }>
@@ -82,12 +76,6 @@ function BtnExternal({ href, label, idx }: { href: string; label: string; idx: n
 export default async function SecaoPage({ params }: Props) {
   const { id } = await params
 
-  // ── Secções com formulário dedicado (curto-circuito antes de carregar tudo) ──
-  if (FORM_SECTIONS[id] === 'cps') {
-    const { data: section } = await supabase.from('menu_sections').select('name').eq('id', id).single()
-    return <FormularioCPS sectionName={section?.name} backHref="/photo" />
-  }
-
   const cookieStore = await cookies()
   const isAdmin = cookieStore.get('rl_auth')?.value === process.env.AUTH_SECRET
 
@@ -107,6 +95,7 @@ export default async function SecaoPage({ params }: Props) {
       { href: '/fotos-selecao',   label: 'Fotos Seleção Noivos', internal: true },
       { href: '/albuns-casamento', label: 'Álbuns de Casamento',  internal: true },
       { href: '/portais-clientes', label: 'Portal do Cliente',    internal: true },
+      { href: '/contrato-cps',     label: 'Dados para Contrato CPS', internal: true },
     )
   }
 
