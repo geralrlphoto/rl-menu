@@ -1040,7 +1040,7 @@ export default function PortalClientePage() {
       </div>
 
       {/* ── HERO ── */}
-      <section className="relative flex flex-col items-center justify-center overflow-hidden" style={{ minHeight: '65vh' }}>
+      <section className="relative flex flex-col items-center justify-center overflow-hidden" style={{ minHeight: '80vh' }}>
         {/* Background */}
         {heroImage ? (
           <>
