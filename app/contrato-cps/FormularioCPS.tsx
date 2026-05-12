@@ -10,12 +10,6 @@ const PROPOSTAS_DEFAULT = [
   'Proposta 3',
 ]
 
-const SERVICOS_DEFAULT = [
-  'Proposta 1',
-  'Proposta 2',
-  'Proposta 3',
-]
-
 type Form = {
   nome_noivos: string
   data_casamento: string
@@ -250,10 +244,6 @@ export default function FormularioCPS({ sectionName, backHref = '/photo' }: {
           <Field label="N.º C. Cidadão Noivo / Pai" name="cc_noivo" value={form.cc_noivo} onChange={update} required />
           <Field label="N.º Ide. Fiscal Noivo / Pai" name="nif_noivo" value={form.nif_noivo} onChange={update} required />
           <Field label="E-mail do Noivo / Pai" name="email_noivo" value={form.email_noivo} onChange={update} type="email" required />
-
-          {/* ── Serviço ── */}
-          <SectionTitle kicker="Secção 04" title="Serviço Pretendido" />
-          <Select label="Serviço Pretendido" name="servico" value={form.servico} onChange={update} options={SERVICOS_DEFAULT} required />
 
           {/* ── Submit ── */}
           <div className="pt-12 pb-8">
