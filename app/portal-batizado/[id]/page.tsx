@@ -883,6 +883,7 @@ function PortalSubPageContent() {
   const [parceirosForm, setParceirosForm] = useState<Array<{imageUrl:string;url?:string}>>([])
   const [savingParceiros, setSavingParceiros] = useState(false)
   const [subpageHeaderUrl, setSubpageHeaderUrl] = useState('')
+  const [designPremiumPages, setDesignPremiumPages] = useState<string[]>([])
   const [preWeddingSlots, setPreWeddingSlots] = useState<Array<{id:string;date:string;time:string;local:string}>>([])
   const [reservedSlotId, setReservedSlotId] = useState<string | null>(null)
   const [reservingSlotId, setReservingSlotId] = useState<string | null>(null)
@@ -963,6 +964,13 @@ function PortalSubPageContent() {
       }
     }
   }, [isSobreViewMode])
+
+  const isDesignPremium   = !isSobrePage && (id ? designPremiumPages.includes(id) : false)
+  const dpEffectivePhoto  = (() => {
+    if (!isDesignPremium) return ''
+    const perPage = id ? pageHeaders[id as string] : undefined
+    return perPage === 'none' ? '' : (perPage || subpageHeaderUrl)
+  })()
   const isPaymentsPage    = title.toUpperCase().includes('PAGAMENTO')
   const isGuiaPage        = title.toUpperCase().includes('GUIA') && !title.toUpperCase().includes('WEDDING')
   const isPreWeddingPage  = title.toUpperCase().includes('WEDDING')
@@ -1016,6 +1024,7 @@ function PortalSubPageContent() {
       setParceiros(ps.parceiros ?? [])
       setPortalSettingsBlockId(settingsBlockIdVal)
       setSubpageHeaderUrl(ps.subpageHeaderUrl ?? '')
+      setDesignPremiumPages(ps.designPremiumPages ?? [])
       const slots = ps.preWeddingSlots ?? []
       setPreWeddingSlots(slots)
       const savedId = ps.preWeddingReservedSlotId ?? null
@@ -1309,6 +1318,14 @@ function PortalSubPageContent() {
     setPageHeaders(newPH)
   }
 
+  async function handleToggleDesignPremium() {
+    if (!id) return
+    const already = designPremiumPages.includes(id)
+    const newList = already ? designPremiumPages.filter(p => p !== id) : [...designPremiumPages, id]
+    await savePortalSettings({ ...portalSettingsObj, designPremiumPages: newList })
+    setDesignPremiumPages(newList)
+  }
+
   async function handleSaveBriefingInfo() {
     if (!id) return
     setSavingBriefingInfo(true)
@@ -1495,6 +1512,23 @@ function PortalSubPageContent() {
 
   return (
     <main className={isSobreViewMode ? 'relative' : 'min-h-screen relative max-w-[860px] mx-auto px-3 sm:px-6 py-6 sm:py-10'}>
+      {/* ── Design premium: fundo fixo cobre o viewport inteiro ── */}
+      {isDesignPremium && (
+        <>
+          <div className="fixed inset-0" style={{ zIndex: -2 }}>
+            {dpEffectivePhoto && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={dpEffectivePhoto} alt="" className="w-full h-full object-cover object-center" />
+            )}
+          </div>
+          <div className="fixed inset-0" style={{
+            zIndex: -1,
+            background: dpEffectivePhoto
+              ? 'linear-gradient(to right, rgba(10,8,6,0.97) 0%, rgba(10,8,6,0.88) 28%, rgba(10,8,6,0.55) 55%, rgba(10,8,6,0.10) 80%, transparent 100%)'
+              : 'rgba(10,8,6,0.96)',
+          }} />
+        </>
+      )}
       <div className={`flex items-center justify-end gap-2 flex-wrap z-30 ${isSobreViewMode ? 'fixed top-4 right-4' : 'mb-8'}`}>
         <div className="flex items-center gap-2">
           {isAdmin && !editing && !editingPhotos && (
@@ -1564,6 +1598,12 @@ function PortalSubPageContent() {
               {published ? '✓ Publicado' : publishing ? 'A publicar...' : 'Publicar'}
             </button>
           )}
+          {isAdmin && !editing && !editingPhotos && !loading && !error && !isSobrePage && (
+            <button onClick={handleToggleDesignPremium}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border transition-all ${isDesignPremium ? 'text-amber-300 border-amber-300/40 bg-amber-300/10' : 'text-white/30 border-white/10 hover:text-amber-300/70 hover:border-amber-300/30'}`}>
+              ◆ Premium
+            </button>
+          )}
           {isAdmin && !editing && !editingPhotos && !loading && !error && (
             <button onClick={() => setEditing(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gold/60 hover:text-gold border border-gold/20 hover:border-gold/40 transition-all">
@@ -1600,6 +1640,46 @@ function PortalSubPageContent() {
             </div>
           </div>
         ) : (() => {
+          // Design Premium: foto fixa em fundo, header reduzido a título + ‹ Voltar
+          if (isDesignPremium) {
+            return (
+              <>
+                {/* ‹ Voltar — fixed top-left */}
+                <Link href={fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : '/portal-batizado'}
+                  className="fixed top-6 left-6 z-50 inline-flex items-center gap-2 text-[10px] tracking-[0.35em] text-white/40 hover:text-gold transition-colors uppercase">
+                  ‹ Voltar
+                </Link>
+                {/* Title block — fluxo normal, conteúdo rola abaixo */}
+                <div className="mb-8 pt-10">
+                  <p className="text-[9px] tracking-[0.5em] text-white/30 uppercase mb-3">RL PHOTO.VIDEO</p>
+                  <h1 className="font-cormorant font-light uppercase text-gold mb-3"
+                    style={{ fontSize: 'clamp(1.6rem, 3.2vw, 2.6rem)', letterSpacing: '0.18em', lineHeight: 1.1 }}>
+                    {title || '...'}
+                  </h1>
+                  <div className="w-10 h-px bg-gold/50" />
+                  {/* Admin: trocar foto de fundo */}
+                  {isAdmin && (
+                    <div className="mt-4 flex items-center gap-2">
+                      {dpEffectivePhoto && (
+                        <button onClick={handleRemovePageHeader} disabled={uploadingPageHeader}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-black/50 border border-red-400/30 text-red-400/50 text-xs hover:text-red-400 transition-colors backdrop-blur-sm">
+                          ✕ Remover foto
+                        </button>
+                      )}
+                      <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/50 border border-white/15 text-white/40 text-[11px] hover:text-white/70 transition-colors cursor-pointer backdrop-blur-sm">
+                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        {uploadingPageHeader ? 'A carregar...' : dpEffectivePhoto ? '+ Trocar foto' : '+ Foto de fundo'}
+                        <input type="file" accept="image/*" className="hidden" disabled={uploadingPageHeader}
+                          onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadPageHeader(f) }} />
+                      </label>
+                    </div>
+                  )}
+                </div>
+              </>
+            )
+          }
           const effectiveHeader = settings.subpageOwnHeader || (id && pageHeaders[id as string]) || subpageHeaderUrl
           return effectiveHeader ? (
           <div className="relative w-full h-48 sm:h-64 rounded-2xl overflow-hidden mb-6 group/header">
@@ -1681,7 +1761,9 @@ function PortalSubPageContent() {
         <div className={
           isSobrePage && !editing && !editingPhotos && !editingParceiros && !editingBriefing && !editingCalloutLinks && !editingPreWedding
             ? ''
-            : 'bg-white/[0.02] border border-white/[0.07] rounded-2xl p-5 sm:p-8'
+            : isDesignPremium
+              ? 'bg-black/60 border border-white/[0.08] rounded-2xl p-5 sm:p-8 backdrop-blur-sm'
+              : 'bg-white/[0.02] border border-white/[0.07] rounded-2xl p-5 sm:p-8'
         }>
           {editingPhotos
             ? <ImageEditor blocks={blocks} pageId={id!} onBlocksUpdated={setBlocks} onDone={handlePhotosDone} />
