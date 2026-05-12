@@ -49,8 +49,10 @@ async function saveToNotion(data: Record<string, any>) {
     const tipo_evento = data.tipo_evento ?? 'casamento'
     const labelTipo = LABEL_BY_TIPO[tipo_evento] ?? 'CASAMENTO'
 
+    const refTitle = (data.referencia_evento ?? '').trim() || `AGUARDAR — ${data.nome_noivos ?? ''}`
+
     const properties: Record<string, any> = {
-      'REFERÊNCIA DO EVENTO': { title: [{ text: { content: `AGUARDAR — ${data.nome_noivos ?? ''}` } }] },
+      'REFERÊNCIA DO EVENTO': { title: [{ text: { content: refTitle } }] },
       'CLIENTE':              rt(data.nome_noivos),
       'TIPO DE EVENTO':       { select: { name: labelTipo } },
     }
@@ -241,6 +243,7 @@ function buildAdminEmail(data: Record<string, any>): string {
 
           <table cellpadding="0" cellspacing="0" style="margin:0 auto 28px;border:0.5px solid #6a5430;width:100%;max-width:400px;background:rgba(201,169,110,0.04);">
             <tr><td style="padding:24px 32px;text-align:left;">
+              ${data.referencia_evento ? `<p style="margin:0 0 4px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;text-align:center;">Referência</p><p style="margin:0 0 16px;font-size:14px;color:#c9b88a;font-family:'Courier New',monospace;letter-spacing:0.1em;text-align:center;">${data.referencia_evento}</p>` : ''}
               <p style="margin:0 0 4px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;text-align:center;">${noivosPaisLabel}</p>
               <p style="margin:0 0 20px;font-size:22px;font-style:italic;color:#c9a96e;line-height:1.2;text-align:center;">${data.nome_noivos ?? '—'}</p>
               ${isBatizado && data.nome_crianca ? `<p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Criança</p><p style="margin:0 0 12px;font-size:13px;color:#d4c9b0;">${data.nome_crianca}${data.idade_crianca ? ` · ${data.idade_crianca}` : ''}</p>` : ''}
@@ -303,6 +306,7 @@ export async function POST(req: NextRequest) {
 
     const data = {
       tipo_evento,
+      referencia_evento: body.referencia_evento ?? null,
       nome_noivos:     body.nome_noivos     ?? null,
       data_casamento:  body.data_casamento  ?? null,
       local_cerimonia: body.local_cerimonia ?? null,
@@ -352,43 +356,67 @@ export async function POST(req: NextRequest) {
       }, { onConflict: 'evento_id' })
     }
 
-    // ── Cria registo em eventos_YYYY ─────────────────────────────────────────
+    // ── Cria/atualiza registo em eventos_YYYY ────────────────────────────────
+    // Se o cliente preencheu referencia_evento, usa-a (admin já criou o evento
+    // e enviou a ref ao cliente). Se não, auto-gera nova (fallback).
     try {
       const ano = data.data_casamento ? parseInt(data.data_casamento.slice(0, 4)) : 2026
       const TABLE_BY_YEAR: Record<number, string> = { 2026: 'eventos_2026', 2027: 'eventos_2027' }
       const table = TABLE_BY_YEAR[ano]
       if (table) {
         const sb = db()
-        // Só conta registos do MESMO tipo para a numeração da referência
-        // (CAS_001, CAS_002... e BAT_001, BAT_002... separados)
         const prefix = PREFIX_BY_TIPO[tipo_evento]
-        const { count } = await sb
-          .from(table)
-          .select('*', { count: 'exact', head: true })
-          .ilike('referencia', `${prefix}_%`)
         const anoSufixo = String(ano).slice(2)
-        const proximoNum = String((count ?? 0) + 1).padStart(3, '0')
-        const referencia = `${prefix}_${proximoNum}_${anoSufixo}_RL`
 
-        await sb.from(table).insert({
+        let referencia = (data.referencia_evento ?? '').trim()
+
+        if (!referencia) {
+          // Fallback: auto-gera se o cliente não forneceu
+          const { count } = await sb
+            .from(table)
+            .select('*', { count: 'exact', head: true })
+            .ilike('referencia', `${prefix}_%`)
+          const proximoNum = String((count ?? 0) + 1).padStart(3, '0')
+          referencia = `${prefix}_${proximoNum}_${anoSufixo}_RL`
+        }
+
+        // Verifica se já existe um registo com esta referência (caso o admin
+        // o tenha criado antes do envio do formulário)
+        const { data: existing } = await sb
+          .from(table)
+          .select('id')
+          .eq('referencia', referencia)
+          .maybeSingle()
+
+        const payload = {
           notion_id: notionVal?.ok ? notionVal.id : null,
           referencia,
           cliente: data.nome_noivos ?? '',
           data_evento: data.data_casamento ?? null,
           local: data.local_cerimonia ?? '',
-          status: 'Não iniciada',
-          fotos_enviadas: false,
           tipo_evento: JSON.stringify([LABEL_BY_TIPO[tipo_evento]]),
           tipo_servico: data.servico ? [data.servico] : null,
-          fotografo: JSON.stringify([]),
-          valor_foto: null,
-          valor_liquido: null,
           nome_crianca:  data.nome_crianca  ?? null,
           idade_crianca: data.idade_crianca ?? null,
-        })
+        }
+
+        if (existing?.id) {
+          // Atualiza registo existente (preserva fotografo/valores definidos pelo admin)
+          await sb.from(table).update(payload).eq('id', existing.id)
+        } else {
+          // Cria novo com defaults
+          await sb.from(table).insert({
+            ...payload,
+            status: 'Não iniciada',
+            fotos_enviadas: false,
+            fotografo: JSON.stringify([]),
+            valor_foto: null,
+            valor_liquido: null,
+          })
+        }
       }
     } catch (e) {
-      console.error('[contrato-cps] eventos insert exception:', e)
+      console.error('[contrato-cps] eventos insert/update exception:', e)
     }
 
     // ── Email confirmação cliente (se tiver email) ───────────────────────────
