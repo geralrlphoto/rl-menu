@@ -772,7 +772,13 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
 
             {/* ── Proposta: Confirmar / Rejeitar ── */}
             {(() => {
-              if (propostaResposta === 'confirmada') return (
+              if (propostaResposta === 'confirmada') {
+                // Se o token é uma referência de batizado (BAT_xxx_yy_RL), passa para o form
+                const refMatch = /^BAT_\d{3}_\d{2}_RL$/i.test(token) ? token : null
+                const contratoUrl = refMatch
+                  ? `/contrato-cps/batizado?ref=${encodeURIComponent(refMatch)}`
+                  : '/contrato-cps/batizado'
+                return (
                 <div className="mt-4 flex flex-col items-center gap-5 w-full px-2 py-8 rounded-2xl text-center"
                   style={{ background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.15)' }}>
                   <div style={{ width: 52, height: 52, borderRadius: '50%', border: '1.5px solid #4ade80', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
@@ -783,10 +789,16 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
                     <p className="font-cormorant text-lg font-light" style={{ color: '#C9A84C' }}>para o batizado!</p>
                   </div>
                   <p className="text-white/40 text-xs tracking-wider leading-relaxed px-2">
-                    Estamos muito felizes por fazer parte deste momento tão especial.<br />Entraremos em contacto em breve para os próximos passos.
+                    Estamos muito felizes por fazer parte deste momento tão especial.<br />Para dar seguimento ao contrato, cliquem no botão abaixo.
                   </p>
+                  <a href={contratoUrl}
+                    className="w-full py-4 rounded-2xl text-sm font-semibold tracking-[0.15em] uppercase text-center block"
+                    style={{ background: '#C9A84C', color: '#0a0a0a' }}>
+                    Próximo Passo →
+                  </a>
                 </div>
-              )
+                )
+              }
 
               if (propostaResposta === 'rejeitada') return (
                 <div className="mt-4 flex flex-col items-center gap-4 w-full px-2 py-8 rounded-2xl text-center"
