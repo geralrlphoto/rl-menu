@@ -1044,13 +1044,14 @@ export default function PortalClientePage() {
         {/* Background */}
         {heroImage ? (
           <>
-            {/* Foto cobre toda a secção */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={heroImage} alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
-            {/* Gradiente único: transparente no topo → fundo da página em baixo */}
+            {/* Foto com fade de cima para baixo até transparência total */}
             <div className="absolute inset-0" style={{
-              background: 'linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 25%, rgba(8,5,3,0.55) 60%, rgba(8,5,3,0.92) 80%, rgba(8,5,3,1) 100%)',
-            }} />
+              WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 30%, transparent 100%)',
+              maskImage: 'linear-gradient(to bottom, black 0%, black 30%, transparent 100%)',
+            }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={heroImage} alt="" className="w-full h-full object-cover object-center" />
+            </div>
           </>
         ) : (
           <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 38%, #2e1c06 0%, #150d03 45%, #090604 100%)' }} />
