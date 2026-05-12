@@ -74,8 +74,11 @@ function ChoiceCard({
         <PlaceholderSVG label={fallbackLabel} />
       )}
 
-      {/* Overlay gradient bottom→up */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+      {/* Overlay gradient bottom→up — reforçado para garantir legibilidade dos textos
+          mesmo com fotos claras (casamento branco, criança em roupa branca, etc.) */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/70 to-black/25" />
+      {/* Camada extra mais escura sob a zona de texto (bottom 55%) */}
+      <div className="absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-black/85 to-transparent" />
 
       {/* Conteúdo do card */}
       <div className="absolute inset-0 flex flex-col justify-end p-8 sm:p-10">
