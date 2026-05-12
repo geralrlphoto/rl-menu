@@ -116,7 +116,7 @@ function SectionTitle({ kicker, title }: { kicker: string; title: string }) {
   return (
     <div className="mb-10 mt-16 first:mt-0">
       <p className="text-[9px] tracking-[0.5em] text-white/25 uppercase mb-3">{kicker}</p>
-      <h2 className="text-[22px] sm:text-[26px] font-extralight tracking-[0.15em] text-gold uppercase">{title}</h2>
+      <h2 className="font-cormorant text-[28px] sm:text-[34px] font-light italic text-gold leading-tight">{title}</h2>
       <div className="mt-4 flex items-center gap-3">
         <div className="h-px w-12 bg-gold/50" />
         <div className="h-px flex-1 bg-white/[0.04]" />
@@ -169,16 +169,14 @@ export default function FormularioCPS({ sectionName, backHref = '/photo' }: {
             ✓
           </div>
           <p className="text-[10px] tracking-[0.5em] text-gold/50 uppercase mb-4">Confirmado</p>
-          <h1 className="text-4xl sm:text-5xl font-extralight tracking-wide text-white/95 mb-3"
-            style={{ fontFamily: '"Cormorant Garamond", Georgia, serif' }}>
+          <h1 className="font-cormorant text-5xl sm:text-6xl font-light tracking-wide text-white/95 mb-3 leading-tight">
             Dados recebidos.
           </h1>
-          <p className="text-lg italic text-gold/80 mb-8"
-            style={{ fontFamily: '"Cormorant Garamond", Georgia, serif' }}>
+          <p className="font-cormorant text-2xl italic text-gold/80 mb-8 font-light">
             Obrigado pela vossa confiança.
           </p>
           <div className="mx-auto h-px w-24 bg-gold/40 mb-8" />
-          <p className="text-sm text-white/45 leading-relaxed mb-10">
+          <p className="font-cormorant text-lg text-white/50 leading-relaxed mb-10 italic font-light">
             Recebemos os vossos dados para o contrato.<br/>
             Em breve entraremos em contacto para os próximos passos.
           </p>
@@ -206,19 +204,17 @@ export default function FormularioCPS({ sectionName, backHref = '/photo' }: {
         {/* Hero */}
         <header className="mb-16 text-center">
           <p className="text-[9px] tracking-[0.5em] text-gold/40 uppercase mb-4">RL PHOTO.VIDEO</p>
-          <h1 className="text-4xl sm:text-5xl font-extralight tracking-[0.05em] text-white/95 leading-tight mb-4"
-            style={{ fontFamily: '"Cormorant Garamond", Georgia, serif' }}>
+          <h1 className="font-cormorant text-5xl sm:text-6xl font-light tracking-wide text-white/95 leading-[1.05] mb-4">
             Dados para
             <br/>
             <span className="italic text-gold">Contrato CPS</span>
           </h1>
           <div className="mx-auto h-px w-16 bg-gold/50 my-6" />
-          <p className="text-[15px] sm:text-[16px] text-white/55 leading-[1.9] max-w-lg mx-auto"
-            style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
-            <span className="italic text-gold/70">Caros noivos / pais,</span><br/>
-            espero que se encontrem bem. Quero expressar o nosso sincero <strong className="font-normal text-white/80">muito obrigado</strong> pela confiança que depositaram na nossa equipa ao escolher os nossos serviços.
+          <p className="font-cormorant text-[19px] sm:text-[21px] text-white/65 leading-[1.7] max-w-lg mx-auto font-light">
+            <span className="italic text-gold/80">Caros noivos / pais,</span><br/>
+            espero que se encontrem bem. Quero expressar o nosso sincero <em className="text-white/85">muito obrigado</em> pela confiança que depositaram na nossa equipa ao escolher os nossos serviços.
           </p>
-          <p className="mt-6 text-[14px] text-white/40 leading-[1.8] max-w-lg mx-auto">
+          <p className="font-cormorant mt-6 text-[17px] sm:text-[18px] text-white/50 leading-[1.7] max-w-lg mx-auto italic font-light">
             Para preparar o contrato, precisamos de alguns dados. Preencham o formulário abaixo da forma mais completa possível — nomes completos, moradas com código postal e quaisquer serviços extras pretendidos.
           </p>
           {sectionName && (
