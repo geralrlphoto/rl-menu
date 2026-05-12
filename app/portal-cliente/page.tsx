@@ -1046,11 +1046,13 @@ export default function PortalClientePage() {
           <>
             {/* Foto com fade de cima para baixo até transparência total */}
             <div className="absolute inset-0" style={{
-              WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 30%, transparent 100%)',
-              maskImage: 'linear-gradient(to bottom, black 0%, black 30%, transparent 100%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 15%, transparent 70%)',
+              maskImage: 'linear-gradient(to bottom, black 0%, black 15%, transparent 70%)',
             }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={heroImage} alt="" className="w-full h-full object-cover object-center" />
+              {/* Overlay escuro para melhor legibilidade das letras */}
+              <div className="absolute inset-0 bg-black/40" />
             </div>
           </>
         ) : (
