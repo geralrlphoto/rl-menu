@@ -39,7 +39,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
   if (isUUID) {
     const updates: Record<string, any> = {}
-    const allowed = ['valor_liquidado','data_pagamento','fase_pagamento','metodo_pagamento','atualizado']
+    const allowed = ['nome_noivos','referencia','data_casamento','data_pagamento','fase_pagamento','metodo_pagamento','valor_liquidado','atualizado']
     for (const [k, v] of Object.entries(body)) {
       if (allowed.includes(k)) updates[k] = v
     }
