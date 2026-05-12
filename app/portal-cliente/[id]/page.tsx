@@ -1606,7 +1606,9 @@ function PortalSubPageContent() {
         <div className={
           isSobrePage && !editing && !editingPhotos && !editingParceiros && !editingBriefing && !editingCalloutLinks && !editingPreWedding
             ? ''
-            : 'bg-white/[0.02] border border-white/[0.07] rounded-2xl p-5 sm:p-8'
+            : isDesignPremium
+              ? 'bg-black/60 border border-white/[0.08] rounded-2xl p-5 sm:p-8 backdrop-blur-sm'
+              : 'bg-white/[0.02] border border-white/[0.07] rounded-2xl p-5 sm:p-8'
         }>
           {editingPhotos
             ? <ImageEditor blocks={blocks} pageId={id!} onBlocksUpdated={setBlocks} onDone={handlePhotosDone} />
