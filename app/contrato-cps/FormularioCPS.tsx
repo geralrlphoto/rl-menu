@@ -5,10 +5,9 @@ import Link from 'next/link'
 
 // Opções dos selects (default — o admin pode editar e gravamos em settings se necessário)
 const PROPOSTAS_DEFAULT = [
-  'Proposta 1 — Foto',
-  'Proposta 2 — Vídeo',
-  'Proposta 3 — Foto + Vídeo',
-  'Proposta Personalizada',
+  'Proposta 1',
+  'Proposta 2',
+  'Proposta 3',
 ]
 
 const SERVICOS_DEFAULT = [
