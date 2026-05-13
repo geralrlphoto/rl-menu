@@ -178,11 +178,21 @@ function buildPortalEmail(opts: {
             </td></tr>
           </table>
 
-          <a href="${opts.url}" style="display:inline-block;padding:16px 40px;background:#c9a96e;color:#0e0b07;text-decoration:none;font-size:12px;letter-spacing:0.4em;font-weight:600;">
-            ABRIR PORTAL →
-          </a>
-          <p style="margin:32px 0 0;font-size:11px;color:#5a4a30;line-height:1.6;">
-            ou copia: <span style="color:#a09070;">${opts.url}</span>
+          <!-- BOTÃO BULLETPROOF (tabela = compatível com todos os clientes de email, incl. Outlook) -->
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 16px;">
+            <tr>
+              <td align="center" style="border-radius:8px;background:#c9a96e;">
+                <a href="${opts.url}" target="_blank"
+                  style="display:inline-block;padding:18px 48px;background:#c9a96e;color:#0e0b07;text-decoration:none;font-family:Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:0.4em;font-weight:700;border-radius:8px;mso-padding-alt:0;border:1px solid #c9a96e;">
+                  ABRIR PORTAL &nbsp;→
+                </a>
+              </td>
+            </tr>
+          </table>
+
+          <p style="margin:24px 0 0;font-size:11px;color:#5a4a30;line-height:1.6;">
+            Caso o botão não funcione, copia este link:<br>
+            <a href="${opts.url}" style="color:#c9a96e;text-decoration:underline;word-break:break-all;">${opts.url}</a>
           </p>
         </td></tr>
       </table>
@@ -285,12 +295,37 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Confirmação ao admin (opcional)
+    // Confirmação ao admin com botão (mesmo estilo do email cliente)
     await sendEmail(
       ADMIN_EMAIL,
       `✓ Portal criado — ${referencia}`,
-      `<p>Portal aprovado e enviado ao cliente <b>${contrato.nome_noivos}</b>.</p>
-       <p>URL: <a href="${portalUrl}">${portalUrl}</a></p>`
+      `<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#0e0b07;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0e0b07;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#120e09;border:0.5px solid #4a3a1e;">
+        <tr><td style="padding:40px 48px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
+          <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.5em;color:#c9a96e;text-transform:uppercase;">✓ Portal criado</p>
+          <p style="margin:0 0 24px;font-size:30px;color:#f0e8d8;font-style:italic;">${contrato.nome_noivos}</p>
+          <div style="margin:0 0 24px;color:#6a5430;font-size:12px;letter-spacing:0.35em;">— · ◆ · —</div>
+          <p style="margin:0 0 8px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;">Referência</p>
+          <p style="margin:0 0 20px;font-size:18px;font-family:'Courier New',monospace;color:#c9b88a;">${referencia}</p>
+          <p style="margin:0 0 8px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;">Password enviada ao cliente</p>
+          <p style="margin:0 0 28px;font-size:18px;font-family:'Courier New',monospace;color:#c9b88a;letter-spacing:0.1em;">${password}</p>
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
+            <tr><td align="center" style="border-radius:8px;background:#c9a96e;">
+              <a href="${portalUrl}" target="_blank"
+                style="display:inline-block;padding:16px 40px;background:#c9a96e;color:#0e0b07;text-decoration:none;font-size:12px;letter-spacing:0.4em;font-weight:700;border-radius:8px;">
+                VER PORTAL &nbsp;→
+              </a>
+            </td></tr>
+          </table>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`
     )
 
     return NextResponse.json({ ok: true, portalUrl, aprovado_em })
