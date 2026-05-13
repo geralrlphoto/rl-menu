@@ -2647,17 +2647,17 @@ function PortalSubPageContent() {
                           )
                         }
                         if (blk.type === 'heading_2') {
-                          return <h2 key={idx} className="text-sm font-bold text-white/90 tracking-widest uppercase pt-5 mt-5 border-t border-white/[0.07]">{blk.text}</h2>
+                          return <h2 key={idx} className="text-base sm:text-[17px] font-bold text-white/95 tracking-widest uppercase pt-5 mt-5 border-t border-white/[0.07]">{blk.text}</h2>
                         }
                         if (blk.type === 'bullet') {
                           return (
-                            <div key={idx} className="flex items-start gap-2.5 text-sm text-white/55 leading-relaxed pl-1">
-                              <span className="text-gold/50 mt-[3px] shrink-0 text-xs">◆</span>
+                            <div key={idx} className="flex items-start gap-2.5 text-base sm:text-[17px] text-white/80 leading-[1.75] pl-1 mb-1">
+                              <span className="text-gold/60 mt-2 shrink-0 text-sm">◆</span>
                               <span>{blk.text}</span>
                             </div>
                           )
                         }
-                        return <p key={idx} className="text-sm text-white/55 leading-relaxed">{blk.text}</p>
+                        return <p key={idx} className="text-base sm:text-[17px] text-white/90 leading-[1.75] mb-3">{blk.text}</p>
                       }
 
                       const guiaBackUrl = fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : undefined
