@@ -52,13 +52,13 @@ export function NotionBlocks({ blocks, rootId, hiddenNav, backUrl, neutralCallou
         group.push(blocks[i++])
       }
       elements.push(
-        <ul key={`ul-${b.id}`} className="mb-3 space-y-1.5 pl-1">
+        <ul key={`ul-${b.id}`} className="mb-4 space-y-2 pl-1">
           {group.map(item => (
-            <li key={item.id} className="flex gap-2 items-start">
-              <span className="text-gold/50 mt-1.5 shrink-0 text-xs">•</span>
-              <div className="text-sm text-white/60 leading-relaxed">
+            <li key={item.id} className="flex gap-2.5 items-start">
+              <span className="text-gold/60 mt-2 shrink-0 text-sm">•</span>
+              <div className="text-base sm:text-[17px] text-white/80 leading-[1.7]">
                 {rt(item.bulleted_list_item?.rich_text)}
-                {item.children && <div className="mt-1 pl-3"><NB blocks={item.children} /></div>}
+                {item.children && <div className="mt-1.5 pl-3"><NB blocks={item.children} /></div>}
               </div>
             </li>
           ))}
@@ -73,11 +73,11 @@ export function NotionBlocks({ blocks, rootId, hiddenNav, backUrl, neutralCallou
         group.push(blocks[i++])
       }
       elements.push(
-        <ol key={`ol-${b.id}`} className="mb-3 space-y-1.5 pl-1 list-decimal list-inside">
+        <ol key={`ol-${b.id}`} className="mb-4 space-y-2 pl-1 list-decimal list-inside">
           {group.map(item => (
-            <li key={item.id} className="text-sm text-white/60 leading-relaxed">
+            <li key={item.id} className="text-base sm:text-[17px] text-white/80 leading-[1.7]">
               {rt(item.numbered_list_item?.rich_text)}
-              {item.children && <div className="mt-1 pl-4"><NB blocks={item.children} /></div>}
+              {item.children && <div className="mt-1.5 pl-4"><NB blocks={item.children} /></div>}
             </li>
           ))}
         </ol>
@@ -88,21 +88,21 @@ export function NotionBlocks({ blocks, rootId, hiddenNav, backUrl, neutralCallou
     switch (type) {
       case 'heading_1':
         elements.push(
-          <h1 key={b.id} className="text-xl sm:text-2xl font-bold text-white tracking-wide mt-8 mb-3">
+          <h1 key={b.id} className="text-2xl sm:text-3xl font-bold text-white tracking-wide mt-10 mb-4">
             {rt(data.rich_text)}
           </h1>
         )
         break
       case 'heading_2':
         elements.push(
-          <h2 key={b.id} className="text-lg font-semibold text-white/90 tracking-wide mt-6 mb-2 pb-1 border-b border-white/[0.06]">
+          <h2 key={b.id} className="text-xl sm:text-2xl font-semibold text-white/95 tracking-wide mt-8 mb-3 pb-1.5 border-b border-white/[0.08]">
             {rt(data.rich_text)}
           </h2>
         )
         break
       case 'heading_3':
         elements.push(
-          <h3 key={b.id} className="text-base font-semibold text-white/75 tracking-wide mt-4 mb-1.5">
+          <h3 key={b.id} className="text-lg sm:text-xl font-semibold text-white/85 tracking-wide mt-5 mb-2">
             {rt(data.rich_text)}
           </h3>
         )
@@ -111,7 +111,7 @@ export function NotionBlocks({ blocks, rootId, hiddenNav, backUrl, neutralCallou
         const text = plainText(data.rich_text)
         elements.push(
           text
-            ? <p key={b.id} className="text-base text-white/90 leading-relaxed mb-3">{rt(data.rich_text)}</p>
+            ? <p key={b.id} className="text-base sm:text-[17px] text-white/90 leading-[1.75] mb-4">{rt(data.rich_text)}</p>
             : <div key={b.id} className="h-2" />
         )
         break
