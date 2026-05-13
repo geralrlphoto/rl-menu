@@ -154,8 +154,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       status:              'status',
       valor_foto:          'valor_foto',
       valor_real_foto:     'valor_real_foto',
-      valor_video:         'valor_liquido',  // valor_video na ficha → valor_liquido no Supabase
-      valor_liquido:       'valor_liquido',  // se também editado diretamente
+      // valor_video tem coluna própria agora (separada de valor_liquido).
+      // valor_liquido = valor_video + valor_extras - despesas (calculado em separado pela ficha)
+      valor_video:         'valor_video',
+      valor_liquido:       'valor_liquido',
       fotografo:           'fotografo',
       tipo_evento:         'tipo_evento',
       tipo_servico:        'tipo_servico',
@@ -304,12 +306,12 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
         proposta:         contrato?.proposta ?? null,
         valor_liquido:    orphan.valor_liquido ?? null,
         valor_foto:       orphan.valor_foto ?? null,
+        valor_video:      (orphan as any).valor_video ?? null,
         valor_real_foto:  orphan.valor_real_foto ?? null,
         fotos_edicao_estado: orphan.fotos_edicao_estado ?? null,
         sel_fotos_estado:    orphan.sel_fotos_estado ?? null,
         video_estado:        orphan.video_estado ?? null,
         album_estado:        orphan.album_estado ?? null,
-        valor_video:      null,
         valor_extras:     null,
         data_entrega:     null,
         data_entrega_ini: null,
@@ -386,14 +388,14 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       editor_fotos:     getProp(p, 'EDITOR DE FOTOS', 'select'),
       proposta:         getProp(p, 'PROPOSTA ESCOLHIDA', 'select') ?? contrato?.proposta ?? null,
       valor_liquido:    getProp(p, 'VALOR LIQUIDO A RECEBER', 'number'),
-      valor_foto:       getProp(p, 'VALOR SERVIÇO FOTO', 'number'),
+      valor_foto:       getProp(p, 'VALOR SERVIÇO FOTO', 'number') ?? sbRow?.valor_foto ?? null,
       valor_real_foto:  sbRow?.valor_real_foto ?? null,
       // Estado das entregas — Supabase como fonte primária; Notion como fallback
       fotos_edicao_estado:  (sbRow as any)?.fotos_edicao_estado ?? getProp(p, 'FOTOS P/ EDIÇÃO', 'select'),
       sel_fotos_estado:     (sbRow as any)?.sel_fotos_estado    ?? getProp(p, 'ESTADO SEL. FOTOS', 'select'),
       video_estado:         (sbRow as any)?.video_estado        ?? getProp(p, 'ESTADO DO VIDEO', 'select'),
       album_estado:         (sbRow as any)?.album_estado        ?? getProp(p, 'ESTADO ÁLBUM', 'select'),
-      valor_video:      getProp(p, 'VALOR DO SERVIÇO VÍDEO', 'number'),
+      valor_video:      getProp(p, 'VALOR DO SERVIÇO VÍDEO', 'number') ?? (sbRow as any)?.valor_video ?? null,
       valor_extras:     getProp(p, 'VALOR DOS EXTRAS', 'number'),
       data_entrega:     getProp(p, 'DATA FINAL ENTREGA FOTOS', 'date'),
       data_entrega_ini: getProp(p, 'DATA ENTREGA FOTOS', 'date'),
