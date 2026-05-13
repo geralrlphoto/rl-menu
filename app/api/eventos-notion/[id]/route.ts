@@ -101,7 +101,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     // Só faz PATCH ao Notion se houver propriedades Notion para actualizar
-    // (campos Supabase-only como valor_real_foto não têm entrada no FIELD_MAP)
+    // Não é fatal se falhar (eventos órfãos sem notion_id devem continuar a
+    // sincronizar para Supabase).
+    let notionOk = true
+    let notionErr: any = null
     if (Object.keys(properties).length > 0) {
       const res = await fetch(`https://api.notion.com/v1/pages/${id}`, {
         method: 'PATCH',
@@ -114,8 +117,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       })
 
       if (!res.ok) {
-        const err = await res.json()
-        return NextResponse.json({ error: err.message }, { status: res.status })
+        notionOk = false
+        try { notionErr = await res.json() } catch { notionErr = null }
+        console.warn('[eventos-notion PATCH] Notion failed, continuing to Supabase sync:', notionErr?.message)
       }
     }
 
@@ -162,6 +166,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       video_estado:        'video_estado',
       fotos_edicao_estado: 'fotos_edicao_estado',
       album_estado:        'album_estado',
+      // Serviços do contrato — essenciais para mostrar no PDF do contrato
+      // mesmo em eventos sem Notion (fallback Supabase)
+      servico_foto:        'servico_foto',
+      servico_video:       'servico_video',
     }
     const evFields: Record<string, any> = {}
     // Colunas que são text (guardam JSON string)
@@ -196,9 +204,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       if (body.data_evento) {
         ano = parseInt(String(body.data_evento).slice(0, 4)) || 2026
       } else {
-        // Buscar data atual do Supabase para determinar a tabela
+        // Buscar data atual do Supabase para determinar a tabela (procura por notion_id OU id)
         for (const t of ['eventos_2026', 'eventos_2027']) {
-          const { data } = await supabase().from(t).select('data_evento').eq('notion_id', id).limit(1).maybeSingle()
+          const { data } = await supabase().from(t).select('data_evento').or(`notion_id.eq.${id},id.eq.${id}`).limit(1).maybeSingle()
           if (data) {
             ano = parseInt(String(data.data_evento).slice(0, 4)) || 2026
             break
@@ -206,9 +214,18 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         }
       }
       const table = ano === 2027 ? 'eventos_2027' : 'eventos_2026'
-      await supabase().from(table).update(evFields).eq('notion_id', id)
+      // Tenta por notion_id primeiro
+      const { data: byNotion } = await supabase().from(table).update(evFields).eq('notion_id', id).select('id')
+      // Se não houve match (evento órfão sem notion_id), tenta por id (Supabase PK)
+      if (!byNotion || byNotion.length === 0) {
+        await supabase().from(table).update(evFields).eq('id', id)
+      }
     }
 
+    if (!notionOk && Object.keys(properties).length > 0) {
+      // Notion falhou mas Supabase deve ter sincronizado — devolve ok mas com aviso
+      return NextResponse.json({ ok: true, notionWarning: notionErr?.message ?? 'Notion update failed' })
+    }
     return NextResponse.json({ ok: true })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
@@ -318,6 +335,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
         // Campos extra (batizado)
         nome_crianca:     (orphan as any).nome_crianca ?? contrato?.nome_crianca ?? null,
         idade_crianca:    (orphan as any).idade_crianca ?? contrato?.idade_crianca ?? null,
+        // Serviços contratados (para mostrar no PDF do contrato)
+        servico_foto:     (orphan as any).servico_foto  ?? [],
+        servico_video:    (orphan as any).servico_video ?? [],
         notion_url:       null,
         _orphan: true, // flag para a UI saber que este evento ainda não tem Notion
       }
@@ -399,8 +419,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       // Campos extra (batizado)
       nome_crianca:     (sbRow as any)?.nome_crianca  ?? contrato?.nome_crianca  ?? null,
       idade_crianca:    (sbRow as any)?.idade_crianca ?? contrato?.idade_crianca ?? null,
-      servico_foto:     getProp(p, 'serviço de fotografia', 'multi_select'),
-      servico_video:    getProp(p, 'serviço de video', 'multi_select'),
+      // Serviços: Notion primeiro (multi_select), fallback Supabase (JSONB)
+      servico_foto:     (() => { const v = getProp(p, 'serviço de fotografia', 'multi_select'); return (Array.isArray(v) && v.length > 0) ? v : ((sbRow as any)?.servico_foto ?? []) })(),
+      servico_video:    (() => { const v = getProp(p, 'serviço de video', 'multi_select'); return (Array.isArray(v) && v.length > 0) ? v : ((sbRow as any)?.servico_video ?? []) })(),
       nome_disco:           getProp(p, 'NOME DO DISCO', 'multi_select'),
       backup_disco:         getProp(p, 'BACKUP DISCO', 'multi_select'),
       notion_url:           page.url,
