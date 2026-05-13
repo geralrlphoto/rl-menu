@@ -94,6 +94,51 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const body = await req.json()
     const properties: Record<string, any> = {}
 
+    // ── CASCATA DE RENAME DE REFERÊNCIA ──────────────────────────────────────
+    // Se o admin alterou a referência do evento (CAS_xxx → CAS_xxx_yy_RL),
+    // precisamos de propagar para TODAS as tabelas que usam essa referência
+    // como chave: dados_contrato_cps, portais, pagamentos_noivos, etc.
+    // Senão fica tudo dessincronizado.
+    if (body.referencia !== undefined && body.referencia !== null) {
+      const newRef = String(body.referencia).trim()
+      if (newRef) {
+        const sb = supabase()
+        // Procura a referência ANTERIOR — pelo notion_id OU pelo id (orphan)
+        const findOld = async (t: string) => {
+          const { data } = await sb.from(t).select('referencia').or(`notion_id.eq.${id},id.eq.${id}`).maybeSingle()
+          return data?.referencia ?? null
+        }
+        let oldRef: string | null = null
+        for (const t of ['eventos_2026', 'eventos_2027']) {
+          oldRef = await findOld(t)
+          if (oldRef) break
+        }
+        if (oldRef && oldRef !== newRef) {
+          console.log(`[eventos-notion PATCH] Cascading rename: ${oldRef} → ${newRef}`)
+          // dados_contrato_cps
+          await sb.from('dados_contrato_cps')
+            .update({ referencia_evento: newRef })
+            .eq('referencia_evento', oldRef)
+          // portais (settings.referencia também precisa de atualizar)
+          const { data: oldPortal } = await sb.from('portais').select('settings').eq('referencia', oldRef).maybeSingle()
+          if (oldPortal) {
+            const newSettings = { ...(oldPortal.settings ?? {}), referencia: newRef }
+            // Apaga eventual row com newRef vazio (pode existir por engano)
+            await sb.from('portais').delete().eq('referencia', newRef)
+            // Renomeia
+            await sb.from('portais')
+              .update({ referencia: newRef, settings: newSettings })
+              .eq('referencia', oldRef)
+          }
+          // pagamentos_noivos (se tiver coluna referencia)
+          try {
+            await sb.from('pagamentos_noivos').update({ referencia: newRef }).eq('referencia', oldRef)
+          } catch {/* tabela ou coluna pode não existir */}
+        }
+      }
+    }
+    // ── /CASCATA ──────────────────────────────────────────────────────────────
+
     for (const [field, val] of Object.entries(body)) {
       const mapping = FIELD_MAP[field]
       if (!mapping) continue
