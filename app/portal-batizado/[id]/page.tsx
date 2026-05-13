@@ -2871,34 +2871,51 @@ function PortalSubPageContent() {
                             const activeCards = sbCards ?? notionCards
 
                             const renderCards = (cards: Array<{ title: string; url: string; imageUrl: string }>) => (
-                              <div className="grid grid-cols-2 gap-3 my-4">
-                                {cards.map((card, idx) => (
-                                  <div key={idx} className="flex flex-col rounded-2xl overflow-hidden border border-white/40 bg-black"
-                                    style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}>
-                                    <div className="px-3 pt-3 pb-2">
-                                      <span className="text-[10px] font-bold tracking-widest text-white/70 uppercase">{card.title}</span>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4">
+                                {cards.map((card, idx) => {
+                                  const hasUrl = !!card.url
+                                  const hasImg = !!card.imageUrl
+                                  return (
+                                    <div key={idx} className="group relative aspect-[4/5] overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-zinc-900 via-black to-zinc-900">
+                                      {/* Foto background */}
+                                      {hasImg ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img src={card.imageUrl} alt=""
+                                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1500ms] group-hover:scale-105" />
+                                      ) : (
+                                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_30%,rgba(201,169,110,0.08)_0%,rgba(0,0,0,0.9)_60%)]" />
+                                      )}
+
+                                      {/* Gradiente overlay para legibilidade */}
+                                      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/55 to-black/15" />
+
+                                      {/* Conteúdo */}
+                                      <div className="relative z-10 flex flex-col justify-end h-full p-5 sm:p-6">
+                                        <p className="text-[9px] tracking-[0.5em] text-gold/60 uppercase mb-2">RL PHOTO·VIDEO</p>
+                                        <h3 className="font-cormorant text-2xl sm:text-3xl font-light leading-[1.05] text-white mb-2">
+                                          <span className="italic text-gold">{card.title}</span>
+                                        </h3>
+                                        <div className="h-px w-10 bg-gold/60 mb-4" />
+
+                                        {hasUrl ? (
+                                          <a href={card.url} target="_blank" rel="noopener noreferrer"
+                                            className="inline-flex items-center justify-center w-full
+                                                       border border-gold/40 bg-gold/[0.05] hover:bg-gold/[0.18] hover:border-gold/70
+                                                       px-5 py-3 text-[10px] tracking-[0.4em] text-gold uppercase
+                                                       transition-all duration-500">
+                                            Ver Mais →
+                                          </a>
+                                        ) : (
+                                          <span className="inline-flex items-center justify-center w-full
+                                                           border border-white/10 bg-white/[0.02]
+                                                           px-5 py-3 text-[10px] tracking-[0.4em] text-white/25 uppercase">
+                                            Aguardar
+                                          </span>
+                                        )}
+                                      </div>
                                     </div>
-                                    {card.imageUrl && (
-                                      // eslint-disable-next-line @next/next/no-img-element
-                                      <img src={card.imageUrl} alt={card.title} className="w-full object-contain" />
-                                    )}
-                                    {card.url ? (
-                                      <div className="p-3">
-                                        <a href={card.url} target="_blank" rel="noopener noreferrer"
-                                          className="block w-full text-center px-4 py-2.5 rounded-xl border border-white/40 bg-white/5 text-white font-semibold text-xs tracking-widest uppercase hover:bg-white/10 transition-all"
-                                          style={{ boxShadow: '0 0 10px 2px rgba(255,255,255,0.15)' }}>
-                                          VER MAIS →
-                                        </a>
-                                      </div>
-                                    ) : (
-                                      <div className="p-3">
-                                        <span className="block w-full text-center px-4 py-2.5 rounded-xl border border-white/15 bg-white/[0.03] text-white/25 font-semibold text-xs tracking-widest uppercase">
-                                          AGUARDAR
-                                        </span>
-                                      </div>
-                                    )}
-                                  </div>
-                                ))}
+                                  )
+                                })}
                               </div>
                             )
 
@@ -3236,34 +3253,45 @@ function PortalSubPageContent() {
                         const activeFilmeCards = sbFilmeCards ?? notionFilmeCards
 
                         const renderFilmeCards = (cards: Array<{ title: string; url: string; imageUrl: string }>) => (
-                          <div className="grid grid-cols-2 gap-3 my-4">
-                            {cards.map((card, idx) => (
-                              <div key={idx} className="flex flex-col rounded-2xl overflow-hidden border border-white/40 bg-black"
-                                style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}>
-                                <div className="px-3 pt-3 pb-2">
-                                  <span className="text-[10px] font-bold tracking-widest text-white/70 uppercase">{card.title}</span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4">
+                            {cards.map((card, idx) => {
+                              const hasUrl = !!card.url
+                              const hasImg = !!card.imageUrl
+                              return (
+                                <div key={idx} className="group relative aspect-[4/5] overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-zinc-900 via-black to-zinc-900">
+                                  {hasImg ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={card.imageUrl} alt=""
+                                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1500ms] group-hover:scale-105" />
+                                  ) : (
+                                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_30%,rgba(201,169,110,0.08)_0%,rgba(0,0,0,0.9)_60%)]" />
+                                  )}
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/55 to-black/15" />
+                                  <div className="relative z-10 flex flex-col justify-end h-full p-5 sm:p-6">
+                                    <p className="text-[9px] tracking-[0.5em] text-gold/60 uppercase mb-2">RL PHOTO·VIDEO</p>
+                                    <h3 className="font-cormorant text-2xl sm:text-3xl font-light leading-[1.05] text-white mb-2">
+                                      <span className="italic text-gold">{card.title}</span>
+                                    </h3>
+                                    <div className="h-px w-10 bg-gold/60 mb-4" />
+                                    {hasUrl ? (
+                                      <a href={card.url} target="_blank" rel="noopener noreferrer"
+                                        className="inline-flex items-center justify-center w-full
+                                                   border border-gold/40 bg-gold/[0.05] hover:bg-gold/[0.18] hover:border-gold/70
+                                                   px-5 py-3 text-[10px] tracking-[0.4em] text-gold uppercase
+                                                   transition-all duration-500">
+                                        Ver Mais →
+                                      </a>
+                                    ) : (
+                                      <span className="inline-flex items-center justify-center w-full
+                                                       border border-white/10 bg-white/[0.02]
+                                                       px-5 py-3 text-[10px] tracking-[0.4em] text-white/25 uppercase">
+                                        Aguardar
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
-                                {card.imageUrl && (
-                                  // eslint-disable-next-line @next/next/no-img-element
-                                  <img src={card.imageUrl} alt={card.title} className="w-full object-contain" />
-                                )}
-                                {card.url ? (
-                                  <div className="p-3">
-                                    <a href={card.url} target="_blank" rel="noopener noreferrer"
-                                      className="block w-full text-center px-4 py-2.5 rounded-xl border border-white/40 bg-white/5 text-white font-semibold text-xs tracking-widest uppercase hover:bg-white/10 transition-all"
-                                      style={{ boxShadow: '0 0 10px 2px rgba(255,255,255,0.15)' }}>
-                                      VER MAIS →
-                                    </a>
-                                  </div>
-                                ) : (
-                                  <div className="p-3">
-                                    <span className="block w-full text-center px-4 py-2.5 rounded-xl border border-white/15 bg-white/[0.03] text-white/25 font-semibold text-xs tracking-widest uppercase">
-                                      AGUARDAR
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            ))}
+                              )
+                            })}
                           </div>
                         )
 
