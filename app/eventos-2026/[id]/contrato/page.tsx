@@ -307,10 +307,6 @@ function ContratoPageContent() {
                     <li key={i} className="text-sm flex items-start gap-2"><span className="text-zinc-400 mt-1">•</span>{s}</li>
                   ))}
                 </ul>
-                <div className="border-t border-zinc-100 px-4 py-2 flex justify-between items-center text-sm">
-                  <span className="text-zinc-400">Valor</span>
-                  <strong><F field="valor_foto" draft={e} editing={editing} readonlyMode={readonly} onChange={change} type="number" placeholder="0" /></strong>
-                </div>
               </div>
             )}
             {servicosVideo.length > 0 && (
@@ -321,10 +317,6 @@ function ContratoPageContent() {
                     <li key={i} className="text-sm flex items-start gap-2"><span className="text-zinc-400 mt-1">•</span>{s}</li>
                   ))}
                 </ul>
-                <div className="border-t border-zinc-100 px-4 py-2 flex justify-between items-center text-sm">
-                  <span className="text-zinc-400">Valor</span>
-                  <strong><F field="valor_video" draft={e} editing={editing} readonlyMode={readonly} onChange={change} type="number" placeholder="0" /></strong>
-                </div>
               </div>
             )}
           </div>
@@ -336,10 +328,6 @@ function ContratoPageContent() {
                   <li key={i} className="text-sm flex items-start gap-2"><span className="text-zinc-400 mt-1">•</span>{s}</li>
                 ))}
               </ul>
-              <div className="border-t border-zinc-100 px-4 py-2 flex justify-between items-center text-sm">
-                <span className="text-zinc-400">Valor extras</span>
-                <strong><F field="valor_extras" draft={e} editing={editing} readonlyMode={readonly} onChange={change} type="number" placeholder="0" /></strong>
-              </div>
             </div>
           )}
           {(() => {
