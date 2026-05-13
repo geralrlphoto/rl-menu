@@ -62,51 +62,35 @@ async function criarPortalCasamento(ref: string, dados: any) {
   return `${SITE_BASE}/portal-cliente/ref/${encodeURIComponent(ref)}`
 }
 
-// ─── Cria portal de batizado (tabela `portal_template_settings`) ─────────────
+// ─── Cria portal de batizado (mesma tabela `portais` que casamento) ──────────
+// Estrutura idêntica ao portal de casamento — só muda settings.tipoPortal
+// e adiciona dados específicos da criança.
 async function criarPortalBatizado(ref: string, dados: any) {
   const sb = db()
-
-  // Lê master template
-  const { data: master } = await sb
-    .from('portal_template_settings')
-    .select('settings')
-    .eq('page_id', `batizado_${BATIZADO_MASTER_TOKEN}`)
-    .single()
-
-  const masterContent = master?.settings?.content ?? {}
-
-  // Constrói conteúdo do cliente — começa do master, sobrescreve dados do evento
-  const clientContent = {
-    ...masterContent,
-    evento: {
-      ...(masterContent.evento ?? {}),
-      // Pais
-      noiva: dados.nome_noiva ?? '', // mãe (reutiliza campo "noiva" da estrutura existente)
-      noivo: dados.nome_noivo ?? '', // pai
-      // Criança
-      crianca_nome:  dados.nome_crianca  ?? '',
-      crianca_idade: dados.idade_crianca ?? '',
-      // Data/local
-      data:  dados.data_casamento  ?? '',
-      local: dados.local_cerimonia ?? '',
-    },
-    proposta: {
-      ...(masterContent.proposta ?? {}),
-      password: '', // cliente define no primeiro acesso ou via admin
-    },
-  }
-
   const row = {
-    page_id: `batizado_${ref}`,
-    settings: { content: clientContent },
+    referencia: ref,
+    noiva: dados.nome_noiva ?? null,  // mãe — reutiliza campo "noiva"
+    noivo: dados.nome_noivo ?? null,  // pai — reutiliza campo "noivo"
+    data: dados.data_casamento ?? null,
+    data_formatada: fmtData(dados.data_casamento),
+    local: dados.local_cerimonia ?? null,
+    settings: {
+      referencia: ref,
+      noiva: dados.nome_noiva ?? '',
+      noivo: dados.nome_noivo ?? '',
+      data: dados.data_casamento ?? '',
+      dataFormatada: fmtData(dados.data_casamento),
+      local: dados.local_cerimonia ?? '',
+      tipoPortal: 'batizado',
+      nomeCrianca:  dados.nome_crianca  ?? '',
+      idadeCrianca: dados.idade_crianca ?? '',
+      hiddenNav: [],
+    },
     updated_at: new Date().toISOString(),
   }
-  const { error } = await sb
-    .from('portal_template_settings')
-    .upsert(row, { onConflict: 'page_id' })
-
+  const { error } = await sb.from('portais').upsert(row, { onConflict: 'referencia' })
   if (error) throw new Error(`portal batizado: ${error.message}`)
-  return `${SITE_BASE}/b/${encodeURIComponent(ref)}`
+  return `${SITE_BASE}/portal-batizado/ref/${encodeURIComponent(ref)}`
 }
 
 // ─── Email ao cliente com link do portal ──────────────────────────────────────
@@ -198,7 +182,7 @@ export async function POST(req: NextRequest) {
     if (contrato.aprovado_em) {
       const tipo = contrato.tipo_evento === 'batizado' ? 'batizado' : 'casamento'
       const url = tipo === 'batizado'
-        ? `${SITE_BASE}/b/${encodeURIComponent(referencia)}`
+        ? `${SITE_BASE}/portal-batizado/ref/${encodeURIComponent(referencia)}`
         : `${SITE_BASE}/portal-cliente/ref/${encodeURIComponent(referencia)}`
       return NextResponse.json({
         ok: true,
@@ -273,7 +257,7 @@ export async function GET(req: NextRequest) {
     const tipo = contrato.tipo_evento === 'batizado' ? 'batizado' : 'casamento'
     const portalUrl = contrato.aprovado_em
       ? (tipo === 'batizado'
-          ? `${SITE_BASE}/b/${encodeURIComponent(referencia)}`
+          ? `${SITE_BASE}/portal-batizado/ref/${encodeURIComponent(referencia)}`
           : `${SITE_BASE}/portal-cliente/ref/${encodeURIComponent(referencia)}`)
       : null
 
