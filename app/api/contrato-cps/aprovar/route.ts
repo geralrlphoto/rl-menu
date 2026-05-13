@@ -19,6 +19,43 @@ const ADMIN_EMAIL = 'geral.rlphoto@gmail.com'
 const BATIZADO_MASTER_TOKEN = 'batizado-maquete'
 const SITE_BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://rl-menu-lake.vercel.app'
 
+// PAGE_ID da maquete batizado em Notion (a mesma usada por /portal-batizado/page.tsx)
+// e ID da maquete casamento (para herdar pageTitles/hiddenNav nos novos portais)
+const BATIZADO_TEMPLATE_PAGE_ID = '35b220116d8a811b99b7f6f26648c017'
+const CASAMENTO_TEMPLATE_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
+const NOTION_TOKEN = process.env.NOTION_TOKEN!
+
+// Lê pageTitles + hiddenNav da maquete a partir de portal_template_settings
+// (fonte autoritativa, igual ao /api/portais-clientes).
+async function fetchMaqueteSettings(pageId: string): Promise<{
+  pageTitles?: Record<string,string>
+  hiddenNav?: string[]
+  guiaLinks?: any
+  pageHeaders?: any
+  briefingLinks?: any
+  briefingInfo?: any
+}> {
+  try {
+    const sb = db()
+    const { data } = await sb
+      .from('portal_template_settings')
+      .select('settings')
+      .eq('page_id', pageId)
+      .single()
+    const s = data?.settings ?? {}
+    return {
+      pageTitles:    s.pageTitles,
+      hiddenNav:     s.hiddenNav,
+      guiaLinks:     s.guiaLinks,
+      pageHeaders:   s.pageHeaders,
+      briefingLinks: s.briefingLinks,
+      briefingInfo:  s.briefingInfo,
+    }
+  } catch {
+    return {}
+  }
+}
+
 function db() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -36,8 +73,11 @@ function fmtData(d: string | null | undefined): string {
 }
 
 // ─── Cria portal de casamento (tabela `portais`) ─────────────────────────────
+// Herda pageTitles/hiddenNav/etc. da maquete casamento para que sub-páginas
+// renomeadas pelo admin e itens escondidos apareçam corretamente.
 async function criarPortalCasamento(ref: string, dados: any) {
   const sb = db()
+  const maquete = await fetchMaqueteSettings(CASAMENTO_TEMPLATE_PAGE_ID)
   const row = {
     referencia: ref,
     noiva: dados.nome_noiva ?? null,
@@ -53,7 +93,12 @@ async function criarPortalCasamento(ref: string, dados: any) {
       dataFormatada: fmtData(dados.data_casamento),
       local: dados.local_cerimonia ?? '',
       tipoPortal: 'casamento',
-      hiddenNav: [],
+      pageTitles:    maquete.pageTitles ?? {},
+      hiddenNav:     maquete.hiddenNav  ?? [],
+      guiaLinks:     maquete.guiaLinks,
+      pageHeaders:   maquete.pageHeaders,
+      briefingLinks: maquete.briefingLinks,
+      briefingInfo:  maquete.briefingInfo,
     },
     updated_at: new Date().toISOString(),
   }
@@ -65,8 +110,12 @@ async function criarPortalCasamento(ref: string, dados: any) {
 // ─── Cria portal de batizado (mesma tabela `portais` que casamento) ──────────
 // Estrutura idêntica ao portal de casamento — só muda settings.tipoPortal
 // e adiciona dados específicos da criança.
+// Copia pageTitles/hiddenNav/guiaLinks/etc. da maquete batizado para que o
+// novo portal apareça com a estrutura batizado (GUIA DOS PAIS, CRONOGRAMA
+// BATIZADO, etc.) em vez do default casamento.
 async function criarPortalBatizado(ref: string, dados: any) {
   const sb = db()
+  const maquete = await fetchMaqueteSettings(BATIZADO_TEMPLATE_PAGE_ID)
   const row = {
     referencia: ref,
     noiva: dados.nome_noiva ?? null,  // mãe — reutiliza campo "noiva"
@@ -84,7 +133,13 @@ async function criarPortalBatizado(ref: string, dados: any) {
       tipoPortal: 'batizado',
       nomeCrianca:  dados.nome_crianca  ?? '',
       idadeCrianca: dados.idade_crianca ?? '',
-      hiddenNav: [],
+      // Herdado da maquete batizado
+      pageTitles:    maquete.pageTitles ?? {},
+      hiddenNav:     maquete.hiddenNav  ?? [],
+      guiaLinks:     maquete.guiaLinks,
+      pageHeaders:   maquete.pageHeaders,
+      briefingLinks: maquete.briefingLinks,
+      briefingInfo:  maquete.briefingInfo,
     },
     updated_at: new Date().toISOString(),
   }
