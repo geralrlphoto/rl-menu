@@ -655,8 +655,14 @@ function TasksSection({ tasks, referencia, settings, onSettingsChange }: {
   const [newTask, setNewTask] = useState('')
   const [saving, setSaving] = useState(false)
   const [localTasks, setLocalTasks] = useState<Task[]>(tasks)
+  const [notif, setNotif] = useState<{ tone: 'ok' | 'err'; msg: string } | null>(null)
 
   useEffect(() => { setLocalTasks(tasks) }, [tasks])
+  useEffect(() => {
+    if (!notif) return
+    const t = setTimeout(() => setNotif(null), 4500)
+    return () => clearTimeout(t)
+  }, [notif])
 
   async function persist(nextTasks: Task[]) {
     const newSettings = { ...settings, tasks: nextTasks }
@@ -670,18 +676,39 @@ function TasksSection({ tasks, referencia, settings, onSettingsChange }: {
     setSaving(false)
   }
 
+  function sendTaskEmail(taskText: string, kind: 'new' | 'completed') {
+    fetch('/api/send-task-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referencia, taskText, kind, tipo: 'batizado' }),
+    }).then(r => r.json()).then(d => {
+      if (d?.ok) setNotif({ tone: 'ok', msg: `Email enviado ao cliente (${d.email}).` })
+      else setNotif({ tone: 'err', msg: d?.error ?? 'Falha ao enviar email ao cliente.' })
+    }).catch(() => setNotif({ tone: 'err', msg: 'Falha ao enviar email ao cliente.' }))
+  }
+
   function toggleDone(id: string) {
+    const target = localTasks.find(t => t.id === id)
+    const willBeDone = !!(target && !target.done)
     const next = localTasks.map(t => t.id === id ? { ...t, done: !t.done } : t)
     setLocalTasks(next)
     persist(next)
+    // Quando vai de false → true: notificar cliente por email
+    if (willBeDone && target?.text) {
+      const ok = window.confirm(`Marcar como concluída e notificar o cliente por email?\n\n"${target.text}"`)
+      if (ok) sendTaskEmail(target.text, 'completed')
+    }
   }
 
   function addTask() {
     if (!newTask.trim()) return
-    const next = [...localTasks, { id: Date.now().toString(), text: newTask.trim(), done: false }]
+    const text = newTask.trim()
+    const next = [...localTasks, { id: Date.now().toString(), text, done: false }]
     setLocalTasks(next)
     setNewTask('')
     persist(next)
+    // Sempre notifica o cliente da nova tarefa (sem confirmação)
+    sendTaskEmail(text, 'new')
   }
 
   function deleteTask(id: string) {
@@ -708,6 +735,11 @@ function TasksSection({ tasks, referencia, settings, onSettingsChange }: {
             </button>
           </div>
         </div>
+        {notif && (
+          <div className={`px-5 py-2 text-[11px] border-b ${notif.tone === 'ok' ? 'border-emerald-400/20 text-emerald-300/80 bg-emerald-400/5' : 'border-red-400/20 text-red-300/80 bg-red-400/5'}`}>
+            {notif.tone === 'ok' ? '✓ ' : '⚠ '}{notif.msg}
+          </div>
+        )}
         <div className="p-5 space-y-2.5">
           {localTasks.length === 0 && !editing && (
             <p className="text-sm text-gold/25 text-center py-6 italic">Sem tarefas de momento.</p>
