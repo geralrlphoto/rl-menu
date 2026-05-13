@@ -3229,7 +3229,7 @@ function PortalSubPageContent() {
                       // ── FILME page: Supabase-first cards (same pattern as FOTOGRAFIAS) ──
                       if (isFilmePage) {
                         const filmeBackUrl = fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : undefined
-                        const sbFilmeCards: Array<{ title: string; url: string; imageUrl: string }> | undefined =
+                        const sbFilmeCardsRaw: Array<{ title: string; url: string; imageUrl: string }> | undefined =
                           Array.isArray((settings as any).fotoCards) ? (settings as any).fotoCards : undefined
 
                         const getImgUrlF = (b: Block) => {
@@ -3237,6 +3237,24 @@ function PortalSubPageContent() {
                           if (!imgChild) return null
                           return imgChild.image?.type === 'external' ? imgChild.image.external?.url : imgChild.image?.file?.url
                         }
+
+                        // Helper: mapeia título do card → URL guardada nas Ações Vídeo da ficha
+                        const getVideoActionUrl = (title: string): string => {
+                          const t = (title || '').toUpperCase()
+                          // SESSÃO DE FAMÍLIA é a versão batizado do PRÉ-WEDDING
+                          if (t.includes('SESSÃO DE FAMÍLIA') || t.includes('SESSAO DE FAMILIA') || t.includes('FAMÍLIA') || t.includes('FAMILIA')) return portalSettingsObj?.video_prewedding_url ?? ''
+                          if (t.includes('WEDDING FILM') || t.includes('O NOSSO FILME') || t.includes('VÍDEO FINAL') || t.includes('VIDEO FINAL') || t.includes('FILME FINAL')) return portalSettingsObj?.wedding_film_url ?? ''
+                          if (t.includes('PRÉ-WEDDING') || t.includes('PRE-WEDDING')) return portalSettingsObj?.video_prewedding_url ?? ''
+                          if (t.includes('SAME DAY') || t.includes('SDE')) return portalSettingsObj?.same_day_edit_url ?? ''
+                          if (t.includes('TEASER') || t.includes('TRAILER')) return portalSettingsObj?.teaser_url ?? ''
+                          return ''
+                        }
+
+                        // Auto-fill URL nos sbFilmeCards quando vazia
+                        const sbFilmeCards = sbFilmeCardsRaw?.map(c => ({
+                          ...c,
+                          url: c.url && c.url.trim() ? c.url : getVideoActionUrl(c.title),
+                        }))
 
                         // Build notion cards as fallback
                         const notionFilmeCards: Array<{ title: string; url: string; imageUrl: string }> = []
@@ -3251,13 +3269,7 @@ function PortalSubPageContent() {
                           for (const callout of cardsHere) {
                             const cardTitle = plainText(callout.callout?.rich_text ?? []).trim()
                             const imgUrl = getImgUrlF(callout) ?? ''
-                            const _ct = cardTitle.toUpperCase()
-                            const fallbackUrl =
-                              _ct.includes('WEDDING FILM') ? (portalSettingsObj?.wedding_film_url ?? '') :
-                              _ct.includes('PRÉ-WEDDING') || _ct.includes('PRE-WEDDING') ? (portalSettingsObj?.video_prewedding_url ?? '') :
-                              _ct.includes('SAME DAY') ? (portalSettingsObj?.same_day_edit_url ?? '') :
-                              _ct.includes('TEASER') || _ct.includes('TRAILER') ? (portalSettingsObj?.teaser_url ?? '') : ''
-                            notionFilmeCards.push({ title: cardTitle, url: pageCalloutLinks[cardTitle] || fallbackUrl, imageUrl: imgUrl })
+                            notionFilmeCards.push({ title: cardTitle, url: pageCalloutLinks[cardTitle] || getVideoActionUrl(cardTitle), imageUrl: imgUrl })
                           }
                         }
 
