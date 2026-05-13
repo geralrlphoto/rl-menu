@@ -430,6 +430,17 @@ function PaymentPhasesSection({ referencia, valorTotal, pagamentos, onRefresh, r
   // Se soma total paga >= valor total do serviço → todas as fases liquidadas
   const tudoLiquidado = (valorTotal || 0) > 0 && totalPagoGeral >= (valorTotal || 0)
 
+  // Cascata: ADJ → REFORÇO → FINAL — o totalPagoGeral preenche por ordem
+  // (igual à lógica da ficha em /eventos-2026/[id])
+  const cumAdj     = faseValores['ADJUDICAÇÃO']
+  const cumReforco = cumAdj + faseValores['REFORÇO']
+  const cumFinal   = cumReforco + faseValores['FINAL']
+  const faseCum: Record<string, number> = {
+    'ADJUDICAÇÃO': cumAdj,
+    'REFORÇO':     cumReforco,
+    'FINAL':       cumFinal,
+  }
+
   return (
     <div className="mb-6 pb-6 border-b border-white/[0.06]">
       <div className="flex items-center justify-between mb-3">
@@ -445,13 +456,19 @@ function PaymentPhasesSection({ referencia, valorTotal, pagamentos, onRefresh, r
       </div>
       <div className="grid grid-cols-3 gap-3">
         {['ADJUDICAÇÃO','REFORÇO','FINAL'].map(label => {
-          const pags = pagamentos.filter(p => p.fase_pagamento.includes(label))
-          const totalPago = pags.reduce((s, p) => s + (p.valor_liquidado ?? 0), 0)
-          const valorFase = faseValores[label]
+          const valorFase  = faseValores[label]
+          const cumThresh  = faseCum[label]
+          const prevThresh = cumThresh - valorFase
+          // Porção do total pago que pertence a esta fase em cascata
+          const totalPago = Math.max(0, Math.min(totalPagoGeral, cumThresh) - prevThresh)
           const falta = Math.max(0, valorFase - totalPago)
-          const liquidado = tudoLiquidado || (totalPago >= valorFase && valorFase > 0)
+          // Liquidado quando o total pago geral cobre a threshold cumulativa desta fase
+          const liquidado = tudoLiquidado || (valorFase > 0 && totalPagoGeral >= cumThresh)
           const parcial = totalPago > 0 && !liquidado
           const pct = valorFase > 0 ? Math.min(100, Math.round((totalPago / valorFase) * 100)) : 0
+          // Pagamentos para mostrar — usa filtro por tag se houver, senão todos os pags (cascata)
+          const pagsByTag = pagamentos.filter(p => p.fase_pagamento.includes(label))
+          const pags = pagsByTag.length > 0 ? pagsByTag : (totalPago > 0 ? pagamentos : [])
           const lastPag = pags[pags.length - 1]
           const metodos = Array.from(new Set(pags.flatMap(p => p.metodo_pagamento)))
 
