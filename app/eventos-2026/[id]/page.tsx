@@ -1976,8 +1976,10 @@ export default function EventoPage() {
 
       <div className="h-px bg-gold/15 my-7" />
 
-      {/* ── Portal do Cliente ── */}
-      <div className="print:hidden">{e.referencia && <PortalSection evento={e} />}</div>
+      {/* ── Aprovação do Contrato CPS + Criar Portal ── */}
+      <div className="print:hidden">
+        <ContratoCPSAprovacaoSection referencia={e.referencia ?? undefined} />
+      </div>
 
       <div className="flex flex-col gap-5">
 
@@ -2370,10 +2372,7 @@ export default function EventoPage() {
             })()}
           </div>
 
-          {/* Contrato CPS recebido — banner de aprovação */}
-          <ContratoCPSAprovacaoSection referencia={e.referencia ?? undefined} />
-
-          {/* Criar Contrato */}
+          {/* Criar Contrato (Contrato CPS recebido foi movido para o topo da ficha) */}
           <ContratoStatusSection eventoId={e.id} referencia={e.referencia ?? undefined} />
 
           {/* Contrato PDF */}
