@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { plainText, type Block } from '../../NotionRenderer'
 import BlockEditor from '../../BlockEditor'
 
@@ -773,12 +773,18 @@ export default function PortalRefPage() {
     }
   }, [referencia])
 
+  const searchParamsHook = useSearchParams()
+
   useEffect(() => {
     Promise.all([loadBlocks(), loadSettings()]).finally(() => setLoading(false))
-    // Check admin session
-    const adminFlag = sessionStorage.getItem(`portalAdmin_${referencia}`)
-    if (adminFlag === 'true') setIsAdmin(true)
-  }, [loadBlocks, loadSettings, referencia])
+    // Check admin: URL param ?admin=1 OR sessionStorage flag
+    const fromUrl = searchParamsHook?.get('admin') === '1'
+    const fromSession = sessionStorage.getItem(`portalAdmin_${referencia}`) === 'true'
+    if (fromUrl || fromSession) {
+      setIsAdmin(true)
+      sessionStorage.setItem(`portalAdmin_${referencia}`, 'true')
+    }
+  }, [loadBlocks, loadSettings, referencia, searchParamsHook])
 
   async function saveSettings(newSettings: PortalSettings) {
     await fetch('/api/portais', {
