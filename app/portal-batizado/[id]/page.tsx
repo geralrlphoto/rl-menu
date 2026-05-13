@@ -2844,9 +2844,27 @@ function PortalSubPageContent() {
                           </div>
                           {/* ── FOTO CARDS (Supabase-first) ── */}
                           {(() => {
+                            // Helper: map card title to URL guardada nas "Ações Fotografia" da ficha
+                            const getActionUrl = (title: string): string => {
+                              const t = (title || '').toUpperCase()
+                              // SESSÃO DE FAMÍLIA é a versão batizado do PRÉ-WEDDING
+                              if (t.includes('SESSÃO DE FAMÍLIA') || t.includes('SESSAO DE FAMILIA') || t.includes('FAMÍLIA') || t.includes('FAMILIA')) return portalSettingsObj?.prewedding_url ?? ''
+                              if (t.includes('SELEÇ') || t.includes('SELEC')) return portalSettingsObj?.selecao_url ?? ''
+                              if (t.includes('PRÉ-WEDDING') || t.includes('PRE-WEDDING')) return portalSettingsObj?.prewedding_url ?? ''
+                              if (t.includes('EDITADAS') || t.includes('FOTOS FINAIS')) return portalSettingsObj?.fotos_finais_url ?? ''
+                              if (t.includes('GALERIA ON') || t.includes('ON-LINE') || t.includes('GALERIAS')) return portalSettingsObj?.galerias_url ?? ''
+                              if (t.includes('MAQUETE')) return portalSettingsObj?.maquete_url ?? ''
+                              return ''
+                            }
+
                             // Build card list: prefer Supabase fotoCards, fall back to Notion callout blocks
-                            const sbCards: Array<{ title: string; url: string; imageUrl: string }> | undefined =
+                            const sbCardsRaw: Array<{ title: string; url: string; imageUrl: string }> | undefined =
                               Array.isArray((settings as any).fotoCards) ? (settings as any).fotoCards : undefined
+                            // Auto-fill URL nos sbCards quando estiver vazia (via Ações Fotografia)
+                            const sbCards = sbCardsRaw?.map(c => ({
+                              ...c,
+                              url: c.url && c.url.trim() ? c.url : getActionUrl(c.title),
+                            }))
 
                             // Extract notion cards for fallback / initialisation
                             const notionCards: Array<{ title: string; url: string; imageUrl: string }> = (() => {
@@ -2855,14 +2873,7 @@ function PortalSubPageContent() {
                               for (const callout of calloutCards) {
                                 const cardTitle = plainText(callout.callout?.rich_text ?? []).trim()
                                 const imgUrl = getImgUrl(callout) ?? ''
-                                const _ct = cardTitle.toUpperCase()
-                                const actionUrlFallback =
-                                  _ct.includes('SELEÇ') ? (portalSettingsObj?.selecao_url ?? '') :
-                                  _ct.includes('PRÉ-WEDDING') || _ct.includes('PRE-WEDDING') ? (portalSettingsObj?.prewedding_url ?? '') :
-                                  _ct.includes('EDITADAS') ? (portalSettingsObj?.fotos_finais_url ?? '') :
-                                  _ct.includes('GALERIA ON') || _ct.includes('ON-LINE') ? (portalSettingsObj?.galerias_url ?? '') :
-                                  _ct.includes('MAQUETE') ? (portalSettingsObj?.maquete_url ?? '') : ''
-                                const url = pageCalloutLinks[cardTitle] || actionUrlFallback || ''
+                                const url = pageCalloutLinks[cardTitle] || getActionUrl(cardTitle) || ''
                                 out.push({ title: cardTitle, url, imageUrl: imgUrl })
                               }
                               return out
