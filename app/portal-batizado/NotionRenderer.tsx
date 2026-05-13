@@ -102,7 +102,7 @@ export function NotionBlocks({ blocks, rootId, hiddenNav, backUrl, neutralCallou
         break
       case 'heading_3':
         elements.push(
-          <h3 key={b.id} className="text-lg sm:text-xl font-semibold text-white/85 tracking-wide mt-5 mb-2">
+          <h3 key={b.id} className="text-base sm:text-[17px] font-bold text-white/95 leading-[1.75] mt-5 mb-2">
             {rt(data.rich_text)}
           </h3>
         )
