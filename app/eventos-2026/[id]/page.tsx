@@ -844,6 +844,7 @@ function ContratoCPSAprovacaoSection({ referencia }: { referencia?: string }) {
       nome_noivos?: string
       tipo_evento?: string
       aprovado_em?: string | null
+      contrato_aprovado_em?: string | null
       created_at?: string
       email_noiva?: string | null
       email_noivo?: string | null
@@ -900,9 +901,11 @@ function ContratoCPSAprovacaoSection({ referencia }: { referencia?: string }) {
 
   const c = data.contrato!
   const isBatizado = c.tipo_evento === 'batizado'
-  const aprovado = !!c.aprovado_em
+  const contratoAprovado = !!c.contrato_aprovado_em
+  const portalAprovado = !!c.aprovado_em
 
-  if (aprovado) {
+  // ── STATE C: PORTAL JÁ APROVADO (verde) ───────────────────────────────────
+  if (portalAprovado) {
     return (
       <div className="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.04] p-4">
         <div className="flex items-center justify-between gap-3">
@@ -923,13 +926,63 @@ function ContratoCPSAprovacaoSection({ referencia }: { referencia?: string }) {
     )
   }
 
+  // ── STATE B: CONTRATO APROVADO → falta criar portal (gold) ────────────────
+  if (contratoAprovado) {
+    return (
+      <div className="mt-4 rounded-xl border border-gold/40 bg-gold/[0.05] p-4">
+        <div className="flex items-start gap-4">
+          <div className="text-3xl">✓</div>
+          <div className="flex-1">
+            <p className="text-[10px] tracking-[0.3em] text-gold/80 uppercase mb-1">
+              Contrato aprovado — Próximo passo: criar portal
+            </p>
+            <p className="text-sm text-white/85 mb-1">
+              <span className="font-medium">{c.nome_noivos}</span>
+              <span className="text-white/40 text-xs ml-2">
+                · contrato aprovado {new Date(c.contrato_aprovado_em!).toLocaleString('pt-PT')}
+              </span>
+            </p>
+            <p className="text-xs text-white/50">
+              Email: {c.email_noiva || c.email_noivo || '—'}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 pt-4 border-t border-gold/20">
+          <div className="flex items-end gap-3">
+            <div className="flex-1">
+              <p className="text-[10px] tracking-[0.3em] text-gold/70 uppercase mb-2">
+                🔑 Password do portal
+                <span className="text-gold/40 normal-case tracking-normal ml-2">(será enviada ao cliente)</span>
+              </p>
+              <input
+                type="text"
+                value={password}
+                onChange={(e) => { setPassword(e.target.value); setError(null) }}
+                placeholder="Ex.: sofia2026"
+                className="w-full bg-black/30 border border-gold/30 rounded px-3 py-2.5 text-sm text-white/90 outline-none focus:border-gold/60 placeholder:text-white/20"
+              />
+            </div>
+            <button onClick={handleAprovar} disabled={submitting || !password.trim()}
+              className="px-5 py-3 text-[11px] tracking-[0.3em] uppercase border border-gold/60 bg-gold/15 text-gold hover:bg-gold/25 disabled:opacity-30 disabled:cursor-not-allowed whitespace-nowrap">
+              {submitting ? 'A criar...' : '✓ Criar Portal e Enviar Cliente'}
+            </button>
+          </div>
+        </div>
+
+        {error && <p className="mt-3 text-xs text-red-400/80">{error}</p>}
+      </div>
+    )
+  }
+
+  // ── STATE A: CPS preenchido, contrato pendente de aprovação (amber) ───────
   return (
     <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/[0.05] p-4">
       <div className="flex items-start gap-4">
         <div className="text-3xl">📋</div>
         <div className="flex-1">
           <p className="text-[10px] tracking-[0.3em] text-amber-400/80 uppercase mb-1">
-            Contrato {isBatizado ? 'Batizado' : 'Casamento'} preenchido
+            Contrato {isBatizado ? 'Batizado' : 'Casamento'} preenchido — Aguarda aprovação
           </p>
           <p className="text-sm text-white/85 mb-1">
             <span className="font-medium">{c.nome_noivos}</span>
@@ -939,38 +992,14 @@ function ContratoCPSAprovacaoSection({ referencia }: { referencia?: string }) {
               </span>
             )}
           </p>
-          <p className="text-xs text-white/50">
+          <p className="text-xs text-white/50 mb-2">
             Email: {c.email_noiva || c.email_noivo || '—'}
+          </p>
+          <p className="text-xs text-amber-300/70 italic">
+            ↓ Vai à secção "Contrato de Prestação de Serviços" mais abaixo, gera, revê e aprova o contrato antes de criar o portal.
           </p>
         </div>
       </div>
-
-      {/* Password do portal — obrigatória antes de aprovar */}
-      <div className="mt-4 pt-4 border-t border-amber-500/20">
-        <div className="flex items-end gap-3">
-          <div className="flex-1">
-            <p className="text-[10px] tracking-[0.3em] text-amber-400/70 uppercase mb-2">
-              🔑 Password do portal
-              <span className="text-amber-400/40 normal-case tracking-normal ml-2">(será enviada ao cliente)</span>
-            </p>
-            <input
-              type="text"
-              value={password}
-              onChange={(e) => { setPassword(e.target.value); setError(null) }}
-              placeholder="Ex.: sofia2026"
-              className="w-full bg-black/30 border border-amber-500/30 rounded px-3 py-2.5 text-sm text-white/90 outline-none focus:border-amber-400/60 placeholder:text-white/20"
-            />
-          </div>
-          <button onClick={handleAprovar} disabled={submitting || !password.trim()}
-            className="px-5 py-3 text-[11px] tracking-[0.3em] uppercase border border-gold/60 bg-gold/10 text-gold hover:bg-gold/20 disabled:opacity-30 disabled:cursor-not-allowed whitespace-nowrap">
-            {submitting ? 'A criar...' : '✓ Aprovar e criar portal'}
-          </button>
-        </div>
-      </div>
-
-      {error && (
-        <p className="mt-3 text-xs text-red-400/80">{error}</p>
-      )}
     </div>
   )
 }
@@ -981,6 +1010,10 @@ function ContratoStatusSection({ eventoId, referencia }: { eventoId: string; ref
   const [portalSettings, setPortalSettings] = useState<any>(null)
   const [toggling, setToggling] = useState(false)
   const [previewing, setPreviewing] = useState(false)
+  // Novo: aprovação do contrato (pré-requisito para criar portal)
+  const [contratoAprovadoEm, setContratoAprovadoEm] = useState<string | null>(null)
+  const [aprovandoContrato, setAprovandoContrato] = useState(false)
+  const [contratoVisto, setContratoVisto] = useState(false)
 
   useEffect(() => {
     // For ref-based portals, read from Supabase; also check Notion for legacy
@@ -991,8 +1024,13 @@ function ContratoStatusSection({ eventoId, referencia }: { eventoId: string; ref
       promises.push(
         fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`).then(r => r.json()).catch(() => ({}))
       )
+      // Estado do contrato CPS
+      promises.push(
+        fetch(`/api/contrato-cps/aprovar?ref=${encodeURIComponent(referencia)}`).then(r => r.json()).catch(() => ({}))
+      )
     }
-    Promise.all(promises).then(([notionData, supabaseData]) => {
+    Promise.all(promises).then((results) => {
+      const [notionData, supabaseData, cpsData] = results
       const notionPs = notionData?.settings ?? {}
       const supabasePs = supabaseData?.portal?.settings ?? {}
       // Merge: Supabase takes priority (ref-based portals), Notion as fallback
@@ -1001,12 +1039,66 @@ function ContratoStatusSection({ eventoId, referencia }: { eventoId: string; ref
       setSettingsBlockId(notionData?.settingsBlockId ?? null)
       setDisponivel(ps.contratoDisponivel ?? false)
       if (Array.isArray(ps.fases_pendentes_override)) setFasesPendentesOverride(ps.fases_pendentes_override)
+      setContratoAprovadoEm(cpsData?.contrato?.contrato_aprovado_em ?? null)
     })
   }, [referencia])
 
+  function handleGerarContrato() {
+    window.open(`/eventos-2026/${eventoId}/contrato`, '_blank')
+    setContratoVisto(true)
+  }
+
   function handleVerContrato() {
     window.open(`/eventos-2026/${eventoId}/contrato`, '_blank')
+    setContratoVisto(true)
     setPreviewing(true)
+  }
+
+  async function handleAprovarContrato() {
+    if (!referencia) return
+    if (!confirm('Aprovar este contrato?\n\nDepois de aprovado, podes criar o portal do cliente no topo da página.')) return
+    setAprovandoContrato(true)
+    try {
+      const r = await fetch('/api/contrato-cps/aprovar-contrato', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referencia, aprovar: true }),
+      })
+      const j = await r.json()
+      if (!r.ok) throw new Error(j.error ?? 'erro')
+      setContratoAprovadoEm(j.contrato_aprovado_em)
+      // Também publica automaticamente no portal (se existir)
+      if (referencia && (supabaseHasPortal())) {
+        const contratoUrl = `/eventos-2026/${eventoId}/contrato`
+        await fetch('/api/portais', {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ referencia, updates: { settings: { contratoDisponivel: true, contratoUrl } } }),
+        }).catch(() => {})
+        setDisponivel(true)
+      }
+    } catch (e: any) {
+      alert(`Erro ao aprovar contrato: ${e.message}`)
+    } finally {
+      setAprovandoContrato(false)
+    }
+  }
+
+  function supabaseHasPortal(): boolean {
+    return portalSettings?.referencia === referencia
+  }
+
+  async function handleDesaprovarContrato() {
+    if (!referencia) return
+    if (!confirm('Reverter aprovação do contrato?')) return
+    setAprovandoContrato(true)
+    try {
+      await fetch('/api/contrato-cps/aprovar-contrato', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referencia, aprovar: false }),
+      })
+      setContratoAprovadoEm(null)
+    } finally {
+      setAprovandoContrato(false)
+    }
   }
 
   async function handlePublicarNoPortal() {
@@ -1059,48 +1151,53 @@ function ContratoStatusSection({ eventoId, referencia }: { eventoId: string; ref
     }
   }
 
+  const contratoAprovado = !!contratoAprovadoEm
+
   return (
     <div className="pt-2 border-t border-white/[0.05]">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-[10px] tracking-[0.3em] text-gold uppercase">Contrato de Prestação de Serviços</span>
-        <div className="flex items-center gap-2">
-          {disponivel && (
-            <button onClick={handleRetirar} disabled={toggling}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold tracking-wider border bg-green-500/10 border-green-500/30 text-green-400 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 transition-all disabled:opacity-50">
-              {toggling ? '...' : '✓ No Portal — Retirar'}
-            </button>
+      <div className="flex items-center justify-between mb-2 gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] tracking-[0.3em] text-gold uppercase">Contrato de Prestação de Serviços</span>
+          {contratoAprovado && (
+            <span className="text-[9px] tracking-[0.25em] text-emerald-400 uppercase border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 rounded">
+              ✓ Aprovado
+            </span>
           )}
-          {disponivel ? (
-            <a href={`/eventos-2026/${eventoId}/contrato`} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold/10 border border-gold/30 text-gold text-[10px] font-semibold tracking-wider hover:bg-gold/20 transition-all">
-              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Ver Contrato ↗
-            </a>
-          ) : previewing ? (
-            <div className="flex items-center gap-2">
-              <button onClick={() => window.open(`/eventos-2026/${eventoId}/contrato`, '_blank')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/10 text-white/50 text-[10px] font-semibold tracking-wider hover:bg-white/[0.07] transition-all">
-                Rever ↗
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          {!contratoAprovado ? (
+            <>
+              {/* 1. Gerar Contrato */}
+              <button onClick={handleGerarContrato}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/10 text-white/70 text-[10px] font-semibold tracking-wider hover:bg-white/[0.07] hover:text-white/90 transition-all">
+                📄 Gerar Contrato
               </button>
-              <button onClick={handlePublicarNoPortal} disabled={toggling}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-500/15 border border-green-500/40 text-green-400 text-[10px] font-semibold tracking-wider hover:bg-green-500/25 transition-all disabled:opacity-50">
-                {toggling ? 'A publicar...' : '✓ Publicar no Portal'}
+              {/* 2. Ver Contrato */}
+              <button onClick={handleVerContrato}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold/10 border border-gold/30 text-gold text-[10px] font-semibold tracking-wider hover:bg-gold/20 transition-all">
+                👁️ Ver Contrato ↗
               </button>
-              <button onClick={() => setPreviewing(false)}
-                className="px-2 py-1.5 rounded-lg text-white/20 hover:text-white/50 text-[10px] transition-all">
-                ✕
+              {/* 3. Aprovar Contrato */}
+              <button onClick={handleAprovarContrato} disabled={aprovandoContrato}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 text-[10px] font-semibold tracking-wider hover:bg-emerald-500/25 transition-all disabled:opacity-50">
+                {aprovandoContrato ? '...' : '✓ Aprovar Contrato'}
               </button>
-            </div>
+            </>
           ) : (
-            <button onClick={handleVerContrato}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold/10 border border-gold/30 text-gold text-[10px] font-semibold tracking-wider hover:bg-gold/20 transition-all">
-              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Criar Contrato ↗
-            </button>
+            <>
+              <span className="text-[10px] text-white/40">
+                Aprovado em {new Date(contratoAprovadoEm!).toLocaleString('pt-PT')}
+              </span>
+              <button onClick={handleVerContrato}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold/10 border border-gold/30 text-gold text-[10px] font-semibold tracking-wider hover:bg-gold/20 transition-all">
+                👁️ Ver Contrato ↗
+              </button>
+              <button onClick={handleDesaprovarContrato} disabled={aprovandoContrato}
+                className="px-3 py-1.5 rounded-lg text-[10px] text-white/30 hover:text-white/60 transition-all">
+                ↺ Reverter
+              </button>
+            </>
           )}
         </div>
       </div>

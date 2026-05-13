@@ -345,7 +345,7 @@ export async function GET(req: NextRequest) {
     const sb = db()
     const { data: contrato } = await sb
       .from('dados_contrato_cps')
-      .select('id, nome_noivos, tipo_evento, aprovado_em, created_at, email_noiva, email_noivo, referencia_evento')
+      .select('id, nome_noivos, tipo_evento, aprovado_em, contrato_aprovado_em, created_at, email_noiva, email_noivo, referencia_evento')
       .eq('referencia_evento', referencia)
       .order('id', { ascending: false })
       .limit(1)
