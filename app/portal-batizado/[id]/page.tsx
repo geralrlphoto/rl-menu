@@ -2951,6 +2951,33 @@ function PortalSubPageContent() {
                                                 onChange={e => setFotoCardsForm(prev => prev.map((c, ii) => ii === idx ? { ...c, url: e.target.value } : c))}
                                                 placeholder="URL (deixar vazio = AGUARDAR)"
                                                 className="w-full bg-white/[0.04] border border-white/[0.10] rounded-lg px-3 py-2 text-xs text-white/50 outline-none focus:border-white/25" />
+                                              {/* Upload de foto */}
+                                              <div className="flex items-center gap-2 pt-1">
+                                                {card.imageUrl ? (
+                                                  // eslint-disable-next-line @next/next/no-img-element
+                                                  <img src={card.imageUrl} alt="" className="w-12 h-12 object-cover rounded-lg border border-white/10" />
+                                                ) : (
+                                                  <div className="w-12 h-12 rounded-lg border border-dashed border-white/15 flex items-center justify-center text-white/20 text-xs">—</div>
+                                                )}
+                                                <label className="flex-1 cursor-pointer px-3 py-2 rounded-lg border border-white/10 hover:border-gold/40 bg-white/[0.03] hover:bg-gold/5 text-[10px] tracking-widest uppercase text-white/50 hover:text-gold/80 text-center transition-colors">
+                                                  📷 {card.imageUrl ? 'Trocar foto' : 'Carregar foto'}
+                                                  <input type="file" accept="image/*" className="hidden"
+                                                    onChange={async (ev) => {
+                                                      const f = ev.target.files?.[0]; if (!f) return
+                                                      const fd = new FormData(); fd.append('file', f)
+                                                      try {
+                                                        const r = await fetch('/api/upload-image', { method: 'POST', body: fd })
+                                                        const j = await r.json()
+                                                        if (j.url) setFotoCardsForm(prev => prev.map((c, ii) => ii === idx ? { ...c, imageUrl: j.url } : c))
+                                                      } catch {/* noop */}
+                                                      ev.target.value = ''
+                                                    }} />
+                                                </label>
+                                                {card.imageUrl && (
+                                                  <button onClick={() => setFotoCardsForm(prev => prev.map((c, ii) => ii === idx ? { ...c, imageUrl: '' } : c))}
+                                                    className="px-2 py-2 text-[10px] text-white/25 hover:text-red-400 transition-colors">✕</button>
+                                                )}
+                                              </div>
                                             </div>
                                           ))}
                                           <button onClick={() => setFotoCardsForm(prev => [...prev, { title: 'NOVO CARD', url: '', imageUrl: fotoCardsForm[0]?.imageUrl ?? '' }])}
@@ -3311,6 +3338,33 @@ function PortalSubPageContent() {
                                             onChange={e => setFotoCardsForm(prev => prev.map((c, ii) => ii === idx ? { ...c, url: e.target.value } : c))}
                                             placeholder="URL (deixar vazio = AGUARDAR)"
                                             className="w-full bg-white/[0.04] border border-white/[0.10] rounded-lg px-3 py-2 text-xs text-white/50 outline-none focus:border-white/25" />
+                                          {/* Upload de foto */}
+                                          <div className="flex items-center gap-2 pt-1">
+                                            {card.imageUrl ? (
+                                              // eslint-disable-next-line @next/next/no-img-element
+                                              <img src={card.imageUrl} alt="" className="w-12 h-12 object-cover rounded-lg border border-white/10" />
+                                            ) : (
+                                              <div className="w-12 h-12 rounded-lg border border-dashed border-white/15 flex items-center justify-center text-white/20 text-xs">—</div>
+                                            )}
+                                            <label className="flex-1 cursor-pointer px-3 py-2 rounded-lg border border-white/10 hover:border-gold/40 bg-white/[0.03] hover:bg-gold/5 text-[10px] tracking-widest uppercase text-white/50 hover:text-gold/80 text-center transition-colors">
+                                              📷 {card.imageUrl ? 'Trocar foto' : 'Carregar foto'}
+                                              <input type="file" accept="image/*" className="hidden"
+                                                onChange={async (ev) => {
+                                                  const f = ev.target.files?.[0]; if (!f) return
+                                                  const fd = new FormData(); fd.append('file', f)
+                                                  try {
+                                                    const r = await fetch('/api/upload-image', { method: 'POST', body: fd })
+                                                    const j = await r.json()
+                                                    if (j.url) setFotoCardsForm(prev => prev.map((c, ii) => ii === idx ? { ...c, imageUrl: j.url } : c))
+                                                  } catch {/* noop */}
+                                                  ev.target.value = ''
+                                                }} />
+                                            </label>
+                                            {card.imageUrl && (
+                                              <button onClick={() => setFotoCardsForm(prev => prev.map((c, ii) => ii === idx ? { ...c, imageUrl: '' } : c))}
+                                                className="px-2 py-2 text-[10px] text-white/25 hover:text-red-400 transition-colors">✕</button>
+                                            )}
+                                          </div>
                                         </div>
                                       ))}
                                       <button onClick={() => setFotoCardsForm(prev => [...prev, { title: 'NOVO CARD', url: '', imageUrl: fotoCardsForm[0]?.imageUrl ?? '' }])}
