@@ -246,6 +246,31 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       let tipoEventoArr: string[] = []
       try { tipoEventoArr = typeof orphan.tipo_evento === 'string' ? JSON.parse(orphan.tipo_evento) : (orphan.tipo_evento ?? []) } catch { tipoEventoArr = [] }
 
+      // Procura os dados detalhados em dados_contrato_cps (form submission)
+      // Match por referencia_evento; fallback por nome_noivos+data
+      let contrato: any = null
+      if (orphan.referencia) {
+        const { data } = await sb
+          .from('dados_contrato_cps')
+          .select('*')
+          .eq('referencia_evento', orphan.referencia)
+          .order('id', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        contrato = data
+      }
+      if (!contrato && orphan.cliente && orphan.data_evento) {
+        const { data } = await sb
+          .from('dados_contrato_cps')
+          .select('*')
+          .eq('nome_noivos', orphan.cliente)
+          .eq('data_casamento', orphan.data_evento)
+          .order('id', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        contrato = data
+      }
+
       const event = {
         id: orphan.id,
         referencia:       orphan.referencia ?? '',
@@ -259,7 +284,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
         fotografo:        (() => { try { return JSON.parse(orphan.fotografo ?? '[]') } catch { return [] } })(),
         videografo:       [],
         editor_fotos:     null,
-        proposta:         null,
+        proposta:         contrato?.proposta ?? null,
         valor_liquido:    orphan.valor_liquido ?? null,
         valor_foto:       orphan.valor_foto ?? null,
         valor_real_foto:  orphan.valor_real_foto ?? null,
@@ -277,11 +302,22 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
         alerta_30du:      false,
         agendamento_email: null,
         contratos:        null,
-        nome_noiva:       null,
-        nome_noivo:       null,
+        // Dados dos noivos / pais — vindos do form
+        nome_noiva:       contrato?.nome_noiva   ?? null,
+        nome_noivo:       contrato?.nome_noivo   ?? null,
+        email_noiva:      contrato?.email_noiva  ?? null,
+        email_noivo:      contrato?.email_noivo  ?? null,
+        tel_noiva:        contrato?.tel_noiva    ?? null,
+        tel_noivo:        contrato?.tel_noivo    ?? null,
+        morada_noiva:     contrato?.morada_noiva ?? null,
+        morada_noivo:     contrato?.morada_noivo ?? null,
+        cc_noiva:         contrato?.cc_noiva     ?? null,
+        cc_noivo:         contrato?.cc_noivo     ?? null,
+        nif_noiva:        contrato?.nif_noiva    ?? null,
+        nif_noivo:        contrato?.nif_noivo    ?? null,
         // Campos extra (batizado)
-        nome_crianca:     (orphan as any).nome_crianca ?? null,
-        idade_crianca:    (orphan as any).idade_crianca ?? null,
+        nome_crianca:     (orphan as any).nome_crianca ?? contrato?.nome_crianca ?? null,
+        idade_crianca:    (orphan as any).idade_crianca ?? contrato?.idade_crianca ?? null,
         notion_url:       null,
         _orphan: true, // flag para a UI saber que este evento ainda não tem Notion
       }
@@ -292,18 +328,35 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const p = page.properties ?? {}
 
     // Buscar campos do Supabase (mais fiável que Notion para campos de estado)
-    const { data: sbRow } = await supabase()
+    const sbClient = supabase()
+    const { data: sbRow } = await sbClient
       .from('eventos_2026')
       .select('*')
       .eq('notion_id', id)
       .maybeSingle()
 
+    // Buscar dados detalhados em dados_contrato_cps (form submission) para
+    // suplementar/substituir campos quando Notion não os tem (retry com payload mínimo)
+    const refFromNotion = getProp(p, 'REFERÊNCIA DO EVENTO', 'title')
+    const refForLookup = sbRow?.referencia ?? refFromNotion
+    let contrato: any = null
+    if (refForLookup) {
+      const { data: cps } = await sbClient
+        .from('dados_contrato_cps')
+        .select('*')
+        .eq('referencia_evento', refForLookup)
+        .order('id', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      contrato = cps
+    }
+
     const event = {
       id: page.id,
       referencia:       getProp(p, 'REFERÊNCIA DO EVENTO', 'title'),
       cliente:          getProp(p, 'CLIENTE', 'text'),
-      data_evento:      getProp(p, 'DATA DO EVENTO', 'date'),
-      local:            getProp(p, 'LOCAL', 'text'),
+      data_evento:      getProp(p, 'DATA DO EVENTO', 'date') ?? contrato?.data_casamento ?? null,
+      local:            getProp(p, 'LOCAL', 'text') ?? contrato?.local_cerimonia ?? '',
       tipo_evento:      getProp(p, 'TIPO DE EVENTO', 'multi_select'),
       tipo_servico:     getProp(p, 'TIPO DE SERVIÇO', 'multi_select'),
       servico_extra:    getProp(p, 'SERVIÇO EXTRA', 'multi_select'),
@@ -311,7 +364,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       fotografo:        getProp(p, 'FOTOGRAFO', 'multi_select'),
       videografo:       getProp(p, 'VÍDEOGRAFO ', 'multi_select'),
       editor_fotos:     getProp(p, 'EDITOR DE FOTOS', 'select'),
-      proposta:         getProp(p, 'PROPOSTA ESCOLHIDA', 'select'),
+      proposta:         getProp(p, 'PROPOSTA ESCOLHIDA', 'select') ?? contrato?.proposta ?? null,
       valor_liquido:    getProp(p, 'VALOR LIQUIDO A RECEBER', 'number'),
       valor_foto:       getProp(p, 'VALOR SERVIÇO FOTO', 'number'),
       valor_real_foto:  sbRow?.valor_real_foto ?? null,
@@ -330,18 +383,22 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       alerta_30du:      getProp(p, 'ALERTA 30DU ENVIADO', 'checkbox'),
       agendamento_email:getProp(p, 'AGENDAMENTO EMAIL', 'select'),
       contratos:        getProp(p, 'CONTRATOS', 'url'),
-      nome_noiva:       getProp(p, 'Nome da Noiva', 'text'),
-      nome_noivo:       getProp(p, 'nome do noivo', 'text'),
-      email_noiva:      getProp(p, 'E-mail da noiva', 'email'),
-      email_noivo:      getProp(p, 'E-mail do noivo', 'email'),
-      tel_noiva:        getProp(p, 'Telefone da noiva', 'phone'),
-      tel_noivo:        getProp(p, 'Telefone do noivo', 'phone'),
-      morada_noiva:     getProp(p, 'Morada da Noiva', 'text'),
-      morada_noivo:     getProp(p, 'Morada do noivo', 'text'),
-      cc_noiva:         getProp(p, 'N.º C.Cidadão da noiva', 'text'),
-      cc_noivo:         getProp(p, 'N.ºC.Cidadao Noivo', 'text'),
-      nif_noiva:        getProp(p, 'N.º Iden.Fiscal Noiva', 'text'),
-      nif_noivo:        getProp(p, 'N.º Iden. Fiscal Noivo', 'text'),
+      // Dados dos noivos / pais — Notion primeiro, dados_contrato_cps como fallback
+      nome_noiva:       getProp(p, 'Nome da Noiva', 'text')         ?? contrato?.nome_noiva   ?? null,
+      nome_noivo:       getProp(p, 'nome do noivo', 'text')         ?? contrato?.nome_noivo   ?? null,
+      email_noiva:      getProp(p, 'E-mail da noiva', 'email')      ?? contrato?.email_noiva  ?? null,
+      email_noivo:      getProp(p, 'E-mail do noivo', 'email')      ?? contrato?.email_noivo  ?? null,
+      tel_noiva:        getProp(p, 'Telefone da noiva', 'phone')    ?? contrato?.tel_noiva    ?? null,
+      tel_noivo:        getProp(p, 'Telefone do noivo', 'phone')    ?? contrato?.tel_noivo    ?? null,
+      morada_noiva:     getProp(p, 'Morada da Noiva', 'text')       ?? contrato?.morada_noiva ?? null,
+      morada_noivo:     getProp(p, 'Morada do noivo', 'text')       ?? contrato?.morada_noivo ?? null,
+      cc_noiva:         getProp(p, 'N.º C.Cidadão da noiva', 'text')?? contrato?.cc_noiva     ?? null,
+      cc_noivo:         getProp(p, 'N.ºC.Cidadao Noivo', 'text')    ?? contrato?.cc_noivo     ?? null,
+      nif_noiva:        getProp(p, 'N.º Iden.Fiscal Noiva', 'text') ?? contrato?.nif_noiva    ?? null,
+      nif_noivo:        getProp(p, 'N.º Iden. Fiscal Noivo', 'text')?? contrato?.nif_noivo    ?? null,
+      // Campos extra (batizado)
+      nome_crianca:     (sbRow as any)?.nome_crianca  ?? contrato?.nome_crianca  ?? null,
+      idade_crianca:    (sbRow as any)?.idade_crianca ?? contrato?.idade_crianca ?? null,
       servico_foto:     getProp(p, 'serviço de fotografia', 'multi_select'),
       servico_video:    getProp(p, 'serviço de video', 'multi_select'),
       nome_disco:           getProp(p, 'NOME DO DISCO', 'multi_select'),
