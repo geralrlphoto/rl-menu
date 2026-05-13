@@ -48,6 +48,19 @@ async function fetchMaqueteSettings(pageId: string): Promise<Record<string, any>
       nomeCrianca: _nc,
       idadeCrianca: _ic,
       portalPassword: _pw,
+      // Específicos do evento da maquete — NÃO copiar para novos portais
+      contratoUrl: _cu,
+      contratoDisponivel: _cd,
+      tasks: _t,
+      preWeddingSlots: _pws,
+      preWeddingReservedSlotId: _prsid,
+      preWeddingReservedAt: _prat,
+      activeNavId: _ani,
+      // Valores monetários da maquete (não fazem sentido para outros clientes)
+      valorFoto: _vf,
+      valorVideo: _vv,
+      valorExtras: _ve,
+      valorTotal: _vt,
       ...inherited
     } = s
     return inherited
