@@ -75,7 +75,7 @@ function fmtData(d: string | null | undefined): string {
 // ─── Cria portal de casamento (tabela `portais`) ─────────────────────────────
 // Herda pageTitles/hiddenNav/etc. da maquete casamento para que sub-páginas
 // renomeadas pelo admin e itens escondidos apareçam corretamente.
-async function criarPortalCasamento(ref: string, dados: any) {
+async function criarPortalCasamento(ref: string, dados: any, password: string) {
   const sb = db()
   const maquete = await fetchMaqueteSettings(CASAMENTO_TEMPLATE_PAGE_ID)
   const row = {
@@ -96,6 +96,7 @@ async function criarPortalCasamento(ref: string, dados: any) {
       dataFormatada: fmtData(dados.data_casamento),
       local: dados.local_cerimonia ?? '',
       tipoPortal: 'casamento',
+      portalPassword: password,
     },
     updated_at: new Date().toISOString(),
   }
@@ -110,7 +111,7 @@ async function criarPortalCasamento(ref: string, dados: any) {
 // Copia pageTitles/hiddenNav/guiaLinks/etc. da maquete batizado para que o
 // novo portal apareça com a estrutura batizado (GUIA DOS PAIS, CRONOGRAMA
 // BATIZADO, etc.) em vez do default casamento.
-async function criarPortalBatizado(ref: string, dados: any) {
+async function criarPortalBatizado(ref: string, dados: any, password: string) {
   const sb = db()
   const maquete = await fetchMaqueteSettings(BATIZADO_TEMPLATE_PAGE_ID)
   const row = {
@@ -133,6 +134,7 @@ async function criarPortalBatizado(ref: string, dados: any) {
       tipoPortal: 'batizado',
       nomeCrianca:  dados.nome_crianca  ?? '',
       idadeCrianca: dados.idade_crianca ?? '',
+      portalPassword: password,
     },
     updated_at: new Date().toISOString(),
   }
@@ -147,6 +149,7 @@ function buildPortalEmail(opts: {
   url: string
   tipo: 'casamento' | 'batizado'
   data?: string
+  password: string
 }): string {
   const primeiroNome = opts.nome_noivos.split(/[\s&]/)[0]
   const tituloTipo = opts.tipo === 'batizado' ? 'O vosso espaço para o batizado' : 'O vosso espaço'
@@ -167,6 +170,14 @@ function buildPortalEmail(opts: {
             Criámos um espaço dedicado a vocês onde podem acompanhar todas as etapas,<br>
             ${opts.tipo === 'casamento' ? 'desde a sessão pré-wedding até à entrega final' : 'desde a sessão até à entrega das fotos e do vídeo'}.
           </p>
+
+          <table cellpadding="0" cellspacing="0" style="margin:0 auto 28px;border:0.5px solid #6a5430;width:100%;max-width:340px;background:rgba(201,169,110,0.04);">
+            <tr><td style="padding:18px 24px;text-align:center;">
+              <p style="margin:0 0 6px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;">🔑 Password de acesso</p>
+              <p style="margin:0;font-size:22px;font-family:'Courier New',monospace;letter-spacing:0.15em;color:#f0e8d8;font-weight:600;">${opts.password}</p>
+            </td></tr>
+          </table>
+
           <a href="${opts.url}" style="display:inline-block;padding:16px 40px;background:#c9a96e;color:#0e0b07;text-decoration:none;font-size:12px;letter-spacing:0.4em;font-weight:600;">
             ABRIR PORTAL →
           </a>
@@ -205,8 +216,12 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json()
     const referencia = String(body.referencia ?? '').trim()
+    const password = String(body.password ?? '').trim()
     if (!referencia) {
       return NextResponse.json({ error: 'referencia obrigatória' }, { status: 400 })
+    }
+    if (!password) {
+      return NextResponse.json({ error: 'password obrigatória' }, { status: 400 })
     }
 
     const sb = db()
@@ -243,8 +258,8 @@ export async function POST(req: NextRequest) {
     // Cria o portal conforme tipo
     const tipo = contrato.tipo_evento === 'batizado' ? 'batizado' : 'casamento'
     const portalUrl = tipo === 'batizado'
-      ? await criarPortalBatizado(referencia, contrato)
-      : await criarPortalCasamento(referencia, contrato)
+      ? await criarPortalBatizado(referencia, contrato, password)
+      : await criarPortalCasamento(referencia, contrato, password)
 
     // Marca como aprovado
     const aprovado_em = new Date().toISOString()
@@ -265,6 +280,7 @@ export async function POST(req: NextRequest) {
           url: portalUrl,
           tipo,
           data: contrato.data_casamento,
+          password,
         })
       )
     }

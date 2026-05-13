@@ -837,6 +837,7 @@ const PORTAL_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
 function ContratoCPSAprovacaoSection({ referencia }: { referencia?: string }) {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [password, setPassword] = useState('')
   const [data, setData] = useState<{
     exists: boolean
     contrato?: {
@@ -869,14 +870,19 @@ function ContratoCPSAprovacaoSection({ referencia }: { referencia?: string }) {
 
   async function handleAprovar() {
     if (!referencia) return
-    if (!confirm(`Aprovar contrato e criar portal para "${data?.contrato?.nome_noivos}"?\n\nIsto envia um email automático ao cliente com o link do portal.`)) return
+    const pwd = password.trim()
+    if (!pwd) {
+      setError('Define a password do portal antes de aprovar.')
+      return
+    }
+    if (!confirm(`Aprovar contrato e criar portal para "${data?.contrato?.nome_noivos}"?\n\nA password (${pwd}) será enviada por email ao cliente.`)) return
     setSubmitting(true)
     setError(null)
     try {
       const r = await fetch('/api/contrato-cps/aprovar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ referencia }),
+        body: JSON.stringify({ referencia, password: pwd }),
       })
       const j = await r.json()
       if (!r.ok) throw new Error(j.error ?? 'erro')
@@ -937,11 +943,31 @@ function ContratoCPSAprovacaoSection({ referencia }: { referencia?: string }) {
             Email: {c.email_noiva || c.email_noivo || '—'}
           </p>
         </div>
-        <button onClick={handleAprovar} disabled={submitting}
-          className="px-5 py-3 text-[11px] tracking-[0.3em] uppercase border border-gold/60 bg-gold/10 text-gold hover:bg-gold/20 disabled:opacity-50 whitespace-nowrap">
-          {submitting ? 'A criar...' : '✓ Aprovar e criar portal'}
-        </button>
       </div>
+
+      {/* Password do portal — obrigatória antes de aprovar */}
+      <div className="mt-4 pt-4 border-t border-amber-500/20">
+        <div className="flex items-end gap-3">
+          <div className="flex-1">
+            <p className="text-[10px] tracking-[0.3em] text-amber-400/70 uppercase mb-2">
+              🔑 Password do portal
+              <span className="text-amber-400/40 normal-case tracking-normal ml-2">(será enviada ao cliente)</span>
+            </p>
+            <input
+              type="text"
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); setError(null) }}
+              placeholder="Ex.: sofia2026"
+              className="w-full bg-black/30 border border-amber-500/30 rounded px-3 py-2.5 text-sm text-white/90 outline-none focus:border-amber-400/60 placeholder:text-white/20"
+            />
+          </div>
+          <button onClick={handleAprovar} disabled={submitting || !password.trim()}
+            className="px-5 py-3 text-[11px] tracking-[0.3em] uppercase border border-gold/60 bg-gold/10 text-gold hover:bg-gold/20 disabled:opacity-30 disabled:cursor-not-allowed whitespace-nowrap">
+            {submitting ? 'A criar...' : '✓ Aprovar e criar portal'}
+          </button>
+        </div>
+      </div>
+
       {error && (
         <p className="mt-3 text-xs text-red-400/80">{error}</p>
       )}
