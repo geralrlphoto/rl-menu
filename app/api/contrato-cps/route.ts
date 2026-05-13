@@ -123,7 +123,8 @@ async function saveToSupabase(data: Record<string, any>) {
 }
 
 // ─── Email cliente: gold card de confirmação ─────────────────────────────────
-function buildClienteEmail(data: { nome_noivos: string; data_casamento: string | null }): string {
+function buildClienteEmail(data: { nome_noivos: string; data_casamento: string | null; tipo_evento?: string }): string {
+  const isBatizado = data.tipo_evento === 'batizado'
   const dataFormatada = data.data_casamento
     ? (() => {
         try {
@@ -135,6 +136,10 @@ function buildClienteEmail(data: { nome_noivos: string; data_casamento: string |
     : ''
 
   const primeiroNome = data.nome_noivos.split(/[\s&]/)[0]
+
+  // Labels condicionais por tipo de evento
+  const labelNomes  = isBatizado ? 'Pais'              : 'Noivos'
+  const labelData   = isBatizado ? 'Data do Batizado'  : 'Data do Casamento'
 
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -174,10 +179,10 @@ function buildClienteEmail(data: { nome_noivos: string; data_casamento: string |
 
           <table cellpadding="0" cellspacing="0" style="margin:0 auto 28px;border:0.5px solid #6a5430;width:100%;max-width:400px;background:rgba(201,169,110,0.04);">
             <tr><td style="padding:24px 32px;text-align:center;">
-              <p style="margin:0 0 4px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;">Noivos</p>
+              <p style="margin:0 0 4px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;">${labelNomes}</p>
               <p style="margin:0 0 20px;font-size:22px;font-style:italic;font-weight:400;color:#c9a96e;line-height:1.2;">${data.nome_noivos}</p>
               ${dataFormatada ? `
-              <p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Data do Casamento</p>
+              <p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">${labelData}</p>
               <p style="margin:0;font-size:14px;color:#d4c9b0;">${dataFormatada}</p>
               ` : ''}
             </td></tr>
@@ -458,7 +463,11 @@ export async function POST(req: NextRequest) {
       await sendEmail(
         clienteEmail,
         '✓ Dados recebidos — RL Photo Video',
-        buildClienteEmail({ nome_noivos: data.nome_noivos!, data_casamento: data.data_casamento })
+        buildClienteEmail({
+          nome_noivos: data.nome_noivos!,
+          data_casamento: data.data_casamento,
+          tipo_evento: tipo_evento,
+        })
       )
     }
 
