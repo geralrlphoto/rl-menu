@@ -206,17 +206,25 @@ function buildClienteEmail(data: { nome_noivos: string; data_casamento: string |
 </body></html>`
 }
 
-// ─── Email admin: notificação de novos dados recebidos ───────────────────────
+// ─── Email admin: notificação completa com TODOS os campos do formulário ─────
 function buildAdminEmail(data: Record<string, any>): string {
   const isBatizado = data.tipo_evento === 'batizado'
   const tipoLabel = isBatizado ? 'Batizado.' : 'para CPS.'
   const noivosPaisLabel = isBatizado ? 'Pais' : 'Noivos / Pais'
+
+  // Helpers
+  const field = (label: string, value: any) => value
+    ? `<tr><td style="padding:8px 0;border-bottom:1px solid #2a1f10;"><p style="margin:0 0 3px;font-size:8px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">${label}</p><p style="margin:0;font-size:13px;color:#d4c9b0;line-height:1.5;">${String(value).replace(/\n/g, '<br>')}</p></td></tr>`
+    : ''
+
+  const sectionTitle = (label: string) => `<tr><td style="padding:24px 0 12px;"><p style="margin:0;font-size:9px;letter-spacing:0.5em;color:#c9a96e;text-transform:uppercase;border-bottom:1px solid #6a5430;padding-bottom:8px;">${label}</p></td></tr>`
+
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;background:#0e0b07;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#0e0b07;padding:40px 16px;">
     <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#120e09;border:0.5px solid #4a3a1e;">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#120e09;border:0.5px solid #4a3a1e;">
 
         <tr><td style="padding:0;">
           <table width="100%" cellpadding="0" cellspacing="0"><tr>
@@ -226,39 +234,64 @@ function buildAdminEmail(data: Record<string, any>): string {
           </tr></table>
         </td></tr>
 
-        <tr><td style="padding:8px 56px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
+        <tr><td style="padding:8px 48px 48px;font-family:Georgia,'Times New Roman',serif;">
 
-          <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
-            width="80" alt="RL" style="display:block;margin:0 auto 24px;width:80px;height:auto;opacity:0.9;" />
+          <div style="text-align:center;">
+            <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
+              width="80" alt="RL" style="display:block;margin:0 auto 24px;width:80px;height:auto;opacity:0.9;" />
 
-          <table cellpadding="0" cellspacing="0" style="margin:0 auto 20px;width:52px;height:52px;border-radius:50%;border:1.5px solid #c9a96e;"><tr><td align="center" valign="middle">
-            <span style="font-size:22px;color:#c9a96e;">&#10003;</span>
-          </td></tr></table>
+            <table cellpadding="0" cellspacing="0" style="margin:0 auto 20px;width:52px;height:52px;border-radius:50%;border:1.5px solid #c9a96e;"><tr><td align="center" valign="middle">
+              <span style="font-size:22px;color:#c9a96e;">&#10003;</span>
+            </td></tr></table>
 
-          <p style="margin:0 0 4px;font-size:28px;font-style:italic;font-weight:300;color:#c9a96e;line-height:1.2;">Olá, Rui!</p>
-          <p style="margin:0;font-size:38px;font-weight:400;color:#f0e8d8;line-height:1.1;">Novos dados</p>
-          <p style="margin:0 0 24px;font-size:38px;font-weight:400;font-style:italic;color:#c9a96e;line-height:1.2;">${tipoLabel}</p>
+            <p style="margin:0 0 4px;font-size:28px;font-style:italic;font-weight:300;color:#c9a96e;line-height:1.2;">Olá, Rui!</p>
+            <p style="margin:0;font-size:38px;font-weight:400;color:#f0e8d8;line-height:1.1;">Novos dados</p>
+            <p style="margin:0 0 16px;font-size:38px;font-weight:400;font-style:italic;color:#c9a96e;line-height:1.2;">${tipoLabel}</p>
 
-          <div style="margin:0 0 24px;color:#6a5430;font-size:12px;letter-spacing:0.35em;">&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</div>
+            ${data.referencia_evento ? `<p style="margin:8px 0 0;font-size:13px;color:#c9b88a;font-family:'Courier New',monospace;letter-spacing:0.15em;">${data.referencia_evento}</p>` : ''}
 
-          <table cellpadding="0" cellspacing="0" style="margin:0 auto 28px;border:0.5px solid #6a5430;width:100%;max-width:400px;background:rgba(201,169,110,0.04);">
-            <tr><td style="padding:24px 32px;text-align:left;">
-              ${data.referencia_evento ? `<p style="margin:0 0 4px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;text-align:center;">Referência</p><p style="margin:0 0 16px;font-size:14px;color:#c9b88a;font-family:'Courier New',monospace;letter-spacing:0.1em;text-align:center;">${data.referencia_evento}</p>` : ''}
-              <p style="margin:0 0 4px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;text-align:center;">${noivosPaisLabel}</p>
-              <p style="margin:0 0 20px;font-size:22px;font-style:italic;color:#c9a96e;line-height:1.2;text-align:center;">${data.nome_noivos ?? '—'}</p>
-              ${isBatizado && data.nome_crianca ? `<p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Criança</p><p style="margin:0 0 12px;font-size:13px;color:#d4c9b0;">${data.nome_crianca}${data.idade_crianca ? ` · ${data.idade_crianca}` : ''}</p>` : ''}
-              ${data.data_casamento ? `<p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Data</p><p style="margin:0 0 12px;font-size:13px;color:#d4c9b0;">${data.data_casamento}</p>` : ''}
-              ${data.local_cerimonia ? `<p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Local</p><p style="margin:0 0 12px;font-size:13px;color:#d4c9b0;">${data.local_cerimonia}</p>` : ''}
-              ${data.proposta ? `<p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Proposta</p><p style="margin:0 0 12px;font-size:13px;color:#d4c9b0;">${data.proposta}</p>` : ''}
-              ${data.servico ? `<p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Serviço</p><p style="margin:0 0 12px;font-size:13px;color:#d4c9b0;">${data.servico}</p>` : ''}
-              ${data.email_noiva ? `<p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Email ${isBatizado ? 'Mãe' : 'Noiva/Mãe'}</p><p style="margin:0 0 12px;font-size:13px;color:#d4c9b0;">${data.email_noiva}</p>` : ''}
-              ${data.email_noivo ? `<p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Email ${isBatizado ? 'Pai' : 'Noivo/Pai'}</p><p style="margin:0;font-size:13px;color:#d4c9b0;">${data.email_noivo}</p>` : ''}
-            </td></tr>
+            <div style="margin:24px 0;color:#6a5430;font-size:12px;letter-spacing:0.35em;">&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</div>
+          </div>
+
+          <table cellpadding="0" cellspacing="0" width="100%">
+
+            ${sectionTitle('Secção 01 — Dados Gerais')}
+            ${field('Referência do Evento', data.referencia_evento)}
+            ${field(noivosPaisLabel, data.nome_noivos)}
+            ${field(isBatizado ? 'Data do Batizado' : 'Data do Casamento', data.data_casamento)}
+            ${field('Local da Cerimónia', data.local_cerimonia)}
+            ${field('Proposta Escolhida', data.proposta)}
+            ${data.servico ? field('Serviço', data.servico) : ''}
+
+            ${isBatizado ? `
+              ${sectionTitle('Secção 02 — Dados da Criança')}
+              ${field('Nome da Criança', data.nome_crianca)}
+              ${field('Idade da Criança', data.idade_crianca)}
+            ` : ''}
+
+            ${sectionTitle(isBatizado ? 'Secção 03 — Dados da Mãe' : 'Secção 02 — Dados da Noiva')}
+            ${field(isBatizado ? 'Nome da Mãe' : 'Nome da Noiva', data.nome_noiva)}
+            ${field('Morada Completa', data.morada_noiva)}
+            ${field('Contacto', data.tel_noiva)}
+            ${field('Cartão de Cidadão', data.cc_noiva)}
+            ${field('NIF', data.nif_noiva)}
+            ${field('Email', data.email_noiva)}
+
+            ${sectionTitle(isBatizado ? 'Secção 04 — Dados do Pai' : 'Secção 03 — Dados do Noivo')}
+            ${field(isBatizado ? 'Nome do Pai' : 'Nome do Noivo', data.nome_noivo)}
+            ${field('Morada Completa', data.morada_noivo)}
+            ${field('Contacto', data.tel_noivo)}
+            ${field('Cartão de Cidadão', data.cc_noivo)}
+            ${field('NIF', data.nif_noivo)}
+            ${field('Email', data.email_noivo)}
+
           </table>
 
-          <p style="margin:0;font-size:15px;color:#a09070;line-height:1.8;">
-            Consulta o <strong style="color:#c9b88a;font-weight:500;">painel</strong> para todos os detalhes.
-          </p>
+          <div style="margin-top:32px;text-align:center;">
+            <p style="margin:0;font-size:13px;color:#a09070;line-height:1.8;">
+              Aprova o contrato em <strong style="color:#c9b88a;font-weight:500;">/eventos-2026/[id]</strong> para criar o portal.
+            </p>
+          </div>
 
         </td></tr>
 
