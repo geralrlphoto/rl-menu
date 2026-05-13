@@ -25,16 +25,10 @@ const BATIZADO_TEMPLATE_PAGE_ID = '35b220116d8a811b99b7f6f26648c017'
 const CASAMENTO_TEMPLATE_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
 const NOTION_TOKEN = process.env.NOTION_TOKEN!
 
-// Lê pageTitles + hiddenNav da maquete a partir de portal_template_settings
+// Lê settings completas da maquete a partir de portal_template_settings
 // (fonte autoritativa, igual ao /api/portais-clientes).
-async function fetchMaqueteSettings(pageId: string): Promise<{
-  pageTitles?: Record<string,string>
-  hiddenNav?: string[]
-  guiaLinks?: any
-  pageHeaders?: any
-  briefingLinks?: any
-  briefingInfo?: any
-}> {
+// Retorna TUDO exceto campos específicos do cliente (noiva/noivo/data/local/...)
+async function fetchMaqueteSettings(pageId: string): Promise<Record<string, any>> {
   try {
     const sb = db()
     const { data } = await sb
@@ -43,14 +37,20 @@ async function fetchMaqueteSettings(pageId: string): Promise<{
       .eq('page_id', pageId)
       .single()
     const s = data?.settings ?? {}
-    return {
-      pageTitles:    s.pageTitles,
-      hiddenNav:     s.hiddenNav,
-      guiaLinks:     s.guiaLinks,
-      pageHeaders:   s.pageHeaders,
-      briefingLinks: s.briefingLinks,
-      briefingInfo:  s.briefingInfo,
-    }
+    // Remove campos que são específicos do cliente (não devem ser herdados)
+    const {
+      referencia: _r,
+      noiva: _n,
+      noivo: _o,
+      data: _d,
+      dataFormatada: _df,
+      local: _l,
+      nomeCrianca: _nc,
+      idadeCrianca: _ic,
+      portalPassword: _pw,
+      ...inherited
+    } = s
+    return inherited
   } catch {
     return {}
   }
@@ -86,6 +86,9 @@ async function criarPortalCasamento(ref: string, dados: any) {
     data_formatada: fmtData(dados.data_casamento),
     local: dados.local_cerimonia ?? null,
     settings: {
+      // PRIMEIRO: tudo herdado da maquete (hero/galeria/parceiros/headers/etc)
+      ...maquete,
+      // DEPOIS: campos específicos do cliente (sobrescrevem maquete)
       referencia: ref,
       noiva: dados.nome_noiva ?? '',
       noivo: dados.nome_noivo ?? '',
@@ -93,12 +96,6 @@ async function criarPortalCasamento(ref: string, dados: any) {
       dataFormatada: fmtData(dados.data_casamento),
       local: dados.local_cerimonia ?? '',
       tipoPortal: 'casamento',
-      pageTitles:    maquete.pageTitles ?? {},
-      hiddenNav:     maquete.hiddenNav  ?? [],
-      guiaLinks:     maquete.guiaLinks,
-      pageHeaders:   maquete.pageHeaders,
-      briefingLinks: maquete.briefingLinks,
-      briefingInfo:  maquete.briefingInfo,
     },
     updated_at: new Date().toISOString(),
   }
@@ -124,6 +121,9 @@ async function criarPortalBatizado(ref: string, dados: any) {
     data_formatada: fmtData(dados.data_casamento),
     local: dados.local_cerimonia ?? null,
     settings: {
+      // PRIMEIRO: tudo herdado da maquete (hero/galeria/parceiros/headers/etc)
+      ...maquete,
+      // DEPOIS: campos específicos do cliente (sobrescrevem maquete)
       referencia: ref,
       noiva: dados.nome_noiva ?? '',
       noivo: dados.nome_noivo ?? '',
@@ -133,13 +133,6 @@ async function criarPortalBatizado(ref: string, dados: any) {
       tipoPortal: 'batizado',
       nomeCrianca:  dados.nome_crianca  ?? '',
       idadeCrianca: dados.idade_crianca ?? '',
-      // Herdado da maquete batizado
-      pageTitles:    maquete.pageTitles ?? {},
-      hiddenNav:     maquete.hiddenNav  ?? [],
-      guiaLinks:     maquete.guiaLinks,
-      pageHeaders:   maquete.pageHeaders,
-      briefingLinks: maquete.briefingLinks,
-      briefingInfo:  maquete.briefingInfo,
     },
     updated_at: new Date().toISOString(),
   }
