@@ -51,47 +51,65 @@ async function saveToNotion(data: Record<string, any>) {
 
     const refTitle = (data.referencia_evento ?? '').trim() || `AGUARDAR — ${data.nome_noivos ?? ''}`
 
-    const properties: Record<string, any> = {
+    // CORE: propriedades obrigatórias (sempre existem na BD do Notion)
+    const coreProperties: Record<string, any> = {
       'REFERÊNCIA DO EVENTO': { title: [{ text: { content: refTitle } }] },
       'CLIENTE':              rt(data.nome_noivos),
-      'TIPO DE EVENTO':       { select: { name: labelTipo } },
     }
+
+    // EXTRAS: propriedades que podem não existir na BD do Notion (versões antigas)
+    // Se Notion rejeitar, tenta novamente sem estas.
+    const extraProperties: Record<string, any> = {}
+
+    extraProperties['TIPO DE EVENTO'] = { select: { name: labelTipo } }
 
     if (tipo_evento === 'batizado') {
-      if (data.nome_crianca)  properties['NOME DA CRIANÇA']  = rt(data.nome_crianca)
-      if (data.idade_crianca) properties['IDADE DA CRIANÇA'] = rt(data.idade_crianca)
+      if (data.nome_crianca)  extraProperties['NOME DA CRIANÇA']  = rt(data.nome_crianca)
+      if (data.idade_crianca) extraProperties['IDADE DA CRIANÇA'] = rt(data.idade_crianca)
     }
 
-    if (data.data_casamento)  properties['DATA DO EVENTO']          = { date: { start: data.data_casamento } }
-    if (data.local_cerimonia) properties['LOCAL']                   = rt(data.local_cerimonia)
-    if (data.proposta)        properties['PROPOSTA ESCOLHIDA']      = { select: { name: data.proposta } }
-    if (data.nome_noiva)      properties['Nome da Noiva']           = rt(data.nome_noiva)
-    if (data.email_noiva)     properties['E-mail da noiva']         = { email: data.email_noiva }
-    if (data.tel_noiva)       properties['Telefone da noiva']       = { phone_number: data.tel_noiva }
-    if (data.morada_noiva)    properties['Morada da Noiva']         = rt(data.morada_noiva)
-    if (data.cc_noiva)        properties['N.º C.Cidadão da noiva']  = rt(data.cc_noiva)
-    if (data.nif_noiva)       properties['N.º Iden.Fiscal Noiva']   = rt(data.nif_noiva)
-    if (data.nome_noivo)      properties['nome do noivo']           = rt(data.nome_noivo)
-    if (data.email_noivo)     properties['E-mail do noivo']         = { email: data.email_noivo }
-    if (data.tel_noivo)       properties['Telefone do noivo']       = { phone_number: data.tel_noivo }
-    if (data.morada_noivo)    properties['Morada do noivo']         = rt(data.morada_noivo)
-    if (data.cc_noivo)        properties['N.ºC.Cidadao Noivo']      = rt(data.cc_noivo)
-    if (data.nif_noivo)       properties['N.º Iden. Fiscal Noivo']  = rt(data.nif_noivo)
+    if (data.data_casamento)  extraProperties['DATA DO EVENTO']          = { date: { start: data.data_casamento } }
+    if (data.local_cerimonia) extraProperties['LOCAL']                   = rt(data.local_cerimonia)
+    if (data.proposta)        extraProperties['PROPOSTA ESCOLHIDA']      = { select: { name: data.proposta } }
+    if (data.nome_noiva)      extraProperties['Nome da Noiva']           = rt(data.nome_noiva)
+    if (data.email_noiva)     extraProperties['E-mail da noiva']         = { email: data.email_noiva }
+    if (data.tel_noiva)       extraProperties['Telefone da noiva']       = { phone_number: data.tel_noiva }
+    if (data.morada_noiva)    extraProperties['Morada da Noiva']         = rt(data.morada_noiva)
+    if (data.cc_noiva)        extraProperties['N.º C.Cidadão da noiva']  = rt(data.cc_noiva)
+    if (data.nif_noiva)       extraProperties['N.º Iden.Fiscal Noiva']   = rt(data.nif_noiva)
+    if (data.nome_noivo)      extraProperties['nome do noivo']           = rt(data.nome_noivo)
+    if (data.email_noivo)     extraProperties['E-mail do noivo']         = { email: data.email_noivo }
+    if (data.tel_noivo)       extraProperties['Telefone do noivo']       = { phone_number: data.tel_noivo }
+    if (data.morada_noivo)    extraProperties['Morada do noivo']         = rt(data.morada_noivo)
+    if (data.cc_noivo)        extraProperties['N.ºC.Cidadao Noivo']      = rt(data.cc_noivo)
+    if (data.nif_noivo)       extraProperties['N.º Iden. Fiscal Noivo']  = rt(data.nif_noivo)
 
-    const res = await fetch('https://api.notion.com/v1/pages', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${NOTION_TOKEN}`,
-        'Notion-Version': '2022-06-28',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ parent: { database_id: EVENTOS_DB }, properties }),
-    })
+    // Função auxiliar para fazer o POST ao Notion
+    async function postNotion(props: Record<string, any>) {
+      return fetch('https://api.notion.com/v1/pages', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${NOTION_TOKEN}`,
+          'Notion-Version': '2022-06-28',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ parent: { database_id: EVENTOS_DB }, properties: props }),
+      })
+    }
+
+    // Tentativa 1: payload completo (core + extras)
+    let res = await postNotion({ ...coreProperties, ...extraProperties })
 
     if (!res.ok) {
-      const err = await res.text()
-      console.error('[contrato-cps] Notion error:', err)
-      return { ok: false, error: err }
+      const errText = await res.text()
+      console.warn('[contrato-cps] Notion full payload failed, retrying with core only:', errText)
+      // Tentativa 2: só core (caso a BD do Notion não tenha algumas propriedades)
+      res = await postNotion(coreProperties)
+      if (!res.ok) {
+        const err2 = await res.text()
+        console.error('[contrato-cps] Notion core payload also failed:', err2)
+        return { ok: false, error: err2 }
+      }
     }
 
     const page = await res.json()

@@ -227,8 +227,65 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     })
 
     if (!res.ok) {
-      const err = await res.json()
-      return NextResponse.json({ error: err.message }, { status: res.status })
+      // Fallback: o [id] pode ser um id Supabase de um evento criado sem Notion
+      // (ex.: form /contrato-cps cujo saveToNotion falhou). Carrega do Supabase
+      // e devolve uma "página virtual" com a mesma forma que o Notion devolveria.
+      const sb = supabase()
+      const { data: orphan } = await sb
+        .from('eventos_2026')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle()
+
+      if (!orphan) {
+        const err = await res.json()
+        return NextResponse.json({ error: err.message }, { status: res.status })
+      }
+
+      // Constrói o evento usando só dados Supabase
+      let tipoEventoArr: string[] = []
+      try { tipoEventoArr = typeof orphan.tipo_evento === 'string' ? JSON.parse(orphan.tipo_evento) : (orphan.tipo_evento ?? []) } catch { tipoEventoArr = [] }
+
+      const event = {
+        id: orphan.id,
+        referencia:       orphan.referencia ?? '',
+        cliente:          orphan.cliente ?? '',
+        data_evento:      orphan.data_evento ?? null,
+        local:            orphan.local ?? '',
+        tipo_evento:      tipoEventoArr,
+        tipo_servico:     orphan.tipo_servico ?? [],
+        servico_extra:    [],
+        status:           orphan.status ?? 'Não iniciada',
+        fotografo:        (() => { try { return JSON.parse(orphan.fotografo ?? '[]') } catch { return [] } })(),
+        videografo:       [],
+        editor_fotos:     null,
+        proposta:         null,
+        valor_liquido:    orphan.valor_liquido ?? null,
+        valor_foto:       orphan.valor_foto ?? null,
+        valor_real_foto:  orphan.valor_real_foto ?? null,
+        fotos_edicao_estado: orphan.fotos_edicao_estado ?? null,
+        sel_fotos_estado:    orphan.sel_fotos_estado ?? null,
+        video_estado:        orphan.video_estado ?? null,
+        album_estado:        orphan.album_estado ?? null,
+        valor_video:      null,
+        valor_extras:     null,
+        data_entrega:     null,
+        data_entrega_ini: null,
+        data_entrada:     null,
+        fotos_enviadas:   orphan.fotos_enviadas ?? false,
+        sel_enviado:      false,
+        alerta_30du:      false,
+        agendamento_email: null,
+        contratos:        null,
+        nome_noiva:       null,
+        nome_noivo:       null,
+        // Campos extra (batizado)
+        nome_crianca:     (orphan as any).nome_crianca ?? null,
+        idade_crianca:    (orphan as any).idade_crianca ?? null,
+        notion_url:       null,
+        _orphan: true, // flag para a UI saber que este evento ainda não tem Notion
+      }
+      return NextResponse.json({ event })
     }
 
     const page = await res.json()
