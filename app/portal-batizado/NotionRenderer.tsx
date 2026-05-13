@@ -118,11 +118,11 @@ export function NotionBlocks({ blocks, rootId, hiddenNav, backUrl, neutralCallou
       }
       case 'to_do':
         elements.push(
-          <div key={b.id} className="flex gap-2.5 items-start mb-2">
-            <div className={`w-4 h-4 mt-0.5 rounded border shrink-0 flex items-center justify-center ${data.checked ? 'bg-gold/30 border-gold/50' : 'border-white/25'}`}>
-              {data.checked && <span className="text-gold text-[9px] font-bold">✓</span>}
+          <div key={b.id} className="flex gap-2.5 items-start mb-2.5">
+            <div className={`w-5 h-5 mt-0.5 rounded border shrink-0 flex items-center justify-center ${data.checked ? 'bg-gold/30 border-gold/50' : 'border-white/25'}`}>
+              {data.checked && <span className="text-gold text-[10px] font-bold">✓</span>}
             </div>
-            <span className={`text-sm leading-relaxed ${data.checked ? 'line-through text-white/25' : 'text-white/65'}`}>
+            <span className={`text-base sm:text-[17px] leading-[1.7] ${data.checked ? 'line-through text-white/30' : 'text-white/80'}`}>
               {rt(data.rich_text)}
             </span>
           </div>
@@ -141,9 +141,9 @@ export function NotionBlocks({ blocks, rootId, hiddenNav, backUrl, neutralCallou
         }
         const cls = neutralCallout ? 'bg-transparent border-transparent' : (colorMap[data.color] ?? colorMap.default)
         elements.push(
-          <div key={b.id} className={`rounded-xl border px-4 py-3 mb-3 ${cls}`}>
+          <div key={b.id} className={`rounded-xl border px-4 py-3 mb-4 ${cls}`}>
             {plainText(data.rich_text) && (
-              <p className="text-sm font-semibold text-white/85 mb-2">{rt(data.rich_text)}</p>
+              <p className="text-base sm:text-[17px] text-white/90 leading-[1.75] mb-2">{rt(data.rich_text)}</p>
             )}
             {b.children && <NB blocks={b.children} />}
           </div>
@@ -152,7 +152,7 @@ export function NotionBlocks({ blocks, rootId, hiddenNav, backUrl, neutralCallou
       }
       case 'quote':
         elements.push(
-          <blockquote key={b.id} className="border-l-2 border-gold/40 pl-4 mb-3 italic text-sm text-white/50">
+          <blockquote key={b.id} className="border-l-2 border-gold/40 pl-4 mb-4 italic text-base sm:text-[17px] text-white/70 leading-[1.75]">
             {rt(data.rich_text)}
             {b.children && <NB blocks={b.children} />}
           </blockquote>
