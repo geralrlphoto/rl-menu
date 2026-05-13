@@ -17,6 +17,12 @@ function db() {
 
 export async function POST(req: NextRequest) {
   try {
+    // Auth admin (só admin pode trocar fotos da landing)
+    const auth = req.cookies.get('rl_auth')?.value
+    if (!auth || auth !== process.env.AUTH_SECRET) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const form = await req.formData()
     const file = form.get('file') as File | null
     const which = String(form.get('which') ?? '')

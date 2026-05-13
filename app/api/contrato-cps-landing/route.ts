@@ -34,6 +34,12 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    // Auth admin (necessária após /api/contrato-cps-landing passar para allowlist pública)
+    const auth = req.cookies.get('rl_auth')?.value
+    if (!auth || auth !== process.env.AUTH_SECRET) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const body = await req.json()
     const payload: Record<string, any> = { id: 1 }
     for (const k of ALLOWED_FIELDS) {
