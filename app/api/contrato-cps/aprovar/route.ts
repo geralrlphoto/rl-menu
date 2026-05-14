@@ -302,17 +302,20 @@ export async function POST(req: NextRequest) {
 
       const getNotionEmail = (k: string) => notionProps?.[k]?.email ?? null
       const getNotionText  = (k: string) => notionProps?.[k]?.rich_text?.map((t: any) => t.plain_text).join('') ?? null
+      const getNotionTitle = (k: string) => notionProps?.[k]?.title?.map((t: any) => t.plain_text).join('') ?? null
 
       // Preenche o que faltar
       const nNoiva = contrato.nome_noiva || eventoRow?.nome_noiva || getNotionText('Nome da Noiva')
       const nNoivo = contrato.nome_noivo || eventoRow?.nome_noivo || getNotionText('nome do noivo')
+      // Cliente (campo "RUI E LILIANA" da ficha) — tanto Supabase como Notion
+      const clienteFicha = eventoRow?.cliente || getNotionText('CLIENTE') || getNotionTitle('CLIENTE')
       contrato = {
         ...contrato,
         nome_noiva:    nNoiva,
         nome_noivo:    nNoivo,
         nome_noivos:   contrato.nome_noivos
                        || [nNoiva, nNoivo].filter(Boolean).join(' & ')
-                       || eventoRow?.cliente
+                       || clienteFicha           // ← fallback: campo CLIENTE da ficha
                        || referencia,
         email_noiva:   contrato.email_noiva  || getNotionEmail('E-mail da noiva'),
         email_noivo:   contrato.email_noivo  || getNotionEmail('E-mail do noivo'),
