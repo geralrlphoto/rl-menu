@@ -1305,7 +1305,13 @@ function PortalSubPageContent() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          photoSettings: { subpageHeaderUrl, pageHeaders },
+          // Sincroniza fotos + design premium (lista de páginas que usam o layout) +
+          // links dos callouts (Ver Mais), guia/calloutLinks, briefingInfo template
+          photoSettings: {
+            subpageHeaderUrl,
+            pageHeaders,
+            designPremiumPages,
+          },
           tipoPortal: 'batizado',
         }),
       })

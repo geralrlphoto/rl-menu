@@ -1167,7 +1167,12 @@ function PortalSubPageContent() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          photoSettings: { subpageHeaderUrl, pageHeaders },
+          // Sincroniza fotos + lista de páginas em Design Premium
+          photoSettings: {
+            subpageHeaderUrl,
+            pageHeaders,
+            designPremiumPages,
+          },
           tipoPortal: 'casamento',
         }),
       })
