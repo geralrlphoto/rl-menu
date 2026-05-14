@@ -235,12 +235,26 @@ function NovoEventoModal({ onClose, onCreated, anoFiltro, totalEventos }: { onCl
   )
 }
 
-// ─── Dropdown referências (usadas / livres) ─────────────────────────────────
+// ─── Dropdown referências (usadas / pendentes / livres) ─────────────────────
 function ReferenciasDropdown({ events, anoFiltro }: { events: Evento[]; anoFiltro: number }) {
   const [open, setOpen]   = useState(false)
   const [prefix, setPrefix] = useState<'CAS_RL' | 'CAS_KP' | 'BAT_RL' | 'BAT_KP'>('CAS_RL')
   const [copied, setCopied] = useState<string | null>(null)
+  const [pendentes, setPendentes] = useState<Map<string, string>>(new Map()) // ref → nota
   const anoSufixo = String(anoFiltro).slice(2) // "26" / "27"
+
+  // Carrega pendentes do Supabase
+  useEffect(() => {
+    if (!open) return
+    fetch('/api/referencias-pendentes')
+      .then(r => r.json())
+      .then(d => {
+        const map = new Map<string, string>()
+        ;(d.pendentes ?? []).forEach((p: any) => map.set(p.referencia, p.nota ?? ''))
+        setPendentes(map)
+      })
+      .catch(() => {/* tabela ainda não criada — silencioso */})
+  }, [open])
 
   // Mapa: referência → cliente (para mostrar a quem está atribuída)
   const usedMap = (() => {
@@ -256,6 +270,8 @@ function ReferenciasDropdown({ events, anoFiltro }: { events: Evento[]; anoFiltr
     BAT_KP: 'BATIZADO · KP',
   }
 
+  type Estado = 'usada' | 'pendente' | 'livre'
+
   // Gera lista de referências: 001..max(usadas)+10 (mínimo 30)
   const refsList = (() => {
     const [tipo, suf] = prefix.split('_')
@@ -270,17 +286,23 @@ function ReferenciasDropdown({ events, anoFiltro }: { events: Evento[]; anoFiltr
       .filter(n => !isNaN(n))
     const maxNum = usedNums.length > 0 ? Math.max(...usedNums) : 0
     const end = Math.max(maxNum + 10, 30)
-    const out: Array<{ ref: string; used: boolean; cliente: string }> = []
+    const out: Array<{ ref: string; estado: Estado; label: string }> = []
     for (let n = 1; n <= end; n++) {
       const ref = `${tipo}_${String(n).padStart(3, '0')}_${anoSufixo}_${suf}`
-      const cliente = usedMap.get(ref) ?? ''
-      out.push({ ref, used: !!cliente, cliente })
+      const cliente = usedMap.get(ref)
+      const nota = pendentes.get(ref)
+      let estado: Estado = 'livre'
+      let label = 'Livre'
+      if (cliente) { estado = 'usada'; label = cliente }
+      else if (nota !== undefined) { estado = 'pendente'; label = nota || 'Pendente' }
+      out.push({ ref, estado, label })
     }
     return out
   })()
 
-  const totalUsadas = refsList.filter(r => r.used).length
-  const totalLivres = refsList.length - totalUsadas
+  const totalUsadas    = refsList.filter(r => r.estado === 'usada').length
+  const totalPendentes = refsList.filter(r => r.estado === 'pendente').length
+  const totalLivres    = refsList.filter(r => r.estado === 'livre').length
 
   async function copiar(ref: string) {
     try {
@@ -288,6 +310,24 @@ function ReferenciasDropdown({ events, anoFiltro }: { events: Evento[]; anoFiltr
       setCopied(ref)
       setTimeout(() => setCopied(null), 1500)
     } catch {/* ignore */}
+  }
+
+  async function togglePendente(ref: string, currentEstado: Estado) {
+    if (currentEstado === 'usada') return
+    if (currentEstado === 'pendente') {
+      // Unmark: remove
+      const next = new Map(pendentes); next.delete(ref); setPendentes(next)
+      await fetch(`/api/referencias-pendentes?ref=${encodeURIComponent(ref)}`, { method: 'DELETE' }).catch(() => {})
+    } else {
+      // Mark: pede nota opcional
+      const nota = window.prompt(`Marcar ${ref} como PENDENTE.\n\nNota opcional (ex.: nome do potencial cliente):`, '')
+      if (nota === null) return // cancelou
+      const next = new Map(pendentes); next.set(ref, nota.trim()); setPendentes(next)
+      await fetch('/api/referencias-pendentes', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referencia: ref, nota: nota.trim() || null }),
+      }).catch(() => {})
+    }
   }
 
   return (
@@ -308,7 +348,7 @@ function ReferenciasDropdown({ events, anoFiltro }: { events: Evento[]; anoFiltr
           {/* Backdrop para fechar ao clicar fora */}
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           {/* Painel */}
-          <div className="absolute right-0 mt-2 w-[min(95vw,420px)] max-h-[70vh] overflow-hidden z-50 rounded-2xl border border-white/15 bg-[#0d0d0e] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.8)]">
+          <div className="absolute right-0 mt-2 w-[min(95vw,460px)] max-h-[70vh] overflow-hidden z-50 rounded-2xl border border-white/15 bg-[#0d0d0e] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.8)]">
             {/* Tabs */}
             <div className="flex border-b border-white/10 text-[10px] tracking-widest uppercase font-bold">
               {(['CAS_RL', 'CAS_KP', 'BAT_RL', 'BAT_KP'] as const).map(p => (
@@ -320,34 +360,48 @@ function ReferenciasDropdown({ events, anoFiltro }: { events: Evento[]; anoFiltr
             </div>
             {/* Legenda */}
             <div className="flex items-center justify-between px-4 py-2 text-[10px] tracking-widest text-white/40 uppercase border-b border-white/[0.05]">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 flex-wrap">
                 <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500/70" /> Usada {totalUsadas}</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-yellow-400/80" /> Pendente {totalPendentes}</span>
                 <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500/70" /> Livre {totalLivres}</span>
               </div>
               <span className="text-white/25">Ano {anoFiltro}</span>
             </div>
             {/* Lista */}
             <div className="overflow-y-auto max-h-[55vh] py-2">
-              {refsList.map(r => (
-                <button
-                  key={r.ref}
-                  onClick={() => copiar(r.ref)}
-                  title={r.used ? `Atribuída a: ${r.cliente}` : 'Livre — clica para copiar'}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-2 text-left transition-colors ${
-                    r.used
-                      ? 'text-red-300/85 hover:bg-red-500/[0.07]'
-                      : 'text-emerald-300/85 hover:bg-emerald-500/[0.07]'
-                  }`}
-                >
-                  <span className="flex items-center gap-2.5 font-mono text-xs">
-                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${r.used ? 'bg-red-500/70' : 'bg-emerald-500/70'}`} />
-                    {r.ref}
-                  </span>
-                  <span className={`text-[10px] tracking-wide truncate max-w-[180px] ${r.used ? 'text-red-300/50' : 'text-emerald-300/40'}`}>
-                    {copied === r.ref ? '✓ Copiado' : (r.used ? r.cliente : 'Livre')}
-                  </span>
-                </button>
-              ))}
+              {refsList.map(r => {
+                const styles = {
+                  usada:    { dot: 'bg-red-500/70',     text: 'text-red-300/85',     hover: 'hover:bg-red-500/[0.07]',     label: 'text-red-300/50' },
+                  pendente: { dot: 'bg-yellow-400/80',  text: 'text-yellow-300/85',  hover: 'hover:bg-yellow-500/[0.07]',  label: 'text-yellow-300/55' },
+                  livre:    { dot: 'bg-emerald-500/70', text: 'text-emerald-300/85', hover: 'hover:bg-emerald-500/[0.07]', label: 'text-emerald-300/40' },
+                }[r.estado]
+                return (
+                  <div key={r.ref}
+                    className={`flex items-center justify-between gap-2 px-4 py-2 transition-colors ${styles.hover}`}>
+                    <button onClick={() => copiar(r.ref)}
+                      title={r.estado === 'usada' ? `Atribuída a: ${r.label}` : (r.estado === 'pendente' ? 'Pendente — clica para copiar' : 'Livre — clica para copiar')}
+                      className={`flex-1 min-w-0 flex items-center gap-2.5 font-mono text-xs text-left ${styles.text}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${styles.dot}`} />
+                      <span className="truncate">{r.ref}</span>
+                    </button>
+                    <span className={`text-[10px] tracking-wide truncate max-w-[140px] ${styles.label}`}>
+                      {copied === r.ref ? '✓ Copiado' : r.label}
+                    </span>
+                    {r.estado !== 'usada' && (
+                      <button
+                        onClick={() => togglePendente(r.ref, r.estado)}
+                        title={r.estado === 'pendente' ? 'Remover pendente' : 'Marcar como pendente'}
+                        className={`shrink-0 text-[9px] tracking-widest uppercase font-bold px-2 py-1 rounded border transition-all ${
+                          r.estado === 'pendente'
+                            ? 'border-yellow-400/40 text-yellow-300/80 bg-yellow-400/10 hover:bg-yellow-400/20'
+                            : 'border-white/15 text-white/40 hover:border-yellow-400/40 hover:text-yellow-300/70'
+                        }`}>
+                        {r.estado === 'pendente' ? '× Pend' : '+ Pend'}
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
         </>
