@@ -164,13 +164,13 @@ async function criarPortalBatizado(ref: string, dados: any, password: string) {
 
 // ─── Email ao cliente com link do portal ──────────────────────────────────────
 function buildPortalEmail(opts: {
-  nome_noivos: string
+  nome_noivos: string | null | undefined
   url: string
   tipo: 'casamento' | 'batizado'
   data?: string
   password: string
 }): string {
-  const primeiroNome = opts.nome_noivos.split(/[\s&]/)[0]
+  const primeiroNome = (opts.nome_noivos || '').split(/[\s&]/)[0] || 'Olá'
   const tituloTipo = opts.tipo === 'batizado' ? 'O vosso espaço para o batizado' : 'O vosso espaço'
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"></head>
@@ -256,7 +256,7 @@ export async function POST(req: NextRequest) {
     const sb = db()
 
     // Busca os dados do contrato
-    const { data: contrato, error: fetchErr } = await sb
+    const { data: contratoOrig, error: fetchErr } = await sb
       .from('dados_contrato_cps')
       .select('*')
       .eq('referencia_evento', referencia)
@@ -264,10 +264,86 @@ export async function POST(req: NextRequest) {
       .limit(1)
       .maybeSingle()
 
-    if (fetchErr || !contrato) {
-      return NextResponse.json({
-        error: `Nenhum contrato encontrado para a referência ${referencia}`,
-      }, { status: 404 })
+    if (fetchErr) {
+      return NextResponse.json({ error: fetchErr.message }, { status: 500 })
+    }
+
+    // Se não há row em CPS OU faltam dados-chave, vai buscar à ficha do evento
+    // (eventos_2026 + Notion) para preencher como fallback.
+    let contrato: any = contratoOrig ?? { referencia_evento: referencia, id: null }
+    const semNome = !contrato.nome_noivos && !contrato.nome_noiva && !contrato.nome_noivo && !contrato.nome_crianca
+    const semEmail = !contrato.email_noiva && !contrato.email_noivo
+    const semData = !contrato.data_casamento
+
+    if (semNome || semEmail || semData) {
+      let eventoRow: any = null
+      for (const t of ['eventos_2026', 'eventos_2027']) {
+        const { data } = await sb.from(t).select('*').eq('referencia', referencia).maybeSingle()
+        if (data) { eventoRow = data; break }
+      }
+      // Tenta também via Notion para email_noiva/noivo
+      let notionProps: any = null
+      try {
+        const NOTION_TOKEN = process.env.NOTION_TOKEN
+        const EVENTOS_DB = '1ad220116d8a804b839ddc36f1e7ecf1'
+        if (NOTION_TOKEN) {
+          const res = await fetch(`https://api.notion.com/v1/databases/${EVENTOS_DB}/query`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${NOTION_TOKEN}`, 'Notion-Version': '2022-06-28', 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filter: { property: 'REFERÊNCIA DO EVENTO', title: { equals: referencia } }, page_size: 1 }),
+            cache: 'no-store',
+          })
+          if (res.ok) {
+            const d = await res.json()
+            notionProps = d.results?.[0]?.properties ?? null
+          }
+        }
+      } catch {/* silencioso */}
+
+      const getNotionEmail = (k: string) => notionProps?.[k]?.email ?? null
+      const getNotionText  = (k: string) => notionProps?.[k]?.rich_text?.map((t: any) => t.plain_text).join('') ?? null
+
+      // Preenche o que faltar
+      const nNoiva = contrato.nome_noiva || eventoRow?.nome_noiva || getNotionText('Nome da Noiva')
+      const nNoivo = contrato.nome_noivo || eventoRow?.nome_noivo || getNotionText('nome do noivo')
+      contrato = {
+        ...contrato,
+        nome_noiva:    nNoiva,
+        nome_noivo:    nNoivo,
+        nome_noivos:   contrato.nome_noivos
+                       || [nNoiva, nNoivo].filter(Boolean).join(' & ')
+                       || eventoRow?.cliente
+                       || referencia,
+        email_noiva:   contrato.email_noiva  || getNotionEmail('E-mail da noiva'),
+        email_noivo:   contrato.email_noivo  || getNotionEmail('E-mail do noivo'),
+        data_casamento:contrato.data_casamento || eventoRow?.data_evento || null,
+        local_cerimonia:contrato.local_cerimonia || eventoRow?.local || null,
+        tipo_evento:   contrato.tipo_evento || (
+          Array.isArray(eventoRow?.tipo_evento) && eventoRow.tipo_evento.find((t: string) => /batizado/i.test(t)) ? 'batizado' : 'casamento'
+        ),
+      }
+    }
+
+    // Garante que contrato tem id (cria row se admin nunca aprovou via CPS)
+    if (!contrato.id) {
+      const { data: inserted, error: insErr } = await sb
+        .from('dados_contrato_cps')
+        .insert({
+          referencia_evento: referencia,
+          nome_noivos: contrato.nome_noivos,
+          nome_noiva: contrato.nome_noiva,
+          nome_noivo: contrato.nome_noivo,
+          email_noiva: contrato.email_noiva,
+          email_noivo: contrato.email_noivo,
+          data_casamento: contrato.data_casamento,
+          local_cerimonia: contrato.local_cerimonia,
+          tipo_evento: contrato.tipo_evento,
+          contrato_aprovado_em: new Date().toISOString(),
+        })
+        .select('id')
+        .single()
+      if (insErr) return NextResponse.json({ error: insErr.message }, { status: 500 })
+      contrato.id = inserted?.id
     }
 
     // Idempotente: se já foi aprovado, devolve o link (sem recriar nada)
@@ -326,7 +402,7 @@ export async function POST(req: NextRequest) {
       <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#120e09;border:0.5px solid #4a3a1e;">
         <tr><td style="padding:40px 48px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
           <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.5em;color:#c9a96e;text-transform:uppercase;">✓ Portal criado</p>
-          <p style="margin:0 0 24px;font-size:30px;color:#f0e8d8;font-style:italic;">${contrato.nome_noivos}</p>
+          <p style="margin:0 0 24px;font-size:30px;color:#f0e8d8;font-style:italic;">${contrato.nome_noivos || referencia}</p>
           <div style="margin:0 0 24px;color:#6a5430;font-size:12px;letter-spacing:0.35em;">— · ◆ · —</div>
           <p style="margin:0 0 8px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;">Referência</p>
           <p style="margin:0 0 20px;font-size:18px;font-family:'Courier New',monospace;color:#c9b88a;">${referencia}</p>
