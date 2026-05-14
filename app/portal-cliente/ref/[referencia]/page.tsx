@@ -871,13 +871,13 @@ function BookingSection({ referencia, settings, onSettingsChange, isAdmin, tipoE
     <section className="px-4 pb-10 sm:pb-14">
       <div className="max-w-2xl mx-auto rounded-2xl overflow-hidden border border-white/40 bg-black"
         style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08]">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-4 border-b border-white/[0.08]">
           <div className="flex items-center gap-2.5">
             <span className={`w-2 h-2 rounded-full ${active ? 'bg-emerald-400/80' : 'bg-white/30'} animate-pulse shrink-0`} />
-            <h2 className="font-playfair font-black text-xl sm:text-2xl tracking-wide text-white"
+            <h2 className="font-playfair font-black text-lg sm:text-2xl tracking-wide text-white"
               style={{ textShadow: '0 0 14px rgba(255,255,255,0.9), 0 0 28px rgba(255,255,255,0.5)' }}>{tituloSec}</h2>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {saving && <span className="text-[10px] text-gold/40 animate-pulse">A guardar...</span>}
             {isAdmin && (
               <>
@@ -909,16 +909,18 @@ function BookingSection({ referencia, settings, onSettingsChange, isAdmin, tipoE
           <div className="p-5 space-y-3 border-b border-white/[0.06]">
             <p className="text-[10px] tracking-[0.3em] text-white/40 uppercase">Configurar Slots</p>
             {draftSlots.map(s => (
-              <div key={s.id} className="grid grid-cols-12 gap-2 items-center">
+              <div key={s.id} className="grid grid-cols-2 sm:grid-cols-12 gap-2 items-center">
                 <input type="date" value={s.date} onChange={e => updateDraftSlot(s.id, 'date', e.target.value)}
-                  className="col-span-4 bg-black/40 border border-white/15 rounded px-2 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40" />
+                  className="col-span-1 sm:col-span-4 bg-black/40 border border-white/15 rounded px-2 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40" />
                 <input type="time" value={s.time} onChange={e => updateDraftSlot(s.id, 'time', e.target.value)}
-                  className="col-span-3 bg-black/40 border border-white/15 rounded px-2 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40" />
+                  className="col-span-1 sm:col-span-3 bg-black/40 border border-white/15 rounded px-2 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40" />
                 <input type="text" value={s.local} placeholder="Local"
                   onChange={e => updateDraftSlot(s.id, 'local', e.target.value)}
-                  className="col-span-4 bg-black/40 border border-white/15 rounded px-2 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40 placeholder:text-white/20" />
+                  className="col-span-2 sm:col-span-4 bg-black/40 border border-white/15 rounded px-2 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40 placeholder:text-white/20" />
                 <button onClick={() => removeDraftSlot(s.id)}
-                  className="col-span-1 text-red-400/60 hover:text-red-400 text-lg leading-none">×</button>
+                  className="col-span-2 sm:col-span-1 text-red-400/60 hover:text-red-400 text-[10px] tracking-widest uppercase font-bold border border-red-400/30 hover:border-red-400/50 px-2 py-1 rounded sm:border-0 sm:hover:border-0 sm:p-0 sm:text-lg sm:leading-none">
+                  <span className="sm:hidden">× Remover</span><span className="hidden sm:inline">×</span>
+                </button>
               </div>
             ))}
             <div className="flex gap-2 pt-2">

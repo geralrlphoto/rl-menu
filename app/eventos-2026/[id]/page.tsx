@@ -1569,16 +1569,18 @@ function BookingSectionFicha({ referencia }: { referencia?: string }) {
         <div className="flex flex-col gap-2 border-t border-white/[0.06] pt-3">
           <p className="text-[10px] tracking-[0.3em] text-white/40 uppercase">Editar Slots</p>
           {draftSlots.map(s => (
-            <div key={s.id} className="grid grid-cols-12 gap-2 items-center">
+            <div key={s.id} className="grid grid-cols-2 sm:grid-cols-12 gap-2 items-center">
               <input type="date" value={s.date} onChange={e => updateDraftSlot(s.id, 'date', e.target.value)}
-                className="col-span-4 bg-black/40 border border-white/15 rounded px-2 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40" />
+                className="col-span-1 sm:col-span-4 bg-black/40 border border-white/15 rounded px-2 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40" />
               <input type="time" value={s.time} onChange={e => updateDraftSlot(s.id, 'time', e.target.value)}
-                className="col-span-3 bg-black/40 border border-white/15 rounded px-2 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40" />
+                className="col-span-1 sm:col-span-3 bg-black/40 border border-white/15 rounded px-2 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40" />
               <input type="text" value={s.local} placeholder="Local"
                 onChange={e => updateDraftSlot(s.id, 'local', e.target.value)}
-                className="col-span-4 bg-black/40 border border-white/15 rounded px-2 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40 placeholder:text-white/20" />
+                className="col-span-2 sm:col-span-4 bg-black/40 border border-white/15 rounded px-2 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40 placeholder:text-white/20" />
               <button onClick={() => removeDraftSlot(s.id)}
-                className="col-span-1 text-red-400/60 hover:text-red-400 text-lg leading-none">×</button>
+                className="col-span-2 sm:col-span-1 text-red-400/60 hover:text-red-400 text-[10px] tracking-widest uppercase font-bold border border-red-400/30 hover:border-red-400/50 px-2 py-1 rounded sm:border-0 sm:hover:border-0 sm:p-0 sm:text-lg sm:leading-none">
+                <span className="sm:hidden">× Remover</span><span className="hidden sm:inline">×</span>
+              </button>
             </div>
           ))}
           <div className="flex gap-2 pt-1 flex-wrap">
