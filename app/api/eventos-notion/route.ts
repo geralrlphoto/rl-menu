@@ -71,30 +71,27 @@ export async function POST(req: NextRequest) {
     }
     const page = await res.json()
 
-    // ── Criar tambem no Supabase (eventos_2026/2027) ────────────────────────
+    // ── Criar tambem no Supabase ─────────────────────────────────────────────
+    // Todos os eventos vão para eventos_2026 (filtrados por data_evento na lista).
+    // A tabela eventos_2027 NÃO existe.
     try {
-      const TABLE_BY_ANO: Record<number, string> = {
-        2026: 'eventos_2026',
-        2027: 'eventos_2027',
+      const sbRow: any = {
+        notion_id: page.id,
+        referencia: referencia ?? '',
+        cliente: cliente ?? '',
+        data_evento: data_evento ?? null,
+        local: local ?? '',
+        status: 'Não iniciada',
+        fotos_enviadas: false,
+        tipo_evento: tipo_evento?.length ? JSON.stringify(tipo_evento) : null,
+        tipo_servico: tipo_servico?.length ? tipo_servico : null, // text[] - array Postgres
+        fotografo: fotografo?.length ? JSON.stringify(fotografo) : null,
+        valor_foto: valor_foto != null ? Number(valor_foto) : null,
+        valor_video: valor_video != null ? Number(valor_video) : null,
+        valor_liquido: valor_liquido != null ? Number(valor_liquido) : (valor_video != null ? Number(valor_video) : null),
       }
-      const tbl = TABLE_BY_ANO[anoEvento]
-      if (tbl) {
-        const sbRow: any = {
-          notion_id: page.id,
-          referencia: referencia ?? '',
-          cliente: cliente ?? '',
-          data_evento: data_evento ?? null,
-          local: local ?? '',
-          status: 'Não iniciada',
-          fotos_enviadas: false,
-          tipo_evento: tipo_evento?.length ? JSON.stringify(tipo_evento) : null,
-          tipo_servico: tipo_servico?.length ? tipo_servico : null, // text[] - array Postgres
-          fotografo: fotografo?.length ? JSON.stringify(fotografo) : null,
-          valor_foto: valor_foto != null ? Number(valor_foto) : null,
-          valor_liquido: valor_liquido != null ? Number(valor_liquido) : (valor_video != null ? Number(valor_video) : null),
-        }
-        await sb().from(tbl).insert(sbRow)
-      }
+      const { error: insErr } = await sb().from('eventos_2026').insert(sbRow)
+      if (insErr) console.error('Erro a inserir no Supabase:', insErr)
     } catch (e) {
       console.error('Erro a inserir no Supabase:', e)
     }
