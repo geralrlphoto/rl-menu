@@ -1445,6 +1445,16 @@ function BookingSectionFicha({ referencia }: { referencia?: string }) {
 
 function PortalSection({ evento }: { evento: Evento }) {
   const referencia = evento.referencia!
+  // Detecta tipo do evento (batizado vs casamento) para usar a rota correta
+  const tipoEvento: 'casamento' | 'batizado' = (() => {
+    const tiposEvento = evento.tipo_evento ?? []
+    if (tiposEvento.map((t: string) => t.toUpperCase()).includes('BATIZADO')) return 'batizado'
+    if ((referencia ?? '').toUpperCase().startsWith('BAT_')) return 'batizado'
+    return 'casamento'
+  })()
+  const portalBase = tipoEvento === 'batizado' ? '/portal-batizado' : '/portal-cliente'
+  const labelCliente = tipoEvento === 'batizado' ? 'Ver Portal Batizado' : 'Ver Portal do Cliente'
+
   const [status, setStatus] = useState<'loading' | 'found' | 'not_found' | 'error'>('loading')
   const [creating, setCreating] = useState(false)
   const [pwBooking, setPwBooking] = useState<{ coupleNames: string; date: string; time: string; local: string; reservedAt: string | null } | null>(null)
@@ -1550,8 +1560,8 @@ function PortalSection({ evento }: { evento: Evento }) {
       })
       if (res.ok) {
         setStatus('found')
-        const portalBase = tipoPortal === 'batizado' ? '/portal-batizado' : '/portal-cliente'
-        window.open(`${portalBase}/ref/${encodeURIComponent(referencia)}`, '_blank')
+        const base = tipoPortal === 'batizado' ? '/portal-batizado' : '/portal-cliente'
+        window.open(`${base}/ref/${encodeURIComponent(referencia)}`, '_blank')
       }
     } finally {
       setCreating(false)
@@ -1656,18 +1666,18 @@ function PortalSection({ evento }: { evento: Evento }) {
           )}
 
           <div className="flex flex-col sm:flex-row gap-3">
-            <a href={`/portal-cliente/ref/${encodeURIComponent(referencia)}`} target="_blank" rel="noopener noreferrer"
+            <a href={`${portalBase}/ref/${encodeURIComponent(referencia)}`} target="_blank" rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black font-bold text-xs tracking-widest hover:bg-gold/80 transition-all uppercase">
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
               </svg>
-              Ver Portal do Cliente ↗
+              {labelCliente} ↗
             </a>
             <button
               onClick={() => {
                 sessionStorage.setItem(`portalAdmin_${referencia}`, 'true')
-                window.open(`/portal-cliente/ref/${encodeURIComponent(referencia)}`, '_blank')
+                window.open(`${portalBase}/ref/${encodeURIComponent(referencia)}?admin=1`, '_blank')
               }}
               className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-white/20 text-white/60 font-bold text-xs tracking-widest hover:bg-white/5 hover:text-white transition-all uppercase">
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -2315,6 +2325,13 @@ export default function EventoPage() {
       <div className="print:hidden">
         <ContratoCPSAprovacaoSection referencia={e.referencia ?? undefined} />
       </div>
+
+      {/* ── Acesso ao Portal do Cliente (sempre que existir portal) ── */}
+      {e.referencia && (
+        <div className="print:hidden mt-5">
+          <PortalSection evento={e} />
+        </div>
+      )}
 
       {/* ── Marcação (sincroniza com portal do cliente) ── */}
       <div className="print:hidden mt-5">
