@@ -1695,6 +1695,10 @@ function PortalSection({ evento }: { evento: Evento }) {
 
   const dtu = pwBooking ? Math.round((new Date(pwBooking.date + 'T00:00:00').getTime() - new Date().setHours(0,0,0,0)) / 86400000) : null
 
+  // Quando não há portal, esconde a secção inteira — a criação do portal
+  // é feita pela secção nova "Aprovação Contrato CPS" no topo da ficha.
+  if (status === 'not_found') return null
+
   return (
     <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 mb-5">
       <h2 className="text-[10px] tracking-[0.35em] text-gold uppercase mb-4">Portal do Cliente</h2>
@@ -1852,18 +1856,6 @@ function PortalSection({ evento }: { evento: Evento }) {
               {savingPassword ? '...' : passwordSaved ? '✓' : 'Guardar'}
             </button>
           </div>
-        </div>
-      )}
-      {status === 'not_found' && (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <p className="text-xs text-white/30">Nenhum portal com a referência <span className="text-gold/60 font-mono">{referencia}</span></p>
-          <button onClick={handleCriarPortal} disabled={creating}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gold/30 text-gold/70 font-medium text-xs tracking-widest hover:bg-gold/10 transition-all uppercase whitespace-nowrap disabled:opacity-50">
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
-            </svg>
-            {creating ? 'A criar...' : 'Criar Portal do Cliente'}
-          </button>
         </div>
       )}
       {status === 'error' && (
