@@ -235,6 +235,127 @@ function NovoEventoModal({ onClose, onCreated, anoFiltro, totalEventos }: { onCl
   )
 }
 
+// ─── Dropdown referências (usadas / livres) ─────────────────────────────────
+function ReferenciasDropdown({ events, anoFiltro }: { events: Evento[]; anoFiltro: number }) {
+  const [open, setOpen]   = useState(false)
+  const [prefix, setPrefix] = useState<'CAS_RL' | 'CAS_KP' | 'BAT_RL' | 'BAT_KP'>('CAS_RL')
+  const [copied, setCopied] = useState<string | null>(null)
+  const anoSufixo = String(anoFiltro).slice(2) // "26" / "27"
+
+  // Mapa: referência → cliente (para mostrar a quem está atribuída)
+  const usedMap = (() => {
+    const m = new Map<string, string>()
+    events.forEach(e => { if (e.referencia) m.set(e.referencia.toUpperCase(), e.cliente || '—') })
+    return m
+  })()
+
+  const PREFIX_LABEL: Record<string, string> = {
+    CAS_RL: 'CASAMENTO · RL',
+    CAS_KP: 'CASAMENTO · KP',
+    BAT_RL: 'BATIZADO · RL',
+    BAT_KP: 'BATIZADO · KP',
+  }
+
+  // Gera lista de referências: 001..max(usadas)+10 (mínimo 30)
+  const refsList = (() => {
+    const [tipo, suf] = prefix.split('_')
+    const filterPrefix = `${tipo}_`
+    const filterSuffix = `_${anoSufixo}_${suf}`
+    const usedNums = Array.from(usedMap.keys())
+      .filter(r => r.startsWith(filterPrefix) && r.endsWith(filterSuffix))
+      .map(r => {
+        const m = r.match(/^[A-Z]+_(\d+)_/)
+        return m ? parseInt(m[1], 10) : NaN
+      })
+      .filter(n => !isNaN(n))
+    const maxNum = usedNums.length > 0 ? Math.max(...usedNums) : 0
+    const end = Math.max(maxNum + 10, 30)
+    const out: Array<{ ref: string; used: boolean; cliente: string }> = []
+    for (let n = 1; n <= end; n++) {
+      const ref = `${tipo}_${String(n).padStart(3, '0')}_${anoSufixo}_${suf}`
+      const cliente = usedMap.get(ref) ?? ''
+      out.push({ ref, used: !!cliente, cliente })
+    }
+    return out
+  })()
+
+  const totalUsadas = refsList.filter(r => r.used).length
+  const totalLivres = refsList.length - totalUsadas
+
+  async function copiar(ref: string) {
+    try {
+      await navigator.clipboard.writeText(ref)
+      setCopied(ref)
+      setTimeout(() => setCopied(null), 1500)
+    } catch {/* ignore */}
+  }
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/15 text-white/70 font-bold text-xs tracking-widest hover:bg-white/[0.04] hover:border-white/30 transition-all uppercase"
+      >
+        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+        Referências
+        <span className="text-[10px] text-white/30 normal-case tracking-normal">({totalUsadas}/{refsList.length})</span>
+      </button>
+
+      {open && (
+        <>
+          {/* Backdrop para fechar ao clicar fora */}
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          {/* Painel */}
+          <div className="absolute right-0 mt-2 w-[min(95vw,420px)] max-h-[70vh] overflow-hidden z-50 rounded-2xl border border-white/15 bg-[#0d0d0e] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.8)]">
+            {/* Tabs */}
+            <div className="flex border-b border-white/10 text-[10px] tracking-widest uppercase font-bold">
+              {(['CAS_RL', 'CAS_KP', 'BAT_RL', 'BAT_KP'] as const).map(p => (
+                <button key={p} onClick={() => setPrefix(p)}
+                  className={`flex-1 px-2 py-3 transition-colors ${prefix === p ? 'text-gold bg-white/[0.03] border-b-2 border-gold' : 'text-white/40 hover:text-white/70'}`}>
+                  {PREFIX_LABEL[p]}
+                </button>
+              ))}
+            </div>
+            {/* Legenda */}
+            <div className="flex items-center justify-between px-4 py-2 text-[10px] tracking-widest text-white/40 uppercase border-b border-white/[0.05]">
+              <div className="flex items-center gap-4">
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500/70" /> Usada {totalUsadas}</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500/70" /> Livre {totalLivres}</span>
+              </div>
+              <span className="text-white/25">Ano {anoFiltro}</span>
+            </div>
+            {/* Lista */}
+            <div className="overflow-y-auto max-h-[55vh] py-2">
+              {refsList.map(r => (
+                <button
+                  key={r.ref}
+                  onClick={() => copiar(r.ref)}
+                  title={r.used ? `Atribuída a: ${r.cliente}` : 'Livre — clica para copiar'}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-2 text-left transition-colors ${
+                    r.used
+                      ? 'text-red-300/85 hover:bg-red-500/[0.07]'
+                      : 'text-emerald-300/85 hover:bg-emerald-500/[0.07]'
+                  }`}
+                >
+                  <span className="flex items-center gap-2.5 font-mono text-xs">
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${r.used ? 'bg-red-500/70' : 'bg-emerald-500/70'}`} />
+                    {r.ref}
+                  </span>
+                  <span className={`text-[10px] tracking-wide truncate max-w-[180px] ${r.used ? 'text-red-300/50' : 'text-emerald-300/40'}`}>
+                    {copied === r.ref ? '✓ Copiado' : (r.used ? r.cliente : 'Livre')}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 function Eventos2026Inner() {
   const [events, setEvents] = useState<Evento[]>([])
   const [loading, setLoading] = useState(true)
@@ -307,13 +428,16 @@ function Eventos2026Inner() {
           <h1 className="text-3xl sm:text-5xl font-extralight tracking-[0.15em] sm:tracking-[0.2em] text-white uppercase mt-3">Casamentos {anoFiltro}</h1>
           <p className="text-white/20 text-xs tracking-[0.3em] mt-2 uppercase">{casamentosCount} casamentos · {events.length} eventos totais</p>
         </div>
-        <button onClick={() => setShowNovoEvento(true)}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black font-bold text-xs tracking-widest hover:bg-gold/80 transition-all uppercase">
-          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
-          </svg>
-          Novo Evento
-        </button>
+        <div className="flex items-center gap-3">
+          <ReferenciasDropdown events={events} anoFiltro={anoFiltro} />
+          <button onClick={() => setShowNovoEvento(true)}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black font-bold text-xs tracking-widest hover:bg-gold/80 transition-all uppercase">
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
+            </svg>
+            Novo Evento
+          </button>
+        </div>
       </div>
       {showNovoEvento && (
         <NovoEventoModal onClose={() => setShowNovoEvento(false)} onCreated={loadEvents} anoFiltro={anoFiltro} totalEventos={events.length} />
