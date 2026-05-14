@@ -380,6 +380,9 @@ function Eventos2026Inner() {
                 {/* Info */}
                 <div>
                   <div className="text-white text-sm font-medium truncate">{e.cliente || e.referencia}</div>
+                  <div className={`text-[10px] mt-1 font-mono ${e.referencia ? 'text-gold/60' : 'text-white/20 italic'}`}>
+                    {e.referencia || 's/referência'}
+                  </div>
                   <div className="text-white/30 text-xs mt-0.5">
                     {String(dt.getDate()).padStart(2,'0')} {MESES_FULL[dt.getMonth()]} · {e.local || '—'}
                   </div>
@@ -461,7 +464,12 @@ function Eventos2026Inner() {
                       {/* Cliente */}
                       <div className="flex-1 min-w-0">
                         <div className="text-white font-medium text-sm truncate">{e.cliente || e.referencia || '—'}</div>
-                        <div className="text-white/30 text-xs truncate mt-0.5">{e.local || '—'}</div>
+                        <div className="text-white/30 text-xs truncate mt-0.5 flex items-center gap-2">
+                          <span className={`font-mono shrink-0 ${e.referencia ? 'text-gold/60' : 'text-white/20 italic'}`}>
+                            {e.referencia || 's/referência'}
+                          </span>
+                          {e.local && <><span className="text-white/15 shrink-0">·</span><span className="truncate">{e.local}</span></>}
+                        </div>
                       </div>
 
                       {/* Tipo */}
