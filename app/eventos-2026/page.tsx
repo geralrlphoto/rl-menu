@@ -364,6 +364,8 @@ function Eventos2026Inner() {
   const [tipoFilter, setTipoFilter] = useState('Todos')
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [showNovoEvento, setShowNovoEvento] = useState(false)
+  // Set de referencias com portal ativo (existe row em `portais`)
+  const [portaisAtivos, setPortaisAtivos] = useState<Set<string>>(new Set())
   const router = useRouter()
   const searchParams = useSearchParams()
   const anoFiltro = parseInt(searchParams.get('ano') ?? '2026')
@@ -393,7 +395,19 @@ function Eventos2026Inner() {
       .catch(() => { setError('Erro de ligação'); setLoading(false) })
   }
 
-  useEffect(() => { loadEvents() }, [anoFiltro])
+  function loadPortais() {
+    fetch('/api/portais')
+      .then(r => r.json())
+      .then(d => {
+        const list = (d.portais ?? d.rows ?? []) as Array<{ referencia?: string | null }>
+        const s = new Set<string>()
+        list.forEach(p => { if (p.referencia) s.add(p.referencia.toUpperCase()) })
+        setPortaisAtivos(s)
+      })
+      .catch(() => {/* silencioso */})
+  }
+
+  useEffect(() => { loadEvents(); loadPortais() }, [anoFiltro])
 
   const filtered = events.filter(e => {
     const matchAno = !e.data_evento || e.data_evento.startsWith(String(anoFiltro))
@@ -592,6 +606,14 @@ function Eventos2026Inner() {
                           <span className={`font-mono shrink-0 ${e.referencia ? 'text-gold/60' : 'text-white/20 italic'}`}>
                             {e.referencia || 's/referência'}
                           </span>
+                          {(() => {
+                            const ativo = e.referencia && portaisAtivos.has(e.referencia.toUpperCase())
+                            return (
+                              <span className={`shrink-0 text-[9px] tracking-widest uppercase font-bold ${ativo ? 'text-emerald-400/80' : 'text-white/25'}`}>
+                                · Portal: {ativo ? 'Ativo' : 'Inativo'}
+                              </span>
+                            )
+                          })()}
                           {e.local && <><span className="text-white/15 shrink-0">·</span><span className="truncate">{e.local}</span></>}
                         </div>
                       </div>
