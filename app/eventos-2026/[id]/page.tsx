@@ -2326,12 +2326,19 @@ export default function EventoPage() {
         <ContratoCPSAprovacaoSection referencia={e.referencia ?? undefined} />
       </div>
 
-      {/* ── Acesso ao Portal do Cliente (sempre que existir portal) ── */}
+      {/* ── Acesso ao Portal do Cliente ── */}
       {e.referencia && (
         <div className="print:hidden mt-5">
           <PortalSection evento={e} />
         </div>
       )}
+
+      {/* ── Contratos (movido do fundo da página para junto do Portal) ── */}
+      <div className="print:hidden mt-5 bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 flex flex-col gap-4">
+        <h2 className="text-[10px] tracking-[0.35em] text-gold uppercase">Contratos</h2>
+        <ContratoStatusSection eventoId={e.id} referencia={e.referencia ?? undefined} />
+        <ContratoUpload eventId={e.id} contratoUrl={e.contratos} onSaved={handleSaved} />
+      </div>
 
       {/* ── Marcação (sincroniza com portal do cliente) ── */}
       <div className="print:hidden mt-5">
@@ -2729,11 +2736,7 @@ export default function EventoPage() {
             })()}
           </div>
 
-          {/* Criar Contrato (Contrato CPS recebido foi movido para o topo da ficha) */}
-          <ContratoStatusSection eventoId={e.id} referencia={e.referencia ?? undefined} />
-
-          {/* Contrato PDF */}
-          <ContratoUpload eventId={e.id} contratoUrl={e.contratos} onSaved={handleSaved} />
+          {/* Contratos foi movido para o topo da ficha (junto do Portal do Cliente) */}
         </Section>
 
         {/* ── Estado das Entregas ── */}
