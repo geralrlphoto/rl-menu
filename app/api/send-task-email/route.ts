@@ -19,42 +19,103 @@ function db() {
   )
 }
 
+// Procura email da noiva no Notion (ficha do evento — "DADOS DOS NOIVOS")
+async function findEmailNotion(referencia: string): Promise<string | null> {
+  const NOTION_TOKEN = process.env.NOTION_TOKEN
+  if (!NOTION_TOKEN) return null
+  const EVENTOS_DB = '1ad220116d8a804b839ddc36f1e7ecf1'
+  try {
+    const res = await fetch(`https://api.notion.com/v1/databases/${EVENTOS_DB}/query`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${NOTION_TOKEN}`,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        filter: { property: 'REFERÊNCIA DO EVENTO', title: { equals: referencia } },
+        page_size: 1,
+      }),
+      cache: 'no-store',
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+    const page = data.results?.[0]
+    if (!page) return null
+    const props = page.properties ?? {}
+    return props['E-mail da noiva']?.email
+        || props['E-mail do noivo']?.email
+        || null
+  } catch { return null }
+}
+
 async function resolveDadosCliente(referencia: string) {
   const sb = db()
-  // 1) tenta dados_contrato_cps (fonte mais rica)
-  const { data: contrato } = await sb
-    .from('dados_contrato_cps')
-    .select('nome_noivos, nome_noiva, nome_noivo, nome_crianca, email_noiva, email_noivo, tipo_evento')
-    .eq('referencia_evento', referencia)
-    .order('id', { ascending: false })
-    .limit(1)
-    .maybeSingle()
 
-  if (contrato) {
-    return {
-      email: contrato.email_noiva || contrato.email_noivo || null,
-      nome:  contrato.nome_noivos || [contrato.nome_noiva, contrato.nome_noivo].filter(Boolean).join(' & ') || contrato.nome_crianca || '',
-      tipo:  (contrato.tipo_evento === 'batizado' ? 'batizado' : 'casamento') as 'casamento' | 'batizado',
-    }
-  }
+  // Carrega TODAS as fontes em paralelo (mais rápido + permite preencher
+  // o email da noiva mesmo quando dados_contrato_cps não tem)
+  const [contratoRes, portalRes, eventosRes] = await Promise.all([
+    sb.from('dados_contrato_cps')
+      .select('nome_noivos, nome_noiva, nome_noivo, nome_crianca, email_noiva, email_noivo, tipo_evento')
+      .eq('referencia_evento', referencia)
+      .order('id', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    sb.from('portais')
+      .select('noiva, noivo, settings')
+      .eq('referencia', referencia)
+      .maybeSingle(),
+    (async () => {
+      for (const t of ['eventos_2026', 'eventos_2027']) {
+        const { data } = await sb.from(t)
+          .select('email_noiva, email_noivo, nome_noiva, nome_noivo, cliente, tipo_evento, nome_crianca')
+          .eq('referencia', referencia)
+          .maybeSingle()
+        if (data) return data
+      }
+      return null
+    })(),
+  ])
+  const contrato = contratoRes.data
+  const portal   = portalRes.data
+  const evento   = eventosRes
+  const portalSettings = portal?.settings ?? {}
 
-  // 2) fallback: portais (settings.noiva/noivo)
-  const { data: portal } = await sb
-    .from('portais')
-    .select('noiva, noivo, settings')
-    .eq('referencia', referencia)
-    .maybeSingle()
+  // Email: 1) contrato CPS  2) portais.settings  3) eventos_YYYY  4) Notion
+  let email: string | null =
+       contrato?.email_noiva
+    || contrato?.email_noivo
+    || portalSettings.email_noiva
+    || portalSettings.email_noivo
+    || evento?.email_noiva
+    || evento?.email_noivo
+    || null
+  if (!email) email = await findEmailNotion(referencia)
 
-  if (portal) {
-    const s = portal.settings ?? {}
-    return {
-      email: s.email_noiva || s.email_noivo || null,
-      nome:  [portal.noiva, portal.noivo].filter(Boolean).join(' & ') || s.nomeCrianca || '',
-      tipo:  ((s.tipo === 'batizado' || s.tipoPortal === 'batizado') ? 'batizado' : 'casamento') as 'casamento' | 'batizado',
-    }
-  }
+  // Nome: melhor disponível
+  const nome =
+       contrato?.nome_noivos
+    || [contrato?.nome_noiva, contrato?.nome_noivo].filter(Boolean).join(' & ')
+    || contrato?.nome_crianca
+    || [portal?.noiva, portal?.noivo].filter(Boolean).join(' & ')
+    || [evento?.nome_noiva, evento?.nome_noivo].filter(Boolean).join(' & ')
+    || evento?.cliente
+    || evento?.nome_crianca
+    || portalSettings.nomeCrianca
+    || ''
 
-  return null
+  // Tipo: tenta detetar pelo contrato/settings/eventos_tipo_evento, fallback pela referência
+  const tipoFromAny =
+       contrato?.tipo_evento
+    || portalSettings.tipo
+    || portalSettings.tipoPortal
+    || (Array.isArray(evento?.tipo_evento) && evento?.tipo_evento.find((t: string) => /batizado/i.test(t)) ? 'batizado' : null)
+    || (typeof evento?.tipo_evento === 'string' && /batizado/i.test(evento.tipo_evento) ? 'batizado' : null)
+    || (referencia.toUpperCase().startsWith('BAT_') ? 'batizado' : 'casamento')
+  const tipo: 'casamento' | 'batizado' = tipoFromAny === 'batizado' ? 'batizado' : 'casamento'
+
+  if (!email) return null
+  return { email, nome, tipo }
 }
 
 function buildEmailHtml(opts: {
