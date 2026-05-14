@@ -1216,6 +1216,233 @@ function ContratoStatusSection({ eventoId, referencia }: { eventoId: string; ref
   )
 }
 
+// ─── BookingSection (Marcação Sessão/Reunião) — sincroniza com portal ───────
+type BookingSlot = { id: string; date: string; time: string; local: string }
+
+function BookingSectionFicha({ referencia }: { referencia?: string }) {
+  const [loading, setLoading] = useState(true)
+  const [exists, setExists]   = useState(false)
+  const [tipo, setTipo]       = useState<'sessao' | 'reuniao'>('sessao')
+  const [active, setActive]   = useState(false)
+  const [slots, setSlots]     = useState<BookingSlot[]>([])
+  const [reservedSlotId, setReservedSlotId] = useState<string | undefined>()
+  const [reservedAt, setReservedAt]         = useState<string | undefined>()
+  const [draftSlots, setDraftSlots] = useState<BookingSlot[]>([])
+  const [editing, setEditing] = useState(false)
+  const [saving, setSaving]   = useState(false)
+  const [notif, setNotif]     = useState<{ tone: 'ok' | 'err'; msg: string } | null>(null)
+
+  const tipoEvento: 'casamento' | 'batizado' = (referencia ?? '').toUpperCase().startsWith('BAT_') ? 'batizado' : 'casamento'
+
+  useEffect(() => {
+    if (!referencia) { setLoading(false); return }
+    fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`)
+      .then(r => r.json())
+      .then(d => {
+        if (!d.portal) { setExists(false); setLoading(false); return }
+        setExists(true)
+        const s = d.portal.settings ?? {}
+        setTipo(s.bookingType === 'reuniao' ? 'reuniao' : 'sessao')
+        setActive(!!s.bookingActive)
+        setSlots(Array.isArray(s.bookingSlots) ? s.bookingSlots : [])
+        setReservedSlotId(s.bookingReservedSlotId)
+        setReservedAt(s.bookingReservedAt)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [referencia])
+
+  useEffect(() => { setDraftSlots(slots) }, [JSON.stringify(slots)])
+  useEffect(() => {
+    if (!notif) return
+    const t = setTimeout(() => setNotif(null), 4500)
+    return () => clearTimeout(t)
+  }, [notif])
+
+  async function persistPatch(patch: Record<string, any>) {
+    if (!referencia) return
+    setSaving(true)
+    // PATCH /api/portais já faz merge: { ...current.settings, ...updates.settings }
+    await fetch('/api/portais', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referencia, updates: { settings: patch } }),
+    }).catch(() => null)
+    setSaving(false)
+  }
+
+  async function toggleActive() {
+    const next = !active
+    setActive(next)
+    await persistPatch({ bookingActive: next })
+    setNotif({ tone: 'ok', msg: next ? 'Secção ativa para o cliente.' : 'Secção desativada — cliente não vê.' })
+  }
+
+  async function changeTipo(novo: 'sessao' | 'reuniao') {
+    setTipo(novo)
+    await persistPatch({ bookingType: novo })
+  }
+
+  async function cancelarReserva() {
+    setReservedSlotId(undefined); setReservedAt(undefined)
+    await persistPatch({ bookingReservedSlotId: null, bookingReservedAt: null })
+    setNotif({ tone: 'ok', msg: 'Reserva do cliente cancelada.' })
+  }
+
+  function addDraftSlot() {
+    setDraftSlots(d => [...d, { id: Date.now().toString(), date: '', time: '', local: '' }])
+  }
+  function updateDraftSlot(id: string, field: keyof BookingSlot, value: string) {
+    setDraftSlots(d => d.map(s => s.id === id ? { ...s, [field]: value } : s))
+  }
+  function removeDraftSlot(id: string) {
+    setDraftSlots(d => d.filter(s => s.id !== id))
+  }
+  async function saveDraftSlots() {
+    const clean = draftSlots.filter(s => s.date && s.time)
+    setSlots(clean)
+    await persistPatch({ bookingSlots: clean })
+    setEditing(false)
+    setNotif({ tone: 'ok', msg: `${clean.length} slot(s) guardado(s).` })
+  }
+
+  function fmtData(d: string) {
+    if (!d) return ''
+    try {
+      return new Date(d + 'T12:00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' })
+    } catch { return d }
+  }
+
+  if (!referencia) return null
+  if (loading) return (
+    <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 flex flex-col gap-3">
+      <h2 className="text-[10px] tracking-[0.35em] text-gold uppercase">Marcação</h2>
+      <p className="text-[11px] text-white/30 italic">A carregar...</p>
+    </div>
+  )
+  if (!exists) return (
+    <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 flex flex-col gap-3">
+      <h2 className="text-[10px] tracking-[0.35em] text-gold uppercase">Marcação</h2>
+      <p className="text-[11px] text-white/30 italic">Portal ainda não foi criado. Cria o portal acima para configurar marcações.</p>
+    </div>
+  )
+
+  const reservedSlot = slots.find(s => s.id === reservedSlotId)
+  const portalUrl = tipoEvento === 'batizado'
+    ? `/portal-batizado/ref/${encodeURIComponent(referencia)}?admin=1`
+    : `/portal-cliente/ref/${encodeURIComponent(referencia)}?admin=1`
+
+  return (
+    <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 flex flex-col gap-4">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-3">
+          <h2 className="text-[10px] tracking-[0.35em] text-gold uppercase">Marcação</h2>
+          {saving && <span className="text-[9px] text-gold/40 animate-pulse">A guardar...</span>}
+        </div>
+        <div className="flex items-center gap-2">
+          <select value={tipo} onChange={e => changeTipo(e.target.value as 'sessao' | 'reuniao')}
+            className="text-[10px] bg-black/40 border border-white/15 text-white/70 rounded px-2 py-1">
+            <option value="sessao">Sessão Fotografia</option>
+            <option value="reuniao">Reunião</option>
+          </select>
+          <button onClick={toggleActive}
+            className={`text-[10px] tracking-widest font-bold uppercase px-3 py-1 rounded-lg border transition-all ${active ? 'border-emerald-400/50 text-emerald-300 bg-emerald-400/10' : 'border-white/20 text-white/45 bg-white/[0.02]'}`}>
+            {active ? '● Ativo (cliente vê)' : '○ Inativo (oculto)'}
+          </button>
+          <a href={portalUrl} target="_blank" rel="noopener noreferrer"
+            className="text-[10px] tracking-widest font-bold uppercase px-3 py-1 rounded-lg border border-gold/40 bg-gold/10 text-gold hover:bg-gold/20 transition-all">
+            Ver no Portal ↗
+          </a>
+        </div>
+      </div>
+
+      {notif && (
+        <div className={`text-[11px] px-3 py-2 rounded ${notif.tone === 'ok' ? 'border border-emerald-400/25 text-emerald-300/90 bg-emerald-400/5' : 'border border-red-400/25 text-red-300/80 bg-red-400/5'}`}>
+          {notif.tone === 'ok' ? '✓ ' : '⚠ '}{notif.msg}
+        </div>
+      )}
+
+      {/* Reserva atual */}
+      {reservedSlot && (
+        <div className="rounded-xl border border-emerald-400/40 bg-emerald-400/[0.06] p-4 flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <p className="text-[9px] tracking-[0.4em] text-emerald-300/70 uppercase mb-1">Cliente reservou</p>
+            <p className="text-base font-semibold text-emerald-200">
+              {fmtData(reservedSlot.date)} · {reservedSlot.time}{reservedSlot.local ? ' · ' + reservedSlot.local : ''}
+            </p>
+            {reservedAt && (
+              <p className="text-[10px] text-white/30 mt-1">Em {new Date(reservedAt).toLocaleString('pt-PT')}</p>
+            )}
+          </div>
+          <button onClick={cancelarReserva}
+            className="text-[10px] tracking-widest uppercase text-red-400/70 hover:text-red-400 border border-red-400/30 hover:border-red-400/50 px-3 py-1.5 rounded-lg">
+            Cancelar Reserva
+          </button>
+        </div>
+      )}
+
+      {/* Slots (lista compacta) */}
+      {!editing && (
+        <div className="flex flex-col gap-2">
+          {slots.length === 0 && (
+            <p className="text-[11px] text-white/30 italic">Sem slots configurados.</p>
+          )}
+          {slots.map(s => {
+            const isReserved = s.id === reservedSlotId
+            return (
+              <div key={s.id} className={`flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg border ${isReserved ? 'border-emerald-400/40 bg-emerald-400/[0.05]' : 'border-white/10 bg-white/[0.02]'}`}>
+                <div className="text-[12px] text-white/80">
+                  <span className="font-semibold">{fmtData(s.date)}</span>
+                  <span className="text-white/40 mx-2">·</span>
+                  <span>{s.time}</span>
+                  {s.local && <><span className="text-white/40 mx-2">·</span><span className="text-white/55">{s.local}</span></>}
+                </div>
+                {isReserved && <span className="text-[9px] tracking-widest text-emerald-300/70 uppercase">Reservado</span>}
+              </div>
+            )
+          })}
+          <div className="flex gap-2 pt-1">
+            <button onClick={() => setEditing(true)}
+              className="text-[10px] tracking-widest font-bold uppercase px-3 py-1.5 rounded-lg border border-gold/40 text-gold/80 hover:bg-gold/10">
+              ✎ Editar Slots
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Editor */}
+      {editing && (
+        <div className="flex flex-col gap-2 border-t border-white/[0.06] pt-3">
+          <p className="text-[10px] tracking-[0.3em] text-white/40 uppercase">Editar Slots</p>
+          {draftSlots.map(s => (
+            <div key={s.id} className="grid grid-cols-12 gap-2 items-center">
+              <input type="date" value={s.date} onChange={e => updateDraftSlot(s.id, 'date', e.target.value)}
+                className="col-span-4 bg-black/40 border border-white/15 rounded px-2 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40" />
+              <input type="time" value={s.time} onChange={e => updateDraftSlot(s.id, 'time', e.target.value)}
+                className="col-span-3 bg-black/40 border border-white/15 rounded px-2 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40" />
+              <input type="text" value={s.local} placeholder="Local"
+                onChange={e => updateDraftSlot(s.id, 'local', e.target.value)}
+                className="col-span-4 bg-black/40 border border-white/15 rounded px-2 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40 placeholder:text-white/20" />
+              <button onClick={() => removeDraftSlot(s.id)}
+                className="col-span-1 text-red-400/60 hover:text-red-400 text-lg leading-none">×</button>
+            </div>
+          ))}
+          <div className="flex gap-2 pt-1 flex-wrap">
+            <button onClick={addDraftSlot}
+              className="text-[11px] tracking-widest uppercase font-bold px-3 py-1.5 rounded-lg border border-white/20 text-white/70 hover:bg-white/[0.05]">+ Slot</button>
+            <button onClick={saveDraftSlots}
+              className="text-[11px] tracking-widest uppercase font-bold px-3 py-1.5 rounded-lg border border-emerald-400/40 bg-emerald-400/10 text-emerald-300 hover:bg-emerald-400/20">✓ Guardar</button>
+            <button onClick={() => { setDraftSlots(slots); setEditing(false) }}
+              className="text-[11px] tracking-widest uppercase font-bold px-3 py-1.5 rounded-lg border border-white/15 text-white/50 hover:bg-white/[0.05]">Cancelar</button>
+          </div>
+          <p className="text-[10px] text-white/25 italic">Datas sem hora são descartadas. Slots sincronizam com o portal do cliente.</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function PortalSection({ evento }: { evento: Evento }) {
   const referencia = evento.referencia!
   const [status, setStatus] = useState<'loading' | 'found' | 'not_found' | 'error'>('loading')
@@ -2087,6 +2314,11 @@ export default function EventoPage() {
       {/* ── Aprovação do Contrato CPS + Criar Portal ── */}
       <div className="print:hidden">
         <ContratoCPSAprovacaoSection referencia={e.referencia ?? undefined} />
+      </div>
+
+      {/* ── Marcação (sincroniza com portal do cliente) ── */}
+      <div className="print:hidden mt-5">
+        <BookingSectionFicha referencia={e.referencia ?? undefined} />
       </div>
 
       <div className="flex flex-col gap-5">
