@@ -331,17 +331,14 @@ function ContratoPageContent() {
             </div>
           )}
           {(() => {
-            const soma = (e.valor_foto ?? 0) + (e.valor_video ?? 0) + (e.valor_extras ?? 0)
-            const total = e.valor_liquido ?? (soma > 0 ? soma : null)
-            return total ? (
+            // Valor Total do Serviço = Foto + Vídeo + Extras
+            // (mesmo cálculo da ficha em /eventos-2026/[id] — NÃO usar valor_liquido,
+            //  que é o valor líquido a receber depois dos custos com freelancers)
+            const total = (e.valor_foto ?? 0) + (e.valor_video ?? 0) + (e.valor_extras ?? 0)
+            return total > 0 ? (
               <div className="mt-4 flex items-center justify-between px-4 py-3 bg-black text-white rounded-lg">
                 <span className="text-xs tracking-widest uppercase font-bold">Valor Total do Serviço</span>
-                <span className="text-lg font-black">
-                  {editing
-                    ? <F field="valor_liquido" draft={e} editing={editing} readonlyMode={readonly} onChange={change} type="number" placeholder="0" />
-                    : fmtVal(total)
-                  }
-                </span>
+                <span className="text-lg font-black">{fmtVal(total)}</span>
               </div>
             ) : null
           })()}
