@@ -41,19 +41,27 @@ export async function POST(req: NextRequest) {
       .limit(1)
       .maybeSingle()
 
-    if (!contrato) {
-      return NextResponse.json({
-        error: `Nenhum contrato encontrado para a referência ${referencia}. O cliente ainda preencheu o formulário?`,
-      }, { status: 404 })
+    const contrato_aprovado_em = aprovar ? new Date().toISOString() : null
+
+    if (contrato?.id) {
+      // Já existe row → apenas marca como aprovado
+      await sb
+        .from('dados_contrato_cps')
+        .update({ contrato_aprovado_em })
+        .eq('id', contrato.id)
+    } else {
+      // Não existe row (cliente nunca preencheu CPS) — admin assumiu que
+      // está OK. Cria row mínima com a referência e marca como aprovado.
+      const { error } = await sb.from('dados_contrato_cps').insert({
+        referencia_evento: referencia,
+        contrato_aprovado_em,
+      })
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 })
+      }
     }
 
-    const contrato_aprovado_em = aprovar ? new Date().toISOString() : null
-    await sb
-      .from('dados_contrato_cps')
-      .update({ contrato_aprovado_em })
-      .eq('id', contrato.id)
-
-    return NextResponse.json({ ok: true, contrato_aprovado_em })
+    return NextResponse.json({ ok: true, contrato_aprovado_em, created: !contrato?.id })
   } catch (err: any) {
     console.error('[contrato-cps/aprovar-contrato]', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
