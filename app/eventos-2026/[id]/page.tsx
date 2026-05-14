@@ -747,6 +747,106 @@ function FotosSelecaoRef({ referencia }: { referencia: string }) {
   )
 }
 
+// ─── Editor de Tipo de Evento (multi-select com badges) ───────────────────────
+const TIPOS_EVENTO_OPTIONS = ['CASAMENTO', 'BATIZADO', 'ANIVERSÁRIO', 'SESSÃO FOTO', 'CORPORATIVO']
+
+function TipoEventoEditor({ value, eventId, referencia, onSaved }: {
+  value: string[]
+  eventId: string
+  referencia: string | null
+  onSaved: (arr: string[]) => void
+}) {
+  const [open, setOpen]   = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [local, setLocal] = useState<string[]>(value ?? [])
+
+  useEffect(() => { setLocal(value ?? []) }, [JSON.stringify(value)])
+
+  async function persist(next: string[]) {
+    setSaving(true)
+    try {
+      // 1) PATCH /api/eventos-notion → atualiza Notion + Supabase eventos_YYYY
+      await fetch(`/api/eventos-notion/${eventId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo_evento: next }),
+      }).catch(() => null)
+
+      // 2) Se houver referência, propaga para dados_contrato_cps (singular para o contrato)
+      //    O contrato lê e.tipo_evento (array) — basta sincronizar para o caso de o admin
+      //    voltar atrás e ler de CPS. Mapeia para "casamento" / "batizado" lowercase.
+      if (referencia) {
+        const t = next.map(x => x.toUpperCase())
+        const tipoSingular = t.includes('BATIZADO') ? 'batizado'
+                          : t.includes('CASAMENTO') ? 'casamento'
+                          : null
+        if (tipoSingular) {
+          await fetch(`/api/contrato-cps?ref=${encodeURIComponent(referencia)}`, {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tipo_evento: tipoSingular }),
+          }).catch(() => null)
+        }
+      }
+      onSaved(next)
+    } finally { setSaving(false) }
+  }
+
+  async function toggle(opt: string) {
+    const next = local.includes(opt) ? local.filter(x => x !== opt) : [...local, opt]
+    setLocal(next)
+    await persist(next)
+  }
+
+  return (
+    <div className="relative inline-flex flex-wrap gap-2 items-center">
+      {local.length === 0 ? (
+        <button onClick={() => setOpen(o => !o)}
+          className="text-xs px-3 py-1 rounded-full border border-dashed border-gold/40 text-gold/60 hover:border-gold hover:text-gold hover:bg-gold/5 transition-all">
+          + Definir Tipo de Evento
+        </button>
+      ) : (
+        <>
+          {local.map(t => (
+            <button key={t} onClick={() => toggle(t)}
+              title="Clica para remover"
+              className="group flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-gold/10 border border-gold/25 text-gold/80 hover:bg-red-500/15 hover:border-red-500/30 hover:text-red-400 transition-all">
+              {t}
+              <span className="opacity-0 group-hover:opacity-100 transition-opacity">×</span>
+            </button>
+          ))}
+          <button onClick={() => setOpen(o => !o)}
+            className="text-[10px] px-2 py-1 rounded-full border border-white/15 text-white/40 hover:border-gold/40 hover:text-gold/70 transition-all">
+            ✎ Editar
+          </button>
+        </>
+      )}
+      {saving && <span className="text-[10px] text-gold/40 animate-pulse">A guardar...</span>}
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute top-full left-0 mt-2 z-50 rounded-xl border border-white/15 bg-[#0d0d0e] p-3 min-w-[220px] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.8)]">
+            <p className="text-[10px] tracking-[0.3em] text-gold/60 uppercase mb-2">Tipo de Evento</p>
+            <div className="flex flex-col gap-1.5">
+              {TIPOS_EVENTO_OPTIONS.map(opt => {
+                const checked = local.includes(opt)
+                return (
+                  <button key={opt} onClick={() => toggle(opt)}
+                    className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs transition-all text-left ${checked ? 'bg-gold/15 border border-gold/30 text-gold' : 'hover:bg-white/[0.04] text-white/60 border border-transparent'}`}>
+                    <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${checked ? 'border-gold bg-gold/30' : 'border-white/25'}`}>
+                      {checked && <span className="text-gold text-[9px]">✓</span>}
+                    </span>
+                    {opt}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 // ─── Upload de contrato PDF ────────────────────────────────────────────────────
 function ContratoUpload({ eventId, contratoUrl, onSaved }: {
   eventId: string; contratoUrl: string | null
@@ -2308,10 +2408,13 @@ export default function EventoPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 mt-4">
-          {(e.tipo_evento ?? []).map(t => (
-            <span key={t} className="text-xs px-2.5 py-1 rounded-full bg-gold/10 border border-gold/25 text-gold/80">{t}</span>
-          ))}
+        <div className="flex flex-wrap gap-2 mt-4 items-center">
+          <TipoEventoEditor
+            value={e.tipo_evento ?? []}
+            eventId={e.id}
+            referencia={e.referencia ?? null}
+            onSaved={(arr) => handleSaved('tipo_evento', arr)}
+          />
           {(e.tipo_servico ?? []).map(t => (
             <span key={t} className="text-xs px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/25 text-blue-400/80">{t}</span>
           ))}

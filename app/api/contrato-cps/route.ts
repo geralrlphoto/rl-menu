@@ -508,3 +508,57 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
+
+// ─── PATCH ?ref=CAS_xxx  body: { tipo_evento?, ... } ──────────────────────────
+// Atualiza campos pontuais em `dados_contrato_cps` para uma referência.
+// Usado pela ficha quando admin define tipo_evento manualmente (caso o
+// cliente não tenha preenchido o formulário CPS).
+export async function PATCH(req: NextRequest) {
+  try {
+    const ref = req.nextUrl.searchParams.get('ref')
+    if (!ref) return NextResponse.json({ error: 'ref required' }, { status: 400 })
+    const body = await req.json().catch(() => ({}))
+
+    const allowed = ['tipo_evento', 'nome_noivos', 'nome_noiva', 'nome_noivo',
+                     'email_noiva', 'email_noivo', 'data_casamento', 'local_cerimonia',
+                     'nome_crianca', 'idade_crianca'] as const
+    const updates: Record<string, any> = {}
+    for (const key of allowed) {
+      if (body[key] !== undefined) updates[key] = body[key]
+    }
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ error: 'no fields to update' }, { status: 400 })
+    }
+
+    const sb = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    )
+
+    // Procura row existente
+    const { data: existing } = await sb
+      .from('dados_contrato_cps')
+      .select('id')
+      .eq('referencia_evento', ref)
+      .order('id', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (existing?.id) {
+      const { error } = await sb.from('dados_contrato_cps').update(updates).eq('id', existing.id)
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ ok: true, updated: true })
+    } else {
+      // Cria row mínima (caso cliente nunca tenha preenchido CPS)
+      const { error } = await sb.from('dados_contrato_cps').insert({
+        referencia_evento: ref,
+        ...updates,
+      })
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ ok: true, created: true })
+    }
+  } catch (err: any) {
+    console.error('[contrato-cps PATCH] Erro:', err)
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
