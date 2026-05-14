@@ -50,6 +50,8 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/api/lembrete-reuniao') ||
     pathname.startsWith('/api/upload-image') ||
     pathname.startsWith('/api/portal-notif-prewedding') ||
+    pathname.startsWith('/api/send-booking-reservation') ||
+    pathname.startsWith('/api/send-task-email') ||
     pathname === '/newsletter' ||
     pathname.startsWith('/newsletter/') ||
     pathname.startsWith('/api/newsletter-subscribe') ||

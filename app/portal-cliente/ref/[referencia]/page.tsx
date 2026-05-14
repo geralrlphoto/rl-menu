@@ -40,6 +40,12 @@ type PortalSettings = {
   preWeddingSlots?: Array<{ id: string; date: string; time: string; local: string }>
   preWeddingReservedSlotId?: string
   preWeddingReservedAt?: string
+  // BookingSection (Marcação) — admin configura slots, cliente reserva
+  bookingActive?: boolean
+  bookingType?: 'sessao' | 'reuniao'
+  bookingSlots?: Array<{ id: string; date: string; time: string; local: string }>
+  bookingReservedSlotId?: string
+  bookingReservedAt?: string
   pageTitles?: Record<string, string>
   calloutLinks?: Record<string, Record<string, string>>
   briefingLinks?: Record<string, string>
@@ -769,6 +775,220 @@ function TasksSection({ tasks, referencia, settings, onSettingsChange, isAdmin }
   )
 }
 
+// ─── booking section (Sessão Fotografia / Reunião) ──────────────────────────
+
+type BookingSlot = { id: string; date: string; time: string; local: string }
+
+function BookingSection({ referencia, settings, onSettingsChange, isAdmin, tipoEvento }: {
+  referencia: string
+  settings: PortalSettings
+  onSettingsChange: (s: PortalSettings) => void
+  isAdmin: boolean
+  tipoEvento: 'casamento' | 'batizado'
+}) {
+  const active           = !!settings.bookingActive
+  const tipo             = settings.bookingType ?? 'sessao'
+  const slots: BookingSlot[] = settings.bookingSlots ?? []
+  const reservedSlotId   = settings.bookingReservedSlotId
+  const reservedAt       = settings.bookingReservedAt
+  const reservedSlot     = slots.find(s => s.id === reservedSlotId)
+
+  const [editing, setEditing]     = useState(false)
+  const [saving, setSaving]       = useState(false)
+  const [reserving, setReserving] = useState<string | null>(null)
+  const [notif, setNotif]         = useState<{ tone: 'ok' | 'err'; msg: string } | null>(null)
+  const [draftSlots, setDraftSlots] = useState<BookingSlot[]>(slots)
+
+  useEffect(() => { setDraftSlots(slots) }, [JSON.stringify(slots)])
+  useEffect(() => {
+    if (!notif) return
+    const t = setTimeout(() => setNotif(null), 4500)
+    return () => clearTimeout(t)
+  }, [notif])
+
+  async function persist(next: Partial<PortalSettings>) {
+    const newSettings = { ...settings, ...next }
+    onSettingsChange(newSettings)
+    setSaving(true)
+    await fetch('/api/portais', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referencia, updates: { settings: newSettings } }),
+    })
+    setSaving(false)
+  }
+
+  function fmtData(d: string) {
+    if (!d) return ''
+    try {
+      return new Date(d + 'T12:00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })
+    } catch { return d }
+  }
+
+  async function reservar(slotId: string) {
+    if (reservedSlotId) return
+    setReserving(slotId)
+    const at = new Date().toISOString()
+    await persist({ bookingReservedSlotId: slotId, bookingReservedAt: at })
+    const s = slots.find(x => x.id === slotId)
+    if (s) {
+      fetch('/api/send-booking-reservation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          referencia,
+          tipoEvento,
+          bookingType: tipo,
+          date: s.date, time: s.time, local: s.local,
+        }),
+      }).catch(() => {})
+    }
+    setReserving(null)
+  }
+
+  function addDraftSlot() {
+    setDraftSlots(d => [...d, { id: Date.now().toString(), date: '', time: '', local: '' }])
+  }
+  function updateDraftSlot(id: string, field: keyof BookingSlot, value: string) {
+    setDraftSlots(d => d.map(s => s.id === id ? { ...s, [field]: value } : s))
+  }
+  function removeDraftSlot(id: string) {
+    setDraftSlots(d => d.filter(s => s.id !== id))
+  }
+  async function saveDraftSlots() {
+    const clean = draftSlots.filter(s => s.date && s.time)
+    await persist({ bookingSlots: clean })
+    setEditing(false)
+    setNotif({ tone: 'ok', msg: 'Slots guardados.' })
+  }
+
+  if (!isAdmin && !active) return null
+  if (!isAdmin && slots.length === 0) return null
+
+  const tituloSec = tipo === 'reuniao' ? 'Marcar Reunião' : 'Marcar Sessão Fotografia'
+
+  return (
+    <section className="px-4 pb-10 sm:pb-14">
+      <div className="max-w-2xl mx-auto rounded-2xl overflow-hidden border border-white/40 bg-black"
+        style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08]">
+          <div className="flex items-center gap-2.5">
+            <span className={`w-2 h-2 rounded-full ${active ? 'bg-emerald-400/80' : 'bg-white/30'} animate-pulse shrink-0`} />
+            <h2 className="font-playfair font-black text-xl sm:text-2xl tracking-wide text-white"
+              style={{ textShadow: '0 0 14px rgba(255,255,255,0.9), 0 0 28px rgba(255,255,255,0.5)' }}>{tituloSec}</h2>
+          </div>
+          <div className="flex items-center gap-2">
+            {saving && <span className="text-[10px] text-gold/40 animate-pulse">A guardar...</span>}
+            {isAdmin && (
+              <>
+                <select value={tipo} onChange={e => persist({ bookingType: e.target.value as 'sessao' | 'reuniao' })}
+                  className="text-[10px] bg-black/50 border border-white/20 text-white/70 rounded px-2 py-1">
+                  <option value="sessao">Sessão Fotografia</option>
+                  <option value="reuniao">Reunião</option>
+                </select>
+                <button onClick={() => persist({ bookingActive: !active })}
+                  className={`text-[10px] tracking-widest font-bold uppercase px-3 py-1 rounded-lg border transition-all ${active ? 'border-emerald-400/50 text-emerald-300 bg-emerald-400/10' : 'border-white/25 text-white/50 bg-white/[0.03]'}`}>
+                  {active ? '● Ativo' : '○ Inativo'}
+                </button>
+                <button onClick={() => setEditing(e => !e)}
+                  className="text-[11px] text-gold/60 hover:text-gold transition-colors border border-gold/30 hover:border-gold/50 px-3 py-1 rounded-lg">
+                  {editing ? 'Fechar' : '✎ Slots'}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {notif && (
+          <div className={`px-5 py-2 text-[11px] border-b ${notif.tone === 'ok' ? 'border-emerald-400/20 text-emerald-300/80 bg-emerald-400/5' : 'border-red-400/20 text-red-300/80 bg-red-400/5'}`}>
+            {notif.tone === 'ok' ? '✓ ' : '⚠ '}{notif.msg}
+          </div>
+        )}
+
+        {isAdmin && editing && (
+          <div className="p-5 space-y-3 border-b border-white/[0.06]">
+            <p className="text-[10px] tracking-[0.3em] text-white/40 uppercase">Configurar Slots</p>
+            {draftSlots.map(s => (
+              <div key={s.id} className="grid grid-cols-12 gap-2 items-center">
+                <input type="date" value={s.date} onChange={e => updateDraftSlot(s.id, 'date', e.target.value)}
+                  className="col-span-4 bg-black/40 border border-white/15 rounded px-2 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40" />
+                <input type="time" value={s.time} onChange={e => updateDraftSlot(s.id, 'time', e.target.value)}
+                  className="col-span-3 bg-black/40 border border-white/15 rounded px-2 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40" />
+                <input type="text" value={s.local} placeholder="Local"
+                  onChange={e => updateDraftSlot(s.id, 'local', e.target.value)}
+                  className="col-span-4 bg-black/40 border border-white/15 rounded px-2 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40 placeholder:text-white/20" />
+                <button onClick={() => removeDraftSlot(s.id)}
+                  className="col-span-1 text-red-400/60 hover:text-red-400 text-lg leading-none">×</button>
+              </div>
+            ))}
+            <div className="flex gap-2 pt-2">
+              <button onClick={addDraftSlot}
+                className="text-[11px] tracking-widest uppercase font-bold px-3 py-1.5 rounded-lg border border-white/20 text-white/70 hover:bg-white/[0.05]">+ Slot</button>
+              <button onClick={saveDraftSlots}
+                className="text-[11px] tracking-widest uppercase font-bold px-3 py-1.5 rounded-lg border border-emerald-400/40 bg-emerald-400/10 text-emerald-300 hover:bg-emerald-400/20">✓ Guardar Slots</button>
+            </div>
+            <p className="text-[10px] text-white/25 italic">Datas sem hora são descartadas.</p>
+          </div>
+        )}
+
+        <div className="p-5">
+          {isAdmin && !active && (
+            <p className="text-[12px] text-white/30 italic text-center py-3">
+              Secção <strong className="text-white/60">inativa</strong> — cliente não vê. Carrega em "Inativo" para ativar.
+            </p>
+          )}
+
+          {reservedSlot && (
+            <div className="rounded-xl border border-emerald-400/40 bg-emerald-400/[0.06] p-5 text-center"
+              style={{ boxShadow: '0 0 14px 2px rgba(74,222,128,0.12), inset 0 0 16px 0 rgba(74,222,128,0.04)' }}>
+              <p className="text-[10px] tracking-[0.5em] text-emerald-300/70 uppercase mb-2">✓ Marcação Confirmada</p>
+              <p className="text-xl font-semibold text-emerald-200 tracking-wide">{fmtData(reservedSlot.date)}</p>
+              <p className="text-base text-emerald-300/80 mt-1">{reservedSlot.time}{reservedSlot.local ? ' · ' + reservedSlot.local : ''}</p>
+              {reservedAt && (
+                <p className="text-[10px] text-white/25 mt-3">Reservado em {new Date(reservedAt).toLocaleString('pt-PT')}</p>
+              )}
+              {isAdmin && (
+                <button onClick={() => persist({ bookingReservedSlotId: undefined, bookingReservedAt: undefined })}
+                  className="mt-3 text-[10px] tracking-widest uppercase text-red-400/70 hover:text-red-400 border border-red-400/30 hover:border-red-400/50 px-3 py-1 rounded-lg">
+                  Cancelar Reserva (admin)
+                </button>
+              )}
+            </div>
+          )}
+
+          {!reservedSlot && slots.length > 0 && (
+            <div className="space-y-2.5">
+              <p className="text-[10px] tracking-[0.4em] text-white/40 uppercase text-center mb-2">
+                {tipo === 'reuniao' ? 'Escolhe uma data e hora para a reunião' : 'Escolhe a data, hora e local da sessão'}
+              </p>
+              {slots.map(s => (
+                <div key={s.id}
+                  className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-white/15 bg-white/[0.02] hover:border-gold/40 hover:bg-white/[0.05] transition-all">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-white tracking-wide">{fmtData(s.date)}</p>
+                    <p className="text-[11px] text-white/55 mt-0.5">{s.time}{s.local ? ' · ' + s.local : ''}</p>
+                  </div>
+                  <button onClick={() => reservar(s.id)} disabled={reserving === s.id}
+                    className="shrink-0 text-[10px] tracking-widest font-bold uppercase px-4 py-2 rounded-lg border border-gold/40 bg-gold/10 text-gold hover:bg-gold/20 transition-all disabled:opacity-50"
+                    style={{ boxShadow: '0 0 10px 1px rgba(201,169,110,0.18)' }}>
+                    {reserving === s.id ? '...' : 'Reservar →'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {isAdmin && slots.length === 0 && !editing && (
+            <p className="text-[12px] text-white/30 italic text-center py-3">
+              Sem slots configurados. Carrega em <strong className="text-gold/60">✎ Slots</strong> para adicionar.
+            </p>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 // ─── main page ────────────────────────────────────────────────────────────────
 
 export default function PortalRefPage() {
@@ -1196,6 +1416,15 @@ export default function PortalRefPage() {
           </div>
         </section>
       )}
+
+      {/* ── BOOKING — admin configura; cliente reserva ── */}
+      <BookingSection
+        referencia={referencia}
+        settings={settings}
+        onSettingsChange={s => setSettings(s)}
+        isAdmin={isAdmin}
+        tipoEvento="casamento"
+      />
 
       {/* ── TASKS — admin pode editar; cliente vê em read-only ── */}
       <TasksSection

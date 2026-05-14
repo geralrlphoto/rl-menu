@@ -55,6 +55,12 @@ async function fetchMaqueteSettings(pageId: string): Promise<Record<string, any>
       preWeddingSlots: _pws,
       preWeddingReservedSlotId: _prsid,
       preWeddingReservedAt: _prat,
+      // BookingSection — reserva e ativação são específicas de cada portal
+      bookingActive: _ba,
+      bookingType: _bt,
+      bookingSlots: _bs,
+      bookingReservedSlotId: _brsid,
+      bookingReservedAt: _brat,
       activeNavId: _ani,
       // Valores monetários da maquete (não fazem sentido para outros clientes)
       valorFoto: _vf,
