@@ -645,11 +645,12 @@ function SettingsPanel({ settings, referencia, blocks, onSaved, onCancel }: {
 
 // ─── tasks section (saves to Supabase) ───────────────────────────────────────
 
-function TasksSection({ tasks, referencia, settings, onSettingsChange }: {
+function TasksSection({ tasks, referencia, settings, onSettingsChange, isAdmin }: {
   tasks: Task[]
   referencia: string
   settings: PortalSettings
   onSettingsChange: (s: PortalSettings) => void
+  isAdmin: boolean
 }) {
   const [editing, setEditing] = useState(false)
   const [newTask, setNewTask] = useState('')
@@ -729,10 +730,12 @@ function TasksSection({ tasks, referencia, settings, onSettingsChange }: {
           </div>
           <div className="flex items-center gap-2">
             {saving && <span className="text-[10px] text-gold/40 animate-pulse">A guardar...</span>}
-            <button onClick={() => setEditing(e => !e)}
-              className="text-[11px] text-gold/60 hover:text-gold transition-colors border border-gold/30 hover:border-gold/50 px-3 py-1 rounded-lg">
-              {editing ? '✓ Concluído' : '✎ Editar'}
-            </button>
+            {isAdmin && (
+              <button onClick={() => setEditing(e => !e)}
+                className="text-[11px] text-gold/60 hover:text-gold transition-colors border border-gold/30 hover:border-gold/50 px-3 py-1 rounded-lg">
+                {editing ? '✓ Concluído' : '✎ Editar'}
+              </button>
+            )}
           </div>
         </div>
         {notif && (
@@ -746,17 +749,23 @@ function TasksSection({ tasks, referencia, settings, onSettingsChange }: {
           )}
           {localTasks.map(task => (
             <div key={task.id} className="flex items-center gap-3 group">
-              <button onClick={() => toggleDone(task.id)}
-                className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${task.done ? 'border-gold bg-gold/25' : 'border-gold/40 hover:border-gold/70'}`}>
-                {task.done && <span className="text-gold text-[10px] font-bold">✓</span>}
-              </button>
+              {isAdmin ? (
+                <button onClick={() => toggleDone(task.id)}
+                  className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${task.done ? 'border-gold bg-gold/25' : 'border-gold/40 hover:border-gold/70'}`}>
+                  {task.done && <span className="text-gold text-[10px] font-bold">✓</span>}
+                </button>
+              ) : (
+                <div className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${task.done ? 'border-gold bg-gold/25' : 'border-gold/40'}`}>
+                  {task.done && <span className="text-gold text-[10px] font-bold">✓</span>}
+                </div>
+              )}
               <span className={`flex-1 text-sm leading-relaxed transition-all ${task.done ? 'line-through text-gold/30' : 'text-white/80'}`}>{task.text}</span>
-              {editing && (
+              {isAdmin && editing && (
                 <button onClick={() => deleteTask(task.id)} className="text-gold/30 hover:text-red-400 transition-colors text-xl leading-none opacity-0 group-hover:opacity-100">×</button>
               )}
             </div>
           ))}
-          {editing && (
+          {isAdmin && editing && (
             <div className="flex gap-2 pt-4 mt-2 border-t border-gold/20">
               <input value={newTask} onChange={e => setNewTask(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addTask() }}
                 placeholder="Escreve uma nova tarefa..."
@@ -1222,15 +1231,14 @@ export default function PortalRefPage() {
         </section>
       )}
 
-      {/* ── TASKS — admin only ── */}
-      {isAdmin && (
-        <TasksSection
-          tasks={settings.tasks ?? []}
-          referencia={referencia}
-          settings={settings}
-          onSettingsChange={s => setSettings(s)}
-        />
-      )}
+      {/* ── TASKS — admin pode editar; cliente vê em read-only ── */}
+      <TasksSection
+        tasks={settings.tasks ?? []}
+        referencia={referencia}
+        settings={settings}
+        onSettingsChange={s => setSettings(s)}
+        isAdmin={isAdmin}
+      />
 
       {/* ── ENTREGAS ── */}
       <EntregasSection referencia={settings.referencia || referencia} />
