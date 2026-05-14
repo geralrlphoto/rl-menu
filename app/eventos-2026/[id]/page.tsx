@@ -1177,8 +1177,9 @@ function ContratoStatusSection({ eventoId, referencia }: { eventoId: string; ref
       const j = await r.json()
       if (!r.ok) throw new Error(j.error ?? 'erro')
       setContratoAprovadoEm(j.contrato_aprovado_em)
-      // Também publica automaticamente no portal (se existir)
-      if (referencia && (supabaseHasPortal())) {
+      // Publica AUTOMATICAMENTE o contrato no portal do cliente.
+      // PATCH /api/portais cria o row se não existir (não falha).
+      if (referencia) {
         const contratoUrl = `/eventos-2026/${eventoId}/contrato`
         await fetch('/api/portais', {
           method: 'PATCH', headers: { 'Content-Type': 'application/json' },
@@ -1199,14 +1200,20 @@ function ContratoStatusSection({ eventoId, referencia }: { eventoId: string; ref
 
   async function handleDesaprovarContrato() {
     if (!referencia) return
-    if (!confirm('Reverter aprovação do contrato?')) return
+    if (!confirm('Reverter aprovação do contrato?\n\nO contrato deixará de estar disponível para o cliente no portal.')) return
     setAprovandoContrato(true)
     try {
       await fetch('/api/contrato-cps/aprovar-contrato', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ referencia, aprovar: false }),
       })
+      // Esconde o contrato no portal do cliente
+      await fetch('/api/portais', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referencia, updates: { settings: { contratoDisponivel: false } } }),
+      }).catch(() => {})
       setContratoAprovadoEm(null)
+      setDisponivel(false)
     } finally {
       setAprovandoContrato(false)
     }
