@@ -550,10 +550,11 @@ function ServiceChecklist({ title, items, selected, field, eventId, onSaved }: {
 }) {
   const [active, setActive] = useState<string[]>(selected)
   const [saving, setSaving] = useState(false)
+  const [customMode, setCustomMode] = useState(false)
+  const [customText, setCustomText] = useState('')
   useEffect(() => { setActive(selected) }, [selected])
 
-  async function toggle(item: string) {
-    const newList = active.includes(item) ? active.filter(i => i !== item) : [...active, item]
+  async function persist(newList: string[]) {
     setActive(newList); setSaving(true)
     const payload: any = {}; payload[field] = newList
     await fetch(`/api/eventos-notion/${eventId}`, {
@@ -561,6 +562,20 @@ function ServiceChecklist({ title, items, selected, field, eventId, onSaved }: {
       body: JSON.stringify(payload),
     })
     onSaved(field, newList); setSaving(false)
+  }
+
+  async function toggle(item: string) {
+    const next = active.includes(item) ? active.filter(i => i !== item) : [...active, item]
+    await persist(next)
+  }
+
+  async function addCustom() {
+    const v = customText.trim().toUpperCase()
+    if (!v) return
+    if (active.includes(v)) { setCustomText(''); setCustomMode(false); return }
+    await persist([...active, v])
+    setCustomText('')
+    setCustomMode(false)
   }
 
   const available = items.filter(i => !active.includes(i))
@@ -585,8 +600,8 @@ function ServiceChecklist({ title, items, selected, field, eventId, onSaved }: {
         </div>
       )}
 
-      {/* Dropdown para adicionar */}
-      {available.length > 0 && (
+      {/* Dropdown para adicionar (existentes) */}
+      {available.length > 0 && !customMode && (
         <div className="relative">
           <select value="" onChange={e => { if (e.target.value) toggle(e.target.value) }}
             className="w-full appearance-none bg-white/[0.02] border border-white/8 hover:border-white/20 rounded-xl px-3 py-2 text-[11px] text-white/30 focus:outline-none transition-colors cursor-pointer pr-6">
@@ -594,6 +609,36 @@ function ServiceChecklist({ title, items, selected, field, eventId, onSaved }: {
             {available.map(i => <option key={i} value={i} className="bg-zinc-900">{i}</option>)}
           </select>
           <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-white/20 text-[10px]">▾</span>
+        </div>
+      )}
+
+      {/* Adicionar serviço CUSTOM (texto livre) */}
+      {!customMode ? (
+        <button onClick={() => setCustomMode(true)}
+          className="text-[10px] tracking-[0.3em] text-gold/40 hover:text-gold/70 transition-colors uppercase text-left px-1 py-1">
+          + Novo Serviço (texto livre)
+        </button>
+      ) : (
+        <div className="flex gap-1.5">
+          <input
+            autoFocus
+            value={customText}
+            onChange={e => setCustomText(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') { e.preventDefault(); addCustom() }
+              if (e.key === 'Escape') { setCustomText(''); setCustomMode(false) }
+            }}
+            placeholder="Escreve e Enter..."
+            className="flex-1 bg-white/[0.04] border border-gold/30 rounded-lg px-3 py-1.5 text-[11px] text-white/85 outline-none focus:border-gold/60 placeholder:text-white/20"
+          />
+          <button onClick={addCustom} disabled={!customText.trim()}
+            className="px-3 py-1.5 rounded-lg bg-gold/15 border border-gold/40 text-gold text-[10px] tracking-widest font-bold uppercase hover:bg-gold/25 disabled:opacity-40">
+            ✓
+          </button>
+          <button onClick={() => { setCustomText(''); setCustomMode(false) }}
+            className="px-2 py-1.5 rounded-lg border border-white/15 text-white/40 text-[10px] hover:text-white/70">
+            ✕
+          </button>
         </div>
       )}
     </div>
