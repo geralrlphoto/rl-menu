@@ -1550,6 +1550,54 @@ function BookingSectionFicha({ referencia }: { referencia?: string }) {
   )
 }
 
+// ─── Botão "Reenviar Email" do portal aprovado ────────────────────────────
+function ReenviarEmailButton({ referencia }: { referencia: string }) {
+  const [sending, setSending] = useState(false)
+  const [feedback, setFeedback] = useState<{ tone: 'ok' | 'err'; msg: string } | null>(null)
+
+  async function handleReenviar() {
+    if (!confirm(`Reenviar email do portal ao cliente para ${referencia}?\n\nO sistema resolve o email da noiva/noivo da ficha do cliente (CPS, eventos, Notion).`)) return
+    setSending(true)
+    setFeedback(null)
+    try {
+      const r = await fetch('/api/contrato-cps/aprovar', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referencia, resend: true }),
+      })
+      const d = await r.json()
+      if (!r.ok || d.error) {
+        setFeedback({ tone: 'err', msg: d.error ?? 'Falha ao reenviar email' })
+      } else if (d.ok && d.emailSentTo) {
+        setFeedback({ tone: 'ok', msg: `Email enviado para ${d.emailSentTo}` })
+      } else {
+        setFeedback({ tone: 'err', msg: 'Email do cliente não encontrado em CPS / ficha / Notion. Preenche o campo "E-mail da noiva" na ficha.' })
+      }
+    } catch (e: any) {
+      setFeedback({ tone: 'err', msg: e.message })
+    } finally {
+      setSending(false)
+      setTimeout(() => setFeedback(null), 8000)
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <button onClick={handleReenviar} disabled={sending}
+        className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-emerald-400/30 text-emerald-300/90 font-bold text-xs tracking-widest hover:bg-emerald-400/10 hover:border-emerald-400/60 transition-all uppercase disabled:opacity-50">
+        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+        </svg>
+        {sending ? 'A enviar...' : '📧 Reenviar Email ao Cliente'}
+      </button>
+      {feedback && (
+        <p className={`text-[10px] tracking-wide ${feedback.tone === 'ok' ? 'text-emerald-300/80' : 'text-red-400/80'}`}>
+          {feedback.tone === 'ok' ? '✓ ' : '⚠ '}{feedback.msg}
+        </p>
+      )}
+    </div>
+  )
+}
+
 function PortalSection({ evento }: { evento: Evento }) {
   const referencia = evento.referencia!
   // Detecta tipo do evento (batizado vs casamento) para usar a rota correta
@@ -1796,6 +1844,7 @@ function PortalSection({ evento }: { evento: Evento }) {
               </svg>
               Editar como Admin ↗
             </button>
+            <ReenviarEmailButton referencia={referencia} />
           </div>
           {/* Eliminar portal */}
           <div className="mt-1 pt-3 border-t border-white/[0.04]">

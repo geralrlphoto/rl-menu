@@ -246,10 +246,13 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const referencia = String(body.referencia ?? '').trim()
     const password = String(body.password ?? '').trim()
+    // resend=true: reenvia o email ao cliente mesmo se o portal já estiver
+    // aprovado (idempotente). Usado pelo botão "📧 Reenviar Email".
+    const resendOnly: boolean = !!body.resend
     if (!referencia) {
       return NextResponse.json({ error: 'referencia obrigatória' }, { status: 400 })
     }
-    if (!password) {
+    if (!password && !resendOnly) {
       return NextResponse.json({ error: 'password obrigatória' }, { status: 400 })
     }
 
@@ -347,10 +350,24 @@ export async function POST(req: NextRequest) {
         .single()
       if (insErr) return NextResponse.json({ error: insErr.message }, { status: 500 })
       contrato.id = inserted?.id
+    } else if (semNome || semEmail || semData) {
+      // Persiste os dados resolvidos no row existente (para futuras consultas
+      // não precisarem do fallback)
+      await sb.from('dados_contrato_cps').update({
+        nome_noivos: contrato.nome_noivos,
+        nome_noiva: contrato.nome_noiva,
+        nome_noivo: contrato.nome_noivo,
+        email_noiva: contrato.email_noiva,
+        email_noivo: contrato.email_noivo,
+        data_casamento: contrato.data_casamento,
+        local_cerimonia: contrato.local_cerimonia,
+        tipo_evento: contrato.tipo_evento,
+      }).eq('id', contrato.id).then(() => {/* sync */})
     }
 
-    // Idempotente: se já foi aprovado, devolve o link (sem recriar nada)
-    if (contrato.aprovado_em) {
+    // Idempotente: se já foi aprovado, devolve o link
+    // (envia o email novamente se resend=true OU a password foi passada)
+    if (contrato.aprovado_em && !resendOnly && !password) {
       const tipo = contrato.tipo_evento === 'batizado' ? 'batizado' : 'casamento'
       const url = tipo === 'batizado'
         ? `${SITE_BASE}/portal-batizado/ref/${encodeURIComponent(referencia)}`
@@ -360,6 +377,41 @@ export async function POST(req: NextRequest) {
         alreadyApproved: true,
         approvedAt: contrato.aprovado_em,
         portalUrl: url,
+      })
+    }
+
+    // Caso especial: resend=true ou portal já aprovado mas com password →
+    // só envia email (não recria portal nem altera aprovado_em)
+    if (contrato.aprovado_em && (resendOnly || password)) {
+      const tipo = contrato.tipo_evento === 'batizado' ? 'batizado' : 'casamento'
+      const portalUrlExisting = tipo === 'batizado'
+        ? `${SITE_BASE}/portal-batizado/ref/${encodeURIComponent(referencia)}`
+        : `${SITE_BASE}/portal-cliente/ref/${encodeURIComponent(referencia)}`
+      // Recolhe password atual do portal (se não foi passada)
+      let pwd = password
+      if (!pwd) {
+        const { data: portalRow } = await sb.from('portais').select('settings').eq('referencia', referencia).maybeSingle()
+        pwd = portalRow?.settings?.portalPassword || ''
+      }
+      const clienteEmail = contrato.email_noiva || contrato.email_noivo
+      let emailSent = false
+      let emailError: string | null = null
+      if (clienteEmail) {
+        emailSent = await sendEmail(
+          clienteEmail,
+          tipo === 'batizado' ? '👶 O portal do batizado está pronto' : '💍 O portal do casamento está pronto',
+          buildPortalEmail({ nome_noivos: contrato.nome_noivos, url: portalUrlExisting, tipo, data: contrato.data_casamento, password: pwd }),
+        )
+        if (!emailSent) emailError = 'Resend rejeitou o envio'
+      } else {
+        emailError = 'Email do cliente não foi encontrado (CPS / ficha / Notion)'
+      }
+      return NextResponse.json({
+        ok: emailSent,
+        resent: true,
+        emailSentTo: clienteEmail ?? null,
+        portalUrl: portalUrlExisting,
+        error: emailError,
       })
     }
 
