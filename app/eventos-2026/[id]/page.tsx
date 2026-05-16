@@ -1643,6 +1643,83 @@ function ReenviarEmailButton({ referencia }: { referencia: string }) {
   )
 }
 
+// ─── Notas privadas do admin (livre, autosalva em evento_notas) ─────────────
+function NotasSection({ referencia }: { referencia?: string }) {
+  const [nota, setNota] = useState('')
+  const [savedNota, setSavedNota] = useState('')
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null)
+  const [loaded, setLoaded] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [savedAt, setSavedAt] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (!referencia) { setLoaded(true); return }
+    fetch(`/api/evento-notas?ref=${encodeURIComponent(referencia)}`)
+      .then(r => r.json())
+      .then(d => {
+        setNota(d.nota ?? '')
+        setSavedNota(d.nota ?? '')
+        setUpdatedAt(d.updated_at ?? null)
+        setLoaded(true)
+      })
+      .catch(() => setLoaded(true))
+  }, [referencia])
+
+  // Debounced auto-save (1s)
+  useEffect(() => {
+    if (!loaded || !referencia) return
+    if (nota === savedNota) return
+    const t = setTimeout(async () => {
+      setSaving(true)
+      try {
+        const res = await fetch('/api/evento-notas', {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ referencia, nota }),
+        })
+        if (res.ok) {
+          setSavedNota(nota)
+          setUpdatedAt(new Date().toISOString())
+          setSavedAt(Date.now())
+        }
+      } finally { setSaving(false) }
+    }, 1000)
+    return () => clearTimeout(t)
+  }, [nota, loaded, savedNota, referencia])
+
+  // Auto-clear "✓ Guardado" pill após 2s
+  useEffect(() => {
+    if (!savedAt) return
+    const t = setTimeout(() => setSavedAt(null), 2200)
+    return () => clearTimeout(t)
+  }, [savedAt])
+
+  if (!referencia) return null
+
+  return (
+    <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 mb-5 flex flex-col gap-3">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h2 className="text-[10px] tracking-[0.35em] text-gold uppercase">Notas (privadas)</h2>
+        <div className="flex items-center gap-3 text-[10px]">
+          {saving && <span className="text-gold/40 animate-pulse">A guardar...</span>}
+          {savedAt && !saving && <span className="text-emerald-400/70">✓ Guardado</span>}
+          {updatedAt && !saving && !savedAt && (
+            <span className="text-white/25">Atualizado: {new Date(updatedAt).toLocaleString('pt-PT')}</span>
+          )}
+        </div>
+      </div>
+      <textarea
+        value={nota}
+        onChange={e => setNota(e.target.value)}
+        placeholder={loaded ? "As tuas notas sobre este evento... (auto-guarda)" : "A carregar..."}
+        disabled={!loaded}
+        rows={5}
+        className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-sm text-white/85 outline-none focus:border-gold/40 resize-y placeholder:text-white/20 leading-relaxed transition-colors"
+      />
+      <p className="text-[9px] text-white/20 tracking-wider">Estas notas só são visíveis para o admin. Auto-guarda 1s após parares de escrever.</p>
+    </div>
+  )
+}
+
 function PortalSection({ evento }: { evento: Evento }) {
   const referencia = evento.referencia!
   // Detecta tipo do evento (batizado vs casamento) para usar a rota correta
@@ -2539,6 +2616,11 @@ export default function EventoPage() {
       {/* ── Marcação (sincroniza com portal do cliente) ── */}
       <div className="print:hidden mt-5">
         <BookingSectionFicha referencia={e.referencia ?? undefined} />
+      </div>
+
+      {/* ── Notas privadas do admin ── */}
+      <div className="print:hidden mt-5">
+        <NotasSection referencia={e.referencia ?? undefined} />
       </div>
 
       <div className="flex flex-col gap-5">
