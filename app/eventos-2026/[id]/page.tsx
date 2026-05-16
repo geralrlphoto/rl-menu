@@ -243,43 +243,40 @@ function EditEquipaField({ label, field, multi, eventoId, referencia, local, dat
   useEffect(() => {
     if (!open || !loaded) return
     function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) handleClose()
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
-  }, [open, loaded, value])
+  }, [open, loaded])
 
-  async function handleClose() {
-    setOpen(false)
+  // Guarda em cada alteração (UX imediata + protege contra fechos inesperados)
+  async function persist(next: string[]) {
     setSaving(true)
-    await fetch('/api/evento-equipa', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        referencia,          // primary key — Notion-independent
-        evento_id: eventoId, // kept for freelancer_casamentos sync
-        local,
-        data_casamento: dataCasamento || null,
-        [field]: value,
-      }),
-    })
-    setSaving(false)
+    try {
+      await fetch('/api/evento-equipa', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          referencia,          // primary key — Notion-independent
+          evento_id: eventoId, // kept for freelancer_casamentos sync
+          local,
+          data_casamento: dataCasamento || null,
+          [field]: next,
+        }),
+      })
+    } finally { setSaving(false) }
   }
 
-  function toggle(opt: string) {
+  async function toggle(opt: string) {
+    let next: string[]
     if (multi) {
-      setValue(v => {
-        const next = v.includes(opt) ? v.filter(x => x !== opt) : [...v, opt]
-        onChanged?.(next)
-        return next
-      })
+      next = value.includes(opt) ? value.filter(x => x !== opt) : [...value, opt]
     } else {
-      setValue(v => {
-        const next = v.includes(opt) ? v.filter(x => x !== opt) : [opt]
-        onChanged?.(next)
-        return next
-      })
+      next = value.includes(opt) ? [] : [opt]
     }
+    setValue(next)
+    onChanged?.(next)
+    await persist(next)
   }
 
   const tagCls = (name: string) => {
