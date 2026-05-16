@@ -96,9 +96,10 @@ export async function GET(req: NextRequest) {
         .lte('data_evento', `${ano}-12-31`)
         .order('data_evento', { ascending: true }),
       fetchNotionEventsMap(ano),
+      // evento_equipa só tem fotografo + videografo (editor_fotos fica em eventos_2026/Notion)
       supabase
         .from('evento_equipa')
-        .select('evento_id, referencia, fotografo, videografo, editor_fotos'),
+        .select('evento_id, referencia, fotografo, videografo'),
     ])
     if (supabaseRes.error) {
       return NextResponse.json({ error: supabaseRes.error.message }, { status: 500 })
@@ -149,8 +150,7 @@ export async function GET(req: NextRequest) {
       const videografo: string[] = (equipaRow?.videografo?.length ? equipaRow.videografo
                           : fromNotion?.videografo?.length ? fromNotion.videografo
                           : parseArr(row.videografo))
-      const editor_fotos: string | null = equipaRow?.editor_fotos
-                          ?? fromNotion?.editor_fotos
+      const editor_fotos: string | null = fromNotion?.editor_fotos
                           ?? row.editor_fotos
                           ?? null
 
