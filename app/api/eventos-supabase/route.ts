@@ -84,8 +84,11 @@ export async function GET(req: NextRequest) {
     const anoParam = req.nextUrl.searchParams.get('ano')
     const ano = anoParam ? parseInt(anoParam) : 2026
 
-    // Carrega em paralelo: Supabase (cache) + Notion (source of truth)
-    const [supabaseRes, notionMap] = await Promise.all([
+    // Carrega em paralelo:
+    //   Supabase eventos_2026 (cache de campos do Notion)
+    //   Notion (source of truth de campos do calendário)
+    //   evento_equipa (fonte autoritativa para fotografo/videografo)
+    const [supabaseRes, notionMap, equipaRes] = await Promise.all([
       supabase
         .from('eventos_2026')
         .select('*')
@@ -93,10 +96,20 @@ export async function GET(req: NextRequest) {
         .lte('data_evento', `${ano}-12-31`)
         .order('data_evento', { ascending: true }),
       fetchNotionEventsMap(ano),
+      supabase
+        .from('evento_equipa')
+        .select('evento_id, referencia, fotografo, videografo, editor_fotos'),
     ])
     if (supabaseRes.error) {
       return NextResponse.json({ error: supabaseRes.error.message }, { status: 500 })
     }
+    // Mapa evento_id/referencia → equipa
+    const equipaByEvento = new Map<string, any>()
+    const equipaByRef = new Map<string, any>()
+    ;(equipaRes.data ?? []).forEach((row: any) => {
+      if (row.evento_id)  equipaByEvento.set(row.evento_id, row)
+      if (row.referencia) equipaByRef.set(row.referencia.toUpperCase(), row)
+    })
 
     // Lista de mismatches para sincronizar Supabase em background
     const mismatches: Array<{ id: string; updates: Record<string, any> }> = []
@@ -125,9 +138,21 @@ export async function GET(req: NextRequest) {
       const data_evento = fromNotion?.data_evento ?? row.data_evento ?? ''
       const tipo_evento = (fromNotion?.tipo_evento?.length ? fromNotion.tipo_evento : parseArr(row.tipo_evento)) as string[]
       const tipo_servico= (fromNotion?.tipo_servico?.length ? fromNotion.tipo_servico : parseArr(row.tipo_servico)) as string[]
-      const fotografo   = (fromNotion?.fotografo?.length ? fromNotion.fotografo : parseArr(row.fotografo)) as string[]
-      const videografo  = (fromNotion?.videografo?.length ? fromNotion.videografo : parseArr(row.videografo)) as string[]
-      const editor_fotos= fromNotion?.editor_fotos ?? row.editor_fotos ?? null
+      // Equipa: evento_equipa (Supabase) > Notion > eventos_2026 (cache antigo)
+      const equipaRow = (row.notion_id && equipaByEvento.get(row.notion_id))
+                     || (row.id && equipaByEvento.get(row.id))
+                     || (referencia && equipaByRef.get(referencia.toUpperCase()))
+                     || null
+      const fotografo: string[] = (equipaRow?.fotografo?.length ? equipaRow.fotografo
+                          : fromNotion?.fotografo?.length ? fromNotion.fotografo
+                          : parseArr(row.fotografo))
+      const videografo: string[] = (equipaRow?.videografo?.length ? equipaRow.videografo
+                          : fromNotion?.videografo?.length ? fromNotion.videografo
+                          : parseArr(row.videografo))
+      const editor_fotos: string | null = equipaRow?.editor_fotos
+                          ?? fromNotion?.editor_fotos
+                          ?? row.editor_fotos
+                          ?? null
 
       // Detecta mismatch nos campos-chave e regista para sync de background
       if (fromNotion) {
