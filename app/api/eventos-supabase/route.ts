@@ -67,6 +67,8 @@ async function fetchNotionEventsMap(ano: number): Promise<Map<string, any>> {
         tipo_evento:  getProp(p, 'TIPO DE EVENTO', 'multi_select') ?? [],
         tipo_servico: getProp(p, 'TIPO DE SERVIÇO', 'multi_select') ?? [],
         fotografo:    getProp(p, 'FOTOGRAFO', 'multi_select') ?? [],
+        videografo:   getProp(p, 'VÍDEOGRAFO ', 'multi_select') ?? [],
+        editor_fotos: getProp(p, 'EDITOR DE FOTOS', 'select'),
         valor_foto:   getProp(p, 'VALOR SERVIÇO FOTO', 'number'),
         valor_liquido:getProp(p, 'VALOR LIQUIDO A RECEBER', 'number'),
       })
@@ -124,6 +126,8 @@ export async function GET(req: NextRequest) {
       const tipo_evento = (fromNotion?.tipo_evento?.length ? fromNotion.tipo_evento : parseArr(row.tipo_evento)) as string[]
       const tipo_servico= (fromNotion?.tipo_servico?.length ? fromNotion.tipo_servico : parseArr(row.tipo_servico)) as string[]
       const fotografo   = (fromNotion?.fotografo?.length ? fromNotion.fotografo : parseArr(row.fotografo)) as string[]
+      const videografo  = (fromNotion?.videografo?.length ? fromNotion.videografo : parseArr(row.videografo)) as string[]
+      const editor_fotos= fromNotion?.editor_fotos ?? row.editor_fotos ?? null
 
       // Detecta mismatch nos campos-chave e regista para sync de background
       if (fromNotion) {
@@ -146,6 +150,8 @@ export async function GET(req: NextRequest) {
         tipo_servico,
         status,
         fotografo,
+        videografo,
+        editor_fotos,
         valor_foto:        row.valor_foto,
         valor_real_foto:   row.valor_real_foto ?? null,
         valor_video:       row.valor_liquido,

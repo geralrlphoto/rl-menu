@@ -17,6 +17,7 @@ type Evento = {
   status: string
   fotografo: string[]
   videografo: string[]
+  editor_fotos?: string | null
   valor_liquido: number | null
   valor_foto: number | null
   valor_real_foto: number | null
@@ -681,10 +682,27 @@ function Eventos2026Inner() {
                         ))}
                       </div>
 
-                      {/* Fotógrafo */}
-                      {e.fotografo?.length > 0 && (
-                        <div className="hidden md:block text-xs text-white/30 shrink-0 max-w-[120px] truncate">
-                          {e.fotografo.join(', ')}
+                      {/* Equipa: Fotografo · Videografo · Editor */}
+                      {(e.fotografo?.length > 0 || e.videografo?.length > 0 || e.editor_fotos) && (
+                        <div className="hidden md:flex flex-col gap-0.5 shrink-0 max-w-[200px] text-[10px]">
+                          {e.fotografo?.length > 0 && (
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-blue-400/40 tracking-widest uppercase text-[8px] shrink-0">F</span>
+                              <span className="text-white/50 truncate">{e.fotografo.join(', ')}</span>
+                            </div>
+                          )}
+                          {e.videografo?.length > 0 && (
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-pink-400/40 tracking-widest uppercase text-[8px] shrink-0">V</span>
+                              <span className="text-white/50 truncate">{e.videografo.join(', ')}</span>
+                            </div>
+                          )}
+                          {e.editor_fotos && (
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-emerald-400/40 tracking-widest uppercase text-[8px] shrink-0">E</span>
+                              <span className="text-white/50 truncate">{e.editor_fotos}</span>
+                            </div>
+                          )}
                         </div>
                       )}
 
