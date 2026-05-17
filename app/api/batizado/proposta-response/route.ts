@@ -100,7 +100,19 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  const nome = row.settings?.content?.evento?.nome || 'Família'
+  // Fallback ao CRM via page_token quando evento.nome está vazio
+  let nome = row.settings?.content?.evento?.nome || ''
+  if (!nome) {
+    const { data: lead } = await supabase
+      .from('crm_contacts')
+      .select('nome')
+      .eq('page_token', token)
+      .maybeSingle()
+    nome = lead?.nome || ''
+  }
+  // Marca proposta_resposta também no CRM
+  await supabase.from('crm_contacts').update({ proposta_resposta: action }).eq('page_token', token)
+  nome = nome || 'Família'
 
   await fetch('https://api.resend.com/emails', {
     method: 'POST',

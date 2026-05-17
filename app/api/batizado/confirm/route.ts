@@ -101,14 +101,47 @@ export async function POST(req: NextRequest) {
 
   // Build email context from content.evento
   const evento = row.settings?.content?.evento || {}
-  const nome   = evento.nome || ''
+  let nome   = evento.nome || ''
   let dataFmt  = evento.data || ''
+  let horaFmt  = evento.hora || ''
+  let localFmt = evento.local || ''
   try {
     if (evento.data) {
       const d = new Date(evento.data + 'T12:00:00')
       dataFmt = d.toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })
     }
   } catch { /* keep raw */ }
+
+  // Fallback ao CRM via page_token — quando o admin não preencheu evento.nome
+  // no editor, o nome do cliente está em crm_contacts.nome (mesmo token).
+  if (!nome || !dataFmt) {
+    const { data: lead } = await supabase
+      .from('crm_contacts')
+      .select('nome, reuniao_data, reuniao_hora, local_casamento')
+      .eq('page_token', token)
+      .maybeSingle()
+    if (lead) {
+      if (!nome && lead.nome) nome = lead.nome
+      if (!dataFmt && lead.reuniao_data) {
+        try {
+          const d = new Date(lead.reuniao_data + 'T12:00:00')
+          dataFmt = d.toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })
+        } catch { dataFmt = lead.reuniao_data }
+      }
+      if (!horaFmt && lead.reuniao_hora) horaFmt = lead.reuniao_hora
+      if (!localFmt && lead.local_casamento) localFmt = lead.local_casamento
+    }
+    // Marca também a página_confirmacao no CRM (estava a ficar dessincronizado)
+    await supabase
+      .from('crm_contacts')
+      .update({ page_confirmacao: 'confirmada' })
+      .eq('page_token', token)
+  } else {
+    await supabase
+      .from('crm_contacts')
+      .update({ page_confirmacao: 'confirmada' })
+      .eq('page_token', token)
+  }
 
   await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -120,7 +153,7 @@ export async function POST(req: NextRequest) {
       from: 'RL Photo.Video <geral@rlphotovideo.pt>',
       to: [ADMIN_EMAIL],
       subject: `✓ Reunião confirmada (Batizado) — ${nome || 'Família'}`,
-      html: buildEmail(nome, dataFmt, evento.hora || '', evento.local || ''),
+      html: buildEmail(nome, dataFmt, horaFmt, localFmt),
     }),
   }).catch(() => {})
 
