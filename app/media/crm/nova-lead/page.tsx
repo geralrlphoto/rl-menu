@@ -123,20 +123,24 @@ export default function NovaLeadPage() {
         {/* ── HERO ───────────────────────────────────────────────────────── */}
         <div className="mb-12 sm:mb-16">
 
-          {/* Hero banner full-width com imagem de fundo + texto sobreposto */}
-          <div className="relative w-full rounded-2xl overflow-hidden border border-blue-400/15 mb-10"
-            style={{ boxShadow: '0 0 60px -10px rgba(59,130,246,0.25)' }}>
+          {/* Hero banner full-width com imagem que desvanece de cima para baixo */}
+          <div className="relative w-full mb-10">
 
-            {/* Imagem de fundo */}
+            {/* Imagem com mask que faz fade-out vertical (visível no topo → transparente no fundo) */}
             <img
               src="https://images.pexels.com/photos/31158869/pexels-photo-31158869.jpeg?auto=compress&cs=tinysrgb&w=2000"
               alt="Câmara de vídeo profissional com iluminação neon"
               className="w-full h-[420px] sm:h-[520px] object-cover"
+              style={{
+                WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.95) 25%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0) 100%)',
+                maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.95) 25%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0) 100%)',
+              }}
             />
 
-            {/* Overlay escuro uniforme — agora que texto está centrado, dark mode em toda a imagem */}
-            <div className="absolute inset-0 bg-[#02060f]/70 pointer-events-none" />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#02060f]/40 via-[#02060f]/30 to-[#02060f]/80 pointer-events-none" />
+            {/* Tint azul subtil sobre a imagem (em vez do overlay escuro) — também faz fade */}
+            <div className="absolute inset-0 pointer-events-none" style={{
+              background: 'linear-gradient(to bottom, rgba(2,6,15,0.35) 0%, rgba(2,6,15,0.25) 40%, rgba(2,6,15,0) 100%)',
+            }} />
 
             {/* Conteúdo sobreposto — logo central + texto centrado por baixo */}
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6 sm:px-12 py-10">
