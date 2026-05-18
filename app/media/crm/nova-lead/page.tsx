@@ -165,9 +165,7 @@ export default function NovaLeadPage() {
               <div className="absolute inset-0 bg-gradient-to-tr from-[#02060f]/40 via-transparent to-blue-500/[0.08] pointer-events-none" />
               <div className="absolute inset-0 ring-1 ring-inset ring-white/[0.04] pointer-events-none rounded-2xl" />
             </div>
-
           </div>
-        </div>
 
           {/* Trust indicators */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-10">
