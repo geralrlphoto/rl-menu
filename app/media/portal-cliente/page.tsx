@@ -61,15 +61,23 @@ export default async function PortalClientePage() {
   const todos: Projeto[] = [...supabaseProjetos, ...mockProjetos]
 
   return (
-    <main className="min-h-screen bg-[#04080f] relative">
+    <main className="min-h-screen bg-[#02060f] relative">
 
-      {/* Grid bg */}
+      {/* ── Mesh gradient (mesmo de /media/crm/nova-lead) ── */}
       <div className="pointer-events-none fixed inset-0 z-0" style={{
-        backgroundImage: `linear-gradient(rgba(70,120,255,0.055) 1px,transparent 1px),linear-gradient(90deg,rgba(70,120,255,0.055) 1px,transparent 1px)`,
-        backgroundSize: '64px 64px',
+        background: 'linear-gradient(180deg, #06122a 0%, #030814 55%, #02060f 100%)',
       }} />
       <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 70% 50% at 50% -10%, rgba(20,80,255,0.10) 0%, transparent 70%)',
+        background: 'radial-gradient(ellipse 95% 65% at 50% 0%, rgba(37,99,235,0.32) 0%, rgba(37,99,235,0.08) 35%, transparent 60%)',
+      }} />
+      <div className="pointer-events-none fixed inset-0 z-0" style={{
+        background: 'radial-gradient(ellipse 55% 70% at 0% 40%, rgba(56,189,248,0.14) 0%, transparent 55%)',
+      }} />
+      <div className="pointer-events-none fixed inset-0 z-0" style={{
+        background: 'radial-gradient(ellipse 60% 50% at 100% 100%, rgba(59,130,246,0.16) 0%, transparent 60%)',
+      }} />
+      <div className="pointer-events-none fixed inset-0 z-0" style={{
+        background: 'radial-gradient(ellipse 100% 100% at 50% 50%, transparent 50%, rgba(0,0,0,0.45) 100%)',
       }} />
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 sm:px-10 py-10">
