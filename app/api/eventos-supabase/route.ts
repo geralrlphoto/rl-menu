@@ -62,6 +62,13 @@ export async function GET(req: NextRequest) {
       const fotografo: string[]  = equipaRow?.fotografo?.length  ? equipaRow.fotografo  : parseArr(row.fotografo)
       const videografo: string[] = equipaRow?.videografo?.length ? equipaRow.videografo : parseArr(row.videografo)
 
+      // Valor total cobrado ao cliente neste evento (mesma fórmula da
+      // ficha em /eventos-2026/[id]):  foto + video + extras
+      const vFoto    = Number(row.valor_real_foto ?? row.valor_foto) || 0
+      const vVideo   = Number(row.valor_video) || 0
+      const vExtras  = Number(row.valor_extras) || 0
+      const valorTotal = vFoto + vVideo + vExtras
+
       return {
         id:                row.id,
         notion_id:         row.notion_id,
@@ -75,11 +82,13 @@ export async function GET(req: NextRequest) {
         fotografo,
         videografo,
         editor_fotos:      row.editor_fotos ?? null,
-        // Valores monetários — coluna própria em eventos_2026
+        // Valores monetários — colunas próprias em eventos_2026
         valor_foto:        row.valor_foto,
         valor_real_foto:   row.valor_real_foto ?? null,
         valor_video:       row.valor_video ?? null,
+        valor_extras:      row.valor_extras ?? null,
         valor_liquido:     row.valor_liquido ?? null,
+        valor_total:       valorTotal,
         fotos_enviadas:    row.fotos_enviadas ?? false,
         // Estado das Entregas
         sel_fotos_estado:    row.sel_fotos_estado ?? null,
@@ -89,25 +98,31 @@ export async function GET(req: NextRequest) {
       }
     })
 
-    // Totais — soma APENAS o que está em eventos_2026 (Supabase, sem Notion)
-    // Vídeo: usa valor_video (bruto) — coluna própria.
-    // Fotografia: valor_real_foto (se existir, é o valor real) senão valor_foto.
+    // Totais agregados:
+    //   Foto    = soma(valor_real_foto ?? valor_foto)
+    //   Vídeo   = soma(valor_video)
+    //   Extras  = soma(valor_extras)
+    //   GERAL   = Foto + Vídeo + Extras  (= soma de valor_total por evento)
     const totais = events.reduce(
       (acc, e) => {
-        acc.totalFoto  += Number(e.valor_real_foto ?? e.valor_foto) || 0
-        acc.totalVideo += Number(e.valor_video) || 0
+        acc.totalFoto   += Number(e.valor_real_foto ?? e.valor_foto) || 0
+        acc.totalVideo  += Number(e.valor_video) || 0
+        acc.totalExtras += Number(e.valor_extras) || 0
+        acc.totalGeral  += Number(e.valor_total) || 0
         return acc
       },
-      { totalFoto: 0, totalVideo: 0 }
+      { totalFoto: 0, totalVideo: 0, totalExtras: 0, totalGeral: 0 }
     )
 
     return NextResponse.json({
       events,
       total: events.length,
       totais: {
-        foto:  totais.totalFoto,
-        video: totais.totalVideo,
-        geral: totais.totalFoto + totais.totalVideo,
+        foto:   totais.totalFoto,
+        video:  totais.totalVideo,
+        extras: totais.totalExtras,
+        // GERAL é o total cobrado ao cliente (foto + video + extras)
+        geral:  totais.totalGeral,
       },
     })
   } catch (err: any) {
