@@ -77,12 +77,28 @@ export default function NovaLeadPage() {
   const labelCls = "block text-[13px] tracking-[0.4em] text-white/70 uppercase mb-2.5 font-medium"
   const inputCls = "w-full bg-white/[0.06] border border-white/[0.15] focus:border-blue-400/50 focus:outline-none px-4 py-4 text-[17px] text-white placeholder:text-white/30 transition-colors duration-200 rounded-md"
 
-  // ── Background — gradiente diagonal limpo (azul escuro → azul vibrante → escuro)
+  // ── Background — mesh gradient liso (sem pattern), 5 camadas de gradients ──
   const BgLayers = () => (
     <>
-      {/* Gradient diagonal principal — transição clara entre tons */}
+      {/* Base linear: azul-escuro muito subtil de cima para baixo */}
       <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'linear-gradient(135deg, #02060f 0%, #0a1a3a 35%, #1e3a8a 55%, #0a1a3a 75%, #02060f 100%)',
+        background: 'linear-gradient(180deg, #06122a 0%, #030814 55%, #02060f 100%)',
+      }} />
+      {/* Mancha grande azul ao centro-topo */}
+      <div className="pointer-events-none fixed inset-0 z-0" style={{
+        background: 'radial-gradient(ellipse 95% 65% at 50% 0%, rgba(37,99,235,0.32) 0%, rgba(37,99,235,0.08) 35%, transparent 60%)',
+      }} />
+      {/* Mancha lateral esquerda (cyan-azul) */}
+      <div className="pointer-events-none fixed inset-0 z-0" style={{
+        background: 'radial-gradient(ellipse 55% 70% at 0% 40%, rgba(56,189,248,0.14) 0%, transparent 55%)',
+      }} />
+      {/* Mancha canto inferior direito (azul profundo) */}
+      <div className="pointer-events-none fixed inset-0 z-0" style={{
+        background: 'radial-gradient(ellipse 60% 50% at 100% 100%, rgba(59,130,246,0.16) 0%, transparent 60%)',
+      }} />
+      {/* Vinheta para escurecer ligeiramente as bordas */}
+      <div className="pointer-events-none fixed inset-0 z-0" style={{
+        background: 'radial-gradient(ellipse 100% 100% at 50% 50%, transparent 50%, rgba(0,0,0,0.45) 100%)',
       }} />
     </>
   )
