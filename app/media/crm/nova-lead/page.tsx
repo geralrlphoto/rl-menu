@@ -77,18 +77,29 @@ export default function NovaLeadPage() {
   const labelCls = "block text-[13px] tracking-[0.4em] text-white/70 uppercase mb-2.5 font-medium"
   const inputCls = "w-full bg-white/[0.06] border border-white/[0.15] focus:border-blue-400/50 focus:outline-none px-4 py-4 text-[17px] text-white placeholder:text-white/30 transition-colors duration-200 rounded-md"
 
-  // ── Backgrounds (mantidos do design original — azul neon) ──────────────────
+  // ── Backgrounds — pontos azuis suaves + spotlights neon ──────────────────
   const BgLayers = () => (
     <>
+      {/* Dot grid — pontos azuis suaves (em vez da grelha de linhas) */}
       <div className="pointer-events-none fixed inset-0 z-0" style={{
-        backgroundImage: `linear-gradient(rgba(30,100,255,0.10) 1px,transparent 1px),linear-gradient(90deg,rgba(30,100,255,0.10) 1px,transparent 1px)`,
-        backgroundSize: '44px 44px',
+        backgroundImage: 'radial-gradient(circle, rgba(59,130,246,0.18) 1px, transparent 1.5px)',
+        backgroundSize: '28px 28px',
       }} />
+      {/* Spotlight azul topo */}
       <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 80% 50% at 50% -5%, rgba(37,99,235,0.20) 0%, transparent 65%)',
+        background: 'radial-gradient(ellipse 70% 50% at 50% -5%, rgba(37,99,235,0.22) 0%, transparent 60%)',
       }} />
+      {/* Spotlight cyan-azul lateral esquerda */}
       <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 60% 40% at 80% 100%, rgba(37,99,235,0.10) 0%, transparent 65%)',
+        background: 'radial-gradient(ellipse 45% 60% at 0% 30%, rgba(59,130,246,0.10) 0%, transparent 55%)',
+      }} />
+      {/* Spotlight azul canto inferior direito */}
+      <div className="pointer-events-none fixed inset-0 z-0" style={{
+        background: 'radial-gradient(ellipse 50% 45% at 100% 100%, rgba(37,99,235,0.12) 0%, transparent 60%)',
+      }} />
+      {/* Gradient suave overlay para profundidade */}
+      <div className="pointer-events-none fixed inset-0 z-0" style={{
+        background: 'linear-gradient(180deg, rgba(2,6,15,0) 0%, rgba(2,6,15,0.3) 50%, rgba(2,6,15,0.6) 100%)',
       }} />
     </>
   )
