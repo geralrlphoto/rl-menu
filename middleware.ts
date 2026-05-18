@@ -40,6 +40,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/freelancer-view') ||
     pathname.startsWith('/r/') ||
     pathname.startsWith('/b/') ||
+    pathname.startsWith('/secao/') ||
     pathname.startsWith('/api/batizado/') ||
     pathname.startsWith('/api/lead-page/view') ||
     pathname.startsWith('/api/lead-page/confirm') ||
