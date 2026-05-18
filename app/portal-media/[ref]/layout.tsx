@@ -72,7 +72,13 @@ export default async function PortalMediaLayout({ children, params }: Props) {
     const portalCookie = cookieStore.get(`pm_${ref.toUpperCase()}`)?.value
     if (portalCookie !== senha) {
       return (
-        <div className="min-h-screen bg-[#04080f]">
+        <div className="min-h-screen bg-[#02060f]">
+          {/* mesh gradient também na tela de login */}
+          <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'linear-gradient(180deg, #06122a 0%, #030814 55%, #02060f 100%)' }} />
+          <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'radial-gradient(ellipse 95% 65% at 50% 0%, rgba(37,99,235,0.32) 0%, rgba(37,99,235,0.08) 35%, transparent 60%)' }} />
+          <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'radial-gradient(ellipse 55% 70% at 0% 40%, rgba(56,189,248,0.14) 0%, transparent 55%)' }} />
+          <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'radial-gradient(ellipse 60% 50% at 100% 100%, rgba(59,130,246,0.16) 0%, transparent 60%)' }} />
+          <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'radial-gradient(ellipse 100% 100% at 50% 50%, transparent 50%, rgba(0,0,0,0.45) 100%)' }} />
           <PortalLoginClient
             portalRef={ref.toUpperCase()}
             nomeProjeto={nomeProjeto}

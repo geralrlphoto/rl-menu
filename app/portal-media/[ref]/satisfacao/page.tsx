@@ -29,11 +29,7 @@ export default async function SatisfacaoPage({ params }: Props) {
   const isAdmin = cookieStore.get('rl_auth')?.value === process.env.AUTH_SECRET
 
   return (
-    <main className="min-h-screen bg-[#04080f] relative">
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        backgroundImage: `linear-gradient(rgba(70,120,255,0.055) 1px,transparent 1px),linear-gradient(90deg,rgba(70,120,255,0.055) 1px,transparent 1px)`,
-        backgroundSize: '64px 64px',
-      }} />
+    <main className="min-h-screen relative">
       <SatisfacaoClient projeto={projeto} isAdmin={isAdmin} />
     </main>
   )
