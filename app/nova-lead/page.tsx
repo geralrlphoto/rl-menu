@@ -218,16 +218,58 @@ export default function NovaLeadPage() {
     setForm(p => ({ ...p, [k]: v }))
   }
 
+  // Valida campos obrigatórios do step atual.
+  // Retorna string com mensagem de erro, ou null se tudo OK.
+  function validateStep(s: number): string | null {
+    if (s === 0) {
+      if (!form.nome.trim()) return 'Diz-nos o vosso nome.'
+    }
+    if (s === 2) {
+      if (!form.tipoEvento) return 'Escolhe o tipo de evento.'
+      if (!form.dataEvento) return 'Data do evento é obrigatória.'
+      if (!form.local.trim()) return 'Local do evento é obrigatório.'
+      if (form.tipoCerimonia.length === 0) return 'Escolhe pelo menos um tipo de cerimónia.'
+      if (!form.numConvidados.trim()) return 'Número de convidados é obrigatório.'
+    }
+    if (s === 3) {
+      if (form.estilo.length === 0) return 'Escolhe pelo menos um estilo.'
+      if (!form.visao20anos.trim()) return 'Conta-nos como imaginam olhar para as fotos daqui a 20 anos.'
+      if (!form.trabalhoFavorito.trim()) return 'Indica um trabalho nosso que vos emocionou (ou escreve "nenhum").'
+      if (!form.preocupacoes.trim()) return 'Conta-nos as vossas preocupações (ou escreve "nenhuma").'
+    }
+    if (s === 4) {
+      if (form.servicos.length === 0) return 'Escolhe pelo menos um serviço.'
+      if (!form.orcamento.trim()) return 'Indica um orçamento previsto.'
+    }
+    if (s === 5) {
+      if (!form.contato.trim()) return 'Telemóvel é obrigatório.'
+      if (!form.email.trim()) return 'E-mail é obrigatório.'
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return 'E-mail inválido.'
+      if (!form.zonaResidencia.trim()) return 'Zona de residência é obrigatória.'
+      if (!form.comoChegou) return 'Diz-nos como chegaram até nós.'
+    }
+    return null
+  }
+
   function goNext() {
+    const err = validateStep(step)
+    if (err) { setErro(err); return }
+    setErro('')
     topRef.current?.scrollIntoView({ behavior: 'smooth' })
     setStep(s => s + 1)
   }
   function goBack() {
+    setErro('')
     topRef.current?.scrollIntoView({ behavior: 'smooth' })
     setStep(s => s - 1)
   }
 
   async function handleSubmit() {
+    // Valida TODOS os steps (defensivo — se o user saltar steps via back/forward)
+    for (const s of [0, 2, 3, 4, 5]) {
+      const err = validateStep(s)
+      if (err) { setErro(err); setStep(s); return }
+    }
     setErro('')
     setSending(true)
     try {
@@ -428,15 +470,15 @@ export default function NovaLeadPage() {
               </div>
               <LeadInput label="Data do Evento" type="date" value={form.dataEvento} onChange={v => set('dataEvento', v)} required />
               <LeadInput label="Local do Evento (Cerimónia + Quinta)" value={form.local} onChange={v => set('local', v)}
-                placeholder="Ex: Igreja X + Quinta Y" />
+                placeholder="Ex: Igreja X + Quinta Y" required />
               <div className="space-y-2">
                 <p className="text-[10px] tracking-[0.4em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.7)' }}>
-                  Tipo de Cerimónia
+                  Tipo de Cerimónia <span style={{ color: 'rgba(201,168,76,0.4)' }}>*</span>
                 </p>
                 <PillToggle options={TIPO_CERIMONIA} value={form.tipoCerimonia} onChange={v => set('tipoCerimonia', v)} multi />
               </div>
               <LeadInput label="Número de Convidados (sensivelmente)" value={form.numConvidados}
-                onChange={v => set('numConvidados', v)} placeholder="Ex: 150" />
+                onChange={v => set('numConvidados', v)} placeholder="Ex: 150" required />
             </div>
           )}
 
@@ -447,7 +489,7 @@ export default function NovaLeadPage() {
               {/* Estilo */}
               <div className="space-y-3">
                 <div>
-                  <p className="font-playfair text-xl italic font-light text-white">"Qual é o vosso estilo?"</p>
+                  <p className="font-playfair text-xl italic font-light text-white">"Qual é o vosso estilo?" <span style={{ color: 'rgba(201,168,76,0.4)' }}>*</span></p>
                   <p className="text-[11px] tracking-wide mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>Podem escolher mais do que um</p>
                 </div>
                 <PillToggle options={ESTILO} value={form.estilo} onChange={v => set('estilo', v)} multi />
@@ -455,7 +497,7 @@ export default function NovaLeadPage() {
 
               {/* Visão 20 anos */}
               <div className="space-y-3">
-                <p className="font-playfair text-xl italic font-light text-white">"Como imaginam olhar para as fotos e o vídeo daqui a 20 anos?"</p>
+                <p className="font-playfair text-xl italic font-light text-white">"Como imaginam olhar para as fotos e o vídeo daqui a 20 anos?" <span style={{ color: 'rgba(201,168,76,0.4)' }}>*</span></p>
                 <textarea
                   value={form.visao20anos}
                   onChange={e => set('visao20anos', e.target.value)}
@@ -470,20 +512,20 @@ export default function NovaLeadPage() {
 
               {/* Trabalho favorito */}
               <div className="space-y-3">
-                <p className="font-playfair text-xl italic font-light text-white">"Já viram algum trabalho nosso que vos emocionou?"</p>
+                <p className="font-playfair text-xl italic font-light text-white">"Já viram algum trabalho nosso que vos emocionou?" <span style={{ color: 'rgba(201,168,76,0.4)' }}>*</span></p>
                 <LeadInput label="Link ou descrição" value={form.trabalhoFavorito}
                   onChange={v => set('trabalhoFavorito', v)}
-                  placeholder="Ex: o vídeo do casamento na Quinta..." />
+                  placeholder="Ex: o vídeo do casamento na Quinta..." required />
               </div>
 
               {/* Preocupações */}
               <div className="space-y-3">
-                <p className="font-playfair text-xl italic font-light text-white">"Há algo que não gostam em fotos ou vídeo?"</p>
+                <p className="font-playfair text-xl italic font-light text-white">"Há algo que não gostam em fotos ou vídeo?" <span style={{ color: 'rgba(201,168,76,0.4)' }}>*</span></p>
                 <textarea
                   value={form.preocupacoes}
                   onChange={e => set('preocupacoes', e.target.value)}
                   rows={3}
-                  placeholder="Poses, ângulos, estilos de edição..."
+                  placeholder="Poses, ângulos, estilos de edição (ou escreve 'nenhuma')..."
                   className="w-full bg-transparent outline-none text-white placeholder-white/20 py-3 px-0 text-base font-cormorant tracking-wide transition-all duration-200 resize-none"
                   style={{ borderBottom: '1px solid rgba(201,168,76,0.25)' }}
                   onFocus={e => { e.currentTarget.style.borderBottomColor = 'rgba(201,168,76,0.8)' }}
@@ -585,7 +627,7 @@ export default function NovaLeadPage() {
                 </div>
               </div>
               <LeadInput label="Orçamento Previsto (sensivelmente)" value={form.orcamento}
-                onChange={v => set('orcamento', v)} placeholder="Ex: 2.000 — 3.000€" />
+                onChange={v => set('orcamento', v)} placeholder="Ex: 2.000 — 3.000€" required />
             </div>
           )}
 
