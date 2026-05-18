@@ -128,8 +128,10 @@ export default function NovaLeadPage() {
 
         {/* ── HERO ───────────────────────────────────────────────────────── */}
         <div className="mb-12 sm:mb-16">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-8">
-            <div className="flex-1 max-w-2xl">
+          <div className="grid grid-cols-1 lg:grid-cols-5 items-center gap-8 lg:gap-12">
+
+            {/* Texto (3/5) */}
+            <div className="lg:col-span-3">
               <div className="flex items-center gap-3 mb-6">
                 <img src="/logo-rl-prod-branco.png" alt="RL PROD" className="w-14 h-14 object-contain"
                   style={{ filter: 'drop-shadow(0 0 16px rgba(59,130,246,0.25))' }} />
@@ -150,7 +152,22 @@ export default function NovaLeadPage() {
                 Respondemos em até 24h com uma proposta personalizada.
               </p>
             </div>
+
+            {/* Imagem (2/5) — câmara de vídeo profissional com iluminação neon */}
+            <div className="lg:col-span-2 relative aspect-[4/3] lg:aspect-[3/4] rounded-2xl overflow-hidden border border-blue-400/15"
+              style={{ boxShadow: '0 0 60px -10px rgba(59,130,246,0.25), inset 0 0 40px rgba(0,0,0,0.4)' }}>
+              <img
+                src="https://images.pexels.com/photos/31158869/pexels-photo-31158869.jpeg?auto=compress&cs=tinysrgb&w=1200"
+                alt="Câmara de vídeo profissional com iluminação neon"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              {/* overlay azul para harmonizar com o tema */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-[#02060f]/40 via-transparent to-blue-500/[0.08] pointer-events-none" />
+              <div className="absolute inset-0 ring-1 ring-inset ring-white/[0.04] pointer-events-none rounded-2xl" />
+            </div>
+
           </div>
+        </div>
 
           {/* Trust indicators */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-10">
