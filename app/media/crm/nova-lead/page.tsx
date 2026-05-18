@@ -26,12 +26,6 @@ const FONTES = [
   'Outro',
 ]
 
-const STEPS = [
-  { num: '1', titulo: 'CONTACTO',     sub: 'Os teus dados' },
-  { num: '2', titulo: 'PROJETO',      sub: 'Conta-nos tudo' },
-  { num: '3', titulo: 'CONFIRMAÇÃO',  sub: 'Enviado com sucesso' },
-]
-
 const EMPTY = {
   nome: '',
   empresa: '',
@@ -44,7 +38,6 @@ const EMPTY = {
 }
 
 export default function NovaLeadPage() {
-  const [step, setStep]     = useState(0)
   const [form, setForm]     = useState(EMPTY)
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState('')
@@ -54,35 +47,17 @@ export default function NovaLeadPage() {
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
       setForm(f => ({ ...f, [k]: e.target.value }))
 
-  function validateStep(s: number): string | null {
-    if (s === 0) {
-      if (!form.nome.trim())     return 'O nome é obrigatório.'
-      if (!form.empresa.trim())  return 'A empresa é obrigatória.'
-      if (!form.email.trim())    return 'O email é obrigatório.'
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return 'Email inválido.'
-      if (!form.telefone.trim()) return 'O telefone é obrigatório.'
-    }
-    if (s === 1) {
-      if (!form.tipo)            return 'O tipo de serviço é obrigatório.'
-      if (!form.fonte)           return 'Indica como nos encontrou.'
-      if (!form.mensagem.trim()) return 'A mensagem é obrigatória.'
-    }
-    return null
-  }
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!form.nome.trim())     { setError('O nome é obrigatório.'); return }
+    if (!form.empresa.trim())  { setError('A empresa é obrigatória.'); return }
+    if (!form.email.trim())    { setError('O email é obrigatório.'); return }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) { setError('Email inválido.'); return }
+    if (!form.telefone.trim()) { setError('O telefone é obrigatório.'); return }
+    if (!form.tipo)            { setError('O tipo de serviço é obrigatório.'); return }
+    if (!form.fonte)           { setError('Indica como nos encontrou.'); return }
+    if (!form.mensagem.trim()) { setError('A mensagem é obrigatória.'); return }
 
-  function goNext() {
-    const err = validateStep(step)
-    if (err) { setError(err); return }
-    setError('')
-    setStep(s => s + 1)
-  }
-  function goBack() { setError(''); setStep(s => s - 1) }
-
-  async function handleSubmit() {
-    for (const s of [0, 1]) {
-      const err = validateStep(s)
-      if (err) { setError(err); setStep(s); return }
-    }
     setSaving(true); setError('')
     try {
       const res = await fetch('/api/media-leads', {
@@ -93,7 +68,6 @@ export default function NovaLeadPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setEnviado(true)
-      setStep(2)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Erro ao enviar.')
       setSaving(false)
@@ -196,134 +170,91 @@ export default function NovaLeadPage() {
           </div>
         </div>
 
-        {/* ── STEP INDICATOR ────────────────────────────────────────────── */}
-        <div className="mb-10 border-y border-white/[0.06] py-5">
-          <div className="grid grid-cols-3 gap-2">
-            {STEPS.map((s, i) => {
-              const isCurrent = i === step
-              const isDone    = i < step
-              return (
-                <div key={s.num} className="flex items-center gap-3 min-w-0">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-[14px] font-bold shrink-0 transition-all ${
-                    isCurrent ? 'bg-blue-500 text-white' :
-                    isDone    ? 'bg-blue-500/15 text-blue-300 border border-blue-400/30' :
-                                'bg-white/[0.04] text-white/30 border border-white/10'
-                  }`}>
-                    {isDone ? '✓' : s.num}
-                  </div>
-                  <div className="min-w-0 hidden sm:block">
-                    <p className={`text-[13px] font-medium tracking-widest uppercase ${isCurrent || isDone ? 'text-white' : 'text-white/35'}`}>{s.titulo}</p>
-                    <p className="text-[11px] text-white/40 tracking-wider truncate mt-0.5">{s.sub}</p>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-
         {/* ── MAIN LAYOUT: form (esq) + side panels (dir) ───────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-          {/* ── FORM (col 1+2) ─────────────────────────────────────────── */}
-          <div className="lg:col-span-2">
-            {step === 0 && (
-              <div className="bg-white/[0.02] border border-white/[0.08] rounded-2xl p-6 sm:p-8">
-                <h2 className="text-[14px] tracking-[0.4em] text-blue-300/80 uppercase font-medium mb-2">1 — Contacto</h2>
-                <p className="text-[15px] text-white/45 mb-7">Diz-nos quem és para podermos falar contigo.</p>
+          {/* ── FORM (col 1+2) — single page com 2 secções ─────────────── */}
+          <form onSubmit={handleSubmit} className="lg:col-span-2 flex flex-col gap-6">
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className={labelCls}>Nome <span className="text-blue-400/60">*</span></label>
-                    <input value={form.nome} onChange={set('nome')} placeholder="Nome completo" className={inputCls} />
-                  </div>
-                  <div>
-                    <label className={labelCls}>Empresa <span className="text-blue-400/60">*</span></label>
-                    <input value={form.empresa} onChange={set('empresa')} placeholder="Nome da empresa" className={inputCls} />
-                  </div>
-                  <div>
-                    <label className={labelCls}>Email <span className="text-blue-400/60">*</span></label>
-                    <input type="email" value={form.email} onChange={set('email')} placeholder="email@exemplo.com" className={inputCls} />
-                  </div>
-                  <div>
-                    <label className={labelCls}>Telefone <span className="text-blue-400/60">*</span></label>
-                    <input value={form.telefone} onChange={set('telefone')} placeholder="+351 9xx xxx xxx" className={inputCls} />
-                  </div>
+            {/* Secção 01 — Contacto */}
+            <div className="bg-white/[0.02] border border-white/[0.08] rounded-2xl p-6 sm:p-8">
+              <p className="text-[13px] tracking-[0.45em] text-blue-300/70 uppercase mb-6 flex items-center gap-3">
+                <span>01 — Contacto</span>
+                <span className="flex-1 h-px bg-white/[0.06]" />
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <label className={labelCls}>Nome <span className="text-blue-400/60">*</span></label>
+                  <input value={form.nome} onChange={set('nome')} placeholder="Nome completo" className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>Empresa <span className="text-blue-400/60">*</span></label>
+                  <input value={form.empresa} onChange={set('empresa')} placeholder="Nome da empresa" className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>Email <span className="text-blue-400/60">*</span></label>
+                  <input type="email" value={form.email} onChange={set('email')} placeholder="email@exemplo.com" className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>Telefone <span className="text-blue-400/60">*</span></label>
+                  <input value={form.telefone} onChange={set('telefone')} placeholder="+351 9xx xxx xxx" className={inputCls} />
                 </div>
               </div>
-            )}
+            </div>
 
-            {step === 1 && (
-              <div className="bg-white/[0.02] border border-white/[0.08] rounded-2xl p-6 sm:p-8">
-                <h2 className="text-[14px] tracking-[0.4em] text-blue-300/80 uppercase font-medium mb-2">2 — Projeto</h2>
-                <p className="text-[15px] text-white/45 mb-7">Conta-nos sobre o que pretendes.</p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className={labelCls}>Tipo de Serviço <span className="text-blue-400/60">*</span></label>
-                    <CustomSelect
-                      value={form.tipo}
-                      onChange={v => setForm(f => ({ ...f, tipo: v }))}
-                      options={TIPOS}
-                      placeholder="Selecionar..."
-                    />
-                  </div>
-                  <div>
-                    <label className={labelCls}>Como nos encontrou <span className="text-blue-400/60">*</span></label>
-                    <CustomSelect
-                      value={form.fonte}
-                      onChange={v => setForm(f => ({ ...f, fonte: v }))}
-                      options={FONTES}
-                      placeholder="Selecionar..."
-                    />
-                  </div>
+            {/* Secção 02 — Projeto */}
+            <div className="bg-white/[0.02] border border-white/[0.08] rounded-2xl p-6 sm:p-8">
+              <p className="text-[13px] tracking-[0.45em] text-blue-300/70 uppercase mb-6 flex items-center gap-3">
+                <span>02 — Projeto</span>
+                <span className="flex-1 h-px bg-white/[0.06]" />
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <label className={labelCls}>Tipo de Serviço <span className="text-blue-400/60">*</span></label>
+                  <CustomSelect
+                    value={form.tipo}
+                    onChange={v => setForm(f => ({ ...f, tipo: v }))}
+                    options={TIPOS}
+                    placeholder="Selecionar..."
+                  />
                 </div>
-
-                <div className="mt-5">
-                  <label className={labelCls}>Mensagem / Descrição do Pedido <span className="text-blue-400/60">*</span></label>
-                  <textarea value={form.mensagem} onChange={set('mensagem')}
-                    placeholder="Descreve o que o cliente pretende..." rows={6}
-                    className={inputCls + ' resize-none leading-relaxed'} />
+                <div>
+                  <label className={labelCls}>Como nos encontrou <span className="text-blue-400/60">*</span></label>
+                  <CustomSelect
+                    value={form.fonte}
+                    onChange={v => setForm(f => ({ ...f, fonte: v }))}
+                    options={FONTES}
+                    placeholder="Selecionar..."
+                  />
                 </div>
               </div>
-            )}
+              <div className="mt-5">
+                <label className={labelCls}>Mensagem / Descrição do Pedido <span className="text-blue-400/60">*</span></label>
+                <textarea value={form.mensagem} onChange={set('mensagem')}
+                  placeholder="Descreve o que o cliente pretende..." rows={6}
+                  className={inputCls + ' resize-none leading-relaxed'} />
+              </div>
+            </div>
 
             {/* Erro */}
             {error && (
-              <div className="mt-4 px-4 py-3.5 rounded-lg border border-red-400/30 bg-red-500/[0.06] text-[15px] text-red-300/85">
+              <div className="px-4 py-3.5 rounded-lg border border-red-400/30 bg-red-500/[0.06] text-[15px] text-red-300/85">
                 ⚠ {error}
               </div>
             )}
 
-            {/* Navegação */}
-            <div className="mt-6 flex items-center justify-between gap-4">
-              {step > 0 ? (
-                <button onClick={goBack} type="button"
-                  className="text-[13px] tracking-[0.35em] text-white/50 hover:text-white/80 uppercase transition-colors">
-                  ← Anterior
-                </button>
-              ) : <div />}
-
-              {step < 1 ? (
-                <button onClick={goNext} type="button"
-                  className="flex items-center gap-3 px-9 py-4 rounded-md bg-blue-500 hover:bg-blue-400 text-white font-semibold text-[14px] tracking-[0.3em] uppercase transition-all shadow-[0_0_20px_rgba(59,130,246,0.25)]">
-                  Próximo Passo →
-                </button>
-              ) : (
-                <button onClick={handleSubmit} disabled={saving} type="button"
-                  className="flex items-center gap-3 px-9 py-4 rounded-md bg-blue-500 hover:bg-blue-400 text-white font-semibold text-[14px] tracking-[0.3em] uppercase transition-all disabled:opacity-50 shadow-[0_0_20px_rgba(59,130,246,0.25)]">
-                  {saving ? 'A enviar...' : 'Enviar Pedido →'}
-                </button>
-              )}
-            </div>
-
-            {/* Botão limpar */}
-            {step === 0 && (
+            {/* Actions */}
+            <div className="flex items-center justify-between pt-4 border-t border-white/[0.08]">
               <button type="button" onClick={() => setForm(EMPTY)}
-                className="mt-4 text-[13px] tracking-[0.35em] text-white/30 hover:text-white/60 uppercase transition-colors">
+                className="text-[13px] tracking-[0.35em] text-white/35 hover:text-white/65 uppercase transition-colors">
                 Limpar
               </button>
-            )}
-          </div>
+              <button type="submit" disabled={saving}
+                className="flex items-center gap-3 px-9 py-4 rounded-md bg-blue-500 hover:bg-blue-400 text-white font-semibold text-[14px] tracking-[0.3em] uppercase transition-all disabled:opacity-50 shadow-[0_0_20px_rgba(59,130,246,0.25)]">
+                {saving ? 'A enviar...' : 'Enviar →'}
+              </button>
+            </div>
+          </form>
 
           {/* ── SIDE PANELS (col 3) ────────────────────────────────────── */}
           <div className="lg:col-span-1 flex flex-col gap-4">
