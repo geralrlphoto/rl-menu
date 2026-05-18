@@ -128,47 +128,50 @@ export default function NovaLeadPage() {
 
         {/* ── HERO ───────────────────────────────────────────────────────── */}
         <div className="mb-12 sm:mb-16">
-          <div className="grid grid-cols-1 lg:grid-cols-5 items-center gap-8 lg:gap-12">
 
-            {/* Texto (3/5) */}
-            <div className="lg:col-span-3">
-              <div className="flex items-center gap-3 mb-6">
-                <img src="/logo-rl-prod-branco.png" alt="RL PROD" className="w-14 h-14 object-contain"
-                  style={{ filter: 'drop-shadow(0 0 16px rgba(59,130,246,0.25))' }} />
-                <div>
-                  <p className="text-[11px] tracking-[0.5em] text-blue-300/70 uppercase">RL Prod</p>
-                  <p className="text-[10px] tracking-[0.4em] text-white/35 uppercase">Photography &amp; Video</p>
+          {/* Hero banner full-width com imagem de fundo + texto sobreposto */}
+          <div className="relative w-full rounded-2xl overflow-hidden border border-blue-400/15 mb-10"
+            style={{ boxShadow: '0 0 60px -10px rgba(59,130,246,0.25)' }}>
+
+            {/* Imagem de fundo */}
+            <img
+              src="https://images.pexels.com/photos/31158869/pexels-photo-31158869.jpeg?auto=compress&cs=tinysrgb&w=2000"
+              alt="Câmara de vídeo profissional com iluminação neon"
+              className="w-full h-[420px] sm:h-[520px] object-cover"
+            />
+
+            {/* Overlay escuro+azul para legibilidade do texto */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#02060f]/95 via-[#02060f]/70 to-[#02060f]/40 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#02060f] via-transparent to-transparent pointer-events-none" />
+
+            {/* Texto sobreposto */}
+            <div className="absolute inset-0 flex items-center px-6 sm:px-12 lg:px-16">
+              <div className="max-w-2xl">
+                <div className="flex items-center gap-3 mb-6">
+                  <img src="/logo-rl-prod-branco.png" alt="RL PROD" className="w-14 h-14 object-contain"
+                    style={{ filter: 'drop-shadow(0 0 16px rgba(59,130,246,0.35))' }} />
+                  <div>
+                    <p className="text-[11px] tracking-[0.5em] text-blue-300/80 uppercase">RL Prod</p>
+                    <p className="text-[10px] tracking-[0.4em] text-white/45 uppercase">Photography &amp; Video</p>
+                  </div>
                 </div>
+
+                <p className="text-[12px] tracking-[0.5em] text-blue-400/80 uppercase mb-4">Pedido de Orçamento</p>
+                <h1 className="text-4xl sm:text-6xl font-extralight tracking-tight text-white leading-[1.1] drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
+                  Vamos criar algo
+                  <br />
+                  <span className="text-blue-400">incrível juntos.</span>
+                </h1>
+                <p className="text-[16px] sm:text-[18px] text-white/75 leading-relaxed mt-5 max-w-lg drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
+                  Preenche o formulário e conta-nos sobre o teu projeto.<br />
+                  Respondemos em até 24h com uma proposta personalizada.
+                </p>
               </div>
-
-              <p className="text-[12px] tracking-[0.5em] text-blue-400/70 uppercase mb-4">Pedido de Orçamento</p>
-              <h1 className="text-4xl sm:text-6xl font-extralight tracking-tight text-white leading-[1.1]">
-                Vamos criar algo
-                <br />
-                <span className="text-blue-400">incrível juntos.</span>
-              </h1>
-              <p className="text-[18px] text-white/60 leading-relaxed mt-6 max-w-lg">
-                Preenche o formulário e conta-nos sobre o teu projeto.<br />
-                Respondemos em até 24h com uma proposta personalizada.
-              </p>
-            </div>
-
-            {/* Imagem (2/5) — câmara de vídeo profissional com iluminação neon */}
-            <div className="lg:col-span-2 relative aspect-[4/3] lg:aspect-[3/4] rounded-2xl overflow-hidden border border-blue-400/15"
-              style={{ boxShadow: '0 0 60px -10px rgba(59,130,246,0.25), inset 0 0 40px rgba(0,0,0,0.4)' }}>
-              <img
-                src="https://images.pexels.com/photos/31158869/pexels-photo-31158869.jpeg?auto=compress&cs=tinysrgb&w=1200"
-                alt="Câmara de vídeo profissional com iluminação neon"
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-              {/* overlay azul para harmonizar com o tema */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-[#02060f]/40 via-transparent to-blue-500/[0.08] pointer-events-none" />
-              <div className="absolute inset-0 ring-1 ring-inset ring-white/[0.04] pointer-events-none rounded-2xl" />
             </div>
           </div>
 
           {/* Trust indicators */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-10">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
               { icon: '⏱', titulo: 'Resposta rápida', sub: 'Até 24h' },
               { icon: '◆', titulo: 'Propostas personalizadas', sub: 'Para o teu projeto' },
