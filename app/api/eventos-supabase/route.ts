@@ -62,10 +62,13 @@ export async function GET(req: NextRequest) {
       const fotografo: string[]  = equipaRow?.fotografo?.length  ? equipaRow.fotografo  : parseArr(row.fotografo)
       const videografo: string[] = equipaRow?.videografo?.length ? equipaRow.videografo : parseArr(row.videografo)
 
-      // Valor total cobrado ao cliente neste evento (mesma fórmula da
-      // ficha em /eventos-2026/[id]):  foto + video + extras
+      // Valor total cobrado ao cliente neste evento.
+      // FOTO  = valor_real_foto ?? valor_foto
+      // VÍDEO = valor_video ?? valor_liquido (fallback: muitos eventos antigos
+      //         têm o valor cobrado em valor_liquido em vez de valor_video)
+      // EXTRAS = valor_extras (se a coluna existir; default 0)
       const vFoto    = Number(row.valor_real_foto ?? row.valor_foto) || 0
-      const vVideo   = Number(row.valor_video) || 0
+      const vVideo   = Number(row.valor_video ?? row.valor_liquido) || 0
       const vExtras  = Number(row.valor_extras) || 0
       const valorTotal = vFoto + vVideo + vExtras
 
@@ -98,15 +101,15 @@ export async function GET(req: NextRequest) {
       }
     })
 
-    // Totais agregados:
+    // Totais agregados (mesma fórmula que valor_total por evento):
     //   Foto    = soma(valor_real_foto ?? valor_foto)
-    //   Vídeo   = soma(valor_video)
+    //   Vídeo   = soma(valor_video ?? valor_liquido)   ← fallback p/ eventos antigos
     //   Extras  = soma(valor_extras)
-    //   GERAL   = Foto + Vídeo + Extras  (= soma de valor_total por evento)
+    //   GERAL   = Foto + Vídeo + Extras
     const totais = events.reduce(
       (acc, e) => {
         acc.totalFoto   += Number(e.valor_real_foto ?? e.valor_foto) || 0
-        acc.totalVideo  += Number(e.valor_video) || 0
+        acc.totalVideo  += Number(e.valor_video ?? e.valor_liquido) || 0
         acc.totalExtras += Number(e.valor_extras) || 0
         acc.totalGeral  += Number(e.valor_total) || 0
         return acc
