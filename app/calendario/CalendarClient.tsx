@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 export type CalEvent = {
@@ -43,11 +44,22 @@ export type ReuniaoEvent = {
   reuniao_link: string | null
 }
 
+export type TarefaEvent = {
+  id: string
+  titulo: string
+  descricao: string | null
+  status: 'NOVA' | 'PENDENTE' | 'CONCLUIDA'
+  data_prazo: string           // YYYY-MM-DD
+  hora: string | null          // HH:MM or HH:MM:SS
+  evento_id: string | null     // Notion event id (optional link)
+}
+
 type SelectedItem =
   | { kind: 'event'; data: CalEvent }
   | { kind: 'pw'; data: PreWeddingEvent }
   | { kind: 'team'; data: TeamEntry }
   | { kind: 'reuniao'; data: ReuniaoEvent }
+  | { kind: 'tarefa'; data: TarefaEvent }
 
 const MESES = [
   'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
@@ -81,16 +93,154 @@ export default function CalendarClient({
   preWeddings,
   teamEntries,
   reunioes,
+  tarefas: initialTarefas,
 }: {
   events: CalEvent[]
   preWeddings: PreWeddingEvent[]
   teamEntries: TeamEntry[]
   reunioes: ReuniaoEvent[]
+  tarefas: TarefaEvent[]
 }) {
+  const router = useRouter()
+  const [, startTransition] = useTransition()
   const today = new Date()
   const [viewYear, setViewYear]   = useState(today.getFullYear())
   const [viewMonth, setViewMonth] = useState(today.getMonth())
   const [selected, setSelected]   = useState<SelectedItem | null>(null)
+  const [tarefas, setTarefas]     = useState<TarefaEvent[]>(initialTarefas)
+
+  // Add-task modal state
+  const [addTaskDate, setAddTaskDate]       = useState<string | null>(null)
+  const [taskTitulo, setTaskTitulo]         = useState('')
+  const [taskHora, setTaskHora]             = useState('')
+  const [taskDesc, setTaskDesc]             = useState('')
+  const [taskEventoId, setTaskEventoId]     = useState('')
+  const [taskSaving, setTaskSaving]         = useState(false)
+
+  // Edit-task modal state (reuses selected)
+  const [editingTask, setEditingTask]       = useState(false)
+  const [editTitulo, setEditTitulo]         = useState('')
+  const [editHora, setEditHora]             = useState('')
+  const [editDesc, setEditDesc]             = useState('')
+  const [editStatus, setEditStatus]         = useState<TarefaEvent['status']>('NOVA')
+  const [editEventoId, setEditEventoId]     = useState('')
+  const [editSaving, setEditSaving]         = useState(false)
+
+  // Build a fast lookup of events for chip label and dropdown
+  const eventsById = new Map(events.map(e => [e.id, e]))
+
+  // Sort events by absolute date proximity to addTaskDate (or today) so the
+  // most-likely options appear at the top of the dropdown.
+  function nearbyEvents(refDate: string | null) {
+    const ref = refDate ? new Date(refDate + 'T00:00:00').getTime() : Date.now()
+    return [...events]
+      .filter(e => e.data_evento)
+      .sort((a, b) => {
+        const da = Math.abs(new Date(a.data_evento + 'T00:00:00').getTime() - ref)
+        const db = Math.abs(new Date(b.data_evento + 'T00:00:00').getTime() - ref)
+        return da - db
+      })
+  }
+
+  function openAddTask(year: number, month: number, day: number) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+    setAddTaskDate(dateStr)
+    setTaskTitulo('')
+    setTaskHora('')
+    setTaskDesc('')
+    setTaskEventoId('')
+  }
+
+  async function handleCreateTask() {
+    if (!addTaskDate || !taskTitulo.trim()) return
+    setTaskSaving(true)
+    try {
+      const res = await fetch('/api/tarefas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          titulo:     taskTitulo,
+          descricao:  taskDesc || null,
+          data_prazo: addTaskDate,
+          hora:       taskHora || null,
+          status:     'NOVA',
+          evento_id:  taskEventoId || null,
+        }),
+      })
+      const d = await res.json()
+      if (d.tarefa) {
+        setTarefas(prev => [...prev, {
+          id:         d.tarefa.id,
+          titulo:     d.tarefa.titulo,
+          descricao:  d.tarefa.descricao,
+          status:     d.tarefa.status,
+          data_prazo: d.tarefa.data_prazo,
+          hora:       d.tarefa.hora,
+          evento_id:  d.tarefa.evento_id ?? null,
+        }])
+        setAddTaskDate(null)
+        startTransition(() => router.refresh())
+      }
+    } finally {
+      setTaskSaving(false)
+    }
+  }
+
+  function startEditTask(t: TarefaEvent) {
+    setEditTitulo(t.titulo)
+    setEditHora(t.hora ? t.hora.slice(0, 5) : '')
+    setEditDesc(t.descricao ?? '')
+    setEditStatus(t.status)
+    setEditEventoId(t.evento_id ?? '')
+    setEditingTask(true)
+  }
+
+  async function handleUpdateTask() {
+    if (selected?.kind !== 'tarefa') return
+    setEditSaving(true)
+    try {
+      const res = await fetch(`/api/tarefas/${selected.data.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          titulo:    editTitulo,
+          descricao: editDesc || null,
+          hora:      editHora || null,
+          status:    editStatus,
+          evento_id: editEventoId || null,
+        }),
+      })
+      if (res.ok) {
+        setTarefas(prev => prev.map(t => t.id === selected.data.id
+          ? {
+              ...t,
+              titulo:    editTitulo,
+              descricao: editDesc || null,
+              hora:      editHora || null,
+              status:    editStatus,
+              evento_id: editEventoId || null,
+            }
+          : t
+        ))
+        setSelected(null)
+        setEditingTask(false)
+        startTransition(() => router.refresh())
+      }
+    } finally {
+      setEditSaving(false)
+    }
+  }
+
+  async function handleDeleteTask(id: string) {
+    if (!confirm('Eliminar esta tarefa?')) return
+    const res = await fetch(`/api/tarefas/${id}`, { method: 'DELETE' })
+    if (res.ok) {
+      setTarefas(prev => prev.filter(t => t.id !== id))
+      setSelected(null)
+      setEditingTask(false)
+      startTransition(() => router.refresh())
+    }
+  }
 
   const firstDay    = new Date(viewYear, viewMonth, 1).getDay()
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
@@ -126,7 +276,11 @@ export default function CalendarClient({
       const d = new Date(r.reuniao_data + 'T00:00:00')
       return d.getFullYear() === viewYear && d.getMonth() === i
     }).length
-    return ev + pw + te + re
+    const ta = tarefas.filter(t => {
+      const d = new Date(t.data_prazo + 'T00:00:00')
+      return d.getFullYear() === viewYear && d.getMonth() === i
+    }).length
+    return ev + pw + te + re + ta
   })
 
   return (
@@ -217,6 +371,7 @@ export default function CalendarClient({
               const dayPws      = isCurrentMonth ? preWeddings.filter(p => startsOn(p.data_evento, viewYear, viewMonth, day)) : []
               const dayTeam     = isCurrentMonth ? teamEntries.filter(t => startsOn(t.data_calendar, viewYear, viewMonth, day)) : []
               const dayReunioes = isCurrentMonth ? reunioes.filter(r => startsOn(r.reuniao_data, viewYear, viewMonth, day)) : []
+              const dayTarefas  = isCurrentMonth ? tarefas.filter(t => startsOn(t.data_prazo, viewYear, viewMonth, day)) : []
 
               const isToday = isCurrentMonth
                 && day === today.getDate()
@@ -233,25 +388,33 @@ export default function CalendarClient({
                 ...dayPws.map(p => ({ kind: 'pw' as const, p })),
                 ...dayTeam.map(t => ({ kind: 'team' as const, t })),
                 ...dayReunioes.map(r => ({ kind: 'reuniao' as const, r })),
+                ...dayTarefas.map(t => ({ kind: 'tarefa' as const, t })),
               ]
               const visible  = allItems.slice(0, MAX)
               const overflow = allItems.length - MAX
 
               return (
                 <div key={i}
-                  className={`relative min-h-[96px] p-1.5 flex flex-col
+                  onClick={() => { if (isCurrentMonth) openAddTask(viewYear, viewMonth, day) }}
+                  className={`group relative min-h-[96px] p-1.5 flex flex-col cursor-pointer transition-colors
                     ${!isLastRow ? 'border-b border-white/[0.04]' : ''}
                     ${!isLastCol ? 'border-r border-white/[0.04]' : ''}
-                    ${isCurrentMonth ? '' : 'bg-white/[0.01]'}
+                    ${isCurrentMonth ? 'hover:bg-white/[0.02]' : 'bg-white/[0.01]'}
                   `}>
                   {/* Day number */}
-                  <div className={`w-6 h-6 flex items-center justify-center rounded-full text-xs mb-1 flex-shrink-0
-                    ${isToday ? 'bg-[#C9A84C] text-black font-semibold' : ''}
-                    ${!isToday && isCurrentMonth && !isSunday ? 'text-white/60' : ''}
-                    ${!isToday && isCurrentMonth && isSunday ? 'text-red-400/60' : ''}
-                    ${!isCurrentMonth ? 'text-white/15' : ''}
-                  `}>
-                    {day}
+                  <div className="flex items-center justify-between mb-1 flex-shrink-0">
+                    <div className={`w-6 h-6 flex items-center justify-center rounded-full text-xs
+                      ${isToday ? 'bg-[#C9A84C] text-black font-semibold' : ''}
+                      ${!isToday && isCurrentMonth && !isSunday ? 'text-white/60' : ''}
+                      ${!isToday && isCurrentMonth && isSunday ? 'text-red-400/60' : ''}
+                      ${!isCurrentMonth ? 'text-white/15' : ''}
+                    `}>
+                      {day}
+                    </div>
+                    {isCurrentMonth && (
+                      <span className="text-[14px] leading-none text-white/0 group-hover:text-[#C9A84C]/70 transition-colors pr-0.5"
+                        title="Adicionar tarefa">＋</span>
+                    )}
                   </div>
 
                   <div className="flex flex-col gap-0.5 overflow-hidden flex-1">
@@ -259,7 +422,7 @@ export default function CalendarClient({
                       if (item.kind === 'event') {
                         const ev = item.e
                         return (
-                          <button key={`ev-${ev.id}`} onClick={() => setSelected({ kind: 'event', data: ev })} className="text-left w-full">
+                          <button key={`ev-${ev.id}`} onClick={(e) => { e.stopPropagation(); setSelected({ kind: 'event', data: ev }) }} className="text-left w-full">
                             <div className="px-1.5 py-0.5 rounded text-[10px] leading-tight truncate"
                               style={{ background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.25)', color: '#C9A84C' }}>
                               {ev.cliente || ev.referencia}
@@ -270,7 +433,7 @@ export default function CalendarClient({
                       if (item.kind === 'pw') {
                         const pw = item.p
                         return (
-                          <button key={`pw-${pw.id}`} onClick={() => setSelected({ kind: 'pw', data: pw })} className="text-left w-full">
+                          <button key={`pw-${pw.id}`} onClick={(e) => { e.stopPropagation(); setSelected({ kind: 'pw', data: pw }) }} className="text-left w-full">
                             <div className="px-1.5 py-0.5 rounded text-[10px] leading-tight truncate"
                               style={{ background: 'rgba(79,195,195,0.10)', border: '1px solid rgba(79,195,195,0.25)', color: '#4FC3C3' }}>
                               📷 {pw.nomes}
@@ -281,10 +444,38 @@ export default function CalendarClient({
                       if (item.kind === 'reuniao') {
                         const r = item.r
                         return (
-                          <button key={`re-${r.id}`} onClick={() => setSelected({ kind: 'reuniao', data: r })} className="text-left w-full">
+                          <button key={`re-${r.id}`} onClick={(e) => { e.stopPropagation(); setSelected({ kind: 'reuniao', data: r }) }} className="text-left w-full">
                             <div className="px-1.5 py-0.5 rounded text-[10px] leading-tight truncate"
                               style={{ background: 'rgba(192,132,252,0.12)', border: '1px solid rgba(192,132,252,0.28)', color: '#C084FC' }}>
                               🤝 {r.nome.split(' ')[0]}
+                            </div>
+                          </button>
+                        )
+                      }
+                      if (item.kind === 'tarefa') {
+                        const ta = item.t
+                        const linkedEvent = ta.evento_id ? eventsById.get(ta.evento_id) : null
+                        // If linked to event → gold; otherwise color by status
+                        const statusCol = ta.status === 'CONCLUIDA'
+                          ? { bg: 'rgba(74,222,128,0.10)', border: 'rgba(74,222,128,0.25)', text: '#86EFAC' }
+                          : ta.status === 'PENDENTE'
+                          ? { bg: 'rgba(251,146,60,0.12)', border: 'rgba(251,146,60,0.28)', text: '#FB923C' }
+                          : linkedEvent
+                          ? { bg: 'rgba(201,168,76,0.12)', border: 'rgba(201,168,76,0.30)', text: '#C9A84C' }
+                          : { bg: 'rgba(96,165,250,0.12)', border: 'rgba(96,165,250,0.28)', text: '#60A5FA' }
+                        const horaStr = ta.hora ? ta.hora.slice(0, 5) : null
+                        const icon = linkedEvent ? '🔗' : '📝'
+                        return (
+                          <button key={`ta-${ta.id}`} onClick={(e) => { e.stopPropagation(); setSelected({ kind: 'tarefa', data: ta }) }} className="text-left w-full">
+                            <div className="px-1.5 py-0.5 rounded text-[10px] leading-tight truncate"
+                              style={{
+                                background: statusCol.bg,
+                                border: `1px solid ${statusCol.border}`,
+                                color: statusCol.text,
+                                textDecoration: ta.status === 'CONCLUIDA' ? 'line-through' : 'none',
+                                opacity: ta.status === 'CONCLUIDA' ? 0.7 : 1,
+                              }}>
+                              {icon} {horaStr ? <span className="opacity-70">{horaStr}</span> : null} {ta.titulo}
                             </div>
                           </button>
                         )
@@ -294,7 +485,7 @@ export default function CalendarClient({
                       const col = TIPO_COLORS[t.tipo]
                       const isIndis = t.status === 'indisponivel'
                       return (
-                        <button key={`te-${t.id}`} onClick={() => setSelected({ kind: 'team', data: t })} className="text-left w-full">
+                        <button key={`te-${t.id}`} onClick={(e) => { e.stopPropagation(); setSelected({ kind: 'team', data: t }) }} className="text-left w-full">
                           <div className="px-1.5 py-0.5 rounded text-[10px] leading-tight truncate"
                             style={{
                               background: isIndis ? 'rgba(239,68,68,0.10)' : col.bg,
@@ -354,9 +545,17 @@ export default function CalendarClient({
             <span className="w-3 h-3 rounded" style={{ background: 'rgba(96,165,250,0.12)', border: '1px solid rgba(96,165,250,0.28)' }} />
             🎬 Ed. Vídeo
           </span>
-          <span className="ml-auto text-white/20">
-            {events.length} eventos · {preWeddings.length} pré-weddings · {teamEntries.filter(t => t.status === 'confirmado').length} confirmações
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded" style={{ background: 'rgba(96,165,250,0.12)', border: '1px solid rgba(96,165,250,0.28)' }} />
+            📝 Tarefa
           </span>
+          <span className="ml-auto text-white/20">
+            {events.length} eventos · {preWeddings.length} pré-weddings · {teamEntries.filter(t => t.status === 'confirmado').length} confirmações · {tarefas.length} tarefas
+          </span>
+        </div>
+
+        <div className="mt-3 text-[10px] text-white/30 tracking-wider">
+          💡 Clica num dia para adicionar uma tarefa com hora.
         </div>
       </div>
 
@@ -453,6 +652,110 @@ export default function CalendarClient({
               )
             })()}
 
+            {selected.kind === 'tarefa' && (() => {
+              const ta = selected.data
+              const statusCol = ta.status === 'CONCLUIDA'
+                ? { text: '#86EFAC', border: 'rgba(74,222,128,0.30)', bg: 'rgba(74,222,128,0.10)' }
+                : ta.status === 'PENDENTE'
+                ? { text: '#FB923C', border: 'rgba(251,146,60,0.30)', bg: 'rgba(251,146,60,0.10)' }
+                : { text: '#60A5FA', border: 'rgba(96,165,250,0.30)', bg: 'rgba(96,165,250,0.10)' }
+              return (
+                <>
+                  <div className="text-[10px] tracking-[0.4em] uppercase mb-1" style={{ color: statusCol.text + 'B0' }}>
+                    📝 TAREFA · {ta.status}
+                  </div>
+
+                  {!editingTask ? (
+                    <>
+                      <h2 className="text-xl font-light text-white tracking-wide mb-4">{ta.titulo}</h2>
+                      <div className="space-y-2 mb-6">
+                        <Row label="Data">{fmtDate(ta.data_prazo)}</Row>
+                        {ta.hora && <Row label="Hora">{ta.hora.slice(0, 5)}</Row>}
+                        {ta.evento_id && eventsById.get(ta.evento_id) && (
+                          <Row label="Evento">
+                            <Link href={`/eventos-2026/${ta.evento_id}`}
+                              className="text-[#C9A84C] hover:underline">
+                              🔗 {eventsById.get(ta.evento_id)!.cliente || eventsById.get(ta.evento_id)!.referencia}
+                            </Link>
+                          </Row>
+                        )}
+                        {ta.descricao && <Row label="Notas">{ta.descricao}</Row>}
+                      </div>
+                      <div className="flex gap-3">
+                        <button onClick={() => startEditTask(ta)}
+                          className="flex-1 text-center py-2.5 rounded-xl text-sm tracking-wider transition-colors"
+                          style={{ background: statusCol.bg, border: `1px solid ${statusCol.border}`, color: statusCol.text }}>
+                          Editar
+                        </button>
+                        <button onClick={() => handleDeleteTask(ta.id)}
+                          className="px-4 py-2.5 rounded-xl text-sm tracking-wider transition-colors"
+                          style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.30)', color: '#F87171' }}>
+                          Eliminar
+                        </button>
+                        <CloseBtn onClose={() => setSelected(null)} />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <input
+                        value={editTitulo}
+                        onChange={e => setEditTitulo(e.target.value)}
+                        placeholder="Título"
+                        className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#C9A84C]/40 mb-3"
+                      />
+                      <div className="flex gap-2 mb-3">
+                        <input
+                          type="time"
+                          value={editHora}
+                          onChange={e => setEditHora(e.target.value)}
+                          className="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C9A84C]/40"
+                        />
+                        <select
+                          value={editStatus}
+                          onChange={e => setEditStatus(e.target.value as TarefaEvent['status'])}
+                          className="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C9A84C]/40"
+                        >
+                          <option value="NOVA">Nova</option>
+                          <option value="PENDENTE">Pendente</option>
+                          <option value="CONCLUIDA">Concluída</option>
+                        </select>
+                      </div>
+                      <select
+                        value={editEventoId}
+                        onChange={e => setEditEventoId(e.target.value)}
+                        className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C9A84C]/40 mb-3"
+                      >
+                        <option value="">— Sem ligação a evento —</option>
+                        {nearbyEvents(ta.data_prazo).map(ev => (
+                          <option key={ev.id} value={ev.id}>
+                            {ev.data_evento ? ev.data_evento.slice(0, 10) + ' · ' : ''}{ev.cliente || ev.referencia}
+                          </option>
+                        ))}
+                      </select>
+                      <textarea
+                        value={editDesc}
+                        onChange={e => setEditDesc(e.target.value)}
+                        placeholder="Notas (opcional)"
+                        rows={3}
+                        className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#C9A84C]/40 mb-4 resize-none"
+                      />
+                      <div className="flex gap-3">
+                        <button onClick={handleUpdateTask} disabled={editSaving || !editTitulo.trim()}
+                          className="flex-1 py-2.5 rounded-xl text-sm tracking-wider transition-colors disabled:opacity-50"
+                          style={{ background: statusCol.bg, border: `1px solid ${statusCol.border}`, color: statusCol.text }}>
+                          {editSaving ? 'A guardar…' : 'Guardar'}
+                        </button>
+                        <button onClick={() => setEditingTask(false)}
+                          className="px-4 py-2.5 border border-white/10 rounded-xl text-sm text-white/40 hover:text-white/70 transition-colors">
+                          Cancelar
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </>
+              )
+            })()}
+
             {selected.kind === 'team' && (() => {
               const t = selected.data
               const isIndis = t.status === 'indisponivel'
@@ -489,6 +792,76 @@ export default function CalendarClient({
                 </>
               )
             })()}
+          </div>
+        </div>
+      )}
+
+      {/* Add Task Modal */}
+      {addTaskDate && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-4"
+          onClick={() => setAddTaskDate(null)}>
+          <div className="w-full max-w-md bg-[#111] rounded-2xl p-6 border border-[#C9A84C]/25"
+            onClick={e => e.stopPropagation()}>
+            <div className="text-[10px] tracking-[0.4em] text-[#C9A84C]/60 uppercase mb-1">📝 NOVA TAREFA</div>
+            <h2 className="text-xl font-light text-white tracking-wide mb-4">{fmtDate(addTaskDate)}</h2>
+
+            <input
+              value={taskTitulo}
+              onChange={e => setTaskTitulo(e.target.value)}
+              placeholder="Título da tarefa"
+              autoFocus
+              className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#C9A84C]/40 mb-3"
+              onKeyDown={e => { if (e.key === 'Enter' && taskTitulo.trim() && !taskSaving) handleCreateTask() }}
+            />
+
+            <div className="flex gap-2 mb-3">
+              <div className="flex-1">
+                <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Hora</label>
+                <input
+                  type="time"
+                  value={taskHora}
+                  onChange={e => setTaskHora(e.target.value)}
+                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C9A84C]/40"
+                />
+              </div>
+            </div>
+
+            <div className="mb-3">
+              <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Ligar a evento (opcional)</label>
+              <select
+                value={taskEventoId}
+                onChange={e => setTaskEventoId(e.target.value)}
+                className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C9A84C]/40"
+              >
+                <option value="">— Sem ligação —</option>
+                {nearbyEvents(addTaskDate).map(ev => (
+                  <option key={ev.id} value={ev.id}>
+                    {ev.data_evento ? ev.data_evento.slice(0, 10) + ' · ' : ''}{ev.cliente || ev.referencia}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <textarea
+              value={taskDesc}
+              onChange={e => setTaskDesc(e.target.value)}
+              placeholder="Notas (opcional)"
+              rows={3}
+              className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#C9A84C]/40 mb-4 resize-none"
+            />
+
+            <div className="flex gap-3">
+              <button onClick={handleCreateTask}
+                disabled={taskSaving || !taskTitulo.trim()}
+                className="flex-1 py-2.5 rounded-xl text-sm tracking-wider transition-colors disabled:opacity-50"
+                style={{ background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.40)', color: '#C9A84C' }}>
+                {taskSaving ? 'A guardar…' : 'Adicionar Tarefa'}
+              </button>
+              <button onClick={() => setAddTaskDate(null)}
+                className="px-4 py-2.5 border border-white/10 rounded-xl text-sm text-white/40 hover:text-white/70 transition-colors">
+                Cancelar
+              </button>
+            </div>
           </div>
         </div>
       )}

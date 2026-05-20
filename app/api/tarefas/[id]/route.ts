@@ -12,7 +12,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params
   const body = await req.json()
 
-  const allowed = ['titulo', 'descricao', 'status', 'data_prazo']
+  const allowed = ['titulo', 'descricao', 'status', 'data_prazo', 'hora', 'evento_id']
   const updates: Record<string, any> = { updated_at: new Date().toISOString() }
   for (const [k, v] of Object.entries(body)) {
     if (allowed.includes(k)) updates[k] = v

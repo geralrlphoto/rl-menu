@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import EventoTarefas from './EventoTarefas'
 
 // ─── Serviços extra ────────────────────────────────────────────────────────────
 const SERVICOS_OPCOES = [
@@ -3074,6 +3075,9 @@ export default function EventoPage() {
             <EditCheck label="Alerta 30 dias úteis enviado" checked={e.alerta_30du} field="alerta_30du" eventId={e.id} onSaved={handleSaved} />
           </div>
         </Section>
+
+        {/* ── Tarefas deste casamento ── */}
+        <EventoTarefas eventoId={e.id} />
 
         {/* ── Equipa ── */}
         <Section title="Equipa">

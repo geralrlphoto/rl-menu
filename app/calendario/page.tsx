@@ -4,6 +4,7 @@ import CalendarClient, {
   type PreWeddingEvent,
   type TeamEntry,
   type ReuniaoEvent,
+  type TarefaEvent,
 } from './CalendarClient'
 
 export const dynamic = 'force-dynamic'
@@ -186,6 +187,23 @@ export default async function CalendarioPage() {
     reuniao_link: r.reuniao_link ?? null,
   }))
 
+  // ── 4b. Tarefas (calendar tasks) ──────────────────────────────────────────
+  const { data: tarefasRaw } = await supabase
+    .from('tarefas')
+    .select('id, titulo, descricao, status, data_prazo, hora, evento_id')
+    .not('data_prazo', 'is', null)
+    .order('data_prazo', { ascending: true })
+
+  const tarefas: TarefaEvent[] = (tarefasRaw ?? []).map((t: any) => ({
+    id:         t.id,
+    titulo:     t.titulo ?? '',
+    descricao:  t.descricao ?? null,
+    status:     (t.status ?? 'NOVA') as TarefaEvent['status'],
+    data_prazo: t.data_prazo,
+    hora:       t.hora ?? null,
+    evento_id:  t.evento_id ?? null,
+  }))
+
   // ── 5. Editing activity logs (FUTURE) ─────────────────────────────────────
   // When "Edição de Fotos / Álbum / Vídeo" features are built, create a
   // `freelancer_activity_log` table with columns:
@@ -206,6 +224,7 @@ export default async function CalendarioPage() {
       preWeddings={preWeddings}
       teamEntries={teamEntries}
       reunioes={reunioes}
+      tarefas={tarefas}
     />
   )
 }

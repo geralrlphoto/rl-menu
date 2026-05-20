@@ -20,7 +20,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const body = await req.json()
-  const { titulo, descricao, status, data_prazo } = body
+  const { titulo, descricao, status, data_prazo, hora, evento_id } = body
 
   if (!titulo?.trim()) {
     return NextResponse.json({ error: 'titulo obrigatório' }, { status: 400 })
@@ -33,6 +33,8 @@ export async function POST(req: Request) {
       descricao:  descricao?.trim() || null,
       status:     status ?? 'NOVA',
       data_prazo: data_prazo || null,
+      hora:       hora || null,
+      evento_id:  evento_id || null,
     })
     .select()
     .single()
