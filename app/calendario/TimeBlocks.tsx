@@ -302,6 +302,21 @@ export default function TimeBlocks() {
   const nowMs = Date.now()
   const newDurSec = diffSeconds(newInicio, newFim)
 
+  // Hero clock: which block is currently "in focus"?
+  // Priority: running > most-recent paused > first idle of today.
+  const heroBlock: Block | null = useMemo(() => {
+    const running = blocks.find(b => b.timer_state === 'running')
+    if (running) return running
+    const paused = blocks.find(b => b.timer_state === 'paused')
+    if (paused) return paused
+    return null
+  }, [blocks])
+  const heroRemaining = heroBlock ? remainingSeconds(heroBlock, nowMs) : 0
+  const heroTotal     = heroBlock ? totalSecondsOf(heroBlock) : 0
+  const heroProgress  = heroTotal > 0 ? 1 - heroRemaining / heroTotal : 0
+  const heroIsRunning = heroBlock?.timer_state === 'running'
+  const heroIsPaused  = heroBlock?.timer_state === 'paused'
+
   return (
     <section className="mt-8 rounded-2xl p-6 flex flex-col gap-5"
       style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -336,6 +351,93 @@ export default function TimeBlocks() {
       </div>
 
       <div className="text-[11px] text-white/40 tracking-wider">{fmtDateLong(day)}</div>
+
+      {/* ─────────────────────────  HERO CLOCK  ───────────────────────── */}
+      <div className="relative overflow-hidden rounded-2xl"
+        style={{
+          background: heroBlock
+            ? `linear-gradient(135deg, ${heroBlock.cor}18, ${heroBlock.cor}06 50%, transparent)`
+            : 'rgba(255,255,255,0.02)',
+          border: `1px solid ${heroBlock ? heroBlock.cor + '50' : 'rgba(255,255,255,0.06)'}`,
+        }}>
+        {/* Progress bar background */}
+        {heroBlock && (
+          <div className="absolute inset-y-0 left-0 transition-all"
+            style={{
+              width: `${Math.min(100, heroProgress * 100)}%`,
+              background: heroBlock.cor + (heroIsRunning ? '1F' : '12'),
+            }} />
+        )}
+
+        <div className="relative flex flex-col items-center justify-center py-10 px-6 gap-4">
+          {heroBlock ? (
+            <>
+              <div className="flex items-center gap-2 flex-wrap justify-center">
+                <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ background: heroBlock.cor }} />
+                <span className="text-xs tracking-[0.3em] uppercase" style={{ color: heroBlock.cor }}>
+                  {heroBlock.titulo}
+                </span>
+                {heroIsRunning && (
+                  <span className="text-[9px] tracking-[0.3em] uppercase px-1.5 py-0.5 rounded animate-pulse"
+                    style={{ background: heroBlock.cor + '30', color: heroBlock.cor }}>A correr</span>
+                )}
+                {heroIsPaused && (
+                  <span className="text-[9px] tracking-[0.3em] uppercase px-1.5 py-0.5 rounded bg-white/10 text-white/50">Em pausa</span>
+                )}
+              </div>
+
+              <div
+                className="font-mono tabular-nums tracking-tight leading-none select-none"
+                style={{
+                  fontSize: 'clamp(56px, 14vw, 144px)',
+                  color: heroIsRunning ? heroBlock.cor : 'rgba(255,255,255,0.92)',
+                  textShadow: heroIsRunning ? `0 0 40px ${heroBlock.cor}40` : 'none',
+                }}>
+                {fmtHMS(heroRemaining)}
+              </div>
+
+              <div className="text-[11px] tracking-wider text-white/40">
+                {hms(heroBlock.hora_inicio).slice(0, 5)} — {hms(heroBlock.hora_fim).slice(0, 5)} · {fmtDuration(heroTotal)} no total
+              </div>
+
+              <div className="flex items-center gap-3 mt-2">
+                {!heroIsRunning ? (
+                  <button onClick={() => timerAction(heroBlock, 'start')}
+                    title={heroIsPaused ? 'Retomar' : 'Iniciar'}
+                    className="w-14 h-14 flex items-center justify-center rounded-full text-2xl transition-all hover:scale-105"
+                    style={{ background: heroBlock.cor + '30', border: `1px solid ${heroBlock.cor}`, color: heroBlock.cor }}>
+                    ▶
+                  </button>
+                ) : (
+                  <button onClick={() => timerAction(heroBlock, 'pause')}
+                    title="Pausar"
+                    className="w-14 h-14 flex items-center justify-center rounded-full text-2xl transition-all hover:scale-105"
+                    style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.30)', color: 'white' }}>
+                    ⏸
+                  </button>
+                )}
+                <button onClick={() => timerAction(heroBlock, 'stop')}
+                  title="Parar e repor"
+                  className="w-12 h-12 flex items-center justify-center rounded-full text-lg text-white/60 hover:text-white hover:bg-white/5 transition-all"
+                  style={{ border: '1px solid rgba(255,255,255,0.15)' }}>
+                  ⏹
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-[10px] tracking-[0.4em] uppercase text-white/30">Nenhum bloco a correr</div>
+              <div className="font-mono tabular-nums tracking-tight leading-none select-none text-white/15"
+                style={{ fontSize: 'clamp(56px, 14vw, 144px)' }}>
+                --:--:--
+              </div>
+              <div className="text-[11px] tracking-wider text-white/35">
+                Carrega ▶ num bloco para começar
+              </div>
+            </>
+          )}
+        </div>
+      </div>
 
       {/* Add form */}
       {adding && (
@@ -406,31 +508,37 @@ export default function TimeBlocks() {
       ) : (
         <div className="flex flex-col gap-2">
           {blocks.map(b => {
-            const remaining = remainingSeconds(b, nowMs)
             const total = totalSecondsOf(b)
+            const remaining = remainingSeconds(b, nowMs)
             const progress = total > 0 ? 1 - remaining / total : 0
             const isRunning = b.timer_state === 'running'
             const isPaused = b.timer_state === 'paused'
             const isDone = b.timer_state === 'completed'
             const dimmed = isDone
+            const isHero = heroBlock?.id === b.id
 
             return (
               <div key={b.id}
-                className="relative rounded-xl overflow-hidden transition-all"
+                className={`relative rounded-xl overflow-hidden transition-all ${isHero ? 'ring-1' : ''}`}
                 style={{
                   background: dimmed ? 'rgba(255,255,255,0.02)' : b.cor + '0F',
                   border: `1px solid ${dimmed ? 'rgba(255,255,255,0.05)' : b.cor + '50'}`,
                   opacity: dimmed ? 0.55 : 1,
+                  ['--tw-ring-color' as any]: isHero ? b.cor + '70' : 'transparent',
                 }}>
 
+                {/* Subtle progress shade for paused/running blocks */}
                 <div className="absolute inset-y-0 left-0 transition-all"
-                  style={{ width: `${Math.min(100, progress * 100)}%`, background: b.cor + (isRunning ? '24' : '15') }} />
+                  style={{
+                    width: `${Math.min(100, progress * 100)}%`,
+                    background: b.cor + (isRunning ? '18' : '0E'),
+                  }} />
 
-                <div className="relative flex items-center gap-4 p-4">
+                <div className="relative flex items-center gap-3 p-3">
                   <div className="w-1.5 self-stretch rounded-full" style={{ background: b.cor }} />
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                       <span className="text-sm text-white truncate" style={{ textDecoration: isDone ? 'line-through' : 'none' }}>
                         {b.titulo}
                       </span>
@@ -452,35 +560,19 @@ export default function TimeBlocks() {
                     </div>
                   </div>
 
-                  {/* Countdown */}
-                  <div className="font-mono text-2xl tabular-nums tracking-tight"
-                    style={{ color: isRunning ? b.cor : 'rgba(255,255,255,0.85)' }}>
-                    {fmtHMS(remaining)}
-                  </div>
-
-                  {/* Controls */}
+                  {/* Inline action: only ▶ (start/focus) + ✕ — hero handles pause/stop */}
                   <div className="flex items-center gap-1.5">
-                    {!isRunning ? (
+                    {!isRunning && !isDone && (
                       <button onClick={() => timerAction(b, 'start')}
-                        title={isPaused ? 'Retomar' : 'Iniciar'}
+                        title={isPaused ? 'Retomar (passa para o relógio em cima)' : 'Iniciar (passa para o relógio em cima)'}
                         className="w-9 h-9 flex items-center justify-center rounded-lg text-sm transition-colors"
                         style={{ background: b.cor + '25', border: `1px solid ${b.cor}80`, color: b.cor }}>
                         ▶
                       </button>
-                    ) : (
-                      <button onClick={() => timerAction(b, 'pause')}
-                        title="Pausar"
-                        className="w-9 h-9 flex items-center justify-center rounded-lg text-sm transition-colors"
-                        style={{ background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.20)', color: 'white' }}>
-                        ⏸
-                      </button>
                     )}
-                    <button onClick={() => timerAction(b, 'stop')}
-                      title="Parar e repor"
-                      className="w-9 h-9 flex items-center justify-center rounded-lg text-sm transition-colors text-white/50 hover:text-white/90 hover:bg-white/5"
-                      style={{ border: '1px solid rgba(255,255,255,0.10)' }}>
-                      ⏹
-                    </button>
+                    {isRunning && (
+                      <span className="px-2 text-xs text-white/40 tracking-wider">no relógio ↑</span>
+                    )}
                     <button onClick={() => handleDelete(b.id)}
                       title="Eliminar"
                       className="w-9 h-9 flex items-center justify-center rounded-lg text-sm text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-colors">
