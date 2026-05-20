@@ -146,14 +146,15 @@ export default function TimeBlocks() {
   useEffect(() => {
     setNewCor(preset.cor)
     setNewFim(addSeconds(newInicio || '09:00:00', preset.defaultDur * 60))
-    // Always sync title to the selected preset (unless user manually edited it
-    // or picked 'custom'). This way switching from "Editar" to "Redes sociais"
-    // updates the title to "Redes sociais" — not "Editar trabalhos".
-    if (presetKey !== 'custom' && !titleEdited) {
-      setNewTitle(preset.label.replace(/ \(.*\)$/, ''))
-    }
-    if (presetKey === 'custom' && !titleEdited) {
-      setNewTitle('')
+    // Always sync title to the selected preset (unless user manually edited it).
+    // For 'custom' we default to "Bloco personalizado" so the user can hit
+    // Adicionar straight away, then rename if wanted.
+    if (!titleEdited) {
+      if (presetKey === 'custom') {
+        setNewTitle('Bloco personalizado')
+      } else {
+        setNewTitle(preset.label.replace(/ \(.*\)$/, ''))
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [presetKey])
