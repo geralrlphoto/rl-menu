@@ -9,13 +9,17 @@ function db() {
 }
 
 function toSeconds(hms: string): number {
-  const parts = hms.split(':').map(n => parseInt(n, 10))
+  const parts = (hms ?? '').split(':').map(n => parseInt(n, 10))
   const [h, m, s] = [parts[0] ?? 0, parts[1] ?? 0, parts[2] ?? 0]
   return h * 3600 + m * 60 + s
 }
 
 function diffMinutes(start: string, end: string): number {
   return Math.max(0, Math.round((toSeconds(end) - toSeconds(start)) / 60))
+}
+
+function diffSeconds(start: string, end: string): number {
+  return Math.max(0, toSeconds(end) - toSeconds(start))
 }
 
 /**
@@ -104,7 +108,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   } else if (action === 'stop') {
     updates = { ...updates, timer_state: 'idle', timer_started_at: null, timer_elapsed_seconds: 0 }
   } else if (action === 'complete') {
-    updates = { ...updates, timer_state: 'completed', timer_started_at: null, timer_elapsed_seconds: (current.duracao_minutos ?? 0) * 60 }
+    // Prefer precise seconds from clock times if available
+    const totalSec = current.hora_inicio && current.hora_fim
+      ? diffSeconds(current.hora_inicio, current.hora_fim)
+      : (current.duracao_minutos ?? 0) * 60
+    updates = { ...updates, timer_state: 'completed', timer_started_at: null, timer_elapsed_seconds: totalSec }
   } else {
     return NextResponse.json({ error: 'action inválida' }, { status: 400 })
   }

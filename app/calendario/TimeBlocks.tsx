@@ -42,30 +42,56 @@ function fmtHMS(totalSeconds: number) {
   return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
 }
 
-function hhmm(t: string) {
-  return (t ?? '').slice(0, 5)
+function hms(t: string) {
+  // Normalize to HH:MM:SS; legacy values may come as HH:MM
+  if (!t) return '00:00:00'
+  const parts = t.split(':')
+  const h = (parts[0] ?? '00').padStart(2, '0')
+  const m = (parts[1] ?? '00').padStart(2, '0')
+  const s = (parts[2] ?? '00').padStart(2, '0')
+  return `${h}:${m}:${s}`
 }
 
-function toSeconds(hms: string): number {
-  const parts = (hms ?? '').split(':').map(n => parseInt(n, 10))
+function toSeconds(t: string): number {
+  const parts = (t ?? '').split(':').map(n => parseInt(n, 10))
   const [h, m, s] = [parts[0] ?? 0, parts[1] ?? 0, parts[2] ?? 0]
   return h * 3600 + m * 60 + s
 }
 
-function diffMinutes(start: string, end: string): number {
-  return Math.max(0, Math.round((toSeconds(end) - toSeconds(start)) / 60))
+function diffSeconds(start: string, end: string): number {
+  return Math.max(0, toSeconds(end) - toSeconds(start))
 }
 
-function addMinutes(hhmm: string, minutes: number): string {
-  const total = toSeconds(hhmm) + minutes * 60
+function addSeconds(t: string, seconds: number): string {
+  const total = toSeconds(t) + seconds
   const wrapped = ((total % 86400) + 86400) % 86400
   const h = Math.floor(wrapped / 3600)
   const m = Math.floor((wrapped % 3600) / 60)
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+  const s = wrapped % 60
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+}
+
+function fmtDuration(seconds: number): string {
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  const s = seconds % 60
+  const parts: string[] = []
+  if (h > 0) parts.push(`${h}h`)
+  if (m > 0) parts.push(`${String(m).padStart(h > 0 ? 2 : 1, '0')}m`)
+  if (s > 0 || parts.length === 0) parts.push(`${String(s).padStart(parts.length > 0 ? 2 : 1, '0')}s`)
+  return parts.join('')
+}
+
+function totalSecondsOf(b: Block): number {
+  // Prefer computed diff from times (HH:MM:SS precision)
+  const fromTimes = diffSeconds(b.hora_inicio, b.hora_fim)
+  if (fromTimes > 0) return fromTimes
+  // Legacy fallback
+  return (b.duracao_minutos ?? 0) * 60
 }
 
 function remainingSeconds(b: Block, nowMs: number) {
-  const total = b.duracao_minutos * 60
+  const total = totalSecondsOf(b)
   let elapsed = b.timer_elapsed_seconds
   if (b.timer_state === 'running' && b.timer_started_at) {
     elapsed += Math.max(0, Math.floor((nowMs - new Date(b.timer_started_at).getTime()) / 1000))
@@ -109,8 +135,8 @@ export default function TimeBlocks() {
   const preset = PRESETS.find(p => p.key === presetKey)!
   const [newTitle, setNewTitle]   = useState('')
   const [newCor, setNewCor]       = useState(preset.cor)
-  const [newInicio, setNewInicio] = useState<string>('09:00')
-  const [newFim, setNewFim]       = useState<string>(addMinutes('09:00', preset.defaultDur))
+  const [newInicio, setNewInicio] = useState<string>('09:00:00')
+  const [newFim, setNewFim]       = useState<string>(addSeconds('09:00:00', preset.defaultDur * 60))
   const [saving, setSaving]       = useState(false)
 
   const [tick, setTick] = useState(0)
@@ -118,16 +144,16 @@ export default function TimeBlocks() {
 
   useEffect(() => {
     setNewCor(preset.cor)
-    setNewFim(addMinutes(newInicio || '09:00', preset.defaultDur))
+    setNewFim(addSeconds(newInicio || '09:00:00', preset.defaultDur * 60))
     if (presetKey !== 'custom' && !newTitle) setNewTitle(preset.label.replace(/ \(.*\)$/, ''))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [presetKey])
 
-  // When inicio changes manually, push fim forward by the same duration (only if inputs not yet completed)
+  // When inicio changes manually, push fim forward by the same duration (seconds-precise)
   function handleChangeInicio(v: string) {
-    const oldDur = diffMinutes(newInicio, newFim)
+    const oldDur = diffSeconds(newInicio, newFim)
     setNewInicio(v)
-    if (oldDur > 0) setNewFim(addMinutes(v, oldDur))
+    if (oldDur > 0) setNewFim(addSeconds(v, oldDur))
   }
 
   useEffect(() => { load() /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [day])
@@ -172,7 +198,7 @@ export default function TimeBlocks() {
 
   async function handleCreate() {
     if (!newTitle.trim()) return
-    const dur = diffMinutes(newInicio, newFim)
+    const dur = diffSeconds(newInicio, newFim)
     if (dur <= 0) { alert('A hora de fim tem de ser posterior à de início.'); return }
     setSaving(true)
     try {
@@ -185,14 +211,14 @@ export default function TimeBlocks() {
           categoria: presetKey,
           titulo: newTitle,
           cor: newCor,
-          hora_inicio: newInicio,
-          hora_fim: newFim,
+          hora_inicio: hms(newInicio),
+          hora_fim: hms(newFim),
           ordem: maxOrdem + 1,
         }),
       })
       const d = await res.json()
       if (d.block) {
-        setBlocks(prev => [...prev, d.block].sort((a, b) => hhmm(a.hora_inicio).localeCompare(hhmm(b.hora_inicio))))
+        setBlocks(prev => [...prev, d.block].sort((a, b) => hms(a.hora_inicio).localeCompare(hms(b.hora_inicio))))
         setAdding(false)
         setNewTitle('')
       } else if (d.error) {
@@ -240,13 +266,17 @@ export default function TimeBlocks() {
   }
 
   async function handleUpdateTimes(b: Block, inicio: string, fim: string) {
-    const dur = diffMinutes(inicio, fim)
-    if (dur <= 0) { alert('A hora de fim tem de ser posterior à de início.'); return }
-    setBlocks(prev => prev.map(x => x.id === b.id ? { ...x, hora_inicio: inicio, hora_fim: fim, duracao_minutos: dur } : x))
+    const inicioN = hms(inicio)
+    const fimN = hms(fim)
+    const durSec = diffSeconds(inicioN, fimN)
+    if (durSec <= 0) { alert('A hora de fim tem de ser posterior à de início.'); return }
+    setBlocks(prev => prev.map(x => x.id === b.id
+      ? { ...x, hora_inicio: inicioN, hora_fim: fimN, duracao_minutos: Math.round(durSec / 60) }
+      : x))
     await fetch(`/api/time-blocks/${b.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ hora_inicio: inicio, hora_fim: fim }),
+      body: JSON.stringify({ hora_inicio: inicioN, hora_fim: fimN }),
     })
   }
 
@@ -256,9 +286,11 @@ export default function TimeBlocks() {
     setDay(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)
   }
 
-  const totalPlanned = useMemo(() => blocks.reduce((acc, b) => acc + b.duracao_minutos, 0), [blocks])
+  const totalPlannedSec = useMemo(() => blocks.reduce((acc, b) => acc + totalSecondsOf(b), 0), [blocks])
+  const totalPlannedH = Math.floor(totalPlannedSec / 3600)
+  const totalPlannedM = Math.floor((totalPlannedSec % 3600) / 60)
   const nowMs = Date.now()
-  const newDur = diffMinutes(newInicio, newFim)
+  const newDurSec = diffSeconds(newInicio, newFim)
 
   return (
     <section className="mt-8 rounded-2xl p-6 flex flex-col gap-5"
@@ -281,7 +313,7 @@ export default function TimeBlocks() {
 
         <div className="flex items-center gap-3">
           <span className="text-[10px] text-white/30 tracking-wider">
-            {blocks.length} bloco{blocks.length === 1 ? '' : 's'} · {Math.floor(totalPlanned / 60)}h{String(totalPlanned % 60).padStart(2, '0')} planeados
+            {blocks.length} bloco{blocks.length === 1 ? '' : 's'} · {totalPlannedH}h{String(totalPlannedM).padStart(2, '0')} planeados
           </span>
           {!adding && (
             <button onClick={() => setAdding(true)}
@@ -325,17 +357,17 @@ export default function TimeBlocks() {
               />
             </div>
             <div>
-              <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Início</label>
-              <input type="time" value={newInicio} onChange={e => handleChangeInicio(e.target.value)}
+              <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Início (hh:mm:ss)</label>
+              <input type="time" step={1} value={newInicio} onChange={e => handleChangeInicio(e.target.value)}
                 className="bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C9A84C]/40" />
             </div>
             <div>
-              <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Fim</label>
-              <input type="time" value={newFim} onChange={e => setNewFim(e.target.value)}
+              <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Fim (hh:mm:ss)</label>
+              <input type="time" step={1} value={newFim} onChange={e => setNewFim(e.target.value)}
                 className="bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C9A84C]/40" />
             </div>
             <div className="text-[10px] text-white/40 tracking-wider pb-2.5">
-              {newDur > 0 ? `${Math.floor(newDur / 60)}h${String(newDur % 60).padStart(2, '0')}` : '—'}
+              {newDurSec > 0 ? fmtDuration(newDurSec) : '—'}
             </div>
             <div>
               <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Cor</label>
@@ -344,7 +376,7 @@ export default function TimeBlocks() {
             </div>
             <button onClick={() => { setAdding(false); setNewTitle('') }}
               className="px-3 py-2 text-xs text-white/40 hover:text-white/70">Cancelar</button>
-            <button onClick={handleCreate} disabled={saving || !newTitle.trim() || newDur <= 0}
+            <button onClick={handleCreate} disabled={saving || !newTitle.trim() || newDurSec <= 0}
               className="px-4 py-2 rounded-lg text-xs tracking-wider transition-colors disabled:opacity-50"
               style={{ background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.40)', color: '#C9A84C' }}>
               {saving ? 'A guardar…' : 'Adicionar'}
@@ -364,7 +396,7 @@ export default function TimeBlocks() {
         <div className="flex flex-col gap-2">
           {blocks.map(b => {
             const remaining = remainingSeconds(b, nowMs)
-            const total = b.duracao_minutos * 60
+            const total = totalSecondsOf(b)
             const progress = total > 0 ? 1 - remaining / total : 0
             const isRunning = b.timer_state === 'running'
             const isPaused = b.timer_state === 'paused'
@@ -396,16 +428,16 @@ export default function TimeBlocks() {
                       {isDone    && <span className="text-[9px] tracking-[0.3em] uppercase px-1.5 py-0.5 rounded bg-green-500/15 text-green-400/70">Concluído</span>}
                     </div>
                     <div className="text-[10px] text-white/40 tracking-wider flex items-center gap-1.5 flex-wrap">
-                      <input type="time" value={hhmm(b.hora_inicio)}
-                        onChange={e => handleUpdateTimes(b, e.target.value, hhmm(b.hora_fim))}
+                      <input type="time" step={1} value={hms(b.hora_inicio)}
+                        onChange={e => handleUpdateTimes(b, e.target.value, hms(b.hora_fim))}
                         disabled={isRunning}
                         className="bg-transparent border border-white/10 rounded px-1.5 py-0.5 text-[11px] text-white/65 focus:outline-none focus:border-[#C9A84C]/40 disabled:opacity-50" />
                       <span>—</span>
-                      <input type="time" value={hhmm(b.hora_fim)}
-                        onChange={e => handleUpdateTimes(b, hhmm(b.hora_inicio), e.target.value)}
+                      <input type="time" step={1} value={hms(b.hora_fim)}
+                        onChange={e => handleUpdateTimes(b, hms(b.hora_inicio), e.target.value)}
                         disabled={isRunning}
                         className="bg-transparent border border-white/10 rounded px-1.5 py-0.5 text-[11px] text-white/65 focus:outline-none focus:border-[#C9A84C]/40 disabled:opacity-50" />
-                      <span className="ml-1">({Math.floor(b.duracao_minutos / 60)}h{String(b.duracao_minutos % 60).padStart(2, '0')})</span>
+                      <span className="ml-1">({fmtDuration(total)})</span>
                     </div>
                   </div>
 
