@@ -82,6 +82,23 @@ function fmtDuration(seconds: number): string {
   return parts.join('')
 }
 
+/** Returns the first block in `list` whose time range overlaps with [start, end].
+ *  Half-open interval: touching ranges (10:00–11:00 and 11:00–12:00) do NOT clash.
+ *  Pass `excludeId` when editing an existing block. */
+function findOverlap(list: Block[], start: string, end: string, excludeId?: string): Block | null {
+  const s = toSeconds(start)
+  const e = toSeconds(end)
+  if (e <= s) return null
+  for (const b of list) {
+    if (excludeId && b.id === excludeId) continue
+    const bs = toSeconds(b.hora_inicio)
+    const be = toSeconds(b.hora_fim)
+    if (be <= bs) continue
+    if (s < be && e > bs) return b
+  }
+  return null
+}
+
 function totalSecondsOf(b: Block): number {
   // Prefer computed diff from times (HH:MM:SS precision)
   const fromTimes = diffSeconds(b.hora_inicio, b.hora_fim)
@@ -210,6 +227,11 @@ export default function TimeBlocks() {
     if (!newTitle.trim()) return
     const dur = diffSeconds(newInicio, newFim)
     if (dur <= 0) { alert('A hora de fim tem de ser posterior à de início.'); return }
+    const clash = findOverlap(blocks, newInicio, newFim)
+    if (clash) {
+      alert(`Horário já preenchido por "${clash.titulo}" (${hms(clash.hora_inicio).slice(0, 5)}–${hms(clash.hora_fim).slice(0, 5)}).`)
+      return
+    }
     setSaving(true)
     try {
       const maxOrdem = blocks.reduce((m, b) => Math.max(m, b.ordem), 0)
@@ -281,6 +303,11 @@ export default function TimeBlocks() {
     const fimN = hms(fim)
     const durSec = diffSeconds(inicioN, fimN)
     if (durSec <= 0) { alert('A hora de fim tem de ser posterior à de início.'); return }
+    const clash = findOverlap(blocks, inicioN, fimN, b.id)
+    if (clash) {
+      alert(`Horário já preenchido por "${clash.titulo}" (${hms(clash.hora_inicio).slice(0, 5)}–${hms(clash.hora_fim).slice(0, 5)}).`)
+      return
+    }
     setBlocks(prev => prev.map(x => x.id === b.id
       ? { ...x, hora_inicio: inicioN, hora_fim: fimN, duracao_minutos: Math.round(durSec / 60) }
       : x))
@@ -302,6 +329,8 @@ export default function TimeBlocks() {
   const totalPlannedM = Math.floor((totalPlannedSec % 3600) / 60)
   const nowMs = Date.now()
   const newDurSec = diffSeconds(newInicio, newFim)
+  // Check overlap with existing blocks of the same day (form)
+  const addOverlap = newDurSec > 0 ? findOverlap(blocks, newInicio, newFim) : null
 
   // Hero clock: which block is currently "in focus"?
   // Priority: running > most-recent paused > first idle of today.
@@ -473,14 +502,25 @@ export default function TimeBlocks() {
             <div>
               <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Início (hh:mm:ss)</label>
               <input type="time" step={1} value={newInicio} onChange={e => handleChangeInicio(e.target.value)}
-                className="bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C9A84C]/40" />
+                className="bg-black/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none transition-colors"
+                style={{
+                  borderWidth: 1, borderStyle: 'solid',
+                  borderColor: addOverlap ? '#EF4444' : 'rgba(255,255,255,0.10)',
+                }}
+              />
             </div>
             <div>
               <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Fim (hh:mm:ss)</label>
               <input type="time" step={1} value={newFim} onChange={e => setNewFim(e.target.value)}
-                className="bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C9A84C]/40" />
+                className="bg-black/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none transition-colors"
+                style={{
+                  borderWidth: 1, borderStyle: 'solid',
+                  borderColor: addOverlap ? '#EF4444' : 'rgba(255,255,255,0.10)',
+                }}
+              />
             </div>
-            <div className="text-[10px] text-white/40 tracking-wider pb-2.5">
+            <div className="text-[10px] tracking-wider pb-2.5"
+              style={{ color: addOverlap ? '#F87171' : 'rgba(255,255,255,0.40)' }}>
               {newDurSec > 0 ? fmtDuration(newDurSec) : '—'}
             </div>
             <div>
@@ -490,12 +530,25 @@ export default function TimeBlocks() {
             </div>
             <button onClick={() => { setAdding(false); setNewTitle(''); setTitleEdited(false) }}
               className="px-3 py-2 text-xs text-white/40 hover:text-white/70">Cancelar</button>
-            <button onClick={handleCreate} disabled={saving || !newTitle.trim() || newDurSec <= 0}
+            <button onClick={handleCreate}
+              disabled={saving || !newTitle.trim() || newDurSec <= 0 || !!addOverlap}
               className="px-4 py-2 rounded-lg text-xs tracking-wider transition-colors disabled:opacity-50"
               style={{ background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.40)', color: '#C9A84C' }}>
               {saving ? 'A guardar…' : 'Adicionar'}
             </button>
           </div>
+
+          {addOverlap && (
+            <div className="flex items-start gap-2 mt-1 px-3 py-2 rounded-lg"
+              style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.30)', color: '#F87171' }}>
+              <span className="text-base leading-none">⚠</span>
+              <div className="text-[11px] tracking-wider leading-tight">
+                <span className="font-semibold">Horário já preenchido.</span>{' '}
+                Cruza com <span className="text-white/85">{addOverlap.titulo}</span>{' '}
+                ({hms(addOverlap.hora_inicio).slice(0, 5)}–{hms(addOverlap.hora_fim).slice(0, 5)}).
+              </div>
+            </div>
+          )}
         </div>
       )}
 
