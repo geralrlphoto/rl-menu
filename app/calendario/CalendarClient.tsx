@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import TimeBlocks from './TimeBlocks'
 
 export type CalEvent = {
   id: string
@@ -557,6 +558,9 @@ export default function CalendarClient({
         <div className="mt-3 text-[10px] text-white/30 tracking-wider">
           💡 Clica num dia para adicionar uma tarefa com hora.
         </div>
+
+        {/* Time Blocks */}
+        <TimeBlocks />
       </div>
 
       {/* Modal */}
