@@ -304,9 +304,19 @@ function mapEvents(events: any[]): ReceitaRow[] {
     .map((e: any) => {
       const dt   = new Date(e.data_evento)
       const mes  = MES[dt.getMonth()]
-      const tipos: string[] = (() => { try { return JSON.parse(e.tipo_evento || '[]') } catch { return [] } })()
+      // tipo_evento já vem como array da /api/eventos-supabase; trata também string JSON legacy
+      const tipos: string[] = Array.isArray(e.tipo_evento)
+        ? e.tipo_evento
+        : (() => { try { return JSON.parse(e.tipo_evento || '[]') } catch { return [] } })()
       const tipo = tipos[0] ?? 'CASAMENTO'
-      const valor = e.valor_liquido ?? 0
+      // Receita BRUTA cobrada ao cliente — mesma fórmula do card /casamentos
+      // e da lista /eventos-2026: valor_foto + valor_video + valor_extras
+      // (com fallback valor_liquido para eventos antigos que ainda só têm essa coluna)
+      const valor = typeof e.valor_total === 'number'
+        ? e.valor_total
+        : (Number(e.valor_real_foto ?? e.valor_foto) || 0)
+          + (Number(e.valor_video ?? e.valor_liquido) || 0)
+          + (Number(e.valor_extras) || 0)
       const dataFmt = `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`
       return { data: dataFmt, mes, tipo, valor, info: e.cliente ?? '' }
     })
