@@ -134,6 +134,7 @@ export default function TimeBlocks() {
   const [presetKey, setPresetKey] = useState<string>('editar')
   const preset = PRESETS.find(p => p.key === presetKey)!
   const [newTitle, setNewTitle]   = useState('')
+  const [titleEdited, setTitleEdited] = useState(false)  // true once the user types manually
   const [newCor, setNewCor]       = useState(preset.cor)
   const [newInicio, setNewInicio] = useState<string>('09:00:00')
   const [newFim, setNewFim]       = useState<string>(addSeconds('09:00:00', preset.defaultDur * 60))
@@ -145,7 +146,15 @@ export default function TimeBlocks() {
   useEffect(() => {
     setNewCor(preset.cor)
     setNewFim(addSeconds(newInicio || '09:00:00', preset.defaultDur * 60))
-    if (presetKey !== 'custom' && !newTitle) setNewTitle(preset.label.replace(/ \(.*\)$/, ''))
+    // Always sync title to the selected preset (unless user manually edited it
+    // or picked 'custom'). This way switching from "Editar" to "Redes sociais"
+    // updates the title to "Redes sociais" — not "Editar trabalhos".
+    if (presetKey !== 'custom' && !titleEdited) {
+      setNewTitle(preset.label.replace(/ \(.*\)$/, ''))
+    }
+    if (presetKey === 'custom' && !titleEdited) {
+      setNewTitle('')
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [presetKey])
 
@@ -221,6 +230,7 @@ export default function TimeBlocks() {
         setBlocks(prev => [...prev, d.block].sort((a, b) => hms(a.hora_inicio).localeCompare(hms(b.hora_inicio))))
         setAdding(false)
         setNewTitle('')
+        setTitleEdited(false)
       } else if (d.error) {
         alert(d.error)
       }
@@ -349,7 +359,8 @@ export default function TimeBlocks() {
           <div className="flex flex-wrap gap-3 items-end">
             <div className="flex-1 min-w-[200px]">
               <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Título</label>
-              <input value={newTitle} onChange={e => setNewTitle(e.target.value)}
+              <input value={newTitle}
+                onChange={e => { setNewTitle(e.target.value); setTitleEdited(true) }}
                 placeholder={preset.label}
                 autoFocus
                 className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#C9A84C]/40"
@@ -374,7 +385,7 @@ export default function TimeBlocks() {
               <input type="color" value={newCor} onChange={e => setNewCor(e.target.value)}
                 className="w-12 h-10 rounded-lg bg-transparent border border-white/10 cursor-pointer" />
             </div>
-            <button onClick={() => { setAdding(false); setNewTitle('') }}
+            <button onClick={() => { setAdding(false); setNewTitle(''); setTitleEdited(false) }}
               className="px-3 py-2 text-xs text-white/40 hover:text-white/70">Cancelar</button>
             <button onClick={handleCreate} disabled={saving || !newTitle.trim() || newDurSec <= 0}
               className="px-4 py-2 rounded-lg text-xs tracking-wider transition-colors disabled:opacity-50"
