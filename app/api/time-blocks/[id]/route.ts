@@ -8,12 +8,23 @@ function db() {
   )
 }
 
+function toSeconds(hms: string): number {
+  const parts = hms.split(':').map(n => parseInt(n, 10))
+  const [h, m, s] = [parts[0] ?? 0, parts[1] ?? 0, parts[2] ?? 0]
+  return h * 3600 + m * 60 + s
+}
+
+function diffMinutes(start: string, end: string): number {
+  return Math.max(0, Math.round((toSeconds(end) - toSeconds(start)) / 60))
+}
+
 /**
  * PATCH /api/time-blocks/[id]
  *
- * Supports two modes:
+ * Two modes:
  *
- * 1. Field edits — pass any of: categoria, titulo, cor, duracao_minutos, ordem.
+ * 1. Field edits — pass any of: categoria, titulo, cor, hora_inicio, hora_fim, ordem.
+ *    duracao_minutos is recomputed automatically when times change.
  *
  * 2. Timer actions — pass `action: 'start' | 'pause' | 'stop' | 'complete'`.
  *    When `action: 'start'`, all other currently-running blocks are paused first
@@ -22,15 +33,24 @@ function db() {
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const body = await req.json()
-
   const supabase = db()
 
   // ── Field edits ─────────────────────────────────────────────────────────
   if (!body.action) {
-    const allowed = ['categoria', 'titulo', 'cor', 'duracao_minutos', 'ordem']
+    const allowed = ['categoria', 'titulo', 'cor', 'hora_inicio', 'hora_fim', 'ordem']
     const updates: Record<string, any> = { updated_at: new Date().toISOString() }
     for (const [k, v] of Object.entries(body)) {
       if (allowed.includes(k)) updates[k] = v
+    }
+    if (updates.hora_inicio || updates.hora_fim) {
+      const { data: cur } = await supabase.from('time_blocks').select('hora_inicio, hora_fim').eq('id', id).single()
+      const start = updates.hora_inicio ?? cur?.hora_inicio
+      const end   = updates.hora_fim    ?? cur?.hora_fim
+      if (start && end) {
+        const dur = diffMinutes(start, end)
+        if (dur <= 0) return NextResponse.json({ error: 'a hora de fim tem de ser posterior à de início' }, { status: 400 })
+        updates.duracao_minutos = dur
+      }
     }
     const { error } = await supabase.from('time_blocks').update(updates).eq('id', id)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -40,7 +60,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   // ── Timer actions ───────────────────────────────────────────────────────
   const action = body.action as 'start' | 'pause' | 'stop' | 'complete'
 
-  // Fetch current block
   const { data: current, error: fetchErr } = await supabase
     .from('time_blocks').select('*').eq('id', id).single()
   if (fetchErr || !current) {
@@ -49,8 +68,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const now = new Date().toISOString()
   let nextElapsed = current.timer_elapsed_seconds ?? 0
-
-  // If currently running, add seconds since started_at to elapsed.
   if (current.timer_state === 'running' && current.timer_started_at) {
     const startedMs = new Date(current.timer_started_at).getTime()
     nextElapsed += Math.max(0, Math.floor((Date.now() - startedMs) / 1000))
@@ -59,7 +76,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   let updates: Record<string, any> = { updated_at: now }
 
   if (action === 'start') {
-    // Pause all other running blocks first (enforce single-runner)
     const { data: running } = await supabase
       .from('time_blocks').select('id, timer_started_at, timer_elapsed_seconds')
       .eq('timer_state', 'running').neq('id', id)
@@ -79,32 +95,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       ...updates,
       timer_state: 'running',
       timer_started_at: now,
-      // keep existing elapsed (resume) — don't reset
       timer_elapsed_seconds: current.timer_state === 'idle' || current.timer_state === 'completed'
         ? 0
         : current.timer_elapsed_seconds,
     }
   } else if (action === 'pause') {
-    updates = {
-      ...updates,
-      timer_state: 'paused',
-      timer_started_at: null,
-      timer_elapsed_seconds: nextElapsed,
-    }
+    updates = { ...updates, timer_state: 'paused', timer_started_at: null, timer_elapsed_seconds: nextElapsed }
   } else if (action === 'stop') {
-    updates = {
-      ...updates,
-      timer_state: 'idle',
-      timer_started_at: null,
-      timer_elapsed_seconds: 0,
-    }
+    updates = { ...updates, timer_state: 'idle', timer_started_at: null, timer_elapsed_seconds: 0 }
   } else if (action === 'complete') {
-    updates = {
-      ...updates,
-      timer_state: 'completed',
-      timer_started_at: null,
-      timer_elapsed_seconds: (current.duracao_minutos ?? 0) * 60,
-    }
+    updates = { ...updates, timer_state: 'completed', timer_started_at: null, timer_elapsed_seconds: (current.duracao_minutos ?? 0) * 60 }
   } else {
     return NextResponse.json({ error: 'action inválida' }, { status: 400 })
   }

@@ -8,11 +8,24 @@ function db() {
   )
 }
 
+function toSeconds(hms: string): number {
+  // accepts "HH:MM" or "HH:MM:SS"
+  const parts = hms.split(':').map(n => parseInt(n, 10))
+  const [h, m, s] = [parts[0] ?? 0, parts[1] ?? 0, parts[2] ?? 0]
+  return h * 3600 + m * 60 + s
+}
+
+function diffMinutes(start: string, end: string): number {
+  const a = toSeconds(start)
+  const b = toSeconds(end)
+  return Math.max(0, Math.round((b - a) / 60))
+}
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const data = searchParams.get('data')   // YYYY-MM-DD
 
-  let q = db().from('time_blocks').select('*').order('ordem', { ascending: true })
+  let q = db().from('time_blocks').select('*').order('hora_inicio', { ascending: true })
   if (data) q = q.eq('data', data)
 
   const { data: rows, error } = await q
@@ -22,10 +35,14 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const body = await req.json()
-  const { data, categoria, titulo, cor, duracao_minutos, ordem } = body
+  const { data, categoria, titulo, cor, hora_inicio, hora_fim, ordem } = body
 
-  if (!data || !categoria || !titulo || !cor || !duracao_minutos) {
+  if (!data || !categoria || !titulo || !cor || !hora_inicio || !hora_fim) {
     return NextResponse.json({ error: 'campos obrigatórios em falta' }, { status: 400 })
+  }
+  const dur = diffMinutes(hora_inicio, hora_fim)
+  if (dur <= 0) {
+    return NextResponse.json({ error: 'a hora de fim tem de ser posterior à de início' }, { status: 400 })
   }
 
   const { data: row, error } = await db()
@@ -35,7 +52,9 @@ export async function POST(req: Request) {
       categoria,
       titulo: String(titulo).trim(),
       cor,
-      duracao_minutos: Number(duracao_minutos),
+      hora_inicio,
+      hora_fim,
+      duracao_minutos: dur,
       ordem: ordem ?? 0,
     })
     .select()
