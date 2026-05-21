@@ -152,6 +152,118 @@ export default function CalendarClient({
     setTaskEventoId('')
   }
 
+  // ── Chooser modal (Tarefa / Reunião / Pré-Wedding) ─────────────────────
+  const [chooserDate, setChooserDate] = useState<string | null>(null)
+  function openChooser(year: number, month: number, day: number) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+    setChooserDate(dateStr)
+  }
+
+  // ── Reunião CRM modal ──────────────────────────────────────────────────
+  type CrmContacto = { id: string; nome: string; contato: string | null; status: string | null; reuniao_data: string | null; reuniao_hora: string | null }
+  const [reuniaoOpen, setReuniaoOpen]       = useState(false)
+  const [reuniaoDate, setReuniaoDate]       = useState<string>('')
+  const [reuniaoContactos, setReuniaoContactos] = useState<CrmContacto[]>([])
+  const [reuniaoCrmId, setReuniaoCrmId]     = useState<string>('')
+  const [reuniaoHora, setReuniaoHora]       = useState<string>('15:00')
+  const [reuniaoTipo, setReuniaoTipo]       = useState<'Presencial' | 'Videochamada'>('Presencial')
+  const [reuniaoLink, setReuniaoLink]       = useState<string>('')
+  const [reuniaoSaving, setReuniaoSaving]   = useState(false)
+  const [reuniaoLoading, setReuniaoLoading] = useState(false)
+
+  function openReuniao(dateStr: string) {
+    setReuniaoDate(dateStr)
+    setReuniaoCrmId(''); setReuniaoHora('15:00'); setReuniaoTipo('Presencial'); setReuniaoLink('')
+    setReuniaoOpen(true)
+    setChooserDate(null)
+    // Carrega contactos só na primeira vez
+    if (reuniaoContactos.length === 0) {
+      setReuniaoLoading(true)
+      fetch('/api/calendario-add/crm-list', { cache: 'no-store' })
+        .then(r => r.json())
+        .then(d => { setReuniaoContactos(d.contactos ?? []); setReuniaoLoading(false) })
+        .catch(() => setReuniaoLoading(false))
+    }
+  }
+
+  async function handleSaveReuniao() {
+    if (!reuniaoCrmId || !reuniaoDate || !reuniaoHora) return
+    setReuniaoSaving(true)
+    try {
+      const res = await fetch('/api/calendario-add/reuniao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          crm_id: reuniaoCrmId,
+          data: reuniaoDate,
+          hora: reuniaoHora,
+          tipo: reuniaoTipo,
+          link: reuniaoLink || null,
+        }),
+      })
+      const d = await res.json()
+      if (res.ok) {
+        setReuniaoOpen(false)
+        startTransition(() => router.refresh())
+      } else {
+        alert(d.error ?? 'Erro ao guardar reunião')
+      }
+    } finally {
+      setReuniaoSaving(false)
+    }
+  }
+
+  // ── Pré-Wedding modal ──────────────────────────────────────────────────
+  type PortalRow = { referencia: string; noiva: string; noivo: string; has_pw: boolean; pw_date: string | null; pw_time: string | null }
+  const [pwOpen, setPwOpen]       = useState(false)
+  const [pwDate, setPwDate]       = useState<string>('')
+  const [pwPortais, setPwPortais] = useState<PortalRow[]>([])
+  const [pwReferencia, setPwReferencia] = useState<string>('')
+  const [pwHora, setPwHora]       = useState<string>('14:00')
+  const [pwLocal, setPwLocal]     = useState<string>('')
+  const [pwSaving, setPwSaving]   = useState(false)
+  const [pwLoading, setPwLoading] = useState(false)
+
+  function openPreWedding(dateStr: string) {
+    setPwDate(dateStr)
+    setPwReferencia(''); setPwHora('14:00'); setPwLocal('')
+    setPwOpen(true)
+    setChooserDate(null)
+    if (pwPortais.length === 0) {
+      setPwLoading(true)
+      fetch('/api/calendario-add/portais-list', { cache: 'no-store' })
+        .then(r => r.json())
+        .then(d => { setPwPortais(d.portais ?? []); setPwLoading(false) })
+        .catch(() => setPwLoading(false))
+    }
+  }
+
+  async function handleSavePreWedding() {
+    if (!pwReferencia || !pwDate) return
+    setPwSaving(true)
+    try {
+      const res = await fetch('/api/calendario-add/pre-wedding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          referencia: pwReferencia,
+          data: pwDate,
+          hora: pwHora || null,
+          local: pwLocal || null,
+        }),
+      })
+      const d = await res.json()
+      if (res.ok) {
+        setPwOpen(false)
+        startTransition(() => router.refresh())
+      } else {
+        alert(d.error ?? 'Erro ao guardar pré-wedding')
+      }
+    } finally {
+      setPwSaving(false)
+    }
+  }
+
   async function handleCreateTask() {
     if (!addTaskDate || !taskTitulo.trim()) return
     setTaskSaving(true)
@@ -396,7 +508,7 @@ export default function CalendarClient({
 
               return (
                 <div key={i}
-                  onClick={() => { if (isCurrentMonth) openAddTask(viewYear, viewMonth, day) }}
+                  onClick={() => { if (isCurrentMonth) openChooser(viewYear, viewMonth, day) }}
                   className={`group relative min-h-[96px] p-1.5 flex flex-col cursor-pointer transition-colors
                     ${!isLastRow ? 'border-b border-white/[0.04]' : ''}
                     ${!isLastCol ? 'border-r border-white/[0.04]' : ''}
@@ -556,7 +668,7 @@ export default function CalendarClient({
         </div>
 
         <div className="mt-3 text-[10px] text-white/30 tracking-wider">
-          💡 Clica num dia para adicionar uma tarefa com hora.
+          💡 Clica num dia para adicionar tarefa, reunião CRM ou pré-wedding — aparece logo nos Time Blocks.
         </div>
 
         {/* Time Blocks */}
@@ -865,6 +977,176 @@ export default function CalendarClient({
                 className="px-4 py-2.5 border border-white/10 rounded-xl text-sm text-white/40 hover:text-white/70 transition-colors">
                 Cancelar
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ────────────────────────── Chooser ────────────────────────── */}
+      {chooserDate && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-4"
+          onClick={() => setChooserDate(null)}>
+          <div className="w-full max-w-md bg-[#111] rounded-2xl p-6 border border-white/15"
+            onClick={e => e.stopPropagation()}>
+            <div className="text-[10px] tracking-[0.4em] text-white/40 uppercase mb-1">+ NOVO EVENTO</div>
+            <h2 className="text-lg font-light text-white tracking-wide mb-5">{fmtDate(chooserDate)}</h2>
+
+            <div className="grid grid-cols-1 gap-2">
+              <button
+                onClick={() => { openAddTask(parseInt(chooserDate.slice(0,4), 10), parseInt(chooserDate.slice(5,7), 10) - 1, parseInt(chooserDate.slice(8,10), 10)); setChooserDate(null) }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors hover:bg-white/[0.04]"
+                style={{ background: 'rgba(96,165,250,0.08)', border: '1px solid rgba(96,165,250,0.25)' }}>
+                <span className="text-2xl">📝</span>
+                <div className="flex-1">
+                  <div className="text-sm text-white">Tarefa</div>
+                  <div className="text-[10px] text-white/40 tracking-wider">Pequena tarefa do dia com hora</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => openReuniao(chooserDate)}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors hover:bg-white/[0.04]"
+                style={{ background: 'rgba(192,132,252,0.08)', border: '1px solid rgba(192,132,252,0.25)' }}>
+                <span className="text-2xl">🤝</span>
+                <div className="flex-1">
+                  <div className="text-sm text-white">Reunião CRM</div>
+                  <div className="text-[10px] text-white/40 tracking-wider">Agendar reunião num contacto existente</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => openPreWedding(chooserDate)}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors hover:bg-white/[0.04]"
+                style={{ background: 'rgba(79,195,195,0.08)', border: '1px solid rgba(79,195,195,0.25)' }}>
+                <span className="text-2xl">📷</span>
+                <div className="flex-1">
+                  <div className="text-sm text-white">Pré-Wedding</div>
+                  <div className="text-[10px] text-white/40 tracking-wider">Marcar sessão pré-wedding num casamento</div>
+                </div>
+              </button>
+            </div>
+
+            <div className="mt-4 text-[10px] text-white/30 tracking-wider">
+              Sai automaticamente para os Time Blocks deste dia.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ────────────────────────── Reunião modal ────────────────────────── */}
+      {reuniaoOpen && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setReuniaoOpen(false)}>
+          <div className="w-full max-w-md bg-[#111] rounded-2xl p-6 border max-h-[90vh] overflow-y-auto"
+            style={{ borderColor: 'rgba(192,132,252,0.30)' }}
+            onClick={e => e.stopPropagation()}>
+            <div className="text-[10px] tracking-[0.4em] uppercase mb-1" style={{ color: '#C084FCB0' }}>🤝 NOVA REUNIÃO CRM</div>
+            <h2 className="text-lg font-light text-white tracking-wide mb-4">{fmtDate(reuniaoDate)}</h2>
+
+            <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Contacto</label>
+            <select value={reuniaoCrmId} onChange={e => setReuniaoCrmId(e.target.value)}
+              disabled={reuniaoLoading}
+              className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C084FC]/40 mb-3">
+              <option value="">{reuniaoLoading ? 'A carregar contactos…' : '— Escolhe contacto —'}</option>
+              {reuniaoContactos.map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.nome}{c.contato ? ` · ${c.contato}` : ''}{c.reuniao_data ? `  (já tem reunião ${c.reuniao_data})` : ''}
+                </option>
+              ))}
+            </select>
+
+            <div className="flex gap-2 mb-3">
+              <div className="flex-1">
+                <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Hora</label>
+                <input type="time" value={reuniaoHora} onChange={e => setReuniaoHora(e.target.value)}
+                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C084FC]/40" />
+              </div>
+              <div className="flex-1">
+                <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Tipo</label>
+                <select value={reuniaoTipo} onChange={e => setReuniaoTipo(e.target.value as any)}
+                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C084FC]/40">
+                  <option value="Presencial">Presencial</option>
+                  <option value="Videochamada">Videochamada</option>
+                </select>
+              </div>
+            </div>
+
+            <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">
+              {reuniaoTipo === 'Videochamada' ? 'Link Meet' : 'Local (opcional)'}
+            </label>
+            <input value={reuniaoLink} onChange={e => setReuniaoLink(e.target.value)}
+              placeholder={reuniaoTipo === 'Videochamada' ? 'https://meet.google.com/…' : 'Morada / sala'}
+              className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#C084FC]/40 mb-4" />
+
+            <div className="flex gap-3">
+              <button onClick={handleSaveReuniao}
+                disabled={reuniaoSaving || !reuniaoCrmId}
+                className="flex-1 py-2.5 rounded-xl text-sm tracking-wider transition-colors disabled:opacity-50"
+                style={{ background: 'rgba(192,132,252,0.15)', border: '1px solid rgba(192,132,252,0.45)', color: '#C084FC' }}>
+                {reuniaoSaving ? 'A guardar…' : 'Agendar Reunião'}
+              </button>
+              <button onClick={() => setReuniaoOpen(false)}
+                className="px-4 py-2.5 border border-white/10 rounded-xl text-sm text-white/40 hover:text-white/70">
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ────────────────────────── Pré-Wedding modal ────────────────────────── */}
+      {pwOpen && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setPwOpen(false)}>
+          <div className="w-full max-w-md bg-[#111] rounded-2xl p-6 border max-h-[90vh] overflow-y-auto"
+            style={{ borderColor: 'rgba(79,195,195,0.30)' }}
+            onClick={e => e.stopPropagation()}>
+            <div className="text-[10px] tracking-[0.4em] uppercase mb-1" style={{ color: '#4FC3C3B0' }}>📷 NOVO PRÉ-WEDDING</div>
+            <h2 className="text-lg font-light text-white tracking-wide mb-4">{fmtDate(pwDate)}</h2>
+
+            <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Casamento</label>
+            <select value={pwReferencia} onChange={e => setPwReferencia(e.target.value)}
+              disabled={pwLoading}
+              className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4FC3C3]/40 mb-3">
+              <option value="">{pwLoading ? 'A carregar portais…' : '— Escolhe casamento —'}</option>
+              {pwPortais.map(p => {
+                const nomes = [p.noiva, p.noivo].filter(Boolean).join(' & ')
+                return (
+                  <option key={p.referencia} value={p.referencia}>
+                    {p.referencia}{nomes ? ` · ${nomes}` : ''}{p.has_pw ? `  (já tem PW ${p.pw_date})` : ''}
+                  </option>
+                )
+              })}
+            </select>
+
+            <div className="flex gap-2 mb-3">
+              <div className="flex-1">
+                <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Hora</label>
+                <input type="time" value={pwHora} onChange={e => setPwHora(e.target.value)}
+                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4FC3C3]/40" />
+              </div>
+            </div>
+
+            <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Local (opcional)</label>
+            <input value={pwLocal} onChange={e => setPwLocal(e.target.value)}
+              placeholder="ex.: Quinta da Aroeira"
+              className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#4FC3C3]/40 mb-4" />
+
+            <div className="flex gap-3">
+              <button onClick={handleSavePreWedding}
+                disabled={pwSaving || !pwReferencia}
+                className="flex-1 py-2.5 rounded-xl text-sm tracking-wider transition-colors disabled:opacity-50"
+                style={{ background: 'rgba(79,195,195,0.15)', border: '1px solid rgba(79,195,195,0.45)', color: '#4FC3C3' }}>
+                {pwSaving ? 'A guardar…' : 'Marcar Pré-Wedding'}
+              </button>
+              <button onClick={() => setPwOpen(false)}
+                className="px-4 py-2.5 border border-white/10 rounded-xl text-sm text-white/40 hover:text-white/70">
+                Cancelar
+              </button>
+            </div>
+
+            <div className="mt-3 text-[10px] text-white/30 tracking-wider">
+              ⚠️ Se o casamento já tem um PW marcado, este novo substitui o anterior.
             </div>
           </div>
         </div>
