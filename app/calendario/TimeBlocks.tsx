@@ -23,14 +23,19 @@ type Block = {
   tempo_real_segundos?: number
 }
 
-const PRESETS = [
-  { key: 'editar',     label: 'Editar trabalhos (prioridade)',          cor: '#8B5CF6', defaultDur: 90 },
-  { key: 'plataforma', label: 'Plataforma',                              cor: '#0EA5A0', defaultDur: 60 },
-  { key: 'redes',      label: 'Redes sociais',                           cor: '#E11D48', defaultDur: 60 },
-  { key: 'almoco',     label: 'Almoço + treino',                         cor: '#D97706', defaultDur: 90 },
-  { key: 'clientes',   label: 'Clientes + arranque / encerramento (fixo)', cor: '#3B82F6', defaultDur: 60 },
-  { key: 'custom',     label: 'Outro (à medida)',                        cor: '#A1A1AA', defaultDur: 30 },
+type Preset = { id?: string; key: string; label: string; cor: string; defaultDur: number; fixo?: boolean }
+
+// Defaults used as fallback if the API returns nothing (e.g. before the
+// migration is run). Once the categorias table is seeded, these are
+// replaced by the server values.
+const DEFAULT_PRESETS: Preset[] = [
+  { key: 'editar',     label: 'Editar trabalhos (prioridade)',                cor: '#8B5CF6', defaultDur: 90, fixo: true },
+  { key: 'plataforma', label: 'Plataforma',                                    cor: '#0EA5A0', defaultDur: 60, fixo: true },
+  { key: 'redes',      label: 'Redes sociais',                                 cor: '#E11D48', defaultDur: 60, fixo: true },
+  { key: 'almoco',     label: 'Almoço + treino',                               cor: '#D97706', defaultDur: 90, fixo: true },
+  { key: 'clientes',   label: 'Clientes + arranque / encerramento (fixo)',     cor: '#3B82F6', defaultDur: 60, fixo: true },
 ]
+const CUSTOM_PRESET: Preset = { key: 'custom', label: 'Outro (à medida)', cor: '#A1A1AA', defaultDur: 30, fixo: true }
 
 function todayStr() {
   const d = new Date()
@@ -156,6 +161,74 @@ export default function TimeBlocks({ events }: { events: CalEvent[] }) {
   const [historicoVersion, setHistoricoVersion] = useState(0)
   const bumpHistorico = () => setHistoricoVersion(v => v + 1)
 
+  // ─── Categorias (presets) loaded from the server ────────────────────────
+  const [serverPresets, setServerPresets] = useState<Preset[]>([])
+  // PRESETS used everywhere = server presets (without 'custom') + custom at the end
+  const PRESETS: Preset[] = useMemo(() => {
+    const real = serverPresets.length > 0 ? serverPresets : DEFAULT_PRESETS
+    return [...real, CUSTOM_PRESET]
+  }, [serverPresets])
+
+  // Add-categoria form state
+  const [addingCategoria, setAddingCategoria] = useState(false)
+  const [newCatLabel, setNewCatLabel] = useState('')
+  const [newCatCor, setNewCatCor]     = useState('#7C3AED')
+  const [newCatDur, setNewCatDur]     = useState<number>(60)
+  const [catSaving, setCatSaving]     = useState(false)
+
+  async function loadCategorias() {
+    try {
+      const res = await fetch('/api/time-block-categorias', { cache: 'no-store' })
+      const d = await res.json()
+      const rows = (d.categorias ?? []) as any[]
+      setServerPresets(rows.map(r => ({
+        id: r.id, key: r.key, label: r.label, cor: r.cor,
+        defaultDur: r.duracao_default_minutos ?? 60, fixo: !!r.fixo,
+      })))
+    } catch {}
+  }
+
+  useEffect(() => { loadCategorias() }, [])
+
+  async function handleCreateCategoria() {
+    if (!newCatLabel.trim()) return
+    setCatSaving(true)
+    try {
+      const res = await fetch('/api/time-block-categorias', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label: newCatLabel, cor: newCatCor, duracao_default_minutos: newCatDur }),
+      })
+      const d = await res.json()
+      if (d.categoria) {
+        setServerPresets(prev => [...prev, {
+          id: d.categoria.id, key: d.categoria.key, label: d.categoria.label,
+          cor: d.categoria.cor, defaultDur: d.categoria.duracao_default_minutos, fixo: !!d.categoria.fixo,
+        }])
+        setAddingCategoria(false)
+        setNewCatLabel(''); setNewCatCor('#7C3AED'); setNewCatDur(60)
+      } else if (d.error) {
+        alert(d.error)
+      }
+    } finally {
+      setCatSaving(false)
+    }
+  }
+
+  async function handleDeleteCategoria(p: Preset) {
+    if (!p.id) return
+    if (p.fixo) { alert('Esta categoria é um preset fixo e não pode ser eliminada.'); return }
+    if (!confirm(`Eliminar a categoria "${p.label}"?\nOs blocos já criados com esta categoria mantêm-se com a mesma cor.`)) return
+    const res = await fetch(`/api/time-block-categorias/${p.id}`, { method: 'DELETE' })
+    if (res.ok) {
+      setServerPresets(prev => prev.filter(x => x.id !== p.id))
+      if (presetKey === p.key) setPresetKey(DEFAULT_PRESETS[0].key)
+    } else {
+      const d = await res.json().catch(() => ({}))
+      alert(d.error ?? 'Erro ao eliminar')
+    }
+  }
+
   // Fast event lookup
   const eventsById = useMemo(() => new Map(events.map(e => [e.id, e])), [events])
   function eventLabel(id?: string | null): string | null {
@@ -182,7 +255,9 @@ export default function TimeBlocks({ events }: { events: CalEvent[] }) {
 
   // Add form
   const [presetKey, setPresetKey] = useState<string>('editar')
-  const preset = PRESETS.find(p => p.key === presetKey)!
+  // Fall back to first preset if the current key no longer exists (e.g. the
+  // categoria was just deleted by the user).
+  const preset = PRESETS.find(p => p.key === presetKey) ?? PRESETS[0]
   const [newTitle, setNewTitle]   = useState('')
   const [titleEdited, setTitleEdited] = useState(false)  // true once the user types manually
   const [newCor, setNewCor]       = useState(preset.cor)
@@ -862,19 +937,68 @@ export default function TimeBlocks({ events }: { events: CalEvent[] }) {
         </div>
       )}
 
-      {/* Legend */}
+      {/* Legend — managed (add/delete categorias) */}
       {showLegend && (
         <div className="mt-2 p-4 rounded-xl"
           style={{ background: 'rgba(0,0,0,0.20)', border: '1px solid rgba(255,255,255,0.04)' }}>
           <div className="flex items-center justify-between mb-3">
             <span className="text-[10px] tracking-[0.35em] uppercase text-white/40">Legenda</span>
-            <button onClick={() => setShowLegend(false)} className="text-[10px] text-white/30 hover:text-white/60">esconder</button>
+            <div className="flex items-center gap-3">
+              {!addingCategoria && (
+                <button onClick={() => setAddingCategoria(true)}
+                  className="text-[10px] tracking-widest uppercase px-2.5 py-1 rounded border border-[#C9A84C]/30 text-[#C9A84C]/70 hover:text-[#C9A84C] hover:border-[#C9A84C]/60 transition-colors">
+                  + Nova categoria
+                </button>
+              )}
+              <button onClick={() => setShowLegend(false)} className="text-[10px] text-white/30 hover:text-white/60">esconder</button>
+            </div>
           </div>
+
+          {addingCategoria && (
+            <div className="mb-3 p-3 rounded-lg flex flex-wrap items-end gap-2"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="flex-1 min-w-[180px]">
+                <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Nome</label>
+                <input value={newCatLabel} onChange={e => setNewCatLabel(e.target.value)}
+                  placeholder="ex.: Newsletter, Treino, Leitura…"
+                  autoFocus
+                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#C9A84C]/40"
+                  onKeyDown={e => { if (e.key === 'Enter' && newCatLabel.trim() && !catSaving) handleCreateCategoria() }}
+                />
+              </div>
+              <div>
+                <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Cor</label>
+                <input type="color" value={newCatCor} onChange={e => setNewCatCor(e.target.value)}
+                  className="w-12 h-10 rounded-lg bg-transparent border border-white/10 cursor-pointer" />
+              </div>
+              <div>
+                <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Duração default (min)</label>
+                <input type="number" min={1} value={newCatDur} onChange={e => setNewCatDur(parseInt(e.target.value || '0', 10))}
+                  className="w-24 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C9A84C]/40" />
+              </div>
+              <button onClick={() => { setAddingCategoria(false); setNewCatLabel(''); setNewCatCor('#7C3AED'); setNewCatDur(60) }}
+                className="px-3 py-2 text-xs text-white/40 hover:text-white/70">Cancelar</button>
+              <button onClick={handleCreateCategoria} disabled={catSaving || !newCatLabel.trim() || newCatDur <= 0}
+                className="px-4 py-2 rounded-lg text-xs tracking-wider transition-colors disabled:opacity-50"
+                style={{ background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.40)', color: '#C9A84C' }}>
+                {catSaving ? 'A criar…' : 'Adicionar'}
+              </button>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-white/65">
             {PRESETS.filter(p => p.key !== 'custom').map(p => (
-              <div key={p.key} className="flex items-center gap-2">
-                <span className="inline-block w-4 h-4 rounded-sm" style={{ background: p.cor }} />
-                <span>{p.label}</span>
+              <div key={p.key} className="group flex items-center gap-2">
+                <span className="inline-block w-4 h-4 rounded-sm flex-shrink-0" style={{ background: p.cor }} />
+                <span className="flex-1 truncate">{p.label}</span>
+                {p.fixo && <span className="text-[9px] text-white/25 tracking-wider uppercase">fixo</span>}
+                {!p.fixo && p.id && (
+                  <button onClick={() => handleDeleteCategoria(p)}
+                    title={`Eliminar "${p.label}"`}
+                    className="w-5 h-5 flex items-center justify-center rounded text-white/25 hover:text-red-400 hover:bg-red-500/10 transition-colors text-xs opacity-0 group-hover:opacity-100">
+                    ✕
+                  </button>
+                )}
               </div>
             ))}
           </div>
