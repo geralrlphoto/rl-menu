@@ -35,11 +35,13 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const body = await req.json()
-  const { data, categoria, titulo, cor, hora_inicio, hora_fim, ordem } = body
+  const { data, categoria, titulo, cor, hora_inicio, hora_fim, ordem, evento_id } = body
 
   if (!data || !categoria || !titulo || !cor || !hora_inicio || !hora_fim) {
     return NextResponse.json({ error: 'campos obrigatórios em falta' }, { status: 400 })
   }
+  // Note: evento_id is enforced client-side for 'editar' category, but the
+  // server allows null so that auto-create and one-off imports keep working.
   const dur = diffMinutes(hora_inicio, hora_fim)
   if (dur <= 0) {
     return NextResponse.json({ error: 'a hora de fim tem de ser posterior à de início' }, { status: 400 })
@@ -56,6 +58,7 @@ export async function POST(req: Request) {
       hora_fim,
       duracao_minutos: dur,
       ordem: ordem ?? 0,
+      evento_id: evento_id || null,
     })
     .select()
     .single()

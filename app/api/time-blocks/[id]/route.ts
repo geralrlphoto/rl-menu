@@ -41,7 +41,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   // ── Field edits ─────────────────────────────────────────────────────────
   if (!body.action) {
-    const allowed = ['categoria', 'titulo', 'cor', 'hora_inicio', 'hora_fim', 'ordem']
+    const allowed = ['categoria', 'titulo', 'cor', 'hora_inicio', 'hora_fim', 'ordem', 'evento_id']
     const updates: Record<string, any> = { updated_at: new Date().toISOString() }
     for (const [k, v] of Object.entries(body)) {
       if (allowed.includes(k)) updates[k] = v
@@ -71,17 +71,20 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   const now = new Date().toISOString()
-  let nextElapsed = current.timer_elapsed_seconds ?? 0
-  if (current.timer_state === 'running' && current.timer_started_at) {
-    const startedMs = new Date(current.timer_started_at).getTime()
-    nextElapsed += Math.max(0, Math.floor((Date.now() - startedMs) / 1000))
-  }
+  // Seconds elapsed in the *current* running session (between started_at and now)
+  const currentSessionSec = current.timer_state === 'running' && current.timer_started_at
+    ? Math.max(0, Math.floor((Date.now() - new Date(current.timer_started_at).getTime()) / 1000))
+    : 0
+  const nextElapsed = (current.timer_elapsed_seconds ?? 0) + currentSessionSec
+  const prevReal    = current.tempo_real_segundos ?? 0
 
   let updates: Record<string, any> = { updated_at: now }
 
   if (action === 'start') {
+    // Pause any other running blocks first AND snapshot their real-time
     const { data: running } = await supabase
-      .from('time_blocks').select('id, timer_started_at, timer_elapsed_seconds')
+      .from('time_blocks')
+      .select('id, timer_started_at, timer_elapsed_seconds, tempo_real_segundos')
       .eq('timer_state', 'running').neq('id', id)
     for (const r of running ?? []) {
       const sec = r.timer_started_at
@@ -91,6 +94,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         timer_state: 'paused',
         timer_started_at: null,
         timer_elapsed_seconds: (r.timer_elapsed_seconds ?? 0) + sec,
+        tempo_real_segundos: (r.tempo_real_segundos ?? 0) + sec,
         updated_at: now,
       }).eq('id', r.id)
     }
@@ -99,20 +103,40 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       ...updates,
       timer_state: 'running',
       timer_started_at: now,
+      // Restart countdown from 0 if block was idle or already completed; otherwise resume
       timer_elapsed_seconds: current.timer_state === 'idle' || current.timer_state === 'completed'
         ? 0
         : current.timer_elapsed_seconds,
     }
   } else if (action === 'pause') {
-    updates = { ...updates, timer_state: 'paused', timer_started_at: null, timer_elapsed_seconds: nextElapsed }
+    updates = {
+      ...updates,
+      timer_state: 'paused',
+      timer_started_at: null,
+      timer_elapsed_seconds: nextElapsed,
+      tempo_real_segundos: prevReal + currentSessionSec,
+    }
   } else if (action === 'stop') {
-    updates = { ...updates, timer_state: 'idle', timer_started_at: null, timer_elapsed_seconds: 0 }
+    // Stop resets the countdown but PRESERVES the accumulated real time
+    updates = {
+      ...updates,
+      timer_state: 'idle',
+      timer_started_at: null,
+      timer_elapsed_seconds: 0,
+      tempo_real_segundos: prevReal + currentSessionSec,
+    }
   } else if (action === 'complete') {
-    // Prefer precise seconds from clock times if available
     const totalSec = current.hora_inicio && current.hora_fim
       ? diffSeconds(current.hora_inicio, current.hora_fim)
       : (current.duracao_minutos ?? 0) * 60
-    updates = { ...updates, timer_state: 'completed', timer_started_at: null, timer_elapsed_seconds: totalSec }
+    updates = {
+      ...updates,
+      timer_state: 'completed',
+      timer_started_at: null,
+      timer_elapsed_seconds: totalSec,
+      // Add this session's elapsed (used for auto-complete when countdown hits 0)
+      tempo_real_segundos: prevReal + currentSessionSec,
+    }
   } else {
     return NextResponse.json({ error: 'action inválida' }, { status: 400 })
   }

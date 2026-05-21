@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import type { CalEvent } from './CalendarClient'
+import HistoricoTimeBlocks from './HistoricoTimeBlocks'
 
 type TimerState = 'idle' | 'running' | 'paused' | 'completed'
 
@@ -17,6 +19,8 @@ type Block = {
   timer_state: TimerState
   timer_started_at: string | null
   timer_elapsed_seconds: number
+  evento_id?: string | null
+  tempo_real_segundos?: number
 }
 
 const PRESETS = [
@@ -140,12 +144,34 @@ function fmtDateLong(d: string) {
   })
 }
 
-export default function TimeBlocks() {
+export default function TimeBlocks({ events }: { events: CalEvent[] }) {
   const [day, setDay]               = useState<string>(todayStr())
   const [blocks, setBlocks]         = useState<Block[]>([])
   const [loading, setLoading]       = useState(true)
   const [adding, setAdding]         = useState(false)
   const [showLegend, setShowLegend] = useState(true)
+  const [historicoOpen, setHistoricoOpen] = useState(false)
+
+  // Fast event lookup
+  const eventsById = useMemo(() => new Map(events.map(e => [e.id, e])), [events])
+  function eventLabel(id?: string | null): string | null {
+    if (!id) return null
+    const ev = eventsById.get(id)
+    if (!ev) return null
+    return ev.cliente || ev.referencia
+  }
+
+  // Events ordered by proximity to a reference date — drives the dropdown
+  function nearbyEvents(refDate: string | null) {
+    const ref = refDate ? new Date(refDate + 'T00:00:00').getTime() : Date.now()
+    return [...events]
+      .filter(e => e.data_evento)
+      .sort((a, b) => {
+        const da = Math.abs(new Date(a.data_evento! + 'T00:00:00').getTime() - ref)
+        const db = Math.abs(new Date(b.data_evento! + 'T00:00:00').getTime() - ref)
+        return da - db
+      })
+  }
 
   // Add form
   const [presetKey, setPresetKey] = useState<string>('editar')
@@ -155,6 +181,7 @@ export default function TimeBlocks() {
   const [newCor, setNewCor]       = useState(preset.cor)
   const [newInicio, setNewInicio] = useState<string>('09:00:00')
   const [newFim, setNewFim]       = useState<string>(addSeconds('09:00:00', preset.defaultDur * 60))
+  const [newEventoId, setNewEventoId] = useState<string>('')
   const [saving, setSaving]       = useState(false)
 
   const [tick, setTick] = useState(0)
@@ -335,6 +362,10 @@ export default function TimeBlocks() {
 
   async function handleCreate() {
     if (!newTitle.trim()) return
+    if (presetKey === 'editar' && !newEventoId) {
+      alert('Para "Editar trabalhos" tens de escolher o casamento.')
+      return
+    }
     const dur = diffSeconds(newInicio, newFim)
     if (dur <= 0) { alert('A hora de fim tem de ser posterior à de início.'); return }
     const clash = findOverlap(blocks, newInicio, newFim)
@@ -356,6 +387,7 @@ export default function TimeBlocks() {
           hora_inicio: hms(newInicio),
           hora_fim: hms(newFim),
           ordem: maxOrdem + 1,
+          evento_id: newEventoId || null,
         }),
       })
       const d = await res.json()
@@ -364,6 +396,7 @@ export default function TimeBlocks() {
         setAdding(false)
         setNewTitle('')
         setTitleEdited(false)
+        setNewEventoId('')
       } else if (d.error) {
         alert(d.error)
       }
@@ -482,6 +515,12 @@ export default function TimeBlocks() {
           </span>
           {!adding && (
             <>
+              <button onClick={() => setHistoricoOpen(true)}
+                title="Ver tempo total gasto por casamento"
+                className="text-xs px-3 py-1.5 rounded-lg transition-colors"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.65)' }}>
+                📊 Histórico
+              </button>
               <button onClick={handleAutoCreateDay}
                 disabled={saving}
                 title="Cria automaticamente os blocos do dia conforme as regras"
@@ -534,6 +573,11 @@ export default function TimeBlocks() {
                   <span className="text-[9px] tracking-[0.3em] uppercase px-1.5 py-0.5 rounded bg-white/10 text-white/50">Em pausa</span>
                 )}
               </div>
+              {heroBlock.evento_id && eventLabel(heroBlock.evento_id) && (
+                <div className="text-xs tracking-wider text-white/60 text-center">
+                  🔗 <span style={{ color: heroBlock.cor }}>{eventLabel(heroBlock.evento_id)}</span>
+                </div>
+              )}
 
               <div
                 className="font-mono tabular-nums tracking-tight leading-none select-none"
@@ -647,10 +691,40 @@ export default function TimeBlocks() {
               <input type="color" value={newCor} onChange={e => setNewCor(e.target.value)}
                 className="w-12 h-10 rounded-lg bg-transparent border border-white/10 cursor-pointer" />
             </div>
-            <button onClick={() => { setAdding(false); setNewTitle(''); setTitleEdited(false) }}
+          </div>
+
+          {/* Wedding/event picker — required for 'editar', optional otherwise */}
+          <div className="flex flex-col gap-1">
+            <label className="text-[9px] tracking-[0.3em] text-white/30 uppercase">
+              Casamento {presetKey === 'editar' ? <span style={{ color: '#F87171' }}>*</span> : <span className="text-white/25">(opcional)</span>}
+            </label>
+            <select value={newEventoId} onChange={e => setNewEventoId(e.target.value)}
+              className="w-full bg-black/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none transition-colors"
+              style={{
+                borderWidth: 1, borderStyle: 'solid',
+                borderColor: presetKey === 'editar' && !newEventoId ? '#F87171' : 'rgba(255,255,255,0.10)',
+              }}>
+              <option value="">— Nenhum —</option>
+              {nearbyEvents(day).map(ev => (
+                <option key={ev.id} value={ev.id}>
+                  {ev.data_evento ? ev.data_evento.slice(0, 10) + ' · ' : ''}{ev.cliente || ev.referencia}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Form actions */}
+          <div className="flex gap-2 justify-end">
+            <button onClick={() => { setAdding(false); setNewTitle(''); setTitleEdited(false); setNewEventoId('') }}
               className="px-3 py-2 text-xs text-white/40 hover:text-white/70">Cancelar</button>
             <button onClick={handleCreate}
-              disabled={saving || !newTitle.trim() || newDurSec <= 0 || !!addOverlap}
+              disabled={
+                saving ||
+                !newTitle.trim() ||
+                newDurSec <= 0 ||
+                !!addOverlap ||
+                (presetKey === 'editar' && !newEventoId)
+              }
               className="px-4 py-2 rounded-lg text-xs tracking-wider transition-colors disabled:opacity-50"
               style={{ background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.40)', color: '#C9A84C' }}>
               {saving ? 'A guardar…' : 'Adicionar'}
@@ -715,9 +789,20 @@ export default function TimeBlocks() {
                       <span className="text-sm text-white truncate" style={{ textDecoration: isDone ? 'line-through' : 'none' }}>
                         {b.titulo}
                       </span>
+                      {b.evento_id && eventLabel(b.evento_id) && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded truncate"
+                          style={{ background: b.cor + '20', border: `1px solid ${b.cor}40`, color: b.cor }}>
+                          🔗 {eventLabel(b.evento_id)}
+                        </span>
+                      )}
                       {isRunning && <span className="text-[9px] tracking-[0.3em] uppercase px-1.5 py-0.5 rounded" style={{ background: b.cor + '30', color: b.cor }}>A correr</span>}
                       {isPaused  && <span className="text-[9px] tracking-[0.3em] uppercase px-1.5 py-0.5 rounded bg-white/10 text-white/50">Em pausa</span>}
                       {isDone    && <span className="text-[9px] tracking-[0.3em] uppercase px-1.5 py-0.5 rounded bg-green-500/15 text-green-400/70">Concluído</span>}
+                      {(b.tempo_real_segundos ?? 0) > 0 && (
+                        <span className="text-[10px] text-white/40 tracking-wider">
+                          · real: {fmtDuration(b.tempo_real_segundos ?? 0)}
+                        </span>
+                      )}
                     </div>
                     <div className="text-[10px] text-white/40 tracking-wider flex items-center gap-1.5 flex-wrap">
                       <input type="time" step={1} value={hms(b.hora_inicio)}
@@ -777,6 +862,12 @@ export default function TimeBlocks() {
           </div>
         </div>
       )}
+
+      <HistoricoTimeBlocks
+        open={historicoOpen}
+        onClose={() => setHistoricoOpen(false)}
+        events={events}
+      />
     </section>
   )
 }
