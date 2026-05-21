@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import type { CalEvent, TarefaEvent } from './CalendarClient'
+import type { CalEvent, TarefaEvent, PreWeddingEvent, ReuniaoEvent } from './CalendarClient'
 import HistoricoTimeBlocks from './HistoricoTimeBlocks'
 import ResumoDia from './ResumoDia'
 
@@ -31,12 +31,15 @@ type Preset = { id?: string; key: string; label: string; cor: string; defaultDur
 // migration is run). Once the categorias table is seeded, these are
 // replaced by the server values.
 const DEFAULT_PRESETS: Preset[] = [
-  { key: 'editar',     label: 'Editar trabalhos (prioridade)',                cor: '#8B5CF6', defaultDur: 90, fixo: true },
-  { key: 'plataforma', label: 'Plataforma',                                    cor: '#0EA5A0', defaultDur: 60, fixo: true },
-  { key: 'redes',      label: 'Redes sociais',                                 cor: '#E11D48', defaultDur: 60, fixo: true },
-  { key: 'almoco',     label: 'Almoço + treino',                               cor: '#D97706', defaultDur: 90, fixo: true },
-  { key: 'clientes',   label: 'Clientes + arranque / encerramento (fixo)',     cor: '#3B82F6', defaultDur: 60, fixo: true },
-  { key: 'pausa',      label: 'Pausa / Intervalo',                             cor: '#71717A', defaultDur: 15, fixo: true },
+  { key: 'editar',      label: 'Editar trabalhos (prioridade)',                cor: '#8B5CF6', defaultDur: 90,  fixo: true },
+  { key: 'plataforma',  label: 'Plataforma',                                    cor: '#0EA5A0', defaultDur: 60,  fixo: true },
+  { key: 'redes',       label: 'Redes sociais',                                 cor: '#E11D48', defaultDur: 60,  fixo: true },
+  { key: 'almoco',      label: 'Almoço + treino',                               cor: '#D97706', defaultDur: 90,  fixo: true },
+  { key: 'clientes',    label: 'Clientes + arranque / encerramento (fixo)',     cor: '#3B82F6', defaultDur: 60,  fixo: true },
+  { key: 'pausa',       label: 'Pausa / Intervalo',                             cor: '#71717A', defaultDur: 15,  fixo: true },
+  { key: 'casamento',   label: 'Casamento / Produção',                          cor: '#C9A84C', defaultDur: 840, fixo: true },
+  { key: 'pre_wedding', label: 'Pré-Wedding',                                   cor: '#4FC3C3', defaultDur: 150, fixo: true },
+  { key: 'reuniao',     label: 'Reunião CRM',                                   cor: '#C084FC', defaultDur: 60,  fixo: true },
 ]
 const CUSTOM_PRESET: Preset = { key: 'custom', label: 'Outro (à medida)', cor: '#A1A1AA', defaultDur: 30, fixo: true }
 
@@ -153,8 +156,13 @@ function fmtDateLong(d: string) {
 }
 
 export default function TimeBlocks({
-  events, tarefas: initialTarefas,
-}: { events: CalEvent[]; tarefas?: TarefaEvent[] }) {
+  events, tarefas: initialTarefas, preWeddings = [], reunioes = [],
+}: {
+  events: CalEvent[]
+  tarefas?: TarefaEvent[]
+  preWeddings?: PreWeddingEvent[]
+  reunioes?: ReuniaoEvent[]
+}) {
   const [day, setDay]               = useState<string>(todayStr())
   const [blocks, setBlocks]         = useState<Block[]>([])
   const [loading, setLoading]       = useState(true)
@@ -589,15 +597,124 @@ export default function TimeBlocks({
       const ALMOCO = (a: number, b: number): Slot => ({ key: 'almoco', title: 'Almoço + treino', cor: presetAlmoco.cor, inicio: sec2hms(a), fim: sec2hms(b) })
       const CLIENTES = (a: number, b: number): Slot => ({ key: 'clientes', title: 'Clientes — encerramento', cor: presetClientes.cor, inicio: sec2hms(a), fim: sec2hms(b) })
 
-      // 1) Encerramento — últimos 30 min da janela
+      // ── 1) Recolha dos eventos do calendário para o dia escolhido ───────
+      // Ler casamentos / pré-weddings / reuniões e converter em "blocos
+      // fixos" que vão ser reservados antes de qualquer outro trabalho.
+      const fixedFromCalendar: Slot[] = []
+
+      const presetCasamento  = PRESETS.find(p => p.key === 'casamento')  ?? { cor: '#C9A84C', label: 'Casamento / Produção' } as any
+      const presetPreWedding = PRESETS.find(p => p.key === 'pre_wedding')?? { cor: '#4FC3C3', label: 'Pré-Wedding' } as any
+      const presetReuniao    = PRESETS.find(p => p.key === 'reuniao')   ?? { cor: '#C084FC', label: 'Reunião CRM' } as any
+
+      // Casamentos: data_evento === day. Sem hora → bloqueia a janela inteira
+      // (geralmente um casamento ocupa o dia todo de qualquer forma).
+      for (const ev of events) {
+        if (ev.data_evento && ev.data_evento.startsWith(day)) {
+          fixedFromCalendar.push({
+            key: 'casamento',
+            title: `Casamento — ${ev.referencia || ev.cliente || ''}`.trim(),
+            cor: presetCasamento.cor,
+            inicio: hms(startHour),
+            fim: hms(endHour),
+          })
+          summary.push(`📍 Casamento "${ev.referencia || ev.cliente}" ocupa o dia inteiro`)
+        }
+      }
+
+      // Pré-Weddings: usam hora se existir, default 14:00 (duração 2h30)
+      for (const pw of preWeddings) {
+        if (pw.data_evento && pw.data_evento.startsWith(day)) {
+          const horaInicio = pw.hora && /^\d{2}:\d{2}/.test(pw.hora) ? pw.hora.slice(0, 5) + ':00' : '14:00:00'
+          const inicio = toSeconds(horaInicio)
+          const fim    = inicio + 150 * 60   // 2h30
+          fixedFromCalendar.push({
+            key: 'pre_wedding',
+            title: `Pré-Wedding — ${pw.nomes || pw.referencia}`,
+            cor: presetPreWedding.cor,
+            inicio: horaInicio,
+            fim: ((): string => {
+              const wrapped = ((fim % 86400) + 86400) % 86400
+              const h = Math.floor(wrapped / 3600), m = Math.floor((wrapped % 3600) / 60)
+              return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`
+            })(),
+          })
+          summary.push(`📷 Pré-Wedding "${pw.nomes}" às ${horaInicio.slice(0,5)}`)
+        }
+      }
+
+      // Reuniões: usam reuniao_hora (HH:MM), default 1h
+      for (const r of reunioes) {
+        if (r.reuniao_data && r.reuniao_data.startsWith(day)) {
+          const horaInicio = r.reuniao_hora && /^\d{2}:\d{2}/.test(r.reuniao_hora) ? r.reuniao_hora.slice(0, 5) + ':00' : '15:00:00'
+          const inicio = toSeconds(horaInicio)
+          const fim    = inicio + 60 * 60
+          fixedFromCalendar.push({
+            key: 'reuniao',
+            title: `Reunião — ${r.nome}`,
+            cor: presetReuniao.cor,
+            inicio: horaInicio,
+            fim: ((): string => {
+              const wrapped = ((fim % 86400) + 86400) % 86400
+              const h = Math.floor(wrapped / 3600), m = Math.floor((wrapped % 3600) / 60)
+              return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`
+            })(),
+          })
+          summary.push(`🤝 Reunião "${r.nome}" às ${horaInicio.slice(0,5)}`)
+        }
+      }
+
+      // Se há casamento no dia, não criamos mais nada além disso + encerramento.
+      // O dia é todo do casamento, ponto final.
+      const hasCasamentoToday = fixedFromCalendar.some(s => s.key === 'casamento')
+
+      // 2) Encerramento — últimos 30 min da janela
       const encSec = 30 * 60
       const encStartSec = endSec - encSec
       summary.push(`Encerramento ${hms(endHour).slice(0,5)} (30min)`)
 
-      // 2) Almoço — só se caber exatamente entre 12:00 e 14:00 dentro da janela
+      if (hasCasamentoToday) {
+        // Caminho rápido: só casamento + encerramento, ajustar fim do casamento
+        // para não sobrepor o encerramento.
+        toCreate = fixedFromCalendar.map(s => s.key === 'casamento'
+          ? { ...s, fim: sec2hms(encStartSec) }
+          : s
+        )
+        toCreate.push(CLIENTES(encStartSec, endSec))
+        toCreate.sort((a, b) => a.inicio.localeCompare(b.inicio))
+        // Salta a parte de Editar/Redes/Plataforma — não criamos nada mais.
+        skipped.push('Editar/Redes/Plataforma (dia ocupado pelo casamento)')
+
+        // Insere blocos e termina cedo
+        const created: Block[] = []
+        let ordem = 1
+        for (const item of toCreate) {
+          const res = await fetch('/api/time-blocks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              data: day, categoria: item.key, titulo: item.title, cor: item.cor,
+              hora_inicio: item.inicio, hora_fim: item.fim, ordem: ordem++,
+            }),
+          })
+          const d2 = await res.json()
+          if (d2.block) created.push(d2.block)
+        }
+        setBlocks(created.sort((a, b) => hms(a.hora_inicio).localeCompare(hms(b.hora_inicio))))
+        bumpHistorico()
+        alert(
+          `✅ Dia gerado para ${hms(startHour).slice(0,5)} → ${hms(endHour).slice(0,5)}.\n\n` +
+          `Hoje é dia de casamento — não foram criados blocos de Editar/Redes/Plataforma.\n\n` +
+          `Incluído:\n` + summary.map(s => `  • ${s}`).join('\n')
+        )
+        return
+      }
+
+      // 3) Almoço — só se caber exatamente entre 12:00 e 14:00 dentro da janela
       const lunchA = toSeconds('12:00:00')
       const lunchB = toSeconds('14:00:00')
-      const lunchFits = startSec <= lunchA && encStartSec >= lunchB
+      const lunchFits = startSec <= lunchA && encStartSec >= lunchB &&
+        // E também só se NENHUM evento fixo sobrepõe 12-14
+        !fixedFromCalendar.some(s => toSeconds(s.inicio) < lunchB && toSeconds(s.fim) > lunchA)
       let workMorning: [number, number] | null = null
       let workAfternoon: [number, number] | null = null
       if (lunchFits) {
@@ -606,14 +723,34 @@ export default function TimeBlocks({
         summary.push('Almoço + treino 12:00–14:00')
       } else {
         // Sem almoço: bloco único de trabalho. Se a janela atravessa a hora de
-        // almoço mas não cabe inteira, simplesmente avisamos.
+        // almoço mas não cabe inteira (ou há evento a colidir), avisamos.
         workMorning = [startSec, encStartSec]
-        if (startSec < lunchA && endSec > lunchA) skipped.push('Almoço (janela demasiado curta)')
+        if (startSec < lunchA && endSec > lunchA) skipped.push('Almoço (não cabe ou há evento a sobrepor)')
+      }
+
+      // 4) Subtrai os eventos fixos das peças de trabalho para evitar sobreposição.
+      const subtractFixed = (range: [number, number]): [number, number][] => {
+        let pieces: [number, number][] = [range]
+        for (const f of fixedFromCalendar) {
+          const fA = toSeconds(f.inicio), fB = toSeconds(f.fim)
+          const next: [number, number][] = []
+          for (const [a, b] of pieces) {
+            if (fB <= a || fA >= b) { next.push([a, b]); continue }
+            if (fA > a) next.push([a, Math.min(b, fA)])
+            if (fB < b) next.push([Math.max(a, fB), b])
+          }
+          pieces = next.filter(([a, b]) => b - a > 0)
+        }
+        return pieces
       }
 
       const workSegs: { range: [number, number]; isManha: boolean }[] = []
-      if (workMorning && workMorning[1] > workMorning[0]) workSegs.push({ range: workMorning, isManha: true })
-      if (workAfternoon && workAfternoon[1] > workAfternoon[0]) workSegs.push({ range: workAfternoon, isManha: false })
+      if (workMorning && workMorning[1] > workMorning[0]) {
+        for (const p of subtractFixed(workMorning)) workSegs.push({ range: p, isManha: true })
+      }
+      if (workAfternoon && workAfternoon[1] > workAfternoon[0]) {
+        for (const p of subtractFixed(workAfternoon)) workSegs.push({ range: p, isManha: false })
+      }
 
       // 3) Pausa em cada segmento ≥ 2h (15 min manhã / 20 min tarde, posicionada a meio)
       const segments: { range: [number, number]; isManha: boolean; pausa?: [number, number] }[] = []
@@ -710,12 +847,17 @@ export default function TimeBlocks({
         }
       }
 
-      // 6) Junta tudo: trabalho + pausas + almoço + encerramento, ordenado por hora
+      // 6) Junta tudo: trabalho + pausas + almoço + eventos do calendário + encerramento
       toCreate = [...finalSlots]
       for (const s of segments) {
         if (s.pausa) toCreate.push(PAUSA(s.pausa[0], s.pausa[1], s.isManha))
       }
       if (lunchFits) toCreate.push(ALMOCO(lunchA, lunchB))
+      // Eventos fixos vindos do calendário (pré-weddings + reuniões; casamento já foi tratado acima)
+      for (const f of fixedFromCalendar) {
+        if (f.key === 'casamento') continue   // não há casamento neste caminho
+        toCreate.push(f)
+      }
       toCreate.push(CLIENTES(encStartSec, endSec))
       toCreate.sort((a, b) => a.inicio.localeCompare(b.inicio))
 
