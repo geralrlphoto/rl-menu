@@ -89,6 +89,68 @@ function startsOn(dateStr: string | null | undefined, year: number, month: numbe
   )
 }
 
+// ─── Botão + popover para sincronizar com Google Calendar via feed ICS ──────
+function GoogleSyncButton() {
+  const [open, setOpen]     = useState(false)
+  const [copied, setCopied] = useState(false)
+  // URL absoluta do feed — Google Calendar precisa de URL pública
+  const icsUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/api/calendar/ics`
+    : '/api/calendar/ics'
+  // Google Calendar — link direto que abre o ecrã de "adicionar agenda por URL"
+  const googleAddUrl = `https://calendar.google.com/calendar/u/0/r/settings/addbyurl?cid=${encodeURIComponent(icsUrl.replace(/^https?:\/\//, 'webcal://'))}`
+
+  async function copyToClipboard() {
+    try { await navigator.clipboard.writeText(icsUrl); setCopied(true); setTimeout(() => setCopied(false), 2000) } catch {/* */}
+  }
+
+  return (
+    <div className="relative">
+      <button onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[#C9A84C]/40 bg-[#C9A84C]/10 text-[#C9A84C] hover:bg-[#C9A84C]/20 hover:border-[#C9A84C]/60 transition-all text-xs tracking-widest uppercase font-semibold">
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <rect x="3" y="4" width="18" height="18" rx="2"/><path strokeLinecap="round" strokeLinejoin="round" d="M16 2v4M8 2v4M3 10h18"/>
+        </svg>
+        Sincronizar Google
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 mt-2 w-[min(95vw,420px)] z-50 rounded-xl border border-white/15 bg-[#0d0d0e] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.8)] p-5">
+            <p className="text-[10px] tracking-[0.35em] text-[#C9A84C]/80 uppercase font-bold mb-3">Sincronizar com Google Calendar</p>
+            <p className="text-[12px] text-white/55 leading-relaxed mb-4">
+              O Google atualiza o feed automaticamente (cerca de cada 4–12h). Inclui casamentos, batizados, pré-weddings, reuniões e tarefas.
+            </p>
+
+            {/* Botão direto */}
+            <a href={googleAddUrl} target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-md bg-[#C9A84C] text-black font-bold text-[11px] tracking-widest uppercase hover:bg-[#C9A84C]/85 transition-all mb-3">
+              ➕ Adicionar ao Google Calendar
+            </a>
+
+            {/* URL do feed (para copiar manualmente) */}
+            <p className="text-[10px] tracking-widest text-white/30 uppercase mb-1.5">Ou copia o link do feed:</p>
+            <div className="flex gap-2 mb-3">
+              <input readOnly value={icsUrl}
+                onClick={e => (e.target as HTMLInputElement).select()}
+                className="flex-1 bg-black/40 border border-white/15 rounded px-3 py-2 text-[11px] font-mono text-white/70 outline-none" />
+              <button onClick={copyToClipboard}
+                className="px-3 py-2 rounded border border-white/15 text-white/60 hover:text-white text-[10px] tracking-widest uppercase font-bold">
+                {copied ? '✓' : 'Copiar'}
+              </button>
+            </div>
+
+            <p className="text-[10px] text-white/30 leading-relaxed">
+              No Google Calendar → <strong className="text-white/55">⚙ Definições → Adicionar agenda → A partir de URL</strong> → cola o link.
+            </p>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 export default function CalendarClient({
   events,
   preWeddings,
@@ -452,11 +514,14 @@ export default function CalendarClient({
           ‹ VOLTAR AO MENU
         </Link>
 
-        {/* Título */}
-        <div className="mb-8">
-          <p className="text-xs tracking-[0.4em] text-white/25 uppercase mb-1">RL PHOTO.VIDEO</p>
-          <h1 className="text-2xl font-light tracking-widest text-[#C9A84C] uppercase">CALENDÁRIO</h1>
-          <div className="mt-3 h-px w-16 bg-[#C9A84C]/40" />
+        {/* Título + Botão Google Sync */}
+        <div className="mb-8 flex items-end justify-between gap-3 flex-wrap">
+          <div>
+            <p className="text-xs tracking-[0.4em] text-white/25 uppercase mb-1">RL PHOTO.VIDEO</p>
+            <h1 className="text-2xl font-light tracking-widest text-[#C9A84C] uppercase">CALENDÁRIO</h1>
+            <div className="mt-3 h-px w-16 bg-[#C9A84C]/40" />
+          </div>
+          <GoogleSyncButton />
         </div>
 
         {/* Month strip */}
