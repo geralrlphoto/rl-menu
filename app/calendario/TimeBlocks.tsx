@@ -158,19 +158,24 @@ export default function TimeBlocks({ events }: { events: CalEvent[] }) {
     if (!id) return null
     const ev = eventsById.get(id)
     if (!ev) return null
-    return ev.cliente || ev.referencia
+    const ref = ev.referencia
+    const cli = ev.cliente
+    if (ref && cli) return `${ref} · ${cli}`
+    return cli || ref || null
   }
 
-  // Events ordered by proximity to a reference date — drives the dropdown
+  // All events for the dropdown. Sorted by proximity to refDate for the ones
+  // that have a date; events without a date go to the end.
   function nearbyEvents(refDate: string | null) {
     const ref = refDate ? new Date(refDate + 'T00:00:00').getTime() : Date.now()
-    return [...events]
-      .filter(e => e.data_evento)
-      .sort((a, b) => {
-        const da = Math.abs(new Date(a.data_evento! + 'T00:00:00').getTime() - ref)
-        const db = Math.abs(new Date(b.data_evento! + 'T00:00:00').getTime() - ref)
-        return da - db
-      })
+    return [...events].sort((a, b) => {
+      if (!a.data_evento && !b.data_evento) return (a.referencia || '').localeCompare(b.referencia || '')
+      if (!a.data_evento) return 1
+      if (!b.data_evento) return -1
+      const da = Math.abs(new Date(a.data_evento + 'T00:00:00').getTime() - ref)
+      const db = Math.abs(new Date(b.data_evento + 'T00:00:00').getTime() - ref)
+      return da - db
+    })
   }
 
   // Add form
@@ -705,12 +710,20 @@ export default function TimeBlocks({ events }: { events: CalEvent[] }) {
                 borderColor: presetKey === 'editar' && !newEventoId ? '#F87171' : 'rgba(255,255,255,0.10)',
               }}>
               <option value="">— Nenhum —</option>
-              {nearbyEvents(day).map(ev => (
-                <option key={ev.id} value={ev.id}>
-                  {ev.data_evento ? ev.data_evento.slice(0, 10) + ' · ' : ''}{ev.cliente || ev.referencia}
-                </option>
-              ))}
+              {nearbyEvents(day).map(ev => {
+                const ref = ev.referencia || '—'
+                const cli = ev.cliente || ''
+                const dt  = ev.data_evento ? ev.data_evento.slice(0, 10) : 'sem data'
+                return (
+                  <option key={ev.id} value={ev.id}>
+                    {ref}{cli ? ` · ${cli}` : ''} · {dt}
+                  </option>
+                )
+              })}
             </select>
+            <span className="text-[10px] text-white/30 tracking-wider mt-0.5">
+              {events.length} eventos carregados
+            </span>
           </div>
 
           {/* Form actions */}

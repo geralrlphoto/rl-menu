@@ -54,7 +54,8 @@ export default function HistoricoTimeBlocks({
   function eventLabel(id: string): string {
     const ev = eventsById.get(id)
     if (!ev) return 'Casamento (sem dados)'
-    return ev.cliente || ev.referencia
+    if (ev.referencia && ev.cliente) return `${ev.referencia} · ${ev.cliente}`
+    return ev.cliente || ev.referencia || 'Casamento'
   }
   function eventDate(id: string): string | null {
     return eventsById.get(id)?.data_evento ?? null
