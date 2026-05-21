@@ -1041,11 +1041,12 @@ export default function TimeBlocks({
       if (wantRedes)      summary.push('Redes sociais 1h')
       if (wantPlataforma) summary.push('Plataforma 1h')
 
-      // 3) Insert sequentially to preserve order
-      const created: Block[] = []
-      let ordem = 1
+      // 3) Insert sequentially. Não substituímos `setBlocks` — recarregamos
+      // do servidor para que os blocos pré-existentes (PWs, reuniões,
+      // manuais) continuem visíveis na UI.
+      let ordem = (blocks.reduce((m, b) => Math.max(m, b.ordem), 0) ?? 0) + 1
       for (const item of toCreate) {
-        const res = await fetch('/api/time-blocks', {
+        await fetch('/api/time-blocks', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1058,11 +1059,14 @@ export default function TimeBlocks({
             ordem: ordem++,
           }),
         })
-        const d2 = await res.json()
-        if (d2.block) created.push(d2.block)
       }
 
-      setBlocks(created.sort((a, b) => hms(a.hora_inicio).localeCompare(hms(b.hora_inicio))))
+      // Recarrega do servidor — vê todos os blocos (existentes + novos)
+      const refreshed = await fetch(`/api/time-blocks?data=${day}`, { cache: 'no-store' })
+      const dRefresh = await refreshed.json()
+      setBlocks((dRefresh.blocks ?? []).sort((a: Block, b: Block) =>
+        hms(a.hora_inicio).localeCompare(hms(b.hora_inicio))
+      ))
       bumpHistorico()
 
       // ── Alerta final com o resumo do que foi gerado ────────────────────
