@@ -587,6 +587,16 @@ export default function TimeBlocks({
     }
   }
 
+  /** Atualizar: pensado para depois de apagar manualmente um bloco.
+   *  - Limpa o cache de sync (para forçar re-sincronização do calendário)
+   *  - Chama o motor do Auto-criar dia, que já preserva blocos existentes
+   *    e preenche apenas os espaços VAZIOS com Editar/Pausas/etc.
+   *  Sem confirmações. */
+  async function handleAtualizar() {
+    syncedDaysRef.current.delete(day)
+    await handleAutoCreateDay()
+  }
+
   /** Auto-build the day according to the rules:
    *  - Arranque 09:30 · Almoço 12:00–14:00 · Encerramento 18:00
    *  - Pausa de 15 min a meio da manhã + Pausa de 20 min a meio da tarde
@@ -1291,6 +1301,13 @@ export default function TimeBlocks({
                 className="text-xs px-3 py-1.5 rounded-lg transition-colors"
                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.65)' }}>
                 📊 Histórico
+              </button>
+              <button onClick={handleAtualizar}
+                disabled={saving}
+                title="Recarrega do servidor, sincroniza com o calendário e preenche os espaços vazios"
+                className="text-xs px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                style={{ background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.30)', color: '#86EFAC' }}>
+                {saving ? 'A atualizar…' : '🔄 Atualizar'}
               </button>
               <button onClick={handleAutoCreateDay}
                 disabled={saving}
