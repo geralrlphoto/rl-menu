@@ -16,7 +16,7 @@ export const maxDuration = 60
 
 const SITE_BASE   = process.env.NEXT_PUBLIC_SITE_URL || 'https://rl-menu-lake.vercel.app'
 const RESEND_KEY  = process.env.RESEND_API_KEY!
-const TO_EMAIL    = process.env.RELATORIO_EMAIL || 'ruimngpro@gmail.com'
+const TO_EMAIL    = process.env.RELATORIO_EMAIL || 'geral.rlphoto@gmail.com'
 
 function db() {
   return createClient(

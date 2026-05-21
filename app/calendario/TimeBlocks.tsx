@@ -162,6 +162,19 @@ export default function TimeBlocks({
   const [showLegend, setShowLegend] = useState(true)
   const [historicoOpen, setHistoricoOpen] = useState(false)
   const [resumoOpen, setResumoOpen]       = useState(false)
+  // Hora a que o utilizador começa o dia. Default 09:30. Lê/escreve localStorage
+  // para manter a preferência entre sessões.
+  const [startHour, setStartHour]   = useState<string>('09:30')
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const saved = window.localStorage.getItem('tb_start_hour')
+    if (saved && /^\d{2}:\d{2}$/.test(saved)) setStartHour(saved)
+  }, [])
+  function handleStartHourChange(v: string) {
+    if (!/^\d{2}:\d{2}$/.test(v)) return
+    setStartHour(v)
+    try { window.localStorage.setItem('tb_start_hour', v) } catch {}
+  }
   // Local copy of tarefas for optimistic toggle from inside the hero clock.
   const [tarefas, setTarefas]       = useState<TarefaEvent[]>(initialTarefas ?? [])
   useEffect(() => { setTarefas(initialTarefas ?? []) }, [initialTarefas])
@@ -509,7 +522,7 @@ export default function TimeBlocks({
 
       // 2) Build all blocks: work template + fixed lunch + fixed closure
       const work = chosen.slots
-      const toCreate: Slot[] = [
+      let toCreate: Slot[] = [
         // Manhã + tarde do template escolhido — só os blocos antes do almoço
         ...work.filter(s => s.inicio < '12:00:00'),
         // 12:00–14:00 Almoço + treino (fixo)
@@ -519,6 +532,19 @@ export default function TimeBlocks({
         // 18:00–18:30 Clientes — encerramento (fixo)
         { key: 'clientes', title: 'Clientes — encerramento', cor: presetClientes.cor, inicio: '18:00:00', fim: '18:30:00' },
       ]
+
+      // 2b) Aplica deslocamento se o utilizador definiu uma hora de arranque
+      // diferente das 09:30 (default dos templates).
+      const baseStartSec   = toSeconds('09:30:00')
+      const userStartSec   = toSeconds(hms(startHour))
+      const offsetSec      = userStartSec - baseStartSec
+      if (offsetSec !== 0) {
+        toCreate = toCreate.map(s => ({
+          ...s,
+          inicio: addSeconds(s.inicio, offsetSec),
+          fim:    addSeconds(s.fim, offsetSec),
+        }))
+      }
 
       // 3) Insert sequentially to preserve order
       const created: Block[] = []
@@ -722,6 +748,15 @@ export default function TimeBlocks({
             <input type="date" value={day} onChange={e => setDay(e.target.value)}
               className="ml-2 bg-black/30 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white/70 focus:outline-none focus:border-[#C9A84C]/40" />
           </div>
+
+          {/* Hora de arranque do dia — usada pelo Auto-criar dia */}
+          <label className="flex items-center gap-2 ml-1">
+            <span className="text-[9px] tracking-[0.3em] uppercase text-white/30 whitespace-nowrap">Iniciar às</span>
+            <input type="time" value={startHour}
+              onChange={e => handleStartHourChange(e.target.value)}
+              title="Hora a que começas o dia (usada no Auto-criar dia)"
+              className="bg-black/30 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-[#C9A84C]/40" />
+          </label>
         </div>
 
         <div className="flex items-center gap-3">
