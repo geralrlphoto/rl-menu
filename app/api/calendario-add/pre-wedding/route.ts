@@ -61,3 +61,30 @@ export async function POST(req: Request) {
   if (updErr) return NextResponse.json({ error: updErr.message }, { status: 500 })
   return NextResponse.json({ ok: true, slot: newSlot })
 }
+
+// DELETE /api/calendario-add/pre-wedding?referencia=CAS_xxx
+// Limpa o slot reservado no portal E remove o time_block correspondente.
+export async function DELETE(req: Request) {
+  const { searchParams } = new URL(req.url)
+  const referencia = searchParams.get('referencia')
+  if (!referencia) return NextResponse.json({ error: 'referencia obrigatória' }, { status: 400 })
+
+  const supabase = db()
+
+  // 1. Limpa preWeddingReservedSlotId no portal (mantém slots para histórico)
+  const { data: row } = await supabase
+    .from('portais')
+    .select('settings')
+    .eq('referencia', referencia)
+    .maybeSingle()
+  if (row) {
+    const settings = row.settings ?? {}
+    const newSettings = { ...settings, preWeddingReservedSlotId: null }
+    await supabase.from('portais').update({ settings: newSettings }).eq('referencia', referencia)
+  }
+
+  // 2. Remove o(s) time_block(s) com evento_id = pw_<referencia>
+  await supabase.from('time_blocks').delete().eq('evento_id', `pw_${referencia}`)
+
+  return NextResponse.json({ ok: true })
+}

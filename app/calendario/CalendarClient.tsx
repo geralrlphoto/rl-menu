@@ -240,6 +240,38 @@ export default function CalendarClient({
     }
   }
 
+  async function handleDeletePreWedding(referencia: string, data: string | null) {
+    if (!referencia) return
+    if (!confirm('Eliminar este pré-wedding?\n\nO bloco correspondente nos Time Blocks também é apagado.')) return
+    const res = await fetch(`/api/calendario-add/pre-wedding?referencia=${encodeURIComponent(referencia)}`, {
+      method: 'DELETE',
+    })
+    if (res.ok) {
+      setSelected(null)
+      if (data) window.dispatchEvent(new CustomEvent('timeblocks-set-day', { detail: { day: data, resync: true } }))
+      startTransition(() => router.refresh())
+    } else {
+      const d = await res.json().catch(() => ({}))
+      alert(d.error ?? 'Erro ao eliminar')
+    }
+  }
+
+  async function handleDeleteReuniao(crmId: string, data: string | null) {
+    if (!crmId) return
+    if (!confirm('Eliminar esta reunião?\n\nO bloco correspondente nos Time Blocks também é apagado.')) return
+    const res = await fetch(`/api/calendario-add/reuniao?crm_id=${encodeURIComponent(crmId)}`, {
+      method: 'DELETE',
+    })
+    if (res.ok) {
+      setSelected(null)
+      if (data) window.dispatchEvent(new CustomEvent('timeblocks-set-day', { detail: { day: data, resync: true } }))
+      startTransition(() => router.refresh())
+    } else {
+      const d = await res.json().catch(() => ({}))
+      alert(d.error ?? 'Erro ao eliminar')
+    }
+  }
+
   async function handleSavePreWedding() {
     if (!pwReferencia || !pwDate) return
     setPwSaving(true)
@@ -732,14 +764,19 @@ export default function CalendarClient({
                   {selected.data.hora && <Row label="Hora">{selected.data.hora}</Row>}
                   {selected.data.local && <Row label="Local">{selected.data.local}</Row>}
                 </div>
-                <ModalActions>
+                <div className="flex gap-3">
                   <Link href="/pre-wedding"
                     className="flex-1 text-center py-2.5 rounded-xl text-sm tracking-wider transition-colors"
                     style={{ background: 'rgba(79,195,195,0.10)', border: '1px solid rgba(79,195,195,0.30)', color: '#4FC3C3' }}>
                     Ver Pré-Wedding
                   </Link>
+                  <button onClick={() => handleDeletePreWedding(selected.data.referencia, selected.data.data_evento)}
+                    className="px-4 py-2.5 rounded-xl text-sm tracking-wider transition-colors"
+                    style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.30)', color: '#F87171' }}>
+                    Eliminar
+                  </button>
                   <CloseBtn onClose={() => setSelected(null)} />
-                </ModalActions>
+                </div>
               </>
             )}
 
@@ -764,14 +801,19 @@ export default function CalendarClient({
                       </Row>
                     )}
                   </div>
-                  <ModalActions>
+                  <div className="flex gap-3">
                     <Link href={`/crm/${r.id}`}
                       className="flex-1 text-center py-2.5 rounded-xl text-sm tracking-wider transition-colors"
                       style={{ background: 'rgba(192,132,252,0.10)', border: '1px solid rgba(192,132,252,0.30)', color: '#C084FC' }}>
                       Ver Ficha CRM
                     </Link>
+                    <button onClick={() => handleDeleteReuniao(r.id, r.reuniao_data)}
+                      className="px-4 py-2.5 rounded-xl text-sm tracking-wider transition-colors"
+                      style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.30)', color: '#F87171' }}>
+                      Eliminar
+                    </button>
                     <CloseBtn onClose={() => setSelected(null)} />
-                  </ModalActions>
+                  </div>
                 </>
               )
             })()}

@@ -33,3 +33,31 @@ export async function POST(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }
+
+// DELETE /api/calendario-add/reuniao?crm_id=<id>
+// Limpa os campos de reunião do contacto CRM E remove o time_block correspondente.
+export async function DELETE(req: Request) {
+  const { searchParams } = new URL(req.url)
+  const crmId = searchParams.get('crm_id')
+  if (!crmId) return NextResponse.json({ error: 'crm_id obrigatório' }, { status: 400 })
+
+  const supabase = db()
+
+  // 1. Limpa os campos da reunião (mantém status para o user ajustar manualmente)
+  const { error } = await supabase
+    .from('crm_contacts')
+    .update({
+      reuniao_data: null,
+      reuniao_hora: null,
+      reuniao_tipo: null,
+      reuniao_link: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', crmId)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // 2. Remove o(s) time_block(s) com evento_id = <crm_id>
+  await supabase.from('time_blocks').delete().eq('evento_id', crmId)
+
+  return NextResponse.json({ ok: true })
+}
