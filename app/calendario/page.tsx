@@ -9,19 +9,18 @@ import CalendarClient, {
 
 export const dynamic = 'force-dynamic'
 
-const NOTION_TOKEN = process.env.NOTION_TOKEN!
-const EVENTOS_DB   = '1ad220116d8a804b839ddc36f1e7ecf1'
-
-function getProp(props: any, key: string, type: string): any {
-  const p = props[key]
-  if (!p) return null
-  try {
-    if (type === 'title')        return p.title?.map((t: any) => t.plain_text).join('') ?? ''
-    if (type === 'text')         return p.rich_text?.map((t: any) => t.plain_text).join('') ?? ''
-    if (type === 'date')         return p.date?.start ?? null
-    if (type === 'multi_select') return p.multi_select?.map((s: any) => s.name) ?? []
-  } catch { return null }
-  return null
+// Best-effort multi-format parser for jsonb / text / text[] arrays returned by Supabase
+function parseArr(v: any): string[] {
+  if (Array.isArray(v)) return v.map(String)
+  if (typeof v === 'string') {
+    const s = v.trim()
+    if (!s) return []
+    if (s.startsWith('[')) {
+      try { const p = JSON.parse(s); return Array.isArray(p) ? p.map(String) : [] } catch { return [s] }
+    }
+    return s.split(',').map(x => x.trim()).filter(Boolean)
+  }
+  return []
 }
 
 export default async function CalendarioPage() {
@@ -30,48 +29,30 @@ export default async function CalendarioPage() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  // ── 1. Fetch wedding events from Notion ───────────────────────────────────
-  const allPages: any[] = []
-  let cursor: string | null = null
+  // ── 1. Wedding events — SUPABASE-ONLY (mesma fonte que /casamentos) ───────
+  //
+  // The table `eventos_2026` despite the name keeps events from multiple years
+  // (the /api/eventos-supabase endpoint just filters by year on top). We load
+  // ALL years here so the calendar dropdown shows everything chronologically.
+  //
+  // We keep `notion_id` as the CalEvent.id (with fallback to row.id when the
+  // notion_id is empty) so that tarefas.evento_id and time_blocks.evento_id
+  // values created before the switch keep matching.
+  const { data: eventosRaw } = await supabase
+    .from('eventos_2026')
+    .select('id, notion_id, referencia, cliente, data_evento, local, tipo_evento, fotografo, videografo')
+    .order('data_evento', { ascending: true })
 
-  do {
-    const body: any = {
-      page_size: 100,
-      sorts: [{ property: 'DATA DO EVENTO', direction: 'ascending' }],
-    }
-    if (cursor) body.start_cursor = cursor
-
-    const res = await fetch(`https://api.notion.com/v1/databases/${EVENTOS_DB}/query`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${NOTION_TOKEN}`,
-        'Notion-Version': '2022-06-28',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-      cache: 'no-store',
-    })
-    if (!res.ok) break
-    const data = await res.json()
-    allPages.push(...data.results)
-    cursor = data.has_more ? data.next_cursor : null
-  } while (cursor)
-
-  const events: CalEvent[] = allPages
-    .map((page: any) => {
-      const p = page.properties ?? {}
-      return {
-        id:          page.id,
-        referencia:  getProp(p, 'REFERÊNCIA DO EVENTO', 'title') ?? '',
-        cliente:     getProp(p, 'CLIENTE', 'text') ?? '',
-        data_evento: getProp(p, 'DATA DO EVENTO', 'date'),
-        local:       getProp(p, 'LOCAL', 'text'),
-        tipo_evento: getProp(p, 'TIPO DE EVENTO', 'multi_select') ?? [],
-        fotografo:   getProp(p, 'FOTOGRAFO', 'multi_select') ?? [],
-        videografo:  getProp(p, 'VÍDEOGRAFO ', 'multi_select') ?? [],
-      }
-    })
-    .filter(e => e.data_evento !== null)
+  const events: CalEvent[] = (eventosRaw ?? []).map((row: any) => ({
+    id:          row.notion_id || row.id,
+    referencia:  row.referencia ?? '',
+    cliente:     row.cliente ?? '',
+    data_evento: row.data_evento ?? null,
+    local:       row.local ?? null,
+    tipo_evento: parseArr(row.tipo_evento),
+    fotografo:   parseArr(row.fotografo),
+    videografo:  parseArr(row.videografo),
+  }))
 
   // ── 2. Pre-wedding reservations ───────────────────────────────────────────
   const { data: portais } = await supabase
