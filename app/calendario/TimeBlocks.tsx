@@ -396,12 +396,12 @@ export default function TimeBlocks({
   }
 
   /** Auto-build the day according to the rules:
-   *  - 09:30–12:00 → Editar trabalhos (priority, single block) — arranque do dia
-   *  - 12:00–14:00 → Almoço + treino
-   *  - 14:00–18:00 → Editar (2h) + Redes sociais (1h) + Plataforma (1h)
-   *    The afternoon order rotates between 6 permutations based on dayOfYear
-   *    so different days have different layouts.
-   *  - 18:00–18:30 → Clientes (encerramento) */
+   *  - Arranque sempre às 09:30
+   *  - Encerramento sempre às 18:00 (Clientes 18:00–18:30)
+   *  - Almoço + treino fixo 12:00–14:00
+   *  - Editar trabalhos é prioridade (sempre 4h30 / dia, total)
+   *  - Redes sociais e Plataforma têm 1h cada / dia
+   *  - 6 templates rotativos pelo dia-do-ano para nunca ficar igual */
   async function handleAutoCreateDay() {
     const presetEditar     = PRESETS.find(p => p.key === 'editar')!
     const presetRedes      = PRESETS.find(p => p.key === 'redes')!
@@ -409,34 +409,62 @@ export default function TimeBlocks({
     const presetAlmoco     = PRESETS.find(p => p.key === 'almoco')!
     const presetClientes   = PRESETS.find(p => p.key === 'clientes')!
 
-    // Afternoon permutations
-    const variants: Array<Array<{ key: string; title: string; cor: string; durSec: number }>> = [
-      [ { key: 'editar',     title: 'Editar trabalhos', cor: presetEditar.cor,     durSec: 2 * 3600 },
-        { key: 'redes',      title: 'Redes sociais',    cor: presetRedes.cor,      durSec: 1 * 3600 },
-        { key: 'plataforma', title: 'Plataforma',       cor: presetPlataforma.cor, durSec: 1 * 3600 } ],
-      [ { key: 'editar',     title: 'Editar trabalhos', cor: presetEditar.cor,     durSec: 2 * 3600 },
-        { key: 'plataforma', title: 'Plataforma',       cor: presetPlataforma.cor, durSec: 1 * 3600 },
-        { key: 'redes',      title: 'Redes sociais',    cor: presetRedes.cor,      durSec: 1 * 3600 } ],
-      [ { key: 'redes',      title: 'Redes sociais',    cor: presetRedes.cor,      durSec: 1 * 3600 },
-        { key: 'editar',     title: 'Editar trabalhos', cor: presetEditar.cor,     durSec: 2 * 3600 },
-        { key: 'plataforma', title: 'Plataforma',       cor: presetPlataforma.cor, durSec: 1 * 3600 } ],
-      [ { key: 'redes',      title: 'Redes sociais',    cor: presetRedes.cor,      durSec: 1 * 3600 },
-        { key: 'plataforma', title: 'Plataforma',       cor: presetPlataforma.cor, durSec: 1 * 3600 },
-        { key: 'editar',     title: 'Editar trabalhos', cor: presetEditar.cor,     durSec: 2 * 3600 } ],
-      [ { key: 'plataforma', title: 'Plataforma',       cor: presetPlataforma.cor, durSec: 1 * 3600 },
-        { key: 'editar',     title: 'Editar trabalhos', cor: presetEditar.cor,     durSec: 2 * 3600 },
-        { key: 'redes',      title: 'Redes sociais',    cor: presetRedes.cor,      durSec: 1 * 3600 } ],
-      [ { key: 'plataforma', title: 'Plataforma',       cor: presetPlataforma.cor, durSec: 1 * 3600 },
-        { key: 'redes',      title: 'Redes sociais',    cor: presetRedes.cor,      durSec: 1 * 3600 },
-        { key: 'editar',     title: 'Editar trabalhos', cor: presetEditar.cor,     durSec: 2 * 3600 } ],
+    type Slot = { key: string; title: string; cor: string; inicio: string; fim: string }
+
+    // Helper aliases for the work segments — keep colors and titles consistent
+    const EDITAR     = (inicio: string, fim: string): Slot => ({ key: 'editar',     title: 'Editar trabalhos (prioridade)', cor: presetEditar.cor,     inicio, fim })
+    const REDES      = (inicio: string, fim: string): Slot => ({ key: 'redes',      title: 'Redes sociais',                  cor: presetRedes.cor,      inicio, fim })
+    const PLATAFORMA = (inicio: string, fim: string): Slot => ({ key: 'plataforma', title: 'Plataforma',                      cor: presetPlataforma.cor, inicio, fim })
+
+    /**
+     * 6 templates completos: a manhã (09:30–12:00, 2h30) e a tarde (14:00–18:00, 4h)
+     * combinam de forma diferente para que cada dia tenha uma disposição única.
+     * Distribuição mantida em todas: Editar 4h30, Redes 1h, Plataforma 1h.
+     */
+    const templates: Slot[][] = [
+      // T0 — Clássico: Editar manhã inteira | tarde Editar+Redes+Plataforma
+      [ EDITAR('09:30:00', '12:00:00'),
+        EDITAR('14:00:00', '16:00:00'),
+        REDES ('16:00:00', '17:00:00'),
+        PLATAFORMA('17:00:00', '18:00:00') ],
+
+      // T1 — Plataforma manhã | tarde Editar+Redes
+      [ EDITAR('09:30:00', '11:00:00'),
+        PLATAFORMA('11:00:00', '12:00:00'),
+        EDITAR('14:00:00', '17:00:00'),
+        REDES ('17:00:00', '18:00:00') ],
+
+      // T2 — Redes manhã | tarde Editar+Plataforma
+      [ EDITAR('09:30:00', '11:00:00'),
+        REDES ('11:00:00', '12:00:00'),
+        EDITAR('14:00:00', '17:00:00'),
+        PLATAFORMA('17:00:00', '18:00:00') ],
+
+      // T3 — Plataforma cedo na manhã | tarde Redes+Editar
+      [ PLATAFORMA('09:30:00', '10:30:00'),
+        EDITAR('10:30:00', '12:00:00'),
+        REDES ('14:00:00', '15:00:00'),
+        EDITAR('15:00:00', '18:00:00') ],
+
+      // T4 — Redes cedo na manhã | tarde Plataforma+Editar
+      [ REDES ('09:30:00', '10:30:00'),
+        EDITAR('10:30:00', '12:00:00'),
+        PLATAFORMA('14:00:00', '15:00:00'),
+        EDITAR('15:00:00', '18:00:00') ],
+
+      // T5 — Editar manhã | tarde fragmentada Plataforma+Editar+Redes
+      [ EDITAR('09:30:00', '12:00:00'),
+        PLATAFORMA('14:00:00', '15:00:00'),
+        EDITAR('15:00:00', '17:00:00'),
+        REDES ('17:00:00', '18:00:00') ],
     ]
 
-    // Day-of-year as variant index (deterministic, different across the week)
+    // Day-of-year as template index (deterministic, different across the week)
     const d = new Date(day + 'T00:00:00')
     const start = new Date(d.getFullYear(), 0, 0)
     const diff  = (d.getTime() - start.getTime()) + ((start.getTimezoneOffset() - d.getTimezoneOffset()) * 60 * 1000)
     const dayOfYear = Math.floor(diff / 86400000)
-    const variantIdx = ((dayOfYear % variants.length) + variants.length) % variants.length
+    const tplIdx = ((dayOfYear % templates.length) + templates.length) % templates.length
 
     // If day already has blocks → confirm replacement
     if (blocks.length > 0) {
@@ -449,34 +477,18 @@ export default function TimeBlocks({
       // 1) Delete existing
       await Promise.all(blocks.map(b => fetch(`/api/time-blocks/${b.id}`, { method: 'DELETE' })))
 
-      // 2) Build all blocks
-      const toCreate: Array<{ key: string; title: string; cor: string; inicio: string; fim: string }> = []
-
-      // 09:30–12:00 — Editar trabalhos (prioridade) — arranque do dia
-      toCreate.push({
-        key: 'editar', title: 'Editar trabalhos (prioridade)',
-        cor: presetEditar.cor, inicio: '09:30:00', fim: '12:00:00',
-      })
-
-      // 12:00–14:00 — Almoço + treino
-      toCreate.push({
-        key: 'almoco', title: 'Almoço + treino',
-        cor: presetAlmoco.cor, inicio: '12:00:00', fim: '14:00:00',
-      })
-
-      // 14:00–18:00 — Editar (2h) + Redes (1h) + Plataforma (1h) na variação do dia
-      let cursor = '14:00:00'
-      for (const piece of variants[variantIdx]) {
-        const fim = addSeconds(cursor, piece.durSec)
-        toCreate.push({ key: piece.key, title: piece.title, cor: piece.cor, inicio: cursor, fim })
-        cursor = fim
-      }
-
-      // 18:00–18:30 — Clientes (encerramento)
-      toCreate.push({
-        key: 'clientes', title: 'Clientes — encerramento',
-        cor: presetClientes.cor, inicio: '18:00:00', fim: '18:30:00',
-      })
+      // 2) Build all blocks: work template + fixed lunch + fixed closure
+      const work = templates[tplIdx]
+      const toCreate: Slot[] = [
+        // Manhã + tarde do template escolhido — só os blocos antes do almoço
+        ...work.filter(s => s.inicio < '12:00:00'),
+        // 12:00–14:00 Almoço + treino (fixo)
+        { key: 'almoco', title: 'Almoço + treino', cor: presetAlmoco.cor, inicio: '12:00:00', fim: '14:00:00' },
+        // Tarde do template (>= 14:00)
+        ...work.filter(s => s.inicio >= '14:00:00'),
+        // 18:00–18:30 Clientes — encerramento (fixo)
+        { key: 'clientes', title: 'Clientes — encerramento', cor: presetClientes.cor, inicio: '18:00:00', fim: '18:30:00' },
+      ]
 
       // 3) Insert sequentially to preserve order
       const created: Block[] = []
