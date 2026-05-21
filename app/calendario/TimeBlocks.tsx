@@ -369,6 +369,24 @@ export default function TimeBlocks({
     if (oldDur > 0) setNewFim(addSeconds(v, oldDur))
   }
 
+  /** Open the "+ Adicionar Bloco" form, pre-filling the Início with a smart
+   *  default:
+   *  - If there are already blocks today → use the end of the LAST block so
+   *    the user chains new blocks after the previous ones.
+   *  - Otherwise → use the user's preferred start hour (configurable in the
+   *    header, default 09:30).
+   *  Fim defaults to Início + the current preset's default duration. */
+  function openAddBlockForm() {
+    const sortedEnds = blocks
+      .map(b => hms(b.hora_fim))
+      .sort((a, b) => b.localeCompare(a))   // descending
+    const defaultInicio = sortedEnds.length > 0 ? sortedEnds[0] : hms(startHour)
+    const defaultFim    = addSeconds(defaultInicio, preset.defaultDur * 60)
+    setNewInicio(defaultInicio)
+    setNewFim(defaultFim)
+    setAdding(true)
+  }
+
   useEffect(() => { load() /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [day])
 
   useEffect(() => {
@@ -784,7 +802,7 @@ export default function TimeBlocks({
                 style={{ background: 'rgba(139,92,246,0.10)', border: '1px solid rgba(139,92,246,0.30)', color: '#A78BFA' }}>
                 {saving ? 'A gerar…' : '✨ Auto-criar dia'}
               </button>
-              <button onClick={() => setAdding(true)}
+              <button onClick={openAddBlockForm}
                 className="text-xs px-3 py-1.5 rounded-lg transition-colors"
                 style={{ background: 'rgba(201,168,76,0.10)', border: '1px solid rgba(201,168,76,0.30)', color: '#C9A84C' }}>
                 + Adicionar Bloco
