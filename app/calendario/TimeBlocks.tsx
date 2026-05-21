@@ -644,14 +644,20 @@ export default function TimeBlocks({
       for (const p of segPieces) effectiveWorkSec += p.b - p.a
 
       // 4) Orçamento: quanto cada categoria recebe
-      // Regra: precisamos de bloco de 60 min contíguo para Redes ou Plataforma.
-      // Verificamos se existe pelo menos 1 piece >= 60 min e ainda assim
-      // resta tempo para Editar.
-      const sortedPieces = [...segPieces].sort((a, b) => (b.b - b.a) - (a.a - a.b))
-      const longestPiece = sortedPieces.length > 0 ? Math.max(...sortedPieces.map(p => p.b - p.a)) : 0
+      // Regras de tamanho mínimo:
+      //   - Editar trabalhos: mínimo 45 min por bloco (peças menores são saltadas
+      //     ou absorvidas pelo bloco anterior)
+      //   - Redes/Plataforma: bloco fixo de 60 min — só cabem em peças ≥ 1h45m
+      //     (60 min do próprio bloco + 45 min mínimo de Editar a seguir)
+      const MIN_EDITAR_SEC = 45 * 60
+      const RED_PLAT_SEC   = 60 * 60
+      const MIN_PIECE_FOR_RED_PLAT = RED_PLAT_SEC + MIN_EDITAR_SEC  // 1h45m
 
-      const wantRedes      = effectiveWorkSec >= 3 * 3600 && longestPiece >= 60 * 60
-      const wantPlataforma = effectiveWorkSec >= 4 * 3600 && segPieces.filter(p => (p.b - p.a) >= 60 * 60).length >= 2
+      const longestPiece = segPieces.length > 0 ? Math.max(...segPieces.map(p => p.b - p.a)) : 0
+      const piecesBigEnough = segPieces.filter(p => (p.b - p.a) >= MIN_PIECE_FOR_RED_PLAT).length
+
+      const wantRedes      = effectiveWorkSec >= 3 * 3600 && longestPiece >= MIN_PIECE_FOR_RED_PLAT
+      const wantPlataforma = effectiveWorkSec >= 4 * 3600 && piecesBigEnough >= 2
 
       if (!wantRedes)      skipped.push('Redes sociais (sem tempo suficiente)')
       if (!wantPlataforma) skipped.push('Plataforma (sem tempo suficiente)')
@@ -683,18 +689,24 @@ export default function TimeBlocks({
         let cursor = piece.a
         const end = piece.b
 
-        // Tenta colocar Redes/Plataforma se ainda há choice na fila e o
-        // piece tem espaço para ela.
-        while (choicesQueue.length > 0 && end - cursor >= 60 * 60) {
+        // Coloca Redes/Plataforma APENAS se sobrar ≥ 45 min para Editar depois.
+        // Isto garante que nunca aparece um Editar de 5/10/20 min.
+        while (choicesQueue.length > 0 && end - cursor >= RED_PLAT_SEC + MIN_EDITAR_SEC) {
           const what = choicesQueue.shift()!
-          const slotEnd = cursor + 60 * 60
+          const slotEnd = cursor + RED_PLAT_SEC
           finalSlots.push(what === 'redes' ? REDE(cursor, slotEnd) : PLAT(cursor, slotEnd))
           cursor = slotEnd
         }
 
-        // O resto do piece vai para Editar (se sobrar ≥ 5 min)
-        if (end - cursor >= 5 * 60) {
+        // Resto do piece vai para Editar — mínimo 45 min, caso contrário
+        // absorve o tempo extra no bloco anterior (evita blocos minúsculos).
+        const remaining = end - cursor
+        if (remaining >= MIN_EDITAR_SEC) {
           finalSlots.push(EDIT(cursor, end))
+        } else if (remaining > 0 && finalSlots.length > 0) {
+          // < 45 min sobra: estende o bloco anterior para absorver
+          const last = finalSlots[finalSlots.length - 1]
+          finalSlots[finalSlots.length - 1] = { ...last, fim: sec2hms(end) }
         }
       }
 
