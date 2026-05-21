@@ -224,14 +224,19 @@ export default function TimeBlocks() {
   }
 
   /** Auto-build the day according to the rules:
+   *  - 09:00–09:30 → Clientes (arranque)
    *  - 09:30–12:00 → Editar trabalhos (priority, single block)
+   *  - 12:00–14:00 → Almoço + treino
    *  - 14:00–18:00 → Editar (2h) + Redes sociais (1h) + Plataforma (1h)
    *    The afternoon order rotates between 6 permutations based on dayOfYear
-   *    so different days have different layouts. */
+   *    so different days have different layouts.
+   *  - 18:00–18:30 → Clientes (encerramento) */
   async function handleAutoCreateDay() {
     const presetEditar     = PRESETS.find(p => p.key === 'editar')!
     const presetRedes      = PRESETS.find(p => p.key === 'redes')!
     const presetPlataforma = PRESETS.find(p => p.key === 'plataforma')!
+    const presetAlmoco     = PRESETS.find(p => p.key === 'almoco')!
+    const presetClientes   = PRESETS.find(p => p.key === 'clientes')!
 
     // Afternoon permutations
     const variants: Array<Array<{ key: string; title: string; cor: string; durSec: number }>> = [
@@ -276,19 +281,37 @@ export default function TimeBlocks() {
       // 2) Build all blocks
       const toCreate: Array<{ key: string; title: string; cor: string; inicio: string; fim: string }> = []
 
-      // Morning single block 09:30–12:00 (Editar trabalhos, prioridade)
+      // 09:00–09:30 — Clientes (arranque)
+      toCreate.push({
+        key: 'clientes', title: 'Clientes — arranque',
+        cor: presetClientes.cor, inicio: '09:00:00', fim: '09:30:00',
+      })
+
+      // 09:30–12:00 — Editar trabalhos (prioridade)
       toCreate.push({
         key: 'editar', title: 'Editar trabalhos (prioridade)',
         cor: presetEditar.cor, inicio: '09:30:00', fim: '12:00:00',
       })
 
-      // Afternoon — 14:00 onwards using selected variant
+      // 12:00–14:00 — Almoço + treino
+      toCreate.push({
+        key: 'almoco', title: 'Almoço + treino',
+        cor: presetAlmoco.cor, inicio: '12:00:00', fim: '14:00:00',
+      })
+
+      // 14:00–18:00 — Editar (2h) + Redes (1h) + Plataforma (1h) na variação do dia
       let cursor = '14:00:00'
       for (const piece of variants[variantIdx]) {
         const fim = addSeconds(cursor, piece.durSec)
         toCreate.push({ key: piece.key, title: piece.title, cor: piece.cor, inicio: cursor, fim })
         cursor = fim
       }
+
+      // 18:00–18:30 — Clientes (encerramento)
+      toCreate.push({
+        key: 'clientes', title: 'Clientes — encerramento',
+        cor: presetClientes.cor, inicio: '18:00:00', fim: '18:30:00',
+      })
 
       // 3) Insert sequentially to preserve order
       const created: Block[] = []
