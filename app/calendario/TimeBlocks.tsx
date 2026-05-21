@@ -546,54 +546,173 @@ export default function TimeBlocks({
       // 1) Delete existing
       await Promise.all(blocks.map(b => fetch(`/api/time-blocks/${b.id}`, { method: 'DELETE' })))
 
-      // 2) Build all blocks: work template + fixed lunch + fixed closure
-      const work = chosen.slots
-      let toCreate: Slot[] = [
-        // Manhã + tarde do template escolhido — só os blocos antes do almoço
-        ...work.filter(s => s.inicio < '12:00:00'),
-        // 12:00–14:00 Almoço + treino (fixo)
-        { key: 'almoco', title: 'Almoço + treino', cor: presetAlmoco.cor, inicio: '12:00:00', fim: '14:00:00' },
-        // Tarde do template (>= 14:00)
-        ...work.filter(s => s.inicio >= '14:00:00'),
-        // 18:00–18:30 Clientes — encerramento (fixo)
-        { key: 'clientes', title: 'Clientes — encerramento', cor: presetClientes.cor, inicio: '18:00:00', fim: '18:30:00' },
-      ]
+      let toCreate: Slot[] = []
 
-      // 2b) Aplica deslocamento de TODOS os slots em função da hora de arranque
-      // escolhida (default 09:30).
-      const baseStartSec   = toSeconds('09:30:00')
-      const userStartSec   = toSeconds(hms(startHour))
-      const offsetSec      = userStartSec - baseStartSec
-      if (offsetSec !== 0) {
-        toCreate = toCreate.map(s => ({
-          ...s,
-          inicio: addSeconds(s.inicio, offsetSec),
-          fim:    addSeconds(s.fim, offsetSec),
-        }))
+      // 2) Construção dinâmica baseada nas horas Iniciar / Terminar ────
+      //
+      // Se a janela (start → end) bate certo com o template fixo (9h),
+      // simplesmente desloca tudo. Caso contrário, descarta o template e
+      // constrói o melhor plano possível dentro da janela disponível:
+      //   1) Encerramento sempre nos últimos 30 min
+      //   2) Almoço 12:00–14:00 SE caber inteiro na janela
+      //   3) Trabalho repartido entre manhã e tarde (separado pelo almoço)
+      //   4) Prioriza Editar; só adiciona Redes/Plataforma se sobrar tempo
+      //   5) Insere ☕ pausas só em segmentos de trabalho ≥ 2h
+      //
+      // O alerta final indica o que foi incluído / saltado.
+      const startSec = toSeconds(hms(startHour))
+      const endSec   = toSeconds(hms(endHour))
+      const windowSec = endSec - startSec
+      const summary: string[] = []
+      const skipped: string[] = []
+
+      if (windowSec < 60 * 60) {
+        alert('⚠️ Janela demasiado curta (menos de 1h). Aumenta a hora de fim.')
+        setSaving(false); return
       }
 
-      // 2c) Reposiciona o ENCERRAMENTO (Clientes 30min) para terminar na hora
-      // definida pelo utilizador (default 18:30). Mantém duração 30min.
-      const userEndSec = toSeconds(hms(endHour))
-      toCreate = toCreate.map(s => {
-        if (s.key !== 'clientes') return s
-        const inicio = addSeconds(hms(endHour), -30 * 60)
-        return { ...s, inicio, fim: hms(endHour) }
+      // Helpers locais
+      const sec2hms = (s: number): string => {
+        const wrapped = ((s % 86400) + 86400) % 86400
+        const h = Math.floor(wrapped / 3600)
+        const m = Math.floor((wrapped % 3600) / 60)
+        const ss = wrapped % 60
+        return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`
+      }
+      const EDIT = (a: number, b: number): Slot => ({ key: 'editar',     title: 'Editar trabalhos (prioridade)', cor: presetEditar.cor,     inicio: sec2hms(a), fim: sec2hms(b) })
+      const REDE = (a: number, b: number): Slot => ({ key: 'redes',      title: 'Redes sociais',                  cor: presetRedes.cor,      inicio: sec2hms(a), fim: sec2hms(b) })
+      const PLAT = (a: number, b: number): Slot => ({ key: 'plataforma', title: 'Plataforma',                      cor: presetPlataforma.cor, inicio: sec2hms(a), fim: sec2hms(b) })
+      const PAUSA = (a: number, b: number, isManha: boolean): Slot => ({
+        key: 'pausa', title: isManha ? '☕ Pausa (15 min)' : '☕ Pausa (20 min)',
+        cor: presetPausa.cor, inicio: sec2hms(a), fim: sec2hms(b),
       })
+      const ALMOCO = (a: number, b: number): Slot => ({ key: 'almoco', title: 'Almoço + treino', cor: presetAlmoco.cor, inicio: sec2hms(a), fim: sec2hms(b) })
+      const CLIENTES = (a: number, b: number): Slot => ({ key: 'clientes', title: 'Clientes — encerramento', cor: presetClientes.cor, inicio: sec2hms(a), fim: sec2hms(b) })
 
-      // 2d) Detecta sobreposição: se o último bloco de trabalho cai depois do
-      // início do encerramento, avisa o utilizador antes de inserir.
-      const enc = toCreate.find(s => s.key === 'clientes')
-      const conflict = enc ? toCreate.find(s => s !== enc && s.fim > enc.inicio) : null
-      if (enc && conflict) {
-        const ok = confirm(
-          `⚠️ A hora de fim (${hms(endHour).slice(0,5)}) é cedo demais para encaixar ` +
-          `todos os blocos.\n\nO bloco "${conflict.title}" (${conflict.inicio.slice(0,5)}–${conflict.fim.slice(0,5)}) ` +
-          `sobrepõe-se ao encerramento (${enc.inicio.slice(0,5)}–${enc.fim.slice(0,5)}).\n\n` +
-          `Continuar mesmo assim? (Vão ser criados mas com conflitos visíveis.)`
-        )
-        if (!ok) { setSaving(false); return }
+      // 1) Encerramento — últimos 30 min da janela
+      const encSec = 30 * 60
+      const encStartSec = endSec - encSec
+      summary.push(`Encerramento ${hms(endHour).slice(0,5)} (30min)`)
+
+      // 2) Almoço — só se caber exatamente entre 12:00 e 14:00 dentro da janela
+      const lunchA = toSeconds('12:00:00')
+      const lunchB = toSeconds('14:00:00')
+      const lunchFits = startSec <= lunchA && encStartSec >= lunchB
+      let workMorning: [number, number] | null = null
+      let workAfternoon: [number, number] | null = null
+      if (lunchFits) {
+        workMorning   = [startSec, lunchA]
+        workAfternoon = [lunchB, encStartSec]
+        summary.push('Almoço + treino 12:00–14:00')
+      } else {
+        // Sem almoço: bloco único de trabalho. Se a janela atravessa a hora de
+        // almoço mas não cabe inteira, simplesmente avisamos.
+        workMorning = [startSec, encStartSec]
+        if (startSec < lunchA && endSec > lunchA) skipped.push('Almoço (janela demasiado curta)')
       }
+
+      const workSegs: { range: [number, number]; isManha: boolean }[] = []
+      if (workMorning && workMorning[1] > workMorning[0]) workSegs.push({ range: workMorning, isManha: true })
+      if (workAfternoon && workAfternoon[1] > workAfternoon[0]) workSegs.push({ range: workAfternoon, isManha: false })
+
+      // 3) Pausa em cada segmento ≥ 2h (15 min manhã / 20 min tarde, posicionada a meio)
+      const segments: { range: [number, number]; isManha: boolean; pausa?: [number, number] }[] = []
+      for (const w of workSegs) {
+        const dur = w.range[1] - w.range[0]
+        if (dur >= 120 * 60) {
+          const pDur = w.isManha ? 15 * 60 : 20 * 60
+          // Posiciona a pausa de modo a que a 1ª metade ≈ 60-90 min
+          const half = Math.floor((dur - pDur) / 2)
+          const pStart = w.range[0] + half
+          segments.push({ range: w.range, isManha: w.isManha, pausa: [pStart, pStart + pDur] })
+        } else {
+          segments.push({ range: w.range, isManha: w.isManha })
+        }
+      }
+
+      // Tempo de trabalho efetivo (excluindo pausas)
+      let effectiveWorkSec = 0
+      const segPieces: { a: number; b: number; isManha: boolean }[] = []
+      for (const s of segments) {
+        if (s.pausa) {
+          segPieces.push({ a: s.range[0], b: s.pausa[0], isManha: s.isManha })
+          segPieces.push({ a: s.pausa[1], b: s.range[1], isManha: s.isManha })
+        } else {
+          segPieces.push({ a: s.range[0], b: s.range[1], isManha: s.isManha })
+        }
+      }
+      for (const p of segPieces) effectiveWorkSec += p.b - p.a
+
+      // 4) Orçamento: quanto cada categoria recebe
+      // Regra: precisamos de bloco de 60 min contíguo para Redes ou Plataforma.
+      // Verificamos se existe pelo menos 1 piece >= 60 min e ainda assim
+      // resta tempo para Editar.
+      const sortedPieces = [...segPieces].sort((a, b) => (b.b - b.a) - (a.a - a.b))
+      const longestPiece = sortedPieces.length > 0 ? Math.max(...sortedPieces.map(p => p.b - p.a)) : 0
+
+      const wantRedes      = effectiveWorkSec >= 3 * 3600 && longestPiece >= 60 * 60
+      const wantPlataforma = effectiveWorkSec >= 4 * 3600 && segPieces.filter(p => (p.b - p.a) >= 60 * 60).length >= 2
+
+      if (!wantRedes)      skipped.push('Redes sociais (sem tempo suficiente)')
+      if (!wantPlataforma) skipped.push('Plataforma (sem tempo suficiente)')
+
+      // 5) Distribuição: usar a variação do dia-do-ano para alternar onde
+      //    Redes e Plataforma caem (manhã/tarde, início/fim)
+      const buckets: { 1: ('redes' | 'plataforma')[]; 2: ('redes' | 'plataforma')[] } = {
+        // bucket 1 = manhã primeiro segmento que tem ≥60min; bucket 2 = qualquer outro
+        1: [], 2: [],
+      }
+      // Decide a colocação com base em tplIdx (0-5 normal, 6 FORTE não chega aqui se houver budget)
+      // Mas como podemos saltar Redes/Plataforma, aceitamos qualquer combinação.
+      const choices: ('redes' | 'plataforma')[] = []
+      if (wantRedes)      choices.push('redes')
+      if (wantPlataforma) choices.push('plataforma')
+      // Alterna entre manhã/tarde com base em tplIdx
+      const placeMorningFirst = tplIdx % 2 === 0
+      if (chosen.forte) { /* dia forte: força tudo Editar — limpamos choices */
+        choices.length = 0
+        summary.push('🔥 Dia forte em Edição (sem Redes nem Plataforma)')
+      }
+
+      // Constrói a sequência final percorrendo cada piece e enchendo
+      // com choices (1h cada) primeiro, depois Editar até preencher.
+      const finalSlots: Slot[] = []
+      const choicesQueue = placeMorningFirst ? [...choices] : [...choices].reverse()
+
+      for (const piece of segPieces) {
+        let cursor = piece.a
+        const end = piece.b
+
+        // Tenta colocar Redes/Plataforma se ainda há choice na fila e o
+        // piece tem espaço para ela.
+        while (choicesQueue.length > 0 && end - cursor >= 60 * 60) {
+          const what = choicesQueue.shift()!
+          const slotEnd = cursor + 60 * 60
+          finalSlots.push(what === 'redes' ? REDE(cursor, slotEnd) : PLAT(cursor, slotEnd))
+          cursor = slotEnd
+        }
+
+        // O resto do piece vai para Editar (se sobrar ≥ 5 min)
+        if (end - cursor >= 5 * 60) {
+          finalSlots.push(EDIT(cursor, end))
+        }
+      }
+
+      // 6) Junta tudo: trabalho + pausas + almoço + encerramento, ordenado por hora
+      toCreate = [...finalSlots]
+      for (const s of segments) {
+        if (s.pausa) toCreate.push(PAUSA(s.pausa[0], s.pausa[1], s.isManha))
+      }
+      if (lunchFits) toCreate.push(ALMOCO(lunchA, lunchB))
+      toCreate.push(CLIENTES(encStartSec, endSec))
+      toCreate.sort((a, b) => a.inicio.localeCompare(b.inicio))
+
+      // Resumo para o alerta final
+      const editarTotal = toCreate.filter(s => s.key === 'editar').reduce((acc, s) => acc + (toSeconds(s.fim) - toSeconds(s.inicio)), 0)
+      const totalHm = (sec: number) => `${Math.floor(sec / 3600)}h${String(Math.floor((sec % 3600) / 60)).padStart(2, '0')}`
+      summary.unshift(`Editar trabalhos ${totalHm(editarTotal)}`)
+      if (wantRedes)      summary.push('Redes sociais 1h')
+      if (wantPlataforma) summary.push('Plataforma 1h')
 
       // 3) Insert sequentially to preserve order
       const created: Block[] = []
@@ -619,13 +738,22 @@ export default function TimeBlocks({
       setBlocks(created.sort((a, b) => hms(a.hora_inicio).localeCompare(hms(b.hora_inicio))))
       bumpHistorico()
 
-      // ── Alerta especial quando o dia rotativo calhou em "FORTE em Edição" ──
-      if (chosen.forte) {
-        alert(
-          '⚠️ Hoje calhou DIA FORTE em Edição (sem Redes nem Plataforma).\n\n' +
-          'Tens 5h55 dedicadas só a editar trabalhos.\n' +
-          'Lembra-te de fazer Redes e Plataforma noutro dia desta semana.'
-        )
+      // ── Alerta final com o resumo do que foi gerado ────────────────────
+      const lines: string[] = []
+      lines.push(`✅ Dia gerado para ${hms(startHour).slice(0,5)} → ${hms(endHour).slice(0,5)}.`)
+      lines.push('')
+      lines.push('Incluído:')
+      for (const s of summary) lines.push(`  • ${s}`)
+      if (skipped.length > 0) {
+        lines.push('')
+        lines.push('⚠️ Saltado (sem espaço):')
+        for (const s of skipped) lines.push(`  • ${s}`)
+        lines.push('')
+        lines.push('Lembra-te de fazer estes blocos noutro dia da semana.')
+      }
+      // Só mostra o alerta se houve algo saltado ou se foi um dia forte
+      if (skipped.length > 0 || chosen.forte) {
+        alert(lines.join('\n'))
       }
     } finally {
       setSaving(false)
