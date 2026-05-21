@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useEffect, useRef, useState } from 'react'
 import type { ChatMensagem } from '@/app/portal-media/_data/mockProject'
 
@@ -49,7 +49,7 @@ export default function ChatBox({ projetoRef, isAdmin, clienteNome }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  /* S� faz scroll quando o utilizador envia uma mensagem */
+  /* Só faz scroll quando o utilizador envia uma mensagem */
   useEffect(() => {
     if (scrollAfterSend.current) {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -91,28 +91,28 @@ export default function ChatBox({ projetoRef, isAdmin, clienteNome }: Props) {
   return (
     <div className="flex flex-col border border-white/[0.07] bg-white/[0.01]" style={{ height: 520 }}>
 
-      {/* -- Header -- */}
+      {/* ── Header ── */}
       <div className="px-5 py-3.5 border-b border-white/[0.06] flex items-center gap-3 shrink-0">
         <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
         <div className="flex-1">
-          <p className="text-lg tracking-[0.4em] text-white/45 uppercase">Chat do Projeto</p>
+          <p className="text-sm tracking-[0.4em] text-white/45 uppercase">Chat do Projeto</p>
         </div>
-        <span className="text-lg text-white/15 font-mono">{mensagens.length} msg{mensagens.length !== 1 ? 's' : ''}</span>
+        <span className="text-sm text-white/15 font-mono">{mensagens.length} msg{mensagens.length !== 1 ? 's' : ''}</span>
       </div>
 
-      {/* -- Mensagens -- */}
+      {/* ── Mensagens ── */}
       <div className="flex-1 overflow-y-auto px-5 py-5 flex flex-col gap-1">
         {loading && (
           <div className="flex-1 flex items-center justify-center">
-            <p className="text-lg tracking-[0.3em] text-white/15 uppercase">A carregar...</p>
+            <p className="text-sm tracking-[0.3em] text-white/15 uppercase">A carregar...</p>
           </div>
         )}
 
         {!loading && mensagens.length === 0 && (
           <div className="flex-1 flex flex-col items-center justify-center gap-3">
-            <span className="text-3xl opacity-20">??</span>
-            <p className="text-lg tracking-[0.3em] text-white/20 uppercase">Sem mensagens ainda</p>
-            <p className="text-lg text-white/12 text-center">Inicia a conversa sobre o projeto</p>
+            <span className="text-3xl opacity-20">💬</span>
+            <p className="text-sm tracking-[0.3em] text-white/20 uppercase">Sem mensagens ainda</p>
+            <p className="text-sm text-white/12 text-center">Inicia a conversa sobre o projeto</p>
           </div>
         )}
 
@@ -121,7 +121,7 @@ export default function ChatBox({ projetoRef, isAdmin, clienteNome }: Props) {
             {/* Separador de dia */}
             <div className="flex items-center gap-3 my-2">
               <div className="h-px flex-1 bg-white/[0.05]" />
-              <span className="text-lg tracking-[0.25em] text-white/18 uppercase shrink-0">{dia}</span>
+              <span className="text-sm tracking-[0.25em] text-white/18 uppercase shrink-0">{dia}</span>
               <div className="h-px flex-1 bg-white/[0.05]" />
             </div>
 
@@ -133,9 +133,9 @@ export default function ChatBox({ projetoRef, isAdmin, clienteNome }: Props) {
                   key={m.id}
                   className={`flex flex-col ${m.isAdmin ? 'items-end' : 'items-start'} ${sameSender ? 'mt-0.5' : 'mt-2'}`}
                 >
-                  {/* Nome � s� mostra quando muda de remetente */}
+                  {/* Nome — só mostra quando muda de remetente */}
                   {!sameSender && (
-                    <span className={`text-lg tracking-[0.2em] text-white/20 uppercase mb-1 ${m.isAdmin ? 'text-right' : 'text-left'}`}>
+                    <span className={`text-sm tracking-[0.2em] text-white/20 uppercase mb-1 ${m.isAdmin ? 'text-right' : 'text-left'}`}>
                       {m.autor}
                     </span>
                   )}
@@ -146,11 +146,11 @@ export default function ChatBox({ projetoRef, isAdmin, clienteNome }: Props) {
                       ? 'bg-white/[0.07] border border-white/[0.14]'
                       : 'bg-white/[0.025] border border-white/[0.06]'
                   }`}>
-                    <p className="text-lg text-white/70 leading-relaxed">{m.texto}</p>
+                    <p className="text-sm text-white/70 leading-relaxed">{m.texto}</p>
                   </div>
 
                   {/* Hora */}
-                  <span className={`text-lg text-white/15 mt-0.5 ${m.isAdmin ? 'text-right' : 'text-left'}`}>
+                  <span className={`text-sm text-white/15 mt-0.5 ${m.isAdmin ? 'text-right' : 'text-left'}`}>
                     {fmtHora(m.criadoEm)}
                   </span>
                 </div>
@@ -162,7 +162,7 @@ export default function ChatBox({ projetoRef, isAdmin, clienteNome }: Props) {
         <div ref={bottomRef} />
       </div>
 
-      {/* -- Input -- */}
+      {/* ── Input ── */}
       <div className="shrink-0 border-t border-white/[0.06] px-4 py-3 flex items-center gap-3">
         <div className="flex-1 border border-white/[0.07] bg-white/[0.02] flex items-center px-4 py-2.5 gap-2 focus-within:border-white/20 transition-colors">
           <input
@@ -171,17 +171,17 @@ export default function ChatBox({ projetoRef, isAdmin, clienteNome }: Props) {
             onChange={e => setTexto(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar() } }}
             placeholder={isAdmin ? 'Mensagem para o cliente...' : 'Escreve a tua mensagem...'}
-            className="flex-1 bg-transparent text-lg text-white/65 placeholder:text-white/15 focus:outline-none min-w-0"
+            className="flex-1 bg-transparent text-sm text-white/65 placeholder:text-white/15 focus:outline-none min-w-0"
           />
         </div>
         <button
           onClick={enviar}
           disabled={sending || !texto.trim()}
           className="border border-white/15 hover:border-white/35 bg-white/[0.03] hover:bg-white/[0.07]
-                     px-5 py-2.5 text-lg tracking-[0.35em] text-white/40 hover:text-white/70
+                     px-5 py-2.5 text-sm tracking-[0.35em] text-white/40 hover:text-white/70
                      uppercase transition-colors disabled:opacity-25 disabled:cursor-not-allowed shrink-0"
         >
-          {sending ? '?' : 'Enviar'}
+          {sending ? '⏳' : 'Enviar'}
         </button>
       </div>
     </div>

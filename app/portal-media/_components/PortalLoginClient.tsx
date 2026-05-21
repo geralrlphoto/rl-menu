@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
@@ -33,7 +33,7 @@ export default function PortalLoginClient({ portalRef, nomeProjeto, cliente }: P
         setSenha('')
       }
     } catch {
-      setErro('Erro de liga��o. Verifica a internet e tenta novamente.')
+      setErro('Erro de ligação. Verifica a internet e tenta novamente.')
     }
     setLoading(false)
   }
@@ -62,47 +62,47 @@ export default function PortalLoginClient({ portalRef, nomeProjeto, cliente }: P
           {/* Neon line */}
           <div className="h-px mb-8" style={{ background: 'linear-gradient(90deg,transparent,rgba(37,99,235,0.4),transparent)' }} />
 
-          <p className="text-lg tracking-[0.6em] text-white/20 uppercase mb-2">Portal do Cliente</p>
+          <p className="text-xs tracking-[0.6em] text-white/20 uppercase mb-2">Portal do Cliente</p>
           <h1 className="text-2xl font-extralight tracking-[0.3em] text-white/80 uppercase mb-1">{nomeProjeto}</h1>
-          <p className="text-lg tracking-[0.3em] text-white/25 uppercase">{cliente}</p>
+          <p className="text-sm tracking-[0.3em] text-white/25 uppercase">{cliente}</p>
         </div>
 
         {/* Card */}
         <div className="border border-white/[0.07] bg-white/[0.02] p-6 flex flex-col gap-4">
-          <p className="text-lg tracking-[0.4em] text-white/20 uppercase mb-1">Acesso protegido</p>
+          <p className="text-xs tracking-[0.4em] text-white/20 uppercase mb-1">Acesso protegido</p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
             <div className="border border-white/[0.08] bg-black/20 flex items-center gap-3 px-4">
-              <span className="text-white/20 text-lg shrink-0">??</span>
+              <span className="text-white/20 text-sm shrink-0">🔑</span>
               <input
                 type="password"
                 value={senha}
                 onChange={e => { setSenha(e.target.value); setErro(null) }}
                 placeholder="Senha de acesso"
                 autoFocus
-                className="flex-1 bg-transparent py-4 text-lg tracking-[0.2em] text-white/65
+                className="flex-1 bg-transparent py-4 text-sm tracking-[0.2em] text-white/65
                            placeholder:text-white/15 focus:outline-none"
               />
             </div>
 
             {erro && (
-              <p className="text-lg text-red-400/70 tracking-[0.2em] leading-relaxed">? {erro}</p>
+              <p className="text-xs text-red-400/70 tracking-[0.2em] leading-relaxed">⚠ {erro}</p>
             )}
 
             <button
               type="submit"
               disabled={loading || !senha.trim()}
               className="border border-white/20 bg-white/[0.03] hover:bg-white/[0.07]
-                         py-4 text-lg tracking-[0.5em] text-white/50 hover:text-white/80 uppercase
+                         py-4 text-sm tracking-[0.5em] text-white/50 hover:text-white/80 uppercase
                          transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
             >
-              {loading ? '? A verificar...' : 'Entrar'}
+              {loading ? '⏳ A verificar...' : 'Entrar'}
             </button>
           </form>
         </div>
 
-        <p className="text-center mt-8 text-lg tracking-[0.4em] text-white/10 uppercase">
-          RL PROD � Photography & Video
+        <p className="text-center mt-8 text-xs tracking-[0.4em] text-white/10 uppercase">
+          RL PROD · Photography & Video
         </p>
       </div>
     </div>

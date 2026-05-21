@@ -1,4 +1,4 @@
-'use client'
+ï»¿'use client'
 import { useState, useRef } from 'react'
 import Link from 'next/link'
 import type { Projeto, RegistoPagamento } from '@/app/portal-media/_data/mockProject'
@@ -21,11 +21,11 @@ const ESTADO_OPTIONS = [
 ]
 
 const METODO_OPTIONS = [
-  'Transferência Bancária',
+  'TransferÃªncia BancÃ¡ria',
   'MB Way',
   'Multibanco',
   'Cheque',
-  'Numerário',
+  'NumerÃ¡rio',
 ]
 
 function todayISO() {
@@ -51,7 +51,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
   const [saving, setSaving] = useState(false)
   const [heroUrl, setHeroUrl] = useState(initial.pagamentosImageUrl ?? '')
 
-  /* -- Registar Pagamento -- */
+  /* â”€â”€ Registar Pagamento â”€â”€ */
   const [showForm, setShowForm]       = useState(false)
   const [submitting, setSubmitting]   = useState(false)
   const [submitted, setSubmitted]     = useState(false)
@@ -63,7 +63,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
     referencia: projeto.ref,
     fase:       '',
     valor:      '',
-    metodo:     'Transferência Bancária',
+    metodo:     'TransferÃªncia BancÃ¡ria',
     data:       todayISO(),
     file:       null,
   })
@@ -79,7 +79,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
       referencia: projeto.ref,
       fase:       '',
       valor:      '',
-      metodo:     'Transferência Bancária',
+      metodo:     'TransferÃªncia BancÃ¡ria',
       data:       todayISO(),
       file:       null,
     })
@@ -116,12 +116,12 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
         setSubmitError(data.error || 'Erro ao enviar. Tenta novamente.')
       }
     } catch {
-      setSubmitError('Erro de ligação. Tenta novamente.')
+      setSubmitError('Erro de ligaÃ§Ã£o. Tenta novamente.')
     }
     setSubmitting(false)
   }
 
-  /* -- Admin edit -- */
+  /* â”€â”€ Admin edit â”€â”€ */
   const save = async () => {
     setSaving(true)
     try {
@@ -146,13 +146,13 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
   const addPagamento = () =>
     setProjeto(p => ({
       ...p,
-      pagamentos: [...p.pagamentos, { descricao: 'Nova Prestação', valor: 0, estado: 'pendente' as const, data: '' }],
+      pagamentos: [...p.pagamentos, { descricao: 'Nova PrestaÃ§Ã£o', valor: 0, estado: 'pendente' as const, data: '' }],
     }))
 
   const removePagamento = (idx: number) =>
     setProjeto(p => ({ ...p, pagamentos: p.pagamentos.filter((_, i) => i !== idx) }))
 
-  /* -- Cálculos -- */
+  /* â”€â”€ CÃ¡lculos â”€â”€ */
   const total    = projeto.pagamentos.reduce((s, pg) => s + pg.valor, 0)
   const pago     = registos.reduce((s, r) => s + r.valor, 0)
   const restante = Math.max(0, total - pago)
@@ -164,13 +164,13 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
       <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 py-10">
 
         <Link href={`/portal-media/${projeto.ref}`}
-          className="inline-flex items-center gap-2 text-[11px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
-          <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
+          className="inline-flex items-center gap-2 text-[9px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
+          <span className="group-hover:-translate-x-1 transition-transform duration-200">â€¹</span>
           Portal {projeto.nome}
         </Link>
 
         <div className="mb-10">
-          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD · {projeto.nome}</p>
+          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD Â· {projeto.nome}</p>
           <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Pagamentos</h1>
           <div className="mt-4 flex items-center gap-3">
             <div className="h-px w-12 bg-white/25" />
@@ -178,33 +178,33 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
           </div>
         </div>
 
-        {/* -- Texto explicativo -- */}
+        {/* â”€â”€ Texto explicativo â”€â”€ */}
         <div className="mb-8 border border-white/[0.06] bg-white/[0.02] px-6 py-5 flex flex-col gap-3">
           <div className="flex items-center gap-3">
             <div className="w-px h-10 bg-white/20 shrink-0" />
-            <p className="text-[11px] tracking-[0.5em] text-white/30 uppercase">Como funciona</p>
+            <p className="text-[9px] tracking-[0.5em] text-white/30 uppercase">Como funciona</p>
           </div>
-          <p className="text-[15px] font-light leading-relaxed text-white/45">
-            Esta página é o registo oficial de todos os pagamentos realizados no âmbito do vosso projecto.
-            Cada vez que efectuarem um pagamento — seja adjudicação, reforço ou valor final — devem submetê-lo aqui para que fique documentado e a nossa equipa seja notificada de imediato.
+          <p className="text-[13px] font-light leading-relaxed text-white/45">
+            Esta pÃ¡gina Ã© o registo oficial de todos os pagamentos realizados no Ã¢mbito do vosso projecto.
+            Cada vez que efectuarem um pagamento â€” seja adjudicaÃ§Ã£o, reforÃ§o ou valor final â€” devem submetÃª-lo aqui para que fique documentado e a nossa equipa seja notificada de imediato.
           </p>
           <div className="flex flex-col gap-2 mt-1">
             {[
-              { n: '1', text: 'Cliquem em «Registar Pagamento» abaixo' },
-              { n: '2', text: 'Preencham o valor, método e data do pagamento' },
-              { n: '3', text: 'Anexem o comprovativo (transferência, MB Way, etc.)' },
-              { n: '4', text: 'Cliquem em Enviar — a equipa RL PROD recebe a confirmação' },
+              { n: '1', text: 'Cliquem em Â«Registar PagamentoÂ» abaixo' },
+              { n: '2', text: 'Preencham o valor, mÃ©todo e data do pagamento' },
+              { n: '3', text: 'Anexem o comprovativo (transferÃªncia, MB Way, etc.)' },
+              { n: '4', text: 'Cliquem em Enviar â€” a equipa RL PROD recebe a confirmaÃ§Ã£o' },
             ].map(step => (
               <div key={step.n} className="flex items-start gap-3">
                 <span className="w-5 h-5 border border-white/15 flex items-center justify-center shrink-0
-                                 text-[12px] tracking-widest text-white/25 mt-0.5">{step.n}</span>
-                <p className="text-[14px] font-light text-white/35 leading-relaxed">{step.text}</p>
+                                 text-[10px] tracking-widest text-white/25 mt-0.5">{step.n}</span>
+                <p className="text-[12px] font-light text-white/35 leading-relaxed">{step.text}</p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* -- Botão Registar -- */}
+        {/* â”€â”€ BotÃ£o Registar â”€â”€ */}
         <button
           onClick={openForm}
           className="w-full mb-8 relative overflow-hidden border border-white/20 hover:border-white/40
@@ -220,45 +220,45 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                 </svg>
               </div>
               <div className="text-left">
-                <p className="text-[11px] tracking-[0.5em] text-white/60 group-hover:text-white/85 uppercase font-medium transition-colors">
+                <p className="text-[9px] tracking-[0.5em] text-white/60 group-hover:text-white/85 uppercase font-medium transition-colors">
                   Registar Pagamento
                 </p>
-                <p className="text-[14px] font-light text-white/25 group-hover:text-white/40 mt-0.5 transition-colors">
+                <p className="text-[12px] font-light text-white/25 group-hover:text-white/40 mt-0.5 transition-colors">
                   Submete o comprovativo e regista o valor pago
                 </p>
               </div>
             </div>
-            <span className="text-white/20 group-hover:text-white/50 group-hover:translate-x-0.5 transition-all">?</span>
+            <span className="text-white/20 group-hover:text-white/50 group-hover:translate-x-0.5 transition-all">â†’</span>
           </div>
         </button>
 
-        {/* -- Resumo -- */}
+        {/* â”€â”€ Resumo â”€â”€ */}
         <div className="grid grid-cols-3 gap-3 mb-10">
           <div className="border border-white/[0.07] bg-white/[0.02] px-4 py-5 text-center">
-            <p className="text-[11px] tracking-[0.4em] text-white/25 uppercase mb-1">Total</p>
-            <p className="text-[14px] tracking-[0.1em] text-white/65 font-light">{total.toLocaleString('pt-PT')} €</p>
-            <p className="text-[11px] tracking-[0.3em] text-white/15 uppercase mt-1">Serviço</p>
+            <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-1">Total</p>
+            <p className="text-[12px] tracking-[0.1em] text-white/65 font-light">{total.toLocaleString('pt-PT')} â‚¬</p>
+            <p className="text-[9px] tracking-[0.3em] text-white/15 uppercase mt-1">ServiÃ§o</p>
           </div>
           <div className={`border px-4 py-5 text-center ${pago > 0 ? 'border-emerald-400/20 bg-emerald-400/[0.03]' : 'border-white/[0.07] bg-white/[0.02]'}`}>
-            <p className="text-[11px] tracking-[0.4em] text-white/25 uppercase mb-1">Pago</p>
-            <p className={`text-[14px] tracking-[0.1em] font-light ${pago > 0 ? 'text-emerald-400/80' : 'text-white/65'}`}>
-              {pago.toLocaleString('pt-PT')} €
+            <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-1">Pago</p>
+            <p className={`text-[12px] tracking-[0.1em] font-light ${pago > 0 ? 'text-emerald-400/80' : 'text-white/65'}`}>
+              {pago.toLocaleString('pt-PT')} â‚¬
             </p>
-            <p className="text-[11px] tracking-[0.3em] text-white/15 uppercase mt-1">{registos.length} registo{registos.length !== 1 ? 's' : ''}</p>
+            <p className="text-[9px] tracking-[0.3em] text-white/15 uppercase mt-1">{registos.length} registo{registos.length !== 1 ? 's' : ''}</p>
           </div>
           <div className={`border px-4 py-5 text-center ${restante > 0 ? 'border-white/[0.07] bg-white/[0.02]' : 'border-emerald-400/20 bg-emerald-400/[0.03]'}`}>
-            <p className="text-[11px] tracking-[0.4em] text-white/25 uppercase mb-1">Restante</p>
-            <p className={`text-[14px] tracking-[0.1em] font-light ${restante > 0 ? 'text-white/65' : 'text-emerald-400/80'}`}>
-              {restante.toLocaleString('pt-PT')} €
+            <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase mb-1">Restante</p>
+            <p className={`text-[12px] tracking-[0.1em] font-light ${restante > 0 ? 'text-white/65' : 'text-emerald-400/80'}`}>
+              {restante.toLocaleString('pt-PT')} â‚¬
             </p>
-            <p className="text-[11px] tracking-[0.3em] text-white/15 uppercase mt-1">{restante === 0 ? 'Liquidado' : 'Em falta'}</p>
+            <p className="text-[9px] tracking-[0.3em] text-white/15 uppercase mt-1">{restante === 0 ? 'Liquidado' : 'Em falta'}</p>
           </div>
         </div>
 
-        {/* -- Histórico de pagamentos registados -- */}
+        {/* â”€â”€ HistÃ³rico de pagamentos registados â”€â”€ */}
         {registos.length > 0 && (
           <div className="mb-10">
-            <p className="text-[11px] tracking-[0.5em] text-white/20 uppercase mb-3">Histórico de Pagamentos</p>
+            <p className="text-[9px] tracking-[0.5em] text-white/20 uppercase mb-3">HistÃ³rico de Pagamentos</p>
             <div className="flex flex-col gap-2">
               {[...registos].reverse().map((r, i) => (
                 <div key={i} className="border border-emerald-400/15 bg-emerald-400/[0.02] px-5 py-3.5
@@ -266,22 +266,22 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-400/50 shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-[13px] tracking-[0.2em] text-white/55">{r.data}</p>
+                      <p className="text-[11px] tracking-[0.2em] text-white/55">{r.data}</p>
                       {r.fase && (
-                        <p className="text-[11px] tracking-[0.3em] text-white/25 uppercase mt-0.5 truncate">
-                          {r.fase}{r.metodo ? ` · ${r.metodo}` : ''}
+                        <p className="text-[9px] tracking-[0.3em] text-white/25 uppercase mt-0.5 truncate">
+                          {r.fase}{r.metodo ? ` Â· ${r.metodo}` : ''}
                         </p>
                       )}
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-[14px] tracking-[0.15em] text-emerald-400/80 font-light">
-                      {r.valor.toLocaleString('pt-PT')} €
+                    <p className="text-[12px] tracking-[0.15em] text-emerald-400/80 font-light">
+                      {r.valor.toLocaleString('pt-PT')} â‚¬
                     </p>
                     {r.comprativoUrl && (
                       <a href={r.comprativoUrl} target="_blank" rel="noopener noreferrer"
-                        className="text-[11px] tracking-[0.3em] text-white/25 hover:text-white/50 uppercase transition-colors">
-                        Ver comprovativo ?
+                        className="text-[9px] tracking-[0.3em] text-white/25 hover:text-white/50 uppercase transition-colors">
+                        Ver comprovativo â†—
                       </a>
                     )}
                   </div>
@@ -291,9 +291,9 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
           </div>
         )}
 
-        {/* -- Plano de Pagamento (admin edita) -- */}
+        {/* â”€â”€ Plano de Pagamento (admin edita) â”€â”€ */}
         <div className="mb-6">
-          <p className="text-[11px] tracking-[0.5em] text-white/20 uppercase mb-3">Plano de Pagamento</p>
+          <p className="text-[9px] tracking-[0.5em] text-white/20 uppercase mb-3">Plano de Pagamento</p>
           <div className="flex flex-col gap-3">
             {projeto.pagamentos.map((pag, i) => {
               const cfg = PAG_CFG[pag.estado]
@@ -305,14 +305,14 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                         value={pag.descricao}
                         isEditing={isEditing}
                         onChange={v => updatePag(i, 'descricao', v)}
-                        className="text-[12px] tracking-[0.2em] text-white/60 uppercase font-medium block"
-                        placeholder="Descrição"
+                        className="text-[10px] tracking-[0.2em] text-white/60 uppercase font-medium block"
+                        placeholder="DescriÃ§Ã£o"
                       />
                       <EditableDateField
                         value={pag.data}
                         isEditing={isEditing}
                         onChange={v => updatePag(i, 'data', v)}
-                        className="text-[11px] tracking-[0.2em] text-white/20 mt-0.5 block"
+                        className="text-[9px] tracking-[0.2em] text-white/20 mt-0.5 block"
                         placeholder="Data prevista"
                       />
                     </div>
@@ -323,9 +323,9 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                           isEditing={isEditing}
                           onChange={v => updatePag(i, 'valor', Number(v) || 0)}
                           type="number"
-                          className="text-[14px] tracking-[0.1em] text-white/60 font-light block text-right"
+                          className="text-[12px] tracking-[0.1em] text-white/60 font-light block text-right"
                         />
-                        {!isEditing && <span className="text-[14px] text-white/60 font-light">€</span>}
+                        {!isEditing && <span className="text-[12px] text-white/60 font-light">â‚¬</span>}
                       </div>
                       <div className="mt-1">
                         <EditableSelect
@@ -333,12 +333,12 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                           options={ESTADO_OPTIONS}
                           isEditing={isEditing}
                           onChange={v => updatePag(i, 'estado', v)}
-                          className={`text-[11px] tracking-[0.3em] uppercase ${cfg.color}`}
+                          className={`text-[9px] tracking-[0.3em] uppercase ${cfg.color}`}
                         />
                       </div>
                       {isEditing && (
                         <button onClick={() => removePagamento(i)}
-                          className="mt-2 text-[11px] tracking-[0.3em] text-red-400/50 hover:text-red-400/80 uppercase transition-colors">
+                          className="mt-2 text-[9px] tracking-[0.3em] text-red-400/50 hover:text-red-400/80 uppercase transition-colors">
                           Remover
                         </button>
                       )}
@@ -352,7 +352,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
           {isEditing && (
             <button onClick={addPagamento}
               className="mt-3 w-full border border-dashed border-white/15 hover:border-white/30 bg-white/[0.01] hover:bg-white/[0.03] py-3
-                         text-[11px] tracking-[0.4em] text-white/30 uppercase transition-colors">
+                         text-[9px] tracking-[0.4em] text-white/30 uppercase transition-colors">
               + Adicionar Linha
             </button>
           )}
@@ -365,7 +365,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
           onToggle={() => setIsEditing(true)} onSave={save} onCancel={cancel} />
       )}
 
-      {/* -- Modal Registar Pagamento -- */}
+      {/* â”€â”€ Modal Registar Pagamento â”€â”€ */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ background: 'rgba(4,8,15,0.92)', backdropFilter: 'blur(6px)' }}>
@@ -383,15 +383,15 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-[11px] tracking-[0.5em] text-white/65 uppercase mb-2">Pagamento Registado</p>
-                  <p className="text-[15px] font-light text-white/35 leading-relaxed">
-                    A informação foi enviada com sucesso para a RL PROD.<br />
-                    O registo já está visível na página.
+                  <p className="text-[9px] tracking-[0.5em] text-white/65 uppercase mb-2">Pagamento Registado</p>
+                  <p className="text-[13px] font-light text-white/35 leading-relaxed">
+                    A informaÃ§Ã£o foi enviada com sucesso para a RL PROD.<br />
+                    O registo jÃ¡ estÃ¡ visÃ­vel na pÃ¡gina.
                   </p>
                 </div>
                 <button onClick={closeForm}
                   className="mt-2 border border-white/15 bg-white/[0.04] hover:bg-white/[0.08] px-6 py-2.5
-                             text-[11px] tracking-[0.4em] text-white/45 hover:text-white/70 uppercase transition-all">
+                             text-[9px] tracking-[0.4em] text-white/45 hover:text-white/70 uppercase transition-all">
                   Fechar
                 </button>
               </div>
@@ -399,7 +399,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
               <>
                 <div className="px-5 sm:px-8 pt-5 sm:pt-7 pb-2 flex items-center justify-between">
                   <div>
-                    <p className="text-[8px] tracking-[0.5em] text-white/20 uppercase mb-1">RL PROD · {projeto.nome}</p>
+                    <p className="text-[8px] tracking-[0.5em] text-white/20 uppercase mb-1">RL PROD Â· {projeto.nome}</p>
                     <h2 className="text-lg font-extralight tracking-[0.3em] text-white/75 uppercase">Registar Pagamento</h2>
                   </div>
                   <button onClick={closeForm}
@@ -412,24 +412,24 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
 
                 <div className="px-5 sm:px-8 py-5 sm:py-6 flex flex-col gap-4">
 
-                  {/* Empresa + Referência */}
+                  {/* Empresa + ReferÃªncia */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                      <label className="text-[11px] tracking-[0.4em] text-white/25 uppercase block mb-1.5">Empresa</label>
+                      <label className="text-[9px] tracking-[0.4em] text-white/25 uppercase block mb-1.5">Empresa</label>
                       <input
                         value={form.empresa}
                         onChange={e => setField('empresa', e.target.value)}
-                        className="w-full bg-white/[0.05] border border-white/[0.10] text-white/70 text-[13px] px-3 py-2.5
+                        className="w-full bg-white/[0.05] border border-white/[0.10] text-white/70 text-[11px] px-3 py-2.5
                                    outline-none focus:border-white/30 placeholder-white/20 transition-colors"
                         placeholder="Nome da empresa"
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] tracking-[0.4em] text-white/25 uppercase block mb-1.5">Referência</label>
+                      <label className="text-[9px] tracking-[0.4em] text-white/25 uppercase block mb-1.5">ReferÃªncia</label>
                       <input
                         value={form.referencia}
                         readOnly
-                        className="w-full bg-white/[0.02] border border-white/[0.06] text-white/35 text-[13px] px-3 py-2.5
+                        className="w-full bg-white/[0.02] border border-white/[0.06] text-white/35 text-[11px] px-3 py-2.5
                                    outline-none font-mono tracking-wider cursor-default"
                       />
                     </div>
@@ -437,14 +437,14 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
 
                   {/* Fase */}
                   <div>
-                    <label className="text-[11px] tracking-[0.4em] text-white/25 uppercase block mb-2">Fase do Pagamento</label>
+                    <label className="text-[9px] tracking-[0.4em] text-white/25 uppercase block mb-2">Fase do Pagamento</label>
                     <div className="grid grid-cols-3 gap-2">
-                      {['Adjudicação', 'Reforço', 'Final'].map(f => (
+                      {['AdjudicaÃ§Ã£o', 'ReforÃ§o', 'Final'].map(f => (
                         <button
                           key={f}
                           type="button"
                           onClick={() => setField('fase', f)}
-                          className={`py-2.5 border text-[11px] tracking-[0.3em] uppercase transition-all
+                          className={`py-2.5 border text-[9px] tracking-[0.3em] uppercase transition-all
                             ${form.fase === f
                               ? 'border-white/40 bg-white/[0.10] text-white/80'
                               : 'border-white/[0.08] bg-white/[0.02] text-white/30 hover:border-white/20 hover:text-white/50'
@@ -456,27 +456,27 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                     </div>
                   </div>
 
-                  {/* Valor + Método */}
+                  {/* Valor + MÃ©todo */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-[11px] tracking-[0.4em] text-white/25 uppercase block mb-1.5">Valor (€)</label>
+                      <label className="text-[9px] tracking-[0.4em] text-white/25 uppercase block mb-1.5">Valor (â‚¬)</label>
                       <input
                         type="number"
                         value={form.valor}
                         onChange={e => setField('valor', e.target.value)}
                         min="0"
                         step="0.01"
-                        className="w-full bg-white/[0.05] border border-white/[0.10] text-white/70 text-[13px] px-3 py-2.5
+                        className="w-full bg-white/[0.05] border border-white/[0.10] text-white/70 text-[11px] px-3 py-2.5
                                    outline-none focus:border-white/30 placeholder-white/20 transition-colors"
                         placeholder="0.00"
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] tracking-[0.4em] text-white/25 uppercase block mb-1.5">Método</label>
+                      <label className="text-[9px] tracking-[0.4em] text-white/25 uppercase block mb-1.5">MÃ©todo</label>
                       <select
                         value={form.metodo}
                         onChange={e => setField('metodo', e.target.value)}
-                        className="w-full bg-white/[0.05] border border-white/[0.10] text-white/70 text-[13px] px-3 py-2.5
+                        className="w-full bg-white/[0.05] border border-white/[0.10] text-white/70 text-[11px] px-3 py-2.5
                                    outline-none focus:border-white/30 transition-colors appearance-none cursor-pointer"
                         style={{ background: 'rgba(255,255,255,0.05)' }}
                       >
@@ -489,12 +489,12 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
 
                   {/* Data */}
                   <div>
-                    <label className="text-[11px] tracking-[0.4em] text-white/25 uppercase block mb-1.5">Data do Pagamento</label>
+                    <label className="text-[9px] tracking-[0.4em] text-white/25 uppercase block mb-1.5">Data do Pagamento</label>
                     <input
                       type="date"
                       value={form.data}
                       onChange={e => setField('data', e.target.value)}
-                      className="w-full bg-white/[0.05] border border-white/[0.10] text-white/70 text-[13px] px-3 py-2.5
+                      className="w-full bg-white/[0.05] border border-white/[0.10] text-white/70 text-[11px] px-3 py-2.5
                                  outline-none focus:border-white/30 transition-colors"
                       style={{ colorScheme: 'dark' }}
                     />
@@ -502,8 +502,8 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
 
                   {/* Comprovativo */}
                   <div>
-                    <label className="text-[11px] tracking-[0.4em] text-white/25 uppercase block mb-1.5">
-                      Comprovativo <span className="text-white/15 normal-case tracking-normal text-[13px]">(foto ou PDF)</span>
+                    <label className="text-[9px] tracking-[0.4em] text-white/25 uppercase block mb-1.5">
+                      Comprovativo <span className="text-white/15 normal-case tracking-normal text-[11px]">(foto ou PDF)</span>
                     </label>
                     <div
                       onClick={() => fileInputRef.current?.click()}
@@ -515,16 +515,16 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                           <svg className="w-5 h-5 text-emerald-400/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                           </svg>
-                          <p className="text-[13px] text-white/55">{form.file.name}</p>
-                          <p className="text-[13px] text-white/25">{(form.file.size / 1024).toFixed(0)} KB · clica para alterar</p>
+                          <p className="text-[11px] text-white/55">{form.file.name}</p>
+                          <p className="text-[11px] text-white/25">{(form.file.size / 1024).toFixed(0)} KB Â· clica para alterar</p>
                         </>
                       ) : (
                         <>
                           <svg className="w-5 h-5 text-white/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
                           </svg>
-                          <p className="text-[13px] text-white/30">Clica para fazer upload</p>
-                          <p className="text-[13px] text-white/20">JPG, PNG, PDF</p>
+                          <p className="text-[11px] text-white/30">Clica para fazer upload</p>
+                          <p className="text-[11px] text-white/20">JPG, PNG, PDF</p>
                         </>
                       )}
                     </div>
@@ -538,14 +538,14 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                   </div>
 
                   {submitError && (
-                    <p className="text-[12px] text-red-400/70 tracking-[0.2em]">{submitError}</p>
+                    <p className="text-[10px] text-red-400/70 tracking-[0.2em]">{submitError}</p>
                   )}
 
                   <button
                     onClick={submitPagamento}
                     disabled={submitting || !form.valor}
                     className="mt-1 w-full border border-white/25 hover:border-white/45 bg-white/[0.05] hover:bg-white/[0.10]
-                               px-6 py-3.5 text-[11px] tracking-[0.5em] text-white/55 hover:text-white/85 uppercase
+                               px-6 py-3.5 text-[9px] tracking-[0.5em] text-white/55 hover:text-white/85 uppercase
                                transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     {submitting ? 'A enviar...' : 'Enviar Registo'}

@@ -17,7 +17,7 @@ export default function EditableSelect({ value, options, isEditing, onChange, cl
     <select
       value={value}
       onChange={e => onChange(e.target.value)}
-      className={`bg-[#0a0a12] border border-white/20 text-white/80 px-2 py-1 outline-none focus:border-white/40 rounded-sm text-lg ${className}`}
+      className={`bg-[#0a0a12] border border-white/20 text-white/80 px-2 py-1 outline-none focus:border-white/40 rounded-sm text-sm ${className}`}
     >
       {options.map(o => (
         <option key={o.value} value={o.value}>{o.label}</option>

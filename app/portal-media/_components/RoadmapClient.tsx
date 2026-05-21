@@ -1,91 +1,91 @@
-'use client'
+﻿'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import type { Projeto, RoadmapColuna, RoadmapTarefa, TarefaEstado } from '@/app/portal-media/_data/mockProject'
 import AdminBar from './AdminBar'
 import HeroUploadBlock from './HeroUploadBlock'
 
-/* ---------------------------------------------------------- */
-/*  DEFAULT � 7 colunas padr�o para qualquer projeto          */
-/* ---------------------------------------------------------- */
+/* ────────────────────────────────────────────────────────── */
+/*  DEFAULT — 7 colunas padrão para qualquer projeto          */
+/* ────────────────────────────────────────────────────────── */
 
 const DEFAULT_ROADMAP: RoadmapColuna[] = [
   {
     id: 'briefing', titulo: 'Briefing', cor: 'blue',
     tarefas: [
       { id: 'b1', titulo: 'Primeiro Contato',    estado: 'nao_iniciada', data: '' },
-      { id: 'b2', titulo: 'Formul�rio Briefing', estado: 'nao_iniciada', data: '' },
-      { id: 'b3', titulo: 'Reuni�o de Briefing', estado: 'nao_iniciada', data: '' },
+      { id: 'b2', titulo: 'Formulário Briefing', estado: 'nao_iniciada', data: '' },
+      { id: 'b3', titulo: 'Reunião de Briefing', estado: 'nao_iniciada', data: '' },
     ],
   },
   {
     id: 'proposta', titulo: 'Proposta', cor: 'cyan',
     tarefas: [
-      { id: 'p1', titulo: 'An�lise de Requisitos', estado: 'nao_iniciada', data: '' },
-      { id: 'p2', titulo: 'Cria��o da Proposta',   estado: 'nao_iniciada', data: '' },
-      { id: 'p3', titulo: 'Apresenta��o',          estado: 'nao_iniciada', data: '' },
-      { id: 'p4', titulo: 'Adjudica��o',           estado: 'nao_iniciada', data: '' },
+      { id: 'p1', titulo: 'Análise de Requisitos', estado: 'nao_iniciada', data: '' },
+      { id: 'p2', titulo: 'Criação da Proposta',   estado: 'nao_iniciada', data: '' },
+      { id: 'p3', titulo: 'Apresentação',          estado: 'nao_iniciada', data: '' },
+      { id: 'p4', titulo: 'Adjudicação',           estado: 'nao_iniciada', data: '' },
       { id: 'p5', titulo: 'CPS Assinado',          estado: 'nao_iniciada', data: '' },
     ],
   },
   {
     id: 'planeamento', titulo: 'Planeamento', cor: 'yellow',
     tarefas: [
-      { id: 'pl1', titulo: 'Defini��o de Datas',       estado: 'nao_iniciada', data: '' },
-      { id: 'pl2', titulo: 'Sele��o de Staff',          estado: 'nao_iniciada', data: '' },
-      { id: 'pl3', titulo: 'Log�stica e Equipamento',   estado: 'nao_iniciada', data: '' },
-      { id: 'pl4', titulo: 'Storytelling / Gui�o',      estado: 'nao_iniciada', data: '' },
+      { id: 'pl1', titulo: 'Definição de Datas',       estado: 'nao_iniciada', data: '' },
+      { id: 'pl2', titulo: 'Seleção de Staff',          estado: 'nao_iniciada', data: '' },
+      { id: 'pl3', titulo: 'Logística e Equipamento',   estado: 'nao_iniciada', data: '' },
+      { id: 'pl4', titulo: 'Storytelling / Guião',      estado: 'nao_iniciada', data: '' },
       { id: 'pl5', titulo: 'Vistoria ao Local',         estado: 'nao_iniciada', data: '' },
-      { id: 'pl6', titulo: 'Data Capta��o Confirmada',  estado: 'nao_iniciada', data: '' },
+      { id: 'pl6', titulo: 'Data Captação Confirmada',  estado: 'nao_iniciada', data: '' },
     ],
   },
   {
-    id: 'pre-producao', titulo: 'Pr�-Produ��o', cor: 'purple',
+    id: 'pre-producao', titulo: 'Pré-Produção', cor: 'purple',
     tarefas: [
       { id: 'pr1', titulo: 'Briefing de Staff',            estado: 'nao_iniciada', data: '' },
-      { id: 'pr2', titulo: 'Organiza��o de Equipamento',   estado: 'nao_iniciada', data: '' },
+      { id: 'pr2', titulo: 'Organização de Equipamento',   estado: 'nao_iniciada', data: '' },
       { id: 'pr3', titulo: 'Confirmar Datas com Cliente',  estado: 'nao_iniciada', data: '' },
-      { id: 'pr4', titulo: 'Prepara��o de Materiais',      estado: 'nao_iniciada', data: '' },
+      { id: 'pr4', titulo: 'Preparação de Materiais',      estado: 'nao_iniciada', data: '' },
     ],
   },
   {
-    id: 'producao', titulo: 'Produ��o', cor: 'orange',
+    id: 'producao', titulo: 'Produção', cor: 'orange',
     tarefas: [
-      { id: 'prod1', titulo: 'Capta��o de Conte�do', estado: 'nao_iniciada', data: '' },
+      { id: 'prod1', titulo: 'Captação de Conteúdo', estado: 'nao_iniciada', data: '' },
       { id: 'prod2', titulo: 'Fotografia de Produto', estado: 'nao_iniciada', data: '' },
-      { id: 'prod3', titulo: 'V�deo Institucional',   estado: 'nao_iniciada', data: '' },
+      { id: 'prod3', titulo: 'Vídeo Institucional',   estado: 'nao_iniciada', data: '' },
     ],
   },
   {
-    id: 'pos-producao', titulo: 'P�s-Produ��o', cor: 'violet',
+    id: 'pos-producao', titulo: 'Pós-Produção', cor: 'violet',
     tarefas: [
-      { id: 'pp1', titulo: 'Arquivo e Organiza��o', estado: 'nao_iniciada', data: '' },
-      { id: 'pp2', titulo: 'Edi��o de V�deo',        estado: 'nao_iniciada', data: '' },
-      { id: 'pp3', titulo: 'Edi��o de Fotografias',  estado: 'nao_iniciada', data: '' },
+      { id: 'pp1', titulo: 'Arquivo e Organização', estado: 'nao_iniciada', data: '' },
+      { id: 'pp2', titulo: 'Edição de Vídeo',        estado: 'nao_iniciada', data: '' },
+      { id: 'pp3', titulo: 'Edição de Fotografias',  estado: 'nao_iniciada', data: '' },
       { id: 'pp4', titulo: 'Color Grading',           estado: 'nao_iniciada', data: '' },
-      { id: 'pp5', titulo: 'Revis�o Interna',         estado: 'nao_iniciada', data: '' },
-      { id: 'pp6', titulo: 'Revis�o do Cliente',      estado: 'nao_iniciada', data: '' },
+      { id: 'pp5', titulo: 'Revisão Interna',         estado: 'nao_iniciada', data: '' },
+      { id: 'pp6', titulo: 'Revisão do Cliente',      estado: 'nao_iniciada', data: '' },
     ],
   },
   {
     id: 'entrega', titulo: 'Entrega', cor: 'emerald',
     tarefas: [
-      { id: 'e1', titulo: 'Exporta��o Final',       estado: 'nao_iniciada', data: '' },
+      { id: 'e1', titulo: 'Exportação Final',       estado: 'nao_iniciada', data: '' },
       { id: 'e2', titulo: 'Entrega de Ficheiros',   estado: 'nao_iniciada', data: '' },
       { id: 'e3', titulo: 'Fatura Final',           estado: 'nao_iniciada', data: '' },
-      { id: 'e4', titulo: 'Avalia��o / Satisfa��o', estado: 'nao_iniciada', data: '' },
+      { id: 'e4', titulo: 'Avaliação / Satisfação', estado: 'nao_iniciada', data: '' },
     ],
   },
 ]
 
-/* ---------------------------------------------------------- */
+/* ────────────────────────────────────────────────────────── */
 /*  CONFIG                                                    */
-/* ---------------------------------------------------------- */
+/* ────────────────────────────────────────────────────────── */
 
 const ESTADO_OPTIONS: { value: TarefaEstado; label: string }[] = [
-  { value: 'concluido',    label: 'Conclu�do'    },
+  { value: 'concluido',    label: 'Concluído'    },
   { value: 'em_andamento', label: 'Em andamento' },
-  { value: 'nao_iniciada', label: 'N�o iniciada' },
+  { value: 'nao_iniciada', label: 'Não iniciada' },
   { value: 'aguardar',     label: 'Aguardar'     },
   { value: 'enviado',      label: 'Enviado'      },
 ]
@@ -93,9 +93,9 @@ const ESTADO_OPTIONS: { value: TarefaEstado; label: string }[] = [
 type EstadoCfg = { pill: string; dot: string; text: string; label: string }
 
 const ESTADO_CFG: Record<TarefaEstado, EstadoCfg> = {
-  concluido:    { pill: 'bg-emerald-400/15 border border-emerald-400/25', dot: 'bg-emerald-400',        text: 'text-emerald-400',  label: 'Conclu�do'    },
+  concluido:    { pill: 'bg-emerald-400/15 border border-emerald-400/25', dot: 'bg-emerald-400',        text: 'text-emerald-400',  label: 'Concluído'    },
   em_andamento: { pill: 'bg-blue-400/15 border border-blue-400/25',       dot: 'bg-blue-400 animate-pulse', text: 'text-blue-400', label: 'Em andamento' },
-  nao_iniciada: { pill: 'bg-white/[0.05] border border-white/10',         dot: 'bg-white/25',            text: 'text-white/35',     label: 'N�o iniciada' },
+  nao_iniciada: { pill: 'bg-white/[0.05] border border-white/10',         dot: 'bg-white/25',            text: 'text-white/35',     label: 'Não iniciada' },
   aguardar:     { pill: 'bg-amber-400/15 border border-amber-400/25',     dot: 'bg-amber-400',           text: 'text-amber-400',    label: 'Aguardar'     },
   enviado:      { pill: 'bg-violet-400/15 border border-violet-400/25',   dot: 'bg-violet-400',          text: 'text-violet-400',   label: 'Enviado'      },
 }
@@ -137,11 +137,11 @@ const fmtDate = (iso: string) => {
   return d.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-/* ---------------------------------------------------------- */
+/* ────────────────────────────────────────────────────────── */
 /*  COMPONENT                                                 */
-/* ---------------------------------------------------------- */
+/* ────────────────────────────────────────────────────────── */
 
-/* Roadmap v�lido = tem pelo menos uma coluna com pelo menos uma tarefa */
+/* Roadmap válido = tem pelo menos uma coluna com pelo menos uma tarefa */
 function roadmapValido(rm: RoadmapColuna[] | undefined): boolean {
   return !!(rm && rm.length > 0 && rm.some(c => c.tarefas && c.tarefas.length > 0))
 }
@@ -157,7 +157,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
   const [heroUrl, setHeroUrl]     = useState(initial.roadmapImageUrl || DEFAULT_ROADMAP_IMAGE)
 
   /* Auto-inicializar: guarda as colunas+tarefas default no Supabase
-     quando o roadmap est� ausente ou tem colunas mas sem tarefas */
+     quando o roadmap está ausente ou tem colunas mas sem tarefas */
   useEffect(() => {
     if (!roadmapValido(initial.roadmap)) {
       fetch(`/api/media-portal/${initial.ref}`, {
@@ -174,7 +174,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
   const totalConcluidas = colunas.reduce((s, c) => s + c.tarefas.filter(t => t.estado === 'concluido').length, 0)
   const progresso      = totalTarefas > 0 ? Math.round((totalConcluidas / totalTarefas) * 100) : 0
 
-  /* -- persist�ncia -- */
+  /* ── persistência ── */
   const save = async () => {
     setSaving(true)
     try {
@@ -194,7 +194,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
     setIsEditing(false)
   }
 
-  /* -- colunas -- */
+  /* ── colunas ── */
   const addColuna = () =>
     setColunas(c => [...c, { id: Date.now().toString(), titulo: `Fase ${c.length + 1}`, cor: 'blue', tarefas: [] }])
 
@@ -204,7 +204,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
   const updateColuna = (id: string, field: 'titulo' | 'cor', value: string) =>
     setColunas(c => c.map(col => col.id === id ? { ...col, [field]: value } : col))
 
-  /* -- tarefas -- */
+  /* ── tarefas ── */
   const addTarefa = (colunaId: string) =>
     setColunas(c => c.map(col => col.id === colunaId
       ? { ...col, tarefas: [...col.tarefas, { id: Date.now().toString(), titulo: 'Nova tarefa', estado: 'nao_iniciada' as TarefaEstado, data: '' }] }
@@ -243,53 +243,53 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
     }).catch(() => {})
   }
 
-  /* ---------------------------------------------------------- */
+  /* ────────────────────────────────────────────────────────── */
   /*  RENDER                                                    */
-  /* ---------------------------------------------------------- */
+  /* ────────────────────────────────────────────────────────── */
   return (
     <>
       <HeroUploadBlock url={heroUrl} isEditing={isEditing} onChange={setHeroUrl} />
 
       <div className="relative z-10 px-6 sm:px-10 py-10">
 
-        {/* -- Back link -- */}
+        {/* ── Back link ── */}
         <Link href={`/portal-media/${initial.ref}`}
-          className="inline-flex items-center gap-2 text-[11px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-10 group">
-          <span className="group-hover:-translate-x-1 transition-transform duration-200">�</span>
+          className="inline-flex items-center gap-2 text-[9px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-10 group">
+          <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
           Portal {initial.nome}
         </Link>
 
-        {/* -- Board header -- */}
+        {/* ── Board header ── */}
         <div className="border border-white/[0.07] bg-white/[0.015] px-6 py-5 mb-8 flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex-1">
-            <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-1">RL PROD � {initial.nome}</p>
+            <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-1">RL PROD · {initial.nome}</p>
             <h1 className="text-2xl font-extralight tracking-[0.35em] text-white/80 uppercase">Road Map</h1>
           </div>
 
           {/* Stats pills */}
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2 border border-white/[0.07] bg-white/[0.02] px-3 py-1.5">
-              <span className="text-[11px] tracking-[0.2em] uppercase">Fases</span>
-              <span className="text-[13px] font-mono text-white/55">{colunas.length}</span>
+              <span className="text-[9px] tracking-[0.2em] uppercase">Fases</span>
+              <span className="text-[11px] font-mono text-white/55">{colunas.length}</span>
             </div>
             <div className="flex items-center gap-2 border border-white/[0.07] bg-white/[0.02] px-3 py-1.5">
-              <span className="text-[11px] tracking-[0.2em] uppercase">Tarefas</span>
-              <span className="text-[13px] font-mono text-white/55">{totalConcluidas}/{totalTarefas}</span>
+              <span className="text-[9px] tracking-[0.2em] uppercase">Tarefas</span>
+              <span className="text-[11px] font-mono text-white/55">{totalConcluidas}/{totalTarefas}</span>
             </div>
             <div className="flex items-center gap-2 border border-emerald-400/20 bg-emerald-400/5 px-3 py-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              <span className="text-[13px] font-mono text-emerald-400/80">{progresso}%</span>
+              <span className="text-[11px] font-mono text-emerald-400/80">{progresso}%</span>
             </div>
             {isAdmin && isEditing && (
               <button onClick={addColuna}
-                className="border border-dashed border-white/20 hover:border-white/40 px-4 py-1.5 text-[11px] tracking-[0.3em] text-white/30 hover:text-white/60 uppercase transition-colors">
+                className="border border-dashed border-white/20 hover:border-white/40 px-4 py-1.5 text-[9px] tracking-[0.3em] text-white/30 hover:text-white/60 uppercase transition-colors">
                 + Coluna
               </button>
             )}
           </div>
         </div>
 
-        {/* -- Barra de progresso global -- */}
+        {/* ── Barra de progresso global ── */}
         <div className="h-px w-full bg-white/[0.05] relative mb-8">
           <div
             className="absolute left-0 top-0 h-full bg-gradient-to-r from-emerald-400/60 to-emerald-400/20 transition-all duration-700"
@@ -297,37 +297,37 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
           />
         </div>
 
-        {/* -- Explica��o para o cliente -- */}
+        {/* ── Explicação para o cliente ── */}
         <div className="mb-10 border border-white/[0.07] bg-white/[0.02] px-6 py-6 flex flex-col gap-4">
-          <p className="text-[11px] tracking-[0.5em] text-white/20 uppercase">O que � o Road Map?</p>
-          <p className="text-[15px] font-light text-white/65 leading-relaxed tracking-wide">
-            O Road Map � o quadro visual que mostra, em tempo real, o estado de cada fase do seu projeto. Est� organizado em colunas que representam as grandes etapas do processo, desde o briefing inicial at� � entrega final.
+          <p className="text-[9px] tracking-[0.5em] text-white/20 uppercase">O que é o Road Map?</p>
+          <p className="text-[13px] font-light text-white/65 leading-relaxed tracking-wide">
+            O Road Map é o quadro visual que mostra, em tempo real, o estado de cada fase do seu projeto. Está organizado em colunas que representam as grandes etapas do processo, desde o briefing inicial até à entrega final.
           </p>
           <div className="flex flex-col gap-3">
             {[
-              { n: '01', t: 'Vis�o geral do projeto',   d: 'Num �nico ecr� tens o panorama completo: o que j� foi conclu�do, o que est� em curso e o que ainda est� por fazer.' },
-              { n: '02', t: 'Fases e tarefas',          d: 'Cada coluna � uma fase do projeto. Dentro de cada fase existem tarefas espec�ficas, cada uma com o seu estado e data prevista.' },
-              { n: '03', t: 'Estados em tempo real',    d: 'As tarefas atualizam o estado � medida que o trabalho avan�a: Conclu�do, Em andamento, Aguardar, Enviado ou N�o iniciada.' },
-              { n: '04', t: 'Transpar�ncia total',      d: 'O objetivo � garantir que est�s sempre informado sobre o progresso, sem teres de perguntar. Tens acesso ao mesmo quadro que a nossa equipa.' },
+              { n: '01', t: 'Visão geral do projeto',   d: 'Num único ecrã tens o panorama completo: o que já foi concluído, o que está em curso e o que ainda está por fazer.' },
+              { n: '02', t: 'Fases e tarefas',          d: 'Cada coluna é uma fase do projeto. Dentro de cada fase existem tarefas específicas, cada uma com o seu estado e data prevista.' },
+              { n: '03', t: 'Estados em tempo real',    d: 'As tarefas atualizam o estado à medida que o trabalho avança: Concluído, Em andamento, Aguardar, Enviado ou Não iniciada.' },
+              { n: '04', t: 'Transparência total',      d: 'O objetivo é garantir que estás sempre informado sobre o progresso, sem teres de perguntar. Tens acesso ao mesmo quadro que a nossa equipa.' },
             ].map(({ n, t, d }) => (
               <div key={n} className="flex items-start gap-4 border-t border-white/[0.05] pt-3">
-                <span className="text-[12px] font-mono text-white/15 shrink-0 mt-0.5">{n}</span>
+                <span className="text-[10px] font-mono text-white/15 shrink-0 mt-0.5">{n}</span>
                 <div>
-                  <p className="text-[13px] tracking-[0.2em] text-white/55 font-medium mb-1">{t}</p>
-                  <p className="text-[14px] font-light text-white/30 leading-relaxed">{d}</p>
+                  <p className="text-[11px] tracking-[0.2em] text-white/55 font-medium mb-1">{t}</p>
+                  <p className="text-[12px] font-light text-white/30 leading-relaxed">{d}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* -- Legenda de estados -- */}
+        {/* ── Legenda de estados ── */}
         <div className="flex flex-wrap items-center gap-3 mb-10">
           {ESTADO_OPTIONS.map(opt => {
             const cfg = ESTADO_CFG[opt.value]
             return (
               <span key={opt.value}
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] ${cfg.pill} ${cfg.text}`}>
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[9px] ${cfg.pill} ${cfg.text}`}>
                 <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot.replace(' animate-pulse', '')}`} />
                 {cfg.label}
               </span>
@@ -335,11 +335,11 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
           })}
         </div>
 
-        {/* -- Board -- */}
+        {/* ── Board ── */}
         {colunas.length === 0 ? (
           <div className="border border-dashed border-white/[0.07] px-6 py-20 text-center">
-            <p className="text-[11px] tracking-[0.4em] text-white/20 uppercase mb-2">Road map vazio</p>
-            {isAdmin && <p className="text-[14px] font-light text-white/15">Clica em "Editar" e depois em "+ Coluna" para come�ar</p>}
+            <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase mb-2">Road map vazio</p>
+            {isAdmin && <p className="text-[12px] font-light text-white/15">Clica em "Editar" e depois em "+ Coluna" para começar</p>}
           </div>
         ) : (
           <div className="overflow-x-auto -mx-6 px-6 sm:-mx-10 sm:px-10 pb-8">
@@ -353,7 +353,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
                 return (
                   <div key={coluna.id} className="w-[285px] flex-shrink-0 flex flex-col">
 
-                    {/* -- Cabe�alho da coluna -- */}
+                    {/* ── Cabeçalho da coluna ── */}
                     {isEditing ? (
                       <div className="border border-white/[0.08] bg-white/[0.025] px-3 pt-3 pb-3 mb-3 flex flex-col gap-3">
                         {/* Seletor de cor */}
@@ -365,20 +365,20 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
                             />
                           ))}
                           <button onClick={() => removeColuna(coluna.id)}
-                            className="ml-auto text-[13px] text-red-400/40 hover:text-red-400/70 transition-colors">?</button>
+                            className="ml-auto text-[11px] text-red-400/40 hover:text-red-400/70 transition-colors">✕</button>
                         </div>
                         <input
                           value={coluna.titulo}
                           onChange={e => updateColuna(coluna.id, 'titulo', e.target.value)}
-                          className="w-full bg-transparent text-[12px] tracking-[0.3em] text-white/70 uppercase font-medium focus:outline-none border-b border-white/10 focus:border-white/30 pb-0.5"
+                          className="w-full bg-transparent text-[10px] tracking-[0.3em] text-white/70 uppercase font-medium focus:outline-none border-b border-white/10 focus:border-white/30 pb-0.5"
                           placeholder="Nome da fase"
                         />
                       </div>
                     ) : (
                       <div className="flex items-center gap-2.5 mb-3 px-0.5">
                         <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${dot}`} />
-                        <span className="text-[12px] tracking-[0.3em] text-white/60 uppercase font-medium flex-1 truncate">{coluna.titulo}</span>
-                        <span className={`text-[12px] font-mono rounded-full px-2.5 py-0.5 shrink-0
+                        <span className="text-[10px] tracking-[0.3em] text-white/60 uppercase font-medium flex-1 truncate">{coluna.titulo}</span>
+                        <span className={`text-[10px] font-mono rounded-full px-2.5 py-0.5 shrink-0
                           ${concluidas === coluna.tarefas.length && coluna.tarefas.length > 0
                             ? 'bg-emerald-400/15 text-emerald-400/80'
                             : 'bg-white/[0.06] text-white/35'}`}>
@@ -387,10 +387,10 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
                       </div>
                     )}
 
-                    {/* -- Lane -- */}
+                    {/* ── Lane ── */}
                     <div className={`border rounded-none p-2.5 flex flex-col gap-2 flex-1 min-h-[80px] ${lane}`}>
 
-                      {/* -- Cards de tarefa -- */}
+                      {/* ── Cards de tarefa ── */}
                       {coluna.tarefas.map(tarefa => {
                         const cfg = ESTADO_CFG[tarefa.estado]
                         return (
@@ -398,9 +398,9 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
                             className="bg-[#060b15] border border-white/[0.07] hover:border-white/[0.14] transition-all duration-200 px-3 py-3 group/card">
 
                             {isEditing ? (
-                              /* -- Modo edi��o -- */
+                              /* ── Modo edição ── */
                               <div className="flex gap-2">
-                                {/* Setas de reordena��o */}
+                                {/* Setas de reordenação */}
                                 <div className="flex flex-col gap-1 shrink-0 pt-0.5">
                                   <button
                                     onClick={() => moveTarefa(coluna.id, tarefa.id, 'up')}
@@ -421,18 +421,18 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
                                     </svg>
                                   </button>
                                 </div>
-                                {/* Campos de edi��o */}
+                                {/* Campos de edição */}
                                 <div className="flex flex-col gap-2 flex-1 min-w-0">
                                   <input
                                     value={tarefa.titulo}
                                     onChange={e => updateTarefa(coluna.id, tarefa.id, 'titulo', e.target.value)}
-                                    className="w-full bg-transparent text-[13px] text-white/70 focus:outline-none border-b border-white/[0.08] focus:border-white/25 pb-0.5 placeholder:text-white/15"
-                                    placeholder="T�tulo da tarefa"
+                                    className="w-full bg-transparent text-[11px] text-white/70 focus:outline-none border-b border-white/[0.08] focus:border-white/25 pb-0.5 placeholder:text-white/15"
+                                    placeholder="Título da tarefa"
                                   />
                                   <select
                                     value={tarefa.estado}
                                     onChange={e => updateTarefa(coluna.id, tarefa.id, 'estado', e.target.value)}
-                                    className="bg-[#04080f] border border-white/[0.08] text-[13px] text-white/50 px-2 py-1.5 focus:outline-none focus:border-white/25 w-full rounded-none"
+                                    className="bg-[#04080f] border border-white/[0.08] text-[11px] text-white/50 px-2 py-1.5 focus:outline-none focus:border-white/25 w-full rounded-none"
                                   >
                                     {ESTADO_OPTIONS.map(o => (
                                       <option key={o.value} value={o.value}>{o.label}</option>
@@ -442,18 +442,18 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
                                     type="date"
                                     value={tarefa.data ?? ''}
                                     onChange={e => updateTarefa(coluna.id, tarefa.id, 'data', e.target.value)}
-                                    className="bg-[#04080f] border border-white/[0.08] text-[13px] text-white/40 px-2 py-1.5 focus:outline-none focus:border-white/25 w-full"
+                                    className="bg-[#04080f] border border-white/[0.08] text-[11px] text-white/40 px-2 py-1.5 focus:outline-none focus:border-white/25 w-full"
                                   />
                                   <button onClick={() => removeTarefa(coluna.id, tarefa.id)}
-                                    className="text-[11px] tracking-[0.25em] text-red-400/40 hover:text-red-400/70 uppercase transition-colors self-end">
+                                    className="text-[9px] tracking-[0.25em] text-red-400/40 hover:text-red-400/70 uppercase transition-colors self-end">
                                     Remover
                                   </button>
                                 </div>
                               </div>
                             ) : (
-                              /* -- Modo visualiza��o -- */
+                              /* ── Modo visualização ── */
                               <div className="flex gap-2 items-start">
-                                {/* Setas � s� vis�veis para admin */}
+                                {/* Setas — só visíveis para admin */}
                                 {isAdmin && (
                                   <div className="flex flex-col gap-1 shrink-0 opacity-0 group-hover/card:opacity-100 transition-opacity duration-150">
                                     <button
@@ -477,13 +477,13 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
                                   </div>
                                 )}
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-[14px] font-light text-white/65 leading-snug mb-3">{tarefa.titulo}</p>
-                                  <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] ${cfg.pill} ${cfg.text}`}>
+                                  <p className="text-[12px] font-light text-white/65 leading-snug mb-3">{tarefa.titulo}</p>
+                                  <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[9px] ${cfg.pill} ${cfg.text}`}>
                                     <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
                                     {cfg.label}
                                   </span>
                                   {tarefa.data && (
-                                    <p className="flex items-center gap-1.5 text-[11px] text-white/20 mt-2.5">
+                                    <p className="flex items-center gap-1.5 text-[9px] text-white/20 mt-2.5">
                                       <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="shrink-0 opacity-50">
                                         <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
                                         <path d="M5 1.5V4M11 1.5V4M2 7h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
@@ -498,18 +498,18 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
                         )
                       })}
 
-                      {/* Bot�o adicionar tarefa */}
+                      {/* Botão adicionar tarefa */}
                       {isEditing && (
                         <button onClick={() => addTarefa(coluna.id)}
-                          className="border border-dashed border-white/[0.08] hover:border-white/20 py-3 text-[11px] tracking-[0.35em] text-white/20 hover:text-white/45 uppercase transition-colors w-full">
+                          className="border border-dashed border-white/[0.08] hover:border-white/20 py-3 text-[9px] tracking-[0.35em] text-white/20 hover:text-white/45 uppercase transition-colors w-full">
                           + Tarefa
                         </button>
                       )}
 
-                      {/* Estado vazio (n�o edi��o) */}
+                      {/* Estado vazio (não edição) */}
                       {coluna.tarefas.length === 0 && !isEditing && (
                         <div className="py-6 text-center">
-                          <p className="text-[11px] text-white/12 tracking-[0.3em] uppercase">Sem tarefas</p>
+                          <p className="text-[9px] text-white/12 tracking-[0.3em] uppercase">Sem tarefas</p>
                         </div>
                       )}
                     </div>
