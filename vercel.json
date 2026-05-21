@@ -3,6 +3,10 @@
     {
       "path": "/api/newsletter-cron",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/relatorio-semanal",
+      "schedule": "0 19 * * 5"
     }
   ]
 }
