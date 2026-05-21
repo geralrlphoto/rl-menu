@@ -1,8 +1,10 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { CalEvent } from './CalendarClient'
+import Link from 'next/link'
+import type { CalEvent, TarefaEvent } from './CalendarClient'
 import HistoricoTimeBlocks from './HistoricoTimeBlocks'
+import ResumoDia from './ResumoDia'
 
 type TimerState = 'idle' | 'running' | 'paused' | 'completed'
 
@@ -149,13 +151,29 @@ function fmtDateLong(d: string) {
   })
 }
 
-export default function TimeBlocks({ events }: { events: CalEvent[] }) {
+export default function TimeBlocks({
+  events, tarefas: initialTarefas,
+}: { events: CalEvent[]; tarefas?: TarefaEvent[] }) {
   const [day, setDay]               = useState<string>(todayStr())
   const [blocks, setBlocks]         = useState<Block[]>([])
   const [loading, setLoading]       = useState(true)
   const [adding, setAdding]         = useState(false)
   const [showLegend, setShowLegend] = useState(true)
   const [historicoOpen, setHistoricoOpen] = useState(false)
+  const [resumoOpen, setResumoOpen]       = useState(false)
+  // Local copy of tarefas for optimistic toggle from inside the hero clock.
+  const [tarefas, setTarefas]       = useState<TarefaEvent[]>(initialTarefas ?? [])
+  useEffect(() => { setTarefas(initialTarefas ?? []) }, [initialTarefas])
+
+  async function toggleTarefaStatus(id: string, currentStatus: TarefaEvent['status']) {
+    const newStatus: TarefaEvent['status'] = currentStatus === 'CONCLUIDA' ? 'NOVA' : 'CONCLUIDA'
+    setTarefas(prev => prev.map(t => t.id === id ? { ...t, status: newStatus } : t))
+    await fetch(`/api/tarefas/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    })
+  }
   // Bumped whenever blocks change in the daily list so the open Histórico
   // modal re-fetches and stays in sync.
   const [historicoVersion, setHistoricoVersion] = useState(0)
@@ -175,6 +193,51 @@ export default function TimeBlocks({ events }: { events: CalEvent[] }) {
   const [newCatCor, setNewCatCor]     = useState('#7C3AED')
   const [newCatDur, setNewCatDur]     = useState<number>(60)
   const [catSaving, setCatSaving]     = useState(false)
+
+  // Edit-categoria inline state (uses the categoria id, null when no row is being edited)
+  const [editCatId, setEditCatId]     = useState<string | null>(null)
+  const [editCatLabel, setEditCatLabel] = useState('')
+  const [editCatCor, setEditCatCor]     = useState('#7C3AED')
+  const [editCatDur, setEditCatDur]     = useState<number>(60)
+  const [editCatSaving, setEditCatSaving] = useState(false)
+
+  function startEditCategoria(p: Preset) {
+    if (!p.id) return
+    setEditCatId(p.id)
+    setEditCatLabel(p.label)
+    setEditCatCor(p.cor)
+    setEditCatDur(p.defaultDur)
+  }
+  function cancelEditCategoria() {
+    setEditCatId(null)
+  }
+  async function saveEditCategoria() {
+    if (!editCatId || !editCatLabel.trim() || editCatDur <= 0) return
+    setEditCatSaving(true)
+    try {
+      const res = await fetch(`/api/time-block-categorias/${editCatId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          label: editCatLabel.trim(),
+          cor: editCatCor,
+          duracao_default_minutos: editCatDur,
+        }),
+      })
+      if (res.ok) {
+        setServerPresets(prev => prev.map(p => p.id === editCatId
+          ? { ...p, label: editCatLabel.trim(), cor: editCatCor, defaultDur: editCatDur }
+          : p
+        ))
+        setEditCatId(null)
+      } else {
+        const d = await res.json().catch(() => ({}))
+        alert(d.error ?? 'Erro ao guardar')
+      }
+    } finally {
+      setEditCatSaving(false)
+    }
+  }
 
   async function loadCategorias() {
     try {
@@ -575,6 +638,22 @@ export default function TimeBlocks({ events }: { events: CalEvent[] }) {
   const heroIsRunning = heroBlock?.timer_state === 'running'
   const heroIsPaused  = heroBlock?.timer_state === 'paused'
 
+  // Tarefas linked to the same casamento as the hero block (pendentes primeiro,
+  // depois concluídas). Mostra até 5 — fecha o ciclo entre time blocks e tarefas.
+  const heroTarefas: TarefaEvent[] = useMemo(() => {
+    if (!heroBlock?.evento_id) return []
+    const linked = tarefas.filter(t => t.evento_id === heroBlock.evento_id)
+    return [...linked].sort((a, b) => {
+      // Concluídas no fim
+      if (a.status === 'CONCLUIDA' && b.status !== 'CONCLUIDA') return 1
+      if (a.status !== 'CONCLUIDA' && b.status === 'CONCLUIDA') return -1
+      // Pendentes mais próximas primeiro
+      const da = a.data_prazo ?? '9999-12-31'
+      const db = b.data_prazo ?? '9999-12-31'
+      return da.localeCompare(db)
+    }).slice(0, 5)
+  }, [tarefas, heroBlock?.evento_id])
+
   return (
     <section className="mt-8 rounded-2xl p-6 flex flex-col gap-5"
       style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -600,6 +679,12 @@ export default function TimeBlocks({ events }: { events: CalEvent[] }) {
           </span>
           {!adding && (
             <>
+              <button onClick={() => setResumoOpen(true)}
+                title="Resumo do tempo gasto neste dia"
+                className="text-xs px-3 py-1.5 rounded-lg transition-colors"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.65)' }}>
+                📋 Resumo do dia
+              </button>
               <button onClick={() => setHistoricoOpen(true)}
                 title="Ver tempo total gasto por casamento"
                 className="text-xs px-3 py-1.5 rounded-lg transition-colors"
@@ -701,6 +786,59 @@ export default function TimeBlocks({ events }: { events: CalEvent[] }) {
                   ⏹
                 </button>
               </div>
+
+              {/* Tarefas do casamento — só aparecem quando o bloco está ligado a um evento */}
+              {heroBlock.evento_id && heroTarefas.length > 0 && (
+                <div className="w-full max-w-xl mt-4 px-3 py-3 rounded-xl"
+                  style={{ background: 'rgba(0,0,0,0.30)', border: `1px solid ${heroBlock.cor}30` }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] tracking-[0.3em] uppercase" style={{ color: heroBlock.cor + 'C0' }}>
+                      📋 Tarefas deste casamento
+                    </span>
+                    <Link href={`/eventos-2026/${heroBlock.evento_id}`}
+                      className="text-[10px] tracking-wider text-white/40 hover:text-white/80 transition-colors">
+                      Ver tudo →
+                    </Link>
+                  </div>
+                  <ul className="flex flex-col gap-1">
+                    {heroTarefas.map(t => {
+                      const done = t.status === 'CONCLUIDA'
+                      return (
+                        <li key={t.id} className="flex items-center gap-2 text-sm">
+                          <button onClick={() => toggleTarefaStatus(t.id, t.status)}
+                            className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-colors text-[10px]"
+                            style={{
+                              border: `1px solid ${done ? 'rgba(134,239,172,0.5)' : 'rgba(255,255,255,0.25)'}`,
+                              background: done ? 'rgba(74,222,128,0.20)' : 'transparent',
+                              color: done ? '#86EFAC' : 'transparent',
+                            }}
+                            title={done ? 'Marcar por fazer' : 'Marcar como feita'}>
+                            ✓
+                          </button>
+                          <span className="text-left flex-1"
+                            style={{
+                              color: done ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.85)',
+                              textDecoration: done ? 'line-through' : 'none',
+                            }}>
+                            {t.titulo}
+                          </span>
+                          {t.hora && (
+                            <span className="text-[10px] text-white/40 tracking-wider">
+                              {t.hora.slice(0, 5)}
+                            </span>
+                          )}
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              )}
+              {heroBlock.evento_id && heroTarefas.length === 0 && (
+                <div className="text-[10px] text-white/30 tracking-wider mt-2 text-center max-w-xl">
+                  Sem tarefas pendentes para este casamento.{' '}
+                  <Link href={`/eventos-2026/${heroBlock.evento_id}`} className="text-white/55 hover:text-white">criar nova →</Link>
+                </div>
+              )}
             </>
           ) : (
             <>
@@ -987,20 +1125,57 @@ export default function TimeBlocks({ events }: { events: CalEvent[] }) {
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-white/65">
-            {PRESETS.filter(p => p.key !== 'custom').map(p => (
-              <div key={p.key} className="group flex items-center gap-2">
-                <span className="inline-block w-4 h-4 rounded-sm flex-shrink-0" style={{ background: p.cor }} />
-                <span className="flex-1 truncate">{p.label}</span>
-                {p.fixo && <span className="text-[9px] text-white/25 tracking-wider uppercase">fixo</span>}
-                {!p.fixo && p.id && (
-                  <button onClick={() => handleDeleteCategoria(p)}
-                    title={`Eliminar "${p.label}"`}
-                    className="w-5 h-5 flex items-center justify-center rounded text-white/25 hover:text-red-400 hover:bg-red-500/10 transition-colors text-xs opacity-0 group-hover:opacity-100">
-                    ✕
-                  </button>
-                )}
-              </div>
-            ))}
+            {PRESETS.filter(p => p.key !== 'custom').map(p => {
+              const isEditing = editCatId === p.id
+              if (isEditing) {
+                return (
+                  <div key={p.key} className="col-span-1 sm:col-span-2 p-2 rounded-lg flex flex-wrap items-end gap-2"
+                    style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${editCatCor}50` }}>
+                    <input value={editCatLabel} onChange={e => setEditCatLabel(e.target.value)}
+                      placeholder="Nome"
+                      autoFocus
+                      className="flex-1 min-w-[180px] bg-black/30 border border-white/10 rounded-lg px-2 py-1.5 text-sm text-white focus:outline-none focus:border-[#C9A84C]/40"
+                      onKeyDown={e => { if (e.key === 'Enter' && !editCatSaving) saveEditCategoria(); if (e.key === 'Escape') cancelEditCategoria() }}
+                    />
+                    <input type="color" value={editCatCor} onChange={e => setEditCatCor(e.target.value)}
+                      className="w-10 h-9 rounded-lg bg-transparent border border-white/10 cursor-pointer" />
+                    <input type="number" min={1} value={editCatDur}
+                      onChange={e => setEditCatDur(parseInt(e.target.value || '0', 10))}
+                      title="Duração default (min)"
+                      className="w-20 bg-black/30 border border-white/10 rounded-lg px-2 py-1.5 text-sm text-white focus:outline-none focus:border-[#C9A84C]/40" />
+                    <button onClick={cancelEditCategoria}
+                      className="px-2 py-1.5 text-xs text-white/40 hover:text-white/70">Cancelar</button>
+                    <button onClick={saveEditCategoria}
+                      disabled={editCatSaving || !editCatLabel.trim() || editCatDur <= 0}
+                      className="px-3 py-1.5 rounded-lg text-xs tracking-wider transition-colors disabled:opacity-50"
+                      style={{ background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.40)', color: '#C9A84C' }}>
+                      {editCatSaving ? 'A guardar…' : 'Guardar'}
+                    </button>
+                  </div>
+                )
+              }
+              return (
+                <div key={p.key} className="group flex items-center gap-2">
+                  <span className="inline-block w-4 h-4 rounded-sm flex-shrink-0" style={{ background: p.cor }} />
+                  <span className="flex-1 truncate">{p.label}</span>
+                  {p.fixo && <span className="text-[9px] text-white/25 tracking-wider uppercase">fixo</span>}
+                  {p.id && (
+                    <button onClick={() => startEditCategoria(p)}
+                      title={`Editar "${p.label}"`}
+                      className="w-5 h-5 flex items-center justify-center rounded text-white/25 hover:text-[#C9A84C] hover:bg-white/5 transition-colors text-xs opacity-0 group-hover:opacity-100">
+                      ✎
+                    </button>
+                  )}
+                  {!p.fixo && p.id && (
+                    <button onClick={() => handleDeleteCategoria(p)}
+                      title={`Eliminar "${p.label}"`}
+                      className="w-5 h-5 flex items-center justify-center rounded text-white/25 hover:text-red-400 hover:bg-red-500/10 transition-colors text-xs opacity-0 group-hover:opacity-100">
+                      ✕
+                    </button>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
@@ -1010,6 +1185,14 @@ export default function TimeBlocks({ events }: { events: CalEvent[] }) {
         onClose={() => setHistoricoOpen(false)}
         events={events}
         refreshSignal={historicoVersion}
+      />
+
+      <ResumoDia
+        open={resumoOpen}
+        onClose={() => setResumoOpen(false)}
+        day={day}
+        blocks={blocks}
+        events={events}
       />
     </section>
   )

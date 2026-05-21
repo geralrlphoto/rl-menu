@@ -560,7 +560,7 @@ export default function CalendarClient({
         </div>
 
         {/* Time Blocks */}
-        <TimeBlocks events={events} />
+        <TimeBlocks events={events} tarefas={tarefas} />
       </div>
 
       {/* Modal */}
