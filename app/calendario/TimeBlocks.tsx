@@ -162,18 +162,26 @@ export default function TimeBlocks({
   const [showLegend, setShowLegend] = useState(true)
   const [historicoOpen, setHistoricoOpen] = useState(false)
   const [resumoOpen, setResumoOpen]       = useState(false)
-  // Hora a que o utilizador começa o dia. Default 09:30. Lê/escreve localStorage
-  // para manter a preferência entre sessões.
+  // Hora a que o utilizador começa e termina o dia. Default 09:30 → 18:30.
+  // Lê/escreve localStorage para manter a preferência entre sessões.
   const [startHour, setStartHour]   = useState<string>('09:30')
+  const [endHour,   setEndHour]     = useState<string>('18:30')
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const saved = window.localStorage.getItem('tb_start_hour')
-    if (saved && /^\d{2}:\d{2}$/.test(saved)) setStartHour(saved)
+    const s = window.localStorage.getItem('tb_start_hour')
+    if (s && /^\d{2}:\d{2}$/.test(s)) setStartHour(s)
+    const e = window.localStorage.getItem('tb_end_hour')
+    if (e && /^\d{2}:\d{2}$/.test(e)) setEndHour(e)
   }, [])
   function handleStartHourChange(v: string) {
     if (!/^\d{2}:\d{2}$/.test(v)) return
     setStartHour(v)
     try { window.localStorage.setItem('tb_start_hour', v) } catch {}
+  }
+  function handleEndHourChange(v: string) {
+    if (!/^\d{2}:\d{2}$/.test(v)) return
+    setEndHour(v)
+    try { window.localStorage.setItem('tb_end_hour', v) } catch {}
   }
   // Local copy of tarefas for optimistic toggle from inside the hero clock.
   const [tarefas, setTarefas]       = useState<TarefaEvent[]>(initialTarefas ?? [])
@@ -551,8 +559,8 @@ export default function TimeBlocks({
         { key: 'clientes', title: 'Clientes — encerramento', cor: presetClientes.cor, inicio: '18:00:00', fim: '18:30:00' },
       ]
 
-      // 2b) Aplica deslocamento se o utilizador definiu uma hora de arranque
-      // diferente das 09:30 (default dos templates).
+      // 2b) Aplica deslocamento de TODOS os slots em função da hora de arranque
+      // escolhida (default 09:30).
       const baseStartSec   = toSeconds('09:30:00')
       const userStartSec   = toSeconds(hms(startHour))
       const offsetSec      = userStartSec - baseStartSec
@@ -562,6 +570,29 @@ export default function TimeBlocks({
           inicio: addSeconds(s.inicio, offsetSec),
           fim:    addSeconds(s.fim, offsetSec),
         }))
+      }
+
+      // 2c) Reposiciona o ENCERRAMENTO (Clientes 30min) para terminar na hora
+      // definida pelo utilizador (default 18:30). Mantém duração 30min.
+      const userEndSec = toSeconds(hms(endHour))
+      toCreate = toCreate.map(s => {
+        if (s.key !== 'clientes') return s
+        const inicio = addSeconds(hms(endHour), -30 * 60)
+        return { ...s, inicio, fim: hms(endHour) }
+      })
+
+      // 2d) Detecta sobreposição: se o último bloco de trabalho cai depois do
+      // início do encerramento, avisa o utilizador antes de inserir.
+      const enc = toCreate.find(s => s.key === 'clientes')
+      const conflict = enc ? toCreate.find(s => s !== enc && s.fim > enc.inicio) : null
+      if (enc && conflict) {
+        const ok = confirm(
+          `⚠️ A hora de fim (${hms(endHour).slice(0,5)}) é cedo demais para encaixar ` +
+          `todos os blocos.\n\nO bloco "${conflict.title}" (${conflict.inicio.slice(0,5)}–${conflict.fim.slice(0,5)}) ` +
+          `sobrepõe-se ao encerramento (${enc.inicio.slice(0,5)}–${enc.fim.slice(0,5)}).\n\n` +
+          `Continuar mesmo assim? (Vão ser criados mas com conflitos visíveis.)`
+        )
+        if (!ok) { setSaving(false); return }
       }
 
       // 3) Insert sequentially to preserve order
@@ -767,12 +798,19 @@ export default function TimeBlocks({
               className="ml-2 bg-black/30 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white/70 focus:outline-none focus:border-[#C9A84C]/40" />
           </div>
 
-          {/* Hora de arranque do dia — usada pelo Auto-criar dia */}
+          {/* Hora de arranque e fim do dia — usadas pelo Auto-criar dia */}
           <label className="flex items-center gap-2 ml-1">
             <span className="text-[9px] tracking-[0.3em] uppercase text-white/30 whitespace-nowrap">Iniciar às</span>
             <input type="time" value={startHour}
               onChange={e => handleStartHourChange(e.target.value)}
-              title="Hora a que começas o dia (usada no Auto-criar dia)"
+              title="Hora a que começas o dia (default 09:30)"
+              className="bg-black/30 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-[#C9A84C]/40" />
+          </label>
+          <label className="flex items-center gap-2">
+            <span className="text-[9px] tracking-[0.3em] uppercase text-white/30 whitespace-nowrap">Terminar às</span>
+            <input type="time" value={endHour}
+              onChange={e => handleEndHourChange(e.target.value)}
+              title="Hora a que termina o encerramento do dia (default 18:30)"
               className="bg-black/30 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-[#C9A84C]/40" />
           </label>
         </div>
