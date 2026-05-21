@@ -164,17 +164,15 @@ export default function TimeBlocks({ events }: { events: CalEvent[] }) {
     return cli || ref || null
   }
 
-  // All events for the dropdown. Sorted by proximity to refDate for the ones
-  // that have a date; events without a date go to the end.
-  function nearbyEvents(refDate: string | null) {
-    const ref = refDate ? new Date(refDate + 'T00:00:00').getTime() : Date.now()
+  // All events for the dropdown, sorted chronologically (Jan → Dec).
+  // Events without a date go to the end, sorted alphabetically by reference.
+  // `refDate` is kept in the signature for API compatibility but no longer used.
+  function nearbyEvents(_refDate: string | null) {
     return [...events].sort((a, b) => {
       if (!a.data_evento && !b.data_evento) return (a.referencia || '').localeCompare(b.referencia || '')
       if (!a.data_evento) return 1
       if (!b.data_evento) return -1
-      const da = Math.abs(new Date(a.data_evento + 'T00:00:00').getTime() - ref)
-      const db = Math.abs(new Date(b.data_evento + 'T00:00:00').getTime() - ref)
-      return da - db
+      return a.data_evento.localeCompare(b.data_evento)  // ascending: Jan → Dec
     })
   }
 
