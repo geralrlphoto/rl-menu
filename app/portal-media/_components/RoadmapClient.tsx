@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import type { Projeto, RoadmapColuna, RoadmapTarefa, TarefaEstado } from '@/app/portal-media/_data/mockProject'
@@ -254,7 +254,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
 
         {/* ── Back link ── */}
         <Link href={`/portal-media/${initial.ref}`}
-          className="inline-flex items-center gap-2 text-[9px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-10 group">
+          className="inline-flex items-center gap-2 text-[11px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-10 group">
           <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
           Portal {initial.nome}
         </Link>
@@ -269,20 +269,20 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
           {/* Stats pills */}
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2 border border-white/[0.07] bg-white/[0.02] px-3 py-1.5">
-              <span className="text-[9px] tracking-[0.2em] uppercase">Fases</span>
-              <span className="text-[11px] font-mono text-white/55">{colunas.length}</span>
+              <span className="text-[11px] tracking-[0.2em] uppercase">Fases</span>
+              <span className="text-[13px] font-mono text-white/55">{colunas.length}</span>
             </div>
             <div className="flex items-center gap-2 border border-white/[0.07] bg-white/[0.02] px-3 py-1.5">
-              <span className="text-[9px] tracking-[0.2em] uppercase">Tarefas</span>
-              <span className="text-[11px] font-mono text-white/55">{totalConcluidas}/{totalTarefas}</span>
+              <span className="text-[11px] tracking-[0.2em] uppercase">Tarefas</span>
+              <span className="text-[13px] font-mono text-white/55">{totalConcluidas}/{totalTarefas}</span>
             </div>
             <div className="flex items-center gap-2 border border-emerald-400/20 bg-emerald-400/5 px-3 py-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              <span className="text-[11px] font-mono text-emerald-400/80">{progresso}%</span>
+              <span className="text-[13px] font-mono text-emerald-400/80">{progresso}%</span>
             </div>
             {isAdmin && isEditing && (
               <button onClick={addColuna}
-                className="border border-dashed border-white/20 hover:border-white/40 px-4 py-1.5 text-[9px] tracking-[0.3em] text-white/30 hover:text-white/60 uppercase transition-colors">
+                className="border border-dashed border-white/20 hover:border-white/40 px-4 py-1.5 text-[11px] tracking-[0.3em] text-white/30 hover:text-white/60 uppercase transition-colors">
                 + Coluna
               </button>
             )}
@@ -299,8 +299,8 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
 
         {/* ── Explicação para o cliente ── */}
         <div className="mb-10 border border-white/[0.07] bg-white/[0.02] px-6 py-6 flex flex-col gap-4">
-          <p className="text-[9px] tracking-[0.5em] text-white/20 uppercase">O que é o Road Map?</p>
-          <p className="text-[13px] font-light text-white/65 leading-relaxed tracking-wide">
+          <p className="text-[11px] tracking-[0.5em] text-white/20 uppercase">O que é o Road Map?</p>
+          <p className="text-[15px] font-light text-white/65 leading-relaxed tracking-wide">
             O Road Map é o quadro visual que mostra, em tempo real, o estado de cada fase do seu projeto. Está organizado em colunas que representam as grandes etapas do processo, desde o briefing inicial até à entrega final.
           </p>
           <div className="flex flex-col gap-3">
@@ -311,10 +311,10 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
               { n: '04', t: 'Transparência total',      d: 'O objetivo é garantir que estás sempre informado sobre o progresso, sem teres de perguntar. Tens acesso ao mesmo quadro que a nossa equipa.' },
             ].map(({ n, t, d }) => (
               <div key={n} className="flex items-start gap-4 border-t border-white/[0.05] pt-3">
-                <span className="text-[10px] font-mono text-white/15 shrink-0 mt-0.5">{n}</span>
+                <span className="text-[12px] font-mono text-white/15 shrink-0 mt-0.5">{n}</span>
                 <div>
-                  <p className="text-[11px] tracking-[0.2em] text-white/55 font-medium mb-1">{t}</p>
-                  <p className="text-[12px] font-light text-white/30 leading-relaxed">{d}</p>
+                  <p className="text-[13px] tracking-[0.2em] text-white/55 font-medium mb-1">{t}</p>
+                  <p className="text-[14px] font-light text-white/30 leading-relaxed">{d}</p>
                 </div>
               </div>
             ))}
@@ -327,7 +327,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
             const cfg = ESTADO_CFG[opt.value]
             return (
               <span key={opt.value}
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[9px] ${cfg.pill} ${cfg.text}`}>
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] ${cfg.pill} ${cfg.text}`}>
                 <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot.replace(' animate-pulse', '')}`} />
                 {cfg.label}
               </span>
@@ -338,8 +338,8 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
         {/* ── Board ── */}
         {colunas.length === 0 ? (
           <div className="border border-dashed border-white/[0.07] px-6 py-20 text-center">
-            <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase mb-2">Road map vazio</p>
-            {isAdmin && <p className="text-[12px] font-light text-white/15">Clica em "Editar" e depois em "+ Coluna" para começar</p>}
+            <p className="text-[11px] tracking-[0.4em] text-white/20 uppercase mb-2">Road map vazio</p>
+            {isAdmin && <p className="text-[14px] font-light text-white/15">Clica em "Editar" e depois em "+ Coluna" para começar</p>}
           </div>
         ) : (
           <div className="overflow-x-auto -mx-6 px-6 sm:-mx-10 sm:px-10 pb-8">
@@ -365,20 +365,20 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
                             />
                           ))}
                           <button onClick={() => removeColuna(coluna.id)}
-                            className="ml-auto text-[11px] text-red-400/40 hover:text-red-400/70 transition-colors">✕</button>
+                            className="ml-auto text-[13px] text-red-400/40 hover:text-red-400/70 transition-colors">✕</button>
                         </div>
                         <input
                           value={coluna.titulo}
                           onChange={e => updateColuna(coluna.id, 'titulo', e.target.value)}
-                          className="w-full bg-transparent text-[10px] tracking-[0.3em] text-white/70 uppercase font-medium focus:outline-none border-b border-white/10 focus:border-white/30 pb-0.5"
+                          className="w-full bg-transparent text-[12px] tracking-[0.3em] text-white/70 uppercase font-medium focus:outline-none border-b border-white/10 focus:border-white/30 pb-0.5"
                           placeholder="Nome da fase"
                         />
                       </div>
                     ) : (
                       <div className="flex items-center gap-2.5 mb-3 px-0.5">
                         <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${dot}`} />
-                        <span className="text-[10px] tracking-[0.3em] text-white/60 uppercase font-medium flex-1 truncate">{coluna.titulo}</span>
-                        <span className={`text-[10px] font-mono rounded-full px-2.5 py-0.5 shrink-0
+                        <span className="text-[12px] tracking-[0.3em] text-white/60 uppercase font-medium flex-1 truncate">{coluna.titulo}</span>
+                        <span className={`text-[12px] font-mono rounded-full px-2.5 py-0.5 shrink-0
                           ${concluidas === coluna.tarefas.length && coluna.tarefas.length > 0
                             ? 'bg-emerald-400/15 text-emerald-400/80'
                             : 'bg-white/[0.06] text-white/35'}`}>
@@ -426,13 +426,13 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
                                   <input
                                     value={tarefa.titulo}
                                     onChange={e => updateTarefa(coluna.id, tarefa.id, 'titulo', e.target.value)}
-                                    className="w-full bg-transparent text-[11px] text-white/70 focus:outline-none border-b border-white/[0.08] focus:border-white/25 pb-0.5 placeholder:text-white/15"
+                                    className="w-full bg-transparent text-[13px] text-white/70 focus:outline-none border-b border-white/[0.08] focus:border-white/25 pb-0.5 placeholder:text-white/15"
                                     placeholder="Título da tarefa"
                                   />
                                   <select
                                     value={tarefa.estado}
                                     onChange={e => updateTarefa(coluna.id, tarefa.id, 'estado', e.target.value)}
-                                    className="bg-[#04080f] border border-white/[0.08] text-[11px] text-white/50 px-2 py-1.5 focus:outline-none focus:border-white/25 w-full rounded-none"
+                                    className="bg-[#04080f] border border-white/[0.08] text-[13px] text-white/50 px-2 py-1.5 focus:outline-none focus:border-white/25 w-full rounded-none"
                                   >
                                     {ESTADO_OPTIONS.map(o => (
                                       <option key={o.value} value={o.value}>{o.label}</option>
@@ -442,10 +442,10 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
                                     type="date"
                                     value={tarefa.data ?? ''}
                                     onChange={e => updateTarefa(coluna.id, tarefa.id, 'data', e.target.value)}
-                                    className="bg-[#04080f] border border-white/[0.08] text-[11px] text-white/40 px-2 py-1.5 focus:outline-none focus:border-white/25 w-full"
+                                    className="bg-[#04080f] border border-white/[0.08] text-[13px] text-white/40 px-2 py-1.5 focus:outline-none focus:border-white/25 w-full"
                                   />
                                   <button onClick={() => removeTarefa(coluna.id, tarefa.id)}
-                                    className="text-[9px] tracking-[0.25em] text-red-400/40 hover:text-red-400/70 uppercase transition-colors self-end">
+                                    className="text-[11px] tracking-[0.25em] text-red-400/40 hover:text-red-400/70 uppercase transition-colors self-end">
                                     Remover
                                   </button>
                                 </div>
@@ -477,13 +477,13 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
                                   </div>
                                 )}
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-[12px] font-light text-white/65 leading-snug mb-3">{tarefa.titulo}</p>
-                                  <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[9px] ${cfg.pill} ${cfg.text}`}>
+                                  <p className="text-[14px] font-light text-white/65 leading-snug mb-3">{tarefa.titulo}</p>
+                                  <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] ${cfg.pill} ${cfg.text}`}>
                                     <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
                                     {cfg.label}
                                   </span>
                                   {tarefa.data && (
-                                    <p className="flex items-center gap-1.5 text-[9px] text-white/20 mt-2.5">
+                                    <p className="flex items-center gap-1.5 text-[11px] text-white/20 mt-2.5">
                                       <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="shrink-0 opacity-50">
                                         <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
                                         <path d="M5 1.5V4M11 1.5V4M2 7h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
@@ -501,7 +501,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
                       {/* Botão adicionar tarefa */}
                       {isEditing && (
                         <button onClick={() => addTarefa(coluna.id)}
-                          className="border border-dashed border-white/[0.08] hover:border-white/20 py-3 text-[9px] tracking-[0.35em] text-white/20 hover:text-white/45 uppercase transition-colors w-full">
+                          className="border border-dashed border-white/[0.08] hover:border-white/20 py-3 text-[11px] tracking-[0.35em] text-white/20 hover:text-white/45 uppercase transition-colors w-full">
                           + Tarefa
                         </button>
                       )}
@@ -509,7 +509,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
                       {/* Estado vazio (não edição) */}
                       {coluna.tarefas.length === 0 && !isEditing && (
                         <div className="py-6 text-center">
-                          <p className="text-[9px] text-white/12 tracking-[0.3em] uppercase">Sem tarefas</p>
+                          <p className="text-[11px] text-white/12 tracking-[0.3em] uppercase">Sem tarefas</p>
                         </div>
                       )}
                     </div>

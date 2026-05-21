@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
@@ -54,7 +54,7 @@ export default function PortalHamburger({ portalRef, nomeProjeto }: Props) {
             <span className="block" style={{ width: '10px', height: '1px', background: 'rgba(255,255,255,0.35)' }} />
             <span className="block" style={{ width: '16px', height: '1px', background: 'rgba(255,255,255,0.65)' }} />
           </button>
-          <span className="text-[9px] tracking-[0.45em] text-white/22 uppercase hidden sm:block">
+          <span className="text-[11px] tracking-[0.45em] text-white/22 uppercase hidden sm:block">
             RL PROD &nbsp;·&nbsp; Portal do Cliente
           </span>
         </div>
@@ -62,7 +62,7 @@ export default function PortalHamburger({ portalRef, nomeProjeto }: Props) {
         {/* Direita: indicador activo */}
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-emerald-400/70 animate-pulse" />
-          <span className="text-[9px] tracking-[0.4em] text-white/25 uppercase">Activo</span>
+          <span className="text-[11px] tracking-[0.4em] text-white/25 uppercase">Activo</span>
         </div>
       </div>
 
@@ -99,7 +99,7 @@ export default function PortalHamburger({ portalRef, nomeProjeto }: Props) {
           style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div>
             <p className="text-[8px] tracking-[0.55em] text-white/20 uppercase mb-1">Portal do Cliente</p>
-            <p className="text-[12px] tracking-[0.25em] text-white/70 uppercase font-light">{nomeProjeto}</p>
+            <p className="text-[14px] tracking-[0.25em] text-white/70 uppercase font-light">{nomeProjeto}</p>
           </div>
           <button
             onClick={() => setOpen(false)}
@@ -132,16 +132,16 @@ export default function PortalHamburger({ portalRef, nomeProjeto }: Props) {
                 onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}
                 onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
               >
-                <span className="text-base select-none shrink-0"
+                <span className="text-lg select-none shrink-0"
                   style={{ color: active ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.18)' }}>
                   {icon}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] tracking-[0.25em] uppercase leading-tight"
+                  <p className="text-[13px] tracking-[0.25em] uppercase leading-tight"
                     style={{ color: active ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.40)' }}>
                     {label}
                   </p>
-                  <p className="text-[9px] mt-0.5 leading-tight"
+                  <p className="text-[11px] mt-0.5 leading-tight"
                     style={{ color: 'rgba(255,255,255,0.12)' }}>
                     {desc}
                   </p>

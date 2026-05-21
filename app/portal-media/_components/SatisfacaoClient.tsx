@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 import { useState } from 'react'
 import Link from 'next/link'
 import type { Projeto } from '@/app/portal-media/_data/mockProject'
@@ -92,7 +92,7 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
       <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 py-10">
 
         <Link href={`/portal-media/${projeto.ref}`}
-          className="inline-flex items-center gap-2 text-[9px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
+          className="inline-flex items-center gap-2 text-[11px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
           <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
           Portal {projeto.nome}
         </Link>
@@ -126,8 +126,8 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
             <div>
               {isAdmin ? (
                 <>
-                  <p className="text-[9px] tracking-[0.5em] text-white/30 uppercase mb-2">Avaliação do Cliente</p>
-                  <p className="text-[12px] font-light text-white/20 leading-relaxed">
+                  <p className="text-[11px] tracking-[0.5em] text-white/30 uppercase mb-2">Avaliação do Cliente</p>
+                  <p className="text-[14px] font-light text-white/20 leading-relaxed">
                     Submetida em{' '}
                     {dataFinal
                       ? new Date(dataFinal).toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })
@@ -136,8 +136,8 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
                 </>
               ) : (
                 <>
-                  <p className="text-[9px] tracking-[0.5em] text-emerald-400/60 uppercase mb-2">Obrigado pelo teu feedback</p>
-                  <p className="text-[13px] font-light text-white/35 leading-relaxed max-w-sm">
+                  <p className="text-[11px] tracking-[0.5em] text-emerald-400/60 uppercase mb-2">Obrigado pelo teu feedback</p>
+                  <p className="text-[15px] font-light text-white/35 leading-relaxed max-w-sm">
                     A tua avaliação foi registada. A equipa RL PROD agradece a confiança.
                   </p>
                 </>
@@ -156,7 +156,7 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
 
             {/* Label nota */}
             {notaFinal > 0 && (
-              <p className="text-[10px] tracking-[0.4em] text-amber-400/50 uppercase -mt-2">
+              <p className="text-[12px] tracking-[0.4em] text-amber-400/50 uppercase -mt-2">
                 {LABELS[notaFinal]}
               </p>
             )}
@@ -164,8 +164,8 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
             {/* Comentário */}
             {comentarioFinal && (
               <div className="border border-white/[0.08] bg-white/[0.02] px-6 py-5 max-w-sm w-full text-left">
-                <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase mb-3">Comentário</p>
-                <p className="text-[13px] font-light text-white/50 leading-relaxed italic">
+                <p className="text-[11px] tracking-[0.4em] text-white/20 uppercase mb-3">Comentário</p>
+                <p className="text-[15px] font-light text-white/50 leading-relaxed italic">
                   &quot;{comentarioFinal}&quot;
                 </p>
               </div>
@@ -182,8 +182,8 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
             </div>
 
             <div>
-              <p className="text-[9px] tracking-[0.3em] text-white/50 uppercase mb-2">Avaliação do Projeto</p>
-              <p className="text-[13px] font-light text-white/25 leading-relaxed max-w-sm">
+              <p className="text-[11px] tracking-[0.3em] text-white/50 uppercase mb-2">Avaliação do Projeto</p>
+              <p className="text-[15px] font-light text-white/25 leading-relaxed max-w-sm">
                 A tua opinião é importante para nós.<br />
                 Avalia a tua experiência com a RL PROD.
               </p>
@@ -191,7 +191,7 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
 
             {/* ── Estrelas ── */}
             <div className="flex flex-col items-center gap-3">
-              <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase">Classificação</p>
+              <p className="text-[11px] tracking-[0.4em] text-white/20 uppercase">Classificação</p>
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5].map(i => (
                   <button key={i}
@@ -203,7 +203,7 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
                   >★</button>
                 ))}
               </div>
-              <p className={`text-[10px] tracking-[0.35em] uppercase transition-all duration-150 ${
+              <p className={`text-[12px] tracking-[0.35em] uppercase transition-all duration-150 ${
                 displayNota > 0 ? 'text-amber-400/55 opacity-100' : 'opacity-0'
               }`}>
                 {LABELS[displayNota] ?? ''}
@@ -212,7 +212,7 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
 
             {/* ── Comentário ── */}
             <div className="w-full max-w-md text-left">
-              <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase mb-3">
+              <p className="text-[11px] tracking-[0.4em] text-white/20 uppercase mb-3">
                 Comentário <span className="text-white/12 normal-case tracking-normal">(opcional)</span>
               </p>
               <textarea
@@ -220,21 +220,21 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
                 onChange={e => setComentario(e.target.value)}
                 placeholder="Partilha a tua experiência com a RL PROD..."
                 rows={4}
-                className="w-full bg-white/[0.03] border border-white/[0.08] px-4 py-3 text-[13px] font-light
+                className="w-full bg-white/[0.03] border border-white/[0.08] px-4 py-3 text-[15px] font-light
                            text-white/60 placeholder:text-white/12 focus:outline-none focus:border-white/20
                            resize-none leading-relaxed transition-colors"
               />
             </div>
 
             {erro && (
-              <p className="text-[11px] text-red-400/70 -mt-4">⚠ {erro}</p>
+              <p className="text-[13px] text-red-400/70 -mt-4">⚠ {erro}</p>
             )}
 
             <button
               onClick={submeter}
               disabled={enviando || nota === 0}
               className="border border-white/30 bg-white/[0.04] hover:bg-white/[0.10] px-10 py-4
-                         text-[9px] tracking-[0.5em] text-white/70 hover:text-white uppercase
+                         text-[11px] tracking-[0.5em] text-white/70 hover:text-white uppercase
                          transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
               style={{ boxShadow: nota > 0 ? '0 0 18px rgba(255,255,255,0.06)' : 'none' }}
             >
