@@ -687,18 +687,22 @@ export default function TimeBlocks({
     const tplIdx = ((dayOfYear % templates.length) + templates.length) % templates.length
     const chosen = templates[tplIdx]
 
-    // If day already has blocks → confirm replacement
-    if (blocks.length > 0) {
-      const ok = confirm(`Já existem ${blocks.length} bloco${blocks.length === 1 ? '' : 's'} neste dia. Substituir por uma rotina automática?`)
-      if (!ok) return
-    }
-
+    // ✅ Já NÃO apagamos os blocos existentes. O Auto-criar passa a
+    // PRESERVAR o que estiver lá (PW, reuniões, blocos manuais, etc.) e
+    // limita-se a preencher os espaços livres com trabalho (Editar/Redes/
+    // Plataforma) + pausas + almoço + encerramento (se ainda não existirem).
     setSaving(true)
     try {
-      // 1) Delete existing
-      await Promise.all(blocks.map(b => fetch(`/api/time-blocks/${b.id}`, { method: 'DELETE' })))
-
       let toCreate: Slot[] = []
+
+      // Blocos já existentes no dia — usados como OBSTÁCULOS no scheduling
+      const existingObstacles: { a: number; b: number; key: string }[] = blocks.map(b => ({
+        a: toSeconds(hms(b.hora_inicio)),
+        b: toSeconds(hms(b.hora_fim)),
+        key: b.categoria,
+      }))
+      const hasExistingClientes = existingObstacles.some(o => o.key === 'clientes')
+      const hasExistingAlmoco   = existingObstacles.some(o => o.key === 'almoco')
 
       // 2) Construção dinâmica baseada nas horas Iniciar / Terminar ────
       //
@@ -811,28 +815,34 @@ export default function TimeBlocks({
       // O dia é todo do casamento, ponto final.
       const hasCasamentoToday = fixedFromCalendar.some(s => s.key === 'casamento')
 
-      // 2) Encerramento — últimos 30 min da janela
+      // 2) Encerramento — últimos 30 min da janela (apenas se não houver já um)
       const encSec = 30 * 60
       const encStartSec = endSec - encSec
-      summary.push(`Encerramento ${hms(endHour).slice(0,5)} (30min)`)
+      if (!hasExistingClientes) {
+        summary.push(`Encerramento ${hms(endHour).slice(0,5)} (30min)`)
+      } else {
+        summary.push('Encerramento (já existe)')
+      }
 
       if (hasCasamentoToday) {
-        // Caminho rápido: só casamento + encerramento, ajustar fim do casamento
-        // para não sobrepor o encerramento.
-        toCreate = fixedFromCalendar.map(s => s.key === 'casamento'
-          ? { ...s, fim: sec2hms(encStartSec) }
-          : s
-        )
-        toCreate.push(CLIENTES(encStartSec, endSec))
+        // Caminho casamento: cria APENAS o que ainda não existe (não apaga
+        // blocos atuais). Para o casamento já existente, deixa-o como está.
+        const hasExistingCasamento = blocks.some(b => b.categoria === 'casamento')
+        toCreate = []
+        if (!hasExistingCasamento) {
+          toCreate.push(...fixedFromCalendar
+            .filter(s => s.key === 'casamento')
+            .map(s => ({ ...s, fim: sec2hms(encStartSec) }))
+          )
+        }
+        if (!hasExistingClientes) toCreate.push(CLIENTES(encStartSec, endSec))
         toCreate.sort((a, b) => a.inicio.localeCompare(b.inicio))
-        // Salta a parte de Editar/Redes/Plataforma — não criamos nada mais.
         skipped.push('Editar/Redes/Plataforma (dia ocupado pelo casamento)')
 
-        // Insere blocos e termina cedo
-        const created: Block[] = []
-        let ordem = 1
+        // Insere os novos blocos sem mexer nos existentes
+        let ordem = (blocks.reduce((m, b) => Math.max(m, b.ordem), 0) ?? 0) + 1
         for (const item of toCreate) {
-          const res = await fetch('/api/time-blocks', {
+          await fetch('/api/time-blocks', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -840,10 +850,8 @@ export default function TimeBlocks({
               hora_inicio: item.inicio, hora_fim: item.fim, ordem: ordem++,
             }),
           })
-          const d2 = await res.json()
-          if (d2.block) created.push(d2.block)
         }
-        setBlocks(created.sort((a, b) => hms(a.hora_inicio).localeCompare(hms(b.hora_inicio))))
+        await load()   // recarrega blocos do servidor (inclui os existentes)
         bumpHistorico()
         alert(
           `✅ Dia gerado para ${hms(startHour).slice(0,5)} → ${hms(endHour).slice(0,5)}.\n\n` +
@@ -857,14 +865,17 @@ export default function TimeBlocks({
       const lunchA = toSeconds('12:00:00')
       const lunchB = toSeconds('14:00:00')
       const lunchFits = startSec <= lunchA && encStartSec >= lunchB &&
-        // E também só se NENHUM evento fixo sobrepõe 12-14
-        !fixedFromCalendar.some(s => toSeconds(s.inicio) < lunchB && toSeconds(s.fim) > lunchA)
+        // E também só se NENHUM evento fixo do calendário sobrepõe 12-14
+        !fixedFromCalendar.some(s => toSeconds(s.inicio) < lunchB && toSeconds(s.fim) > lunchA) &&
+        // … e também só se nenhum bloco já existente sobrepõe 12-14
+        !existingObstacles.some(o => o.a < lunchB && o.b > lunchA)
       let workMorning: [number, number] | null = null
       let workAfternoon: [number, number] | null = null
       if (lunchFits) {
         workMorning   = [startSec, lunchA]
         workAfternoon = [lunchB, encStartSec]
-        summary.push('Almoço + treino 12:00–14:00')
+        if (!hasExistingAlmoco) summary.push('Almoço + treino 12:00–14:00')
+        else summary.push('Almoço (já existe)')
       } else {
         // Sem almoço: bloco único de trabalho. Se a janela atravessa a hora de
         // almoço mas não cabe inteira (ou há evento a colidir), avisamos.
@@ -872,11 +883,17 @@ export default function TimeBlocks({
         if (startSec < lunchA && endSec > lunchA) skipped.push('Almoço (não cabe ou há evento a sobrepor)')
       }
 
-      // 4) Subtrai os eventos fixos das peças de trabalho para evitar sobreposição.
+      // 4) Subtrai os eventos fixos do calendário E os blocos já existentes
+      // das peças de trabalho. Tudo o que estiver no caminho conta como
+      // obstáculo — Auto-criar só preenche os espaços VAZIOS.
+      const allObstacles: { a: number; b: number }[] = [
+        ...fixedFromCalendar.map(f => ({ a: toSeconds(f.inicio), b: toSeconds(f.fim) })),
+        ...existingObstacles,
+      ]
       const subtractFixed = (range: [number, number]): [number, number][] => {
         let pieces: [number, number][] = [range]
-        for (const f of fixedFromCalendar) {
-          const fA = toSeconds(f.inicio), fB = toSeconds(f.fim)
+        for (const f of allObstacles) {
+          const fA = f.a, fB = f.b
           const next: [number, number][] = []
           for (const [a, b] of pieces) {
             if (fB <= a || fA >= b) { next.push([a, b]); continue }
@@ -992,17 +1009,29 @@ export default function TimeBlocks({
       }
 
       // 6) Junta tudo: trabalho + pausas + almoço + eventos do calendário + encerramento
+      //    (skipando o que já existe nos blocos atuais)
       toCreate = [...finalSlots]
       for (const s of segments) {
         if (s.pausa) toCreate.push(PAUSA(s.pausa[0], s.pausa[1], s.isManha))
       }
-      if (lunchFits) toCreate.push(ALMOCO(lunchA, lunchB))
-      // Eventos fixos vindos do calendário (pré-weddings + reuniões; casamento já foi tratado acima)
+      if (lunchFits && !hasExistingAlmoco) toCreate.push(ALMOCO(lunchA, lunchB))
+
+      // Eventos fixos do calendário — só os que ainda não têm um bloco
+      // existente com o mesmo evento_id (evita duplicar PWs e reuniões)
+      const existingEventoIds = new Set(blocks.map(b => b.evento_id).filter((x): x is string => !!x))
       for (const f of fixedFromCalendar) {
-        if (f.key === 'casamento') continue   // não há casamento neste caminho
-        toCreate.push(f)
+        if (f.key === 'casamento') continue
+        // Tenta identificar evento_id (já guardado no Slot? não — let me check)
+        // Como o Slot não guarda evento_id, comparamos por categoria + hora
+        const alreadyExists = blocks.some(b =>
+          b.categoria === f.key &&
+          hms(b.hora_inicio) === f.inicio &&
+          hms(b.hora_fim) === f.fim
+        )
+        if (!alreadyExists) toCreate.push(f)
       }
-      toCreate.push(CLIENTES(encStartSec, endSec))
+
+      if (!hasExistingClientes) toCreate.push(CLIENTES(encStartSec, endSec))
       toCreate.sort((a, b) => a.inicio.localeCompare(b.inicio))
 
       // Resumo para o alerta final
