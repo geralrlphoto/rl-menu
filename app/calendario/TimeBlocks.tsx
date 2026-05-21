@@ -223,6 +223,100 @@ export default function TimeBlocks() {
     }
   }
 
+  /** Auto-build the day according to the rules:
+   *  - 09:30–12:00 → Editar trabalhos (priority, single block)
+   *  - 14:00–18:00 → Editar (2h) + Redes sociais (1h) + Plataforma (1h)
+   *    The afternoon order rotates between 6 permutations based on dayOfYear
+   *    so different days have different layouts. */
+  async function handleAutoCreateDay() {
+    const presetEditar     = PRESETS.find(p => p.key === 'editar')!
+    const presetRedes      = PRESETS.find(p => p.key === 'redes')!
+    const presetPlataforma = PRESETS.find(p => p.key === 'plataforma')!
+
+    // Afternoon permutations
+    const variants: Array<Array<{ key: string; title: string; cor: string; durSec: number }>> = [
+      [ { key: 'editar',     title: 'Editar trabalhos', cor: presetEditar.cor,     durSec: 2 * 3600 },
+        { key: 'redes',      title: 'Redes sociais',    cor: presetRedes.cor,      durSec: 1 * 3600 },
+        { key: 'plataforma', title: 'Plataforma',       cor: presetPlataforma.cor, durSec: 1 * 3600 } ],
+      [ { key: 'editar',     title: 'Editar trabalhos', cor: presetEditar.cor,     durSec: 2 * 3600 },
+        { key: 'plataforma', title: 'Plataforma',       cor: presetPlataforma.cor, durSec: 1 * 3600 },
+        { key: 'redes',      title: 'Redes sociais',    cor: presetRedes.cor,      durSec: 1 * 3600 } ],
+      [ { key: 'redes',      title: 'Redes sociais',    cor: presetRedes.cor,      durSec: 1 * 3600 },
+        { key: 'editar',     title: 'Editar trabalhos', cor: presetEditar.cor,     durSec: 2 * 3600 },
+        { key: 'plataforma', title: 'Plataforma',       cor: presetPlataforma.cor, durSec: 1 * 3600 } ],
+      [ { key: 'redes',      title: 'Redes sociais',    cor: presetRedes.cor,      durSec: 1 * 3600 },
+        { key: 'plataforma', title: 'Plataforma',       cor: presetPlataforma.cor, durSec: 1 * 3600 },
+        { key: 'editar',     title: 'Editar trabalhos', cor: presetEditar.cor,     durSec: 2 * 3600 } ],
+      [ { key: 'plataforma', title: 'Plataforma',       cor: presetPlataforma.cor, durSec: 1 * 3600 },
+        { key: 'editar',     title: 'Editar trabalhos', cor: presetEditar.cor,     durSec: 2 * 3600 },
+        { key: 'redes',      title: 'Redes sociais',    cor: presetRedes.cor,      durSec: 1 * 3600 } ],
+      [ { key: 'plataforma', title: 'Plataforma',       cor: presetPlataforma.cor, durSec: 1 * 3600 },
+        { key: 'redes',      title: 'Redes sociais',    cor: presetRedes.cor,      durSec: 1 * 3600 },
+        { key: 'editar',     title: 'Editar trabalhos', cor: presetEditar.cor,     durSec: 2 * 3600 } ],
+    ]
+
+    // Day-of-year as variant index (deterministic, different across the week)
+    const d = new Date(day + 'T00:00:00')
+    const start = new Date(d.getFullYear(), 0, 0)
+    const diff  = (d.getTime() - start.getTime()) + ((start.getTimezoneOffset() - d.getTimezoneOffset()) * 60 * 1000)
+    const dayOfYear = Math.floor(diff / 86400000)
+    const variantIdx = ((dayOfYear % variants.length) + variants.length) % variants.length
+
+    // If day already has blocks → confirm replacement
+    if (blocks.length > 0) {
+      const ok = confirm(`Já existem ${blocks.length} bloco${blocks.length === 1 ? '' : 's'} neste dia. Substituir por uma rotina automática?`)
+      if (!ok) return
+    }
+
+    setSaving(true)
+    try {
+      // 1) Delete existing
+      await Promise.all(blocks.map(b => fetch(`/api/time-blocks/${b.id}`, { method: 'DELETE' })))
+
+      // 2) Build all blocks
+      const toCreate: Array<{ key: string; title: string; cor: string; inicio: string; fim: string }> = []
+
+      // Morning single block 09:30–12:00 (Editar trabalhos, prioridade)
+      toCreate.push({
+        key: 'editar', title: 'Editar trabalhos (prioridade)',
+        cor: presetEditar.cor, inicio: '09:30:00', fim: '12:00:00',
+      })
+
+      // Afternoon — 14:00 onwards using selected variant
+      let cursor = '14:00:00'
+      for (const piece of variants[variantIdx]) {
+        const fim = addSeconds(cursor, piece.durSec)
+        toCreate.push({ key: piece.key, title: piece.title, cor: piece.cor, inicio: cursor, fim })
+        cursor = fim
+      }
+
+      // 3) Insert sequentially to preserve order
+      const created: Block[] = []
+      let ordem = 1
+      for (const item of toCreate) {
+        const res = await fetch('/api/time-blocks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            data: day,
+            categoria: item.key,
+            titulo: item.title,
+            cor: item.cor,
+            hora_inicio: item.inicio,
+            hora_fim: item.fim,
+            ordem: ordem++,
+          }),
+        })
+        const d2 = await res.json()
+        if (d2.block) created.push(d2.block)
+      }
+
+      setBlocks(created.sort((a, b) => hms(a.hora_inicio).localeCompare(hms(b.hora_inicio))))
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function handleCreate() {
     if (!newTitle.trim()) return
     const dur = diffSeconds(newInicio, newFim)
@@ -371,11 +465,20 @@ export default function TimeBlocks() {
             {blocks.length} bloco{blocks.length === 1 ? '' : 's'} · {totalPlannedH}h{String(totalPlannedM).padStart(2, '0')} planeados
           </span>
           {!adding && (
-            <button onClick={() => setAdding(true)}
-              className="text-xs px-3 py-1.5 rounded-lg transition-colors"
-              style={{ background: 'rgba(201,168,76,0.10)', border: '1px solid rgba(201,168,76,0.30)', color: '#C9A84C' }}>
-              + Adicionar Bloco
-            </button>
+            <>
+              <button onClick={handleAutoCreateDay}
+                disabled={saving}
+                title="Cria automaticamente os blocos do dia conforme as regras"
+                className="text-xs px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                style={{ background: 'rgba(139,92,246,0.10)', border: '1px solid rgba(139,92,246,0.30)', color: '#A78BFA' }}>
+                {saving ? 'A gerar…' : '✨ Auto-criar dia'}
+              </button>
+              <button onClick={() => setAdding(true)}
+                className="text-xs px-3 py-1.5 rounded-lg transition-colors"
+                style={{ background: 'rgba(201,168,76,0.10)', border: '1px solid rgba(201,168,76,0.30)', color: '#C9A84C' }}>
+                + Adicionar Bloco
+              </button>
+            </>
           )}
         </div>
       </div>
