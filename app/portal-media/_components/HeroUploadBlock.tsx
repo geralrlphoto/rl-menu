@@ -64,18 +64,18 @@ export default function HeroUploadBlock({ url, isEditing, onChange }: Props) {
             onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(f) }}
           />
           <div className="flex items-center gap-3 border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-            <span className="text-[11px] tracking-[0.4em] text-white/25 uppercase shrink-0">🖼 Foto cabeçalho</span>
+            <span className="text-[12px] tracking-[0.4em] text-white/25 uppercase shrink-0">🖼 Foto cabeçalho</span>
             <button
               onClick={() => fileRef.current?.click()}
               disabled={uploading}
-              className="flex-1 text-left text-[13px] text-white/40 hover:text-white/70 transition-colors disabled:opacity-40"
+              className="flex-1 text-left text-[14px] text-white/40 hover:text-white/70 transition-colors disabled:opacity-40"
             >
               {uploading ? '⏳ A carregar...' : url ? '✓ Trocar foto' : '⬆ Carregar foto'}
             </button>
             {url && !uploading && (
               <button
                 onClick={() => onChange('')}
-                className="text-white/20 hover:text-white/50 text-[13px] transition-colors shrink-0"
+                className="text-white/20 hover:text-white/50 text-[14px] transition-colors shrink-0"
               >
                 ✕ Remover
               </button>

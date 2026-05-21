@@ -190,13 +190,13 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
       <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 py-10">
 
         <Link href={`/portal-media/${projeto.ref}`}
-          className="inline-flex items-center gap-2 text-[11px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
+          className="inline-flex items-center gap-2 text-[12px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
           <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
           Portal {projeto.nome}
         </Link>
 
         <div className="mb-10">
-          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD · {projeto.nome}</p>
+          <p className="text-[9px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD · {projeto.nome}</p>
           <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Contrato & CPS</h1>
           <div className="mt-4 flex items-center gap-3">
             <div className="h-px w-12 bg-white/25" />
@@ -207,8 +207,8 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
         {/* ── Texto de boas-vindas ── */}
         <div className="border border-white/[0.07] bg-white/[0.02] px-6 py-6 mb-6">
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-          <p className="text-[11px] tracking-[0.5em] text-white/20 uppercase mb-4">Área Exclusiva</p>
-          <p className="text-[15px] font-light text-white/65 leading-relaxed mb-4">
+          <p className="text-[12px] tracking-[0.5em] text-white/20 uppercase mb-4">Área Exclusiva</p>
+          <p className="text-[16px] font-light text-white/65 leading-relaxed mb-4">
             Encontra-se na área exclusiva do seu contrato.
           </p>
           <div className="flex flex-col gap-2.5 mb-4">
@@ -218,30 +218,30 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
               { icon: '◎', text: 'Acompanhar o histórico de pagamentos associados ao seu processo.' },
             ].map(({ icon, text }) => (
               <div key={icon} className="flex items-start gap-3">
-                <span className="text-[15px] text-white/25 mt-0.5 shrink-0 w-4">{icon}</span>
-                <p className="text-[14px] text-white/45 font-light leading-relaxed">{text}</p>
+                <span className="text-[16px] text-white/25 mt-0.5 shrink-0 w-4">{icon}</span>
+                <p className="text-[15px] text-white/45 font-light leading-relaxed">{text}</p>
               </div>
             ))}
           </div>
-          <p className="text-[15px] font-light text-white/30 leading-relaxed">
+          <p className="text-[16px] font-light text-white/30 leading-relaxed">
             O nosso objetivo é <span className="text-white/55">simplificar o acesso à informação essencial</span>, garantindo-lhe mais comodidade e transparência.
           </p>
-          <p className="text-[12px] text-white/20 mt-3 tracking-[0.15em]">Obrigado pela confiança · RL PROD</p>
+          <p className="text-[13px] text-white/20 mt-3 tracking-[0.15em]">Obrigado pela confiança · RL PROD</p>
         </div>
 
         {/* ── Método de Pagamento ── */}
         <div className="border border-white/[0.12] bg-white/[0.03] px-6 py-6 mb-6 relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-          <p className="text-[11px] tracking-[0.5em] text-white/30 uppercase mb-5">Método de Pagamento</p>
+          <p className="text-[12px] tracking-[0.5em] text-white/30 uppercase mb-5">Método de Pagamento</p>
 
           {/* Prazo */}
           <div className="bg-white/[0.04] border border-white/[0.08] px-4 py-3 mb-5">
-            <p className="text-[11px] tracking-[0.3em] text-white/25 uppercase mb-1">Prazo</p>
+            <p className="text-[12px] tracking-[0.3em] text-white/25 uppercase mb-1">Prazo</p>
             <EditableField
               value={conta.prazo}
               isEditing={isEditing}
               onChange={v => setConta('prazo', v)}
-              className="text-[14px] text-white/80 font-medium"
+              className="text-[15px] text-white/80 font-medium"
               placeholder="Ex: 48 horas após confirmação"
             />
           </div>
@@ -249,22 +249,22 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
           {/* Método + Titular */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
             <div>
-              <p className="text-[11px] tracking-[0.3em] text-white/25 uppercase mb-1">Método</p>
+              <p className="text-[12px] tracking-[0.3em] text-white/25 uppercase mb-1">Método</p>
               <EditableField
                 value={conta.metodo}
                 isEditing={isEditing}
                 onChange={v => setConta('metodo', v)}
-                className="text-[14px] text-white/65"
+                className="text-[15px] text-white/65"
                 placeholder="Transferência Bancária"
               />
             </div>
             <div>
-              <p className="text-[11px] tracking-[0.3em] text-white/25 uppercase mb-1">Titular</p>
+              <p className="text-[12px] tracking-[0.3em] text-white/25 uppercase mb-1">Titular</p>
               <EditableField
                 value={conta.titular}
                 isEditing={isEditing}
                 onChange={v => setConta('titular', v)}
-                className="text-[14px] text-white/65"
+                className="text-[15px] text-white/65"
                 placeholder="Nome do titular"
               />
             </div>
@@ -272,34 +272,34 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
 
           {/* IBAN */}
           <div className="border border-white/[0.10] bg-white/[0.02] px-4 py-4 mb-5 overflow-x-auto">
-            <p className="text-[11px] tracking-[0.3em] text-white/25 uppercase mb-2">IBAN</p>
+            <p className="text-[12px] tracking-[0.3em] text-white/25 uppercase mb-2">IBAN</p>
             <EditableField
               value={conta.iban}
               isEditing={isEditing}
               onChange={v => setConta('iban', v)}
-              className="text-[15px] sm:text-[18px] text-white/80 font-mono tracking-wider sm:tracking-widest whitespace-nowrap"
+              className="text-[16px] sm:text-[19px] text-white/80 font-mono tracking-wider sm:tracking-widest whitespace-nowrap"
               placeholder="PT50 0000 0000 0000 0000 0000 0"
             />
           </div>
 
           {/* Comprovativo */}
           <div className="border-t border-white/[0.06] pt-4">
-            <p className="text-[11px] tracking-[0.3em] text-white/25 uppercase mb-2">Após Transferência</p>
+            <p className="text-[12px] tracking-[0.3em] text-white/25 uppercase mb-2">Após Transferência</p>
             {isEditing ? (
               <div>
-                <p className="text-[14px] font-light text-white/30 mb-1">Email para comprovativo</p>
+                <p className="text-[15px] font-light text-white/30 mb-1">Email para comprovativo</p>
                 <EditableField
                   value={conta.email}
                   isEditing={true}
                   onChange={v => setConta('email', v)}
-                  className="text-[15px] font-light text-white/65"
+                  className="text-[16px] font-light text-white/65"
                   placeholder="email@www.rlprod.pt"
                 />
               </div>
             ) : (
               <div className="flex items-start gap-3 border border-white/[0.08] bg-white/[0.02] px-4 py-3">
                 <span className="text-white/30 shrink-0 mt-0.5">◉</span>
-                <p className="text-[15px] font-light text-white/40 leading-relaxed">
+                <p className="text-[16px] font-light text-white/40 leading-relaxed">
                   Após cada pagamento, regista o estado na{' '}
                   <a href={`/portal-media/${projeto.ref}/pagamentos`}
                     className="text-white/65 hover:text-white/90 transition-colors underline underline-offset-2">
@@ -320,10 +320,10 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <p className="text-[11px] tracking-[0.5em] text-white/25 uppercase mb-1">Contrato de Prestação de Serviços</p>
-                  <p className="text-[14px] tracking-[0.2em] text-white/75 font-light mb-1">{contratoLocal?.ref}</p>
+                  <p className="text-[12px] tracking-[0.5em] text-white/25 uppercase mb-1">Contrato de Prestação de Serviços</p>
+                  <p className="text-[15px] tracking-[0.2em] text-white/75 font-light mb-1">{contratoLocal?.ref}</p>
                   <div className="flex flex-wrap items-center gap-3 mt-2">
-                    <span className={`text-[11px] tracking-[0.35em] uppercase px-2 py-0.5 border ${
+                    <span className={`text-[12px] tracking-[0.35em] uppercase px-2 py-0.5 border ${
                       contratoLocal?.estado === 'Assinado'
                         ? 'border-emerald-400/30 text-emerald-400/60'
                         : contratoLocal?.estado === 'disponivel'
@@ -337,7 +337,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                         : contratoLocal?.estado}
                     </span>
                     {contratoLocal?.geradoEm && (
-                      <span className="text-[12px] text-white/15 tracking-[0.2em]">Gerado em {contratoLocal.geradoEm}</span>
+                      <span className="text-[13px] text-white/15 tracking-[0.2em]">Gerado em {contratoLocal.geradoEm}</span>
                     )}
                   </div>
                 </div>
@@ -346,7 +346,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                   target="_blank"
                   rel="noopener noreferrer"
                   className="shrink-0 border border-white/15 bg-white/[0.04] hover:bg-white/[0.09] hover:border-white/30
-                             px-5 py-3 text-[11px] tracking-[0.4em] text-white/45 hover:text-white/75 uppercase
+                             px-5 py-3 text-[12px] tracking-[0.4em] text-white/45 hover:text-white/75 uppercase
                              transition-all duration-300 flex items-center gap-2"
                 >
                   <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -358,14 +358,14 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
               {/* Admin: rascunho warning + confirm button */}
               {isAdmin && !estaDisponivelCliente && (
                 <div className="mt-4 pt-4 border-t border-white/[0.06] flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-[12px] tracking-[0.2em] text-amber-400/50 font-light">
+                  <p className="text-[13px] tracking-[0.2em] text-amber-400/50 font-light">
                     ⚠ Não visível para o cliente
                   </p>
                   <button
                     onClick={confirmarContrato}
                     disabled={confirmando}
                     className="border border-white/30 bg-white/[0.04] hover:bg-white/[0.10] px-5 py-2.5
-                               text-[11px] tracking-[0.4em] text-white/70 hover:text-white uppercase
+                               text-[12px] tracking-[0.4em] text-white/70 hover:text-white uppercase
                                transition-all duration-200 disabled:opacity-40 shrink-0"
                     style={{ boxShadow: '0 0 14px rgba(255,255,255,0.05)' }}
                   >
@@ -376,13 +376,13 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
 
               {isEditing && (
                 <div className="mt-4">
-                  <p className="text-[14px] font-light text-white/30 mb-1">URL externo do contrato (opcional)</p>
+                  <p className="text-[15px] font-light text-white/30 mb-1">URL externo do contrato (opcional)</p>
                   <EditableField
                     value={projeto.contratoUrl ?? ''}
                     isEditing={true}
                     onChange={v => set('contratoUrl', v)}
                     placeholder="https://drive.google.com/..."
-                    className="text-[15px] font-light text-white/40"
+                    className="text-[16px] font-light text-white/40"
                   />
                 </div>
               )}
@@ -392,11 +392,11 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                 <div className="mt-3 pt-3 border-t border-white/[0.04] flex items-center justify-end">
                   {confirmAnular ? (
                     <div className="flex items-center gap-3">
-                      <span className="text-[13px] text-white/35 tracking-[0.15em]">Tens a certeza?</span>
+                      <span className="text-[14px] text-white/35 tracking-[0.15em]">Tens a certeza?</span>
                       <button
                         onClick={anularContrato}
                         disabled={anulando}
-                        className="px-4 py-1.5 text-[11px] tracking-[0.3em] uppercase border border-red-400/40
+                        className="px-4 py-1.5 text-[12px] tracking-[0.3em] uppercase border border-red-400/40
                                    text-red-400/70 hover:border-red-400/70 hover:text-red-400
                                    transition-colors disabled:opacity-40"
                       >
@@ -404,7 +404,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                       </button>
                       <button
                         onClick={() => setConfirmAnular(false)}
-                        className="text-[11px] tracking-[0.3em] text-white/25 hover:text-white/50 uppercase transition-colors"
+                        className="text-[12px] tracking-[0.3em] text-white/25 hover:text-white/50 uppercase transition-colors"
                       >
                         Cancelar
                       </button>
@@ -412,7 +412,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                   ) : (
                     <button
                       onClick={() => setConfirmAnular(true)}
-                      className="text-[11px] tracking-[0.3em] text-white/15 hover:text-red-400/50 uppercase transition-colors"
+                      className="text-[12px] tracking-[0.3em] text-white/15 hover:text-red-400/50 uppercase transition-colors"
                     >
                       Anular Contrato
                     </button>
@@ -426,10 +426,10 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
               ${projeto.contratoUrl ? 'border-emerald-400/20 bg-emerald-400/5' : 'border-white/[0.07] bg-white/[0.02]'}`}>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
-                  <p className="text-[11px] tracking-[0.25em] text-white/60 uppercase font-medium mb-1">
+                  <p className="text-[12px] tracking-[0.25em] text-white/60 uppercase font-medium mb-1">
                     Contrato de Prestação de Serviços
                   </p>
-                  <p className={`text-[11px] tracking-[0.3em] uppercase mb-3 ${
+                  <p className={`text-[12px] tracking-[0.3em] uppercase mb-3 ${
                     projeto.contratoUrl ? 'text-emerald-400/60'
                     : temContratoGerado ? 'text-amber-400/40'
                     : 'text-white/20'
@@ -438,13 +438,13 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                   </p>
                   {isEditing && (
                     <div>
-                      <p className="text-[14px] font-light text-white/30 mb-1">URL do contrato (Google Drive, etc.)</p>
+                      <p className="text-[15px] font-light text-white/30 mb-1">URL do contrato (Google Drive, etc.)</p>
                       <EditableField
                         value={projeto.contratoUrl ?? ''}
                         isEditing={true}
                         onChange={v => set('contratoUrl', v)}
                         placeholder="https://..."
-                        className="text-[15px] font-light text-white/40"
+                        className="text-[16px] font-light text-white/40"
                       />
                     </div>
                   )}
@@ -454,19 +454,19 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                     projeto.contratoUrl ? (
                       <a href={projeto.contratoUrl} target="_blank" rel="noopener noreferrer"
                         className="border border-white/20 bg-white/[0.04] hover:bg-white/[0.09] px-4 py-2
-                                   text-[11px] tracking-[0.35em] text-white/50 hover:text-white/80 uppercase transition-all">
+                                   text-[12px] tracking-[0.35em] text-white/50 hover:text-white/80 uppercase transition-all">
                         Ver Mais →
                       </a>
                     ) : (
                       <span className="border border-white/[0.07] px-4 py-2
-                                       text-[11px] tracking-[0.35em] text-white/18 uppercase cursor-not-allowed">
+                                       text-[12px] tracking-[0.35em] text-white/18 uppercase cursor-not-allowed">
                         Aguardar
                       </span>
                     )
                   )}
                   {isAdmin && !isEditing && !temContratoGerado && (
                     <button onClick={gerarContrato} disabled={gerando}
-                      className="border border-white/20 hover:border-white/40 bg-white/[0.04] hover:bg-white/[0.08] px-5 py-2.5 text-[11px] tracking-[0.4em] text-white/50 hover:text-white/80 uppercase transition-all disabled:opacity-40">
+                      className="border border-white/20 hover:border-white/40 bg-white/[0.04] hover:bg-white/[0.08] px-5 py-2.5 text-[12px] tracking-[0.4em] text-white/50 hover:text-white/80 uppercase transition-all disabled:opacity-40">
                       {gerando ? 'A gerar...' : '⊕ Gerar Contrato'}
                     </button>
                   )}
@@ -483,20 +483,20 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
           }`}>
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="text-[11px] tracking-[0.5em] text-white/30 uppercase mb-1">Recibo / Fatura</p>
+                <p className="text-[12px] tracking-[0.5em] text-white/30 uppercase mb-1">Recibo / Fatura</p>
                 {isEditing ? (
                   <div className="mt-2">
-                    <p className="text-[13px] font-light text-white/25 mb-2">URL do PDF (Google Drive, Dropbox, etc.)</p>
+                    <p className="text-[14px] font-light text-white/25 mb-2">URL do PDF (Google Drive, Dropbox, etc.)</p>
                     <EditableField
                       value={projeto.reciboFaturaUrl ?? ''}
                       isEditing={true}
                       onChange={v => set('reciboFaturaUrl', v)}
                       placeholder="https://drive.google.com/..."
-                      className="text-[14px] font-light text-white/45"
+                      className="text-[15px] font-light text-white/45"
                     />
                   </div>
                 ) : (
-                  <p className={`text-[14px] font-light mt-0.5 ${projeto.reciboFaturaUrl ? 'text-emerald-400/50' : 'text-white/18'}`}>
+                  <p className={`text-[15px] font-light mt-0.5 ${projeto.reciboFaturaUrl ? 'text-emerald-400/50' : 'text-white/18'}`}>
                     {projeto.reciboFaturaUrl ? 'Disponível para download' : 'A aguardar emissão'}
                   </p>
                 )}
@@ -509,7 +509,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                     rel="noopener noreferrer"
                     className="shrink-0 flex items-center gap-2 border border-emerald-400/30 bg-emerald-400/[0.07]
                                hover:bg-emerald-400/[0.14] hover:border-emerald-400/50 px-5 py-3
-                               text-[11px] tracking-[0.4em] text-emerald-400/70 hover:text-emerald-400
+                               text-[12px] tracking-[0.4em] text-emerald-400/70 hover:text-emerald-400
                                uppercase transition-all duration-200"
                   >
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -519,7 +519,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                   </a>
                 ) : (
                   <span className="shrink-0 flex items-center gap-2 border border-white/[0.08] bg-white/[0.02]
-                                   px-5 py-3 text-[11px] tracking-[0.4em] text-white/18 uppercase cursor-not-allowed">
+                                   px-5 py-3 text-[12px] tracking-[0.4em] text-white/18 uppercase cursor-not-allowed">
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <path d="M12 16l-4-4m4 4l4-4m-4 4V4M4 20h16" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
@@ -534,9 +534,9 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
           {(isAdmin || projeto.fichaCliente) && (
             <div className="border border-white/[0.07] bg-white/[0.02] px-6 py-6">
               <div className="flex items-center justify-between mb-5">
-                <p className="text-[11px] tracking-[0.5em] text-white/25 uppercase">Dados do Cliente</p>
+                <p className="text-[12px] tracking-[0.5em] text-white/25 uppercase">Dados do Cliente</p>
                 {isAdmin && !isEditing && !projeto.fichaCliente && (
-                  <p className="text-[11px] tracking-[0.25em] text-white/15 italic">Clica em Editar para preencher</p>
+                  <p className="text-[12px] tracking-[0.25em] text-white/15 italic">Clica em Editar para preencher</p>
                 )}
               </div>
 
@@ -544,44 +544,44 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
                 {/* Valor */}
                 <div className="border border-white/[0.10] bg-white/[0.03] px-4 py-4">
-                  <p className="text-[11px] tracking-[0.45em] text-white/20 uppercase mb-2">Valor do Serviço</p>
+                  <p className="text-[12px] tracking-[0.45em] text-white/20 uppercase mb-2">Valor do Serviço</p>
                   {isEditing ? (
                     <EditableField
                       value={projeto.fichaCliente?.orcamento ?? ''}
                       isEditing={true}
                       onChange={v => setFicha('orcamento', v)}
-                      className="text-[20px] font-light text-white/70 tracking-wide"
+                      className="text-[21px] font-light text-white/70 tracking-wide"
                       placeholder="Ex: 3 000 €"
                     />
                   ) : projeto.fichaCliente?.orcamento ? (
-                    <p className="text-[20px] font-light text-white/70 tracking-wide">{projeto.fichaCliente.orcamento}</p>
+                    <p className="text-[21px] font-light text-white/70 tracking-wide">{projeto.fichaCliente.orcamento}</p>
                   ) : (
-                    <p className="text-[14px] text-white/15 italic">—</p>
+                    <p className="text-[15px] text-white/15 italic">—</p>
                   )}
                 </div>
 
                 {/* Método de pagamento rápido */}
                 <div className="border border-white/[0.10] bg-white/[0.03] px-4 py-4">
-                  <p className="text-[11px] tracking-[0.45em] text-white/20 uppercase mb-2">Método de Pagamento</p>
+                  <p className="text-[12px] tracking-[0.45em] text-white/20 uppercase mb-2">Método de Pagamento</p>
                   {isEditing ? (
                     <EditableField
                       value={projeto.fichaCliente?.metodoPagamento ?? ''}
                       isEditing={true}
                       onChange={v => setFicha('metodoPagamento', v)}
-                      className="text-[15px] font-light text-white/60"
+                      className="text-[16px] font-light text-white/60"
                       placeholder="Ex: Transferência — 50%+50%"
                     />
                   ) : projeto.fichaCliente?.metodoPagamento ? (
-                    <p className="text-[15px] font-light text-white/60">{projeto.fichaCliente.metodoPagamento}</p>
+                    <p className="text-[16px] font-light text-white/60">{projeto.fichaCliente.metodoPagamento}</p>
                   ) : (
-                    <p className="text-[14px] text-white/15 italic">—</p>
+                    <p className="text-[15px] text-white/15 italic">—</p>
                   )}
                 </div>
               </div>
 
               {/* ── Serviços Contratados ── */}
               <div className="border border-white/[0.08] bg-white/[0.015] px-4 py-4 mb-5">
-                <p className="text-[11px] tracking-[0.45em] text-white/20 uppercase mb-3">Serviços Contratados</p>
+                <p className="text-[12px] tracking-[0.45em] text-white/20 uppercase mb-3">Serviços Contratados</p>
                 {isEditing ? (
                   <div className="flex flex-wrap gap-2">
                     {SERVICOS_LISTA.map(servico => {
@@ -597,7 +597,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                               : [...selecionados, servico]
                             setFicha('servicosList', next.join('\n'))
                           }}
-                          className={`px-3 py-1.5 text-[12px] tracking-[0.2em] uppercase transition-all duration-200 border ${
+                          className={`px-3 py-1.5 text-[13px] tracking-[0.2em] uppercase transition-all duration-200 border ${
                             isSelected
                               ? 'border-white/40 bg-white/[0.12] text-white/80'
                               : 'border-white/[0.07] bg-white/[0.02] text-white/25 hover:border-white/20 hover:text-white/45'
@@ -614,12 +614,12 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                     {projeto.fichaCliente.servicosList.split('\n').filter(Boolean).map((s, i) => (
                       <div key={i} className="flex items-center gap-2.5">
                         <span className="w-1 h-1 rounded-full bg-white/20 shrink-0" />
-                        <p className="text-[14px] text-white/55 font-light">{s}</p>
+                        <p className="text-[15px] text-white/55 font-light">{s}</p>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-[14px] text-white/15 italic">—</p>
+                  <p className="text-[15px] text-white/15 italic">—</p>
                 )}
               </div>
 
@@ -630,13 +630,13 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                   .filter(({ field }) => isEditing || !!(projeto.fichaCliente as any)?.[field])
                   .map(({ label, field, placeholder, isDate }) => (
                     <div key={field} className="flex flex-col gap-0.5">
-                      <p className="text-[11px] tracking-[0.35em] text-white/20 uppercase">{label}</p>
+                      <p className="text-[12px] tracking-[0.35em] text-white/20 uppercase">{label}</p>
                       {isDate ? (
                         <EditableDateField
                           value={(projeto.fichaCliente as any)?.[field] ?? ''}
                           isEditing={isEditing}
                           onChange={v => setFicha(field, v)}
-                          className="text-[14px] text-white/55 font-light"
+                          className="text-[15px] text-white/55 font-light"
                           placeholder={placeholder}
                         />
                       ) : (
@@ -644,7 +644,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
                           value={(projeto.fichaCliente as any)?.[field] ?? ''}
                           isEditing={isEditing}
                           onChange={v => setFicha(field, v)}
-                          className="text-[14px] text-white/55 font-light"
+                          className="text-[15px] text-white/55 font-light"
                           placeholder={placeholder}
                         />
                       )}
@@ -655,12 +655,12 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
               {/* Observações */}
               {(isEditing || projeto.fichaCliente?.observacoes) && (
                 <div className="mt-4 pt-4 border-t border-white/[0.06]">
-                  <p className="text-[11px] tracking-[0.35em] text-white/20 uppercase mb-2">Observações</p>
+                  <p className="text-[12px] tracking-[0.35em] text-white/20 uppercase mb-2">Observações</p>
                   <EditableField
                     value={projeto.fichaCliente?.observacoes ?? ''}
                     isEditing={isEditing}
                     onChange={v => setFicha('observacoes', v)}
-                    className="text-[14px] text-white/45 font-light leading-relaxed"
+                    className="text-[15px] text-white/45 font-light leading-relaxed"
                     placeholder="Notas adicionais..."
                     multiline
                   />

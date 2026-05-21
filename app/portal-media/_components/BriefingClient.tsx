@@ -104,7 +104,7 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
       <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 py-10">
 
         <Link href={`/portal-media/${initial.ref}`}
-          className="inline-flex items-center gap-2 text-[11px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
+          className="inline-flex items-center gap-2 text-[12px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
           <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
           Portal {initial.nome}
         </Link>
@@ -112,7 +112,7 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
         {/* Title + add button */}
         <div className="flex items-end justify-between mb-10">
           <div>
-            <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD · {initial.nome}</p>
+            <p className="text-[9px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD · {initial.nome}</p>
             <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Briefing</h1>
             <div className="mt-4 flex items-center gap-3">
               <div className="h-px w-12 bg-white/25" />
@@ -122,7 +122,7 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
           {isAdmin && (
             <button
               onClick={addSessao}
-              className="border border-dashed border-white/20 hover:border-white/40 px-4 py-2 text-[11px] tracking-[0.3em] text-white/30 hover:text-white/60 uppercase transition-colors shrink-0"
+              className="border border-dashed border-white/20 hover:border-white/40 px-4 py-2 text-[12px] tracking-[0.3em] text-white/30 hover:text-white/60 uppercase transition-colors shrink-0"
             >
               + Sessão
             </button>
@@ -131,8 +131,8 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
 
         {/* Intro box */}
         <div className="mb-10 border border-white/[0.07] bg-white/[0.02] px-6 py-6 flex flex-col gap-4">
-          <p className="text-[11px] tracking-[0.5em] text-white/30 uppercase">O que é o Briefing?</p>
-          <p className="text-[15px] font-light text-white/65 leading-relaxed tracking-wide">
+          <p className="text-[12px] tracking-[0.5em] text-white/30 uppercase">O que é o Briefing?</p>
+          <p className="text-[16px] font-light text-white/65 leading-relaxed tracking-wide">
             O briefing é a base de tudo o que fazemos juntos. É o momento em que nos sentamos contigo, presencialmente ou à distância, para perceber exatamente o que precisas, o que sentes e o que esperas do projeto.
           </p>
           <div className="flex flex-col gap-3">
@@ -143,10 +143,10 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
               { n: '04', t: 'Notificação', d: 'Sempre que adicionarmos um novo registo de briefing, recebes uma notificação por email para ficares a par.' },
             ].map(({ n, t, d }) => (
               <div key={n} className="flex items-start gap-4 border-t border-white/[0.05] pt-3">
-                <span className="text-[12px] font-mono text-white/15 shrink-0 mt-0.5">{n}</span>
+                <span className="text-[13px] font-mono text-white/15 shrink-0 mt-0.5">{n}</span>
                 <div>
-                  <p className="text-[13px] tracking-[0.2em] text-white/55 font-medium mb-1">{t}</p>
-                  <p className="text-[14px] font-light text-white/30 leading-relaxed">{d}</p>
+                  <p className="text-[14px] tracking-[0.2em] text-white/55 font-medium mb-1">{t}</p>
+                  <p className="text-[15px] font-light text-white/30 leading-relaxed">{d}</p>
                 </div>
               </div>
             ))}
@@ -156,9 +156,9 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
         {/* Empty state */}
         {sessoes.length === 0 && (
           <div className="border border-dashed border-white/[0.07] px-6 py-14 text-center">
-            <p className="text-[11px] tracking-[0.4em] text-white/20 uppercase mb-2">Sem briefings registados</p>
+            <p className="text-[12px] tracking-[0.4em] text-white/20 uppercase mb-2">Sem briefings registados</p>
             {isAdmin && (
-              <p className="text-[14px] font-light text-white/15">Clica em "+ Sessão" para adicionar o primeiro briefing</p>
+              <p className="text-[15px] font-light text-white/15">Clica em "+ Sessão" para adicionar o primeiro briefing</p>
             )}
           </div>
         )}
@@ -170,38 +170,38 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
 
               {/* Session header */}
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-6 py-4 border-b border-white/[0.06]">
-                <span className="text-[12px] font-mono text-white/15 shrink-0">{String(i + 1).padStart(2, '0')}</span>
+                <span className="text-[13px] font-mono text-white/15 shrink-0">{String(i + 1).padStart(2, '0')}</span>
                 <EditableField
                   value={sessao.titulo}
                   isEditing={isEditing}
                   onChange={v => update(sessao.id, 'titulo', v)}
-                  className="flex-1 min-w-[120px] text-[13px] tracking-[0.3em] text-white/65 uppercase font-medium"
+                  className="flex-1 min-w-[120px] text-[14px] tracking-[0.3em] text-white/65 uppercase font-medium"
                   placeholder="Título do briefing"
                 />
                 <EditableDateField
                   value={sessao.data}
                   isEditing={isEditing}
                   onChange={v => update(sessao.id, 'data', v)}
-                  className="text-[11px] tracking-[0.2em] text-white/30 shrink-0"
+                  className="text-[12px] tracking-[0.2em] text-white/30 shrink-0"
                   placeholder="Data"
                 />
               </div>
 
               {/* Resumo */}
               <div className="px-6 py-5">
-                <p className="text-[11px] tracking-[0.4em] text-white/20 uppercase mb-3">Resumo</p>
+                <p className="text-[12px] tracking-[0.4em] text-white/20 uppercase mb-3">Resumo</p>
                 {isEditing ? (
                   <textarea
                     value={sessao.resumo}
                     onChange={e => update(sessao.id, 'resumo', e.target.value)}
                     placeholder="Escreve aqui o resumo do briefing com o cliente: objetivos, referências, decisões tomadas..."
                     rows={7}
-                    className="w-full bg-white/[0.03] border border-white/[0.08] px-4 py-3 text-[15px] font-light text-white/55 leading-relaxed resize-none focus:outline-none focus:border-white/20 placeholder:text-white/15"
+                    className="w-full bg-white/[0.03] border border-white/[0.08] px-4 py-3 text-[16px] font-light text-white/55 leading-relaxed resize-none focus:outline-none focus:border-white/20 placeholder:text-white/15"
                   />
                 ) : sessao.resumo ? (
-                  <p className="text-[15px] font-light text-white/40 leading-relaxed whitespace-pre-wrap">{sessao.resumo}</p>
+                  <p className="text-[16px] font-light text-white/40 leading-relaxed whitespace-pre-wrap">{sessao.resumo}</p>
                 ) : (
-                  <p className="text-[14px] font-light text-white/15">Sem resumo registado.</p>
+                  <p className="text-[15px] font-light text-white/15">Sem resumo registado.</p>
                 )}
               </div>
 
@@ -209,7 +209,7 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
               {isAdmin && (
                 <>
                   <div className="px-6 py-4 border-t border-white/[0.06] flex flex-wrap items-center justify-between gap-3">
-                    <span className={`text-[11px] tracking-[0.25em] uppercase ${sessao.notificacaoEnviada ? 'text-emerald-400/60' : 'text-white/18'}`}>
+                    <span className={`text-[12px] tracking-[0.25em] uppercase ${sessao.notificacaoEnviada ? 'text-emerald-400/60' : 'text-white/18'}`}>
                       {sessao.notificacaoEnviada
                         ? `✓ Notificado em ${sessao.notificacaoEnviada}`
                         : 'Cliente não notificado'}
@@ -217,7 +217,7 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
                     <button
                       onClick={() => !sessao.notificacaoEnviada && notificar(sessao.id)}
                       disabled={!!sessao.notificacaoEnviada || notifying === sessao.id}
-                      className={`px-5 py-2 text-[11px] tracking-[0.35em] uppercase border transition-colors shrink-0
+                      className={`px-5 py-2 text-[12px] tracking-[0.35em] uppercase border transition-colors shrink-0
                         ${sessao.notificacaoEnviada
                           ? 'border-emerald-400/20 text-emerald-400/40 cursor-default'
                           : 'border-white/25 text-white/50 hover:border-white/50 hover:text-white/80 cursor-pointer'}
@@ -231,16 +231,16 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
                   <div className="px-6 py-3 border-t border-white/[0.04] flex items-center justify-end">
                     {confirmDelete === sessao.id ? (
                       <div className="flex items-center gap-3">
-                        <span className="text-[14px] text-white/35 tracking-[0.2em]">Tens a certeza?</span>
+                        <span className="text-[15px] text-white/35 tracking-[0.2em]">Tens a certeza?</span>
                         <button
                           onClick={() => eliminar(sessao.id)}
-                          className="px-4 py-1.5 text-[11px] tracking-[0.3em] uppercase border border-red-400/40 text-red-400/70 hover:border-red-400/70 hover:text-red-400 transition-colors"
+                          className="px-4 py-1.5 text-[12px] tracking-[0.3em] uppercase border border-red-400/40 text-red-400/70 hover:border-red-400/70 hover:text-red-400 transition-colors"
                         >
                           Eliminar
                         </button>
                         <button
                           onClick={() => setConfirmDelete(null)}
-                          className="text-[11px] tracking-[0.3em] text-white/25 hover:text-white/50 uppercase transition-colors"
+                          className="text-[12px] tracking-[0.3em] text-white/25 hover:text-white/50 uppercase transition-colors"
                         >
                           Cancelar
                         </button>
@@ -248,7 +248,7 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
                     ) : (
                       <button
                         onClick={() => setConfirmDelete(sessao.id)}
-                        className="text-[11px] tracking-[0.3em] text-white/15 hover:text-red-400/50 uppercase transition-colors"
+                        className="text-[12px] tracking-[0.3em] text-white/15 hover:text-red-400/50 uppercase transition-colors"
                       >
                         Eliminar Sessão
                       </button>
@@ -267,12 +267,12 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
               className="flex items-center justify-between border border-white/20 bg-white/[0.03] hover:bg-white/[0.07]
                          hover:border-white/35 px-6 py-4 transition-all duration-200 group"
               style={{ boxShadow: '0 0 18px rgba(255,255,255,0.04)' }}>
-              <span className="text-[12px] tracking-[0.4em] text-white/55 group-hover:text-white/80 uppercase transition-colors">Ver Mais</span>
+              <span className="text-[13px] tracking-[0.4em] text-white/55 group-hover:text-white/80 uppercase transition-colors">Ver Mais</span>
               <span className="text-white/25 group-hover:text-white/55 transition-colors">↗</span>
             </a>
           ) : (
             <div className="flex items-center justify-between border border-white/[0.06] bg-white/[0.01] px-6 py-4 cursor-not-allowed">
-              <span className="text-[12px] tracking-[0.4em] text-white/18 uppercase">Aguardar</span>
+              <span className="text-[13px] tracking-[0.4em] text-white/18 uppercase">Aguardar</span>
               <span className="text-white/10">↗</span>
             </div>
           )}

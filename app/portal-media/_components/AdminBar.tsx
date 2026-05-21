@@ -77,7 +77,7 @@ export default function AdminBar({ isEditing, saving, onToggle, onSave, onCancel
 
           {/* Badge maquete (modo visualização) */}
           {isMaster && (
-            <span className="px-3 py-2 border border-blue-400/25 bg-blue-400/5 text-blue-400/50 text-[11px] tracking-[0.35em] uppercase">
+            <span className="px-3 py-2 border border-blue-400/25 bg-blue-400/5 text-blue-400/50 text-[12px] tracking-[0.35em] uppercase">
               Maquete Mestre
             </span>
           )}
