@@ -36,6 +36,7 @@ const DEFAULT_PRESETS: Preset[] = [
   { key: 'redes',      label: 'Redes sociais',                                 cor: '#E11D48', defaultDur: 60, fixo: true },
   { key: 'almoco',     label: 'Almoço + treino',                               cor: '#D97706', defaultDur: 90, fixo: true },
   { key: 'clientes',   label: 'Clientes + arranque / encerramento (fixo)',     cor: '#3B82F6', defaultDur: 60, fixo: true },
+  { key: 'pausa',      label: 'Pausa / Intervalo',                             cor: '#71717A', defaultDur: 15, fixo: true },
 ]
 const CUSTOM_PRESET: Preset = { key: 'custom', label: 'Outro (à medida)', cor: '#A1A1AA', defaultDur: 30, fixo: true }
 
@@ -396,75 +397,104 @@ export default function TimeBlocks({
   }
 
   /** Auto-build the day according to the rules:
-   *  - Arranque sempre às 09:30
-   *  - Encerramento sempre às 18:00 (Clientes 18:00–18:30)
-   *  - Almoço + treino fixo 12:00–14:00
-   *  - Editar trabalhos é prioridade (sempre 4h30 / dia, total)
-   *  - Redes sociais e Plataforma têm 1h cada / dia
-   *  - 6 templates rotativos pelo dia-do-ano para nunca ficar igual */
+   *  - Arranque 09:30 · Almoço 12:00–14:00 · Encerramento 18:00
+   *  - Pausa de 15 min a meio da manhã + Pausa de 20 min a meio da tarde
+   *  - Editar trabalhos é prioridade (3h55 / dia em dias normais; 5h55 em dia forte)
+   *  - Redes sociais e Plataforma têm 1h cada / dia (excepto em dia forte)
+   *  - 6 templates rotativos pelo dia-do-ano + 1 template raro "FORTE em Edição"
+   *    (apresentado com alerta) */
   async function handleAutoCreateDay() {
     const presetEditar     = PRESETS.find(p => p.key === 'editar')!
     const presetRedes      = PRESETS.find(p => p.key === 'redes')!
     const presetPlataforma = PRESETS.find(p => p.key === 'plataforma')!
     const presetAlmoco     = PRESETS.find(p => p.key === 'almoco')!
     const presetClientes   = PRESETS.find(p => p.key === 'clientes')!
+    const presetPausa      = PRESETS.find(p => p.key === 'pausa')
+      ?? { key: 'pausa', label: 'Pausa', cor: '#71717A', defaultDur: 15, fixo: true }
 
     type Slot = { key: string; title: string; cor: string; inicio: string; fim: string }
 
-    // Helper aliases for the work segments — keep colors and titles consistent
     const EDITAR     = (inicio: string, fim: string): Slot => ({ key: 'editar',     title: 'Editar trabalhos (prioridade)', cor: presetEditar.cor,     inicio, fim })
     const REDES      = (inicio: string, fim: string): Slot => ({ key: 'redes',      title: 'Redes sociais',                  cor: presetRedes.cor,      inicio, fim })
     const PLATAFORMA = (inicio: string, fim: string): Slot => ({ key: 'plataforma', title: 'Plataforma',                      cor: presetPlataforma.cor, inicio, fim })
+    const PAUSA_M    = (): Slot => ({ key: 'pausa', title: '☕ Pausa (15 min)', cor: presetPausa.cor, inicio: '11:00:00', fim: '11:15:00' })
+    const PAUSA_T    = (): Slot => ({ key: 'pausa', title: '☕ Pausa (20 min)', cor: presetPausa.cor, inicio: '16:00:00', fim: '16:20:00' })
 
     /**
-     * 6 templates completos: a manhã (09:30–12:00, 2h30) e a tarde (14:00–18:00, 4h)
-     * combinam de forma diferente para que cada dia tenha uma disposição única.
-     * Distribuição mantida em todas: Editar 4h30, Redes 1h, Plataforma 1h.
+     * 7 templates (índices 0–6). Estrutura comum:
+     *   Manhã: 09:30–11:00 (1h30) + ☕ 11:00–11:15 + 11:15–12:00 (45 min)
+     *   Tarde: 14:00–16:00 (2h) + ☕ 16:00–16:20 + 16:20–18:00 (1h40)
+     * Tempo útil total: 5h55 (manhã 2h15 + tarde 3h40).
+     * Distribuição padrão: Editar 3h55, Redes 1h, Plataforma 1h.
+     * Templates 0–5 = rotação normal.
+     * Template 6 = "FORTE em Edição" (só Editar) → mostra alerta.
      */
-    const templates: Slot[][] = [
-      // T0 — Clássico: Editar manhã inteira | tarde Editar+Redes+Plataforma
-      [ EDITAR('09:30:00', '12:00:00'),
-        EDITAR('14:00:00', '16:00:00'),
-        REDES ('16:00:00', '17:00:00'),
-        PLATAFORMA('17:00:00', '18:00:00') ],
+    const templates: { label: string; forte?: boolean; slots: Slot[] }[] = [
+      // T0 — Editar inteiro manhã | tarde Plataforma+Editar+Redes+Editar
+      { label: 'Clássico', slots: [
+        EDITAR('09:30:00', '11:00:00'), PAUSA_M(), EDITAR('11:15:00', '12:00:00'),
+        PLATAFORMA('14:00:00', '15:00:00'), EDITAR('15:00:00', '16:00:00'), PAUSA_T(),
+        REDES('16:20:00', '17:20:00'), EDITAR('17:20:00', '18:00:00'),
+      ] },
 
-      // T1 — Plataforma manhã | tarde Editar+Redes
-      [ EDITAR('09:30:00', '11:00:00'),
-        PLATAFORMA('11:00:00', '12:00:00'),
-        EDITAR('14:00:00', '17:00:00'),
-        REDES ('17:00:00', '18:00:00') ],
+      // T1 — Plataforma cedo
+      { label: 'Plataforma cedo', slots: [
+        PLATAFORMA('09:30:00', '10:30:00'), EDITAR('10:30:00', '11:00:00'), PAUSA_M(), EDITAR('11:15:00', '12:00:00'),
+        EDITAR('14:00:00', '16:00:00'), PAUSA_T(),
+        REDES('16:20:00', '17:20:00'), EDITAR('17:20:00', '18:00:00'),
+      ] },
 
-      // T2 — Redes manhã | tarde Editar+Plataforma
-      [ EDITAR('09:30:00', '11:00:00'),
-        REDES ('11:00:00', '12:00:00'),
-        EDITAR('14:00:00', '17:00:00'),
-        PLATAFORMA('17:00:00', '18:00:00') ],
+      // T2 — Redes cedo
+      { label: 'Redes cedo', slots: [
+        REDES('09:30:00', '10:30:00'), EDITAR('10:30:00', '11:00:00'), PAUSA_M(), EDITAR('11:15:00', '12:00:00'),
+        EDITAR('14:00:00', '16:00:00'), PAUSA_T(),
+        PLATAFORMA('16:20:00', '17:20:00'), EDITAR('17:20:00', '18:00:00'),
+      ] },
 
-      // T3 — Plataforma cedo na manhã | tarde Redes+Editar
-      [ PLATAFORMA('09:30:00', '10:30:00'),
-        EDITAR('10:30:00', '12:00:00'),
-        REDES ('14:00:00', '15:00:00'),
-        EDITAR('15:00:00', '18:00:00') ],
+      // T3 — Redes a meio da tarde
+      { label: 'Redes meio-tarde', slots: [
+        EDITAR('09:30:00', '11:00:00'), PAUSA_M(), EDITAR('11:15:00', '12:00:00'),
+        REDES('14:00:00', '15:00:00'), EDITAR('15:00:00', '16:00:00'), PAUSA_T(),
+        PLATAFORMA('16:20:00', '17:20:00'), EDITAR('17:20:00', '18:00:00'),
+      ] },
 
-      // T4 — Redes cedo na manhã | tarde Plataforma+Editar
-      [ REDES ('09:30:00', '10:30:00'),
-        EDITAR('10:30:00', '12:00:00'),
-        PLATAFORMA('14:00:00', '15:00:00'),
-        EDITAR('15:00:00', '18:00:00') ],
+      // T4 — Plataforma fim da tarde
+      { label: 'Plataforma fim-tarde', slots: [
+        EDITAR('09:30:00', '11:00:00'), PAUSA_M(), EDITAR('11:15:00', '12:00:00'),
+        EDITAR('14:00:00', '16:00:00'), PAUSA_T(),
+        EDITAR('16:20:00', '17:00:00'), PLATAFORMA('17:00:00', '18:00:00'),
+      ] /* ← faltava Redes: mover para outra altura, ver abaixo */ },
 
-      // T5 — Editar manhã | tarde fragmentada Plataforma+Editar+Redes
-      [ EDITAR('09:30:00', '12:00:00'),
-        PLATAFORMA('14:00:00', '15:00:00'),
-        EDITAR('15:00:00', '17:00:00'),
-        REDES ('17:00:00', '18:00:00') ],
+      // T5 — Misto (Plataforma cedo, Redes pós-pausa-tarde)
+      { label: 'Misto', slots: [
+        PLATAFORMA('09:30:00', '10:30:00'), EDITAR('10:30:00', '11:00:00'), PAUSA_M(), EDITAR('11:15:00', '12:00:00'),
+        EDITAR('14:00:00', '15:00:00'), REDES('15:00:00', '16:00:00'), PAUSA_T(),
+        EDITAR('16:20:00', '18:00:00'),
+      ] },
+
+      // T6 — FORTE em Edição (sem Redes, sem Plataforma) — apresentado com alerta
+      { label: 'FORTE em Edição', forte: true, slots: [
+        EDITAR('09:30:00', '11:00:00'), PAUSA_M(), EDITAR('11:15:00', '12:00:00'),
+        EDITAR('14:00:00', '16:00:00'), PAUSA_T(),
+        EDITAR('16:20:00', '18:00:00'),
+      ] },
     ]
 
-    // Day-of-year as template index (deterministic, different across the week)
+    // Corrige T4 — adiciona Redes no início da tarde
+    templates[4].slots = [
+      EDITAR('09:30:00', '11:00:00'), PAUSA_M(), EDITAR('11:15:00', '12:00:00'),
+      REDES('14:00:00', '15:00:00'), EDITAR('15:00:00', '16:00:00'), PAUSA_T(),
+      EDITAR('16:20:00', '17:00:00'), PLATAFORMA('17:00:00', '18:00:00'),
+    ]
+
+    // Day-of-year as template index (deterministic, different across the week).
+    // We rotate 6 normal templates first (0..5) and only ~1 in 7 days fica FORTE (idx 6).
     const d = new Date(day + 'T00:00:00')
     const start = new Date(d.getFullYear(), 0, 0)
     const diff  = (d.getTime() - start.getTime()) + ((start.getTimezoneOffset() - d.getTimezoneOffset()) * 60 * 1000)
     const dayOfYear = Math.floor(diff / 86400000)
     const tplIdx = ((dayOfYear % templates.length) + templates.length) % templates.length
+    const chosen = templates[tplIdx]
 
     // If day already has blocks → confirm replacement
     if (blocks.length > 0) {
@@ -478,7 +508,7 @@ export default function TimeBlocks({
       await Promise.all(blocks.map(b => fetch(`/api/time-blocks/${b.id}`, { method: 'DELETE' })))
 
       // 2) Build all blocks: work template + fixed lunch + fixed closure
-      const work = templates[tplIdx]
+      const work = chosen.slots
       const toCreate: Slot[] = [
         // Manhã + tarde do template escolhido — só os blocos antes do almoço
         ...work.filter(s => s.inicio < '12:00:00'),
@@ -513,6 +543,15 @@ export default function TimeBlocks({
 
       setBlocks(created.sort((a, b) => hms(a.hora_inicio).localeCompare(hms(b.hora_inicio))))
       bumpHistorico()
+
+      // ── Alerta especial quando o dia rotativo calhou em "FORTE em Edição" ──
+      if (chosen.forte) {
+        alert(
+          '⚠️ Hoje calhou DIA FORTE em Edição (sem Redes nem Plataforma).\n\n' +
+          'Tens 5h55 dedicadas só a editar trabalhos.\n' +
+          'Lembra-te de fazer Redes e Plataforma noutro dia desta semana.'
+        )
+      }
     } finally {
       setSaving(false)
     }
