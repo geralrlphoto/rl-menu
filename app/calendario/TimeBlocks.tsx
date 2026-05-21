@@ -151,6 +151,10 @@ export default function TimeBlocks({ events }: { events: CalEvent[] }) {
   const [adding, setAdding]         = useState(false)
   const [showLegend, setShowLegend] = useState(true)
   const [historicoOpen, setHistoricoOpen] = useState(false)
+  // Bumped whenever blocks change in the daily list so the open Histórico
+  // modal re-fetches and stays in sync.
+  const [historicoVersion, setHistoricoVersion] = useState(0)
+  const bumpHistorico = () => setHistoricoVersion(v => v + 1)
 
   // Fast event lookup
   const eventsById = useMemo(() => new Map(events.map(e => [e.id, e])), [events])
@@ -358,6 +362,7 @@ export default function TimeBlocks({ events }: { events: CalEvent[] }) {
       }
 
       setBlocks(created.sort((a, b) => hms(a.hora_inicio).localeCompare(hms(b.hora_inicio))))
+      bumpHistorico()
     } finally {
       setSaving(false)
     }
@@ -400,6 +405,7 @@ export default function TimeBlocks({ events }: { events: CalEvent[] }) {
         setNewTitle('')
         setTitleEdited(false)
         setNewEventoId('')
+        bumpHistorico()
       } else if (d.error) {
         alert(d.error)
       }
@@ -435,13 +441,14 @@ export default function TimeBlocks({ events }: { events: CalEvent[] }) {
       body: JSON.stringify({ action }),
     })
     const d = await res.json()
-    if (d.block) load()
+    if (d.block) { load(); bumpHistorico() }
   }
 
   async function handleDelete(id: string) {
     if (!confirm('Eliminar este time block?')) return
     setBlocks(prev => prev.filter(b => b.id !== id))
     await fetch(`/api/time-blocks/${id}`, { method: 'DELETE' })
+    bumpHistorico()
   }
 
   async function handleUpdateTimes(b: Block, inicio: string, fim: string) {
@@ -878,6 +885,7 @@ export default function TimeBlocks({ events }: { events: CalEvent[] }) {
         open={historicoOpen}
         onClose={() => setHistoricoOpen(false)}
         events={events}
+        refreshSignal={historicoVersion}
       />
     </section>
   )

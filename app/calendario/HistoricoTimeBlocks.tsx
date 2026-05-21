@@ -40,11 +40,15 @@ function fmtDateShort(d: string) {
 }
 
 export default function HistoricoTimeBlocks({
-  open, onClose, events,
+  open, onClose, events, refreshSignal = 0,
 }: {
   open: boolean
   onClose: () => void
   events: CalEvent[]
+  /** When this number changes and the modal is open, the list reloads.
+   *  Used by the parent TimeBlocks to refresh history after a block is
+   *  deleted/added in the daily list. */
+  refreshSignal?: number
 }) {
   const [items, setItems] = useState<HistoricoItem[]>([])
   const [loading, setLoading] = useState(false)
@@ -127,7 +131,7 @@ export default function HistoricoTimeBlocks({
     if (!open) return
     reload()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open])
+  }, [open, refreshSignal])
 
   if (!open) return null
 
@@ -149,8 +153,16 @@ export default function HistoricoTimeBlocks({
               {items.length} casamento{items.length === 1 ? '' : 's'} · {fmtTotal(grandTotal)} no total
             </p>
           </div>
-          <button onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-white/40 hover:text-white/80 hover:bg-white/5 transition-colors">✕</button>
+          <div className="flex items-center gap-2">
+            <button onClick={reload}
+              disabled={loading || busy}
+              title="Recarregar do servidor"
+              className="text-[10px] tracking-widest uppercase px-2.5 py-1.5 rounded-lg border border-white/10 text-white/40 hover:text-white/80 hover:border-white/30 transition-colors disabled:opacity-40">
+              🔄 Recarregar
+            </button>
+            <button onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-white/40 hover:text-white/80 hover:bg-white/5 transition-colors">✕</button>
+          </div>
         </div>
 
         {/* List */}
