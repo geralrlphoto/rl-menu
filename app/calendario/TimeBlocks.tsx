@@ -361,6 +361,9 @@ export default function TimeBlocks({
 
   const [tick, setTick] = useState(0)
   const completedAlerted = useRef<Set<string>>(new Set())
+  // Dias para os quais já corremos o auto-sync com o calendário nesta sessão
+  // (evita duplicar blocos a cada navegação).
+  const syncedDaysRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     setNewCor(preset.cor)
@@ -437,9 +440,130 @@ export default function TimeBlocks({
     try {
       const res = await fetch(`/api/time-blocks?data=${day}`, { cache: 'no-store' })
       const d = await res.json()
-      setBlocks(d.blocks ?? [])
+      const loaded: Block[] = d.blocks ?? []
+      setBlocks(loaded)
+
+      // Auto-sync com o calendário — corre 1x por sessão e por dia.
+      if (!syncedDaysRef.current.has(day)) {
+        syncedDaysRef.current.add(day)
+        await syncCalendarEventsToBlocks(loaded)
+      }
     } finally {
       setLoading(false)
+    }
+  }
+
+  /** Cria blocos automaticamente a partir dos eventos do calendário (casamentos,
+   *  pré-weddings, reuniões) que ainda não tenham um bloco com o respetivo
+   *  evento_id. Não toca em blocos já existentes — quem manda é o calendário,
+   *  mas o utilizador pode sempre apagar manualmente o que não quiser. */
+  async function syncCalendarEventsToBlocks(currentBlocks: Block[]) {
+    const existingIds = new Set(
+      currentBlocks.map(b => b.evento_id).filter((x): x is string => !!x)
+    )
+
+    // Datas dos eventos vêm no formato "YYYY-MM-DD" ou às vezes ISO
+    // ("YYYY-MM-DDTHH:MM:SS...") — usamos prefix-match.
+    const matchesDay = (s?: string | null) => !!s && s.startsWith(day)
+
+    const corCasamento  = PRESETS.find(p => p.key === 'casamento')?.cor   ?? '#C9A84C'
+    const corPreWedding = PRESETS.find(p => p.key === 'pre_wedding')?.cor ?? '#4FC3C3'
+    const corReuniao    = PRESETS.find(p => p.key === 'reuniao')?.cor     ?? '#C084FC'
+
+    // Helper para escrever 'HH:MM:SS'
+    const fmt = (sec: number) => {
+      const wrapped = ((sec % 86400) + 86400) % 86400
+      const h = Math.floor(wrapped / 3600)
+      const m = Math.floor((wrapped % 3600) / 60)
+      const s = wrapped % 60
+      return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+    }
+
+    type ToCreate = { categoria: string; titulo: string; cor: string; inicio: string; fim: string; evento_id?: string | null }
+    const toCreate: ToCreate[] = []
+
+    // 1) Casamentos (dia inteiro)
+    for (const ev of events) {
+      if (!matchesDay(ev.data_evento)) continue
+      if (existingIds.has(ev.id)) continue
+      toCreate.push({
+        categoria: 'casamento',
+        titulo: `Casamento — ${ev.referencia || ev.cliente || ''}`.trim(),
+        cor: corCasamento,
+        inicio: hms(startHour),
+        fim:    hms(endHour),
+        evento_id: ev.id,
+      })
+    }
+
+    // 2) Pré-weddings (2h30 a partir da hora)
+    for (const pw of preWeddings) {
+      if (!matchesDay(pw.data_evento)) continue
+      if (existingIds.has(pw.id)) continue
+      const horaInicio = pw.hora && /^\d{2}:\d{2}/.test(pw.hora)
+        ? pw.hora.slice(0, 5) + ':00'
+        : '14:00:00'
+      const inicioSec = toSeconds(horaInicio)
+      toCreate.push({
+        categoria: 'pre_wedding',
+        titulo: `Pré-Wedding — ${pw.nomes || pw.referencia}`,
+        cor: corPreWedding,
+        inicio: horaInicio,
+        fim:    fmt(inicioSec + 150 * 60),
+        evento_id: pw.id,
+      })
+    }
+
+    // 3) Reuniões CRM (1h)
+    for (const r of reunioes) {
+      if (!matchesDay(r.reuniao_data)) continue
+      if (existingIds.has(r.id)) continue
+      const horaInicio = r.reuniao_hora && /^\d{2}:\d{2}/.test(r.reuniao_hora)
+        ? r.reuniao_hora.slice(0, 5) + ':00'
+        : '15:00:00'
+      const inicioSec = toSeconds(horaInicio)
+      toCreate.push({
+        categoria: 'reuniao',
+        titulo: `Reunião — ${r.nome || ''}`.trim(),
+        cor: corReuniao,
+        inicio: horaInicio,
+        fim:    fmt(inicioSec + 60 * 60),
+        evento_id: r.id,
+      })
+    }
+
+    if (toCreate.length === 0) return
+
+    // Insere em paralelo e recarrega o estado
+    const created: Block[] = []
+    let ordem = (currentBlocks.reduce((m, b) => Math.max(m, b.ordem), 0) ?? 0) + 1
+    for (const item of toCreate) {
+      try {
+        const res = await fetch('/api/time-blocks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            data: day,
+            categoria: item.categoria,
+            titulo: item.titulo,
+            cor: item.cor,
+            hora_inicio: item.inicio,
+            hora_fim: item.fim,
+            ordem: ordem++,
+            evento_id: item.evento_id,
+          }),
+        })
+        const d = await res.json()
+        if (d.block) created.push(d.block)
+      } catch {}
+    }
+
+    if (created.length > 0) {
+      // Re-fetch fresh from server (mais simples e sem condições de corrida)
+      const res = await fetch(`/api/time-blocks?data=${day}`, { cache: 'no-store' })
+      const d = await res.json()
+      setBlocks(d.blocks ?? [])
+      bumpHistorico()
     }
   }
 
