@@ -224,8 +224,7 @@ export default function TimeBlocks() {
   }
 
   /** Auto-build the day according to the rules:
-   *  - 09:00–09:30 → Clientes (arranque)
-   *  - 09:30–12:00 → Editar trabalhos (priority, single block)
+   *  - 09:30–12:00 → Editar trabalhos (priority, single block) — arranque do dia
    *  - 12:00–14:00 → Almoço + treino
    *  - 14:00–18:00 → Editar (2h) + Redes sociais (1h) + Plataforma (1h)
    *    The afternoon order rotates between 6 permutations based on dayOfYear
@@ -281,13 +280,7 @@ export default function TimeBlocks() {
       // 2) Build all blocks
       const toCreate: Array<{ key: string; title: string; cor: string; inicio: string; fim: string }> = []
 
-      // 09:00–09:30 — Clientes (arranque)
-      toCreate.push({
-        key: 'clientes', title: 'Clientes — arranque',
-        cor: presetClientes.cor, inicio: '09:00:00', fim: '09:30:00',
-      })
-
-      // 09:30–12:00 — Editar trabalhos (prioridade)
+      // 09:30–12:00 — Editar trabalhos (prioridade) — arranque do dia
       toCreate.push({
         key: 'editar', title: 'Editar trabalhos (prioridade)',
         cor: presetEditar.cor, inicio: '09:30:00', fim: '12:00:00',
