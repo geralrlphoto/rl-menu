@@ -204,6 +204,8 @@ export default function CalendarClient({
       const d = await res.json()
       if (res.ok) {
         setReuniaoOpen(false)
+        // Salta o TimeBlocks para o dia da reunião + força re-sync
+        window.dispatchEvent(new CustomEvent('timeblocks-set-day', { detail: { day: reuniaoDate, resync: true } }))
         startTransition(() => router.refresh())
       } else {
         alert(d.error ?? 'Erro ao guardar reunião')
@@ -255,6 +257,8 @@ export default function CalendarClient({
       const d = await res.json()
       if (res.ok) {
         setPwOpen(false)
+        // Salta o TimeBlocks para o dia do PW + força re-sync
+        window.dispatchEvent(new CustomEvent('timeblocks-set-day', { detail: { day: pwDate, resync: true } }))
         startTransition(() => router.refresh())
       } else {
         alert(d.error ?? 'Erro ao guardar pré-wedding')
@@ -291,6 +295,10 @@ export default function CalendarClient({
           hora:       d.tarefa.hora,
           evento_id:  d.tarefa.evento_id ?? null,
         }])
+        // Salta o TimeBlocks para o dia da tarefa
+        if (addTaskDate) {
+          window.dispatchEvent(new CustomEvent('timeblocks-set-day', { detail: { day: addTaskDate, resync: false } }))
+        }
         setAddTaskDate(null)
         startTransition(() => router.refresh())
       }

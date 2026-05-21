@@ -365,6 +365,26 @@ export default function TimeBlocks({
   // (evita duplicar blocos a cada navegação).
   const syncedDaysRef = useRef<Set<string>>(new Set())
 
+  /** Pode ser disparado de fora (CalendarClient após criar um evento) para:
+   *  - Mudar a vista para um dia específico
+   *  - Forçar re-sync mesmo que esse dia já tenha sido sincronizado */
+  useEffect(() => {
+    const handler = (e: any) => {
+      const targetDay = e?.detail?.day
+      const resync    = e?.detail?.resync
+      if (!targetDay || typeof targetDay !== 'string') return
+      if (resync) syncedDaysRef.current.delete(targetDay)
+      if (targetDay !== day) {
+        setDay(targetDay)            // useEffect de [day] chama load() → faz sync
+      } else {
+        load()                        // mesmo dia → load manual para apanhar mudanças
+      }
+    }
+    window.addEventListener('timeblocks-set-day', handler as EventListener)
+    return () => window.removeEventListener('timeblocks-set-day', handler as EventListener)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [day])
+
   useEffect(() => {
     setNewCor(preset.cor)
     setNewFim(addSeconds(newInicio || '09:00:00', preset.defaultDur * 60))
