@@ -38,12 +38,25 @@ export default async function CalendarioPage() {
   // We keep `notion_id` as the CalEvent.id (with fallback to row.id when the
   // notion_id is empty) so that tarefas.evento_id and time_blocks.evento_id
   // values created before the switch keep matching.
-  const { data: eventosRaw } = await supabase
-    .from('eventos_2026')
-    .select('id, notion_id, referencia, cliente, data_evento, local, tipo_evento, fotografo, videografo')
-    .order('data_evento', { ascending: true })
+  //
+  // NOTE: Supabase's default row limit is 1000. /casamentos hits the API once
+  // per year (so it's automatically chunked), but here we load everything in
+  // one shot. We use a paged loop with `range` to be safe against the cap.
+  const eventosRaw: any[] = []
+  const PAGE = 1000
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase
+      .from('eventos_2026')
+      .select('*')
+      .order('data_evento', { ascending: true, nullsFirst: false })
+      .range(from, from + PAGE - 1)
+    if (error) { console.error('[calendario] eventos_2026 fetch error:', error.message); break }
+    if (!data || data.length === 0) break
+    eventosRaw.push(...data)
+    if (data.length < PAGE) break
+  }
 
-  const events: CalEvent[] = (eventosRaw ?? []).map((row: any) => ({
+  const events: CalEvent[] = eventosRaw.map((row: any) => ({
     id:          row.notion_id || row.id,
     referencia:  row.referencia ?? '',
     cliente:     row.cliente ?? '',
