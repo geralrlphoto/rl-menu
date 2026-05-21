@@ -1,4 +1,4 @@
-ï»¿'use client'
+'use client'
 import { useState, useRef } from 'react'
 import Link from 'next/link'
 import type { Projeto, FaseEstado } from '@/app/portal-media/_data/mockProject'
@@ -9,13 +9,13 @@ import EditableDateField from './EditableDateField'
 import HeroUploadBlock from './HeroUploadBlock'
 
 const ESTADO_CFG = {
-  concluido: { label: 'ConcluÃ­do', bg: 'bg-emerald-400/10', border: 'border-emerald-400/30', dot: 'bg-emerald-400',  text: 'text-emerald-400/80' },
+  concluido: { label: 'Concluído', bg: 'bg-emerald-400/10', border: 'border-emerald-400/30', dot: 'bg-emerald-400',  text: 'text-emerald-400/80' },
   em_curso:  { label: 'Em Curso',  bg: 'bg-blue-400/10',    border: 'border-blue-400/30',    dot: 'bg-blue-400',     text: 'text-blue-400/80'   },
   pendente:  { label: 'Pendente',  bg: 'bg-red-400/[0.03]',  border: 'border-red-400/20',    dot: 'bg-red-400/40',   text: 'text-red-400/50'    },
 }
 
 const ESTADO_OPTIONS = [
-  { value: 'concluido', label: 'ConcluÃ­do' },
+  { value: 'concluido', label: 'Concluído' },
   { value: 'em_curso',  label: 'Em Curso'  },
   { value: 'pendente',  label: 'Pendente'  },
 ]
@@ -59,7 +59,7 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
 
     const emailCliente = projeto.fichaCliente?.email
     if (!emailCliente) {
-      alert('Sem email do cliente definido. Adiciona o email na secÃ§Ã£o Contrato & CPS.')
+      alert('Sem email do cliente definido. Adiciona o email na secção Contrato & CPS.')
       return
     }
 
@@ -125,14 +125,14 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
 
         {/* Back */}
         <Link href={`/portal-media/${projeto.ref}`}
-          className="inline-flex items-center gap-2 text-[9px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
-          <span className="group-hover:-translate-x-1 transition-transform duration-200">â€¹</span>
+          className="inline-flex items-center gap-2 text-[11px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
+          <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
           Portal {projeto.nome}
         </Link>
 
         {/* Header */}
         <div className="mb-10">
-          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD Â· {projeto.nome}</p>
+          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD · {projeto.nome}</p>
           <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Workflow</h1>
           <div className="mt-4 flex items-center gap-3">
             <div className="h-px w-12 bg-white/25" />
@@ -142,15 +142,15 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
 
         {/* Intro */}
         <div className="mb-10 border border-white/[0.07] bg-white/[0.02] px-6 py-6 flex flex-col gap-4">
-          <p className="text-[9px] tracking-[0.5em] text-white/30 uppercase">Sobre o workflow</p>
-          <p className="text-[13px] font-light text-white/65 leading-relaxed tracking-wide">
-            Este Ã© o nosso workflow na sua versÃ£o mais completa.
+          <p className="text-[11px] tracking-[0.5em] text-white/30 uppercase">Sobre o workflow</p>
+          <p className="text-[15px] font-light text-white/65 leading-relaxed tracking-wide">
+            Este é o nosso workflow na sua versão mais completa.
           </p>
-          <p className="text-[13px] font-light text-white/40 leading-relaxed tracking-wide">
-            Em alguns projetos nÃ£o passamos exactamente por todos os passos, mas a nossa atenÃ§Ã£o e dedicaÃ§Ã£o serÃ¡ a mesma, bem como a qualidade do trabalho que vamos entregar.
+          <p className="text-[15px] font-light text-white/40 leading-relaxed tracking-wide">
+            Em alguns projetos não passamos exactamente por todos os passos, mas a nossa atenção e dedicação será a mesma, bem como a qualidade do trabalho que vamos entregar.
           </p>
-          <p className="text-[13px] font-light text-white/40 leading-relaxed tracking-wide">
-            A flexibilidade que aplicamos no nÃºmero de etapas Ã© uma caracterÃ­stica da nossa personalidade, que procura eficiÃªncia em cada projeto, garantindo sempre o foco nos objetivos e resultados.
+          <p className="text-[15px] font-light text-white/40 leading-relaxed tracking-wide">
+            A flexibilidade que aplicamos no número de etapas é uma característica da nossa personalidade, que procura eficiência em cada projeto, garantindo sempre o foco nos objetivos e resultados.
           </p>
         </div>
 
@@ -171,12 +171,12 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
                   <div className={`flex-1 border ${cfg.border} ${cfg.bg} p-5`}>
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <span className="text-[10px] font-mono text-white/15 shrink-0">{String(i + 1).padStart(2, '0')}</span>
+                        <span className="text-[12px] font-mono text-white/15 shrink-0">{String(i + 1).padStart(2, '0')}</span>
                         <EditableField
                           value={fase.nome}
                           isEditing={isEditing}
                           onChange={v => updateFase(i, 'nome', v)}
-                          className={`text-[11px] tracking-[0.35em] font-medium uppercase ${fase.estado === 'pendente' ? 'text-white/35' : 'text-white/75'}`}
+                          className={`text-[13px] tracking-[0.35em] font-medium uppercase ${fase.estado === 'pendente' ? 'text-white/35' : 'text-white/75'}`}
                         />
                       </div>
                       <div className="shrink-0">
@@ -185,7 +185,7 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
                           options={ESTADO_OPTIONS}
                           isEditing={isEditing}
                           onChange={v => updateFase(i, 'estado', v)}
-                          className={`text-[9px] tracking-[0.3em] uppercase ${cfg.text}`}
+                          className={`text-[11px] tracking-[0.3em] uppercase ${cfg.text}`}
                         />
                       </div>
                     </div>
@@ -193,18 +193,18 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
                       value={fase.descricao}
                       isEditing={isEditing}
                       onChange={v => updateFase(i, 'descricao', v)}
-                      className="text-[12px] font-light text-white/30 leading-relaxed pl-7 block tracking-wide"
-                      placeholder="DescriÃ§Ã£o da fase"
+                      className="text-[14px] font-light text-white/30 leading-relaxed pl-7 block tracking-wide"
+                      placeholder="Descrição da fase"
                       multiline
                     />
                     <EditableDateField
                       value={fase.data ?? ''}
                       isEditing={isEditing}
                       onChange={v => updateFase(i, 'data', v)}
-                      className={`text-[9px] tracking-[0.3em] mt-2 pl-7 block ${fase.estado === 'pendente' ? 'text-white/15' : 'text-white/30'}`}
+                      className={`text-[11px] tracking-[0.3em] mt-2 pl-7 block ${fase.estado === 'pendente' ? 'text-white/15' : 'text-white/30'}`}
                       placeholder="Data estimada"
                     />
-                    {/* Notification button â€” admin only */}
+                    {/* Notification button — admin only */}
                     {isAdmin && (
                       <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center gap-3">
                         {fase.notificacaoEnviada ? (
@@ -247,33 +247,33 @@ export default function WorkflowClient({ projeto: initial, isAdmin }: Props) {
         {isEditing && (
           <button onClick={addFase}
             className="mt-4 w-full border border-dashed border-white/[0.08] hover:border-white/20 bg-white/[0.01] hover:bg-white/[0.03] py-3
-                       text-[9px] tracking-[0.4em] text-white/25 uppercase transition-colors">
+                       text-[11px] tracking-[0.4em] text-white/25 uppercase transition-colors">
             + Adicionar Fase
           </button>
         )}
 
         {/* Nota datas */}
         <div className="mt-10 border border-white/[0.05] bg-white/[0.01] px-5 py-4">
-          <p className="text-[10px] tracking-[0.25em] text-white/20 leading-relaxed font-light">
-            As datas indicadas sÃ£o estimativas e podem ser ajustadas conforme o avanÃ§o do projeto.
-            SerÃ¡s notificado em cada transiÃ§Ã£o de fase.
+          <p className="text-[12px] tracking-[0.25em] text-white/20 leading-relaxed font-light">
+            As datas indicadas são estimativas e podem ser ajustadas conforme o avanço do projeto.
+            Serás notificado em cada transição de fase.
           </p>
         </div>
 
         {/* Timings */}
         <div className="mt-3 border border-white/[0.07] bg-white/[0.02] px-6 py-6 flex flex-col gap-4">
-          <p className="text-[9px] tracking-[0.5em] text-white/30 uppercase">Timings</p>
-          <p className="text-[13px] font-light text-white/40 leading-relaxed tracking-wide">
-            No projeto tens todos os timings associados, bem como cada passo que damos atÃ© Ã  conclusÃ£o do mesmo.
+          <p className="text-[11px] tracking-[0.5em] text-white/30 uppercase">Timings</p>
+          <p className="text-[15px] font-light text-white/40 leading-relaxed tracking-wide">
+            No projeto tens todos os timings associados, bem como cada passo que damos até à conclusão do mesmo.
           </p>
-          <p className="text-[13px] font-light text-white/40 leading-relaxed tracking-wide">
-            O compromisso entre ambas as partes com estes timings Ã© fundamental para que tenhas os conteÃºdos do teu lado dentro do prazo estabelecido.
+          <p className="text-[15px] font-light text-white/40 leading-relaxed tracking-wide">
+            O compromisso entre ambas as partes com estes timings é fundamental para que tenhas os conteúdos do teu lado dentro do prazo estabelecido.
           </p>
-          <p className="text-[13px] font-light text-white/30 leading-relaxed tracking-wide">
-            No entanto deverÃ¡ haver sempre alguma flexibilidade para imprevistos.
+          <p className="text-[15px] font-light text-white/30 leading-relaxed tracking-wide">
+            No entanto deverá haver sempre alguma flexibilidade para imprevistos.
           </p>
           <div className="pt-2 border-t border-white/[0.05]">
-            <p className="text-[11px] tracking-[0.3em] text-white/50 uppercase font-light">
+            <p className="text-[13px] tracking-[0.3em] text-white/50 uppercase font-light">
               Contamos contigo para nos ajudares neste processo.
             </p>
           </div>

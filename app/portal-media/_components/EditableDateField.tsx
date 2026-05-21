@@ -60,7 +60,7 @@ export default function EditableDateField({ value, isEditing, onChange, classNam
       onChange={e => onChange(e.target.value ? fromISO(e.target.value) : '')}
       placeholder={placeholder}
       className={`[color-scheme:dark] bg-white/[0.06] border border-white/20 text-white/80
-                  px-2 py-1 outline-none focus:border-white/40 rounded-sm w-full text-sm ${className}`}
+                  px-2 py-1 outline-none focus:border-white/40 rounded-sm w-full text-lg ${className}`}
     />
   )
 }

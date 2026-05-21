@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 import { useState } from 'react'
 import Link from 'next/link'
 import type { Projeto } from '@/app/portal-media/_data/mockProject'
@@ -7,7 +7,7 @@ import HeroUploadBlock from './HeroUploadBlock'
 
 interface Props { projeto: Projeto; isAdmin: boolean }
 
-const LABELS = ['', 'Fraco', 'Razoável', 'Bom', 'Muito Bom', 'Excelente']
+const LABELS = ['', 'Fraco', 'Razo�vel', 'Bom', 'Muito Bom', 'Excelente']
 
 export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
   const [projeto, setProjeto]   = useState(initial)
@@ -15,7 +15,7 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
   const [saving, setSaving]     = useState(false)
   const [heroUrl, setHeroUrl]   = useState(initial.satisfacaoImageUrl ?? '')
 
-  /* ── form state ── */
+  /* -- form state -- */
   const [nota, setNota]           = useState(0)
   const [hoverNota, setHoverNota] = useState(0)
   const [comentario, setComentario] = useState('')
@@ -27,7 +27,7 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
   const jaSubmeteu  = !!satisfacao
   const displayNota = hoverNota || nota
 
-  /* ── save hero image (admin edit) ── */
+  /* -- save hero image (admin edit) -- */
   const save = async () => {
     setSaving(true)
     try {
@@ -42,9 +42,9 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
   }
   const cancel = () => { setProjeto(initial); setIsEditing(false) }
 
-  /* ── submit satisfaction ── */
+  /* -- submit satisfaction -- */
   const submeter = async () => {
-    if (nota === 0) { setErro('Seleciona uma classificação.'); return }
+    if (nota === 0) { setErro('Seleciona uma classifica��o.'); return }
     setEnviando(true)
     setErro(null)
     try {
@@ -81,7 +81,7 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
     setEnviando(false)
   }
 
-  /* ── helpers ── */
+  /* -- helpers -- */
   const notaFinal = satisfacao?.nota ?? (enviado ? nota : 0)
   const comentarioFinal = satisfacao?.comentario ?? (enviado ? comentario.trim() : '')
   const dataFinal = satisfacao?.submetidoEm
@@ -92,21 +92,21 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
       <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 py-10">
 
         <Link href={`/portal-media/${projeto.ref}`}
-          className="inline-flex items-center gap-2 text-[9px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
-          <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
+          className="inline-flex items-center gap-2 text-[11px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
+          <span className="group-hover:-translate-x-1 transition-transform duration-200">�</span>
           Portal {projeto.nome}
         </Link>
 
         <div className="mb-10">
-          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD · {projeto.nome}</p>
-          <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Satisfação</h1>
+          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD � {projeto.nome}</p>
+          <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Satisfa��o</h1>
           <div className="mt-4 flex items-center gap-3">
             <div className="h-px w-12 bg-white/25" />
             <div className="h-px flex-1 bg-white/[0.04]" />
           </div>
         </div>
 
-        {/* ── Já submetido ── */}
+        {/* -- J� submetido -- */}
         {(jaSubmeteu || enviado) ? (
           <div className={`border px-8 py-10 flex flex-col items-center text-center gap-6 ${
             isAdmin
@@ -114,31 +114,31 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
               : 'border-emerald-400/20 bg-emerald-400/[0.03]'
           }`}>
 
-            {/* Ícone */}
+            {/* �cone */}
             <div className={`w-14 h-14 border flex items-center justify-center ${
               isAdmin ? 'border-white/[0.08]' : 'border-emerald-400/25'
             }`}>
               <span className={`text-2xl select-none ${isAdmin ? 'text-white/20' : 'text-emerald-400/50'}`}>
-                {isAdmin ? '◒' : '✓'}
+                {isAdmin ? '?' : '?'}
               </span>
             </div>
 
             <div>
               {isAdmin ? (
                 <>
-                  <p className="text-[9px] tracking-[0.5em] text-white/30 uppercase mb-2">Avaliação do Cliente</p>
-                  <p className="text-[12px] font-light text-white/20 leading-relaxed">
+                  <p className="text-[11px] tracking-[0.5em] text-white/30 uppercase mb-2">Avalia��o do Cliente</p>
+                  <p className="text-[14px] font-light text-white/20 leading-relaxed">
                     Submetida em{' '}
                     {dataFinal
                       ? new Date(dataFinal).toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })
-                      : '—'}
+                      : '�'}
                   </p>
                 </>
               ) : (
                 <>
-                  <p className="text-[9px] tracking-[0.5em] text-emerald-400/60 uppercase mb-2">Obrigado pelo teu feedback</p>
-                  <p className="text-[13px] font-light text-white/35 leading-relaxed max-w-sm">
-                    A tua avaliação foi registada. A equipa RL PROD agradece a confiança.
+                  <p className="text-[11px] tracking-[0.5em] text-emerald-400/60 uppercase mb-2">Obrigado pelo teu feedback</p>
+                  <p className="text-[15px] font-light text-white/35 leading-relaxed max-w-sm">
+                    A tua avalia��o foi registada. A equipa RL PROD agradece a confian�a.
                   </p>
                 </>
               )}
@@ -149,49 +149,49 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
               {[1, 2, 3, 4, 5].map(i => (
                 <span key={i} className="text-3xl leading-none select-none"
                   style={{ color: i <= notaFinal ? '#f59e0b' : 'rgba(255,255,255,0.08)' }}>
-                  ★
+                  ?
                 </span>
               ))}
             </div>
 
             {/* Label nota */}
             {notaFinal > 0 && (
-              <p className="text-[10px] tracking-[0.4em] text-amber-400/50 uppercase -mt-2">
+              <p className="text-[12px] tracking-[0.4em] text-amber-400/50 uppercase -mt-2">
                 {LABELS[notaFinal]}
               </p>
             )}
 
-            {/* Comentário */}
+            {/* Coment�rio */}
             {comentarioFinal && (
               <div className="border border-white/[0.08] bg-white/[0.02] px-6 py-5 max-w-sm w-full text-left">
-                <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase mb-3">Comentário</p>
-                <p className="text-[13px] font-light text-white/50 leading-relaxed italic">
+                <p className="text-[11px] tracking-[0.4em] text-white/20 uppercase mb-3">Coment�rio</p>
+                <p className="text-[15px] font-light text-white/50 leading-relaxed italic">
                   &quot;{comentarioFinal}&quot;
                 </p>
               </div>
             )}
           </div>
 
-        /* ── Formulário (admin e cliente) ── */
+        /* -- Formul�rio (admin e cliente) -- */
         ) : (
           <div className="border border-white/[0.07] bg-white/[0.02] px-8 py-10 flex flex-col items-center text-center gap-8">
 
             <div className="w-14 h-14 border border-white/[0.08] flex items-center justify-center"
               style={{ boxShadow: '0 0 30px rgba(180,200,255,0.05)' }}>
-              <span className="text-2xl text-white/15 select-none">◒</span>
+              <span className="text-2xl text-white/15 select-none">?</span>
             </div>
 
             <div>
-              <p className="text-[9px] tracking-[0.3em] text-white/50 uppercase mb-2">Avaliação do Projeto</p>
-              <p className="text-[13px] font-light text-white/25 leading-relaxed max-w-sm">
-                A tua opinião é importante para nós.<br />
-                Avalia a tua experiência com a RL PROD.
+              <p className="text-[11px] tracking-[0.3em] text-white/50 uppercase mb-2">Avalia��o do Projeto</p>
+              <p className="text-[15px] font-light text-white/25 leading-relaxed max-w-sm">
+                A tua opini�o � importante para n�s.<br />
+                Avalia a tua experi�ncia com a RL PROD.
               </p>
             </div>
 
-            {/* ── Estrelas ── */}
+            {/* -- Estrelas -- */}
             <div className="flex flex-col items-center gap-3">
-              <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase">Classificação</p>
+              <p className="text-[11px] tracking-[0.4em] text-white/20 uppercase">Classifica��o</p>
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5].map(i => (
                   <button key={i}
@@ -200,45 +200,45 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
                     onMouseLeave={() => setHoverNota(0)}
                     className="text-4xl leading-none transition-all duration-100"
                     style={{ color: i <= displayNota ? '#f59e0b' : 'rgba(255,255,255,0.10)' }}
-                  >★</button>
+                  >?</button>
                 ))}
               </div>
-              <p className={`text-[10px] tracking-[0.35em] uppercase transition-all duration-150 ${
+              <p className={`text-[12px] tracking-[0.35em] uppercase transition-all duration-150 ${
                 displayNota > 0 ? 'text-amber-400/55 opacity-100' : 'opacity-0'
               }`}>
                 {LABELS[displayNota] ?? ''}
               </p>
             </div>
 
-            {/* ── Comentário ── */}
+            {/* -- Coment�rio -- */}
             <div className="w-full max-w-md text-left">
-              <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase mb-3">
-                Comentário <span className="text-white/12 normal-case tracking-normal">(opcional)</span>
+              <p className="text-[11px] tracking-[0.4em] text-white/20 uppercase mb-3">
+                Coment�rio <span className="text-white/12 normal-case tracking-normal">(opcional)</span>
               </p>
               <textarea
                 value={comentario}
                 onChange={e => setComentario(e.target.value)}
-                placeholder="Partilha a tua experiência com a RL PROD..."
+                placeholder="Partilha a tua experi�ncia com a RL PROD..."
                 rows={4}
-                className="w-full bg-white/[0.03] border border-white/[0.08] px-4 py-3 text-[13px] font-light
+                className="w-full bg-white/[0.03] border border-white/[0.08] px-4 py-3 text-[15px] font-light
                            text-white/60 placeholder:text-white/12 focus:outline-none focus:border-white/20
                            resize-none leading-relaxed transition-colors"
               />
             </div>
 
             {erro && (
-              <p className="text-[11px] text-red-400/70 -mt-4">⚠ {erro}</p>
+              <p className="text-[13px] text-red-400/70 -mt-4">? {erro}</p>
             )}
 
             <button
               onClick={submeter}
               disabled={enviando || nota === 0}
               className="border border-white/30 bg-white/[0.04] hover:bg-white/[0.10] px-10 py-4
-                         text-[9px] tracking-[0.5em] text-white/70 hover:text-white uppercase
+                         text-[11px] tracking-[0.5em] text-white/70 hover:text-white uppercase
                          transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
               style={{ boxShadow: nota > 0 ? '0 0 18px rgba(255,255,255,0.06)' : 'none' }}
             >
-              {enviando ? '⏳ A enviar...' : 'Submeter Avaliação'}
+              {enviando ? '? A enviar...' : 'Submeter Avalia��o'}
             </button>
           </div>
         )}

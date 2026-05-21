@@ -21,7 +21,7 @@ export default function EditableField({ value, isEditing, onChange, className = 
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
       rows={3}
-      className={`${base} resize-y text-sm leading-relaxed`}
+      className={`${base} resize-y text-lg leading-relaxed`}
     />
   )
 
@@ -31,7 +31,7 @@ export default function EditableField({ value, isEditing, onChange, className = 
       value={value}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
-      className={`${base} text-sm`}
+      className={`${base} text-lg`}
     />
   )
 }
