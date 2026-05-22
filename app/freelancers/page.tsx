@@ -435,12 +435,20 @@ export default function FreelancersPage() {
                               </div>
                             </Link>
 
+                            {/* Botão Maquete: SEMPRE visível (gold destacado) */}
+                            <Link href={`/painel-editor?freelancer=${f.id}`}
+                              className="flex-shrink-0 inline-flex items-center gap-1.5 text-[10px] px-3 py-1.5 rounded-lg border tracking-widest uppercase font-bold transition-all"
+                              style={{
+                                background: 'linear-gradient(135deg, rgba(201,164,92,0.15), rgba(201,164,92,0.04))',
+                                borderColor: 'rgba(201,164,92,0.45)',
+                                color: '#C9A45C',
+                                boxShadow: '0 0 12px rgba(201,164,92,0.18)',
+                              }}
+                              title={`Abrir maquete como ${f.nome}`}>
+                              ✦ Maquete
+                            </Link>
+
                             <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0">
-                              <Link href={`/painel-editor?freelancer=${f.id}`}
-                                className="text-[9px] px-2.5 py-1 rounded-lg border border-gold/40 bg-gold/[0.08] text-gold/80 hover:text-gold hover:bg-gold/15 transition-all tracking-widest uppercase font-bold"
-                                title={`Abrir maquete como ${f.nome}`}>
-                                ✦ Maquete
-                              </Link>
                               <CopiarUrlButton id={f.id} />
                               <button onClick={() => { setPwEditId(f.id); setPwDraft(f.password ?? '') }}
                                 className="text-[9px] px-2.5 py-1 rounded-lg border border-white/10 text-white/30 hover:text-white/60 hover:border-white/25 transition-all tracking-widest uppercase">

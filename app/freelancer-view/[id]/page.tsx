@@ -297,47 +297,68 @@ function PasswordGate({ id, onAuth }: { id: string; onAuth: () => void }) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-[#0a0a0a]">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <p className="text-[14px] tracking-[0.5em] text-white/20 uppercase mb-3">RL PHOTO.VIDEO</p>
-          <h1 className="text-2xl font-light tracking-[0.2em] text-white uppercase">Área do Freelancer</h1>
-          <div className="mt-4 h-px w-8 bg-gold/50 mx-auto" />
-        </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-[14px] tracking-[0.3em] text-white/30 uppercase mb-2">Password de Acesso</label>
-            <div className="relative">
-              <input
-                type={showPw ? 'text' : 'password'}
-                value={pw}
-                onChange={e => setPw(e.target.value)}
-                autoFocus
-                placeholder="••••••••"
-                className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3 pr-11 text-white text-[14px] outline-none focus:border-gold/40 transition-colors placeholder:text-white/15"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPw(v => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/60 transition-colors p-1"
-              >
-                {showPw ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                )}
-              </button>
-            </div>
+    <div className="min-h-screen flex items-center justify-center px-4 relative" style={{ background: '#0A0A0A' }}>
+      {/* Atmosfera */}
+      <div className="pointer-events-none fixed inset-0 z-0"
+        style={{ background: 'radial-gradient(ellipse 80% 60% at 80% 15%, rgba(201,164,92,0.07), transparent 65%)' }} />
+      <div className="pointer-events-none fixed inset-0 z-0"
+        style={{ background: 'radial-gradient(ellipse 60% 50% at 15% 85%, rgba(201,164,92,0.05), transparent 70%)' }} />
+
+      <div className="relative z-10 w-full max-w-sm">
+        {/* Card editorial */}
+        <div className="rounded-3xl border border-white/[0.08] p-8 backdrop-blur-md"
+          style={{
+            background: 'linear-gradient(135deg, rgba(20,15,8,0.5), rgba(11,11,11,0.85))',
+            boxShadow: '0 30px 60px -20px rgba(0,0,0,0.6)',
+          }}>
+          <div className="text-center mb-8">
+            <p className="text-[11px] tracking-[0.5em] text-gold/70 uppercase mb-3">RL Photo.Video</p>
+            <h1 className="text-2xl sm:text-3xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
+              Área do <span className="italic text-gold">Freelancer</span>
+            </h1>
+            <div className="mt-4 h-px w-12 bg-gradient-to-r from-transparent via-gold/60 to-transparent mx-auto" />
           </div>
-          {error && <p className="text-[14px] text-red-400/80">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading || !pw.trim()}
-            className="w-full py-3 rounded-xl bg-gold text-black font-bold text-[14px] tracking-widest hover:bg-gold/80 transition-all disabled:opacity-40 uppercase"
-          >
-            {loading ? 'A verificar...' : 'Entrar'}
-          </button>
-        </form>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-[10px] tracking-[0.35em] text-white/40 uppercase font-medium mb-2">Password de Acesso</label>
+              <div className="relative">
+                <input
+                  type={showPw ? 'text' : 'password'}
+                  value={pw}
+                  onChange={e => setPw(e.target.value)}
+                  autoFocus
+                  placeholder="••••••••"
+                  className="w-full bg-black/30 border border-white/[0.08] rounded-xl px-4 py-3 pr-11 text-white text-[14px] outline-none focus:border-gold/40 transition-colors placeholder:text-white/15"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPw(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 hover:text-gold transition-colors p-1"
+                >
+                  {showPw ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  )}
+                </button>
+              </div>
+            </div>
+            {error && (
+              <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30">
+                <p className="text-[12px] text-red-300">{error}</p>
+              </div>
+            )}
+            <button
+              type="submit"
+              disabled={loading || !pw.trim()}
+              className="w-full h-11 rounded-xl bg-gold text-black font-semibold text-[13px] tracking-widest uppercase hover:bg-gold/90 transition-all disabled:opacity-40"
+              style={!loading && pw.trim() ? { boxShadow: '0 0 24px -4px rgba(201,164,92,0.5)' } : {}}
+            >
+              {loading ? 'A verificar…' : 'Entrar'}
+            </button>
+          </form>
+        </div>
+        <p className="text-center text-[10px] tracking-[0.4em] uppercase text-white/15 mt-6">RL Photo.Video · Wedding Moments Films</p>
       </div>
     </div>
   )
@@ -1373,14 +1394,18 @@ function DisponibilidadeTab({ freelancerId, disponibilidade, casamentos, onRefre
   return (
     <section className="space-y-6">
 
-      {/* Explicação do separador */}
-      <div className="px-4 py-4 rounded-xl border border-white/[0.06] bg-white/[0.02] space-y-2">
-        <p className="text-[18px] tracking-[0.3em] text-gold/60 uppercase">A tua Agenda</p>
-        <p className="text-[14px] text-white leading-relaxed">
-          Aqui podes ver de forma simples todos os eventos que te foram atribuídos e gerir a tua disponibilidade.
-        </p>
-        <p className="text-[14px] text-white leading-relaxed">
-          Deves marcar os períodos em que estás indisponível para que a equipa RL saiba que não podes ser contactado. Só recebes notificação de um novo evento se estiveres disponível. Se tiveres indisponibilidade marcada para esse dia não recebes qualquer notificação.
+      {/* Hero da secção */}
+      <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] px-8 py-7"
+        style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.6), rgba(11,11,11,0.85))', boxShadow: '0 20px 50px -20px rgba(0,0,0,0.5)' }}>
+        <div className="pointer-events-none absolute -top-10 -right-10 w-40 h-40 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(201,164,92,0.12), transparent 70%)' }} />
+        <p className="text-[11px] tracking-[0.5em] text-gold/70 uppercase mb-2">Editorial Workspace</p>
+        <h2 className="text-3xl sm:text-4xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
+          A tua <span className="italic text-gold">Agenda</span>
+        </h2>
+        <div className="mt-3 h-px w-16 bg-gradient-to-r from-gold/70 to-transparent" />
+        <p className="text-[14px] text-white/55 mt-4 leading-relaxed max-w-2xl">
+          Aqui podes ver de forma simples todos os eventos atribuídos e gerir a tua disponibilidade. Marca os períodos em que estás indisponível — só recebes notificação de um novo evento se estiveres disponível.
         </p>
       </div>
 
@@ -1600,17 +1625,21 @@ function MensagensTab({ freelancerId, casamentos, mensagens, onRefresh }: {
     <section className="space-y-4">
       {!selectedId ? (
         <>
-          {/* Explicação do separador */}
-          <div className="px-4 py-4 rounded-xl border border-white/[0.06] bg-white/[0.02] space-y-2 mb-2">
-            <p className="text-[18px] tracking-[0.35em] text-gold/60 uppercase">Mensagens por Evento</p>
-            <p className="text-[14px] text-white leading-relaxed">
-              Este espaço serve para manter uma conversa direta com a equipa RL sobre cada evento que te foi atribuído.
-            </p>
-            <p className="text-[14px] text-white leading-relaxed">
-              Usa-o para partilhar algo relevante que aconteceu antes, durante ou após o casamento. Imprevistos, notas importantes, questões de entrega ou qualquer assunto que deva ficar registado. Assim, todas as mensagens ficam associadas ao evento certo e nada se perde.
+          {/* Hero da secção */}
+          <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] px-8 py-7 mb-2"
+            style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.6), rgba(11,11,11,0.85))', boxShadow: '0 20px 50px -20px rgba(0,0,0,0.5)' }}>
+            <div className="pointer-events-none absolute -top-10 -right-10 w-40 h-40 rounded-full"
+              style={{ background: 'radial-gradient(circle, rgba(201,164,92,0.12), transparent 70%)' }} />
+            <p className="text-[11px] tracking-[0.5em] text-gold/70 uppercase mb-2">Editorial Workspace</p>
+            <h2 className="text-3xl sm:text-4xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
+              Mensagens por <span className="italic text-gold">Evento</span>
+            </h2>
+            <div className="mt-3 h-px w-16 bg-gradient-to-r from-gold/70 to-transparent" />
+            <p className="text-[14px] text-white/55 mt-4 leading-relaxed max-w-2xl">
+              Conversa direta com a equipa RL sobre cada evento atribuído. Imprevistos, notas importantes, questões de entrega — todas as mensagens ficam associadas ao evento certo e nada se perde.
             </p>
           </div>
-          <p className="text-[14px] tracking-[0.35em] text-white/25 uppercase mb-2">Seleciona um Evento</p>
+          <p className="text-[11px] tracking-[0.4em] text-gold/70 uppercase font-bold mt-4">Seleciona um Evento</p>
           {casamentos.length === 0 ? (
             <p className="text-center py-10 text-white/15 text-[14px] tracking-widest">Sem eventos disponíveis.</p>
           ) : (
@@ -1882,28 +1911,28 @@ export default function FreelancerViewPage() {
 
       {/* Tab Navigation — horizontal (apenas mobile; desktop usa sidebar) */}
       {!loading && (
-        <div className="mb-8 relative lg:hidden">
+        <div className="mb-6 relative lg:hidden">
           {/* Left arrow */}
           <button
             onClick={() => { const el = document.getElementById('tab-scroll'); if (el) el.scrollBy({ left: -160, behavior: 'smooth' }) }}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-black border border-white/20 text-white/50 hover:text-white hover:border-white/40 transition-all -translate-x-1 shadow-lg"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-black border border-gold/30 text-white/60 hover:text-gold hover:border-gold/60 transition-all -translate-x-1"
             style={{ boxShadow: '0 0 12px 2px rgba(0,0,0,0.8)' }}
           >‹</button>
           {/* Right arrow */}
           <button
             onClick={() => { const el = document.getElementById('tab-scroll'); if (el) el.scrollBy({ left: 160, behavior: 'smooth' }) }}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-black border border-white/20 text-white/50 hover:text-white hover:border-white/40 transition-all translate-x-1 shadow-lg"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-black border border-gold/30 text-white/60 hover:text-gold hover:border-gold/60 transition-all translate-x-1"
             style={{ boxShadow: '0 0 12px 2px rgba(0,0,0,0.8)' }}
           >›</button>
           <div id="tab-scroll" className="-mx-4 px-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-          <div className="flex items-center gap-1.5 p-1.5 rounded-2xl border border-white/30 bg-black w-max min-w-full"
-            style={{ boxShadow: '0 0 18px 3px rgba(255,255,255,0.10), 0 0 6px 1px rgba(255,255,255,0.15), inset 0 0 18px 0 rgba(255,255,255,0.03)' }}>
+          <div className="flex items-center gap-1 p-1.5 rounded-2xl border border-white/[0.08] backdrop-blur-md w-max min-w-full"
+            style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.5))' }}>
             <button
               onClick={() => setTab(null)}
-              className={`flex-shrink-0 flex items-center justify-center px-4 py-2.5 rounded-xl text-xl transition-all ${
+              className={`flex-shrink-0 flex items-center justify-center px-4 py-2 rounded-xl text-lg transition-all ${
                 tab === null
-                  ? 'bg-white/10 text-white border border-white/20'
-                  : 'text-white/40 hover:text-white/70 border border-transparent'
+                  ? 'bg-gold/15 text-gold border border-gold/35'
+                  : 'text-white/45 hover:text-white/80 border border-transparent'
               }`}
             >
               ⌂
@@ -1921,24 +1950,24 @@ export default function FreelancerViewPage() {
               <button
                 key={t.key}
                 onClick={() => setTab(t.key as typeof tab)}
-                className={`flex-shrink-0 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl transition-all ${
+                className={`flex-shrink-0 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl transition-all ${
                   t.key === 'notificacoes' || t.key === 'mensagens'
-                    ? 'text-2xl'
-                    : 'text-[14px] tracking-[0.25em] uppercase font-semibold'
+                    ? 'text-xl'
+                    : 'text-[11px] tracking-[0.25em] uppercase font-semibold'
                 } ${
                   tab === t.key
-                    ? 'bg-white/10 text-white border border-white/20'
-                    : 'text-white/30 hover:text-white/55 border border-transparent'
+                    ? 'bg-gold/15 text-gold border border-gold/35'
+                    : 'text-white/45 hover:text-white/80 border border-transparent'
                 }`}
               >
                 <span className={t.key === 'notificacoes' && t.count > 0 ? 'animate-bell-shake inline-block' : ''}>
                   {t.label}
                 </span>
                 {t.count > 0 && (
-                  <span className={`text-[14px] px-1.5 py-0.5 rounded-full font-bold transition-all ${
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold transition-all ${
                     t.key === 'notificacoes' || t.key === 'mensagens'
                       ? 'bg-red-500/20 text-red-400 border border-red-500/40'
-                      : tab === t.key ? 'bg-white/15 text-white/80' : 'bg-white/[0.06] text-white/25'
+                      : tab === t.key ? 'bg-gold/20 text-gold' : 'bg-white/[0.06] text-white/40'
                   }`}>{t.count}</span>
                 )}
               </button>
@@ -2094,17 +2123,18 @@ export default function FreelancerViewPage() {
               {/* Próximo Casamento — destaque */}
               {proximoCasamento && (
                 <div onClick={() => setTab('casamentos')}
-                  className="cursor-pointer bg-gradient-to-br from-gold/[0.08] to-gold/[0.02] border border-gold/30 rounded-2xl p-6 sm:p-7 hover:border-gold/50 transition-all"
-                  style={{ boxShadow: '0 0 24px -8px rgba(201,168,76,0.25)' }}>
-                  <p className="text-[14px] tracking-[0.4em] text-gold/70 uppercase font-bold mb-3">Próximo Casamento</p>
-                  <div className="flex items-end justify-between gap-4 flex-wrap">
+                  className="group cursor-pointer relative overflow-hidden bg-gradient-to-br from-gold/[0.08] to-gold/[0.02] border border-gold/30 rounded-2xl p-6 sm:p-7 hover:border-gold/50 transition-all"
+                  style={{ boxShadow: '0 20px 50px -20px rgba(0,0,0,0.5), 0 0 24px -8px rgba(201,164,92,0.25)' }}>
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-gold/0 via-gold/[0.06] to-gold/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
+                  <p className="text-[11px] tracking-[0.4em] text-gold/70 uppercase font-bold mb-3">Próximo Casamento</p>
+                  <div className="relative flex items-end justify-between gap-4 flex-wrap">
                     <div>
-                      <h2 className="text-2xl font-semibold text-white mb-1">{proximoCasamento.local}</h2>
-                      <p className="text-[14px] text-white/55">{fmtDate(proximoCasamento.data_casamento)}</p>
+                      <h2 className="text-2xl font-light text-white tracking-tight mb-1" style={{ fontFamily: 'Georgia, serif' }}>{proximoCasamento.local}</h2>
+                      <p className="text-[13px] text-white/55">{fmtDate(proximoCasamento.data_casamento)}</p>
                     </div>
                     <div className={`text-right ${dtuProximo !== null && dtuProximo <= 15 ? 'text-red-400' : 'text-gold'}`}>
-                      <p className="text-4xl font-black leading-none">{dtuProximo === 0 ? 'HOJE' : dtuProximo}</p>
-                      <p className="text-[14px] tracking-widest uppercase mt-1">{dtuProximo === 0 ? '' : dtuProximo === 1 ? 'dia' : 'dias'}</p>
+                      <p className="text-4xl font-bold leading-none">{dtuProximo === 0 ? 'HOJE' : dtuProximo}</p>
+                      <p className="text-[11px] tracking-[0.35em] uppercase mt-1">{dtuProximo === 0 ? '' : dtuProximo === 1 ? 'dia' : 'dias'}</p>
                     </div>
                   </div>
                 </div>
@@ -2112,7 +2142,7 @@ export default function FreelancerViewPage() {
 
               {/* Quick Actions — 4 cards */}
               <div>
-                <h3 className="text-[14px] tracking-[0.4em] text-gold uppercase font-bold mb-3">Atalhos</h3>
+                <h3 className="text-[11px] tracking-[0.4em] text-gold/70 uppercase font-bold mb-3">Atalhos</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
                     { key: 'casamentos', icon: '💍', label: 'Casamentos', count: upcoming.length, sub: upcoming.length === 0 ? 'Sem próximos' : `${upcoming.length} próximos` },
@@ -2137,10 +2167,11 @@ export default function FreelancerViewPage() {
 
               {/* Próximos Casamentos (lista) */}
               {upcoming.length > 1 && (
-                <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 sm:p-6">
+                <div className="rounded-2xl border border-white/[0.06] p-5 sm:p-6"
+                  style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.5))' }}>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-[14px] tracking-[0.4em] text-gold uppercase font-bold">Próximos Casamentos</h3>
-                    <button onClick={() => setTab('casamentos')} className="text-[14px] tracking-widest text-white/35 hover:text-gold uppercase transition-colors">Ver todos →</button>
+                    <h3 className="text-[11px] tracking-[0.4em] text-gold/70 uppercase font-bold">Próximos Casamentos</h3>
+                    <button onClick={() => setTab('casamentos')} className="text-[11px] tracking-[0.25em] text-white/35 hover:text-gold uppercase transition-colors">Ver todos →</button>
                   </div>
                   <div className="space-y-2">
                     {upcoming.slice(0, 4).map(c => {
@@ -2168,8 +2199,9 @@ export default function FreelancerViewPage() {
 
               {/* Atividade Recente */}
               {atividadesRecentes.length > 0 && (
-                <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 sm:p-6">
-                  <h3 className="text-[14px] tracking-[0.4em] text-gold uppercase font-bold mb-4">Atividade Recente</h3>
+                <div className="rounded-2xl border border-white/[0.06] p-5 sm:p-6"
+                  style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.5))' }}>
+                  <h3 className="text-[11px] tracking-[0.4em] text-gold/70 uppercase font-bold mb-4">Atividade Recente</h3>
                   <div className="space-y-2.5">
                     {atividadesRecentes.map((a, i) => (
                       <div key={i} className="flex items-start gap-3 text-[14px]">
@@ -2218,19 +2250,28 @@ export default function FreelancerViewPage() {
           {tab === 'casamentos' && (
             <div className="space-y-10">
 
-              {/* Intro */}
-              {(freelancer?.intro_casamentos || true) && (
-                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] px-5 py-4 space-y-1">
-                  <p className="text-[14px] text-white font-semibold">A Tua Agenda</p>
-                  <p className="text-[14px] text-white leading-relaxed whitespace-pre-wrap">
-                    {freelancer?.intro_casamentos || `Aqui encontras todos os eventos que te foram atribuídos ao longo do ano. Sempre que um novo evento for adicionado, deverás confirmar a tua disponibilidade.\n\nA 3 dias do evento tens acesso ao briefing com toda a informação necessária para o dia — percurso, contactos, detalhes da cerimónia e muito mais.`}
-                  </p>
-                </div>
-              )}
+              {/* Hero da secção */}
+              <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] px-8 py-7"
+                style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.6), rgba(11,11,11,0.85))', boxShadow: '0 20px 50px -20px rgba(0,0,0,0.5)' }}>
+                <div className="pointer-events-none absolute -top-10 -right-10 w-40 h-40 rounded-full"
+                  style={{ background: 'radial-gradient(circle, rgba(201,164,92,0.15), transparent 70%)' }} />
+                <p className="text-[11px] tracking-[0.5em] text-gold/70 uppercase mb-2">Editorial Workspace</p>
+                <h2 className="text-3xl sm:text-4xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
+                  A tua <span className="italic text-gold">Agenda</span>
+                </h2>
+                <div className="mt-3 h-px w-16 bg-gradient-to-r from-gold/70 to-transparent" />
+                <p className="text-[14px] text-white/55 mt-4 leading-relaxed whitespace-pre-wrap max-w-2xl">
+                  {freelancer?.intro_casamentos || `Aqui encontras todos os eventos que te foram atribuídos ao longo do ano. Sempre que um novo evento for adicionado, deverás confirmar a tua disponibilidade.\n\nA 3 dias do evento tens acesso ao briefing com toda a informação necessária para o dia — percurso, contactos, detalhes da cerimónia e muito mais.`}
+                </p>
+              </div>
 
               {/* Próximos */}
               <section>
-                <p className="text-[14px] text-white font-semibold mb-4">Próximos Casamentos ({upcoming.length})</p>
+                <div className="flex items-center gap-3 mb-5">
+                  <p className="text-[11px] tracking-[0.4em] text-gold/70 uppercase font-bold">Próximos Casamentos</p>
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-gold/10 border border-gold/25 text-gold font-bold">{upcoming.length}</span>
+                  <div className="flex-1 h-px bg-gradient-to-r from-gold/20 to-transparent" />
+                </div>
                 {upcoming.length === 0 ? (
                   <p className="text-white/15 text-[14px] tracking-widest">Sem casamentos futuros.</p>
                 ) : (
@@ -2281,7 +2322,11 @@ export default function FreelancerViewPage() {
 
               {/* Casamentos Passados */}
               <section>
-                <p className="text-[14px] text-white font-semibold mb-4">Casamentos Anteriores ({past.length})</p>
+                <div className="flex items-center gap-3 mb-5">
+                  <p className="text-[11px] tracking-[0.4em] text-white/40 uppercase font-bold">Casamentos Anteriores</p>
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.08] text-white/40 font-bold">{past.length}</span>
+                  <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
+                </div>
                 {past.length === 0 ? (
                   <p className="text-white/15 text-[14px] tracking-widest">Sem casamentos anteriores.</p>
                 ) : (
@@ -2325,14 +2370,18 @@ export default function FreelancerViewPage() {
 
           {/* ── Tab: Edição de Fotos ── */}
           {tab === 'edicao' && (
-            <section className="space-y-5">
-              <div className="px-4 py-4 rounded-xl border border-white/[0.06] bg-white/[0.02] space-y-2">
-                <p className="text-[18px] tracking-[0.3em] text-gold/60 uppercase">Estado da Edição</p>
-                <p className="text-[14px] text-white leading-relaxed">
-                  É importante manteres o estado de cada trabalho sempre atualizado.
-                </p>
-                <p className="text-[14px] text-white leading-relaxed">
-                  Os noivos têm acesso a esta informação em tempo real através do portal deles. Um estado atualizado transmite profissionalismo e mantém os noivos tranquilos ao longo de todo o processo.
+            <section className="space-y-6">
+              <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] px-8 py-7"
+                style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.6), rgba(11,11,11,0.85))', boxShadow: '0 20px 50px -20px rgba(0,0,0,0.5)' }}>
+                <div className="pointer-events-none absolute -top-10 -right-10 w-40 h-40 rounded-full"
+                  style={{ background: 'radial-gradient(circle, rgba(201,164,92,0.12), transparent 70%)' }} />
+                <p className="text-[11px] tracking-[0.5em] text-gold/70 uppercase mb-2">Editorial Workspace</p>
+                <h2 className="text-3xl sm:text-4xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
+                  Estado da <span className="italic text-gold">Edição</span>
+                </h2>
+                <div className="mt-3 h-px w-16 bg-gradient-to-r from-gold/70 to-transparent" />
+                <p className="text-[14px] text-white/55 mt-4 leading-relaxed max-w-2xl">
+                  É importante manteres o estado de cada trabalho sempre atualizado. Os noivos têm acesso a esta informação em tempo real através do portal — um estado atualizado transmite profissionalismo e mantém-nos tranquilos ao longo de todo o processo.
                 </p>
               </div>
               {edicao.length === 0 ? (
@@ -2376,24 +2425,30 @@ export default function FreelancerViewPage() {
 
           {/* ── Tab: Workflow ── */}
           {tab === 'guia' && (
-            <section className="space-y-4">
-              <div className="px-4 py-4 rounded-xl border border-white/[0.06] bg-white/[0.02] space-y-2">
-                <p className="text-[18px] tracking-[0.3em] text-gold/60 uppercase">Workflow</p>
-                <p className="text-[14px] text-white leading-relaxed">
-                  Aqui vais encontrar todo o nosso sistema de trabalho.
-                </p>
-                <p className="text-[14px] text-white leading-relaxed">
-                  Lê com atenção para que nada falhe e para que não haja dúvidas. O nosso fluxo de trabalho está desenhado para garantir que cada projeto é executado com a máxima qualidade e organização.
+            <section className="space-y-6">
+              <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] px-8 py-7"
+                style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.6), rgba(11,11,11,0.85))', boxShadow: '0 20px 50px -20px rgba(0,0,0,0.5)' }}>
+                <div className="pointer-events-none absolute -top-10 -right-10 w-40 h-40 rounded-full"
+                  style={{ background: 'radial-gradient(circle, rgba(201,164,92,0.12), transparent 70%)' }} />
+                <p className="text-[11px] tracking-[0.5em] text-gold/70 uppercase mb-2">Editorial Workspace</p>
+                <h2 className="text-3xl sm:text-4xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
+                  O nosso <span className="italic text-gold">Workflow</span>
+                </h2>
+                <div className="mt-3 h-px w-16 bg-gradient-to-r from-gold/70 to-transparent" />
+                <p className="text-[14px] text-white/55 mt-4 leading-relaxed max-w-2xl">
+                  Lê com atenção para que nada falhe. O nosso fluxo de trabalho está desenhado para garantir que cada projeto é executado com a máxima qualidade e organização.
                 </p>
               </div>
               {freelancer?.guia_trabalho ? (
-                <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
-                  <p className="text-[14px] tracking-[0.4em] text-white/20 uppercase mb-5">Workflow</p>
-                  <p className="text-[14px] text-white leading-relaxed whitespace-pre-wrap">{freelancer.guia_trabalho}</p>
+                <div className="rounded-2xl border border-white/[0.06] p-6 sm:p-8"
+                  style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.6))' }}>
+                  <p className="text-[11px] tracking-[0.4em] text-gold/70 uppercase font-bold mb-5">Guia de Trabalho</p>
+                  <p className="text-[14px] text-white/80 leading-relaxed whitespace-pre-wrap">{freelancer.guia_trabalho}</p>
                 </div>
               ) : (
-                <div className="text-center py-16 space-y-3">
-                  <p className="text-white/15 text-[14px] tracking-widest">Workflow não disponível.</p>
+                <div className="rounded-2xl border border-dashed border-white/[0.08] text-center py-20">
+                  <p className="text-gold/40 text-4xl font-serif leading-none mb-3">∅</p>
+                  <p className="text-[12px] text-white/35 tracking-widest uppercase">Workflow não disponível</p>
                 </div>
               )}
             </section>
@@ -2526,9 +2581,10 @@ export default function FreelancerViewPage() {
         />
       )}
 
-      {/* Rodapé */}
-      <div className="mt-16 -mx-4 px-0">
-        <img src="/banner_footer.png" alt="RL Photo.Video" className="w-full object-cover" />
+      {/* Rodapé editorial */}
+      <p className="text-center text-[10px] tracking-[0.4em] uppercase text-white/15 mt-12 mb-4">RL Photo.Video · Wedding Moments Films</p>
+      <div className="-mx-6 sm:-mx-8 px-0">
+        <img src="/banner_footer.png" alt="RL Photo.Video" className="w-full object-cover opacity-70" />
       </div>
     </main>
     </div>
