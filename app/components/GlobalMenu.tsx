@@ -5,7 +5,9 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 
-const HIDDEN_PATHS = ['/login', '/portal-cliente', '/portal-batizado', '/freelancer-view', '/freelancers/', '/r/', '/b/', '/nova-lead', '/portal-media']
+const HIDDEN_PATHS = ['/login', '/portal-cliente', '/portal-batizado', '/freelancer-view', '/r/', '/b/', '/nova-lead', '/portal-media']
+// Paths em que o menu lateral permanente é colapsado (só botão flutuante visível)
+const COLLAPSED_PATHS = ['/freelancers/']
 const HIDDEN_EXACT = ['/'] // brand selector — sem menu lateral
 
 const MEDIA_LINKS = [
@@ -86,6 +88,9 @@ export default function GlobalMenu() {
 
   const isHidden = HIDDEN_EXACT.includes(pathname) || HIDDEN_PATHS.some(p => pathname.startsWith(p))
   if (isHidden) return null
+
+  // Em paths colapsados: sidebar permanente escondida, só botão flutuante (drawer)
+  const isCollapsed = COLLAPSED_PATHS.some(p => pathname.startsWith(p))
 
   const isMedia = pathname.startsWith('/media')
   const gold = 'rgba(201,168,76,'
@@ -225,26 +230,30 @@ export default function GlobalMenu() {
         }
       `}</style>
 
-      {/* ── DESKTOP: sidebar permanente ───────────────────────────────────── */}
-      <aside
-        data-global-menu
-        className="hidden lg:flex flex-col fixed top-0 left-0 h-full z-40 print:hidden"
-        style={{
-          width: '220px',
-          background: 'rgba(0,4,10,0.96)',
-          borderRight: `1px solid ${accent(0.1)}`,
-          boxShadow: `2px 0 24px rgba(0,0,0,0.3)`,
-        }}
-      >
-        <SidebarContent />
-      </aside>
+      {/* ── DESKTOP: sidebar permanente (escondida em paths colapsados) ───── */}
+      {!isCollapsed && (
+        <aside
+          data-global-menu
+          className="hidden lg:flex flex-col fixed top-0 left-0 h-full z-40 print:hidden"
+          style={{
+            width: '220px',
+            background: 'rgba(0,4,10,0.96)',
+            borderRight: `1px solid ${accent(0.1)}`,
+            boxShadow: `2px 0 24px rgba(0,0,0,0.3)`,
+          }}
+        >
+          <SidebarContent />
+        </aside>
+      )}
 
-      {/* ── MOBILE: botão hambúrguer ──────────────────────────────────────── */}
+      {/* ── Botão hambúrguer/seta (mobile sempre; desktop só em paths colapsados) ── */}
       <button
         onClick={() => setOpen(true)}
         data-global-menu
-        className="lg:hidden fixed top-4 left-4 z-40 w-10 h-10 flex flex-col items-center justify-center gap-[5px] rounded-xl transition-all duration-200 print:hidden"
+        className={`${isCollapsed ? '' : 'lg:hidden'} fixed top-4 z-[60] w-10 h-10 flex flex-col items-center justify-center gap-[5px] rounded-xl transition-all duration-200 print:hidden`}
         style={{
+          left: isCollapsed ? 'auto' : '1rem',
+          right: isCollapsed ? '1rem' : 'auto',
           background: 'rgba(0,4,10,0.75)',
           backdropFilter: 'blur(12px)',
           border: `1px solid ${accent(0.2)}`,
@@ -253,26 +262,36 @@ export default function GlobalMenu() {
         onMouseEnter={e => { e.currentTarget.style.borderColor = accent(0.45); e.currentTarget.style.boxShadow = `0 0 20px ${accent(0.12)}` }}
         onMouseLeave={e => { e.currentTarget.style.borderColor = accent(0.2);  e.currentTarget.style.boxShadow = `0 0 16px ${accent(0.06)}` }}
         aria-label="Menu"
+        title="Menu Principal"
       >
-        <span className="block rounded-full" style={{ width: '16px', height: '1px', background: accent(0.8) }} />
-        <span className="block rounded-full" style={{ width: '10px', height: '1px', background: accent(0.5) }} />
-        <span className="block rounded-full" style={{ width: '16px', height: '1px', background: accent(0.8) }} />
+        {isCollapsed ? (
+          /* Seta indicando 'abrir menu' */
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5" style={{ color: accent(0.85) }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        ) : (
+          <>
+            <span className="block rounded-full" style={{ width: '16px', height: '1px', background: accent(0.8) }} />
+            <span className="block rounded-full" style={{ width: '10px', height: '1px', background: accent(0.5) }} />
+            <span className="block rounded-full" style={{ width: '16px', height: '1px', background: accent(0.8) }} />
+          </>
+        )}
       </button>
 
-      {/* MOBILE: overlay */}
+      {/* Drawer overlay (mobile sempre; desktop só em paths colapsados) */}
       {open && (
         <div
           data-global-menu
-          className="lg:hidden fixed inset-0 z-40 print:hidden"
+          className={`${isCollapsed ? '' : 'lg:hidden'} fixed inset-0 z-[55] print:hidden`}
           style={{ background: 'rgba(0,4,10,0.7)', backdropFilter: 'blur(4px)' }}
           onClick={() => setOpen(false)}
         />
       )}
 
-      {/* MOBILE: drawer */}
+      {/* Drawer (mobile sempre; desktop só em paths colapsados) */}
       <div
         data-global-menu
-        className={`lg:hidden fixed top-0 left-0 h-full z-50 flex flex-col transition-transform duration-300 ease-in-out print:hidden ${open ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`${isCollapsed ? '' : 'lg:hidden'} fixed top-0 left-0 h-full z-[60] flex flex-col transition-transform duration-300 ease-in-out print:hidden ${open ? 'translate-x-0' : '-translate-x-full'}`}
         style={{
           width: '256px',
           background: 'rgba(0,4,10,0.98)',
