@@ -208,8 +208,6 @@ const NAV_ITEMS = [
   { key: 'clientes',    label: 'Clientes',            icon: '☉' },
   { key: 'workflow',    label: 'Workflow',            icon: '☰', href: '/painel-editor/workflow' },
   { key: 'biblioteca',  label: 'Biblioteca',          icon: '♪', href: '/painel-editor/musicas' },
-  { key: 'templates',   label: 'Templates',           icon: '◫' },
-  { key: 'config',      label: 'Configurações',       icon: '⚙' },
 ]
 
 const FILTER_TABS = ['Todos','Novo Projeto','Em Edição','Para Revisão','Aprovados','Não Aprovados','Entregues','Aguardando Cliente']

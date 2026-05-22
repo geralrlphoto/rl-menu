@@ -62,9 +62,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'clientes',    label: 'Clientes',            icon: '☉' },
   { key: 'workflow',    label: 'Workflow',            icon: '☰', href: '/painel-editor/workflow' },
   { key: 'biblioteca',  label: 'Biblioteca',          icon: '♪', href: '/painel-editor/musicas' },
-  { key: 'templates',   label: 'Templates',           icon: '◫' },
   { key: 'notas',       label: 'Notas',               icon: '✦' },
-  { key: 'config',      label: 'Configurações',       icon: '⚙' },
 ]
 
 function fmtDate(d: string) {

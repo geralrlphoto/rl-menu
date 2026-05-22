@@ -19,9 +19,6 @@ const NAV_ITEMS = [
   { key: 'clientes',    label: 'Clientes',            icon: '☉' },
   { key: 'workflow',    label: 'Workflow',            icon: '☰', href: '/painel-editor/workflow' },
   { key: 'biblioteca',  label: 'Biblioteca',          icon: '♪', href: '/painel-editor/musicas' },
-  { key: 'templates',   label: 'Templates',           icon: '◫' },
-  { key: 'relatorios',  label: 'Relatórios',          icon: '◫' },
-  { key: 'config',      label: 'Configurações',       icon: '⚙' },
 ]
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
