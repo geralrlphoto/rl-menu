@@ -251,7 +251,7 @@ export default function OrcamentoDeslocacaoPage() {
               </div>
 
               <input
-                type="range" min="0" max="500" step="5"
+                type="range" min="0" max="200" step="1"
                 value={f.margemEuros}
                 onChange={e => set('margemEuros', Number(e.target.value))}
                 className="w-full accent-emerald-400 cursor-pointer h-1"
@@ -259,19 +259,26 @@ export default function OrcamentoDeslocacaoPage() {
 
               <div className="flex items-baseline justify-between mt-1">
                 <span className="text-[10px] text-white/30">0 €</span>
-                <span className="text-[10px] text-white/30">500 €</span>
+                <span className="text-[10px] text-white/30">200 €</span>
               </div>
 
-              {/* Botões de incremento rápido */}
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {[5, 10, 25, 50, 100].map(v => (
-                  <button key={v} type="button" onClick={() => set('margemEuros', Math.min(500, (Number(f.margemEuros) || 0) + v))}
-                    className="px-2.5 py-1 rounded-md text-[10px] tracking-widest uppercase font-bold border border-emerald-400/30 text-emerald-300/75 hover:bg-emerald-400/10 hover:border-emerald-400/60 transition-all">
-                    +{v}€
-                  </button>
-                ))}
+              {/* Presets — clicar SUBSTITUI o valor */}
+              <div className="grid grid-cols-4 gap-2 mt-4">
+                {[30, 50, 75].map(v => {
+                  const ativo = Number(f.margemEuros) === v
+                  return (
+                    <button key={v} type="button" onClick={() => set('margemEuros', v)}
+                      className={`px-3 py-2.5 rounded-lg text-sm tracking-widest font-bold transition-all border ${
+                        ativo
+                          ? 'bg-emerald-400 text-black border-emerald-400'
+                          : 'border-emerald-400/30 text-emerald-300/80 hover:bg-emerald-400/10 hover:border-emerald-400/60'
+                      }`}>
+                      {v} €
+                    </button>
+                  )
+                })}
                 <button type="button" onClick={() => set('margemEuros', 0)}
-                  className="ml-auto px-2.5 py-1 rounded-md text-[10px] tracking-widest uppercase font-bold border border-white/15 text-white/35 hover:bg-white/[0.05]">
+                  className="px-3 py-2.5 rounded-lg text-sm tracking-widest font-bold border border-white/15 text-white/45 hover:bg-white/[0.05] transition-all">
                   Zero
                 </button>
               </div>
