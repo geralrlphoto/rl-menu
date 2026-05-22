@@ -12,12 +12,9 @@ import { PROJECTS, paymentPlanFor, comparePtDate, TODAY, type Project, type Inst
 const NAV_ITEMS = [
   { key: 'dashboard',   label: 'Dashboard',           icon: '⌂', href: '/painel-editor' },
   { key: 'novos',       label: 'Novos Projetos',      icon: '+', href: '/painel-editor/novos-projetos' },
-  { key: 'edicao',      label: 'Em Edição',           icon: '✎' },
-  { key: 'finalizados', label: 'Finalizados',         icon: '✓' },
   { key: 'pagamentos',  label: 'Pagamentos',          icon: '€', href: '/painel-editor/pagamentos', active: true },
   { key: 'tarefas',     label: 'Tarefas',             icon: '◷', href: '/painel-editor/tarefas' },
   { key: 'calendario',  label: 'Calendário',          icon: '◉', href: '/painel-editor/calendario' },
-  { key: 'clientes',    label: 'Clientes',            icon: '☉' },
   { key: 'workflow',    label: 'Workflow',            icon: '☰', href: '/painel-editor/workflow' },
   { key: 'biblioteca',  label: 'Biblioteca',          icon: '♪', href: '/painel-editor/musicas' },
 ]
