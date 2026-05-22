@@ -1855,12 +1855,51 @@ export default function FreelancerViewPage() {
           notificacoes: notificacoes.filter(n => !n.lida).length,
         }}
         isFotografo={isFotografo}
+        onLogout={() => {
+          if (confirm('Tens a certeza que queres sair?')) {
+            sessionStorage.removeItem(`freelancerAuth_${id}`)
+            setAuthed(false)
+            setTab(null)
+          }
+        }}
       />
 
     <main className={`relative z-10 min-h-screen px-4 py-10 mx-auto lg:pl-[260px] lg:pr-6 ${tab === null ? 'max-w-[1600px]' : 'max-w-3xl'}`}>
       {/* Header */}
       <div className="mb-8">
-        <p className="text-[14px] text-white font-semibold mb-3">RL PHOTO.VIDEO · Área do Freelancer</p>
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <p className="text-[14px] text-white font-semibold">RL PHOTO.VIDEO · Área do Freelancer</p>
+
+          {/* Botões topo direito — Notificações + Sair (visível em todos os tamanhos) */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setTab('notificacoes')}
+              className="relative inline-flex items-center justify-center w-9 h-9 rounded-lg border border-white/10 hover:border-gold/40 hover:bg-gold/[0.06] transition-all text-white/65 hover:text-gold"
+              title="Notificações"
+            >
+              <span className="text-base">◉</span>
+              {notificacoes.filter(n => !n.lida).length > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border border-black">
+                  {notificacoes.filter(n => !n.lida).length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => {
+                if (confirm('Tens a certeza que queres sair?')) {
+                  sessionStorage.removeItem(`freelancerAuth_${id}`)
+                  setAuthed(false)
+                  setTab(null)
+                }
+              }}
+              className="inline-flex items-center gap-2 px-3 h-9 rounded-lg border border-white/10 hover:border-red-500/40 hover:bg-red-500/[0.06] transition-all text-white/65 hover:text-red-400 text-[14px] tracking-widest uppercase font-medium"
+              title="Sair"
+            >
+              <span className="text-base">⎋</span>
+              <span className="hidden sm:inline">Sair</span>
+            </button>
+          </div>
+        </div>
         {loading ? (
           <p className="text-white/20 text-[14px] tracking-widest uppercase">A carregar...</p>
         ) : (
@@ -2570,12 +2609,14 @@ function SidebarNav({
   setTab,
   counts,
   isFotografo,
+  onLogout,
 }: {
   freelancer: Freelancer | null
   tab: TabKey
   setTab: (t: TabKey) => void
   counts: { casamentos: number; edicao: number; album: number; mensagens: number; notificacoes: number }
   isFotografo: boolean
+  onLogout: () => void
 }) {
   const items: Array<{ key: TabKey; label: string; icon: string; count?: number }> = [
     { key: null,             label: 'Início',         icon: '⌂' },
@@ -2650,10 +2691,35 @@ function SidebarNav({
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="px-5 py-4 border-t border-white/[0.04]">
-        <p className="text-[14px] tracking-[0.3em] uppercase text-white/20">Área do Freelancer</p>
-        <p className="text-[14px] text-white/15 mt-1">© RL Photo.Video</p>
+      {/* Footer com ações: Notificações + Sair */}
+      <div className="px-3 py-3 border-t border-white/[0.04] space-y-2">
+        <button
+          onClick={() => setTab('notificacoes')}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border border-white/[0.06] hover:border-gold/30 hover:bg-gold/[0.04] transition-all text-white/65 hover:text-gold"
+        >
+          <span className="text-base relative">
+            ◉
+            {counts.notificacoes > 0 && (
+              <span className="absolute -top-1 -right-2 w-2 h-2 rounded-full bg-red-500 border border-black" />
+            )}
+          </span>
+          <span className="flex-1 text-left text-[14px] tracking-[0.2em] uppercase font-medium">Notificações</span>
+          {counts.notificacoes > 0 && (
+            <span className="text-[14px] px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/40 font-bold">
+              {counts.notificacoes}
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={onLogout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border border-white/[0.06] hover:border-red-500/30 hover:bg-red-500/[0.06] transition-all text-white/65 hover:text-red-400"
+        >
+          <span className="text-base">⎋</span>
+          <span className="flex-1 text-left text-[14px] tracking-[0.2em] uppercase font-medium">Sair</span>
+        </button>
+
+        <p className="text-[14px] text-white/15 text-center pt-2">© RL Photo.Video</p>
       </div>
     </aside>
   )
