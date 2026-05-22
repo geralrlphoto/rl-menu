@@ -91,11 +91,43 @@ function stageBadge(s: Project['stage']) {
 // ────────────────────────────────────────────────────────────────────────
 //  PAGE
 // ────────────────────────────────────────────────────────────────────────
+type PaymentOverride = { status: 'A receber' | 'Recebido'; paidDate?: string; metodo?: string }
+type PaymentMethod = 'MBWay' | 'Transferência' | 'Numerário'
+
+const PAYMENT_STORAGE_KEY = 'painel-editor-payment-overrides'
+
+function todayPt() {
+  const d = new Date()
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`
+}
+
 export default function PagamentosPage() {
   const [filter, setFilter] = useState<FilterTab>('Todos')
   const [search, setSearch] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>('p1')
   const [allProjects, setAllProjects] = useState<Project[]>(PROJECTS)
+  const [paymentOverrides, setPaymentOverrides] = useState<Record<string, PaymentOverride>>({})
+
+  // ── Carregar payment overrides do localStorage ──
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(PAYMENT_STORAGE_KEY)
+      if (raw) setPaymentOverrides(JSON.parse(raw))
+    } catch {}
+  }, [])
+
+  function setPaymentStatus(projectId: string, status: 'A receber' | 'Recebido', metodo?: PaymentMethod) {
+    setPaymentOverrides(prev => {
+      const next = { ...prev }
+      if (status === 'A receber') {
+        next[projectId] = { status: 'A receber' }
+      } else {
+        next[projectId] = { status: 'Recebido', paidDate: todayPt(), metodo }
+      }
+      try { localStorage.setItem(PAYMENT_STORAGE_KEY, JSON.stringify(next)) } catch {}
+      return next
+    })
+  }
 
   // ── Sincroniza com user-projects (localStorage) + patches sobre mocks ──
   useEffect(() => {
@@ -126,15 +158,27 @@ export default function PagamentosPage() {
     return () => window.removeEventListener('focus', onFocus)
   }, [])
 
-  // Construir todas as rows (uma por installment)
+  // Construir todas as rows (uma por installment) — aplica overrides do user
   const allRows: Row[] = useMemo(() => {
     const rows: Row[] = []
     allProjects.forEach(p => {
       const plan = paymentPlanFor(p)
-      plan.forEach((inst, idx) => rows.push({ project: p, inst, idx, totalParcels: plan.length }))
+      plan.forEach((inst, idx) => {
+        const override = paymentOverrides[p.id]
+        if (override) {
+          rows.push({
+            project: p,
+            inst: { ...inst, status: override.status, paidDate: override.paidDate ?? null, metodo: override.metodo },
+            idx,
+            totalParcels: plan.length,
+          })
+        } else {
+          rows.push({ project: p, inst, idx, totalParcels: plan.length })
+        }
+      })
     })
     return rows
-  }, [allProjects])
+  }, [allProjects, paymentOverrides])
 
   const filteredRows = useMemo(() => {
     let arr = allRows
@@ -264,11 +308,11 @@ export default function PagamentosPage() {
                   <thead>
                     <tr className="text-[10px] tracking-widest uppercase text-white/35 bg-white/[0.02] border-b border-white/[0.06]">
                       <th className="text-left px-4 py-3 font-medium">Projeto / Casal</th>
-                      <th className="text-left px-3 py-3 font-medium">Pacote</th>
                       <th className="text-left px-3 py-3 font-medium">Descrição</th>
                       <th className="text-right px-3 py-3 font-medium">Valor</th>
-                      <th className="text-left px-3 py-3 font-medium">Vencimento</th>
                       <th className="text-left px-3 py-3 font-medium">Estado</th>
+                      <th className="text-left px-3 py-3 font-medium">Data Pagamento</th>
+                      <th className="text-left px-3 py-3 font-medium">Método</th>
                       <th className="text-left px-3 py-3 font-medium">Workflow</th>
                       <th className="text-right px-4 py-3 font-medium">Ações</th>
                     </tr>
@@ -278,6 +322,7 @@ export default function PagamentosPage() {
                       const sb = statusBadge(r.inst.status)
                       const wb = stageBadge(r.project.stage)
                       const selected = selectedId === r.project.id
+                      const isPaid = r.inst.status === 'Recebido'
                       return (
                         <tr key={i}
                           onClick={() => setSelectedId(r.project.id)}
@@ -295,18 +340,50 @@ export default function PagamentosPage() {
                               </div>
                             </div>
                           </td>
-                          <td className="px-3 py-3 text-[12px] text-white/70">{r.project.pacote.replace(' 👑','')}</td>
                           <td className="px-3 py-3 text-[12px] text-white/70">
                             {r.inst.label}
                           </td>
                           <td className="px-3 py-3 text-[13px] text-white font-semibold text-right">{fmtEUR(r.inst.value)}</td>
-                          <td className="px-3 py-3 text-[12px] text-white/65">{r.inst.dueDate}</td>
-                          <td className="px-3 py-3">
-                            <span className={`inline-flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-full border tracking-widest uppercase font-bold ${sb.cls}`}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${sb.dot}`} />
-                              {sb.label}
-                            </span>
+
+                          {/* Dropdown Estado */}
+                          <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
+                            <select
+                              value={isPaid ? `Pago:${r.inst.metodo ?? 'Transferência'}` : 'Aguarda'}
+                              onChange={e => {
+                                const v = e.target.value
+                                if (v === 'Aguarda') {
+                                  setPaymentStatus(r.project.id, 'A receber')
+                                } else if (v.startsWith('Pago:')) {
+                                  const m = v.replace('Pago:', '') as PaymentMethod
+                                  setPaymentStatus(r.project.id, 'Recebido', m)
+                                }
+                              }}
+                              className={`bg-black/40 border rounded-lg px-2.5 py-1 text-[11px] tracking-widest uppercase font-bold cursor-pointer focus:outline-none focus:border-gold/40 ${
+                                isPaid ? 'border-emerald-500/40 text-emerald-300' : 'border-yellow-500/40 text-yellow-300'
+                              }`}>
+                              <option value="Aguarda" style={{ background: '#1a1206' }}>⏳ Aguarda</option>
+                              <option value="Pago:MBWay" style={{ background: '#1a1206' }}>✓ Pago · MBWay</option>
+                              <option value="Pago:Transferência" style={{ background: '#1a1206' }}>✓ Pago · Transferência</option>
+                              <option value="Pago:Numerário" style={{ background: '#1a1206' }}>✓ Pago · Numerário</option>
+                            </select>
                           </td>
+
+                          {/* Data Pagamento */}
+                          <td className="px-3 py-3 text-[12px]">
+                            {isPaid && r.inst.paidDate
+                              ? <span className="text-emerald-300 font-medium">{r.inst.paidDate}</span>
+                              : <span className="text-white/30">—</span>}
+                          </td>
+
+                          {/* Método */}
+                          <td className="px-3 py-3 text-[12px]">
+                            {isPaid && r.inst.metodo
+                              ? <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border border-gold/25 bg-gold/[0.06] text-gold/80 font-medium">
+                                  {r.inst.metodo === 'MBWay' ? '📱' : r.inst.metodo === 'Numerário' ? '💵' : '🏦'} {r.inst.metodo}
+                                </span>
+                              : <span className="text-white/30">—</span>}
+                          </td>
+
                           <td className="px-3 py-3">
                             <span className={`text-[10px] px-2 py-0.5 rounded-full border tracking-widest uppercase font-bold ${wb.cls}`}>
                               {wb.label}
