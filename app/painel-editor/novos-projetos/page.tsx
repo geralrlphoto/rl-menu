@@ -15,7 +15,38 @@ type Approval = 'Aguardando Revisão' | 'Aprovado Cliente' | 'Requer Alteraçõe
 
 type ProjectFile = { name: string; size: string; date: string }
 type Version    = { tag: string; date: string; nota: string }
-type DeliveryItem = { type: string; status: 'Não enviado'|'Enviado'|'Aprovado'|'Necessita alterações' }
+
+// ── Tipos de Entrega Final (selecionáveis no Novo Projeto) ─────────────
+type EntregaTipo =
+  | 'Trailer Final' | 'Filme Completo' | 'Instagram Reels' | 'Teaser'
+  | 'Cerimónia Completa' | 'Discursos' | 'RAW Export'
+  | 'Sessão Noivos' | 'Dança dos Noivos' | 'Filme Drone' | 'Versão Reduzida' | 'Pré-Wedding'
+
+type DeliveryItem = {
+  type: EntregaTipo
+  status: 'Não enviado'|'Enviado'|'Aprovado'|'Necessita alterações'
+}
+
+const ENTREGAS_DISPONIVEIS: EntregaTipo[] = [
+  'Trailer Final', 'Filme Completo', 'Instagram Reels', 'Teaser',
+  'Cerimónia Completa', 'Discursos', 'Sessão Noivos', 'Dança dos Noivos',
+  'Filme Drone', 'Versão Reduzida', 'Pré-Wedding', 'RAW Export',
+]
+
+const ENTREGA_ICONS: Record<EntregaTipo, string> = {
+  'Trailer Final':       '▶',
+  'Filme Completo':      '◫',
+  'Instagram Reels':     '◯',
+  'Teaser':              '◐',
+  'Cerimónia Completa':  '⛪',
+  'Discursos':           '🎤',
+  'RAW Export':          '◇',
+  'Sessão Noivos':       '◉',
+  'Dança dos Noivos':    '♪',
+  'Filme Drone':         '◇',
+  'Versão Reduzida':     '◯',
+  'Pré-Wedding':         '✿',
+}
 
 // ── Categorias de Material ──────────────────────────────────────────────
 type MaterialCategoria =
@@ -524,6 +555,7 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
     notas:           '',
   })
   const [categorias, setCategorias] = useState<MaterialCategoria[]>([])
+  const [entregas, setEntregas] = useState<EntregaTipo[]>(['Trailer Final','Filme Completo'])
   const [saving, setSaving] = useState(false)
 
   function update<K extends keyof typeof form>(k: K, v: typeof form[K]) {
@@ -538,6 +570,16 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
   }
   function clearCategorias() {
     setCategorias([])
+  }
+
+  function toggleEntrega(e: EntregaTipo) {
+    setEntregas(prev => prev.includes(e) ? prev.filter(x => x !== e) : [...prev, e])
+  }
+  function selectAllEntregas() {
+    setEntregas([...ENTREGAS_DISPONIVEIS])
+  }
+  function clearEntregas() {
+    setEntregas([])
   }
 
   function valid() {
@@ -565,12 +607,7 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
       ultimoDownload: null,
       materialItems: categorias.map(c => ({ categoria: c, status: 'Pendente' as const })),
       finalLink:    '',
-      deliveries: [
-        { type: 'Trailer Final',  status: 'Não enviado' },
-        { type: 'Filme Completo', status: 'Não enviado' },
-        { type: 'Instagram Reels', status: 'Não enviado' },
-        { type: 'Teaser',          status: 'Não enviado' },
-      ],
+      deliveries:   entregas.map(e => ({ type: e, status: 'Não enviado' as const })),
       versions:     [],
       feedback:     [],
     }
@@ -713,6 +750,58 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
               <p className="text-[11px] text-gold/70 mt-3 flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-gold" />
                 {categorias.length} {categorias.length === 1 ? 'categoria selecionada' : 'categorias selecionadas'}
+              </p>
+            )}
+          </div>
+
+          {/* ENTREGAS AO CLIENTE */}
+          <div className="pt-2 border-t border-white/[0.06]">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <label className="block text-[10px] tracking-[0.3em] uppercase text-white/45 font-medium">
+                  Entregas ao Cliente
+                </label>
+                <p className="text-[11px] text-white/35 mt-0.5">O que vais entregar ao cliente. Aparece na secção Entrega Final.</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={selectAllEntregas}
+                  className="text-[10px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors border border-gold/20 px-2 py-1 rounded-md">
+                  Todas
+                </button>
+                <button type="button" onClick={clearEntregas}
+                  className="text-[10px] tracking-widest uppercase text-white/40 hover:text-white/80 transition-colors border border-white/10 px-2 py-1 rounded-md">
+                  Limpar
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {ENTREGAS_DISPONIVEIS.map(e => {
+                const selected = entregas.includes(e)
+                return (
+                  <button key={e} type="button" onClick={() => toggleEntrega(e)}
+                    className={`group flex items-center gap-2 px-3 py-2 rounded-lg border text-left transition-all ${
+                      selected
+                        ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300'
+                        : 'border-white/[0.06] text-white/55 hover:text-white hover:border-white/15 hover:bg-white/[0.02]'
+                    }`}
+                    style={selected ? { boxShadow: '0 0 14px -3px rgba(52,211,153,0.3)' } : {}}>
+                    <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
+                      selected ? 'bg-emerald-400 border-emerald-400' : 'border-white/25'
+                    }`}>
+                      {selected && <span className="text-[10px] text-black font-bold">✓</span>}
+                    </span>
+                    <span className={`text-base shrink-0 ${selected ? 'text-emerald-300' : 'text-white/40'}`}>{ENTREGA_ICONS[e]}</span>
+                    <span className="text-[11.5px] font-medium leading-tight truncate">{e}</span>
+                  </button>
+                )
+              })}
+            </div>
+
+            {entregas.length > 0 && (
+              <p className="text-[11px] text-emerald-300/80 mt-3 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                {entregas.length} {entregas.length === 1 ? 'entrega selecionada' : 'entregas selecionadas'}
               </p>
             )}
           </div>
