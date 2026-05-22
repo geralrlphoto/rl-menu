@@ -15,7 +15,7 @@ const NAV_ITEMS = [
   { key: 'finalizados', label: 'Finalizados',         icon: '✓' },
   { key: 'pagamentos',  label: 'Pagamentos',          icon: '€', href: '/painel-editor/pagamentos' },
   { key: 'tarefas',     label: 'Tarefas',             icon: '◷', href: '/painel-editor/tarefas', active: true },
-  { key: 'calendario',  label: 'Calendário',          icon: '◉' },
+  { key: 'calendario',  label: 'Calendário',          icon: '◉', href: '/painel-editor/calendario' },
   { key: 'clientes',    label: 'Clientes',            icon: '☉' },
   { key: 'templates',   label: 'Templates',           icon: '◫' },
   { key: 'relatorios',  label: 'Relatórios',          icon: '◫' },

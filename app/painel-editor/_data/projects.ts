@@ -295,3 +295,92 @@ export const AUTO_TASKS_TEMPLATE: { title: string; priority: Priority }[] = [
   { title: 'Entrega cliente',             priority: 'Alta' },
 ]
 
+// ────────────────────────────────────────────────────────────────────────
+//  CALENDÁRIO (eventos derivados dos projetos)
+// ────────────────────────────────────────────────────────────────────────
+
+export type EventType = 'Casamento' | 'Prazo' | 'Entrega' | 'Revisão' | 'Pagamento' | 'Reunião' | 'Urgente'
+
+export type CalendarEvent = {
+  id: string
+  title: string
+  subtitle?: string
+  date: string          // dd/mm/yyyy
+  hora?: string
+  type: EventType
+  projectId?: string
+  todoODia?: boolean
+  completed?: boolean
+}
+
+const EVENT_COLORS: Record<EventType, { dot: string; bg: string; text: string; badge: string }> = {
+  Casamento: { dot: '#a78bfa', bg: 'bg-purple-500/10',   text: 'text-purple-200', badge: 'bg-purple-500/15 text-purple-300 border-purple-500/30' },
+  Prazo:     { dot: '#34d399', bg: 'bg-emerald-500/10',  text: 'text-emerald-200', badge: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
+  Entrega:   { dot: '#60a5fa', bg: 'bg-blue-500/10',     text: 'text-blue-200',    badge: 'bg-blue-500/15 text-blue-300 border-blue-500/30' },
+  Revisão:   { dot: '#facc15', bg: 'bg-yellow-500/10',   text: 'text-yellow-200',  badge: 'bg-yellow-500/15 text-yellow-300 border-yellow-500/30' },
+  Pagamento: { dot: '#fb923c', bg: 'bg-orange-500/10',   text: 'text-orange-200',  badge: 'bg-orange-500/15 text-orange-300 border-orange-500/30' },
+  Reunião:   { dot: '#06b6d4', bg: 'bg-cyan-500/10',     text: 'text-cyan-200',    badge: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30' },
+  Urgente:   { dot: '#ef4444', bg: 'bg-red-500/10',      text: 'text-red-200',     badge: 'bg-red-500/15 text-red-300 border-red-500/30' },
+}
+
+export function eventColorFor(t: EventType) { return EVENT_COLORS[t] }
+
+function addDaysISO(date: string, days: number): string {
+  const [d, m, y] = date.split('/').map(Number)
+  const dt = new Date(y, m-1, d)
+  dt.setDate(dt.getDate() + days)
+  return `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`
+}
+
+/** Gera eventos auto a partir dos projetos */
+export function eventsFromProjects(): CalendarEvent[] {
+  const events: CalendarEvent[] = []
+
+  PROJECTS.forEach(p => {
+    if (p.cancelled || p.archived) return
+    const baseId = p.id
+
+    // 💍 Casamento
+    events.push({ id: `${baseId}-wed`, title: 'Casamento', subtitle: p.noivos, date: p.dataCasamento, type: 'Casamento', projectId: p.id, todoODia: true })
+
+    // 📦 Material recebido (recebido)
+    events.push({ id: `${baseId}-mat`, title: 'Material Recebido', subtitle: p.noivos, date: p.recebido, type: 'Prazo', projectId: p.id, todoODia: true })
+
+    // 📅 Edição start (~5 dias após recebido)
+    events.push({ id: `${baseId}-edit`, title: 'Início da Edição', subtitle: p.noivos, date: addDaysISO(p.recebido, 5), type: 'Prazo', projectId: p.id, todoODia: true })
+
+    // 🟡 Review V1 (~10 dias após edição)
+    events.push({ id: `${baseId}-v1`, title: 'Revisão V1', subtitle: p.noivos, date: addDaysISO(p.recebido, 15), type: 'Revisão', projectId: p.id, todoODia: true })
+
+    // 🟡 Review V2 (~5 dias antes da entrega)
+    events.push({ id: `${baseId}-v2`, title: 'Revisão V2', subtitle: p.noivos, date: addDaysISO(p.entregaPrevista, -5), type: 'Revisão', projectId: p.id, todoODia: true })
+
+    // 🔵 Entrega Trailer (~7 dias antes da entrega final)
+    events.push({ id: `${baseId}-trailer`, title: 'Entrega Trailer', subtitle: p.noivos, date: addDaysISO(p.entregaPrevista, -7), type: 'Entrega', projectId: p.id, todoODia: true })
+
+    // 🔵 Entrega Final
+    events.push({ id: `${baseId}-final`, title: 'Entrega Final', subtitle: p.noivos, date: p.entregaPrevista, type: 'Entrega', projectId: p.id, todoODia: true, completed: p.finalEntregue })
+
+    // 🟠 Pagamentos (gerados via paymentPlanFor)
+    const plan = paymentPlanFor(p)
+    plan.forEach((inst, i) => {
+      events.push({
+        id: `${baseId}-pay-${i}`,
+        title: `Pagamento Parcela ${i + 1}`,
+        subtitle: p.noivos,
+        date: inst.dueDate,
+        type: 'Pagamento',
+        projectId: p.id,
+        todoODia: true,
+        completed: inst.status === 'Recebido',
+      })
+    })
+  })
+
+  // Reuniões cliente (mock)
+  events.push({ id: 'meet-1', title: 'Reunião Cliente', subtitle: 'Amanda & Lucas', date: '24/05/2026', hora: '10:00', type: 'Reunião', projectId: 'p1' })
+  events.push({ id: 'meet-2', title: 'Reunião Cliente', subtitle: 'Beatriz & Gabriel', date: '28/05/2026', hora: '14:30', type: 'Reunião', projectId: 'p2' })
+
+  return events
+}
+

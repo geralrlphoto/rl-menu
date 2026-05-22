@@ -58,7 +58,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'finalizados', label: 'Projetos Finalizados', icon: '✓' },
   { key: 'pagamentos',  label: 'Pagamentos',          icon: '€', href: '/painel-editor/pagamentos' },
   { key: 'tarefas',     label: 'Tarefas',             icon: '◷', href: '/painel-editor/tarefas' },
-  { key: 'calendario',  label: 'Calendário',          icon: '◉' },
+  { key: 'calendario',  label: 'Calendário',          icon: '◉', href: '/painel-editor/calendario' },
   { key: 'clientes',    label: 'Clientes',            icon: '☉' },
   { key: 'templates',   label: 'Templates',           icon: '◫' },
   { key: 'notas',       label: 'Notas',               icon: '✦' },
