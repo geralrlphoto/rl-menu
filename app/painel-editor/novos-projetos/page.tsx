@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -73,35 +73,50 @@ const MATERIAL_ICONS: Record<MaterialCategoria, string> = {
   'Corte do Bolo': '◍', 'Drone': '◇', 'Áudio Geral': '◯', 'Áudio Lapela': '◐',
 }
 
-// ── Referências de Eventos (Casamentos cadastrados por ano) ─────────────
+// ── Referências de Eventos (vêm de /api/eventos-supabase) ────────────────
 type EventReference = {
   ref: string
   ano: number
   noivos: string
-  data: string   // dd/mm/yyyy
+  data: string   // dd/mm/yyyy (display)
   local: string
   foto: string
 }
 
-const EVENT_REFERENCES: EventReference[] = [
-  // 2025
-  { ref: 'CAS_001_25_RL', ano: 2025, noivos: 'Maria & João',       data: '12/04/2025', local: 'Quinta dos Castanheiros, Sintra', foto: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=900&h=600&fit=crop' },
-  { ref: 'CAS_002_25_RL', ano: 2025, noivos: 'Inês & Pedro',        data: '25/05/2025', local: 'Solar dos Lobos, Évora',          foto: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=900&h=600&fit=crop' },
-  { ref: 'CAS_003_25_RL', ano: 2025, noivos: 'Catarina & Tomás',    data: '14/06/2025', local: 'Casa do Lago, Cascais',           foto: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=900&h=600&fit=crop' },
-  { ref: 'CAS_004_25_RL', ano: 2025, noivos: 'Margarida & Diogo',   data: '06/09/2025', local: 'Quinta de Santa Bárbara, Mafra',  foto: 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=900&h=600&fit=crop' },
-  // 2026
-  { ref: 'CAS_001_26_RL', ano: 2026, noivos: 'Amanda & Lucas',      data: '28/06/2026', local: 'Quinta da Bichinha, Lisboa',      foto: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=900&h=600&fit=crop' },
-  { ref: 'CAS_002_26_RL', ano: 2026, noivos: 'Beatriz & Gabriel',   data: '31/05/2026', local: 'Solar do Pelourinho, Sintra',     foto: 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=900&h=600&fit=crop' },
-  { ref: 'CAS_003_26_RL', ano: 2026, noivos: 'Juliana & Matheus',   data: '07/06/2026', local: 'Quinta da Lagoalva, Alpiarça',    foto: 'https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=900&h=600&fit=crop' },
-  { ref: 'CAS_004_26_RL', ano: 2026, noivos: 'Carolina & Felipe',   data: '14/06/2026', local: 'Quinta dos Lagares, Óbidos',      foto: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=900&h=600&fit=crop' },
-  { ref: 'CAS_005_26_RL', ano: 2026, noivos: 'Sofia & Ricardo',     data: '21/06/2026', local: 'Casa dos Penedos, Sintra',         foto: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=900&h=600&fit=crop' },
-  { ref: 'CAS_006_26_RL', ano: 2026, noivos: 'Beatriz & André',     data: '05/07/2026', local: 'Quinta do Torneiro, Loures',       foto: 'https://images.unsplash.com/photo-1469371670807-013ccf25f16a?w=900&h=600&fit=crop' },
-  { ref: 'CAS_007_26_RL', ano: 2026, noivos: 'Joana & Henrique',    data: '12/07/2026', local: 'Convento do Espinheiro, Évora',    foto: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=900&h=600&fit=crop' },
-  // 2027
-  { ref: 'CAS_001_27_RL', ano: 2027, noivos: 'Helena & André',      data: '15/05/2027', local: 'Quinta de Sant\'Ana, Mafra',       foto: 'https://images.unsplash.com/photo-1502086223501-7ea6ecd79368?w=900&h=600&fit=crop' },
-  { ref: 'CAS_002_27_RL', ano: 2027, noivos: 'Marta & Vasco',       data: '22/06/2027', local: 'Quinta do Falcão, Cascais',        foto: 'https://images.unsplash.com/photo-1502136969935-8d8eef54d77b?w=900&h=600&fit=crop' },
-  { ref: 'CAS_003_27_RL', ano: 2027, noivos: 'Daniela & Bernardo',  data: '04/09/2027', local: 'Tivoli Palácio de Seteais',        foto: 'https://images.unsplash.com/photo-1469371670807-013ccf25f16a?w=900&h=600&fit=crop' },
+// Foto fallback aleatória (a API ainda não devolve foto de capa)
+const FALLBACK_FOTOS = [
+  'https://images.unsplash.com/photo-1519741497674-611481863552?w=900&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=900&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=900&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=900&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=900&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1469371670807-013ccf25f16a?w=900&h=600&fit=crop',
 ]
+
+/** Converte YYYY-MM-DD da API para DD/MM/YYYY de display */
+function isoToPt(iso: string): string {
+  if (!iso) return ''
+  const [y, m, d] = iso.split('T')[0].split('-')
+  if (!y || !m || !d) return iso
+  return `${d}/${m}/${y}`
+}
+
+/** Mapeia evento da API para EventReference */
+function eventToRef(e: any, idx: number): EventReference | null {
+  if (!e.referencia) return null  // ignora eventos sem referência
+  const isCasamento = Array.isArray(e.tipo_evento) && e.tipo_evento.includes('CASAMENTO')
+  if (!isCasamento) return null
+  const dataPt = isoToPt(e.data_evento)
+  const ano = parseInt((e.data_evento || '').slice(0,4)) || new Date().getFullYear()
+  return {
+    ref:    e.referencia,
+    ano,
+    noivos: e.cliente || '—',
+    data:   dataPt,
+    local:  e.local || '',
+    foto:   FALLBACK_FOTOS[idx % FALLBACK_FOTOS.length],
+  }
+}
 
 type Project = {
   id: string
@@ -586,7 +601,39 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
 
   const [ano, setAno] = useState<number>(2026)
   const [refId, setRefId] = useState<string>('')   // referência seleccionada
-  const ref = EVENT_REFERENCES.find(e => e.ref === refId) ?? null
+  const [refsForYear, setRefsForYear] = useState<EventReference[]>([])
+  const [loadingRefs, setLoadingRefs] = useState(false)
+  const [errorRefs, setErrorRefs] = useState<string | null>(null)
+  const ref = refsForYear.find(e => e.ref === refId) ?? null
+
+  // Fetch referências de /api/eventos-supabase?ano={ano}
+  useEffect(() => {
+    let cancelled = false
+    setLoadingRefs(true)
+    setErrorRefs(null)
+    fetch(`/api/eventos-supabase?ano=${ano}`)
+      .then(r => r.json())
+      .then(d => {
+        if (cancelled) return
+        if (d.error) {
+          setErrorRefs(d.error)
+          setRefsForYear([])
+          return
+        }
+        const events: any[] = d.events ?? []
+        const refs: EventReference[] = events
+          .map((e, i) => eventToRef(e, i))
+          .filter((x): x is EventReference => x !== null)
+        setRefsForYear(refs)
+      })
+      .catch(err => {
+        if (cancelled) return
+        setErrorRefs(err.message ?? 'Erro ao carregar referências')
+        setRefsForYear([])
+      })
+      .finally(() => { if (!cancelled) setLoadingRefs(false) })
+    return () => { cancelled = true }
+  }, [ano])
 
   const [form, setForm] = useState({
     dataCriacao:     `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`,
@@ -603,17 +650,14 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
   // Quando muda a referência seleccionada, calcula sugestão de entrega prevista (data casamento + 30 dias)
   function updateRef(r: string) {
     setRefId(r)
-    const target = EVENT_REFERENCES.find(e => e.ref === r)
-    if (target && !form.entregaPrevista) {
+    const target = refsForYear.find(e => e.ref === r)
+    if (target && target.data && !form.entregaPrevista) {
       const [dd,mm,yy] = target.data.split('/').map(Number)
       const d = new Date(yy, mm-1, dd); d.setDate(d.getDate() + 30)
       const suggested = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`
       setForm(prev => ({ ...prev, entregaPrevista: suggested }))
     }
   }
-
-  // Filtrar referências por ano e excluir já-existentes
-  const refsForYear = EVENT_REFERENCES.filter(e => e.ano === ano)
 
   function update<K extends keyof typeof form>(k: K, v: typeof form[K]) {
     setForm(prev => ({ ...prev, [k]: v }))
@@ -712,31 +756,53 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
         {/* Body */}
         <div className="px-7 py-6 space-y-5">
 
-          {/* ─── REFERÊNCIA DO EVENTO ─── */}
+          {/* ─── REFERÊNCIA DO EVENTO (Supabase) ─── */}
           <div className="rounded-xl border border-gold/20 p-4"
             style={{ background: 'linear-gradient(135deg, rgba(201,164,92,0.05), transparent)' }}>
-            <p className="text-[10px] tracking-[0.3em] uppercase text-gold font-bold mb-3">Referência do Evento</p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[10px] tracking-[0.3em] uppercase text-gold font-bold">Referência do Evento</p>
+              {loadingRefs && (
+                <span className="text-[10px] text-gold/70 tracking-widest uppercase flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
+                  A carregar…
+                </span>
+              )}
+            </div>
             <div className="grid grid-cols-[110px_1fr] gap-3">
               {/* Ano */}
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-white/45 mb-1">Ano</label>
                 <select value={ano} onChange={e => { setAno(Number(e.target.value)); setRefId('') }}
                   className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/40 cursor-pointer">
-                  {[2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
+                  {[2024, 2025, 2026, 2027, 2028].map(y => <option key={y} value={y}>{y}</option>)}
                 </select>
               </div>
               {/* Referência */}
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-white/45 mb-1">Referência <span className="text-gold">*</span></label>
-                <select value={refId} onChange={e => updateRef(e.target.value)}
-                  className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/40 cursor-pointer font-mono">
-                  <option value="">— Seleciona o evento —</option>
+                <select value={refId} onChange={e => updateRef(e.target.value)} disabled={loadingRefs || refsForYear.length === 0}
+                  className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/40 cursor-pointer font-mono disabled:opacity-50 disabled:cursor-not-allowed">
+                  <option value="">{loadingRefs ? '— A carregar… —' : refsForYear.length === 0 ? '— Sem eventos —' : '— Seleciona o evento —'}</option>
                   {refsForYear.map(r => (
                     <option key={r.ref} value={r.ref}>{r.ref} · {r.noivos}</option>
                   ))}
                 </select>
               </div>
             </div>
+
+            {/* Erro */}
+            {errorRefs && (
+              <div className="mt-3 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30">
+                <p className="text-[11px] text-red-300">Erro: {errorRefs}</p>
+              </div>
+            )}
+
+            {/* Info de quantidade */}
+            {!loadingRefs && !errorRefs && refsForYear.length > 0 && !refId && (
+              <p className="text-[11px] text-white/45 mt-2">
+                <span className="text-gold/80 font-semibold">{refsForYear.length}</span> {refsForYear.length === 1 ? 'casamento disponível' : 'casamentos disponíveis'} em {ano}
+              </p>
+            )}
 
             {/* Preview do evento seleccionado */}
             {ref && (
@@ -747,8 +813,8 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
                 <div className="flex-1 min-w-0">
                   <p className="text-[15px] font-semibold text-white" style={{ fontFamily: 'Georgia, serif' }}>{ref.noivos}</p>
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-white/55 mt-0.5">
-                    <span className="flex items-center gap-1">📅 <span className="text-white/85 font-medium">{ref.data}</span></span>
-                    <span className="flex items-center gap-1">📍 <span className="text-white/75">{ref.local}</span></span>
+                    {ref.data && <span className="flex items-center gap-1">📅 <span className="text-white/85 font-medium">{ref.data}</span></span>}
+                    {ref.local && <span className="flex items-center gap-1">📍 <span className="text-white/75">{ref.local}</span></span>}
                   </div>
                   <p className="text-[10px] text-gold/70 tracking-widest uppercase mt-1 font-mono">{ref.ref}</p>
                 </div>
