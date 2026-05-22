@@ -59,7 +59,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'pagamentos',  label: 'Pagamentos',          icon: '€', href: '/painel-editor/pagamentos' },
   { key: 'tarefas',     label: 'Tarefas',             icon: '◷', href: '/painel-editor/tarefas' },
   { key: 'calendario',  label: 'Calendário',          icon: '◉', href: '/painel-editor/calendario' },
-  { key: 'clientes',    label: 'Clientes',            icon: '☉' },
+  { key: 'workflow',    label: 'Workflow',            icon: '☰' },
   { key: 'templates',   label: 'Templates',           icon: '◫' },
   { key: 'notas',       label: 'Notas',               icon: '✦' },
   { key: 'config',      label: 'Configurações',       icon: '⚙' },

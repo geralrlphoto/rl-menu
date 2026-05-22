@@ -16,7 +16,7 @@ const NAV_ITEMS = [
   { key: 'pagamentos',  label: 'Pagamentos',          icon: '€', href: '/painel-editor/pagamentos' },
   { key: 'tarefas',     label: 'Tarefas',             icon: '◷', href: '/painel-editor/tarefas' },
   { key: 'calendario',  label: 'Calendário',          icon: '◉', href: '/painel-editor/calendario', active: true },
-  { key: 'clientes',    label: 'Clientes',            icon: '☉' },
+  { key: 'workflow',    label: 'Workflow',            icon: '☰' },
   { key: 'templates',   label: 'Templates',           icon: '◫' },
   { key: 'relatorios',  label: 'Relatórios',          icon: '◫' },
   { key: 'config',      label: 'Configurações',       icon: '⚙' },
