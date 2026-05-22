@@ -81,14 +81,14 @@ function AlbumStatusSelect({ albumId, status, onChanged }: { albumId: string; st
   // APROVADO e ENTREGUE só podem ser definidos pelo cliente/admin — mostra badge fixo
   if (status === 'APROVADO') {
     return (
-      <span className={`text-[16px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium ${cls}`}>
+      <span className={`text-[14px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium ${cls}`}>
         APROVADO ✓
       </span>
     )
   }
   if (status === 'ENTREGUE') {
     return (
-      <span className={`text-[16px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium ${cls}`}>
+      <span className={`text-[14px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium ${cls}`}>
         ENTREGUE ✓
       </span>
     )
@@ -99,7 +99,7 @@ function AlbumStatusSelect({ albumId, status, onChanged }: { albumId: string; st
       value={status}
       onChange={e => handleChange(e.target.value)}
       disabled={saving}
-      className={`text-[16px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium appearance-none cursor-pointer focus:outline-none transition-all disabled:opacity-50 ${cls} [color-scheme:dark]`}
+      className={`text-[14px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium appearance-none cursor-pointer focus:outline-none transition-all disabled:opacity-50 ${cls} [color-scheme:dark]`}
       style={{ backgroundColor: 'transparent' }}
     >
       {ALBUM_STATUS_OPTIONS.map(o => (
@@ -154,8 +154,8 @@ function AlbumInfoModal({ refEvento, nome, dataCasamento, onClose }: { refEvento
   function DateBox({ label, value }: { label: string; value: string | null }) {
     return (
       <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3">
-        <span className="text-[16px] tracking-[0.3em] text-white/25 uppercase block mb-1">{label}</span>
-        <span className="text-[16px] text-white/80">{fmt(value)}</span>
+        <span className="text-[14px] tracking-[0.3em] text-white/25 uppercase block mb-1">{label}</span>
+        <span className="text-[14px] text-white/80">{fmt(value)}</span>
       </div>
     )
   }
@@ -163,8 +163,8 @@ function AlbumInfoModal({ refEvento, nome, dataCasamento, onClose }: { refEvento
   function Field({ label, value }: { label: string; value: string | null }) {
     return (
       <div className="flex flex-col gap-1.5">
-        <span className="text-[16px] tracking-[0.35em] text-white/25 uppercase">{label}</span>
-        <span className="text-[16px] text-white/80">{value || '—'}</span>
+        <span className="text-[14px] tracking-[0.35em] text-white/25 uppercase">{label}</span>
+        <span className="text-[14px] text-white/80">{value || '—'}</span>
       </div>
     )
   }
@@ -182,18 +182,18 @@ function AlbumInfoModal({ refEvento, nome, dataCasamento, onClose }: { refEvento
         <div className="px-8 pt-7 pb-5 border-b border-white/[0.05]">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-[16px] tracking-[0.5em] text-white/20 uppercase mb-2">Álbum de Casamento</p>
+              <p className="text-[14px] tracking-[0.5em] text-white/20 uppercase mb-2">Álbum de Casamento</p>
               <h2 className="text-2xl font-light tracking-[0.15em] text-white uppercase">{data?.nome || nome || '—'}</h2>
-              {data?.ref_album && <p className="text-[16px] text-white/30 mt-1 tracking-widest">{data.ref_album}</p>}
+              {data?.ref_album && <p className="text-[14px] text-white/30 mt-1 tracking-widest">{data.ref_album}</p>}
             </div>
             <div className="flex items-center gap-2 shrink-0">
               {data?.status && (
                 <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border ${cfg.bg} ${cfg.border}`}>
                   <div className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                  <span className={`text-[16px] font-semibold tracking-widest uppercase ${cfg.text}`}>{data.status}</span>
+                  <span className={`text-[14px] font-semibold tracking-widest uppercase ${cfg.text}`}>{data.status}</span>
                 </div>
               )}
-              <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white hover:border-white/30 transition-all text-[16px]">✕</button>
+              <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white hover:border-white/30 transition-all text-[14px]">✕</button>
             </div>
           </div>
         </div>
@@ -203,8 +203,8 @@ function AlbumInfoModal({ refEvento, nome, dataCasamento, onClose }: { refEvento
 
           {/* Nome dos Noivos — always visible */}
           <div className="bg-gold/5 border border-gold/20 rounded-2xl p-4">
-            <span className="text-[16px] tracking-[0.4em] text-gold/40 uppercase block mb-1.5">Nome dos Noivos</span>
-            <span className="text-[16px] text-white/80">{data?.nome || nome || '—'}</span>
+            <span className="text-[14px] tracking-[0.4em] text-gold/40 uppercase block mb-1.5">Nome dos Noivos</span>
+            <span className="text-[14px] text-white/80">{data?.nome || nome || '—'}</span>
           </div>
 
           {/* Datas principais — always visible */}
@@ -215,22 +215,22 @@ function AlbumInfoModal({ refEvento, nome, dataCasamento, onClose }: { refEvento
           </div>
 
           {loading ? (
-            <p className="text-white/20 text-[16px] tracking-widest">A carregar...</p>
+            <p className="text-white/20 text-[14px] tracking-widest">A carregar...</p>
           ) : !data ? (
-            <p className="text-white/20 text-[16px] tracking-widest">Sem informação adicional disponível.</p>
+            <p className="text-white/20 text-[14px] tracking-widest">Sem informação adicional disponível.</p>
           ) : (<>
 
             {/* Fotos p/Álbum */}
             {data.num_fotografias && (
               <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 flex items-center justify-between">
-                <span className="text-[16px] tracking-[0.35em] text-white/25 uppercase">Fotos p/ Álbum</span>
+                <span className="text-[14px] tracking-[0.35em] text-white/25 uppercase">Fotos p/ Álbum</span>
                 <span className="text-2xl font-light text-white/80">{data.num_fotografias}</span>
               </div>
             )}
 
             {/* Datas álbum */}
             <div>
-              <p className="text-[16px] tracking-[0.35em] text-white/20 uppercase mb-3">Datas Álbum</p>
+              <p className="text-[14px] tracking-[0.35em] text-white/20 uppercase mb-3">Datas Álbum</p>
               <div className="grid grid-cols-3 gap-3">
                 <DateBox label="Data Aprovação"        value={data.data_aprovacao} />
                 <DateBox label="Data Prevista Entrega" value={data.data_prevista_entrega} />
@@ -246,14 +246,14 @@ function AlbumInfoModal({ refEvento, nome, dataCasamento, onClose }: { refEvento
             {/* Textos */}
             {data.texto_album && (
               <div className="flex flex-col gap-1.5">
-                <span className="text-[16px] tracking-[0.35em] text-white/25 uppercase">Texto para Álbum</span>
-                <p className="text-[16px] text-white/80 leading-relaxed">{data.texto_album}</p>
+                <span className="text-[14px] tracking-[0.35em] text-white/25 uppercase">Texto para Álbum</span>
+                <p className="text-[14px] text-white/80 leading-relaxed">{data.texto_album}</p>
               </div>
             )}
             {data.texto_caixa && (
               <div className="flex flex-col gap-1.5">
-                <span className="text-[16px] tracking-[0.35em] text-white/25 uppercase">Texto para Caixa</span>
-                <p className="text-[16px] text-white/80 leading-relaxed">{data.texto_caixa}</p>
+                <span className="text-[14px] tracking-[0.35em] text-white/25 uppercase">Texto para Caixa</span>
+                <p className="text-[14px] text-white/80 leading-relaxed">{data.texto_caixa}</p>
               </div>
             )}
           </>)}
@@ -299,13 +299,13 @@ function PasswordGate({ id, onAuth }: { id: string; onAuth: () => void }) {
     <div className="min-h-screen flex items-center justify-center px-4 bg-[#0a0a0a]">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <p className="text-[16px] tracking-[0.5em] text-white/20 uppercase mb-3">RL PHOTO.VIDEO</p>
+          <p className="text-[14px] tracking-[0.5em] text-white/20 uppercase mb-3">RL PHOTO.VIDEO</p>
           <h1 className="text-2xl font-light tracking-[0.2em] text-white uppercase">Área do Freelancer</h1>
           <div className="mt-4 h-px w-8 bg-gold/50 mx-auto" />
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-[16px] tracking-[0.3em] text-white/30 uppercase mb-2">Password de Acesso</label>
+            <label className="block text-[14px] tracking-[0.3em] text-white/30 uppercase mb-2">Password de Acesso</label>
             <div className="relative">
               <input
                 type={showPw ? 'text' : 'password'}
@@ -313,7 +313,7 @@ function PasswordGate({ id, onAuth }: { id: string; onAuth: () => void }) {
                 onChange={e => setPw(e.target.value)}
                 autoFocus
                 placeholder="••••••••"
-                className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3 pr-11 text-white text-[16px] outline-none focus:border-gold/40 transition-colors placeholder:text-white/15"
+                className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3 pr-11 text-white text-[14px] outline-none focus:border-gold/40 transition-colors placeholder:text-white/15"
               />
               <button
                 type="button"
@@ -328,11 +328,11 @@ function PasswordGate({ id, onAuth }: { id: string; onAuth: () => void }) {
               </button>
             </div>
           </div>
-          {error && <p className="text-[16px] text-red-400/80">{error}</p>}
+          {error && <p className="text-[14px] text-red-400/80">{error}</p>}
           <button
             type="submit"
             disabled={loading || !pw.trim()}
-            className="w-full py-3 rounded-xl bg-gold text-black font-bold text-[16px] tracking-widest hover:bg-gold/80 transition-all disabled:opacity-40 uppercase"
+            className="w-full py-3 rounded-xl bg-gold text-black font-bold text-[14px] tracking-widest hover:bg-gold/80 transition-all disabled:opacity-40 uppercase"
           >
             {loading ? 'A verificar...' : 'Entrar'}
           </button>
@@ -396,10 +396,10 @@ function SelecaoModal({ nome, onClose }: { nome: string; onClose: () => void }) 
         {/* Header */}
         <div className="px-8 pt-7 pb-5 border-b border-white/[0.05] flex items-start justify-between gap-4">
           <div>
-            <p className="text-[16px] tracking-[0.5em] text-white/20 uppercase mb-2">Seleção de Fotos</p>
+            <p className="text-[14px] tracking-[0.5em] text-white/20 uppercase mb-2">Seleção de Fotos</p>
             <h2 className="text-2xl font-light tracking-[0.15em] text-white uppercase">{nome}</h2>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white hover:border-white/30 transition-all text-[16px] mt-1">✕</button>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white hover:border-white/30 transition-all text-[14px] mt-1">✕</button>
         </div>
         {/* Body */}
         <div className="px-8 py-6 max-h-[65vh] overflow-y-auto">
@@ -410,38 +410,38 @@ function SelecaoModal({ nome, onClose }: { nome: string; onClose: () => void }) 
           )}
           {/* Nome dos Noivos — always visible */}
           <div className="bg-gold/5 border border-gold/20 rounded-2xl p-4 mb-4">
-            <span className="text-[16px] tracking-[0.4em] text-gold/40 uppercase block mb-1.5">Nome dos Noivos</span>
-            <span className="text-[16px] text-white/80">{record?.nome_noivos || '—'}</span>
+            <span className="text-[14px] tracking-[0.4em] text-gold/40 uppercase block mb-1.5">Nome dos Noivos</span>
+            <span className="text-[14px] text-white/80">{record?.nome_noivos || '—'}</span>
           </div>
 
           {/* Datas — always visible */}
           <div className="grid grid-cols-3 gap-3 mb-6">
             <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3">
-              <span className="text-[16px] tracking-[0.3em] text-white uppercase block mb-1">Data do Evento</span>
-              <p className="text-[16px] text-white">{record ? fmtFull(record.date) : '—'}</p>
+              <span className="text-[14px] tracking-[0.3em] text-white uppercase block mb-1">Data do Evento</span>
+              <p className="text-[14px] text-white">{record ? fmtFull(record.date) : '—'}</p>
             </div>
             <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3">
-              <span className="text-[16px] tracking-[0.3em] text-white uppercase block mb-1">Data de Entrada</span>
-              <p className="text-[16px] text-white">{record ? fmtFull(record.data_entrada) : '—'}</p>
+              <span className="text-[14px] tracking-[0.3em] text-white uppercase block mb-1">Data de Entrada</span>
+              <p className="text-[14px] text-white">{record ? fmtFull(record.data_entrada) : '—'}</p>
             </div>
             <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3">
-              <span className="text-[16px] tracking-[0.3em] text-white uppercase block mb-1">Data Limite p/ Entrega</span>
-              <p className="text-[16px] text-white">{record?.data_entrada ? fmtFull(addDaysStr(record.data_entrada, 35)) : '—'}</p>
+              <span className="text-[14px] tracking-[0.3em] text-white uppercase block mb-1">Data Limite p/ Entrega</span>
+              <p className="text-[14px] text-white">{record?.data_entrada ? fmtFull(addDaysStr(record.data_entrada, 35)) : '—'}</p>
             </div>
           </div>
           {notFound && (
-            <p className="text-white/30 text-[16px] text-center py-8 tracking-widest">Seleção de fotos não encontrada.</p>
+            <p className="text-white/30 text-[14px] text-center py-8 tracking-widest">Seleção de fotos não encontrada.</p>
           )}
           {record && (
             <div className="space-y-6">
               {/* Contagens */}
               <div>
-                <p className="text-[16px] tracking-[0.35em] text-white uppercase mb-3">Contagem de Fotos</p>
+                <p className="text-[14px] tracking-[0.35em] text-white uppercase mb-3">Contagem de Fotos</p>
                 <div className="grid grid-cols-4 gap-2">
                   {SELECAO_SECTIONS.map(({ label, field }) => (
                     <div key={field} className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3">
-                      <span className="text-[16px] tracking-[0.2em] text-white uppercase block mb-1">{label}</span>
-                      <p className="text-xl font-light text-white">{record[field] || <span className="text-white/30 text-[16px]">—</span>}</p>
+                      <span className="text-[14px] tracking-[0.2em] text-white uppercase block mb-1">{label}</span>
+                      <p className="text-xl font-light text-white">{record[field] || <span className="text-white/30 text-[14px]">—</span>}</p>
                     </div>
                   ))}
                 </div>
@@ -449,8 +449,8 @@ function SelecaoModal({ nome, onClose }: { nome: string; onClose: () => void }) 
               {/* Detalhes */}
               {record.detalhes && (
                 <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
-                  <span className="text-[16px] tracking-[0.3em] text-white uppercase block mb-2">Detalhes</span>
-                  <p className="text-[16px] text-white leading-relaxed">{record.detalhes}</p>
+                  <span className="text-[14px] tracking-[0.3em] text-white uppercase block mb-2">Detalhes</span>
+                  <p className="text-[14px] text-white leading-relaxed">{record.detalhes}</p>
                 </div>
               )}
             </div>
@@ -485,18 +485,18 @@ function EdicaoModal({ e, onClose }: { e: Edicao; onClose: () => void }) {
         {/* Header */}
         <div className="px-7 pt-6 pb-5 border-b border-white/[0.05] flex items-start justify-between gap-4">
           <div>
-            <p className="text-[16px] tracking-[0.4em] text-white uppercase mb-1">Edição de Fotos</p>
+            <p className="text-[14px] tracking-[0.4em] text-white uppercase mb-1">Edição de Fotos</p>
             <h2 className="text-xl font-light tracking-[0.1em] text-white uppercase">{e.nome}</h2>
             <div className="flex items-center gap-3 mt-1 flex-wrap">
-              {e.data_casamento && <p className="text-[16px] text-white">{fmtDate(e.data_casamento).split(' · ')[0]}</p>}
-              {e.local && <p className="text-[16px] text-white">📍 {e.local}</p>}
+              {e.data_casamento && <p className="text-[14px] text-white">{fmtDate(e.data_casamento).split(' · ')[0]}</p>}
+              {e.local && <p className="text-[14px] text-white">📍 {e.local}</p>}
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <span className={`text-[16px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium ${STATUS_EDICAO_STYLE[e.status] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
+            <span className={`text-[14px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium ${STATUS_EDICAO_STYLE[e.status] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
               {e.status}
             </span>
-            <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white hover:border-white/30 transition-all text-[16px]">✕</button>
+            <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white hover:border-white/30 transition-all text-[14px]">✕</button>
           </div>
         </div>
         {/* Body */}
@@ -506,26 +506,26 @@ function EdicaoModal({ e, onClose }: { e: Edicao; onClose: () => void }) {
             <div className="grid grid-cols-2 gap-3">
               {e.data_entrega && (
                 <div className="bg-white/[0.03] border border-white/[0.05] rounded-2xl px-4 py-3">
-                  <p className="text-[16px] tracking-[0.3em] text-white uppercase mb-1">Data Entrega</p>
-                  <p className="text-[16px] text-white">{fmtDate(e.data_entrega).split(' · ')[0]}</p>
+                  <p className="text-[14px] tracking-[0.3em] text-white uppercase mb-1">Data Entrega</p>
+                  <p className="text-[14px] text-white">{fmtDate(e.data_entrega).split(' · ')[0]}</p>
                 </div>
               )}
               {e.data_final_entrega && (
                 <div className="bg-white/[0.03] border border-white/[0.05] rounded-2xl px-4 py-3">
-                  <p className="text-[16px] tracking-[0.3em] text-white uppercase mb-1">Entrega Final</p>
-                  <p className="text-[16px] text-white">{fmtDate(e.data_final_entrega).split(' · ')[0]}</p>
+                  <p className="text-[14px] tracking-[0.3em] text-white uppercase mb-1">Entrega Final</p>
+                  <p className="text-[14px] text-white">{fmtDate(e.data_final_entrega).split(' · ')[0]}</p>
                 </div>
               )}
             </div>
           )}
           {/* Contagem de fotos */}
           <div>
-            <p className="text-[16px] tracking-[0.35em] text-white uppercase mb-3">Contagem de Fotos</p>
+            <p className="text-[14px] tracking-[0.35em] text-white uppercase mb-3">Contagem de Fotos</p>
             <div className="grid grid-cols-3 gap-2">
               {FOTO_FIELDS.map(({ key, label }) => (
                 <div key={key} className="bg-white/[0.03] border border-white/[0.05] rounded-xl px-3 py-2.5">
-                  <p className="text-[16px] tracking-[0.2em] text-white uppercase mb-1">{label}</p>
-                  <p className="text-xl font-light text-white">{e[key] != null ? String(e[key]) : <span className="text-white/30 text-[16px]">—</span>}</p>
+                  <p className="text-[14px] tracking-[0.2em] text-white uppercase mb-1">{label}</p>
+                  <p className="text-xl font-light text-white">{e[key] != null ? String(e[key]) : <span className="text-white/30 text-[14px]">—</span>}</p>
                 </div>
               ))}
             </div>
@@ -546,10 +546,10 @@ function BriefingModal({ url, onClose }: { url: string; onClose: () => void }) {
       <div className="absolute inset-0 bg-black/90 backdrop-blur-md" />
       {/* Header bar */}
       <div className="relative z-10 flex items-center justify-between px-4 py-3 bg-[#0e0e0e] border-b border-white/[0.07] flex-shrink-0" onClick={e => e.stopPropagation()}>
-        <p className="text-[16px] tracking-[0.4em] text-white/30 uppercase">Briefing</p>
+        <p className="text-[14px] tracking-[0.4em] text-white/30 uppercase">Briefing</p>
         <div className="flex items-center gap-2">
           <a href={url} target="_blank" rel="noopener noreferrer"
-            className="text-[16px] px-3 py-1.5 rounded-lg border border-white/10 text-white/30 hover:text-white/60 hover:border-white/25 transition-all tracking-widest uppercase">
+            className="text-[14px] px-3 py-1.5 rounded-lg border border-white/10 text-white/30 hover:text-white/60 hover:border-white/25 transition-all tracking-widest uppercase">
             Abrir no Browser ↗
           </a>
           <button onClick={onClose}
@@ -567,9 +567,9 @@ function BriefingModal({ url, onClose }: { url: string; onClose: () => void }) {
         )}
         {error && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-4 text-center">
-            <p className="text-white/30 text-[16px] tracking-widest">Não foi possível carregar o briefing aqui.</p>
+            <p className="text-white/30 text-[14px] tracking-widest">Não foi possível carregar o briefing aqui.</p>
             <a href={url} target="_blank" rel="noopener noreferrer"
-              className="px-5 py-2.5 rounded-xl bg-gold/10 border border-gold/30 text-gold text-[16px] font-semibold tracking-widest uppercase hover:bg-gold/20 transition-all">
+              className="px-5 py-2.5 rounded-xl bg-gold/10 border border-gold/30 text-gold text-[14px] font-semibold tracking-widest uppercase hover:bg-gold/20 transition-all">
               Abrir no Browser ↗
             </a>
           </div>
@@ -592,7 +592,7 @@ function RSection({ label, children }: { label: string; children: React.ReactNod
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <span className="text-[16px] tracking-[0.4em] uppercase font-semibold shrink-0"
+        <span className="text-[14px] tracking-[0.4em] uppercase font-semibold shrink-0"
           style={{ color: 'rgba(6,182,212,0.55)' }}>{label}</span>
         <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, rgba(6,182,212,0.2), transparent)' }} />
       </div>
@@ -604,7 +604,7 @@ function RSection({ label, children }: { label: string; children: React.ReactNod
 function RField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <p className="text-[16px] tracking-[0.35em] uppercase font-medium" style={{ color: 'rgba(255,255,255,0.25)' }}>{label}</p>
+      <p className="text-[14px] tracking-[0.35em] uppercase font-medium" style={{ color: 'rgba(255,255,255,0.25)' }}>{label}</p>
       {children}
     </div>
   )
@@ -613,7 +613,7 @@ function RField({ label, children }: { label: string; children: React.ReactNode 
 function RInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
   return (
     <input type="text" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-      className="w-full bg-transparent outline-none text-[16px] text-white placeholder-white/10 py-3 px-4 rounded-xl transition-all duration-200"
+      className="w-full bg-transparent outline-none text-[14px] text-white placeholder-white/10 py-3 px-4 rounded-xl transition-all duration-200"
       style={{ border: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.02)' }}
       onFocus={e => { e.currentTarget.style.borderColor = 'rgba(6,182,212,0.45)'; e.currentTarget.style.boxShadow = '0 0 16px rgba(6,182,212,0.08)' }}
       onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.boxShadow = 'none' }}
@@ -624,7 +624,7 @@ function RInput({ value, onChange, placeholder }: { value: string; onChange: (v:
 function RTextarea({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
   return (
     <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={3}
-      className="w-full bg-transparent outline-none text-[16px] text-white placeholder-white/10 py-3 px-4 rounded-xl transition-all duration-200 resize-none"
+      className="w-full bg-transparent outline-none text-[14px] text-white placeholder-white/10 py-3 px-4 rounded-xl transition-all duration-200 resize-none"
       style={{ border: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.02)' }}
       onFocus={e => { e.currentTarget.style.borderColor = 'rgba(6,182,212,0.45)'; e.currentTarget.style.boxShadow = '0 0 16px rgba(6,182,212,0.08)' }}
       onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.boxShadow = 'none' }}
@@ -637,7 +637,7 @@ function RSegmented({ options, value, onChange }: { options: string[]; value: st
     <div className="flex gap-2 flex-wrap">
       {options.map(opt => (
         <button key={opt} type="button" onClick={() => onChange(value === opt ? '' : opt)}
-          className="px-4 py-2 rounded-lg text-[16px] font-semibold tracking-widest uppercase transition-all duration-150"
+          className="px-4 py-2 rounded-lg text-[14px] font-semibold tracking-widest uppercase transition-all duration-150"
           style={value === opt ? {
             background: 'rgba(6,182,212,0.12)', border: '1px solid rgba(6,182,212,0.4)',
             color: 'rgba(6,182,212,0.9)', boxShadow: '0 0 14px rgba(6,182,212,0.1)',
@@ -658,7 +658,7 @@ function RMulti({ options, value, onChange }: { options: string[]; value: string
         const active = value.includes(opt)
         return (
           <button key={opt} type="button" onClick={() => toggle(opt)}
-            className="px-4 py-2 rounded-lg text-[16px] font-semibold tracking-widest uppercase transition-all duration-150"
+            className="px-4 py-2 rounded-lg text-[14px] font-semibold tracking-widest uppercase transition-all duration-150"
             style={active ? {
               background: 'rgba(6,182,212,0.12)', border: '1px solid rgba(6,182,212,0.4)',
               color: 'rgba(6,182,212,0.9)', boxShadow: '0 0 14px rgba(6,182,212,0.1)',
@@ -676,7 +676,7 @@ function RToggle({ value, onChange }: { value: boolean | null; onChange: (v: boo
     <div className="flex gap-2">
       {([true, false] as const).map(v => (
         <button key={String(v)} type="button" onClick={() => onChange(v)}
-          className="flex-1 py-2.5 rounded-xl text-[16px] font-semibold tracking-widest uppercase transition-all duration-150"
+          className="flex-1 py-2.5 rounded-xl text-[14px] font-semibold tracking-widest uppercase transition-all duration-150"
           style={value === v ? {
             background: v ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.08)',
             border: `1px solid ${v ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.3)'}`,
@@ -762,12 +762,12 @@ function RelatorioVideoModal({ c, freelancerNome, onClose, onSubmitted }: { c: C
         </div>
         <div className="space-y-3">
           <p className="text-xl font-light tracking-[0.2em] uppercase" style={{ color: 'rgba(52,211,153,0.9)' }}>Obrigado!</p>
-          <p className="text-[16px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          <p className="text-[14px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
             O teu relatório foi recebido com sucesso. A equipa RL fica a par de tudo.
           </p>
         </div>
         <button onClick={onClose}
-          className="w-full py-3 rounded-xl text-[16px] font-semibold tracking-[0.3em] uppercase transition-all"
+          className="w-full py-3 rounded-xl text-[14px] font-semibold tracking-[0.3em] uppercase transition-all"
           style={{ border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.02)' }}>
           Fechar
         </button>
@@ -787,7 +787,7 @@ function RelatorioVideoModal({ c, freelancerNome, onClose, onSubmitted }: { c: C
         {/* Header */}
         <div className="flex items-start justify-between mb-7">
           <div>
-            <p className="text-[16px] tracking-[0.45em] uppercase mb-1.5" style={{ color: 'rgba(6,182,212,0.5)' }}>
+            <p className="text-[14px] tracking-[0.45em] uppercase mb-1.5" style={{ color: 'rgba(6,182,212,0.5)' }}>
               Relatório Pós-Evento
             </p>
             <h2 className="text-2xl font-light tracking-[0.12em] text-white uppercase leading-tight">
@@ -808,17 +808,17 @@ function RelatorioVideoModal({ c, freelancerNome, onClose, onSubmitted }: { c: C
         {/* Info pills */}
         <div className="flex flex-wrap gap-2 mb-8">
           {c.referencia && (
-            <span className="text-[16px] px-3 py-1.5 rounded-full font-semibold tracking-widest uppercase"
+            <span className="text-[14px] px-3 py-1.5 rounded-full font-semibold tracking-widest uppercase"
               style={{ border: '1px solid rgba(6,182,212,0.3)', color: 'rgba(6,182,212,0.75)', background: 'rgba(6,182,212,0.06)' }}>
               {c.referencia}
             </span>
           )}
-          <span className="text-[16px] px-3 py-1.5 rounded-full font-medium tracking-widest uppercase"
+          <span className="text-[14px] px-3 py-1.5 rounded-full font-medium tracking-widest uppercase"
             style={{ border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.02)' }}>
             {freelancerNome}
           </span>
           {c.data_casamento && (
-            <span className="text-[16px] px-3 py-1.5 rounded-full font-medium tracking-widest uppercase"
+            <span className="text-[14px] px-3 py-1.5 rounded-full font-medium tracking-widest uppercase"
               style={{ border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.02)' }}>
               {fmtDate(c.data_casamento).split(' · ')[0]}
             </span>
@@ -884,12 +884,12 @@ function RelatorioVideoModal({ c, freelancerNome, onClose, onSubmitted }: { c: C
 
           {/* Error */}
           {error && (
-            <p className="text-[16px] text-red-400/70 text-center">{error}</p>
+            <p className="text-[14px] text-red-400/70 text-center">{error}</p>
           )}
 
           {/* Submit */}
           <button type="submit" disabled={submitting}
-            className="w-full py-4 rounded-xl text-[16px] font-semibold tracking-[0.3em] uppercase transition-all duration-200"
+            className="w-full py-4 rounded-xl text-[14px] font-semibold tracking-[0.3em] uppercase transition-all duration-200"
             style={submitting ? {
               background: 'rgba(6,182,212,0.06)', border: '1px solid rgba(6,182,212,0.15)', color: 'rgba(6,182,212,0.4)',
             } : {
@@ -1001,19 +1001,19 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo, freelancerNome }:
                     <span className={`text-xl font-bold leading-none ${isUrgent ? 'text-red-400' : isPast ? 'text-white/30' : 'text-gold'}`}>
                       {c.data_casamento.split('-')[2]}
                     </span>
-                    <span className={`text-[16px] uppercase tracking-wide font-semibold ${isUrgent ? 'text-red-400/60' : isPast ? 'text-white/20' : 'text-gold/60'}`}>
+                    <span className={`text-[14px] uppercase tracking-wide font-semibold ${isUrgent ? 'text-red-400/60' : isPast ? 'text-white/20' : 'text-gold/60'}`}>
                       {MESES[parseInt(c.data_casamento.split('-')[1])-1]}
                     </span>
                   </>
-                ) : <span className="text-white/20 text-[16px]">—</span>}
+                ) : <span className="text-white/20 text-[14px]">—</span>}
               </div>
               <div>
                 <h2 className="text-base font-bold text-white uppercase tracking-wide leading-tight">{c.local || '—'}</h2>
                 {c.data_casamento && (
-                  <p className={`text-[16px] mt-0.5 ${isUrgent ? 'text-red-400/70' : isPast ? 'text-white/50' : 'text-white'}`}>{fmtDate(c.data_casamento)}</p>
+                  <p className={`text-[14px] mt-0.5 ${isUrgent ? 'text-red-400/70' : isPast ? 'text-white/50' : 'text-white'}`}>{fmtDate(c.data_casamento)}</p>
                 )}
                 {dtu !== null && dtu >= 0 && (
-                  <span className={`inline-block mt-1 text-[16px] font-bold px-2 py-0.5 rounded-full ${isUrgent ? 'bg-red-500/20 text-red-400' : 'bg-gold/10 text-gold border border-gold/25'}`}>
+                  <span className={`inline-block mt-1 text-[14px] font-bold px-2 py-0.5 rounded-full ${isUrgent ? 'bg-red-500/20 text-red-400' : 'bg-gold/10 text-gold border border-gold/25'}`}>
                     {dtu === 0 ? 'HOJE' : `${dtu} dias`}
                   </span>
                 )}
@@ -1028,64 +1028,64 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo, freelancerNome }:
         {/* Body */}
         <div className="px-6 py-5 space-y-4">
           <div>
-            <p className="text-[16px] tracking-[0.3em] text-white uppercase mb-2">Equipa Fotografia</p>
+            <p className="text-[14px] tracking-[0.3em] text-white uppercase mb-2">Equipa Fotografia</p>
             {c.equipa_foto && c.equipa_foto.length > 0 ? (
               <div className="flex flex-wrap gap-1.5">
                 {c.equipa_foto.map((name, i) => (
-                  <span key={i} className="text-[16px] px-2.5 py-1 rounded-full bg-white/[0.06] border border-white/[0.08] text-white">{name}</span>
+                  <span key={i} className="text-[14px] px-2.5 py-1 rounded-full bg-white/[0.06] border border-white/[0.08] text-white">{name}</span>
                 ))}
               </div>
-            ) : <p className="text-[16px] text-white/20 italic">Não definida</p>}
+            ) : <p className="text-[14px] text-white/20 italic">Não definida</p>}
           </div>
           <div>
-            <p className="text-[16px] tracking-[0.3em] text-white uppercase mb-2">Videógrafo</p>
-            <p className="text-[16px] text-white">{c.videografo || <span className="text-white/40 italic">Não definido</span>}</p>
+            <p className="text-[14px] tracking-[0.3em] text-white uppercase mb-2">Videógrafo</p>
+            <p className="text-[14px] text-white">{c.videografo || <span className="text-white/40 italic">Não definido</span>}</p>
           </div>
           <div>
-            <p className="text-[16px] tracking-[0.3em] text-white uppercase mb-2">Briefing</p>
+            <p className="text-[14px] tracking-[0.3em] text-white uppercase mb-2">Briefing</p>
             {c.briefing_url ? (
               <button onClick={() => setBriefingOpen(true)}
-                className="inline-flex items-center gap-1.5 text-[16px] text-gold/70 hover:text-gold transition-colors border border-gold/20 px-3 py-1.5 rounded-lg hover:bg-gold/5">
+                className="inline-flex items-center gap-1.5 text-[14px] text-gold/70 hover:text-gold transition-colors border border-gold/20 px-3 py-1.5 rounded-lg hover:bg-gold/5">
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 Ver Briefing
               </button>
-            ) : <p className="text-[16px] text-white/20 italic">Sem briefing</p>}
+            ) : <p className="text-[14px] text-white/20 italic">Sem briefing</p>}
           </div>
           {isVideografo && (
             <div>
-              <p className="text-[16px] tracking-[0.3em] text-white uppercase mb-2">Relatório Pós-Evento</p>
+              <p className="text-[14px] tracking-[0.3em] text-white uppercase mb-2">Relatório Pós-Evento</p>
               {c.referencia ? (
                 jaEnviou === 'loading' ? (
-                  <p className="text-[16px] text-white/20 italic">...</p>
+                  <p className="text-[14px] text-white/20 italic">...</p>
                 ) : jaEnviou ? (
                   <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl"
                     style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.25)' }}>
                     <svg className="w-3.5 h-3.5 shrink-0" style={{ color: 'rgba(52,211,153,0.7)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                     <div>
-                      <p className="text-[16px] font-semibold tracking-widest uppercase" style={{ color: 'rgba(52,211,153,0.8)' }}>Relatório Enviado</p>
-                      <p className="text-[16px] mt-0.5" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                      <p className="text-[14px] font-semibold tracking-widest uppercase" style={{ color: 'rgba(52,211,153,0.8)' }}>Relatório Enviado</p>
+                      <p className="text-[14px] mt-0.5" style={{ color: 'rgba(255,255,255,0.25)' }}>
                         {new Date(jaEnviou).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
                   </div>
                 ) : (
                   <button onClick={() => setShowRelatorio(true)}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[16px] font-semibold tracking-widest uppercase transition-all"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-semibold tracking-widest uppercase transition-all"
                     style={{ background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.3)', color: 'rgba(6,182,212,0.8)' }}>
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     Preencher Relatório
                   </button>
                 )
               ) : (
-                <p className="text-[16px] text-white/20 italic">Referência não disponível</p>
+                <p className="text-[14px] text-white/20 italic">Referência não disponível</p>
               )}
             </div>
           )}
           {!isVideografo && c.referencia && (
             <div>
-              <p className="text-[16px] tracking-[0.3em] text-white uppercase mb-2">Relatório do Videógrafo</p>
+              <p className="text-[14px] tracking-[0.3em] text-white uppercase mb-2">Relatório do Videógrafo</p>
               {relatorioExterno === 'loading' ? (
-                <p className="text-[16px] text-white/20 italic">...</p>
+                <p className="text-[14px] text-white/20 italic">...</p>
               ) : relatorioExterno ? (() => {
                 const d = relatorioExterno.dados ?? {}
                 const SKIP = ['LOCAL DO CASAMENTO (QUINTA)', 'DATA DO CASAMENTO']
@@ -1109,9 +1109,9 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo, freelancerNome }:
                     <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                       <div className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                        <span className="text-[16px] font-medium text-white/70">{relatorioExterno.nome_operador || '—'}</span>
+                        <span className="text-[14px] font-medium text-white/70">{relatorioExterno.nome_operador || '—'}</span>
                       </div>
-                      <span className="text-[16px] text-white/25">
+                      <span className="text-[14px] text-white/25">
                         {new Date(relatorioExterno.criado_em).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                       </span>
                     </div>
@@ -1119,18 +1119,18 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo, freelancerNome }:
                     <div className="px-4 py-3 flex flex-col gap-2.5">
                       {campos.map(([key, val]) => (
                         <div key={key} className="flex items-baseline justify-between gap-3">
-                          <span className="text-[16px] tracking-widest uppercase shrink-0" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                          <span className="text-[14px] tracking-widest uppercase shrink-0" style={{ color: 'rgba(255,255,255,0.25)' }}>
                             {LABEL[key] ?? key}
                           </span>
-                          <span className="text-[16px] text-right" style={{ color: 'rgba(255,255,255,0.6)' }}>{String(val)}</span>
+                          <span className="text-[14px] text-right" style={{ color: 'rgba(255,255,255,0.6)' }}>{String(val)}</span>
                         </div>
                       ))}
-                      {campos.length === 0 && <p className="text-[16px] text-white/20 italic">Sem dados preenchidos.</p>}
+                      {campos.length === 0 && <p className="text-[14px] text-white/20 italic">Sem dados preenchidos.</p>}
                     </div>
                   </div>
                 )
               })() : (
-                <p className="text-[16px] text-white/20 italic">Sem relatório ainda.</p>
+                <p className="text-[14px] text-white/20 italic">Sem relatório ainda.</p>
               )}
             </div>
           )}
@@ -1141,35 +1141,35 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo, freelancerNome }:
           <div className="px-6 pb-5">
             {confirmed ? (
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[16px] font-semibold tracking-widest uppercase cursor-default">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[14px] font-semibold tracking-widest uppercase cursor-default">
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                   Confirmado
                 </div>
                 <button disabled
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-white/20 text-[16px] font-semibold tracking-widest uppercase opacity-40 cursor-not-allowed">
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-white/20 text-[14px] font-semibold tracking-widest uppercase opacity-40 cursor-not-allowed">
                   Indisponível
                 </button>
               </div>
             ) : indisponivel ? (
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-[16px] font-semibold tracking-widest uppercase cursor-default">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-[14px] font-semibold tracking-widest uppercase cursor-default">
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                   Indisponível
                 </div>
                 <button disabled
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-white/20 text-[16px] font-semibold tracking-widest uppercase opacity-40 cursor-not-allowed">
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-white/20 text-[14px] font-semibold tracking-widest uppercase opacity-40 cursor-not-allowed">
                   Confirmar
                 </button>
               </div>
             ) : (
               <div className="flex items-center gap-3">
                 <button onClick={handleConfirmar} disabled={confirming}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-[16px] font-semibold tracking-widest uppercase hover:bg-gold/20 transition-all disabled:opacity-50">
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-[14px] font-semibold tracking-widest uppercase hover:bg-gold/20 transition-all disabled:opacity-50">
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                   {confirming ? 'A confirmar...' : 'Confirmar Data'}
                 </button>
                 <button onClick={handleIndisponivel} disabled={markingIndisp}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-red-500/20 text-red-400/60 text-[16px] font-semibold tracking-widest uppercase hover:bg-red-500/10 hover:border-red-500/40 hover:text-red-400 transition-all disabled:opacity-50">
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-red-500/20 text-red-400/60 text-[14px] font-semibold tracking-widest uppercase hover:bg-red-500/10 hover:border-red-500/40 hover:text-red-400 transition-all disabled:opacity-50">
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                   {markingIndisp ? 'A guardar...' : 'Indisponível'}
                 </button>
@@ -1218,14 +1218,14 @@ function EdicaoCard({ e, onStatusChange }: { e: Edicao; onStatusChange: (id: str
   return (
     <>
       <div className="p-3 rounded-xl border border-white/[0.06] bg-white/[0.02] space-y-2">
-        <p className="text-[16px] font-semibold text-white/80 leading-tight">{e.nome}</p>
-        {e.data_casamento && <p className="text-[16px] text-white/30">{fmtDate(e.data_casamento).split(' · ')[0]}</p>}
-        {e.local && <p className="text-[16px] text-white/25">📍 {e.local}</p>}
-        {e.data_entrega && <p className="text-[16px] text-white/25">Entrega: {fmtDate(e.data_entrega).split(' · ')[0]}</p>}
+        <p className="text-[14px] font-semibold text-white/80 leading-tight">{e.nome}</p>
+        {e.data_casamento && <p className="text-[14px] text-white/30">{fmtDate(e.data_casamento).split(' · ')[0]}</p>}
+        {e.local && <p className="text-[14px] text-white/25">📍 {e.local}</p>}
+        {e.data_entrega && <p className="text-[14px] text-white/25">Entrega: {fmtDate(e.data_entrega).split(' · ')[0]}</p>}
         {hasCounts && (
           <div className="flex flex-wrap gap-1 pt-1 border-t border-white/[0.04]">
             {FOTO_FIELDS.filter(f => e[f.key] != null).map(({ key, label }) => (
-              <span key={key} className="text-[16px] bg-white/[0.04] text-white/35 px-1.5 py-0.5 rounded">
+              <span key={key} className="text-[14px] bg-white/[0.04] text-white/35 px-1.5 py-0.5 rounded">
                 {label.split('/')[0].trim().slice(0,3)}: {e[key] as number}
               </span>
             ))}
@@ -1239,17 +1239,17 @@ function EdicaoCard({ e, onStatusChange }: { e: Edicao; onStatusChange: (id: str
               onChange={ev => handleStatus(ev.target.value)}
               disabled={saving}
               style={{ boxShadow: '0 0 14px 2px rgba(255,255,255,0.10), 0 0 5px 1px rgba(255,255,255,0.12), inset 0 0 12px 0 rgba(255,255,255,0.03)' }}
-              className="appearance-none w-full text-[16px] tracking-[0.2em] uppercase font-semibold px-3 py-2.5 pr-7 rounded-xl border border-white/20 bg-white/[0.05] text-white outline-none cursor-pointer transition-all disabled:opacity-40 hover:border-white/40 hover:bg-white/[0.08] [color-scheme:dark]"
+              className="appearance-none w-full text-[14px] tracking-[0.2em] uppercase font-semibold px-3 py-2.5 pr-7 rounded-xl border border-white/20 bg-white/[0.05] text-white outline-none cursor-pointer transition-all disabled:opacity-40 hover:border-white/40 hover:bg-white/[0.08] [color-scheme:dark]"
             >
               <option value="EM EDIÇÃO" className="bg-zinc-900 text-white">EM EDIÇÃO</option>
               <option value="CONCLUÍDO" className="bg-zinc-900 text-white">CONCLUÍDO</option>
             </select>
-            <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[16px] text-white/50">▾</span>
+            <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[14px] text-white/50">▾</span>
           </div>
         </div>
         <div>
           <button onClick={() => setOpenSelecao(true)}
-            className="text-[16px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-lg border border-gold/30 bg-gold/5 text-gold/70 hover:text-gold hover:border-gold/50 hover:bg-gold/10 transition-all">
+            className="text-[14px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-lg border border-gold/30 bg-gold/5 text-gold/70 hover:text-gold hover:border-gold/50 hover:bg-gold/10 transition-all">
             Ver Mais
           </button>
         </div>
@@ -1279,17 +1279,17 @@ function PagamentosTab({ pagamentos, casamentos }: { pagamentos: Pagamento[]; ca
     <section className="space-y-6">
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4 space-y-1">
-          <p className="text-[16px] tracking-[0.35em] text-emerald-400/60 uppercase">Total Pago</p>
+          <p className="text-[14px] tracking-[0.35em] text-emerald-400/60 uppercase">Total Pago</p>
           <p className="text-xl font-light text-emerald-400 truncate">{fmtEuro(totalPago)}</p>
         </div>
         <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-2xl p-4 space-y-1">
-          <p className="text-[16px] tracking-[0.35em] text-yellow-400/60 uppercase">Pendente</p>
+          <p className="text-[14px] tracking-[0.35em] text-yellow-400/60 uppercase">Pendente</p>
           <p className="text-xl font-light text-yellow-400 truncate">{fmtEuro(totalPendente)}</p>
         </div>
       </div>
 
       {pagamentos.length === 0 ? (
-        <p className="text-center py-10 text-white/15 text-[16px] tracking-widest">Sem pagamentos registados.</p>
+        <p className="text-center py-10 text-white/15 text-[14px] tracking-widest">Sem pagamentos registados.</p>
       ) : (
         <div className="space-y-2">
           {pagamentos.map(p => {
@@ -1297,26 +1297,26 @@ function PagamentosTab({ pagamentos, casamentos }: { pagamentos: Pagamento[]; ca
             return (
               <div key={p.id} className="bg-white/[0.02] border border-white/[0.06] rounded-xl px-4 py-3">
                 {casamento && (
-                  <p className="text-[16px] tracking-[0.25em] text-gold/50 uppercase mb-1.5">
+                  <p className="text-[14px] tracking-[0.25em] text-gold/50 uppercase mb-1.5">
                     📍 {casamento.local}{casamento.data_casamento ? ` · ${fmtDate(casamento.data_casamento).split(' · ')[0]}` : ''}
                   </p>
                 )}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="text-[16px] text-white/80 font-medium leading-tight">{p.descricao}</p>
+                    <p className="text-[14px] text-white/80 font-medium leading-tight">{p.descricao}</p>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
                       {p.data_prevista && (
-                        <span className="text-[16px] text-white/30">Previsto: {fmtDate(p.data_prevista).split(' · ')[0]}</span>
+                        <span className="text-[14px] text-white/30">Previsto: {fmtDate(p.data_prevista).split(' · ')[0]}</span>
                       )}
                       {p.data_pago && (
-                        <span className="text-[16px] text-emerald-400/70">Pago em: {fmtDate(p.data_pago).split(' · ')[0]}</span>
+                        <span className="text-[14px] text-emerald-400/70">Pago em: {fmtDate(p.data_pago).split(' · ')[0]}</span>
                       )}
                     </div>
-                    {p.notas && <p className="text-[16px] text-white/25 mt-1 italic">{p.notas}</p>}
+                    {p.notas && <p className="text-[14px] text-white/25 mt-1 italic">{p.notas}</p>}
                   </div>
                   <div className="flex flex-col items-end gap-1.5 shrink-0">
                     <span className="text-base font-light text-white/80">{fmtEuro(p.valor)}</span>
-                    <span className={`text-[16px] px-2.5 py-0.5 rounded-full border tracking-widest uppercase font-medium ${PAGA_STATUS_STYLE[p.status] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
+                    <span className={`text-[14px] px-2.5 py-0.5 rounded-full border tracking-widest uppercase font-medium ${PAGA_STATUS_STYLE[p.status] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
                       {p.status}
                     </span>
                   </div>
@@ -1375,23 +1375,23 @@ function DisponibilidadeTab({ freelancerId, disponibilidade, casamentos, onRefre
       {/* Explicação do separador */}
       <div className="px-4 py-4 rounded-xl border border-white/[0.06] bg-white/[0.02] space-y-2">
         <p className="text-[18px] tracking-[0.3em] text-gold/60 uppercase">A tua Agenda</p>
-        <p className="text-[16px] text-white leading-relaxed">
+        <p className="text-[14px] text-white leading-relaxed">
           Aqui podes ver de forma simples todos os eventos que te foram atribuídos e gerir a tua disponibilidade.
         </p>
-        <p className="text-[16px] text-white leading-relaxed">
+        <p className="text-[14px] text-white leading-relaxed">
           Deves marcar os períodos em que estás indisponível para que a equipa RL saiba que não podes ser contactado. Só recebes notificação de um novo evento se estiveres disponível. Se tiveres indisponibilidade marcada para esse dia não recebes qualquer notificação.
         </p>
       </div>
 
       {upcoming.length > 0 && (
         <div className="bg-gold/[0.03] border border-gold/15 rounded-2xl p-5">
-          <p className="text-[16px] tracking-[0.35em] text-gold/40 uppercase mb-3">Eventos Atribuídos</p>
+          <p className="text-[14px] tracking-[0.35em] text-gold/40 uppercase mb-3">Eventos Atribuídos</p>
           <div className="space-y-2">
             {upcoming.map(c => (
               <div key={c.id} className="flex items-center gap-3">
                 <div className="w-1.5 h-1.5 rounded-full bg-gold/50 flex-shrink-0" />
-                <span className="text-[16px] text-white/70 flex-1">{c.local}</span>
-                <span className="text-[16px] text-white/30">{c.data_casamento ? fmtDate(c.data_casamento).split(' · ')[0] : '—'}</span>
+                <span className="text-[14px] text-white/70 flex-1">{c.local}</span>
+                <span className="text-[14px] text-white/30">{c.data_casamento ? fmtDate(c.data_casamento).split(' · ')[0] : '—'}</span>
               </div>
             ))}
           </div>
@@ -1400,42 +1400,42 @@ function DisponibilidadeTab({ freelancerId, disponibilidade, casamentos, onRefre
 
       <div>
         <div className="flex items-center justify-between mb-4">
-          <p className="text-[16px] font-semibold text-white">Indisponibilidades</p>
+          <p className="text-[14px] font-semibold text-white">Indisponibilidades</p>
           <button onClick={() => setShowForm(v => !v)}
-            className="px-3 py-1.5 rounded-xl bg-gold/10 border border-gold/30 text-gold text-[16px] font-semibold tracking-widest uppercase hover:bg-gold/20 transition-all">
+            className="px-3 py-1.5 rounded-xl bg-gold/10 border border-gold/30 text-gold text-[14px] font-semibold tracking-widest uppercase hover:bg-gold/20 transition-all">
             + Marcar
           </button>
         </div>
 
         {showForm && (
           <div className="mb-4 bg-white/[0.02] border border-white/10 rounded-2xl p-5 space-y-3">
-            <p className="text-[16px] tracking-[0.3em] text-white/25 uppercase">Novo Período</p>
+            <p className="text-[14px] tracking-[0.3em] text-white/25 uppercase">Novo Período</p>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label className="block text-[16px] text-white/25 tracking-widest uppercase mb-1.5">Data Início *</label>
+                <label className="block text-[14px] text-white/25 tracking-widest uppercase mb-1.5">Data Início *</label>
                 <input type="date" value={form.data_inicio}
                   onChange={e => setForm(v => ({ ...v, data_inicio: e.target.value }))}
-                  className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2.5 text-[16px] text-white/80 outline-none focus:border-gold/40 [color-scheme:dark]" />
+                  className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2.5 text-[14px] text-white/80 outline-none focus:border-gold/40 [color-scheme:dark]" />
               </div>
               <div>
-                <label className="block text-[16px] text-white/25 tracking-widest uppercase mb-1.5">Data Fim</label>
+                <label className="block text-[14px] text-white/25 tracking-widest uppercase mb-1.5">Data Fim</label>
                 <input type="date" value={form.data_fim}
                   onChange={e => setForm(v => ({ ...v, data_fim: e.target.value }))}
-                  className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2.5 text-[16px] text-white/80 outline-none focus:border-gold/40 [color-scheme:dark]" />
+                  className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2.5 text-[14px] text-white/80 outline-none focus:border-gold/40 [color-scheme:dark]" />
               </div>
             </div>
             <div>
-              <label className="block text-[16px] text-white/25 tracking-widest uppercase mb-1.5">Motivo (opcional)</label>
+              <label className="block text-[14px] text-white/25 tracking-widest uppercase mb-1.5">Motivo (opcional)</label>
               <input value={form.motivo}
                 onChange={e => setForm(v => ({ ...v, motivo: e.target.value }))}
                 placeholder="Ex: férias, compromisso..."
-                className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 text-[16px] text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
+                className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 text-[14px] text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
             </div>
             <div className="flex justify-end gap-2">
               <button onClick={() => { setShowForm(false); setForm({ data_inicio: '', data_fim: '', motivo: '' }) }}
-                className="px-3 py-1.5 rounded-xl text-[16px] border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
+                className="px-3 py-1.5 rounded-xl text-[14px] border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
               <button onClick={handleAdd} disabled={saving || !form.data_inicio}
-                className="px-4 py-1.5 rounded-xl text-[16px] bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-40">
+                className="px-4 py-1.5 rounded-xl text-[14px] bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-40">
                 {saving ? 'A guardar...' : 'Guardar'}
               </button>
             </div>
@@ -1443,25 +1443,25 @@ function DisponibilidadeTab({ freelancerId, disponibilidade, casamentos, onRefre
         )}
 
         {disponibilidade.length === 0 && !showForm ? (
-          <p className="text-center py-8 text-white/15 text-[16px] tracking-widest">Sem indisponibilidades marcadas.</p>
+          <p className="text-center py-8 text-white/15 text-[14px] tracking-widest">Sem indisponibilidades marcadas.</p>
         ) : (
           <div className="space-y-2">
             {disponibilidade.map(d => (
               <div key={d.id} className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-red-500/20 bg-red-500/[0.03]">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[16px] text-white/80">{fmtDate(d.data_inicio).split(' · ')[0]}</span>
+                    <span className="text-[14px] text-white/80">{fmtDate(d.data_inicio).split(' · ')[0]}</span>
                     {d.data_fim && d.data_fim !== d.data_inicio && (
                       <>
-                        <span className="text-white/30 text-[16px]">→</span>
-                        <span className="text-[16px] text-white/80">{fmtDate(d.data_fim).split(' · ')[0]}</span>
+                        <span className="text-white/30 text-[14px]">→</span>
+                        <span className="text-[14px] text-white/80">{fmtDate(d.data_fim).split(' · ')[0]}</span>
                       </>
                     )}
                   </div>
-                  {d.motivo && <p className="text-[16px] text-white/30 mt-0.5 italic">{d.motivo}</p>}
+                  {d.motivo && <p className="text-[14px] text-white/30 mt-0.5 italic">{d.motivo}</p>}
                 </div>
                 <button onClick={() => handleDelete(d.id)} disabled={deleting === d.id}
-                  className="text-white/20 hover:text-red-400 transition-colors text-[16px] px-2 py-0.5 disabled:opacity-30">
+                  className="text-white/20 hover:text-red-400 transition-colors text-[14px] px-2 py-0.5 disabled:opacity-30">
                   {deleting === d.id ? '...' : '✕'}
                 </button>
               </div>
@@ -1507,7 +1507,7 @@ function NotificacoesTab({ notificacoes, onRefresh }: { notificacoes: Notificaca
       {notificacoes.length === 0 ? (
         <div className="text-center py-16 space-y-3">
           <p className="text-white/20 text-5xl">🔔</p>
-          <p className="text-white/15 text-[16px] tracking-widest">Sem notificações.</p>
+          <p className="text-white/15 text-[14px] tracking-widest">Sem notificações.</p>
         </div>
       ) : (
         notificacoes.map(n => (
@@ -1521,7 +1521,7 @@ function NotificacoesTab({ notificacoes, onRefresh }: { notificacoes: Notificaca
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <p className="text-base font-semibold text-white leading-tight">{n.titulo}</p>
-                  <span className="text-[16px] text-white/30 whitespace-nowrap flex-shrink-0 mt-0.5">{fmtRelative(n.created_at)}</span>
+                  <span className="text-[14px] text-white/30 whitespace-nowrap flex-shrink-0 mt-0.5">{fmtRelative(n.created_at)}</span>
                 </div>
                 {n.mensagem && (
                   <p className="text-base text-white leading-relaxed mt-1">{n.mensagem}</p>
@@ -1529,7 +1529,7 @@ function NotificacoesTab({ notificacoes, onRefresh }: { notificacoes: Notificaca
                 {!n.lida && (
                   <button
                     onClick={() => markLida(n.id)}
-                    className="mt-3 text-[16px] tracking-[0.2em] uppercase px-3 py-1.5 rounded-full border border-emerald-500/35 text-emerald-400/80 hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-400/50 transition-all font-semibold"
+                    className="mt-3 text-[14px] tracking-[0.2em] uppercase px-3 py-1.5 rounded-full border border-emerald-500/35 text-emerald-400/80 hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-400/50 transition-all font-semibold"
                   >
                     ✓ Lida
                   </button>
@@ -1602,16 +1602,16 @@ function MensagensTab({ freelancerId, casamentos, mensagens, onRefresh }: {
           {/* Explicação do separador */}
           <div className="px-4 py-4 rounded-xl border border-white/[0.06] bg-white/[0.02] space-y-2 mb-2">
             <p className="text-[18px] tracking-[0.35em] text-gold/60 uppercase">Mensagens por Evento</p>
-            <p className="text-[16px] text-white leading-relaxed">
+            <p className="text-[14px] text-white leading-relaxed">
               Este espaço serve para manter uma conversa direta com a equipa RL sobre cada evento que te foi atribuído.
             </p>
-            <p className="text-[16px] text-white leading-relaxed">
+            <p className="text-[14px] text-white leading-relaxed">
               Usa-o para partilhar algo relevante que aconteceu antes, durante ou após o casamento. Imprevistos, notas importantes, questões de entrega ou qualquer assunto que deva ficar registado. Assim, todas as mensagens ficam associadas ao evento certo e nada se perde.
             </p>
           </div>
-          <p className="text-[16px] tracking-[0.35em] text-white/25 uppercase mb-2">Seleciona um Evento</p>
+          <p className="text-[14px] tracking-[0.35em] text-white/25 uppercase mb-2">Seleciona um Evento</p>
           {casamentos.length === 0 ? (
-            <p className="text-center py-10 text-white/15 text-[16px] tracking-widest">Sem eventos disponíveis.</p>
+            <p className="text-center py-10 text-white/15 text-[14px] tracking-widest">Sem eventos disponíveis.</p>
           ) : (
             <div className="space-y-2">
               {casamentos.map(c => {
@@ -1622,21 +1622,21 @@ function MensagensTab({ freelancerId, casamentos, mensagens, onRefresh }: {
                   <button key={c.id} onClick={() => setSelectedId(c.id)}
                     className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border border-white/[0.07] bg-white/[0.02] hover:border-gold/30 hover:bg-gold/[0.03] text-left transition-all group">
                     <div className="flex-1 min-w-0">
-                      <p className="text-[16px] font-medium text-white/85 truncate">{c.local || '—'}</p>
+                      <p className="text-[14px] font-medium text-white/85 truncate">{c.local || '—'}</p>
                       {last ? (
-                        <p className="text-[16px] text-white/30 mt-0.5 truncate">
+                        <p className="text-[14px] text-white/30 mt-0.5 truncate">
                           {last.remetente === 'admin' ? '← ' : '→ '}{last.mensagem}
                         </p>
                       ) : (
-                        <p className="text-[16px] text-white/15 mt-0.5 italic">Iniciar conversa</p>
+                        <p className="text-[14px] text-white/15 mt-0.5 italic">Iniciar conversa</p>
                       )}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {unread > 0 && (
-                        <span className="text-[16px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/35 font-bold">{unread}</span>
+                        <span className="text-[14px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/35 font-bold">{unread}</span>
                       )}
                       {msgs.length > 0 && (
-                        <span className="text-[16px] text-white/20">💬 {msgs.length}</span>
+                        <span className="text-[14px] text-white/20">💬 {msgs.length}</span>
                       )}
                       <span className="text-white/15 group-hover:text-white/40 transition-colors text-base">›</span>
                     </div>
@@ -1650,7 +1650,7 @@ function MensagensTab({ freelancerId, casamentos, mensagens, onRefresh }: {
         <div className="space-y-3">
           {/* Back */}
           <button onClick={() => { setSelectedId(null); doneReadRef.current = null }}
-            className="flex items-center gap-1.5 text-[16px] text-white/30 hover:text-white/60 transition-colors">
+            className="flex items-center gap-1.5 text-[14px] text-white/30 hover:text-white/60 transition-colors">
             ← Voltar aos eventos
           </button>
 
@@ -1658,8 +1658,8 @@ function MensagensTab({ freelancerId, casamentos, mensagens, onRefresh }: {
           <div className="rounded-2xl border border-white/[0.08] bg-black/20 overflow-hidden flex flex-col">
             {/* Header */}
             <div className="px-4 py-3 border-b border-white/[0.06] bg-white/[0.02]">
-              <p className="text-[16px] font-semibold text-white/80 truncate">{selected?.local || '—'}</p>
-              {selected?.data_casamento && <p className="text-[16px] text-white/30 mt-0.5">{selected.data_casamento}</p>}
+              <p className="text-[14px] font-semibold text-white/80 truncate">{selected?.local || '—'}</p>
+              {selected?.data_casamento && <p className="text-[14px] text-white/30 mt-0.5">{selected.data_casamento}</p>}
             </div>
 
             {/* Messages */}
@@ -1667,7 +1667,7 @@ function MensagensTab({ freelancerId, casamentos, mensagens, onRefresh }: {
               {thread.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 gap-2">
                   <p className="text-3xl opacity-20">💬</p>
-                  <p className="text-[16px] text-white/20 tracking-widest">Sem mensagens. Inicia a conversa!</p>
+                  <p className="text-[14px] text-white/20 tracking-widest">Sem mensagens. Inicia a conversa!</p>
                 </div>
               ) : (
                 thread.map(m => (
@@ -1677,8 +1677,8 @@ function MensagensTab({ freelancerId, casamentos, mensagens, onRefresh }: {
                         ? 'bg-gold/15 border border-gold/25 rounded-2xl rounded-br-sm'
                         : 'bg-white/[0.06] border border-white/[0.09] rounded-2xl rounded-bl-sm'
                     }`}>
-                      <p className="text-[16px] text-white leading-relaxed">{m.mensagem}</p>
-                      <p className="text-[16px] text-white/25 text-right">{fmtHora(m.created_at)}</p>
+                      <p className="text-[14px] text-white leading-relaxed">{m.mensagem}</p>
+                      <p className="text-[14px] text-white/25 text-right">{fmtHora(m.created_at)}</p>
                     </div>
                   </div>
                 ))
@@ -1693,7 +1693,7 @@ function MensagensTab({ freelancerId, casamentos, mensagens, onRefresh }: {
                 onChange={e => setTexto(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
                 placeholder="Escreve uma mensagem..."
-                className="flex-1 bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2.5 text-[16px] text-white/85 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15"
+                className="flex-1 bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2.5 text-[14px] text-white/85 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15"
               />
               <button onClick={handleSend} disabled={sending || !texto.trim()}
                 className="px-4 py-2.5 rounded-xl bg-gold/10 border border-gold/30 text-gold text-base font-bold hover:bg-gold/20 disabled:opacity-30 transition-all shrink-0">
@@ -1839,16 +1839,16 @@ export default function FreelancerViewPage() {
     <main className={`relative z-10 min-h-screen px-4 py-10 mx-auto lg:pl-[240px] ${tab === null ? 'max-w-6xl' : 'max-w-3xl'}`}>
       {/* Header */}
       <div className="mb-8">
-        <p className="text-[16px] text-white font-semibold mb-3">RL PHOTO.VIDEO · Área do Freelancer</p>
+        <p className="text-[14px] text-white font-semibold mb-3">RL PHOTO.VIDEO · Área do Freelancer</p>
         {loading ? (
-          <p className="text-white/20 text-[16px] tracking-widest uppercase">A carregar...</p>
+          <p className="text-white/20 text-[14px] tracking-widest uppercase">A carregar...</p>
         ) : (
           <>
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h1 className="text-3xl font-light tracking-[0.15em] text-white uppercase">{freelancer?.nome ?? '—'}</h1>
                 {freelancer?.status && (
-                  <span className="inline-block mt-2 text-[16px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-semibold bg-gold/10 text-gold border-gold/30">
+                  <span className="inline-block mt-2 text-[14px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-semibold bg-gold/10 text-gold border-gold/30">
                     {freelancer.status}
                   </span>
                 )}
@@ -1861,12 +1861,12 @@ export default function FreelancerViewPage() {
                   <div className={`flex-shrink-0 flex items-center gap-3 px-4 py-3 rounded-xl border ${isUrgent ? 'border-red-500/30 bg-red-500/5' : 'border-gold/20 bg-gold/[0.04]'}`}>
                     <div className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl border ${isUrgent ? 'bg-red-500/15 border-red-500/30' : 'bg-gold/10 border-gold/25'}`}>
                       <span className={`text-lg font-bold leading-none ${isUrgent ? 'text-red-400' : 'text-gold'}`}>{dtu === 0 ? '!' : dtu}</span>
-                      <span className={`text-[16px] uppercase tracking-wide ${isUrgent ? 'text-red-400/60' : 'text-gold/60'}`}>{dtu === 0 ? 'HOJE' : 'd'}</span>
+                      <span className={`text-[14px] uppercase tracking-wide ${isUrgent ? 'text-red-400/60' : 'text-gold/60'}`}>{dtu === 0 ? 'HOJE' : 'd'}</span>
                     </div>
                     <div>
-                      <p className="text-[16px] text-white/25 uppercase tracking-widest mb-0.5">Próximo</p>
-                      <p className="text-[16px] font-semibold text-white/80 max-w-[150px] truncate">{next.local}</p>
-                      <p className="text-[16px] text-white/35">{fmtDate(next.data_casamento).split(' · ')[0]}</p>
+                      <p className="text-[14px] text-white/25 uppercase tracking-widest mb-0.5">Próximo</p>
+                      <p className="text-[14px] font-semibold text-white/80 max-w-[150px] truncate">{next.local}</p>
+                      <p className="text-[14px] text-white/35">{fmtDate(next.data_casamento).split(' · ')[0]}</p>
                     </div>
                   </div>
                 )
@@ -1921,7 +1921,7 @@ export default function FreelancerViewPage() {
                 className={`flex-shrink-0 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl transition-all ${
                   t.key === 'notificacoes' || t.key === 'mensagens'
                     ? 'text-2xl'
-                    : 'text-[16px] tracking-[0.25em] uppercase font-semibold'
+                    : 'text-[14px] tracking-[0.25em] uppercase font-semibold'
                 } ${
                   tab === t.key
                     ? 'bg-white/10 text-white border border-white/20'
@@ -1932,7 +1932,7 @@ export default function FreelancerViewPage() {
                   {t.label}
                 </span>
                 {t.count > 0 && (
-                  <span className={`text-[16px] px-1.5 py-0.5 rounded-full font-bold transition-all ${
+                  <span className={`text-[14px] px-1.5 py-0.5 rounded-full font-bold transition-all ${
                     t.key === 'notificacoes' || t.key === 'mensagens'
                       ? 'bg-red-500/20 text-red-400 border border-red-500/40'
                       : tab === t.key ? 'bg-white/15 text-white/80' : 'bg-white/[0.06] text-white/25'
@@ -2013,7 +2013,7 @@ export default function FreelancerViewPage() {
                     <h1 className="text-3xl font-light text-white tracking-tight">
                       {saudacao}, <span className="font-semibold">{primeiroNome}</span> <span className="inline-block">👋</span>
                     </h1>
-                    <p className="text-[16px] text-white/40 mt-1">
+                    <p className="text-[14px] text-white/40 mt-1">
                       {freelancer?.status ? `Bem-vindo ao teu espaço · ${freelancer.status}` : 'Bem-vindo ao teu espaço'}
                     </p>
                   </div>
@@ -2025,15 +2025,15 @@ export default function FreelancerViewPage() {
                 <div onClick={() => setTab('casamentos')}
                   className="cursor-pointer bg-gradient-to-br from-gold/[0.08] to-gold/[0.02] border border-gold/30 rounded-2xl p-6 sm:p-7 hover:border-gold/50 transition-all"
                   style={{ boxShadow: '0 0 24px -8px rgba(201,168,76,0.25)' }}>
-                  <p className="text-[16px] tracking-[0.4em] text-gold/70 uppercase font-bold mb-3">Próximo Casamento</p>
+                  <p className="text-[14px] tracking-[0.4em] text-gold/70 uppercase font-bold mb-3">Próximo Casamento</p>
                   <div className="flex items-end justify-between gap-4 flex-wrap">
                     <div>
                       <h2 className="text-2xl font-semibold text-white mb-1">{proximoCasamento.local}</h2>
-                      <p className="text-[16px] text-white/55">{fmtDate(proximoCasamento.data_casamento)}</p>
+                      <p className="text-[14px] text-white/55">{fmtDate(proximoCasamento.data_casamento)}</p>
                     </div>
                     <div className={`text-right ${dtuProximo !== null && dtuProximo <= 15 ? 'text-red-400' : 'text-gold'}`}>
                       <p className="text-4xl font-black leading-none">{dtuProximo === 0 ? 'HOJE' : dtuProximo}</p>
-                      <p className="text-[16px] tracking-widest uppercase mt-1">{dtuProximo === 0 ? '' : dtuProximo === 1 ? 'dia' : 'dias'}</p>
+                      <p className="text-[14px] tracking-widest uppercase mt-1">{dtuProximo === 0 ? '' : dtuProximo === 1 ? 'dia' : 'dias'}</p>
                     </div>
                   </div>
                 </div>
@@ -2041,7 +2041,7 @@ export default function FreelancerViewPage() {
 
               {/* Quick Actions — 4 cards */}
               <div>
-                <h3 className="text-[16px] tracking-[0.4em] text-gold uppercase font-bold mb-3">Atalhos</h3>
+                <h3 className="text-[14px] tracking-[0.4em] text-gold uppercase font-bold mb-3">Atalhos</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
                     { key: 'casamentos', icon: '💍', label: 'Casamentos', count: upcoming.length, sub: upcoming.length === 0 ? 'Sem próximos' : `${upcoming.length} próximos` },
@@ -2054,11 +2054,11 @@ export default function FreelancerViewPage() {
                       <div className="flex items-start justify-between mb-2">
                         <span className="text-2xl">{c.icon}</span>
                         {c.count > 0 && (
-                          <span className="text-[16px] tracking-widest uppercase font-bold px-2 py-0.5 rounded-full bg-gold/15 text-gold border border-gold/30">{c.count}</span>
+                          <span className="text-[14px] tracking-widest uppercase font-bold px-2 py-0.5 rounded-full bg-gold/15 text-gold border border-gold/30">{c.count}</span>
                         )}
                       </div>
-                      <p className="text-[16px] tracking-widest uppercase font-bold text-white/85 mb-1">{c.label}</p>
-                      <p className="text-[16px] text-white/35 leading-tight">{c.sub}</p>
+                      <p className="text-[14px] tracking-widest uppercase font-bold text-white/85 mb-1">{c.label}</p>
+                      <p className="text-[14px] text-white/35 leading-tight">{c.sub}</p>
                     </button>
                   ))}
                 </div>
@@ -2068,8 +2068,8 @@ export default function FreelancerViewPage() {
               {upcoming.length > 1 && (
                 <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 sm:p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-[16px] tracking-[0.4em] text-gold uppercase font-bold">Próximos Casamentos</h3>
-                    <button onClick={() => setTab('casamentos')} className="text-[16px] tracking-widest text-white/35 hover:text-gold uppercase transition-colors">Ver todos →</button>
+                    <h3 className="text-[14px] tracking-[0.4em] text-gold uppercase font-bold">Próximos Casamentos</h3>
+                    <button onClick={() => setTab('casamentos')} className="text-[14px] tracking-widest text-white/35 hover:text-gold uppercase transition-colors">Ver todos →</button>
                   </div>
                   <div className="space-y-2">
                     {upcoming.slice(0, 4).map(c => {
@@ -2079,14 +2079,14 @@ export default function FreelancerViewPage() {
                           className="cursor-pointer flex items-center gap-4 px-4 py-3 rounded-xl border border-white/[0.05] hover:border-gold/25 hover:bg-white/[0.03] transition-all">
                           <div className={`w-12 h-12 rounded-lg flex flex-col items-center justify-center border ${dtu !== null && dtu <= 15 ? 'border-red-500/30 bg-red-500/5 text-red-400' : 'border-gold/20 bg-gold/[0.04] text-gold'}`}>
                             <span className="text-base font-black leading-none">{dtu === 0 ? '!' : dtu}</span>
-                            <span className="text-[16px] uppercase tracking-wide opacity-60">{dtu === 0 ? 'HOJE' : 'd'}</span>
+                            <span className="text-[14px] uppercase tracking-wide opacity-60">{dtu === 0 ? 'HOJE' : 'd'}</span>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-[16px] font-semibold text-white truncate">{c.local}</p>
-                            <p className="text-[16px] text-white/35 mt-0.5">{fmtDate(c.data_casamento).split(' · ')[0]}</p>
+                            <p className="text-[14px] font-semibold text-white truncate">{c.local}</p>
+                            <p className="text-[14px] text-white/35 mt-0.5">{fmtDate(c.data_casamento).split(' · ')[0]}</p>
                           </div>
                           {c.data_confirmada && (
-                            <span className="text-[16px] tracking-widest uppercase font-bold px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">✓</span>
+                            <span className="text-[14px] tracking-widest uppercase font-bold px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">✓</span>
                           )}
                         </div>
                       )
@@ -2098,16 +2098,16 @@ export default function FreelancerViewPage() {
               {/* Atividade Recente */}
               {atividadesRecentes.length > 0 && (
                 <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 sm:p-6">
-                  <h3 className="text-[16px] tracking-[0.4em] text-gold uppercase font-bold mb-4">Atividade Recente</h3>
+                  <h3 className="text-[14px] tracking-[0.4em] text-gold uppercase font-bold mb-4">Atividade Recente</h3>
                   <div className="space-y-2.5">
                     {atividadesRecentes.map((a, i) => (
-                      <div key={i} className="flex items-start gap-3 text-[16px]">
+                      <div key={i} className="flex items-start gap-3 text-[14px]">
                         <span className="w-7 h-7 rounded-full border border-white/10 bg-white/[0.02] flex items-center justify-center shrink-0 text-base">
                           {a.tipo === 'msg' ? '💬' : a.tipo === 'pag' ? '💰' : '🔔'}
                         </span>
                         <div className="flex-1 min-w-0">
                           <p className="text-white/75 leading-snug">{a.texto}</p>
-                          <p className="text-[16px] text-white/30 mt-0.5">{tempoRelativo(a.data)}</p>
+                          <p className="text-[14px] text-white/30 mt-0.5">{tempoRelativo(a.data)}</p>
                         </div>
                       </div>
                     ))}
@@ -2128,10 +2128,10 @@ export default function FreelancerViewPage() {
                   className="bg-blue-500/[0.06] border border-blue-500/25 hover:bg-blue-500/[0.1] rounded-2xl p-4 text-left transition-all flex items-center gap-3">
                   <span className="text-2xl">💬</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[16px] tracking-widest uppercase font-bold text-blue-300/85">Mensagens</p>
-                    <p className="text-[16px] text-white/40 mt-0.5">{mensagensNaoLidas} {mensagensNaoLidas === 1 ? 'nova' : 'novas'}</p>
+                    <p className="text-[14px] tracking-widest uppercase font-bold text-blue-300/85">Mensagens</p>
+                    <p className="text-[14px] text-white/40 mt-0.5">{mensagensNaoLidas} {mensagensNaoLidas === 1 ? 'nova' : 'novas'}</p>
                   </div>
-                  <span className="text-[16px] tracking-widest uppercase font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/40">{mensagensNaoLidas}</span>
+                  <span className="text-[14px] tracking-widest uppercase font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/40">{mensagensNaoLidas}</span>
                 </button>
               )}
             </aside>
@@ -2149,8 +2149,8 @@ export default function FreelancerViewPage() {
               {/* Intro */}
               {(freelancer?.intro_casamentos || true) && (
                 <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] px-5 py-4 space-y-1">
-                  <p className="text-[16px] text-white font-semibold">A Tua Agenda</p>
-                  <p className="text-[16px] text-white leading-relaxed whitespace-pre-wrap">
+                  <p className="text-[14px] text-white font-semibold">A Tua Agenda</p>
+                  <p className="text-[14px] text-white leading-relaxed whitespace-pre-wrap">
                     {freelancer?.intro_casamentos || `Aqui encontras todos os eventos que te foram atribuídos ao longo do ano. Sempre que um novo evento for adicionado, deverás confirmar a tua disponibilidade.\n\nA 3 dias do evento tens acesso ao briefing com toda a informação necessária para o dia — percurso, contactos, detalhes da cerimónia e muito mais.`}
                   </p>
                 </div>
@@ -2158,9 +2158,9 @@ export default function FreelancerViewPage() {
 
               {/* Próximos */}
               <section>
-                <p className="text-[16px] text-white font-semibold mb-4">Próximos Casamentos ({upcoming.length})</p>
+                <p className="text-[14px] text-white font-semibold mb-4">Próximos Casamentos ({upcoming.length})</p>
                 {upcoming.length === 0 ? (
-                  <p className="text-white/15 text-[16px] tracking-widest">Sem casamentos futuros.</p>
+                  <p className="text-white/15 text-[14px] tracking-widest">Sem casamentos futuros.</p>
                 ) : (
                   <div className="space-y-3">
                     {upcoming.map(c => {
@@ -2174,26 +2174,26 @@ export default function FreelancerViewPage() {
                               {c.data_casamento ? (
                                 <>
                                   <span className={`text-base font-bold leading-none ${isUrgent ? 'text-red-400' : 'text-gold'}`}>{c.data_casamento.split('-')[2]}</span>
-                                  <span className={`text-[16px] uppercase tracking-wide font-semibold ${isUrgent ? 'text-red-400/60' : 'text-gold/60'}`}>{MESES[parseInt(c.data_casamento.split('-')[1])-1]}</span>
+                                  <span className={`text-[14px] uppercase tracking-wide font-semibold ${isUrgent ? 'text-red-400/60' : 'text-gold/60'}`}>{MESES[parseInt(c.data_casamento.split('-')[1])-1]}</span>
                                 </>
-                              ) : <span className="text-white/20 text-[16px]">—</span>}
+                              ) : <span className="text-white/20 text-[14px]">—</span>}
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-base font-light tracking-wider text-white uppercase truncate">{c.local || '—'}</p>
-                              <p className="text-[16px] text-white/60 mt-0.5">{fmtDate(c.data_casamento)}</p>
+                              <p className="text-[14px] text-white/60 mt-0.5">{fmtDate(c.data_casamento)}</p>
                               <div className="flex items-center gap-2 flex-wrap mt-2">
                                 {days !== null && (
-                                  <span className={`text-[16px] px-2.5 py-1 rounded-full border tracking-widest font-medium ${days <= 7 ? 'bg-red-500/15 text-red-400 border-red-500/30' : days <= 30 ? 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30' : 'bg-gold/10 text-gold border-gold/25'}`}>
+                                  <span className={`text-[14px] px-2.5 py-1 rounded-full border tracking-widest font-medium ${days <= 7 ? 'bg-red-500/15 text-red-400 border-red-500/30' : days <= 30 ? 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30' : 'bg-gold/10 text-gold border-gold/25'}`}>
                                     {days === 0 ? 'HOJE' : `${days}d`}
                                   </span>
                                 )}
                                 {(freelancer?.status === 'VIDEOGRAFO' ? c.data_confirmada_videografo : c.data_confirmada) && (
-                                  <span className="text-[16px] px-2.5 py-1 rounded-full border bg-emerald-500/15 text-emerald-400 border-emerald-500/30 tracking-widest">
+                                  <span className="text-[14px] px-2.5 py-1 rounded-full border bg-emerald-500/15 text-emerald-400 border-emerald-500/30 tracking-widest">
                                     ✓ Confirmado
                                   </span>
                                 )}
                                 {(freelancer?.status === 'VIDEOGRAFO' ? (c.indisponivel_videografo && !c.data_confirmada_videografo) : (c.indisponivel && !c.data_confirmada)) && (
-                                  <span className="text-[16px] px-2.5 py-1 rounded-full border bg-red-500/15 text-red-400 border-red-500/30 tracking-widest">
+                                  <span className="text-[14px] px-2.5 py-1 rounded-full border bg-red-500/15 text-red-400 border-red-500/30 tracking-widest">
                                     Indisponível
                                   </span>
                                 )}
@@ -2209,20 +2209,20 @@ export default function FreelancerViewPage() {
 
               {/* Casamentos Passados */}
               <section>
-                <p className="text-[16px] text-white font-semibold mb-4">Casamentos Anteriores ({past.length})</p>
+                <p className="text-[14px] text-white font-semibold mb-4">Casamentos Anteriores ({past.length})</p>
                 {past.length === 0 ? (
-                  <p className="text-white/15 text-[16px] tracking-widest">Sem casamentos anteriores.</p>
+                  <p className="text-white/15 text-[14px] tracking-widest">Sem casamentos anteriores.</p>
                 ) : (
                   <div className="space-y-2">
                     {past.map(c => (
                       <div key={c.id} onClick={() => setFicha(c)}
                         className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-white/[0.04] bg-white/[0.01] opacity-60 cursor-pointer hover:opacity-80 hover:border-white/[0.10] transition-all">
                         <div>
-                          <p className="text-[16px] text-white/60">{c.local || '—'}</p>
-                          <p className="text-[16px] text-white/25 mt-0.5">{fmtDate(c.data_casamento).split(' · ')[0]}</p>
+                          <p className="text-[14px] text-white/60">{c.local || '—'}</p>
+                          <p className="text-[14px] text-white/25 mt-0.5">{fmtDate(c.data_casamento).split(' · ')[0]}</p>
                         </div>
                         {c.data_confirmada && (
-                          <span className="text-[16px] text-emerald-400/50">✓</span>
+                          <span className="text-[14px] text-emerald-400/50">✓</span>
                         )}
                       </div>
                     ))}
@@ -2256,28 +2256,28 @@ export default function FreelancerViewPage() {
             <section className="space-y-5">
               <div className="px-4 py-4 rounded-xl border border-white/[0.06] bg-white/[0.02] space-y-2">
                 <p className="text-[18px] tracking-[0.3em] text-gold/60 uppercase">Estado da Edição</p>
-                <p className="text-[16px] text-white leading-relaxed">
+                <p className="text-[14px] text-white leading-relaxed">
                   É importante manteres o estado de cada trabalho sempre atualizado.
                 </p>
-                <p className="text-[16px] text-white leading-relaxed">
+                <p className="text-[14px] text-white leading-relaxed">
                   Os noivos têm acesso a esta informação em tempo real através do portal deles. Um estado atualizado transmite profissionalismo e mantém os noivos tranquilos ao longo de todo o processo.
                 </p>
               </div>
               {edicao.length === 0 ? (
-                <p className="text-white/15 text-[16px] tracking-widest">Sem trabalhos de edição atribuídos.</p>
+                <p className="text-white/15 text-[14px] tracking-widest">Sem trabalhos de edição atribuídos.</p>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {STATUS_EDICAO_ORDER.map(status => {
                     const jobs = edicao.filter(e => e.status === status)
                     return (
                       <div key={status} className="space-y-2">
-                        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[16px] font-bold tracking-widest uppercase ${STATUS_EDICAO_STYLE[status] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
+                        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[14px] font-bold tracking-widest uppercase ${STATUS_EDICAO_STYLE[status] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
                           <span>{status}</span>
                           <span className="ml-auto opacity-60">({jobs.length})</span>
                         </div>
                         {jobs.map(e => <EdicaoCard key={e.id} e={e} onStatusChange={(id, s) => setEdicao(prev => prev.map(x => x.id === id ? { ...x, status: s } : x))} />)}
                         {jobs.length === 0 && (
-                          <p className="text-[16px] text-white/15 text-center py-4 tracking-widest">—</p>
+                          <p className="text-[14px] text-white/15 text-center py-4 tracking-widest">—</p>
                         )}
                       </div>
                     )
@@ -2307,21 +2307,21 @@ export default function FreelancerViewPage() {
             <section className="space-y-4">
               <div className="px-4 py-4 rounded-xl border border-white/[0.06] bg-white/[0.02] space-y-2">
                 <p className="text-[18px] tracking-[0.3em] text-gold/60 uppercase">Workflow</p>
-                <p className="text-[16px] text-white leading-relaxed">
+                <p className="text-[14px] text-white leading-relaxed">
                   Aqui vais encontrar todo o nosso sistema de trabalho.
                 </p>
-                <p className="text-[16px] text-white leading-relaxed">
+                <p className="text-[14px] text-white leading-relaxed">
                   Lê com atenção para que nada falhe e para que não haja dúvidas. O nosso fluxo de trabalho está desenhado para garantir que cada projeto é executado com a máxima qualidade e organização.
                 </p>
               </div>
               {freelancer?.guia_trabalho ? (
                 <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
-                  <p className="text-[16px] tracking-[0.4em] text-white/20 uppercase mb-5">Workflow</p>
-                  <p className="text-[16px] text-white leading-relaxed whitespace-pre-wrap">{freelancer.guia_trabalho}</p>
+                  <p className="text-[14px] tracking-[0.4em] text-white/20 uppercase mb-5">Workflow</p>
+                  <p className="text-[14px] text-white leading-relaxed whitespace-pre-wrap">{freelancer.guia_trabalho}</p>
                 </div>
               ) : (
                 <div className="text-center py-16 space-y-3">
-                  <p className="text-white/15 text-[16px] tracking-widest">Workflow não disponível.</p>
+                  <p className="text-white/15 text-[14px] tracking-widest">Workflow não disponível.</p>
                 </div>
               )}
             </section>
@@ -2341,20 +2341,20 @@ export default function FreelancerViewPage() {
           {tab === 'album' && (
             <section className="space-y-4">
               {album.length === 0 ? (
-                <p className="text-white/15 text-[16px] tracking-widest">Sem álbuns atribuídos.</p>
+                <p className="text-white/15 text-[14px] tracking-widest">Sem álbuns atribuídos.</p>
               ) : (
                 ALBUM_STATUS_SECTIONS.map(statusLabel => {
                   const items = album.filter(a => a.status === statusLabel)
                   return (
                     <div key={statusLabel}>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className={`text-[16px] px-2 py-0.5 rounded border tracking-widest font-semibold uppercase ${STATUS_ALBUM_STYLE[statusLabel] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
+                        <span className={`text-[14px] px-2 py-0.5 rounded border tracking-widest font-semibold uppercase ${STATUS_ALBUM_STYLE[statusLabel] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
                           {statusLabel}
                         </span>
-                        <span className="text-[16px] text-white/20">({items.length})</span>
+                        <span className="text-[14px] text-white/20">({items.length})</span>
                       </div>
                       {items.length === 0 ? (
-                        <p className="text-[16px] text-white/10 italic pl-1">—</p>
+                        <p className="text-[14px] text-white/10 italic pl-1">—</p>
                       ) : (
                         <div className="space-y-2">
                           {items.map(a => (
@@ -2364,8 +2364,8 @@ export default function FreelancerViewPage() {
                                 <div className="bg-orange-500/10 border-b border-orange-500/30">
                                   {/* Header row */}
                                   <div className="px-4 pt-3 pb-2 flex items-center gap-2">
-                                    <span className="text-orange-400 text-[16px]">✎</span>
-                                    <p className="text-[16px] tracking-[0.3em] uppercase font-semibold text-orange-400">Alterações Solicitadas pelo Cliente</p>
+                                    <span className="text-orange-400 text-[14px]">✎</span>
+                                    <p className="text-[14px] tracking-[0.3em] uppercase font-semibold text-orange-400">Alterações Solicitadas pelo Cliente</p>
                                   </div>
                                   {/* Details */}
                                   <div className="px-4 pb-3 flex gap-3">
@@ -2378,27 +2378,27 @@ export default function FreelancerViewPage() {
                                           alt="Referência do cliente"
                                           className="w-20 h-20 object-cover border border-orange-500/30 hover:border-orange-400/60 transition-colors"
                                         />
-                                        <p className="text-[16px] text-orange-300/40 mt-1 text-center tracking-wide">ver foto</p>
+                                        <p className="text-[14px] text-orange-300/40 mt-1 text-center tracking-wide">ver foto</p>
                                       </a>
                                     )}
                                     {/* Text details */}
                                     <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                                       {a.alteracao.tipos_alteracao && a.alteracao.tipos_alteracao.length > 0 && (
                                         <div>
-                                          <p className="text-[16px] text-orange-300/40 tracking-widest uppercase mb-0.5">Tipo</p>
-                                          <p className="text-[16px] text-orange-300/80">{a.alteracao.tipos_alteracao.join(' · ')}</p>
+                                          <p className="text-[14px] text-orange-300/40 tracking-widest uppercase mb-0.5">Tipo</p>
+                                          <p className="text-[14px] text-orange-300/80">{a.alteracao.tipos_alteracao.join(' · ')}</p>
                                         </div>
                                       )}
                                       {a.alteracao.paginas_alterar && (
                                         <div>
-                                          <p className="text-[16px] text-orange-300/40 tracking-widest uppercase mb-0.5">Páginas</p>
-                                          <p className="text-[16px] text-orange-300/80">{a.alteracao.paginas_alterar}</p>
+                                          <p className="text-[14px] text-orange-300/40 tracking-widest uppercase mb-0.5">Páginas</p>
+                                          <p className="text-[14px] text-orange-300/80">{a.alteracao.paginas_alterar}</p>
                                         </div>
                                       )}
                                       {a.alteracao.observacoes && (
                                         <div>
-                                          <p className="text-[16px] text-orange-300/40 tracking-widest uppercase mb-0.5">Observações</p>
-                                          <p className="text-[16px] text-orange-300/70 leading-relaxed">{a.alteracao.observacoes}</p>
+                                          <p className="text-[14px] text-orange-300/40 tracking-widest uppercase mb-0.5">Observações</p>
+                                          <p className="text-[14px] text-orange-300/70 leading-relaxed">{a.alteracao.observacoes}</p>
                                         </div>
                                       )}
                                     </div>
@@ -2408,23 +2408,23 @@ export default function FreelancerViewPage() {
                               <div className="px-4 py-3 space-y-2">
                                 <div className="flex items-start justify-between gap-3 flex-wrap">
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-[16px] text-white/80">{a.nome}</p>
+                                    <p className="text-[14px] text-white/80">{a.nome}</p>
                                     <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                                      {a.data_casamento && <p className="text-[16px] text-white/30">{fmtDate(a.data_casamento).split(' · ')[0]}</p>}
-                                      {a.referencia_album && <span className="text-[16px] text-gold/50 font-mono">{a.referencia_album}</span>}
+                                      {a.data_casamento && <p className="text-[14px] text-white/30">{fmtDate(a.data_casamento).split(' · ')[0]}</p>}
+                                      {a.referencia_album && <span className="text-[14px] text-gold/50 font-mono">{a.referencia_album}</span>}
                                     </div>
                                     <div className="flex items-center gap-3 mt-1 flex-wrap">
                                       {a.data_entrega_fotos && (
-                                        <span className="text-[16px] text-white/30">Entrada: {fmtDate(a.data_entrega_fotos).split(' · ')[0]}</span>
+                                        <span className="text-[14px] text-white/30">Entrada: {fmtDate(a.data_entrega_fotos).split(' · ')[0]}</span>
                                       )}
                                       {a.data_entrega_fotos && (
-                                        <span className="text-[16px] text-white/30">Limite: {fmtDate(addDaysStr(a.data_entrega_fotos, 35)).split(' · ')[0]}</span>
+                                        <span className="text-[14px] text-white/30">Limite: {fmtDate(addDaysStr(a.data_entrega_fotos, 35)).split(' · ')[0]}</span>
                                       )}
                                     </div>
                                   </div>
                                   <div className="flex items-center gap-2 shrink-0">
                                     <button onClick={() => setAlbumInfo(a)}
-                                      className="text-[16px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-xl border border-gold/30 bg-gold/5 text-gold/70 hover:text-gold hover:border-gold/60 hover:bg-gold/10 transition-all">
+                                      className="text-[14px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-xl border border-gold/30 bg-gold/5 text-gold/70 hover:text-gold hover:border-gold/60 hover:bg-gold/10 transition-all">
                                       Ver Mais
                                     </button>
                                     <AlbumStatusSelect albumId={a.id} status={a.status} onChanged={s => setAlbum(prev => prev.map(x => x.id === a.id ? { ...x, status: s } : x))} />
@@ -2467,9 +2467,9 @@ export default function FreelancerViewPage() {
 function Stat({ label, value, sub }: { label: string; value: number; sub?: string }) {
   return (
     <div className="bg-black/30 border border-white/[0.06] rounded-xl px-3 py-3">
-      <p className="text-[16px] tracking-[0.3em] uppercase text-white/35 mb-1">{label}</p>
+      <p className="text-[14px] tracking-[0.3em] uppercase text-white/35 mb-1">{label}</p>
       <p className="text-2xl font-bold text-white/90 leading-none">{value}</p>
-      {sub && <p className="text-[16px] text-white/30 mt-1">{sub}</p>}
+      {sub && <p className="text-[14px] text-white/30 mt-1">{sub}</p>}
     </div>
   )
 }
@@ -2513,8 +2513,8 @@ function SidebarNav({
     >
       {/* Logo */}
       <div className="px-6 pt-8 pb-6 border-b border-gold/10">
-        <p className="text-[16px] tracking-[0.45em] text-gold/60 uppercase">RL</p>
-        <p className="text-[16px] tracking-[0.18em] text-gold font-light uppercase mt-0.5">Photo<span className="text-white/40">.</span>Video</p>
+        <p className="text-[14px] tracking-[0.45em] text-gold/60 uppercase">RL</p>
+        <p className="text-[14px] tracking-[0.18em] text-gold font-light uppercase mt-0.5">Photo<span className="text-white/40">.</span>Video</p>
         <div className="mt-3 h-px w-8 bg-gold/40" />
       </div>
 
@@ -2524,14 +2524,14 @@ function SidebarNav({
           {freelancer.foto_url ? (
             <img src={freelancer.foto_url} alt={freelancer.nome} className="w-9 h-9 rounded-full object-cover border border-gold/30" />
           ) : (
-            <div className="w-9 h-9 rounded-full bg-gold/15 border border-gold/30 flex items-center justify-center text-gold text-[16px] font-bold">
+            <div className="w-9 h-9 rounded-full bg-gold/15 border border-gold/30 flex items-center justify-center text-gold text-[14px] font-bold">
               {(freelancer.nome ?? '?').charAt(0)}
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <p className="text-[16px] text-white/85 font-medium truncate">{freelancer.nome}</p>
+            <p className="text-[14px] text-white/85 font-medium truncate">{freelancer.nome}</p>
             {freelancer.status && (
-              <p className="text-[16px] tracking-[0.25em] uppercase text-gold/60 mt-0.5">{freelancer.status}</p>
+              <p className="text-[14px] tracking-[0.25em] uppercase text-gold/60 mt-0.5">{freelancer.status}</p>
             )}
           </div>
         </div>
@@ -2552,9 +2552,9 @@ function SidebarNav({
               }`}
             >
               <span className={`w-5 text-center text-base ${active ? 'text-gold' : 'text-white/30 group-hover:text-white/60'}`}>{it.icon}</span>
-              <span className="flex-1 text-[16px] tracking-[0.2em] uppercase font-medium">{it.label}</span>
+              <span className="flex-1 text-[14px] tracking-[0.2em] uppercase font-medium">{it.label}</span>
               {it.count && it.count > 0 ? (
-                <span className={`text-[16px] px-1.5 py-0.5 rounded-full font-bold ${
+                <span className={`text-[14px] px-1.5 py-0.5 rounded-full font-bold ${
                   active ? 'bg-gold/20 text-gold' : 'bg-white/[0.06] text-white/40'
                 }`}>{it.count}</span>
               ) : null}
@@ -2565,8 +2565,8 @@ function SidebarNav({
 
       {/* Footer */}
       <div className="px-5 py-4 border-t border-white/[0.04]">
-        <p className="text-[16px] tracking-[0.3em] uppercase text-white/20">Área do Freelancer</p>
-        <p className="text-[16px] text-white/15 mt-1">© RL Photo.Video</p>
+        <p className="text-[14px] tracking-[0.3em] uppercase text-white/20">Área do Freelancer</p>
+        <p className="text-[14px] text-white/15 mt-1">© RL Photo.Video</p>
       </div>
     </aside>
   )
@@ -2613,8 +2613,8 @@ function TasksWidget({ freelancerId }: { freelancerId: string }) {
   return (
     <div className="bg-white/[0.02] border border-white/[0.07] rounded-2xl p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-[16px] tracking-[0.4em] text-gold uppercase font-bold">Tarefas</h3>
-        <span className="text-[16px] text-white/40">{pend} pend · {concl} ok</span>
+        <h3 className="text-[14px] tracking-[0.4em] text-gold uppercase font-bold">Tarefas</h3>
+        <span className="text-[14px] text-white/40">{pend} pend · {concl} ok</span>
       </div>
 
       {/* Input */}
@@ -2624,17 +2624,17 @@ function TasksWidget({ freelancerId }: { freelancerId: string }) {
           onChange={e => setNovo(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') adicionar() }}
           placeholder="Nova tarefa…"
-          className="flex-1 bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2 text-[16px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40"
+          className="flex-1 bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2 text-[14px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40"
         />
         <button
           onClick={adicionar}
-          className="px-3 py-2 rounded-lg bg-gold/15 border border-gold/30 text-gold text-[16px] hover:bg-gold/25 transition-all"
+          className="px-3 py-2 rounded-lg bg-gold/15 border border-gold/30 text-gold text-[14px] hover:bg-gold/25 transition-all"
         >+</button>
       </div>
 
       {/* Lista */}
       {tasks.length === 0 ? (
-        <p className="text-[16px] text-white/25 text-center py-3">Sem tarefas. Adiciona uma.</p>
+        <p className="text-[14px] text-white/25 text-center py-3">Sem tarefas. Adiciona uma.</p>
       ) : (
         <ul className="space-y-1.5 max-h-[280px] overflow-y-auto pr-1">
           {tasks.map(t => (
@@ -2645,12 +2645,12 @@ function TasksWidget({ freelancerId }: { freelancerId: string }) {
                   t.done ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'border-white/20 hover:border-gold/50'
                 }`}
               >
-                {t.done ? <span className="text-[16px]">✓</span> : null}
+                {t.done ? <span className="text-[14px]">✓</span> : null}
               </button>
-              <span className={`flex-1 text-[16px] leading-snug ${t.done ? 'line-through text-white/30' : 'text-white/80'}`}>{t.text}</span>
+              <span className={`flex-1 text-[14px] leading-snug ${t.done ? 'line-through text-white/30' : 'text-white/80'}`}>{t.text}</span>
               <button
                 onClick={() => remover(t.id)}
-                className="opacity-0 group-hover:opacity-100 text-white/30 hover:text-red-400 text-[16px] transition-all"
+                className="opacity-0 group-hover:opacity-100 text-white/30 hover:text-red-400 text-[14px] transition-all"
               >×</button>
             </li>
           ))}
@@ -2688,18 +2688,18 @@ function MiniCalendar({ casamentos, onClickDate }: { casamentos: Casamento[]; on
   return (
     <div className="bg-white/[0.02] border border-white/[0.07] rounded-2xl p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-[16px] tracking-[0.4em] text-gold uppercase font-bold">Calendário</h3>
+        <h3 className="text-[14px] tracking-[0.4em] text-gold uppercase font-bold">Calendário</h3>
         <div className="flex items-center gap-1">
-          <button onClick={() => changeMonth(-1)} className="w-6 h-6 rounded border border-white/10 text-white/40 hover:text-gold hover:border-gold/30 transition-all text-[16px]">‹</button>
-          <span className="text-[16px] tracking-widest uppercase text-white/70 px-2">{MESES[view.m]} {view.y}</span>
-          <button onClick={() => changeMonth(1)} className="w-6 h-6 rounded border border-white/10 text-white/40 hover:text-gold hover:border-gold/30 transition-all text-[16px]">›</button>
+          <button onClick={() => changeMonth(-1)} className="w-6 h-6 rounded border border-white/10 text-white/40 hover:text-gold hover:border-gold/30 transition-all text-[14px]">‹</button>
+          <span className="text-[14px] tracking-widest uppercase text-white/70 px-2">{MESES[view.m]} {view.y}</span>
+          <button onClick={() => changeMonth(1)} className="w-6 h-6 rounded border border-white/10 text-white/40 hover:text-gold hover:border-gold/30 transition-all text-[14px]">›</button>
         </div>
       </div>
 
       {/* Dias da semana */}
       <div className="grid grid-cols-7 gap-1 mb-1">
         {DIAS.map(d => (
-          <div key={d} className="text-center text-[16px] tracking-widest uppercase text-white/25 py-1">{d.charAt(0)}</div>
+          <div key={d} className="text-center text-[14px] tracking-widest uppercase text-white/25 py-1">{d.charAt(0)}</div>
         ))}
       </div>
 
@@ -2712,7 +2712,7 @@ function MiniCalendar({ casamentos, onClickDate }: { casamentos: Casamento[]; on
               key={i}
               onClick={() => c.hasEvent && c.iso && onClickDate?.(c.iso)}
               disabled={!c.hasEvent}
-              className={`relative aspect-square flex items-center justify-center text-[16px] rounded-md transition-all ${
+              className={`relative aspect-square flex items-center justify-center text-[14px] rounded-md transition-all ${
                 c.isToday
                   ? 'bg-gold text-black font-bold'
                   : c.hasEvent
@@ -2730,7 +2730,7 @@ function MiniCalendar({ casamentos, onClickDate }: { casamentos: Casamento[]; on
       </div>
 
       {/* Legenda */}
-      <div className="mt-3 flex items-center justify-center gap-3 text-[16px] text-white/35">
+      <div className="mt-3 flex items-center justify-center gap-3 text-[14px] text-white/35">
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-gold" /> Hoje</span>
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm border border-gold/40 bg-gold/15" /> Casamento</span>
       </div>
@@ -2770,15 +2770,15 @@ function NotesWidget({ freelancerId }: { freelancerId: string }) {
   return (
     <div className="bg-white/[0.02] border border-white/[0.07] rounded-2xl p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-[16px] tracking-[0.4em] text-gold uppercase font-bold">Notas</h3>
-        {saved && <span className="text-[16px] text-emerald-400/70 tracking-widest uppercase">guardado {saved}</span>}
+        <h3 className="text-[14px] tracking-[0.4em] text-gold uppercase font-bold">Notas</h3>
+        {saved && <span className="text-[14px] text-emerald-400/70 tracking-widest uppercase">guardado {saved}</span>}
       </div>
       <textarea
         value={val}
         onChange={e => setVal(e.target.value)}
         placeholder="Escreve lembretes pessoais aqui…"
         rows={4}
-        className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2 text-[16px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40 resize-none leading-relaxed"
+        className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2 text-[14px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40 resize-none leading-relaxed"
       />
     </div>
   )
