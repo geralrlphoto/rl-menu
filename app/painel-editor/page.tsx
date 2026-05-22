@@ -150,14 +150,51 @@ export default function PainelEditor() {
   // Calendário
   const today = new Date(2026, 4, 20) // Maio 2026 dia 20 (mock)
   const [view, setView] = useState({ y: 2026, m: 4 })
+
+  // ── Marcas no calendário: criações + entregas ─────────────────────────
+  // Mapa: 'YYYY-MM-DD' → { creations: string[], deliveries: string[] }
+  const calendarMarks = useMemo(() => {
+    const marks: Record<string, { creations: string[]; deliveries: string[] }> = {}
+    const ensure = (k: string) => { if (!marks[k]) marks[k] = { creations: [], deliveries: [] }; return marks[k] }
+
+    // 1) Projetos criados pelo utilizador (localStorage) — têm recebido + entregaPrevista
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('painel-editor-user-projects') : null
+      const userProjects: any[] = raw ? JSON.parse(raw) : []
+      userProjects.forEach(p => {
+        const recIso = ptToISODate(p.recebido || '')
+        if (recIso) ensure(recIso).creations.push(p.noivos)
+        const entIso = ptToISODate(p.entregaPrevista || '')
+        if (entIso) ensure(entIso).deliveries.push(p.noivos)
+      })
+    } catch {}
+
+    // 2) Mocks (MOCK_NOVOS) — usa 'data' como criação aproximada + 'entrega' como entrega
+    MOCK_NOVOS.forEach(m => {
+      if (m.data)    ensure(m.data).creations.push(m.noivos)
+      if (m.entrega) ensure(m.entrega).deliveries.push(m.noivos)
+    })
+
+    return marks
+  }, [novosProjetos])
+
   const firstDay = new Date(view.y, view.m, 1).getDay()
   const lastDate = new Date(view.y, view.m + 1, 0).getDate()
   const prevLastDate = new Date(view.y, view.m, 0).getDate()
-  const cells: Array<{ day: number; current: boolean; isToday: boolean }> = []
+  type Cell = { day: number; current: boolean; isToday: boolean; iso?: string; hasCreation?: boolean; hasDelivery?: boolean; creationNames?: string[]; deliveryNames?: string[] }
+  const cells: Cell[] = []
   for (let i = firstDay - 1; i >= 0; i--) cells.push({ day: prevLastDate - i, current: false, isToday: false })
   for (let d = 1; d <= lastDate; d++) {
+    const iso = `${view.y}-${String(view.m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+    const mark = calendarMarks[iso]
     const isToday = view.y === today.getFullYear() && view.m === today.getMonth() && d === today.getDate()
-    cells.push({ day: d, current: true, isToday })
+    cells.push({
+      day: d, current: true, isToday, iso,
+      hasCreation: (mark?.creations.length ?? 0) > 0,
+      hasDelivery: (mark?.deliveries.length ?? 0) > 0,
+      creationNames: mark?.creations,
+      deliveryNames: mark?.deliveries,
+    })
   }
   while (cells.length % 7 !== 0) cells.push({ day: cells.length - lastDate - firstDay + 1, current: false, isToday: false })
 
@@ -430,20 +467,53 @@ export default function PainelEditor() {
                   {DIAS.map((d, i) => <div key={i} className="text-center text-[10px] tracking-widest uppercase text-white/30 py-1.5">{d}</div>)}
                 </div>
                 <div className="grid grid-cols-7 gap-1">
-                  {cells.map((c, i) => (
-                    <button key={i}
-                      className={`aspect-square flex items-center justify-center text-[12px] rounded-lg transition-all ${
-                        c.isToday
-                          ? 'bg-gold text-black font-bold shadow-lg'
-                          : c.current
-                            ? 'text-white/70 hover:bg-white/[0.05]'
-                            : 'text-white/15'
-                      }`}
-                      style={c.isToday ? { boxShadow: '0 0 16px rgba(201,164,92,0.5)' } : {}}
-                    >
-                      {c.day}
-                    </button>
-                  ))}
+                  {cells.map((c, i) => {
+                    const tooltip = [
+                      ...(c.creationNames ?? []).map(n => `📅 Criado: ${n}`),
+                      ...(c.deliveryNames ?? []).map(n => `🎯 Entrega: ${n}`),
+                    ].join('\n')
+                    return (
+                      <button key={i}
+                        title={tooltip || undefined}
+                        className={`relative aspect-square flex items-center justify-center text-[12px] rounded-lg transition-all ${
+                          c.isToday
+                            ? 'bg-gold text-black font-bold shadow-lg'
+                            : c.current
+                              ? 'text-white/70 hover:bg-white/[0.05]'
+                              : 'text-white/15'
+                        }`}
+                        style={c.isToday ? { boxShadow: '0 0 16px rgba(201,164,92,0.5)' } : {}}
+                      >
+                        {c.day}
+                        {/* Dot azul top-left: criação de projeto */}
+                        {c.hasCreation && c.current && !c.isToday && (
+                          <span className="absolute top-1 left-1 w-1.5 h-1.5 rounded-full bg-blue-400"
+                            style={{ boxShadow: '0 0 6px rgba(96,165,250,0.8)' }} />
+                        )}
+                        {/* Dot gold bottom-right: entrega prevista */}
+                        {c.hasDelivery && c.current && !c.isToday && (
+                          <span className="absolute bottom-1 right-1 w-1.5 h-1.5 rounded-full bg-gold"
+                            style={{ boxShadow: '0 0 6px rgba(201,164,92,0.9)' }} />
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {/* Legenda */}
+                <div className="mt-4 flex items-center justify-center gap-4 text-[10px] text-white/45 pt-3 border-t border-white/[0.04]">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400" style={{ boxShadow: '0 0 5px rgba(96,165,250,0.7)' }} />
+                    Criação
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-gold" style={{ boxShadow: '0 0 5px rgba(201,164,92,0.8)' }} />
+                    Entrega
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-sm bg-gold" />
+                    Hoje
+                  </span>
                 </div>
               </div>
 
