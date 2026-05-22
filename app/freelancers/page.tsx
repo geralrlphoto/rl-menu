@@ -436,6 +436,11 @@ export default function FreelancersPage() {
                             </Link>
 
                             <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0">
+                              <Link href={`/painel-editor?freelancer=${f.id}`}
+                                className="text-[9px] px-2.5 py-1 rounded-lg border border-gold/40 bg-gold/[0.08] text-gold/80 hover:text-gold hover:bg-gold/15 transition-all tracking-widest uppercase font-bold"
+                                title={`Abrir maquete como ${f.nome}`}>
+                                ✦ Maquete
+                              </Link>
                               <CopiarUrlButton id={f.id} />
                               <button onClick={() => { setPwEditId(f.id); setPwDraft(f.password ?? '') }}
                                 className="text-[9px] px-2.5 py-1 rounded-lg border border-white/10 text-white/30 hover:text-white/60 hover:border-white/25 transition-all tracking-widest uppercase">

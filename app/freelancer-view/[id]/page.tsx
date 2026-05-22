@@ -1816,11 +1816,12 @@ export default function FreelancerViewPage() {
     .sort((a,b) => (a.data_casamento ?? '') > (b.data_casamento ?? '') ? -1 : 1)
 
   return (
-    <div className="min-h-screen relative">
-      {/* ── Background gradient (estilo proposta criativa, gold) ───────── */}
-      <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'linear-gradient(160deg, #0e0b07 0%, #1a1206 30%, #0e0b07 70%, #060504 100%)' }} />
-      <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'radial-gradient(ellipse 75% 65% at 50% 48%, rgba(201,168,76,0.18) 0%, rgba(160,120,40,0.07) 45%, transparent 70%)' }} />
-      <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'radial-gradient(ellipse 40% 40% at 50% 48%, rgba(232,180,60,0.08) 0%, transparent 60%)' }} />
+    <div className="min-h-screen text-white relative" style={{ background: '#0A0A0A' }}>
+      {/* ── Atmosfera (estilo Editorial Workspace) ──────────────────────── */}
+      <div className="pointer-events-none fixed inset-0 z-0"
+        style={{ background: 'radial-gradient(ellipse 80% 60% at 80% 15%, rgba(201,164,92,0.07), transparent 65%)' }} />
+      <div className="pointer-events-none fixed inset-0 z-0"
+        style={{ background: 'radial-gradient(ellipse 60% 50% at 15% 85%, rgba(201,164,92,0.05), transparent 70%)' }} />
 
       {/* ── Sidebar lateral (desktop) ──────────────────────────────────── */}
       <SidebarNav
@@ -1844,77 +1845,39 @@ export default function FreelancerViewPage() {
         }}
       />
 
-    <main className={`relative z-10 min-h-screen px-4 py-10 mx-auto lg:pl-[260px] lg:pr-6 ${tab === null ? 'max-w-[1600px]' : 'max-w-3xl'}`}>
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <p className="text-[14px] text-white font-semibold">RL PHOTO.VIDEO · Área do Freelancer</p>
+    <main className={`relative z-10 min-h-screen px-6 sm:px-8 py-6 mx-auto lg:pl-[254px] lg:pr-8 ${tab === null ? 'max-w-[1500px]' : 'max-w-3xl'}`}>
+      {/* Top bar — editorial label + ações */}
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <p className="text-[11px] tracking-[0.45em] text-gold/60 uppercase font-light">Editorial Workspace · Área do Freelancer</p>
 
-          {/* Botões topo direito — Notificações + Sair (visível em todos os tamanhos) */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setTab('notificacoes')}
-              className="relative inline-flex items-center justify-center w-9 h-9 rounded-lg border border-white/10 hover:border-gold/40 hover:bg-gold/[0.06] transition-all text-white/65 hover:text-gold"
-              title="Notificações"
-            >
-              <span className="text-base">◉</span>
-              {notificacoes.filter(n => !n.lida).length > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border border-black">
-                  {notificacoes.filter(n => !n.lida).length}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => {
-                if (confirm('Tens a certeza que queres sair?')) {
-                  sessionStorage.removeItem(`freelancerAuth_${id}`)
-                  setAuthed(false)
-                  setTab(null)
-                }
-              }}
-              className="inline-flex items-center gap-2 px-3 h-9 rounded-lg border border-white/10 hover:border-red-500/40 hover:bg-red-500/[0.06] transition-all text-white/65 hover:text-red-400 text-[14px] tracking-widest uppercase font-medium"
-              title="Sair"
-            >
-              <span className="text-base">⎋</span>
-              <span className="hidden sm:inline">Sair</span>
-            </button>
-          </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setTab('notificacoes')}
+            className="relative w-10 h-10 rounded-xl border border-white/15 bg-black/40 backdrop-blur-md hover:border-gold/40 transition-all flex items-center justify-center text-white/65 hover:text-gold"
+            title="Notificações"
+          >
+            <span className="text-base">◉</span>
+            {notificacoes.filter(n => !n.lida).length > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border border-black">
+                {notificacoes.filter(n => !n.lida).length}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => {
+              if (confirm('Tens a certeza que queres sair?')) {
+                sessionStorage.removeItem(`freelancerAuth_${id}`)
+                setAuthed(false)
+                setTab(null)
+              }
+            }}
+            className="inline-flex items-center gap-2 px-3 h-10 rounded-xl border border-white/15 bg-black/40 backdrop-blur-md hover:border-red-500/40 hover:bg-red-500/[0.06] transition-all text-white/65 hover:text-red-400 text-[12px] tracking-widest uppercase font-medium"
+            title="Sair"
+          >
+            <span className="text-base">⎋</span>
+            <span className="hidden sm:inline">Sair</span>
+          </button>
         </div>
-        {loading ? (
-          <p className="text-white/20 text-[14px] tracking-widest uppercase">A carregar...</p>
-        ) : (
-          <>
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h1 className="text-3xl font-light tracking-[0.15em] text-white uppercase">{freelancer?.nome ?? '—'}</h1>
-                {freelancer?.status && (
-                  <span className="inline-block mt-2 text-[14px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-semibold bg-gold/10 text-gold border-gold/30">
-                    {freelancer.status}
-                  </span>
-                )}
-              </div>
-              {upcoming[0] && (() => {
-                const next = upcoming[0]
-                const dtu = daysUntil(next.data_casamento)
-                const isUrgent = dtu !== null && dtu <= 15
-                return (
-                  <div className={`flex-shrink-0 flex items-center gap-3 px-4 py-3 rounded-xl border ${isUrgent ? 'border-red-500/30 bg-red-500/5' : 'border-gold/20 bg-gold/[0.04]'}`}>
-                    <div className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl border ${isUrgent ? 'bg-red-500/15 border-red-500/30' : 'bg-gold/10 border-gold/25'}`}>
-                      <span className={`text-lg font-bold leading-none ${isUrgent ? 'text-red-400' : 'text-gold'}`}>{dtu === 0 ? '!' : dtu}</span>
-                      <span className={`text-[14px] uppercase tracking-wide ${isUrgent ? 'text-red-400/60' : 'text-gold/60'}`}>{dtu === 0 ? 'HOJE' : 'd'}</span>
-                    </div>
-                    <div>
-                      <p className="text-[14px] text-white/25 uppercase tracking-widest mb-0.5">Próximo</p>
-                      <p className="text-[14px] font-semibold text-white/80 max-w-[150px] truncate">{next.local}</p>
-                      <p className="text-[14px] text-white/35">{fmtDate(next.data_casamento).split(' · ')[0]}</p>
-                    </div>
-                  </div>
-                )
-              })()}
-            </div>
-            <div className="mt-4 h-px w-12 bg-gold/50" />
-          </>
-        )}
       </div>
 
       {/* Tab Navigation — horizontal (apenas mobile; desktop usa sidebar) */}
@@ -1985,6 +1948,15 @@ export default function FreelancerViewPage() {
         </div>
       )}
 
+      {loading && (
+        <div className="flex items-center justify-center py-20">
+          <div className="flex items-center gap-3 text-white/40">
+            <div className="w-4 h-4 border border-gold/30 border-t-gold/80 rounded-full animate-spin" />
+            <span className="text-[11px] tracking-[0.35em] uppercase">A carregar…</span>
+          </div>
+        </div>
+      )}
+
       {!loading && tab === null && (() => {
         // Estatísticas para o dashboard
         const proximoCasamento = upcoming[0] ?? null
@@ -2040,69 +2012,75 @@ export default function FreelancerViewPage() {
 
         return (
           <>
-          {/* ── HERO Card largo (mockup) ────────────────────────────── */}
-          <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] mb-5 min-h-[280px]">
+          {/* ── HERO editorial ─────────────────────────────────────── */}
+          <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] mb-7"
+            style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.6)' }}>
             {/* Background foto (se houver) */}
-            {freelancer?.foto_url && (
-              <div className="absolute inset-0 z-0">
-                <img src={freelancer.foto_url} alt="" className="w-full h-full object-cover" />
-              </div>
-            )}
-            {/* Gradiente sobre a foto (escuro → transparente da esquerda para a direita) */}
+            <div className="absolute inset-0 z-0">
+              {freelancer?.foto_url ? (
+                <img src={freelancer.foto_url} alt="" className="w-full h-full object-cover scale-105" style={{ filter: 'blur(2px)' }} />
+              ) : (
+                <img src="https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=1600&h=400&fit=crop"
+                  alt="" className="w-full h-full object-cover scale-105" style={{ filter: 'blur(2px)' }} />
+              )}
+            </div>
             <div className="absolute inset-0 z-[1]"
-              style={{ background: freelancer?.foto_url
-                ? 'linear-gradient(90deg, rgba(8,6,4,0.97) 0%, rgba(14,11,7,0.92) 40%, rgba(14,11,7,0.55) 65%, rgba(14,11,7,0.2) 90%, rgba(14,11,7,0) 100%)'
-                : 'linear-gradient(90deg, rgba(8,6,4,0.95) 0%, rgba(14,11,7,0.85) 45%, rgba(14,11,7,0.4) 75%, rgba(20,15,8,0.1) 100%)' }} />
+              style={{ background: 'linear-gradient(90deg, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.85) 40%, rgba(10,10,10,0.5) 70%, rgba(10,10,10,0.15) 100%)' }} />
 
-            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-5 gap-6 p-6 sm:p-8">
-              <div className="lg:col-span-3 flex flex-col gap-5">
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-5 gap-6 px-8 sm:px-12 py-10 sm:py-12">
+              <div className="lg:col-span-3 flex flex-col gap-5 max-w-2xl">
                 <div>
-                  <h1 className="text-3xl sm:text-4xl font-semibold text-white tracking-tight">
-                    Bem-vindo de volta, {primeiroNome}! <span className="inline-block">👋</span>
+                  <p className="text-[12px] tracking-[0.5em] text-gold/70 uppercase mb-2">{saudacao}</p>
+                  <h1 className="text-4xl sm:text-5xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
+                    Bem-vindo, <span className="italic text-gold">{primeiroNome || '—'}</span>
                   </h1>
-                  <p className="text-[15px] text-white/55 mt-2">Continua a criar histórias inesquecíveis.</p>
+                  <div className="mt-4 h-px w-16 bg-gradient-to-r from-gold/70 to-transparent" />
+                  <p className="text-[14px] text-white/55 mt-4 leading-relaxed max-w-md">
+                    Continua a criar histórias inesquecíveis — acompanha aqui todos os teus eventos, edições e pagamentos.
+                  </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2">
                   <button onClick={() => setTab('casamentos')}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black text-[14px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
-                    style={{ boxShadow: '0 0 20px -4px rgba(201,168,76,0.5)' }}>
+                    className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gold text-black text-[13px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
+                    style={{ boxShadow: '0 0 24px -4px rgba(201,164,92,0.5)' }}>
                     <span className="text-lg leading-none">+</span> Ver Casamentos
                   </button>
                   <button onClick={() => setTab('disponibilidade')}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/15 text-white/85 text-[14px] font-medium tracking-wider hover:bg-white/[0.05] hover:border-white/30 transition-all">
+                    className="inline-flex items-center gap-2 px-5 h-10 rounded-xl border border-white/15 bg-black/40 backdrop-blur-md text-white/85 text-[13px] font-medium tracking-wider hover:bg-white/[0.05] hover:border-gold/40 transition-all">
                     <span className="text-base leading-none">◷</span> Confirmar Disponibilidade
                   </button>
                 </div>
 
-                <div>
-                  <p className="text-[14px] tracking-[0.3em] text-white/40 uppercase font-medium mb-3">Resumo Rápido</p>
+                <div className="mt-2">
+                  <p className="text-[11px] tracking-[0.4em] text-gold/70 uppercase font-bold mb-3">Resumo Rápido</p>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                     <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
                       <span className="w-8 h-8 rounded-lg border bg-gold/10 border-gold/25 text-gold flex items-center justify-center text-base">◫</span>
-                      <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalCasamentos}</p><p className="text-[14px] text-white/55 leading-tight mt-0.5">Casamentos</p></div>
+                      <div className="min-w-0"><p className="text-xl font-bold text-white leading-none">{totalCasamentos}</p><p className="text-[11px] text-white/55 leading-tight mt-0.5">Casamentos</p></div>
                     </div>
                     <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
                       <span className="w-8 h-8 rounded-lg border bg-purple-500/10 border-purple-500/25 text-purple-300 flex items-center justify-center text-base">✎</span>
-                      <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalEmEdicao}</p><p className="text-[14px] text-white/55 leading-tight mt-0.5">Em edição</p></div>
+                      <div className="min-w-0"><p className="text-xl font-bold text-white leading-none">{totalEmEdicao}</p><p className="text-[11px] text-white/55 leading-tight mt-0.5">Em edição</p></div>
                     </div>
                     <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
                       <span className="w-8 h-8 rounded-lg border bg-emerald-500/10 border-emerald-500/25 text-emerald-300 flex items-center justify-center text-base">✓</span>
-                      <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalConcluidos}</p><p className="text-[14px] text-white/55 leading-tight mt-0.5">Concluídos</p></div>
+                      <div className="min-w-0"><p className="text-xl font-bold text-white leading-none">{totalConcluidos}</p><p className="text-[11px] text-white/55 leading-tight mt-0.5">Concluídos</p></div>
                     </div>
                     <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
                       <span className="w-8 h-8 rounded-lg border bg-amber-500/10 border-amber-500/25 text-amber-300 flex items-center justify-center text-base">◷</span>
-                      <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalAguardando}</p><p className="text-[14px] text-white/55 leading-tight mt-0.5">Aguardando</p></div>
+                      <div className="min-w-0"><p className="text-xl font-bold text-white leading-none">{totalAguardando}</p><p className="text-[11px] text-white/55 leading-tight mt-0.5">Aguardando</p></div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="lg:col-span-2 hidden lg:flex items-center justify-end pr-4">
-                <div className="text-right max-w-[280px]">
-                  <p className="text-gold/70 text-5xl font-serif leading-none mb-3">&ldquo;</p>
-                  <p className="text-[16px] text-white/85 italic leading-relaxed font-light" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>Transformamos momentos em histórias que duram para sempre.</p>
-                  <p className="text-[14px] text-gold/80 italic font-light mt-3" style={{ fontFamily: 'Georgia, serif' }}>— Momento</p>
+              <div className="lg:col-span-2 hidden lg:flex items-end justify-end">
+                <div className="text-right max-w-[280px] p-4 rounded-2xl border border-gold/15"
+                  style={{ background: 'linear-gradient(135deg, rgba(201,164,92,0.05), transparent)' }}>
+                  <p className="text-gold/60 text-4xl font-serif leading-none mb-2">&ldquo;</p>
+                  <p className="text-[14px] text-white/80 italic leading-relaxed font-light" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>Transformamos momentos em histórias que duram para sempre.</p>
+                  <p className="text-[10px] text-gold/70 italic font-light mt-3 tracking-[0.35em] uppercase">— RL Photo.Video</p>
                 </div>
               </div>
             </div>
@@ -2600,57 +2578,42 @@ function SidebarNav({
 
   return (
     <aside
-      className="hidden lg:flex fixed top-0 left-0 bottom-0 w-[220px] z-20 flex-col"
+      className="hidden lg:flex fixed top-0 left-0 bottom-0 w-[230px] z-30 flex-col"
       style={{
-        background: 'linear-gradient(180deg, rgba(10,8,5,0.85) 0%, rgba(14,11,7,0.92) 100%)',
-        backdropFilter: 'blur(16px)',
-        borderRight: '1px solid rgba(201,168,76,0.12)',
+        background: 'linear-gradient(180deg, rgba(15,12,8,0.96) 0%, rgba(11,9,5,0.98) 100%)',
+        backdropFilter: 'blur(20px)',
+        borderRight: '1px solid rgba(201,164,92,0.12)',
       }}
     >
-      {/* Logo */}
-      <div className="px-6 pt-8 pb-6 border-b border-gold/10">
-        <p className="text-[14px] tracking-[0.45em] text-gold/60 uppercase">RL</p>
-        <p className="text-[14px] tracking-[0.18em] text-gold font-light uppercase mt-0.5">Photo<span className="text-white/40">.</span>Video</p>
+      {/* Logo editorial */}
+      <div className="px-6 pt-8 pb-7 border-b border-white/[0.04]">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-2xl font-serif italic text-gold" style={{ fontFamily: 'Georgia, serif' }}>R</span>
+          <p className="text-[12px] tracking-[0.4em] text-gold/70 font-light uppercase">RL</p>
+        </div>
+        <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase ml-9">Photo.Video</p>
         <div className="mt-3 h-px w-8 bg-gold/40" />
       </div>
 
-      {/* User */}
-      {freelancer && (
-        <div className="px-5 py-4 border-b border-white/[0.04] flex items-center gap-3">
-          {freelancer.foto_url ? (
-            <img src={freelancer.foto_url} alt={freelancer.nome} className="w-9 h-9 rounded-full object-cover border border-gold/30" />
-          ) : (
-            <div className="w-9 h-9 rounded-full bg-gold/15 border border-gold/30 flex items-center justify-center text-gold text-[14px] font-bold">
-              {(freelancer.nome ?? '?').charAt(0)}
-            </div>
-          )}
-          <div className="min-w-0 flex-1">
-            <p className="text-[14px] text-white/85 font-medium truncate">{freelancer.nome}</p>
-            {freelancer.status && (
-              <p className="text-[14px] tracking-[0.25em] uppercase text-gold/60 mt-0.5">{freelancer.status}</p>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
+      <nav className="flex-1 overflow-y-auto px-3 py-5 space-y-0.5">
         {items.map((it, i) => {
           const active = tab === it.key
           return (
             <button
               key={i}
               onClick={() => setTab(it.key)}
-              className={`w-full group flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ${
+              className={`w-full group flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition-all ${
                 active
-                  ? 'bg-gold/10 border border-gold/25 text-gold'
-                  : 'border border-transparent text-white/45 hover:text-white/85 hover:bg-white/[0.03]'
+                  ? 'bg-gold/10 border border-gold/30 text-gold'
+                  : 'border border-transparent text-white/45 hover:text-white/90 hover:bg-white/[0.03]'
               }`}
+              style={active ? { boxShadow: '0 0 18px -4px rgba(201,164,92,0.35)' } : {}}
             >
-              <span className={`w-5 text-center text-base ${active ? 'text-gold' : 'text-white/30 group-hover:text-white/60'}`}>{it.icon}</span>
-              <span className="flex-1 text-[14px] tracking-[0.2em] uppercase font-medium">{it.label}</span>
+              <span className={`w-5 text-center text-base ${active ? 'text-gold' : 'text-white/35 group-hover:text-white/70'}`}>{it.icon}</span>
+              <span className="flex-1 text-[13px] font-medium tracking-wide">{it.label}</span>
               {it.count && it.count > 0 ? (
-                <span className={`text-[14px] px-1.5 py-0.5 rounded-full font-bold ${
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
                   active ? 'bg-gold/20 text-gold' : 'bg-white/[0.06] text-white/40'
                 }`}>{it.count}</span>
               ) : null}
@@ -2659,35 +2622,39 @@ function SidebarNav({
         })}
       </nav>
 
-      {/* Footer com ações: Notificações + Sair */}
-      <div className="px-3 py-3 border-t border-white/[0.04] space-y-2">
-        <button
-          onClick={() => setTab('notificacoes')}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border border-white/[0.06] hover:border-gold/30 hover:bg-gold/[0.04] transition-all text-white/65 hover:text-gold"
-        >
-          <span className="text-base relative">
-            ◉
-            {counts.notificacoes > 0 && (
-              <span className="absolute -top-1 -right-2 w-2 h-2 rounded-full bg-red-500 border border-black" />
+      {/* Profile + Quote (estilo editorial) */}
+      <div className="px-5 py-4 border-t border-white/[0.04]">
+        {freelancer && (
+          <div className="flex items-center gap-3 mb-4 p-2 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+            {freelancer.foto_url ? (
+              <img src={freelancer.foto_url} alt={freelancer.nome} className="w-9 h-9 rounded-full object-cover border border-gold/40" />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gold/30 to-gold/10 border border-gold/40 flex items-center justify-center text-gold font-bold">
+                {(freelancer.nome ?? '?').charAt(0)}
+              </div>
             )}
-          </span>
-          <span className="flex-1 text-left text-[14px] tracking-[0.2em] uppercase font-medium">Notificações</span>
-          {counts.notificacoes > 0 && (
-            <span className="text-[14px] px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/40 font-bold">
-              {counts.notificacoes}
-            </span>
-          )}
-        </button>
+            <div className="min-w-0 flex-1">
+              <p className="text-[12px] font-semibold text-white truncate">{freelancer.nome}</p>
+              {freelancer.status && (
+                <p className="text-[10px] tracking-[0.25em] uppercase text-white/35 truncate">{freelancer.status}</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="p-3 rounded-xl border border-gold/15 mb-3"
+          style={{ background: 'linear-gradient(135deg, rgba(201,164,92,0.05), transparent)' }}>
+          <p className="text-gold/40 text-2xl font-serif leading-none mb-1">&ldquo;</p>
+          <p className="text-[11px] text-white/55 italic leading-relaxed font-light">Cada momento é uma história única.</p>
+        </div>
 
         <button
           onClick={onLogout}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border border-white/[0.06] hover:border-red-500/30 hover:bg-red-500/[0.06] transition-all text-white/65 hover:text-red-400"
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl border border-white/[0.06] hover:border-red-500/30 hover:bg-red-500/[0.06] transition-all text-white/55 hover:text-red-400"
         >
           <span className="text-base">⎋</span>
-          <span className="flex-1 text-left text-[14px] tracking-[0.2em] uppercase font-medium">Sair</span>
+          <span className="flex-1 text-left text-[11px] tracking-[0.25em] uppercase font-medium">Sair</span>
         </button>
-
-        <p className="text-[14px] text-white/15 text-center pt-2">© RL Photo.Video</p>
       </div>
     </aside>
   )

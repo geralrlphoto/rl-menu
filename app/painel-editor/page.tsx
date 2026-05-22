@@ -1,7 +1,16 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+
+type FreelancerData = {
+  id: string
+  nome: string
+  email: string | null
+  status: string | null
+  foto_url: string | null
+}
 
 // ──────────────────────────────────────────────────────────────────────────
 //  PAINEL EDITOR — Premium Internal Dashboard for RL PHOTO.VIDEO
@@ -68,7 +77,35 @@ function fmtDate(d: string) {
   return `${String(dd).padStart(2,'0')}/${String(m).padStart(2,'0')}/${y}`
 }
 
+// Foto fallback para o caso de o freelancer não ter foto
+const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=200&h=200&fit=crop&crop=face'
+
 export default function PainelEditor() {
+  const params = useSearchParams()
+  const freelancerId = params?.get('freelancer') ?? null
+  const [freelancer, setFreelancer] = useState<FreelancerData | null>(null)
+
+  // Buscar freelancer da BD se o id estiver na URL
+  useEffect(() => {
+    if (!freelancerId) { setFreelancer(null); return }
+    let cancelled = false
+    fetch('/api/freelancers')
+      .then(r => r.json())
+      .then(d => {
+        if (cancelled) return
+        const f = (d.freelancers ?? []).find((x: any) => x.id === freelancerId)
+        if (f) setFreelancer({ id: f.id, nome: f.nome, email: f.email, status: f.status, foto_url: f.foto_url })
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [freelancerId])
+
+  const displayName  = freelancer?.nome?.split(' ')[0] ?? 'Editor'
+  const displayFull  = freelancer?.nome ?? 'Editor Pro'
+  const displayEmail = freelancer?.email ?? 'editorpro@mail.com'
+  const displayRole  = freelancer?.status ?? 'Editor de Vídeo'
+  const displayPhoto = freelancer?.foto_url ?? DEFAULT_AVATAR
+
   const [active, setActive] = useState('dashboard')
 
   // Calendário
@@ -195,12 +232,12 @@ export default function PainelEditor() {
               <div className="max-w-xl flex items-center gap-5">
                 <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gold/50 shrink-0"
                   style={{ boxShadow: '0 0 28px -4px rgba(201,164,92,0.4)' }}>
-                  <img src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=200&h=200&fit=crop&crop=face"
-                    alt="Editor Pro" className="w-full h-full object-cover" />
+                  <img src={displayPhoto}
+                    alt={displayFull} className="w-full h-full object-cover" />
                 </div>
                 <div>
                   <h1 className="text-4xl sm:text-5xl font-light text-white tracking-tight">
-                    Olá, <span className="font-semibold">Editor</span>!
+                    Olá, <span className="font-semibold">{displayName}</span>!
                   </h1>
                   <p className="text-[16px] text-white/65 mt-3 leading-relaxed font-light">
                     Que hoje seja mais um dia de transformar momentos<br />em memórias inesquecíveis.
@@ -217,10 +254,12 @@ export default function PainelEditor() {
                   <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border border-black">3</span>
                 </button>
                 <div className="flex items-center gap-3 px-3 py-2 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gold/30 to-gold/10 border border-gold/40 flex items-center justify-center text-gold font-bold text-sm">E</div>
-                  <div className="hidden sm:block">
-                    <p className="text-[13px] font-semibold text-white">Editor</p>
-                    <p className="text-[10px] text-white/40 tracking-wide">Editor de Vídeo</p>
+                  <div className="w-9 h-9 rounded-full overflow-hidden border border-gold/40 shrink-0">
+                    <img src={displayPhoto} alt={displayFull} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="hidden sm:block min-w-0">
+                    <p className="text-[13px] font-semibold text-white truncate max-w-[140px]">{displayName}</p>
+                    <p className="text-[10px] text-white/40 tracking-wide truncate max-w-[140px]">{displayRole}</p>
                   </div>
                 </div>
               </div>
