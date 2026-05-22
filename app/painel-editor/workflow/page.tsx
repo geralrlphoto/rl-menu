@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import {
   PROJECTS,
@@ -13,6 +13,42 @@ import {
   type Project,
   type WorkflowStep,
 } from '../_data/projects'
+
+// ── Helpers ───────────────────────────────────────────────────────────
+function stripTimeWF(d: string): string { return (d || '').split('—')[0].trim() }
+function progressFromStageWF(stage: string): number {
+  if (stage === 'Novo Projeto') return 5
+  if (stage === 'Em Edição' || stage === 'Color Grading' || stage === 'Trailer em Produção' || stage === 'Áudio / Sincronização') return 35
+  if (stage === 'Para Revisão' || stage === 'Correções') return 70
+  if (stage === 'Finalizado') return 90
+  if (stage === 'Entregue') return 100
+  return 5
+}
+
+function userProjectToProject(p: any): Project {
+  const pacote = p.pacote ?? 'Pacote Premium 👑'
+  return {
+    id: p.id,
+    noivos: p.noivos ?? '—',
+    foto: p.foto || 'https://images.unsplash.com/photo-1519741497674-611481863552?w=900&h=600&fit=crop',
+    email: p.email || `${(p.noivos ?? 'cliente').toLowerCase().replace(/[^a-z]/g,'')}@mail.com`,
+    telefone: p.telefone || '+351 9XX XXX XXX',
+    recebido: stripTimeWF(p.recebido || ''),
+    dataCasamento: p.dataCasamento || '',
+    entregaPrevista: p.entregaPrevista || '',
+    pacote,
+    preco: pacote === 'Pacote Essencial' ? 1800 : 3500,
+    duracao: p.duracao || '~12 min',
+    stage: p.stage ?? 'Novo Projeto',
+    approval: p.approval ?? 'Aguardando Revisão',
+    progress: progressFromStageWF(p.stage),
+    editor: p.editor || 'Editor Pro',
+    finalEntregue: p.stage === 'Entregue',
+    finalLink: p.finalLink || '',
+    archived: p.archived,
+    cancelled: p.cancelled,
+  }
+}
 
 // ────────────────────────────────────────────────────────────────────────
 //  WORKFLOW — Wedding Moments Films (master production workflow)
@@ -69,12 +105,39 @@ const PROGRESS_COLORS: Record<WorkflowStep, string> = {
 export default function WorkflowPage() {
   const [stageFilter, setStageFilter] = useState<'Todos os Projetos' | WorkflowStep>('Todos os Projetos')
   const [search, setSearch] = useState('')
+  const [allProjects, setAllProjects] = useState<Project[]>(PROJECTS)
 
-  const enriched = useMemo(() => PROJECTS.map(p => ({
+  // ── Sincroniza com user-projects (localStorage) + patches sobre mocks ──
+  useEffect(() => {
+    function load() {
+      try {
+        const userRaw = localStorage.getItem('painel-editor-user-projects')
+        const userProjects: any[] = userRaw ? JSON.parse(userRaw) : []
+        const userMapped: Project[] = userProjects.map(userProjectToProject)
+
+        const patchesRaw = localStorage.getItem('painel-editor-project-patches')
+        const patches: Record<string, Partial<Project>> = patchesRaw ? JSON.parse(patchesRaw) : {}
+
+        const merged: Project[] = [
+          ...userMapped,
+          ...PROJECTS.map(p => patches[p.id] ? { ...p, ...patches[p.id], finalEntregue: (patches[p.id] as any).stage === 'Entregue' || p.finalEntregue, progress: progressFromStageWF((patches[p.id] as any).stage ?? p.stage) } : p),
+        ]
+        setAllProjects(merged)
+      } catch {
+        setAllProjects(PROJECTS)
+      }
+    }
+    load()
+    const onFocus = () => load()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [])
+
+  const enriched = useMemo(() => allProjects.map(p => ({
     p,
     step: workflowStageFor(p),
     progress: p.progress,
-  })), [])
+  })), [allProjects])
 
   const filtered = useMemo(() => {
     let arr = enriched
