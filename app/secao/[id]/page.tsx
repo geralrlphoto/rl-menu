@@ -101,8 +101,9 @@ export default async function SecaoPage({ params }: Props) {
 
   if (section.name?.toUpperCase().includes('FINANÇ') || id === '657aa823-19f0-4bc8-a1a1-a0a712f6d6e0') {
     extraButtons.push(
-      { href: '/financas',        label: 'Pagamentos Noivos', internal: true },
-      { href: '/financas-gerais', label: 'Finanças Gerais',   internal: true },
+      { href: '/financas',                label: 'Pagamentos Noivos',       internal: true },
+      { href: '/financas-gerais',         label: 'Finanças Gerais',          internal: true },
+      { href: '/orcamento-deslocacao',    label: 'Orçamento de Deslocação',  internal: true },
     )
   }
 
