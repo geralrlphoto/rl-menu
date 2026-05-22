@@ -221,11 +221,39 @@ export default function PagamentosPage() {
     .slice(0, 5)
   , [allRows])
 
-  // Gráfico — 12 meses (mock)
-  const monthlyRevenue = [1800, 2300, 3600, 4500, 7800, 12500, 14200, 12800, 15600, 18500, 19200, 21450]
+  // Gráfico — 12 meses do ano atual, acumulado real (a partir de allRows recebidos)
+  const currentYear = TODAY.split('/')[2]
+  const currentMonthIdx = Math.max(0, Number(TODAY.split('/')[1]) - 1)
+  const MONTH_LABELS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+  const monthlyRevenue = useMemo(() => {
+    // Soma por mês (apenas pagamentos efetivamente recebidos no ano corrente)
+    const perMonth = new Array(12).fill(0) as number[]
+    allRows.forEach(r => {
+      if (r.inst.status !== 'Recebido') return
+      const dt = r.inst.paidDate
+      if (!dt) return
+      const [_, mm, yyyy] = dt.split('/')
+      if (yyyy !== currentYear) return
+      const idx = Number(mm) - 1
+      if (idx >= 0 && idx < 12) perMonth[idx] += r.inst.value
+    })
+    // Acumulado (running sum) — gráfico cresce até ao mês atual e fica plano depois
+    const cumulative = new Array(12).fill(0) as number[]
+    let acc = 0
+    for (let i = 0; i < 12; i++) {
+      if (i <= currentMonthIdx) {
+        acc += perMonth[i]
+        cumulative[i] = acc
+      } else {
+        cumulative[i] = acc // mantém valor para os meses futuros (linha plana)
+      }
+    }
+    return cumulative
+  }, [allRows, currentYear, currentMonthIdx])
+
   const chartPath = useMemo(() => {
     const w = 460, h = 110, pad = 8
-    const max = Math.max(...monthlyRevenue)
+    const max = Math.max(1, ...monthlyRevenue)
     const step = (w - pad*2) / (monthlyRevenue.length - 1)
     const pts = monthlyRevenue.map((v, i) => ({ x: pad + i * step, y: h - pad - (v / max) * (h - pad*2) }))
     let d = `M ${pts[0].x} ${pts[0].y}`
@@ -234,8 +262,10 @@ export default function PagamentosPage() {
       const cx = (p0.x + p1.x) / 2
       d += ` Q ${cx} ${p0.y}, ${cx} ${(p0.y + p1.y) / 2} T ${p1.x} ${p1.y}`
     }
-    return { path: d, last: pts[pts.length-1], pts, w, h }
-  }, [])
+    // Highlight = mês atual (não o último ponto, porque os meses futuros são planos)
+    const highlight = pts[currentMonthIdx]
+    return { path: d, last: pts[pts.length-1], highlight, pts, w, h, currentValue: monthlyRevenue[currentMonthIdx] }
+  }, [monthlyRevenue, currentMonthIdx])
 
   const selectedProject = allProjects.find(p => p.id === selectedId) ?? null
   const selectedPlan    = selectedProject ? paymentPlanFor(selectedProject) : []
@@ -264,10 +294,10 @@ export default function PagamentosPage() {
 
           {/* KPIs */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <KpiCard icon="↘" label="Recebido este mês" value={fmtEUR(kpis.recebidosMes)} sub="Maio 2026"               trend={+12.4} />
-            <KpiCard icon="◷" label="A receber"          value={fmtEUR(kpis.aReceber)}     sub={`${allRows.filter(r=>r.inst.status==='A receber').length} projeto${allRows.filter(r=>r.inst.status==='A receber').length === 1 ? '' : 's'}`} trend={+5.2} />
-            <KpiCard icon="!" label="Atrasados"          value={fmtEUR(kpis.atrasados)}    sub={`${allRows.filter(r=>r.inst.status==='Atrasado').length} projeto${allRows.filter(r=>r.inst.status==='Atrasado').length === 1 ? '' : 's'}`}  trend={-3.1} red />
-            <KpiCard icon="€" label="Total anual"        value={fmtEUR(kpis.totalAnual)}   sub="2026"                  trend={+28.7} />
+            <KpiCard icon="↘" label="Recebido este mês" value={fmtEUR(kpis.recebidosMes)} sub={`${MONTH_LABELS_PT[currentMonthIdx]} ${currentYear}`} />
+            <KpiCard icon="◷" label="A receber"          value={fmtEUR(kpis.aReceber)}     sub={`${allRows.filter(r=>r.inst.status==='A receber').length} projeto${allRows.filter(r=>r.inst.status==='A receber').length === 1 ? '' : 's'}`} />
+            <KpiCard icon="!" label="Atrasados"          value={fmtEUR(kpis.atrasados)}    sub={`${allRows.filter(r=>r.inst.status==='Atrasado').length} projeto${allRows.filter(r=>r.inst.status==='Atrasado').length === 1 ? '' : 's'}`} red />
+            <KpiCard icon="€" label="Total anual"        value={fmtEUR(kpis.totalAnual)}   sub={currentYear} />
           </div>
 
           {/* GRID Principal: tabela (2/3) + right panel (1/3) */}
@@ -434,7 +464,7 @@ export default function PagamentosPage() {
               </Panel>
 
               {/* Chart */}
-              <Panel title="Receitas Mensais" right={<button className="text-[10px] tracking-widest uppercase text-white/35 hover:text-gold transition-colors border border-white/10 px-2 py-1 rounded-md">2026 ▾</button>}>
+              <Panel title="Receitas Mensais" right={<button className="text-[10px] tracking-widest uppercase text-white/35 hover:text-gold transition-colors border border-white/10 px-2 py-1 rounded-md">{currentYear} ▾</button>}>
                 <div className="relative">
                   <svg viewBox={`0 0 ${chartPath.w} ${chartPath.h}`} className="w-full h-32">
                     <defs>
@@ -450,12 +480,12 @@ export default function PagamentosPage() {
                     </defs>
                     <path d={`${chartPath.path} L ${chartPath.last.x} ${chartPath.h} L 8 ${chartPath.h} Z`} fill="url(#goldArea)" />
                     <path d={chartPath.path} fill="none" stroke="url(#goldStroke)" strokeWidth="2.2" strokeLinecap="round" />
-                    <circle cx={chartPath.last.x} cy={chartPath.last.y} r="4" fill="#C9A45C" />
-                    <circle cx={chartPath.last.x} cy={chartPath.last.y} r="9" fill="#C9A45C" opacity="0.18" />
+                    <circle cx={chartPath.highlight.x} cy={chartPath.highlight.y} r="4" fill="#C9A45C" />
+                    <circle cx={chartPath.highlight.x} cy={chartPath.highlight.y} r="9" fill="#C9A45C" opacity="0.18" />
                   </svg>
                   <div className="absolute top-1 right-1 px-2.5 py-1.5 rounded-lg bg-black/80 border border-gold/30">
-                    <p className="text-[11px] text-gold font-bold leading-none">21.450 €</p>
-                    <p className="text-[9px] text-white/40 mt-0.5">Maio 2026</p>
+                    <p className="text-[11px] text-gold font-bold leading-none">{fmtEUR(chartPath.currentValue)}</p>
+                    <p className="text-[9px] text-white/40 mt-0.5">{MONTH_LABELS_PT[currentMonthIdx]} {currentYear}</p>
                   </div>
                 </div>
                 <div className="flex justify-between mt-2 text-[10px] text-white/30 px-1">
