@@ -384,3 +384,53 @@ export function eventsFromProjects(): CalendarEvent[] {
   return events
 }
 
+// ────────────────────────────────────────────────────────────────────────
+//  WORKFLOW — sistema de 9 etapas
+// ────────────────────────────────────────────────────────────────────────
+
+export type WorkflowStep = 'Recebido' | 'Organização' | 'Pré-Produção' | 'Edição' | 'Color Grading' | 'Áudio' | 'Revisão' | 'Aprovação' | 'Entrega'
+
+export const WORKFLOW_STEPS: WorkflowStep[] = [
+  'Recebido', 'Organização', 'Pré-Produção', 'Edição', 'Color Grading', 'Áudio', 'Revisão', 'Aprovação', 'Entrega',
+]
+
+export const WORKFLOW_PROGRESS: Record<WorkflowStep, number> = {
+  'Recebido':      10,
+  'Organização':   20,
+  'Pré-Produção':  30,
+  'Edição':        50,
+  'Color Grading': 65,
+  'Áudio':         75,
+  'Revisão':       85,
+  'Aprovação':     95,
+  'Entrega':       100,
+}
+
+export const WORKFLOW_DESCRIPTIONS: Record<WorkflowStep, string> = {
+  'Recebido':      'Projeto recebido e confirmado',
+  'Organização':   'Download e organização dos arquivos',
+  'Pré-Produção':  'Análise do material e planeamento da edição',
+  'Edição':        'Cortes, montagem e sincronização',
+  'Color Grading': 'Correção de cor e tratamento de imagem',
+  'Áudio':         'Mixagem, trilha sonora e limpeza de áudio',
+  'Revisão':       'Envio para revisão e ajustes necessários',
+  'Aprovação':     'Aguardando aprovação do cliente',
+  'Entrega':       'Exportação e entrega final ao cliente',
+}
+
+/** Mapeia o stage atual do projeto para uma das 9 etapas do workflow */
+export function workflowStageFor(p: Project): WorkflowStep {
+  switch (p.stage) {
+    case 'Novo Projeto':           return 'Recebido'
+    case 'Em Edição':              return 'Edição'
+    case 'Color Grading':          return 'Color Grading'
+    case 'Trailer em Produção':    return 'Edição'
+    case 'Áudio / Sincronização':  return 'Áudio'
+    case 'Para Revisão':           return 'Revisão'
+    case 'Correções':              return 'Revisão'
+    case 'Finalizado':             return 'Aprovação'
+    case 'Entregue':               return 'Entrega'
+    default:                       return 'Recebido'
+  }
+}
+
