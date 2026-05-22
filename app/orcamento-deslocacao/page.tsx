@@ -67,13 +67,19 @@ export default function OrcamentoDeslocacaoPage() {
       {/* Estilos de impressão — esconde UI e estiliza preto/branco */}
       <style jsx global>{`
         @media print {
-          body { background: #fff !important; color: #000 !important; }
+          html, body {
+            background: #fff !important;
+            color: #000 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
           .no-print { display: none !important; }
           .print-only { display: block !important; }
-          .print-card { background: #fff !important; border-color: #ddd !important; color: #000 !important; }
-          .print-card * { color: #000 !important; }
-          .print-gold { color: #C9A84C !important; }
-          @page { margin: 1.5cm; }
+          .print-only img {
+            display: block !important;
+            visibility: visible !important;
+          }
+          @page { margin: 1.5cm; size: A4; }
         }
         .print-only { display: none; }
       `}</style>
@@ -85,8 +91,8 @@ export default function OrcamentoDeslocacaoPage() {
           ‹ Voltar
         </Link>
 
-        {/* Header */}
-        <header className="mb-10">
+        {/* Header (só ecrã — escondido no PDF) */}
+        <header className="no-print mb-10">
           <p className="text-[9px] tracking-[0.5em] text-white/20 uppercase mb-2">RL PHOTO.VIDEO</p>
           <h1 className="text-3xl font-extralight tracking-[0.2em] text-gold uppercase">
             Orçamento de Deslocação
@@ -267,12 +273,14 @@ export default function OrcamentoDeslocacaoPage() {
 
           {/* Cabeçalho — logo + dados da empresa (mesmo padrão do contrato) */}
           <div className="flex items-start justify-between mb-10 pb-6 border-b-2 border-black">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-5">
               <img
                 src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
                 alt="RL Photo Video"
-                className="w-20 h-20 object-contain"
-                style={{ filter: 'invert(0)' }}
+                width={90}
+                height={90}
+                className="object-contain"
+                style={{ width: '90px', height: '90px' }}
               />
               <div>
                 <h1 className="text-2xl font-black tracking-[0.15em] uppercase text-black">RL PHOTO.VIDEO</h1>
