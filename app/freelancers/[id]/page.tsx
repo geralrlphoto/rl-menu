@@ -129,7 +129,7 @@ function PasswordDisplay({ password, freelancerId }: { password: string | null; 
 
 export default function FreelancerDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const [tab, setTab] = useState<'casamentos'|'edicao'|'album'|'valores'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|null>(null)
+  const [tab, setTab] = useState<'casamentos'|'edicao'|'album'|'valores'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'|null>(null)
   const [editForm, setEditForm] = useState<{ nome: string; status: string; contato: string; email: string; nome_sos: string; contato_sos: string } | null>(null)
   const [editSaving, setEditSaving] = useState(false)
   const [introHome, setIntroHome] = useState('')
@@ -195,10 +195,11 @@ export default function FreelancerDetailPage() {
     </main>
   )
 
-  // Próximo casamento
-  const upcoming = casamentos
+  // Lista de próximos (ordenados) e o próximo (primeiro da lista)
+  const upcomingList = casamentos
     .filter(c => c.data_casamento && (daysUntil(c.data_casamento) ?? -1) >= 0)
-    .sort((a,b) => (a.data_casamento ?? '') < (b.data_casamento ?? '') ? -1 : 1)[0] ?? null
+    .sort((a,b) => (a.data_casamento ?? '') < (b.data_casamento ?? '') ? -1 : 1)
+  const upcoming = upcomingList[0] ?? null
   const dtu = upcoming ? daysUntil(upcoming.data_casamento) : null
 
   const isVideografo = freelancer?.status === 'VIDEOGRAFO'
@@ -278,7 +279,7 @@ export default function FreelancerDetailPage() {
     setEditSaving(false)
   }
 
-  const tabs: { key: 'casamentos'|'edicao'|'album'|'valores'|'info'|'notas'|'pagamentos'|'notificacoes'; label: string; count?: number }[] = [
+  const tabs: { key: 'casamentos'|'edicao'|'album'|'valores'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'; label: string; count?: number }[] = [
     { key: 'casamentos',   label: 'Casamentos',  count: casamentos.length },
     ...(!isVideografo ? [{ key: 'edicao' as const, label: 'Edição Fotos', count: edicao.length }] : []),
     ...(isFotografo ? [{ key: 'album' as const, label: 'Edição Álbum', count: album.length }] : []),
@@ -288,6 +289,7 @@ export default function FreelancerDetailPage() {
     { key: 'pagamentos',   label: 'Pagamentos', count: pagamentos.length },
     { key: 'mensagens',    label: 'Msgs',   count: mensagens.filter(m => m.remetente === 'freelancer' && !m.lida_admin).length },
     { key: 'notificacoes', label: 'Notif.', count: notificacoes.filter(n => !n.lida).length },
+    { key: 'definicoes',   label: 'Definições' },
   ]
 
   return (
@@ -395,156 +397,332 @@ export default function FreelancerDetailPage() {
           className="flex-shrink-0 w-7 h-8 flex items-center justify-center text-white/30 hover:text-white/70 transition-colors text-base">›</button>
       </div>
 
-      {/* Home */}
-      {tab === null && (
-        <div className="max-w-2xl">
+      {/* Home — Dashboard (cópia do portal do freelancer) */}
+      {tab === null && (() => {
+        const proximoCasamento = upcomingList[0] ?? null
+        const dtuProximo = proximoCasamento ? daysUntil(proximoCasamento.data_casamento) : null
+        const edicoesEmCurso = edicao.filter(e => e.status === 'EM EDIÇÃO').length
+        const edicoesPendentes = edicao.filter(e => e.status === 'NOVO TRABALHO').length
+        const albumsEmCurso = album.filter(a => ['EM EDIÇÃO','EM APROVAÇÃO'].includes(a.status)).length
+        const pagPendentes = pagamentos.filter(p => p.status !== 'PAGO').length
+        const valorPendente = pagamentos.filter(p => p.status !== 'PAGO').reduce((s, p) => s + (Number(p.valor) || 0), 0)
+        const mensagensNaoLidas = mensagens.filter(m => m.remetente === 'freelancer' && !m.lida_admin).length
+        const primeiroNome = (freelancer?.nome ?? '').split(' ')[0] || ''
+        const totalCasamentos = casamentos.length
+        const totalEmEdicao = edicao.filter(e => e.status === 'EM EDIÇÃO').length
+        const totalConcluidos = edicao.filter(e => e.status === 'CONCLUÍDO').length
+        const totalAguardando = edicao.filter(e => e.status === 'NOVO TRABALHO').length
 
-          {/* ── Pré-visualização igual ao portal ── */}
-          {(introHomeTitle || introHome) && (
-            <div className="mb-6 px-2 py-6 space-y-2">
-              {introHomeTitle && <p className="text-[22px] font-semibold text-white">{introHomeTitle}</p>}
-              {introHome && <p className="text-[14px] text-white leading-relaxed whitespace-pre-wrap">{introHome}</p>}
-            </div>
-          )}
+        const atividades: Array<{ tipo: string; texto: string; data: string }> = []
+        mensagens.slice(0, 10).forEach(m => {
+          if (m.remetente === 'freelancer') atividades.push({ tipo: 'msg', texto: `Msg do freelancer: ${(m.mensagem ?? '').slice(0, 60)}${(m.mensagem ?? '').length > 60 ? '…' : ''}`, data: m.created_at })
+        })
+        notificacoes.slice(0, 10).forEach(n => atividades.push({ tipo: 'notif', texto: n.titulo, data: n.created_at }))
+        pagamentos.filter(p => p.data_pago).slice(0, 5).forEach(p => atividades.push({ tipo: 'pag', texto: `Pagamento: ${p.descricao}`, data: p.data_pago! }))
+        atividades.sort((a, b) => (b.data || '') > (a.data || '') ? 1 : -1)
+        const atividadesRecentes = atividades.slice(0, 6)
+        const tempoRelativo = (d: string) => {
+          const diff = Date.now() - new Date(d).getTime()
+          const h = Math.floor(diff / 36e5)
+          if (h < 1) return 'agora'; if (h < 24) return `há ${h}h`
+          const dias = Math.floor(h / 24); if (dias < 7) return `há ${dias}d`
+          return new Date(d).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })
+        }
 
-          {/* ── Controlos admin ── */}
-          <div className="border-t border-white/[0.06] pt-5 space-y-4">
-
-            {/* Foto de perfil */}
-            <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
-              <p className="text-[14px] tracking-[0.3em] text-white/25 uppercase mb-1">Foto de Perfil / Hero</p>
-              <p className="text-[14px] text-white/35 mb-4 italic">Aparece no avatar e como fundo do hero do portal do freelancer.</p>
-              <div className="flex items-center gap-5">
-                {freelancer.foto_url ? (
-                  <div className="relative w-24 h-28 rounded-2xl overflow-hidden flex-shrink-0 border border-white/10"
-                    style={{ boxShadow: '0 0 16px 2px rgba(200,100,50,0.25)' }}>
-                    <img src={freelancer.foto_url} alt={freelancer.nome} className="w-full h-full object-cover grayscale" />
-                  </div>
-                ) : (
-                  <div className="w-24 h-28 rounded-2xl border border-dashed border-white/15 flex items-center justify-center flex-shrink-0">
-                    <span className="text-white/20 text-2xl">👤</span>
-                  </div>
-                )}
-                <div className="space-y-2">
-                  <label className={`cursor-pointer px-4 py-2 rounded-xl text-[14px] border transition-all inline-block ${uploadingPhoto ? 'border-white/10 text-white/20' : 'border-white/20 text-white/50 hover:border-white/40 hover:text-white/80'}`}>
-                    {uploadingPhoto ? 'A enviar...' : freelancer.foto_url ? 'Alterar foto' : 'Carregar foto'}
-                    <input type="file" accept="image/*" className="hidden" disabled={uploadingPhoto}
-                      onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoUpload(f) }} />
-                  </label>
-                  {freelancer.foto_url && (
-                    <button onClick={async () => {
-                      await fetch('/api/freelancers', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, foto_url: null }) })
-                      await load()
-                    }} className="block text-[14px] text-red-400/50 hover:text-red-400 transition-colors">
-                      Remover foto
-                    </button>
-                  )}
-                </div>
+        return (
+          <>
+          {/* ── HERO Card ─────────────────────────────────────────── */}
+          <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] mb-5 min-h-[280px]">
+            {freelancer?.foto_url && (
+              <div className="absolute inset-0 z-0">
+                <img src={freelancer.foto_url} alt="" className="w-full h-full object-cover" />
               </div>
-            </div>
-
-            {/* Texto da página inicial */}
-            <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-[14px] tracking-[0.3em] text-white/25 uppercase">Texto da página inicial</p>
-                <span className={`text-[14px] tracking-widest transition-all ${
-                  introHomeStatus === 'saving' ? 'text-white/30' :
-                  introHomeStatus === 'saved'  ? 'text-emerald-400' : 'text-transparent'
-                }`}>
-                  {introHomeStatus === 'saving' ? 'A guardar...' : '✓ Guardado'}
-                </span>
-              </div>
-              <input
-                value={introHomeTitle}
-                onChange={e => handleIntroHomeTitleChange(e.target.value)}
-                placeholder="Título de boas-vindas..."
-                className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-[14px] text-white/70 outline-none focus:border-white/20 transition-colors placeholder:text-white/15 mb-2"
-              />
-              <textarea
-                value={introHome}
-                onChange={e => handleIntroHomeChange(e.target.value)}
-                rows={5}
-                placeholder="Escreve aqui o texto que aparece na página inicial do freelancer (⌂)..."
-                className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-[14px] text-white/70 outline-none focus:border-white/20 transition-colors resize-none placeholder:text-white/15 leading-relaxed"
-              />
-            </div>
-
-            {/* Guia de trabalho */}
-            <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-[14px] tracking-[0.3em] text-white/25 uppercase">Guia de Trabalho</p>
-                <span className={`text-[14px] tracking-widest transition-all ${
-                  guiaStatus === 'saving' ? 'text-white/30' :
-                  guiaStatus === 'saved'  ? 'text-emerald-400' : 'text-transparent'
-                }`}>
-                  {guiaStatus === 'saving' ? 'A guardar...' : '✓ Guardado'}
-                </span>
-              </div>
-              <textarea
-                value={guia}
-                onChange={e => handleGuiaChange(e.target.value)}
-                rows={8}
-                placeholder="Escreve aqui as regras e guia de trabalho para os freelancers (herda para todos via template)..."
-                className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-[14px] text-white/70 outline-none focus:border-white/20 transition-colors resize-none placeholder:text-white/15 leading-relaxed"
-              />
-            </div>
-
-            {/* Dados do freelancer */}
-            {editForm ? (
-              <div className="bg-white/[0.02] border border-gold/20 rounded-2xl p-5 space-y-3">
-                <p className="text-[14px] tracking-[0.3em] text-gold/60 uppercase mb-1">Editar dados</p>
-                {[
-                  { label: 'Nome', key: 'nome', placeholder: 'Nome' },
-                  { label: 'Contato', key: 'contato', placeholder: '9XX XXX XXX' },
-                  { label: 'Email', key: 'email', placeholder: 'email@exemplo.com' },
-                  { label: 'SOS — Nome', key: 'nome_sos', placeholder: 'Nome familiar' },
-                  { label: 'SOS — Nº', key: 'contato_sos', placeholder: '9XX XXX XXX' },
-                ].map(f => (
-                  <div key={f.key}>
-                    <label className="block text-[14px] text-white/25 tracking-widest uppercase mb-1">{f.label}</label>
-                    <input value={(editForm as any)[f.key]} onChange={e => setEditForm(prev => ({ ...prev!, [f.key]: e.target.value }))}
-                      placeholder={f.placeholder}
-                      className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-[14px] text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
-                  </div>
-                ))}
+            )}
+            <div className="absolute inset-0 z-[1]"
+              style={{ background: freelancer?.foto_url
+                ? 'linear-gradient(90deg, rgba(8,6,4,0.97) 0%, rgba(14,11,7,0.92) 40%, rgba(14,11,7,0.55) 65%, rgba(14,11,7,0.2) 90%, rgba(14,11,7,0) 100%)'
+                : 'linear-gradient(90deg, rgba(8,6,4,0.95) 0%, rgba(14,11,7,0.85) 45%, rgba(14,11,7,0.4) 75%, rgba(20,15,8,0.1) 100%)' }} />
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-5 gap-6 p-6 sm:p-8">
+              <div className="lg:col-span-3 flex flex-col gap-5">
                 <div>
-                  <label className="block text-[14px] text-white/25 tracking-widest uppercase mb-1">Função</label>
-                  <select value={editForm.status} onChange={e => setEditForm(prev => ({ ...prev!, status: e.target.value }))}
-                    className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-[14px] text-white/80 outline-none focus:border-gold/40 transition-colors cursor-pointer">
-                    {['FOTOGRAFO','VIDEOGRAFO','ASSISTENTE','EDITORES','OUTRO'].map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
+                  <h1 className="text-3xl sm:text-4xl font-semibold text-white tracking-tight">
+                    Bem-vindo de volta, {primeiroNome}! <span className="inline-block">👋</span>
+                  </h1>
+                  <p className="text-[15px] text-white/55 mt-2">Continua a criar histórias inesquecíveis.</p>
                 </div>
-                <div className="flex justify-end gap-2 pt-1">
-                  <button onClick={() => setEditForm(null)} className="px-3 py-1.5 rounded-lg text-[14px] border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
-                  <button onClick={handleEditSave} disabled={editSaving} className="px-4 py-1.5 rounded-lg text-[14px] bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-50">
-                    {editSaving ? 'A guardar...' : 'Guardar'}
+                <div className="flex flex-wrap items-center gap-3">
+                  <button onClick={() => setTab('casamentos')}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black text-[14px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
+                    style={{ boxShadow: '0 0 20px -4px rgba(201,168,76,0.5)' }}>
+                    <span className="text-lg leading-none">+</span> Ver Casamentos
                   </button>
+                  <button onClick={() => setTab('definicoes')}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/15 text-white/85 text-[14px] font-medium tracking-wider hover:bg-white/[0.05] hover:border-white/30 transition-all">
+                    <span className="text-base leading-none">⚙</span> Definições
+                  </button>
+                </div>
+                <div>
+                  <p className="text-[14px] tracking-[0.3em] text-white/40 uppercase font-medium mb-3">Resumo Rápido</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                      <span className="w-8 h-8 rounded-lg border bg-gold/10 border-gold/25 text-gold flex items-center justify-center text-base">◫</span>
+                      <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalCasamentos}</p><p className="text-[14px] text-white/55 leading-tight mt-0.5">Casamentos</p></div>
+                    </div>
+                    <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                      <span className="w-8 h-8 rounded-lg border bg-purple-500/10 border-purple-500/25 text-purple-300 flex items-center justify-center text-base">✎</span>
+                      <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalEmEdicao}</p><p className="text-[14px] text-white/55 leading-tight mt-0.5">Em edição</p></div>
+                    </div>
+                    <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                      <span className="w-8 h-8 rounded-lg border bg-emerald-500/10 border-emerald-500/25 text-emerald-300 flex items-center justify-center text-base">✓</span>
+                      <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalConcluidos}</p><p className="text-[14px] text-white/55 leading-tight mt-0.5">Concluídos</p></div>
+                    </div>
+                    <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                      <span className="w-8 h-8 rounded-lg border bg-amber-500/10 border-amber-500/25 text-amber-300 flex items-center justify-center text-base">◷</span>
+                      <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalAguardando}</p><p className="text-[14px] text-white/55 leading-tight mt-0.5">Aguardando</p></div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            ) : (
-              <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 space-y-3">
-                <p className="text-[14px] tracking-[0.3em] text-white/25 uppercase mb-2">Dados do Freelancer</p>
-                {[
-                  ['Nome', freelancer.nome],
-                  ['Função', freelancer.status],
-                  ['Contato', freelancer.contato],
-                  ['Email', freelancer.email],
-                  ['SOS', freelancer.nome_sos ? `${freelancer.nome_sos}${freelancer.contato_sos ? ` · ${freelancer.contato_sos}` : ''}` : null],
-                ].filter(([,v]) => v).map(([label, val]) => (
-                  <div key={label as string} className="flex items-center gap-3">
-                    <span className="text-[14px] text-white/25 tracking-widest uppercase w-16 shrink-0">{label}</span>
-                    <span className="text-[14px] text-white/70">{val}</span>
+              <div className="lg:col-span-2 hidden lg:flex items-center justify-end pr-4">
+                <div className="text-right max-w-[280px]">
+                  <p className="text-gold/70 text-5xl font-serif leading-none mb-3">&ldquo;</p>
+                  <p className="text-[16px] text-white/85 italic leading-relaxed font-light" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>Transformamos momentos em histórias que duram para sempre.</p>
+                  <p className="text-[14px] text-gold/80 italic font-light mt-3" style={{ fontFamily: 'Georgia, serif' }}>— Momento</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-5">
+            {/* Próximo Casamento — destaque */}
+            {proximoCasamento && (
+              <div onClick={() => setTab('casamentos')}
+                className="cursor-pointer bg-gradient-to-br from-gold/[0.08] to-gold/[0.02] border border-gold/30 rounded-2xl p-6 sm:p-7 hover:border-gold/50 transition-all"
+                style={{ boxShadow: '0 0 24px -8px rgba(201,168,76,0.25)' }}>
+                <p className="text-[14px] tracking-[0.4em] text-gold/70 uppercase font-bold mb-3">Próximo Casamento</p>
+                <div className="flex items-end justify-between gap-4 flex-wrap">
+                  <div>
+                    <h2 className="text-2xl font-semibold text-white mb-1">{proximoCasamento.local}</h2>
+                    <p className="text-[14px] text-white/55">{fmtDate(proximoCasamento.data_casamento)}</p>
                   </div>
-                ))}
-                <div className="pt-2">
-                  <button onClick={() => setEditForm({ nome: freelancer.nome, status: freelancer.status ?? '', contato: freelancer.contato ?? '', email: freelancer.email ?? '', nome_sos: freelancer.nome_sos ?? '', contato_sos: freelancer.contato_sos ?? '' })}
-                    className="px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-[14px] font-semibold tracking-widest hover:bg-gold/20 transition-all uppercase">
-                    Editar
-                  </button>
+                  <div className={`text-right ${dtuProximo !== null && dtuProximo <= 15 ? 'text-red-400' : 'text-gold'}`}>
+                    <p className="text-4xl font-black leading-none">{dtuProximo === 0 ? 'HOJE' : dtuProximo}</p>
+                    <p className="text-[14px] tracking-widest uppercase mt-1">{dtuProximo === 0 ? '' : dtuProximo === 1 ? 'dia' : 'dias'}</p>
+                  </div>
                 </div>
               </div>
             )}
+
+            {/* Atalhos */}
+            <div>
+              <h3 className="text-[14px] tracking-[0.4em] text-gold uppercase font-bold mb-3">Atalhos</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { key: 'casamentos' as const, icon: '💍', label: 'Casamentos', count: upcomingList.length, sub: upcomingList.length === 0 ? 'Sem próximos' : `${upcomingList.length} próximos` },
+                  { key: 'edicao' as const, icon: isFotografo ? '📷' : '🎬', label: isFotografo ? 'Edição Fotos' : 'Edição Vídeo', count: edicoesEmCurso, sub: `${edicoesPendentes} novos · ${edicoesEmCurso} em curso` },
+                  ...(album.length > 0 ? [{ key: 'album' as const, icon: '📚', label: 'Álbuns', count: albumsEmCurso, sub: `${album.length} total · ${albumsEmCurso} em curso` }] : []),
+                  { key: 'pagamentos' as const, icon: '💰', label: 'Pagamentos', count: pagPendentes, sub: pagPendentes === 0 ? 'Tudo em dia' : `${valorPendente.toLocaleString('pt-PT')} € pendente` },
+                ].slice(0, 4).map(c => (
+                  <button key={c.key} onClick={() => setTab(c.key)}
+                    className="bg-white/[0.02] border border-white/[0.08] hover:border-gold/30 hover:bg-white/[0.04] rounded-2xl p-4 text-left transition-all group">
+                    <div className="flex items-start justify-between mb-2">
+                      <span className="text-2xl">{c.icon}</span>
+                      {c.count > 0 && (
+                        <span className="text-[14px] tracking-widest uppercase font-bold px-2 py-0.5 rounded-full bg-gold/15 text-gold border border-gold/30">{c.count}</span>
+                      )}
+                    </div>
+                    <p className="text-[14px] tracking-widest uppercase font-bold text-white/85 mb-1">{c.label}</p>
+                    <p className="text-[14px] text-white/35 leading-tight">{c.sub}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Próximos Casamentos (lista) */}
+            {upcomingList.length > 1 && (
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 sm:p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-[14px] tracking-[0.4em] text-gold uppercase font-bold">Próximos Casamentos</h3>
+                  <button onClick={() => setTab('casamentos')} className="text-[14px] tracking-widest text-white/35 hover:text-gold uppercase transition-colors">Ver todos →</button>
+                </div>
+                <div className="space-y-2">
+                  {upcomingList.slice(0, 4).map(c => {
+                    const dtu2 = daysUntil(c.data_casamento)
+                    return (
+                      <div key={c.id} onClick={() => setTab('casamentos')}
+                        className="cursor-pointer flex items-center gap-4 px-4 py-3 rounded-xl border border-white/[0.05] hover:border-gold/25 hover:bg-white/[0.03] transition-all">
+                        <div className={`w-12 h-12 rounded-lg flex flex-col items-center justify-center border ${dtu2 !== null && dtu2 <= 15 ? 'border-red-500/30 bg-red-500/5 text-red-400' : 'border-gold/20 bg-gold/[0.04] text-gold'}`}>
+                          <span className="text-base font-black leading-none">{dtu2 === 0 ? '!' : dtu2}</span>
+                          <span className="text-[14px] uppercase tracking-wide opacity-60">{dtu2 === 0 ? 'HOJE' : 'd'}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[14px] font-semibold text-white truncate">{c.local}</p>
+                          <p className="text-[14px] text-white/35 mt-0.5">{fmtDate(c.data_casamento).split(' · ')[0]}</p>
+                        </div>
+                        {c.data_confirmada && (
+                          <span className="text-[14px] tracking-widest uppercase font-bold px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">✓</span>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Atividade Recente */}
+            {atividadesRecentes.length > 0 && (
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 sm:p-6">
+                <h3 className="text-[14px] tracking-[0.4em] text-gold uppercase font-bold mb-4">Atividade Recente</h3>
+                <div className="space-y-2.5">
+                  {atividadesRecentes.map((a, i) => (
+                    <div key={i} className="flex items-start gap-3 text-[14px]">
+                      <span className="w-7 h-7 rounded-full border border-white/10 bg-white/[0.02] flex items-center justify-center shrink-0 text-base">
+                        {a.tipo === 'msg' ? '💬' : a.tipo === 'pag' ? '💰' : '🔔'}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white/75 leading-snug">{a.texto}</p>
+                        <p className="text-[14px] text-white/30 mt-0.5">{tempoRelativo(a.data)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Alerta mensagens não lidas (admin vê mensagens do freelancer) */}
+            {mensagensNaoLidas > 0 && (
+              <button onClick={() => setTab('mensagens')}
+                className="bg-blue-500/[0.06] border border-blue-500/25 hover:bg-blue-500/[0.1] rounded-2xl p-4 text-left transition-all flex items-center gap-3">
+                <span className="text-2xl">💬</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] tracking-widest uppercase font-bold text-blue-300/85">Mensagens do Freelancer</p>
+                  <p className="text-[14px] text-white/40 mt-0.5">{mensagensNaoLidas} {mensagensNaoLidas === 1 ? 'nova' : 'novas'}</p>
+                </div>
+                <span className="text-[14px] tracking-widest uppercase font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/40">{mensagensNaoLidas}</span>
+              </button>
+            )}
           </div>
+          </>
+        )
+      })()}
+
+      {/* Definições — antigos controlos admin movidos para aqui */}
+      {tab === 'definicoes' && (
+        <div className="max-w-3xl space-y-4">
+          <h2 className="text-[14px] tracking-[0.4em] text-gold uppercase font-bold mb-4">Definições</h2>
+
+          {/* Foto de perfil */}
+          <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
+            <p className="text-[14px] tracking-[0.3em] text-white/25 uppercase mb-1">Foto de Perfil / Hero</p>
+            <p className="text-[14px] text-white/35 mb-4 italic">Aparece no avatar e como fundo do hero do portal do freelancer.</p>
+            <div className="flex items-center gap-5">
+              {freelancer.foto_url ? (
+                <div className="relative w-24 h-28 rounded-2xl overflow-hidden flex-shrink-0 border border-white/10"
+                  style={{ boxShadow: '0 0 16px 2px rgba(200,100,50,0.25)' }}>
+                  <img src={freelancer.foto_url} alt={freelancer.nome} className="w-full h-full object-cover grayscale" />
+                </div>
+              ) : (
+                <div className="w-24 h-28 rounded-2xl border border-dashed border-white/15 flex items-center justify-center flex-shrink-0">
+                  <span className="text-white/20 text-2xl">👤</span>
+                </div>
+              )}
+              <div className="space-y-2">
+                <label className={`cursor-pointer px-4 py-2 rounded-xl text-[14px] border transition-all inline-block ${uploadingPhoto ? 'border-white/10 text-white/20' : 'border-white/20 text-white/50 hover:border-white/40 hover:text-white/80'}`}>
+                  {uploadingPhoto ? 'A enviar...' : freelancer.foto_url ? 'Alterar foto' : 'Carregar foto'}
+                  <input type="file" accept="image/*" className="hidden" disabled={uploadingPhoto}
+                    onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoUpload(f) }} />
+                </label>
+                {freelancer.foto_url && (
+                  <button onClick={async () => {
+                    await fetch('/api/freelancers', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, foto_url: null }) })
+                    await load()
+                  }} className="block text-[14px] text-red-400/50 hover:text-red-400 transition-colors">Remover foto</button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Texto da página inicial */}
+          <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[14px] tracking-[0.3em] text-white/25 uppercase">Texto da página inicial</p>
+              <span className={`text-[14px] tracking-widest transition-all ${
+                introHomeStatus === 'saving' ? 'text-white/30' : introHomeStatus === 'saved' ? 'text-emerald-400' : 'text-transparent'
+              }`}>{introHomeStatus === 'saving' ? 'A guardar...' : '✓ Guardado'}</span>
+            </div>
+            <input value={introHomeTitle} onChange={e => handleIntroHomeTitleChange(e.target.value)} placeholder="Título de boas-vindas..."
+              className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-[14px] text-white/70 outline-none focus:border-white/20 transition-colors placeholder:text-white/15 mb-2" />
+            <textarea value={introHome} onChange={e => handleIntroHomeChange(e.target.value)} rows={5} placeholder="Escreve aqui o texto..."
+              className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-[14px] text-white/70 outline-none focus:border-white/20 transition-colors resize-none placeholder:text-white/15 leading-relaxed" />
+          </div>
+
+          {/* Guia de trabalho */}
+          <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[14px] tracking-[0.3em] text-white/25 uppercase">Guia de Trabalho</p>
+              <span className={`text-[14px] tracking-widest transition-all ${
+                guiaStatus === 'saving' ? 'text-white/30' : guiaStatus === 'saved' ? 'text-emerald-400' : 'text-transparent'
+              }`}>{guiaStatus === 'saving' ? 'A guardar...' : '✓ Guardado'}</span>
+            </div>
+            <textarea value={guia} onChange={e => handleGuiaChange(e.target.value)} rows={8} placeholder="Regras e guia de trabalho..."
+              className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-[14px] text-white/70 outline-none focus:border-white/20 transition-colors resize-none placeholder:text-white/15 leading-relaxed" />
+          </div>
+
+          {/* Dados do freelancer */}
+          {editForm ? (
+            <div className="bg-white/[0.02] border border-gold/20 rounded-2xl p-5 space-y-3">
+              <p className="text-[14px] tracking-[0.3em] text-gold/60 uppercase mb-1">Editar dados</p>
+              {[
+                { label: 'Nome', key: 'nome', placeholder: 'Nome' },
+                { label: 'Contato', key: 'contato', placeholder: '9XX XXX XXX' },
+                { label: 'Email', key: 'email', placeholder: 'email@exemplo.com' },
+                { label: 'SOS — Nome', key: 'nome_sos', placeholder: 'Nome familiar' },
+                { label: 'SOS — Nº', key: 'contato_sos', placeholder: '9XX XXX XXX' },
+              ].map(f => (
+                <div key={f.key}>
+                  <label className="block text-[14px] text-white/25 tracking-widest uppercase mb-1">{f.label}</label>
+                  <input value={(editForm as any)[f.key]} onChange={e => setEditForm(prev => ({ ...prev!, [f.key]: e.target.value }))}
+                    placeholder={f.placeholder}
+                    className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-[14px] text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
+                </div>
+              ))}
+              <div>
+                <label className="block text-[14px] text-white/25 tracking-widest uppercase mb-1">Função</label>
+                <select value={editForm.status} onChange={e => setEditForm(prev => ({ ...prev!, status: e.target.value }))}
+                  className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-[14px] text-white/80 outline-none focus:border-gold/40 transition-colors cursor-pointer">
+                  {['FOTOGRAFO','VIDEOGRAFO','ASSISTENTE','EDITORES','OUTRO'].map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <div className="flex justify-end gap-2 pt-1">
+                <button onClick={() => setEditForm(null)} className="px-3 py-1.5 rounded-lg text-[14px] border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
+                <button onClick={handleEditSave} disabled={editSaving} className="px-4 py-1.5 rounded-lg text-[14px] bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-50">
+                  {editSaving ? 'A guardar...' : 'Guardar'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 space-y-3">
+              <p className="text-[14px] tracking-[0.3em] text-white/25 uppercase mb-2">Dados do Freelancer</p>
+              {[
+                ['Nome', freelancer.nome],
+                ['Função', freelancer.status],
+                ['Contato', freelancer.contato],
+                ['Email', freelancer.email],
+                ['SOS', freelancer.nome_sos ? `${freelancer.nome_sos}${freelancer.contato_sos ? ` · ${freelancer.contato_sos}` : ''}` : null],
+              ].filter(([,v]) => v).map(([label, val]) => (
+                <div key={label as string} className="flex items-center gap-3">
+                  <span className="text-[14px] text-white/25 tracking-widest uppercase w-16 shrink-0">{label}</span>
+                  <span className="text-[14px] text-white/70">{val}</span>
+                </div>
+              ))}
+              <div className="pt-2">
+                <button onClick={() => setEditForm({ nome: freelancer.nome, status: freelancer.status ?? '', contato: freelancer.contato ?? '', email: freelancer.email ?? '', nome_sos: freelancer.nome_sos ?? '', contato_sos: freelancer.contato_sos ?? '' })}
+                  className="px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-[14px] font-semibold tracking-widest hover:bg-gold/20 transition-all uppercase">
+                  Editar
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -564,7 +742,7 @@ export default function FreelancerDetailPage() {
 }
 
 // ─── SidebarNavAdmin ───────────────────────────────────────────────────────
-type AdminTabKey = 'casamentos'|'edicao'|'album'|'valores'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|null
+type AdminTabKey = 'casamentos'|'edicao'|'album'|'valores'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'|null
 
 function SidebarNavAdmin({
   freelancer,
@@ -592,6 +770,7 @@ function SidebarNavAdmin({
     { key: 'pagamentos',     label: 'Pagamentos',     icon: '$', count: counts.pagamentos },
     { key: 'mensagens',      label: 'Mensagens',      icon: '✉', count: counts.mensagens },
     { key: 'notificacoes',   label: 'Notificações',   icon: '◉', count: counts.notificacoes },
+    { key: 'definicoes',     label: 'Definições',     icon: '⚙' },
   ]
 
   return (
