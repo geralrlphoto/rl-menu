@@ -724,11 +724,10 @@ function DetailPanel({ project, plan }: { project: Project; plan: Installment[] 
             <PillBtn label="Marcar recebido" gold disabled={totalPendente === 0} />
             <PillBtn label="Enviar fatura" />
             <PillBtn label="Abrir projeto" />
-            <PillBtn label="Abrir cliente" />
           </div>
         </div>
 
-        {/* TIMELINE + CLIENTE */}
+        {/* TIMELINE + RESUMO FINANCEIRO (sem dados pessoais do cliente) */}
         <div className="p-5 sm:p-6 space-y-5">
           <div>
             <p className="text-[11px] tracking-[0.4em] uppercase text-gold/70 font-bold mb-3">Eventos Automáticos</p>
@@ -750,12 +749,8 @@ function DetailPanel({ project, plan }: { project: Project; plan: Installment[] 
           </div>
 
           <div>
-            <p className="text-[11px] tracking-[0.4em] uppercase text-gold/70 font-bold mb-3">Cliente</p>
+            <p className="text-[11px] tracking-[0.4em] uppercase text-gold/70 font-bold mb-3">Resumo Financeiro</p>
             <div className="space-y-1.5 text-[12px]">
-              <ClientRow label="Nome"      value={project.noivos} />
-              <ClientRow label="Email"     value={project.email} />
-              <ClientRow label="Telefone"  value={project.telefone} />
-              <ClientRow label="Casamento" value={project.dataCasamento} />
               <ClientRow label="Total"     value={fmtEUR(project.preco)} />
               <ClientRow label="Pago"      value={fmtEUR(totalPago)} valueClass="text-emerald-300" />
               <ClientRow label="Em falta"  value={fmtEUR(totalProjeto - totalPago)} valueClass="text-yellow-300" />
