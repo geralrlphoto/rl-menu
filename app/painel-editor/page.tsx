@@ -62,8 +62,15 @@ const MOCK_COMPROMISSOS = [
 // Pontos do gráfico (R$ por dia)
 const MOCK_REVENUE = [3000, 4500, 6200, 5800, 8400, 12500, 14200, 12800, 16000, 18500, 19200, 21000, 22400, 21800, 23500, 24850]
 
-// Baseline (representa projetos mock pré-existentes no sistema)
-const KPI_BASELINE = { novos: 5, andamento: 7, finalizados: 18 }
+// Stages atuais dos projetos mock em /novos-projetos (sincronizados manualmente)
+// Quando o user altera o stage de um mock, o patch é guardado em localStorage e aplicado por cima
+const MOCK_PROJECTS_STAGES: Record<string, string> = {
+  p1: 'Em Edição',         // Amanda & Lucas
+  p2: 'Para Revisão',      // Beatriz & Gabriel
+  p3: 'Novo Projeto',      // Juliana & Matheus
+  p4: 'Entregue',          // Carolina & Felipe
+  p5: 'Finalizado',        // Sofia & Ricardo
+}
 const EDITING_STAGES = ['Em Edição','Color Grading','Trailer em Produção','Áudio / Sincronização','Para Revisão','Correções','Finalizado']
 
 type NavItem = { key: string; label: string; icon: string; href?: string }
@@ -119,11 +126,16 @@ export default function PainelEditor() {
   const [novosProjetos, setNovosProjetos] = useState<NovoMini[]>(MOCK_NOVOS)
   const [finalizadosProjetos, setFinalizadosProjetos] = useState<typeof MOCK_FINALIZADOS>(MOCK_FINALIZADOS)
   const [unseenIds, setUnseenIds] = useState<Set<string>>(new Set())
-  const [kpiCounts, setKpiCounts] = useState({
-    novos:        KPI_BASELINE.novos,
-    andamento:    KPI_BASELINE.andamento,
-    finalizados:  KPI_BASELINE.finalizados,
-  })
+  // Inicializa com contagens calculadas dos defaults do mock
+  const initialKpis = (() => {
+    const stages = Object.values(MOCK_PROJECTS_STAGES)
+    return {
+      novos:       stages.filter(s => s === 'Novo Projeto').length,
+      andamento:   stages.filter(s => EDITING_STAGES.includes(s)).length,
+      finalizados: stages.filter(s => s === 'Entregue').length,
+    }
+  })()
+  const [kpiCounts, setKpiCounts] = useState(initialKpis)
 
   function loadFromStorage() {
     try {
@@ -158,14 +170,24 @@ export default function PainelEditor() {
         .slice(0, 4)
       setFinalizadosProjetos(mergedFinalizados)
 
-      // ── KPI counts (baseline + user-projects por stage) ──────────────
-      const novosCount = userProjects.filter(p => p.stage === 'Novo Projeto').length
-      const andamentoCount = userProjects.filter(p => EDITING_STAGES.includes(p.stage)).length
-      const finalizadosCount = userProjects.filter(p => p.stage === 'Entregue').length
+      // ── KPI counts (mocks + patches + user-projects) ─────────────────
+      // 1) Estado atual dos mocks (aplica patches por cima)
+      let patches: Record<string, any> = {}
+      try {
+        const patchesJson = localStorage.getItem('painel-editor-project-patches')
+        patches = patchesJson ? JSON.parse(patchesJson) : {}
+      } catch {}
+
+      const mockStages: string[] = Object.keys(MOCK_PROJECTS_STAGES).map(id =>
+        patches[id]?.stage ?? MOCK_PROJECTS_STAGES[id]
+      )
+      const userStages: string[] = userProjects.map(p => p.stage)
+      const allStages: string[] = [...mockStages, ...userStages]
+
       setKpiCounts({
-        novos:       KPI_BASELINE.novos + novosCount,
-        andamento:   KPI_BASELINE.andamento + andamentoCount,
-        finalizados: KPI_BASELINE.finalizados + finalizadosCount,
+        novos:       allStages.filter(s => s === 'Novo Projeto').length,
+        andamento:   allStages.filter(s => EDITING_STAGES.includes(s)).length,
+        finalizados: allStages.filter(s => s === 'Entregue').length,
       })
 
       // Ler unseen ids
