@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
+import { TasksWidget, MiniCalendar, NotesWidget } from '@/app/components/FreelancerWidgets'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -415,10 +416,10 @@ export default function FreelancerDetailPage() {
 
         const atividades: Array<{ tipo: string; texto: string; data: string }> = []
         mensagens.slice(0, 10).forEach(m => {
-          if (m.remetente === 'freelancer') atividades.push({ tipo: 'msg', texto: `Msg do freelancer: ${(m.mensagem ?? '').slice(0, 60)}${(m.mensagem ?? '').length > 60 ? '…' : ''}`, data: m.created_at })
+          if (m.remetente === 'freelancer') atividades.push({ tipo: 'msg', texto: `Mensagem: ${(m.mensagem ?? '').slice(0, 60)}${(m.mensagem ?? '').length > 60 ? '…' : ''}`, data: m.created_at })
         })
         notificacoes.slice(0, 10).forEach(n => atividades.push({ tipo: 'notif', texto: n.titulo, data: n.created_at }))
-        pagamentos.filter(p => p.data_pago).slice(0, 5).forEach(p => atividades.push({ tipo: 'pag', texto: `Pagamento: ${p.descricao}`, data: p.data_pago! }))
+        pagamentos.filter(p => p.data_pago).slice(0, 5).forEach(p => atividades.push({ tipo: 'pag', texto: `Pagamento recebido: ${p.descricao}`, data: p.data_pago! }))
         atividades.sort((a, b) => (b.data || '') > (a.data || '') ? 1 : -1)
         const atividadesRecentes = atividades.slice(0, 6)
         const tempoRelativo = (d: string) => {
@@ -456,9 +457,9 @@ export default function FreelancerDetailPage() {
                     style={{ boxShadow: '0 0 20px -4px rgba(201,168,76,0.5)' }}>
                     <span className="text-lg leading-none">+</span> Ver Casamentos
                   </button>
-                  <button onClick={() => setTab('definicoes')}
+                  <button onClick={() => setTab('casamentos')}
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/15 text-white/85 text-[14px] font-medium tracking-wider hover:bg-white/[0.05] hover:border-white/30 transition-all">
-                    <span className="text-base leading-none">⚙</span> Definições
+                    <span className="text-base leading-none">◷</span> Confirmar Disponibilidade
                   </button>
                 </div>
                 <div>
@@ -493,7 +494,8 @@ export default function FreelancerDetailPage() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-5">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            <div className="lg:col-span-2 flex flex-col gap-5">
             {/* Próximo Casamento — destaque */}
             {proximoCasamento && (
               <div onClick={() => setTab('casamentos')}
@@ -589,18 +591,27 @@ export default function FreelancerDetailPage() {
               </div>
             )}
 
-            {/* Alerta mensagens não lidas (admin vê mensagens do freelancer) */}
-            {mensagensNaoLidas > 0 && (
-              <button onClick={() => setTab('mensagens')}
-                className="bg-blue-500/[0.06] border border-blue-500/25 hover:bg-blue-500/[0.1] rounded-2xl p-4 text-left transition-all flex items-center gap-3">
-                <span className="text-2xl">💬</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[14px] tracking-widest uppercase font-bold text-blue-300/85">Mensagens do Freelancer</p>
-                  <p className="text-[14px] text-white/40 mt-0.5">{mensagensNaoLidas} {mensagensNaoLidas === 1 ? 'nova' : 'novas'}</p>
-                </div>
-                <span className="text-[14px] tracking-widest uppercase font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/40">{mensagensNaoLidas}</span>
-              </button>
-            )}
+            </div>
+
+            {/* ── COLUNA LATERAL (1/3) — Tarefas + Calendário + Notas ── */}
+            <aside className="lg:col-span-1 flex flex-col gap-4">
+              <TasksWidget freelancerId={id} />
+              <MiniCalendar casamentos={casamentos} onClickDate={() => setTab('casamentos')} />
+              <NotesWidget freelancerId={id} />
+
+              {/* Alerta mensagens não lidas */}
+              {mensagensNaoLidas > 0 && (
+                <button onClick={() => setTab('mensagens')}
+                  className="bg-blue-500/[0.06] border border-blue-500/25 hover:bg-blue-500/[0.1] rounded-2xl p-4 text-left transition-all flex items-center gap-3">
+                  <span className="text-2xl">💬</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[14px] tracking-widest uppercase font-bold text-blue-300/85">Mensagens</p>
+                    <p className="text-[14px] text-white/40 mt-0.5">{mensagensNaoLidas} {mensagensNaoLidas === 1 ? 'nova' : 'novas'}</p>
+                  </div>
+                  <span className="text-[14px] tracking-widest uppercase font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/40">{mensagensNaoLidas}</span>
+                </button>
+              )}
+            </aside>
           </div>
           </>
         )
