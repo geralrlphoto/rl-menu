@@ -17,6 +17,31 @@ type ProjectFile = { name: string; size: string; date: string }
 type Version    = { tag: string; date: string; nota: string }
 type DeliveryItem = { type: string; status: 'Não enviado'|'Enviado'|'Aprovado'|'Necessita alterações' }
 
+// ── Categorias de Material ──────────────────────────────────────────────
+type MaterialCategoria =
+  | 'Making Off Noivo' | 'Making Off Noiva' | 'Cerimónia' | 'Cocktail' | 'Festa'
+  | 'Sessão Noivos' | 'Dança dos Noivos' | 'Votos dos Noivos' | 'Discursos'
+  | 'Corte do Bolo' | 'Drone' | 'Áudio Geral' | 'Áudio Lapela'
+
+type MaterialItem = {
+  categoria: MaterialCategoria
+  status: 'Pendente' | 'Recebido' | 'Descarregado'
+  size?: string
+  date?: string
+}
+
+const MATERIAL_CATEGORIAS: MaterialCategoria[] = [
+  'Making Off Noivo', 'Making Off Noiva', 'Cerimónia', 'Cocktail', 'Festa',
+  'Sessão Noivos', 'Dança dos Noivos', 'Votos dos Noivos', 'Discursos',
+  'Corte do Bolo', 'Drone', 'Áudio Geral', 'Áudio Lapela',
+]
+
+const MATERIAL_ICONS: Record<MaterialCategoria, string> = {
+  'Making Off Noivo': '◇', 'Making Off Noiva': '✿', 'Cerimónia': '⛪', 'Cocktail': '🥂', 'Festa': '✦',
+  'Sessão Noivos': '◉', 'Dança dos Noivos': '♪', 'Votos dos Noivos': '♥', 'Discursos': '◐',
+  'Corte do Bolo': '◍', 'Drone': '◇', 'Áudio Geral': '◯', 'Áudio Lapela': '◐',
+}
+
 type Project = {
   id: string
   noivos: string
@@ -33,7 +58,7 @@ type Project = {
   materialStatus: 'Material pendente'|'Material recebido'|'Material descarregado'
   downloadStatus: 'Não descarregado'|'Em download'|'Material recebido'|'Download concluído'
   ultimoDownload: string | null
-  files: ProjectFile[]
+  materialItems: MaterialItem[]   // categorias seleccionadas para este projeto
   finalLink: string
   deliveries: DeliveryItem[]
   versions: Version[]
@@ -57,12 +82,12 @@ const PROJECTS: Project[] = [
     materialStatus: 'Material descarregado',
     downloadStatus: 'Download concluído',
     ultimoDownload: '19/05/2026 — 15:42',
-    files: [
-      { name: 'Cerimonia_A.mov',       size: '4.2 GB', date: '19/05/2026' },
-      { name: 'Drone_01.mp4',          size: '1.8 GB', date: '19/05/2026' },
-      { name: 'Audio_Cerimonia.wav',   size: '420 MB', date: '19/05/2026' },
-      { name: 'Bride_Preparation.mp4', size: '3.1 GB', date: '19/05/2026' },
-      { name: 'MakingOf.mov',          size: '2.4 GB', date: '19/05/2026' },
+    materialItems: [
+      { categoria: 'Making Off Noiva', status: 'Descarregado', size: '3.1 GB', date: '19/05/2026' },
+      { categoria: 'Cerimónia',         status: 'Descarregado', size: '4.2 GB', date: '19/05/2026' },
+      { categoria: 'Drone',             status: 'Descarregado', size: '1.8 GB', date: '19/05/2026' },
+      { categoria: 'Áudio Geral',       status: 'Descarregado', size: '420 MB', date: '19/05/2026' },
+      { categoria: 'Votos dos Noivos',  status: 'Descarregado', size: '2.4 GB', date: '19/05/2026' },
     ],
     finalLink: '',
     deliveries: [
@@ -93,11 +118,12 @@ const PROJECTS: Project[] = [
     materialStatus: 'Material descarregado',
     downloadStatus: 'Download concluído',
     ultimoDownload: '18/05/2026 — 11:20',
-    files: [
-      { name: 'Ceremony_Master.mov',   size: '5.6 GB', date: '18/05/2026' },
-      { name: 'Drone_Reception.mp4',   size: '2.2 GB', date: '18/05/2026' },
-      { name: 'Speech_Father.wav',     size: '180 MB', date: '18/05/2026' },
-      { name: 'FirstDance.mov',        size: '1.9 GB', date: '18/05/2026' },
+    materialItems: [
+      { categoria: 'Cerimónia',         status: 'Descarregado', size: '5.6 GB', date: '18/05/2026' },
+      { categoria: 'Drone',             status: 'Descarregado', size: '2.2 GB', date: '18/05/2026' },
+      { categoria: 'Discursos',         status: 'Descarregado', size: '180 MB', date: '18/05/2026' },
+      { categoria: 'Dança dos Noivos',  status: 'Descarregado', size: '1.9 GB', date: '18/05/2026' },
+      { categoria: 'Festa',             status: 'Recebido' },
     ],
     finalLink: 'https://vimeo.com/beatriz-gabriel-v2',
     deliveries: [
@@ -129,7 +155,11 @@ const PROJECTS: Project[] = [
     materialStatus: 'Material pendente',
     downloadStatus: 'Não descarregado',
     ultimoDownload: null,
-    files: [],
+    materialItems: [
+      { categoria: 'Cerimónia',  status: 'Pendente' },
+      { categoria: 'Cocktail',   status: 'Pendente' },
+      { categoria: 'Festa',      status: 'Pendente' },
+    ],
     finalLink: '',
     deliveries: [
       { type: 'Trailer Final', status: 'Não enviado' },
@@ -154,8 +184,14 @@ const PROJECTS: Project[] = [
     materialStatus: 'Material descarregado',
     downloadStatus: 'Download concluído',
     ultimoDownload: '15/05/2026 — 09:32',
-    files: [
-      { name: 'Final_Master.mp4', size: '8.4 GB', date: '04/07/2026' },
+    materialItems: [
+      { categoria: 'Making Off Noivo', status: 'Descarregado', size: '2.2 GB', date: '15/05/2026' },
+      { categoria: 'Making Off Noiva', status: 'Descarregado', size: '3.4 GB', date: '15/05/2026' },
+      { categoria: 'Cerimónia',         status: 'Descarregado', size: '6.8 GB', date: '15/05/2026' },
+      { categoria: 'Cocktail',          status: 'Descarregado', size: '4.1 GB', date: '15/05/2026' },
+      { categoria: 'Festa',             status: 'Descarregado', size: '8.4 GB', date: '15/05/2026' },
+      { categoria: 'Drone',             status: 'Descarregado', size: '2.9 GB', date: '15/05/2026' },
+      { categoria: 'Áudio Lapela',      status: 'Descarregado', size: '320 MB', date: '15/05/2026' },
     ],
     finalLink: 'https://vimeo.com/carolina-felipe-final',
     deliveries: [
@@ -487,10 +523,21 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
     clientLink:      '',
     notas:           '',
   })
+  const [categorias, setCategorias] = useState<MaterialCategoria[]>([])
   const [saving, setSaving] = useState(false)
 
   function update<K extends keyof typeof form>(k: K, v: typeof form[K]) {
     setForm(prev => ({ ...prev, [k]: v }))
+  }
+
+  function toggleCategoria(c: MaterialCategoria) {
+    setCategorias(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])
+  }
+  function selectAllCategorias() {
+    setCategorias([...MATERIAL_CATEGORIAS])
+  }
+  function clearCategorias() {
+    setCategorias([])
   }
 
   function valid() {
@@ -516,7 +563,7 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
       materialStatus: 'Material pendente',
       downloadStatus: 'Não descarregado',
       ultimoDownload: null,
-      files:        [],
+      materialItems: categorias.map(c => ({ categoria: c, status: 'Pendente' as const })),
       finalLink:    '',
       deliveries: [
         { type: 'Trailer Final',  status: 'Não enviado' },
@@ -617,6 +664,58 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
               className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40" />
             <p className="text-[10px] text-white/30 mt-1">Drive · Dropbox · Frame.io · WeTransfer · Mega</p>
           </Field>
+
+          {/* CATEGORIAS DE MATERIAL */}
+          <div className="pt-2 border-t border-white/[0.06]">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <label className="block text-[10px] tracking-[0.3em] uppercase text-white/45 font-medium">
+                  Material do Projeto
+                </label>
+                <p className="text-[11px] text-white/35 mt-0.5">Seleciona as categorias que vão fazer parte deste casamento.</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={selectAllCategorias}
+                  className="text-[10px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors border border-gold/20 px-2 py-1 rounded-md">
+                  Todas
+                </button>
+                <button type="button" onClick={clearCategorias}
+                  className="text-[10px] tracking-widest uppercase text-white/40 hover:text-white/80 transition-colors border border-white/10 px-2 py-1 rounded-md">
+                  Limpar
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {MATERIAL_CATEGORIAS.map(c => {
+                const selected = categorias.includes(c)
+                return (
+                  <button key={c} type="button" onClick={() => toggleCategoria(c)}
+                    className={`group flex items-center gap-2 px-3 py-2 rounded-lg border text-left transition-all ${
+                      selected
+                        ? 'bg-gold/10 border-gold/40 text-gold'
+                        : 'border-white/[0.06] text-white/55 hover:text-white hover:border-white/15 hover:bg-white/[0.02]'
+                    }`}
+                    style={selected ? { boxShadow: '0 0 14px -3px rgba(201,164,92,0.35)' } : {}}>
+                    <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
+                      selected ? 'bg-gold border-gold' : 'border-white/25'
+                    }`}>
+                      {selected && <span className="text-[10px] text-black font-bold">✓</span>}
+                    </span>
+                    <span className="text-base shrink-0 text-gold/80">{MATERIAL_ICONS[c]}</span>
+                    <span className="text-[11.5px] font-medium leading-tight truncate">{c}</span>
+                  </button>
+                )
+              })}
+            </div>
+
+            {categorias.length > 0 && (
+              <p className="text-[11px] text-gold/70 mt-3 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-gold" />
+                {categorias.length} {categorias.length === 1 ? 'categoria selecionada' : 'categorias selecionadas'}
+              </p>
+            )}
+          </div>
 
           <Field label="Observações">
             <textarea value={form.notas} onChange={e => update('notas', e.target.value)}
@@ -876,37 +975,44 @@ function ProjectCard({
             </div>
           </Section>
 
-          {/* Project files */}
+          {/* Material do Projeto (por categoria seleccionada) */}
           <Section title="Material do Projeto">
-            {p.files.length === 0 ? (
+            {p.materialItems.length === 0 ? (
               <div className="rounded-xl border border-dashed border-white/[0.08] py-8 text-center">
-                <p className="text-[12px] text-white/35">Sem ficheiros descarregados ainda.</p>
+                <p className="text-[12px] text-white/35">Nenhuma categoria de material selecionada.</p>
+                <p className="text-[11px] text-white/25 mt-1">Edita o projeto e adiciona as categorias necessárias.</p>
               </div>
             ) : (
-              <div className="rounded-xl border border-white/[0.06] overflow-hidden">
-                <table className="w-full">
-                  <thead>
-                    <tr className="text-[10px] tracking-widest uppercase text-white/35 bg-white/[0.02]">
-                      <th className="text-left px-4 py-2.5 font-medium">Ficheiro</th>
-                      <th className="text-left px-4 py-2.5 font-medium">Tamanho</th>
-                      <th className="text-left px-4 py-2.5 font-medium">Data</th>
-                      <th className="text-right px-4 py-2.5 font-medium">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {p.files.map((f, i) => (
-                      <tr key={i} className="border-t border-white/[0.04] hover:bg-white/[0.02] transition-colors">
-                        <td className="px-4 py-2.5 text-[12px] text-white/85 font-mono">{f.name}</td>
-                        <td className="px-4 py-2.5 text-[12px] text-white/55">{f.size}</td>
-                        <td className="px-4 py-2.5 text-[12px] text-white/55">{f.date}</td>
-                        <td className="px-4 py-2.5 text-right">
-                          <button className="text-[11px] text-white/50 hover:text-gold transition-colors mr-3">Preview</button>
-                          <button className="text-[11px] text-gold/70 hover:text-gold transition-colors">Download</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {p.materialItems.map((m, i) => {
+                  const cls =
+                    m.status === 'Descarregado' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 ring-emerald-500/15' :
+                    m.status === 'Recebido'     ? 'bg-blue-500/10 text-blue-300 border-blue-500/30 ring-blue-500/15' :
+                                                  'bg-yellow-500/10 text-yellow-300 border-yellow-500/30 ring-yellow-500/15'
+                  return (
+                    <div key={i} className="group rounded-xl border border-white/[0.06] p-3.5 bg-white/[0.02] hover:border-gold/25 transition-all flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-lg border border-gold/25 bg-gold/[0.06] text-gold flex items-center justify-center text-base shrink-0">
+                        {MATERIAL_ICONS[m.categoria]}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-semibold text-white truncate">{m.categoria}</p>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded-full border tracking-widest uppercase font-bold ${cls}`}>
+                            {m.status}
+                          </span>
+                          {m.size && <span className="text-[11px] text-white/40 font-mono">{m.size}</span>}
+                        </div>
+                        {m.date && <p className="text-[10px] text-white/30 mt-1">{m.date}</p>}
+                      </div>
+                      {m.status === 'Descarregado' && (
+                        <div className="flex flex-col gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button className="text-[10px] text-gold/70 hover:text-gold transition-colors" title="Download">↓</button>
+                          <button className="text-[10px] text-white/50 hover:text-gold transition-colors" title="Preview">◐</button>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             )}
           </Section>
