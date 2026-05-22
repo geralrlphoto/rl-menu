@@ -1724,27 +1724,6 @@ export default function FreelancerViewPage() {
   const [disponibilidade, setDisponibilidade] = useState<Disponib[]>([])
   const [notificacoes, setNotificacoes]       = useState<Notificacao[]>([])
   const [mensagens, setMensagens]             = useState<Mensagem[]>([])
-  const [uploadingHero, setUploadingHero]     = useState(false)
-
-  // Upload do hero photo (reusa foto_url do freelancer)
-  async function handleHeroUpload(file: File) {
-    setUploadingHero(true)
-    try {
-      const form = new FormData()
-      form.append('file', file)
-      const res = await fetch('/api/upload-image', { method: 'POST', body: form }).then(r => r.json())
-      if (res.url) {
-        await fetch('/api/freelancers', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, foto_url: res.url }),
-        })
-        setFreelancer(prev => prev ? { ...prev, foto_url: res.url } : prev)
-      }
-    } finally {
-      setUploadingHero(false)
-    }
-  }
 
   // Block browser back button
   useEffect(() => {
@@ -2093,18 +2072,6 @@ export default function FreelancerViewPage() {
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/15 text-white/85 text-[14px] font-medium tracking-wider hover:bg-white/[0.05] hover:border-white/30 transition-all">
                     <span className="text-base leading-none">◷</span> Confirmar Disponibilidade
                   </button>
-
-                  {/* Upload / Trocar foto */}
-                  <label className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-[14px] font-medium tracking-wider transition-all cursor-pointer ${
-                    uploadingHero
-                      ? 'border-white/10 text-white/30 cursor-wait'
-                      : 'border-gold/30 text-gold/80 hover:bg-gold/10 hover:border-gold/50'
-                  }`}>
-                    <span className="text-base leading-none">{uploadingHero ? '⏳' : '📷'}</span>
-                    {uploadingHero ? 'A enviar…' : (freelancer?.foto_url ? 'Trocar foto' : 'Adicionar foto')}
-                    <input type="file" accept="image/*" className="hidden" disabled={uploadingHero}
-                      onChange={e => { const f = e.target.files?.[0]; if (f) handleHeroUpload(f) }} />
-                  </label>
                 </div>
 
                 <div>

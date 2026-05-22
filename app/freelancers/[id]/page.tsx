@@ -412,7 +412,8 @@ export default function FreelancerDetailPage() {
 
             {/* Foto de perfil */}
             <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
-              <p className="text-[14px] tracking-[0.3em] text-white/25 uppercase mb-4">Foto de Perfil</p>
+              <p className="text-[14px] tracking-[0.3em] text-white/25 uppercase mb-1">Foto de Perfil / Hero</p>
+              <p className="text-[14px] text-white/35 mb-4 italic">Aparece no avatar e como fundo do hero do portal do freelancer.</p>
               <div className="flex items-center gap-5">
                 {freelancer.foto_url ? (
                   <div className="relative w-24 h-28 rounded-2xl overflow-hidden flex-shrink-0 border border-white/10"
