@@ -221,6 +221,13 @@ export default function NovosProjetosPage() {
   const [sort, setSort] = useState('Mais recentes')
   const [expanded, setExpanded] = useState<string | null>('p1')
   const [page, setPage] = useState(1)
+  const [showAddModal, setShowAddModal] = useState(false)
+
+  function handleCreate(p: Project) {
+    setProjects(prev => [p, ...prev])
+    setShowAddModal(false)
+    setExpanded(p.id)
+  }
 
   const filtered = useMemo(() => {
     let arr = [...projects]
@@ -348,6 +355,7 @@ export default function NovosProjetosPage() {
                   ◉
                 </button>
                 <button
+                  onClick={() => setShowAddModal(true)}
                   className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gold text-black text-[13px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
                   style={{ boxShadow: '0 0 24px -4px rgba(201,164,92,0.5)' }}>
                   <span className="text-lg leading-none">+</span> Novo Projeto
@@ -450,6 +458,202 @@ export default function NovosProjetosPage() {
           <p className="text-center text-[10px] tracking-[0.4em] uppercase text-white/15 mt-12 mb-4">RL Photo.Video · Wedding Moments Films</p>
         </div>
       </main>
+
+      {/* MODAL — Novo Projeto */}
+      {showAddModal && (
+        <NewProjectModal
+          onClose={() => setShowAddModal(false)}
+          onCreate={handleCreate}
+        />
+      )}
+    </div>
+  )
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+//  NEW PROJECT MODAL
+// ──────────────────────────────────────────────────────────────────────────
+function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate: (p: Project) => void }) {
+  const today = new Date()
+  const todayStr = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()} — ${String(today.getHours()).padStart(2,'0')}:${String(today.getMinutes()).padStart(2,'0')}`
+
+  const [form, setForm] = useState({
+    noivos:          '',
+    foto:            '',
+    dataCasamento:   '',
+    entregaPrevista: '',
+    pacote:          'Pacote Premium 👑' as 'Pacote Premium 👑' | 'Pacote Essencial',
+    duracao:         '',
+    clientLink:      '',
+    notas:           '',
+  })
+  const [saving, setSaving] = useState(false)
+
+  function update<K extends keyof typeof form>(k: K, v: typeof form[K]) {
+    setForm(prev => ({ ...prev, [k]: v }))
+  }
+
+  function valid() {
+    return form.noivos.trim() && form.dataCasamento.trim() && form.entregaPrevista.trim()
+  }
+
+  function handleSubmit() {
+    if (!valid()) return
+    setSaving(true)
+    const newProject: Project = {
+      id:           `p${Date.now()}`,
+      noivos:       form.noivos.trim(),
+      foto:         form.foto.trim() || 'https://images.unsplash.com/photo-1519741497674-611481863552?w=900&h=600&fit=crop',
+      recebido:     todayStr,
+      dataCasamento:   form.dataCasamento,
+      entregaPrevista: form.entregaPrevista,
+      pacote:       form.pacote,
+      duracao:      form.duracao.trim() || (form.pacote === 'Pacote Premium 👑' ? '~12 min' : '~8 min'),
+      stage:        'Novo Projeto',
+      approval:     'Aguardando Revisão',
+      observacoes:  [],
+      clientLink:   form.clientLink.trim(),
+      materialStatus: 'Material pendente',
+      downloadStatus: 'Não descarregado',
+      ultimoDownload: null,
+      files:        [],
+      finalLink:    '',
+      deliveries: [
+        { type: 'Trailer Final',  status: 'Não enviado' },
+        { type: 'Filme Completo', status: 'Não enviado' },
+        { type: 'Instagram Reels', status: 'Não enviado' },
+        { type: 'Teaser',          status: 'Não enviado' },
+      ],
+      versions:     [],
+      feedback:     [],
+    }
+    setTimeout(() => {
+      onCreate(newProject)
+      setSaving(false)
+    }, 250)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8" onClick={onClose}>
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
+
+      {/* Modal */}
+      <div onClick={e => e.stopPropagation()}
+        className="relative w-full max-w-2xl max-h-[88vh] overflow-y-auto rounded-3xl border border-gold/25"
+        style={{
+          background: 'linear-gradient(135deg, rgba(20,15,8,0.97), rgba(11,11,11,0.97))',
+          boxShadow: '0 40px 80px -20px rgba(0,0,0,0.7), 0 0 50px -8px rgba(201,164,92,0.25)',
+        }}>
+
+        {/* Header */}
+        <div className="relative px-7 py-6 border-b border-white/[0.06]">
+          <div className="absolute inset-0 opacity-30 pointer-events-none rounded-t-3xl overflow-hidden">
+            <img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=900&h=300&fit=crop" alt="" className="w-full h-full object-cover" style={{ filter: 'blur(8px)' }} />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-transparent" />
+          </div>
+          <div className="relative flex items-center justify-between gap-4">
+            <div>
+              <p className="text-[10px] tracking-[0.4em] uppercase text-gold/70 font-bold mb-1">Editorial Workspace</p>
+              <h2 className="text-2xl font-light text-white" style={{ fontFamily: 'Georgia, serif' }}>
+                Novo <span className="italic text-gold">Projeto</span>
+              </h2>
+              <p className="text-[12px] text-white/55 mt-1">Adiciona um novo casamento ao teu workflow.</p>
+            </div>
+            <button onClick={onClose}
+              className="w-10 h-10 rounded-xl border border-white/15 text-white/55 hover:text-gold hover:border-gold/30 transition-all flex items-center justify-center text-lg">✕</button>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="px-7 py-6 space-y-5">
+
+          {/* Noivos + Foto */}
+          <Field label="Nome dos Noivos" required>
+            <input value={form.noivos} onChange={e => update('noivos', e.target.value)}
+              placeholder="Ex: Amanda & Lucas"
+              className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40" />
+          </Field>
+
+          <Field label="URL da Foto (opcional)">
+            <input value={form.foto} onChange={e => update('foto', e.target.value)}
+              placeholder="https://images.unsplash.com/…"
+              className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40" />
+          </Field>
+
+          {/* Datas (2 col) */}
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Data do Casamento" required>
+              <input value={form.dataCasamento} onChange={e => update('dataCasamento', e.target.value)}
+                placeholder="dd/mm/aaaa"
+                className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40 font-mono" />
+            </Field>
+            <Field label="Entrega Prevista" required>
+              <input value={form.entregaPrevista} onChange={e => update('entregaPrevista', e.target.value)}
+                placeholder="dd/mm/aaaa"
+                className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40 font-mono" />
+            </Field>
+          </div>
+
+          {/* Pacote + Duração (2 col) */}
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Pacote">
+              <select value={form.pacote} onChange={e => update('pacote', e.target.value as any)}
+                className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/40 cursor-pointer">
+                <option>Pacote Premium 👑</option>
+                <option>Pacote Essencial</option>
+              </select>
+            </Field>
+            <Field label="Duração Estimada">
+              <input value={form.duracao} onChange={e => update('duracao', e.target.value)}
+                placeholder="~12 min"
+                className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40" />
+            </Field>
+          </div>
+
+          <Field label="Link do Material do Cliente">
+            <input value={form.clientLink} onChange={e => update('clientLink', e.target.value)}
+              placeholder="https://drive.google.com/…"
+              className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40" />
+            <p className="text-[10px] text-white/30 mt-1">Drive · Dropbox · Frame.io · WeTransfer · Mega</p>
+          </Field>
+
+          <Field label="Observações">
+            <textarea value={form.notas} onChange={e => update('notas', e.target.value)}
+              placeholder="Detalhes adicionais sobre o projeto…"
+              rows={3}
+              className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40 resize-none leading-relaxed" />
+          </Field>
+        </div>
+
+        {/* Footer */}
+        <div className="px-7 py-5 border-t border-white/[0.06] flex items-center justify-between gap-3 bg-black/40">
+          <p className="text-[11px] text-white/30 italic">O workflow começa em <span className="text-gold/80">Recebido</span> (5%)</p>
+          <div className="flex items-center gap-2">
+            <button onClick={onClose}
+              className="px-4 py-2 rounded-lg border border-white/[0.08] text-white/55 text-[12px] tracking-wider uppercase font-semibold hover:text-white hover:bg-white/[0.04] transition-all">
+              Cancelar
+            </button>
+            <button onClick={handleSubmit} disabled={!valid() || saving}
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-gold text-black text-[12px] tracking-wider uppercase font-semibold hover:bg-gold/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              style={!saving && valid() ? { boxShadow: '0 0 18px -2px rgba(201,164,92,0.5)' } : {}}>
+              {saving ? 'A criar…' : <>+ Criar Projeto</>}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Field({ label, children, required }: { label: string; children: React.ReactNode; required?: boolean }) {
+  return (
+    <div>
+      <label className="block text-[10px] tracking-[0.3em] uppercase text-white/45 font-medium mb-1.5">
+        {label}
+        {required && <span className="text-gold ml-1">*</span>}
+      </label>
+      {children}
     </div>
   )
 }
