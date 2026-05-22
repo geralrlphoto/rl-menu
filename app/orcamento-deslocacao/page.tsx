@@ -30,11 +30,8 @@ const DEFAULTS = {
   valorNoite: 60,
   // Extras
   observacoes: '',
-  // ── Margem de Lucro (INTERNO — não aparece no PDF) ──
-  custoCombustivelReal: 0,    // ex: o que pagas mesmo em combustível
-  custoRefeicoesReal: 0,      // o que custa de facto a alimentar a equipa
-  custoEstadiaReal: 0,        // o que custas no hotel/AL
-  outrosCustos: 0,            // qualquer outra despesa
+  // ── Margem de Lucro (slider 0-100%) ─────────────────
+  margemPct: 0,               // % a somar ao subtotal
 }
 
 type Form = typeof DEFAULTS
@@ -54,19 +51,16 @@ export default function OrcamentoDeslocacaoPage() {
     const subViagem    = (Number(f.horasViagem) || 0) * (Number(f.valorHoraViagem) || 0)
     const subServico   = (Number(f.horasServico) || 0) * (Number(f.valorHoraServico) || 0)
     const subDormida   = (Number(f.numPessoas) || 0) * (Number(f.noites) || 0) * (Number(f.valorNoite) || 0)
-    const total = subKm + subPortagens + subRefeicoes + subViagem + subServico + subDormida
+    const subtotal = subKm + subPortagens + subRefeicoes + subViagem + subServico + subDormida
 
-    // Margem de lucro (apenas dashboard)
-    const custosReais = (Number(f.custoCombustivelReal) || 0)
-                      + (Number(f.custoRefeicoesReal)   || 0)
-                      + (Number(f.custoEstadiaReal)     || 0)
-                      + (Number(f.outrosCustos)         || 0)
-                      + (Number(f.portagens)            || 0) // portagens são custo real direto
-    const margemValor = total - custosReais
-    const margemPct   = total > 0 ? (margemValor / total) * 100 : 0
+    // Margem de lucro — slider 0-100% somada ao subtotal
+    const margemPct   = Math.max(0, Math.min(100, Number(f.margemPct) || 0))
+    const margemValor = subtotal * (margemPct / 100)
+    const total       = subtotal + margemValor
+
     return {
-      kmTotal, subKm, subPortagens, subRefeicoes, subViagem, subServico, subDormida, total,
-      custosReais, margemValor, margemPct,
+      kmTotal, subKm, subPortagens, subRefeicoes, subViagem, subServico, subDormida,
+      subtotal, margemPct, margemValor, total,
     }
   }, [f])
 
@@ -248,49 +242,39 @@ export default function OrcamentoDeslocacaoPage() {
                 className={inputCls + ' resize-none leading-relaxed'} />
             </div>
 
-            {/* ── Margem de Lucro — APENAS INTERNO, não aparece no PDF ── */}
-            <div className="bg-red-500/[0.04] border border-red-500/20 rounded-2xl p-5 sm:p-6">
-              <h2 className="text-[10px] tracking-[0.4em] text-red-400/85 uppercase font-bold mb-1 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-red-400" /> Margem de Lucro
-                <span className="ml-auto text-[9px] tracking-[0.3em] text-red-400/50 normal-case font-normal">— Interno · não aparece no PDF</span>
-              </h2>
-              <p className="text-[12px] text-white/40 mb-5">Indica os custos reais para veres a margem do orçamento.</p>
+            {/* ── Margem de Lucro — slider, soma ao subtotal ────────────── */}
+            <div className={sectionCls}>
+              <h2 className={sectionTitle}><span className="w-2 h-2 rounded-full bg-emerald-400" /> Margem de Lucro</h2>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div>
-                  <label className={labelCls}>Combustível real</label>
-                  <input type="number" min="0" step="0.5" value={f.custoCombustivelReal} onChange={e => set('custoCombustivelReal', Number(e.target.value))} className={inputCls} />
-                </div>
-                <div>
-                  <label className={labelCls}>Refeições reais</label>
-                  <input type="number" min="0" step="0.5" value={f.custoRefeicoesReal} onChange={e => set('custoRefeicoesReal', Number(e.target.value))} className={inputCls} />
-                </div>
-                <div>
-                  <label className={labelCls}>Estadia real</label>
-                  <input type="number" min="0" step="0.5" value={f.custoEstadiaReal} onChange={e => set('custoEstadiaReal', Number(e.target.value))} className={inputCls} />
-                </div>
-                <div>
-                  <label className={labelCls}>Outros custos</label>
-                  <input type="number" min="0" step="0.5" value={f.outrosCustos} onChange={e => set('outrosCustos', Number(e.target.value))} className={inputCls} />
-                </div>
+              <div className="flex items-baseline justify-between mb-2">
+                <span className="text-[11px] tracking-[0.3em] text-white/40 uppercase">Margem</span>
+                <span className="text-lg font-bold text-emerald-300">{totals.margemPct.toFixed(0)}%</span>
               </div>
 
-              <div className="mt-5 grid grid-cols-3 gap-3">
+              <input
+                type="range" min="0" max="100" step="1"
+                value={f.margemPct}
+                onChange={e => set('margemPct', Number(e.target.value))}
+                className="w-full accent-emerald-400 cursor-pointer h-1"
+              />
+
+              <div className="flex items-baseline justify-between mt-1">
+                <span className="text-[10px] text-white/30">0%</span>
+                <span className="text-[10px] text-white/30">100%</span>
+              </div>
+
+              <div className="mt-4 grid grid-cols-3 gap-3">
                 <div className="bg-black/30 rounded-xl px-4 py-3 border border-white/[0.06]">
-                  <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-1">Cobrado</p>
-                  <p className="text-lg font-bold text-white/85">{fmt(totals.total)}</p>
+                  <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-1">Subtotal</p>
+                  <p className="text-base font-semibold text-white/80">{fmt(totals.subtotal)}</p>
                 </div>
-                <div className="bg-black/30 rounded-xl px-4 py-3 border border-white/[0.06]">
-                  <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-1">Custos Reais</p>
-                  <p className="text-lg font-bold text-red-300/85">{fmt(totals.custosReais)}</p>
-                  <p className="text-[10px] text-white/25 mt-0.5">portagens incluídas</p>
+                <div className="bg-emerald-500/[0.07] rounded-xl px-4 py-3 border border-emerald-500/20">
+                  <p className="text-[9px] tracking-[0.3em] uppercase text-emerald-400/70 mb-1">+ Margem</p>
+                  <p className="text-base font-semibold text-emerald-300">{fmt(totals.margemValor)}</p>
                 </div>
-                <div className={`rounded-xl px-4 py-3 border ${totals.margemValor >= 0 ? 'bg-emerald-500/[0.08] border-emerald-500/25' : 'bg-red-500/[0.10] border-red-500/30'}`}>
-                  <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-1">Margem</p>
-                  <p className={`text-lg font-bold ${totals.margemValor >= 0 ? 'text-emerald-300' : 'text-red-400'}`}>{fmt(totals.margemValor)}</p>
-                  <p className={`text-[10px] mt-0.5 ${totals.margemValor >= 0 ? 'text-emerald-400/60' : 'text-red-400/60'}`}>
-                    {totals.margemPct.toFixed(1)}%
-                  </p>
+                <div className="bg-gold/10 rounded-xl px-4 py-3 border border-gold/30">
+                  <p className="text-[9px] tracking-[0.3em] uppercase text-gold/70 mb-1">= Total</p>
+                  <p className="text-base font-bold text-gold">{fmt(totals.total)}</p>
                 </div>
               </div>
             </div>
