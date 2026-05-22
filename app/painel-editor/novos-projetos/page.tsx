@@ -651,7 +651,6 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
   const [form, setForm] = useState({
     dataCriacao:     `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`,
     entregaPrevista: '',
-    pacote:          'Pacote Premium 👑' as 'Pacote Premium 👑' | 'Pacote Essencial',
     duracao:         '',
     clientLink:      '',
     notas:           '',
@@ -713,8 +712,8 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
       recebido:     createdAt,
       dataCasamento:   ref.data,
       entregaPrevista: form.entregaPrevista,
-      pacote:       form.pacote,
-      duracao:      form.duracao.trim() || (form.pacote === 'Pacote Premium 👑' ? '~12 min' : '~8 min'),
+      pacote:       'Pacote Premium 👑',
+      duracao:      form.duracao.trim() || '~12 min',
       stage:        'Novo Projeto',
       approval:     'Aguardando Revisão',
       observacoes:  [],
@@ -865,21 +864,11 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
             </Field>
           </div>
 
-          {/* Pacote + Duração (2 col) */}
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Pacote">
-              <select value={form.pacote} onChange={e => update('pacote', e.target.value as any)}
-                className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/40 cursor-pointer">
-                <option>Pacote Premium 👑</option>
-                <option>Pacote Essencial</option>
-              </select>
-            </Field>
-            <Field label="Duração Estimada">
-              <input value={form.duracao} onChange={e => update('duracao', e.target.value)}
-                placeholder="~12 min"
-                className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40" />
-            </Field>
-          </div>
+          <Field label="Duração Estimada">
+            <input value={form.duracao} onChange={e => update('duracao', e.target.value)}
+              placeholder="~12 min"
+              className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40" />
+          </Field>
 
           <Field label="Link do Material do Cliente">
             <input value={form.clientLink} onChange={e => update('clientLink', e.target.value)}
