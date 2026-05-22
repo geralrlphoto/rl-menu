@@ -30,8 +30,8 @@ const DEFAULTS = {
   valorNoite: 60,
   // Extras
   observacoes: '',
-  // ── Margem de Lucro (slider 0-100%) ─────────────────
-  margemPct: 0,               // % a somar ao subtotal
+  // ── Margem de Lucro (slider em €, 5 em 5) ───────────
+  margemEuros: 0,             // valor fixo em € a somar ao subtotal
 }
 
 type Form = typeof DEFAULTS
@@ -53,14 +53,13 @@ export default function OrcamentoDeslocacaoPage() {
     const subDormida   = (Number(f.numPessoas) || 0) * (Number(f.noites) || 0) * (Number(f.valorNoite) || 0)
     const subtotal = subKm + subPortagens + subRefeicoes + subViagem + subServico + subDormida
 
-    // Margem de lucro — slider 0-100% somada ao subtotal
-    const margemPct   = Math.max(0, Math.min(100, Number(f.margemPct) || 0))
-    const margemValor = subtotal * (margemPct / 100)
+    // Margem de lucro — valor fixo em € (slider de 5 em 5) somado ao subtotal
+    const margemValor = Math.max(0, Number(f.margemEuros) || 0)
     const total       = subtotal + margemValor
 
     return {
       kmTotal, subKm, subPortagens, subRefeicoes, subViagem, subServico, subDormida,
-      subtotal, margemPct, margemValor, total,
+      subtotal, margemValor, total,
     }
   }, [f])
 
@@ -242,25 +241,39 @@ export default function OrcamentoDeslocacaoPage() {
                 className={inputCls + ' resize-none leading-relaxed'} />
             </div>
 
-            {/* ── Margem de Lucro — slider, soma ao subtotal ────────────── */}
+            {/* ── Margem de Lucro — slider em €, 5 em 5 ─────────────────── */}
             <div className={sectionCls}>
               <h2 className={sectionTitle}><span className="w-2 h-2 rounded-full bg-emerald-400" /> Margem de Lucro</h2>
 
               <div className="flex items-baseline justify-between mb-2">
                 <span className="text-[11px] tracking-[0.3em] text-white/40 uppercase">Margem</span>
-                <span className="text-lg font-bold text-emerald-300">{totals.margemPct.toFixed(0)}%</span>
+                <span className="text-2xl font-bold text-emerald-300">{fmt(totals.margemValor)}</span>
               </div>
 
               <input
-                type="range" min="0" max="100" step="1"
-                value={f.margemPct}
-                onChange={e => set('margemPct', Number(e.target.value))}
+                type="range" min="0" max="500" step="5"
+                value={f.margemEuros}
+                onChange={e => set('margemEuros', Number(e.target.value))}
                 className="w-full accent-emerald-400 cursor-pointer h-1"
               />
 
               <div className="flex items-baseline justify-between mt-1">
-                <span className="text-[10px] text-white/30">0%</span>
-                <span className="text-[10px] text-white/30">100%</span>
+                <span className="text-[10px] text-white/30">0 €</span>
+                <span className="text-[10px] text-white/30">500 €</span>
+              </div>
+
+              {/* Botões de incremento rápido */}
+              <div className="flex flex-wrap gap-1.5 mt-3">
+                {[5, 10, 25, 50, 100].map(v => (
+                  <button key={v} type="button" onClick={() => set('margemEuros', Math.min(500, (Number(f.margemEuros) || 0) + v))}
+                    className="px-2.5 py-1 rounded-md text-[10px] tracking-widest uppercase font-bold border border-emerald-400/30 text-emerald-300/75 hover:bg-emerald-400/10 hover:border-emerald-400/60 transition-all">
+                    +{v}€
+                  </button>
+                ))}
+                <button type="button" onClick={() => set('margemEuros', 0)}
+                  className="ml-auto px-2.5 py-1 rounded-md text-[10px] tracking-widest uppercase font-bold border border-white/15 text-white/35 hover:bg-white/[0.05]">
+                  Zero
+                </button>
               </div>
 
               <div className="mt-4 grid grid-cols-3 gap-3">
