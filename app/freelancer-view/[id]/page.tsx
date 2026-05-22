@@ -1724,6 +1724,27 @@ export default function FreelancerViewPage() {
   const [disponibilidade, setDisponibilidade] = useState<Disponib[]>([])
   const [notificacoes, setNotificacoes]       = useState<Notificacao[]>([])
   const [mensagens, setMensagens]             = useState<Mensagem[]>([])
+  const [uploadingHero, setUploadingHero]     = useState(false)
+
+  // Upload do hero photo (reusa foto_url do freelancer)
+  async function handleHeroUpload(file: File) {
+    setUploadingHero(true)
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      const res = await fetch('/api/upload-image', { method: 'POST', body: form }).then(r => r.json())
+      if (res.url) {
+        await fetch('/api/freelancers', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, foto_url: res.url }),
+        })
+        setFreelancer(prev => prev ? { ...prev, foto_url: res.url } : prev)
+      }
+    } finally {
+      setUploadingHero(false)
+    }
+  }
 
   // Block browser back button
   useEffect(() => {
@@ -1836,7 +1857,7 @@ export default function FreelancerViewPage() {
         isFotografo={isFotografo}
       />
 
-    <main className={`relative z-10 min-h-screen px-4 py-10 mx-auto lg:pl-[240px] ${tab === null ? 'max-w-6xl' : 'max-w-3xl'}`}>
+    <main className={`relative z-10 min-h-screen px-4 py-10 mx-auto lg:pl-[260px] lg:pr-6 ${tab === null ? 'max-w-[1600px]' : 'max-w-3xl'}`}>
       {/* Header */}
       <div className="mb-8">
         <p className="text-[14px] text-white font-semibold mb-3">RL PHOTO.VIDEO · Área do Freelancer</p>
@@ -2001,8 +2022,19 @@ export default function FreelancerViewPage() {
         return (
           <>
           {/* ── HERO Card largo (mockup) ────────────────────────────── */}
-          <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] mb-5"
-            style={{ background: 'linear-gradient(90deg, rgba(8,6,4,0.95) 0%, rgba(14,11,7,0.85) 45%, rgba(14,11,7,0.4) 75%, rgba(20,15,8,0.1) 100%)' }}>
+          <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] mb-5 min-h-[280px]">
+            {/* Background foto (se houver) */}
+            {freelancer?.foto_url && (
+              <div className="absolute inset-0 z-0">
+                <img src={freelancer.foto_url} alt="" className="w-full h-full object-cover" />
+              </div>
+            )}
+            {/* Gradiente sobre a foto (escuro → transparente da esquerda para a direita) */}
+            <div className="absolute inset-0 z-[1]"
+              style={{ background: freelancer?.foto_url
+                ? 'linear-gradient(90deg, rgba(8,6,4,0.97) 0%, rgba(14,11,7,0.92) 40%, rgba(14,11,7,0.55) 65%, rgba(14,11,7,0.2) 90%, rgba(14,11,7,0) 100%)'
+                : 'linear-gradient(90deg, rgba(8,6,4,0.95) 0%, rgba(14,11,7,0.85) 45%, rgba(14,11,7,0.4) 75%, rgba(20,15,8,0.1) 100%)' }} />
+
             <div className="relative z-10 grid grid-cols-1 lg:grid-cols-5 gap-6 p-6 sm:p-8">
               <div className="lg:col-span-3 flex flex-col gap-5">
                 <div>
@@ -2022,36 +2054,48 @@ export default function FreelancerViewPage() {
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/15 text-white/85 text-[14px] font-medium tracking-wider hover:bg-white/[0.05] hover:border-white/30 transition-all">
                     <span className="text-base leading-none">◷</span> Confirmar Disponibilidade
                   </button>
+
+                  {/* Upload / Trocar foto */}
+                  <label className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-[14px] font-medium tracking-wider transition-all cursor-pointer ${
+                    uploadingHero
+                      ? 'border-white/10 text-white/30 cursor-wait'
+                      : 'border-gold/30 text-gold/80 hover:bg-gold/10 hover:border-gold/50'
+                  }`}>
+                    <span className="text-base leading-none">{uploadingHero ? '⏳' : '📷'}</span>
+                    {uploadingHero ? 'A enviar…' : (freelancer?.foto_url ? 'Trocar foto' : 'Adicionar foto')}
+                    <input type="file" accept="image/*" className="hidden" disabled={uploadingHero}
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleHeroUpload(f) }} />
+                  </label>
                 </div>
 
                 <div>
                   <p className="text-[14px] tracking-[0.3em] text-white/40 uppercase font-medium mb-3">Resumo Rápido</p>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                    <div className="bg-black/30 border border-white/[0.06] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                    <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
                       <span className="w-8 h-8 rounded-lg border bg-gold/10 border-gold/25 text-gold flex items-center justify-center text-base">◫</span>
-                      <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalCasamentos}</p><p className="text-[14px] text-white/45 leading-tight mt-0.5">Casamentos</p></div>
+                      <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalCasamentos}</p><p className="text-[14px] text-white/55 leading-tight mt-0.5">Casamentos</p></div>
                     </div>
-                    <div className="bg-black/30 border border-white/[0.06] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                    <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
                       <span className="w-8 h-8 rounded-lg border bg-purple-500/10 border-purple-500/25 text-purple-300 flex items-center justify-center text-base">✎</span>
-                      <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalEmEdicao}</p><p className="text-[14px] text-white/45 leading-tight mt-0.5">Em edição</p></div>
+                      <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalEmEdicao}</p><p className="text-[14px] text-white/55 leading-tight mt-0.5">Em edição</p></div>
                     </div>
-                    <div className="bg-black/30 border border-white/[0.06] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                    <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
                       <span className="w-8 h-8 rounded-lg border bg-emerald-500/10 border-emerald-500/25 text-emerald-300 flex items-center justify-center text-base">✓</span>
-                      <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalConcluidos}</p><p className="text-[14px] text-white/45 leading-tight mt-0.5">Concluídos</p></div>
+                      <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalConcluidos}</p><p className="text-[14px] text-white/55 leading-tight mt-0.5">Concluídos</p></div>
                     </div>
-                    <div className="bg-black/30 border border-white/[0.06] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                    <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
                       <span className="w-8 h-8 rounded-lg border bg-amber-500/10 border-amber-500/25 text-amber-300 flex items-center justify-center text-base">◷</span>
-                      <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalAguardando}</p><p className="text-[14px] text-white/45 leading-tight mt-0.5">Aguardando</p></div>
+                      <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalAguardando}</p><p className="text-[14px] text-white/55 leading-tight mt-0.5">Aguardando</p></div>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div className="lg:col-span-2 hidden lg:flex items-center justify-end pr-4">
-                <div className="text-right max-w-[260px]">
-                  <p className="text-gold/60 text-4xl font-serif leading-none mb-2">&ldquo;</p>
-                  <p className="text-[15px] text-white/75 italic leading-relaxed font-light">Transformamos momentos em histórias que duram para sempre.</p>
-                  <p className="text-[14px] text-gold/70 italic font-light mt-3" style={{ fontFamily: 'Georgia, serif' }}>— Momento</p>
+                <div className="text-right max-w-[280px]">
+                  <p className="text-gold/70 text-5xl font-serif leading-none mb-3">&ldquo;</p>
+                  <p className="text-[16px] text-white/85 italic leading-relaxed font-light" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>Transformamos momentos em histórias que duram para sempre.</p>
+                  <p className="text-[14px] text-gold/80 italic font-light mt-3" style={{ fontFamily: 'Georgia, serif' }}>— Momento</p>
                 </div>
               </div>
             </div>
