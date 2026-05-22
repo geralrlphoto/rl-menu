@@ -270,6 +270,32 @@ export default function PagamentosPage() {
   const selectedProject = allProjects.find(p => p.id === selectedId) ?? null
   const selectedPlan    = selectedProject ? paymentPlanFor(selectedProject) : []
 
+  // Modal Novo Recebimento
+  const [showNovoRecebimento, setShowNovoRecebimento] = useState(false)
+
+  // Exportar CSV (todas as rows)
+  function exportarCSV() {
+    const headers = ['Projeto', 'Casamento', 'Valor (€)', 'Estado', 'Data Pagamento', 'Método']
+    const rows = allRows.map(r => [
+      `"${r.project.noivos.replace(/"/g, '""')}"`,
+      r.project.dataCasamento,
+      String(r.inst.value).replace('.', ','),
+      r.inst.status,
+      r.inst.paidDate ?? '',
+      r.inst.metodo ?? '',
+    ].join(';'))
+    const csv = '﻿' + [headers.join(';'), ...rows].join('\r\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `pagamentos-${TODAY.replace(/\//g, '-')}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="min-h-screen text-white relative" style={{ background: '#0A0A0A' }}>
       {/* Atmosfera */}
@@ -290,6 +316,8 @@ export default function PagamentosPage() {
             total={kpis.totalAnual}
             facturasPendentes={kpis.facturasPendentes}
             aguardamPagamento={kpis.aguardamPagamento}
+            onNovoRecebimento={() => setShowNovoRecebimento(true)}
+            onExportar={exportarCSV}
           />
 
           {/* KPIs */}
@@ -561,6 +589,19 @@ export default function PagamentosPage() {
           <p className="text-center text-[10px] tracking-[0.4em] uppercase text-white/15 mt-12 mb-4">RL Photo.Video · Pagamentos sincronizados com Projetos</p>
         </div>
       </main>
+
+      {/* Modal Novo Recebimento */}
+      {showNovoRecebimento && (
+        <NovoRecebimentoModal
+          projects={allProjects}
+          paymentOverrides={paymentOverrides}
+          onClose={() => setShowNovoRecebimento(false)}
+          onConfirm={(projectId, metodo) => {
+            setPaymentStatus(projectId, 'Recebido', metodo)
+            setShowNovoRecebimento(false)
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -616,7 +657,7 @@ function Sidebar() {
   )
 }
 
-function Hero({ total, facturasPendentes, aguardamPagamento }: { total: number; facturasPendentes: number; aguardamPagamento: number }) {
+function Hero({ total, facturasPendentes, aguardamPagamento, onNovoRecebimento, onExportar }: { total: number; facturasPendentes: number; aguardamPagamento: number; onNovoRecebimento: () => void; onExportar: () => void }) {
   return (
     <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] mb-6"
       style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.6)' }}>
@@ -647,11 +688,17 @@ function Hero({ total, facturasPendentes, aguardamPagamento }: { total: number; 
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <button className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gold text-black text-[13px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
+          <button
+            type="button"
+            onClick={onNovoRecebimento}
+            className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gold text-black text-[13px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
             style={{ boxShadow: '0 0 24px -4px rgba(201,164,92,0.5)' }}>
             <span className="text-lg leading-none">+</span> Novo Recebimento
           </button>
-          <button className="inline-flex items-center gap-2 px-4 h-10 rounded-xl border border-white/15 text-white/75 text-[13px] font-medium tracking-wider hover:bg-white/[0.05] hover:border-white/30 transition-all">
+          <button
+            type="button"
+            onClick={onExportar}
+            className="inline-flex items-center gap-2 px-4 h-10 rounded-xl border border-white/15 text-white/75 text-[13px] font-medium tracking-wider hover:bg-white/[0.05] hover:border-white/30 transition-all">
             ↓ Exportar
           </button>
         </div>
@@ -886,5 +933,118 @@ function PillBtn({ label, gold, disabled }: { label: string; gold?: boolean; dis
       style={gold ? { boxShadow: '0 0 14px -4px rgba(201,164,92,0.5)' } : {}}>
       {label}
     </button>
+  )
+}
+
+// ────────────────────────────────────────────────────────────────────────
+//  MODAL NOVO RECEBIMENTO
+// ────────────────────────────────────────────────────────────────────────
+function NovoRecebimentoModal({
+  projects,
+  paymentOverrides,
+  onClose,
+  onConfirm,
+}: {
+  projects: Project[]
+  paymentOverrides: Record<string, PaymentOverride>
+  onClose: () => void
+  onConfirm: (projectId: string, metodo: PaymentMethod) => void
+}) {
+  // Apenas projetos que ainda não estão marcados como Recebido
+  const pendentes = projects.filter(p => {
+    const override = paymentOverrides[p.id]
+    if (override) return override.status !== 'Recebido'
+    // Sem override: considera pago se finalEntregue + aprovado (mock auto-pago)
+    return !(p.finalEntregue && p.approval === 'Aprovado Cliente')
+  })
+  const [selectedId, setSelectedId] = useState<string>(pendentes[0]?.id ?? '')
+  const [metodo, setMetodo] = useState<PaymentMethod>('Transferência')
+  const selected = projects.find(p => p.id === selectedId)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}>
+      <div className="relative w-full max-w-lg rounded-2xl border border-gold/30 overflow-hidden"
+        style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.98), rgba(11,9,5,0.99))', boxShadow: '0 30px 60px -20px rgba(0,0,0,0.8), 0 0 40px -10px rgba(201,164,92,0.35)' }}>
+        <button onClick={onClose}
+          className="absolute top-3 right-3 w-8 h-8 rounded-lg border border-white/10 text-white/55 hover:text-gold hover:border-gold/30 flex items-center justify-center text-lg">×</button>
+
+        <div className="px-6 pt-6 pb-4 border-b border-white/[0.06]">
+          <p className="text-[11px] tracking-[0.4em] uppercase text-gold/70 font-bold mb-2">Registar Pagamento</p>
+          <h2 className="text-2xl font-light text-white" style={{ fontFamily: 'Georgia, serif' }}>Novo <span className="italic text-gold">Recebimento</span></h2>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {pendentes.length === 0 ? (
+            <div className="text-center py-6">
+              <p className="text-gold/50 text-3xl font-serif mb-2">✓</p>
+              <p className="text-[14px] text-white/55">Todos os projetos estão pagos.</p>
+            </div>
+          ) : (
+            <>
+              {/* Projeto */}
+              <div>
+                <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-2">Projeto</p>
+                <select value={selectedId} onChange={e => setSelectedId(e.target.value)}
+                  className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/50">
+                  {pendentes.map(p => (
+                    <option key={p.id} value={p.id} style={{ background: '#1a1206' }}>
+                      {p.noivos} — {p.dataCasamento} — {new Intl.NumberFormat('pt-PT').format(p.preco)} €
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Valor (read-only, vem do projeto) */}
+              {selected && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-2">Valor</p>
+                    <div className="px-3 py-2.5 rounded-lg bg-black/20 border border-white/10 text-[14px] font-bold text-gold">
+                      {new Intl.NumberFormat('pt-PT').format(selected.preco)} €
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-2">Data</p>
+                    <div className="px-3 py-2.5 rounded-lg bg-black/20 border border-white/10 text-[13px] text-white/85">
+                      {TODAY} <span className="text-white/30 text-[11px]">(hoje)</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Método */}
+              <div>
+                <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-2">Método de Pagamento</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['MBWay','Transferência','Numerário'] as PaymentMethod[]).map(m => (
+                    <button key={m} type="button" onClick={() => setMetodo(m)}
+                      className={`px-3 py-2.5 rounded-lg border text-[12px] font-semibold tracking-wider transition-all ${
+                        metodo === m
+                          ? 'bg-gold/15 border-gold/50 text-gold'
+                          : 'border-white/10 text-white/55 hover:border-white/25 hover:text-white/85'
+                      }`}>
+                      {m === 'MBWay' ? '📱' : m === 'Transferência' ? '🏦' : '💵'} {m}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <button type="button" onClick={onClose}
+                  className="flex-1 px-4 py-2.5 rounded-lg border border-white/10 text-white/65 text-[12px] font-semibold tracking-wider hover:border-white/25 hover:text-white transition-all">
+                  Cancelar
+                </button>
+                <button type="button" onClick={() => onConfirm(selectedId, metodo)}
+                  disabled={!selectedId}
+                  className="flex-1 px-4 py-2.5 rounded-lg bg-gold text-black text-[12px] font-bold tracking-wider hover:bg-gold/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ boxShadow: '0 0 18px -4px rgba(201,164,92,0.5)' }}>
+                  ✓ Registar Recebimento
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
