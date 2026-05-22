@@ -289,6 +289,17 @@ export default function FreelancersPage() {
           <div className="mt-2 h-px w-12 bg-gold/40" />
         </div>
         <div className="flex items-center gap-3">
+          <Link href="/painel-editor"
+            className="relative flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold tracking-widest uppercase transition-all overflow-hidden group"
+            style={{
+              background: 'linear-gradient(135deg, rgba(201,164,92,0.18), rgba(201,164,92,0.04))',
+              border: '1px solid rgba(201,164,92,0.5)',
+              color: '#C9A45C',
+              boxShadow: '0 0 16px rgba(201,164,92,0.25), inset 0 0 12px rgba(201,164,92,0.05)',
+            }}>
+            <span className="absolute inset-0 bg-gradient-to-r from-gold/0 via-gold/15 to-gold/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
+            <span className="relative">✦ Maquete</span>
+          </Link>
           <Link href="/freelancers/novos"
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-white/40 text-xs font-semibold tracking-widest hover:bg-white/[0.06] hover:text-white/70 transition-all uppercase">
             Novos Freelancers
