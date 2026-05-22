@@ -263,53 +263,147 @@ export default function OrcamentoDeslocacaoPage() {
         </div>
 
         {/* ─── PRINT VIEW (oculta em ecrã, visível no PDF) ─────────────── */}
-        <div className="print-only">
-          <div className="print-card mb-6 pb-6 border-b border-gray-300">
-            <p className="text-[10px] tracking-[0.5em] uppercase text-gray-500 mb-1">RL Photo.Video · Photography &amp; Video</p>
-            <h1 className="text-3xl font-light tracking-[0.15em] uppercase print-gold">Orçamento de Deslocação</h1>
-            <p className="text-xs text-gray-500 mt-2">Emitido em {new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+        <div className="print-only max-w-[800px] mx-auto px-10 py-8">
+
+          {/* Cabeçalho — logo + dados da empresa (mesmo padrão do contrato) */}
+          <div className="flex items-start justify-between mb-10 pb-6 border-b-2 border-black">
+            <div className="flex items-center gap-4">
+              <img
+                src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
+                alt="RL Photo Video"
+                className="w-20 h-20 object-contain"
+                style={{ filter: 'invert(0)' }}
+              />
+              <div>
+                <h1 className="text-2xl font-black tracking-[0.15em] uppercase text-black">RL PHOTO.VIDEO</h1>
+                <p className="text-xs text-zinc-500 mt-1">Fotografia &amp; Vídeo de Casamentos</p>
+              </div>
+            </div>
+            <div className="text-right text-[11px] text-zinc-600 leading-relaxed">
+              <p><strong>NIF:</strong> 238 076 415</p>
+              <p><strong>CAE:</strong> 74200</p>
+              <p>geral.rlphoto@gmail.com</p>
+              <p>+351 916 162 728</p>
+            </div>
           </div>
 
-          {(f.cliente || f.evento || f.data || f.destino) && (
-            <div className="print-card mb-6 grid grid-cols-2 gap-4 text-sm">
-              {f.cliente && <div><p className="text-[10px] uppercase text-gray-500 tracking-wider">Cliente</p><strong>{f.cliente}</strong></div>}
-              {f.evento  && <div><p className="text-[10px] uppercase text-gray-500 tracking-wider">Evento</p><strong>{f.evento}</strong></div>}
-              {f.data    && <div><p className="text-[10px] uppercase text-gray-500 tracking-wider">Data</p><strong>{new Date(f.data + 'T12:00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })}</strong></div>}
-              {f.destino && <div className="col-span-2"><p className="text-[10px] uppercase text-gray-500 tracking-wider">Trajeto</p><strong>{f.origem} → {f.destino}</strong></div>}
-            </div>
-          )}
+          {/* Título */}
+          <div className="text-center mb-10">
+            <h2 className="text-xl font-black tracking-[0.2em] uppercase mb-2 text-black">Orçamento de Deslocação</h2>
+            <p className="text-xs text-zinc-500 tracking-widest uppercase">
+              Emitido em {new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })}
+            </p>
+          </div>
 
-          <table className="print-card w-full text-sm border-collapse mb-6">
-            <thead>
-              <tr className="border-b-2 border-gray-300">
-                <th className="text-left py-2 text-[10px] tracking-widest uppercase text-gray-500">Item</th>
-                <th className="text-left py-2 text-[10px] tracking-widest uppercase text-gray-500">Detalhe</th>
-                <th className="text-right py-2 text-[10px] tracking-widest uppercase text-gray-500">Valor</th>
-              </tr>
-            </thead>
-            <tbody>
-              <PrintRow label="Deslocação" detail={`${totals.kmTotal} km × ${fmt(f.valorPorKm)}/km${f.idaVolta ? ' (ida e volta)' : ''}`} valor={totals.subKm} />
-              {totals.subPortagens > 0 && <PrintRow label="Portagens" detail="—" valor={totals.subPortagens} />}
-              {totals.subRefeicoes > 0 && <PrintRow label="Refeições" detail={`${f.numPessoas} pessoas × ${f.numRefeicoes} refeições × ${fmt(f.valorRefeicao)}`} valor={totals.subRefeicoes} />}
-              {totals.subViagem > 0 && <PrintRow label="Horas de viagem" detail={`${f.horasViagem}h × ${fmt(f.valorHoraViagem)}/h`} valor={totals.subViagem} />}
-              {totals.subServico > 0 && <PrintRow label="Horas de serviço extra" detail={`${f.horasServico}h × ${fmt(f.valorHoraServico)}/h`} valor={totals.subServico} />}
-              {totals.subDormida > 0 && <PrintRow label="Estadia" detail={`${f.numPessoas} pessoas × ${f.noites} noites × ${fmt(f.valorNoite)}`} valor={totals.subDormida} />}
-              <tr className="border-t-2 border-gray-700">
-                <td colSpan={2} className="py-3 text-sm tracking-widest uppercase font-bold">TOTAL</td>
-                <td className="py-3 text-right text-xl font-bold print-gold">{fmt(totals.total)}</td>
-              </tr>
-            </tbody>
-          </table>
+          {/* 1. Identificação das Partes */}
+          <section className="mb-8">
+            <h3 className="text-[10px] font-black tracking-[0.3em] uppercase border-b border-zinc-200 pb-2 mb-4 text-black">
+              1. Identificação das Partes
+            </h3>
+
+            <div className="space-y-5">
+              <div>
+                <p className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-1">Primeira Outorgante (Prestadora)</p>
+                <p className="text-sm leading-relaxed text-zinc-800">
+                  <strong>Liliana Sofia Fernandes Barreto Gonçalves</strong>, a exercer sob a marca <strong>RL Photo — Fotografia &amp; Vídeo</strong>,
+                  contribuinte n.º <strong>238 076 415</strong>, CAE <strong>74200</strong> (Atividades Fotográficas/Vídeo),
+                  com sede em <strong>Centro Comercial Os Mochos, Loja 124, 2955-185 Pinhal Novo</strong>,
+                  e-mail <strong>geral.rlphoto@gmail.com</strong>, telefone <strong>+351 916 162 728</strong>.
+                </p>
+              </div>
+
+              {(f.cliente || f.evento || f.data || f.destino) && (
+                <div>
+                  <p className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-1">Segunda Outorgante (Cliente)</p>
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                    {f.cliente && <div><span className="text-zinc-400 text-[10px] block mb-0.5">Nome</span><strong>{f.cliente}</strong></div>}
+                    {f.evento  && <div><span className="text-zinc-400 text-[10px] block mb-0.5">Tipo de evento</span><strong>{f.evento}</strong></div>}
+                    {f.data    && <div><span className="text-zinc-400 text-[10px] block mb-0.5">Data do evento</span><strong>{new Date(f.data + 'T12:00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })}</strong></div>}
+                    {f.destino && <div><span className="text-zinc-400 text-[10px] block mb-0.5">Local</span><strong>{f.destino}</strong></div>}
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* 2. Trajeto */}
+          <section className="mb-8">
+            <h3 className="text-[10px] font-black tracking-[0.3em] uppercase border-b border-zinc-200 pb-2 mb-4 text-black">
+              2. Trajeto
+            </h3>
+            <div className="bg-zinc-50 rounded-lg p-4 text-sm grid grid-cols-3 gap-3">
+              <div>
+                <span className="text-zinc-400 text-[10px] block mb-0.5 uppercase tracking-wider">Origem</span>
+                <strong>{f.origem || '—'}</strong>
+              </div>
+              <div>
+                <span className="text-zinc-400 text-[10px] block mb-0.5 uppercase tracking-wider">Destino</span>
+                <strong>{f.destino || '—'}</strong>
+              </div>
+              <div>
+                <span className="text-zinc-400 text-[10px] block mb-0.5 uppercase tracking-wider">Distância</span>
+                <strong>{totals.kmTotal.toLocaleString('pt-PT')} km</strong>
+                <span className="text-zinc-400 text-[10px] ml-1">{f.idaVolta ? '(ida e volta)' : '(só ida)'}</span>
+              </div>
+            </div>
+          </section>
+
+          {/* 3. Detalhe dos Custos */}
+          <section className="mb-8">
+            <h3 className="text-[10px] font-black tracking-[0.3em] uppercase border-b border-zinc-200 pb-2 mb-4 text-black">
+              3. Detalhe dos Custos
+            </h3>
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="border-b-2 border-zinc-300">
+                  <th className="text-left py-2 text-[10px] tracking-widest uppercase text-zinc-500 font-bold">Item</th>
+                  <th className="text-left py-2 text-[10px] tracking-widest uppercase text-zinc-500 font-bold">Detalhe</th>
+                  <th className="text-right py-2 text-[10px] tracking-widest uppercase text-zinc-500 font-bold">Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                <PrintRow label="Deslocação" detail={`${totals.kmTotal} km × ${fmt(f.valorPorKm)}/km${f.idaVolta ? ' (ida e volta)' : ''}`} valor={totals.subKm} />
+                {totals.subPortagens > 0 && <PrintRow label="Portagens" detail="Valor total da via" valor={totals.subPortagens} />}
+                {totals.subRefeicoes > 0 && <PrintRow label="Refeições" detail={`${f.numPessoas} pessoas × ${f.numRefeicoes} refeições × ${fmt(f.valorRefeicao)}`} valor={totals.subRefeicoes} />}
+                {totals.subViagem > 0 && <PrintRow label="Horas de viagem" detail={`${f.horasViagem}h × ${fmt(f.valorHoraViagem)}/h`} valor={totals.subViagem} />}
+                {totals.subServico > 0 && <PrintRow label="Horas de serviço extra" detail={`${f.horasServico}h × ${fmt(f.valorHoraServico)}/h`} valor={totals.subServico} />}
+                {totals.subDormida > 0 && <PrintRow label="Estadia" detail={`${f.numPessoas} pessoas × ${f.noites} noite(s) × ${fmt(f.valorNoite)}`} valor={totals.subDormida} />}
+                <tr className="bg-black text-white">
+                  <td colSpan={2} className="py-3 px-2 text-sm tracking-widest uppercase font-bold">TOTAL A LIQUIDAR</td>
+                  <td className="py-3 px-2 text-right text-xl font-black">{fmt(totals.total)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
 
           {f.observacoes && (
-            <div className="print-card mb-6">
-              <p className="text-[10px] tracking-widest uppercase text-gray-500 mb-2">Observações</p>
-              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{f.observacoes}</p>
-            </div>
+            <section className="mb-8">
+              <h3 className="text-[10px] font-black tracking-[0.3em] uppercase border-b border-zinc-200 pb-2 mb-4 text-black">
+                4. Observações
+              </h3>
+              <p className="text-sm text-zinc-700 leading-relaxed whitespace-pre-wrap">{f.observacoes}</p>
+            </section>
           )}
 
-          <div className="print-card pt-6 border-t border-gray-300 text-[10px] text-gray-500 tracking-widest uppercase text-center">
-            RL Photo · Video · info@rlphotovideo.pt · www.rlphotovideo.pt
+          {/* Condições gerais */}
+          <section className="mb-8 text-[11px] text-zinc-600 leading-relaxed">
+            <h3 className="text-[10px] font-black tracking-[0.3em] uppercase border-b border-zinc-200 pb-2 mb-3 text-black">
+              Condições Gerais
+            </h3>
+            <ul className="space-y-1.5 list-disc list-inside">
+              <li>O presente orçamento é válido por <strong>30 dias</strong> a partir da data de emissão.</li>
+              <li>Valores apresentados em <strong>Euros (€)</strong>, com IVA incluído quando aplicável.</li>
+              <li>A deslocação inclui a viagem de ida e volta entre a sede da prestadora e o local indicado.</li>
+              <li>O pagamento dos custos de deslocação é faturado em separado do serviço de fotografia/vídeo.</li>
+              <li>Em caso de cancelamento por parte do cliente, podem ser cobrados custos já incorridos (portagens, estadias confirmadas).</li>
+            </ul>
+          </section>
+
+          {/* Rodapé */}
+          <div className="pt-6 border-t border-zinc-300 text-center">
+            <p className="text-[10px] tracking-[0.4em] uppercase text-zinc-500 mb-1">RL Photo · Video · Photography &amp; Video</p>
+            <p className="text-[10px] text-zinc-400">Centro Comercial Os Mochos, Loja 124, 2955-185 Pinhal Novo</p>
+            <p className="text-[10px] text-zinc-400">NIF 238 076 415 · geral.rlphoto@gmail.com · +351 916 162 728</p>
           </div>
         </div>
       </main>
