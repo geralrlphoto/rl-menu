@@ -120,7 +120,9 @@ export default function WorkflowPage() {
 
         const merged: Project[] = [
           ...userMapped,
-          ...PROJECTS.map(p => patches[p.id] ? { ...p, ...patches[p.id], finalEntregue: (patches[p.id] as any).stage === 'Entregue' || p.finalEntregue, progress: progressFromStageWF((patches[p.id] as any).stage ?? p.stage) } : p),
+          ...PROJECTS
+            .map(p => patches[p.id] ? { ...p, ...patches[p.id], finalEntregue: (patches[p.id] as any).stage === 'Entregue' || p.finalEntregue, progress: progressFromStageWF((patches[p.id] as any).stage ?? p.stage) } : p)
+            .filter(p => !(p as any).archived && !(p as any).cancelled),
         ]
         setAllProjects(merged)
       } catch {

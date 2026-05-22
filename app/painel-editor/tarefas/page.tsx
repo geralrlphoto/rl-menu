@@ -125,15 +125,25 @@ export default function TarefasPage() {
         const raw = localStorage.getItem('painel-editor-user-projects')
         const userProjects: any[] = raw ? JSON.parse(raw) : []
 
-        // 1) Adiciona user-projects ao lookup global (para projectFor())
+        // Detecta mocks eliminados via patches
+        const patchesRaw = localStorage.getItem('painel-editor-project-patches')
+        const patches: Record<string, any> = patchesRaw ? JSON.parse(patchesRaw) : {}
+        const deletedIds = new Set<string>()
+        Object.entries(patches).forEach(([id, patch]) => {
+          if (patch?.archived || patch?.cancelled) deletedIds.add(id)
+        })
+
+        // 1) Adiciona user-projects ao lookup global (para projectFor()) — filtra mocks eliminados
         const userMappedProjects: Project[] = userProjects.map(userProjectToProjectT)
-        setProjectsLookup([...userMappedProjects, ...PROJECTS])
+        const aliveMocks = PROJECTS.filter(p => !deletedIds.has(p.id))
+        setProjectsLookup([...userMappedProjects, ...aliveMocks])
 
         // 2) Gera tarefas automáticas para cada user-project
         const userTasks: Task[] = userProjects.flatMap(generateTasksForUserProject)
 
-        // 3) Merge: tarefas auto-geradas no topo + mock TASKS
-        setTasks([...userTasks, ...TASKS])
+        // 3) Merge: tarefas auto-geradas + mock TASKS (filtra tarefas de projetos eliminados)
+        const allTasks = [...userTasks, ...TASKS].filter(t => !deletedIds.has(t.projectId))
+        setTasks(allTasks)
       } catch {
         setProjectsLookup([...PROJECTS])
         setTasks(TASKS)

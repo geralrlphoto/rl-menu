@@ -105,10 +105,12 @@ export default function PagamentosPage() {
         const patchesRaw = localStorage.getItem('painel-editor-project-patches')
         const patches: Record<string, Partial<Project>> = patchesRaw ? JSON.parse(patchesRaw) : {}
 
-        // user-created no topo + mocks com patches aplicados
+        // user-created no topo + mocks com patches aplicados (filtra eliminados)
         const merged: Project[] = [
           ...userMapped,
-          ...PROJECTS.map(p => patches[p.id] ? { ...p, ...patches[p.id], finalEntregue: (patches[p.id] as any).stage === 'Entregue' || p.finalEntregue } : p),
+          ...PROJECTS
+            .map(p => patches[p.id] ? { ...p, ...patches[p.id], finalEntregue: (patches[p.id] as any).stage === 'Entregue' || p.finalEntregue } : p)
+            .filter(p => !(p as any).archived && !(p as any).cancelled),
         ]
         setAllProjects(merged)
       } catch {

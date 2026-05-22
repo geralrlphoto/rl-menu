@@ -171,16 +171,16 @@ export default function PainelEditor() {
       setFinalizadosProjetos(mergedFinalizados)
 
       // ── KPI counts (mocks + patches + user-projects) ─────────────────
-      // 1) Estado atual dos mocks (aplica patches por cima)
+      // 1) Estado atual dos mocks (aplica patches por cima) — exclui eliminados
       let patches: Record<string, any> = {}
       try {
         const patchesJson = localStorage.getItem('painel-editor-project-patches')
         patches = patchesJson ? JSON.parse(patchesJson) : {}
       } catch {}
 
-      const mockStages: string[] = Object.keys(MOCK_PROJECTS_STAGES).map(id =>
-        patches[id]?.stage ?? MOCK_PROJECTS_STAGES[id]
-      )
+      const mockStages: string[] = Object.keys(MOCK_PROJECTS_STAGES)
+        .filter(id => !(patches[id]?.archived || patches[id]?.cancelled))
+        .map(id => patches[id]?.stage ?? MOCK_PROJECTS_STAGES[id])
       const userStages: string[] = userProjects.map(p => p.stage)
       const allStages: string[] = [...mockStages, ...userStages]
 

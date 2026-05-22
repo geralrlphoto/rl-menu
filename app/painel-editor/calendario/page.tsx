@@ -89,17 +89,33 @@ type ViewMode = 'Mês' | 'Semana' | 'Dia' | 'Agenda'
 export default function CalendarioPage() {
   const baseEvents = useMemo(() => eventsFromProjects(), [])
   const [userEvents, setUserEvents] = useState<CalendarEvent[]>([])
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set())
 
   // Ler projetos criados pelo utilizador (localStorage) e gerar os seus eventos
   useEffect(() => {
-    setUserEvents(userProjectsToEvents())
-    // Re-sync quando a tab volta a ficar visível (cobre o caso de criar projeto noutra tab)
-    const onFocus = () => setUserEvents(userProjectsToEvents())
+    function load() {
+      setUserEvents(userProjectsToEvents())
+      // Detecta mocks eliminados via patches (archived/cancelled)
+      try {
+        const raw = localStorage.getItem('painel-editor-project-patches')
+        const patches: Record<string, any> = raw ? JSON.parse(raw) : {}
+        const deleted = new Set<string>()
+        Object.entries(patches).forEach(([id, patch]) => {
+          if (patch?.archived || patch?.cancelled) deleted.add(id)
+        })
+        setDeletedIds(deleted)
+      } catch {}
+    }
+    load()
+    const onFocus = () => load()
     window.addEventListener('focus', onFocus)
     return () => window.removeEventListener('focus', onFocus)
   }, [])
 
-  const allEvents = useMemo(() => [...userEvents, ...baseEvents], [userEvents, baseEvents])
+  const allEvents = useMemo(() => {
+    // Filtra eventos de projetos eliminados (archived/cancelled)
+    return [...userEvents, ...baseEvents].filter(e => !e.projectId || !deletedIds.has(e.projectId))
+  }, [userEvents, baseEvents, deletedIds])
   const [view, setView] = useState<ViewMode>('Mês')
   const [calView, setCalView] = useState({ y: 2026, m: 4 }) // Maio 2026
   const [typeFilter, setTypeFilter] = useState<'Todos' | EventType>('Todos')
