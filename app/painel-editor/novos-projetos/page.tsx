@@ -341,8 +341,12 @@ const FILTER_TABS = ['Todos','Novo Projeto','Em Edição','Para Revisão','Aprov
 // ──────────────────────────────────────────────────────────────────────────
 //  PAGE
 // ──────────────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'painel-editor-user-projects'
+const STORAGE_PATCHES_KEY = 'painel-editor-project-patches'
+
 export default function NovosProjetosPage() {
   const [projects, setProjects] = useState<Project[]>(PROJECTS)
+  const [hydrated, setHydrated] = useState(false)
   const [activeTab, setActiveTab] = useState('Todos')
   const [search, setSearch] = useState('')
   const [showOnlyActive, setShowOnlyActive] = useState(false)
@@ -350,6 +354,56 @@ export default function NovosProjetosPage() {
   const [expanded, setExpanded] = useState<string | null>('p1')
   const [page, setPage] = useState(1)
   const [showAddModal, setShowAddModal] = useState(false)
+
+  // ── Carregar projetos criados pelo utilizador + patches sobre mocks ───
+  useEffect(() => {
+    try {
+      const userJson = localStorage.getItem(STORAGE_KEY)
+      const userProjects: Project[] = userJson ? JSON.parse(userJson) : []
+
+      const patchesJson = localStorage.getItem(STORAGE_PATCHES_KEY)
+      const patches: Record<string, Partial<Project>> = patchesJson ? JSON.parse(patchesJson) : {}
+
+      // user-created projects no topo + mocks com patches aplicados
+      const merged: Project[] = [
+        ...userProjects,
+        ...PROJECTS.map(p => patches[p.id] ? { ...p, ...patches[p.id] } : p),
+      ]
+      setProjects(merged)
+    } catch (err) {
+      console.warn('Erro ao carregar projetos guardados:', err)
+    }
+    setHydrated(true)
+  }, [])
+
+  // ── Persistir alterações no localStorage ─────────────────────────────
+  useEffect(() => {
+    if (!hydrated) return
+    try {
+      const mockIds = new Set(PROJECTS.map(p => p.id))
+      // 1) Projetos criados pelo utilizador (não estão no mock)
+      const userProjects = projects.filter(p => !mockIds.has(p.id))
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(userProjects))
+
+      // 2) Patches sobre projetos mock (alterações de stage/approval/etc)
+      const patches: Record<string, Partial<Project>> = {}
+      projects.forEach(p => {
+        if (mockIds.has(p.id)) {
+          const original = PROJECTS.find(x => x.id === p.id)!
+          const diff: Partial<Project> = {}
+          ;(Object.keys(p) as (keyof Project)[]).forEach(k => {
+            if (JSON.stringify(p[k]) !== JSON.stringify(original[k])) {
+              ;(diff as any)[k] = p[k]
+            }
+          })
+          if (Object.keys(diff).length > 0) patches[p.id] = diff
+        }
+      })
+      localStorage.setItem(STORAGE_PATCHES_KEY, JSON.stringify(patches))
+    } catch (err) {
+      console.warn('Erro ao guardar projetos:', err)
+    }
+  }, [projects, hydrated])
 
   function handleCreate(p: Project) {
     setProjects(prev => [p, ...prev])
