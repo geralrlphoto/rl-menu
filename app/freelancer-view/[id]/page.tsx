@@ -1815,7 +1815,7 @@ export default function FreelancerViewPage() {
     .sort((a,b) => (a.data_casamento ?? '') > (b.data_casamento ?? '') ? -1 : 1)
 
   return (
-    <main className="min-h-screen px-4 py-10 max-w-2xl mx-auto">
+    <main className={`min-h-screen px-4 py-10 mx-auto ${tab === null ? 'max-w-5xl' : 'max-w-2xl'}`}>
       {/* Header */}
       <div className="mb-8">
         <p className="text-[16px] text-white font-semibold mb-3">RL PHOTO.VIDEO · Área do Freelancer</p>
@@ -1924,58 +1924,233 @@ export default function FreelancerViewPage() {
         </div>
       )}
 
-      {!loading && tab === null && (
-        <div className="flex flex-col md:flex-row items-start justify-between py-8 gap-6 md:gap-8">
+      {!loading && tab === null && (() => {
+        // Estatísticas para o dashboard
+        const proximoCasamento = upcoming[0] ?? null
+        const dtuProximo = proximoCasamento ? daysUntil(proximoCasamento.data_casamento) : null
 
-          {/* Texto */}
-          {(freelancer?.intro_home_title || freelancer?.intro_home) && (
-            <div className="flex-1 min-w-0 space-y-3 order-2 md:order-1">
-              {freelancer.intro_home_title && <p className="text-xl font-semibold text-white">{freelancer.intro_home_title}</p>}
-              {freelancer.intro_home && <p className="text-base text-white leading-relaxed whitespace-pre-wrap">{freelancer.intro_home}</p>}
-            </div>
-          )}
+        const edicoesEmCurso = edicao.filter(e => e.status === 'EM EDIÇÃO').length
+        const edicoesPendentes = edicao.filter(e => e.status === 'NOVO TRABALHO').length
+        const albumsEmCurso  = album.filter(a => ['EM EDIÇÃO','EM APROVAÇÃO'].includes(a.status)).length
 
-          {/* Card de perfil */}
-          {freelancer?.foto_url && (
-            <div className="flex-shrink-0 mx-auto md:mx-0 order-1 md:order-2"
-              style={{ filter: 'drop-shadow(0 0 1px rgba(212,175,55,0.9)) drop-shadow(0 0 16px rgba(212,175,55,0.35))' }}>
-              <svg width="0" height="0" style={{ position: 'absolute' }}>
-                <defs>
-                  <clipPath id={`card-${freelancer.id}`}>
-                    <path d="M28,0 L232,0 Q260,0 260,28 L260,305 L205,360 L28,360 Q0,360 0,332 L0,28 Q0,0 28,0 Z" />
-                  </clipPath>
-                </defs>
-              </svg>
-              <div className="relative w-[260px] h-[360px]"
-                style={{ clipPath: `url(#card-${freelancer.id})` }}>
-                <div className="absolute inset-0 bg-neutral-400" />
-                <img src={freelancer.foto_url} alt={freelancer.nome}
-                  className="absolute inset-0 w-full h-full object-cover"
-                  style={{ filter: 'grayscale(100%)' }} />
-                <span className="absolute top-4 right-4 text-white font-black text-xl leading-none select-none">↙</span>
-                <div className="absolute left-3 bottom-5 flex items-end gap-[5px]">
-                  <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
-                    className="font-black uppercase text-white text-[13px] leading-none tracking-[0.12em] whitespace-nowrap">
-                    {freelancer.nome}
-                  </span>
-                  <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
-                    className="uppercase text-white/70 text-[9px] leading-none tracking-[0.18em] whitespace-nowrap font-semibold">
-                    {freelancer.status}
-                  </span>
+        const pagPendentes = pagamentos.filter(p => p.status !== 'PAGO').length
+        const valorPendente = pagamentos
+          .filter(p => p.status !== 'PAGO')
+          .reduce((s, p) => s + (Number(p.valor) || 0), 0)
+
+        const mensagensNaoLidas = mensagens.filter(m => m.remetente === 'admin' && !m.lida_freelancer).length
+        const notificacoesNaoLidas = notificacoes.filter(n => !n.lida).length
+
+        // Saudação por hora
+        const hora = new Date().getHours()
+        const saudacao = hora < 6 ? 'Boa madrugada' : hora < 12 ? 'Bom dia' : hora < 19 ? 'Boa tarde' : 'Boa noite'
+        const primeiroNome = (freelancer?.nome ?? '').split(' ')[0] || ''
+
+        // Atividade recente (combina mensagens + notificações ordenadas por data)
+        const atividades: Array<{ tipo: string; texto: string; data: string }> = []
+        mensagens.slice(0, 10).forEach(m => {
+          if (m.remetente === 'admin') {
+            atividades.push({ tipo: 'msg', texto: `Mensagem: ${(m.mensagem ?? '').slice(0, 60)}${(m.mensagem ?? '').length > 60 ? '…' : ''}`, data: m.created_at })
+          }
+        })
+        notificacoes.slice(0, 10).forEach(n => {
+          atividades.push({ tipo: 'notif', texto: n.titulo, data: n.created_at })
+        })
+        pagamentos.filter(p => p.data_pago).slice(0, 5).forEach(p => {
+          atividades.push({ tipo: 'pag', texto: `Pagamento recebido: ${p.descricao}`, data: p.data_pago! })
+        })
+        atividades.sort((a, b) => (b.data || '') > (a.data || '') ? 1 : -1)
+        const atividadesRecentes = atividades.slice(0, 6)
+
+        const tempoRelativo = (d: string) => {
+          const diff = Date.now() - new Date(d).getTime()
+          const h = Math.floor(diff / 36e5)
+          if (h < 1) return 'agora'
+          if (h < 24) return `há ${h}h`
+          const dias = Math.floor(h / 24)
+          if (dias < 7) return `há ${dias}d`
+          return new Date(d).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })
+        }
+
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+            {/* ── COLUNA PRINCIPAL (2/3) ────────────────────────────── */}
+            <div className="lg:col-span-2 flex flex-col gap-5">
+
+              {/* Hero — Saudação */}
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 sm:p-8">
+                <div className="flex items-center gap-4 mb-2">
+                  {freelancer?.foto_url ? (
+                    <img src={freelancer.foto_url} alt={freelancer.nome} className="w-14 h-14 rounded-full object-cover border border-gold/30" />
+                  ) : (
+                    <div className="w-14 h-14 rounded-full bg-gold/15 border border-gold/30 flex items-center justify-center text-gold text-xl font-bold">
+                      {primeiroNome.charAt(0)}
+                    </div>
+                  )}
+                  <div>
+                    <h1 className="text-3xl font-light text-white tracking-tight">
+                      {saudacao}, <span className="font-semibold">{primeiroNome}</span> <span className="inline-block">👋</span>
+                    </h1>
+                    <p className="text-sm text-white/40 mt-1">
+                      {freelancer?.status ? `Bem-vindo ao teu espaço · ${freelancer.status}` : 'Bem-vindo ao teu espaço'}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
 
-          {/* Fallback */}
-          {!freelancer?.foto_url && !freelancer?.intro_home_title && !freelancer?.intro_home && (
-            <div className="w-full flex flex-col items-center justify-center py-12 gap-3">
-              <div className="h-px w-8 bg-white/10" />
-              <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase">Seleciona uma secção acima</p>
+              {/* Próximo Casamento — destaque */}
+              {proximoCasamento && (
+                <div onClick={() => setTab('casamentos')}
+                  className="cursor-pointer bg-gradient-to-br from-gold/[0.08] to-gold/[0.02] border border-gold/30 rounded-2xl p-6 sm:p-7 hover:border-gold/50 transition-all"
+                  style={{ boxShadow: '0 0 24px -8px rgba(201,168,76,0.25)' }}>
+                  <p className="text-[10px] tracking-[0.4em] text-gold/70 uppercase font-bold mb-3">Próximo Casamento</p>
+                  <div className="flex items-end justify-between gap-4 flex-wrap">
+                    <div>
+                      <h2 className="text-2xl font-semibold text-white mb-1">{proximoCasamento.local}</h2>
+                      <p className="text-[13px] text-white/55">{fmtDate(proximoCasamento.data_casamento)}</p>
+                    </div>
+                    <div className={`text-right ${dtuProximo !== null && dtuProximo <= 15 ? 'text-red-400' : 'text-gold'}`}>
+                      <p className="text-4xl font-black leading-none">{dtuProximo === 0 ? 'HOJE' : dtuProximo}</p>
+                      <p className="text-[10px] tracking-widest uppercase mt-1">{dtuProximo === 0 ? '' : dtuProximo === 1 ? 'dia' : 'dias'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Quick Actions — 4 cards */}
+              <div>
+                <h3 className="text-[10px] tracking-[0.4em] text-gold uppercase font-bold mb-3">Atalhos</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { key: 'casamentos', icon: '💍', label: 'Casamentos', count: upcoming.length, sub: upcoming.length === 0 ? 'Sem próximos' : `${upcoming.length} próximos` },
+                    { key: 'edicao',     icon: isFotografo ? '📷' : '🎬', label: isFotografo ? 'Edição Fotos' : 'Edição Vídeo', count: edicoesEmCurso, sub: `${edicoesPendentes} novos · ${edicoesEmCurso} em curso` },
+                    ...(album.length > 0 ? [{ key: 'album', icon: '📚', label: 'Álbuns', count: albumsEmCurso, sub: `${album.length} total · ${albumsEmCurso} em curso` }] : []),
+                    { key: 'pagamentos', icon: '💰', label: 'Pagamentos', count: pagPendentes, sub: pagPendentes === 0 ? 'Tudo em dia' : `${valorPendente.toLocaleString('pt-PT')} € pendente` },
+                  ].slice(0, 4).map(c => (
+                    <button key={c.key} onClick={() => setTab(c.key as any)}
+                      className="bg-white/[0.02] border border-white/[0.08] hover:border-gold/30 hover:bg-white/[0.04] rounded-2xl p-4 text-left transition-all group">
+                      <div className="flex items-start justify-between mb-2">
+                        <span className="text-2xl">{c.icon}</span>
+                        {c.count > 0 && (
+                          <span className="text-[10px] tracking-widest uppercase font-bold px-2 py-0.5 rounded-full bg-gold/15 text-gold border border-gold/30">{c.count}</span>
+                        )}
+                      </div>
+                      <p className="text-[11px] tracking-widest uppercase font-bold text-white/85 mb-1">{c.label}</p>
+                      <p className="text-[11px] text-white/35 leading-tight">{c.sub}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Próximos Casamentos (lista) */}
+              {upcoming.length > 1 && (
+                <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 sm:p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-[10px] tracking-[0.4em] text-gold uppercase font-bold">Próximos Casamentos</h3>
+                    <button onClick={() => setTab('casamentos')} className="text-[10px] tracking-widest text-white/35 hover:text-gold uppercase transition-colors">Ver todos →</button>
+                  </div>
+                  <div className="space-y-2">
+                    {upcoming.slice(0, 4).map(c => {
+                      const dtu = daysUntil(c.data_casamento)
+                      return (
+                        <div key={c.id} onClick={() => setTab('casamentos')}
+                          className="cursor-pointer flex items-center gap-4 px-4 py-3 rounded-xl border border-white/[0.05] hover:border-gold/25 hover:bg-white/[0.03] transition-all">
+                          <div className={`w-12 h-12 rounded-lg flex flex-col items-center justify-center border ${dtu !== null && dtu <= 15 ? 'border-red-500/30 bg-red-500/5 text-red-400' : 'border-gold/20 bg-gold/[0.04] text-gold'}`}>
+                            <span className="text-base font-black leading-none">{dtu === 0 ? '!' : dtu}</span>
+                            <span className="text-[8px] uppercase tracking-wide opacity-60">{dtu === 0 ? 'HOJE' : 'd'}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-white truncate">{c.local}</p>
+                            <p className="text-[11px] text-white/35 mt-0.5">{fmtDate(c.data_casamento).split(' · ')[0]}</p>
+                          </div>
+                          {c.data_confirmada && (
+                            <span className="text-[9px] tracking-widest uppercase font-bold px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">✓</span>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Atividade Recente */}
+              {atividadesRecentes.length > 0 && (
+                <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 sm:p-6">
+                  <h3 className="text-[10px] tracking-[0.4em] text-gold uppercase font-bold mb-4">Atividade Recente</h3>
+                  <div className="space-y-2.5">
+                    {atividadesRecentes.map((a, i) => (
+                      <div key={i} className="flex items-start gap-3 text-[13px]">
+                        <span className="w-7 h-7 rounded-full border border-white/10 bg-white/[0.02] flex items-center justify-center shrink-0 text-base">
+                          {a.tipo === 'msg' ? '💬' : a.tipo === 'pag' ? '💰' : '🔔'}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white/75 leading-snug">{a.texto}</p>
+                          <p className="text-[10px] text-white/30 mt-0.5">{tempoRelativo(a.data)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      )}
+
+            {/* ── COLUNA LATERAL (1/3) ─────────────────────────────── */}
+            <aside className="lg:col-span-1 flex flex-col gap-4">
+
+              {/* Estatísticas Rápidas */}
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
+                <h3 className="text-[10px] tracking-[0.4em] text-gold uppercase font-bold mb-4">Estatísticas</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <Stat label="Casamentos" value={casamentos.length} />
+                  <Stat label="Em Edição" value={edicoesEmCurso} />
+                  <Stat label="Álbuns" value={album.length} />
+                  <Stat label="Pagamentos" value={pagPendentes} sub={pagPendentes ? `${valorPendente.toLocaleString('pt-PT')}€` : 'em dia'} />
+                </div>
+              </div>
+
+              {/* Mensagens não lidas */}
+              {mensagensNaoLidas > 0 && (
+                <button onClick={() => setTab('mensagens')}
+                  className="bg-blue-500/[0.06] border border-blue-500/25 hover:bg-blue-500/[0.1] rounded-2xl p-5 text-left transition-all">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-2xl">💬</span>
+                    <span className="text-[10px] tracking-widest uppercase font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/40">{mensagensNaoLidas}</span>
+                  </div>
+                  <p className="text-[11px] tracking-widest uppercase font-bold text-blue-300/85 mt-2">Mensagens novas</p>
+                  <p className="text-[11px] text-white/40 mt-0.5">Tens {mensagensNaoLidas} {mensagensNaoLidas === 1 ? 'mensagem' : 'mensagens'} por ler</p>
+                </button>
+              )}
+
+              {/* Notificações não lidas */}
+              {notificacoesNaoLidas > 0 && (
+                <button onClick={() => setTab('notificacoes')}
+                  className="bg-amber-500/[0.06] border border-amber-500/25 hover:bg-amber-500/[0.1] rounded-2xl p-5 text-left transition-all">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-2xl">🔔</span>
+                    <span className="text-[10px] tracking-widest uppercase font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/40">{notificacoesNaoLidas}</span>
+                  </div>
+                  <p className="text-[11px] tracking-widest uppercase font-bold text-amber-300/85 mt-2">Notificações</p>
+                  <p className="text-[11px] text-white/40 mt-0.5">{notificacoesNaoLidas} por ler</p>
+                </button>
+              )}
+
+              {/* Intro text do template (se houver) */}
+              {(freelancer?.intro_home_title || freelancer?.intro_home) && (
+                <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
+                  {freelancer.intro_home_title && (
+                    <p className="text-[11px] tracking-[0.4em] text-gold/80 uppercase font-bold mb-3">{freelancer.intro_home_title}</p>
+                  )}
+                  {freelancer.intro_home && (
+                    <p className="text-[12px] text-white/55 leading-relaxed whitespace-pre-wrap">{freelancer.intro_home}</p>
+                  )}
+                </div>
+              )}
+
+            </aside>
+          </div>
+        )
+      })()}
 
       {!loading && tab !== null && (
         <div>
@@ -2297,5 +2472,16 @@ export default function FreelancerViewPage() {
         <img src="/banner_footer.png" alt="RL Photo.Video" className="w-full object-cover" />
       </div>
     </main>
+  )
+}
+
+// ─── Componente Stat (mini-card de estatística no dashboard) ────────────────
+function Stat({ label, value, sub }: { label: string; value: number; sub?: string }) {
+  return (
+    <div className="bg-black/30 border border-white/[0.06] rounded-xl px-3 py-3">
+      <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-1">{label}</p>
+      <p className="text-2xl font-bold text-white/90 leading-none">{value}</p>
+      {sub && <p className="text-[10px] text-white/30 mt-1">{sub}</p>}
+    </div>
   )
 }
