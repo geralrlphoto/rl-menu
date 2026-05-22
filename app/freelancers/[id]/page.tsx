@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef, type Dispatch, type SetStateAction } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 
@@ -575,7 +575,7 @@ function SidebarNavAdmin({
 }: {
   freelancer: Freelancer | null
   tab: AdminTabKey
-  setTab: Dispatch<SetStateAction<AdminTabKey>>
+  setTab: (t: AdminTabKey) => void
   counts: { casamentos: number; edicao: number; album: number; pagamentos: number; mensagens: number; notificacoes: number }
   isVideografo: boolean
   isFotografo: boolean
