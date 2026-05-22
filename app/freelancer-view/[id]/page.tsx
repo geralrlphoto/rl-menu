@@ -1993,32 +1993,74 @@ export default function FreelancerViewPage() {
           return new Date(d).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })
         }
 
+        const totalCasamentos = casamentos.length
+        const totalEmEdicao = edicao.filter(e => e.status === 'EM EDIÇÃO').length
+        const totalConcluidos = edicao.filter(e => e.status === 'CONCLUÍDO').length
+        const totalAguardando = edicao.filter(e => e.status === 'NOVO TRABALHO').length
+
         return (
+          <>
+          {/* ── HERO Card largo (mockup) ────────────────────────────── */}
+          <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] mb-5"
+            style={{ background: 'linear-gradient(90deg, rgba(8,6,4,0.95) 0%, rgba(14,11,7,0.85) 45%, rgba(14,11,7,0.4) 75%, rgba(20,15,8,0.1) 100%)' }}>
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-5 gap-6 p-6 sm:p-8">
+              <div className="lg:col-span-3 flex flex-col gap-5">
+                <div>
+                  <h1 className="text-3xl sm:text-4xl font-semibold text-white tracking-tight">
+                    Bem-vindo de volta, {primeiroNome}! <span className="inline-block">👋</span>
+                  </h1>
+                  <p className="text-[15px] text-white/55 mt-2">Continua a criar histórias inesquecíveis.</p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <button onClick={() => setTab('casamentos')}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black text-[14px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
+                    style={{ boxShadow: '0 0 20px -4px rgba(201,168,76,0.5)' }}>
+                    <span className="text-lg leading-none">+</span> Ver Casamentos
+                  </button>
+                  <button onClick={() => setTab('disponibilidade')}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/15 text-white/85 text-[14px] font-medium tracking-wider hover:bg-white/[0.05] hover:border-white/30 transition-all">
+                    <span className="text-base leading-none">◷</span> Confirmar Disponibilidade
+                  </button>
+                </div>
+
+                <div>
+                  <p className="text-[14px] tracking-[0.3em] text-white/40 uppercase font-medium mb-3">Resumo Rápido</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    <div className="bg-black/30 border border-white/[0.06] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                      <span className="w-8 h-8 rounded-lg border bg-gold/10 border-gold/25 text-gold flex items-center justify-center text-base">◫</span>
+                      <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalCasamentos}</p><p className="text-[14px] text-white/45 leading-tight mt-0.5">Casamentos</p></div>
+                    </div>
+                    <div className="bg-black/30 border border-white/[0.06] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                      <span className="w-8 h-8 rounded-lg border bg-purple-500/10 border-purple-500/25 text-purple-300 flex items-center justify-center text-base">✎</span>
+                      <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalEmEdicao}</p><p className="text-[14px] text-white/45 leading-tight mt-0.5">Em edição</p></div>
+                    </div>
+                    <div className="bg-black/30 border border-white/[0.06] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                      <span className="w-8 h-8 rounded-lg border bg-emerald-500/10 border-emerald-500/25 text-emerald-300 flex items-center justify-center text-base">✓</span>
+                      <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalConcluidos}</p><p className="text-[14px] text-white/45 leading-tight mt-0.5">Concluídos</p></div>
+                    </div>
+                    <div className="bg-black/30 border border-white/[0.06] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                      <span className="w-8 h-8 rounded-lg border bg-amber-500/10 border-amber-500/25 text-amber-300 flex items-center justify-center text-base">◷</span>
+                      <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalAguardando}</p><p className="text-[14px] text-white/45 leading-tight mt-0.5">Aguardando</p></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="lg:col-span-2 hidden lg:flex items-center justify-end pr-4">
+                <div className="text-right max-w-[260px]">
+                  <p className="text-gold/60 text-4xl font-serif leading-none mb-2">&ldquo;</p>
+                  <p className="text-[15px] text-white/75 italic leading-relaxed font-light">Transformamos momentos em histórias que duram para sempre.</p>
+                  <p className="text-[14px] text-gold/70 italic font-light mt-3" style={{ fontFamily: 'Georgia, serif' }}>— Momento</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
             {/* ── COLUNA PRINCIPAL (2/3) ────────────────────────────── */}
             <div className="lg:col-span-2 flex flex-col gap-5">
-
-              {/* Hero — Saudação */}
-              <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 sm:p-8">
-                <div className="flex items-center gap-4 mb-2">
-                  {freelancer?.foto_url ? (
-                    <img src={freelancer.foto_url} alt={freelancer.nome} className="w-14 h-14 rounded-full object-cover border border-gold/30" />
-                  ) : (
-                    <div className="w-14 h-14 rounded-full bg-gold/15 border border-gold/30 flex items-center justify-center text-gold text-xl font-bold">
-                      {primeiroNome.charAt(0)}
-                    </div>
-                  )}
-                  <div>
-                    <h1 className="text-3xl font-light text-white tracking-tight">
-                      {saudacao}, <span className="font-semibold">{primeiroNome}</span> <span className="inline-block">👋</span>
-                    </h1>
-                    <p className="text-[14px] text-white/40 mt-1">
-                      {freelancer?.status ? `Bem-vindo ao teu espaço · ${freelancer.status}` : 'Bem-vindo ao teu espaço'}
-                    </p>
-                  </div>
-                </div>
-              </div>
 
               {/* Próximo Casamento — destaque */}
               {proximoCasamento && (
@@ -2136,6 +2178,7 @@ export default function FreelancerViewPage() {
               )}
             </aside>
           </div>
+          </>
         )
       })()}
 
