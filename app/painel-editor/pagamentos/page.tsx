@@ -526,6 +526,34 @@ export default function PagamentosPage() {
                 </div>
               </Panel>
 
+              {/* Breakdown Total Anual */}
+              <Panel title={`Receitas ${currentYear}`}>
+                {(() => {
+                  const recebidos = allRows.filter(r => r.inst.status === 'Recebido' && (r.inst.paidDate ?? '').split('/')[2] === currentYear)
+                  const total = recebidos.reduce((s, r) => s + r.inst.value, 0)
+                  if (recebidos.length === 0) {
+                    return <p className="text-[12px] text-white/30 italic text-center py-3">Nenhum pagamento recebido este ano.</p>
+                  }
+                  return (
+                    <div className="space-y-2">
+                      {recebidos.map((r, i) => (
+                        <div key={i} className="flex items-center justify-between text-[12px] py-1.5 border-b border-white/[0.04] last:border-0">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-white/85 font-medium truncate">{r.project.noivos}</p>
+                            <p className="text-[10px] text-white/35 mt-0.5">{r.inst.paidDate} · {r.inst.metodo ?? '—'}</p>
+                          </div>
+                          <p className="text-emerald-300 font-bold ml-3 shrink-0">{fmtEUR(r.inst.value)}</p>
+                        </div>
+                      ))}
+                      <div className="flex items-center justify-between pt-2 mt-1 border-t border-gold/20">
+                        <p className="text-[11px] tracking-widest uppercase text-gold/70 font-bold">Total</p>
+                        <p className="text-gold font-bold text-[14px]">{fmtEUR(total)}</p>
+                      </div>
+                    </div>
+                  )
+                })()}
+              </Panel>
+
             </aside>
           </div>
 

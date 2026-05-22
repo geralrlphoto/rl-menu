@@ -176,9 +176,9 @@ export function paymentPlanFor(p: Project): Installment[] {
 
   // Vencimento: alguns dias antes da entrega prevista (ou na data de entrega)
   const due = p.entregaPrevista || p.dataCasamento || p.recebido
-  // Foi pago se o projeto foi entregue + cliente aprovou
-  const pago = p.finalEntregue && p.approval === 'Aprovado Cliente'
-  const atrasado = !pago && comparePtDate(due, TODAY) < 0
+  // Default: NUNCA pago automaticamente. O estado "Recebido" só vem do override do user (dropdown).
+  // Isto garante que nada conta para o Total Anual sem o user marcar explicitamente.
+  const atrasado = comparePtDate(due, TODAY) < 0
 
   return [
     {
@@ -187,9 +187,8 @@ export function paymentPlanFor(p: Project): Installment[] {
       percent: 100,
       value: p.preco,
       dueDate: due,
-      paidDate: pago ? due : null,
-      status: pago ? 'Recebido' : atrasado ? 'Atrasado' : 'A receber',
-      metodo: pago ? 'Transferência' : undefined,
+      paidDate: null,
+      status: atrasado ? 'Atrasado' : 'A receber',
     },
   ]
 }
