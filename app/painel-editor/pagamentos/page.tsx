@@ -434,7 +434,12 @@ export default function PagamentosPage() {
 
               {/* DETAIL PANEL — projeto sincronizado */}
               {selectedProject && (
-                <DetailPanel project={selectedProject} plan={selectedPlan} />
+                <DetailPanel
+                  project={selectedProject}
+                  plan={selectedPlan}
+                  override={paymentOverrides[selectedProject.id]}
+                  onSetStatus={(status, metodo) => setPaymentStatus(selectedProject.id, status, metodo)}
+                />
               )}
             </div>
 
@@ -672,10 +677,21 @@ function Panel({ title, right, children }: { title: string; right?: React.ReactN
 }
 
 // Detail Panel — quando uma row é selecionada
-function DetailPanel({ project, plan }: { project: Project; plan: Installment[] }) {
+function DetailPanel({
+  project,
+  plan,
+  override,
+  onSetStatus,
+}: {
+  project: Project
+  plan: Installment[]
+  override?: PaymentOverride
+  onSetStatus: (status: 'A receber' | 'Recebido', metodo?: PaymentMethod) => void
+}) {
   const totalPago    = plan.filter(p => p.status === 'Recebido').reduce((s, i) => s + i.value, 0)
   const totalPendente = plan.filter(p => p.status === 'A receber' || p.status === 'Atrasado').reduce((s, i) => s + i.value, 0)
   const totalProjeto = project.preco
+  const isPaid = override?.status === 'Recebido' || plan.every(p => p.status === 'Recebido')
 
   // Timeline de eventos automáticos
   const eventos: { data: string; texto: string; tipo: string }[] = []
@@ -701,10 +717,27 @@ function DetailPanel({ project, plan }: { project: Project; plan: Installment[] 
             <h2 className="text-2xl font-light text-white" style={{ fontFamily: 'Georgia, serif' }}>{project.noivos}</h2>
             <p className="text-[12px] text-white/45 mt-1">{project.pacote} · {fmtEUR(project.preco)} · {project.duracao}</p>
           </div>
-          <div className="text-right shrink-0">
+          <div className="text-right shrink-0 flex flex-col items-end gap-1.5">
             <p className="text-[10px] tracking-widest uppercase text-white/35">Pago</p>
-            <p className="text-[20px] font-bold text-emerald-300 leading-none">{fmtEUR(totalPago)}</p>
-            <p className="text-[10px] text-white/35 mt-1.5">Falta {fmtEUR(totalProjeto - totalPago)}</p>
+            <p className={`text-[20px] font-bold leading-none ${isPaid ? 'text-emerald-300' : 'text-white/85'}`}>{fmtEUR(totalPago)}</p>
+            <p className="text-[10px] text-white/35">Falta {fmtEUR(totalProjeto - totalPago)}</p>
+            {/* Dropdown: marcar pagamento direto do header */}
+            <select
+              value={isPaid ? `Pago:${override?.metodo ?? 'Transferência'}` : 'Aguarda'}
+              onChange={e => {
+                const v = e.target.value
+                if (v === 'Aguarda') onSetStatus('A receber')
+                else if (v.startsWith('Pago:')) onSetStatus('Recebido', v.replace('Pago:', '') as PaymentMethod)
+              }}
+              className={`mt-1 bg-black/40 border rounded-lg px-2.5 py-1 text-[10px] tracking-widest uppercase font-bold cursor-pointer focus:outline-none focus:border-gold/40 ${
+                isPaid ? 'border-emerald-500/40 text-emerald-300' : 'border-yellow-500/40 text-yellow-300'
+              }`}
+            >
+              <option value="Aguarda" style={{ background: '#1a1206' }}>⏳ Aguarda</option>
+              <option value="Pago:MBWay" style={{ background: '#1a1206' }}>✓ Pago · MBWay</option>
+              <option value="Pago:Transferência" style={{ background: '#1a1206' }}>✓ Pago · Transferência</option>
+              <option value="Pago:Numerário" style={{ background: '#1a1206' }}>✓ Pago · Numerário</option>
+            </select>
           </div>
         </div>
 
