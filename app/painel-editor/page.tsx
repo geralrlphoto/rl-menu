@@ -192,15 +192,22 @@ export default function PainelEditor() {
             <div className="absolute inset-0 z-[1]"
               style={{ background: 'linear-gradient(90deg, rgba(11,11,11,0.96) 0%, rgba(11,11,11,0.85) 35%, rgba(11,11,11,0.45) 65%, rgba(11,11,11,0.1) 100%)' }} />
             <div className="relative z-10 flex items-start justify-between gap-6 px-8 sm:px-12 py-12 sm:py-16">
-              <div className="max-w-xl">
-                <h1 className="text-4xl sm:text-5xl font-light text-white tracking-tight">
-                  Olá, <span className="font-semibold">Editor</span>! <span className="inline-block">👋</span>
-                </h1>
-                <p className="text-[16px] text-white/65 mt-3 leading-relaxed font-light">
-                  Que hoje seja mais um dia de transformar momentos<br />em memórias inesquecíveis.
-                </p>
-                <div className="mt-5 h-px w-20 bg-gradient-to-r from-gold/70 via-gold/30 to-transparent" />
-                <p className="text-[12px] tracking-[0.4em] text-gold/70 uppercase mt-4">Painel criativo RL Photo.Video</p>
+              <div className="max-w-xl flex items-center gap-5">
+                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gold/50 shrink-0"
+                  style={{ boxShadow: '0 0 28px -4px rgba(201,164,92,0.4)' }}>
+                  <img src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=200&h=200&fit=crop&crop=face"
+                    alt="Editor Pro" className="w-full h-full object-cover" />
+                </div>
+                <div>
+                  <h1 className="text-4xl sm:text-5xl font-light text-white tracking-tight">
+                    Olá, <span className="font-semibold">Editor</span>!
+                  </h1>
+                  <p className="text-[16px] text-white/65 mt-3 leading-relaxed font-light">
+                    Que hoje seja mais um dia de transformar momentos<br />em memórias inesquecíveis.
+                  </p>
+                  <div className="mt-5 h-px w-20 bg-gradient-to-r from-gold/70 via-gold/30 to-transparent" />
+                  <p className="text-[12px] tracking-[0.4em] text-gold/70 uppercase mt-4">Painel criativo RL Photo.Video</p>
+                </div>
               </div>
 
               {/* Top-right: notif + profile */}
