@@ -1,8 +1,49 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { PROJECTS, paymentPlanFor, comparePtDate, TODAY, type Project, type Installment } from '../_data/projects'
+
+/** Limpa horário "DD/MM/YYYY — HH:MM" → "DD/MM/YYYY" */
+function stripTime(d: string): string {
+  return (d || '').split('—')[0].trim()
+}
+
+/** Converte user-project (formato do /novos-projetos) → Project do _data/projects.ts */
+function userProjectToDataProject(p: any): Project {
+  const pacote = p.pacote ?? 'Pacote Premium 👑'
+  const preco = pacote === 'Pacote Essencial' ? 1800 : 3500
+  return {
+    id:              p.id,
+    noivos:          p.noivos ?? '—',
+    foto:            p.foto || 'https://images.unsplash.com/photo-1519741497674-611481863552?w=900&h=600&fit=crop',
+    email:           p.email || `${(p.noivos ?? 'cliente').toLowerCase().replace(/[^a-z]/g,'')}@mail.com`,
+    telefone:        p.telefone || '+351 9XX XXX XXX',
+    recebido:        stripTime(p.recebido || ''),
+    dataCasamento:   p.dataCasamento || '',
+    entregaPrevista: p.entregaPrevista || '',
+    pacote,
+    preco,
+    duracao:         p.duracao || (pacote === 'Pacote Premium 👑' ? '~12 min' : '~8 min'),
+    stage:           p.stage ?? 'Novo Projeto',
+    approval:        p.approval ?? 'Aguardando Revisão',
+    progress:        progressFromStage(p.stage),
+    editor:          p.editor || 'Editor Pro',
+    finalEntregue:   p.stage === 'Entregue',
+    finalLink:       p.finalLink || '',
+    archived:        p.archived,
+    cancelled:       p.cancelled,
+  }
+}
+
+function progressFromStage(stage: string): number {
+  if (stage === 'Novo Projeto') return 5
+  if (stage === 'Em Edição' || stage === 'Color Grading' || stage === 'Trailer em Produção' || stage === 'Áudio / Sincronização') return 35
+  if (stage === 'Para Revisão' || stage === 'Correções') return 70
+  if (stage === 'Finalizado') return 90
+  if (stage === 'Entregue') return 100
+  return 5
+}
 
 // ────────────────────────────────────────────────────────────────────────
 //  PAGAMENTOS — Wedding Moments Films
@@ -51,16 +92,44 @@ export default function PagamentosPage() {
   const [filter, setFilter] = useState<FilterTab>('Todos')
   const [search, setSearch] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>('p1')
+  const [allProjects, setAllProjects] = useState<Project[]>(PROJECTS)
+
+  // ── Sincroniza com user-projects (localStorage) + patches sobre mocks ──
+  useEffect(() => {
+    function load() {
+      try {
+        const userRaw = localStorage.getItem('painel-editor-user-projects')
+        const userProjects: any[] = userRaw ? JSON.parse(userRaw) : []
+        const userMapped: Project[] = userProjects.map(userProjectToDataProject)
+
+        const patchesRaw = localStorage.getItem('painel-editor-project-patches')
+        const patches: Record<string, Partial<Project>> = patchesRaw ? JSON.parse(patchesRaw) : {}
+
+        // user-created no topo + mocks com patches aplicados
+        const merged: Project[] = [
+          ...userMapped,
+          ...PROJECTS.map(p => patches[p.id] ? { ...p, ...patches[p.id], finalEntregue: (patches[p.id] as any).stage === 'Entregue' || p.finalEntregue } : p),
+        ]
+        setAllProjects(merged)
+      } catch {
+        setAllProjects(PROJECTS)
+      }
+    }
+    load()
+    const onFocus = () => load()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [])
 
   // Construir todas as rows (uma por installment)
   const allRows: Row[] = useMemo(() => {
     const rows: Row[] = []
-    PROJECTS.forEach(p => {
+    allProjects.forEach(p => {
       const plan = paymentPlanFor(p)
       plan.forEach((inst, idx) => rows.push({ project: p, inst, idx, totalParcels: plan.length }))
     })
     return rows
-  }, [])
+  }, [allProjects])
 
   const filteredRows = useMemo(() => {
     let arr = allRows
@@ -119,7 +188,7 @@ export default function PagamentosPage() {
     return { path: d, last: pts[pts.length-1], pts, w, h }
   }, [])
 
-  const selectedProject = PROJECTS.find(p => p.id === selectedId) ?? null
+  const selectedProject = allProjects.find(p => p.id === selectedId) ?? null
   const selectedPlan    = selectedProject ? paymentPlanFor(selectedProject) : []
 
   return (
