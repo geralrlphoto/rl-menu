@@ -50,18 +50,19 @@ const KPIS = [
   { label: 'Recebimentos',   value: '24.850,00 €', sub: 'Este mês', icon: '€', color: 'gold' },
 ]
 
-const NAV_ITEMS = [
-  { key: 'dashboard', label: 'Dashboard', icon: '⌂' },
-  { key: 'novos',     label: 'Novos Projetos', icon: '+' },
-  { key: 'edicao',    label: 'Em Edição', icon: '✎' },
+type NavItem = { key: string; label: string; icon: string; href?: string }
+const NAV_ITEMS: NavItem[] = [
+  { key: 'dashboard',   label: 'Dashboard',           icon: '⌂' },
+  { key: 'novos',       label: 'Novos Projetos',      icon: '+', href: '/painel-editor/novos-projetos' },
+  { key: 'edicao',      label: 'Em Edição',           icon: '✎' },
   { key: 'finalizados', label: 'Projetos Finalizados', icon: '✓' },
-  { key: 'pagamentos', label: 'Pagamentos', icon: '€' },
-  { key: 'tarefas',    label: 'Tarefas', icon: '◷' },
-  { key: 'calendario', label: 'Calendário', icon: '◉' },
-  { key: 'clientes',   label: 'Clientes', icon: '☉' },
-  { key: 'templates',  label: 'Templates', icon: '◫' },
-  { key: 'notas',      label: 'Notas', icon: '✦' },
-  { key: 'config',     label: 'Configurações', icon: '⚙' },
+  { key: 'pagamentos',  label: 'Pagamentos',          icon: '€' },
+  { key: 'tarefas',     label: 'Tarefas',             icon: '◷' },
+  { key: 'calendario',  label: 'Calendário',          icon: '◉' },
+  { key: 'clientes',    label: 'Clientes',            icon: '☉' },
+  { key: 'templates',   label: 'Templates',           icon: '◫' },
+  { key: 'notas',       label: 'Notas',               icon: '✦' },
+  { key: 'config',      label: 'Configurações',       icon: '⚙' },
 ]
 
 function fmtDate(d: string) {
@@ -138,19 +139,31 @@ export default function PainelEditor() {
         <nav className="flex-1 overflow-y-auto px-3 py-5 space-y-0.5">
           {NAV_ITEMS.map(it => {
             const isActive = active === it.key
+            const cls = `w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all group ${
+              isActive
+                ? 'bg-gold/10 border border-gold/30 text-gold'
+                : 'border border-transparent text-white/45 hover:text-white/90 hover:bg-white/[0.03]'
+            }`
+            const inner = (
+              <>
+                <span className={`w-5 text-center text-base ${isActive ? 'text-gold' : 'text-white/35 group-hover:text-white/70'}`}>{it.icon}</span>
+                <span className="text-[13px] font-medium tracking-wide">{it.label}</span>
+              </>
+            )
+
+            if (it.href) {
+              return (
+                <Link key={it.key} href={it.href} className={cls}>{inner}</Link>
+              )
+            }
             return (
               <button
                 key={it.key}
                 onClick={() => setActive(it.key)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all group ${
-                  isActive
-                    ? 'bg-gold/10 border border-gold/30 text-gold'
-                    : 'border border-transparent text-white/45 hover:text-white/90 hover:bg-white/[0.03]'
-                }`}
+                className={cls}
                 style={isActive ? { boxShadow: '0 0 18px -4px rgba(201,164,92,0.35)' } : {}}
               >
-                <span className={`w-5 text-center text-base ${isActive ? 'text-gold' : 'text-white/35 group-hover:text-white/70'}`}>{it.icon}</span>
-                <span className="text-[13px] font-medium tracking-wide">{it.label}</span>
+                {inner}
               </button>
             )
           })}
