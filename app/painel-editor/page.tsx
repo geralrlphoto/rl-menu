@@ -21,13 +21,23 @@ const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Ag
 const MESES_SHORT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
 const DIAS = ['D','S','T','Q','Q','S','S']
 
-// Mock data
-const MOCK_NOVOS = [
+// Mock data — default novos projetos (usados se não houver dados no localStorage)
+type NovoMini = { id: string; noivos: string; data: string; entrega: string; foto: string; status: string; createdAt?: string }
+const MOCK_NOVOS: NovoMini[] = [
   { id: '1', noivos: 'Amanda & Lucas',     data: '2026-05-24', entrega: '2026-06-02', foto: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=300&fit=crop', status: 'Novo' },
   { id: '2', noivos: 'Beatriz & Gabriel',  data: '2026-05-31', entrega: '2026-06-09', foto: 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400&h=300&fit=crop', status: 'Novo' },
   { id: '3', noivos: 'Juliana & Matheus',  data: '2026-06-07', entrega: '2026-06-16', foto: 'https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=400&h=300&fit=crop', status: 'Novo' },
   { id: '4', noivos: 'Carolina & Felipe',  data: '2026-06-14', entrega: '2026-06-23', foto: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=400&h=300&fit=crop', status: 'Novo' },
 ]
+
+/** Converte 'DD/MM/YYYY' (formato dos novos projetos) para 'YYYY-MM-DD' (usado por fmtDate) */
+function ptToISODate(pt: string): string {
+  if (!pt) return ''
+  const datePart = pt.split('—')[0].trim() // remove " — HH:MM" se existir
+  const [d, m, y] = datePart.split('/')
+  if (!d || !m || !y) return pt
+  return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`
+}
 
 const MOCK_FINALIZADOS = [
   { id: 'f1', noivos: 'Pedro & Mariana',   entrega: '2026-05-12', foto: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&h=300&fit=crop' },
@@ -107,6 +117,31 @@ export default function PainelEditor() {
   const displayPhoto = freelancer?.foto_url ?? DEFAULT_AVATAR
 
   const [active, setActive] = useState('dashboard')
+
+  // ── Novos Projetos (lê localStorage + mock) — máximo 4 mais recentes ──
+  const [novosProjetos, setNovosProjetos] = useState<NovoMini[]>(MOCK_NOVOS)
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('painel-editor-user-projects')
+      if (!raw) return
+      const userProjects: any[] = JSON.parse(raw)
+      // Mapear ao formato NovoMini
+      const mapped: NovoMini[] = userProjects.map(p => ({
+        id:        p.id,
+        noivos:    p.noivos,
+        data:      ptToISODate(p.dataCasamento || ''),
+        entrega:   ptToISODate(p.entregaPrevista || ''),
+        foto:      p.foto || 'https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=300&fit=crop',
+        status:    'Novo',
+        createdAt: ptToISODate(p.recebido || ''),
+      }))
+      // user-projects primeiro (já estão por ordem de criação — mais recente primeiro)
+      // + mocks para preencher até 4
+      const merged = [...mapped, ...MOCK_NOVOS].slice(0, 4)
+      setNovosProjetos(merged)
+    } catch {}
+  }, [])
 
   // Calendário
   const today = new Date(2026, 4, 20) // Maio 2026 dia 20 (mock)
@@ -304,10 +339,10 @@ export default function PainelEditor() {
                 style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-[15px] font-semibold text-white">Novos Projetos</h3>
-                  <button className="text-[11px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors">Ver todos →</button>
+                  <Link href="/painel-editor/novos-projetos" className="text-[11px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors">Ver todos →</Link>
                 </div>
                 <div className="space-y-3">
-                  {MOCK_NOVOS.map(p => (
+                  {novosProjetos.map(p => (
                     <div key={p.id} className="group flex items-center gap-3 p-2 rounded-xl border border-white/[0.04] hover:border-gold/25 hover:bg-white/[0.02] transition-all cursor-pointer">
                       <div className="w-16 h-12 rounded-lg overflow-hidden shrink-0 border border-white/10">
                         <img src={p.foto} alt={p.noivos} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />

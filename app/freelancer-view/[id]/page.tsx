@@ -2273,44 +2273,120 @@ export default function FreelancerViewPage() {
                   <div className="flex-1 h-px bg-gradient-to-r from-gold/20 to-transparent" />
                 </div>
                 {upcoming.length === 0 ? (
-                  <p className="text-white/15 text-[14px] tracking-widest">Sem casamentos futuros.</p>
+                  <div className="rounded-2xl border border-dashed border-white/[0.08] text-center py-16">
+                    <p className="text-gold/40 text-4xl font-serif leading-none mb-3">∅</p>
+                    <p className="text-[12px] text-white/35 tracking-widest uppercase">Sem casamentos futuros</p>
+                  </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-5">
                     {upcoming.map(c => {
                       const days = daysUntil(c.data_casamento)
                       const isUrgent = days !== null && days <= 7
+                      const isConfirmed = freelancer?.status === 'VIDEOGRAFO' ? c.data_confirmada_videografo : c.data_confirmada
+                      const isIndisp = freelancer?.status === 'VIDEOGRAFO' ? (c.indisponivel_videografo && !c.data_confirmada_videografo) : (c.indisponivel && !c.data_confirmada)
+                      const progress = days === null ? 0 : Math.max(5, Math.min(100, 100 - Math.min(days, 180) / 180 * 95))
+                      const badge = isConfirmed
+                        ? { label: 'Confirmado', cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' }
+                        : isIndisp
+                        ? { label: 'Indisponível', cls: 'bg-red-500/15 text-red-300 border-red-500/30' }
+                        : isUrgent
+                        ? { label: 'Urgente', cls: 'bg-red-500/15 text-red-300 border-red-500/30' }
+                        : { label: 'Por Confirmar', cls: 'bg-gold/15 text-gold border-gold/30' }
                       return (
-                        <div key={c.id} onClick={() => setFicha(c)}
-                          className={`cursor-pointer bg-white/[0.02] border rounded-2xl p-5 space-y-3 hover:border-white/20 transition-all ${isUrgent ? 'border-red-500/25' : 'border-white/[0.07]'}`}>
-                          <div className="flex items-start gap-3">
-                            <div className={`flex-shrink-0 flex flex-col items-center justify-center w-12 h-12 rounded-xl border text-center ${isUrgent ? 'bg-red-500/15 border-red-500/30' : 'bg-gold/10 border-gold/25'}`}>
-                              {c.data_casamento ? (
-                                <>
-                                  <span className={`text-base font-bold leading-none ${isUrgent ? 'text-red-400' : 'text-gold'}`}>{c.data_casamento.split('-')[2]}</span>
-                                  <span className={`text-[14px] uppercase tracking-wide font-semibold ${isUrgent ? 'text-red-400/60' : 'text-gold/60'}`}>{MESES[parseInt(c.data_casamento.split('-')[1])-1]}</span>
-                                </>
-                              ) : <span className="text-white/20 text-[14px]">—</span>}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-base font-light tracking-wider text-white uppercase truncate">{c.local || '—'}</p>
-                              <p className="text-[14px] text-white/60 mt-0.5">{fmtDate(c.data_casamento)}</p>
-                              <div className="flex items-center gap-2 flex-wrap mt-2">
-                                {days !== null && (
-                                  <span className={`text-[14px] px-2.5 py-1 rounded-full border tracking-widest font-medium ${days <= 7 ? 'bg-red-500/15 text-red-400 border-red-500/30' : days <= 30 ? 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30' : 'bg-gold/10 text-gold border-gold/25'}`}>
-                                    {days === 0 ? 'HOJE' : `${days}d`}
-                                  </span>
-                                )}
-                                {(freelancer?.status === 'VIDEOGRAFO' ? c.data_confirmada_videografo : c.data_confirmada) && (
-                                  <span className="text-[14px] px-2.5 py-1 rounded-full border bg-emerald-500/15 text-emerald-400 border-emerald-500/30 tracking-widest">
-                                    ✓ Confirmado
-                                  </span>
-                                )}
-                                {(freelancer?.status === 'VIDEOGRAFO' ? (c.indisponivel_videografo && !c.data_confirmada_videografo) : (c.indisponivel && !c.data_confirmada)) && (
-                                  <span className="text-[14px] px-2.5 py-1 rounded-full border bg-red-500/15 text-red-400 border-red-500/30 tracking-widest">
-                                    Indisponível
-                                  </span>
-                                )}
+                        <div
+                          key={c.id}
+                          onClick={() => setFicha(c)}
+                          className="group cursor-pointer relative overflow-hidden rounded-2xl border transition-all"
+                          style={{
+                            background: 'linear-gradient(135deg, rgba(20,15,8,0.5), rgba(11,11,11,0.85))',
+                            borderColor: isUrgent ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.06)',
+                            boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)',
+                          }}
+                        >
+                          {/* Gold sweep hover */}
+                          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-gold/0 via-gold/[0.06] to-gold/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
+
+                          <div className="relative grid grid-cols-1 lg:grid-cols-[160px_1fr_auto] gap-5 p-5">
+                            {/* Date tile */}
+                            <div className="relative">
+                              <div className={`aspect-[16/10] rounded-xl border flex flex-col items-center justify-center text-center overflow-hidden ${isUrgent ? 'bg-red-500/10 border-red-500/30' : 'bg-gold/[0.06] border-gold/25'}`}
+                                style={{ background: isUrgent
+                                  ? 'linear-gradient(135deg, rgba(239,68,68,0.18), rgba(60,15,15,0.6))'
+                                  : 'linear-gradient(135deg, rgba(201,164,92,0.18), rgba(35,25,8,0.7))' }}>
+                                {c.data_casamento ? (
+                                  <>
+                                    <span className={`text-3xl font-bold leading-none ${isUrgent ? 'text-red-400' : 'text-gold'}`}>{c.data_casamento.split('-')[2]}</span>
+                                    <span className={`text-[10px] uppercase tracking-[0.3em] font-semibold mt-1 ${isUrgent ? 'text-red-400/70' : 'text-gold/70'}`}>{MESES[parseInt(c.data_casamento.split('-')[1])-1]} {c.data_casamento.split('-')[0]}</span>
+                                  </>
+                                ) : <span className="text-white/20 text-[14px]">—</span>}
                               </div>
+                              <span className={`absolute top-2 left-2 text-[9px] px-2 py-0.5 rounded-full border tracking-[0.2em] uppercase font-bold ${badge.cls}`}>
+                                {badge.label}
+                              </span>
+                            </div>
+
+                            {/* Info */}
+                            <div className="flex flex-col gap-2 min-w-0">
+                              <div>
+                                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                  {c.referencia && (
+                                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-gold/10 border border-gold/30 text-gold tracking-widest font-bold">
+                                      {c.referencia}
+                                    </span>
+                                  )}
+                                </div>
+                                <h2 className="text-2xl font-light text-white tracking-tight truncate" style={{ fontFamily: 'Georgia, serif' }}>{c.local || '—'}</h2>
+                                <p className="text-[12px] text-white/55 mt-0.5">{fmtDate(c.data_casamento)}</p>
+                              </div>
+
+                              <div className="grid grid-cols-3 gap-3 mt-1">
+                                <div className="min-w-0">
+                                  <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-0.5">Equipa Foto</p>
+                                  <p className="text-[12px] font-medium text-white/85 truncate">{c.equipa_foto && c.equipa_foto.length ? c.equipa_foto.join(' · ') : '—'}</p>
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-0.5">Videógrafo</p>
+                                  <p className="text-[12px] font-medium text-white/85 truncate">{c.videografo || '—'}</p>
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-0.5">Briefing</p>
+                                  <p className="text-[12px] font-medium text-white/85 truncate">{c.briefing_url ? 'Disponível' : 'Sem briefing'}</p>
+                                </div>
+                              </div>
+
+                              {/* Progress bar */}
+                              <div className="mt-2">
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <p className="text-[9px] tracking-[0.3em] uppercase text-white/40">
+                                    {days === null ? 'Sem data' : days < 0 ? 'Passado' : days === 0 ? 'HOJE' : `${days} ${days === 1 ? 'dia' : 'dias'} restantes`}
+                                  </p>
+                                  <p className={`text-[11px] font-bold ${isUrgent ? 'text-red-400' : 'text-gold'}`}>{Math.round(progress)}%</p>
+                                </div>
+                                <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                                  <div className="h-full rounded-full transition-all duration-700"
+                                    style={{
+                                      width: `${progress}%`,
+                                      background: isUrgent
+                                        ? 'linear-gradient(90deg, #ef4444, #f87171, #ef4444)'
+                                        : 'linear-gradient(90deg, #C9A45C, #E8C76D, #C9A45C)',
+                                      boxShadow: isUrgent ? '0 0 12px rgba(239,68,68,0.5)' : '0 0 12px rgba(201,164,92,0.5)',
+                                    }} />
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Right CTA */}
+                            <div className="flex flex-col items-end justify-between gap-3">
+                              {days !== null && (
+                                <div className={`text-right ${isUrgent ? 'text-red-400' : 'text-gold'}`}>
+                                  <p className="text-3xl font-bold leading-none">{days === 0 ? '!' : days}</p>
+                                  <p className="text-[10px] tracking-[0.3em] uppercase mt-1">{days === 0 ? 'HOJE' : days === 1 ? 'dia' : 'dias'}</p>
+                                </div>
+                              )}
+                              <button onClick={e => { e.stopPropagation(); setFicha(c) }}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gold/30 text-gold text-[11px] tracking-wider uppercase font-semibold hover:bg-gold/10 transition-all whitespace-nowrap">
+                                Abrir Ficha <span>›</span>
+                              </button>
                             </div>
                           </div>
                         </div>
