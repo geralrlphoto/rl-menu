@@ -135,6 +135,7 @@ type Project = {
   dataCasamento: string // dd/mm/yyyy
   entregaPrevista: string
   pacote: 'Pacote Premium 👑' | 'Pacote Essencial'
+  preco?: number        // valor total do projeto em €
   duracao: string       // ~12 min
   stage: WorkflowStage
   approval: Approval
@@ -786,6 +787,7 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
     dataCriacao:     `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`,
     entregaPrevista: '',
     duracao:         '',
+    valor:           '',
     clientLink:      '',
     notas:           '',
   })
@@ -830,13 +832,17 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
   }
 
   function valid() {
-    return !!ref && form.entregaPrevista.trim() && form.dataCriacao.trim()
+    const precoNum = Number(form.valor.replace(/[^\d,.]/g,'').replace(',','.')) || 0
+    return !!ref && !!form.entregaPrevista.trim() && !!form.dataCriacao.trim() && precoNum > 0
   }
 
   function handleSubmit() {
     if (!valid() || !ref) return
     setSaving(true)
     const createdAt = `${form.dataCriacao} — ${String(today.getHours()).padStart(2,'0')}:${String(today.getMinutes()).padStart(2,'0')}`
+    // Parse valor (aceita "3500", "3500,00", "3500.00", "3 500 €" etc.)
+    const precoNum = Number(form.valor.replace(/[^\d,.]/g,'').replace(',','.')) || 0
+
     const newProject: Project = {
       id:           `p${Date.now()}`,
       referencia:   ref.ref,
@@ -847,6 +853,7 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
       dataCasamento:   ref.data,
       entregaPrevista: form.entregaPrevista,
       pacote:       'Pacote Premium 👑',
+      preco:        precoNum,
       duracao:      form.duracao.trim() || '~12 min',
       stage:        'Novo Projeto',
       approval:     'Aguardando Revisão',
@@ -998,11 +1005,26 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
             </Field>
           </div>
 
-          <Field label="Duração Estimada">
-            <input value={form.duracao} onChange={e => update('duracao', e.target.value)}
-              placeholder="~12 min"
-              className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40" />
-          </Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Valor do Projeto (€)" required>
+              <div className="relative">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={form.valor}
+                  onChange={e => update('valor', e.target.value)}
+                  placeholder="3500"
+                  className="w-full bg-black/30 border border-white/[0.08] rounded-lg pl-8 pr-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40 font-mono" />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gold/80 text-[14px]">€</span>
+              </div>
+              <p className="text-[10px] text-white/30 mt-1">Valor total cobrado ao cliente</p>
+            </Field>
+            <Field label="Duração Estimada">
+              <input value={form.duracao} onChange={e => update('duracao', e.target.value)}
+                placeholder="~12 min"
+                className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40" />
+            </Field>
+          </div>
 
           <Field label="Link do Material do Cliente">
             <input value={form.clientLink} onChange={e => update('clientLink', e.target.value)}

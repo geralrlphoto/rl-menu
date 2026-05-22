@@ -12,7 +12,10 @@ function stripTime(d: string): string {
 /** Converte user-project (formato do /novos-projetos) → Project do _data/projects.ts */
 function userProjectToDataProject(p: any): Project {
   const pacote = p.pacote ?? 'Pacote Premium 👑'
-  const preco = pacote === 'Pacote Essencial' ? 1800 : 3500
+  // Usa preco definido pelo utilizador no Novo Projeto; fallback ao default do pacote
+  const preco = typeof p.preco === 'number' && p.preco > 0
+    ? p.preco
+    : (pacote === 'Pacote Essencial' ? 1800 : 3500)
   return {
     id:              p.id,
     noivos:          p.noivos ?? '—',
@@ -23,7 +26,7 @@ function userProjectToDataProject(p: any): Project {
     dataCasamento:   p.dataCasamento || '',
     entregaPrevista: p.entregaPrevista || '',
     pacote,
-    preco,
+    preco: preco,
     duracao:         p.duracao || (pacote === 'Pacote Premium 👑' ? '~12 min' : '~8 min'),
     stage:           p.stage ?? 'Novo Projeto',
     approval:        p.approval ?? 'Aguardando Revisão',

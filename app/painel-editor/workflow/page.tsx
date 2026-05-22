@@ -27,6 +27,9 @@ function progressFromStageWF(stage: string): number {
 
 function userProjectToProject(p: any): Project {
   const pacote = p.pacote ?? 'Pacote Premium 👑'
+  const preco = typeof p.preco === 'number' && p.preco > 0
+    ? p.preco
+    : (pacote === 'Pacote Essencial' ? 1800 : 3500)
   return {
     id: p.id,
     noivos: p.noivos ?? '—',
@@ -37,7 +40,7 @@ function userProjectToProject(p: any): Project {
     dataCasamento: p.dataCasamento || '',
     entregaPrevista: p.entregaPrevista || '',
     pacote,
-    preco: pacote === 'Pacote Essencial' ? 1800 : 3500,
+    preco,
     duracao: p.duracao || '~12 min',
     stage: p.stage ?? 'Novo Projeto',
     approval: p.approval ?? 'Aguardando Revisão',
