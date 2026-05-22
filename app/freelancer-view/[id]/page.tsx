@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef, type Dispatch, type SetStateAction } from 'react'
 import { useParams } from 'next/navigation'
 
 const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
@@ -2486,7 +2486,7 @@ function SidebarNav({
 }: {
   freelancer: Freelancer | null
   tab: TabKey
-  setTab: (t: TabKey) => void
+  setTab: Dispatch<SetStateAction<TabKey>>
   counts: { casamentos: number; edicao: number; album: number; mensagens: number; notificacoes: number }
   isFotografo: boolean
 }) {
