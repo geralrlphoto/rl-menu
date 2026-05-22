@@ -337,11 +337,11 @@ export default function OrcamentoDeslocacaoPage() {
         </div>
 
         {/* ─── PRINT VIEW (oculta em ecrã, visível no PDF) ─────────────── */}
-        {/* Design clean & profissional · só TOTAL (sem valores por linha) ───*/}
-        <div className="print-only max-w-[800px] mx-auto px-10 py-12 text-zinc-900">
+        {/* Design no mesmo padrão do contrato — secções numeradas + assinaturas */}
+        <div className="print-only max-w-[800px] mx-auto px-10 py-10 text-zinc-900">
 
           {/* Cabeçalho */}
-          <header className="flex items-end justify-between mb-12 pb-5 border-b border-zinc-300">
+          <header className="flex items-start justify-between mb-10 pb-6 border-b-2 border-black">
             <div className="flex items-center gap-5">
               <img
                 src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
@@ -350,135 +350,212 @@ export default function OrcamentoDeslocacaoPage() {
                 style={{ width: '80px', height: '80px' }}
               />
               <div>
-                <p className="text-[22px] font-light tracking-[0.18em] uppercase text-zinc-900 leading-none">RL <strong className="font-bold">PHOTO</strong>.VIDEO</p>
-                <p className="text-[10px] text-zinc-500 tracking-[0.3em] uppercase mt-1.5">Fotografia &amp; Vídeo</p>
+                <h1 className="text-2xl font-black tracking-[0.15em] uppercase">RL PHOTO.VIDEO</h1>
+                <p className="text-xs text-zinc-500 mt-1">Fotografia &amp; Vídeo</p>
               </div>
             </div>
-            <div className="text-right text-[10px] text-zinc-500 tracking-wider leading-relaxed">
-              <p>NIF · 238 076 415</p>
-              <p>CAE · 74200</p>
-              <p>+351 916 162 728</p>
+            <div className="text-right text-[11px] text-zinc-500 leading-relaxed">
+              <p>NIF: 238 076 415</p>
+              <p>CAE: 74200</p>
               <p>geral.rlphoto@gmail.com</p>
+              <p>+351 916 162 728</p>
             </div>
           </header>
 
-          {/* Título — minimal */}
-          <div className="mb-12">
-            <p className="text-[10px] tracking-[0.5em] uppercase text-zinc-400 mb-2">Documento</p>
-            <h1 className="text-[28px] font-light tracking-[0.05em] text-zinc-900 leading-tight">Orçamento de Deslocação</h1>
-            <p className="text-[11px] text-zinc-500 mt-2 tracking-wide">
-              Emitido em {new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })}
+          {/* Título centrado */}
+          <div className="text-center mb-10">
+            <h2 className="text-xl font-black tracking-[0.25em] uppercase mb-2">Orçamento de Deslocação</h2>
+            <p className="text-[11px] text-zinc-400 tracking-widest uppercase">
+              {new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })}
             </p>
+            <div className="mt-3 flex items-center justify-center gap-3">
+              <div className="h-px w-12 bg-zinc-300" />
+              <span className="text-zinc-300 text-sm">◆</span>
+              <div className="h-px w-12 bg-zinc-300" />
+            </div>
           </div>
 
-          {/* Cliente + Trajeto — grid limpo */}
-          {(f.cliente || f.evento || f.data || f.destino) && (
-            <section className="mb-10">
-              <p className="text-[9px] tracking-[0.4em] uppercase text-zinc-400 mb-3">Para</p>
-              <div className="grid grid-cols-2 gap-x-12 gap-y-3 text-[13px]">
-                {f.cliente && <div><p className="text-[9px] uppercase tracking-widest text-zinc-400 mb-0.5">Cliente</p><p className="font-semibold">{f.cliente}</p></div>}
-                {f.evento  && <div><p className="text-[9px] uppercase tracking-widest text-zinc-400 mb-0.5">Evento</p><p className="font-semibold">{f.evento}</p></div>}
-                {f.data    && <div><p className="text-[9px] uppercase tracking-widest text-zinc-400 mb-0.5">Data</p><p className="font-semibold">{new Date(f.data + 'T12:00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })}</p></div>}
-                {f.destino && <div><p className="text-[9px] uppercase tracking-widest text-zinc-400 mb-0.5">Local</p><p className="font-semibold">{f.destino}</p></div>}
+          {/* 1. Identificação das Partes */}
+          <section className="mb-8">
+            <h3 className="text-[10px] font-black tracking-[0.3em] uppercase border-b border-zinc-200 pb-2 mb-4">
+              1. Identificação das Partes
+            </h3>
+            <div className="space-y-5">
+              <div>
+                <p className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-1">Primeira Outorgante (Prestadora)</p>
+                <p className="text-sm leading-relaxed">
+                  <strong>Liliana Sofia Fernandes Barreto Gonçalves</strong>, a exercer sob a marca <strong>RL Photo — Fotografia &amp; Vídeo</strong>,
+                  contribuinte n.º <strong>238 076 415</strong>, CAE <strong>74200</strong> (Atividades Fotográficas/Vídeo),
+                  com sede em <strong>Centro Comercial Os Mochos, Loja 124, 2955-185 Pinhal Novo</strong>,
+                  e-mail <strong>geral.rlphoto@gmail.com</strong>, telefone <strong>+351 916 162 728</strong>,
+                  doravante designada como <strong>PRESTADORA</strong>.
+                </p>
               </div>
-            </section>
-          )}
+              {(f.cliente) && (
+                <div>
+                  <p className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-1">Segunda Outorgante (Cliente)</p>
+                  <p className="text-sm leading-relaxed">
+                    <strong>{f.cliente}</strong>, doravante designado como <strong>CLIENTE</strong>.
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
 
-          {/* Trajeto detalhe */}
-          <section className="mb-10">
-            <p className="text-[9px] tracking-[0.4em] uppercase text-zinc-400 mb-3">Trajeto</p>
-            <div className="flex items-center justify-between border border-zinc-200 rounded-md px-5 py-4 text-[13px]">
-              <div className="flex items-center gap-3">
-                <div>
-                  <p className="text-[9px] uppercase tracking-widest text-zinc-400 mb-0.5">Origem</p>
-                  <p className="font-semibold">{f.origem || '—'}</p>
-                </div>
-                <span className="text-zinc-300 text-lg">→</span>
-                <div>
-                  <p className="text-[9px] uppercase tracking-widest text-zinc-400 mb-0.5">Destino</p>
-                  <p className="font-semibold">{f.destino || '—'}</p>
-                </div>
+          {/* 2. Objeto */}
+          <section className="mb-8">
+            <h3 className="text-[10px] font-black tracking-[0.3em] uppercase border-b border-zinc-200 pb-2 mb-4">
+              2. Objeto do Orçamento
+            </h3>
+            <p className="text-sm leading-relaxed mb-4">
+              O presente orçamento refere-se às despesas de <strong>deslocação, refeições, horas de viagem/serviço e estadia</strong> da equipa da PRESTADORA para a cobertura do seguinte evento:
+            </p>
+            <div className="bg-zinc-50 rounded-lg p-4 grid grid-cols-2 gap-3 text-sm">
+              {f.evento  && <div><span className="text-zinc-400 text-xs block mb-0.5">Tipo de Evento</span><strong>{f.evento}</strong></div>}
+              {f.data    && <div><span className="text-zinc-400 text-xs block mb-0.5">Data do Evento</span><strong>{new Date(f.data + 'T12:00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })}</strong></div>}
+              {f.destino && <div className="col-span-2"><span className="text-zinc-400 text-xs block mb-0.5">Local</span><strong>{f.destino}</strong></div>}
+            </div>
+          </section>
+
+          {/* 3. Trajeto */}
+          <section className="mb-8">
+            <h3 className="text-[10px] font-black tracking-[0.3em] uppercase border-b border-zinc-200 pb-2 mb-4">
+              3. Trajeto da Deslocação
+            </h3>
+            <div className="bg-zinc-50 rounded-lg p-4 grid grid-cols-3 gap-3 text-sm">
+              <div>
+                <span className="text-zinc-400 text-xs block mb-0.5">Origem</span>
+                <strong>{f.origem || '—'}</strong>
               </div>
-              <div className="text-right">
-                <p className="text-[9px] uppercase tracking-widest text-zinc-400 mb-0.5">Distância</p>
-                <p className="font-semibold">{totals.kmTotal.toLocaleString('pt-PT')} km <span className="text-[10px] font-normal text-zinc-400">{f.idaVolta ? '(ida e volta)' : '(só ida)'}</span></p>
+              <div>
+                <span className="text-zinc-400 text-xs block mb-0.5">Destino</span>
+                <strong>{f.destino || '—'}</strong>
+              </div>
+              <div>
+                <span className="text-zinc-400 text-xs block mb-0.5">Distância Total</span>
+                <strong>{totals.kmTotal.toLocaleString('pt-PT')} km</strong>
+                <span className="text-[10px] text-zinc-400 ml-1">{f.idaVolta ? '(ida e volta)' : '(só ida)'}</span>
               </div>
             </div>
           </section>
 
-          {/* Resumo — apenas LISTAGEM sem valores individuais */}
-          <section className="mb-10">
-            <p className="text-[9px] tracking-[0.4em] uppercase text-zinc-400 mb-3">Inclui</p>
-            <ul className="space-y-2.5 text-[13px] leading-relaxed">
+          {/* 4. Serviços Incluídos */}
+          <section className="mb-8">
+            <h3 className="text-[10px] font-black tracking-[0.3em] uppercase border-b border-zinc-200 pb-2 mb-4">
+              4. Serviços e Despesas Incluídas
+            </h3>
+            <ul className="space-y-2.5 text-sm leading-relaxed">
               {totals.subKm > 0 && (
                 <li className="flex items-start gap-3">
-                  <span className="text-zinc-300 mt-0.5">·</span>
-                  <span><strong>Deslocação</strong> — {totals.kmTotal.toLocaleString('pt-PT')} km {f.idaVolta ? '(ida e volta)' : ''}</span>
+                  <span className="text-zinc-400 mt-0.5">◆</span>
+                  <span>
+                    <strong>Deslocação</strong> — {totals.kmTotal.toLocaleString('pt-PT')} km {f.idaVolta ? '(ida e volta)' : '(só ida)'} entre <em>{f.origem}</em> e <em>{f.destino || 'local do evento'}</em>.
+                  </span>
                 </li>
               )}
               {totals.subPortagens > 0 && (
                 <li className="flex items-start gap-3">
-                  <span className="text-zinc-300 mt-0.5">·</span>
-                  <span><strong>Portagens</strong></span>
+                  <span className="text-zinc-400 mt-0.5">◆</span>
+                  <span><strong>Portagens</strong> — custos de portagem incluídos no trajeto.</span>
                 </li>
               )}
               {totals.subRefeicoes > 0 && (
                 <li className="flex items-start gap-3">
-                  <span className="text-zinc-300 mt-0.5">·</span>
-                  <span><strong>Refeições</strong> da equipa ({f.numPessoas} {f.numPessoas === 1 ? 'pessoa' : 'pessoas'} · {f.numRefeicoes} {f.numRefeicoes === 1 ? 'refeição' : 'refeições'})</span>
+                  <span className="text-zinc-400 mt-0.5">◆</span>
+                  <span>
+                    <strong>Refeições da equipa</strong> — {f.numPessoas} {f.numPessoas === 1 ? 'pessoa' : 'pessoas'},
+                    {' '}{f.numRefeicoes} {f.numRefeicoes === 1 ? 'refeição' : 'refeições'} {f.numPessoas > 1 ? 'cada' : ''}.
+                  </span>
                 </li>
               )}
               {totals.subViagem > 0 && (
                 <li className="flex items-start gap-3">
-                  <span className="text-zinc-300 mt-0.5">·</span>
-                  <span><strong>Horas de viagem</strong> ({f.horasViagem}h)</span>
+                  <span className="text-zinc-400 mt-0.5">◆</span>
+                  <span><strong>Horas de viagem</strong> — {f.horasViagem}h de deslocação.</span>
                 </li>
               )}
               {totals.subServico > 0 && (
                 <li className="flex items-start gap-3">
-                  <span className="text-zinc-300 mt-0.5">·</span>
-                  <span><strong>Horas de serviço</strong> ({f.horasServico}h)</span>
+                  <span className="text-zinc-400 mt-0.5">◆</span>
+                  <span><strong>Horas de serviço extra</strong> — {f.horasServico}h adicionais para além do pacote contratado.</span>
                 </li>
               )}
               {totals.subDormida > 0 && (
                 <li className="flex items-start gap-3">
-                  <span className="text-zinc-300 mt-0.5">·</span>
-                  <span><strong>Estadia</strong> ({f.numPessoas} {f.numPessoas === 1 ? 'pessoa' : 'pessoas'} · {f.noites} {f.noites === 1 ? 'noite' : 'noites'})</span>
+                  <span className="text-zinc-400 mt-0.5">◆</span>
+                  <span>
+                    <strong>Estadia</strong> — alojamento para {f.numPessoas} {f.numPessoas === 1 ? 'pessoa' : 'pessoas'}
+                    {' '}durante {f.noites} {f.noites === 1 ? 'noite' : 'noites'}.
+                  </span>
                 </li>
               )}
             </ul>
           </section>
 
-          {/* TOTAL — destaque grande */}
+          {/* 5. Valor */}
           <section className="mb-10">
-            <div className="border-t-2 border-zinc-900 pt-6 flex items-end justify-between">
+            <h3 className="text-[10px] font-black tracking-[0.3em] uppercase border-b border-zinc-200 pb-2 mb-4">
+              5. Valor a Liquidar
+            </h3>
+            <div className="bg-black text-white rounded-lg px-6 py-5 flex items-center justify-between">
               <div>
-                <p className="text-[10px] tracking-[0.5em] uppercase text-zinc-500 mb-1">Total</p>
-                <p className="text-[11px] text-zinc-400 tracking-wide">Valor total da deslocação</p>
+                <p className="text-[10px] tracking-[0.4em] uppercase mb-1" style={{ color: '#C9A84C' }}>Total da Deslocação</p>
+                <p className="text-[11px] text-zinc-400">Valores em euros, com IVA quando aplicável.</p>
               </div>
-              <p className="text-[36px] font-light tracking-tight text-zinc-900 leading-none">{fmt(totals.total)}</p>
+              <p className="text-3xl font-black tracking-tight" style={{ color: '#C9A84C' }}>{fmt(totals.total)}</p>
             </div>
           </section>
 
           {f.observacoes && (
-            <section className="mb-10">
-              <p className="text-[9px] tracking-[0.4em] uppercase text-zinc-400 mb-3">Observações</p>
-              <p className="text-[12px] text-zinc-700 leading-relaxed whitespace-pre-wrap">{f.observacoes}</p>
+            <section className="mb-8">
+              <h3 className="text-[10px] font-black tracking-[0.3em] uppercase border-b border-zinc-200 pb-2 mb-4">
+                6. Observações
+              </h3>
+              <p className="text-sm text-zinc-700 leading-relaxed whitespace-pre-wrap">{f.observacoes}</p>
             </section>
           )}
 
-          {/* Condições gerais — discreto */}
-          <section className="mb-12 text-[10px] text-zinc-500 leading-relaxed">
-            <p className="text-[9px] tracking-[0.4em] uppercase text-zinc-400 mb-2">Condições</p>
-            <p>
-              Orçamento válido por 30 dias. Valores em euros, com IVA incluído quando aplicável.
-              A deslocação inclui ida e volta entre a sede da prestadora e o local indicado.
-              Em caso de cancelamento, podem ser cobrados custos já incorridos.
+          {/* Condições gerais */}
+          <section className="mb-10 text-[11px] text-zinc-600 leading-relaxed">
+            <h3 className="text-[10px] font-black tracking-[0.3em] uppercase border-b border-zinc-200 pb-2 mb-3 text-zinc-900">
+              Condições Gerais
+            </h3>
+            <ul className="space-y-1.5 list-disc list-inside">
+              <li>O presente orçamento é <strong>válido por 30 dias</strong> a partir da data de emissão.</li>
+              <li>Valores apresentados em <strong>euros (€)</strong>, com IVA incluído quando aplicável.</li>
+              <li>A deslocação inclui a viagem entre a sede da PRESTADORA e o local do evento indicado.</li>
+              <li>O pagamento dos custos de deslocação é faturado em <strong>separado</strong> do serviço de fotografia/vídeo.</li>
+              <li>Em caso de cancelamento por parte do CLIENTE, podem ser cobrados <strong>custos já incorridos</strong> (portagens, estadias confirmadas, etc.).</li>
+              <li>Alterações ao local, data ou número de pessoas implicam recálculo do orçamento.</li>
+            </ul>
+          </section>
+
+          {/* Local + Data + Assinaturas */}
+          <section className="mb-8">
+            <h3 className="text-[10px] font-black tracking-[0.3em] uppercase border-b border-zinc-200 pb-2 mb-6">
+              Aceitação
+            </h3>
+            <p className="text-sm text-zinc-600 mb-8">
+              Para aceitar o presente orçamento, basta assinar e devolver uma cópia à PRESTADORA, ou confirmar por escrito (email).
             </p>
+            <p className="text-sm mb-10">Palmela, {new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })}.</p>
+            <div className="grid grid-cols-2 gap-16">
+              <div>
+                <div className="border-b border-zinc-400 mb-3 h-12" />
+                <p className="text-xs text-zinc-500 text-center">A PRESTADORA</p>
+                <p className="text-xs font-bold text-center mt-1">Liliana Sofia F. B. Gonçalves</p>
+                <p className="text-[10px] text-zinc-400 text-center">RL PHOTO.VIDEO</p>
+              </div>
+              <div>
+                <div className="border-b border-zinc-400 mb-3 h-12" />
+                <p className="text-xs text-zinc-500 text-center">O CLIENTE</p>
+                <p className="text-xs font-bold text-center mt-1">{f.cliente || '____________________________'}</p>
+              </div>
+            </div>
           </section>
 
           {/* Rodapé */}
-          <footer className="pt-6 border-t border-zinc-200 text-center">
+          <footer className="pt-5 border-t border-zinc-200 text-center">
             <p className="text-[9px] tracking-[0.45em] uppercase text-zinc-500 mb-1.5"><strong>RL Photo · Video</strong> — Photography &amp; Video</p>
             <p className="text-[9px] text-zinc-400 tracking-wide">Centro Comercial Os Mochos, Loja 124 · 2955-185 Pinhal Novo</p>
             <p className="text-[9px] text-zinc-400 tracking-wide">NIF 238 076 415 · geral.rlphoto@gmail.com · +351 916 162 728</p>
