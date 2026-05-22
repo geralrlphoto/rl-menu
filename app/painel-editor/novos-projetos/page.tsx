@@ -73,11 +73,43 @@ const MATERIAL_ICONS: Record<MaterialCategoria, string> = {
   'Corte do Bolo': '◍', 'Drone': '◇', 'Áudio Geral': '◯', 'Áudio Lapela': '◐',
 }
 
+// ── Referências de Eventos (Casamentos cadastrados por ano) ─────────────
+type EventReference = {
+  ref: string
+  ano: number
+  noivos: string
+  data: string   // dd/mm/yyyy
+  local: string
+  foto: string
+}
+
+const EVENT_REFERENCES: EventReference[] = [
+  // 2025
+  { ref: 'CAS_001_25_RL', ano: 2025, noivos: 'Maria & João',       data: '12/04/2025', local: 'Quinta dos Castanheiros, Sintra', foto: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=900&h=600&fit=crop' },
+  { ref: 'CAS_002_25_RL', ano: 2025, noivos: 'Inês & Pedro',        data: '25/05/2025', local: 'Solar dos Lobos, Évora',          foto: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=900&h=600&fit=crop' },
+  { ref: 'CAS_003_25_RL', ano: 2025, noivos: 'Catarina & Tomás',    data: '14/06/2025', local: 'Casa do Lago, Cascais',           foto: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=900&h=600&fit=crop' },
+  { ref: 'CAS_004_25_RL', ano: 2025, noivos: 'Margarida & Diogo',   data: '06/09/2025', local: 'Quinta de Santa Bárbara, Mafra',  foto: 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=900&h=600&fit=crop' },
+  // 2026
+  { ref: 'CAS_001_26_RL', ano: 2026, noivos: 'Amanda & Lucas',      data: '28/06/2026', local: 'Quinta da Bichinha, Lisboa',      foto: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=900&h=600&fit=crop' },
+  { ref: 'CAS_002_26_RL', ano: 2026, noivos: 'Beatriz & Gabriel',   data: '31/05/2026', local: 'Solar do Pelourinho, Sintra',     foto: 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=900&h=600&fit=crop' },
+  { ref: 'CAS_003_26_RL', ano: 2026, noivos: 'Juliana & Matheus',   data: '07/06/2026', local: 'Quinta da Lagoalva, Alpiarça',    foto: 'https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=900&h=600&fit=crop' },
+  { ref: 'CAS_004_26_RL', ano: 2026, noivos: 'Carolina & Felipe',   data: '14/06/2026', local: 'Quinta dos Lagares, Óbidos',      foto: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=900&h=600&fit=crop' },
+  { ref: 'CAS_005_26_RL', ano: 2026, noivos: 'Sofia & Ricardo',     data: '21/06/2026', local: 'Casa dos Penedos, Sintra',         foto: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=900&h=600&fit=crop' },
+  { ref: 'CAS_006_26_RL', ano: 2026, noivos: 'Beatriz & André',     data: '05/07/2026', local: 'Quinta do Torneiro, Loures',       foto: 'https://images.unsplash.com/photo-1469371670807-013ccf25f16a?w=900&h=600&fit=crop' },
+  { ref: 'CAS_007_26_RL', ano: 2026, noivos: 'Joana & Henrique',    data: '12/07/2026', local: 'Convento do Espinheiro, Évora',    foto: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=900&h=600&fit=crop' },
+  // 2027
+  { ref: 'CAS_001_27_RL', ano: 2027, noivos: 'Helena & André',      data: '15/05/2027', local: 'Quinta de Sant\'Ana, Mafra',       foto: 'https://images.unsplash.com/photo-1502086223501-7ea6ecd79368?w=900&h=600&fit=crop' },
+  { ref: 'CAS_002_27_RL', ano: 2027, noivos: 'Marta & Vasco',       data: '22/06/2027', local: 'Quinta do Falcão, Cascais',        foto: 'https://images.unsplash.com/photo-1502136969935-8d8eef54d77b?w=900&h=600&fit=crop' },
+  { ref: 'CAS_003_27_RL', ano: 2027, noivos: 'Daniela & Bernardo',  data: '04/09/2027', local: 'Tivoli Palácio de Seteais',        foto: 'https://images.unsplash.com/photo-1469371670807-013ccf25f16a?w=900&h=600&fit=crop' },
+]
+
 type Project = {
   id: string
+  referencia?: string   // ex: CAS_001_26_RL
   noivos: string
+  local?: string        // local do casamento
   foto: string
-  recebido: string      // dd/mm/yyyy HH:MM
+  recebido: string      // data de criação do projeto — dd/mm/yyyy HH:MM
   dataCasamento: string // dd/mm/yyyy
   entregaPrevista: string
   pacote: 'Pacote Premium 👑' | 'Pacote Essencial'
@@ -99,7 +131,9 @@ type Project = {
 const PROJECTS: Project[] = [
   {
     id: 'p1',
+    referencia: 'CAS_001_26_RL',
     noivos: 'Amanda & Lucas',
+    local: 'Quinta da Bichinha, Lisboa',
     foto: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=900&h=600&fit=crop',
     recebido: '18/05/2026 — 14:32',
     dataCasamento: '28/06/2026',
@@ -135,7 +169,9 @@ const PROJECTS: Project[] = [
   },
   {
     id: 'p2',
+    referencia: 'CAS_002_26_RL',
     noivos: 'Beatriz & Gabriel',
+    local: 'Solar do Pelourinho, Sintra',
     foto: 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=900&h=600&fit=crop',
     recebido: '17/05/2026 — 09:12',
     dataCasamento: '31/05/2026',
@@ -172,7 +208,9 @@ const PROJECTS: Project[] = [
   },
   {
     id: 'p3',
+    referencia: 'CAS_003_26_RL',
     noivos: 'Juliana & Matheus',
+    local: 'Quinta da Lagoalva, Alpiarça',
     foto: 'https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=900&h=600&fit=crop',
     recebido: '16/05/2026 — 18:45',
     dataCasamento: '07/06/2026',
@@ -201,7 +239,9 @@ const PROJECTS: Project[] = [
   },
   {
     id: 'p4',
+    referencia: 'CAS_004_26_RL',
     noivos: 'Carolina & Felipe',
+    local: 'Quinta dos Lagares, Óbidos',
     foto: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=900&h=600&fit=crop',
     recebido: '14/05/2026 — 11:08',
     dataCasamento: '14/06/2026',
@@ -544,10 +584,12 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
   const today = new Date()
   const todayStr = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()} — ${String(today.getHours()).padStart(2,'0')}:${String(today.getMinutes()).padStart(2,'0')}`
 
+  const [ano, setAno] = useState<number>(2026)
+  const [refId, setRefId] = useState<string>('')   // referência seleccionada
+  const ref = EVENT_REFERENCES.find(e => e.ref === refId) ?? null
+
   const [form, setForm] = useState({
-    noivos:          '',
-    foto:            '',
-    dataCasamento:   '',
+    dataCriacao:     `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`,
     entregaPrevista: '',
     pacote:          'Pacote Premium 👑' as 'Pacote Premium 👑' | 'Pacote Essencial',
     duracao:         '',
@@ -557,6 +599,21 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
   const [categorias, setCategorias] = useState<MaterialCategoria[]>([])
   const [entregas, setEntregas] = useState<EntregaTipo[]>(['Trailer Final','Filme Completo'])
   const [saving, setSaving] = useState(false)
+
+  // Quando muda a referência seleccionada, calcula sugestão de entrega prevista (data casamento + 30 dias)
+  function updateRef(r: string) {
+    setRefId(r)
+    const target = EVENT_REFERENCES.find(e => e.ref === r)
+    if (target && !form.entregaPrevista) {
+      const [dd,mm,yy] = target.data.split('/').map(Number)
+      const d = new Date(yy, mm-1, dd); d.setDate(d.getDate() + 30)
+      const suggested = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`
+      setForm(prev => ({ ...prev, entregaPrevista: suggested }))
+    }
+  }
+
+  // Filtrar referências por ano e excluir já-existentes
+  const refsForYear = EVENT_REFERENCES.filter(e => e.ano === ano)
 
   function update<K extends keyof typeof form>(k: K, v: typeof form[K]) {
     setForm(prev => ({ ...prev, [k]: v }))
@@ -583,18 +640,21 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
   }
 
   function valid() {
-    return form.noivos.trim() && form.dataCasamento.trim() && form.entregaPrevista.trim()
+    return !!ref && form.entregaPrevista.trim() && form.dataCriacao.trim()
   }
 
   function handleSubmit() {
-    if (!valid()) return
+    if (!valid() || !ref) return
     setSaving(true)
+    const createdAt = `${form.dataCriacao} — ${String(today.getHours()).padStart(2,'0')}:${String(today.getMinutes()).padStart(2,'0')}`
     const newProject: Project = {
       id:           `p${Date.now()}`,
-      noivos:       form.noivos.trim(),
-      foto:         form.foto.trim() || 'https://images.unsplash.com/photo-1519741497674-611481863552?w=900&h=600&fit=crop',
-      recebido:     todayStr,
-      dataCasamento:   form.dataCasamento,
+      referencia:   ref.ref,
+      noivos:       ref.noivos,
+      local:        ref.local,
+      foto:         ref.foto,
+      recebido:     createdAt,
+      dataCasamento:   ref.data,
       entregaPrevista: form.entregaPrevista,
       pacote:       form.pacote,
       duracao:      form.duracao.trim() || (form.pacote === 'Pacote Premium 👑' ? '~12 min' : '~8 min'),
@@ -652,30 +712,62 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
         {/* Body */}
         <div className="px-7 py-6 space-y-5">
 
-          {/* Noivos + Foto */}
-          <Field label="Nome dos Noivos" required>
-            <input value={form.noivos} onChange={e => update('noivos', e.target.value)}
-              placeholder="Ex: Amanda & Lucas"
-              className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40" />
-          </Field>
+          {/* ─── REFERÊNCIA DO EVENTO ─── */}
+          <div className="rounded-xl border border-gold/20 p-4"
+            style={{ background: 'linear-gradient(135deg, rgba(201,164,92,0.05), transparent)' }}>
+            <p className="text-[10px] tracking-[0.3em] uppercase text-gold font-bold mb-3">Referência do Evento</p>
+            <div className="grid grid-cols-[110px_1fr] gap-3">
+              {/* Ano */}
+              <div>
+                <label className="block text-[10px] uppercase tracking-widest text-white/45 mb-1">Ano</label>
+                <select value={ano} onChange={e => { setAno(Number(e.target.value)); setRefId('') }}
+                  className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/40 cursor-pointer">
+                  {[2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+              {/* Referência */}
+              <div>
+                <label className="block text-[10px] uppercase tracking-widest text-white/45 mb-1">Referência <span className="text-gold">*</span></label>
+                <select value={refId} onChange={e => updateRef(e.target.value)}
+                  className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/40 cursor-pointer font-mono">
+                  <option value="">— Seleciona o evento —</option>
+                  {refsForYear.map(r => (
+                    <option key={r.ref} value={r.ref}>{r.ref} · {r.noivos}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
-          <Field label="URL da Foto (opcional)">
-            <input value={form.foto} onChange={e => update('foto', e.target.value)}
-              placeholder="https://images.unsplash.com/…"
-              className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40" />
-          </Field>
+            {/* Preview do evento seleccionado */}
+            {ref && (
+              <div className="mt-4 flex items-center gap-3 p-3 rounded-lg border border-gold/25 bg-black/30">
+                <div className="w-14 h-14 rounded-lg overflow-hidden border border-gold/30 shrink-0">
+                  <img src={ref.foto} alt="" className="w-full h-full object-cover" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[15px] font-semibold text-white" style={{ fontFamily: 'Georgia, serif' }}>{ref.noivos}</p>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-white/55 mt-0.5">
+                    <span className="flex items-center gap-1">📅 <span className="text-white/85 font-medium">{ref.data}</span></span>
+                    <span className="flex items-center gap-1">📍 <span className="text-white/75">{ref.local}</span></span>
+                  </div>
+                  <p className="text-[10px] text-gold/70 tracking-widest uppercase mt-1 font-mono">{ref.ref}</p>
+                </div>
+              </div>
+            )}
+          </div>
 
-          {/* Datas (2 col) */}
+          {/* DATAS — Criação + Entrega Prevista */}
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Data do Casamento" required>
-              <input value={form.dataCasamento} onChange={e => update('dataCasamento', e.target.value)}
+            <Field label="Data de Criação do Projeto" required>
+              <input value={form.dataCriacao} onChange={e => update('dataCriacao', e.target.value)}
                 placeholder="dd/mm/aaaa"
                 className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40 font-mono" />
             </Field>
-            <Field label="Entrega Prevista" required>
+            <Field label="Data Prevista de Entrega" required>
               <input value={form.entregaPrevista} onChange={e => update('entregaPrevista', e.target.value)}
                 placeholder="dd/mm/aaaa"
                 className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40 font-mono" />
+              {ref && <p className="text-[10px] text-gold/60 mt-1">Sugestão: data do casamento + 30 dias</p>}
             </Field>
           </div>
 
@@ -889,16 +981,26 @@ function ProjectCard({
         {/* Info */}
         <div className="flex flex-col gap-2 min-w-0">
           <div>
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              {p.referencia && (
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-gold/10 border border-gold/30 text-gold tracking-widest font-bold">
+                  {p.referencia}
+                </span>
+              )}
+              <span className="text-[10px] px-2 py-0.5 rounded-md bg-gold/15 border border-gold/30 text-gold uppercase tracking-widest font-bold">Novo Projeto</span>
+            </div>
             <h2 className="text-2xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>{p.noivos}</h2>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <span className="text-[10px] px-2 py-0.5 rounded-md bg-gold/15 border border-gold/30 text-gold uppercase tracking-widest font-bold">Novo Projeto</span>
-              <span className="text-[11px] text-white/40">· {p.pacote}</span>
-              <span className="text-[11px] text-white/40">· {p.duracao}</span>
+              {p.local && <span className="text-[11px] text-white/55">📍 {p.local}</span>}
+              <span className="text-[11px] text-white/30">·</span>
+              <span className="text-[11px] text-white/40">{p.pacote}</span>
+              <span className="text-[11px] text-white/30">·</span>
+              <span className="text-[11px] text-white/40">{p.duracao}</span>
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-3 mt-1">
-            <Meta label="Recebido"     value={p.recebido} />
+            <Meta label="Criado em"     value={p.recebido} />
             <Meta label="Data Casamento" value={p.dataCasamento} />
             <Meta label="Entrega Prevista" value={p.entregaPrevista} />
           </div>
