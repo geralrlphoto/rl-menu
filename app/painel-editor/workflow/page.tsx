@@ -26,6 +26,7 @@ const NAV_ITEMS = [
   { key: 'calendario',  label: 'Calendário',          icon: '◉', href: '/painel-editor/calendario' },
   { key: 'workflow',    label: 'Workflow',            icon: '☰', href: '/painel-editor/workflow', active: true },
   { key: 'biblioteca',  label: 'Biblioteca',          icon: '♪', href: '/painel-editor/musicas' },
+  { key: 'dados',       label: 'Dados Pessoais',      icon: '☻', href: '/painel-editor/dados-pessoais' },
 ]
 
 // Ícone por etapa (visual mockup-style)
