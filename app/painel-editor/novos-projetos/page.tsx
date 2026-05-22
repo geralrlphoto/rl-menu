@@ -1245,16 +1245,15 @@ function ProjectCard({
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               {p.local && <span className="text-[11px] text-white/55">📍 {p.local}</span>}
               <span className="text-[11px] text-white/30">·</span>
-              <span className="text-[11px] text-white/40">{p.pacote}</span>
-              <span className="text-[11px] text-white/30">·</span>
               <span className="text-[11px] text-white/40">{p.duracao}</span>
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3 mt-1">
+          <div className="grid grid-cols-4 gap-3 mt-1">
             <Meta label="Criado em"     value={p.recebido} />
             <Meta label="Data Casamento" value={p.dataCasamento} />
             <Meta label="Entrega Prevista" value={p.entregaPrevista} />
+            <ValorMeta projectId={p.id} value={p.preco} onSave={(v) => onChange({ preco: v })} />
           </div>
 
           {/* Progress */}
@@ -1572,6 +1571,59 @@ function Meta({ label, value }: { label: string; value: string }) {
     <div className="min-w-0">
       <p className="text-[10px] tracking-widest uppercase text-white/35 mb-0.5">{label}</p>
       <p className="text-[13px] font-medium text-white/85 truncate">{value}</p>
+    </div>
+  )
+}
+
+// Inline-editable do valor do projeto (€). Funciona em mocks (via patches) e em user-projects.
+function ValorMeta({ projectId, value, onSave }: { projectId: string; value?: number; onSave: (v: number) => void }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState<string>(value && value > 0 ? String(value) : '')
+
+  useEffect(() => {
+    setDraft(value && value > 0 ? String(value) : '')
+  }, [value])
+
+  function commit() {
+    const parsed = Number(String(draft).replace(/[^\d,.]/g, '').replace(',', '.')) || 0
+    if (parsed !== (value || 0)) onSave(parsed)
+    setEditing(false)
+  }
+
+  const formatted = value && value > 0
+    ? new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 0 }).format(value) + ' €'
+    : null
+
+  return (
+    <div className="min-w-0">
+      <p className="text-[10px] tracking-widest uppercase text-white/35 mb-0.5">Valor do Projeto</p>
+      {editing ? (
+        <div className="flex items-center gap-1">
+          <input
+            type="number"
+            autoFocus
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={commit}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') { e.preventDefault(); commit() }
+              if (e.key === 'Escape') { e.preventDefault(); setDraft(value && value > 0 ? String(value) : ''); setEditing(false) }
+            }}
+            placeholder="0"
+            className="w-full bg-black/40 border border-gold/40 rounded-md px-2 py-1 text-[13px] font-medium text-gold outline-none focus:border-gold focus:bg-black/60 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          />
+          <span className="text-[12px] text-gold/70">€</span>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setEditing(true) }}
+          title="Clica para editar o valor"
+          className={`text-left text-[13px] font-medium truncate w-full px-1.5 -mx-1.5 py-0.5 rounded-md transition-all border border-transparent hover:border-gold/30 hover:bg-gold/5 ${formatted ? 'text-gold' : 'text-white/30 italic'}`}
+        >
+          {formatted || 'Adicionar valor…'}
+        </button>
+      )}
     </div>
   )
 }
