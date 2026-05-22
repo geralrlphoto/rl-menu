@@ -101,6 +101,14 @@ function isoToPt(iso: string): string {
   return `${d}/${m}/${y}`
 }
 
+/** Converte DD/MM/YYYY para YYYY-MM-DD (formato HTML <input type='date'>) */
+function ptToIso(pt: string): string {
+  if (!pt) return ''
+  const [d, m, y] = pt.split('/')
+  if (!d || !m || !y) return ''
+  return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`
+}
+
 /** Mapeia evento da API para EventReference — aceita TODOS os eventos com referência */
 function eventToRef(e: any, idx: number): EventReference | null {
   if (!e.referencia) return null  // só ignora eventos sem referência
@@ -827,18 +835,33 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
             )}
           </div>
 
-          {/* DATAS — Criação + Entrega Prevista */}
+          {/* DATAS — Criação + Entrega Prevista (date pickers) */}
           <div className="grid grid-cols-2 gap-4">
             <Field label="Data de Criação do Projeto" required>
-              <input value={form.dataCriacao} onChange={e => update('dataCriacao', e.target.value)}
-                placeholder="dd/mm/aaaa"
-                className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40 font-mono" />
+              <div className="relative">
+                <input
+                  type="date"
+                  value={ptToIso(form.dataCriacao)}
+                  onChange={e => update('dataCriacao', isoToPt(e.target.value))}
+                  className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/40 font-mono [color-scheme:dark]" />
+              </div>
+              {form.dataCriacao && (
+                <p className="text-[10px] text-white/45 mt-1">📅 <span className="text-gold/80">{form.dataCriacao}</span></p>
+              )}
             </Field>
             <Field label="Data Prevista de Entrega" required>
-              <input value={form.entregaPrevista} onChange={e => update('entregaPrevista', e.target.value)}
-                placeholder="dd/mm/aaaa"
-                className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40 font-mono" />
-              {ref && <p className="text-[10px] text-gold/60 mt-1">Sugestão: data do casamento + 30 dias</p>}
+              <div className="relative">
+                <input
+                  type="date"
+                  value={ptToIso(form.entregaPrevista)}
+                  onChange={e => update('entregaPrevista', isoToPt(e.target.value))}
+                  min={ref ? ptToIso(ref.data) : undefined}
+                  className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/40 font-mono [color-scheme:dark]" />
+              </div>
+              {form.entregaPrevista
+                ? <p className="text-[10px] text-white/45 mt-1">📅 <span className="text-gold/80">{form.entregaPrevista}</span></p>
+                : ref && <p className="text-[10px] text-gold/60 mt-1">Sugestão: data do casamento + 30 dias</p>
+              }
             </Field>
           </div>
 
