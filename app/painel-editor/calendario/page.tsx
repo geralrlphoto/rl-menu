@@ -1,8 +1,69 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { eventsFromProjects, eventColorFor, PROJECTS, type CalendarEvent, type EventType } from '../_data/projects'
+
+// ── Helper: gera eventos a partir dos projetos criados pelo utilizador ──
+// (estrutura igual à de eventsFromProjects() em _data/projects.ts)
+function addDaysPt(date: string, days: number): string {
+  const cleaned = (date || '').split('—')[0].trim() // remove " — HH:MM"
+  const [d, m, y] = cleaned.split('/').map(Number)
+  if (!d || !m || !y) return ''
+  const dt = new Date(y, m-1, d)
+  dt.setDate(dt.getDate() + days)
+  return `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`
+}
+
+function stripTime(date: string): string {
+  return (date || '').split('—')[0].trim()
+}
+
+function userProjectsToEvents(): CalendarEvent[] {
+  if (typeof window === 'undefined') return []
+  let userProjects: any[] = []
+  try {
+    const raw = localStorage.getItem('painel-editor-user-projects')
+    userProjects = raw ? JSON.parse(raw) : []
+  } catch { return [] }
+
+  const events: CalendarEvent[] = []
+  userProjects.forEach(p => {
+    if (!p.id || !p.noivos) return
+    const recebido = stripTime(p.recebido || '')
+    const dataCasamento = p.dataCasamento || ''
+    const entregaPrevista = p.entregaPrevista || ''
+
+    // 📅 Criação do projeto
+    if (recebido) {
+      events.push({ id: `${p.id}-create`, title: 'Projeto Recebido', subtitle: p.noivos, date: recebido, type: 'Prazo', projectId: p.id, todoODia: true })
+    }
+
+    // 💍 Dia do Casamento
+    if (dataCasamento) {
+      events.push({ id: `${p.id}-wed`, title: 'Casamento', subtitle: p.noivos, date: dataCasamento, type: 'Casamento', projectId: p.id, todoODia: true })
+    }
+
+    // 🟢 Início de Edição (~5 dias depois de criado)
+    if (recebido) {
+      events.push({ id: `${p.id}-edit`, title: 'Início da Edição', subtitle: p.noivos, date: addDaysPt(recebido, 5), type: 'Prazo', projectId: p.id, todoODia: true })
+    }
+
+    // 🟡 Revisão V1 e V2
+    if (entregaPrevista) {
+      events.push({ id: `${p.id}-v1`, title: 'Revisão V1', subtitle: p.noivos, date: addDaysPt(entregaPrevista, -10), type: 'Revisão', projectId: p.id, todoODia: true })
+      events.push({ id: `${p.id}-v2`, title: 'Revisão V2', subtitle: p.noivos, date: addDaysPt(entregaPrevista, -3), type: 'Revisão', projectId: p.id, todoODia: true })
+    }
+
+    // 🔵 Entrega Trailer + Entrega Final
+    if (entregaPrevista) {
+      events.push({ id: `${p.id}-trailer`, title: 'Entrega Trailer', subtitle: p.noivos, date: addDaysPt(entregaPrevista, -5), type: 'Entrega', projectId: p.id, todoODia: true })
+      events.push({ id: `${p.id}-final`, title: 'Entrega Final', subtitle: p.noivos, date: entregaPrevista, type: 'Entrega', projectId: p.id, todoODia: true })
+    }
+  })
+
+  return events
+}
 
 // ────────────────────────────────────────────────────────────────────────
 //  CALENDÁRIO — Wedding Moments Films
@@ -26,7 +87,19 @@ const DIAS = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB']
 type ViewMode = 'Mês' | 'Semana' | 'Dia' | 'Agenda'
 
 export default function CalendarioPage() {
-  const allEvents = useMemo(() => eventsFromProjects(), [])
+  const baseEvents = useMemo(() => eventsFromProjects(), [])
+  const [userEvents, setUserEvents] = useState<CalendarEvent[]>([])
+
+  // Ler projetos criados pelo utilizador (localStorage) e gerar os seus eventos
+  useEffect(() => {
+    setUserEvents(userProjectsToEvents())
+    // Re-sync quando a tab volta a ficar visível (cobre o caso de criar projeto noutra tab)
+    const onFocus = () => setUserEvents(userProjectsToEvents())
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [])
+
+  const allEvents = useMemo(() => [...userEvents, ...baseEvents], [userEvents, baseEvents])
   const [view, setView] = useState<ViewMode>('Mês')
   const [calView, setCalView] = useState({ y: 2026, m: 4 }) // Maio 2026
   const [typeFilter, setTypeFilter] = useState<'Todos' | EventType>('Todos')
