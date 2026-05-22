@@ -62,12 +62,9 @@ const MOCK_COMPROMISSOS = [
 // Pontos do gráfico (R$ por dia)
 const MOCK_REVENUE = [3000, 4500, 6200, 5800, 8400, 12500, 14200, 12800, 16000, 18500, 19200, 21000, 22400, 21800, 23500, 24850]
 
-const KPIS = [
-  { label: 'Novos Projetos', value: 5,  sub: 'Aguardando início', icon: '◫', color: 'gold' },
-  { label: 'Em Andamento',   value: 7,  sub: 'Em edição ativa',   icon: '✎', color: 'gold' },
-  { label: 'Finalizados',    value: 18, sub: 'Este mês',          icon: '✓', color: 'gold' },
-  { label: 'Recebimentos',   value: '24.850,00 €', sub: 'Este mês', icon: '€', color: 'gold' },
-]
+// Baseline (representa projetos mock pré-existentes no sistema)
+const KPI_BASELINE = { novos: 5, andamento: 7, finalizados: 18 }
+const EDITING_STAGES = ['Em Edição','Color Grading','Trailer em Produção','Áudio / Sincronização','Para Revisão','Correções','Finalizado']
 
 type NavItem = { key: string; label: string; icon: string; href?: string }
 const NAV_ITEMS: NavItem[] = [
@@ -122,14 +119,20 @@ export default function PainelEditor() {
   const [novosProjetos, setNovosProjetos] = useState<NovoMini[]>(MOCK_NOVOS)
   const [finalizadosProjetos, setFinalizadosProjetos] = useState<typeof MOCK_FINALIZADOS>(MOCK_FINALIZADOS)
   const [unseenIds, setUnseenIds] = useState<Set<string>>(new Set())
+  const [kpiCounts, setKpiCounts] = useState({
+    novos:        KPI_BASELINE.novos,
+    andamento:    KPI_BASELINE.andamento,
+    finalizados:  KPI_BASELINE.finalizados,
+  })
 
-  useEffect(() => {
+  function loadFromStorage() {
     try {
       const raw = localStorage.getItem('painel-editor-user-projects')
       const userProjects: any[] = raw ? JSON.parse(raw) : []
 
-      // ── NOVOS (todos os user-projects + mocks, top 4) ────────────────
-      const mapped: NovoMini[] = userProjects.map(p => ({
+      // ── NOVOS (top 4 mais recentes — só os que estão em 'Novo Projeto') ──
+      const novosUser = userProjects.filter(p => p.stage === 'Novo Projeto')
+      const mapped: NovoMini[] = novosUser.map(p => ({
         id:        p.id,
         noivos:    p.noivos,
         data:      ptToISODate(p.dataCasamento || ''),
@@ -150,17 +153,34 @@ export default function PainelEditor() {
           entrega: ptToISODate(p.entregaPrevista || ''),
           foto:    p.foto || 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&h=300&fit=crop',
         }))
-      // Mesclar e ordenar por entrega desc (mais recente primeiro)
       const mergedFinalizados = [...userFinalizados, ...MOCK_FINALIZADOS]
         .sort((a, b) => (b.entrega || '').localeCompare(a.entrega || ''))
         .slice(0, 4)
       setFinalizadosProjetos(mergedFinalizados)
+
+      // ── KPI counts (baseline + user-projects por stage) ──────────────
+      const novosCount = userProjects.filter(p => p.stage === 'Novo Projeto').length
+      const andamentoCount = userProjects.filter(p => EDITING_STAGES.includes(p.stage)).length
+      const finalizadosCount = userProjects.filter(p => p.stage === 'Entregue').length
+      setKpiCounts({
+        novos:       KPI_BASELINE.novos + novosCount,
+        andamento:   KPI_BASELINE.andamento + andamentoCount,
+        finalizados: KPI_BASELINE.finalizados + finalizadosCount,
+      })
 
       // Ler unseen ids
       const unseenJson = localStorage.getItem('painel-editor-unseen-projects')
       const unseen: string[] = unseenJson ? JSON.parse(unseenJson) : []
       setUnseenIds(new Set(unseen))
     } catch {}
+  }
+
+  useEffect(() => {
+    loadFromStorage()
+    // Refresh quando voltas à tab (cobre mudanças em /novos-projetos noutra aba)
+    const onFocus = () => loadFromStorage()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
   }, [])
 
   // Calendário
@@ -366,10 +386,15 @@ export default function PainelEditor() {
             </div>
           </div>
 
-          {/* ── KPI CARDS ─────────────────────────────────────────────── */}
+          {/* ── KPI CARDS (clicáveis e dinâmicos) ───────────────────── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {KPIS.map((k, i) => (
-              <div key={i}
+            {([
+              { label: 'Novos Projetos', value: kpiCounts.novos.toString(),       sub: 'Aguardando início', icon: '◫', href: '/painel-editor/novos-projetos' },
+              { label: 'Em Andamento',   value: kpiCounts.andamento.toString(),   sub: 'Em edição ativa',   icon: '✎', href: '/painel-editor/novos-projetos' },
+              { label: 'Finalizados',    value: kpiCounts.finalizados.toString(), sub: 'Este mês',          icon: '✓', href: '/painel-editor/novos-projetos' },
+              { label: 'Recebimentos',   value: '24.850,00 €',                    sub: 'Este mês',          icon: '€', href: '/painel-editor/pagamentos' },
+            ]).map((k, i) => (
+              <Link key={i} href={k.href}
                 className="group relative overflow-hidden rounded-2xl border border-white/[0.08] p-5 hover:border-gold/30 transition-all cursor-pointer"
                 style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.6), rgba(11,11,11,0.85))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}
               >
@@ -387,9 +412,9 @@ export default function PainelEditor() {
                       <p className="text-[11px] text-white/35 mt-1.5">{k.sub}</p>
                     </div>
                   </div>
-                  <button className="w-9 h-9 rounded-full border border-gold/30 flex items-center justify-center text-gold/60 group-hover:text-gold group-hover:bg-gold/10 transition-all">›</button>
+                  <span className="w-9 h-9 rounded-full border border-gold/30 flex items-center justify-center text-gold/60 group-hover:text-gold group-hover:bg-gold/10 transition-all">›</span>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
 
