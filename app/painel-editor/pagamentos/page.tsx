@@ -19,7 +19,7 @@ const NAV_ITEMS = [
   { key: 'calendario',  label: 'Calendário',          icon: '◉', href: '/painel-editor/calendario' },
   { key: 'clientes',    label: 'Clientes',            icon: '☉' },
   { key: 'workflow',    label: 'Workflow',            icon: '☰', href: '/painel-editor/workflow' },
-  { key: 'musicas',     label: 'Biblioteca Músicas',  icon: '♪', href: '/painel-editor/musicas' },
+  { key: 'biblioteca',  label: 'Biblioteca',          icon: '♪', href: '/painel-editor/musicas' },
   { key: 'templates',   label: 'Templates',           icon: '◫' },
   { key: 'relatorios',  label: 'Relatórios',          icon: '◫' },
   { key: 'config',      label: 'Configurações',       icon: '⚙' },
