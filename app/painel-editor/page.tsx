@@ -120,12 +120,12 @@ export default function PainelEditor() {
 
   // ── Novos Projetos (lê localStorage + mock) — máximo 4 mais recentes ──
   const [novosProjetos, setNovosProjetos] = useState<NovoMini[]>(MOCK_NOVOS)
+  const [unseenIds, setUnseenIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem('painel-editor-user-projects')
-      if (!raw) return
-      const userProjects: any[] = JSON.parse(raw)
+      const userProjects: any[] = raw ? JSON.parse(raw) : []
       // Mapear ao formato NovoMini
       const mapped: NovoMini[] = userProjects.map(p => ({
         id:        p.id,
@@ -136,10 +136,14 @@ export default function PainelEditor() {
         status:    'Novo',
         createdAt: ptToISODate(p.recebido || ''),
       }))
-      // user-projects primeiro (já estão por ordem de criação — mais recente primeiro)
-      // + mocks para preencher até 4
+      // user-projects primeiro + mocks para preencher até 4
       const merged = [...mapped, ...MOCK_NOVOS].slice(0, 4)
       setNovosProjetos(merged)
+
+      // Ler unseen ids
+      const unseenJson = localStorage.getItem('painel-editor-unseen-projects')
+      const unseen: string[] = unseenJson ? JSON.parse(unseenJson) : []
+      setUnseenIds(new Set(unseen))
     } catch {}
   }, [])
 
@@ -181,6 +185,14 @@ export default function PainelEditor() {
 
   return (
     <div className="min-h-screen text-white relative" style={{ background: '#0B0B0B' }}>
+      {/* Animação gold pulse para projetos novos não-abertos */}
+      <style jsx global>{`
+        @keyframes unseenGlow {
+          0%, 100% { box-shadow: 0 0 0 rgba(201,164,92,0), 0 0 16px -4px rgba(201,164,92,0.25); }
+          50%      { box-shadow: 0 0 0 rgba(201,164,92,0), 0 0 32px 0 rgba(201,164,92,0.55); }
+        }
+        .unseen-glow { animation: unseenGlow 2.4s ease-in-out infinite; }
+      `}</style>
       {/* ── Background atmosférico (radial gold + grid sutil) ─────────────── */}
       <div className="pointer-events-none fixed inset-0 z-0"
         style={{ background: 'radial-gradient(ellipse 80% 60% at 80% 20%, rgba(201,164,92,0.06), transparent 65%)' }} />
@@ -342,24 +354,37 @@ export default function PainelEditor() {
                   <Link href="/painel-editor/novos-projetos" className="text-[11px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors">Ver todos →</Link>
                 </div>
                 <div className="space-y-3">
-                  {novosProjetos.map(p => (
-                    <div key={p.id} className="group flex items-center gap-3 p-2 rounded-xl border border-white/[0.04] hover:border-gold/25 hover:bg-white/[0.02] transition-all cursor-pointer">
-                      <div className="w-16 h-12 rounded-lg overflow-hidden shrink-0 border border-white/10">
-                        <img src={p.foto} alt={p.noivos} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <p className="text-[13px] font-medium text-white truncate">{p.noivos}</p>
-                          <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-gold/15 border border-gold/30 text-gold uppercase tracking-wider shrink-0">{p.status}</span>
+                  {novosProjetos.map(p => {
+                    const unseen = unseenIds.has(p.id)
+                    return (
+                      <Link key={p.id}
+                        href={`/painel-editor/novos-projetos`}
+                        className={`relative group flex items-center gap-3 p-2 rounded-xl border transition-all cursor-pointer ${unseen ? 'unseen-glow border-gold/55' : 'border-white/[0.04] hover:border-gold/25 hover:bg-white/[0.02]'}`}>
+                        <div className="w-16 h-12 rounded-lg overflow-hidden shrink-0 border border-white/10">
+                          <img src={p.foto} alt={p.noivos} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         </div>
-                        <p className="text-[10px] text-white/35">Casamento · {fmtDate(p.data)}</p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-[10px] text-white/35 mb-0.5">Entrega prevista</p>
-                        <p className="text-[12px] font-semibold text-gold">{fmtDate(p.entrega)}</p>
-                      </div>
-                    </div>
-                  ))}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <p className="text-[13px] font-medium text-white truncate">{p.noivos}</p>
+                            {unseen ? (
+                              <span className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-md bg-gold text-black uppercase tracking-wider shrink-0 font-bold"
+                                style={{ boxShadow: '0 0 10px rgba(201,164,92,0.7)' }}>
+                                <span className="w-1 h-1 rounded-full bg-black animate-pulse" />
+                                Novo
+                              </span>
+                            ) : (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-gold/15 border border-gold/30 text-gold uppercase tracking-wider shrink-0">{p.status}</span>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-white/35">Casamento · {fmtDate(p.data)}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-[10px] text-white/35 mb-0.5">Entrega prevista</p>
+                          <p className="text-[12px] font-semibold text-gold">{fmtDate(p.entrega)}</p>
+                        </div>
+                      </Link>
+                    )
+                  })}
                 </div>
               </div>
 

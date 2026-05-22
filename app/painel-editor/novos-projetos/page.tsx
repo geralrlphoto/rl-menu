@@ -343,9 +343,11 @@ const FILTER_TABS = ['Todos','Novo Projeto','Em Edição','Para Revisão','Aprov
 // ──────────────────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'painel-editor-user-projects'
 const STORAGE_PATCHES_KEY = 'painel-editor-project-patches'
+const STORAGE_UNSEEN_KEY = 'painel-editor-unseen-projects'
 
 export default function NovosProjetosPage() {
   const [projects, setProjects] = useState<Project[]>(PROJECTS)
+  const [unseenIds, setUnseenIds] = useState<Set<string>>(new Set())
   const [hydrated, setHydrated] = useState(false)
   const [activeTab, setActiveTab] = useState('Todos')
   const [search, setSearch] = useState('')
@@ -370,11 +372,33 @@ export default function NovosProjetosPage() {
         ...PROJECTS.map(p => patches[p.id] ? { ...p, ...patches[p.id] } : p),
       ]
       setProjects(merged)
+
+      // Unseen: ids de projetos novos que ainda não foram abertos
+      const unseenJson = localStorage.getItem(STORAGE_UNSEEN_KEY)
+      const unseen: string[] = unseenJson ? JSON.parse(unseenJson) : []
+      setUnseenIds(new Set(unseen))
     } catch (err) {
       console.warn('Erro ao carregar projetos guardados:', err)
     }
     setHydrated(true)
   }, [])
+
+  // ── Persistir unseen ─────────────────────────────────────────────────
+  useEffect(() => {
+    if (!hydrated) return
+    try {
+      localStorage.setItem(STORAGE_UNSEEN_KEY, JSON.stringify([...unseenIds]))
+    } catch {}
+  }, [unseenIds, hydrated])
+
+  function markAsSeen(id: string) {
+    setUnseenIds(prev => {
+      if (!prev.has(id)) return prev
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
+  }
 
   // ── Persistir alterações no localStorage ─────────────────────────────
   useEffect(() => {
@@ -407,8 +431,9 @@ export default function NovosProjetosPage() {
 
   function handleCreate(p: Project) {
     setProjects(prev => [p, ...prev])
+    setUnseenIds(prev => new Set([...prev, p.id]))   // brilho gold até abrir
     setShowAddModal(false)
-    setExpanded(p.id)
+    // não dou setExpanded aqui — deixo o user clicar para "abrir" e tirar o glow
   }
 
   const filtered = useMemo(() => {
@@ -439,6 +464,14 @@ export default function NovosProjetosPage() {
 
   return (
     <div className="min-h-screen text-white relative" style={{ background: '#0A0A0A' }}>
+      {/* Animação gold pulse para projetos novos não-abertos */}
+      <style jsx global>{`
+        @keyframes unseenGlow {
+          0%, 100% { box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5), 0 0 0 rgba(201,164,92,0.0), 0 0 24px -4px rgba(201,164,92,0.25); }
+          50%      { box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5), 0 0 0 rgba(201,164,92,0.0), 0 0 48px 0 rgba(201,164,92,0.55); }
+        }
+        .unseen-glow { animation: unseenGlow 2.4s ease-in-out infinite; }
+      `}</style>
       {/* Atmosfera */}
       <div className="pointer-events-none fixed inset-0 z-0"
         style={{ background: 'radial-gradient(ellipse 80% 60% at 80% 15%, rgba(201,164,92,0.07), transparent 65%)' }} />
@@ -608,7 +641,11 @@ export default function NovosProjetosPage() {
                 key={p.id}
                 p={p}
                 expanded={expanded === p.id}
-                onToggle={() => setExpanded(expanded === p.id ? null : p.id)}
+                isUnseen={unseenIds.has(p.id)}
+                onToggle={() => {
+                  setExpanded(expanded === p.id ? null : p.id)
+                  markAsSeen(p.id)
+                }}
                 onChange={(patch) => updateProject(p.id, patch)}
               />
             ))}
@@ -1079,10 +1116,11 @@ function Field({ label, children, required }: { label: string; children: React.R
 //  PROJECT CARD
 // ──────────────────────────────────────────────────────────────────────────
 function ProjectCard({
-  p, expanded, onToggle, onChange,
+  p, expanded, isUnseen, onToggle, onChange,
 }: {
   p: Project
   expanded: boolean
+  isUnseen?: boolean
   onToggle: () => void
   onChange: (patch: Partial<Project>) => void
 }) {
@@ -1092,15 +1130,26 @@ function ProjectCard({
 
   return (
     <div
-      className="group relative overflow-hidden rounded-2xl border transition-all"
+      className={`group relative overflow-hidden rounded-2xl border transition-all ${isUnseen ? 'unseen-glow' : ''}`}
       style={{
         background: 'linear-gradient(135deg, rgba(20,15,8,0.5), rgba(11,11,11,0.85))',
-        borderColor: expanded ? 'rgba(201,164,92,0.4)' : 'rgba(255,255,255,0.06)',
+        borderColor: expanded ? 'rgba(201,164,92,0.4)' : isUnseen ? 'rgba(201,164,92,0.55)' : 'rgba(255,255,255,0.06)',
         boxShadow: expanded
           ? '0 30px 70px -20px rgba(0,0,0,0.6), 0 0 30px -8px rgba(201,164,92,0.25)'
-          : '0 10px 30px -10px rgba(0,0,0,0.5)',
+          : isUnseen
+            ? '0 10px 30px -10px rgba(0,0,0,0.5)' // base — glow é animado via CSS abaixo
+            : '0 10px 30px -10px rgba(0,0,0,0.5)',
       }}
     >
+      {/* NOVO badge para projetos não-abertos */}
+      {isUnseen && !expanded && (
+        <span className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gold text-black text-[9px] tracking-[0.3em] uppercase font-bold"
+          style={{ boxShadow: '0 0 14px rgba(201,164,92,0.7)' }}>
+          <span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" />
+          Novo
+        </span>
+      )}
+
       {/* Hover glow sweep */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-gold/0 via-gold/[0.04] to-gold/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
 
