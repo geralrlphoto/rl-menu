@@ -458,7 +458,7 @@ export default function PainelEditor() {
                     const unseen = unseenIds.has(p.id)
                     return (
                       <Link key={p.id}
-                        href={`/painel-editor/novos-projetos`}
+                        href={`/painel-editor/novos-projetos?open=${p.id}`}
                         className={`relative group flex items-center gap-3 p-2 rounded-xl border transition-all cursor-pointer ${unseen ? 'unseen-glow border-gold/55' : 'border-white/[0.04] hover:border-gold/25 hover:bg-white/[0.02]'}`}>
                         <div className="w-16 h-12 rounded-lg overflow-hidden shrink-0 border border-white/10">
                           <img src={p.foto} alt={p.noivos} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -497,15 +497,15 @@ export default function PainelEditor() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   {finalizadosProjetos.map(p => (
-                    <div key={p.id} className="group cursor-pointer">
-                      <div className="relative aspect-[4/3] rounded-xl overflow-hidden border border-white/[0.08] mb-2">
+                    <Link key={p.id} href={`/painel-editor/novos-projetos?open=${p.id}`} className="group cursor-pointer">
+                      <div className="relative aspect-[4/3] rounded-xl overflow-hidden border border-white/[0.08] mb-2 group-hover:border-gold/30 transition-all">
                         <img src={p.foto} alt={p.noivos} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                         <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-emerald-500/90 border border-emerald-300 flex items-center justify-center text-[10px] font-bold text-black">✓</div>
                       </div>
-                      <p className="text-[12px] font-medium text-white truncate">{p.noivos}</p>
+                      <p className="text-[12px] font-medium text-white truncate group-hover:text-gold transition-colors">{p.noivos}</p>
                       <p className="text-[10px] text-white/35">Entrega: {fmtDate(p.entrega)}</p>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>

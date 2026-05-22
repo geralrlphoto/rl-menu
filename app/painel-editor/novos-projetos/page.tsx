@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 
 // ────────────────────────────────────────────────────────────────────────────
 //  NOVOS PROJETOS — RL Photo.Video (premium cinematic editor workspace)
@@ -346,6 +347,8 @@ const STORAGE_PATCHES_KEY = 'painel-editor-project-patches'
 const STORAGE_UNSEEN_KEY = 'painel-editor-unseen-projects'
 
 export default function NovosProjetosPage() {
+  const searchParams = useSearchParams()
+  const openParam = searchParams?.get('open') ?? null
   const [projects, setProjects] = useState<Project[]>(PROJECTS)
   const [unseenIds, setUnseenIds] = useState<Set<string>>(new Set())
   const [hydrated, setHydrated] = useState(false)
@@ -353,7 +356,23 @@ export default function NovosProjetosPage() {
   const [search, setSearch] = useState('')
   const [showOnlyActive, setShowOnlyActive] = useState(false)
   const [sort, setSort] = useState('Mais recentes')
-  const [expanded, setExpanded] = useState<string | null>('p1')
+  const [expanded, setExpanded] = useState<string | null>(openParam || 'p1')
+
+  // Se URL tiver ?open={id} → expande esse projeto + scroll
+  useEffect(() => {
+    if (!openParam) return
+    setExpanded(openParam)
+    // Marca como visto (remove o glow)
+    setUnseenIds(prev => {
+      if (!prev.has(openParam)) return prev
+      const next = new Set(prev); next.delete(openParam); return next
+    })
+    // Scroll suave depois do render
+    setTimeout(() => {
+      const el = document.getElementById(`project-${openParam}`)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 200)
+  }, [openParam])
   const [page, setPage] = useState(1)
   const [showAddModal, setShowAddModal] = useState(false)
 
@@ -637,17 +656,18 @@ export default function NovosProjetosPage() {
           {/* PROJECT LIST */}
           <div className="space-y-5">
             {filtered.map(p => (
-              <ProjectCard
-                key={p.id}
-                p={p}
-                expanded={expanded === p.id}
-                isUnseen={unseenIds.has(p.id)}
-                onToggle={() => {
-                  setExpanded(expanded === p.id ? null : p.id)
-                  markAsSeen(p.id)
-                }}
-                onChange={(patch) => updateProject(p.id, patch)}
-              />
+              <div key={p.id} id={`project-${p.id}`} className="scroll-mt-6">
+                <ProjectCard
+                  p={p}
+                  expanded={expanded === p.id}
+                  isUnseen={unseenIds.has(p.id)}
+                  onToggle={() => {
+                    setExpanded(expanded === p.id ? null : p.id)
+                    markAsSeen(p.id)
+                  }}
+                  onChange={(patch) => updateProject(p.id, patch)}
+                />
+              </div>
             ))}
             {filtered.length === 0 && (
               <div className="rounded-2xl border border-dashed border-white/[0.08] text-center py-20">
