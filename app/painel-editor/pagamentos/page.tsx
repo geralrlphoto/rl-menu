@@ -218,8 +218,8 @@ export default function PagamentosPage() {
           {/* KPIs */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <KpiCard icon="↘" label="Recebido este mês" value={fmtEUR(kpis.recebidosMes)} sub="Maio 2026"               trend={+12.4} />
-            <KpiCard icon="◷" label="A receber"          value={fmtEUR(kpis.aReceber)}     sub={`${allRows.filter(r=>r.inst.status==='A receber').length} parcelas`} trend={+5.2} />
-            <KpiCard icon="!" label="Atrasados"          value={fmtEUR(kpis.atrasados)}    sub={`${allRows.filter(r=>r.inst.status==='Atrasado').length} parcelas`}  trend={-3.1} red />
+            <KpiCard icon="◷" label="A receber"          value={fmtEUR(kpis.aReceber)}     sub={`${allRows.filter(r=>r.inst.status==='A receber').length} projeto${allRows.filter(r=>r.inst.status==='A receber').length === 1 ? '' : 's'}`} trend={+5.2} />
+            <KpiCard icon="!" label="Atrasados"          value={fmtEUR(kpis.atrasados)}    sub={`${allRows.filter(r=>r.inst.status==='Atrasado').length} projeto${allRows.filter(r=>r.inst.status==='Atrasado').length === 1 ? '' : 's'}`}  trend={-3.1} red />
             <KpiCard icon="€" label="Total anual"        value={fmtEUR(kpis.totalAnual)}   sub="2026"                  trend={+28.7} />
           </div>
 
@@ -262,7 +262,7 @@ export default function PagamentosPage() {
                     <tr className="text-[10px] tracking-widest uppercase text-white/35 bg-white/[0.02] border-b border-white/[0.06]">
                       <th className="text-left px-4 py-3 font-medium">Projeto / Casal</th>
                       <th className="text-left px-3 py-3 font-medium">Pacote</th>
-                      <th className="text-left px-3 py-3 font-medium">Parcela</th>
+                      <th className="text-left px-3 py-3 font-medium">Descrição</th>
                       <th className="text-right px-3 py-3 font-medium">Valor</th>
                       <th className="text-left px-3 py-3 font-medium">Vencimento</th>
                       <th className="text-left px-3 py-3 font-medium">Estado</th>
@@ -294,7 +294,7 @@ export default function PagamentosPage() {
                           </td>
                           <td className="px-3 py-3 text-[12px] text-white/70">{r.project.pacote.replace(' 👑','')}</td>
                           <td className="px-3 py-3 text-[12px] text-white/70">
-                            <span className="text-gold/80">{r.idx + 1}/{r.totalParcels}</span> · {r.inst.label.replace(/\d+%/, '').trim()}
+                            {r.inst.label}
                           </td>
                           <td className="px-3 py-3 text-[13px] text-white font-semibold text-right">{fmtEUR(r.inst.value)}</td>
                           <td className="px-3 py-3 text-[12px] text-white/65">{r.inst.dueDate}</td>
@@ -569,13 +569,13 @@ function DetailPanel({ project, plan }: { project: Project; plan: Installment[] 
 
   // Timeline de eventos automáticos
   const eventos: { data: string; texto: string; tipo: string }[] = []
-  if (plan[0]?.status === 'Recebido') eventos.push({ data: plan[0].paidDate ?? '', texto: '💰 Reserva recebida', tipo: 'reserva' })
+  eventos.push({ data: project.recebido, texto: '📥 Projeto recebido', tipo: 'received' })
   if (comparePtDate(project.dataCasamento, TODAY) < 0) eventos.push({ data: project.dataCasamento, texto: '💍 Casamento realizado', tipo: 'wedding' })
   if (project.stage === 'Para Revisão' || project.stage === 'Finalizado' || project.stage === 'Entregue') eventos.push({ data: '—', texto: '📤 Entrega enviada', tipo: 'delivery' })
   if (project.approval === 'Aprovado Cliente') eventos.push({ data: '—', texto: '✓ Cliente aprovou', tipo: 'approval' })
-  const pagamentoFinalPendente = plan.find(i => i.key === 'entrega' && i.status !== 'Recebido')
-  if (pagamentoFinalPendente && project.approval === 'Aprovado Cliente') eventos.push({ data: '—', texto: '⏳ Pagamento final pendente', tipo: 'final-pending' })
-  if (plan[plan.length-1]?.status === 'Recebido') eventos.push({ data: plan[plan.length-1].paidDate ?? '', texto: '🏁 Pagamento concluído', tipo: 'final-done' })
+  const pagamentoPendente = plan.find(i => i.status !== 'Recebido' && i.status !== 'Cancelado')
+  if (pagamentoPendente) eventos.push({ data: pagamentoPendente.dueDate, texto: '⏳ Pagamento pendente', tipo: 'pending' })
+  if (plan[0]?.status === 'Recebido') eventos.push({ data: plan[0].paidDate ?? '', texto: '🏁 Pagamento recebido', tipo: 'done' })
 
   return (
     <div className="rounded-2xl border border-gold/20 overflow-hidden"

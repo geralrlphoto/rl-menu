@@ -166,66 +166,30 @@ export function comparePtDate(a: string, b: string): number {
 /** Hoje em dd/mm/yyyy (mock fixo para consistência) */
 export const TODAY = '24/05/2026'
 
-/** Gera plano de pagamento a partir de um projeto */
+/** Gera plano de pagamento — UMA única parcela por projeto (100%) */
 export function paymentPlanFor(p: Project): Installment[] {
   if (p.cancelled) {
     return [
-      { key: 'reserva',   label: 'Reserva 30%',       percent: 30, value: p.preco * 0.30, dueDate: p.recebido, paidDate: p.recebido, status: 'Cancelado' },
-      { key: 'casamento', label: 'Dia do Casamento 40%', percent: 40, value: p.preco * 0.40, dueDate: p.dataCasamento, paidDate: null, status: 'Cancelado' },
-      { key: 'entrega',   label: 'Entrega Final 30%', percent: 30, value: p.preco * 0.30, dueDate: p.entregaPrevista, paidDate: null, status: 'Cancelado' },
+      { key: 'entrega', label: 'Pagamento Único', percent: 100, value: p.preco, dueDate: p.entregaPrevista, paidDate: null, status: 'Cancelado' },
     ]
   }
 
-  if (p.pacote === 'Pacote Essencial') {
-    // 50/50: reserva + entrega
-    const reservaDue = p.recebido
-    const entregaDue = p.entregaPrevista
-    return [
-      { key: 'reserva', label: 'Reserva 50%',       percent: 50, value: p.preco * 0.50, dueDate: reservaDue, paidDate: reservaDue, status: 'Recebido', metodo: 'Transferência' },
-      { key: 'entrega', label: 'Entrega Final 50%', percent: 50, value: p.preco * 0.50, dueDate: entregaDue, paidDate: p.finalEntregue ? entregaDue : null, status: p.finalEntregue ? 'Recebido' : (comparePtDate(entregaDue, TODAY) < 0 ? 'Atrasado' : 'A receber'), metodo: p.finalEntregue ? 'Transferência' : undefined },
-    ]
-  }
-
-  // Premium: 30/40/30
-  const reservaDue   = p.recebido
-  const casamentoDue = p.dataCasamento
-  const entregaDue   = addDaysPt(p.entregaPrevista, -2)
-
-  // status casamento: já pago se data casamento passou
-  const casamentoPago = comparePtDate(p.dataCasamento, TODAY) < 0
-  // status entrega: só Recebido se finalEntregue + aprovação cliente
-  const entregaPago = p.finalEntregue && p.approval === 'Aprovado Cliente'
+  // Vencimento: alguns dias antes da entrega prevista (ou na data de entrega)
+  const due = p.entregaPrevista || p.dataCasamento || p.recebido
+  // Foi pago se o projeto foi entregue + cliente aprovou
+  const pago = p.finalEntregue && p.approval === 'Aprovado Cliente'
+  const atrasado = !pago && comparePtDate(due, TODAY) < 0
 
   return [
     {
-      key: 'reserva',
-      label: 'Reserva 30%',
-      percent: 30,
-      value: p.preco * 0.30,
-      dueDate: reservaDue,
-      paidDate: reservaDue,
-      status: 'Recebido',
-      metodo: 'Transferência',
-    },
-    {
-      key: 'casamento',
-      label: 'Dia do Casamento 40%',
-      percent: 40,
-      value: p.preco * 0.40,
-      dueDate: casamentoDue,
-      paidDate: casamentoPago ? casamentoDue : null,
-      status: casamentoPago ? 'Recebido' : (comparePtDate(casamentoDue, TODAY) < 0 ? 'Atrasado' : 'A receber'),
-      metodo: casamentoPago ? 'MB Way' : undefined,
-    },
-    {
       key: 'entrega',
-      label: 'Entrega Final 30%',
-      percent: 30,
-      value: p.preco * 0.30,
-      dueDate: entregaDue,
-      paidDate: entregaPago ? entregaDue : null,
-      status: entregaPago ? 'Recebido' : (comparePtDate(entregaDue, TODAY) < 0 ? 'Atrasado' : 'A receber'),
-      metodo: entregaPago ? 'Transferência' : undefined,
+      label: 'Pagamento Único',
+      percent: 100,
+      value: p.preco,
+      dueDate: due,
+      paidDate: pago ? due : null,
+      status: pago ? 'Recebido' : atrasado ? 'Atrasado' : 'A receber',
+      metodo: pago ? 'Transferência' : undefined,
     },
   ]
 }
@@ -361,12 +325,12 @@ export function eventsFromProjects(): CalendarEvent[] {
     // 🔵 Entrega Final
     events.push({ id: `${baseId}-final`, title: 'Entrega Final', subtitle: p.noivos, date: p.entregaPrevista, type: 'Entrega', projectId: p.id, todoODia: true, completed: p.finalEntregue })
 
-    // 🟠 Pagamentos (gerados via paymentPlanFor)
+    // 🟠 Pagamento único (gerado via paymentPlanFor)
     const plan = paymentPlanFor(p)
     plan.forEach((inst, i) => {
       events.push({
         id: `${baseId}-pay-${i}`,
-        title: `Pagamento Parcela ${i + 1}`,
+        title: 'Pagamento',
         subtitle: p.noivos,
         date: inst.dueDate,
         type: 'Pagamento',
