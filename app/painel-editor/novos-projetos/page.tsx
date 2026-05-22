@@ -101,11 +101,9 @@ function isoToPt(iso: string): string {
   return `${d}/${m}/${y}`
 }
 
-/** Mapeia evento da API para EventReference */
+/** Mapeia evento da API para EventReference — aceita TODOS os eventos com referência */
 function eventToRef(e: any, idx: number): EventReference | null {
-  if (!e.referencia) return null  // ignora eventos sem referência
-  const isCasamento = Array.isArray(e.tipo_evento) && e.tipo_evento.includes('CASAMENTO')
-  if (!isCasamento) return null
+  if (!e.referencia) return null  // só ignora eventos sem referência
   const dataPt = isoToPt(e.data_evento)
   const ano = parseInt((e.data_evento || '').slice(0,4)) || new Date().getFullYear()
   return {
@@ -607,6 +605,7 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
   const ref = refsForYear.find(e => e.ref === refId) ?? null
 
   // Fetch referências de /api/eventos-supabase?ano={ano}
+  // Devolve TODOS os eventos do ano (incluindo passados) sem filtro de tipo
   useEffect(() => {
     let cancelled = false
     setLoadingRefs(true)
@@ -624,6 +623,12 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
         const refs: EventReference[] = events
           .map((e, i) => eventToRef(e, i))
           .filter((x): x is EventReference => x !== null)
+        // Ordena por data (mais antigos → mais recentes) para mostrar TUDO, incluindo já passados
+        refs.sort((a, b) => {
+          const da = a.data.split('/').reverse().join('-')
+          const db = b.data.split('/').reverse().join('-')
+          return da.localeCompare(db)
+        })
         setRefsForYear(refs)
       })
       .catch(err => {
@@ -774,7 +779,7 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
                 <label className="block text-[10px] uppercase tracking-widest text-white/45 mb-1">Ano</label>
                 <select value={ano} onChange={e => { setAno(Number(e.target.value)); setRefId('') }}
                   className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/40 cursor-pointer">
-                  {[2024, 2025, 2026, 2027, 2028].map(y => <option key={y} value={y}>{y}</option>)}
+                  {[2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028].map(y => <option key={y} value={y}>{y}</option>)}
                 </select>
               </div>
               {/* Referência */}
@@ -784,7 +789,7 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
                   className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/40 cursor-pointer font-mono disabled:opacity-50 disabled:cursor-not-allowed">
                   <option value="">{loadingRefs ? '— A carregar… —' : refsForYear.length === 0 ? '— Sem eventos —' : '— Seleciona o evento —'}</option>
                   {refsForYear.map(r => (
-                    <option key={r.ref} value={r.ref}>{r.ref} · {r.noivos}</option>
+                    <option key={r.ref} value={r.ref}>{r.ref}{r.data ? ` · ${r.data}` : ''} · {r.noivos}</option>
                   ))}
                 </select>
               </div>
