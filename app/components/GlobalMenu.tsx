@@ -7,7 +7,7 @@ import Link from 'next/link'
 
 const HIDDEN_PATHS = ['/login', '/portal-cliente', '/portal-batizado', '/freelancer-view', '/r/', '/b/', '/nova-lead', '/portal-media']
 // Paths em que o menu lateral permanente é colapsado (só botão flutuante visível)
-const COLLAPSED_PATHS = ['/freelancers/']
+const COLLAPSED_PATHS = ['/freelancers/', '/painel-editor']
 const HIDDEN_EXACT = ['/'] // brand selector — sem menu lateral
 
 const MEDIA_LINKS = [
