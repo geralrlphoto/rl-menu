@@ -234,62 +234,80 @@ export default function CalendarioPage() {
                   </div>
                 </div>
 
-                {/* Dias semana */}
-                <div className="grid grid-cols-7 gap-1 mb-1">
-                  {DIAS.map((d, i) => (
-                    <div key={i} className="text-center text-[10px] tracking-[0.3em] uppercase text-white/35 py-2">{d}</div>
-                  ))}
-                </div>
+                {/* ── VIEW: MÊS ─────────────────────────────────────── */}
+                {view === 'Mês' && (
+                  <>
+                    {/* Dias semana */}
+                    <div className="grid grid-cols-7 gap-1 mb-1">
+                      {DIAS.map((d, i) => (
+                        <div key={i} className="text-center text-[10px] tracking-[0.3em] uppercase text-white/35 py-2">{d}</div>
+                      ))}
+                    </div>
 
-                {/* Grid */}
-                <div className="grid grid-cols-7 gap-1.5">
-                  {cells.map((c, i) => {
-                    const isToday = c.current && c.day === TODAY_DAY && c.month === 4 && c.year === 2026
-                    const dayEvents = c.current ? (eventsByDay.get(c.day) ?? []) : []
-                    return (
-                      <div key={i}
-                        className={`relative min-h-[110px] rounded-xl p-2 border transition-all ${
-                          c.current
-                            ? 'border-white/[0.05] hover:border-gold/20 hover:bg-white/[0.02]'
-                            : 'border-transparent opacity-30'
-                        }`}>
-                        {/* Day number */}
-                        <div className="flex items-center justify-between mb-1.5">
-                          {isToday ? (
-                            <span className="w-7 h-7 rounded-full bg-gold text-black text-[13px] font-bold flex items-center justify-center"
-                              style={{ boxShadow: '0 0 14px rgba(201,164,92,0.55)' }}>{c.day}</span>
-                          ) : (
-                            <span className={`text-[13px] ${c.current ? 'text-white/85 font-medium' : 'text-white/30'}`}>{c.day}</span>
-                          )}
-                          {dayEvents.length > 2 && (
-                            <span className="text-[9px] text-white/35">+{dayEvents.length - 2}</span>
-                          )}
-                        </div>
+                    {/* Grid */}
+                    <div className="grid grid-cols-7 gap-1.5">
+                      {cells.map((c, i) => {
+                        const isToday = c.current && c.day === TODAY_DAY && c.month === 4 && c.year === 2026
+                        const dayEvents = c.current ? (eventsByDay.get(c.day) ?? []) : []
+                        return (
+                          <div key={i}
+                            className={`relative min-h-[110px] rounded-xl p-2 border transition-all ${
+                              c.current
+                                ? 'border-white/[0.05] hover:border-gold/20 hover:bg-white/[0.02]'
+                                : 'border-transparent opacity-30'
+                            }`}>
+                            <div className="flex items-center justify-between mb-1.5">
+                              {isToday ? (
+                                <span className="w-7 h-7 rounded-full bg-gold text-black text-[13px] font-bold flex items-center justify-center"
+                                  style={{ boxShadow: '0 0 14px rgba(201,164,92,0.55)' }}>{c.day}</span>
+                              ) : (
+                                <span className={`text-[13px] ${c.current ? 'text-white/85 font-medium' : 'text-white/30'}`}>{c.day}</span>
+                              )}
+                              {dayEvents.length > 2 && (
+                                <span className="text-[9px] text-white/35">+{dayEvents.length - 2}</span>
+                              )}
+                            </div>
 
-                        {/* Events */}
-                        <div className="space-y-1">
-                          {dayEvents.slice(0, 2).map(ev => {
-                            const color = eventColorFor(ev.type)
-                            return (
-                              <div key={ev.id} className="flex items-start gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: color.dot }} />
-                                <div className="min-w-0 flex-1">
-                                  <p className={`text-[10.5px] font-medium leading-tight truncate ${ev.completed ? 'line-through text-white/35' : 'text-white/85'}`}>
-                                    {ev.hora ? <span className="text-white/55 mr-1">{ev.hora}</span> : null}
-                                    {ev.title}
-                                  </p>
-                                  {ev.subtitle && (
-                                    <p className="text-[10px] text-white/40 truncate">{ev.subtitle}</p>
-                                  )}
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
+                            <div className="space-y-1">
+                              {dayEvents.slice(0, 2).map(ev => {
+                                const color = eventColorFor(ev.type)
+                                return (
+                                  <div key={ev.id} className="flex items-start gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: color.dot }} />
+                                    <div className="min-w-0 flex-1">
+                                      <p className={`text-[10.5px] font-medium leading-tight truncate ${ev.completed ? 'line-through text-white/35' : 'text-white/85'}`}>
+                                        {ev.hora ? <span className="text-white/55 mr-1">{ev.hora}</span> : null}
+                                        {ev.title}
+                                      </p>
+                                      {ev.subtitle && (
+                                        <p className="text-[10px] text-white/40 truncate">{ev.subtitle}</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </>
+                )}
+
+                {/* ── VIEW: SEMANA ──────────────────────────────────── */}
+                {view === 'Semana' && (
+                  <SemanaView events={allEvents} todayY={2026} todayM={4} todayD={TODAY_DAY} />
+                )}
+
+                {/* ── VIEW: DIA ─────────────────────────────────────── */}
+                {view === 'Dia' && (
+                  <DiaView events={allEvents} todayY={2026} todayM={4} todayD={TODAY_DAY} />
+                )}
+
+                {/* ── VIEW: AGENDA ──────────────────────────────────── */}
+                {view === 'Agenda' && (
+                  <AgendaView events={allEvents} />
+                )}
 
                 {/* Legend */}
                 <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 mt-5 pt-5 border-t border-white/[0.04]">
@@ -310,6 +328,7 @@ export default function CalendarioPage() {
                     )
                   })}
                 </div>
+                {/* legenda já apresentada acima */}
               </div>
             </div>
 
@@ -553,6 +572,248 @@ function Donut({ items, total, label }: { items: { value: number; color: string 
         <p className="text-3xl font-bold text-white leading-none">{total}</p>
         <p className="text-[10px] tracking-widest uppercase text-white/40 mt-1">{label}</p>
       </div>
+    </div>
+  )
+}
+
+// ────────────────────────────────────────────────────────────────────────
+//  VIEWS: SEMANA · DIA · AGENDA
+// ────────────────────────────────────────────────────────────────────────
+
+/** Constrói uma data 'DD/MM/YYYY' a partir de (y, m, d) */
+function buildPt(y: number, m: number, d: number): string {
+  return `${String(d).padStart(2,'0')}/${String(m+1).padStart(2,'0')}/${y}`
+}
+
+function eventsForDate(events: CalendarEvent[], pt: string): CalendarEvent[] {
+  return events.filter(e => e.date === pt).sort((a, b) => (a.hora ?? '').localeCompare(b.hora ?? ''))
+}
+
+// ── SEMANA ──────────────────────────────────────────────────────────────
+function SemanaView({ events, todayY, todayM, todayD }: { events: CalendarEvent[]; todayY: number; todayM: number; todayD: number }) {
+  const [weekStart, setWeekStart] = useState(() => {
+    const t = new Date(todayY, todayM, todayD)
+    const dow = t.getDay() // 0 = Domingo
+    t.setDate(t.getDate() - dow)
+    return t
+  })
+
+  const days: Date[] = []
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart); d.setDate(weekStart.getDate() + i); days.push(d)
+  }
+  const DIAS_FULL = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado']
+
+  function shift(delta: number) {
+    const d = new Date(weekStart); d.setDate(d.getDate() + delta * 7); setWeekStart(d)
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4 px-1">
+        <button onClick={() => shift(-1)} className="text-[11px] tracking-widest uppercase text-white/55 hover:text-gold transition-colors px-3 py-1 rounded-md border border-white/10">‹ Semana</button>
+        <p className="text-[14px] text-white font-light" style={{ fontFamily: 'Georgia, serif' }}>
+          {buildPt(days[0].getFullYear(), days[0].getMonth(), days[0].getDate())} — {buildPt(days[6].getFullYear(), days[6].getMonth(), days[6].getDate())}
+        </p>
+        <button onClick={() => shift(1)} className="text-[11px] tracking-widest uppercase text-white/55 hover:text-gold transition-colors px-3 py-1 rounded-md border border-white/10">Semana ›</button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-7 gap-2">
+        {days.map((d, i) => {
+          const pt = buildPt(d.getFullYear(), d.getMonth(), d.getDate())
+          const dayEvents = eventsForDate(events, pt)
+          const isToday = d.getFullYear() === todayY && d.getMonth() === todayM && d.getDate() === todayD
+          return (
+            <div key={i} className={`rounded-xl border p-3 min-h-[180px] ${isToday ? 'border-gold/45 bg-gold/[0.04]' : 'border-white/[0.06] bg-white/[0.02]'}`}
+              style={isToday ? { boxShadow: '0 0 18px -4px rgba(201,164,92,0.35)' } : {}}>
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <p className="text-[9px] tracking-widest uppercase text-white/35">{DIAS_FULL[d.getDay()].slice(0,3)}</p>
+                  <p className={`text-[22px] font-bold leading-none ${isToday ? 'text-gold' : 'text-white/85'}`}>{d.getDate()}</p>
+                </div>
+                {dayEvents.length > 0 && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gold/15 border border-gold/30 text-gold font-bold">{dayEvents.length}</span>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                {dayEvents.slice(0, 5).map(ev => {
+                  const color = eventColorFor(ev.type)
+                  return (
+                    <div key={ev.id} className="flex items-start gap-1.5 group cursor-pointer">
+                      <span className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: color.dot }} />
+                      <div className="min-w-0 flex-1">
+                        <p className={`text-[11px] font-medium leading-tight truncate ${ev.completed ? 'line-through text-white/35' : 'text-white/85'} group-hover:text-gold transition-colors`}>
+                          {ev.title}
+                        </p>
+                        {ev.subtitle && <p className="text-[10px] text-white/40 truncate">{ev.subtitle}</p>}
+                      </div>
+                    </div>
+                  )
+                })}
+                {dayEvents.length > 5 && (
+                  <p className="text-[10px] text-white/35 pt-0.5">+{dayEvents.length - 5} mais</p>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ── DIA ─────────────────────────────────────────────────────────────────
+function DiaView({ events, todayY, todayM, todayD }: { events: CalendarEvent[]; todayY: number; todayM: number; todayD: number }) {
+  const [day, setDay] = useState(() => new Date(todayY, todayM, todayD))
+
+  function shift(delta: number) {
+    const d = new Date(day); d.setDate(d.getDate() + delta); setDay(d)
+  }
+
+  const pt = buildPt(day.getFullYear(), day.getMonth(), day.getDate())
+  const dayEvents = eventsForDate(events, pt)
+  const DIAS_FULL = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado']
+
+  // Slots de hora (06:00 → 22:00)
+  const slots = Array.from({ length: 17 }, (_, i) => `${String(6 + i).padStart(2,'0')}:00`)
+  const eventsByHora = new Map<string, CalendarEvent[]>()
+  dayEvents.forEach(ev => {
+    const h = ev.hora?.split(':')[0] ? `${ev.hora.split(':')[0].padStart(2,'0')}:00` : 'Todo o dia'
+    if (!eventsByHora.has(h)) eventsByHora.set(h, [])
+    eventsByHora.get(h)!.push(ev)
+  })
+  const todoODia = eventsByHora.get('Todo o dia') ?? []
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4 px-1">
+        <button onClick={() => shift(-1)} className="text-[11px] tracking-widest uppercase text-white/55 hover:text-gold transition-colors px-3 py-1 rounded-md border border-white/10">‹ Dia anterior</button>
+        <div className="text-center">
+          <p className="text-[10px] tracking-widest uppercase text-gold/60">{DIAS_FULL[day.getDay()]}</p>
+          <p className="text-[20px] text-white font-light" style={{ fontFamily: 'Georgia, serif' }}>{pt}</p>
+        </div>
+        <button onClick={() => shift(1)} className="text-[11px] tracking-widest uppercase text-white/55 hover:text-gold transition-colors px-3 py-1 rounded-md border border-white/10">Dia seguinte ›</button>
+      </div>
+
+      {/* Todo o dia */}
+      {todoODia.length > 0 && (
+        <div className="mb-4">
+          <p className="text-[10px] tracking-widest uppercase text-white/40 mb-2">Todo o dia</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {todoODia.map(ev => {
+              const color = eventColorFor(ev.type)
+              return (
+                <div key={ev.id} className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:border-gold/25 transition-all cursor-pointer">
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color.dot, boxShadow: `0 0 6px ${color.dot}99` }} />
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-[13px] font-medium ${ev.completed ? 'line-through text-white/35' : 'text-white/85'}`}>{ev.title}</p>
+                    {ev.subtitle && <p className="text-[11px] text-white/50">{ev.subtitle}</p>}
+                  </div>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-md border tracking-widest uppercase font-bold ${color.badge}`}>{ev.type}</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Timeline horária */}
+      <div className="space-y-1">
+        {slots.map(slot => {
+          const evs = eventsByHora.get(slot) ?? []
+          return (
+            <div key={slot} className="grid grid-cols-[60px_1fr] gap-3 items-start py-2 border-t border-white/[0.04]">
+              <p className="text-[11px] text-white/40 font-mono tabular-nums">{slot}</p>
+              <div className="space-y-1.5 min-h-[1.25rem]">
+                {evs.length === 0 ? (
+                  <p className="text-[11px] text-white/15 italic">—</p>
+                ) : (
+                  evs.map(ev => {
+                    const color = eventColorFor(ev.type)
+                    return (
+                      <div key={ev.id} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-white/[0.06] hover:border-gold/25 transition-all cursor-pointer"
+                        style={{ background: `${color.dot}10` }}>
+                        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: color.dot }} />
+                        <p className="text-[12px] font-medium text-white/85 truncate flex-1">{ev.title}</p>
+                        {ev.subtitle && <span className="text-[10px] text-white/50 hidden sm:inline">· {ev.subtitle}</span>}
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {dayEvents.length === 0 && (
+        <div className="mt-6 text-center py-10 rounded-xl border border-dashed border-white/[0.08]">
+          <p className="text-[14px] text-white/35">Sem eventos neste dia.</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── AGENDA ──────────────────────────────────────────────────────────────
+function AgendaView({ events }: { events: CalendarEvent[] }) {
+  const sorted = useMemo(() => [...events].sort((a, b) => {
+    const ka = a.date.split('/').reverse().join('-') + (a.hora ?? '')
+    const kb = b.date.split('/').reverse().join('-') + (b.hora ?? '')
+    return ka.localeCompare(kb)
+  }), [events])
+
+  // Agrupar por mês
+  const groups: Record<string, CalendarEvent[]> = {}
+  sorted.forEach(ev => {
+    const [, m, y] = ev.date.split('/').map(Number)
+    const key = `${y}-${String(m).padStart(2,'0')}`
+    if (!groups[key]) groups[key] = []
+    groups[key].push(ev)
+  })
+
+  return (
+    <div className="space-y-6">
+      {Object.entries(groups).map(([key, group]) => {
+        const [y, m] = key.split('-').map(Number)
+        return (
+          <div key={key}>
+            <div className="flex items-center gap-3 mb-3">
+              <h3 className="text-[14px] font-semibold text-white" style={{ fontFamily: 'Georgia, serif' }}>
+                {MESES[m - 1]} {y}
+              </h3>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-gold/10 border border-gold/25 text-gold font-bold">{group.length}</span>
+              <div className="flex-1 h-px bg-white/[0.06]" />
+            </div>
+            <div className="space-y-2">
+              {group.map(ev => {
+                const color = eventColorFor(ev.type)
+                const [d, mn] = ev.date.split('/').map(Number)
+                return (
+                  <div key={ev.id} className="flex items-center gap-4 p-3 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:border-gold/25 transition-all cursor-pointer">
+                    <div className="text-center shrink-0 w-12">
+                      <p className="text-[22px] font-bold text-white leading-none">{String(d).padStart(2,'0')}</p>
+                      <p className="text-[9px] text-gold tracking-widest uppercase">{MESES_SHORT[mn - 1]}</p>
+                    </div>
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color.dot, boxShadow: `0 0 6px ${color.dot}99` }} />
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-[14px] font-medium ${ev.completed ? 'line-through text-white/35' : 'text-white/90'}`}>{ev.title}</p>
+                      {ev.subtitle && <p className="text-[11px] text-white/45">{ev.subtitle}</p>}
+                    </div>
+                    <p className="text-[11px] text-white/40 font-mono shrink-0">{ev.hora ?? 'Todo o dia'}</p>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-md border tracking-widest uppercase font-bold shrink-0 ${color.badge}`}>{ev.type}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })}
+      {sorted.length === 0 && (
+        <div className="text-center py-16 rounded-xl border border-dashed border-white/[0.08]">
+          <p className="text-[14px] text-white/35">Sem eventos.</p>
+        </div>
+      )}
     </div>
   )
 }
