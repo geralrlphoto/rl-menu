@@ -120,13 +120,15 @@ export default function PainelEditor() {
 
   // ── Novos Projetos (lê localStorage + mock) — máximo 4 mais recentes ──
   const [novosProjetos, setNovosProjetos] = useState<NovoMini[]>(MOCK_NOVOS)
+  const [finalizadosProjetos, setFinalizadosProjetos] = useState<typeof MOCK_FINALIZADOS>(MOCK_FINALIZADOS)
   const [unseenIds, setUnseenIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem('painel-editor-user-projects')
       const userProjects: any[] = raw ? JSON.parse(raw) : []
-      // Mapear ao formato NovoMini
+
+      // ── NOVOS (todos os user-projects + mocks, top 4) ────────────────
       const mapped: NovoMini[] = userProjects.map(p => ({
         id:        p.id,
         noivos:    p.noivos,
@@ -136,9 +138,23 @@ export default function PainelEditor() {
         status:    'Novo',
         createdAt: ptToISODate(p.recebido || ''),
       }))
-      // user-projects primeiro + mocks para preencher até 4
       const merged = [...mapped, ...MOCK_NOVOS].slice(0, 4)
       setNovosProjetos(merged)
+
+      // ── FINALIZADOS (user-projects com stage='Entregue' + mocks, top 4) ──
+      const userFinalizados = userProjects
+        .filter(p => p.stage === 'Entregue')
+        .map(p => ({
+          id:      p.id,
+          noivos:  p.noivos,
+          entrega: ptToISODate(p.entregaPrevista || ''),
+          foto:    p.foto || 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&h=300&fit=crop',
+        }))
+      // Mesclar e ordenar por entrega desc (mais recente primeiro)
+      const mergedFinalizados = [...userFinalizados, ...MOCK_FINALIZADOS]
+        .sort((a, b) => (b.entrega || '').localeCompare(a.entrega || ''))
+        .slice(0, 4)
+      setFinalizadosProjetos(mergedFinalizados)
 
       // Ler unseen ids
       const unseenJson = localStorage.getItem('painel-editor-unseen-projects')
@@ -430,10 +446,10 @@ export default function PainelEditor() {
                 style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-[15px] font-semibold text-white">Projetos Finalizados</h3>
-                  <button className="text-[11px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors">Ver todos →</button>
+                  <Link href="/painel-editor/novos-projetos" className="text-[11px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors">Ver todos →</Link>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  {MOCK_FINALIZADOS.map(p => (
+                  {finalizadosProjetos.map(p => (
                     <div key={p.id} className="group cursor-pointer">
                       <div className="relative aspect-[4/3] rounded-xl overflow-hidden border border-white/[0.08] mb-2">
                         <img src={p.foto} alt={p.noivos} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
