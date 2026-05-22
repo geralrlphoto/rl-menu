@@ -1815,7 +1815,28 @@ export default function FreelancerViewPage() {
     .sort((a,b) => (a.data_casamento ?? '') > (b.data_casamento ?? '') ? -1 : 1)
 
   return (
-    <main className={`min-h-screen px-4 py-10 mx-auto ${tab === null ? 'max-w-5xl' : 'max-w-2xl'}`}>
+    <div className="min-h-screen relative">
+      {/* ── Background gradient (estilo proposta criativa, gold) ───────── */}
+      <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'linear-gradient(160deg, #0e0b07 0%, #1a1206 30%, #0e0b07 70%, #060504 100%)' }} />
+      <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'radial-gradient(ellipse 75% 65% at 50% 48%, rgba(201,168,76,0.18) 0%, rgba(160,120,40,0.07) 45%, transparent 70%)' }} />
+      <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'radial-gradient(ellipse 40% 40% at 50% 48%, rgba(232,180,60,0.08) 0%, transparent 60%)' }} />
+
+      {/* ── Sidebar lateral (desktop) ──────────────────────────────────── */}
+      <SidebarNav
+        freelancer={freelancer}
+        tab={tab}
+        setTab={setTab}
+        counts={{
+          casamentos: casamentos.length,
+          edicao: edicao.length,
+          album: album.length,
+          mensagens: mensagens.filter(m => m.remetente === 'admin' && !m.lida_freelancer).length,
+          notificacoes: notificacoes.filter(n => !n.lida).length,
+        }}
+        isFotografo={isFotografo}
+      />
+
+    <main className={`relative z-10 min-h-screen px-4 py-10 mx-auto lg:pl-[240px] ${tab === null ? 'max-w-6xl' : 'max-w-3xl'}`}>
       {/* Header */}
       <div className="mb-8">
         <p className="text-[16px] text-white font-semibold mb-3">RL PHOTO.VIDEO · Área do Freelancer</p>
@@ -1856,9 +1877,9 @@ export default function FreelancerViewPage() {
         )}
       </div>
 
-      {/* Tab Navigation */}
+      {/* Tab Navigation — horizontal (apenas mobile; desktop usa sidebar) */}
       {!loading && (
-        <div className="mb-8 relative">
+        <div className="mb-8 relative lg:hidden">
           {/* Left arrow */}
           <button
             onClick={() => { const el = document.getElementById('tab-scroll'); if (el) el.scrollBy({ left: -160, behavior: 'smooth' }) }}
@@ -2095,58 +2116,24 @@ export default function FreelancerViewPage() {
               )}
             </div>
 
-            {/* ── COLUNA LATERAL (1/3) ─────────────────────────────── */}
+            {/* ── COLUNA LATERAL (1/3) — Tarefas + Calendário + Notas ── */}
             <aside className="lg:col-span-1 flex flex-col gap-4">
+              <TasksWidget freelancerId={id} />
+              <MiniCalendar casamentos={casamentos} onClickDate={() => setTab('casamentos')} />
+              <NotesWidget freelancerId={id} />
 
-              {/* Estatísticas Rápidas */}
-              <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
-                <h3 className="text-[10px] tracking-[0.4em] text-gold uppercase font-bold mb-4">Estatísticas</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <Stat label="Casamentos" value={casamentos.length} />
-                  <Stat label="Em Edição" value={edicoesEmCurso} />
-                  <Stat label="Álbuns" value={album.length} />
-                  <Stat label="Pagamentos" value={pagPendentes} sub={pagPendentes ? `${valorPendente.toLocaleString('pt-PT')}€` : 'em dia'} />
-                </div>
-              </div>
-
-              {/* Mensagens não lidas */}
+              {/* Alerta mensagens não lidas */}
               {mensagensNaoLidas > 0 && (
                 <button onClick={() => setTab('mensagens')}
-                  className="bg-blue-500/[0.06] border border-blue-500/25 hover:bg-blue-500/[0.1] rounded-2xl p-5 text-left transition-all">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-2xl">💬</span>
-                    <span className="text-[10px] tracking-widest uppercase font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/40">{mensagensNaoLidas}</span>
+                  className="bg-blue-500/[0.06] border border-blue-500/25 hover:bg-blue-500/[0.1] rounded-2xl p-4 text-left transition-all flex items-center gap-3">
+                  <span className="text-2xl">💬</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] tracking-widest uppercase font-bold text-blue-300/85">Mensagens</p>
+                    <p className="text-[11px] text-white/40 mt-0.5">{mensagensNaoLidas} {mensagensNaoLidas === 1 ? 'nova' : 'novas'}</p>
                   </div>
-                  <p className="text-[11px] tracking-widest uppercase font-bold text-blue-300/85 mt-2">Mensagens novas</p>
-                  <p className="text-[11px] text-white/40 mt-0.5">Tens {mensagensNaoLidas} {mensagensNaoLidas === 1 ? 'mensagem' : 'mensagens'} por ler</p>
+                  <span className="text-[10px] tracking-widest uppercase font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/40">{mensagensNaoLidas}</span>
                 </button>
               )}
-
-              {/* Notificações não lidas */}
-              {notificacoesNaoLidas > 0 && (
-                <button onClick={() => setTab('notificacoes')}
-                  className="bg-amber-500/[0.06] border border-amber-500/25 hover:bg-amber-500/[0.1] rounded-2xl p-5 text-left transition-all">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-2xl">🔔</span>
-                    <span className="text-[10px] tracking-widest uppercase font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/40">{notificacoesNaoLidas}</span>
-                  </div>
-                  <p className="text-[11px] tracking-widest uppercase font-bold text-amber-300/85 mt-2">Notificações</p>
-                  <p className="text-[11px] text-white/40 mt-0.5">{notificacoesNaoLidas} por ler</p>
-                </button>
-              )}
-
-              {/* Intro text do template (se houver) */}
-              {(freelancer?.intro_home_title || freelancer?.intro_home) && (
-                <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
-                  {freelancer.intro_home_title && (
-                    <p className="text-[11px] tracking-[0.4em] text-gold/80 uppercase font-bold mb-3">{freelancer.intro_home_title}</p>
-                  )}
-                  {freelancer.intro_home && (
-                    <p className="text-[12px] text-white/55 leading-relaxed whitespace-pre-wrap">{freelancer.intro_home}</p>
-                  )}
-                </div>
-              )}
-
             </aside>
           </div>
         )
@@ -2472,6 +2459,7 @@ export default function FreelancerViewPage() {
         <img src="/banner_footer.png" alt="RL Photo.Video" className="w-full object-cover" />
       </div>
     </main>
+    </div>
   )
 }
 
@@ -2482,6 +2470,316 @@ function Stat({ label, value, sub }: { label: string; value: number; sub?: strin
       <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-1">{label}</p>
       <p className="text-2xl font-bold text-white/90 leading-none">{value}</p>
       {sub && <p className="text-[10px] text-white/30 mt-1">{sub}</p>}
+    </div>
+  )
+}
+
+// ─── SidebarNav ────────────────────────────────────────────────────────────
+type TabKey = 'casamentos'|'edicao'|'album'|'pagamentos'|'disponibilidade'|'guia'|'notificacoes'|'mensagens'|null
+
+function SidebarNav({
+  freelancer,
+  tab,
+  setTab,
+  counts,
+  isFotografo,
+}: {
+  freelancer: Freelancer | null
+  tab: TabKey
+  setTab: (t: TabKey) => void
+  counts: { casamentos: number; edicao: number; album: number; mensagens: number; notificacoes: number }
+  isFotografo: boolean
+}) {
+  const items: Array<{ key: TabKey; label: string; icon: string; count?: number }> = [
+    { key: null,             label: 'Início',         icon: '⌂' },
+    { key: 'casamentos',     label: 'Casamentos',     icon: '◆', count: counts.casamentos },
+    { key: 'edicao',         label: isFotografo ? 'Edição Fotos' : 'Edição Vídeo', icon: '✎', count: counts.edicao },
+    ...(counts.album > 0 ? [{ key: 'album' as TabKey, label: 'Álbuns', icon: '◫', count: counts.album }] : []),
+    { key: 'pagamentos',     label: 'Pagamentos',     icon: '€' },
+    { key: 'disponibilidade',label: 'Agenda',         icon: '☉' },
+    { key: 'guia',           label: 'Workflow',       icon: '☰' },
+    { key: 'mensagens',      label: 'Mensagens',      icon: '✉', count: counts.mensagens },
+    { key: 'notificacoes',   label: 'Notificações',   icon: '◉', count: counts.notificacoes },
+  ]
+
+  return (
+    <aside
+      className="hidden lg:flex fixed top-0 left-0 bottom-0 w-[220px] z-20 flex-col"
+      style={{
+        background: 'linear-gradient(180deg, rgba(10,8,5,0.85) 0%, rgba(14,11,7,0.92) 100%)',
+        backdropFilter: 'blur(16px)',
+        borderRight: '1px solid rgba(201,168,76,0.12)',
+      }}
+    >
+      {/* Logo */}
+      <div className="px-6 pt-8 pb-6 border-b border-gold/10">
+        <p className="text-[9px] tracking-[0.45em] text-gold/60 uppercase">RL</p>
+        <p className="text-[15px] tracking-[0.18em] text-gold font-light uppercase mt-0.5">Photo<span className="text-white/40">.</span>Video</p>
+        <div className="mt-3 h-px w-8 bg-gold/40" />
+      </div>
+
+      {/* User */}
+      {freelancer && (
+        <div className="px-5 py-4 border-b border-white/[0.04] flex items-center gap-3">
+          {freelancer.foto_url ? (
+            <img src={freelancer.foto_url} alt={freelancer.nome} className="w-9 h-9 rounded-full object-cover border border-gold/30" />
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-gold/15 border border-gold/30 flex items-center justify-center text-gold text-sm font-bold">
+              {(freelancer.nome ?? '?').charAt(0)}
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="text-[12px] text-white/85 font-medium truncate">{freelancer.nome}</p>
+            {freelancer.status && (
+              <p className="text-[8px] tracking-[0.25em] uppercase text-gold/60 mt-0.5">{freelancer.status}</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
+        {items.map((it, i) => {
+          const active = tab === it.key
+          return (
+            <button
+              key={i}
+              onClick={() => setTab(it.key)}
+              className={`w-full group flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ${
+                active
+                  ? 'bg-gold/10 border border-gold/25 text-gold'
+                  : 'border border-transparent text-white/45 hover:text-white/85 hover:bg-white/[0.03]'
+              }`}
+            >
+              <span className={`w-5 text-center text-base ${active ? 'text-gold' : 'text-white/30 group-hover:text-white/60'}`}>{it.icon}</span>
+              <span className="flex-1 text-[11px] tracking-[0.2em] uppercase font-medium">{it.label}</span>
+              {it.count && it.count > 0 ? (
+                <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold ${
+                  active ? 'bg-gold/20 text-gold' : 'bg-white/[0.06] text-white/40'
+                }`}>{it.count}</span>
+              ) : null}
+            </button>
+          )
+        })}
+      </nav>
+
+      {/* Footer */}
+      <div className="px-5 py-4 border-t border-white/[0.04]">
+        <p className="text-[8px] tracking-[0.3em] uppercase text-white/20">Área do Freelancer</p>
+        <p className="text-[8px] text-white/15 mt-1">© RL Photo.Video</p>
+      </div>
+    </aside>
+  )
+}
+
+// ─── TasksWidget ───────────────────────────────────────────────────────────
+type TaskItem = { id: string; text: string; done: boolean }
+
+function TasksWidget({ freelancerId }: { freelancerId: string }) {
+  const KEY = `freelancer_${freelancerId}_tasks`
+  const [tasks, setTasks] = useState<TaskItem[]>([])
+  const [novo, setNovo] = useState('')
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(KEY)
+      if (raw) setTasks(JSON.parse(raw))
+    } catch {}
+    setLoaded(true)
+  }, [KEY])
+
+  useEffect(() => {
+    if (!loaded) return
+    try { localStorage.setItem(KEY, JSON.stringify(tasks)) } catch {}
+  }, [tasks, KEY, loaded])
+
+  function adicionar() {
+    const t = novo.trim()
+    if (!t) return
+    setTasks(prev => [...prev, { id: crypto.randomUUID(), text: t, done: false }])
+    setNovo('')
+  }
+  function toggle(id: string) {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t))
+  }
+  function remover(id: string) {
+    setTasks(prev => prev.filter(t => t.id !== id))
+  }
+
+  const pend = tasks.filter(t => !t.done).length
+  const concl = tasks.length - pend
+
+  return (
+    <div className="bg-white/[0.02] border border-white/[0.07] rounded-2xl p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-[10px] tracking-[0.4em] text-gold uppercase font-bold">Tarefas</h3>
+        <span className="text-[9px] text-white/40">{pend} pend · {concl} ok</span>
+      </div>
+
+      {/* Input */}
+      <div className="flex items-center gap-2 mb-3">
+        <input
+          value={novo}
+          onChange={e => setNovo(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') adicionar() }}
+          placeholder="Nova tarefa…"
+          className="flex-1 bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2 text-[12px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40"
+        />
+        <button
+          onClick={adicionar}
+          className="px-3 py-2 rounded-lg bg-gold/15 border border-gold/30 text-gold text-[11px] hover:bg-gold/25 transition-all"
+        >+</button>
+      </div>
+
+      {/* Lista */}
+      {tasks.length === 0 ? (
+        <p className="text-[11px] text-white/25 text-center py-3">Sem tarefas. Adiciona uma.</p>
+      ) : (
+        <ul className="space-y-1.5 max-h-[280px] overflow-y-auto pr-1">
+          {tasks.map(t => (
+            <li key={t.id} className="group flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/[0.03] transition-all">
+              <button
+                onClick={() => toggle(t.id)}
+                className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-all ${
+                  t.done ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'border-white/20 hover:border-gold/50'
+                }`}
+              >
+                {t.done ? <span className="text-[9px]">✓</span> : null}
+              </button>
+              <span className={`flex-1 text-[12px] leading-snug ${t.done ? 'line-through text-white/30' : 'text-white/80'}`}>{t.text}</span>
+              <button
+                onClick={() => remover(t.id)}
+                className="opacity-0 group-hover:opacity-100 text-white/30 hover:text-red-400 text-xs transition-all"
+              >×</button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+// ─── MiniCalendar ──────────────────────────────────────────────────────────
+function MiniCalendar({ casamentos, onClickDate }: { casamentos: Casamento[]; onClickDate?: (d: string) => void }) {
+  const today = new Date(); today.setHours(0,0,0,0)
+  const [view, setView] = useState({ y: today.getFullYear(), m: today.getMonth() })
+
+  const datas = new Set(casamentos.map(c => c.data_casamento).filter(Boolean) as string[])
+
+  function changeMonth(delta: number) {
+    const d = new Date(view.y, view.m + delta, 1)
+    setView({ y: d.getFullYear(), m: d.getMonth() })
+  }
+
+  const first = new Date(view.y, view.m, 1)
+  const lastDay = new Date(view.y, view.m + 1, 0).getDate()
+  const startWeekday = first.getDay() // 0 = Dom
+
+  // grid de células: vazias até primeiro dia + dias do mês
+  const cells: Array<{ day: number | null; iso?: string; isToday?: boolean; hasEvent?: boolean }> = []
+  for (let i = 0; i < startWeekday; i++) cells.push({ day: null })
+  for (let d = 1; d <= lastDay; d++) {
+    const iso = `${view.y}-${String(view.m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+    const isTodayCell = (view.y === today.getFullYear() && view.m === today.getMonth() && d === today.getDate())
+    cells.push({ day: d, iso, isToday: isTodayCell, hasEvent: datas.has(iso) })
+  }
+
+  return (
+    <div className="bg-white/[0.02] border border-white/[0.07] rounded-2xl p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-[10px] tracking-[0.4em] text-gold uppercase font-bold">Calendário</h3>
+        <div className="flex items-center gap-1">
+          <button onClick={() => changeMonth(-1)} className="w-6 h-6 rounded border border-white/10 text-white/40 hover:text-gold hover:border-gold/30 transition-all text-xs">‹</button>
+          <span className="text-[10px] tracking-widest uppercase text-white/70 px-2">{MESES[view.m]} {view.y}</span>
+          <button onClick={() => changeMonth(1)} className="w-6 h-6 rounded border border-white/10 text-white/40 hover:text-gold hover:border-gold/30 transition-all text-xs">›</button>
+        </div>
+      </div>
+
+      {/* Dias da semana */}
+      <div className="grid grid-cols-7 gap-1 mb-1">
+        {DIAS.map(d => (
+          <div key={d} className="text-center text-[8px] tracking-widest uppercase text-white/25 py-1">{d.charAt(0)}</div>
+        ))}
+      </div>
+
+      {/* Grid */}
+      <div className="grid grid-cols-7 gap-1">
+        {cells.map((c, i) => {
+          if (c.day === null) return <div key={i} />
+          return (
+            <button
+              key={i}
+              onClick={() => c.hasEvent && c.iso && onClickDate?.(c.iso)}
+              disabled={!c.hasEvent}
+              className={`relative aspect-square flex items-center justify-center text-[11px] rounded-md transition-all ${
+                c.isToday
+                  ? 'bg-gold text-black font-bold'
+                  : c.hasEvent
+                    ? 'bg-gold/15 text-gold border border-gold/30 hover:bg-gold/25 cursor-pointer'
+                    : 'text-white/35'
+              }`}
+            >
+              {c.day}
+              {c.hasEvent && !c.isToday && (
+                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-gold" />
+              )}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Legenda */}
+      <div className="mt-3 flex items-center justify-center gap-3 text-[9px] text-white/35">
+        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-gold" /> Hoje</span>
+        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm border border-gold/40 bg-gold/15" /> Casamento</span>
+      </div>
+    </div>
+  )
+}
+
+// ─── NotesWidget ───────────────────────────────────────────────────────────
+function NotesWidget({ freelancerId }: { freelancerId: string }) {
+  const KEY = `freelancer_${freelancerId}_notes`
+  const [val, setVal] = useState('')
+  const [saved, setSaved] = useState<string | null>(null)
+  const [loaded, setLoaded] = useState(false)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(KEY)
+      if (raw) setVal(raw)
+    } catch {}
+    setLoaded(true)
+  }, [KEY])
+
+  useEffect(() => {
+    if (!loaded) return
+    if (timer.current) clearTimeout(timer.current)
+    timer.current = setTimeout(() => {
+      try {
+        localStorage.setItem(KEY, val)
+        const now = new Date()
+        setSaved(`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`)
+      } catch {}
+    }, 600)
+    return () => { if (timer.current) clearTimeout(timer.current) }
+  }, [val, KEY, loaded])
+
+  return (
+    <div className="bg-white/[0.02] border border-white/[0.07] rounded-2xl p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-[10px] tracking-[0.4em] text-gold uppercase font-bold">Notas</h3>
+        {saved && <span className="text-[8px] text-emerald-400/70 tracking-widest uppercase">guardado {saved}</span>}
+      </div>
+      <textarea
+        value={val}
+        onChange={e => setVal(e.target.value)}
+        placeholder="Escreve lembretes pessoais aqui…"
+        rows={4}
+        className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2 text-[12px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40 resize-none leading-relaxed"
+      />
     </div>
   )
 }
