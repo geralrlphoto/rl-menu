@@ -450,7 +450,19 @@ export default function PainelEditor() {
               <div className="rounded-2xl border border-white/[0.08] p-5"
                 style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-[15px] font-semibold text-white">Novos Projetos</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-[15px] font-semibold text-white">Novos Projetos</h3>
+                    {(() => {
+                      const unseenInList = novosProjetos.filter(p => unseenIds.has(p.id)).length
+                      return unseenInList > 0 && (
+                        <span className="inline-flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full bg-gold text-black uppercase tracking-widest font-bold"
+                          style={{ boxShadow: '0 0 10px rgba(201,164,92,0.7)' }}>
+                          <span className="w-1 h-1 rounded-full bg-black animate-pulse" />
+                          {unseenInList} novo{unseenInList > 1 ? 's' : ''}
+                        </span>
+                      )
+                    })()}
+                  </div>
                   <Link href="/painel-editor/novos-projetos" className="text-[11px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors">Ver todos →</Link>
                 </div>
                 <div className="space-y-3">
