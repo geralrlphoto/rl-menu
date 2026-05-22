@@ -5,7 +5,7 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 
-const HIDDEN_PATHS = ['/login', '/portal-cliente', '/portal-batizado', '/freelancer-view', '/r/', '/b/', '/nova-lead', '/portal-media', '/orcamento-deslocacao']
+const HIDDEN_PATHS = ['/login', '/portal-cliente', '/portal-batizado', '/freelancer-view', '/r/', '/b/', '/nova-lead', '/portal-media']
 const HIDDEN_EXACT = ['/'] // brand selector — sem menu lateral
 
 const MEDIA_LINKS = [
@@ -218,9 +218,17 @@ export default function GlobalMenu() {
 
   return (
     <>
+      {/* Esconde tudo no PDF / print */}
+      <style jsx global>{`
+        @media print {
+          [data-global-menu] { display: none !important; }
+        }
+      `}</style>
+
       {/* ── DESKTOP: sidebar permanente ───────────────────────────────────── */}
       <aside
-        className="hidden lg:flex flex-col fixed top-0 left-0 h-full z-40"
+        data-global-menu
+        className="hidden lg:flex flex-col fixed top-0 left-0 h-full z-40 print:hidden"
         style={{
           width: '220px',
           background: 'rgba(0,4,10,0.96)',
@@ -234,7 +242,8 @@ export default function GlobalMenu() {
       {/* ── MOBILE: botão hambúrguer ──────────────────────────────────────── */}
       <button
         onClick={() => setOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-40 w-10 h-10 flex flex-col items-center justify-center gap-[5px] rounded-xl transition-all duration-200"
+        data-global-menu
+        className="lg:hidden fixed top-4 left-4 z-40 w-10 h-10 flex flex-col items-center justify-center gap-[5px] rounded-xl transition-all duration-200 print:hidden"
         style={{
           background: 'rgba(0,4,10,0.75)',
           backdropFilter: 'blur(12px)',
@@ -253,7 +262,8 @@ export default function GlobalMenu() {
       {/* MOBILE: overlay */}
       {open && (
         <div
-          className="lg:hidden fixed inset-0 z-40"
+          data-global-menu
+          className="lg:hidden fixed inset-0 z-40 print:hidden"
           style={{ background: 'rgba(0,4,10,0.7)', backdropFilter: 'blur(4px)' }}
           onClick={() => setOpen(false)}
         />
@@ -261,7 +271,8 @@ export default function GlobalMenu() {
 
       {/* MOBILE: drawer */}
       <div
-        className={`lg:hidden fixed top-0 left-0 h-full z-50 flex flex-col transition-transform duration-300 ease-in-out ${open ? 'translate-x-0' : '-translate-x-full'}`}
+        data-global-menu
+        className={`lg:hidden fixed top-0 left-0 h-full z-50 flex flex-col transition-transform duration-300 ease-in-out print:hidden ${open ? 'translate-x-0' : '-translate-x-full'}`}
         style={{
           width: '256px',
           background: 'rgba(0,4,10,0.98)',
