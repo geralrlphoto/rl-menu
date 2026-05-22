@@ -202,7 +202,7 @@ const NAV_ITEMS = [
   { key: 'novos',       label: 'Novos Projetos',      icon: '+', href: '/painel-editor/novos-projetos', active: true },
   { key: 'edicao',      label: 'Em Edição',           icon: '✎' },
   { key: 'finalizados', label: 'Finalizados',         icon: '✓' },
-  { key: 'pagamentos',  label: 'Pagamentos',          icon: '€' },
+  { key: 'pagamentos',  label: 'Pagamentos',          icon: '€', href: '/painel-editor/pagamentos' },
   { key: 'tarefas',     label: 'Tarefas',             icon: '◷' },
   { key: 'calendario',  label: 'Calendário',          icon: '◉' },
   { key: 'clientes',    label: 'Clientes',            icon: '☉' },
