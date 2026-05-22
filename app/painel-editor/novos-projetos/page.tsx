@@ -385,10 +385,12 @@ export default function NovosProjetosPage() {
       const patchesJson = localStorage.getItem(STORAGE_PATCHES_KEY)
       const patches: Record<string, Partial<Project>> = patchesJson ? JSON.parse(patchesJson) : {}
 
-      // user-created projects no topo + mocks com patches aplicados
+      // user-created projects no topo + mocks com patches aplicados + filtra eliminados
       const merged: Project[] = [
         ...userProjects,
-        ...PROJECTS.map(p => patches[p.id] ? { ...p, ...patches[p.id] } : p),
+        ...PROJECTS
+          .map(p => patches[p.id] ? { ...p, ...patches[p.id] } : p)
+          .filter(p => !(p as any).archived && !(p as any).cancelled),
       ]
       setProjects(merged)
 
@@ -479,6 +481,26 @@ export default function NovosProjetosPage() {
 
   function updateProject(id: string, patch: Partial<Project>) {
     setProjects(prev => prev.map(p => p.id === id ? { ...p, ...patch } : p))
+  }
+
+  function deleteProject(id: string) {
+    setProjects(prev => prev.filter(p => p.id !== id))
+    // Limpa também os outros estados relacionados
+    setUnseenIds(prev => {
+      if (!prev.has(id)) return prev
+      const next = new Set(prev); next.delete(id); return next
+    })
+    if (expanded === id) setExpanded(null)
+    // Para mocks: marca patches com archived/cancelled (porque o mock vai ser re-injectado na próxima carga)
+    const isMock = PROJECTS.some(p => p.id === id)
+    if (isMock) {
+      try {
+        const raw = localStorage.getItem('painel-editor-project-patches')
+        const patches = raw ? JSON.parse(raw) : {}
+        patches[id] = { ...(patches[id] || {}), archived: true, cancelled: true }
+        localStorage.setItem('painel-editor-project-patches', JSON.stringify(patches))
+      } catch {}
+    }
   }
 
   return (
@@ -666,6 +688,7 @@ export default function NovosProjetosPage() {
                     markAsSeen(p.id)
                   }}
                   onChange={(patch) => updateProject(p.id, patch)}
+                  onDelete={() => deleteProject(p.id)}
                 />
               </div>
             ))}
@@ -1136,13 +1159,14 @@ function Field({ label, children, required }: { label: string; children: React.R
 //  PROJECT CARD
 // ──────────────────────────────────────────────────────────────────────────
 function ProjectCard({
-  p, expanded, isUnseen, onToggle, onChange,
+  p, expanded, isUnseen, onToggle, onChange, onDelete,
 }: {
   p: Project
   expanded: boolean
   isUnseen?: boolean
   onToggle: () => void
   onChange: (patch: Partial<Project>) => void
+  onDelete?: () => void
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const badge = shortBadge(p.stage)
@@ -1246,6 +1270,21 @@ function ProjectCard({
                     {a}
                   </button>
                 ))}
+
+                {/* Separador */}
+                <div className="my-1 h-px bg-white/[0.08]" />
+
+                {/* Eliminar Projeto (destrutivo, vermelho) */}
+                <button
+                  onClick={() => {
+                    setMenuOpen(false)
+                    if (confirm(`Eliminar o projeto "${p.noivos}"? Esta acção não pode ser desfeita.`)) {
+                      onDelete?.()
+                    }
+                  }}
+                  className="w-full text-left text-[12px] px-3 py-2 rounded-lg text-red-400/85 hover:text-red-300 hover:bg-red-500/10 transition-all font-semibold flex items-center gap-2">
+                  <span>🗑</span> Eliminar Projeto
+                </button>
               </div>
             )}
           </div>
