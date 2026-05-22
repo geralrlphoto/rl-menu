@@ -30,6 +30,11 @@ const DEFAULTS = {
   valorNoite: 60,
   // Extras
   observacoes: '',
+  // ── Margem de Lucro (INTERNO — não aparece no PDF) ──
+  custoCombustivelReal: 0,    // ex: o que pagas mesmo em combustível
+  custoRefeicoesReal: 0,      // o que custa de facto a alimentar a equipa
+  custoEstadiaReal: 0,        // o que custas no hotel/AL
+  outrosCustos: 0,            // qualquer outra despesa
 }
 
 type Form = typeof DEFAULTS
@@ -50,7 +55,19 @@ export default function OrcamentoDeslocacaoPage() {
     const subServico   = (Number(f.horasServico) || 0) * (Number(f.valorHoraServico) || 0)
     const subDormida   = (Number(f.numPessoas) || 0) * (Number(f.noites) || 0) * (Number(f.valorNoite) || 0)
     const total = subKm + subPortagens + subRefeicoes + subViagem + subServico + subDormida
-    return { kmTotal, subKm, subPortagens, subRefeicoes, subViagem, subServico, subDormida, total }
+
+    // Margem de lucro (apenas dashboard)
+    const custosReais = (Number(f.custoCombustivelReal) || 0)
+                      + (Number(f.custoRefeicoesReal)   || 0)
+                      + (Number(f.custoEstadiaReal)     || 0)
+                      + (Number(f.outrosCustos)         || 0)
+                      + (Number(f.portagens)            || 0) // portagens são custo real direto
+    const margemValor = total - custosReais
+    const margemPct   = total > 0 ? (margemValor / total) * 100 : 0
+    return {
+      kmTotal, subKm, subPortagens, subRefeicoes, subViagem, subServico, subDormida, total,
+      custosReais, margemValor, margemPct,
+    }
   }, [f])
 
   // Print helper
@@ -230,6 +247,53 @@ export default function OrcamentoDeslocacaoPage() {
                 placeholder="Ex: incluí drone, equipamento extra, taxas de entrada..."
                 className={inputCls + ' resize-none leading-relaxed'} />
             </div>
+
+            {/* ── Margem de Lucro — APENAS INTERNO, não aparece no PDF ── */}
+            <div className="bg-red-500/[0.04] border border-red-500/20 rounded-2xl p-5 sm:p-6">
+              <h2 className="text-[10px] tracking-[0.4em] text-red-400/85 uppercase font-bold mb-1 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-red-400" /> Margem de Lucro
+                <span className="ml-auto text-[9px] tracking-[0.3em] text-red-400/50 normal-case font-normal">— Interno · não aparece no PDF</span>
+              </h2>
+              <p className="text-[12px] text-white/40 mb-5">Indica os custos reais para veres a margem do orçamento.</p>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div>
+                  <label className={labelCls}>Combustível real</label>
+                  <input type="number" min="0" step="0.5" value={f.custoCombustivelReal} onChange={e => set('custoCombustivelReal', Number(e.target.value))} className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>Refeições reais</label>
+                  <input type="number" min="0" step="0.5" value={f.custoRefeicoesReal} onChange={e => set('custoRefeicoesReal', Number(e.target.value))} className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>Estadia real</label>
+                  <input type="number" min="0" step="0.5" value={f.custoEstadiaReal} onChange={e => set('custoEstadiaReal', Number(e.target.value))} className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>Outros custos</label>
+                  <input type="number" min="0" step="0.5" value={f.outrosCustos} onChange={e => set('outrosCustos', Number(e.target.value))} className={inputCls} />
+                </div>
+              </div>
+
+              <div className="mt-5 grid grid-cols-3 gap-3">
+                <div className="bg-black/30 rounded-xl px-4 py-3 border border-white/[0.06]">
+                  <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-1">Cobrado</p>
+                  <p className="text-lg font-bold text-white/85">{fmt(totals.total)}</p>
+                </div>
+                <div className="bg-black/30 rounded-xl px-4 py-3 border border-white/[0.06]">
+                  <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-1">Custos Reais</p>
+                  <p className="text-lg font-bold text-red-300/85">{fmt(totals.custosReais)}</p>
+                  <p className="text-[10px] text-white/25 mt-0.5">portagens incluídas</p>
+                </div>
+                <div className={`rounded-xl px-4 py-3 border ${totals.margemValor >= 0 ? 'bg-emerald-500/[0.08] border-emerald-500/25' : 'bg-red-500/[0.10] border-red-500/30'}`}>
+                  <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-1">Margem</p>
+                  <p className={`text-lg font-bold ${totals.margemValor >= 0 ? 'text-emerald-300' : 'text-red-400'}`}>{fmt(totals.margemValor)}</p>
+                  <p className={`text-[10px] mt-0.5 ${totals.margemValor >= 0 ? 'text-emerald-400/60' : 'text-red-400/60'}`}>
+                    {totals.margemPct.toFixed(1)}%
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* ── BREAKDOWN (1/3) — sticky no desktop, breakdown total ─────── */}
@@ -269,150 +333,152 @@ export default function OrcamentoDeslocacaoPage() {
         </div>
 
         {/* ─── PRINT VIEW (oculta em ecrã, visível no PDF) ─────────────── */}
-        <div className="print-only max-w-[800px] mx-auto px-10 py-8">
+        {/* Design clean & profissional · só TOTAL (sem valores por linha) ───*/}
+        <div className="print-only max-w-[800px] mx-auto px-10 py-12 text-zinc-900">
 
-          {/* Cabeçalho — logo + dados da empresa (mesmo padrão do contrato) */}
-          <div className="flex items-start justify-between mb-10 pb-6 border-b-2 border-black">
+          {/* Cabeçalho */}
+          <header className="flex items-end justify-between mb-12 pb-5 border-b border-zinc-300">
             <div className="flex items-center gap-5">
               <img
                 src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
                 alt="RL Photo Video"
-                width={90}
-                height={90}
-                className="object-contain"
-                style={{ width: '90px', height: '90px' }}
+                width={80} height={80}
+                style={{ width: '80px', height: '80px' }}
               />
               <div>
-                <h1 className="text-2xl font-black tracking-[0.15em] uppercase text-black">RL PHOTO.VIDEO</h1>
-                <p className="text-xs text-zinc-500 mt-1">Fotografia &amp; Vídeo de Casamentos</p>
+                <p className="text-[22px] font-light tracking-[0.18em] uppercase text-zinc-900 leading-none">RL <strong className="font-bold">PHOTO</strong>.VIDEO</p>
+                <p className="text-[10px] text-zinc-500 tracking-[0.3em] uppercase mt-1.5">Fotografia &amp; Vídeo</p>
               </div>
             </div>
-            <div className="text-right text-[11px] text-zinc-600 leading-relaxed">
-              <p><strong>NIF:</strong> 238 076 415</p>
-              <p><strong>CAE:</strong> 74200</p>
-              <p>geral.rlphoto@gmail.com</p>
+            <div className="text-right text-[10px] text-zinc-500 tracking-wider leading-relaxed">
+              <p>NIF · 238 076 415</p>
+              <p>CAE · 74200</p>
               <p>+351 916 162 728</p>
+              <p>geral.rlphoto@gmail.com</p>
             </div>
-          </div>
+          </header>
 
-          {/* Título */}
-          <div className="text-center mb-10">
-            <h2 className="text-xl font-black tracking-[0.2em] uppercase mb-2 text-black">Orçamento de Deslocação</h2>
-            <p className="text-xs text-zinc-500 tracking-widest uppercase">
+          {/* Título — minimal */}
+          <div className="mb-12">
+            <p className="text-[10px] tracking-[0.5em] uppercase text-zinc-400 mb-2">Documento</p>
+            <h1 className="text-[28px] font-light tracking-[0.05em] text-zinc-900 leading-tight">Orçamento de Deslocação</h1>
+            <p className="text-[11px] text-zinc-500 mt-2 tracking-wide">
               Emitido em {new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })}
             </p>
           </div>
 
-          {/* 1. Identificação das Partes */}
-          <section className="mb-8">
-            <h3 className="text-[10px] font-black tracking-[0.3em] uppercase border-b border-zinc-200 pb-2 mb-4 text-black">
-              1. Identificação das Partes
-            </h3>
-
-            <div className="space-y-5">
-              <div>
-                <p className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-1">Primeira Outorgante (Prestadora)</p>
-                <p className="text-sm leading-relaxed text-zinc-800">
-                  <strong>Liliana Sofia Fernandes Barreto Gonçalves</strong>, a exercer sob a marca <strong>RL Photo — Fotografia &amp; Vídeo</strong>,
-                  contribuinte n.º <strong>238 076 415</strong>, CAE <strong>74200</strong> (Atividades Fotográficas/Vídeo),
-                  com sede em <strong>Centro Comercial Os Mochos, Loja 124, 2955-185 Pinhal Novo</strong>,
-                  e-mail <strong>geral.rlphoto@gmail.com</strong>, telefone <strong>+351 916 162 728</strong>.
-                </p>
+          {/* Cliente + Trajeto — grid limpo */}
+          {(f.cliente || f.evento || f.data || f.destino) && (
+            <section className="mb-10">
+              <p className="text-[9px] tracking-[0.4em] uppercase text-zinc-400 mb-3">Para</p>
+              <div className="grid grid-cols-2 gap-x-12 gap-y-3 text-[13px]">
+                {f.cliente && <div><p className="text-[9px] uppercase tracking-widest text-zinc-400 mb-0.5">Cliente</p><p className="font-semibold">{f.cliente}</p></div>}
+                {f.evento  && <div><p className="text-[9px] uppercase tracking-widest text-zinc-400 mb-0.5">Evento</p><p className="font-semibold">{f.evento}</p></div>}
+                {f.data    && <div><p className="text-[9px] uppercase tracking-widest text-zinc-400 mb-0.5">Data</p><p className="font-semibold">{new Date(f.data + 'T12:00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })}</p></div>}
+                {f.destino && <div><p className="text-[9px] uppercase tracking-widest text-zinc-400 mb-0.5">Local</p><p className="font-semibold">{f.destino}</p></div>}
               </div>
-
-              {(f.cliente || f.evento || f.data || f.destino) && (
-                <div>
-                  <p className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-1">Segunda Outorgante (Cliente)</p>
-                  <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
-                    {f.cliente && <div><span className="text-zinc-400 text-[10px] block mb-0.5">Nome</span><strong>{f.cliente}</strong></div>}
-                    {f.evento  && <div><span className="text-zinc-400 text-[10px] block mb-0.5">Tipo de evento</span><strong>{f.evento}</strong></div>}
-                    {f.data    && <div><span className="text-zinc-400 text-[10px] block mb-0.5">Data do evento</span><strong>{new Date(f.data + 'T12:00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })}</strong></div>}
-                    {f.destino && <div><span className="text-zinc-400 text-[10px] block mb-0.5">Local</span><strong>{f.destino}</strong></div>}
-                  </div>
-                </div>
-              )}
-            </div>
-          </section>
-
-          {/* 2. Trajeto */}
-          <section className="mb-8">
-            <h3 className="text-[10px] font-black tracking-[0.3em] uppercase border-b border-zinc-200 pb-2 mb-4 text-black">
-              2. Trajeto
-            </h3>
-            <div className="bg-zinc-50 rounded-lg p-4 text-sm grid grid-cols-3 gap-3">
-              <div>
-                <span className="text-zinc-400 text-[10px] block mb-0.5 uppercase tracking-wider">Origem</span>
-                <strong>{f.origem || '—'}</strong>
-              </div>
-              <div>
-                <span className="text-zinc-400 text-[10px] block mb-0.5 uppercase tracking-wider">Destino</span>
-                <strong>{f.destino || '—'}</strong>
-              </div>
-              <div>
-                <span className="text-zinc-400 text-[10px] block mb-0.5 uppercase tracking-wider">Distância</span>
-                <strong>{totals.kmTotal.toLocaleString('pt-PT')} km</strong>
-                <span className="text-zinc-400 text-[10px] ml-1">{f.idaVolta ? '(ida e volta)' : '(só ida)'}</span>
-              </div>
-            </div>
-          </section>
-
-          {/* 3. Detalhe dos Custos */}
-          <section className="mb-8">
-            <h3 className="text-[10px] font-black tracking-[0.3em] uppercase border-b border-zinc-200 pb-2 mb-4 text-black">
-              3. Detalhe dos Custos
-            </h3>
-            <table className="w-full text-sm border-collapse">
-              <thead>
-                <tr className="border-b-2 border-zinc-300">
-                  <th className="text-left py-2 text-[10px] tracking-widest uppercase text-zinc-500 font-bold">Item</th>
-                  <th className="text-left py-2 text-[10px] tracking-widest uppercase text-zinc-500 font-bold">Detalhe</th>
-                  <th className="text-right py-2 text-[10px] tracking-widest uppercase text-zinc-500 font-bold">Valor</th>
-                </tr>
-              </thead>
-              <tbody>
-                <PrintRow label="Deslocação" detail={`${totals.kmTotal} km × ${fmt(f.valorPorKm)}/km${f.idaVolta ? ' (ida e volta)' : ''}`} valor={totals.subKm} />
-                {totals.subPortagens > 0 && <PrintRow label="Portagens" detail="Valor total da via" valor={totals.subPortagens} />}
-                {totals.subRefeicoes > 0 && <PrintRow label="Refeições" detail={`${f.numPessoas} pessoas × ${f.numRefeicoes} refeições × ${fmt(f.valorRefeicao)}`} valor={totals.subRefeicoes} />}
-                {totals.subViagem > 0 && <PrintRow label="Horas de viagem" detail={`${f.horasViagem}h × ${fmt(f.valorHoraViagem)}/h`} valor={totals.subViagem} />}
-                {totals.subServico > 0 && <PrintRow label="Horas de serviço extra" detail={`${f.horasServico}h × ${fmt(f.valorHoraServico)}/h`} valor={totals.subServico} />}
-                {totals.subDormida > 0 && <PrintRow label="Estadia" detail={`${f.numPessoas} pessoas × ${f.noites} noite(s) × ${fmt(f.valorNoite)}`} valor={totals.subDormida} />}
-                <tr className="bg-black text-white">
-                  <td colSpan={2} className="py-3 px-2 text-sm tracking-widest uppercase font-bold">TOTAL A LIQUIDAR</td>
-                  <td className="py-3 px-2 text-right text-xl font-black">{fmt(totals.total)}</td>
-                </tr>
-              </tbody>
-            </table>
-          </section>
-
-          {f.observacoes && (
-            <section className="mb-8">
-              <h3 className="text-[10px] font-black tracking-[0.3em] uppercase border-b border-zinc-200 pb-2 mb-4 text-black">
-                4. Observações
-              </h3>
-              <p className="text-sm text-zinc-700 leading-relaxed whitespace-pre-wrap">{f.observacoes}</p>
             </section>
           )}
 
-          {/* Condições gerais */}
-          <section className="mb-8 text-[11px] text-zinc-600 leading-relaxed">
-            <h3 className="text-[10px] font-black tracking-[0.3em] uppercase border-b border-zinc-200 pb-2 mb-3 text-black">
-              Condições Gerais
-            </h3>
-            <ul className="space-y-1.5 list-disc list-inside">
-              <li>O presente orçamento é válido por <strong>30 dias</strong> a partir da data de emissão.</li>
-              <li>Valores apresentados em <strong>Euros (€)</strong>, com IVA incluído quando aplicável.</li>
-              <li>A deslocação inclui a viagem de ida e volta entre a sede da prestadora e o local indicado.</li>
-              <li>O pagamento dos custos de deslocação é faturado em separado do serviço de fotografia/vídeo.</li>
-              <li>Em caso de cancelamento por parte do cliente, podem ser cobrados custos já incorridos (portagens, estadias confirmadas).</li>
+          {/* Trajeto detalhe */}
+          <section className="mb-10">
+            <p className="text-[9px] tracking-[0.4em] uppercase text-zinc-400 mb-3">Trajeto</p>
+            <div className="flex items-center justify-between border border-zinc-200 rounded-md px-5 py-4 text-[13px]">
+              <div className="flex items-center gap-3">
+                <div>
+                  <p className="text-[9px] uppercase tracking-widest text-zinc-400 mb-0.5">Origem</p>
+                  <p className="font-semibold">{f.origem || '—'}</p>
+                </div>
+                <span className="text-zinc-300 text-lg">→</span>
+                <div>
+                  <p className="text-[9px] uppercase tracking-widest text-zinc-400 mb-0.5">Destino</p>
+                  <p className="font-semibold">{f.destino || '—'}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-[9px] uppercase tracking-widest text-zinc-400 mb-0.5">Distância</p>
+                <p className="font-semibold">{totals.kmTotal.toLocaleString('pt-PT')} km <span className="text-[10px] font-normal text-zinc-400">{f.idaVolta ? '(ida e volta)' : '(só ida)'}</span></p>
+              </div>
+            </div>
+          </section>
+
+          {/* Resumo — apenas LISTAGEM sem valores individuais */}
+          <section className="mb-10">
+            <p className="text-[9px] tracking-[0.4em] uppercase text-zinc-400 mb-3">Inclui</p>
+            <ul className="space-y-2.5 text-[13px] leading-relaxed">
+              {totals.subKm > 0 && (
+                <li className="flex items-start gap-3">
+                  <span className="text-zinc-300 mt-0.5">·</span>
+                  <span><strong>Deslocação</strong> — {totals.kmTotal.toLocaleString('pt-PT')} km {f.idaVolta ? '(ida e volta)' : ''}</span>
+                </li>
+              )}
+              {totals.subPortagens > 0 && (
+                <li className="flex items-start gap-3">
+                  <span className="text-zinc-300 mt-0.5">·</span>
+                  <span><strong>Portagens</strong></span>
+                </li>
+              )}
+              {totals.subRefeicoes > 0 && (
+                <li className="flex items-start gap-3">
+                  <span className="text-zinc-300 mt-0.5">·</span>
+                  <span><strong>Refeições</strong> da equipa ({f.numPessoas} {f.numPessoas === 1 ? 'pessoa' : 'pessoas'} · {f.numRefeicoes} {f.numRefeicoes === 1 ? 'refeição' : 'refeições'})</span>
+                </li>
+              )}
+              {totals.subViagem > 0 && (
+                <li className="flex items-start gap-3">
+                  <span className="text-zinc-300 mt-0.5">·</span>
+                  <span><strong>Horas de viagem</strong> ({f.horasViagem}h)</span>
+                </li>
+              )}
+              {totals.subServico > 0 && (
+                <li className="flex items-start gap-3">
+                  <span className="text-zinc-300 mt-0.5">·</span>
+                  <span><strong>Horas de serviço</strong> ({f.horasServico}h)</span>
+                </li>
+              )}
+              {totals.subDormida > 0 && (
+                <li className="flex items-start gap-3">
+                  <span className="text-zinc-300 mt-0.5">·</span>
+                  <span><strong>Estadia</strong> ({f.numPessoas} {f.numPessoas === 1 ? 'pessoa' : 'pessoas'} · {f.noites} {f.noites === 1 ? 'noite' : 'noites'})</span>
+                </li>
+              )}
             </ul>
           </section>
 
+          {/* TOTAL — destaque grande */}
+          <section className="mb-10">
+            <div className="border-t-2 border-zinc-900 pt-6 flex items-end justify-between">
+              <div>
+                <p className="text-[10px] tracking-[0.5em] uppercase text-zinc-500 mb-1">Total</p>
+                <p className="text-[11px] text-zinc-400 tracking-wide">Valor total da deslocação</p>
+              </div>
+              <p className="text-[36px] font-light tracking-tight text-zinc-900 leading-none">{fmt(totals.total)}</p>
+            </div>
+          </section>
+
+          {f.observacoes && (
+            <section className="mb-10">
+              <p className="text-[9px] tracking-[0.4em] uppercase text-zinc-400 mb-3">Observações</p>
+              <p className="text-[12px] text-zinc-700 leading-relaxed whitespace-pre-wrap">{f.observacoes}</p>
+            </section>
+          )}
+
+          {/* Condições gerais — discreto */}
+          <section className="mb-12 text-[10px] text-zinc-500 leading-relaxed">
+            <p className="text-[9px] tracking-[0.4em] uppercase text-zinc-400 mb-2">Condições</p>
+            <p>
+              Orçamento válido por 30 dias. Valores em euros, com IVA incluído quando aplicável.
+              A deslocação inclui ida e volta entre a sede da prestadora e o local indicado.
+              Em caso de cancelamento, podem ser cobrados custos já incorridos.
+            </p>
+          </section>
+
           {/* Rodapé */}
-          <div className="pt-6 border-t border-zinc-300 text-center">
-            <p className="text-[10px] tracking-[0.4em] uppercase text-zinc-500 mb-1">RL Photo · Video · Photography &amp; Video</p>
-            <p className="text-[10px] text-zinc-400">Centro Comercial Os Mochos, Loja 124, 2955-185 Pinhal Novo</p>
-            <p className="text-[10px] text-zinc-400">NIF 238 076 415 · geral.rlphoto@gmail.com · +351 916 162 728</p>
-          </div>
+          <footer className="pt-6 border-t border-zinc-200 text-center">
+            <p className="text-[9px] tracking-[0.45em] uppercase text-zinc-500 mb-1.5"><strong>RL Photo · Video</strong> — Photography &amp; Video</p>
+            <p className="text-[9px] text-zinc-400 tracking-wide">Centro Comercial Os Mochos, Loja 124 · 2955-185 Pinhal Novo</p>
+            <p className="text-[9px] text-zinc-400 tracking-wide">NIF 238 076 415 · geral.rlphoto@gmail.com · +351 916 162 728</p>
+          </footer>
         </div>
       </main>
     </>
@@ -432,12 +498,3 @@ function Row({ label, value, sub }: { label: string; value: string; sub?: string
   )
 }
 
-function PrintRow({ label, detail, valor }: { label: string; detail: string; valor: number }) {
-  return (
-    <tr className="border-b border-gray-200">
-      <td className="py-2 font-semibold">{label}</td>
-      <td className="py-2 text-gray-600 text-[12px]">{detail}</td>
-      <td className="py-2 text-right font-mono">{valor.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</td>
-    </tr>
-  )
-}
