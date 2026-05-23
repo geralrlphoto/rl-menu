@@ -345,6 +345,56 @@ export default function PainelEditor() {
     return { path: d, last, points: pts, w, h }
   }, [])
 
+  // ── Alertas críticos: projetos com prazo de entrega ultrapassado ──────
+  // Aparece a brilhar vermelho até o admin marcar o projeto como Entregue.
+  const projetosAtrasados = useMemo(() => {
+    if (typeof window === 'undefined') return [] as { id: string; noivos: string; entregaPrevista: string; diasAtraso: number; foto?: string }[]
+    try {
+      const userRaw = localStorage.getItem('painel-editor-user-projects')
+      const userProjects: any[] = userRaw ? JSON.parse(userRaw) : []
+      const patchesRaw = localStorage.getItem('painel-editor-project-patches')
+      const patches: Record<string, any> = patchesRaw ? JSON.parse(patchesRaw) : {}
+
+      const todayMs = new Date(TODAY_YEAR_NUM, TODAY_MONTH_IDX, TODAY_DAY_NUM).getTime()
+      const parsePt = (s: string): number => {
+        const cleaned = (s || '').split('—')[0].trim()
+        const [d, m, y] = cleaned.split('/').map(Number)
+        if (!d || !m || !y) return 0
+        return new Date(y, m-1, d).getTime()
+      }
+
+      // Mocks (com patches aplicados) + user-projects
+      const mockData = MOCK_PROJECTS
+        .map(p => patches[p.id] ? { ...p, ...patches[p.id] } : p)
+        .filter(p => !(p as any).archived && !(p as any).cancelled)
+
+      const all: any[] = [
+        ...userProjects.filter(p => !p.archived && !p.cancelled),
+        ...mockData,
+      ]
+
+      const result: { id: string; noivos: string; entregaPrevista: string; diasAtraso: number; foto?: string }[] = []
+      const seen = new Set<string>()
+      all.forEach(p => {
+        if (!p?.id || seen.has(p.id)) return
+        seen.add(p.id)
+        if (p.stage === 'Entregue') return
+        const epMs = parsePt(p.entregaPrevista || '')
+        if (!epMs || epMs >= todayMs) return
+        const diasAtraso = Math.floor((todayMs - epMs) / 86400000)
+        result.push({
+          id: p.id,
+          noivos: p.noivos || 'Projeto',
+          entregaPrevista: p.entregaPrevista,
+          diasAtraso,
+          foto: p.foto,
+        })
+      })
+      // Mais atrasado primeiro
+      return result.sort((a, b) => b.diasAtraso - a.diasAtraso)
+    } catch { return [] as any[] }
+  }, [storageTick])
+
   // ── Próximos compromissos: TODAS as tarefas (user + auto + mocks) ──────
   // Filtra: não concluídas, ordena por data+hora ASC, limita a 5
   const compromissos = useMemo(() => {
@@ -557,13 +607,18 @@ export default function PainelEditor() {
 
   return (
     <div className="min-h-screen text-white relative" style={{ background: '#0B0B0B' }}>
-      {/* Animação gold pulse para projetos novos não-abertos */}
+      {/* Animação gold pulse para projetos novos não-abertos + alert red pulse para projetos atrasados */}
       <style jsx global>{`
         @keyframes unseenGlow {
           0%, 100% { box-shadow: 0 0 0 rgba(201,164,92,0), 0 0 16px -4px rgba(201,164,92,0.25); }
           50%      { box-shadow: 0 0 0 rgba(201,164,92,0), 0 0 32px 0 rgba(201,164,92,0.55); }
         }
         .unseen-glow { animation: unseenGlow 2.4s ease-in-out infinite; }
+        @keyframes alertPulse {
+          0%, 100% { box-shadow: 0 0 0 rgba(239,68,68,0), 0 0 24px -4px rgba(239,68,68,0.35), inset 0 0 0 1px rgba(239,68,68,0.15); }
+          50%      { box-shadow: 0 0 0 rgba(239,68,68,0), 0 0 48px 0 rgba(239,68,68,0.7), inset 0 0 0 1px rgba(239,68,68,0.45); }
+        }
+        .alert-glow { animation: alertPulse 1.8s ease-in-out infinite; }
       `}</style>
       {/* ── Background atmosférico (radial gold + grid sutil) ─────────────── */}
       <div className="pointer-events-none fixed inset-0 z-0"
@@ -875,6 +930,58 @@ export default function PainelEditor() {
                   </span>
                 </div>
               </div>
+
+              {/* ALERTAS CRÍTICOS — projetos com prazo de entrega ultrapassado */}
+              {projetosAtrasados.length > 0 && (
+                <div className="alert-glow rounded-2xl border border-red-500/40 p-5 mb-5"
+                  style={{ background: 'linear-gradient(180deg, rgba(40,8,8,0.6), rgba(11,11,11,0.85))' }}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl animate-pulse text-red-400">⚠</span>
+                      <div>
+                        <p className="text-[10px] tracking-[0.4em] uppercase text-red-300/80 font-bold">Alertas Críticos</p>
+                        <h3 className="text-[15px] font-semibold text-white">
+                          {projetosAtrasados.length} projeto{projetosAtrasados.length === 1 ? '' : 's'} com entrega atrasada
+                        </h3>
+                      </div>
+                    </div>
+                    <Link href="/painel-editor/novos-projetos"
+                      className="text-[11px] tracking-widest uppercase text-red-300/80 hover:text-red-200 transition-colors">
+                      Resolver →
+                    </Link>
+                  </div>
+                  <div className="space-y-2">
+                    {projetosAtrasados.slice(0, 5).map(p => (
+                      <Link key={p.id} href={`/painel-editor/novos-projetos?open=${p.id}`}
+                        className="flex items-center gap-3 p-2 -mx-2 rounded-lg hover:bg-red-500/[0.06] transition-colors group">
+                        {p.foto ? (
+                          <div className="w-10 h-10 rounded-lg overflow-hidden border border-red-500/30 shrink-0">
+                            <img src={p.foto} alt={p.noivos} className="w-full h-full object-cover" />
+                          </div>
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg border border-red-500/30 bg-red-500/10 flex items-center justify-center text-red-300 shrink-0">⚠</div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-medium text-white truncate">{p.noivos}</p>
+                          <p className="text-[11px] text-white/40 mt-0.5">
+                            Entrega prevista: <span className="text-white/65">{p.entregaPrevista}</span>
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-[16px] font-bold text-red-300 leading-none">{p.diasAtraso}d</p>
+                          <p className="text-[9px] tracking-widest uppercase text-red-300/60 mt-1">atraso</p>
+                        </div>
+                        <span className="text-red-300/40 group-hover:text-red-200 text-lg">›</span>
+                      </Link>
+                    ))}
+                  </div>
+                  {projetosAtrasados.length > 5 && (
+                    <p className="text-[10px] text-red-300/60 mt-3 text-center">
+                      +{projetosAtrasados.length - 5} outros projetos atrasados
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* Próximos compromissos — tarefas reais criadas em /painel-editor/tarefas */}
               <div className="rounded-2xl border border-white/[0.08] p-5"
