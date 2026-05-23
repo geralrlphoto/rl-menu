@@ -1293,18 +1293,117 @@ function ProjectCard({
             <button onClick={() => setMenuOpen(v => !v)}
               className="w-9 h-9 rounded-lg border border-white/10 text-white/60 hover:text-gold hover:border-gold/30 transition-all flex items-center justify-center text-lg">⋮</button>
             {menuOpen && (
-              <div className="absolute top-11 right-0 w-56 rounded-xl border border-gold/20 backdrop-blur-xl p-1.5 z-30"
+              <div className="absolute top-11 right-0 w-60 rounded-xl border border-gold/20 backdrop-blur-xl p-1.5 z-30"
                 style={{ background: 'rgba(15,12,8,0.95)', boxShadow: '0 20px 50px -10px rgba(0,0,0,0.7)' }}>
-                {[
-                  'Abrir Projeto','Editar Dados','Adicionar Observações','Enviar Revisão',
-                  'Marcar Entrega','Arquivar Projeto','Abrir Material Original','Download Material',
-                  'Abrir Projeto Final','Copiar Link Final',
-                ].map(a => (
-                  <button key={a} onClick={() => setMenuOpen(false)}
-                    className="w-full text-left text-[12px] px-3 py-2 rounded-lg text-white/65 hover:text-gold hover:bg-gold/10 transition-all">
-                    {a}
-                  </button>
-                ))}
+                {(() => {
+                  const toast = (msg: string) => {
+                    if (typeof window === 'undefined') return
+                    // Toast minimalista no canto
+                    const el = document.createElement('div')
+                    el.textContent = msg
+                    el.style.cssText = 'position:fixed;bottom:24px;right:24px;background:rgba(15,12,8,0.96);border:1px solid rgba(201,164,92,0.4);color:#E8C76D;padding:12px 18px;border-radius:12px;font-size:13px;font-family:system-ui;z-index:99999;box-shadow:0 20px 50px -10px rgba(0,0,0,0.7),0 0 24px -4px rgba(201,164,92,0.3)'
+                    document.body.appendChild(el)
+                    setTimeout(() => el.remove(), 2500)
+                  }
+                  const items: { label: string; icon: string; action: () => void; disabled?: boolean; disabledReason?: string }[] = [
+                    {
+                      label: expanded ? 'Fechar Projeto' : 'Abrir Projeto', icon: expanded ? '⌃' : '⌄',
+                      action: () => onToggle(),
+                    },
+                    {
+                      label: 'Editar Dados', icon: '✎',
+                      action: () => { if (!expanded) onToggle(); toast('A ficha de edição abriu em baixo') },
+                    },
+                    {
+                      label: 'Adicionar Observação', icon: '+',
+                      action: () => {
+                        const obs = window.prompt(`Nova observação para "${p.noivos}":`, '')
+                        if (obs && obs.trim()) {
+                          onChange({ observacoes: [...(p.observacoes || []), obs.trim()] })
+                          toast('Observação adicionada')
+                        }
+                      },
+                    },
+                    {
+                      label: 'Enviar Revisão', icon: '↗',
+                      action: () => {
+                        onChange({ stage: 'Para Revisão', approval: 'Aguardando Revisão' })
+                        toast(`"${p.noivos}" enviado para revisão`)
+                      },
+                    },
+                    {
+                      label: p.stage === 'Entregue' ? 'Reverter Entrega' : 'Marcar Entrega', icon: '✓',
+                      action: () => {
+                        if (p.stage === 'Entregue') {
+                          if (window.confirm('Reverter a entrega? O timestamp será limpo.')) {
+                            onChange({ stage: 'Finalizado' })
+                            toast('Entrega revertida')
+                          }
+                        } else {
+                          onChange({ stage: 'Entregue', approval: 'Aprovado Cliente' })
+                          toast(`"${p.noivos}" marcado como Entregue`)
+                        }
+                      },
+                    },
+                    {
+                      label: 'Arquivar Projeto', icon: '📁',
+                      action: () => {
+                        if (window.confirm(`Arquivar "${p.noivos}"? Pode reabrir mais tarde.`)) {
+                          onChange({ archived: true } as any)
+                          toast('Projeto arquivado')
+                        }
+                      },
+                    },
+                    {
+                      label: 'Abrir Material Original', icon: '↗',
+                      disabled: !p.clientLink,
+                      disabledReason: 'Sem link de material',
+                      action: () => {
+                        if (p.clientLink) window.open(p.clientLink, '_blank', 'noopener')
+                      },
+                    },
+                    {
+                      label: 'Download Material', icon: '↓',
+                      action: () => {
+                        onChange({ downloadStatus: 'Em download', ultimoDownload: new Date().toLocaleDateString('pt-PT') })
+                        toast('Download iniciado')
+                      },
+                    },
+                    {
+                      label: 'Abrir Projeto Final', icon: '↗',
+                      disabled: !p.finalLink,
+                      disabledReason: 'Ainda sem link final',
+                      action: () => {
+                        if (p.finalLink) window.open(p.finalLink, '_blank', 'noopener')
+                      },
+                    },
+                    {
+                      label: 'Copiar Link Final', icon: '⎘',
+                      disabled: !p.finalLink,
+                      disabledReason: 'Sem link para copiar',
+                      action: () => {
+                        if (!p.finalLink) return
+                        navigator.clipboard?.writeText(p.finalLink)
+                          .then(() => toast('Link copiado'))
+                          .catch(() => toast('Não foi possível copiar'))
+                      },
+                    },
+                  ]
+                  return items.map(it => (
+                    <button key={it.label}
+                      onClick={() => { setMenuOpen(false); if (!it.disabled) it.action() }}
+                      disabled={it.disabled}
+                      title={it.disabled ? it.disabledReason : undefined}
+                      className={`w-full text-left text-[12px] px-3 py-2 rounded-lg transition-all flex items-center gap-2 ${
+                        it.disabled
+                          ? 'text-white/25 cursor-not-allowed'
+                          : 'text-white/70 hover:text-gold hover:bg-gold/10'
+                      }`}>
+                      <span className="w-4 text-center opacity-60">{it.icon}</span>
+                      {it.label}
+                    </button>
+                  ))
+                })()}
 
                 {/* Separador */}
                 <div className="my-1 h-px bg-white/[0.08]" />
