@@ -3,6 +3,13 @@
 import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import { TODAY as TODAY_PT } from './_data/projects'
+
+// Hoje (derivado da constante canónica)
+const [_TD, _TM, _TY] = TODAY_PT.split('/').map(Number)
+const TODAY_DAY_NUM = _TD
+const TODAY_MONTH_IDX = _TM - 1
+const TODAY_YEAR_NUM = _TY
 
 type FreelancerData = {
   id: string
@@ -207,8 +214,8 @@ export default function PainelEditor() {
     return () => window.removeEventListener('focus', onFocus)
   }, [])
 
-  // Calendário
-  const today = new Date(2026, 4, 20) // Maio 2026 dia 20 (mock)
+  // Calendário — hoje derivado de TODAY canónico
+  const today = new Date(TODAY_YEAR_NUM, TODAY_MONTH_IDX, TODAY_DAY_NUM)
   const [view, setView] = useState({ y: 2026, m: 4 })
 
   // ── Marcas no calendário: criações + entregas + tarefas ───────────────
@@ -308,10 +315,7 @@ export default function PainelEditor() {
       const userProjRaw = localStorage.getItem('painel-editor-user-projects')
       const userProj: any[] = userProjRaw ? JSON.parse(userProjRaw) : []
 
-      const todayMs = (() => {
-        const t = new Date(2026, 4, 24)  // mock today
-        return t.getTime()
-      })()
+      const todayMs = new Date(TODAY_YEAR_NUM, TODAY_MONTH_IDX, TODAY_DAY_NUM).getTime()
 
       const parseMs = (d: string, h?: string): number => {
         const [dd, mm, yyyy] = (d || '').split('/').map(Number)

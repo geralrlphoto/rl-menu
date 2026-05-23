@@ -283,9 +283,10 @@ export default function TarefasPage() {
     setCompletingTask(null)
   }
 
-  // Calendário (Maio 2026)
-  const calToday = new Date(2026, 4, 24)
-  const [calView, setCalView] = useState({ y: 2026, m: 4 })
+  // Calendário — hoje derivado da constante TODAY
+  const [_td, _tm, _ty] = TODAY.split('/').map(Number)
+  const calToday = new Date(_ty, _tm - 1, _td)
+  const [calView, setCalView] = useState({ y: _ty, m: _tm - 1 })
   const firstDay = new Date(calView.y, calView.m, 1).getDay()
   const lastDate = new Date(calView.y, calView.m + 1, 0).getDate()
   const prevLastDate = new Date(calView.y, calView.m, 0).getDate()

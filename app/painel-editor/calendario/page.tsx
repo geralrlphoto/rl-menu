@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { eventsFromProjects, eventColorFor, PROJECTS, type CalendarEvent, type EventType } from '../_data/projects'
+import { eventsFromProjects, eventColorFor, PROJECTS, TODAY as TODAY_PT, type CalendarEvent, type EventType } from '../_data/projects'
 
 // ── Helper: gera eventos a partir dos projetos criados pelo utilizador ──
 // (estrutura igual à de eventsFromProjects() em _data/projects.ts)
@@ -150,10 +150,14 @@ export default function CalendarioPage() {
     // Filtra eventos de projetos eliminados (archived/cancelled)
     return [...taskEvents, ...userEvents, ...baseEvents].filter(e => !e.projectId || !deletedIds.has(e.projectId))
   }, [taskEvents, userEvents, baseEvents, deletedIds])
+  // Hoje — derivado do TODAY canónico em _data/projects.ts
+  const [TODAY_DAY_NUM, TODAY_MONTH_NUM, TODAY_YEAR_NUM] = TODAY_PT.split('/').map(Number)
+  const TODAY_DAY = TODAY_DAY_NUM
+  const TODAY_MONTH_IDX = TODAY_MONTH_NUM - 1   // 0-based para Date / setCalView
+
   const [view, setView] = useState<ViewMode>('Mês')
-  const [calView, setCalView] = useState({ y: 2026, m: 4 }) // Maio 2026
+  const [calView, setCalView] = useState({ y: TODAY_YEAR_NUM, m: TODAY_MONTH_IDX })
   const [typeFilter, setTypeFilter] = useState<'Todos' | EventType>('Todos')
-  const TODAY_DAY = 15  // matching screenshot — dia 15 destacado
 
   // Eventos do mês (filtrados)
   const eventsThisMonth = useMemo(() => {
@@ -298,7 +302,7 @@ export default function CalendarioPage() {
                     {/* Grid */}
                     <div className="grid grid-cols-7 gap-1.5">
                       {cells.map((c, i) => {
-                        const isToday = c.current && c.day === TODAY_DAY && c.month === 4 && c.year === 2026
+                        const isToday = c.current && c.day === TODAY_DAY && c.month === TODAY_MONTH_IDX && c.year === TODAY_YEAR_NUM
                         const dayEvents = c.current ? (eventsByDay.get(c.day) ?? []) : []
                         return (
                           <div key={i}
@@ -347,12 +351,12 @@ export default function CalendarioPage() {
 
                 {/* ── VIEW: SEMANA ──────────────────────────────────── */}
                 {view === 'Semana' && (
-                  <SemanaView events={allEvents} todayY={2026} todayM={4} todayD={TODAY_DAY} />
+                  <SemanaView events={allEvents} todayY={TODAY_YEAR_NUM} todayM={TODAY_MONTH_IDX} todayD={TODAY_DAY} />
                 )}
 
                 {/* ── VIEW: DIA ─────────────────────────────────────── */}
                 {view === 'Dia' && (
-                  <DiaView events={allEvents} todayY={2026} todayM={4} todayD={TODAY_DAY} />
+                  <DiaView events={allEvents} todayY={TODAY_YEAR_NUM} todayM={TODAY_MONTH_IDX} todayD={TODAY_DAY} />
                 )}
 
                 {/* ── VIEW: AGENDA ──────────────────────────────────── */}

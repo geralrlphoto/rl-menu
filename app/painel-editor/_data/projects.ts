@@ -164,7 +164,7 @@ export function comparePtDate(a: string, b: string): number {
 }
 
 /** Hoje em dd/mm/yyyy (mock fixo para consistência) */
-export const TODAY = '24/05/2026'
+export const TODAY = '23/05/2026'
 
 /** Gera plano de pagamento — UMA única parcela por projeto (100%) */
 export function paymentPlanFor(p: Project): Installment[] {
