@@ -135,6 +135,7 @@ type Project = {
   recebido: string      // data de criação do projeto — dd/mm/yyyy HH:MM
   dataCasamento: string // dd/mm/yyyy
   entregaPrevista: string
+  entregueEm?: string   // dd/mm/yyyy HH:MM — preenchido automaticamente quando stage = Entregue
   pacote: 'Pacote Premium 👑' | 'Pacote Essencial'
   preco?: number        // valor total do projeto em €
   duracao: string       // ~12 min
@@ -482,7 +483,21 @@ export default function NovosProjetosPage() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / 10))
 
   function updateProject(id: string, patch: Partial<Project>) {
-    setProjects(prev => prev.map(p => p.id === id ? { ...p, ...patch } : p))
+    setProjects(prev => prev.map(p => {
+      if (p.id !== id) return p
+      const next = { ...p, ...patch }
+      // Auto-stamp entregueEm quando entra em Entregue (ou limpa se sair)
+      const goingToEntregue = patch.stage && patch.stage === 'Entregue' && p.stage !== 'Entregue'
+      const leavingEntregue = patch.stage && patch.stage !== 'Entregue' && p.stage === 'Entregue'
+      if (goingToEntregue && !next.entregueEm) {
+        const now = new Date()
+        next.entregueEm = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} — ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`
+      }
+      if (leavingEntregue) {
+        next.entregueEm = undefined
+      }
+      return next
+    }))
   }
 
   function deleteProject(id: string) {
@@ -1247,10 +1262,11 @@ function ProjectCard({
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-3 mt-1">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-1">
             <Meta label="Criado em"     value={p.recebido} />
             <Meta label="Data Casamento" value={p.dataCasamento} />
             <Meta label="Entrega Prevista" value={p.entregaPrevista} />
+            <DiasMeta recebido={p.recebido} entregueEm={p.entregueEm} entregaPrevista={p.entregaPrevista} stage={p.stage} />
             <ValorMeta projectId={p.id} value={p.preco} onSave={(v) => onChange({ preco: v })} />
           </div>
 
@@ -1569,6 +1585,66 @@ function Meta({ label, value }: { label: string; value: string }) {
     <div className="min-w-0">
       <p className="text-[10px] tracking-widest uppercase text-white/35 mb-0.5">{label}</p>
       <p className="text-[13px] font-medium text-white/85 truncate">{value}</p>
+    </div>
+  )
+}
+
+// Mostra dias decorridos desde a criação até à entrega (ou até hoje se ainda em curso).
+// Cor: gold em curso · emerald entregue dentro do prazo · red atrasado.
+function DiasMeta({ recebido, entregueEm, entregaPrevista, stage }: {
+  recebido: string
+  entregueEm?: string
+  entregaPrevista: string
+  stage: WorkflowStage
+}) {
+  const parse = (s: string): Date | null => {
+    if (!s) return null
+    const cleaned = s.split('—')[0].trim()
+    const [d, m, y] = cleaned.split('/').map(Number)
+    if (!d || !m || !y) return null
+    return new Date(y, m-1, d)
+  }
+  const startDt = parse(recebido)
+  if (!startDt) return <Meta label="Dias" value="—" />
+
+  const isDelivered = stage === 'Entregue'
+  const endDt = isDelivered
+    ? (parse(entregueEm || '') || parse(entregaPrevista) || new Date())
+    : new Date()
+  const days = Math.max(0, Math.floor((endDt.getTime() - startDt.getTime()) / 86400000))
+
+  // Prazo previsto em dias (do recebido até entregaPrevista)
+  const prazoDt = parse(entregaPrevista)
+  const prazoDias = prazoDt && startDt
+    ? Math.max(1, Math.floor((prazoDt.getTime() - startDt.getTime()) / 86400000))
+    : null
+
+  let color = 'text-gold'
+  let label = 'Em curso'
+  let suffix = ''
+  if (isDelivered) {
+    label = 'Entregue em'
+    if (prazoDias != null && days <= prazoDias) {
+      color = 'text-emerald-300'
+    } else if (prazoDias != null && days > prazoDias) {
+      color = 'text-yellow-300'
+      suffix = ` (+${days - prazoDias})`
+    } else {
+      color = 'text-emerald-300'
+    }
+  } else if (prazoDias != null && days > prazoDias) {
+    color = 'text-red-300'
+    suffix = ' atrasado'
+  } else if (prazoDias != null && days >= prazoDias - 2) {
+    color = 'text-yellow-300'
+  }
+
+  return (
+    <div className="min-w-0">
+      <p className="text-[10px] tracking-widest uppercase text-white/35 mb-0.5">{label}</p>
+      <p className={`text-[13px] font-bold truncate ${color}`}>
+        {days} {days === 1 ? 'dia' : 'dias'}{suffix}
+      </p>
     </div>
   )
 }
