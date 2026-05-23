@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { loadFreelancerProfile, saveFreelancerProfile, type FreelancerProfile, DEFAULT_FREELANCER_PROFILE } from '../_data/freelancer-profile'
 
 // ────────────────────────────────────────────────────────────────────────
 //  DADOS PESSOAIS — Wedding Moments Films
@@ -43,6 +44,18 @@ const RECENT_ACTIVITY = [
 export default function DadosPessoaisPage() {
   const [editMode, setEditMode] = useState(false)
   const [theme, setTheme] = useState<'dark'|'light'>('dark')
+  const [profile, setProfile] = useState<FreelancerProfile>(DEFAULT_FREELANCER_PROFILE)
+
+  // Carrega perfil de localStorage no mount
+  useEffect(() => {
+    setProfile(loadFreelancerProfile())
+  }, [])
+
+  function updateProfile(patch: Partial<FreelancerProfile>) {
+    const next = { ...profile, ...patch }
+    setProfile(next)
+    saveFreelancerProfile(next)
+  }
 
   return (
     <div className="min-h-screen text-white relative" style={{ background: '#0A0A0A' }}>
@@ -54,12 +67,12 @@ export default function DadosPessoaisPage() {
       <main className="relative z-10 lg:pl-[250px]">
         <div className="px-6 sm:px-8 py-6 max-w-[1700px] mx-auto">
 
-          <Hero theme={theme} onToggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')} onEdit={() => setEditMode(!editMode)} />
+          <Hero theme={theme} onToggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')} onEdit={() => setEditMode(!editMode)} editMode={editMode} />
 
           {/* 3-column row: Profile | Conta | Resumo */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-5">
-            <ProfileCard />
-            <AccountInfoCard />
+            <ProfileCard profile={profile} editMode={editMode} onChange={updateProfile} />
+            <AccountInfoCard profile={profile} editMode={editMode} onChange={updateProfile} />
             <ActivitySummaryCard />
           </div>
 
@@ -162,7 +175,7 @@ function Sidebar() {
 //  HERO
 // ────────────────────────────────────────────────────────────────────────
 
-function Hero({ theme, onToggleTheme, onEdit }: { theme: 'dark'|'light'; onToggleTheme: () => void; onEdit: () => void }) {
+function Hero({ theme, onToggleTheme, onEdit, editMode }: { theme: 'dark'|'light'; onToggleTheme: () => void; onEdit: () => void; editMode: boolean }) {
   return (
     <div className="relative overflow-hidden rounded-3xl border border-white/[0.08]"
       style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.6)' }}>
@@ -191,9 +204,13 @@ function Hero({ theme, onToggleTheme, onEdit }: { theme: 'dark'|'light'; onToggl
             {theme === 'dark' ? '☀' : '☾'}
           </button>
           <button onClick={onEdit}
-            className="inline-flex items-center gap-2 px-5 h-11 rounded-xl bg-gold text-black text-[13px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
-            style={{ boxShadow: '0 0 24px -4px rgba(201,164,92,0.5)' }}>
-            ✎ Editar Perfil
+            className={`inline-flex items-center gap-2 px-5 h-11 rounded-xl text-[13px] font-semibold tracking-wider transition-all ${
+              editMode
+                ? 'bg-emerald-500 text-black hover:bg-emerald-500/90'
+                : 'bg-gold text-black hover:bg-gold/90'
+            }`}
+            style={{ boxShadow: editMode ? '0 0 24px -4px rgba(52,211,153,0.5)' : '0 0 24px -4px rgba(201,164,92,0.5)' }}>
+            {editMode ? '✓ Concluir Edição' : '✎ Editar Perfil'}
           </button>
         </div>
       </div>
@@ -205,7 +222,7 @@ function Hero({ theme, onToggleTheme, onEdit }: { theme: 'dark'|'light'; onToggl
 //  PROFILE CARD
 // ────────────────────────────────────────────────────────────────────────
 
-function ProfileCard() {
+function ProfileCard({ profile, editMode, onChange }: { profile: FreelancerProfile; editMode: boolean; onChange: (patch: Partial<FreelancerProfile>) => void }) {
   return (
     <Card>
       <div className="flex items-start gap-5">
@@ -213,7 +230,7 @@ function ProfileCard() {
         <div className="relative shrink-0">
           <div className="w-32 h-32 rounded-full border-2 border-gold/40 overflow-hidden"
             style={{ boxShadow: '0 0 28px -6px rgba(201,164,92,0.3)' }}>
-            <img src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=300&h=300&fit=crop&crop=face" alt="Editor Pro" className="w-full h-full object-cover" />
+            <img src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=300&h=300&fit=crop&crop=face" alt={profile.nome} className="w-full h-full object-cover" />
           </div>
           <button className="absolute bottom-1 right-1 w-9 h-9 rounded-full bg-gold text-black flex items-center justify-center hover:bg-gold/90 transition-all"
             style={{ boxShadow: '0 0 14px rgba(201,164,92,0.5)' }} title="Alterar foto">
@@ -224,15 +241,20 @@ function ProfileCard() {
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
-            <h2 className="text-2xl font-light text-white" style={{ fontFamily: 'Georgia, serif' }}>Editor Pro</h2>
+            {editMode ? (
+              <input value={profile.nome} onChange={e => onChange({ nome: e.target.value })}
+                className="text-2xl font-light text-white bg-black/40 border border-gold/30 rounded-md px-2 py-0.5 focus:outline-none focus:border-gold/60" style={{ fontFamily: 'Georgia, serif' }} />
+            ) : (
+              <h2 className="text-2xl font-light text-white" style={{ fontFamily: 'Georgia, serif' }}>{profile.nome}</h2>
+            )}
             <span className="text-[10px] px-2 py-0.5 rounded-md bg-gold/15 border border-gold/30 text-gold uppercase tracking-widest font-bold">Freelancer</span>
           </div>
           <p className="text-[13px] text-white/55 mb-4">Editor de Vídeo & Colorista</p>
 
           <div className="space-y-2 text-[13px]">
-            <ContactLine ico="✉" value="editorpro@mail.com" />
-            <ContactLine ico="✆" value="+351 912 345 678" />
-            <ContactLine ico="◉" value="Lisboa, Portugal" />
+            <ContactLine ico="✉" value={profile.email} editable={editMode} onChange={(v) => onChange({ email: v })} />
+            <ContactLine ico="✆" value={profile.telefone} editable={editMode} onChange={(v) => onChange({ telefone: v })} />
+            <ContactLine ico="◉" value={profile.localizacao} editable={editMode} onChange={(v) => onChange({ localizacao: v })} />
           </div>
         </div>
       </div>
@@ -248,11 +270,16 @@ function ProfileCard() {
   )
 }
 
-function ContactLine({ ico, value }: { ico: string; value: string }) {
+function ContactLine({ ico, value, editable, onChange }: { ico: string; value: string; editable?: boolean; onChange?: (v: string) => void }) {
   return (
     <p className="flex items-center gap-2 text-white/80">
       <span className="text-gold/70 w-4 text-center">{ico}</span>
-      <span>{value}</span>
+      {editable && onChange ? (
+        <input value={value} onChange={e => onChange(e.target.value)}
+          className="flex-1 text-[13px] text-white bg-black/40 border border-gold/30 rounded-md px-2 py-0.5 focus:outline-none focus:border-gold/60" />
+      ) : (
+        <span>{value}</span>
+      )}
     </p>
   )
 }
@@ -261,27 +288,39 @@ function ContactLine({ ico, value }: { ico: string; value: string }) {
 //  ACCOUNT INFO
 // ────────────────────────────────────────────────────────────────────────
 
-function AccountInfoCard() {
-  const rows = [
-    ['Nome Completo',     'Editor Pro'],
-    ['Nome de Usuário',   'editorpro'],
-    ['Email',             'editorpro@mail.com'],
-    ['Telefone',          '+351 912 345 678'],
-    ['Data de Nascimento','15/07/1992'],
-    ['Localização',       'Lisboa, Portugal'],
-    ['Fuso Horário',      '🌐 (GMT+01:00) Lisboa'],
-    ['Idioma',            '🇵🇹 Português (Portugal)'],
+function AccountInfoCard({ profile, editMode, onChange }: { profile: FreelancerProfile; editMode: boolean; onChange: (patch: Partial<FreelancerProfile>) => void }) {
+  const rows: { label: string; key: keyof FreelancerProfile; type?: string; editable: boolean }[] = [
+    { label: 'Nome Completo',     key: 'nome',          editable: true },
+    { label: 'Nome de Usuário',   key: 'username',      editable: true },
+    { label: 'Email',             key: 'email',         type: 'email', editable: true },
+    { label: 'Telefone',          key: 'telefone',      type: 'tel',   editable: true },
+    { label: 'Data de Nascimento',key: 'dataNascimento',editable: true },
+    { label: 'Localização',       key: 'localizacao',   editable: true },
+    { label: 'Fuso Horário',      key: 'fusoHorario',   editable: false },
+    { label: 'Idioma',            key: 'idioma',        editable: false },
   ]
   return (
     <Card>
-      <CardHeader title="Informações da Conta" />
+      <CardHeader title="Informações da Conta" right={editMode ? <span className="text-[10px] text-gold/70 tracking-widest uppercase font-bold">Modo Edição</span> : undefined} />
       <div className="space-y-3.5">
-        {rows.map(([label, value]) => (
+        {rows.map(({ label, key, type, editable }) => (
           <div key={label} className="flex items-center justify-between gap-3 pb-3 border-b border-white/[0.04] last:border-0 last:pb-0">
-            <span className="text-[12px] text-white/45">{label}</span>
-            <span className="text-[13px] text-white font-medium text-right">{value}</span>
+            <span className="text-[12px] text-white/45 shrink-0">{label}</span>
+            {editMode && editable ? (
+              <input
+                type={type ?? 'text'}
+                value={profile[key]}
+                onChange={(e) => onChange({ [key]: e.target.value } as Partial<FreelancerProfile>)}
+                className="flex-1 ml-3 text-right text-[13px] text-white font-medium bg-black/40 border border-gold/30 rounded-md px-2 py-1 focus:outline-none focus:border-gold/60"
+              />
+            ) : (
+              <span className="text-[13px] text-white font-medium text-right truncate">{profile[key]}</span>
+            )}
           </div>
         ))}
+        {editMode && (
+          <p className="text-[10px] text-emerald-400/70 italic pt-2">✓ Alterações guardadas automaticamente.</p>
+        )}
       </div>
     </Card>
   )
