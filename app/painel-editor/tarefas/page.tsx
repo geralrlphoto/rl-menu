@@ -112,11 +112,15 @@ function deadlineLabel(date: string): string {
   return `${String(d).padStart(2,'0')} ${meses[m-1]}`
 }
 
+const USER_TASKS_STORAGE_KEY = 'painel-editor-user-tasks'
+
 export default function TarefasPage() {
   const [tasks, setTasks] = useState<Task[]>(TASKS)
+  const [userTasks, setUserTasks] = useState<Task[]>([])
   const [filter, setFilter] = useState<FilterTab>('Todas')
   const [search, setSearch] = useState('')
   const [showCompleted, setShowCompleted] = useState(false)
+  const [showNewTaskModal, setShowNewTaskModal] = useState(false)
 
   // ── Sincroniza com user-projects (localStorage) ─────────────────────
   useEffect(() => {
@@ -139,10 +143,15 @@ export default function TarefasPage() {
         setProjectsLookup([...userMappedProjects, ...aliveMocks])
 
         // 2) Gera tarefas automáticas para cada user-project
-        const userTasks: Task[] = userProjects.flatMap(generateTasksForUserProject)
+        const autoUserTasks: Task[] = userProjects.flatMap(generateTasksForUserProject)
 
-        // 3) Merge: tarefas auto-geradas + mock TASKS (filtra tarefas de projetos eliminados)
-        const allTasks = [...userTasks, ...TASKS].filter(t => !deletedIds.has(t.projectId))
+        // 3) Carrega tarefas criadas manualmente pelo user
+        const userTasksRaw = localStorage.getItem(USER_TASKS_STORAGE_KEY)
+        const userCreatedTasks: Task[] = userTasksRaw ? JSON.parse(userTasksRaw) : []
+        setUserTasks(userCreatedTasks)
+
+        // 4) Merge: user-criadas + auto-geradas + mock TASKS (filtra tarefas de projetos eliminados)
+        const allTasks = [...userCreatedTasks, ...autoUserTasks, ...TASKS].filter(t => !deletedIds.has(t.projectId))
         setTasks(allTasks)
       } catch {
         setProjectsLookup([...PROJECTS])
@@ -154,6 +163,18 @@ export default function TarefasPage() {
     window.addEventListener('focus', onFocus)
     return () => window.removeEventListener('focus', onFocus)
   }, [])
+
+  // Persistir tarefas criadas manualmente sempre que mudam
+  useEffect(() => {
+    try {
+      localStorage.setItem(USER_TASKS_STORAGE_KEY, JSON.stringify(userTasks))
+    } catch {}
+  }, [userTasks])
+
+  function addTask(newTask: Task) {
+    setUserTasks(prev => [newTask, ...prev])
+    setTasks(prev => [newTask, ...prev])
+  }
 
   // Filtros
   const filtered = useMemo(() => {
@@ -208,13 +229,15 @@ export default function TarefasPage() {
 
   // Toggle status
   function toggleTask(id: string) {
-    setTasks(prev => prev.map(t => {
+    const update = (t: Task): Task => {
       if (t.id !== id) return t
       if (t.status === 'Concluída') return { ...t, status: 'Pendente', progress: 0, completedAt: undefined }
       const now = new Date()
       const tm = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`
       return { ...t, status: 'Concluída', progress: 100, completedAt: `${TODAY} — ${tm}` }
-    }))
+    }
+    setTasks(prev => prev.map(update))
+    setUserTasks(prev => prev.map(update))
   }
 
   // Calendário (Maio 2026)
@@ -249,7 +272,7 @@ export default function TarefasPage() {
         <div className="px-6 sm:px-8 py-6 max-w-[1600px] mx-auto">
 
           {/* HERO */}
-          <Hero />
+          <Hero onNovaTarefa={() => setShowNewTaskModal(true)} />
 
           {/* GRID */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-5">
@@ -442,6 +465,15 @@ export default function TarefasPage() {
           <p className="text-center text-[10px] tracking-[0.4em] uppercase text-white/15 mt-12 mb-4">RL Photo.Video · Tarefas sincronizadas</p>
         </div>
       </main>
+
+      {/* Modal Nova Tarefa */}
+      {showNewTaskModal && (
+        <NovaTarefaModal
+          projects={getProjectsLookup()}
+          onClose={() => setShowNewTaskModal(false)}
+          onCreate={(t) => { addTask(t); setShowNewTaskModal(false) }}
+        />
+      )}
     </div>
   )
 }
@@ -524,7 +556,7 @@ function Sidebar() {
   )
 }
 
-function Hero() {
+function Hero({ onNovaTarefa }: { onNovaTarefa: () => void }) {
   return (
     <div className="relative overflow-hidden rounded-3xl border border-white/[0.08]"
       style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.6)' }}>
@@ -549,7 +581,10 @@ function Hero() {
             <span className="text-lg text-white/75 group-hover:text-gold">🔔</span>
             <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border border-black">3</span>
           </button>
-          <button className="inline-flex items-center gap-2 px-5 h-11 rounded-xl bg-gold text-black text-[13px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
+          <button
+            type="button"
+            onClick={onNovaTarefa}
+            className="inline-flex items-center gap-2 px-5 h-11 rounded-xl bg-gold text-black text-[13px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
             style={{ boxShadow: '0 0 24px -4px rgba(201,164,92,0.5)' }}>
             <span className="text-lg leading-none">+</span> Nova Tarefa
           </button>
@@ -677,6 +712,163 @@ function Legend({ color, label, value }: { color: string; label: string; value: 
       <span className="w-2.5 h-2.5 rounded-full" style={{ background: color, boxShadow: `0 0 6px ${color}99` }} />
       <span className="font-semibold text-white tabular-nums">{value}</span>
       <span className="text-white/55">{label}</span>
+    </div>
+  )
+}
+
+// ────────────────────────────────────────────────────────────────────────
+//  MODAL NOVA TAREFA
+// ────────────────────────────────────────────────────────────────────────
+function ptToIso(d: string): string {
+  if (!d) return ''
+  const [dd, mm, yyyy] = d.split('/')
+  return `${yyyy}-${mm}-${dd}`
+}
+function isoToPt(iso: string): string {
+  if (!iso) return ''
+  const [y, m, d] = iso.split('-')
+  return `${d}/${m}/${y}`
+}
+
+function NovaTarefaModal({
+  projects,
+  onClose,
+  onCreate,
+}: {
+  projects: Project[]
+  onClose: () => void
+  onCreate: (task: Task) => void
+}) {
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [projectId, setProjectId] = useState<string>(projects[0]?.id ?? '')
+  const [deadlineIso, setDeadlineIso] = useState<string>(ptToIso(TODAY))
+  const [hora, setHora] = useState<string>('')
+  const [priority, setPriority] = useState<Priority>('Média')
+  const [status, setStatus] = useState<TaskStatus>('Pendente')
+
+  const valid = title.trim().length > 0 && deadlineIso && projectId
+
+  function submit() {
+    if (!valid) return
+    const deadline = isoToPt(deadlineIso)
+    const id = `user-task-${Date.now()}`
+    const task: Task = {
+      id,
+      title: title.trim(),
+      description: description.trim() || undefined,
+      projectId,
+      assignee: 'Editor Pro',
+      assigneeAvatar: AVATAR_EDITOR,
+      deadline,
+      hora: hora || undefined,
+      priority,
+      status,
+      progress: status === 'Concluída' ? 100 : status === 'Em andamento' ? 30 : 0,
+      autoGenerated: false,
+    }
+    onCreate(task)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}>
+      <div className="relative w-full max-w-xl rounded-2xl border border-gold/30 overflow-hidden"
+        style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.98), rgba(11,9,5,0.99))', boxShadow: '0 30px 60px -20px rgba(0,0,0,0.8), 0 0 40px -10px rgba(201,164,92,0.35)' }}>
+        <button onClick={onClose}
+          className="absolute top-3 right-3 w-8 h-8 rounded-lg border border-white/10 text-white/55 hover:text-gold hover:border-gold/30 flex items-center justify-center text-lg z-10">×</button>
+
+        <div className="px-6 pt-6 pb-4 border-b border-white/[0.06]">
+          <p className="text-[11px] tracking-[0.4em] uppercase text-gold/70 font-bold mb-2">Criar Tarefa</p>
+          <h2 className="text-2xl font-light text-white" style={{ fontFamily: 'Georgia, serif' }}>Nova <span className="italic text-gold">Tarefa</span></h2>
+        </div>
+
+        <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+          {/* Título */}
+          <div>
+            <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-2">Título <span className="text-red-400">*</span></p>
+            <input value={title} onChange={e => setTitle(e.target.value)}
+              placeholder="Ex: Color grading Carolina & Felipe"
+              className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/30 focus:outline-none focus:border-gold/50" />
+          </div>
+
+          {/* Descrição */}
+          <div>
+            <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-2">Descrição</p>
+            <textarea value={description} onChange={e => setDescription(e.target.value)}
+              placeholder="Detalhes adicionais (opcional)"
+              rows={3}
+              className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/30 focus:outline-none focus:border-gold/50 resize-none" />
+          </div>
+
+          {/* Projeto */}
+          <div>
+            <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-2">Projeto <span className="text-red-400">*</span></p>
+            <select value={projectId} onChange={e => setProjectId(e.target.value)}
+              className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/50">
+              {projects.length === 0 && <option value="" style={{ background: '#1a1206' }}>— Nenhum projeto disponível —</option>}
+              {projects.map(p => (
+                <option key={p.id} value={p.id} style={{ background: '#1a1206' }}>{p.noivos} — {p.dataCasamento}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Data + Hora */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-2">Prazo <span className="text-red-400">*</span></p>
+              <input type="date" value={deadlineIso} onChange={e => setDeadlineIso(e.target.value)}
+                className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/50 [color-scheme:dark]" />
+            </div>
+            <div>
+              <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-2">Hora</p>
+              <input type="time" value={hora} onChange={e => setHora(e.target.value)}
+                className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/50 [color-scheme:dark]" />
+            </div>
+          </div>
+
+          {/* Prioridade */}
+          <div>
+            <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-2">Prioridade</p>
+            <div className="grid grid-cols-3 gap-2">
+              {(['Alta','Média','Baixa'] as Priority[]).map(p => {
+                const colorCls =
+                  p === 'Alta'  ? (priority === p ? 'bg-red-500/20 border-red-500/50 text-red-300'         : 'border-white/10 text-white/55 hover:border-red-500/30') :
+                  p === 'Média' ? (priority === p ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300' : 'border-white/10 text-white/55 hover:border-yellow-500/30') :
+                                  (priority === p ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300' : 'border-white/10 text-white/55 hover:border-emerald-500/30')
+                return (
+                  <button key={p} type="button" onClick={() => setPriority(p)}
+                    className={`px-3 py-2.5 rounded-lg border text-[12px] font-semibold tracking-wider transition-all ${colorCls}`}>
+                    {p}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Status inicial */}
+          <div>
+            <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-2">Estado inicial</p>
+            <select value={status} onChange={e => setStatus(e.target.value as TaskStatus)}
+              className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/50">
+              {(['Pendente','Em andamento','Em revisão','Bloqueada','Concluída'] as TaskStatus[]).map(s => (
+                <option key={s} value={s} style={{ background: '#1a1206' }}>{s}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-3 pt-2">
+            <button type="button" onClick={onClose}
+              className="flex-1 px-4 py-2.5 rounded-lg border border-white/10 text-white/65 text-[12px] font-semibold tracking-wider hover:border-white/25 hover:text-white transition-all">
+              Cancelar
+            </button>
+            <button type="button" onClick={submit} disabled={!valid}
+              className="flex-1 px-4 py-2.5 rounded-lg bg-gold text-black text-[12px] font-bold tracking-wider hover:bg-gold/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ boxShadow: '0 0 18px -4px rgba(201,164,92,0.5)' }}>
+              ✓ Criar Tarefa
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
