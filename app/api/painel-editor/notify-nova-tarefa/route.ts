@@ -89,8 +89,6 @@ export async function POST(req: NextRequest) {
                 ${escapeHtml(titulo)}
               </p>
 
-              ${descricao ? `<p style="margin:0 0 16px;font-size:13px;color:rgba(255,255,255,0.55);line-height:1.6;font-family:Arial,sans-serif;">${escapeHtml(descricao)}</p>` : ''}
-
               <!-- Meta rows -->
               <table cellpadding="0" cellspacing="0" style="width:100%;margin:12px 0 0;">
                 ${projeto ? metaRow('Projeto', projeto) : ''}
