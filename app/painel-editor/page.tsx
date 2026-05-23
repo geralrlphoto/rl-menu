@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { TODAY as TODAY_PT } from './_data/projects'
+import { TODAY as TODAY_PT, TASKS as MOCK_TASKS } from './_data/projects'
 
 // Hoje (derivado da constante canónica)
 const [_TD, _TM, _TY] = TODAY_PT.split('/').map(Number)
@@ -242,15 +242,56 @@ export default function PainelEditor() {
       if (m.entrega) ensure(m.entrega).deliveries.push(m.noivos)
     })
 
-    // 3) Tarefas criadas em /painel-editor/tarefas (filtra eliminadas)
+    // 3) TODAS as tarefas: user-criadas + auto-geradas para user-projects + mocks TASKS
+    //    (filtra eliminadas + projetos eliminados)
     try {
-      const raw = typeof window !== 'undefined' ? localStorage.getItem('painel-editor-user-tasks') : null
-      const userTasks: any[] = raw ? JSON.parse(raw) : []
-      const delRaw = typeof window !== 'undefined' ? localStorage.getItem('painel-editor-deleted-tasks') : null
+      const w = typeof window !== 'undefined' ? window : null
+      const userTasksRaw = w ? localStorage.getItem('painel-editor-user-tasks') : null
+      const userTasks: any[] = userTasksRaw ? JSON.parse(userTasksRaw) : []
+      const delRaw = w ? localStorage.getItem('painel-editor-deleted-tasks') : null
       const deleted = new Set<string>(delRaw ? JSON.parse(delRaw) : [])
-      userTasks
-        .filter(t => !deleted.has(t.id) && t.deadline)
+      const userProjRaw = w ? localStorage.getItem('painel-editor-user-projects') : null
+      const userProj: any[] = userProjRaw ? JSON.parse(userProjRaw) : []
+      const patchesRaw = w ? localStorage.getItem('painel-editor-project-patches') : null
+      const patches: Record<string, any> = patchesRaw ? JSON.parse(patchesRaw) : {}
+      const deletedProjIds = new Set<string>()
+      Object.entries(patches).forEach(([id, patch]) => {
+        if (patch?.archived || patch?.cancelled) deletedProjIds.add(id)
+      })
+
+      // Auto-tarefas: 5 por user-project com offsets 0/1/3/7/14 a partir do recebido
+      const autoUserTasks: { id: string; title: string; deadline: string; projectId: string }[] = []
+      userProj.forEach(p => {
+        const recebido = (p.recebido || '').split('—')[0].trim()
+        const [d, m, y] = (recebido || '').split('/').map(Number)
+        if (!d || !m || !y) return
+        const offsets = [
+          { title: 'Importar material',     days: 0 },
+          { title: 'Organizar ficheiros',   days: 1 },
+          { title: 'Iniciar edição',        days: 3 },
+          { title: 'Color grading',         days: 7 },
+          { title: 'Enviar primeira versão', days: 14 },
+        ]
+        offsets.forEach((o, i) => {
+          const dt = new Date(y, m-1, d); dt.setDate(dt.getDate() + o.days)
+          const deadline = `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`
+          autoUserTasks.push({ id: `${p.id}-task-${i}`, title: o.title, deadline, projectId: p.id })
+        })
+      })
+
+      // Mocks TASKS + user-criadas + auto-geradas
+      const all: { id: string; title: string; deadline: string; projectId?: string }[] = [
+        ...userTasks.map(t => ({ id: t.id, title: t.title, deadline: t.deadline, projectId: t.projectId })),
+        ...autoUserTasks,
+        ...MOCK_TASKS.map(t => ({ id: t.id, title: t.title, deadline: t.deadline, projectId: t.projectId })),
+      ]
+      const seen = new Set<string>()
+      all
+        .filter(t => t && !deleted.has(t.id) && (!t.projectId || !deletedProjIds.has(t.projectId)))
+        .filter(t => t.deadline && t.title)
         .forEach(t => {
+          if (seen.has(t.id)) return
+          seen.add(t.id)
           const iso = ptToISODate(t.deadline)
           if (iso) ensure(iso).tasks.push(t.title)
         })
@@ -303,8 +344,8 @@ export default function PainelEditor() {
     return { path: d, last, points: pts, w, h }
   }, [])
 
-  // ── Próximos compromissos: tarefas reais de /painel-editor/tarefas ──────
-  // Filtra: não concluídas, deadline >= hoje, ordena por data+hora, limita a 5
+  // ── Próximos compromissos: TODAS as tarefas (user + auto + mocks) ──────
+  // Filtra: não concluídas, ordena por data+hora ASC, limita a 5
   const compromissos = useMemo(() => {
     if (typeof window === 'undefined') return [] as { hora: string; titulo: string; sub: string; overdue: boolean; dateMs: number }[]
     try {
@@ -314,9 +355,12 @@ export default function PainelEditor() {
       const deleted = new Set<string>(delRaw ? JSON.parse(delRaw) : [])
       const userProjRaw = localStorage.getItem('painel-editor-user-projects')
       const userProj: any[] = userProjRaw ? JSON.parse(userProjRaw) : []
+      const patchesRaw = localStorage.getItem('painel-editor-project-patches')
+      const patches: Record<string, any> = patchesRaw ? JSON.parse(patchesRaw) : {}
+      const deletedProjIds = new Set<string>()
+      Object.entries(patches).forEach(([id, p]) => { if (p?.archived || p?.cancelled) deletedProjIds.add(id) })
 
       const todayMs = new Date(TODAY_YEAR_NUM, TODAY_MONTH_IDX, TODAY_DAY_NUM).getTime()
-
       const parseMs = (d: string, h?: string): number => {
         const [dd, mm, yyyy] = (d || '').split('/').map(Number)
         if (!dd || !mm || !yyyy) return 0
@@ -324,11 +368,41 @@ export default function PainelEditor() {
         return new Date(yyyy, mm - 1, dd, hh || 0, mi || 0).getTime()
       }
 
-      return userTasks
+      // Auto-tasks dos user-projects
+      const autoUserTasks: any[] = []
+      userProj.forEach(p => {
+        const recebido = (p.recebido || '').split('—')[0].trim()
+        const [d, m, y] = (recebido || '').split('/').map(Number)
+        if (!d || !m || !y) return
+        const offsets = [
+          { title: 'Importar material',     days: 0 },
+          { title: 'Organizar ficheiros',   days: 1 },
+          { title: 'Iniciar edição',        days: 3 },
+          { title: 'Color grading',         days: 7 },
+          { title: 'Enviar primeira versão', days: 14 },
+        ]
+        offsets.forEach((o, i) => {
+          const dt = new Date(y, m-1, d); dt.setDate(dt.getDate() + o.days)
+          const deadline = `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`
+          autoUserTasks.push({ id: `${p.id}-task-${i}`, title: o.title, deadline, projectId: p.id, status: 'Pendente' })
+        })
+      })
+
+      // Lookup nome de projeto (user + mocks via PROJECTS importado em outras páginas)
+      // No dashboard só temos userProj — para mocks usamos um lookup adicional via MOCK_TASKS.projectId+title
+      const projectNameLookup = new Map<string, string>()
+      userProj.forEach(p => projectNameLookup.set(p.id, p.noivos || ''))
+      // Mocks: usamos os projectIds p1..p5 mapeados aos nomes em MOCK_TASKS (sem PROJECTS importado, usamos t.projectId)
+      const allRaw = [...userTasks, ...autoUserTasks, ...MOCK_TASKS]
+
+      const seen = new Set<string>()
+      return allRaw
         .filter(t => !deleted.has(t.id))
         .filter(t => t.status !== 'Concluída' && t.status !== 'Cancelada')
+        .filter(t => !t.projectId || !deletedProjIds.has(t.projectId))
+        .filter(t => { if (seen.has(t.id)) return false; seen.add(t.id); return true })
         .map(t => {
-          const projeto = t.projectId ? userProj.find(p => p.id === t.projectId)?.noivos : null
+          const projeto = t.projectId ? projectNameLookup.get(t.projectId) || '' : ''
           const dateMs = parseMs(t.deadline, t.hora)
           return {
             hora: t.hora || '—',
