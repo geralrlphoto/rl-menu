@@ -31,12 +31,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'RESEND_API_KEY não configurada' }, { status: 500 })
   }
 
-  // Cores por prioridade
-  const cor =
-    prioridade === 'Alta'  ? { bg: 'rgba(239,68,68,0.18)', border: 'rgba(239,68,68,0.45)', text: '#fca5a5' } :
-    prioridade === 'Média' ? { bg: 'rgba(250,204,21,0.18)', border: 'rgba(250,204,21,0.45)', text: '#fde047' } :
-                             { bg: 'rgba(52,211,153,0.18)', border: 'rgba(52,211,153,0.45)', text: '#6ee7b7' }
-
   // Codifica payload em base64url para o freelancer abrir e responder
   const payload = {
     titulo,
@@ -53,92 +47,84 @@ export async function POST(req: NextRequest) {
   const b64 = Buffer.from(payloadStr, 'utf-8').toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
   const portalUrl = `https://rl-menu-lake.vercel.app/tarefa-resposta?d=${b64}`
 
+  // Card minimalista — sem dados específicos da tarefa
   const html = `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#050507;font-family:Georgia, 'Times New Roman', serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#050507;padding:40px 16px;">
     <tr><td align="center">
-      <table width="440" cellpadding="0" cellspacing="0" style="max-width:440px;width:100%;background:#0a0a12;border:1px solid rgba(201,164,92,0.18);">
 
-        <!-- Top gold line -->
-        <tr><td height="1" style="background:linear-gradient(90deg,#050507,rgba(201,164,92,0.6),#050507);font-size:0;line-height:0;">&nbsp;</td></tr>
+      <!-- Outer gold-bordered frame -->
+      <table width="440" cellpadding="0" cellspacing="0" style="max-width:440px;width:100%;background:#0a0a0c;border:1px solid rgba(201,164,92,0.45);border-radius:24px;">
 
-        <tr><td style="padding:44px 44px 36px;text-align:center;">
+        <tr><td style="padding:48px 40px 40px;text-align:center;">
 
-          <!-- Logo -->
-          <img src="https://rl-menu-lake.vercel.app/logo_marca_advocacia__8_-removebg-preview.png"
-            width="80" alt="RL PROD"
-            style="display:block;margin:0 auto 28px;width:80px;height:80px;object-fit:contain;" />
-
-          <!-- Label -->
-          <p style="margin:0 0 4px;font-size:8px;letter-spacing:6px;color:rgba(201,164,92,0.6);text-transform:uppercase;font-family:Arial,sans-serif;">Painel Editor</p>
-
-          <!-- Divider -->
-          <table cellpadding="0" cellspacing="0" style="margin:14px auto 22px;width:40px;"><tr><td height="1" style="background:rgba(201,164,92,0.4);font-size:0;line-height:0;">&nbsp;</td></tr></table>
-
-          <!-- Title -->
-          <p style="margin:0 0 24px;font-size:30px;font-weight:300;letter-spacing:2px;color:rgba(255,255,255,0.95);font-family:Georgia,serif;">
-            Nova <span style="color:#C9A45C;font-style:italic;">Tarefa</span>
-          </p>
-
-          ${freelancerNome ? `<p style="margin:0 0 28px;font-size:12px;color:rgba(255,255,255,0.45);font-family:Arial,sans-serif;">Olá <span style="color:#C9A45C;">${escapeHtml(freelancerNome)}</span>,</p>` : ''}
-
-          <p style="margin:0 0 28px;font-size:13px;color:rgba(255,255,255,0.55);line-height:1.7;font-family:Arial,sans-serif;font-weight:300;">
-            Foi-te atribuída uma nova tarefa.
-          </p>
-
-          <!-- Card detail -->
-          <table cellpadding="0" cellspacing="0" style="margin:0 auto 24px;width:100%;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);">
-            <tr><td style="padding:22px 24px;text-align:left;">
-
-              <!-- Priority badge -->
-              <table cellpadding="0" cellspacing="0" style="margin:0 0 14px;">
-                <tr><td style="background:${cor.bg};border:1px solid ${cor.border};padding:5px 12px;font-size:9px;letter-spacing:3px;color:${cor.text};text-transform:uppercase;font-weight:bold;font-family:Arial,sans-serif;">
-                  ${escapeHtml(prioridade)} Prioridade
-                </td></tr>
-              </table>
-
-              <!-- Title -->
-              <p style="margin:0 0 8px;font-size:18px;font-weight:400;color:rgba(255,255,255,0.95);font-family:Georgia,serif;">
-                ${escapeHtml(titulo)}
-              </p>
-
-              <!-- Meta rows -->
-              <table cellpadding="0" cellspacing="0" style="width:100%;margin:12px 0 0;">
-                ${projeto ? metaRow('Projeto', projeto) : ''}
-                ${metaRow('Prazo', `${prazo}${hora ? ` · ${hora}` : ''}`)}
-                ${status ? metaRow('Estado', status) : ''}
-              </table>
-
+          <!-- Logo RL em círculo -->
+          <table cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
+            <tr><td align="center" width="78" height="78" style="border:1.5px solid rgba(201,164,92,0.55);border-radius:50%;background:rgba(10,10,12,0.6);">
+              <img src="https://rl-menu-lake.vercel.app/logo_marca_advocacia__8_-removebg-preview.png"
+                width="56" alt="RL"
+                style="display:block;margin:0 auto;width:56px;height:56px;object-fit:contain;" />
             </td></tr>
           </table>
 
+          <!-- PHOTO VIDEO -->
+          <p style="margin:0;font-size:38px;font-weight:300;letter-spacing:8px;color:rgba(255,255,255,0.92);font-family:Georgia,serif;line-height:1;">PHOTO</p>
+          <p style="margin:6px 0 14px;font-size:38px;font-weight:300;letter-spacing:8px;color:rgba(255,255,255,0.92);font-family:Georgia,serif;line-height:1;">VIDEO</p>
+          <p style="margin:0 0 32px;font-size:10px;letter-spacing:6px;color:rgba(201,164,92,0.75);font-family:Georgia,serif;text-transform:uppercase;">Wedding Moments</p>
+
+          <!-- Divider gold com sparkle -->
+          <table cellpadding="0" cellspacing="0" style="margin:0 auto 36px;width:80%;"><tr>
+            <td height="1" style="background:linear-gradient(90deg, transparent, rgba(201,164,92,0.5), transparent);font-size:0;line-height:0;">&nbsp;</td>
+          </tr></table>
+
+          <!-- Ícone pessoa + download badge -->
+          <table cellpadding="0" cellspacing="0" style="margin:0 auto 32px;">
+            <tr><td align="center" width="160" height="160" style="border:1.5px solid rgba(201,164,92,0.55);border-radius:32px;background:radial-gradient(circle at 30% 30%, rgba(201,164,92,0.12), rgba(201,164,92,0.02));position:relative;">
+              <!-- pessoa SVG inline (gold stroke) -->
+              <table cellpadding="0" cellspacing="0" style="margin:0 auto;"><tr><td align="center" style="padding:34px 0 0;position:relative;">
+                <img src="https://rl-menu-lake.vercel.app/icon-person-task.png" width="80" alt=""
+                  onerror="this.style.display='none'"
+                  style="display:block;width:80px;height:80px;" />
+                <!-- fallback emoji (caso a img acima 404) -->
+                <span style="font-size:64px;line-height:1;color:#C9A45C;display:inline-block;">👤</span>
+              </td></tr></table>
+            </td></tr>
+          </table>
+
+          <!-- Label -->
+          <p style="margin:0 0 18px;font-size:11px;letter-spacing:5px;color:rgba(201,164,92,0.75);text-transform:uppercase;font-family:Georgia,serif;font-weight:bold;">Nova Tarefa</p>
+
+          <!-- Título -->
+          <p style="margin:0 0 16px;font-size:26px;font-weight:300;letter-spacing:0.5px;color:rgba(255,255,255,0.95);font-family:Georgia,serif;line-height:1.25;">
+            Nova tarefa atribuída
+          </p>
+
+          <!-- Mini divider -->
+          <table cellpadding="0" cellspacing="0" style="margin:0 auto 22px;width:60px;"><tr><td height="1" style="background:rgba(201,164,92,0.5);font-size:0;line-height:0;">&nbsp;</td></tr></table>
+
+          <!-- Descrição -->
+          <p style="margin:0 0 32px;font-size:13px;color:rgba(255,255,255,0.5);line-height:1.7;font-family:Arial,sans-serif;font-weight:300;padding:0 12px;">
+            Consulte o portal para ver todos<br>
+            os detalhes da tarefa atribuída a si.
+          </p>
+
           <!-- CTA -->
-          <table cellpadding="0" cellspacing="0" style="margin:8px auto 12px;width:100%;">
-            <tr><td style="border:1px solid rgba(201,164,92,0.45);background:rgba(201,164,92,0.08);text-align:center;">
+          <table cellpadding="0" cellspacing="0" style="margin:0 auto;width:80%;">
+            <tr><td style="border:1px solid rgba(201,164,92,0.55);border-radius:16px;background:rgba(201,164,92,0.03);text-align:center;">
               <a href="${portalUrl}"
-                style="display:block;padding:15px 32px;font-size:10px;letter-spacing:5px;color:#C9A45C;text-decoration:none;text-transform:uppercase;font-family:Arial,sans-serif;font-weight:600;">
-                Responder à Tarefa &rarr;
+                style="display:block;padding:16px 24px;font-size:14px;letter-spacing:0.5px;color:#E8C76D;text-decoration:none;font-family:Georgia,serif;font-weight:400;">
+                ↗ &nbsp;Consultar portal
               </a>
             </td></tr>
           </table>
 
-          <!-- URL hint -->
-          <p style="margin:14px 0 0;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.12);font-family:monospace;">
-            rl-menu-lake.vercel.app/tarefa-resposta
-          </p>
+          <!-- Wave gold subtle no fim -->
+          <table cellpadding="0" cellspacing="0" style="margin:32px auto 0;width:100%;"><tr>
+            <td height="1" style="background:linear-gradient(90deg, transparent 0%, rgba(201,164,92,0.4) 30%, rgba(201,164,92,0.6) 50%, rgba(201,164,92,0.4) 70%, transparent 100%);font-size:0;line-height:0;">&nbsp;</td>
+          </tr></table>
 
-        </td></tr>
-
-        <!-- Bottom line -->
-        <tr><td height="1" style="background:linear-gradient(90deg,#050507,rgba(201,164,92,0.3),#050507);font-size:0;line-height:0;">&nbsp;</td></tr>
-
-        <!-- Footer -->
-        <tr><td style="padding:18px 44px;text-align:center;">
-          <p style="margin:0;font-size:8px;letter-spacing:5px;color:rgba(255,255,255,0.12);text-transform:uppercase;font-family:Arial,sans-serif;">
-            RL PROD &middot; Wedding Moments Films &middot; Notificação Admin
-          </p>
         </td></tr>
 
       </table>
@@ -156,7 +142,7 @@ export async function POST(req: NextRequest) {
     body: JSON.stringify({
       from: 'RL PROD <geral@rlphotovideo.pt>',
       to: [to],
-      subject: `Nova Tarefa: ${titulo}`,
+      subject: `Nova tarefa atribuída · RL Photo.Video`,
       html,
     }),
   })
