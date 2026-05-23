@@ -296,6 +296,49 @@ export default function PainelEditor() {
     return { path: d, last, points: pts, w, h }
   }, [])
 
+  // ── Próximos compromissos: tarefas reais de /painel-editor/tarefas ──────
+  // Filtra: não concluídas, deadline >= hoje, ordena por data+hora, limita a 5
+  const compromissos = useMemo(() => {
+    if (typeof window === 'undefined') return [] as { hora: string; titulo: string; sub: string; overdue: boolean; dateMs: number }[]
+    try {
+      const raw = localStorage.getItem('painel-editor-user-tasks')
+      const userTasks: any[] = raw ? JSON.parse(raw) : []
+      const delRaw = localStorage.getItem('painel-editor-deleted-tasks')
+      const deleted = new Set<string>(delRaw ? JSON.parse(delRaw) : [])
+      const userProjRaw = localStorage.getItem('painel-editor-user-projects')
+      const userProj: any[] = userProjRaw ? JSON.parse(userProjRaw) : []
+
+      const todayMs = (() => {
+        const t = new Date(2026, 4, 24)  // mock today
+        return t.getTime()
+      })()
+
+      const parseMs = (d: string, h?: string): number => {
+        const [dd, mm, yyyy] = (d || '').split('/').map(Number)
+        if (!dd || !mm || !yyyy) return 0
+        const [hh, mi] = (h || '').split(':').map(Number)
+        return new Date(yyyy, mm - 1, dd, hh || 0, mi || 0).getTime()
+      }
+
+      return userTasks
+        .filter(t => !deleted.has(t.id))
+        .filter(t => t.status !== 'Concluída' && t.status !== 'Cancelada')
+        .map(t => {
+          const projeto = t.projectId ? userProj.find(p => p.id === t.projectId)?.noivos : null
+          const dateMs = parseMs(t.deadline, t.hora)
+          return {
+            hora: t.hora || '—',
+            titulo: t.title,
+            sub: projeto || (t.projectId ? '' : 'Sem projeto associado'),
+            overdue: dateMs > 0 && dateMs < todayMs,
+            dateMs,
+          }
+        })
+        .sort((a, b) => a.dateMs - b.dateMs)
+        .slice(0, 5)
+    } catch { return [] as any[] }
+  }, [storageTick])
+
   return (
     <div className="min-h-screen text-white relative" style={{ background: '#0B0B0B' }}>
       {/* Animação gold pulse para projetos novos não-abertos */}
@@ -620,19 +663,25 @@ export default function PainelEditor() {
                 </div>
               </div>
 
-              {/* Próximos compromissos */}
+              {/* Próximos compromissos — tarefas reais criadas em /painel-editor/tarefas */}
               <div className="rounded-2xl border border-white/[0.08] p-5"
                 style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
-                <h3 className="text-[15px] font-semibold text-white mb-4">Próximos compromissos</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-[15px] font-semibold text-white">Próximos compromissos</h3>
+                  <Link href="/painel-editor/tarefas" className="text-[11px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors">Ver todas →</Link>
+                </div>
                 <div className="space-y-3">
-                  {MOCK_COMPROMISSOS.map((c, i) => (
+                  {compromissos.length === 0 ? (
+                    <p className="text-[12px] text-white/30 italic py-2">Sem compromissos próximos. <Link href="/painel-editor/tarefas" className="text-gold/70 hover:text-gold underline">Criar tarefa →</Link></p>
+                  ) : compromissos.map((c, i) => (
                     <div key={i} className="flex items-start gap-3">
                       <p className="text-[13px] text-white/60 w-12 shrink-0 font-mono">{c.hora}</p>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-medium text-white">{c.titulo}</p>
-                        <p className="text-[11px] text-white/40">{c.sub}</p>
+                        <p className="text-[13px] font-medium text-white truncate">{c.titulo}</p>
+                        <p className="text-[11px] text-white/40 truncate">{c.sub}</p>
                       </div>
-                      <span className="w-2 h-2 rounded-full bg-gold mt-2 shrink-0" style={{ boxShadow: '0 0 6px rgba(201,164,92,0.7)' }} />
+                      <span className={`w-2 h-2 rounded-full mt-2 shrink-0 ${c.overdue ? 'bg-red-400' : 'bg-gold'}`}
+                        style={{ boxShadow: c.overdue ? '0 0 6px rgba(248,113,113,0.7)' : '0 0 6px rgba(201,164,92,0.7)' }} />
                     </div>
                   ))}
                 </div>
