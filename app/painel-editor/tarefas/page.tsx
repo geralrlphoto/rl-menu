@@ -866,6 +866,8 @@ function NovaTarefaModal({
           hora: task.hora,
           prioridade: task.priority,
           status: task.status,
+          // Para onde a resposta do freelancer vai voltar (email do admin RL Photo.Video)
+          adminEmail: 'ruimngpro@gmail.com',
         }),
       })
       const data = await res.json()

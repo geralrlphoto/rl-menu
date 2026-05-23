@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 type Body = {
-  to: string
+  to: string                // email do freelancer (destinatário)
   freelancerNome?: string
   titulo: string
   descricao?: string
@@ -10,6 +10,7 @@ type Body = {
   hora?: string             // HH:mm
   prioridade: 'Alta' | 'Média' | 'Baixa'
   status?: string
+  adminEmail?: string       // email do admin para onde voltam as respostas
 }
 
 export async function POST(req: NextRequest) {
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { to, freelancerNome, titulo, descricao, projeto, prazo, hora, prioridade, status } = body
+  const { to, freelancerNome, titulo, descricao, projeto, prazo, hora, prioridade, status, adminEmail } = body
 
   if (!to || !titulo || !prazo || !prioridade) {
     return NextResponse.json({ ok: false, error: 'Faltam campos obrigatórios (to, titulo, prazo, prioridade)' }, { status: 400 })
@@ -36,7 +37,21 @@ export async function POST(req: NextRequest) {
     prioridade === 'Média' ? { bg: 'rgba(250,204,21,0.18)', border: 'rgba(250,204,21,0.45)', text: '#fde047' } :
                              { bg: 'rgba(52,211,153,0.18)', border: 'rgba(52,211,153,0.45)', text: '#6ee7b7' }
 
-  const portalUrl = 'https://rl-menu-lake.vercel.app/painel-editor/tarefas'
+  // Codifica payload em base64url para o freelancer abrir e responder
+  const payload = {
+    titulo,
+    projeto,
+    prazo,
+    hora,
+    prioridade,
+    freelancerNome: freelancerNome ?? 'Freelancer',
+    freelancerEmail: to,
+    adminEmail: adminEmail ?? 'ruimngpro@gmail.com',
+  }
+  const payloadStr = JSON.stringify(payload)
+  // Buffer está disponível em Node runtime (Next API routes)
+  const b64 = Buffer.from(payloadStr, 'utf-8').toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+  const portalUrl = `https://rl-menu-lake.vercel.app/tarefa-resposta?d=${b64}`
 
   const html = `<!DOCTYPE html>
 <html>
@@ -104,14 +119,14 @@ export async function POST(req: NextRequest) {
             <tr><td style="border:1px solid rgba(201,164,92,0.45);background:rgba(201,164,92,0.08);text-align:center;">
               <a href="${portalUrl}"
                 style="display:block;padding:15px 32px;font-size:10px;letter-spacing:5px;color:#C9A45C;text-decoration:none;text-transform:uppercase;font-family:Arial,sans-serif;font-weight:600;">
-                Abrir Painel de Tarefas &rarr;
+                Responder à Tarefa &rarr;
               </a>
             </td></tr>
           </table>
 
           <!-- URL hint -->
           <p style="margin:14px 0 0;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.12);font-family:monospace;">
-            rl-menu-lake.vercel.app/painel-editor/tarefas
+            rl-menu-lake.vercel.app/tarefa-resposta
           </p>
 
         </td></tr>
