@@ -105,20 +105,10 @@ export async function POST(req: NextRequest) {
           <table cellpadding="0" cellspacing="0" style="margin:0 auto 22px;width:60px;"><tr><td height="1" style="background:rgba(201,164,92,0.5);font-size:0;line-height:0;">&nbsp;</td></tr></table>
 
           <!-- Descrição -->
-          <p style="margin:0 0 32px;font-size:13px;color:rgba(255,255,255,0.5);line-height:1.7;font-family:Arial,sans-serif;font-weight:300;padding:0 12px;">
+          <p style="margin:0 0 12px;font-size:13px;color:rgba(255,255,255,0.5);line-height:1.7;font-family:Arial,sans-serif;font-weight:300;padding:0 12px;">
             Consulte o portal para ver todos<br>
             os detalhes da tarefa atribuída a si.
           </p>
-
-          <!-- CTA -->
-          <table cellpadding="0" cellspacing="0" style="margin:0 auto;width:80%;">
-            <tr><td style="border:1px solid rgba(201,164,92,0.55);border-radius:16px;background:rgba(201,164,92,0.03);text-align:center;">
-              <a href="${portalUrl}"
-                style="display:block;padding:16px 24px;font-size:14px;letter-spacing:0.5px;color:#E8C76D;text-decoration:none;font-family:Georgia,serif;font-weight:400;">
-                ↗ &nbsp;Consultar portal
-              </a>
-            </td></tr>
-          </table>
 
           <!-- Wave gold subtle no fim -->
           <table cellpadding="0" cellspacing="0" style="margin:32px auto 0;width:100%;"><tr>
