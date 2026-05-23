@@ -114,10 +114,12 @@ function deadlineLabel(date: string): string {
 }
 
 const USER_TASKS_STORAGE_KEY = 'painel-editor-user-tasks'
+const DELETED_TASKS_STORAGE_KEY = 'painel-editor-deleted-tasks'
 
 export default function TarefasPage() {
   const [tasks, setTasks] = useState<Task[]>(TASKS)
   const [userTasks, setUserTasks] = useState<Task[]>([])
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set())
   const [filter, setFilter] = useState<FilterTab>('Todas')
   const [search, setSearch] = useState('')
   const [showCompleted, setShowCompleted] = useState(false)
@@ -151,8 +153,17 @@ export default function TarefasPage() {
         const userCreatedTasks: Task[] = userTasksRaw ? JSON.parse(userTasksRaw) : []
         setUserTasks(userCreatedTasks)
 
-        // 4) Merge: user-criadas + auto-geradas + mock TASKS (filtra tarefas de projetos eliminados)
-        const allTasks = [...userCreatedTasks, ...autoUserTasks, ...TASKS].filter(t => !deletedIds.has(t.projectId))
+        // 3b) Carrega tarefas eliminadas pelo user (ids ocultos persistidos)
+        const deletedRaw = localStorage.getItem(DELETED_TASKS_STORAGE_KEY)
+        const deletedTaskIds: string[] = deletedRaw ? JSON.parse(deletedRaw) : []
+        const deletedTaskSet = new Set(deletedTaskIds)
+        setDeletedIds(deletedTaskSet)
+
+        // 4) Merge: user-criadas + auto-geradas + mock TASKS
+        //    (filtra tarefas de projetos eliminados E tarefas explicitamente eliminadas)
+        const allTasks = [...userCreatedTasks, ...autoUserTasks, ...TASKS]
+          .filter(t => !deletedIds.has(t.projectId))
+          .filter(t => !deletedTaskSet.has(t.id))
         setTasks(allTasks)
       } catch {
         setProjectsLookup([...PROJECTS])
@@ -175,6 +186,19 @@ export default function TarefasPage() {
   function addTask(newTask: Task) {
     setUserTasks(prev => [newTask, ...prev])
     setTasks(prev => [newTask, ...prev])
+  }
+
+  function deleteTask(id: string) {
+    // Remove da lista visível e de userTasks (caso seja user-criada)
+    setTasks(prev => prev.filter(t => t.id !== id))
+    setUserTasks(prev => prev.filter(t => t.id !== id))
+    // Persiste o id em deletedIds para que mocks/auto-tarefas não reapareçam
+    setDeletedIds(prev => {
+      if (prev.has(id)) return prev
+      const next = new Set(prev); next.add(id)
+      try { localStorage.setItem(DELETED_TASKS_STORAGE_KEY, JSON.stringify([...next])) } catch {}
+      return next
+    })
   }
 
   // Filtros
@@ -315,21 +339,21 @@ export default function TarefasPage() {
               {/* Group: Tarefas de Hoje */}
               {hoje.length > 0 && (
                 <Section title="Tarefas de Hoje" count={hoje.length}>
-                  {hoje.map(t => <TaskRow key={t.id} t={t} onToggle={() => toggleTask(t.id)} />)}
+                  {hoje.map(t => <TaskRow key={t.id} t={t} onToggle={() => toggleTask(t.id)} onDelete={() => deleteTask(t.id)} />)}
                 </Section>
               )}
 
               {/* Group: Atrasadas */}
               {atrasadas.length > 0 && (
                 <Section title="Atrasadas" count={atrasadas.length} accent="red">
-                  {atrasadas.map(t => <TaskRow key={t.id} t={t} onToggle={() => toggleTask(t.id)} />)}
+                  {atrasadas.map(t => <TaskRow key={t.id} t={t} onToggle={() => toggleTask(t.id)} onDelete={() => deleteTask(t.id)} />)}
                 </Section>
               )}
 
               {/* Group: Próximas Tarefas */}
               {proximas.length > 0 && (
                 <Section title="Próximas Tarefas" count={proximas.length}>
-                  {proximas.map(t => <TaskRow key={t.id} t={t} onToggle={() => toggleTask(t.id)} />)}
+                  {proximas.map(t => <TaskRow key={t.id} t={t} onToggle={() => toggleTask(t.id)} onDelete={() => deleteTask(t.id)} />)}
                 </Section>
               )}
 
@@ -342,7 +366,7 @@ export default function TarefasPage() {
               )}
               {showCompleted && concluidas.length > 0 && (
                 <Section title="Concluídas" count={concluidas.length} accent="emerald">
-                  {concluidas.map(t => <TaskRow key={t.id} t={t} onToggle={() => toggleTask(t.id)} />)}
+                  {concluidas.map(t => <TaskRow key={t.id} t={t} onToggle={() => toggleTask(t.id)} onDelete={() => deleteTask(t.id)} />)}
                 </Section>
               )}
 
@@ -614,10 +638,21 @@ function Section({ title, count, accent, children }: { title: string; count: num
   )
 }
 
-function TaskRow({ t, onToggle }: { t: Task; onToggle: () => void }) {
+function TaskRow({ t, onToggle, onDelete }: { t: Task; onToggle: () => void; onDelete: () => void }) {
   const proj = projectFor(t.projectId)
   const done = t.status === 'Concluída'
   const overdue = isOverdue(t)
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  // Fecha menu ao clicar fora
+  useEffect(() => {
+    if (!menuOpen) return
+    const close = () => setMenuOpen(false)
+    // Pequeno timeout para não fechar com o próprio click de abertura
+    const id = setTimeout(() => window.addEventListener('click', close), 0)
+    return () => { clearTimeout(id); window.removeEventListener('click', close) }
+  }, [menuOpen])
+
   return (
     <div className="group flex items-center gap-4 p-3 rounded-xl border border-transparent hover:border-gold/20 hover:bg-white/[0.02] transition-all">
       {/* Checkbox */}
@@ -660,7 +695,28 @@ function TaskRow({ t, onToggle }: { t: Task; onToggle: () => void }) {
       </div>
 
       {/* Menu */}
-      <button className="w-8 h-8 rounded-lg text-white/35 hover:text-gold hover:bg-white/[0.04] transition-all flex items-center justify-center shrink-0">⋮</button>
+      <div className="relative shrink-0" onClick={e => e.stopPropagation()}>
+        <button onClick={() => setMenuOpen(v => !v)}
+          className="w-8 h-8 rounded-lg text-white/35 hover:text-gold hover:bg-white/[0.04] transition-all flex items-center justify-center">⋮</button>
+        {menuOpen && (
+          <div className="absolute right-0 top-9 w-48 rounded-xl border border-gold/20 backdrop-blur-xl p-1.5 z-20"
+            style={{ background: 'rgba(15,12,8,0.96)', boxShadow: '0 20px 50px -10px rgba(0,0,0,0.7)' }}>
+            <button onClick={() => { setMenuOpen(false); onToggle() }}
+              className="w-full text-left text-[12px] px-3 py-2 rounded-lg text-white/70 hover:text-gold hover:bg-gold/10 transition-all flex items-center gap-2">
+              <span>{done ? '↺' : '✓'}</span>
+              {done ? 'Marcar como pendente' : 'Marcar como concluída'}
+            </button>
+            <div className="my-1 h-px bg-white/[0.08]" />
+            <button onClick={() => {
+                setMenuOpen(false)
+                if (window.confirm(`Eliminar a tarefa "${t.title}"? Esta ação não pode ser desfeita.`)) onDelete()
+              }}
+              className="w-full text-left text-[12px] px-3 py-2 rounded-lg text-red-300 hover:text-red-200 hover:bg-red-500/15 transition-all flex items-center gap-2">
+              <span>🗑</span> Eliminar Tarefa
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
