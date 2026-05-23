@@ -253,20 +253,17 @@ export default function TarefasPage() {
     return { segments: segs, total }
   }, [counts])
 
-  // Toggle status — só Concluída requer resultado (modal). Reabrir é direto.
+  // Toggle status — só permite Pendente → Concluída (com modal de resultado).
+  // Tarefa Concluída fica TRANCADA: não pode ser revertida (regra de negócio).
   function toggleTask(id: string) {
     const task = tasks.find(t => t.id === id)
     if (!task) return
     if (task.status === 'Concluída') {
-      // Reabrir: limpa resultado + completedAt
-      const update = (t: Task): Task =>
-        t.id !== id ? t : { ...t, status: 'Pendente', progress: 0, completedAt: undefined, resultado: undefined }
-      setTasks(prev => prev.map(update))
-      setUserTasks(prev => prev.map(update))
-    } else {
-      // Concluir: abrir modal para escrever resultado
-      setCompletingTask(task)
+      // Bloqueado: não há reversão de Concluída.
+      return
     }
+    // Concluir: abrir modal para escrever resultado
+    setCompletingTask(task)
   }
 
   function completeTaskWithResultado(id: string, resultado: string) {
@@ -678,10 +675,15 @@ function TaskRow({ t, onToggle, onDelete }: { t: Task; onToggle: () => void; onD
 
   return (
     <div className="group flex items-center gap-4 p-3 rounded-xl border border-transparent hover:border-gold/20 hover:bg-white/[0.02] transition-all">
-      {/* Checkbox */}
-      <button onClick={onToggle}
+      {/* Checkbox — quando Concluída fica trancada (não permite reverter) */}
+      <button
+        onClick={done ? undefined : onToggle}
+        disabled={done}
+        title={done ? 'Tarefa concluída — não é possível reverter' : 'Marcar como concluída'}
         className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-          done ? 'bg-gold border-gold' : 'border-white/25 hover:border-gold/60'
+          done
+            ? 'bg-emerald-500 border-emerald-500 cursor-not-allowed'
+            : 'border-white/25 hover:border-gold/60 cursor-pointer'
         }`}>
         {done && <span className="text-[12px] text-black font-bold">✓</span>}
       </button>
@@ -728,13 +730,19 @@ function TaskRow({ t, onToggle, onDelete }: { t: Task; onToggle: () => void; onD
         <button onClick={() => setMenuOpen(v => !v)}
           className="w-8 h-8 rounded-lg text-white/35 hover:text-gold hover:bg-white/[0.04] transition-all flex items-center justify-center">⋮</button>
         {menuOpen && (
-          <div className="absolute right-0 top-9 w-48 rounded-xl border border-gold/20 backdrop-blur-xl p-1.5 z-20"
+          <div className="absolute right-0 top-9 w-52 rounded-xl border border-gold/20 backdrop-blur-xl p-1.5 z-20"
             style={{ background: 'rgba(15,12,8,0.96)', boxShadow: '0 20px 50px -10px rgba(0,0,0,0.7)' }}>
-            <button onClick={() => { setMenuOpen(false); onToggle() }}
-              className="w-full text-left text-[12px] px-3 py-2 rounded-lg text-white/70 hover:text-gold hover:bg-gold/10 transition-all flex items-center gap-2">
-              <span>{done ? '↺' : '✓'}</span>
-              {done ? 'Marcar como pendente' : 'Marcar como concluída'}
-            </button>
+            {done ? (
+              // Tarefa Concluída — não pode reverter, só eliminar
+              <div className="px-3 py-2 text-[11px] text-emerald-300/80 flex items-center gap-2">
+                <span>🔒</span> Tarefa concluída — bloqueada
+              </div>
+            ) : (
+              <button onClick={() => { setMenuOpen(false); onToggle() }}
+                className="w-full text-left text-[12px] px-3 py-2 rounded-lg text-white/70 hover:text-gold hover:bg-gold/10 transition-all flex items-center gap-2">
+                <span>✓</span> Marcar como concluída
+              </button>
+            )}
             <div className="my-1 h-px bg-white/[0.08]" />
             <button onClick={() => {
                 setMenuOpen(false)
