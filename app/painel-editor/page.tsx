@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { TODAY as TODAY_PT, TASKS as MOCK_TASKS, PROJECTS as MOCK_PROJECTS, paymentPlanFor, type Project as DataProject } from './_data/projects'
 import { NotificationBell } from './_components/NotificationBell'
+import { loadFreelancerProfile } from './_data/freelancer-profile'
 
 // Hoje (derivado da constante canónica)
 const [_TD, _TM, _TY] = TODAY_PT.split('/').map(Number)
@@ -394,6 +395,55 @@ export default function PainelEditor() {
       return result.sort((a, b) => b.diasAtraso - a.diasAtraso)
     } catch { return [] as any[] }
   }, [storageTick])
+
+  // ── Auto-notificação: envia email ao freelancer quando há projetos
+  //    atrasados ainda não notificados. Evita duplicados via localStorage.
+  useEffect(() => {
+    if (projetosAtrasados.length === 0) return
+    if (typeof window === 'undefined') return
+
+    let cancelled = false
+    ;(async () => {
+      try {
+        const profile = loadFreelancerProfile()
+        if (!profile.email || !profile.email.includes('@')) return
+
+        // IDs já notificados (não voltar a enviar)
+        const raw = localStorage.getItem('painel-editor-notified-overdue')
+        const notified = new Set<string>(raw ? JSON.parse(raw) : [])
+
+        // Filtra os que faltam notificar
+        const pending = projetosAtrasados.filter(p => !notified.has(p.id))
+        if (pending.length === 0) return
+
+        // Dispara em série (sem bloquear) para não saturar API
+        for (const proj of pending) {
+          if (cancelled) break
+          try {
+            const res = await fetch('/api/painel-editor/notify-projeto-atrasado', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                to: profile.email,
+                freelancerNome: profile.nome,
+                noivos: proj.noivos,
+                entregaPrevista: proj.entregaPrevista,
+                diasAtraso: proj.diasAtraso,
+                foto: proj.foto,
+              }),
+            })
+            const data = await res.json().catch(() => ({}))
+            if (res.ok && data?.ok) {
+              notified.add(proj.id)
+              localStorage.setItem('painel-editor-notified-overdue', JSON.stringify([...notified]))
+            }
+          } catch {}
+        }
+      } catch {}
+    })()
+
+    return () => { cancelled = true }
+  }, [projetosAtrasados])
 
   // ── Próximos compromissos: TODAS as tarefas (user + auto + mocks) ──────
   // Filtra: não concluídas, ordena por data+hora ASC, limita a 5
