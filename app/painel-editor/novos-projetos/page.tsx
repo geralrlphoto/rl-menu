@@ -458,6 +458,24 @@ export default function NovosProjetosPage() {
     setUnseenIds(prev => new Set([...prev, p.id]))   // brilho gold até abrir
     setShowAddModal(false)
     // não dou setExpanded aqui — deixo o user clicar para "abrir" e tirar o glow
+
+    // Auto-notifica o freelancer por email (card pré-desenhado, sem dados)
+    try {
+      const raw = localStorage.getItem('painel-editor-freelancer-profile')
+      const profile = raw ? JSON.parse(raw) : null
+      const email = profile?.email
+      if (email && email.includes('@')) {
+        fetch('/api/painel-editor/notify-novo-projeto', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: email,
+            freelancerNome: profile?.nome,
+            noivos: p.noivos,
+          }),
+        }).catch(() => {})
+      }
+    } catch {}
   }
 
   const filtered = useMemo(() => {
