@@ -124,6 +124,7 @@ export default function TarefasPage() {
   const [search, setSearch] = useState('')
   const [showCompleted, setShowCompleted] = useState(false)
   const [showNewTaskModal, setShowNewTaskModal] = useState(false)
+  const [completingTask, setCompletingTask] = useState<Task | null>(null)   // task que está prestes a ser marcada como Concluída
 
   // ── Sincroniza com user-projects (localStorage) ─────────────────────
   useEffect(() => {
@@ -252,17 +253,30 @@ export default function TarefasPage() {
     return { segments: segs, total }
   }, [counts])
 
-  // Toggle status
+  // Toggle status — só Concluída requer resultado (modal). Reabrir é direto.
   function toggleTask(id: string) {
-    const update = (t: Task): Task => {
-      if (t.id !== id) return t
-      if (t.status === 'Concluída') return { ...t, status: 'Pendente', progress: 0, completedAt: undefined }
-      const now = new Date()
-      const tm = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`
-      return { ...t, status: 'Concluída', progress: 100, completedAt: `${TODAY} — ${tm}` }
+    const task = tasks.find(t => t.id === id)
+    if (!task) return
+    if (task.status === 'Concluída') {
+      // Reabrir: limpa resultado + completedAt
+      const update = (t: Task): Task =>
+        t.id !== id ? t : { ...t, status: 'Pendente', progress: 0, completedAt: undefined, resultado: undefined }
+      setTasks(prev => prev.map(update))
+      setUserTasks(prev => prev.map(update))
+    } else {
+      // Concluir: abrir modal para escrever resultado
+      setCompletingTask(task)
     }
+  }
+
+  function completeTaskWithResultado(id: string, resultado: string) {
+    const now = new Date()
+    const tm = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`
+    const update = (t: Task): Task =>
+      t.id !== id ? t : { ...t, status: 'Concluída', progress: 100, completedAt: `${TODAY} — ${tm}`, resultado: resultado.trim() }
     setTasks(prev => prev.map(update))
     setUserTasks(prev => prev.map(update))
+    setCompletingTask(null)
   }
 
   // Calendário (Maio 2026)
@@ -499,6 +513,15 @@ export default function TarefasPage() {
           onCreate={(t) => { addTask(t); setShowNewTaskModal(false) }}
         />
       )}
+
+      {/* Modal Concluir Tarefa — obriga a escrever resultado */}
+      {completingTask && (
+        <ConcluirTarefaModal
+          task={completingTask}
+          onClose={() => setCompletingTask(null)}
+          onConfirm={(resultado) => completeTaskWithResultado(completingTask.id, resultado)}
+        />
+      )}
     </div>
   )
 }
@@ -672,6 +695,12 @@ function TaskRow({ t, onToggle, onDelete }: { t: Task; onToggle: () => void; onD
             : <span className="text-white/25 italic">Sem projeto associado</span>}
         </p>
         {t.completedAt && <p className="text-[10px] text-emerald-400/70 mt-0.5">✓ Concluída · {t.completedAt}</p>}
+        {done && t.resultado && (
+          <div className="mt-1.5 pl-2 border-l-2 border-emerald-500/40">
+            <p className="text-[10px] tracking-widest uppercase text-emerald-400/60 font-bold">Resultado</p>
+            <p className="text-[11px] text-white/65 leading-snug mt-0.5 line-clamp-2">{t.resultado}</p>
+          </div>
+        )}
       </div>
 
       {/* Priority */}
@@ -1054,6 +1083,79 @@ function NovaTarefaModal({
             E-mail destino: <span className="text-white/55">{profile.email}</span>
             <Link href="/painel-editor/dados-pessoais" className="ml-2 underline decoration-white/20 hover:text-gold hover:decoration-gold/40 transition-colors">editar</Link>
           </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ────────────────────────────────────────────────────────────────────────
+//  MODAL CONCLUIR TAREFA — obriga a escrever resultado
+// ────────────────────────────────────────────────────────────────────────
+function ConcluirTarefaModal({
+  task,
+  onClose,
+  onConfirm,
+}: {
+  task: Task
+  onClose: () => void
+  onConfirm: (resultado: string) => void
+}) {
+  const [resultado, setResultado] = useState('')
+  const valid = resultado.trim().length > 0
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}>
+      <div className="relative w-full max-w-lg rounded-2xl border border-emerald-500/30 overflow-hidden"
+        style={{ background: 'linear-gradient(180deg, rgba(8,18,12,0.98), rgba(5,11,8,0.99))', boxShadow: '0 30px 60px -20px rgba(0,0,0,0.8), 0 0 40px -10px rgba(52,211,153,0.3)' }}>
+        <button onClick={onClose}
+          className="absolute top-3 right-3 w-8 h-8 rounded-lg border border-white/10 text-white/55 hover:text-emerald-300 hover:border-emerald-500/30 flex items-center justify-center text-lg z-10">×</button>
+
+        <div className="px-6 pt-6 pb-4 border-b border-white/[0.06]">
+          <p className="text-[11px] tracking-[0.4em] uppercase text-emerald-400/80 font-bold mb-2">Concluir Tarefa</p>
+          <h2 className="text-2xl font-light text-white" style={{ fontFamily: 'Georgia, serif' }}>Marcar como <span className="italic text-emerald-300">concluída</span></h2>
+        </div>
+
+        <div className="p-6 space-y-4">
+          {/* Tarefa */}
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <p className="text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium mb-1">Tarefa</p>
+            <p className="text-[15px] font-medium text-white leading-snug">{task.title}</p>
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+              <span className={`text-[9px] px-2 py-0.5 rounded-full border tracking-widest uppercase font-bold ${priorityBadge(task.priority)}`}>{task.priority}</span>
+              <span className="text-[10px] text-white/35">Prazo · {task.deadline}{task.hora ? ` · ${task.hora}` : ''}</span>
+            </div>
+          </div>
+
+          {/* Resultado obrigatório */}
+          <div>
+            <p className="text-[11px] tracking-[0.3em] uppercase text-emerald-400/80 font-bold mb-2">
+              Resultado <span className="text-red-400 normal-case tracking-normal text-[10px] ml-1">(obrigatório)</span>
+            </p>
+            <textarea value={resultado} onChange={e => setResultado(e.target.value)}
+              autoFocus
+              placeholder="Descreve o que foi feito, decisões tomadas ou notas relevantes…"
+              rows={5}
+              className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/30 focus:outline-none focus:border-emerald-500/50 resize-none leading-relaxed" />
+            <p className="text-[10px] text-white/35 mt-1.5">
+              {resultado.trim().length > 0
+                ? `${resultado.trim().length} caracteres`
+                : 'Não é possível concluir sem escrever o resultado.'}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 pt-2">
+            <button type="button" onClick={onClose}
+              className="flex-1 px-4 py-2.5 rounded-lg border border-white/10 text-white/65 text-[12px] font-semibold tracking-wider hover:border-white/25 hover:text-white transition-all">
+              Cancelar
+            </button>
+            <button type="button" onClick={() => onConfirm(resultado)} disabled={!valid}
+              title={!valid ? 'Escreve o resultado antes de concluir.' : undefined}
+              className="flex-1 px-4 py-2.5 rounded-lg bg-emerald-500 text-black text-[12px] font-bold tracking-wider hover:bg-emerald-400 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-white/[0.04] disabled:text-white/30 flex items-center justify-center gap-2"
+              style={valid ? { boxShadow: '0 0 18px -4px rgba(52,211,153,0.5)' } : {}}>
+              {valid ? <>✓ Concluir Tarefa</> : <>🔒 Escreve o resultado</>}
+            </button>
+          </div>
         </div>
       </div>
     </div>
