@@ -126,6 +126,7 @@ export default function PainelEditor() {
   const [novosProjetos, setNovosProjetos] = useState<NovoMini[]>(MOCK_NOVOS)
   const [finalizadosProjetos, setFinalizadosProjetos] = useState<typeof MOCK_FINALIZADOS>(MOCK_FINALIZADOS)
   const [unseenIds, setUnseenIds] = useState<Set<string>>(new Set())
+  const [storageTick, setStorageTick] = useState(0)  // refresh signal para useMemos que leem localStorage
   // Inicializa com contagens calculadas dos defaults do mock
   const initialKpis = (() => {
     const stages = Object.values(MOCK_PROJECTS_STAGES)
@@ -199,8 +200,9 @@ export default function PainelEditor() {
 
   useEffect(() => {
     loadFromStorage()
+    setStorageTick(t => t + 1)
     // Refresh quando voltas à tab (cobre mudanças em /novos-projetos noutra aba)
-    const onFocus = () => loadFromStorage()
+    const onFocus = () => { loadFromStorage(); setStorageTick(t => t + 1) }
     window.addEventListener('focus', onFocus)
     return () => window.removeEventListener('focus', onFocus)
   }, [])
@@ -209,11 +211,11 @@ export default function PainelEditor() {
   const today = new Date(2026, 4, 20) // Maio 2026 dia 20 (mock)
   const [view, setView] = useState({ y: 2026, m: 4 })
 
-  // ── Marcas no calendário: criações + entregas ─────────────────────────
-  // Mapa: 'YYYY-MM-DD' → { creations: string[], deliveries: string[] }
+  // ── Marcas no calendário: criações + entregas + tarefas ───────────────
+  // Mapa: 'YYYY-MM-DD' → { creations: string[], deliveries: string[], tasks: string[] }
   const calendarMarks = useMemo(() => {
-    const marks: Record<string, { creations: string[]; deliveries: string[] }> = {}
-    const ensure = (k: string) => { if (!marks[k]) marks[k] = { creations: [], deliveries: [] }; return marks[k] }
+    const marks: Record<string, { creations: string[]; deliveries: string[]; tasks: string[] }> = {}
+    const ensure = (k: string) => { if (!marks[k]) marks[k] = { creations: [], deliveries: [], tasks: [] }; return marks[k] }
 
     // 1) Projetos criados pelo utilizador (localStorage) — têm recebido + entregaPrevista
     try {
@@ -233,13 +235,27 @@ export default function PainelEditor() {
       if (m.entrega) ensure(m.entrega).deliveries.push(m.noivos)
     })
 
+    // 3) Tarefas criadas em /painel-editor/tarefas (filtra eliminadas)
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('painel-editor-user-tasks') : null
+      const userTasks: any[] = raw ? JSON.parse(raw) : []
+      const delRaw = typeof window !== 'undefined' ? localStorage.getItem('painel-editor-deleted-tasks') : null
+      const deleted = new Set<string>(delRaw ? JSON.parse(delRaw) : [])
+      userTasks
+        .filter(t => !deleted.has(t.id) && t.deadline)
+        .forEach(t => {
+          const iso = ptToISODate(t.deadline)
+          if (iso) ensure(iso).tasks.push(t.title)
+        })
+    } catch {}
+
     return marks
-  }, [novosProjetos])
+  }, [novosProjetos, storageTick])
 
   const firstDay = new Date(view.y, view.m, 1).getDay()
   const lastDate = new Date(view.y, view.m + 1, 0).getDate()
   const prevLastDate = new Date(view.y, view.m, 0).getDate()
-  type Cell = { day: number; current: boolean; isToday: boolean; iso?: string; hasCreation?: boolean; hasDelivery?: boolean; creationNames?: string[]; deliveryNames?: string[] }
+  type Cell = { day: number; current: boolean; isToday: boolean; iso?: string; hasCreation?: boolean; hasDelivery?: boolean; hasTask?: boolean; creationNames?: string[]; deliveryNames?: string[]; taskNames?: string[] }
   const cells: Cell[] = []
   for (let i = firstDay - 1; i >= 0; i--) cells.push({ day: prevLastDate - i, current: false, isToday: false })
   for (let d = 1; d <= lastDate; d++) {
@@ -250,8 +266,10 @@ export default function PainelEditor() {
       day: d, current: true, isToday, iso,
       hasCreation: (mark?.creations.length ?? 0) > 0,
       hasDelivery: (mark?.deliveries.length ?? 0) > 0,
+      hasTask:     (mark?.tasks.length ?? 0) > 0,
       creationNames: mark?.creations,
       deliveryNames: mark?.deliveries,
+      taskNames:     mark?.tasks,
     })
   }
   while (cells.length % 7 !== 0) cells.push({ day: cells.length - lastDate - firstDay + 1, current: false, isToday: false })
@@ -546,6 +564,7 @@ export default function PainelEditor() {
                     const tooltip = [
                       ...(c.creationNames ?? []).map(n => `📅 Criado: ${n}`),
                       ...(c.deliveryNames ?? []).map(n => `🎯 Entrega: ${n}`),
+                      ...(c.taskNames ?? []).map(n => `◷ Tarefa: ${n}`),
                     ].join('\n')
                     return (
                       <button key={i}
@@ -570,13 +589,18 @@ export default function PainelEditor() {
                           <span className="absolute bottom-1 right-1 w-1.5 h-1.5 rounded-full bg-gold"
                             style={{ boxShadow: '0 0 6px rgba(201,164,92,0.9)' }} />
                         )}
+                        {/* Dot dourado top-right: tarefa */}
+                        {c.hasTask && c.current && !c.isToday && (
+                          <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-gold/80"
+                            style={{ boxShadow: '0 0 6px rgba(201,164,92,0.7)' }} />
+                        )}
                       </button>
                     )
                   })}
                 </div>
 
                 {/* Legenda */}
-                <div className="mt-4 flex items-center justify-center gap-4 text-[10px] text-white/45 pt-3 border-t border-white/[0.04]">
+                <div className="mt-4 flex items-center justify-center gap-4 text-[10px] text-white/45 pt-3 border-t border-white/[0.04] flex-wrap">
                   <span className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-blue-400" style={{ boxShadow: '0 0 5px rgba(96,165,250,0.7)' }} />
                     Criação
@@ -584,6 +608,10 @@ export default function PainelEditor() {
                   <span className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-gold" style={{ boxShadow: '0 0 5px rgba(201,164,92,0.8)' }} />
                     Entrega
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-gold/80" style={{ boxShadow: '0 0 5px rgba(201,164,92,0.6)' }} />
+                    Tarefa
                   </span>
                   <span className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-sm bg-gold" />

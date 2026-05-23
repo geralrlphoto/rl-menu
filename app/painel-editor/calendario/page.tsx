@@ -19,6 +19,38 @@ function stripTime(date: string): string {
   return (date || '').split('—')[0].trim()
 }
 
+// Lê tarefas (user-criadas + auto-geradas + mocks) do localStorage e converte em CalendarEvents.
+// Estas tarefas são geridas em /painel-editor/tarefas.
+function userTasksToEvents(): CalendarEvent[] {
+  if (typeof window === 'undefined') return []
+  const events: CalendarEvent[] = []
+  try {
+    // 1) Tarefas criadas manualmente
+    const userTasksRaw = localStorage.getItem('painel-editor-user-tasks')
+    const userTasks: any[] = userTasksRaw ? JSON.parse(userTasksRaw) : []
+
+    // 2) Ids eliminados pelo user (não devem aparecer)
+    const deletedRaw = localStorage.getItem('painel-editor-deleted-tasks')
+    const deleted = new Set<string>(deletedRaw ? JSON.parse(deletedRaw) : [])
+
+    userTasks.filter(t => !deleted.has(t.id)).forEach(t => {
+      if (!t.deadline || !t.title) return
+      events.push({
+        id: `task-${t.id}`,
+        title: t.title,
+        subtitle: t.description || (t.projectId ? '' : 'Sem projeto associado'),
+        date: t.deadline,
+        hora: t.hora,
+        type: 'Tarefa',
+        projectId: t.projectId,
+        todoODia: !t.hora,
+        completed: t.status === 'Concluída',
+      })
+    })
+  } catch {}
+  return events
+}
+
 function userProjectsToEvents(): CalendarEvent[] {
   if (typeof window === 'undefined') return []
   let userProjects: any[] = []
@@ -89,12 +121,14 @@ type ViewMode = 'Mês' | 'Semana' | 'Dia' | 'Agenda'
 export default function CalendarioPage() {
   const baseEvents = useMemo(() => eventsFromProjects(), [])
   const [userEvents, setUserEvents] = useState<CalendarEvent[]>([])
+  const [taskEvents, setTaskEvents] = useState<CalendarEvent[]>([])
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set())
 
-  // Ler projetos criados pelo utilizador (localStorage) e gerar os seus eventos
+  // Ler projetos + tarefas criados pelo utilizador (localStorage) e gerar os seus eventos
   useEffect(() => {
     function load() {
       setUserEvents(userProjectsToEvents())
+      setTaskEvents(userTasksToEvents())
       // Detecta mocks eliminados via patches (archived/cancelled)
       try {
         const raw = localStorage.getItem('painel-editor-project-patches')
@@ -114,8 +148,8 @@ export default function CalendarioPage() {
 
   const allEvents = useMemo(() => {
     // Filtra eventos de projetos eliminados (archived/cancelled)
-    return [...userEvents, ...baseEvents].filter(e => !e.projectId || !deletedIds.has(e.projectId))
-  }, [userEvents, baseEvents, deletedIds])
+    return [...taskEvents, ...userEvents, ...baseEvents].filter(e => !e.projectId || !deletedIds.has(e.projectId))
+  }, [taskEvents, userEvents, baseEvents, deletedIds])
   const [view, setView] = useState<ViewMode>('Mês')
   const [calView, setCalView] = useState({ y: 2026, m: 4 }) // Maio 2026
   const [typeFilter, setTypeFilter] = useState<'Todos' | EventType>('Todos')
@@ -241,6 +275,7 @@ export default function CalendarioPage() {
                       className="bg-black/30 border border-white/[0.08] rounded-lg px-3 py-1.5 text-[12px] text-white/70 focus:outline-none focus:border-gold/40 cursor-pointer">
                       <option>Todos os tipos</option>
                       <option>Casamento</option>
+                      <option>Tarefa</option>
                       <option>Prazo</option>
                       <option>Entrega</option>
                       <option>Revisão</option>
@@ -329,6 +364,7 @@ export default function CalendarioPage() {
                 <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 mt-5 pt-5 border-t border-white/[0.04]">
                   {[
                     { type: 'Casamento' as EventType, label: 'Casamentos' },
+                    { type: 'Tarefa' as EventType,    label: 'Tarefas' },
                     { type: 'Prazo' as EventType,     label: 'Prazos' },
                     { type: 'Entrega' as EventType,   label: 'Entregas' },
                     { type: 'Revisão' as EventType,   label: 'Revisões' },

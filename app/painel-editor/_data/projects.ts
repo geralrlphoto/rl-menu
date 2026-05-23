@@ -264,7 +264,7 @@ export const AUTO_TASKS_TEMPLATE: { title: string; priority: Priority }[] = [
 //  CALENDÁRIO (eventos derivados dos projetos)
 // ────────────────────────────────────────────────────────────────────────
 
-export type EventType = 'Casamento' | 'Prazo' | 'Entrega' | 'Revisão' | 'Pagamento' | 'Reunião' | 'Urgente'
+export type EventType = 'Casamento' | 'Prazo' | 'Entrega' | 'Revisão' | 'Pagamento' | 'Reunião' | 'Tarefa' | 'Urgente'
 
 export type CalendarEvent = {
   id: string
@@ -285,6 +285,7 @@ const EVENT_COLORS: Record<EventType, { dot: string; bg: string; text: string; b
   Revisão:   { dot: '#facc15', bg: 'bg-yellow-500/10',   text: 'text-yellow-200',  badge: 'bg-yellow-500/15 text-yellow-300 border-yellow-500/30' },
   Pagamento: { dot: '#fb923c', bg: 'bg-orange-500/10',   text: 'text-orange-200',  badge: 'bg-orange-500/15 text-orange-300 border-orange-500/30' },
   Reunião:   { dot: '#06b6d4', bg: 'bg-cyan-500/10',     text: 'text-cyan-200',    badge: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30' },
+  Tarefa:    { dot: '#C9A45C', bg: 'bg-gold/10',         text: 'text-gold',        badge: 'bg-gold/15 text-gold border-gold/30' },
   Urgente:   { dot: '#ef4444', bg: 'bg-red-500/10',      text: 'text-red-200',     badge: 'bg-red-500/15 text-red-300 border-red-500/30' },
 }
 
