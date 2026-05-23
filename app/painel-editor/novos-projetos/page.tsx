@@ -1193,6 +1193,161 @@ function Field({ label, children, required }: { label: string; children: React.R
 // ──────────────────────────────────────────────────────────────────────────
 //  PROJECT CARD
 // ──────────────────────────────────────────────────────────────────────────
+// Modal de edição rápida dos dados-base do projeto (cabeçalho do card)
+function EditarDadosModal({
+  project,
+  onClose,
+  onSave,
+}: {
+  project: Project
+  onClose: () => void
+  onSave: (patch: Partial<Project>) => void
+}) {
+  const [referencia, setReferencia] = useState(project.referencia || '')
+  const [noivos, setNoivos] = useState(project.noivos || '')
+  const [local, setLocal] = useState(project.local || '')
+  const [foto, setFoto] = useState(project.foto || '')
+  const [duracao, setDuracao] = useState(project.duracao || '')
+
+  const ptToIso = (d: string) => {
+    if (!d) return ''
+    const cleaned = d.split('—')[0].trim()
+    const [dd, mm, yyyy] = cleaned.split('/')
+    if (!dd || !mm || !yyyy) return ''
+    return `${yyyy}-${mm}-${dd}`
+  }
+  const isoToPt = (iso: string) => {
+    if (!iso) return ''
+    const [y, m, d] = iso.split('-')
+    return `${d}/${m}/${y}`
+  }
+
+  const [criadoEm, setCriadoEm] = useState(ptToIso(project.recebido || ''))
+  const [dataCasamento, setDataCasamento] = useState(ptToIso(project.dataCasamento || ''))
+  const [entregaPrevista, setEntregaPrevista] = useState(ptToIso(project.entregaPrevista || ''))
+  const [valor, setValor] = useState<string>(project.preco && project.preco > 0 ? String(project.preco) : '')
+
+  function submit() {
+    const precoNum = Number(String(valor).replace(/[^\d,.]/g, '').replace(',', '.')) || 0
+    const patch: Partial<Project> = {
+      referencia: referencia.trim() || undefined,
+      noivos: noivos.trim() || project.noivos,
+      local: local.trim() || undefined,
+      foto: foto.trim() || project.foto,
+      duracao: duracao.trim() || project.duracao,
+      recebido: isoToPt(criadoEm) || project.recebido,
+      dataCasamento: isoToPt(dataCasamento) || project.dataCasamento,
+      entregaPrevista: isoToPt(entregaPrevista) || project.entregaPrevista,
+      preco: precoNum,
+    }
+    onSave(patch)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}>
+      <div className="relative w-full max-w-2xl rounded-2xl border border-gold/30 overflow-hidden"
+        style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.98), rgba(11,9,5,0.99))', boxShadow: '0 30px 60px -20px rgba(0,0,0,0.8), 0 0 40px -10px rgba(201,164,92,0.35)' }}>
+        <button onClick={onClose}
+          className="absolute top-3 right-3 w-8 h-8 rounded-lg border border-white/10 text-white/55 hover:text-gold hover:border-gold/30 flex items-center justify-center text-lg z-10">×</button>
+
+        <div className="px-6 pt-6 pb-4 border-b border-white/[0.06]">
+          <p className="text-[11px] tracking-[0.4em] uppercase text-gold/70 font-bold mb-2">Editar Projeto</p>
+          <h2 className="text-2xl font-light text-white" style={{ fontFamily: 'Georgia, serif' }}>
+            {project.noivos}
+          </h2>
+        </div>
+
+        <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+          {/* Referência + Noivos */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <Label>Referência</Label>
+              <input value={referencia} onChange={e => setReferencia(e.target.value)}
+                placeholder="CAS_001_26_RL"
+                className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/30 focus:outline-none focus:border-gold/50 font-mono" />
+            </div>
+            <div className="sm:col-span-2">
+              <Label>Noivos <span className="text-red-400">*</span></Label>
+              <input value={noivos} onChange={e => setNoivos(e.target.value)}
+                placeholder="Nome dos noivos"
+                className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-gold/50" />
+            </div>
+          </div>
+
+          {/* Local */}
+          <div>
+            <Label>Local</Label>
+            <input value={local} onChange={e => setLocal(e.target.value)}
+              placeholder="Ex: Quinta da Bichinha, Lisboa"
+              className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/30 focus:outline-none focus:border-gold/50" />
+          </div>
+
+          {/* Foto URL + Duração */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="sm:col-span-2">
+              <Label>URL da Foto</Label>
+              <input value={foto} onChange={e => setFoto(e.target.value)}
+                placeholder="https://..."
+                className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[12px] text-white placeholder:text-white/30 focus:outline-none focus:border-gold/50 font-mono" />
+            </div>
+            <div>
+              <Label>Duração do Vídeo</Label>
+              <input value={duracao} onChange={e => setDuracao(e.target.value)}
+                placeholder="~12 min"
+                className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/30 focus:outline-none focus:border-gold/50" />
+            </div>
+          </div>
+
+          {/* Datas */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <Label>Criado em</Label>
+              <input type="date" value={criadoEm} onChange={e => setCriadoEm(e.target.value)}
+                className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/50 [color-scheme:dark]" />
+            </div>
+            <div>
+              <Label>Data Casamento</Label>
+              <input type="date" value={dataCasamento} onChange={e => setDataCasamento(e.target.value)}
+                className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/50 [color-scheme:dark]" />
+            </div>
+            <div>
+              <Label>Entrega Prevista</Label>
+              <input type="date" value={entregaPrevista} onChange={e => setEntregaPrevista(e.target.value)}
+                className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/50 [color-scheme:dark]" />
+            </div>
+          </div>
+
+          {/* Valor */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Valor do Projeto (€)</Label>
+              <div className="relative">
+                <input type="number" value={valor} onChange={e => setValor(e.target.value)}
+                  placeholder="0"
+                  className="w-full bg-black/40 border border-white/15 rounded-lg pl-3 pr-10 py-2.5 text-[14px] text-gold font-bold focus:outline-none focus:border-gold/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gold/60 text-[12px]">€</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Botões */}
+          <div className="flex items-center gap-3 pt-2">
+            <button type="button" onClick={onClose}
+              className="flex-1 px-4 py-2.5 rounded-lg border border-white/10 text-white/65 text-[12px] font-semibold tracking-wider hover:border-white/25 hover:text-white transition-all">
+              Cancelar
+            </button>
+            <button type="button" onClick={submit}
+              className="flex-1 px-4 py-2.5 rounded-lg bg-gold text-black text-[12px] font-bold tracking-wider hover:bg-gold/90 transition-all"
+              style={{ boxShadow: '0 0 18px -4px rgba(201,164,92,0.5)' }}>
+              ✓ Guardar Alterações
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ProjectCard({
   p, expanded, isUnseen, onToggle, onChange, onDelete,
 }: {
@@ -1204,6 +1359,7 @@ function ProjectCard({
   onDelete?: () => void
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [editingDados, setEditingDados] = useState(false)
   const badge = shortBadge(p.stage)
   const progress = progressFromStage(p.stage)
 
@@ -1312,7 +1468,7 @@ function ProjectCard({
                     },
                     {
                       label: 'Editar Dados', icon: '✎',
-                      action: () => { if (!expanded) onToggle(); toast('A ficha de edição abriu em baixo') },
+                      action: () => setEditingDados(true),
                     },
                     {
                       label: 'Adicionar Observação', icon: '+',
@@ -1671,6 +1827,15 @@ function ProjectCard({
             />
           </Section>
         </div>
+      )}
+
+      {/* Modal de edição rápida dos dados-base */}
+      {editingDados && (
+        <EditarDadosModal
+          project={p}
+          onClose={() => setEditingDados(false)}
+          onSave={(patch) => { onChange(patch); setEditingDados(false) }}
+        />
       )}
     </div>
   )
