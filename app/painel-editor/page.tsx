@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { TODAY as TODAY_PT, TASKS as MOCK_TASKS } from './_data/projects'
+import { TODAY as TODAY_PT, TASKS as MOCK_TASKS, PROJECTS as MOCK_PROJECTS, paymentPlanFor, type Project as DataProject } from './_data/projects'
 
 // Hoje (derivado da constante canónica)
 const [_TD, _TM, _TY] = TODAY_PT.split('/').map(Number)
@@ -461,6 +461,67 @@ export default function PainelEditor() {
     } catch { return [] as any[] }
   }, [storageTick])
 
+  // ── Recebimentos Total Anual (mesmo cálculo do /painel-editor/pagamentos) ──
+  // Soma das parcelas com status 'Recebido' no ano corrente, aplicando overrides
+  const totalAnualEuros = useMemo(() => {
+    if (typeof window === 'undefined') return 0
+    try {
+      // 1) user-projects do localStorage
+      const userRaw = localStorage.getItem('painel-editor-user-projects')
+      const userProjects: any[] = userRaw ? JSON.parse(userRaw) : []
+      // 2) Patches sobre mocks (preço/stage etc.)
+      const patchesRaw = localStorage.getItem('painel-editor-project-patches')
+      const patches: Record<string, Partial<DataProject>> = patchesRaw ? JSON.parse(patchesRaw) : {}
+      // 3) Payment overrides (Aguarda/Pago manual via dropdown)
+      const ovRaw = localStorage.getItem('painel-editor-payment-overrides')
+      const overrides: Record<string, { status: 'A receber'|'Recebido'; paidDate?: string; metodo?: string }> = ovRaw ? JSON.parse(ovRaw) : {}
+
+      // user-mapped (formato Project) — mantém preço definido pelo user
+      const userMapped: DataProject[] = userProjects.map(p => ({
+        id: p.id, noivos: p.noivos ?? '—', foto: p.foto || '',
+        email: p.email || '', telefone: p.telefone || '',
+        recebido: (p.recebido || '').split('—')[0].trim(),
+        dataCasamento: p.dataCasamento || '',
+        entregaPrevista: p.entregaPrevista || '',
+        pacote: p.pacote ?? 'Pacote Premium 👑',
+        preco: typeof p.preco === 'number' && p.preco > 0 ? p.preco : (p.pacote === 'Pacote Essencial' ? 1800 : 3500),
+        duracao: p.duracao || '',
+        stage: p.stage ?? 'Novo Projeto',
+        approval: p.approval ?? 'Aguardando Revisão',
+        progress: 0, editor: p.editor || 'Editor Pro',
+        finalEntregue: p.stage === 'Entregue',
+        finalLink: p.finalLink || '',
+        archived: p.archived, cancelled: p.cancelled,
+      })) as any
+
+      // Merge: user + mocks com patches (filtra eliminados)
+      const merged: DataProject[] = [
+        ...userMapped,
+        ...MOCK_PROJECTS
+          .map(p => patches[p.id] ? { ...p, ...patches[p.id] } : p)
+          .filter(p => !(p as any).archived && !(p as any).cancelled),
+      ]
+
+      // Soma das parcelas Recebido no ano corrente
+      const year = String(TODAY_YEAR_NUM)
+      let total = 0
+      merged.forEach(p => {
+        const plan = paymentPlanFor(p)
+        plan.forEach(inst => {
+          const ov = overrides[p.id]
+          const status = ov ? ov.status : inst.status
+          const paidDate = ov ? ov.paidDate ?? null : inst.paidDate
+          if (status === 'Recebido' && (paidDate ?? '').split('/')[2] === year) {
+            total += inst.value
+          }
+        })
+      })
+      return total
+    } catch { return 0 }
+  }, [storageTick])
+
+  const totalAnualLabel = new Intl.NumberFormat('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(totalAnualEuros) + ' €'
+
   // ── Unseen tasks (glow gold até clicar) ──────────────────────────────
   const [unseenTaskIds, setUnseenTaskIds] = useState<Set<string>>(new Set())
 
@@ -618,7 +679,7 @@ export default function PainelEditor() {
               { label: 'Novos Projetos', value: kpiCounts.novos.toString(),       sub: 'Aguardando início', icon: '◫', href: '/painel-editor/novos-projetos' },
               { label: 'Em Andamento',   value: kpiCounts.andamento.toString(),   sub: 'Em edição ativa',   icon: '✎', href: '/painel-editor/novos-projetos' },
               { label: 'Finalizados',    value: kpiCounts.finalizados.toString(), sub: 'Este mês',          icon: '✓', href: '/painel-editor/novos-projetos' },
-              { label: 'Recebimentos',   value: '24.850,00 €',                    sub: 'Este mês',          icon: '€', href: '/painel-editor/pagamentos' },
+              { label: 'Recebimentos',   value: totalAnualLabel,                  sub: `Total ${TODAY_YEAR_NUM}`, icon: '€', href: '/painel-editor/pagamentos' },
             ]).map((k, i) => (
               <Link key={i} href={k.href}
                 className="group relative overflow-hidden rounded-2xl border border-white/[0.08] p-5 hover:border-gold/30 transition-all cursor-pointer"
@@ -911,10 +972,10 @@ export default function PainelEditor() {
                     <circle cx={chartPath.last.x} cy={chartPath.last.y} r="9" fill="#C9A45C" opacity="0.18" />
                   </svg>
 
-                  {/* Tooltip do último valor */}
+                  {/* Tooltip — Total Anual real (alinhado com /pagamentos) */}
                   <div className="absolute top-1 right-1 px-2.5 py-1.5 rounded-lg bg-black/80 border border-gold/30">
-                    <p className="text-[11px] text-gold font-bold leading-none">24.850,00 €</p>
-                    <p className="text-[9px] text-white/40 mt-0.5">Receitas</p>
+                    <p className="text-[11px] text-gold font-bold leading-none">{totalAnualLabel}</p>
+                    <p className="text-[9px] text-white/40 mt-0.5">Total {TODAY_YEAR_NUM}</p>
                   </div>
                 </div>
 
