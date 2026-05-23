@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { PROJECTS, TASKS, TODAY, comparePtDate, type Task, type Priority, type TaskStatus, type Project } from '../_data/projects'
 import { loadFreelancerProfile, type FreelancerProfile, DEFAULT_FREELANCER_PROFILE } from '../_data/freelancer-profile'
+import { NotificationBell } from '../_components/NotificationBell'
 
 const AVATAR_EDITOR = 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=80&h=80&fit=crop&crop=face'
 
@@ -630,10 +631,7 @@ function Hero({ onNovaTarefa }: { onNovaTarefa: () => void }) {
           </div>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          <button className="relative w-11 h-11 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md hover:border-gold/40 transition-all flex items-center justify-center group">
-            <span className="text-lg text-white/75 group-hover:text-gold">🔔</span>
-            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border border-black">3</span>
-          </button>
+          <NotificationBell />
           <button
             type="button"
             onClick={onNovaTarefa}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { loadFreelancerProfile, saveFreelancerProfile, type FreelancerProfile, DEFAULT_FREELANCER_PROFILE } from '../_data/freelancer-profile'
+import { NotificationBell } from '../_components/NotificationBell'
 
 // ────────────────────────────────────────────────────────────────────────
 //  DADOS PESSOAIS — Wedding Moments Films
@@ -195,10 +196,7 @@ function Hero({ theme, onToggleTheme, onEdit, editMode }: { theme: 'dark'|'light
           </div>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          <button className="relative w-11 h-11 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md hover:border-gold/40 transition-all flex items-center justify-center">
-            <span className="text-lg text-white/75">🔔</span>
-            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border border-black">3</span>
-          </button>
+          <NotificationBell />
           <button onClick={onToggleTheme}
             className="w-11 h-11 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md hover:border-gold/40 transition-all flex items-center justify-center text-white/75 hover:text-gold">
             {theme === 'dark' ? '☀' : '☾'}

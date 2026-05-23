@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { eventsFromProjects, eventColorFor, PROJECTS, TASKS, TODAY as TODAY_PT, type CalendarEvent, type EventType, type Task, type Priority } from '../_data/projects'
+import { NotificationBell } from '../_components/NotificationBell'
 
 // ── Helper: gera eventos a partir dos projetos criados pelo utilizador ──
 // (estrutura igual à de eventsFromProjects() em _data/projects.ts)
@@ -610,10 +611,7 @@ function Hero() {
           </div>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          <button className="relative w-11 h-11 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md hover:border-gold/40 transition-all flex items-center justify-center">
-            <span className="text-lg text-white/75">🔔</span>
-            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border border-black">3</span>
-          </button>
+          <NotificationBell />
           <button className="w-11 h-11 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md hover:border-gold/40 transition-all flex items-center justify-center">
             <span className="text-lg text-white/75">📅</span>
           </button>
