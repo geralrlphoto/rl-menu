@@ -187,6 +187,13 @@ export default function TarefasPage() {
   function addTask(newTask: Task) {
     setUserTasks(prev => [newTask, ...prev])
     setTasks(prev => [newTask, ...prev])
+    // Marca tarefa como "não vista" para brilhar no widget do dashboard até ser aberta
+    try {
+      const raw = localStorage.getItem('painel-editor-unseen-tasks')
+      const arr: string[] = raw ? JSON.parse(raw) : []
+      if (!arr.includes(newTask.id)) arr.push(newTask.id)
+      localStorage.setItem('painel-editor-unseen-tasks', JSON.stringify(arr))
+    } catch {}
   }
 
   function deleteTask(id: string) {

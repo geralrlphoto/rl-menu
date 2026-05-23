@@ -339,6 +339,71 @@ export default function PainelEditor() {
     } catch { return [] as any[] }
   }, [storageTick])
 
+  // ── Widget Tarefas (lateral): 2 últimas concluídas + 3 mais recentes ─────
+  const tarefasWidget = useMemo(() => {
+    if (typeof window === 'undefined') return [] as { id: string; label: string; pct: number; done: boolean; ts: number }[]
+    try {
+      const raw = localStorage.getItem('painel-editor-user-tasks')
+      const userTasks: any[] = raw ? JSON.parse(raw) : []
+      const delRaw = localStorage.getItem('painel-editor-deleted-tasks')
+      const deleted = new Set<string>(delRaw ? JSON.parse(delRaw) : [])
+      const userProjRaw = localStorage.getItem('painel-editor-user-projects')
+      const userProj: any[] = userProjRaw ? JSON.parse(userProjRaw) : []
+
+      const alive = userTasks.filter(t => !deleted.has(t.id))
+
+      const labelOf = (t: any) => {
+        const proj = t.projectId ? userProj.find((p: any) => p.id === t.projectId)?.noivos : null
+        return proj ? `${t.title} — ${proj}` : t.title
+      }
+
+      // Timestamp do id `user-task-${Date.now()}`
+      const tsOf = (id: string) => {
+        const n = Number((id || '').split('-').pop())
+        return Number.isFinite(n) ? n : 0
+      }
+
+      const concluidas = alive
+        .filter((t: any) => t.status === 'Concluída')
+        .sort((a: any, b: any) => tsOf(b.id) - tsOf(a.id))
+        .slice(0, 2)
+        .map((t: any) => ({ id: t.id, label: labelOf(t), pct: 100, done: true, ts: tsOf(t.id) }))
+
+      const recentes = alive
+        .filter((t: any) => t.status !== 'Concluída' && t.status !== 'Cancelada')
+        .sort((a: any, b: any) => tsOf(b.id) - tsOf(a.id))
+        .slice(0, 3)
+        .map((t: any) => {
+          const pct = t.progress ?? (t.status === 'Em andamento' ? 30 : t.status === 'Em revisão' ? 70 : 0)
+          return { id: t.id, label: labelOf(t), pct, done: false, ts: tsOf(t.id) }
+        })
+
+      // 3 mais recentes primeiro (incluindo "Novo" badge), depois as últimas concluídas
+      return [...recentes, ...concluidas]
+    } catch { return [] as any[] }
+  }, [storageTick])
+
+  // ── Unseen tasks (glow gold até clicar) ──────────────────────────────
+  const [unseenTaskIds, setUnseenTaskIds] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('painel-editor-unseen-tasks')
+      const arr: string[] = raw ? JSON.parse(raw) : []
+      setUnseenTaskIds(new Set(arr))
+    } catch {}
+    // Re-load também quando storageTick muda (criação de nova tarefa noutra tab/page)
+  }, [storageTick])
+
+  function markTaskSeen(id: string) {
+    setUnseenTaskIds(prev => {
+      if (!prev.has(id)) return prev
+      const next = new Set(prev); next.delete(id)
+      try { localStorage.setItem('painel-editor-unseen-tasks', JSON.stringify([...next])) } catch {}
+      return next
+    })
+  }
+
   return (
     <div className="min-h-screen text-white relative" style={{ background: '#0B0B0B' }}>
       {/* Animação gold pulse para projetos novos não-abertos */}
@@ -691,38 +756,49 @@ export default function PainelEditor() {
             {/* COLUNA DIREITA — Tarefas + Resumo Financeiro */}
             <div className="lg:col-span-1 flex flex-col gap-5">
 
-              {/* Tarefas */}
+              {/* Tarefas — 2 últimas concluídas + 3 mais recentes (novas brilham até clicar) */}
               <div className="rounded-2xl border border-white/[0.08] p-5"
                 style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-[15px] font-semibold text-white">Tarefas</h3>
-                  <button className="text-[11px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors">Ver todas →</button>
+                  <Link href="/painel-editor/tarefas" className="text-[11px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors">Ver todas →</Link>
                 </div>
                 <div className="space-y-4">
-                  {MOCK_TAREFAS.map(t => (
-                    <div key={t.id} className="group">
-                      <div className="flex items-center gap-3 mb-1.5">
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                          t.done ? 'bg-gold/20 border-gold' : 'border-white/30'
-                        }`}>
-                          {t.done && <span className="text-[10px] text-gold">✓</span>}
+                  {tarefasWidget.length === 0 ? (
+                    <p className="text-[12px] text-white/30 italic py-2">Sem tarefas. <Link href="/painel-editor/tarefas" className="text-gold/70 hover:text-gold underline">Criar tarefa →</Link></p>
+                  ) : tarefasWidget.map(t => {
+                    const isUnseen = unseenTaskIds.has(t.id) && !t.done
+                    return (
+                      <Link key={t.id} href={`/painel-editor/tarefas`}
+                        onClick={() => markTaskSeen(t.id)}
+                        className={`block group rounded-lg p-2 -m-2 transition-all ${isUnseen ? 'unseen-glow border border-gold/30 bg-gold/[0.03]' : ''}`}>
+                        <div className="flex items-center gap-3 mb-1.5">
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                            t.done ? 'bg-emerald-500/20 border-emerald-500' : isUnseen ? 'border-gold/70' : 'border-white/30'
+                          }`}>
+                            {t.done && <span className="text-[10px] text-emerald-300">✓</span>}
+                            {isUnseen && !t.done && <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />}
+                          </div>
+                          <p className={`flex-1 text-[12px] truncate ${t.done ? 'text-white/55 line-through' : 'text-white/85'}`}>{t.label}</p>
+                          {isUnseen && !t.done && (
+                            <span className="text-[8px] px-1.5 py-0.5 rounded bg-gold/15 border border-gold/30 text-gold tracking-widest uppercase font-bold">Novo</span>
+                          )}
+                          <p className={`text-[12px] font-medium ${t.done ? 'text-emerald-300/80' : 'text-white/70'}`}>{t.pct}%</p>
+                          <span className="text-white/30 group-hover:text-gold transition-colors text-sm">›</span>
                         </div>
-                        <p className="flex-1 text-[12px] text-white/85 truncate">{t.label}</p>
-                        <p className="text-[12px] text-white/70 font-medium">{t.pct}%</p>
-                        <button className="text-white/30 group-hover:text-gold transition-colors text-sm">›</button>
-                      </div>
-                      <div className="h-1 rounded-full bg-white/[0.06] ml-8 overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-700"
-                          style={{
-                            width: `${t.pct}%`,
-                            background: 'linear-gradient(90deg, #C9A45C, #E8C76D)',
-                            boxShadow: '0 0 10px rgba(201,164,92,0.5)'
-                          }}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                        <div className="h-1 rounded-full bg-white/[0.06] ml-8 overflow-hidden">
+                          <div className="h-full rounded-full transition-all duration-700"
+                            style={{
+                              width: `${t.pct}%`,
+                              background: t.done
+                                ? 'linear-gradient(90deg, #34d399, #6ee7b7)'
+                                : 'linear-gradient(90deg, #C9A45C, #E8C76D)',
+                              boxShadow: t.done ? '0 0 10px rgba(52,211,153,0.5)' : '0 0 10px rgba(201,164,92,0.5)',
+                            }} />
+                        </div>
+                      </Link>
+                    )
+                  })}
                 </div>
               </div>
 
