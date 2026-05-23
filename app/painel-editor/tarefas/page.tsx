@@ -967,15 +967,62 @@ function NovaTarefaModal({
             </select>
           </div>
 
-          {/* Destinatário da notificação (perfil do freelancer) */}
-          <div className="rounded-lg border border-white/[0.08] bg-white/[0.02] p-3">
-            <p className="text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium mb-1">Notificação para</p>
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-[13px] text-white/85 truncate"><span className="text-gold/70">✉</span> {profile.email}</p>
-              <Link href="/painel-editor/dados-pessoais"
-                className="text-[10px] tracking-widest uppercase text-white/40 hover:text-gold transition-colors shrink-0">
-                Editar →
-              </Link>
+          {/* Card minimalista — Enviar para o e-mail */}
+          <div className="relative rounded-2xl border border-gold/30 overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, rgba(20,15,8,0.6), rgba(11,11,11,0.4))',
+              boxShadow: '0 0 30px -8px rgba(201,164,92,0.3), 0 10px 30px -10px rgba(0,0,0,0.5)',
+            }}>
+            <div className="flex items-center gap-5 p-4 sm:p-5">
+              {/* Icon: envelope + paper-plane (gold neon) */}
+              <div className="shrink-0 w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-2xl border border-gold/40 flex items-center justify-center relative"
+                style={{
+                  background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.18), rgba(201,164,92,0.03))',
+                  boxShadow: '0 0 18px -4px rgba(201,164,92,0.45), inset 0 0 18px -8px rgba(201,164,92,0.4)',
+                }}>
+                <svg viewBox="0 0 24 24" className="w-8 h-8 text-gold" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2.5" y="5" width="15" height="11" rx="1.5" />
+                  <path d="M2.5 6.5 L10 12 L17.5 6.5" />
+                </svg>
+                {/* Paper plane dot */}
+                <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-black border border-gold/60 flex items-center justify-center"
+                  style={{ boxShadow: '0 0 10px rgba(201,164,92,0.5)' }}>
+                  <svg viewBox="0 0 24 24" className="w-2.5 h-2.5 text-gold" fill="currentColor">
+                    <path d="M21 3L3 10l7 3 3 7 8-17z" />
+                  </svg>
+                </span>
+              </div>
+
+              {/* Divider line */}
+              <div className="hidden sm:block w-px h-14 bg-gold/15 shrink-0" />
+
+              {/* Text */}
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] sm:text-[11px] tracking-[0.4em] uppercase text-gold/75 font-bold mb-1.5">Nova Tarefa</p>
+                <p className="text-[18px] sm:text-[22px] font-light text-white tracking-tight leading-tight" style={{ fontFamily: 'Georgia, serif' }}>
+                  Enviar para o e-mail
+                </p>
+                <p className="text-[11px] sm:text-[12px] text-white/45 mt-1 leading-snug">
+                  Envie esta tarefa diretamente para o e-mail e mantenha-se organizado.
+                </p>
+              </div>
+
+              {/* Action button */}
+              <button type="button" onClick={submitAndNotify} disabled={!valid || sending}
+                className="shrink-0 inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl border border-gold/45 text-gold text-[12px] font-semibold tracking-wider hover:bg-gold/10 hover:border-gold/70 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ boxShadow: '0 0 16px -4px rgba(201,164,92,0.4)' }}>
+                {sending ? (
+                  <>
+                    <span className="inline-block w-3 h-3 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+                    A enviar…
+                  </>
+                ) : (
+                  <>
+                    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="currentColor"><path d="M21 3L3 10l7 3 3 7 8-17z" /></svg>
+                    Enviar por e-mail
+                  </>
+                )}
+              </button>
             </div>
           </div>
 
@@ -990,31 +1037,21 @@ function NovaTarefaModal({
             </div>
           )}
 
-          {/* Botões */}
-          <div className="space-y-2 pt-2">
-            <button type="button" onClick={submitAndNotify} disabled={!valid || sending}
-              className="w-full px-4 py-3 rounded-lg bg-gold text-black text-[12px] font-bold tracking-wider hover:bg-gold/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              style={{ boxShadow: '0 0 18px -4px rgba(201,164,92,0.5)' }}>
-              {sending ? (
-                <>
-                  <span className="inline-block w-3 h-3 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                  A Enviar…
-                </>
-              ) : (
-                <>✓ Criar + Enviar Notificação</>
-              )}
+          {/* Link discreto: criar sem notificar + cancelar */}
+          <div className="flex items-center justify-between gap-3 pt-1">
+            <button type="button" onClick={onClose} disabled={sending}
+              className="text-[11px] tracking-widest uppercase text-white/40 hover:text-white transition-colors disabled:opacity-40">
+              ← Cancelar
             </button>
-            <div className="flex items-center gap-2">
-              <button type="button" onClick={onClose} disabled={sending}
-                className="flex-1 px-4 py-2.5 rounded-lg border border-white/10 text-white/65 text-[12px] font-semibold tracking-wider hover:border-white/25 hover:text-white transition-all disabled:opacity-40">
-                Cancelar
-              </button>
-              <button type="button" onClick={submit} disabled={!valid || sending}
-                className="flex-1 px-4 py-2.5 rounded-lg border border-gold/40 text-gold text-[12px] font-semibold tracking-wider hover:bg-gold/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
-                Criar sem notificar
-              </button>
-            </div>
+            <button type="button" onClick={submit} disabled={!valid || sending}
+              className="text-[11px] tracking-widest uppercase text-white/40 hover:text-gold transition-colors disabled:opacity-40">
+              Criar sem enviar e-mail →
+            </button>
           </div>
+          <p className="text-[10px] text-white/30 text-center">
+            E-mail destino: <span className="text-white/55">{profile.email}</span>
+            <Link href="/painel-editor/dados-pessoais" className="ml-2 underline decoration-white/20 hover:text-gold hover:decoration-gold/40 transition-colors">editar</Link>
+          </p>
         </div>
       </div>
     </div>
