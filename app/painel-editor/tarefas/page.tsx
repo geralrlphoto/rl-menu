@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { PROJECTS, TASKS, TODAY, comparePtDate, type Task, type Priority, type TaskStatus, type Project } from '../_data/projects'
+import { PROJECTS, TASKS, TODAY, comparePtDate, eventsFromProjects, type Task, type Priority, type TaskStatus, type Project } from '../_data/projects'
 import { loadFreelancerProfile, type FreelancerProfile, DEFAULT_FREELANCER_PROFILE } from '../_data/freelancer-profile'
 import { NotificationBell } from '../_components/NotificationBell'
 
@@ -291,15 +291,66 @@ export default function TarefasPage() {
   const firstDay = new Date(calView.y, calView.m, 1).getDay()
   const lastDate = new Date(calView.y, calView.m + 1, 0).getDate()
   const prevLastDate = new Date(calView.y, calView.m, 0).getDate()
-  const cells: Array<{ day: number; current: boolean; isToday: boolean; hasTask: boolean }> = []
-  const tasksByDay = new Set(tasks.map(t => {
-    const [d,m,y] = t.deadline.split('/').map(Number)
-    return y === calView.y && m-1 === calView.m ? d : null
-  }).filter(Boolean) as number[])
+
+  // Sincronizado com /calendario: marca dias com TAREFAS + EVENTOS DE PROJETOS
+  // (Casamento, Material Recebido, Início Edição, Revisão V1/V2, Entrega Trailer/Final, Pagamento)
+  const baseEvents = useMemo(() => eventsFromProjects(), [])
+  const userProjectEvents = useMemo(() => {
+    if (typeof window === 'undefined') return [] as { date: string }[]
+    try {
+      const raw = localStorage.getItem('painel-editor-user-projects')
+      const userProjects: any[] = raw ? JSON.parse(raw) : []
+      const evts: { date: string }[] = []
+      const addDaysPt = (date: string, days: number): string => {
+        const cleaned = (date || '').split('—')[0].trim()
+        const [d, m, y] = cleaned.split('/').map(Number)
+        if (!d || !m || !y) return ''
+        const dt = new Date(y, m-1, d); dt.setDate(dt.getDate() + days)
+        return `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`
+      }
+      userProjects.forEach(p => {
+        const recebido = (p.recebido || '').split('—')[0].trim()
+        if (recebido) {
+          evts.push({ date: recebido })
+          evts.push({ date: addDaysPt(recebido, 5) })   // Início Edição
+        }
+        if (p.dataCasamento) evts.push({ date: p.dataCasamento })
+        if (p.entregaPrevista) {
+          evts.push({ date: addDaysPt(p.entregaPrevista, -10) })
+          evts.push({ date: addDaysPt(p.entregaPrevista, -7) })
+          evts.push({ date: addDaysPt(p.entregaPrevista, -5) })
+          evts.push({ date: addDaysPt(p.entregaPrevista, -3) })
+          evts.push({ date: p.entregaPrevista })
+        }
+      })
+      return evts
+    } catch { return [] as { date: string }[] }
+  }, [tasks])  // re-roda quando tasks muda (proxy para localStorage updates)
+
+  // Conta eventos por dia (tarefas + projetos)
+  const markedDays = useMemo(() => {
+    const counts = new Map<number, number>()
+    const inc = (d: number) => counts.set(d, (counts.get(d) ?? 0) + 1)
+    // Tarefas no mês atual
+    tasks.forEach(t => {
+      const [d, m, y] = (t.deadline || '').split('/').map(Number)
+      if (y === calView.y && m - 1 === calView.m && d) inc(d)
+    })
+    // Eventos de projetos (mock + user) no mês atual
+    ;[...baseEvents, ...userProjectEvents].forEach(e => {
+      const [d, m, y] = (e.date || '').split('/').map(Number)
+      if (y === calView.y && m - 1 === calView.m && d) inc(d)
+    })
+    return counts
+  }, [tasks, baseEvents, userProjectEvents, calView])
+
+  type Cell = { day: number; current: boolean; isToday: boolean; hasTask: boolean; iso?: string }
+  const cells: Cell[] = []
   for (let i = firstDay - 1; i >= 0; i--) cells.push({ day: prevLastDate - i, current: false, isToday: false, hasTask: false })
   for (let d = 1; d <= lastDate; d++) {
     const isToday = calView.y === calToday.getFullYear() && calView.m === calToday.getMonth() && d === calToday.getDate()
-    cells.push({ day: d, current: true, isToday, hasTask: tasksByDay.has(d) })
+    const iso = `${calView.y}-${String(calView.m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+    cells.push({ day: d, current: true, isToday, hasTask: (markedDays.get(d) ?? 0) > 0, iso })
   }
   while (cells.length % 7 !== 0) cells.push({ day: cells.length - lastDate - firstDay + 1, current: false, isToday: false, hasTask: false })
 
@@ -437,7 +488,7 @@ export default function TarefasPage() {
                 <div className="flex items-center gap-2">
                   <button onClick={() => { const d = new Date(calView.y, calView.m - 1, 1); setCalView({ y: d.getFullYear(), m: d.getMonth() }) }}
                     className="w-6 h-6 rounded-md border border-white/10 text-white/50 hover:text-gold hover:border-gold/30 transition-all text-[12px]">‹</button>
-                  <button onClick={() => { setCalView({ y: 2026, m: 4 }) }}
+                  <button onClick={() => { setCalView({ y: _ty, m: _tm - 1 }) }}
                     className="text-[11px] tracking-widest uppercase text-white/45 hover:text-gold transition-colors px-2 py-1 rounded-md border border-white/10">Hoje</button>
                   <button onClick={() => { const d = new Date(calView.y, calView.m + 1, 1); setCalView({ y: d.getFullYear(), m: d.getMonth() }) }}
                     className="w-6 h-6 rounded-md border border-white/10 text-white/50 hover:text-gold hover:border-gold/30 transition-all text-[12px]">›</button>
@@ -452,26 +503,34 @@ export default function TarefasPage() {
                   ))}
                 </div>
                 <div className="grid grid-cols-7 gap-1">
-                  {cells.map((c, i) => (
-                    <div key={i} className="aspect-square relative">
-                      <button
-                        className={`w-full h-full flex items-center justify-center text-[12px] rounded-md transition-all ${
-                          c.isToday
-                            ? 'bg-gold text-black font-bold'
-                            : c.hasTask && c.current
-                              ? 'text-gold border border-gold/30 hover:bg-gold/10'
-                              : c.current
-                                ? 'text-white/65 hover:bg-white/[0.04]'
-                                : 'text-white/15'
-                        }`}
-                        style={c.isToday ? { boxShadow: '0 0 12px rgba(201,164,92,0.5)' } : {}}>
-                        {c.day}
-                      </button>
-                      {c.hasTask && c.current && !c.isToday && (
-                        <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-gold" />
-                      )}
-                    </div>
-                  ))}
+                  {cells.map((c, i) => {
+                    const href = c.iso ? `/painel-editor/calendario?date=${c.iso}` : '/painel-editor/calendario'
+                    const cls = `w-full h-full flex items-center justify-center text-[12px] rounded-md transition-all ${
+                      c.isToday
+                        ? 'bg-gold text-black font-bold'
+                        : c.hasTask && c.current
+                          ? 'text-gold border border-gold/30 hover:bg-gold/10'
+                          : c.current
+                            ? 'text-white/65 hover:bg-white/[0.04]'
+                            : 'text-white/15'
+                    }`
+                    return (
+                      <div key={i} className="aspect-square relative">
+                        {c.current ? (
+                          <Link href={href} className={cls}
+                            style={c.isToday ? { boxShadow: '0 0 12px rgba(201,164,92,0.5)' } : {}}
+                            title="Abrir no Calendário">
+                            {c.day}
+                          </Link>
+                        ) : (
+                          <span className={cls}>{c.day}</span>
+                        )}
+                        {c.hasTask && c.current && !c.isToday && (
+                          <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-gold pointer-events-none" />
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               </Panel>
 

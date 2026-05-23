@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { eventsFromProjects, eventColorFor, PROJECTS, TASKS, TODAY as TODAY_PT, type CalendarEvent, type EventType, type Task, type Priority } from '../_data/projects'
 import { NotificationBell } from '../_components/NotificationBell'
 
@@ -208,6 +209,16 @@ export default function CalendarioPage() {
 
   const [view, setView] = useState<ViewMode>('Mês')
   const [calView, setCalView] = useState({ y: TODAY_YEAR_NUM, m: TODAY_MONTH_IDX })
+
+  // Salta para mês indicado em ?date=YYYY-MM-DD (vindo do mini-calendar de /tarefas etc.)
+  const searchParams = useSearchParams()
+  useEffect(() => {
+    const dParam = searchParams?.get('date')
+    if (!dParam) return
+    const [y, m] = dParam.split('-').map(Number)
+    if (!y || !m) return
+    setCalView({ y, m: m - 1 })
+  }, [searchParams])
   const [typeFilter, setTypeFilter] = useState<'Todos' | EventType>('Todos')
 
   // Eventos do mês (filtrados)
@@ -320,7 +331,7 @@ export default function CalendarioPage() {
                   <div className="flex items-center gap-2">
                     <button onClick={() => changeMonth(-1)} className="w-9 h-9 rounded-lg border border-white/10 text-white/55 hover:text-gold hover:border-gold/30 transition-all">‹</button>
                     <button onClick={() => changeMonth(1)}  className="w-9 h-9 rounded-lg border border-white/10 text-white/55 hover:text-gold hover:border-gold/30 transition-all">›</button>
-                    <button onClick={() => setCalView({ y: 2026, m: 4 })} className="px-4 h-9 rounded-lg border border-white/10 text-white/70 hover:text-gold hover:border-gold/30 transition-all text-[12px] tracking-widest uppercase">Hoje</button>
+                    <button onClick={() => setCalView({ y: TODAY_YEAR_NUM, m: TODAY_MONTH_IDX })} className="px-4 h-9 rounded-lg border border-white/10 text-white/70 hover:text-gold hover:border-gold/30 transition-all text-[12px] tracking-widest uppercase">Hoje</button>
                     <p className="text-[18px] font-light text-white ml-3" style={{ fontFamily: 'Georgia, serif' }}>
                       {MESES[calView.m]} {calView.y} <span className="text-white/30 text-base">▾</span>
                     </p>
