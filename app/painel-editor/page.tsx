@@ -1213,124 +1213,115 @@ export default function PainelEditor() {
                   <span>1</span><span>5</span><span>10</span><span>15</span><span>20</span><span>25</span><span>31</span>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* ── PERFORMANCE — total + on-time + late + média dias ─────────── */}
-          <div className="mt-5 rounded-2xl border border-white/[0.08] p-6"
-            style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.55), rgba(11,11,11,0.85))', boxShadow: '0 30px 60px -20px rgba(0,0,0,0.6)' }}>
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <p className="text-[10px] tracking-[0.4em] uppercase text-gold/70 font-bold mb-1">Performance</p>
-                <h3 className="text-2xl font-light text-white" style={{ fontFamily: 'Georgia, serif' }}>
-                  Visão Geral <span className="italic text-gold">dos Projetos</span>
-                </h3>
-              </div>
-              <Link href="/painel-editor/novos-projetos" className="text-[11px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors">
-                Ver projetos →
-              </Link>
-            </div>
+              {/* PERFORMANCE — total + on-time + late + média dias (debaixo do Resumo Financeiro) */}
+              <div className="rounded-2xl border border-white/[0.08] p-5"
+                style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-[15px] font-semibold text-white">Performance</h3>
+                  <Link href="/painel-editor/novos-projetos" className="text-[11px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors">Ver →</Link>
+                </div>
 
-            {(() => {
-              const { total, onTime, late, emCurso, mediaDias } = performanceStats
-              const totalEntregues = onTime + late
-              const pctOn = totalEntregues > 0 ? Math.round((onTime / totalEntregues) * 100) : 0
-              const pctLate = totalEntregues > 0 ? 100 - pctOn : 0
-              // Donut: segmentos baseados em todos os projetos (entregues + em curso)
-              const segs = [
-                { value: onTime,  color: '#34d399', label: 'No prazo' },
-                { value: late,    color: '#ef4444', label: 'Fora prazo' },
-                { value: emCurso, color: '#C9A45C', label: 'Em curso' },
-              ]
-              const sumAll = segs.reduce((s, x) => s + x.value, 0) || 1
-              // SVG donut path generation
-              let cumPct = 0
-              const radius = 60
-              const cx = 80, cy = 80
-              const polar = (deg: number) => {
-                const r = (deg - 90) * Math.PI / 180
-                return [cx + radius * Math.cos(r), cy + radius * Math.sin(r)] as const
-              }
-              const arcs = segs.map(s => {
-                const pct = s.value / sumAll
-                if (pct === 0) return null
-                const startDeg = cumPct * 360
-                const endDeg = (cumPct + pct) * 360
-                cumPct += pct
-                const [x1, y1] = polar(startDeg)
-                const [x2, y2] = polar(endDeg)
-                const largeArc = endDeg - startDeg > 180 ? 1 : 0
-                return { path: `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`, color: s.color, label: s.label }
-              }).filter(Boolean) as { path: string; color: string; label: string }[]
+                {(() => {
+                  const { total, onTime, late, emCurso, mediaDias } = performanceStats
+                  const totalEntregues = onTime + late
+                  const pctOn = totalEntregues > 0 ? Math.round((onTime / totalEntregues) * 100) : 0
+                  const segs = [
+                    { value: onTime,  color: '#34d399', label: 'No prazo' },
+                    { value: late,    color: '#ef4444', label: 'Fora prazo' },
+                    { value: emCurso, color: '#C9A45C', label: 'Em curso' },
+                  ]
+                  const sumAll = segs.reduce((s, x) => s + x.value, 0) || 1
 
-              return (
-                <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr_1fr] gap-6 items-center">
+                  // Donut SVG (90px)
+                  let cumPct = 0
+                  const radius = 36, cx = 50, cy = 50
+                  const polar = (deg: number) => {
+                    const r = (deg - 90) * Math.PI / 180
+                    return [cx + radius * Math.cos(r), cy + radius * Math.sin(r)] as const
+                  }
+                  const arcs = segs.map(s => {
+                    const pct = s.value / sumAll
+                    if (pct === 0) return null
+                    const startDeg = cumPct * 360
+                    const endDeg = (cumPct + pct) * 360
+                    cumPct += pct
+                    const [x1, y1] = polar(startDeg)
+                    const [x2, y2] = polar(endDeg)
+                    const largeArc = endDeg - startDeg > 180 ? 1 : 0
+                    return { path: `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`, color: s.color }
+                  }).filter(Boolean) as { path: string; color: string }[]
 
-                  {/* Donut */}
-                  <div className="relative w-[160px] h-[160px] mx-auto">
-                    <svg viewBox="0 0 160 160" className="w-full h-full">
-                      <circle cx="80" cy="80" r="60" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="18" />
-                      {arcs.map((a, i) => (
-                        <path key={i} d={a.path} fill="none" stroke={a.color} strokeWidth="18" strokeLinecap="butt"
-                          style={{ filter: `drop-shadow(0 0 6px ${a.color}80)` }} />
-                      ))}
-                    </svg>
-                    {/* Total no centro */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <p className="text-[10px] tracking-widest uppercase text-white/35">Total</p>
-                      <p className="text-[36px] font-bold text-white leading-none mt-0.5" style={{ fontFamily: 'Georgia, serif' }}>{total}</p>
-                      <p className="text-[10px] text-white/35 mt-0.5">projetos</p>
-                    </div>
-                  </div>
-
-                  {/* Stats: no prazo + fora prazo + em curso */}
-                  <div className="space-y-3">
-                    {segs.map((s, i) => {
-                      const pct = sumAll > 0 ? Math.round((s.value / sumAll) * 100) : 0
-                      return (
-                        <div key={i}>
-                          <div className="flex items-center justify-between text-[12px] mb-1.5">
-                            <span className="flex items-center gap-2 text-white/70">
-                              <span className="w-2.5 h-2.5 rounded-full" style={{ background: s.color, boxShadow: `0 0 6px ${s.color}99` }} />
-                              {s.label}
-                            </span>
-                            <span className="font-bold tabular-nums" style={{ color: s.color }}>
-                              {s.value} <span className="text-white/30 font-normal ml-1">· {pct}%</span>
-                            </span>
-                          </div>
-                          <div className="h-1 rounded-full bg-white/[0.05] overflow-hidden">
-                            <div className="h-full transition-all duration-700" style={{ width: `${pct}%`, background: s.color, boxShadow: `0 0 8px ${s.color}80` }} />
+                  return (
+                    <>
+                      {/* Top row: donut + média lado a lado */}
+                      <div className="flex items-center gap-4 mb-5">
+                        {/* Donut com total no centro */}
+                        <div className="relative w-[100px] h-[100px] shrink-0">
+                          <svg viewBox="0 0 100 100" className="w-full h-full">
+                            <circle cx="50" cy="50" r="36" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="11" />
+                            {arcs.map((a, i) => (
+                              <path key={i} d={a.path} fill="none" stroke={a.color} strokeWidth="11" strokeLinecap="butt"
+                                style={{ filter: `drop-shadow(0 0 4px ${a.color}80)` }} />
+                            ))}
+                          </svg>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <p className="text-[8px] tracking-widest uppercase text-white/35 leading-none">Total</p>
+                            <p className="text-[22px] font-bold text-white leading-none mt-0.5" style={{ fontFamily: 'Georgia, serif' }}>{total}</p>
                           </div>
                         </div>
-                      )
-                    })}
-                    {totalEntregues > 0 && (
-                      <p className="text-[11px] text-white/40 pt-2 border-t border-white/[0.04]">
-                        Dos entregues, <span className="text-emerald-300 font-bold">{pctOn}%</span> dentro do prazo
-                        {pctLate > 0 && <span className="text-red-300"> · {pctLate}% atrasado</span>}
-                      </p>
-                    )}
-                  </div>
 
-                  {/* Média dias */}
-                  <div className="text-center lg:text-right lg:border-l lg:border-white/[0.06] lg:pl-6">
-                    <p className="text-[10px] tracking-[0.3em] uppercase text-gold/70 font-bold mb-2">Tempo médio de entrega</p>
-                    <div className="flex items-baseline gap-2 justify-center lg:justify-end">
-                      <p className="text-[56px] font-bold text-gold leading-none" style={{ fontFamily: 'Georgia, serif' }}>
-                        {mediaDias}
-                      </p>
-                      <p className="text-[14px] text-white/55 font-light">{mediaDias === 1 ? 'dia' : 'dias'}</p>
-                    </div>
-                    <p className="text-[11px] text-white/40 mt-3 leading-relaxed">
-                      Do material recebido<br />à entrega final
-                    </p>
-                    {totalEntregues === 0 && (
-                      <p className="text-[10px] text-white/25 italic mt-2">Sem projetos entregues ainda</p>
-                    )}
-                  </div>
-                </div>
-              )
-            })()}
+                        {/* Média dias */}
+                        <div className="flex-1 min-w-0 border-l border-white/[0.06] pl-4">
+                          <p className="text-[9px] tracking-[0.3em] uppercase text-gold/70 font-bold mb-1.5 leading-tight">Tempo médio</p>
+                          <div className="flex items-baseline gap-1.5">
+                            <p className="text-[36px] font-bold text-gold leading-none" style={{ fontFamily: 'Georgia, serif' }}>
+                              {mediaDias}
+                            </p>
+                            <p className="text-[11px] text-white/55 font-light">{mediaDias === 1 ? 'dia' : 'dias'}</p>
+                          </div>
+                          <p className="text-[10px] text-white/40 mt-1 leading-snug">
+                            Recebido → Entrega final
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Stats verticais com barras */}
+                      <div className="space-y-2.5">
+                        {segs.map((s, i) => {
+                          const pct = sumAll > 0 ? Math.round((s.value / sumAll) * 100) : 0
+                          return (
+                            <div key={i}>
+                              <div className="flex items-center justify-between text-[11px] mb-1">
+                                <span className="flex items-center gap-1.5 text-white/65">
+                                  <span className="w-2 h-2 rounded-full" style={{ background: s.color, boxShadow: `0 0 5px ${s.color}99` }} />
+                                  {s.label}
+                                </span>
+                                <span className="font-bold tabular-nums" style={{ color: s.color }}>
+                                  {s.value} <span className="text-white/30 font-normal text-[10px]">· {pct}%</span>
+                                </span>
+                              </div>
+                              <div className="h-1 rounded-full bg-white/[0.05] overflow-hidden">
+                                <div className="h-full transition-all duration-700" style={{ width: `${pct}%`, background: s.color, boxShadow: `0 0 6px ${s.color}80` }} />
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+
+                      {totalEntregues > 0 && (
+                        <p className="text-[10px] text-white/40 pt-3 mt-3 border-t border-white/[0.04]">
+                          <span className="text-emerald-300 font-bold">{pctOn}%</span> dos entregues no prazo
+                        </p>
+                      )}
+                      {totalEntregues === 0 && (
+                        <p className="text-[10px] text-white/25 italic mt-3 text-center">Sem projetos entregues ainda</p>
+                      )}
+                    </>
+                  )
+                })()}
+              </div>
+            </div>
           </div>
 
           {/* Footer */}
