@@ -630,7 +630,11 @@ function TaskRow({ t, onToggle }: { t: Task; onToggle: () => void }) {
       {/* Info */}
       <div className="flex-1 min-w-0">
         <p className={`text-[14px] font-medium leading-tight ${done ? 'line-through text-white/35' : 'text-white'}`}>{t.title}</p>
-        <p className="text-[11px] text-white/40 mt-0.5 truncate">{proj?.noivos ?? '—'}</p>
+        <p className="text-[11px] mt-0.5 truncate">
+          {proj
+            ? <span className="text-white/40">{proj.noivos}</span>
+            : <span className="text-white/25 italic">Sem projeto associado</span>}
+        </p>
         {t.completedAt && <p className="text-[10px] text-emerald-400/70 mt-0.5">✓ Concluída · {t.completedAt}</p>}
       </div>
 
@@ -741,13 +745,14 @@ function NovaTarefaModal({
 }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [projectId, setProjectId] = useState<string>(projects[0]?.id ?? '')
+  const [projectId, setProjectId] = useState<string>('')   // vazio = sem projeto associado
   const [deadlineIso, setDeadlineIso] = useState<string>(ptToIso(TODAY))
   const [hora, setHora] = useState<string>('')
   const [priority, setPriority] = useState<Priority>('Média')
   const [status, setStatus] = useState<TaskStatus>('Pendente')
 
-  const valid = title.trim().length > 0 && deadlineIso && projectId
+  // Projeto deixa de ser obrigatório — basta título + prazo
+  const valid = title.trim().length > 0 && !!deadlineIso
 
   function submit() {
     if (!valid) return
@@ -800,16 +805,17 @@ function NovaTarefaModal({
               className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/30 focus:outline-none focus:border-gold/50 resize-none" />
           </div>
 
-          {/* Projeto */}
+          {/* Projeto (opcional) */}
           <div>
-            <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-2">Projeto <span className="text-red-400">*</span></p>
+            <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-2">Projeto <span className="text-white/30 normal-case tracking-normal text-[10px]">(opcional)</span></p>
             <select value={projectId} onChange={e => setProjectId(e.target.value)}
               className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/50">
-              {projects.length === 0 && <option value="" style={{ background: '#1a1206' }}>— Nenhum projeto disponível —</option>}
+              <option value="" style={{ background: '#1a1206' }}>— Sem projeto associado —</option>
               {projects.map(p => (
                 <option key={p.id} value={p.id} style={{ background: '#1a1206' }}>{p.noivos} — {p.dataCasamento}</option>
               ))}
             </select>
+            <p className="text-[10px] text-white/35 mt-1.5 italic">Deixa em branco se a tarefa não estiver ligada a um projeto específico.</p>
           </div>
 
           {/* Data + Hora */}
