@@ -543,6 +543,82 @@ export default function PainelEditor() {
     })
   }
 
+  function markProjectSeen(id: string) {
+    setUnseenIds(prev => {
+      if (!prev.has(id)) return prev
+      const next = new Set(prev); next.delete(id)
+      try { localStorage.setItem('painel-editor-unseen-projects', JSON.stringify([...next])) } catch {}
+      return next
+    })
+  }
+
+  // ── Notificações (sino) — agrupa unseen projects + unseen tasks ──────
+  const [notifOpen, setNotifOpen] = useState(false)
+
+  const notifications = useMemo(() => {
+    type Notif = { id: string; type: 'projeto'|'tarefa'; title: string; sub: string; href: string }
+    const items: Notif[] = []
+    if (typeof window === 'undefined') return items
+    try {
+      // Projetos não-abertos
+      const userRaw = localStorage.getItem('painel-editor-user-projects')
+      const userProjects: any[] = userRaw ? JSON.parse(userRaw) : []
+      novosProjetos.forEach(p => {
+        if (unseenIds.has(p.id)) {
+          // tenta encontrar mais dados se for user-project
+          const meta = userProjects.find(up => up.id === p.id)
+          items.push({
+            id: `proj-${p.id}`,
+            type: 'projeto',
+            title: p.noivos,
+            sub: meta?.dataCasamento ? `Casamento · ${meta.dataCasamento}` : 'Novo projeto recebido',
+            href: `/painel-editor/novos-projetos?open=${p.id}`,
+          })
+        }
+      })
+
+      // Tarefas novas
+      const userTasksRaw = localStorage.getItem('painel-editor-user-tasks')
+      const userTasks: any[] = userTasksRaw ? JSON.parse(userTasksRaw) : []
+      const delRaw = localStorage.getItem('painel-editor-deleted-tasks')
+      const deleted = new Set<string>(delRaw ? JSON.parse(delRaw) : [])
+      userTasks
+        .filter(t => unseenTaskIds.has(t.id) && !deleted.has(t.id))
+        .forEach(t => {
+          const proj = t.projectId ? userProjects.find(up => up.id === t.projectId)?.noivos : null
+          items.push({
+            id: `task-${t.id}`,
+            type: 'tarefa',
+            title: t.title,
+            sub: proj ? `${proj} · Prazo ${t.deadline || '—'}` : `Prazo ${t.deadline || '—'}`,
+            href: `/painel-editor/tarefas`,
+          })
+        })
+    } catch {}
+    return items
+  }, [unseenIds, unseenTaskIds, novosProjetos, storageTick])
+
+  function clearNotification(notifId: string) {
+    if (notifId.startsWith('proj-')) markProjectSeen(notifId.replace('proj-', ''))
+    if (notifId.startsWith('task-')) markTaskSeen(notifId.replace('task-', ''))
+  }
+
+  function clearAllNotifications() {
+    notifications.forEach(n => clearNotification(n.id))
+  }
+
+  // Fecha popover ao clicar fora
+  useEffect(() => {
+    if (!notifOpen) return
+    const close = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (target.closest('[data-notif-root]')) return
+      setNotifOpen(false)
+    }
+    const id = setTimeout(() => document.addEventListener('click', close), 0)
+    return () => { clearTimeout(id); document.removeEventListener('click', close) }
+  }, [notifOpen])
+
   return (
     <div className="min-h-screen text-white relative" style={{ background: '#0B0B0B' }}>
       {/* Animação gold pulse para projetos novos não-abertos */}
@@ -656,10 +732,78 @@ export default function PainelEditor() {
 
               {/* Top-right: notif + profile */}
               <div className="flex items-center gap-3 shrink-0">
-                <button className="relative w-11 h-11 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md hover:border-gold/40 transition-all flex items-center justify-center group">
-                  <span className="text-lg text-white/70 group-hover:text-gold">🔔</span>
-                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border border-black">3</span>
-                </button>
+                <div className="relative" data-notif-root>
+                  <button onClick={() => setNotifOpen(v => !v)}
+                    className="relative w-11 h-11 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md hover:border-gold/40 transition-all flex items-center justify-center group">
+                    <span className={`text-lg ${notifications.length > 0 ? 'text-gold animate-pulse' : 'text-white/70 group-hover:text-gold'}`}>🔔</span>
+                    {notifications.length > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border border-black"
+                        style={{ boxShadow: '0 0 8px rgba(239,68,68,0.6)' }}>
+                        {notifications.length}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Popover de notificações */}
+                  {notifOpen && (
+                    <div className="absolute top-[52px] right-0 w-[340px] max-h-[400px] rounded-2xl border border-gold/25 overflow-hidden z-50"
+                      style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.98), rgba(11,9,5,0.99))', boxShadow: '0 20px 60px -10px rgba(0,0,0,0.7), 0 0 30px -8px rgba(201,164,92,0.3)' }}>
+                      {/* Header */}
+                      <div className="px-4 py-3 border-b border-white/[0.06] flex items-center justify-between">
+                        <p className="text-[11px] tracking-[0.3em] uppercase text-gold/70 font-bold">Notificações</p>
+                        {notifications.length > 0 && (
+                          <button onClick={clearAllNotifications}
+                            className="text-[10px] tracking-widest uppercase text-white/40 hover:text-gold transition-colors">
+                            Marcar todas
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Lista */}
+                      <div className="overflow-y-auto" style={{ maxHeight: '340px' }}>
+                        {notifications.length === 0 ? (
+                          <div className="px-4 py-10 text-center">
+                            <p className="text-gold/30 text-3xl font-serif mb-2">✓</p>
+                            <p className="text-[12px] text-white/45">Tudo em dia.</p>
+                            <p className="text-[10px] text-white/25 mt-1">Sem notificações novas.</p>
+                          </div>
+                        ) : (
+                          <div className="divide-y divide-white/[0.04]">
+                            {notifications.map(n => (
+                              <Link key={n.id} href={n.href}
+                                onClick={() => { clearNotification(n.id); setNotifOpen(false) }}
+                                className="block px-4 py-3 hover:bg-gold/[0.04] transition-colors group">
+                                <div className="flex items-start gap-3">
+                                  <span className={`text-[10px] px-2 py-0.5 rounded-full border tracking-widest uppercase font-bold shrink-0 mt-0.5 ${
+                                    n.type === 'projeto'
+                                      ? 'bg-blue-500/15 text-blue-300 border-blue-500/30'
+                                      : 'bg-gold/15 text-gold border-gold/30'
+                                  }`}>
+                                    {n.type === 'projeto' ? '◫ Projeto' : '◷ Tarefa'}
+                                  </span>
+                                  <span className="w-1.5 h-1.5 rounded-full bg-gold mt-2 shrink-0 animate-pulse" style={{ boxShadow: '0 0 6px rgba(201,164,92,0.7)' }} />
+                                </div>
+                                <p className="text-[13px] font-medium text-white/90 mt-1.5 leading-tight">{n.title}</p>
+                                <p className="text-[11px] text-white/40 mt-0.5">{n.sub}</p>
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Footer */}
+                      {notifications.length > 0 && (
+                        <div className="px-4 py-2.5 border-t border-white/[0.06] bg-black/30 flex items-center justify-between">
+                          <p className="text-[10px] text-white/35">{notifications.length} nova{notifications.length === 1 ? '' : 's'}</p>
+                          <Link href="/painel-editor/tarefas" onClick={() => setNotifOpen(false)}
+                            className="text-[10px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors">
+                            Ver todas →
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
                 <div className="flex items-center gap-3 px-3 py-2 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md">
                   <div className="w-9 h-9 rounded-full overflow-hidden border border-gold/40 shrink-0">
                     <img src={displayPhoto} alt={displayFull} className="w-full h-full object-cover" />
