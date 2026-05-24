@@ -13,7 +13,7 @@ import { PROJECTS as MOCK_PROJECTS } from '../_data/projects'
 
 type Notif = {
   id: string
-  type: 'projeto' | 'tarefa'
+  type: 'projeto' | 'tarefa' | 'mensagem'
   title: string
   sub: string
   href: string
@@ -121,6 +121,39 @@ export function NotificationBell() {
             href: '/painel-editor/tarefas',
           })
         })
+
+      // 3) Mensagens não lidas (varre todas as chaves painel-editor-mensagens-{projectId})
+      const projectNameById = new Map<string, { nome: string; foto?: string }>()
+      userProjects.forEach((p: any) => { if (p?.id) projectNameById.set(p.id, { nome: p.noivos || 'Projeto', foto: p.foto }) })
+      MOCK_PROJECTS.forEach(p => { if (!projectNameById.has(p.id)) projectNameById.set(p.id, { nome: p.noivos, foto: p.foto }) })
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (!key || !key.startsWith('painel-editor-mensagens-')) continue
+        if (key.includes('-seen-')) continue   // skip seen counters
+        const projectId = key.replace('painel-editor-mensagens-', '')
+        try {
+          const arr: any[] = JSON.parse(localStorage.getItem(key) || '[]')
+          if (arr.length === 0) continue
+          const seenAdmin = Number(localStorage.getItem(`painel-editor-mensagens-seen-admin-${projectId}`) ?? 0)
+          const seenFree  = Number(localStorage.getItem(`painel-editor-mensagens-seen-freelancer-${projectId}`) ?? 0)
+          const minSeen = Math.min(seenAdmin, seenFree)
+          const unread = arr.length - minSeen
+          if (unread <= 0) continue
+          const proj = projectNameById.get(projectId)
+          if (!proj) continue
+          // Mostra a última mensagem como preview
+          const last = arr[arr.length - 1]
+          const preview = (last?.texto || '').slice(0, 60) + ((last?.texto || '').length > 60 ? '…' : '')
+          items.push({
+            id: `msg-${projectId}`,
+            type: 'mensagem',
+            title: proj.nome,
+            sub: `${unread} nova${unread === 1 ? '' : 's'} · ${preview}`,
+            href: `/painel-editor/novos-projetos?open=${projectId}&chat=1`,
+          })
+        } catch {}
+      }
     } catch {}
     return items
   }, [tick])
@@ -137,6 +170,12 @@ export function NotificationBell() {
         const raw = localStorage.getItem('painel-editor-unseen-tasks')
         const arr: string[] = raw ? JSON.parse(raw) : []
         localStorage.setItem('painel-editor-unseen-tasks', JSON.stringify(arr.filter(x => x !== id)))
+      } else if (notifId.startsWith('msg-')) {
+        // Marca msgs do projeto como vistas pelos dois lados
+        const projectId = notifId.replace('msg-', '')
+        const arr: any[] = JSON.parse(localStorage.getItem(`painel-editor-mensagens-${projectId}`) || '[]')
+        localStorage.setItem(`painel-editor-mensagens-seen-admin-${projectId}`, String(arr.length))
+        localStorage.setItem(`painel-editor-mensagens-seen-freelancer-${projectId}`, String(arr.length))
       }
       setTick(t => t + 1)
     } catch {}
@@ -146,6 +185,15 @@ export function NotificationBell() {
     try {
       localStorage.setItem('painel-editor-unseen-projects', JSON.stringify([]))
       localStorage.setItem('painel-editor-unseen-tasks', JSON.stringify([]))
+      // Marca todas as conversas como totalmente lidas
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (!key || !key.startsWith('painel-editor-mensagens-') || key.includes('-seen-')) continue
+        const projectId = key.replace('painel-editor-mensagens-', '')
+        const arr: any[] = JSON.parse(localStorage.getItem(key) || '[]')
+        localStorage.setItem(`painel-editor-mensagens-seen-admin-${projectId}`, String(arr.length))
+        localStorage.setItem(`painel-editor-mensagens-seen-freelancer-${projectId}`, String(arr.length))
+      }
       setTick(t => t + 1)
     } catch {}
   }
@@ -194,9 +242,11 @@ export function NotificationBell() {
                   <span className={`text-[10px] px-2 py-0.5 rounded-full border tracking-widest uppercase font-bold shrink-0 mt-0.5 ${
                     n.type === 'projeto'
                       ? 'bg-blue-500/15 text-blue-300 border-blue-500/30'
-                      : 'bg-gold/15 text-gold border-gold/30'
+                      : n.type === 'tarefa'
+                        ? 'bg-gold/15 text-gold border-gold/30'
+                        : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
                   }`}>
-                    {n.type === 'projeto' ? '◫ Projeto' : '◷ Tarefa'}
+                    {n.type === 'projeto' ? '◫ Projeto' : n.type === 'tarefa' ? '◷ Tarefa' : '💬 Mensagem'}
                   </span>
                   <span className="w-1.5 h-1.5 rounded-full bg-gold mt-2 shrink-0 animate-pulse"
                     style={{ boxShadow: '0 0 6px rgba(201,164,92,0.7)' }} />

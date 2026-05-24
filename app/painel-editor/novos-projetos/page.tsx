@@ -1381,15 +1381,25 @@ function ProjectCard({
   const [messagesOpen, setMessagesOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
 
-  // Mantém contador de mensagens não lidas (lê localStorage)
+  // Auto-abrir chat quando ?chat=1 está na URL (vindo da sineta)
+  const searchParamsCard = useSearchParams()
+  useEffect(() => {
+    if (!expanded) return
+    if (searchParamsCard?.get('chat') === '1') setMessagesOpen(true)
+  }, [expanded, searchParamsCard])
+
+  // Mantém contador de mensagens não lidas pelo "outro lado"
+  // (msgs do admin que freelancer ainda não viu + msgs do freelancer que admin ainda não viu)
   useEffect(() => {
     function refresh() {
       try {
         const raw = localStorage.getItem(`painel-editor-mensagens-${p.id}`)
         const arr: any[] = raw ? JSON.parse(raw) : []
-        const seenRaw = localStorage.getItem(`painel-editor-mensagens-seen-${p.id}`)
-        const seenCount = seenRaw ? Number(seenRaw) : 0
-        setUnreadCount(Math.max(0, arr.length - seenCount))
+        const seenByAdmin = Number(localStorage.getItem(`painel-editor-mensagens-seen-admin-${p.id}`) ?? 0)
+        const seenByFreelancer = Number(localStorage.getItem(`painel-editor-mensagens-seen-freelancer-${p.id}`) ?? 0)
+        // Total não-lidas = soma das msgs depois do ponto de leitura mais recente de qualquer lado
+        const minSeen = Math.min(seenByAdmin, seenByFreelancer)
+        setUnreadCount(Math.max(0, arr.length - minSeen))
       } catch {}
     }
     refresh()
@@ -2088,16 +2098,38 @@ function MensagensModal({
   const [messages, setMessages] = useState<Mensagem[]>([])
   const [autor, setAutor] = useState<'Admin' | 'Freelancer'>('Admin')
   const [texto, setTexto] = useState('')
+  const [seenByAdmin, setSeenByAdmin] = useState(0)
+  const [seenByFreelancer, setSeenByFreelancer] = useState(0)
 
-  // Carrega + marca como vistas
+  // Marca como vistas para o autor actual
+  function markSeen(forAutor: 'Admin' | 'Freelancer', count: number) {
+    const key = `painel-editor-mensagens-seen-${forAutor === 'Admin' ? 'admin' : 'freelancer'}-${projectId}`
+    try { localStorage.setItem(key, String(count)) } catch {}
+    if (forAutor === 'Admin') setSeenByAdmin(count)
+    else setSeenByFreelancer(count)
+  }
+
+  // Carrega mensagens + seen counters
   useEffect(() => {
     try {
       const raw = localStorage.getItem(`painel-editor-mensagens-${projectId}`)
       const arr: Mensagem[] = raw ? JSON.parse(raw) : []
       setMessages(arr)
-      localStorage.setItem(`painel-editor-mensagens-seen-${projectId}`, String(arr.length))
+      const sa = Number(localStorage.getItem(`painel-editor-mensagens-seen-admin-${projectId}`) ?? 0)
+      const sf = Number(localStorage.getItem(`painel-editor-mensagens-seen-freelancer-${projectId}`) ?? 0)
+      setSeenByAdmin(sa)
+      setSeenByFreelancer(sf)
+      // Quem abriu (autor selecionado) marca como lido
+      markSeen(autor, arr.length)
     } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId])
+
+  // Ao trocar autor, marca como lido para esse autor
+  useEffect(() => {
+    if (messages.length > 0) markSeen(autor, messages.length)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autor])
 
   function send() {
     const t = texto.trim()
@@ -2108,7 +2140,8 @@ function MensagensModal({
     setTexto('')
     try {
       localStorage.setItem(`painel-editor-mensagens-${projectId}`, JSON.stringify(next))
-      localStorage.setItem(`painel-editor-mensagens-seen-${projectId}`, String(next.length))
+      // O autor que enviou marca a sua nova mensagem como vista
+      markSeen(autor, next.length)
     } catch {}
   }
 
@@ -2117,8 +2150,16 @@ function MensagensModal({
     setMessages(next)
     try {
       localStorage.setItem(`painel-editor-mensagens-${projectId}`, JSON.stringify(next))
-      localStorage.setItem(`painel-editor-mensagens-seen-${projectId}`, String(next.length))
+      // Reajusta seen counters caso ultrapassem o novo total
+      if (seenByAdmin > next.length) markSeen('Admin', next.length)
+      if (seenByFreelancer > next.length) markSeen('Freelancer', next.length)
     } catch {}
+  }
+
+  // Read receipt: msg na posição i é "vista pelo outro lado" se a contagem-seen do outro é > i
+  function readReceipt(idx: number, msgAutor: 'Admin'|'Freelancer'): 'sent'|'read' {
+    const other = msgAutor === 'Admin' ? seenByFreelancer : seenByAdmin
+    return other > idx ? 'read' : 'sent'
   }
 
   function fmtTime(ts: number): string {
@@ -2176,8 +2217,9 @@ function MensagensModal({
               <p className="text-[13px] text-white/45">Sem mensagens ainda.</p>
               <p className="text-[11px] text-white/25 mt-1">Sê o primeiro a escrever.</p>
             </div>
-          ) : messages.map(m => {
+          ) : messages.map((m, idx) => {
             const isAdmin = m.autor === 'Admin'
+            const receipt = readReceipt(idx, m.autor)
             return (
               <div key={m.id} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
                 <div className={`group max-w-[80%] rounded-2xl px-4 py-2.5 ${
@@ -2195,6 +2237,16 @@ function MensagensModal({
                       className="ml-auto text-[10px] text-white/20 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity">🗑</button>
                   </div>
                   <p className="text-[13px] text-white/90 leading-relaxed whitespace-pre-wrap break-words">{m.texto}</p>
+                  {/* Read receipt */}
+                  <div className="flex justify-end mt-1">
+                    <span className={`text-[10px] font-bold tabular-nums leading-none ${
+                      receipt === 'read'
+                        ? (isAdmin ? 'text-emerald-300' : 'text-emerald-300')
+                        : 'text-white/35'
+                    }`} title={receipt === 'read' ? `Lida pelo ${isAdmin ? 'Freelancer' : 'Admin'}` : 'Enviada · ainda não lida'}>
+                      {receipt === 'read' ? '✓✓' : '✓'}
+                    </span>
+                  </div>
                 </div>
               </div>
             )
