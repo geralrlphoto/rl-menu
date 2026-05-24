@@ -718,10 +718,38 @@ function AddMusicaModal({
   const [genero, setGenero]   = useState<Genero>('Cinematic')
   const [clima, setClima]     = useState<Clima>('Romântico')
   const [duracao, setDuracao] = useState('')
+  const [autoFilling, setAutoFilling] = useState(false)
+  const [autoFilled, setAutoFilled] = useState(false)
 
   // Auto-detect & preview thumbnail YouTube
   const plataforma = detectPlataforma(link)
   const ytThumb = plataforma === 'YouTube' ? youtubeThumb(link) : null
+
+  // Auto-fill via YouTube oEmbed (título + autor) quando há ID válido
+  useEffect(() => {
+    if (plataforma !== 'YouTube') return
+    const id = youtubeIdFromUrl(link)
+    if (!id) return
+    let cancelled = false
+    setAutoFilling(true)
+    setAutoFilled(false)
+    const debounce = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/painel-editor/youtube-oembed?url=${encodeURIComponent(link)}`)
+        const data = await res.json()
+        if (cancelled || !res.ok || data.error) return
+        // Só preenche se os campos estiverem vazios (não sobrescreve o que user já editou)
+        if (data.title && !title.trim())       setTitle(String(data.title))
+        if (data.author_name && !artist.trim()) setArtist(String(data.author_name))
+        setAutoFilled(true)
+      } catch {}
+      finally {
+        if (!cancelled) setAutoFilling(false)
+      }
+    }, 500) // 500ms debounce
+    return () => { cancelled = true; clearTimeout(debounce); setAutoFilling(false) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [link])
 
   const valid = title.trim().length > 0 && link.trim().length > 0
 
@@ -779,7 +807,18 @@ function AddMusicaModal({
               <div className="mt-3 flex items-center gap-3 rounded-lg border border-gold/20 bg-gold/[0.04] p-3">
                 <img src={ytThumb} alt="YouTube preview" className="w-24 h-14 object-cover rounded-md border border-white/10" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] tracking-widest uppercase text-gold/70 font-bold">YouTube</p>
+                  <p className="text-[10px] tracking-widest uppercase text-gold/70 font-bold flex items-center gap-2">
+                    YouTube
+                    {autoFilling && (
+                      <span className="inline-flex items-center gap-1 normal-case tracking-normal text-white/55 font-normal text-[10px]">
+                        <span className="inline-block w-2.5 h-2.5 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+                        a obter dados…
+                      </span>
+                    )}
+                    {!autoFilling && autoFilled && (
+                      <span className="normal-case tracking-normal text-emerald-300 font-normal text-[10px]">✓ título e artista preenchidos</span>
+                    )}
+                  </p>
                   <p className="text-[11px] text-white/55 mt-0.5 truncate">Preview · capa será usada automaticamente</p>
                 </div>
               </div>
