@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { TODAY as TODAY_PT, TASKS as MOCK_TASKS, PROJECTS as MOCK_PROJECTS, paymentPlanFor, type Project as DataProject } from './_data/projects'
 import { NotificationBell } from './_components/NotificationBell'
+import { MessagesBell } from './_components/MessagesBell'
 import { loadFreelancerProfile } from './_data/freelancer-profile'
 
 // Hoje (derivado da constante canónica)
@@ -837,6 +838,7 @@ export default function PainelEditor() {
               {/* Top-right: notif + profile */}
               <div className="flex items-center gap-3 shrink-0">
                 <NotificationBell />
+                <MessagesBell />
                 <div className="flex items-center gap-3 px-3 py-2 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md">
                   <div className="w-9 h-9 rounded-full overflow-hidden border border-gold/40 shrink-0">
                     <img src={displayPhoto} alt={displayFull} className="w-full h-full object-cover" />

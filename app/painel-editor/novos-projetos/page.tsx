@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { NotificationBell } from '../_components/NotificationBell'
+import { MessagesBell } from '../_components/MessagesBell'
 
 // ────────────────────────────────────────────────────────────────────────────
 //  NOVOS PROJETOS — RL Photo.Video (premium cinematic editor workspace)
@@ -639,6 +640,7 @@ export default function NovosProjetosPage() {
 
               <div className="flex items-center gap-2 shrink-0">
                 <NotificationBell />
+                <MessagesBell />
                 <button className="w-10 h-10 rounded-xl border border-white/15 bg-black/40 backdrop-blur-md hover:border-gold/40 transition-all flex items-center justify-center text-white/65 hover:text-gold">
                   ◉
                 </button>

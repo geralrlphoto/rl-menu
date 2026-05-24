@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { PROJECTS, TASKS, TODAY, comparePtDate, eventsFromProjects, type Task, type Priority, type TaskStatus, type Project } from '../_data/projects'
 import { loadFreelancerProfile, type FreelancerProfile, DEFAULT_FREELANCER_PROFILE } from '../_data/freelancer-profile'
 import { NotificationBell } from '../_components/NotificationBell'
+import { MessagesBell } from '../_components/MessagesBell'
 
 const AVATAR_EDITOR = 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=80&h=80&fit=crop&crop=face'
 
@@ -691,6 +692,7 @@ function Hero({ onNovaTarefa }: { onNovaTarefa: () => void }) {
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <NotificationBell />
+          <MessagesBell />
           <button
             type="button"
             onClick={onNovaTarefa}

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { loadFreelancerProfile, saveFreelancerProfile, type FreelancerProfile, DEFAULT_FREELANCER_PROFILE } from '../_data/freelancer-profile'
 import { NotificationBell } from '../_components/NotificationBell'
+import { MessagesBell } from '../_components/MessagesBell'
 
 // ────────────────────────────────────────────────────────────────────────
 //  DADOS PESSOAIS — Wedding Moments Films
@@ -197,6 +198,7 @@ function Hero({ theme, onToggleTheme, onEdit, editMode }: { theme: 'dark'|'light
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <NotificationBell />
+          <MessagesBell />
           <button onClick={onToggleTheme}
             className="w-11 h-11 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md hover:border-gold/40 transition-all flex items-center justify-center text-white/75 hover:text-gold">
             {theme === 'dark' ? '☀' : '☾'}

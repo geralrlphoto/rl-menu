@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { NotificationBell } from '../_components/NotificationBell'
+import { MessagesBell } from '../_components/MessagesBell'
 
 // ── Helpers de URL/plataforma ───────────────────────────────────────────
 function detectPlataforma(url: string): Plataforma {
@@ -605,6 +606,7 @@ function Hero({ onAdd }: { onAdd: () => void }) {
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <NotificationBell />
+          <MessagesBell />
           <button className="w-11 h-11 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md hover:border-gold/40 transition-all flex items-center justify-center text-white/75 hover:text-gold" title="Importar Playlist">↓</button>
           <button
             type="button"

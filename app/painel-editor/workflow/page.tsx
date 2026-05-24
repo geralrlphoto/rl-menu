@@ -14,6 +14,7 @@ import {
   type WorkflowStep,
 } from '../_data/projects'
 import { NotificationBell } from '../_components/NotificationBell'
+import { MessagesBell } from '../_components/MessagesBell'
 
 // ── Helpers ───────────────────────────────────────────────────────────
 function stripTimeWF(d: string): string { return (d || '').split('—')[0].trim() }
@@ -577,6 +578,7 @@ function Hero() {
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <NotificationBell />
+          <MessagesBell />
           <button className="w-11 h-11 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md hover:border-gold/40 transition-all flex items-center justify-center">
             <span className="text-lg text-white/75">📅</span>
           </button>
