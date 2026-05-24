@@ -124,8 +124,27 @@ export default function PainelEditor() {
     return () => { cancelled = true }
   }, [freelancerId])
 
-  const displayName  = freelancer?.nome?.split(' ')[0] ?? 'Editor'
-  const displayFull  = freelancer?.nome ?? 'Editor Pro'
+  // Lê perfil de localStorage (definido em /painel-editor/dados-pessoais)
+  // — tem prioridade sobre o nome do API freelancer
+  const [profileNome, setProfileNome] = useState<string>('')
+  useEffect(() => {
+    function refresh() {
+      try { setProfileNome(loadFreelancerProfile().nome || '') } catch {}
+    }
+    refresh()
+    const onFocus = () => refresh()
+    window.addEventListener('focus', onFocus)
+    window.addEventListener('storage', onFocus)
+    return () => {
+      window.removeEventListener('focus', onFocus)
+      window.removeEventListener('storage', onFocus)
+    }
+  }, [])
+
+  // Hierarquia: 1) Profile em Dados Pessoais  2) Freelancer da API  3) fallback
+  const effectiveNome = (profileNome.trim() || freelancer?.nome || 'Editor Pro').trim()
+  const displayName  = effectiveNome.split(' ')[0]
+  const displayFull  = effectiveNome
   const displayEmail = freelancer?.email ?? 'editorpro@mail.com'
   const displayRole  = freelancer?.status ?? 'Editor de Vídeo'
   const displayPhoto = freelancer?.foto_url ?? DEFAULT_AVATAR
