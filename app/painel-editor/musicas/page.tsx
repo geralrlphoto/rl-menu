@@ -150,8 +150,10 @@ export default function MusicasPage() {
   const [page, setPage] = useState(1)
   const [playing, setPlaying] = useState<string | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
+  const [editingCover, setEditingCover] = useState<Momento | null>(null)
+  const [customCovers, setCustomCovers] = useState<Record<string, string>>({})
 
-  // ── Carrega/persiste user-tracks ────────────────────────────────────
+  // ── Carrega/persiste user-tracks + custom covers ────────────────────
   useEffect(() => {
     try {
       const raw = localStorage.getItem('painel-editor-user-musicas')
@@ -160,7 +162,29 @@ export default function MusicasPage() {
         setTracks([...userTracks, ...TRACKS])
       }
     } catch {}
+    try {
+      const raw = localStorage.getItem('painel-editor-musicas-covers')
+      const map = raw ? JSON.parse(raw) : {}
+      setCustomCovers(map)
+    } catch {}
   }, [])
+
+  function setCustomCover(momento: Momento, dataUrl: string) {
+    setCustomCovers(prev => {
+      const next = { ...prev, [momento]: dataUrl }
+      try { localStorage.setItem('painel-editor-musicas-covers', JSON.stringify(next)) } catch {}
+      return next
+    })
+  }
+
+  function resetCustomCover(momento: Momento) {
+    setCustomCovers(prev => {
+      const next = { ...prev }
+      delete next[momento]
+      try { localStorage.setItem('painel-editor-musicas-covers', JSON.stringify(next)) } catch {}
+      return next
+    })
+  }
 
   function persistUserTracks(all: Track[]) {
     try {
@@ -257,7 +281,9 @@ export default function MusicasPage() {
                   {CATEGORIES.slice(0, 6).map(c => (
                     <CategoryCard key={c.momento} c={c}
                       active={activeCategory === c.momento}
-                      onClick={() => setActiveCategory(activeCategory === c.momento ? null : c.momento)} />
+                      onClick={() => setActiveCategory(activeCategory === c.momento ? null : c.momento)}
+                      customCover={customCovers[c.momento]}
+                      onEditCover={() => setEditingCover(c.momento)} />
                   ))}
                 </div>
               </div>
@@ -460,6 +486,18 @@ export default function MusicasPage() {
           onCreate={addTrack}
         />
       )}
+
+      {/* Modal: Trocar Foto do Card */}
+      {editingCover && (
+        <EditCoverModal
+          momento={editingCover}
+          currentCover={customCovers[editingCover] || CATEGORIES.find(c => c.momento === editingCover)?.cover || ''}
+          hasCustom={Boolean(customCovers[editingCover])}
+          onClose={() => setEditingCover(null)}
+          onSave={(dataUrl) => { setCustomCover(editingCover, dataUrl); setEditingCover(null) }}
+          onReset={() => { resetCustomCover(editingCover); setEditingCover(null) }}
+        />
+      )}
     </div>
   )
 }
@@ -590,10 +628,16 @@ function FilterSelect<T extends string>({ value, onChange, options }: { value: T
   )
 }
 
-function CategoryCard({ c, active, onClick }: { c: Category; active: boolean; onClick: () => void }) {
+function CategoryCard({ c, active, onClick, customCover, onEditCover }: {
+  c: Category
+  active: boolean
+  onClick: () => void
+  customCover?: string
+  onEditCover?: () => void
+}) {
   return (
-    <button onClick={onClick}
-      className={`relative overflow-hidden rounded-2xl border aspect-[3/2.4] text-left transition-all ${
+    <div
+      className={`group relative overflow-hidden rounded-2xl border aspect-[3/2.4] transition-all ${
         active
           ? 'border-gold/55'
           : 'border-white/[0.06] hover:border-gold/30'
@@ -601,16 +645,28 @@ function CategoryCard({ c, active, onClick }: { c: Category; active: boolean; on
       style={active
         ? { boxShadow: '0 0 28px -6px rgba(201,164,92,0.45), 0 10px 30px -10px rgba(0,0,0,0.6)' }
         : { boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
-      <img src={c.cover} alt="" className="absolute inset-0 w-full h-full object-cover transition-transform hover:scale-105 duration-700" />
-      <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 65%, rgba(0,0,0,0.92) 100%)' }} />
-      <div className="absolute inset-x-0 bottom-0 p-3.5">
-        <p className="text-[14px] font-bold tracking-[0.18em] uppercase text-white" style={{ fontFamily: 'Georgia, serif', textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>{c.momento}</p>
-        <p className="text-[11px] text-gold/85 mt-0.5">{c.count} músicas</p>
-      </div>
-      {active && (
-        <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-gold" style={{ boxShadow: '0 0 8px rgba(201,164,92,0.8)' }} />
+      {/* Click area (selecionar categoria) */}
+      <button onClick={onClick} className="absolute inset-0 w-full h-full text-left z-10" title={`Filtrar por ${c.momento}`}>
+        <img src={customCover || c.cover} alt="" className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105 duration-700" />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 65%, rgba(0,0,0,0.92) 100%)' }} />
+        <div className="absolute inset-x-0 bottom-0 p-3.5">
+          <p className="text-[14px] font-bold tracking-[0.18em] uppercase text-white" style={{ fontFamily: 'Georgia, serif', textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>{c.momento}</p>
+          <p className="text-[11px] text-gold/85 mt-0.5">{c.count} músicas</p>
+        </div>
+        {active && (
+          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-gold" style={{ boxShadow: '0 0 8px rgba(201,164,92,0.8)' }} />
+        )}
+      </button>
+
+      {/* Botão ✎ trocar foto (sobre o click area, mais alto z-index) */}
+      {onEditCover && (
+        <button onClick={(e) => { e.stopPropagation(); onEditCover() }}
+          title="Trocar foto"
+          className="absolute top-2 left-2 z-20 w-7 h-7 rounded-lg border border-white/15 bg-black/60 backdrop-blur-md text-white/70 hover:text-gold hover:border-gold/40 hover:bg-black/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all text-[12px]">
+          ✎
+        </button>
       )}
-    </button>
+    </div>
   )
 }
 
@@ -790,6 +846,129 @@ function AddMusicaModal({
               style={{ boxShadow: '0 0 18px -4px rgba(201,164,92,0.5)' }}>
               ✓ Adicionar Música
             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ────────────────────────────────────────────────────────────────────────
+//  MODAL: TROCAR FOTO DO CARD DE CATEGORIA
+// ────────────────────────────────────────────────────────────────────────
+function EditCoverModal({
+  momento,
+  currentCover,
+  hasCustom,
+  onClose,
+  onSave,
+  onReset,
+}: {
+  momento: Momento
+  currentCover: string
+  hasCustom: boolean
+  onClose: () => void
+  onSave: (dataUrl: string) => void
+  onReset: () => void
+}) {
+  const [url, setUrl] = useState('')
+  const [filePreview, setFilePreview] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    setError(null)
+    const f = e.target.files?.[0]
+    if (!f) return
+    if (!f.type.startsWith('image/')) { setError('Selecciona uma imagem.'); return }
+    if (f.size > 2 * 1024 * 1024) { setError('Imagem demasiado grande (máx 2 MB).'); return }
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = reader.result
+      if (typeof result === 'string') {
+        setFilePreview(result)
+        setUrl('')
+      }
+    }
+    reader.readAsDataURL(f)
+  }
+
+  function submit() {
+    const value = filePreview || url.trim()
+    if (!value) { setError('Selecciona um ficheiro ou cola um URL.'); return }
+    onSave(value)
+  }
+
+  const previewSrc = filePreview || (url.trim() && /^https?:\/\//.test(url.trim()) ? url.trim() : currentCover)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}>
+      <div className="relative w-full max-w-md rounded-2xl border border-gold/30 overflow-hidden"
+        style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.98), rgba(11,9,5,0.99))', boxShadow: '0 30px 60px -20px rgba(0,0,0,0.8), 0 0 40px -10px rgba(201,164,92,0.35)' }}>
+        <button onClick={onClose}
+          className="absolute top-3 right-3 w-8 h-8 rounded-lg border border-white/10 text-white/55 hover:text-gold hover:border-gold/30 flex items-center justify-center text-lg z-10">×</button>
+
+        <div className="px-6 pt-6 pb-4 border-b border-white/[0.06]">
+          <p className="text-[11px] tracking-[0.4em] uppercase text-gold/70 font-bold mb-2">Categoria</p>
+          <h2 className="text-2xl font-light text-white" style={{ fontFamily: 'Georgia, serif' }}>
+            Trocar foto · <span className="italic text-gold">{momento}</span>
+          </h2>
+        </div>
+
+        <div className="p-6 space-y-4">
+          {/* Preview */}
+          <div className="relative w-full aspect-[3/2.4] rounded-xl overflow-hidden border border-white/15">
+            {previewSrc ? (
+              <img src={previewSrc} alt="Preview" className="absolute inset-0 w-full h-full object-cover" />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center text-white/30 text-[12px]">Sem imagem</div>
+            )}
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,0.85) 100%)' }} />
+            <p className="absolute bottom-3 left-3 text-[14px] font-bold tracking-[0.18em] uppercase text-white" style={{ fontFamily: 'Georgia, serif', textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>{momento}</p>
+          </div>
+
+          {/* Upload ficheiro */}
+          <div>
+            <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-2">Carregar do computador</p>
+            <label className="block w-full cursor-pointer">
+              <input type="file" accept="image/*" onChange={onFile} className="hidden" />
+              <div className="rounded-lg border border-dashed border-white/15 hover:border-gold/40 px-4 py-3 text-center transition-all">
+                <p className="text-[13px] text-white/65">📤 Escolher imagem</p>
+                <p className="text-[10px] text-white/30 mt-0.5">PNG, JPG · máx 2 MB</p>
+              </div>
+            </label>
+          </div>
+
+          {/* OU URL */}
+          <div>
+            <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-2">Ou colar URL</p>
+            <input value={url} onChange={e => { setUrl(e.target.value); setFilePreview(null) }}
+              placeholder="https://..."
+              className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[12px] text-white placeholder:text-white/30 focus:outline-none focus:border-gold/50 font-mono" />
+          </div>
+
+          {error && (
+            <p className="text-[12px] text-red-300 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30">⚠ {error}</p>
+          )}
+
+          {/* Botões */}
+          <div className="space-y-2 pt-2">
+            <div className="flex items-center gap-3">
+              <button type="button" onClick={onClose}
+                className="flex-1 px-4 py-2.5 rounded-lg border border-white/10 text-white/65 text-[12px] font-semibold tracking-wider hover:border-white/25 hover:text-white transition-all">
+                Cancelar
+              </button>
+              <button type="button" onClick={submit}
+                className="flex-1 px-4 py-2.5 rounded-lg bg-gold text-black text-[12px] font-bold tracking-wider hover:bg-gold/90 transition-all"
+                style={{ boxShadow: '0 0 18px -4px rgba(201,164,92,0.5)' }}>
+                ✓ Guardar
+              </button>
+            </div>
+            {hasCustom && (
+              <button type="button" onClick={onReset}
+                className="w-full text-[11px] text-white/40 hover:text-red-300 transition-colors py-2">
+                ↺ Repor imagem original
+              </button>
+            )}
           </div>
         </div>
       </div>
