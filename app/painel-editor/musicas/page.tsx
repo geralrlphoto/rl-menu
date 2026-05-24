@@ -189,7 +189,9 @@ export default function MusicasPage() {
 
   const filtered = useMemo(() => {
     let arr = tracks
-    if (filterMomento !== 'Todos os Momentos') arr = arr.filter(t => t.momento === filterMomento)
+    // Categoria clicada nos cards (Making Of, Votos, etc.) tem prioridade sobre o dropdown
+    if (activeCategory)                        arr = arr.filter(t => t.momento === activeCategory)
+    else if (filterMomento !== 'Todos os Momentos') arr = arr.filter(t => t.momento === filterMomento)
     if (filterGenero  !== 'Todos os Géneros')  arr = arr.filter(t => t.genero === filterGenero)
     if (filterClima   !== 'Todos os Climas')   arr = arr.filter(t => t.clima === filterClima)
     if (search.trim()) arr = arr.filter(t =>
@@ -197,7 +199,7 @@ export default function MusicasPage() {
       t.artist.toLowerCase().includes(search.toLowerCase())
     )
     return arr
-  }, [tracks, filterMomento, filterGenero, filterClima, search])
+  }, [tracks, activeCategory, filterMomento, filterGenero, filterClima, search])
 
   const favoritas = tracks.filter(t => t.favorita)
 
@@ -267,9 +269,21 @@ export default function MusicasPage() {
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
                   <div className="flex items-center gap-3">
-                    <h2 className="text-[18px] font-semibold text-white" style={{ fontFamily: 'Georgia, serif' }}>Músicas Recentes</h2>
-                    <span className="text-[11px] tracking-widest uppercase text-white/45 px-2.5 py-1 rounded-full border border-white/10 bg-white/[0.02]">{TOTAL_LIBRARY} músicas</span>
+                    <h2 className="text-[18px] font-semibold text-white" style={{ fontFamily: 'Georgia, serif' }}>
+                      {activeCategory ? (
+                        <>Músicas · <span className="italic text-gold">{activeCategory}</span></>
+                      ) : 'Músicas Recentes'}
+                    </h2>
+                    <span className="text-[11px] tracking-widest uppercase text-white/45 px-2.5 py-1 rounded-full border border-white/10 bg-white/[0.02]">
+                      {filtered.length} {filtered.length === 1 ? 'música' : 'músicas'}
+                    </span>
                   </div>
+                  {activeCategory && (
+                    <button onClick={() => setActiveCategory(null)}
+                      className="text-[11px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors px-3 py-1.5 rounded-lg border border-gold/30 hover:bg-gold/10">
+                      ← Ver todas
+                    </button>
+                  )}
                 </div>
 
                 {/* Table */}
