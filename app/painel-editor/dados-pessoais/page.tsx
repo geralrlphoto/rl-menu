@@ -81,15 +81,15 @@ export default function DadosPessoaisPage() {
           {/* Sobre Mim + Especialidades */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-5">
             <div className="lg:col-span-2">
-              <AboutCard />
+              <AboutCard editMode={editMode} onToggle={() => setEditMode(!editMode)} />
             </div>
-            <SkillsCard />
+            <SkillsCard editMode={editMode} onToggle={() => setEditMode(!editMode)} />
           </div>
 
           {/* Preferências + Pagamento + Segurança */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-5">
-            <WorkPreferencesCard />
-            <PaymentInfoCard />
+            <WorkPreferencesCard editMode={editMode} onToggle={() => setEditMode(!editMode)} />
+            <PaymentInfoCard editMode={editMode} onToggle={() => setEditMode(!editMode)} />
             <SecurityCard />
           </div>
 
@@ -363,10 +363,10 @@ function ActivitySummaryCard() {
 //  ABOUT
 // ────────────────────────────────────────────────────────────────────────
 
-function AboutCard() {
+function AboutCard({ editMode, onToggle }: { editMode?: boolean; onToggle?: () => void }) {
   return (
     <Card>
-      <CardHeader title="Sobre Mim" right={<EditButton />} />
+      <CardHeader title="Sobre Mim" right={<EditButton editMode={editMode} onToggle={onToggle} />} />
       <p className="text-[13px] text-white/65 leading-relaxed">
         Editor de vídeo especializado em casamentos com mais de 6 anos de experiência.
         Apaixonado por contar histórias reais através de imagens. Busco sempre capturar
@@ -395,10 +395,10 @@ function AboutStat({ label, value, small }: { label: string; value: string; smal
 //  SKILLS
 // ────────────────────────────────────────────────────────────────────────
 
-function SkillsCard() {
+function SkillsCard({ editMode, onToggle }: { editMode?: boolean; onToggle?: () => void }) {
   return (
     <Card>
-      <CardHeader title="Especialidades" right={<EditButton />} />
+      <CardHeader title="Especialidades" right={<EditButton editMode={editMode} onToggle={onToggle} />} />
       <div className="space-y-4">
         {SKILLS.map(s => (
           <div key={s.label}>
@@ -425,7 +425,7 @@ function SkillsCard() {
 //  WORK PREFERENCES
 // ────────────────────────────────────────────────────────────────────────
 
-function WorkPreferencesCard() {
+function WorkPreferencesCard({ editMode, onToggle }: { editMode?: boolean; onToggle?: () => void }) {
   const rows = [
     ['Dias de Trabalho',    'Segunda a Sábado'],
     ['Horário Preferencial','09:00 - 18:00'],
@@ -434,7 +434,7 @@ function WorkPreferencesCard() {
   ]
   return (
     <Card>
-      <CardHeader title="Preferências de Trabalho" right={<EditButton />} />
+      <CardHeader title="Preferências de Trabalho" right={<EditButton editMode={editMode} onToggle={onToggle} />} />
       <div className="space-y-3.5">
         {rows.map(([label, value]) => (
           <div key={label} className="flex items-center justify-between gap-3 pb-3 border-b border-white/[0.04] last:border-0 last:pb-0">
@@ -458,7 +458,7 @@ function WorkPreferencesCard() {
 //  PAYMENT INFO
 // ────────────────────────────────────────────────────────────────────────
 
-function PaymentInfoCard() {
+function PaymentInfoCard({ editMode, onToggle }: { editMode?: boolean; onToggle?: () => void }) {
   const rows = [
     ['Método de Pagamento', 'Transferência Bancária'],
     ['IBAN',                'PT50 0010 0000 1234 5678 9015 4'],
@@ -468,7 +468,7 @@ function PaymentInfoCard() {
   ]
   return (
     <Card>
-      <CardHeader title="Informações de Pagamento" right={<EditButton />} />
+      <CardHeader title="Informações de Pagamento" right={<EditButton editMode={editMode} onToggle={onToggle} />} />
       <div className="space-y-3.5">
         {rows.map(([label, value]) => (
           <div key={label} className="flex items-center justify-between gap-3 pb-3 border-b border-white/[0.04] last:border-0 last:pb-0">
@@ -570,10 +570,17 @@ function CardHeader({ title, right }: { title: string; right?: React.ReactNode }
   )
 }
 
-function EditButton() {
+function EditButton({ editMode, onToggle }: { editMode?: boolean; onToggle?: () => void }) {
   return (
-    <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gold/30 bg-gold/[0.06] text-gold text-[11px] tracking-widest uppercase font-bold hover:bg-gold/15 transition-all">
-      Editar
+    <button
+      type="button"
+      onClick={onToggle}
+      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] tracking-widest uppercase font-bold transition-all ${
+        editMode
+          ? 'border-emerald-500/45 bg-emerald-500/[0.08] text-emerald-300 hover:bg-emerald-500/15'
+          : 'border-gold/30 bg-gold/[0.06] text-gold hover:bg-gold/15'
+      }`}>
+      {editMode ? '✓ Concluir' : '✎ Editar'}
     </button>
   )
 }
