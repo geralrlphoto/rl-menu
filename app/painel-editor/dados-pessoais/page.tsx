@@ -81,15 +81,15 @@ export default function DadosPessoaisPage() {
           {/* Sobre Mim + Especialidades */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-5">
             <div className="lg:col-span-2">
-              <AboutCard editMode={editMode} onToggle={() => setEditMode(!editMode)} />
+              <AboutCard editMode={editMode} onToggle={() => setEditMode(!editMode)} profile={profile} onChange={updateProfile} />
             </div>
-            <SkillsCard editMode={editMode} onToggle={() => setEditMode(!editMode)} />
+            <SkillsCard editMode={editMode} onToggle={() => setEditMode(!editMode)} profile={profile} onChange={updateProfile} />
           </div>
 
           {/* Preferências + Pagamento + Segurança */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-5">
-            <WorkPreferencesCard editMode={editMode} onToggle={() => setEditMode(!editMode)} />
-            <PaymentInfoCard editMode={editMode} onToggle={() => setEditMode(!editMode)} />
+            <WorkPreferencesCard editMode={editMode} onToggle={() => setEditMode(!editMode)} profile={profile} onChange={updateProfile} />
+            <PaymentInfoCard editMode={editMode} onToggle={() => setEditMode(!editMode)} profile={profile} onChange={updateProfile} />
             <SecurityCard />
           </div>
 
@@ -363,30 +363,50 @@ function ActivitySummaryCard() {
 //  ABOUT
 // ────────────────────────────────────────────────────────────────────────
 
-function AboutCard({ editMode, onToggle }: { editMode?: boolean; onToggle?: () => void }) {
+function AboutCard({ editMode, onToggle, profile, onChange }: {
+  editMode?: boolean
+  onToggle?: () => void
+  profile: FreelancerProfile
+  onChange: (patch: Partial<FreelancerProfile>) => void
+}) {
   return (
     <Card>
       <CardHeader title="Sobre Mim" right={<EditButton editMode={editMode} onToggle={onToggle} />} />
-      <p className="text-[13px] text-white/65 leading-relaxed">
-        Editor de vídeo especializado em casamentos com mais de 6 anos de experiência.
-        Apaixonado por contar histórias reais através de imagens. Busco sempre capturar
-        emoções autênticas e transformar momentos em memórias inesquecíveis.
-      </p>
+      {editMode ? (
+        <textarea
+          value={profile.sobre}
+          onChange={e => onChange({ sobre: e.target.value })}
+          rows={4}
+          className="w-full bg-black/40 border border-gold/30 rounded-lg px-3 py-2.5 text-[13px] text-white/85 placeholder:text-white/30 focus:outline-none focus:border-gold/60 resize-none leading-relaxed" />
+      ) : (
+        <p className="text-[13px] text-white/65 leading-relaxed whitespace-pre-wrap">{profile.sobre}</p>
+      )}
 
       <div className="grid grid-cols-3 gap-3 mt-5 pt-5 border-t border-white/[0.05]">
-        <AboutStat label="Experiência"           value="6+ anos" />
-        <AboutStat label="Projetos Realizados"   value="150+" />
-        <AboutStat label="Estilo"                value="Cinemático, Emocional, Autêntico" small />
+        <AboutStat label="Experiência" value={profile.experiencia} editMode={editMode}
+          onChange={v => onChange({ experiencia: v })} />
+        <AboutStat label="Projetos Realizados" value={profile.projetosRealizados} editMode={editMode}
+          onChange={v => onChange({ projetosRealizados: v })} />
+        <AboutStat label="Estilo" value={profile.estilo} small editMode={editMode}
+          onChange={v => onChange({ estilo: v })} />
       </div>
     </Card>
   )
 }
 
-function AboutStat({ label, value, small }: { label: string; value: string; small?: boolean }) {
+function AboutStat({ label, value, small, editMode, onChange }: {
+  label: string; value: string; small?: boolean
+  editMode?: boolean; onChange?: (v: string) => void
+}) {
   return (
     <div>
       <p className="text-[10px] tracking-widest uppercase text-white/35 mb-1">{label}</p>
-      <p className={`${small ? 'text-[12px]' : 'text-[15px]'} font-semibold text-white leading-tight`}>{value}</p>
+      {editMode && onChange ? (
+        <input value={value} onChange={e => onChange(e.target.value)}
+          className={`w-full bg-black/40 border border-gold/30 rounded-md px-2 py-1 ${small ? 'text-[12px]' : 'text-[14px]'} font-semibold text-white focus:outline-none focus:border-gold/60`} />
+      ) : (
+        <p className={`${small ? 'text-[12px]' : 'text-[15px]'} font-semibold text-white leading-tight`}>{value}</p>
+      )}
     </div>
   )
 }
@@ -395,16 +415,47 @@ function AboutStat({ label, value, small }: { label: string; value: string; smal
 //  SKILLS
 // ────────────────────────────────────────────────────────────────────────
 
-function SkillsCard({ editMode, onToggle }: { editMode?: boolean; onToggle?: () => void }) {
+function SkillsCard({ editMode, onToggle, profile, onChange }: {
+  editMode?: boolean
+  onToggle?: () => void
+  profile: FreelancerProfile
+  onChange: (patch: Partial<FreelancerProfile>) => void
+}) {
+  function updateSkill(idx: number, patch: Partial<{ label: string; value: number }>) {
+    const next = profile.skills.map((s, i) => i === idx ? { ...s, ...patch } : s)
+    onChange({ skills: next })
+  }
+  function addSkill() {
+    onChange({ skills: [...profile.skills, { label: 'Nova competência', value: 50 }] })
+  }
+  function removeSkill(idx: number) {
+    onChange({ skills: profile.skills.filter((_, i) => i !== idx) })
+  }
   return (
     <Card>
       <CardHeader title="Especialidades" right={<EditButton editMode={editMode} onToggle={onToggle} />} />
       <div className="space-y-4">
-        {SKILLS.map(s => (
-          <div key={s.label}>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[12px] text-white/75">{s.label}</span>
-              <span className="text-[12px] font-bold text-gold">{s.value}%</span>
+        {profile.skills.map((s, i) => (
+          <div key={i}>
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+              {editMode ? (
+                <input value={s.label} onChange={e => updateSkill(i, { label: e.target.value })}
+                  className="flex-1 bg-black/40 border border-gold/30 rounded-md px-2 py-1 text-[12px] text-white/85 focus:outline-none focus:border-gold/60" />
+              ) : (
+                <span className="text-[12px] text-white/75">{s.label}</span>
+              )}
+              {editMode ? (
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <input type="number" min={0} max={100} value={s.value}
+                    onChange={e => updateSkill(i, { value: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })}
+                    className="w-14 bg-black/40 border border-gold/30 rounded-md px-2 py-1 text-[12px] text-gold font-bold focus:outline-none focus:border-gold/60 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                  <span className="text-[12px] font-bold text-gold/70">%</span>
+                  <button onClick={() => removeSkill(i)} title="Remover"
+                    className="ml-1 text-red-300/60 hover:text-red-300 text-[14px]">×</button>
+                </div>
+              ) : (
+                <span className="text-[12px] font-bold text-gold">{s.value}%</span>
+              )}
             </div>
             <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
               <div className="h-full rounded-full transition-all duration-700"
@@ -416,6 +467,12 @@ function SkillsCard({ editMode, onToggle }: { editMode?: boolean; onToggle?: () 
             </div>
           </div>
         ))}
+        {editMode && (
+          <button onClick={addSkill}
+            className="w-full text-[11px] tracking-widest uppercase text-gold/70 hover:text-gold py-2 rounded-lg border border-dashed border-gold/30 hover:bg-gold/[0.04] transition-all">
+            + Adicionar competência
+          </button>
+        )}
       </div>
     </Card>
   )
@@ -425,29 +482,69 @@ function SkillsCard({ editMode, onToggle }: { editMode?: boolean; onToggle?: () 
 //  WORK PREFERENCES
 // ────────────────────────────────────────────────────────────────────────
 
-function WorkPreferencesCard({ editMode, onToggle }: { editMode?: boolean; onToggle?: () => void }) {
-  const rows = [
-    ['Dias de Trabalho',    'Segunda a Sábado'],
-    ['Horário Preferencial','09:00 - 18:00'],
-    ['Comunicação',         'Email, WhatsApp, Slack'],
-    ['Notificações',        'Ativas'],
+function WorkPreferencesCard({ editMode, onToggle, profile, onChange }: {
+  editMode?: boolean
+  onToggle?: () => void
+  profile: FreelancerProfile
+  onChange: (patch: Partial<FreelancerProfile>) => void
+}) {
+  const rows: { label: string; key: keyof FreelancerProfile }[] = [
+    { label: 'Dias de Trabalho',     key: 'diasTrabalho' },
+    { label: 'Horário Preferencial', key: 'horarioPreferencial' },
+    { label: 'Comunicação',          key: 'comunicacao' },
   ]
   return (
     <Card>
       <CardHeader title="Preferências de Trabalho" right={<EditButton editMode={editMode} onToggle={onToggle} />} />
       <div className="space-y-3.5">
-        {rows.map(([label, value]) => (
-          <div key={label} className="flex items-center justify-between gap-3 pb-3 border-b border-white/[0.04] last:border-0 last:pb-0">
-            <span className="text-[12px] text-white/45">{label}</span>
-            <span className="text-[13px] text-white font-medium text-right">{value}</span>
+        {rows.map(({ label, key }) => (
+          <div key={label} className="flex items-center justify-between gap-3 pb-3 border-b border-white/[0.04]">
+            <span className="text-[12px] text-white/45 shrink-0">{label}</span>
+            {editMode ? (
+              <input value={String(profile[key])} onChange={e => onChange({ [key]: e.target.value } as any)}
+                className="flex-1 ml-3 text-right text-[13px] text-white font-medium bg-black/40 border border-gold/30 rounded-md px-2 py-1 focus:outline-none focus:border-gold/60" />
+            ) : (
+              <span className="text-[13px] text-white font-medium text-right truncate">{String(profile[key])}</span>
+            )}
           </div>
         ))}
+        {/* Notificações toggle */}
+        <div className="flex items-center justify-between gap-3 pb-3 border-b border-white/[0.04]">
+          <span className="text-[12px] text-white/45">Notificações</span>
+          {editMode ? (
+            <button onClick={() => onChange({ notificacoesAtivas: !profile.notificacoesAtivas })}
+              className={`px-3 py-1 rounded-md text-[11px] font-bold tracking-wider uppercase transition-all ${
+                profile.notificacoesAtivas
+                  ? 'bg-emerald-500/15 border border-emerald-500/40 text-emerald-300'
+                  : 'bg-white/[0.04] border border-white/15 text-white/55'
+              }`}>
+              {profile.notificacoesAtivas ? '✓ Ativas' : '○ Inativas'}
+            </button>
+          ) : (
+            <span className="text-[13px] text-white font-medium">{profile.notificacoesAtivas ? 'Ativas' : 'Inativas'}</span>
+          )}
+        </div>
+        {/* Disponibilidade toggle */}
         <div className="flex items-center justify-between gap-3">
           <span className="text-[12px] text-white/45">Disponibilidade</span>
-          <span className="inline-flex items-center gap-1.5 text-[12px] text-emerald-300 font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" style={{ boxShadow: '0 0 6px rgba(52,211,153,0.7)' }} />
-            Disponível para novos projetos
-          </span>
+          {editMode ? (
+            <button onClick={() => onChange({ disponivelNovosProjetos: !profile.disponivelNovosProjetos })}
+              className={`px-3 py-1 rounded-md text-[11px] font-bold tracking-wider uppercase transition-all ${
+                profile.disponivelNovosProjetos
+                  ? 'bg-emerald-500/15 border border-emerald-500/40 text-emerald-300'
+                  : 'bg-white/[0.04] border border-white/15 text-white/55'
+              }`}>
+              {profile.disponivelNovosProjetos ? '✓ Disponível' : '○ Indisponível'}
+            </button>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 text-[12px] font-medium">
+              <span className={`w-1.5 h-1.5 rounded-full ${profile.disponivelNovosProjetos ? 'bg-emerald-400' : 'bg-white/30'}`}
+                style={profile.disponivelNovosProjetos ? { boxShadow: '0 0 6px rgba(52,211,153,0.7)' } : {}} />
+              <span className={profile.disponivelNovosProjetos ? 'text-emerald-300' : 'text-white/55'}>
+                {profile.disponivelNovosProjetos ? 'Disponível para novos projetos' : 'Indisponível de momento'}
+              </span>
+            </span>
+          )}
         </div>
       </div>
     </Card>
@@ -458,22 +555,32 @@ function WorkPreferencesCard({ editMode, onToggle }: { editMode?: boolean; onTog
 //  PAYMENT INFO
 // ────────────────────────────────────────────────────────────────────────
 
-function PaymentInfoCard({ editMode, onToggle }: { editMode?: boolean; onToggle?: () => void }) {
-  const rows = [
-    ['Método de Pagamento', 'Transferência Bancária'],
-    ['IBAN',                'PT50 0010 0000 1234 5678 9015 4'],
-    ['Titular da Conta',    'Editor Pro'],
-    ['NIF',                 '123 456 789'],
-    ['Moeda',               'EUR (€)'],
+function PaymentInfoCard({ editMode, onToggle, profile, onChange }: {
+  editMode?: boolean
+  onToggle?: () => void
+  profile: FreelancerProfile
+  onChange: (patch: Partial<FreelancerProfile>) => void
+}) {
+  const rows: { label: string; key: keyof FreelancerProfile; mono?: boolean }[] = [
+    { label: 'Método de Pagamento', key: 'metodoPagamento' },
+    { label: 'IBAN',                key: 'iban', mono: true },
+    { label: 'Titular da Conta',    key: 'titularConta' },
+    { label: 'NIF',                 key: 'nif', mono: true },
+    { label: 'Moeda',               key: 'moeda' },
   ]
   return (
     <Card>
       <CardHeader title="Informações de Pagamento" right={<EditButton editMode={editMode} onToggle={onToggle} />} />
       <div className="space-y-3.5">
-        {rows.map(([label, value]) => (
+        {rows.map(({ label, key, mono }) => (
           <div key={label} className="flex items-center justify-between gap-3 pb-3 border-b border-white/[0.04] last:border-0 last:pb-0">
-            <span className="text-[12px] text-white/45">{label}</span>
-            <span className="text-[13px] text-white font-medium text-right">{value}</span>
+            <span className="text-[12px] text-white/45 shrink-0">{label}</span>
+            {editMode ? (
+              <input value={String(profile[key])} onChange={e => onChange({ [key]: e.target.value } as any)}
+                className={`flex-1 ml-3 text-right text-[13px] text-white font-medium bg-black/40 border border-gold/30 rounded-md px-2 py-1 focus:outline-none focus:border-gold/60 ${mono ? 'font-mono' : ''}`} />
+            ) : (
+              <span className={`text-[13px] text-white font-medium text-right truncate ${mono ? 'font-mono' : ''}`}>{String(profile[key])}</span>
+            )}
           </div>
         ))}
       </div>
