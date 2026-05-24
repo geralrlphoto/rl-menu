@@ -1378,6 +1378,25 @@ function ProjectCard({
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [editingDados, setEditingDados] = useState(false)
+  const [messagesOpen, setMessagesOpen] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  // Mantém contador de mensagens não lidas (lê localStorage)
+  useEffect(() => {
+    function refresh() {
+      try {
+        const raw = localStorage.getItem(`painel-editor-mensagens-${p.id}`)
+        const arr: any[] = raw ? JSON.parse(raw) : []
+        const seenRaw = localStorage.getItem(`painel-editor-mensagens-seen-${p.id}`)
+        const seenCount = seenRaw ? Number(seenRaw) : 0
+        setUnreadCount(Math.max(0, arr.length - seenCount))
+      } catch {}
+    }
+    refresh()
+    const onFocus = () => refresh()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [p.id, messagesOpen])
   const badge = shortBadge(p.stage)
   const progress = progressFromStage(p.stage)
 
@@ -1463,6 +1482,21 @@ function ProjectCard({
 
         {/* Right actions */}
         <div className="flex flex-col items-end justify-between gap-3">
+          <div className="flex items-center gap-2">
+            {/* Botão Mensagens */}
+            <button onClick={() => setMessagesOpen(true)}
+              title="Mensagens deste projeto"
+              className="relative w-9 h-9 rounded-lg border border-white/10 text-white/60 hover:text-gold hover:border-gold/30 transition-all flex items-center justify-center">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-gold text-black text-[9px] font-bold flex items-center justify-center border border-black"
+                  style={{ boxShadow: '0 0 6px rgba(201,164,92,0.7)' }}>
+                  {unreadCount}
+                </span>
+              )}
+            </button>
           <div className="relative">
             <button onClick={() => setMenuOpen(v => !v)}
               className="w-9 h-9 rounded-lg border border-white/10 text-white/60 hover:text-gold hover:border-gold/30 transition-all flex items-center justify-center text-lg">⋮</button>
@@ -1595,6 +1629,7 @@ function ProjectCard({
                 </button>
               </div>
             )}
+          </div>
           </div>
           <button onClick={onToggle}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gold/30 text-gold text-[12px] tracking-wider uppercase font-semibold hover:bg-gold/10 transition-all">
@@ -1855,6 +1890,16 @@ function ProjectCard({
           onSave={(patch) => { onChange(patch); setEditingDados(false) }}
         />
       )}
+
+      {/* Modal de mensagens do projeto */}
+      {messagesOpen && (
+        <MensagensModal
+          projectId={p.id}
+          projectNome={p.noivos}
+          projectFoto={p.foto}
+          onClose={() => setMessagesOpen(false)}
+        />
+      )}
     </div>
   )
 }
@@ -2014,5 +2059,167 @@ function PillBtn({ label, gold }: { label: string; gold?: boolean }) {
       style={gold ? { boxShadow: '0 0 14px -4px rgba(201,164,92,0.5)' } : {}}>
       {label}
     </button>
+  )
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+//  MODAL: MENSAGENS DO PROJETO
+//  Admin ⇆ Freelancer trocam mensagens sobre este evento.
+//  Persistido em localStorage: painel-editor-mensagens-{projectId}
+// ──────────────────────────────────────────────────────────────────────────
+type Mensagem = {
+  id: string
+  autor: 'Admin' | 'Freelancer'
+  texto: string
+  ts: number   // Date.now()
+}
+
+function MensagensModal({
+  projectId,
+  projectNome,
+  projectFoto,
+  onClose,
+}: {
+  projectId: string
+  projectNome: string
+  projectFoto?: string
+  onClose: () => void
+}) {
+  const [messages, setMessages] = useState<Mensagem[]>([])
+  const [autor, setAutor] = useState<'Admin' | 'Freelancer'>('Admin')
+  const [texto, setTexto] = useState('')
+
+  // Carrega + marca como vistas
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(`painel-editor-mensagens-${projectId}`)
+      const arr: Mensagem[] = raw ? JSON.parse(raw) : []
+      setMessages(arr)
+      localStorage.setItem(`painel-editor-mensagens-seen-${projectId}`, String(arr.length))
+    } catch {}
+  }, [projectId])
+
+  function send() {
+    const t = texto.trim()
+    if (!t) return
+    const newMsg: Mensagem = { id: `m-${Date.now()}`, autor, texto: t, ts: Date.now() }
+    const next = [...messages, newMsg]
+    setMessages(next)
+    setTexto('')
+    try {
+      localStorage.setItem(`painel-editor-mensagens-${projectId}`, JSON.stringify(next))
+      localStorage.setItem(`painel-editor-mensagens-seen-${projectId}`, String(next.length))
+    } catch {}
+  }
+
+  function deleteMsg(id: string) {
+    const next = messages.filter(m => m.id !== id)
+    setMessages(next)
+    try {
+      localStorage.setItem(`painel-editor-mensagens-${projectId}`, JSON.stringify(next))
+      localStorage.setItem(`painel-editor-mensagens-seen-${projectId}`, String(next.length))
+    } catch {}
+  }
+
+  function fmtTime(ts: number): string {
+    const d = new Date(ts)
+    const today = new Date()
+    const sameDay = d.toDateString() === today.toDateString()
+    const hh = String(d.getHours()).padStart(2, '0')
+    const mi = String(d.getMinutes()).padStart(2, '0')
+    if (sameDay) return `Hoje · ${hh}:${mi}`
+    return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} · ${hh}:${mi}`
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}>
+      <div className="relative w-full max-w-lg rounded-2xl border border-gold/30 overflow-hidden flex flex-col"
+        style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.98), rgba(11,9,5,0.99))', boxShadow: '0 30px 60px -20px rgba(0,0,0,0.8), 0 0 40px -10px rgba(201,164,92,0.35)', maxHeight: '85vh' }}>
+
+        {/* Header */}
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-white/[0.06] shrink-0">
+          {projectFoto && (
+            <div className="w-10 h-10 rounded-lg overflow-hidden border border-gold/30 shrink-0">
+              <img src={projectFoto} alt={projectNome} className="w-full h-full object-cover" />
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] tracking-[0.4em] uppercase text-gold/70 font-bold">Mensagens</p>
+            <p className="text-[15px] font-light text-white truncate" style={{ fontFamily: 'Georgia, serif' }}>{projectNome}</p>
+          </div>
+          <button onClick={onClose}
+            className="w-8 h-8 rounded-lg border border-white/10 text-white/55 hover:text-gold hover:border-gold/30 flex items-center justify-center text-lg shrink-0">×</button>
+        </div>
+
+        {/* Toggle Autor */}
+        <div className="px-5 py-3 border-b border-white/[0.04] shrink-0 flex items-center gap-2">
+          <span className="text-[10px] tracking-widest uppercase text-white/40 mr-1">Enviar como:</span>
+          <button onClick={() => setAutor('Admin')}
+            className={`px-3 py-1.5 rounded-lg text-[11px] tracking-wider uppercase font-bold transition-all ${
+              autor === 'Admin'
+                ? 'bg-gold/15 border border-gold/45 text-gold'
+                : 'border border-white/10 text-white/45 hover:text-white/85'
+            }`}>👑 Admin</button>
+          <button onClick={() => setAutor('Freelancer')}
+            className={`px-3 py-1.5 rounded-lg text-[11px] tracking-wider uppercase font-bold transition-all ${
+              autor === 'Freelancer'
+                ? 'bg-blue-500/15 border border-blue-500/45 text-blue-300'
+                : 'border border-white/10 text-white/45 hover:text-white/85'
+            }`}>✎ Freelancer</button>
+        </div>
+
+        {/* Lista de mensagens */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-3" style={{ minHeight: 200 }}>
+          {messages.length === 0 ? (
+            <div className="text-center py-10">
+              <p className="text-gold/30 text-4xl font-serif mb-2">💬</p>
+              <p className="text-[13px] text-white/45">Sem mensagens ainda.</p>
+              <p className="text-[11px] text-white/25 mt-1">Sê o primeiro a escrever.</p>
+            </div>
+          ) : messages.map(m => {
+            const isAdmin = m.autor === 'Admin'
+            return (
+              <div key={m.id} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
+                <div className={`group max-w-[80%] rounded-2xl px-4 py-2.5 ${
+                  isAdmin
+                    ? 'bg-gold/15 border border-gold/30 rounded-br-md'
+                    : 'bg-blue-500/10 border border-blue-500/30 rounded-bl-md'
+                }`}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`text-[9px] tracking-widest uppercase font-bold ${isAdmin ? 'text-gold' : 'text-blue-300'}`}>
+                      {isAdmin ? '👑 Admin' : '✎ Freelancer'}
+                    </span>
+                    <span className="text-[9px] text-white/30">{fmtTime(m.ts)}</span>
+                    <button onClick={() => deleteMsg(m.id)}
+                      title="Eliminar"
+                      className="ml-auto text-[10px] text-white/20 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity">🗑</button>
+                  </div>
+                  <p className="text-[13px] text-white/90 leading-relaxed whitespace-pre-wrap break-words">{m.texto}</p>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Input */}
+        <div className="border-t border-white/[0.06] p-3 shrink-0 flex items-end gap-2">
+          <textarea value={texto} onChange={e => setTexto(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
+            placeholder={`Escreve como ${autor}…`}
+            rows={2}
+            className="flex-1 bg-black/40 border border-white/15 rounded-lg px-3 py-2 text-[13px] text-white placeholder:text-white/30 focus:outline-none focus:border-gold/50 resize-none" />
+          <button onClick={send} disabled={!texto.trim()}
+            className={`shrink-0 w-10 h-10 rounded-lg font-bold text-[15px] transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
+              autor === 'Admin'
+                ? 'bg-gold text-black hover:bg-gold/90'
+                : 'bg-blue-500 text-white hover:bg-blue-500/90'
+            }`}
+            title="Enviar (Enter)"
+            style={{ boxShadow: autor === 'Admin' ? '0 0 14px -4px rgba(201,164,92,0.5)' : '0 0 14px -4px rgba(59,130,246,0.5)' }}>
+            ↑
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
