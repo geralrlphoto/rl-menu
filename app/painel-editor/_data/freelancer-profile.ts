@@ -13,6 +13,7 @@ export type FreelancerProfile = {
   localizacao: string
   fusoHorario: string
   idioma: string
+  foto: string   // URL externo ou dataURL (upload local)
   // Sobre Mim
   sobre: string
   experiencia: string
@@ -43,6 +44,7 @@ export const DEFAULT_FREELANCER_PROFILE: FreelancerProfile = {
   localizacao: 'Lisboa, Portugal',
   fusoHorario: '🌐 (GMT+01:00) Lisboa',
   idioma: '🇵🇹 Português (Portugal)',
+  foto: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=300&h=300&fit=crop&crop=face',
   sobre: 'Editor de vídeo especializado em casamentos com mais de 6 anos de experiência. Apaixonado por contar histórias reais através de imagens. Busco sempre capturar emoções autênticas e transformar momentos em memórias inesquecíveis.',
   experiencia: '6+ anos',
   projetosRealizados: '150+',

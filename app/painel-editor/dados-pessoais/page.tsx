@@ -64,7 +64,7 @@ export default function DadosPessoaisPage() {
       <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'radial-gradient(ellipse 80% 60% at 80% 15%, rgba(201,164,92,0.07), transparent 65%)' }} />
       <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'radial-gradient(ellipse 60% 50% at 15% 85%, rgba(201,164,92,0.05), transparent 70%)' }} />
 
-      <Sidebar />
+      <Sidebar profile={profile} />
 
       <main className="relative z-10 lg:pl-[250px]">
         <div className="px-6 sm:px-8 py-6 max-w-[1700px] mx-auto">
@@ -109,7 +109,7 @@ export default function DadosPessoaisPage() {
 //  SIDEBAR
 // ────────────────────────────────────────────────────────────────────────
 
-function Sidebar() {
+function Sidebar({ profile }: { profile: FreelancerProfile }) {
   return (
     <aside
       className="hidden lg:flex fixed top-0 left-0 bottom-0 w-[250px] z-30 flex-col"
@@ -159,11 +159,11 @@ function Sidebar() {
       <div className="px-4 py-3 border-t border-white/[0.04]">
         <div className="flex items-center gap-3 p-2 rounded-xl bg-white/[0.02] border border-white/[0.06]">
           <div className="relative w-10 h-10 rounded-full overflow-hidden border border-gold/40 shrink-0">
-            <img src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=80&h=80&fit=crop&crop=face" alt="" className="w-full h-full object-cover" />
+            <img src={profile.foto} alt={profile.nome} className="w-full h-full object-cover" />
             <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border border-black" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[12px] font-semibold text-white truncate">Editor Pro</p>
+            <p className="text-[12px] font-semibold text-white truncate">{profile.nome}</p>
             <p className="text-[10px] text-white/35 truncate">editorpro@mail.com</p>
             <p className="text-[9px] text-emerald-400 mt-0.5">● Online</p>
           </div>
@@ -223,6 +223,7 @@ function Hero({ theme, onToggleTheme, onEdit, editMode }: { theme: 'dark'|'light
 // ────────────────────────────────────────────────────────────────────────
 
 function ProfileCard({ profile, editMode, onChange }: { profile: FreelancerProfile; editMode: boolean; onChange: (patch: Partial<FreelancerProfile>) => void }) {
+  const [editingFoto, setEditingFoto] = useState(false)
   return (
     <Card>
       <div className="flex items-start gap-5">
@@ -230,13 +231,23 @@ function ProfileCard({ profile, editMode, onChange }: { profile: FreelancerProfi
         <div className="relative shrink-0">
           <div className="w-32 h-32 rounded-full border-2 border-gold/40 overflow-hidden"
             style={{ boxShadow: '0 0 28px -6px rgba(201,164,92,0.3)' }}>
-            <img src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=300&h=300&fit=crop&crop=face" alt={profile.nome} className="w-full h-full object-cover" />
+            <img src={profile.foto || 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=300&h=300&fit=crop&crop=face'}
+              alt={profile.nome} className="w-full h-full object-cover" />
           </div>
-          <button className="absolute bottom-1 right-1 w-9 h-9 rounded-full bg-gold text-black flex items-center justify-center hover:bg-gold/90 transition-all"
+          <button onClick={() => setEditingFoto(true)}
+            className="absolute bottom-1 right-1 w-9 h-9 rounded-full bg-gold text-black flex items-center justify-center hover:bg-gold/90 transition-all"
             style={{ boxShadow: '0 0 14px rgba(201,164,92,0.5)' }} title="Alterar foto">
             <span className="text-sm">📷</span>
           </button>
         </div>
+
+        {editingFoto && (
+          <EditFotoModal
+            currentFoto={profile.foto}
+            onClose={() => setEditingFoto(false)}
+            onSave={(url) => { onChange({ foto: url }); setEditingFoto(false) }}
+          />
+        )}
 
         {/* Info */}
         <div className="flex-1 min-w-0">
@@ -689,5 +700,115 @@ function EditButton({ editMode, onToggle }: { editMode?: boolean; onToggle?: () 
       }`}>
       {editMode ? '✓ Concluir' : '✎ Editar'}
     </button>
+  )
+}
+
+// ────────────────────────────────────────────────────────────────────────
+//  MODAL: ALTERAR FOTO DE PERFIL
+// ────────────────────────────────────────────────────────────────────────
+function EditFotoModal({
+  currentFoto,
+  onClose,
+  onSave,
+}: {
+  currentFoto: string
+  onClose: () => void
+  onSave: (urlOrDataUrl: string) => void
+}) {
+  const [url, setUrl] = useState('')
+  const [filePreview, setFilePreview] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    setError(null)
+    const f = e.target.files?.[0]
+    if (!f) return
+    if (!f.type.startsWith('image/')) { setError('Selecciona uma imagem.'); return }
+    if (f.size > 2 * 1024 * 1024) { setError('Imagem demasiado grande (máx 2 MB).'); return }
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = reader.result
+      if (typeof result === 'string') {
+        setFilePreview(result)
+        setUrl('')
+      }
+    }
+    reader.readAsDataURL(f)
+  }
+
+  function submit() {
+    const value = filePreview || url.trim()
+    if (!value) { setError('Selecciona um ficheiro ou cola um URL.'); return }
+    onSave(value)
+  }
+
+  const previewSrc = filePreview || (url.trim() && /^https?:\/\//.test(url.trim()) ? url.trim() : currentFoto)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}>
+      <div className="relative w-full max-w-md rounded-2xl border border-gold/30 overflow-hidden"
+        style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.98), rgba(11,9,5,0.99))', boxShadow: '0 30px 60px -20px rgba(0,0,0,0.8), 0 0 40px -10px rgba(201,164,92,0.35)' }}>
+        <button onClick={onClose}
+          className="absolute top-3 right-3 w-8 h-8 rounded-lg border border-white/10 text-white/55 hover:text-gold hover:border-gold/30 flex items-center justify-center text-lg z-10">×</button>
+
+        <div className="px-6 pt-6 pb-4 border-b border-white/[0.06]">
+          <p className="text-[11px] tracking-[0.4em] uppercase text-gold/70 font-bold mb-2">Perfil</p>
+          <h2 className="text-2xl font-light text-white" style={{ fontFamily: 'Georgia, serif' }}>
+            Alterar <span className="italic text-gold">foto</span>
+          </h2>
+        </div>
+
+        <div className="p-6 space-y-4">
+          {/* Preview circular */}
+          <div className="flex justify-center">
+            <div className="relative w-32 h-32 rounded-full border-2 border-gold/40 overflow-hidden"
+              style={{ boxShadow: '0 0 28px -6px rgba(201,164,92,0.3)' }}>
+              {previewSrc ? (
+                <img src={previewSrc} alt="Preview" className="w-full h-full object-cover" />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-white/30 text-[12px]">Sem foto</div>
+              )}
+            </div>
+          </div>
+
+          {/* Upload ficheiro */}
+          <div>
+            <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-2">Carregar do computador</p>
+            <label className="block w-full cursor-pointer">
+              <input type="file" accept="image/*" onChange={onFile} className="hidden" />
+              <div className="rounded-lg border border-dashed border-white/15 hover:border-gold/40 px-4 py-3 text-center transition-all">
+                <p className="text-[13px] text-white/65">📤 Escolher imagem</p>
+                <p className="text-[10px] text-white/30 mt-0.5">PNG, JPG · máx 2 MB</p>
+              </div>
+            </label>
+          </div>
+
+          {/* OU URL */}
+          <div>
+            <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-2">Ou colar URL</p>
+            <input value={url} onChange={e => { setUrl(e.target.value); setFilePreview(null) }}
+              placeholder="https://..."
+              className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[12px] text-white placeholder:text-white/30 focus:outline-none focus:border-gold/50 font-mono" />
+          </div>
+
+          {error && (
+            <p className="text-[12px] text-red-300 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30">⚠ {error}</p>
+          )}
+
+          {/* Botões */}
+          <div className="flex items-center gap-3 pt-2">
+            <button type="button" onClick={onClose}
+              className="flex-1 px-4 py-2.5 rounded-lg border border-white/10 text-white/65 text-[12px] font-semibold tracking-wider hover:border-white/25 hover:text-white transition-all">
+              Cancelar
+            </button>
+            <button type="button" onClick={submit}
+              className="flex-1 px-4 py-2.5 rounded-lg bg-gold text-black text-[12px] font-bold tracking-wider hover:bg-gold/90 transition-all"
+              style={{ boxShadow: '0 0 18px -4px rgba(201,164,92,0.5)' }}>
+              ✓ Guardar foto
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
