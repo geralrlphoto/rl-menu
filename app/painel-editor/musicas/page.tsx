@@ -1,8 +1,44 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { NotificationBell } from '../_components/NotificationBell'
+
+// ── Helpers de URL/plataforma ───────────────────────────────────────────
+function detectPlataforma(url: string): Plataforma {
+  const u = (url || '').toLowerCase()
+  if (u.includes('youtube.com') || u.includes('youtu.be')) return 'YouTube'
+  if (u.includes('spotify.com'))                            return 'Spotify'
+  if (u.includes('vimeo.com'))                              return 'Vimeo'
+  if (u.includes('artlist.io'))                             return 'Artlist'
+  if (u.includes('musicbed.com'))                           return 'Musicbed'
+  if (u.includes('soundstripe.com'))                        return 'Soundstripe'
+  if (u.includes('epidemicsound.com'))                      return 'Epidemic Sound'
+  if (u.includes('drive.google.com'))                       return 'Drive'
+  return 'Custom'
+}
+
+// Extrai o ID do vídeo (formato: 11 chars alfanuméricos + _-)
+function youtubeIdFromUrl(url: string): string | null {
+  if (!url) return null
+  try {
+    // youtu.be/<id>
+    const short = url.match(/youtu\.be\/([A-Za-z0-9_-]{11})/)
+    if (short?.[1]) return short[1]
+    // youtube.com/watch?v=<id> ou youtube.com/embed/<id>
+    const u = new URL(url)
+    const v = u.searchParams.get('v')
+    if (v && /^[A-Za-z0-9_-]{11}$/.test(v)) return v
+    const embed = url.match(/youtube\.com\/embed\/([A-Za-z0-9_-]{11})/)
+    if (embed?.[1]) return embed[1]
+  } catch {}
+  return null
+}
+
+function youtubeThumb(url: string): string | null {
+  const id = youtubeIdFromUrl(url)
+  return id ? `https://i.ytimg.com/vi/${id}/mqdefault.jpg` : null
+}
 
 // ────────────────────────────────────────────────────────────────────────
 //  BIBLIOTECA DE MÚSICAS — Wedding Moments Films
@@ -113,6 +149,43 @@ export default function MusicasPage() {
   const [filterClima, setFilterClima] = useState<'Todos os Climas' | Clima>('Todos os Climas')
   const [page, setPage] = useState(1)
   const [playing, setPlaying] = useState<string | null>(null)
+  const [showAddModal, setShowAddModal] = useState(false)
+
+  // ── Carrega/persiste user-tracks ────────────────────────────────────
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('painel-editor-user-musicas')
+      const userTracks: Track[] = raw ? JSON.parse(raw) : []
+      if (userTracks.length > 0) {
+        setTracks([...userTracks, ...TRACKS])
+      }
+    } catch {}
+  }, [])
+
+  function persistUserTracks(all: Track[]) {
+    try {
+      const mockIds = new Set(TRACKS.map(t => t.id))
+      const userTracks = all.filter(t => !mockIds.has(t.id))
+      localStorage.setItem('painel-editor-user-musicas', JSON.stringify(userTracks))
+    } catch {}
+  }
+
+  function addTrack(t: Track) {
+    setTracks(prev => {
+      const next = [t, ...prev]
+      persistUserTracks(next)
+      return next
+    })
+    setShowAddModal(false)
+  }
+
+  function deleteTrack(id: string) {
+    setTracks(prev => {
+      const next = prev.filter(t => t.id !== id)
+      persistUserTracks(next)
+      return next
+    })
+  }
 
   const filtered = useMemo(() => {
     let arr = tracks
@@ -129,7 +202,11 @@ export default function MusicasPage() {
   const favoritas = tracks.filter(t => t.favorita)
 
   function toggleFav(id: string) {
-    setTracks(prev => prev.map(t => t.id === id ? { ...t, favorita: !t.favorita } : t))
+    setTracks(prev => {
+      const next = prev.map(t => t.id === id ? { ...t, favorita: !t.favorita } : t)
+      persistUserTracks(next)
+      return next
+    })
   }
 
   return (
@@ -143,7 +220,7 @@ export default function MusicasPage() {
         <div className="px-6 sm:px-8 py-6 max-w-[1700px] mx-auto">
 
           {/* HERO */}
-          <Hero />
+          <Hero onAdd={() => setShowAddModal(true)} />
 
           {/* SEARCH + FILTERS */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-3 mt-5 mb-5">
@@ -361,6 +438,14 @@ export default function MusicasPage() {
           <p className="text-center text-[10px] tracking-[0.4em] uppercase text-white/15 mt-12 mb-4">RL Photo.Video · Biblioteca de Músicas</p>
         </div>
       </main>
+
+      {/* Modal: Adicionar Música */}
+      {showAddModal && (
+        <AddMusicaModal
+          onClose={() => setShowAddModal(false)}
+          onCreate={addTrack}
+        />
+      )}
     </div>
   )
 }
@@ -442,7 +527,7 @@ function Sidebar() {
   )
 }
 
-function Hero() {
+function Hero({ onAdd }: { onAdd: () => void }) {
   return (
     <div className="relative overflow-hidden rounded-3xl border border-white/[0.08]"
       style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.6)' }}>
@@ -469,7 +554,10 @@ function Hero() {
         <div className="flex items-center gap-3 shrink-0">
           <NotificationBell />
           <button className="w-11 h-11 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md hover:border-gold/40 transition-all flex items-center justify-center text-white/75 hover:text-gold" title="Importar Playlist">↓</button>
-          <button className="inline-flex items-center gap-2 px-5 h-11 rounded-xl bg-gold text-black text-[13px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
+          <button
+            type="button"
+            onClick={onAdd}
+            className="inline-flex items-center gap-2 px-5 h-11 rounded-xl bg-gold text-black text-[13px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
             style={{ boxShadow: '0 0 24px -4px rgba(201,164,92,0.5)' }}>
             <span className="text-lg leading-none">+</span> Adicionar Música
           </button>
@@ -530,6 +618,167 @@ function StatRow({ label, value }: { label: string; value: string }) {
     <div className="flex items-center justify-between text-[12px]">
       <span className="text-white/50">{label}</span>
       <span className="font-semibold text-white tabular-nums">{value}</span>
+    </div>
+  )
+}
+
+// ────────────────────────────────────────────────────────────────────────
+//  MODAL: ADICIONAR MÚSICA
+// ────────────────────────────────────────────────────────────────────────
+const MOMENTO_OPTIONS: Momento[] = [
+  'Making Of','Votos','Cerimónia','Cocktail','Festa','Corte do Bolo',
+  'Entrada Noivo','Entrada Noiva','Preparação Noivo','Preparação Noiva',
+  'Entrega do Ramo','Dança dos Noivos','Discursos','Trailer','Teaser','Instagram Reels',
+]
+const GENERO_OPTIONS: Genero[] = ['Cinematic','Acústico','Clássico','Pop','Indie','Jazz','Folk']
+const CLIMA_OPTIONS: Clima[] = ['Romântico','Emocional','Épico','Leve','Feliz','Nostálgico','Elegante','Solenne','Energético']
+const COVER_FALLBACK = 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200&h=200&fit=crop'
+
+function AddMusicaModal({
+  onClose,
+  onCreate,
+}: {
+  onClose: () => void
+  onCreate: (t: Track) => void
+}) {
+  const [link, setLink]       = useState('')
+  const [title, setTitle]     = useState('')
+  const [artist, setArtist]   = useState('')
+  const [momento, setMomento] = useState<Momento>('Cerimónia')
+  const [genero, setGenero]   = useState<Genero>('Cinematic')
+  const [clima, setClima]     = useState<Clima>('Romântico')
+  const [duracao, setDuracao] = useState('')
+
+  // Auto-detect & preview thumbnail YouTube
+  const plataforma = detectPlataforma(link)
+  const ytThumb = plataforma === 'YouTube' ? youtubeThumb(link) : null
+
+  const valid = title.trim().length > 0 && link.trim().length > 0
+
+  function submit() {
+    if (!valid) return
+    const id = `user-musica-${Date.now()}`
+    const cover = ytThumb || COVER_FALLBACK
+    const track: Track = {
+      id,
+      title: title.trim(),
+      artist: artist.trim() || '—',
+      cover,
+      genero,
+      clima,
+      duracao: duracao.trim() || '—',
+      momento,
+      plataforma,
+      link: link.trim(),
+      favorita: false,
+      usadaEm: 0,
+    }
+    onCreate(track)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}>
+      <div className="relative w-full max-w-xl rounded-2xl border border-gold/30 overflow-hidden"
+        style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.98), rgba(11,9,5,0.99))', boxShadow: '0 30px 60px -20px rgba(0,0,0,0.8), 0 0 40px -10px rgba(201,164,92,0.35)' }}>
+        <button onClick={onClose}
+          className="absolute top-3 right-3 w-8 h-8 rounded-lg border border-white/10 text-white/55 hover:text-gold hover:border-gold/30 flex items-center justify-center text-lg z-10">×</button>
+
+        <div className="px-6 pt-6 pb-4 border-b border-white/[0.06]">
+          <p className="text-[11px] tracking-[0.4em] uppercase text-gold/70 font-bold mb-2">Biblioteca</p>
+          <h2 className="text-2xl font-light text-white" style={{ fontFamily: 'Georgia, serif' }}>
+            Adicionar <span className="italic text-gold">Música</span>
+          </h2>
+        </div>
+
+        <div className="p-6 space-y-4 max-h-[78vh] overflow-y-auto">
+
+          {/* Link primeiro — detecção automática */}
+          <div>
+            <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-2">
+              Link <span className="text-red-400">*</span>
+              {plataforma !== 'Custom' && (
+                <span className="ml-2 text-[10px] px-2 py-0.5 rounded-md bg-gold/10 border border-gold/30 text-gold normal-case tracking-normal">
+                  ✓ {plataforma}
+                </span>
+              )}
+            </p>
+            <input value={link} onChange={e => setLink(e.target.value)}
+              placeholder="https://www.youtube.com/watch?v=..."
+              className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[12px] text-white placeholder:text-white/30 focus:outline-none focus:border-gold/50 font-mono" />
+            {ytThumb && (
+              <div className="mt-3 flex items-center gap-3 rounded-lg border border-gold/20 bg-gold/[0.04] p-3">
+                <img src={ytThumb} alt="YouTube preview" className="w-24 h-14 object-cover rounded-md border border-white/10" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] tracking-widest uppercase text-gold/70 font-bold">YouTube</p>
+                  <p className="text-[11px] text-white/55 mt-0.5 truncate">Preview · capa será usada automaticamente</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Título + Artista */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-2">Título <span className="text-red-400">*</span></p>
+              <input value={title} onChange={e => setTitle(e.target.value)}
+                placeholder="Ex: Perfect"
+                className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/30 focus:outline-none focus:border-gold/50" />
+            </div>
+            <div>
+              <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-2">Artista</p>
+              <input value={artist} onChange={e => setArtist(e.target.value)}
+                placeholder="Ex: Ed Sheeran"
+                className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/30 focus:outline-none focus:border-gold/50" />
+            </div>
+          </div>
+
+          {/* Momento */}
+          <div>
+            <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-2">Momento</p>
+            <select value={momento} onChange={e => setMomento(e.target.value as Momento)}
+              className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/50">
+              {MOMENTO_OPTIONS.map(m => <option key={m} value={m} style={{ background: '#1a1206' }}>{m}</option>)}
+            </select>
+          </div>
+
+          {/* Género + Clima + Duração */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-2">Género</p>
+              <select value={genero} onChange={e => setGenero(e.target.value as Genero)}
+                className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/50">
+                {GENERO_OPTIONS.map(g => <option key={g} value={g} style={{ background: '#1a1206' }}>{g}</option>)}
+              </select>
+            </div>
+            <div>
+              <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-2">Clima</p>
+              <select value={clima} onChange={e => setClima(e.target.value as Clima)}
+                className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/50">
+                {CLIMA_OPTIONS.map(c => <option key={c} value={c} style={{ background: '#1a1206' }}>{c}</option>)}
+              </select>
+            </div>
+            <div>
+              <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-2">Duração</p>
+              <input value={duracao} onChange={e => setDuracao(e.target.value)}
+                placeholder="3:45"
+                className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/30 focus:outline-none focus:border-gold/50 font-mono" />
+            </div>
+          </div>
+
+          {/* Botões */}
+          <div className="flex items-center gap-3 pt-2">
+            <button type="button" onClick={onClose}
+              className="flex-1 px-4 py-2.5 rounded-lg border border-white/10 text-white/65 text-[12px] font-semibold tracking-wider hover:border-white/25 hover:text-white transition-all">
+              Cancelar
+            </button>
+            <button type="button" onClick={submit} disabled={!valid}
+              className="flex-1 px-4 py-2.5 rounded-lg bg-gold text-black text-[12px] font-bold tracking-wider hover:bg-gold/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ boxShadow: '0 0 18px -4px rgba(201,164,92,0.5)' }}>
+              ✓ Adicionar Música
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
