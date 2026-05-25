@@ -294,11 +294,10 @@ export default function FreelancerDetailPage() {
   ]
 
   return (
-    <div className="min-h-screen relative">
-      {/* ── Background gradient (estilo proposta criativa, gold) ───────── */}
-      <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'linear-gradient(160deg, #0e0b07 0%, #1a1206 30%, #0e0b07 70%, #060504 100%)' }} />
-      <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'radial-gradient(ellipse 75% 65% at 50% 48%, rgba(201,168,76,0.18) 0%, rgba(160,120,40,0.07) 45%, transparent 70%)' }} />
-      <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'radial-gradient(ellipse 40% 40% at 50% 48%, rgba(232,180,60,0.08) 0%, transparent 60%)' }} />
+    <div className="min-h-screen text-white relative" style={{ background: '#0B0B0B' }}>
+      {/* ── Background atmosférico (igual ao /painel-fotografo) ───────── */}
+      <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'radial-gradient(ellipse 80% 60% at 80% 20%, rgba(201,164,92,0.06), transparent 65%)' }} />
+      <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'radial-gradient(ellipse 60% 50% at 20% 80%, rgba(201,164,92,0.04), transparent 70%)' }} />
 
       {/* ── Sidebar lateral (desktop) ──────────────────────────────────── */}
       <SidebarNavAdmin
@@ -400,7 +399,7 @@ export default function FreelancerDetailPage() {
               />
             </div>
             <div className="absolute inset-0 z-[1]"
-              style={{ background: 'linear-gradient(90deg, rgba(20,15,8,0.97) 0%, rgba(20,15,8,0.88) 35%, rgba(20,15,8,0.5) 65%, rgba(20,15,8,0.12) 100%)' }} />
+              style={{ background: 'linear-gradient(90deg, rgba(11,11,11,0.97) 0%, rgba(11,11,11,0.88) 35%, rgba(11,11,11,0.5) 65%, rgba(11,11,11,0.12) 100%)' }} />
             <div className="relative z-10 flex items-start justify-between gap-6 px-8 sm:px-12 py-12 sm:py-16">
               <div className="max-w-xl flex items-center gap-5">
                 <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gold/50 shrink-0"
