@@ -865,30 +865,54 @@ export default function FreelancerDetailPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             <div className="lg:col-span-2 flex flex-col gap-5">
-            {/* Próximos Casamentos (lista) */}
+            {/* Próximos Casamentos — design premium compacto */}
             {upcomingList.length > 1 && (
-              <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 sm:p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-[14px] tracking-[0.4em] text-gold uppercase font-bold">Próximos Casamentos</h3>
-                  <button onClick={() => setTab('casamentos')} className="text-[14px] tracking-widest text-white/35 hover:text-gold uppercase transition-colors">Ver todos →</button>
+              <div className="rounded-2xl border border-white/[0.08] p-4"
+                style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
+                <div className="flex items-center justify-between mb-3 px-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-[12px] tracking-[0.35em] text-gold/85 uppercase font-bold">Próximos Casamentos</h3>
+                    <span className="text-[10px] text-white/30">·</span>
+                    <span className="text-[10px] tracking-widest uppercase text-white/35">{Math.min(upcomingList.length, 4)} de {upcomingList.length}</span>
+                  </div>
+                  <button onClick={() => setTab('casamentos')}
+                    className="text-[10px] tracking-widest uppercase text-gold/60 hover:text-gold transition-colors">
+                    Ver todos →
+                  </button>
                 </div>
-                <div className="space-y-2">
+                <div className="divide-y divide-white/[0.04]">
                   {upcomingList.slice(0, 4).map(c => {
                     const dtu2 = daysUntil(c.data_casamento)
+                    const urgent = dtu2 !== null && dtu2 <= 15
                     return (
                       <div key={c.id} onClick={() => setTab('casamentos')}
-                        className="cursor-pointer flex items-center gap-4 px-4 py-3 rounded-xl border border-white/[0.05] hover:border-gold/25 hover:bg-white/[0.03] transition-all">
-                        <div className={`w-12 h-12 rounded-lg flex flex-col items-center justify-center border ${dtu2 !== null && dtu2 <= 15 ? 'border-red-500/30 bg-red-500/5 text-red-400' : 'border-gold/20 bg-gold/[0.04] text-gold'}`}>
-                          <span className="text-base font-black leading-none">{dtu2 === 0 ? '!' : dtu2}</span>
-                          <span className="text-[14px] uppercase tracking-wide opacity-60">{dtu2 === 0 ? 'HOJE' : 'd'}</span>
+                        className="cursor-pointer flex items-center gap-3 px-2 py-2.5 hover:bg-white/[0.02] transition-all group rounded-lg">
+                        {/* Counter compacto + linha vertical */}
+                        <div className="flex items-center gap-3 shrink-0">
+                          <div className={`flex flex-col items-center justify-center min-w-[42px] py-1 rounded-md ${urgent ? 'text-red-400' : 'text-gold'}`}>
+                            <span className="text-[18px] font-light leading-none tabular-nums" style={{ fontFamily: 'Georgia, serif' }}>
+                              {dtu2 === 0 ? '!' : dtu2}
+                            </span>
+                            <span className="text-[8px] tracking-[0.25em] uppercase opacity-50 mt-0.5">{dtu2 === 0 ? 'hoje' : 'dias'}</span>
+                          </div>
+                          <div className={`w-px h-8 ${urgent ? 'bg-red-400/30' : 'bg-gold/20'}`} />
                         </div>
+                        {/* Info casamento */}
                         <div className="flex-1 min-w-0">
-                          <p className="text-[14px] font-semibold text-white truncate">{c.local}</p>
-                          <p className="text-[14px] text-white/35 mt-0.5">{fmtDate(c.data_casamento).split(' · ')[0]}</p>
+                          <p className="text-[13px] font-medium text-white/90 truncate group-hover:text-gold transition-colors">{c.local}</p>
+                          <p className="text-[10px] text-white/35 mt-0.5 tracking-wide">{fmtDate(c.data_casamento).split(' · ')[0]}</p>
                         </div>
-                        {c.data_confirmada && (
-                          <span className="text-[14px] tracking-widest uppercase font-bold px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">✓</span>
+                        {/* Badge confirmação */}
+                        {c.data_confirmada ? (
+                          <span className="text-[8px] tracking-[0.25em] uppercase font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+                            ✓ Conf.
+                          </span>
+                        ) : (
+                          <span className="text-[8px] tracking-[0.25em] uppercase font-bold px-1.5 py-0.5 rounded bg-white/[0.04] text-white/40 border border-white/10">
+                            Pend.
+                          </span>
                         )}
+                        <span className="text-white/20 group-hover:text-gold transition-colors text-sm">›</span>
                       </div>
                     )
                   })}
