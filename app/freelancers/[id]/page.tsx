@@ -383,6 +383,35 @@ export default function FreelancerDetailPage() {
         const totalRecebidoLabel = totalRecebido.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
         const anoAtual = new Date().getFullYear()
 
+        // ── Performance Stats (on-time / late / em curso / média dias) ──
+        const performanceStats = (() => {
+          const concluidos = edicao.filter(e => e.status === 'CONCLUÍDO')
+          let onTime = 0
+          let late = 0
+          let somaDias = 0
+          let contDias = 0
+          concluidos.forEach(e => {
+            const dEntrega = e.data_entrega ? new Date(e.data_entrega) : null
+            const dFinal = e.data_final_entrega ? new Date(e.data_final_entrega) : null
+            const dCasamento = e.data_casamento ? new Date(e.data_casamento) : null
+            // on-time se entrega final <= prazo planeado
+            if (dFinal && dEntrega) {
+              if (dFinal.getTime() <= dEntrega.getTime()) onTime += 1
+              else late += 1
+            } else {
+              onTime += 1
+            }
+            // média de dias casamento → entrega final
+            if (dCasamento && dFinal) {
+              somaDias += Math.max(0, Math.round((dFinal.getTime() - dCasamento.getTime()) / 86400000))
+              contDias += 1
+            }
+          })
+          const emCurso = edicao.filter(e => e.status !== 'CONCLUÍDO').length
+          const mediaDias = contDias > 0 ? Math.round(somaDias / contDias) : 0
+          return { total: edicao.length, onTime, late, emCurso, mediaDias }
+        })()
+
         // ── Chart data: receitas cumulativas por dia do mês atual ───────
         const chartPath = (() => {
           const w = 520, h = 120, pad = 8
@@ -634,89 +663,204 @@ export default function FreelancerDetailPage() {
             <TasksWidget freelancerId={id} />
           </div>
 
-          {/* ── Casamentos Editados (últimos 4 concluídos) ─────────── */}
-          {(() => {
-            const editados = edicao.filter(e => e.status === 'CONCLUÍDO').slice(0, 4)
-            if (editados.length === 0) return null
-            const placeholderImgs = [
-              'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&h=400&fit=crop',
-              'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&h=400&fit=crop',
-              'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=600&h=400&fit=crop',
-              'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=600&h=400&fit=crop',
-            ]
-            return (
-              <div className="rounded-2xl border border-white/[0.08] p-5 mb-5"
-                style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-[15px] font-semibold text-white">Casamentos Editados</h3>
-                  <button onClick={() => setTab('edicao')}
-                    className="text-[11px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors">
-                    Ver todos →
-                  </button>
+          {/* ── 3-COL: Casamentos Editados | Performance | Resumo Financeiro ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+
+            {/* COL 1: Casamentos Editados */}
+            {(() => {
+              const editados = edicao.filter(e => e.status === 'CONCLUÍDO').slice(0, 4)
+              const placeholderImgs = [
+                'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&h=400&fit=crop',
+                'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&h=400&fit=crop',
+                'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=600&h=400&fit=crop',
+                'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=600&h=400&fit=crop',
+              ]
+              return (
+                <div className="rounded-2xl border border-white/[0.08] p-5"
+                  style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-[15px] font-semibold text-white">Casamentos Editados</h3>
+                    <button onClick={() => setTab('edicao')}
+                      className="text-[11px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors">
+                      Ver todos →
+                    </button>
+                  </div>
+                  {editados.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center text-center py-8">
+                      <span className="text-3xl mb-2 opacity-30">✓</span>
+                      <p className="text-[12px] text-white/40">Sem casamentos editados</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3">
+                      {editados.map((e, idx) => {
+                        const dataLabel = e.data_final_entrega || e.data_entrega
+                        return (
+                          <button key={e.id} onClick={() => setTab('edicao')}
+                            className="group cursor-pointer text-left">
+                            <div className="relative aspect-[4/3] rounded-xl overflow-hidden border border-white/[0.08] mb-2 group-hover:border-gold/30 transition-all">
+                              <img src={placeholderImgs[idx % placeholderImgs.length]}
+                                alt={e.nome}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                              <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-emerald-500/90 border border-emerald-300 flex items-center justify-center text-[10px] font-bold text-black">
+                                ✓
+                              </div>
+                            </div>
+                            <p className="text-[12px] font-medium text-white truncate group-hover:text-gold transition-colors">{e.nome}</p>
+                            <p className="text-[10px] text-white/35">
+                              {dataLabel ? `Entrega: ${fmtDate(dataLabel).split(' · ')[0]}` : 'Sem data'}
+                            </p>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                  {editados.map((e, idx) => {
-                    const dataLabel = e.data_final_entrega || e.data_entrega
-                    return (
-                      <button key={e.id} onClick={() => setTab('edicao')}
-                        className="group cursor-pointer text-left">
-                        <div className="relative aspect-[4/3] rounded-xl overflow-hidden border border-white/[0.08] mb-2 group-hover:border-gold/30 transition-all">
-                          <img src={placeholderImgs[idx % placeholderImgs.length]}
-                            alt={e.nome}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                          <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-emerald-500/90 border border-emerald-300 flex items-center justify-center text-[10px] font-bold text-black">
-                            ✓
+              )
+            })()}
+
+            {/* COL 2: Performance (donut + média + barras) */}
+            {(() => {
+              const { total, onTime, late, emCurso, mediaDias } = performanceStats
+              const totalEntregues = onTime + late
+              const pctOn = totalEntregues > 0 ? Math.round((onTime / totalEntregues) * 100) : 0
+              const segs = [
+                { value: onTime,  color: '#34d399', label: 'No prazo' },
+                { value: late,    color: '#ef4444', label: 'Fora prazo' },
+                { value: emCurso, color: '#C9A45C', label: 'Em curso' },
+              ]
+              const sumAll = segs.reduce((s, x) => s + x.value, 0) || 1
+              let cumPct = 0
+              const radius = 36, cx = 50, cy = 50
+              const polar = (deg: number) => {
+                const r = (deg - 90) * Math.PI / 180
+                return [cx + radius * Math.cos(r), cy + radius * Math.sin(r)] as const
+              }
+              const arcs = segs.map(s => {
+                const pct = s.value / sumAll
+                if (pct === 0) return null
+                const startDeg = cumPct * 360
+                const endDeg = (cumPct + pct) * 360
+                cumPct += pct
+                const [x1, y1] = polar(startDeg)
+                const [x2, y2] = polar(endDeg)
+                const largeArc = endDeg - startDeg > 180 ? 1 : 0
+                return { path: `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`, color: s.color }
+              }).filter(Boolean) as { path: string; color: string }[]
+
+              return (
+                <div className="rounded-2xl border border-white/[0.08] p-5"
+                  style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-[15px] font-semibold text-white">Performance</h3>
+                    <button onClick={() => setTab('edicao')}
+                      className="text-[11px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors">
+                      Ver →
+                    </button>
+                  </div>
+
+                  {/* Top: donut + média lado a lado */}
+                  <div className="flex items-center gap-4 mb-5">
+                    <div className="relative w-[100px] h-[100px] shrink-0">
+                      <svg viewBox="0 0 100 100" className="w-full h-full">
+                        <circle cx="50" cy="50" r="36" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="11" />
+                        {arcs.map((a, i) => (
+                          <path key={i} d={a.path} fill="none" stroke={a.color} strokeWidth="11" strokeLinecap="butt"
+                            style={{ filter: `drop-shadow(0 0 4px ${a.color}80)` }} />
+                        ))}
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <p className="text-[8px] tracking-widest uppercase text-white/35 leading-none">Total</p>
+                        <p className="text-[22px] font-bold text-white leading-none mt-0.5" style={{ fontFamily: 'Georgia, serif' }}>{total}</p>
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0 border-l border-white/[0.06] pl-4">
+                      <p className="text-[9px] tracking-[0.3em] uppercase text-gold/70 font-bold mb-1.5 leading-tight">Tempo médio</p>
+                      <div className="flex items-baseline gap-1.5">
+                        <p className="text-[36px] font-bold text-gold leading-none" style={{ fontFamily: 'Georgia, serif' }}>
+                          {mediaDias}
+                        </p>
+                        <p className="text-[11px] text-white/55 font-light">{mediaDias === 1 ? 'dia' : 'dias'}</p>
+                      </div>
+                      <p className="text-[10px] text-white/40 mt-1 leading-snug">
+                        Casamento → Entrega
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Stats verticais com barras */}
+                  <div className="space-y-2.5">
+                    {segs.map((s, i) => {
+                      const pct = sumAll > 0 ? Math.round((s.value / sumAll) * 100) : 0
+                      return (
+                        <div key={i}>
+                          <div className="flex items-center justify-between text-[11px] mb-1">
+                            <span className="flex items-center gap-1.5 text-white/65">
+                              <span className="w-2 h-2 rounded-full" style={{ background: s.color, boxShadow: `0 0 5px ${s.color}99` }} />
+                              {s.label}
+                            </span>
+                            <span className="font-bold tabular-nums" style={{ color: s.color }}>
+                              {s.value} <span className="text-white/30 font-normal text-[10px]">· {pct}%</span>
+                            </span>
+                          </div>
+                          <div className="h-1 rounded-full bg-white/[0.05] overflow-hidden">
+                            <div className="h-full transition-all duration-700" style={{ width: `${pct}%`, background: s.color, boxShadow: `0 0 6px ${s.color}80` }} />
                           </div>
                         </div>
-                        <p className="text-[12px] font-medium text-white truncate group-hover:text-gold transition-colors">{e.nome}</p>
-                        <p className="text-[10px] text-white/35">
-                          {dataLabel ? `Entrega: ${fmtDate(dataLabel).split(' · ')[0]}` : 'Sem data'}
-                        </p>
-                      </button>
-                    )
-                  })}
+                      )
+                    })}
+                  </div>
+
+                  {totalEntregues > 0 && (
+                    <p className="text-[10px] text-white/40 pt-3 mt-3 border-t border-white/[0.04]">
+                      <span className="text-emerald-300 font-bold">{pctOn}%</span> dos entregues no prazo
+                    </p>
+                  )}
+                  {totalEntregues === 0 && (
+                    <p className="text-[10px] text-white/25 italic mt-3 text-center">Sem casamentos entregues ainda</p>
+                  )}
+                </div>
+              )
+            })()}
+
+            {/* COL 3: Resumo Financeiro (gráfico SVG) */}
+            <div className="rounded-2xl border border-white/[0.08] p-5"
+              style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-[15px] font-semibold text-white">Resumo Financeiro</h3>
+                <button onClick={() => setTab('pagamentos')}
+                  className="text-[11px] tracking-wider text-white/40 hover:text-gold transition-colors px-2 py-1 rounded-md border border-white/10 hover:border-gold/30">
+                  Este mês ▾
+                </button>
+              </div>
+              <div className="relative">
+                <svg viewBox={`0 0 ${chartPath.w} ${chartPath.h}`} className="w-full h-32">
+                  <defs>
+                    <linearGradient id="goldGradFL" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#C9A45C" stopOpacity="0.45" />
+                      <stop offset="100%" stopColor="#C9A45C" stopOpacity="0" />
+                    </linearGradient>
+                    <linearGradient id="goldLineFL" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#C9A45C" />
+                      <stop offset="50%" stopColor="#E8C76D" />
+                      <stop offset="100%" stopColor="#C9A45C" />
+                    </linearGradient>
+                  </defs>
+                  <path d={`${chartPath.path} L ${chartPath.last.x} ${chartPath.h} L 8 ${chartPath.h} Z`} fill="url(#goldGradFL)" />
+                  <path d={chartPath.path} fill="none" stroke="url(#goldLineFL)" strokeWidth="2.2" strokeLinecap="round" />
+                  <circle cx={chartPath.last.x} cy={chartPath.last.y} r="4" fill="#C9A45C" />
+                  <circle cx={chartPath.last.x} cy={chartPath.last.y} r="9" fill="#C9A45C" opacity="0.18" />
+                </svg>
+                <div className="absolute top-1 right-1 px-2.5 py-1.5 rounded-lg bg-black/80 border border-gold/30">
+                  <p className="text-[11px] text-gold font-bold leading-none">{totalRecebidoLabel}</p>
+                  <p className="text-[9px] text-white/40 mt-0.5">Total {anoAtual}</p>
                 </div>
               </div>
-            )
-          })()}
-
-          {/* ── Resumo Financeiro (gráfico SVG cumulativo do mês) ───── */}
-          <div className="rounded-2xl border border-white/[0.08] p-5 mb-5"
-            style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[15px] font-semibold text-white">Resumo Financeiro</h3>
-              <button onClick={() => setTab('pagamentos')}
-                className="text-[11px] tracking-wider text-white/40 hover:text-gold transition-colors px-2 py-1 rounded-md border border-white/10 hover:border-gold/30">
-                Este mês ▾
-              </button>
-            </div>
-            <div className="relative">
-              <svg viewBox={`0 0 ${chartPath.w} ${chartPath.h}`} className="w-full h-32">
-                <defs>
-                  <linearGradient id="goldGradFL" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#C9A45C" stopOpacity="0.45" />
-                    <stop offset="100%" stopColor="#C9A45C" stopOpacity="0" />
-                  </linearGradient>
-                  <linearGradient id="goldLineFL" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#C9A45C" />
-                    <stop offset="50%" stopColor="#E8C76D" />
-                    <stop offset="100%" stopColor="#C9A45C" />
-                  </linearGradient>
-                </defs>
-                <path d={`${chartPath.path} L ${chartPath.last.x} ${chartPath.h} L 8 ${chartPath.h} Z`} fill="url(#goldGradFL)" />
-                <path d={chartPath.path} fill="none" stroke="url(#goldLineFL)" strokeWidth="2.2" strokeLinecap="round" />
-                <circle cx={chartPath.last.x} cy={chartPath.last.y} r="4" fill="#C9A45C" />
-                <circle cx={chartPath.last.x} cy={chartPath.last.y} r="9" fill="#C9A45C" opacity="0.18" />
-              </svg>
-              <div className="absolute top-1 right-1 px-2.5 py-1.5 rounded-lg bg-black/80 border border-gold/30">
-                <p className="text-[11px] text-gold font-bold leading-none">{totalRecebidoLabel}</p>
-                <p className="text-[9px] text-white/40 mt-0.5">Total {anoAtual}</p>
+              <div className="flex justify-between mt-2 text-[10px] text-white/30 px-1">
+                <span>1</span><span>5</span><span>10</span><span>15</span><span>20</span><span>25</span><span>{chartPath.diasNoMes}</span>
               </div>
             </div>
-            <div className="flex justify-between mt-2 text-[10px] text-white/30 px-1">
-              <span>1</span><span>5</span><span>10</span><span>15</span><span>20</span><span>25</span><span>{chartPath.diasNoMes}</span>
-            </div>
+
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
