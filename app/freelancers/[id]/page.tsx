@@ -432,64 +432,100 @@ export default function FreelancerDetailPage() {
 
         return (
           <>
-          {/* ── HERO Card ─────────────────────────────────────────── */}
-          <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] mb-5 min-h-[280px]">
-            {freelancer?.foto_url && (
-              <div className="absolute inset-0 z-0">
-                <img src={freelancer.foto_url} alt="" className="w-full h-full object-cover" />
-              </div>
-            )}
+          {/* ── HERO Card (estilo Painel Criativo) ─────────────────── */}
+          <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] mb-5"
+            style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.5)' }}>
+            <div className="absolute inset-0 z-0">
+              <img
+                src={freelancer?.foto_url || 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1600&h=400&fit=crop'}
+                alt=""
+                className="w-full h-full object-cover"
+              />
+            </div>
             <div className="absolute inset-0 z-[1]"
-              style={{ background: freelancer?.foto_url
-                ? 'linear-gradient(90deg, rgba(8,6,4,0.97) 0%, rgba(14,11,7,0.92) 40%, rgba(14,11,7,0.55) 65%, rgba(14,11,7,0.2) 90%, rgba(14,11,7,0) 100%)'
-                : 'linear-gradient(90deg, rgba(8,6,4,0.95) 0%, rgba(14,11,7,0.85) 45%, rgba(14,11,7,0.4) 75%, rgba(20,15,8,0.1) 100%)' }} />
-            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-5 gap-6 p-6 sm:p-8">
-              <div className="lg:col-span-3 flex flex-col gap-5">
+              style={{ background: 'linear-gradient(90deg, rgba(11,11,11,0.96) 0%, rgba(11,11,11,0.85) 35%, rgba(11,11,11,0.45) 65%, rgba(11,11,11,0.1) 100%)' }} />
+            <div className="relative z-10 flex items-start justify-between gap-6 px-8 sm:px-12 py-12 sm:py-16">
+              <div className="max-w-xl flex items-center gap-5">
+                {freelancer?.foto_url && (
+                  <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gold/50 shrink-0"
+                    style={{ boxShadow: '0 0 28px -4px rgba(201,164,92,0.4)' }}>
+                    <img src={freelancer.foto_url}
+                      alt={freelancer.nome} className="w-full h-full object-cover" />
+                  </div>
+                )}
                 <div>
-                  <h1 className="text-3xl sm:text-4xl font-semibold text-white tracking-tight">
-                    Bem-vindo de volta, {primeiroNome}! <span className="inline-block">👋</span>
+                  <h1 className="text-4xl sm:text-5xl font-light text-white tracking-tight">
+                    Olá, <span className="font-semibold">{primeiroNome}</span>!
                   </h1>
-                  <p className="text-[15px] text-white/55 mt-2">Continua a criar histórias inesquecíveis.</p>
+                  <p className="text-[16px] text-white/65 mt-3 leading-relaxed font-light">
+                    Que hoje seja mais um dia de transformar momentos<br />em memórias inesquecíveis.
+                  </p>
+                  <div className="mt-5 h-px w-20 bg-gradient-to-r from-gold/70 via-gold/30 to-transparent" />
+                  <p className="text-[12px] tracking-[0.4em] text-gold/70 uppercase mt-4">Painel criativo RL Photo.Video</p>
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <button onClick={() => setTab('casamentos')}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black text-[14px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
-                    style={{ boxShadow: '0 0 20px -4px rgba(201,168,76,0.5)' }}>
-                    <span className="text-lg leading-none">+</span> Ver Casamentos
-                  </button>
-                  <button onClick={() => setTab('casamentos')}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/15 text-white/85 text-[14px] font-medium tracking-wider hover:bg-white/[0.05] hover:border-white/30 transition-all">
-                    <span className="text-base leading-none">◷</span> Confirmar Disponibilidade
-                  </button>
-                </div>
-                <div>
-                  <p className="text-[14px] tracking-[0.3em] text-white/40 uppercase font-medium mb-3">Resumo Rápido</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                    <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
-                      <span className="w-8 h-8 rounded-lg border bg-gold/10 border-gold/25 text-gold flex items-center justify-center text-base">◫</span>
-                      <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalCasamentos}</p><p className="text-[14px] text-white/55 leading-tight mt-0.5">Casamentos</p></div>
-                    </div>
-                    <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
-                      <span className="w-8 h-8 rounded-lg border bg-purple-500/10 border-purple-500/25 text-purple-300 flex items-center justify-center text-base">✎</span>
-                      <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalEmEdicao}</p><p className="text-[14px] text-white/55 leading-tight mt-0.5">Em edição</p></div>
-                    </div>
-                    <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
-                      <span className="w-8 h-8 rounded-lg border bg-emerald-500/10 border-emerald-500/25 text-emerald-300 flex items-center justify-center text-base">✓</span>
-                      <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalConcluidos}</p><p className="text-[14px] text-white/55 leading-tight mt-0.5">Concluídos</p></div>
-                    </div>
-                    <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
-                      <span className="w-8 h-8 rounded-lg border bg-amber-500/10 border-amber-500/25 text-amber-300 flex items-center justify-center text-base">◷</span>
-                      <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalAguardando}</p><p className="text-[14px] text-white/55 leading-tight mt-0.5">Aguardando</p></div>
-                    </div>
+              </div>
+
+              {/* Top-right: notif + messages + profile chip */}
+              <div className="flex items-center gap-3 shrink-0">
+                <button title="Notificações"
+                  className="w-10 h-10 rounded-full border border-white/15 bg-black/40 backdrop-blur-md text-white/70 hover:text-gold hover:border-gold/40 transition-all flex items-center justify-center">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+                </button>
+                <button title="Mensagens"
+                  className="w-10 h-10 rounded-full border border-white/15 bg-black/40 backdrop-blur-md text-white/70 hover:text-gold hover:border-gold/40 transition-all flex items-center justify-center relative">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                  {mensagensNaoLidas > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full bg-gold text-black text-[10px] font-bold flex items-center justify-center px-1">
+                      {mensagensNaoLidas}
+                    </span>
+                  )}
+                </button>
+                <div className="flex items-center gap-3 px-3 py-2 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md">
+                  <div className="w-9 h-9 rounded-full overflow-hidden border border-gold/40 shrink-0">
+                    {freelancer?.foto_url
+                      ? <img src={freelancer.foto_url} alt={freelancer.nome} className="w-full h-full object-cover" />
+                      : <div className="w-full h-full bg-gradient-to-br from-gold/30 to-gold/10 flex items-center justify-center text-gold text-sm font-bold">{primeiroNome.charAt(0).toUpperCase()}</div>
+                    }
+                  </div>
+                  <div className="hidden sm:block min-w-0">
+                    <p className="text-[13px] font-semibold text-white truncate max-w-[140px]">{primeiroNome}</p>
+                    <p className="text-[10px] text-white/40 tracking-wide truncate max-w-[140px]">{isFotografo ? 'Fotógrafo' : 'Editor de Vídeo'}</p>
                   </div>
                 </div>
               </div>
-              <div className="lg:col-span-2 hidden lg:flex items-center justify-end pr-4">
-                <div className="text-right max-w-[280px]">
-                  <p className="text-gold/70 text-5xl font-serif leading-none mb-3">&ldquo;</p>
-                  <p className="text-[16px] text-white/85 italic leading-relaxed font-light" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>Transformamos momentos em histórias que duram para sempre.</p>
-                  <p className="text-[14px] text-gold/80 italic font-light mt-3" style={{ fontFamily: 'Georgia, serif' }}>— Momento</p>
-                </div>
+            </div>
+          </div>
+
+          {/* ── CTAs + Resumo Rápido (movidos para fora do hero) ─── */}
+          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.015] p-5 sm:p-6 mb-5">
+            <div className="flex flex-wrap items-center gap-3 mb-5">
+              <button onClick={() => setTab('casamentos')}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black text-[14px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
+                style={{ boxShadow: '0 0 20px -4px rgba(201,168,76,0.5)' }}>
+                <span className="text-lg leading-none">+</span> Ver Casamentos
+              </button>
+              <button onClick={() => setTab('casamentos')}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/15 text-white/85 text-[14px] font-medium tracking-wider hover:bg-white/[0.05] hover:border-white/30 transition-all">
+                <span className="text-base leading-none">◷</span> Confirmar Disponibilidade
+              </button>
+            </div>
+            <p className="text-[14px] tracking-[0.3em] text-white/40 uppercase font-medium mb-3">Resumo Rápido</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                <span className="w-8 h-8 rounded-lg border bg-gold/10 border-gold/25 text-gold flex items-center justify-center text-base">◫</span>
+                <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalCasamentos}</p><p className="text-[14px] text-white/55 leading-tight mt-0.5">Casamentos</p></div>
+              </div>
+              <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                <span className="w-8 h-8 rounded-lg border bg-purple-500/10 border-purple-500/25 text-purple-300 flex items-center justify-center text-base">✎</span>
+                <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalEmEdicao}</p><p className="text-[14px] text-white/55 leading-tight mt-0.5">Em edição</p></div>
+              </div>
+              <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                <span className="w-8 h-8 rounded-lg border bg-emerald-500/10 border-emerald-500/25 text-emerald-300 flex items-center justify-center text-base">✓</span>
+                <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalConcluidos}</p><p className="text-[14px] text-white/55 leading-tight mt-0.5">Concluídos</p></div>
+              </div>
+              <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
+                <span className="w-8 h-8 rounded-lg border bg-amber-500/10 border-amber-500/25 text-amber-300 flex items-center justify-center text-base">◷</span>
+                <div className="min-w-0"><p className="text-2xl font-bold text-white leading-none">{totalAguardando}</p><p className="text-[14px] text-white/55 leading-tight mt-0.5">Aguardando</p></div>
               </div>
             </div>
           </div>
