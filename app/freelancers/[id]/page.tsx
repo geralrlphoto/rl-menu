@@ -896,26 +896,6 @@ export default function FreelancerDetailPage() {
               </div>
             )}
 
-            {/* Atividade Recente */}
-            {atividadesRecentes.length > 0 && (
-              <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 sm:p-6">
-                <h3 className="text-[14px] tracking-[0.4em] text-gold uppercase font-bold mb-4">Atividade Recente</h3>
-                <div className="space-y-2.5">
-                  {atividadesRecentes.map((a, i) => (
-                    <div key={i} className="flex items-start gap-3 text-[14px]">
-                      <span className="w-7 h-7 rounded-full border border-white/10 bg-white/[0.02] flex items-center justify-center shrink-0 text-base">
-                        {a.tipo === 'msg' ? '💬' : a.tipo === 'pag' ? '💰' : '🔔'}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white/75 leading-snug">{a.texto}</p>
-                        <p className="text-[14px] text-white/30 mt-0.5">{tempoRelativo(a.data)}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             </div>
 
             {/* ── COLUNA LATERAL (1/3) — Alertas ─────────────────────── */}
