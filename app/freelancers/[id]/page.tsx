@@ -1244,28 +1244,115 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
     onRefresh()
   }
 
-  const sorted = [...casamentos].sort((a,b) => (a.data_casamento??'') < (b.data_casamento??'') ? -1 : 1)
+  // Filtros e pesquisa (estilo /novos-projetos)
+  const FILTER_TABS = ['Todos', 'Próximos', 'Confirmados', 'Pendentes', 'Passados'] as const
+  type FilterTab = typeof FILTER_TABS[number]
+  const [activeFilter, setActiveFilter] = useState<FilterTab>('Todos')
+  const [search, setSearch] = useState('')
+  const [sortOption, setSortOption] = useState('Mais próximos')
+
+  // Placeholder wedding images (rotation)
+  const placeholderImgs = [
+    'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=600&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=600&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=600&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=600&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1525258946800-98cfd641d0de?w=600&h=400&fit=crop',
+    'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=600&h=400&fit=crop',
+  ]
+
+  const sortedAll = [...casamentos].sort((a,b) => (a.data_casamento??'') < (b.data_casamento??'') ? -1 : 1)
+
+  // Aplicar filtros + pesquisa
+  const filtered = sortedAll.filter(c => {
+    const dtu = daysUntil(c.data_casamento)
+    const isPast = dtu !== null && dtu < 0
+    if (activeFilter === 'Próximos' && isPast) return false
+    if (activeFilter === 'Passados' && !isPast) return false
+    if (activeFilter === 'Confirmados' && !c.data_confirmada) return false
+    if (activeFilter === 'Pendentes' && (c.data_confirmada || isPast || c.indisponivel)) return false
+    if (search.trim() && !c.local.toLowerCase().includes(search.toLowerCase())) return false
+    return true
+  })
+  const sorted = sortOption === 'Mais distantes' ? [...filtered].reverse() : filtered
+
+  // Contadores
+  const totalConfirmados = casamentos.filter(c => c.data_confirmada).length
+  const totalPendentes = casamentos.filter(c => !c.data_confirmada && !c.indisponivel && (daysUntil(c.data_casamento) ?? -1) >= 0).length
 
   return (
-    <div className="space-y-4 fade-in-up">
+    <div className="space-y-5 fade-in-up">
 
-      {/* ── Header premium da página ─────────────────────────────────── */}
-      <div className="flex items-end justify-between mb-2 px-1">
-        <div>
-          <p className="text-[11px] tracking-[0.5em] text-gold/70 uppercase mb-2 font-light">Os teus eventos</p>
-          <h2 className="text-3xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
-            <span className="italic text-gold">Casamentos</span> Atribuídos
-          </h2>
-          <div className="mt-3 h-px w-20 bg-gradient-to-r from-gold/70 via-gold/30 to-transparent" />
+      {/* ── HERO PREMIUM (estilo /novos-projetos) ───────────────────── */}
+      <div className="relative overflow-hidden rounded-3xl border border-white/[0.08]"
+        style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.6)' }}>
+        <div className="absolute inset-0 z-0">
+          <img src="https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=1600&h=400&fit=crop"
+            alt="" className="w-full h-full object-cover scale-105" style={{ filter: 'blur(2px)' }} />
         </div>
-        <p className="text-[13px] text-white/40 italic" style={{ fontFamily: 'Georgia, serif' }}>
-          {casamentos.length} {casamentos.length === 1 ? 'evento' : 'eventos'} no total
-        </p>
+        <div className="absolute inset-0 z-[1]"
+          style={{ background: 'linear-gradient(90deg, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.85) 40%, rgba(10,10,10,0.5) 70%, rgba(10,10,10,0.15) 100%)' }} />
+        <div className="relative z-10 flex items-start justify-between gap-6 px-8 sm:px-12 py-10 sm:py-12">
+          <div className="max-w-xl">
+            <p className="text-[12px] tracking-[0.5em] text-gold/70 uppercase mb-2 font-light">Atelier Fotográfico</p>
+            <h1 className="text-4xl sm:text-5xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
+              CASAMENTOS <span className="italic text-gold">Atribuídos</span>
+            </h1>
+            <div className="mt-4 h-px w-20 bg-gradient-to-r from-gold/70 to-transparent" />
+            <p className="text-[14px] text-white/55 mt-4 leading-relaxed max-w-md italic" style={{ fontFamily: 'Georgia, serif' }}>
+              Cada evento, uma história única para capturar. Acompanha aqui todos os casamentos atribuídos ao longo do ano.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button onClick={() => { setShowAdd(true); setEditing(null); setForm({}) }}
+              className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gold text-black text-[13px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
+              style={{ boxShadow: '0 0 24px -4px rgba(201,164,92,0.5)' }}>
+              <span className="text-lg leading-none">+</span> Novo Evento
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* ── Texto Intro (editável) ── */}
-      <div className="rounded-2xl border border-white/[0.08] px-5 py-4 space-y-2"
-        style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
+      {/* ── FILTERS BAR ─────────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-white/[0.06] p-4 backdrop-blur-md"
+        style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.5))' }}>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {FILTER_TABS.map(t => (
+              <button key={t} onClick={() => setActiveFilter(t)}
+                className={`px-3 py-1.5 rounded-lg text-[12px] tracking-wide transition-all ${
+                  activeFilter === t
+                    ? 'bg-gold/15 text-gold border border-gold/35'
+                    : 'border border-white/[0.06] text-white/45 hover:text-white/80 hover:bg-white/[0.03]'
+                }`}>
+                {t}
+                {t === 'Confirmados' && totalConfirmados > 0 && <span className="ml-1.5 text-[10px] opacity-70">{totalConfirmados}</span>}
+                {t === 'Pendentes' && totalPendentes > 0 && <span className="ml-1.5 text-[10px] opacity-70">{totalPendentes}</span>}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-[14px]">⌕</span>
+              <input value={search} onChange={e => setSearch(e.target.value)}
+                placeholder="Pesquisar local…"
+                className="bg-black/30 border border-white/[0.08] rounded-lg pl-9 pr-3 py-1.5 text-[12px] text-white placeholder:text-white/30 focus:outline-none focus:border-gold/40 w-56" />
+            </div>
+            <select value={sortOption} onChange={e => setSortOption(e.target.value)}
+              className="bg-black/30 border border-white/[0.08] rounded-lg px-3 py-1.5 text-[12px] text-white/70 focus:outline-none focus:border-gold/40 cursor-pointer">
+              <option>Mais próximos</option>
+              <option>Mais distantes</option>
+            </select>
+          </div>
+        </div>
+        <p className="text-[11px] text-white/35 mt-3">{filtered.length} {filtered.length === 1 ? 'evento' : 'eventos'} · {casamentos.length} no total</p>
+      </div>
+
+      {/* ── TEXTO INTRO (editável, recolhido) ───────────────────────── */}
+      <div className="rounded-2xl border border-white/[0.06] px-5 py-4 space-y-2"
+        style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.3), rgba(11,11,11,0.5))' }}>
         <div className="flex items-center justify-between">
           <p className="text-[11px] tracking-[0.4em] text-gold/60 uppercase font-light">Texto Intro · Secção Casamentos</p>
           {!editingIntro && (
@@ -1290,16 +1377,8 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
             </div>
           </div>
         ) : (
-          <p className="text-[14px] text-white/60 leading-relaxed whitespace-pre-wrap">{introValue}</p>
+          <p className="text-[13px] text-white/60 leading-relaxed whitespace-pre-wrap">{introValue}</p>
         )}
-      </div>
-
-      <div className="flex justify-end">
-        <button onClick={() => { setShowAdd(true); setEditing(null); setForm({}) }}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black text-[12px] font-semibold tracking-[0.25em] hover:bg-gold/90 transition-all uppercase"
-          style={{ boxShadow: '0 0 20px -4px rgba(201,168,76,0.5)' }}>
-          <span className="text-lg leading-none">+</span> Adicionar Evento
-        </button>
       </div>
 
       {showAdd && (
@@ -1307,123 +1386,138 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
       )}
 
       {sorted.length === 0 && !showAdd && (
-        <p className="text-center py-10 text-white/20 text-[14px] tracking-widest">Sem casamentos registados.</p>
+        <div className="rounded-2xl border border-dashed border-white/10 p-12 flex flex-col items-center justify-center text-center">
+          <span className="text-5xl mb-3 opacity-30">📷</span>
+          <p className="text-[13px] text-white/40 italic">
+            {search || activeFilter !== 'Todos' ? 'Nenhum evento corresponde aos filtros' : 'Sem casamentos registados'}
+          </p>
+        </div>
       )}
 
-      {sorted.map(c => {
+      {/* ── LISTA DE CASAMENTOS (cards premium) ─────────────────────── */}
+      <div className="space-y-5">
+      {sorted.map((c, idx) => {
         const dtu = daysUntil(c.data_casamento)
         const isUrgent = dtu !== null && dtu >= 0 && dtu <= 15
         const isPast = dtu !== null && dtu < 0
+        const img = placeholderImgs[idx % placeholderImgs.length]
+
+        // Status label/badge
+        let statusBadge: { label: string; cls: string } | null = null
+        if (c.indisponivel) statusBadge = { label: '✕ Indisponível', cls: 'bg-red-500/15 text-red-300 border-red-500/30' }
+        else if (c.data_confirmada) statusBadge = { label: '✓ Confirmado', cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' }
+        else if (!isPast) statusBadge = { label: 'Pendente', cls: 'bg-orange-500/15 text-orange-300 border-orange-500/30' }
+
         return editing?.id === c.id ? (
           <CasamentoForm key={c.id} form={form} setForm={setForm} saving={saving} onSave={save}
             onCancel={() => setEditing(null)} onDelete={() => del(c.id)} />
         ) : (
-          <div key={c.id} onClick={() => setFicha(c)}
-            className={`relative flex items-center gap-5 px-5 py-4 rounded-2xl border transition-all group cursor-pointer ${
-              isUrgent
-                ? 'border-red-500/30 hover:border-red-500/50'
-                : isPast
-                  ? 'border-white/[0.04] opacity-60 hover:opacity-80'
-                  : 'border-white/[0.08] hover:border-gold/40'
-            }`}
+          <div key={c.id}
+            className={`group relative overflow-hidden rounded-2xl border transition-all ${isPast ? 'opacity-65' : ''}`}
             style={{
               background: isUrgent
-                ? 'linear-gradient(135deg, rgba(239,68,68,0.06), rgba(11,11,11,0.7))'
-                : isPast
-                  ? 'rgba(255,255,255,0.01)'
-                  : 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))',
-              boxShadow: !isPast ? '0 10px 30px -10px rgba(0,0,0,0.5)' : undefined,
+                ? 'linear-gradient(135deg, rgba(239,68,68,0.08), rgba(11,11,11,0.85))'
+                : 'linear-gradient(135deg, rgba(20,15,8,0.5), rgba(11,11,11,0.85))',
+              borderColor: isUrgent ? 'rgba(239,68,68,0.35)' : 'rgba(255,255,255,0.06)',
+              boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)',
             }}>
-            {/* Date thumbnail premium */}
-            <div className={`flex-shrink-0 flex flex-col items-center justify-center w-16 h-16 rounded-2xl border ${
-              isUrgent
-                ? 'bg-red-500/10 border-red-500/30'
-                : isPast
-                  ? 'bg-white/[0.02] border-white/[0.05]'
-                  : 'border-gold/25'
-            }`}
-              style={!isPast && !isUrgent ? {
-                background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.15), rgba(201,164,92,0.04))',
-                boxShadow: '0 0 22px -6px rgba(201,164,92,0.3)'
-              } : undefined}>
-              {c.data_casamento ? (
-                <>
-                  <span className={`text-xl font-light leading-none tabular-nums ${isUrgent ? 'text-red-400' : isPast ? 'text-white/25' : 'text-gold'}`} style={{ fontFamily: 'Georgia, serif' }}>
-                    {c.data_casamento.split('-')[2]}
-                  </span>
-                  <span className={`text-[10px] uppercase tracking-[0.25em] mt-1 ${isUrgent ? 'text-red-400/60' : isPast ? 'text-white/15' : 'text-gold/70'}`}>
-                    {MESES[parseInt(c.data_casamento.split('-')[1])-1]}
-                  </span>
-                </>
-              ) : <span className="text-white/20 text-base">—</span>}
-            </div>
-            {/* Info */}
-            <div className="flex-1 min-w-0">
-              <h3 className={`text-[16px] font-light truncate transition-colors mb-1 ${isPast ? 'text-white/45' : 'text-white/90 group-hover:text-gold'}`} style={{ fontFamily: 'Georgia, serif' }}>
-                {c.local}
-              </h3>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            {/* Hover glow sweep */}
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-gold/0 via-gold/[0.04] to-gold/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
+
+            <div className="relative grid grid-cols-1 lg:grid-cols-[280px_1fr_auto] gap-5 p-5">
+              {/* THUMB */}
+              <button onClick={() => setFicha(c)}
+                className="relative aspect-[16/10] rounded-xl overflow-hidden border border-white/10 group/img cursor-pointer">
+                <img src={img} alt={c.local} className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-700" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                {/* Date label top-left */}
                 {c.data_casamento && (
-                  <span className="text-[12px] text-white/45 italic" style={{ fontFamily: 'Georgia, serif' }}>
-                    {fmtDate(c.data_casamento)}
-                  </span>
+                  <div className="absolute top-3 left-3 px-3 py-1.5 rounded-lg backdrop-blur-md border border-white/15 bg-black/50">
+                    <p className={`text-[16px] font-light leading-none tabular-nums ${isUrgent ? 'text-red-300' : 'text-gold'}`} style={{ fontFamily: 'Georgia, serif' }}>
+                      {c.data_casamento.split('-')[2]} <span className="text-[10px] uppercase tracking-[0.2em] opacity-70">{MESES[parseInt(c.data_casamento.split('-')[1])-1]}</span>
+                    </p>
+                  </div>
                 )}
-                {c.videografo && (
-                  <span className="inline-flex items-center gap-1.5 text-[11px] text-white/40">
-                    <span className="text-gold/50">🎥</span> {c.videografo}
-                  </span>
+                {/* Counter dias bottom-right */}
+                {dtu !== null && !isPast && (
+                  <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded-lg backdrop-blur-md border border-white/15 bg-black/50">
+                    <p className={`text-[11px] font-bold tracking-widest uppercase ${isUrgent ? 'text-red-300' : 'text-white/70'}`}>
+                      {dtu === 0 ? 'HOJE' : `${dtu} dias`}
+                    </p>
+                  </div>
                 )}
-                {c.equipa_foto && c.equipa_foto.length > 0 && (
-                  <span className="inline-flex items-center gap-1.5 text-[11px] text-white/40">
-                    <span className="text-gold/50">📷</span> {c.equipa_foto.join(', ')}
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-col items-end gap-1 flex-shrink-0">
-              {dtu !== null && dtu >= 0 && (
-                <span className={`text-[14px] font-bold px-2 py-0.5 rounded-full ${isUrgent ? 'bg-red-500/15 text-red-400' : 'bg-white/[0.06] text-white/30'}`}>
-                  {dtu === 0 ? 'HOJE' : `${dtu}d`}
-                </span>
-              )}
-              {/* Fotógrafo */}
-              {c.indisponivel ? (
-                <div className="flex items-center gap-1">
-                  <span className="text-[14px] font-semibold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/25 tracking-widest uppercase">✕ Indisponível 📷</span>
-                  <button onClick={async e => { e.stopPropagation(); await fetch('/api/freelancer-casamentos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id, indisponivel: false }) }); onRefresh() }} className="text-white/20 hover:text-white/60 transition-colors text-[14px] px-1" title="Reverter">↩</button>
-                </div>
-              ) : c.data_confirmada ? (
-                <div className="flex items-center gap-1">
-                  <span className="text-[14px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 tracking-widest uppercase">✓ Confirmado 📷</span>
-                  <button onClick={async e => { e.stopPropagation(); await fetch('/api/freelancer-casamentos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id, data_confirmada: false }) }); onRefresh() }} className="text-white/20 hover:text-red-400 transition-colors text-[14px] px-1" title="Remover confirmação">✕</button>
-                </div>
-              ) : !isPast ? (
-                <span className="text-[14px] font-semibold px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-400/70 border border-orange-500/20 tracking-widest uppercase">Pendente 📷</span>
-              ) : null}
-              {/* Videógrafo (só se existir) */}
-              {c.videografo && (c.indisponivel_videografo ? (
-                <div className="flex items-center gap-1">
-                  <span className="text-[14px] font-semibold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/25 tracking-widest uppercase">✕ Indisponível 🎥</span>
-                  <button onClick={async e => { e.stopPropagation(); await fetch('/api/freelancer-casamentos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id, indisponivel_videografo: false }) }); onRefresh() }} className="text-white/20 hover:text-white/60 transition-colors text-[14px] px-1" title="Reverter">↩</button>
-                </div>
-              ) : c.data_confirmada_videografo ? (
-                <div className="flex items-center gap-1">
-                  <span className="text-[14px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 tracking-widest uppercase">✓ Confirmado 🎥</span>
-                  <button onClick={async e => { e.stopPropagation(); await fetch('/api/freelancer-casamentos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id, data_confirmada_videografo: false }) }); onRefresh() }} className="text-white/20 hover:text-red-400 transition-colors text-[14px] px-1" title="Remover confirmação">✕</button>
-                </div>
-              ) : !isPast ? (
-                <span className="text-[14px] font-semibold px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-400/70 border border-orange-500/20 tracking-widest uppercase">Pendente 🎥</span>
-              ) : null)}
-              <button
-                onClick={e => { e.stopPropagation(); del(c.id) }}
-                className="opacity-0 group-hover:opacity-100 transition-opacity mt-1 p-1 rounded-lg hover:bg-red-500/15 text-white/20 hover:text-red-400"
-                title="Eliminar evento">
-                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
               </button>
+
+              {/* INFO */}
+              <div className="flex flex-col gap-2 min-w-0">
+                <div>
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    {statusBadge && (
+                      <span className={`text-[10px] px-2 py-0.5 rounded-md border tracking-widest uppercase font-bold ${statusBadge.cls}`}>
+                        {statusBadge.label}
+                      </span>
+                    )}
+                    {isUrgent && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-red-500/15 border border-red-500/40 text-red-300 uppercase tracking-widest font-bold animate-pulse">
+                        URGENTE
+                      </span>
+                    )}
+                  </div>
+                  <h2 className="text-2xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>{c.local}</h2>
+                  {c.data_casamento && (
+                    <p className="text-[12px] text-white/45 italic mt-1" style={{ fontFamily: 'Georgia, serif' }}>{fmtDate(c.data_casamento)}</p>
+                  )}
+                </div>
+
+                {/* Meta grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-1">
+                  {c.equipa_foto && c.equipa_foto.length > 0 && (
+                    <div>
+                      <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-0.5">Equipa Foto</p>
+                      <p className="text-[12px] text-white/80 truncate">📷 {c.equipa_foto.join(', ')}</p>
+                    </div>
+                  )}
+                  {c.videografo && (
+                    <div>
+                      <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-0.5">Videógrafo</p>
+                      <p className="text-[12px] text-white/80 truncate">🎥 {c.videografo}</p>
+                    </div>
+                  )}
+                  {c.briefing_url && (
+                    <div>
+                      <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-0.5">Briefing</p>
+                      <a href={c.briefing_url} target="_blank" rel="noopener noreferrer"
+                        onClick={e => e.stopPropagation()}
+                        className="text-[12px] text-gold/80 hover:text-gold underline truncate inline-block">📄 Ver briefing</a>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* RIGHT — ACTIONS */}
+              <div className="flex flex-col items-end justify-between gap-3">
+                <button onClick={() => setFicha(c)}
+                  className="px-3 py-2 rounded-lg border border-gold/30 text-gold text-[11px] tracking-widest uppercase font-semibold hover:bg-gold/10 transition-all">
+                  Abrir ficha
+                </button>
+                <div className="flex items-center gap-1.5">
+                  {!isPast && !c.data_confirmada && !c.indisponivel && (
+                    <button onClick={async e => { e.stopPropagation(); await fetch('/api/freelancer-casamentos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id, data_confirmada: true }) }); onRefresh() }}
+                      className="px-3 py-1.5 rounded-lg border border-emerald-500/30 text-emerald-300 text-[10px] tracking-widest uppercase hover:bg-emerald-500/10 transition-all">
+                      ✓ Confirmar
+                    </button>
+                  )}
+                  <button onClick={e => { e.stopPropagation(); del(c.id) }}
+                    className="w-8 h-8 rounded-lg border border-white/10 text-white/40 hover:text-red-400 hover:border-red-500/30 transition-all flex items-center justify-center"
+                    title="Eliminar">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+                  </button>
+                </div>
             </div>
           </div>
         )
       })}
+      </div>
 
       {ficha && (
         <CasamentoFicha
