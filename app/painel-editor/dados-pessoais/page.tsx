@@ -144,7 +144,7 @@ export default function DadosPessoaisPage() {
 
       <Sidebar profile={profile} />
 
-      <main className="relative z-10 lg:pl-[250px]">
+      <main className="relative z-10 md:pl-[250px]">
         <div className="px-6 sm:px-8 py-6 max-w-[1700px] mx-auto">
 
           <Hero theme={theme} onToggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')} onEdit={() => setEditMode(!editMode)} editMode={editMode} />
@@ -185,7 +185,7 @@ export default function DadosPessoaisPage() {
 function Sidebar({ profile }: { profile: FreelancerProfile }) {
   return (
     <aside
-      className="hidden lg:flex fixed top-0 left-0 bottom-0 w-[250px] z-30 flex-col"
+      className="hidden md:flex fixed top-0 left-0 bottom-0 w-[250px] z-30 flex-col"
       style={{
         background: 'linear-gradient(180deg, rgba(15,12,8,0.96) 0%, rgba(11,9,5,0.98) 100%)',
         backdropFilter: 'blur(20px)',
