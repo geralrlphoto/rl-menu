@@ -332,7 +332,7 @@ function ProfileCard({ profile, editMode, onChange }: { profile: FreelancerProfi
             )}
             <span className="text-[10px] px-2 py-0.5 rounded-md bg-gold/15 border border-gold/30 text-gold uppercase tracking-widest font-bold">Freelancer</span>
           </div>
-          <p className="text-[13px] text-white/55 mb-4">Editor de Vídeo & Colorista</p>
+          <p className="text-[13px] text-white/55 mb-4">{profile.funcao}</p>
 
           <div className="space-y-2 text-[13px]">
             <ContactLine ico="✉" value={profile.email} editable={editMode} onChange={(v) => onChange({ email: v })} />
@@ -577,6 +577,7 @@ function WorkPreferencesCard({ editMode, onToggle, profile, onChange }: {
   profile: FreelancerProfile
   onChange: (patch: Partial<FreelancerProfile>) => void
 }) {
+  const FUNCAO_OPTIONS: FreelancerProfile['funcao'][] = ['Videógrafo', 'Fotógrafo', 'Editor de Foto', 'Editor de Vídeo', 'Assistente']
   const rows: { label: string; key: keyof FreelancerProfile }[] = [
     { label: 'Dias de Trabalho',     key: 'diasTrabalho' },
     { label: 'Horário Preferencial', key: 'horarioPreferencial' },
@@ -586,6 +587,21 @@ function WorkPreferencesCard({ editMode, onToggle, profile, onChange }: {
     <Card>
       <CardHeader title="Preferências de Trabalho" right={<EditButton editMode={editMode} onToggle={onToggle} />} />
       <div className="space-y-3.5">
+        {/* Função (dropdown) */}
+        <div className="flex items-center justify-between gap-3 pb-3 border-b border-white/[0.04]">
+          <span className="text-[12px] text-white/45 shrink-0">Função</span>
+          {editMode ? (
+            <select value={profile.funcao}
+              onChange={e => onChange({ funcao: e.target.value as FreelancerProfile['funcao'] })}
+              className="flex-1 ml-3 text-right text-[13px] text-white font-medium bg-black/40 border border-gold/30 rounded-md px-2 py-1 focus:outline-none focus:border-gold/60 cursor-pointer">
+              {FUNCAO_OPTIONS.map(f => (
+                <option key={f} value={f} style={{ background: '#1a1206' }}>{f}</option>
+              ))}
+            </select>
+          ) : (
+            <span className="text-[13px] text-gold font-medium text-right truncate">{profile.funcao}</span>
+          )}
+        </div>
         {rows.map(({ label, key }) => (
           <div key={label} className="flex items-center justify-between gap-3 pb-3 border-b border-white/[0.04]">
             <span className="text-[12px] text-white/45 shrink-0">{label}</span>

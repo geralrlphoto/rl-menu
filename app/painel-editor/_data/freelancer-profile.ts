@@ -22,6 +22,7 @@ export type FreelancerProfile = {
   // Especialidades (label → percentagem)
   skills: { label: string; value: number }[]
   // Preferências de Trabalho
+  funcao: 'Videógrafo' | 'Fotógrafo' | 'Editor de Foto' | 'Editor de Vídeo' | 'Assistente'
   diasTrabalho: string
   horarioPreferencial: string
   comunicacao: string
@@ -56,6 +57,7 @@ export const DEFAULT_FREELANCER_PROFILE: FreelancerProfile = {
     { label: 'Sound Design',      value: 70 },
     { label: 'Direção Criativa',  value: 85 },
   ],
+  funcao: 'Editor de Vídeo',
   diasTrabalho: 'Segunda a Sábado',
   horarioPreferencial: '09:00 - 18:00',
   comunicacao: 'Email, WhatsApp, Slack',
