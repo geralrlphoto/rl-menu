@@ -400,7 +400,7 @@ export default function FreelancerDetailPage() {
               />
             </div>
             <div className="absolute inset-0 z-[1]"
-              style={{ background: 'linear-gradient(90deg, rgba(11,11,11,0.96) 0%, rgba(11,11,11,0.85) 35%, rgba(11,11,11,0.45) 65%, rgba(11,11,11,0.1) 100%)' }} />
+              style={{ background: 'linear-gradient(90deg, rgba(20,15,8,0.97) 0%, rgba(20,15,8,0.88) 35%, rgba(20,15,8,0.5) 65%, rgba(20,15,8,0.12) 100%)' }} />
             <div className="relative z-10 flex items-start justify-between gap-6 px-8 sm:px-12 py-12 sm:py-16">
               <div className="max-w-xl flex items-center gap-5">
                 <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gold/50 shrink-0"
