@@ -1845,12 +1845,25 @@ export default function FreelancerViewPage() {
     .sort((a,b) => (a.data_casamento ?? '') > (b.data_casamento ?? '') ? -1 : 1)
 
   return (
-    <div className="min-h-screen text-white relative" style={{ background: '#0A0A0A' }}>
-      {/* ── Atmosfera (estilo Editorial Workspace) ──────────────────────── */}
+    <div className="min-h-screen text-white relative" style={{ background: '#0B0B0B' }}>
+      {/* Animação gold pulse para items novos não-abertos + alert red pulse para alertas críticos */}
+      <style jsx global>{`
+        @keyframes unseenGlow {
+          0%, 100% { box-shadow: 0 0 0 rgba(201,164,92,0), 0 0 16px -4px rgba(201,164,92,0.25); }
+          50%      { box-shadow: 0 0 0 rgba(201,164,92,0), 0 0 32px 0 rgba(201,164,92,0.55); }
+        }
+        .unseen-glow { animation: unseenGlow 2.4s ease-in-out infinite; }
+        @keyframes alertPulse {
+          0%, 100% { box-shadow: 0 0 0 rgba(239,68,68,0), 0 0 24px -4px rgba(239,68,68,0.35), inset 0 0 0 1px rgba(239,68,68,0.15); }
+          50%      { box-shadow: 0 0 0 rgba(239,68,68,0), 0 0 48px 0 rgba(239,68,68,0.7), inset 0 0 0 1px rgba(239,68,68,0.45); }
+        }
+        .alert-glow { animation: alertPulse 1.8s ease-in-out infinite; }
+      `}</style>
+      {/* ── Background atmosférico (radial gold + grid sutil) ─────────────── */}
       <div className="pointer-events-none fixed inset-0 z-0"
-        style={{ background: 'radial-gradient(ellipse 80% 60% at 80% 15%, rgba(201,164,92,0.07), transparent 65%)' }} />
+        style={{ background: 'radial-gradient(ellipse 80% 60% at 80% 20%, rgba(201,164,92,0.06), transparent 65%)' }} />
       <div className="pointer-events-none fixed inset-0 z-0"
-        style={{ background: 'radial-gradient(ellipse 60% 50% at 15% 85%, rgba(201,164,92,0.05), transparent 70%)' }} />
+        style={{ background: 'radial-gradient(ellipse 60% 50% at 20% 80%, rgba(201,164,92,0.04), transparent 70%)' }} />
 
       {/* ── Sidebar lateral (desktop) ──────────────────────────────────── */}
       <SidebarNav
@@ -1875,40 +1888,6 @@ export default function FreelancerViewPage() {
       />
 
     <main className={`relative z-10 min-h-screen px-6 sm:px-8 py-6 mx-auto lg:pl-[254px] lg:pr-8 ${tab === null ? 'max-w-[1500px]' : 'max-w-3xl'}`}>
-      {/* Top bar — editorial label + ações */}
-      <div className="flex items-center justify-between gap-3 mb-6">
-        <p className="text-[11px] tracking-[0.45em] text-gold/60 uppercase font-light">Editorial Workspace · Área do Freelancer</p>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setTab('notificacoes')}
-            className="relative w-10 h-10 rounded-xl border border-white/15 bg-black/40 backdrop-blur-md hover:border-gold/40 transition-all flex items-center justify-center text-white/65 hover:text-gold"
-            title="Notificações"
-          >
-            <span className="text-base">◉</span>
-            {notificacoes.filter(n => !n.lida).length > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border border-black">
-                {notificacoes.filter(n => !n.lida).length}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => {
-              if (confirm('Tens a certeza que queres sair?')) {
-                sessionStorage.removeItem(`freelancerAuth_${id}`)
-                setAuthed(false)
-                setTab(null)
-              }
-            }}
-            className="inline-flex items-center gap-2 px-3 h-10 rounded-xl border border-white/15 bg-black/40 backdrop-blur-md hover:border-red-500/40 hover:bg-red-500/[0.06] transition-all text-white/65 hover:text-red-400 text-[12px] tracking-widest uppercase font-medium"
-            title="Sair"
-          >
-            <span className="text-base">⎋</span>
-            <span className="hidden sm:inline">Sair</span>
-          </button>
-        </div>
-      </div>
-
       {/* Tab Navigation — horizontal (apenas mobile; desktop usa sidebar) */}
       {!loading && (
         <div className="mb-6 relative lg:hidden">
@@ -2042,77 +2021,141 @@ export default function FreelancerViewPage() {
         return (
           <>
           {/* ── HERO editorial ─────────────────────────────────────── */}
-          <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] mb-7"
-            style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.6)' }}>
-            {/* Background foto (se houver) */}
+          <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] mb-6"
+            style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.5)' }}>
             <div className="absolute inset-0 z-0">
-              {freelancer?.foto_url ? (
-                <img src={freelancer.foto_url} alt="" className="w-full h-full object-cover scale-105" style={{ filter: 'blur(2px)' }} />
-              ) : (
-                <img src="https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=1600&h=400&fit=crop"
-                  alt="" className="w-full h-full object-cover scale-105" style={{ filter: 'blur(2px)' }} />
-              )}
+              <img
+                src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1600&h=400&fit=crop"
+                alt=""
+                className="w-full h-full object-cover"
+              />
             </div>
             <div className="absolute inset-0 z-[1]"
-              style={{ background: 'linear-gradient(90deg, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.85) 40%, rgba(10,10,10,0.5) 70%, rgba(10,10,10,0.15) 100%)' }} />
-
-            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-5 gap-6 px-8 sm:px-12 py-10 sm:py-12">
-              <div className="lg:col-span-3 flex flex-col gap-5 max-w-2xl">
+              style={{ background: 'linear-gradient(90deg, rgba(11,11,11,0.96) 0%, rgba(11,11,11,0.85) 35%, rgba(11,11,11,0.45) 65%, rgba(11,11,11,0.1) 100%)' }} />
+            <div className="relative z-10 flex items-start justify-between gap-6 px-8 sm:px-12 py-12 sm:py-16">
+              <div className="max-w-xl flex items-center gap-5">
+                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gold/50 shrink-0"
+                  style={{ boxShadow: '0 0 28px -4px rgba(201,164,92,0.4)' }}>
+                  {freelancer?.foto_url ? (
+                    <img src={freelancer.foto_url} alt={freelancer.nome} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-gold/30 to-gold/10 flex items-center justify-center text-gold text-2xl font-bold" style={{ fontFamily: 'Georgia, serif' }}>
+                      {primeiroNome.charAt(0) || '?'}
+                    </div>
+                  )}
+                </div>
                 <div>
-                  <p className="text-[12px] tracking-[0.5em] text-gold/70 uppercase mb-2">{saudacao}</p>
+                  <p className="text-[11px] tracking-[0.5em] text-gold/70 uppercase mb-2">{saudacao}</p>
                   <h1 className="text-4xl sm:text-5xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
                     Bem-vindo, <span className="italic text-gold">{primeiroNome || '—'}</span>
                   </h1>
-                  <div className="mt-4 h-px w-16 bg-gradient-to-r from-gold/70 to-transparent" />
-                  <p className="text-[14px] text-white/55 mt-4 leading-relaxed max-w-md">
-                    Continua a criar histórias inesquecíveis — acompanha aqui todos os teus eventos, edições e pagamentos.
+                  <p className="text-[15px] text-white/65 mt-3 leading-relaxed font-light max-w-md">
+                    Continua a criar histórias inesquecíveis — acompanha<br className="hidden sm:inline" /> todos os teus eventos, edições e pagamentos.
                   </p>
+                  <div className="mt-5 h-px w-20 bg-gradient-to-r from-gold/70 via-gold/30 to-transparent" />
+                  <p className="text-[11px] tracking-[0.45em] text-gold/70 uppercase mt-4">Editorial Workspace · Área do Freelancer</p>
                 </div>
+              </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  <button onClick={() => setTab('casamentos')}
-                    className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gold text-black text-[13px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
-                    style={{ boxShadow: '0 0 24px -4px rgba(201,164,92,0.5)' }}>
-                    <span className="text-lg leading-none">+</span> Ver Casamentos
-                  </button>
-                  <button onClick={() => setTab('disponibilidade')}
-                    className="inline-flex items-center gap-2 px-5 h-10 rounded-xl border border-white/15 bg-black/40 backdrop-blur-md text-white/85 text-[13px] font-medium tracking-wider hover:bg-white/[0.05] hover:border-gold/40 transition-all">
-                    <span className="text-base leading-none">◷</span> Confirmar Disponibilidade
-                  </button>
-                </div>
-
-                <div className="mt-2">
-                  <p className="text-[11px] tracking-[0.4em] text-gold/70 uppercase font-bold mb-3">Resumo Rápido</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                    <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
-                      <span className="w-8 h-8 rounded-lg border bg-gold/10 border-gold/25 text-gold flex items-center justify-center text-base">◫</span>
-                      <div className="min-w-0"><p className="text-xl font-bold text-white leading-none">{totalCasamentos}</p><p className="text-[11px] text-white/55 leading-tight mt-0.5">Casamentos</p></div>
-                    </div>
-                    <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
-                      <span className="w-8 h-8 rounded-lg border bg-purple-500/10 border-purple-500/25 text-purple-300 flex items-center justify-center text-base">✎</span>
-                      <div className="min-w-0"><p className="text-xl font-bold text-white leading-none">{totalEmEdicao}</p><p className="text-[11px] text-white/55 leading-tight mt-0.5">Em edição</p></div>
-                    </div>
-                    <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
-                      <span className="w-8 h-8 rounded-lg border bg-emerald-500/10 border-emerald-500/25 text-emerald-300 flex items-center justify-center text-base">✓</span>
-                      <div className="min-w-0"><p className="text-xl font-bold text-white leading-none">{totalConcluidos}</p><p className="text-[11px] text-white/55 leading-tight mt-0.5">Concluídos</p></div>
-                    </div>
-                    <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] rounded-xl px-3 py-2.5 flex items-center gap-2.5">
-                      <span className="w-8 h-8 rounded-lg border bg-amber-500/10 border-amber-500/25 text-amber-300 flex items-center justify-center text-base">◷</span>
-                      <div className="min-w-0"><p className="text-xl font-bold text-white leading-none">{totalAguardando}</p><p className="text-[11px] text-white/55 leading-tight mt-0.5">Aguardando</p></div>
-                    </div>
+              {/* Top-right: notif + profile + logout */}
+              <div className="flex items-center gap-3 shrink-0">
+                <button
+                  onClick={() => setTab('notificacoes')}
+                  className="relative w-10 h-10 rounded-xl border border-white/15 bg-black/40 backdrop-blur-md hover:border-gold/40 transition-all flex items-center justify-center text-white/65 hover:text-gold"
+                  title="Notificações"
+                >
+                  <span className="text-base">◉</span>
+                  {notificacoesNaoLidas > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border border-black">
+                      {notificacoesNaoLidas}
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={() => setTab('mensagens')}
+                  className="relative w-10 h-10 rounded-xl border border-white/15 bg-black/40 backdrop-blur-md hover:border-gold/40 transition-all flex items-center justify-center text-white/65 hover:text-gold"
+                  title="Mensagens"
+                >
+                  <span className="text-base">✉</span>
+                  {mensagensNaoLidas > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border border-black">
+                      {mensagensNaoLidas}
+                    </span>
+                  )}
+                </button>
+                <div className="hidden sm:flex items-center gap-3 px-3 py-2 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md">
+                  <div className="w-9 h-9 rounded-full overflow-hidden border border-gold/40 shrink-0">
+                    {freelancer?.foto_url ? (
+                      <img src={freelancer.foto_url} alt={freelancer.nome} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-gold/30 to-gold/10 flex items-center justify-center text-gold text-sm font-bold">{primeiroNome.charAt(0) || '?'}</div>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-semibold text-white truncate max-w-[140px]">{primeiroNome}</p>
+                    <p className="text-[10px] text-white/40 tracking-wide truncate max-w-[140px]">{freelancer?.status ?? 'Freelancer'}</p>
                   </div>
                 </div>
-              </div>
-
-              <div className="lg:col-span-2 hidden lg:flex items-end justify-end">
-                <div className="text-right max-w-[280px] p-4 rounded-2xl border border-gold/15"
-                  style={{ background: 'linear-gradient(135deg, rgba(201,164,92,0.05), transparent)' }}>
-                  <p className="text-gold/60 text-4xl font-serif leading-none mb-2">&ldquo;</p>
-                  <p className="text-[14px] text-white/80 italic leading-relaxed font-light" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>Transformamos momentos em histórias que duram para sempre.</p>
-                  <p className="text-[10px] text-gold/70 italic font-light mt-3 tracking-[0.35em] uppercase">— RL Photo.Video</p>
-                </div>
+                <button
+                  onClick={() => {
+                    if (confirm('Tens a certeza que queres sair?')) {
+                      sessionStorage.removeItem(`freelancerAuth_${id}`)
+                      setAuthed(false)
+                      setTab(null)
+                    }
+                  }}
+                  className="w-10 h-10 rounded-xl border border-white/15 bg-black/40 backdrop-blur-md hover:border-red-500/40 hover:bg-red-500/[0.06] transition-all flex items-center justify-center text-white/65 hover:text-red-400"
+                  title="Sair"
+                >
+                  <span className="text-base">⎋</span>
+                </button>
               </div>
             </div>
+          </div>
+
+          {/* ── KPI CARDS (clicáveis e dinâmicos) ───────────────────── */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {([
+              { label: 'Casamentos', value: totalCasamentos.toString(), sub: `${upcoming.length} próximos`,           icon: '◫', tab: 'casamentos' as const },
+              { label: 'Em Edição',  value: totalEmEdicao.toString(),   sub: `${totalAguardando} aguardando`,         icon: '✎', tab: 'edicao' as const },
+              { label: 'Concluídos', value: totalConcluidos.toString(), sub: 'Edições finalizadas',                   icon: '✓', tab: 'edicao' as const },
+              { label: 'Pagamentos', value: pagPendentes.toString(),    sub: pagPendentes === 0 ? 'Tudo em dia' : `${valorPendente.toLocaleString('pt-PT')} € pendente`, icon: '€', tab: 'pagamentos' as const },
+            ]).map((k, i) => (
+              <button key={i} onClick={() => setTab(k.tab)}
+                className="group relative overflow-hidden rounded-2xl border border-white/[0.08] p-5 hover:border-gold/30 transition-all cursor-pointer text-left"
+                style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.6), rgba(11,11,11,0.85))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}
+              >
+                <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ background: 'radial-gradient(circle, rgba(201,164,92,0.18), transparent 70%)' }} />
+                <div className="relative flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl border border-gold/30 flex items-center justify-center text-2xl text-gold"
+                      style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.15), rgba(201,164,92,0.04))', boxShadow: '0 0 22px -4px rgba(201,164,92,0.25)' }}>
+                      {k.icon}
+                    </div>
+                    <div>
+                      <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-1">{k.label}</p>
+                      <p className="text-3xl font-bold text-white leading-none">{k.value}</p>
+                      <p className="text-[11px] text-white/35 mt-1.5">{k.sub}</p>
+                    </div>
+                  </div>
+                  <span className="w-9 h-9 rounded-full border border-gold/30 flex items-center justify-center text-gold/60 group-hover:text-gold group-hover:bg-gold/10 transition-all">›</span>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {/* CTAs principais */}
+          <div className="flex flex-wrap items-center gap-2 mb-6">
+            <button onClick={() => setTab('casamentos')}
+              className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gold text-black text-[13px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
+              style={{ boxShadow: '0 0 24px -4px rgba(201,164,92,0.5)' }}>
+              <span className="text-lg leading-none">+</span> Ver Casamentos
+            </button>
+            <button onClick={() => setTab('disponibilidade')}
+              className="inline-flex items-center gap-2 px-5 h-10 rounded-xl border border-white/15 bg-black/40 backdrop-blur-md text-white/85 text-[13px] font-medium tracking-wider hover:bg-white/[0.05] hover:border-gold/40 transition-all">
+              <span className="text-base leading-none">◷</span> Confirmar Disponibilidade
+            </button>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -2167,11 +2210,11 @@ export default function FreelancerViewPage() {
 
               {/* Próximos Casamentos (lista) */}
               {upcoming.length > 1 && (
-                <div className="rounded-2xl border border-white/[0.06] p-5 sm:p-6"
-                  style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.5))' }}>
+                <div className="rounded-2xl border border-white/[0.08] p-5 sm:p-6 backdrop-blur-md"
+                  style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-[11px] tracking-[0.4em] text-gold/70 uppercase font-bold">Próximos Casamentos</h3>
-                    <button onClick={() => setTab('casamentos')} className="text-[11px] tracking-[0.25em] text-white/35 hover:text-gold uppercase transition-colors">Ver todos →</button>
+                    <h3 className="text-[15px] font-semibold text-white">Próximos Casamentos</h3>
+                    <button onClick={() => setTab('casamentos')} className="text-[11px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors">Ver todos →</button>
                   </div>
                   <div className="space-y-2">
                     {upcoming.slice(0, 4).map(c => {
@@ -2199,9 +2242,9 @@ export default function FreelancerViewPage() {
 
               {/* Atividade Recente */}
               {atividadesRecentes.length > 0 && (
-                <div className="rounded-2xl border border-white/[0.06] p-5 sm:p-6"
-                  style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.5))' }}>
-                  <h3 className="text-[11px] tracking-[0.4em] text-gold/70 uppercase font-bold mb-4">Atividade Recente</h3>
+                <div className="rounded-2xl border border-white/[0.08] p-5 sm:p-6 backdrop-blur-md"
+                  style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
+                  <h3 className="text-[15px] font-semibold text-white mb-4">Atividade Recente</h3>
                   <div className="space-y-2.5">
                     {atividadesRecentes.map((a, i) => (
                       <div key={i} className="flex items-start gap-3 text-[14px]">
@@ -2658,7 +2701,10 @@ export default function FreelancerViewPage() {
       )}
 
       {/* Rodapé editorial */}
-      <p className="text-center text-[10px] tracking-[0.4em] uppercase text-white/15 mt-12 mb-4">RL Photo.Video · Wedding Moments Films</p>
+      <div className="mt-10 mb-4 flex items-center justify-between">
+        <p className="text-[10px] tracking-[0.4em] uppercase text-white/20">RL Photo.Video · Área do Freelancer</p>
+        <p className="text-[11px] tracking-widest uppercase text-white/30">Wedding Moments Films</p>
+      </div>
       <div className="-mx-6 sm:-mx-8 px-0">
         <img src="/banner_footer.png" alt="RL Photo.Video" className="w-full object-cover opacity-70" />
       </div>
@@ -2712,19 +2758,18 @@ function SidebarNav({
     <aside
       className="hidden lg:flex fixed top-0 left-0 bottom-0 w-[230px] z-30 flex-col"
       style={{
-        background: 'linear-gradient(180deg, rgba(15,12,8,0.96) 0%, rgba(11,9,5,0.98) 100%)',
+        background: 'linear-gradient(180deg, rgba(15,12,8,0.95) 0%, rgba(11,9,5,0.98) 100%)',
         backdropFilter: 'blur(20px)',
         borderRight: '1px solid rgba(201,164,92,0.12)',
       }}
     >
       {/* Logo editorial */}
-      <div className="px-6 pt-8 pb-7 border-b border-white/[0.04]">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-2xl font-serif italic text-gold" style={{ fontFamily: 'Georgia, serif' }}>R</span>
-          <p className="text-[12px] tracking-[0.4em] text-gold/70 font-light uppercase">RL</p>
+      <div className="px-6 pt-8 pb-8 flex flex-col items-center border-b border-white/[0.04]">
+        <div className="w-14 h-14 rounded-2xl border border-gold/40 flex items-center justify-center mb-2 overflow-hidden"
+          style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.18), rgba(201,164,92,0.04))', boxShadow: '0 0 20px rgba(201,164,92,0.15)' }}>
+          <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png" alt="RL" className="w-10 h-10 object-contain" />
         </div>
-        <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase ml-9">Photo.Video</p>
-        <div className="mt-3 h-px w-8 bg-gold/40" />
+        <p className="text-[10px] tracking-[0.4em] text-gold/70 font-light uppercase mt-1">{freelancer?.status === 'VIDEOGRAFO' ? 'Videógrafo' : freelancer?.status === 'FOTOGRAFO' ? 'Fotógrafo' : 'Freelancer'}</p>
       </div>
 
       {/* Nav */}
@@ -2735,7 +2780,7 @@ function SidebarNav({
             <button
               key={i}
               onClick={() => setTab(it.key)}
-              className={`w-full group flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition-all ${
+              className={`w-full group flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all ${
                 active
                   ? 'bg-gold/10 border border-gold/30 text-gold'
                   : 'border border-transparent text-white/45 hover:text-white/90 hover:bg-white/[0.03]'
