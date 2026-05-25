@@ -50,6 +50,7 @@ type Evento = {
   local: string
   tipo_evento: string[]
   tipo_servico: string[]
+  servicos_dia?: string[]
   servico_extra: string[]
   status: string
   fotografo: string[]
@@ -2588,6 +2589,9 @@ export default function EventoPage() {
           />
           {(e.tipo_servico ?? []).map(t => (
             <span key={t} className="text-xs px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/25 text-blue-400/80">{t}</span>
+          ))}
+          {(e.servicos_dia ?? []).map((t: string) => (
+            <span key={t} className="text-xs px-2.5 py-1 rounded-full bg-gold/10 border border-gold/30 text-gold/85 tracking-wide">{t}</span>
           ))}
         </div>
         <p className="print:hidden text-[10px] text-white/15 mt-3 tracking-wider">Clica em qualquer campo para editar · guarda automaticamente no Notion</p>

@@ -26,7 +26,7 @@ function daysUntil(d: string | null) {
 }
 
 type Freelancer = { id: string; nome: string; status: string | null; intro_casamentos: string | null; intro_home: string | null; intro_home_title: string | null; is_template?: boolean | null; foto_url?: string | null; guia_trabalho?: string | null }
-type Casamento  = { id: string; local: string; data_casamento: string | null; referencia?: string | null; equipa_foto: string[] | null; videografo: string | null; briefing_url: string | null; data_confirmada: boolean | null; indisponivel: boolean | null; data_confirmada_videografo: boolean | null; indisponivel_videografo: boolean | null }
+type Casamento  = { id: string; local: string; data_casamento: string | null; referencia?: string | null; equipa_foto: string[] | null; videografo: string | null; briefing_url: string | null; data_confirmada: boolean | null; indisponivel: boolean | null; data_confirmada_videografo: boolean | null; indisponivel_videografo: boolean | null; servicos_dia?: string[] | null; local_cerimonia?: string | null; hora_inicio?: string | null }
 type Edicao     = {
   id: string; nome: string; status: string; data_casamento: string | null
   data_entrega: string | null; data_final_entrega: string | null; local: string | null
@@ -1049,6 +1049,23 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo, freelancerNome }:
 
         {/* Body */}
         <div className="px-6 py-5 space-y-4">
+          {/* Hora + Local da Cerimónia */}
+          {(c.hora_inicio || c.local_cerimonia) && (
+            <div className="grid grid-cols-2 gap-3">
+              {c.hora_inicio && (
+                <div>
+                  <p className="text-[14px] tracking-[0.3em] text-white uppercase mb-2">Hora Início</p>
+                  <p className="text-[14px] text-white">⏱ {c.hora_inicio}</p>
+                </div>
+              )}
+              {c.local_cerimonia && (
+                <div>
+                  <p className="text-[14px] tracking-[0.3em] text-white uppercase mb-2">Cerimónia</p>
+                  <p className="text-[14px] text-white">⛪ {c.local_cerimonia}</p>
+                </div>
+              )}
+            </div>
+          )}
           <div>
             <p className="text-[14px] tracking-[0.3em] text-white uppercase mb-2">Equipa Fotografia</p>
             {c.equipa_foto && c.equipa_foto.length > 0 ? (
@@ -1063,6 +1080,17 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo, freelancerNome }:
             <p className="text-[14px] tracking-[0.3em] text-white uppercase mb-2">Videógrafo</p>
             <p className="text-[14px] text-white">{c.videografo || <span className="text-white/40 italic">Não definido</span>}</p>
           </div>
+          {/* Serviços do Dia */}
+          {c.servicos_dia && c.servicos_dia.length > 0 && (
+            <div>
+              <p className="text-[14px] tracking-[0.3em] text-white uppercase mb-2">Serviços do Dia</p>
+              <div className="flex flex-wrap gap-1.5">
+                {c.servicos_dia.map((s, i) => (
+                  <span key={i} className="text-[12px] px-2.5 py-1 rounded-full bg-gold/10 border border-gold/30 text-gold tracking-wide">{s}</span>
+                ))}
+              </div>
+            </div>
+          )}
           <div>
             <p className="text-[14px] tracking-[0.3em] text-white uppercase mb-2">Briefing</p>
             {c.briefing_url ? (
