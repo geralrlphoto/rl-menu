@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { PROJECTS, paymentPlanFor, comparePtDate, TODAY, type Project, type Installment } from '../_data/projects'
+import { BrandLogo } from '../_components/BrandLogo'
 
 /** Limpa horário "DD/MM/YYYY — HH:MM" → "DD/MM/YYYY" */
 function stripTime(d: string): string {
@@ -619,14 +620,7 @@ function Sidebar() {
         backdropFilter: 'blur(20px)',
         borderRight: '1px solid rgba(201,164,92,0.12)',
       }}>
-      <div className="px-6 pt-8 pb-7 border-b border-white/[0.04]">
-        <div className="flex items-center gap-2 mb-1">
-          <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png" alt="RL" className="w-8 h-8 object-contain" />
-          <p className="text-[12px] tracking-[0.4em] text-gold/70 font-light uppercase">Wedding</p>
-        </div>
-        <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase ml-9">Moments Films</p>
-        <div className="mt-3 h-px w-8 bg-gold/40" />
-      </div>
+      <BrandLogo />
       <nav className="flex-1 overflow-y-auto px-3 py-5 space-y-0.5">
         {NAV_ITEMS.map(it => {
           const isActive = !!it.active

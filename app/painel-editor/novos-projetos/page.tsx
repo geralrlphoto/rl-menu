@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { NotificationBell } from '../_components/NotificationBell'
 import { MessagesBell } from '../_components/MessagesBell'
+import { BrandLogo } from '../_components/BrandLogo'
 
 // ────────────────────────────────────────────────────────────────────────────
 //  NOVOS PROJETOS — RL Photo.Video (premium cinematic editor workspace)
@@ -565,14 +566,7 @@ export default function NovosProjetosPage() {
         }}
       >
         {/* Logo */}
-        <div className="px-6 pt-8 pb-7 border-b border-white/[0.04]">
-          <div className="flex items-center gap-2 mb-1">
-            <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png" alt="RL" className="w-8 h-8 object-contain" />
-            <p className="text-[12px] tracking-[0.4em] text-gold/70 font-light uppercase">Wedding</p>
-          </div>
-          <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase ml-9">Moments Films</p>
-          <div className="mt-3 h-px w-8 bg-gold/40" />
-        </div>
+        <BrandLogo />
 
         <nav className="flex-1 overflow-y-auto px-3 py-5 space-y-0.5">
           {NAV_ITEMS.map(it => {

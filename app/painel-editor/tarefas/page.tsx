@@ -6,6 +6,7 @@ import { PROJECTS, TASKS, TODAY, comparePtDate, eventsFromProjects, type Task, t
 import { loadFreelancerProfile, type FreelancerProfile, DEFAULT_FREELANCER_PROFILE } from '../_data/freelancer-profile'
 import { NotificationBell } from '../_components/NotificationBell'
 import { MessagesBell } from '../_components/MessagesBell'
+import { BrandLogo } from '../_components/BrandLogo'
 
 const AVATAR_EDITOR = 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=80&h=80&fit=crop&crop=face'
 
@@ -606,19 +607,7 @@ function Sidebar() {
         borderRight: '1px solid rgba(201,164,92,0.12)',
       }}>
       {/* Logo */}
-      <div className="px-6 pt-7 pb-6 border-b border-white/[0.04]">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl border border-gold/40 flex items-center justify-center"
-            style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.2), rgba(201,164,92,0.04))', boxShadow: '0 0 20px rgba(201,164,92,0.15)' }}>
-            <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png" alt="RL" className="w-9 h-9 object-contain" />
-          </div>
-          <div>
-            <p className="text-[15px] tracking-[0.18em] text-gold font-bold uppercase leading-tight" style={{ fontFamily: 'Georgia, serif' }}>Wedding</p>
-            <p className="text-[15px] tracking-[0.18em] text-gold font-bold uppercase leading-tight" style={{ fontFamily: 'Georgia, serif' }}>Moments</p>
-            <p className="text-[9px] tracking-[0.35em] text-gold/70 uppercase mt-0.5">Films</p>
-          </div>
-        </div>
-      </div>
+      <BrandLogo />
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-3 py-5 space-y-0.5">
         {NAV_ITEMS.map(it => {

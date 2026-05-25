@@ -6,6 +6,7 @@ import { loadFreelancerProfile, saveFreelancerProfile, type FreelancerProfile, D
 import { PROJECTS as MOCK_PROJECTS, TASKS as MOCK_TASKS } from '../_data/projects'
 import { NotificationBell } from '../_components/NotificationBell'
 import { MessagesBell } from '../_components/MessagesBell'
+import { BrandLogo } from '../_components/BrandLogo'
 
 // ────────────────────────────────────────────────────────────────────────
 //  DADOS PESSOAIS — Wedding Moments Films
@@ -190,19 +191,7 @@ function Sidebar({ profile }: { profile: FreelancerProfile }) {
         backdropFilter: 'blur(20px)',
         borderRight: '1px solid rgba(201,164,92,0.12)',
       }}>
-      <div className="px-6 pt-7 pb-6 border-b border-white/[0.04]">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl border border-gold/40 flex items-center justify-center overflow-hidden"
-            style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.2), rgba(201,164,92,0.04))', boxShadow: '0 0 20px rgba(201,164,92,0.15)' }}>
-            <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png" alt="RL" className="w-9 h-9 object-contain" />
-          </div>
-          <div>
-            <p className="text-[14px] tracking-[0.18em] text-gold font-bold uppercase leading-tight" style={{ fontFamily: 'Georgia, serif' }}>Wedding</p>
-            <p className="text-[14px] tracking-[0.18em] text-gold font-bold uppercase leading-tight" style={{ fontFamily: 'Georgia, serif' }}>Moments</p>
-            <p className="text-[9px] tracking-[0.35em] text-gold/70 uppercase mt-0.5">Films</p>
-          </div>
-        </div>
-      </div>
+      <BrandLogo />
       <nav className="flex-1 overflow-y-auto px-3 py-5 space-y-0.5">
         {NAV_ITEMS.map(it => {
           const isActive = !!it.active

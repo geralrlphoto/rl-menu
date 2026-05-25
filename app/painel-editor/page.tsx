@@ -127,12 +127,14 @@ export default function PainelEditor() {
   // — tem prioridade sobre nome/foto do API freelancer
   const [profileNome, setProfileNome] = useState<string>('')
   const [profileFoto, setProfileFoto] = useState<string>('')
+  const [profileFuncao, setProfileFuncao] = useState<string>('Editor de Vídeo')
   useEffect(() => {
     function refresh() {
       try {
         const p = loadFreelancerProfile()
         setProfileNome(p.nome || '')
         setProfileFoto(p.foto || '')
+        setProfileFuncao(p.funcao || 'Editor de Vídeo')
       } catch {}
     }
     refresh()
@@ -778,7 +780,7 @@ export default function PainelEditor() {
             style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.18), rgba(201,164,92,0.04))', boxShadow: '0 0 20px rgba(201,164,92,0.15)' }}>
             <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png" alt="RL" className="w-10 h-10 object-contain" />
           </div>
-          <p className="text-[10px] tracking-[0.4em] text-gold/70 font-light uppercase mt-1">Video Editor</p>
+          <p className="text-[10px] tracking-[0.4em] text-gold/70 font-light uppercase mt-1">{profileFuncao}</p>
         </div>
 
         {/* Nav */}
