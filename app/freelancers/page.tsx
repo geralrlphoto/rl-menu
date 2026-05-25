@@ -333,7 +333,7 @@ export default function FreelancersPage() {
             <p className="text-[10px] tracking-[0.4em] uppercase text-gold/70 font-bold">Maquetes</p>
             <h2 className="text-xl font-bold tracking-widest text-white uppercase mt-1">Painéis Disponíveis</h2>
           </div>
-          <p className="text-[10px] tracking-widest text-white/30 uppercase">1 maquete</p>
+          <p className="text-[10px] tracking-widest text-white/30 uppercase">2 maquetes</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Card: Maquete Editor de Vídeo */}
@@ -365,6 +365,36 @@ export default function FreelancersPage() {
               </div>
             </div>
             {/* Sweep effect */}
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-gold/0 via-gold/[0.05] to-gold/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
+          </Link>
+
+          {/* Card: Maquete Fotógrafo (independente do Editor de Vídeo) */}
+          <Link href="/painel-fotografo"
+            className="group relative overflow-hidden rounded-2xl border border-gold/30 p-5 transition-all hover:border-gold/55"
+            style={{
+              background: 'linear-gradient(135deg, rgba(20,15,8,0.6), rgba(11,11,11,0.85))',
+              boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5), 0 0 20px -8px rgba(201,164,92,0.25)',
+            }}>
+            <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{ background: 'radial-gradient(circle, rgba(201,164,92,0.18), transparent 70%)' }} />
+            <div className="relative flex items-start gap-4">
+              <div className="w-14 h-14 rounded-2xl border border-gold/45 flex items-center justify-center text-2xl shrink-0 overflow-hidden"
+                style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.18), rgba(201,164,92,0.04))', boxShadow: '0 0 18px -4px rgba(201,164,92,0.35)' }}>
+                <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png" alt="RL" className="w-9 h-9 object-contain" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[9px] tracking-[0.4em] uppercase text-gold/60 font-bold mb-1">Fotógrafo</p>
+                <h3 className="text-[15px] font-bold text-white leading-tight" style={{ fontFamily: 'Georgia, serif' }}>
+                  Maquete <span className="italic text-gold">Fotógrafo</span>
+                </h3>
+                <p className="text-[11px] text-white/50 mt-2 leading-relaxed">
+                  Dashboard independente para o fluxo de fotografia: projetos, entregas, calendário e dados pessoais. Dados separados do editor de vídeo.
+                </p>
+                <span className="inline-flex items-center gap-1.5 mt-3 text-[10px] tracking-widest uppercase text-gold/85 group-hover:text-gold font-bold">
+                  Abrir Painel <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+                </span>
+              </div>
+            </div>
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-gold/0 via-gold/[0.05] to-gold/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
           </Link>
         </div>
