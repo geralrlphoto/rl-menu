@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { NotificationBell } from '../_components/NotificationBell'
 import { MessagesBell } from '../_components/MessagesBell'
 import { BrandLogo } from '../_components/BrandLogo'
+import { PROJECTS as MOCK_PROJECTS } from '../_data/projects'
+import { loadAssociacao, associate, disassociate } from '../_data/musicas-associacao'
 
 // ── Helpers de URL/plataforma ───────────────────────────────────────────
 function detectPlataforma(url: string): Plataforma {
@@ -153,6 +155,7 @@ export default function MusicasPage() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingCover, setEditingCover] = useState<Momento | null>(null)
   const [customCovers, setCustomCovers] = useState<Record<string, string>>({})
+  const [associatingTrack, setAssociatingTrack] = useState<Track | null>(null)
 
   // ── Carrega/persiste user-tracks + custom covers ────────────────────
   useEffect(() => {
@@ -382,13 +385,20 @@ export default function MusicasPage() {
                                 className="w-8 h-8 rounded-lg text-white/45 hover:text-gold hover:bg-white/[0.04] transition-all flex items-center justify-center" title="Abrir link">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" /></svg>
                               </a>
+                              <button onClick={() => setAssociatingTrack(t)}
+                                className="w-8 h-8 rounded-lg text-white/45 hover:text-gold hover:bg-white/[0.04] transition-all flex items-center justify-center"
+                                title="Associar a projeto">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <rect x="2" y="6" width="20" height="12" rx="2" />
+                                  <path d="M2 10l5-4M22 10l-5-4M2 14l5 4M22 14l-5 4" />
+                                </svg>
+                              </button>
                               <button onClick={() => toggleFav(t.id)}
                                 className={`w-8 h-8 rounded-lg transition-all flex items-center justify-center ${
                                   t.favorita ? 'text-red-400 bg-red-500/10' : 'text-white/45 hover:text-red-400 hover:bg-white/[0.04]'
                                 }`} title="Favoritar">
                                 {t.favorita ? '♥' : '♡'}
                               </button>
-                              <button className="w-8 h-8 rounded-lg text-white/45 hover:text-gold hover:bg-white/[0.04] transition-all flex items-center justify-center" title="Mais">⋮</button>
                             </div>
                           </td>
                         </tr>
@@ -524,6 +534,14 @@ export default function MusicasPage() {
           onClose={() => setEditingCover(null)}
           onSave={(dataUrl) => { setCustomCover(editingCover, dataUrl); setEditingCover(null) }}
           onReset={() => { resetCustomCover(editingCover); setEditingCover(null) }}
+        />
+      )}
+
+      {/* Modal: Associar música a projeto */}
+      {associatingTrack && (
+        <AssociarProjetoModal
+          track={associatingTrack}
+          onClose={() => setAssociatingTrack(null)}
         />
       )}
     </div>
@@ -1026,6 +1044,145 @@ function EditCoverModal({
               </button>
             )}
           </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ────────────────────────────────────────────────────────────────────────
+//  MODAL: ASSOCIAR MÚSICA A PROJETO
+// ────────────────────────────────────────────────────────────────────────
+function AssociarProjetoModal({
+  track,
+  onClose,
+}: {
+  track: Track
+  onClose: () => void
+}) {
+  // Lista projetos (user-projects + mocks com patches, filtra eliminados)
+  const [projects, setProjects] = useState<{ id: string; noivos: string; foto?: string; dataCasamento?: string }[]>([])
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [tick, setTick] = useState(0)
+
+  useEffect(() => {
+    try {
+      const userRaw = localStorage.getItem('painel-editor-user-projects')
+      const userProjects: any[] = userRaw ? JSON.parse(userRaw) : []
+      const patchesRaw = localStorage.getItem('painel-editor-project-patches')
+      const patches: Record<string, any> = patchesRaw ? JSON.parse(patchesRaw) : {}
+
+      const mocks = MOCK_PROJECTS
+        .map((p: any) => patches[p.id] ? { ...p, ...patches[p.id] } : p)
+        .filter((p: any) => !p.archived && !p.cancelled)
+
+      const all = [
+        ...userProjects.filter((p: any) => !p.archived && !p.cancelled),
+        ...mocks,
+      ].map((p: any) => ({ id: p.id, noivos: p.noivos, foto: p.foto, dataCasamento: p.dataCasamento }))
+
+      const seen = new Set<string>()
+      setProjects(all.filter(p => p?.id && !seen.has(p.id) && (seen.add(p.id), true)))
+
+      // Pre-fill selected com os projetos já associados a esta track
+      const assoc = loadAssociacao()
+      const linked = new Set<string>()
+      Object.keys(assoc).forEach(pid => {
+        if ((assoc[pid] || []).includes(track.id)) linked.add(pid)
+      })
+      setSelected(linked)
+    } catch {}
+  }, [track.id, tick])
+
+  function toggle(projectId: string) {
+    setSelected(prev => {
+      const next = new Set(prev)
+      if (next.has(projectId)) {
+        next.delete(projectId)
+        disassociate(track.id, projectId)
+      } else {
+        next.add(projectId)
+        associate(track.id, projectId)
+      }
+      return next
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}>
+      <div className="relative w-full max-w-lg rounded-2xl border border-gold/30 overflow-hidden flex flex-col"
+        style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.98), rgba(11,9,5,0.99))', boxShadow: '0 30px 60px -20px rgba(0,0,0,0.8), 0 0 40px -10px rgba(201,164,92,0.35)', maxHeight: '85vh' }}>
+        <button onClick={onClose}
+          className="absolute top-3 right-3 w-8 h-8 rounded-lg border border-white/10 text-white/55 hover:text-gold hover:border-gold/30 flex items-center justify-center text-lg z-10">×</button>
+
+        {/* Header com música */}
+        <div className="px-5 pt-5 pb-4 border-b border-white/[0.06] shrink-0">
+          <p className="text-[11px] tracking-[0.4em] uppercase text-gold/70 font-bold mb-2">Associar Música</p>
+          <div className="flex items-center gap-3">
+            {track.cover && (
+              <img src={track.cover} alt={track.title} className="w-12 h-12 rounded-md object-cover border border-white/15 shrink-0" />
+            )}
+            <div className="min-w-0">
+              <p className="text-[15px] font-light text-white truncate" style={{ fontFamily: 'Georgia, serif' }}>
+                <span className="italic text-gold">{track.title}</span>
+              </p>
+              <p className="text-[11px] text-white/55 truncate mt-0.5">{track.artist} · {track.duracao}</p>
+            </div>
+          </div>
+          <p className="text-[11px] text-white/45 mt-3">
+            Selecciona um ou mais projetos. A música aparecerá em "Músicas Utilizadas" na ficha do projeto.
+          </p>
+        </div>
+
+        {/* Lista de projetos */}
+        <div className="flex-1 overflow-y-auto p-3" style={{ minHeight: 200 }}>
+          {projects.length === 0 ? (
+            <p className="text-[12px] text-white/30 italic text-center py-8">Nenhum projeto disponível.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {projects.map(p => {
+                const isSelected = selected.has(p.id)
+                return (
+                  <button key={p.id} onClick={() => toggle(p.id)}
+                    className={`w-full flex items-center gap-3 p-2.5 rounded-lg border transition-all text-left ${
+                      isSelected
+                        ? 'border-gold/45 bg-gold/[0.06]'
+                        : 'border-white/[0.06] hover:border-gold/25 hover:bg-white/[0.02]'
+                    }`}>
+                    {p.foto ? (
+                      <img src={p.foto} alt={p.noivos} className="w-10 h-10 rounded-md object-cover border border-white/10 shrink-0" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-md bg-white/5 border border-white/10 flex items-center justify-center text-white/30 shrink-0">◫</div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-[13px] font-medium truncate ${isSelected ? 'text-gold' : 'text-white/85'}`}>{p.noivos}</p>
+                      {p.dataCasamento && <p className="text-[10px] text-white/40 mt-0.5">Casamento · {p.dataCasamento}</p>}
+                    </div>
+                    {/* Check */}
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                      isSelected
+                        ? 'bg-gold border-gold'
+                        : 'border-white/25'
+                    }`}>
+                      {isSelected && <span className="text-[10px] text-black font-bold">✓</span>}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-white/[0.06] px-5 py-3 shrink-0 flex items-center justify-between gap-3">
+          <p className="text-[11px] text-white/45">
+            {selected.size === 0 ? 'Nenhum projeto selecionado' : `${selected.size} projeto${selected.size === 1 ? '' : 's'} associado${selected.size === 1 ? '' : 's'}`}
+          </p>
+          <button onClick={onClose}
+            className="px-4 py-2 rounded-lg bg-gold text-black text-[12px] font-bold tracking-wider hover:bg-gold/90 transition-all"
+            style={{ boxShadow: '0 0 14px -4px rgba(201,164,92,0.5)' }}>
+            ✓ Concluído
+          </button>
         </div>
       </div>
     </div>

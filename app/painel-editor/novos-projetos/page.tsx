@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { NotificationBell } from '../_components/NotificationBell'
 import { MessagesBell } from '../_components/MessagesBell'
 import { BrandLogo } from '../_components/BrandLogo'
+import { getTracksForProject, disassociate } from '../_data/musicas-associacao'
 
 // ────────────────────────────────────────────────────────────────────────────
 //  NOVOS PROJETOS — RL Photo.Video (premium cinematic editor workspace)
@@ -1760,6 +1761,9 @@ function ProjectCard({
             </div>
           </Section>
 
+          {/* Músicas Utilizadas — associadas em /musicas */}
+          <MusicasProjetoSection projectId={p.id} />
+
           {/* Material do Projeto (por categoria seleccionada) */}
           <Section title="Material do Projeto">
             {p.materialItems.length === 0 ? (
@@ -2065,6 +2069,114 @@ function PillBtn({ label, gold }: { label: string; gold?: boolean }) {
       style={gold ? { boxShadow: '0 0 14px -4px rgba(201,164,92,0.5)' } : {}}>
       {label}
     </button>
+  )
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+//  SECÇÃO: MÚSICAS UTILIZADAS NO PROJETO
+//  Lê tracks user-adicionadas + mocks; associação em localStorage.
+// ──────────────────────────────────────────────────────────────────────────
+type MusicaInfo = {
+  id: string
+  title: string
+  artist: string
+  cover: string
+  duracao: string
+  plataforma: string
+  link: string
+  momento: string
+}
+
+// Pequeno set de tracks mock para resolver IDs m1..m10 (subset essencial)
+const MUSICAS_MOCK_LOOKUP: Record<string, MusicaInfo> = {
+  'm1':  { id: 'm1',  title: 'Golden Hour',                artist: 'JVKE',             cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200&h=200&fit=crop', duracao: '3:45', plataforma: 'Artlist',        link: 'https://artlist.io/golden-hour',     momento: 'Making Of' },
+  'm2':  { id: 'm2',  title: 'You Are The Reason',         artist: 'Calum Scott',      cover: 'https://images.unsplash.com/photo-1518972559570-7cc1309f3229?w=200&h=200&fit=crop', duracao: '4:18', plataforma: 'Musicbed',       link: 'https://musicbed.com/calum',         momento: 'Votos' },
+  'm3':  { id: 'm3',  title: 'Canon in D',                 artist: 'Johann Pachelbel', cover: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=200&h=200&fit=crop', duracao: '5:08', plataforma: 'Soundstripe',    link: 'https://soundstripe.com/canon',      momento: 'Cerimónia' },
+  'm4':  { id: 'm4',  title: 'Better Together',            artist: 'Jack Johnson',     cover: 'https://images.unsplash.com/photo-1499415479124-43c32433a620?w=200&h=200&fit=crop', duracao: '3:28', plataforma: 'Epidemic Sound', link: 'https://epidemicsound.com/better',   momento: 'Cocktail' },
+  'm5':  { id: 'm5',  title: 'A Sky Full of Stars',        artist: 'Coldplay',         cover: 'https://images.unsplash.com/photo-1502136969935-8d8eef54d77b?w=200&h=200&fit=crop', duracao: '4:20', plataforma: 'Spotify',        link: 'https://spotify.com/sky',            momento: 'Festa' },
+  'm6':  { id: 'm6',  title: "Can't Help Falling in Love", artist: 'Elvis Presley',    cover: 'https://images.unsplash.com/photo-1535254973040-607b474cb50d?w=200&h=200&fit=crop', duracao: '3:02', plataforma: 'YouTube',        link: 'https://youtube.com/elvis',          momento: 'Corte do Bolo' },
+  'm7':  { id: 'm7',  title: 'Perfect',                    artist: 'Ed Sheeran',       cover: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop', duracao: '4:23', plataforma: 'Spotify',        link: 'https://spotify.com/perfect',        momento: 'Votos' },
+  'm8':  { id: 'm8',  title: 'Somewhere Only We Know',     artist: 'Keane',            cover: 'https://images.unsplash.com/photo-1518972559570-7cc1309f3229?w=200&h=200&fit=crop', duracao: '3:57', plataforma: 'Artlist',        link: 'https://artlist.io/keane',           momento: 'Making Of' },
+  'm9':  { id: 'm9',  title: 'A Thousand Years',           artist: 'Christina Perri',  cover: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop', duracao: '4:45', plataforma: 'Spotify',        link: '#',                                  momento: 'Votos' },
+  'm10': { id: 'm10', title: 'Make You Feel My Love',      artist: 'Adele',            cover: 'https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=200&h=200&fit=crop', duracao: '3:32', plataforma: 'Spotify',        link: '#',                                  momento: 'Cerimónia' },
+}
+
+function MusicasProjetoSection({ projectId }: { projectId: string }) {
+  const [trackIds, setTrackIds] = useState<string[]>([])
+  const [tracks, setTracks] = useState<MusicaInfo[]>([])
+
+  function refresh() {
+    try {
+      const ids = getTracksForProject(projectId)
+      setTrackIds(ids)
+
+      // Carrega user-musicas do localStorage e cria mapa
+      const raw = localStorage.getItem('painel-editor-user-musicas')
+      const userTracks: any[] = raw ? JSON.parse(raw) : []
+      const lookup: Record<string, MusicaInfo> = { ...MUSICAS_MOCK_LOOKUP }
+      userTracks.forEach((t: any) => {
+        if (t?.id) lookup[t.id] = {
+          id: t.id, title: t.title, artist: t.artist, cover: t.cover,
+          duracao: t.duracao, plataforma: t.plataforma, link: t.link, momento: t.momento,
+        }
+      })
+      setTracks(ids.map(id => lookup[id]).filter(Boolean))
+    } catch {}
+  }
+
+  useEffect(() => {
+    refresh()
+    const onFocus = () => refresh()
+    window.addEventListener('focus', onFocus)
+    window.addEventListener('storage', onFocus)
+    return () => {
+      window.removeEventListener('focus', onFocus)
+      window.removeEventListener('storage', onFocus)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId])
+
+  function remove(trackId: string) {
+    disassociate(trackId, projectId)
+    refresh()
+  }
+
+  return (
+    <Section title="Músicas Utilizadas">
+      {tracks.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-white/[0.08] py-8 text-center">
+          <p className="text-gold/30 text-2xl mb-1">♪</p>
+          <p className="text-[12px] text-white/35">Nenhuma música associada a este projeto.</p>
+          <p className="text-[11px] text-white/25 mt-1">
+            Vai à <Link href="/painel-editor/musicas" className="text-gold/70 hover:text-gold underline">Biblioteca</Link> e usa o ícone 🎬 para associar.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {tracks.map(t => (
+            <div key={t.id} className="flex items-center gap-3 p-2.5 rounded-xl border border-white/[0.06] hover:border-gold/25 hover:bg-white/[0.02] transition-all group">
+              <img src={t.cover} alt={t.title} className="w-11 h-11 rounded-md object-cover border border-white/10 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-medium text-white truncate">{t.title}</p>
+                <p className="text-[11px] text-white/45 truncate">{t.artist} · {t.duracao}</p>
+              </div>
+              <span className="text-[10px] tracking-widest uppercase px-2 py-0.5 rounded-full bg-gold/15 border border-gold/30 text-gold shrink-0">
+                {t.momento}
+              </span>
+              <a href={t.link} target="_blank" rel="noopener noreferrer"
+                title={`Abrir em ${t.plataforma}`}
+                className="w-8 h-8 rounded-lg text-white/45 hover:text-gold hover:bg-white/[0.04] transition-all flex items-center justify-center shrink-0">↗</a>
+              <button onClick={() => remove(t.id)}
+                title="Remover do projeto"
+                className="w-8 h-8 rounded-lg text-white/30 hover:text-red-300 hover:bg-red-500/10 transition-all flex items-center justify-center shrink-0">×</button>
+            </div>
+          ))}
+          <p className="text-[10px] text-white/35 italic mt-2">
+            {tracks.length} música{tracks.length === 1 ? '' : 's'} associada{tracks.length === 1 ? '' : 's'} · gere em <Link href="/painel-editor/musicas" className="text-gold/70 hover:text-gold">Biblioteca</Link>
+          </p>
+        </div>
+      )}
+    </Section>
   )
 }
 
