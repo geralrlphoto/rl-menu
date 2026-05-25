@@ -377,6 +377,46 @@ export default function FreelancerDetailPage() {
         const totalEmEdicao = edicao.filter(e => e.status === 'EM EDIÇÃO').length
         const totalConcluidos = edicao.filter(e => e.status === 'CONCLUÍDO').length
         const totalAguardando = edicao.filter(e => e.status === 'NOVO TRABALHO').length
+        const totalRecebido = pagamentos
+          .filter(p => p.status === 'PAGO')
+          .reduce((s, p) => s + (Number(p.valor) || 0), 0)
+        const totalRecebidoLabel = totalRecebido.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
+        const anoAtual = new Date().getFullYear()
+
+        // ── Chart data: receitas cumulativas por dia do mês atual ───────
+        const chartPath = (() => {
+          const w = 520, h = 120, pad = 8
+          const hoje = new Date()
+          const ano = hoje.getFullYear()
+          const mes = hoje.getMonth()
+          const diasNoMes = new Date(ano, mes + 1, 0).getDate()
+          // Cumulativo dia-a-dia dentro do mês
+          const cumulative: number[] = []
+          let running = 0
+          for (let d = 1; d <= diasNoMes; d++) {
+            pagamentos.forEach(p => {
+              if (p.status === 'PAGO' && p.data_pago) {
+                const dp = new Date(p.data_pago)
+                if (dp.getFullYear() === ano && dp.getMonth() === mes && dp.getDate() === d) {
+                  running += Number(p.valor) || 0
+                }
+              }
+            })
+            cumulative.push(running)
+          }
+          const max = Math.max(...cumulative, 1)
+          const step = (w - pad*2) / (cumulative.length - 1 || 1)
+          const pts = cumulative.map((v, i) => ({ x: pad + i * step, y: h - pad - (v / max) * (h - pad*2) }))
+          let d = `M ${pts[0].x} ${pts[0].y}`
+          for (let i = 1; i < pts.length; i++) {
+            const p0 = pts[i-1], p1 = pts[i]
+            const cx = (p0.x + p1.x) / 2
+            d += ` Q ${cx} ${p0.y}, ${cx} ${(p0.y + p1.y) / 2}`
+            d += ` T ${p1.x} ${p1.y}`
+          }
+          const last = pts[pts.length - 1]
+          return { path: d, last, w, h, totalMes: cumulative[cumulative.length - 1], diasNoMes }
+        })()
 
         const atividades: Array<{ tipo: string; texto: string; data: string }> = []
         mensagens.slice(0, 10).forEach(m => {
@@ -495,12 +535,13 @@ export default function FreelancerDetailPage() {
           </div>
 
           {/* ── KPI CARDS premium (igual ao /painel-fotografo) ────── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
             {([
               { label: 'Casamentos',  value: totalCasamentos.toString(),  sub: 'Total atribuídos',  icon: '◫', tab: 'casamentos' as const },
               { label: 'Em Edição',   value: totalEmEdicao.toString(),    sub: 'Em edição ativa',   icon: '✎', tab: 'edicao' as const },
               { label: 'Concluídos',  value: totalConcluidos.toString(),  sub: 'Entregues',         icon: '✓', tab: 'edicao' as const },
               { label: 'Aguardando',  value: totalAguardando.toString(),  sub: 'Por iniciar',       icon: '◷', tab: 'edicao' as const },
+              { label: 'Recebimentos', value: totalRecebidoLabel,         sub: `Total ${anoAtual}`,  icon: '€', tab: 'pagamentos' as const },
             ]).map((k, i) => (
               <button key={i} onClick={() => setTab(k.tab)}
                 className="group relative overflow-hidden rounded-2xl border border-white/[0.08] p-5 hover:border-gold/30 transition-all cursor-pointer text-left w-full"
@@ -639,6 +680,44 @@ export default function FreelancerDetailPage() {
               </div>
             )
           })()}
+
+          {/* ── Resumo Financeiro (gráfico SVG cumulativo do mês) ───── */}
+          <div className="rounded-2xl border border-white/[0.08] p-5 mb-5"
+            style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[15px] font-semibold text-white">Resumo Financeiro</h3>
+              <button onClick={() => setTab('pagamentos')}
+                className="text-[11px] tracking-wider text-white/40 hover:text-gold transition-colors px-2 py-1 rounded-md border border-white/10 hover:border-gold/30">
+                Este mês ▾
+              </button>
+            </div>
+            <div className="relative">
+              <svg viewBox={`0 0 ${chartPath.w} ${chartPath.h}`} className="w-full h-32">
+                <defs>
+                  <linearGradient id="goldGradFL" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#C9A45C" stopOpacity="0.45" />
+                    <stop offset="100%" stopColor="#C9A45C" stopOpacity="0" />
+                  </linearGradient>
+                  <linearGradient id="goldLineFL" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#C9A45C" />
+                    <stop offset="50%" stopColor="#E8C76D" />
+                    <stop offset="100%" stopColor="#C9A45C" />
+                  </linearGradient>
+                </defs>
+                <path d={`${chartPath.path} L ${chartPath.last.x} ${chartPath.h} L 8 ${chartPath.h} Z`} fill="url(#goldGradFL)" />
+                <path d={chartPath.path} fill="none" stroke="url(#goldLineFL)" strokeWidth="2.2" strokeLinecap="round" />
+                <circle cx={chartPath.last.x} cy={chartPath.last.y} r="4" fill="#C9A45C" />
+                <circle cx={chartPath.last.x} cy={chartPath.last.y} r="9" fill="#C9A45C" opacity="0.18" />
+              </svg>
+              <div className="absolute top-1 right-1 px-2.5 py-1.5 rounded-lg bg-black/80 border border-gold/30">
+                <p className="text-[11px] text-gold font-bold leading-none">{totalRecebidoLabel}</p>
+                <p className="text-[9px] text-white/40 mt-0.5">Total {anoAtual}</p>
+              </div>
+            </div>
+            <div className="flex justify-between mt-2 text-[10px] text-white/30 px-1">
+              <span>1</span><span>5</span><span>10</span><span>15</span><span>20</span><span>25</span><span>{chartPath.diasNoMes}</span>
+            </div>
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             <div className="lg:col-span-2 flex flex-col gap-5">
