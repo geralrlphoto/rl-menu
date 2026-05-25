@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { loadFreelancerProfile, saveFreelancerProfile, type FreelancerProfile, DEFAULT_FREELANCER_PROFILE } from '../_data/freelancer-profile'
+import { PROJECTS as MOCK_PROJECTS, TASKS as MOCK_TASKS } from '../_data/projects'
 import { NotificationBell } from '../_components/NotificationBell'
 import { MessagesBell } from '../_components/MessagesBell'
 
@@ -54,6 +55,53 @@ export default function DadosPessoaisPage() {
     saveFreelancerProfile(next)
   }
 
+  // Stats agregados (Resumo da Atividade) — sincronizados com localStorage + mocks
+  const [activityStats, setActivityStats] = useState({
+    projetosEmEdicao: 0,
+    tarefasConcluidas: 0,
+    projetosFinalizados: 0,
+  })
+  useEffect(() => {
+    function refresh() {
+      try {
+        // Projetos: user-projects + mocks com patches (filtra archived/cancelled)
+        const userRaw = localStorage.getItem('painel-editor-user-projects')
+        const userProjects: any[] = userRaw ? JSON.parse(userRaw) : []
+        const patchesRaw = localStorage.getItem('painel-editor-project-patches')
+        const patches: Record<string, any> = patchesRaw ? JSON.parse(patchesRaw) : {}
+        const mocksApplied = MOCK_PROJECTS
+          .map(p => patches[p.id] ? { ...p, ...patches[p.id] } : p)
+          .filter(p => !(p as any).archived && !(p as any).cancelled)
+        const allProjects = [
+          ...userProjects.filter(p => !p.archived && !p.cancelled),
+          ...mocksApplied,
+        ]
+        const EDITING = ['Em Edição','Color Grading','Trailer em Produção','Áudio / Sincronização','Para Revisão','Correções','Finalizado']
+        const projetosEmEdicao = allProjects.filter(p => EDITING.includes(p.stage)).length
+        const projetosFinalizados = allProjects.filter(p => p.stage === 'Entregue').length
+
+        // Tarefas: user-tasks (concluídas) + mocks TASKS concluídas (filtra eliminadas)
+        const userTasksRaw = localStorage.getItem('painel-editor-user-tasks')
+        const userTasks: any[] = userTasksRaw ? JSON.parse(userTasksRaw) : []
+        const delRaw = localStorage.getItem('painel-editor-deleted-tasks')
+        const deleted = new Set<string>(delRaw ? JSON.parse(delRaw) : [])
+        const userConcluidas = userTasks.filter(t => !deleted.has(t.id) && t.status === 'Concluída').length
+        const mockConcluidas = MOCK_TASKS.filter(t => !deleted.has(t.id) && t.status === 'Concluída').length
+        const tarefasConcluidas = userConcluidas + mockConcluidas
+
+        setActivityStats({ projetosEmEdicao, tarefasConcluidas, projetosFinalizados })
+      } catch {}
+    }
+    refresh()
+    const onFocus = () => refresh()
+    window.addEventListener('focus', onFocus)
+    window.addEventListener('storage', onFocus)
+    return () => {
+      window.removeEventListener('focus', onFocus)
+      window.removeEventListener('storage', onFocus)
+    }
+  }, [])
+
   return (
     <div className="min-h-screen text-white relative" style={{ background: '#0A0A0A' }}>
       <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'radial-gradient(ellipse 80% 60% at 80% 15%, rgba(201,164,92,0.07), transparent 65%)' }} />
@@ -70,7 +118,7 @@ export default function DadosPessoaisPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-5">
             <ProfileCard profile={profile} editMode={editMode} onChange={updateProfile} />
             <AccountInfoCard profile={profile} editMode={editMode} onChange={updateProfile} />
-            <ActivitySummaryCard />
+            <ActivitySummaryCard stats={activityStats} />
           </div>
 
           {/* Sobre Mim + Especialidades */}
@@ -331,21 +379,19 @@ function AccountInfoCard({ profile, editMode, onChange }: { profile: FreelancerP
 //  ACTIVITY SUMMARY
 // ────────────────────────────────────────────────────────────────────────
 
-function ActivitySummaryCard() {
-  const stats = [
-    { ico: '◫', label: 'Projetos em Edição',     value: '6',      color: '#a78bfa' },
-    { ico: '✓', label: 'Tarefas Concluídas',     value: '24',     color: '#10b981' },
-    { ico: '◷', label: 'Horas Trabalhadas',      value: '56h 30m', color: '#60a5fa' },
-    { ico: '◇', label: 'Projetos Finalizados',  value: '4',      color: '#C9A45C' },
-    { ico: '★', label: 'Avaliação Média',        value: '4.9/5',  color: '#facc15' },
+function ActivitySummaryCard({ stats }: {
+  stats: { projetosEmEdicao: number; tarefasConcluidas: number; projetosFinalizados: number }
+}) {
+  const rows = [
+    { ico: '◫', label: 'Projetos em Edição',     value: String(stats.projetosEmEdicao),   color: '#a78bfa' },
+    { ico: '✓', label: 'Tarefas Concluídas',     value: String(stats.tarefasConcluidas),  color: '#10b981' },
+    { ico: '◇', label: 'Projetos Finalizados',   value: String(stats.projetosFinalizados),color: '#C9A45C' },
   ]
   return (
     <Card>
-      <CardHeader title="Resumo da Atividade" right={
-        <button className="text-[11px] tracking-wider uppercase text-white/45 hover:text-gold transition-colors border border-white/10 px-2.5 py-1 rounded-md">Este Mês ▾</button>
-      } />
+      <CardHeader title="Resumo da Atividade" />
       <div className="space-y-3.5">
-        {stats.map(s => (
+        {rows.map(s => (
           <div key={s.label} className="flex items-center gap-3 pb-3 border-b border-white/[0.04] last:border-0 last:pb-0">
             <div className="w-9 h-9 rounded-lg border flex items-center justify-center text-base shrink-0"
               style={{ background: `${s.color}1a`, borderColor: `${s.color}55`, color: s.color }}>
