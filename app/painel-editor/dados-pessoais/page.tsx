@@ -60,6 +60,8 @@ export default function DadosPessoaisPage() {
     projetosEmEdicao: 0,
     tarefasConcluidas: 0,
     projetosFinalizados: 0,
+    avaliacaoMedia: '—',         // baseada em entregas no prazo
+    avaliacaoCor: '#facc15',     // amber default
   })
   useEffect(() => {
     function refresh() {
@@ -89,7 +91,39 @@ export default function DadosPessoaisPage() {
         const mockConcluidas = MOCK_TASKS.filter(t => !deleted.has(t.id) && t.status === 'Concluída').length
         const tarefasConcluidas = userConcluidas + mockConcluidas
 
-        setActivityStats({ projetosEmEdicao, tarefasConcluidas, projetosFinalizados })
+        // Avaliação Média baseada em pontualidade dos projetos entregues
+        // Para cada Entregue: verifica se entregueEm <= entregaPrevista (no prazo) ou depois (atrasado)
+        const parse = (s?: string): Date | null => {
+          if (!s) return null
+          const cleaned = s.split('—')[0].trim()
+          const [d, m, y] = cleaned.split('/').map(Number)
+          if (!d || !m || !y) return null
+          return new Date(y, m-1, d)
+        }
+        let onTime = 0
+        let late = 0
+        allProjects.forEach(p => {
+          if (p.stage !== 'Entregue') return
+          const prazo = parse(p.entregaPrevista)
+          const entregueEm = parse(p.entregueEm) || prazo
+          if (!entregueEm) return
+          if (!prazo) { onTime += 1; return }
+          if (entregueEm.getTime() <= prazo.getTime()) onTime += 1
+          else late += 1
+        })
+        const totalEntregues = onTime + late
+        let avaliacaoMedia = '—'
+        let avaliacaoCor = '#facc15'
+        if (totalEntregues > 0) {
+          // 100% no prazo → 5.0   |   0% no prazo → 1.0   (range 1.0–5.0)
+          const ratio = onTime / totalEntregues
+          const rating = 1 + ratio * 4
+          avaliacaoMedia = `${rating.toFixed(1)}/5`
+          // Cor: >=4.5 emerald · >=3.5 yellow · senão red
+          avaliacaoCor = rating >= 4.5 ? '#34d399' : rating >= 3.5 ? '#facc15' : '#ef4444'
+        }
+
+        setActivityStats({ projetosEmEdicao, tarefasConcluidas, projetosFinalizados, avaliacaoMedia, avaliacaoCor })
       } catch {}
     }
     refresh()
@@ -380,25 +414,33 @@ function AccountInfoCard({ profile, editMode, onChange }: { profile: FreelancerP
 // ────────────────────────────────────────────────────────────────────────
 
 function ActivitySummaryCard({ stats }: {
-  stats: { projetosEmEdicao: number; tarefasConcluidas: number; projetosFinalizados: number }
+  stats: {
+    projetosEmEdicao: number
+    tarefasConcluidas: number
+    projetosFinalizados: number
+    avaliacaoMedia: string
+    avaliacaoCor: string
+  }
 }) {
   const rows = [
-    { ico: '◫', label: 'Projetos em Edição',     value: String(stats.projetosEmEdicao),   color: '#a78bfa' },
-    { ico: '✓', label: 'Tarefas Concluídas',     value: String(stats.tarefasConcluidas),  color: '#10b981' },
-    { ico: '◇', label: 'Projetos Finalizados',   value: String(stats.projetosFinalizados),color: '#C9A45C' },
+    { ico: '◫', label: 'Projetos em Edição',     value: String(stats.projetosEmEdicao),    color: '#a78bfa', valueColor: '#ffffff' },
+    { ico: '✓', label: 'Tarefas Concluídas',     value: String(stats.tarefasConcluidas),   color: '#10b981', valueColor: '#ffffff' },
+    { ico: '◇', label: 'Projetos Finalizados',   value: String(stats.projetosFinalizados), color: '#C9A45C', valueColor: '#ffffff' },
+    { ico: '★', label: 'Avaliação Média',        value: stats.avaliacaoMedia,              color: stats.avaliacaoCor, valueColor: stats.avaliacaoCor, tip: 'Baseada em % de entregas dentro do prazo' },
   ]
   return (
     <Card>
       <CardHeader title="Resumo da Atividade" />
       <div className="space-y-3.5">
         {rows.map(s => (
-          <div key={s.label} className="flex items-center gap-3 pb-3 border-b border-white/[0.04] last:border-0 last:pb-0">
+          <div key={s.label} className="flex items-center gap-3 pb-3 border-b border-white/[0.04] last:border-0 last:pb-0"
+            title={s.tip}>
             <div className="w-9 h-9 rounded-lg border flex items-center justify-center text-base shrink-0"
               style={{ background: `${s.color}1a`, borderColor: `${s.color}55`, color: s.color }}>
               {s.ico}
             </div>
             <p className="flex-1 text-[13px] text-white/85">{s.label}</p>
-            <p className="text-[15px] font-bold text-white tabular-nums">{s.value}</p>
+            <p className="text-[15px] font-bold tabular-nums" style={{ color: s.valueColor }}>{s.value}</p>
           </div>
         ))}
       </div>
