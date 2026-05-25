@@ -15,13 +15,21 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const { data, error } = await db().from('freelancer_casamentos').insert(body).select().single()
+  // Tentar primeiro com servicos_dia (e referencia se passada); se falhar, retry sem essas colunas opcionais
+  const { servicos_dia, referencia, ...core } = body
+  const supabase = db()
+  let { data, error } = await supabase.from('freelancer_casamentos').insert({ ...core, servicos_dia, referencia }).select().single()
+  if (error && /column .* (servicos_dia|referencia)/i.test(error.message)) {
+    // Retry sem as colunas opcionais
+    const res2 = await supabase.from('freelancer_casamentos').insert(core).select().single()
+    data = res2.data; error = res2.error
+  }
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true, casamento: data })
 }
 
 export async function PATCH(req: NextRequest) {
-  const { id, confirmado_em, indisponivel_em, confirmado_videografo_em, indisponivel_videografo_em, ...fields } = await req.json()
+  const { id, confirmado_em, indisponivel_em, confirmado_videografo_em, indisponivel_videografo_em, servicos_dia, referencia, ...fields } = await req.json()
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
   const supabase = db()
@@ -39,6 +47,14 @@ export async function PATCH(req: NextRequest) {
 
   if (Object.keys(tsFields).length > 0) {
     await supabase.from('freelancer_casamentos').update(tsFields).eq('id', id).then(() => {}).catch(() => {})
+  }
+
+  // 3 — save optional fields (servicos_dia, referencia) — silently ignored if columns don't exist yet
+  const optFields: Record<string, any> = {}
+  if (servicos_dia !== undefined) optFields.servicos_dia = servicos_dia
+  if (referencia !== undefined)   optFields.referencia   = referencia
+  if (Object.keys(optFields).length > 0) {
+    await supabase.from('freelancer_casamentos').update(optFields).eq('id', id).then(() => {}).catch(() => {})
   }
 
   return NextResponse.json({ ok: true })

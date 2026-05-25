@@ -19,6 +19,8 @@ type Casamento = {
   data_confirmada_videografo: boolean | null
   indisponivel: boolean | null
   indisponivel_videografo: boolean | null
+  servicos_dia?: string[] | null
+  referencia?: string | null
 }
 type Edicao = {
   id: string; freelancer_id: string; nome: string; status: string; local: string | null
@@ -1530,7 +1532,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
           onDelete={async () => { await del(ficha.id); setFicha(null) }}
           onEdit={() => {
             setEditing(ficha)
-            setForm({ local: ficha.local, data_casamento: ficha.data_casamento ?? '', equipa_foto: ficha.equipa_foto ?? [], videografo: ficha.videografo ?? '', briefing_url: ficha.briefing_url ?? '' })
+            setForm({ local: ficha.local, data_casamento: ficha.data_casamento ?? '', equipa_foto: ficha.equipa_foto ?? [], videografo: ficha.videografo ?? '', briefing_url: ficha.briefing_url ?? '', servicos_dia: ficha.servicos_dia ?? [] })
             setShowAdd(false)
             setFicha(null)
           }}
@@ -1639,6 +1641,22 @@ function CasamentoFicha({ casamento: c, onClose, onEdit, onConfirm, onDelete, is
             )}
           </div>
 
+          {/* Serviços do Dia */}
+          <div>
+            <p className="text-[14px] tracking-[0.3em] text-white/25 uppercase mb-2">Serviços do Dia</p>
+            {c.servicos_dia && c.servicos_dia.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {c.servicos_dia.map((s, i) => (
+                  <span key={i} className="text-[11px] px-2.5 py-1 rounded-full bg-gold/10 border border-gold/25 text-gold/85 tracking-wide">
+                    {s}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[14px] text-white/20 italic">Sem serviços definidos</p>
+            )}
+          </div>
+
           {/* Relatório — só para videógrafos */}
           {isVideografo && (
             <div>
@@ -1725,7 +1743,28 @@ function CasamentoFicha({ casamento: c, onClose, onEdit, onConfirm, onDelete, is
   )
 }
 
+const SERVICOS_DIA_CASAMENTO = [
+  'Making Off Noiva',
+  'Making Off Noivo',
+  'Cerimónia Civil',
+  'Cerimónia Igreja',
+  'Cocktail',
+  'Banquete',
+  'Corte do Bolo',
+  'Dança dos Noivos',
+  'Festa',
+  'Sessão Noivos',
+]
+
 function CasamentoForm({ form, setForm, saving, onSave, onCancel, onDelete }: any) {
+  const servicos = (form.servicos_dia ?? []) as string[]
+  function toggleServico(s: string) {
+    setForm((f: any) => {
+      const arr = (f.servicos_dia ?? []) as string[]
+      return { ...f, servicos_dia: arr.includes(s) ? arr.filter(x => x !== s) : [...arr, s] }
+    })
+  }
+
   return (
     <div className="bg-white/[0.02] border border-gold/20 rounded-xl p-4 space-y-3">
       <div className="grid grid-cols-2 gap-2">
@@ -1748,6 +1787,19 @@ function CasamentoForm({ form, setForm, saving, onSave, onCancel, onDelete }: an
         <div className="col-span-2">
           <label className={labelCls}>URL Briefing</label>
           <input value={form.briefing_url ?? ''} onChange={e => setForm((f: any) => ({ ...f, briefing_url: e.target.value }))} placeholder="https://..." className={inputCls} />
+        </div>
+        <div className="col-span-2">
+          <label className={labelCls}>Serviços do Dia</label>
+          <p className="text-[10px] text-white/30 mb-2 italic">O que vai ser fotografado/filmado neste evento</p>
+          <div className="flex flex-wrap gap-2">
+            {SERVICOS_DIA_CASAMENTO.map(s => (
+              <button type="button" key={s} onClick={() => toggleServico(s)}
+                className={`px-3 py-1 rounded-full text-[10px] font-medium tracking-wide border transition-all
+                  ${servicos.includes(s) ? 'bg-gold/20 border-gold/50 text-gold' : 'bg-white/[0.03] border-white/10 text-white/40 hover:border-white/25'}`}>
+                {s}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
       <div className="flex items-center justify-between pt-1">

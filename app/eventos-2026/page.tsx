@@ -13,6 +13,7 @@ type Evento = {
   local: string
   tipo_evento: string[]
   tipo_servico: string[]
+  servicos_dia?: string[]
   servico_extra: string[]
   status: string
   fotografo: string[]
@@ -73,10 +74,22 @@ function groupByMonth(events: Evento[]) {
 
 const TIPOS_EVENTO   = ['CASAMENTO','BATIZADO','ANIVERSÁRIO','SESSÃO FOTO','CORPORATIVO']
 const TIPOS_SERVICO  = ['FOTOGRAFIA','VÍDEO','FOTOGRAFIA + VÍDEO']
+const SERVICOS_DIA   = [
+  'Making Off Noiva',
+  'Making Off Noivo',
+  'Cerimónia Civil',
+  'Cerimónia Igreja',
+  'Cocktail',
+  'Banquete',
+  'Corte do Bolo',
+  'Dança dos Noivos',
+  'Festa',
+  'Sessão Noivos',
+] as const
 
 type NovoEventoForm = {
   referencia: string; cliente: string; data_evento: string; local: string
-  tipo_evento: string[]; tipo_servico: string[]
+  tipo_evento: string[]; tipo_servico: string[]; servicos_dia: string[]
   fotografo: string; videografo: string
   valor_foto: string; valor_video: string; valor_liquido: string
 }
@@ -88,7 +101,7 @@ function NovoEventoModal({ onClose, onCreated, anoFiltro, totalEventos }: { onCl
 
   const [form, setForm] = useState<NovoEventoForm>({
     referencia: refSugerida, cliente: '', data_evento: '', local: '',
-    tipo_evento: [], tipo_servico: [],
+    tipo_evento: [], tipo_servico: [], servicos_dia: [],
     fotografo: '', videografo: '',
     valor_foto: '', valor_video: '', valor_liquido: '',
   })
@@ -98,7 +111,7 @@ function NovoEventoModal({ onClose, onCreated, anoFiltro, totalEventos }: { onCl
   function set(k: keyof NovoEventoForm, v: string | string[]) {
     setForm(f => ({ ...f, [k]: v }))
   }
-  function toggleArr(k: 'tipo_evento' | 'tipo_servico', val: string) {
+  function toggleArr(k: 'tipo_evento' | 'tipo_servico' | 'servicos_dia', val: string) {
     setForm(f => {
       const arr = f[k] as string[]
       return { ...f, [k]: arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val] }
@@ -118,6 +131,7 @@ function NovoEventoModal({ onClose, onCreated, anoFiltro, totalEventos }: { onCl
         local:       form.local.trim(),
         tipo_evento: form.tipo_evento,
         tipo_servico: form.tipo_servico,
+        servicos_dia: form.servicos_dia,
         fotografo:  form.fotografo ? [form.fotografo] : [],
         videografo: form.videografo ? [form.videografo] : [],
       }
@@ -185,6 +199,19 @@ function NovoEventoModal({ onClose, onCreated, anoFiltro, totalEventos }: { onCl
                 <button type="button" key={t} onClick={() => toggleArr('tipo_servico', t)}
                   className={`px-3 py-1 rounded-full text-[10px] font-medium tracking-wide border transition-all
                     ${form.tipo_servico.includes(t) ? 'bg-gold/20 border-gold/50 text-gold' : 'bg-white/[0.03] border-white/10 text-white/40 hover:border-white/25'}`}>
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className={lbl}>Serviços do Dia</label>
+            <p className="text-[10px] text-white/30 mb-2 italic">Selecciona o que vai ser fotografado/filmado neste evento. Aparecerá na ficha do freelancer.</p>
+            <div className="flex flex-wrap gap-2">
+              {SERVICOS_DIA.map(t => (
+                <button type="button" key={t} onClick={() => toggleArr('servicos_dia', t)}
+                  className={`px-3 py-1 rounded-full text-[10px] font-medium tracking-wide border transition-all
+                    ${form.servicos_dia.includes(t) ? 'bg-gold/20 border-gold/50 text-gold' : 'bg-white/[0.03] border-white/10 text-white/40 hover:border-white/25'}`}>
                   {t}
                 </button>
               ))}

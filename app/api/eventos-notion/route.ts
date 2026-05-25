@@ -35,7 +35,7 @@ function getProp(props: any, key: string, type: string): any {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { referencia, cliente, data_evento, local, tipo_evento, tipo_servico, fotografo, videografo, valor_foto, valor_video, valor_liquido } = body
+    const { referencia, cliente, data_evento, local, tipo_evento, tipo_servico, servicos_dia, fotografo, videografo, valor_foto, valor_video, valor_liquido } = body
 
     // Escolher a base certa pelo ano da data do evento
     const anoEvento = data_evento ? parseInt(data_evento.slice(0, 4)) : 2026
@@ -49,6 +49,7 @@ export async function POST(req: NextRequest) {
     if (local)         properties['LOCAL']                   = { rich_text: [{ text: { content: local } }] }
     if (tipo_evento?.length)  properties['TIPO DE EVENTO']   = { multi_select: tipo_evento.map((n: string) => ({ name: n })) }
     if (tipo_servico?.length) properties['TIPO DE SERVIÇO']  = { multi_select: tipo_servico.map((n: string) => ({ name: n })) }
+    if (servicos_dia?.length) properties['SERVIÇOS DO DIA']  = { multi_select: servicos_dia.map((n: string) => ({ name: n })) }
     if (fotografo?.length)    properties['FOTOGRAFO']        = { multi_select: fotografo.map((n: string) => ({ name: n })) }
     if (videografo?.length)   properties['VÍDEOGRAFO ']      = { multi_select: videografo.map((n: string) => ({ name: n })) }
     if (valor_foto != null)   properties['VALOR SERVIÇO FOTO']       = { number: Number(valor_foto) }
@@ -85,6 +86,7 @@ export async function POST(req: NextRequest) {
         fotos_enviadas: false,
         tipo_evento: tipo_evento?.length ? JSON.stringify(tipo_evento) : null,
         tipo_servico: tipo_servico?.length ? tipo_servico : null, // text[] - array Postgres
+        servicos_dia: servicos_dia?.length ? servicos_dia : null, // text[] - array Postgres
         fotografo: fotografo?.length ? JSON.stringify(fotografo) : null,
         valor_foto: valor_foto != null ? Number(valor_foto) : null,
         valor_video: valor_video != null ? Number(valor_video) : null,
@@ -158,6 +160,7 @@ export async function GET(req: NextRequest) {
         local: getProp(p, 'LOCAL', 'text'),
         tipo_evento: getProp(p, 'TIPO DE EVENTO', 'multi_select'),
         tipo_servico: getProp(p, 'TIPO DE SERVIÇO', 'multi_select'),
+        servicos_dia: getProp(p, 'SERVIÇOS DO DIA', 'multi_select'),
         servico_extra: getProp(p, 'SERVIÇO EXTRA', 'multi_select'),
         status: getProp(p, 'Status', 'status'),
         fotografo: getProp(p, 'FOTOGRAFO', 'multi_select'),
