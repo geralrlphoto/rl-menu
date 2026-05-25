@@ -865,31 +865,6 @@ export default function FreelancerDetailPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             <div className="lg:col-span-2 flex flex-col gap-5">
-            {/* Atalhos */}
-            <div>
-              <h3 className="text-[14px] tracking-[0.4em] text-gold uppercase font-bold mb-3">Atalhos</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {[
-                  { key: 'casamentos' as const, icon: '💍', label: 'Casamentos', count: upcomingList.length, sub: upcomingList.length === 0 ? 'Sem próximos' : `${upcomingList.length} próximos` },
-                  { key: 'edicao' as const, icon: isFotografo ? '📷' : '🎬', label: isFotografo ? 'Edição Fotos' : 'Edição Vídeo', count: edicoesEmCurso, sub: `${edicoesPendentes} novos · ${edicoesEmCurso} em curso` },
-                  ...(album.length > 0 ? [{ key: 'album' as const, icon: '📚', label: 'Álbuns', count: albumsEmCurso, sub: `${album.length} total · ${albumsEmCurso} em curso` }] : []),
-                  { key: 'pagamentos' as const, icon: '💰', label: 'Pagamentos', count: pagPendentes, sub: pagPendentes === 0 ? 'Tudo em dia' : `${valorPendente.toLocaleString('pt-PT')} € pendente` },
-                ].slice(0, 4).map(c => (
-                  <button key={c.key} onClick={() => setTab(c.key)}
-                    className="bg-white/[0.02] border border-white/[0.08] hover:border-gold/30 hover:bg-white/[0.04] rounded-2xl p-4 text-left transition-all group">
-                    <div className="flex items-start justify-between mb-2">
-                      <span className="text-2xl">{c.icon}</span>
-                      {c.count > 0 && (
-                        <span className="text-[14px] tracking-widest uppercase font-bold px-2 py-0.5 rounded-full bg-gold/15 text-gold border border-gold/30">{c.count}</span>
-                      )}
-                    </div>
-                    <p className="text-[14px] tracking-widest uppercase font-bold text-white/85 mb-1">{c.label}</p>
-                    <p className="text-[14px] text-white/35 leading-tight">{c.sub}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Próximos Casamentos (lista) */}
             {upcomingList.length > 1 && (
               <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 sm:p-6">
