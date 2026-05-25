@@ -21,6 +21,8 @@ type Casamento = {
   indisponivel_videografo: boolean | null
   servicos_dia?: string[] | null
   referencia?: string | null
+  local_cerimonia?: string | null
+  hora_inicio?: string | null
 }
 type Edicao = {
   id: string; freelancer_id: string; nome: string; status: string; local: string | null
@@ -1472,7 +1474,23 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                 </div>
 
                 {/* Meta grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-1">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mt-1">
+                  {c.hora_inicio && (
+                    <div>
+                      <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-0.5">Hora Início</p>
+                      <p className="text-[12px] text-white/80 truncate">⏱ {c.hora_inicio}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-0.5">Quinta</p>
+                    <p className="text-[12px] text-white/80 truncate">🏛 {c.local || '—'}</p>
+                  </div>
+                  {c.local_cerimonia && (
+                    <div>
+                      <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-0.5">Cerimónia</p>
+                      <p className="text-[12px] text-white/80 truncate">⛪ {c.local_cerimonia}</p>
+                    </div>
+                  )}
                   {c.equipa_foto && c.equipa_foto.length > 0 && (
                     <div>
                       <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-0.5">Equipa Foto</p>
@@ -1494,6 +1512,20 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                     </div>
                   )}
                 </div>
+
+                {/* Serviços do Dia (badges) */}
+                {c.servicos_dia && c.servicos_dia.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-1.5">Serviços do Dia</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {c.servicos_dia.map((s, i) => (
+                        <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-gold/10 border border-gold/25 text-gold/85 tracking-wide">
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* RIGHT — ACTIONS */}
@@ -1532,7 +1564,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
           onDelete={async () => { await del(ficha.id); setFicha(null) }}
           onEdit={() => {
             setEditing(ficha)
-            setForm({ local: ficha.local, data_casamento: ficha.data_casamento ?? '', equipa_foto: ficha.equipa_foto ?? [], videografo: ficha.videografo ?? '', briefing_url: ficha.briefing_url ?? '', servicos_dia: ficha.servicos_dia ?? [] })
+            setForm({ local: ficha.local, data_casamento: ficha.data_casamento ?? '', equipa_foto: ficha.equipa_foto ?? [], videografo: ficha.videografo ?? '', briefing_url: ficha.briefing_url ?? '', servicos_dia: ficha.servicos_dia ?? [], local_cerimonia: ficha.local_cerimonia ?? '', hora_inicio: ficha.hora_inicio ?? '' })
             setShowAdd(false)
             setFicha(null)
           }}
@@ -1588,7 +1620,9 @@ function CasamentoFicha({ casamento: c, onClose, onEdit, onConfirm, onDelete, is
               <div>
                 <h2 className="text-base font-bold text-white uppercase tracking-wide leading-tight">{c.local || '—'}</h2>
                 {c.data_casamento && (
-                  <p className={`text-[14px] mt-0.5 ${isUrgent ? 'text-red-400/70' : isPast ? 'text-white/30' : 'text-white/45'}`}>{fmtDate(c.data_casamento)}</p>
+                  <p className={`text-[14px] mt-0.5 ${isUrgent ? 'text-red-400/70' : isPast ? 'text-white/30' : 'text-white/45'}`}>
+                    {fmtDate(c.data_casamento)}{c.hora_inicio ? ` · ${c.hora_inicio}` : ''}
+                  </p>
                 )}
                 {dtu !== null && dtu >= 0 && (
                   <span className={`inline-block mt-1 text-[14px] font-bold px-2 py-0.5 rounded-full ${isUrgent ? 'bg-red-500/20 text-red-400' : 'bg-white/[0.08] text-white/40'}`}>
@@ -1621,6 +1655,14 @@ function CasamentoFicha({ casamento: c, onClose, onEdit, onConfirm, onDelete, is
               <p className="text-[14px] text-white/20 italic">Não definida</p>
             )}
           </div>
+
+          {/* Local da Cerimónia */}
+          {c.local_cerimonia && (
+            <div>
+              <p className="text-[14px] tracking-[0.3em] text-white/25 uppercase mb-2">Local da Cerimónia</p>
+              <p className="text-[14px] text-white/70">⛪ {c.local_cerimonia}</p>
+            </div>
+          )}
 
           {/* Videógrafo */}
           <div>
@@ -1777,6 +1819,14 @@ function CasamentoForm({ form, setForm, saving, onSave, onCancel, onDelete }: an
           <input type="date" value={form.data_casamento ?? ''} onChange={e => setForm((f: any) => ({ ...f, data_casamento: e.target.value }))} className={inputCls} />
         </div>
         <div>
+          <label className={labelCls}>Hora de Início</label>
+          <input type="time" value={form.hora_inicio ?? ''} onChange={e => setForm((f: any) => ({ ...f, hora_inicio: e.target.value }))} className={inputCls} />
+        </div>
+        <div className="col-span-2">
+          <label className={labelCls}>Local da Cerimónia</label>
+          <input value={form.local_cerimonia ?? ''} onChange={e => setForm((f: any) => ({ ...f, local_cerimonia: e.target.value }))} placeholder="Igreja de São Pedro, Lisboa" className={inputCls} />
+        </div>
+        <div className="col-span-2">
           <label className={labelCls}>Videógrafo</label>
           <input value={form.videografo ?? ''} onChange={e => setForm((f: any) => ({ ...f, videografo: e.target.value }))} placeholder="Nome" className={inputCls} />
         </div>

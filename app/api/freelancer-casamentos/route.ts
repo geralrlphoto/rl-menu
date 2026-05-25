@@ -15,11 +15,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  // Tentar primeiro com servicos_dia (e referencia se passada); se falhar, retry sem essas colunas opcionais
-  const { servicos_dia, referencia, ...core } = body
+  // Tentar primeiro com colunas opcionais; se falhar por coluna inexistente, retry sem elas
+  const { servicos_dia, referencia, local_cerimonia, hora_inicio, ...core } = body
   const supabase = db()
-  let { data, error } = await supabase.from('freelancer_casamentos').insert({ ...core, servicos_dia, referencia }).select().single()
-  if (error && /column .* (servicos_dia|referencia)/i.test(error.message)) {
+  let { data, error } = await supabase.from('freelancer_casamentos').insert({ ...core, servicos_dia, referencia, local_cerimonia, hora_inicio }).select().single()
+  if (error && /column .* (servicos_dia|referencia|local_cerimonia|hora_inicio)/i.test(error.message)) {
     // Retry sem as colunas opcionais
     const res2 = await supabase.from('freelancer_casamentos').insert(core).select().single()
     data = res2.data; error = res2.error
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const { id, confirmado_em, indisponivel_em, confirmado_videografo_em, indisponivel_videografo_em, servicos_dia, referencia, ...fields } = await req.json()
+  const { id, confirmado_em, indisponivel_em, confirmado_videografo_em, indisponivel_videografo_em, servicos_dia, referencia, local_cerimonia, hora_inicio, ...fields } = await req.json()
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
   const supabase = db()
@@ -49,10 +49,12 @@ export async function PATCH(req: NextRequest) {
     await supabase.from('freelancer_casamentos').update(tsFields).eq('id', id).then(() => {}).catch(() => {})
   }
 
-  // 3 — save optional fields (servicos_dia, referencia) — silently ignored if columns don't exist yet
+  // 3 — save optional fields (servicos_dia, referencia, local_cerimonia, hora_inicio) — silently ignored if columns don't exist yet
   const optFields: Record<string, any> = {}
-  if (servicos_dia !== undefined) optFields.servicos_dia = servicos_dia
-  if (referencia !== undefined)   optFields.referencia   = referencia
+  if (servicos_dia !== undefined)   optFields.servicos_dia   = servicos_dia
+  if (referencia !== undefined)     optFields.referencia     = referencia
+  if (local_cerimonia !== undefined) optFields.local_cerimonia = local_cerimonia
+  if (hora_inicio !== undefined)    optFields.hora_inicio    = hora_inicio
   if (Object.keys(optFields).length > 0) {
     await supabase.from('freelancer_casamentos').update(optFields).eq('id', id).then(() => {}).catch(() => {})
   }
