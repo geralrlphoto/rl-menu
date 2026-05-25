@@ -56,7 +56,7 @@ function progressFromStage(stage: string): number {
 
 const NAV_ITEMS = [
   { key: 'dashboard',   label: 'Dashboard',           icon: '⌂', href: '/painel-fotografo' },
-  { key: 'novos',       label: 'Novos Projetos',      icon: '+', href: '/painel-fotografo/novos-projetos' },
+  { key: 'novos',       label: 'Novos Eventos',       icon: '+', href: '/painel-fotografo/novos-projetos' },
   { key: 'pagamentos',  label: 'Pagamentos',          icon: '€', href: '/painel-fotografo/pagamentos', active: true },
   { key: 'tarefas',     label: 'Tarefas',             icon: '◷', href: '/painel-fotografo/tarefas' },
   { key: 'calendario',  label: 'Calendário',          icon: '◉', href: '/painel-fotografo/calendario' },

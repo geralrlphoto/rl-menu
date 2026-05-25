@@ -86,7 +86,7 @@ const EDITING_STAGES = ['Em Edição','Color Grading','Trailer em Produção','�
 type NavItem = { key: string; label: string; icon: string; href?: string }
 const NAV_ITEMS: NavItem[] = [
   { key: 'dashboard',   label: 'Dashboard',           icon: '⌂' },
-  { key: 'novos',       label: 'Novos Projetos',      icon: '+', href: '/painel-fotografo/novos-projetos' },
+  { key: 'novos',       label: 'Novos Eventos',       icon: '+', href: '/painel-fotografo/novos-projetos' },
   { key: 'pagamentos',  label: 'Pagamentos',          icon: '€', href: '/painel-fotografo/pagamentos' },
   { key: 'tarefas',     label: 'Tarefas',             icon: '◷', href: '/painel-fotografo/tarefas' },
   { key: 'calendario',  label: 'Calendário',          icon: '◉', href: '/painel-fotografo/calendario' },
@@ -157,7 +157,7 @@ export default function PainelEditor() {
 
   const [active, setActive] = useState('dashboard')
 
-  // ── Novos Projetos (lê localStorage + mock) — máximo 4 mais recentes ──
+  // ── Novos Eventos (lê localStorage + mock) — máximo 4 mais recentes ──
   const [novosProjetos, setNovosProjetos] = useState<NovoMini[]>(MOCK_NOVOS)
   const [finalizadosProjetos, setFinalizadosProjetos] = useState<typeof MOCK_FINALIZADOS>(MOCK_FINALIZADOS)
   const [unseenIds, setUnseenIds] = useState<Set<string>>(new Set())
@@ -880,7 +880,7 @@ export default function PainelEditor() {
           {/* ── KPI CARDS (clicáveis e dinâmicos) ───────────────────── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             {([
-              { label: 'Novos Projetos', value: kpiCounts.novos.toString(),       sub: 'Aguardando início', icon: '◫', href: '/painel-fotografo/novos-projetos' },
+              { label: 'Novos Eventos',  value: kpiCounts.novos.toString(),       sub: 'Aguardando início', icon: '◫', href: '/painel-fotografo/novos-projetos' },
               { label: 'Em Andamento',   value: kpiCounts.andamento.toString(),   sub: 'Em edição ativa',   icon: '✎', href: '/painel-fotografo/novos-projetos' },
               { label: 'Finalizados',    value: kpiCounts.finalizados.toString(), sub: 'Este mês',          icon: '✓', href: '/painel-fotografo/novos-projetos' },
               { label: 'Recebimentos',   value: totalAnualLabel,                  sub: `Total ${TODAY_YEAR_NUM}`, icon: '€', href: '/painel-fotografo/pagamentos' },
@@ -915,12 +915,12 @@ export default function PainelEditor() {
             {/* COLUNA ESQUERDA — Projetos */}
             <div className="lg:col-span-1 flex flex-col gap-5">
 
-              {/* Novos Projetos */}
+              {/* Novos Eventos */}
               <div className="rounded-2xl border border-white/[0.08] p-5"
                 style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-[15px] font-semibold text-white">Novos Projetos</h3>
+                    <h3 className="text-[15px] font-semibold text-white">Novos Eventos</h3>
                     {(() => {
                       const unseenInList = novosProjetos.filter(p => unseenIds.has(p.id)).length
                       return unseenInList > 0 && (

@@ -334,7 +334,7 @@ function shortBadge(s: WorkflowStage): { label: string; cls: string } {
 
 const NAV_ITEMS = [
   { key: 'dashboard',   label: 'Dashboard',           icon: '⌂', href: '/painel-fotografo' },
-  { key: 'novos',       label: 'Novos Projetos',      icon: '+', href: '/painel-fotografo/novos-projetos', active: true },
+  { key: 'novos',       label: 'Novos Eventos',       icon: '+', href: '/painel-fotografo/novos-projetos', active: true },
   { key: 'pagamentos',  label: 'Pagamentos',          icon: '€', href: '/painel-fotografo/pagamentos' },
   { key: 'tarefas',     label: 'Tarefas',             icon: '◷', href: '/painel-fotografo/tarefas' },
   { key: 'calendario',  label: 'Calendário',          icon: '◉', href: '/painel-fotografo/calendario' },
@@ -625,7 +625,7 @@ export default function NovosProjetosPage() {
               <div className="max-w-xl">
                 <p className="text-[12px] tracking-[0.5em] text-gold/70 uppercase mb-2">Editorial Workspace</p>
                 <h1 className="text-4xl sm:text-5xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
-                  NOVOS <span className="italic text-gold">Projetos</span>
+                  NOVOS <span className="italic text-gold">Eventos</span>
                 </h1>
                 <div className="mt-4 h-px w-16 bg-gradient-to-r from-gold/70 to-transparent" />
                 <p className="text-[14px] text-white/55 mt-4 leading-relaxed max-w-md">
