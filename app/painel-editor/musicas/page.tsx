@@ -136,7 +136,6 @@ const MOMENTO_CLS: Record<Momento, string> = {
   'Instagram Reels': 'bg-yellow-500/15 text-yellow-300 border-yellow-500/30',
 }
 
-const TOTAL_LIBRARY = 814 // total mostrado no design
 
 // ────────────────────────────────────────────────────────────────────────
 //  PAGE
@@ -399,7 +398,7 @@ export default function MusicasPage() {
 
                 {/* Pagination */}
                 <div className="flex items-center justify-between gap-3 px-5 py-3 border-t border-white/[0.06] bg-white/[0.02]">
-                  <p className="text-[11px] text-white/40">Mostrando 1 a {filtered.slice(0, 8).length} de {TOTAL_LIBRARY} músicas</p>
+                  <p className="text-[11px] text-white/40">Mostrando 1 a {Math.min(8, filtered.length)} de {filtered.length} músicas</p>
                   <div className="flex items-center gap-1">
                     <button onClick={() => setPage(Math.max(1, page-1))} className="w-8 h-8 rounded-lg border border-white/10 text-white/55 hover:text-gold hover:border-gold/30 transition-all">‹</button>
                     {[1,2,3,4,'…',102].map((n, i) => (
@@ -452,27 +451,54 @@ export default function MusicasPage() {
                 </div>
               </Panel>
 
-              {/* Infos da Biblioteca */}
-              <div className="rounded-2xl border border-white/[0.06] p-5 backdrop-blur-md"
-                style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.35), rgba(11,11,11,0.65))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
-                <h3 className="text-[14px] font-semibold text-white mb-4" style={{ fontFamily: 'Georgia, serif' }}>Infos da Biblioteca</h3>
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="relative w-16 h-16 rounded-full border border-gold/30 flex items-center justify-center"
-                    style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.2), rgba(201,164,92,0.04))', boxShadow: '0 0 18px -4px rgba(201,164,92,0.3)' }}>
-                    <span className="text-2xl text-gold">♪</span>
+              {/* Infos da Biblioteca — números reais */}
+              {(() => {
+                const total = tracks.length
+                const totalFavoritas = tracks.filter(t => t.favorita).length
+                const totalUsadasEmProjetos = tracks.reduce((s, t) => s + (t.usadaEm || 0), 0)
+                // Adicionadas este mês: id 'user-musica-{Date.now()}' do mês corrente
+                const now = new Date()
+                const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime()
+                const adicionadasEsteMes = tracks.filter(t => {
+                  const m = t.id.match(/^user-musica-(\d+)$/)
+                  if (!m) return false
+                  return Number(m[1]) >= monthStart
+                }).length
+                // Atualizada em: data da última user-musica adicionada (ou TODAY)
+                const tsList = tracks.map(t => {
+                  const m = t.id.match(/^user-musica-(\d+)$/)
+                  return m ? Number(m[1]) : 0
+                }).filter(n => n > 0)
+                const lastUpdate = tsList.length > 0
+                  ? new Date(Math.max(...tsList))
+                  : now
+                const lastUpdateStr = `${String(lastUpdate.getDate()).padStart(2,'0')}/${String(lastUpdate.getMonth()+1).padStart(2,'0')}/${lastUpdate.getFullYear()}`
+
+                return (
+                  <div className="rounded-2xl border border-white/[0.06] p-5 backdrop-blur-md"
+                    style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.35), rgba(11,11,11,0.65))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
+                    <h3 className="text-[14px] font-semibold text-white mb-4" style={{ fontFamily: 'Georgia, serif' }}>Infos da Biblioteca</h3>
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="relative w-16 h-16 rounded-full border border-gold/30 flex items-center justify-center"
+                        style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.2), rgba(201,164,92,0.04))', boxShadow: '0 0 18px -4px rgba(201,164,92,0.3)' }}>
+                        <span className="text-2xl text-gold">♪</span>
+                      </div>
+                      <div>
+                        <p className="text-3xl font-bold text-white leading-none">{total}</p>
+                        <p className="text-[11px] text-white/45 mt-1.5 tracking-widest uppercase">
+                          {total === 1 ? 'Música Disponível' : 'Músicas Disponíveis'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-2 pt-3 border-t border-white/[0.05]">
+                      <StatRow label="Atualizada em"        value={lastUpdateStr} />
+                      <StatRow label="Adicionadas este mês" value={String(adicionadasEsteMes)} />
+                      <StatRow label="Favoritas"            value={String(totalFavoritas)} />
+                      <StatRow label="Usadas em projetos"   value={String(totalUsadasEmProjetos)} />
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-3xl font-bold text-white leading-none">{TOTAL_LIBRARY}</p>
-                    <p className="text-[11px] text-white/45 mt-1.5 tracking-widest uppercase">Músicas Disponíveis</p>
-                  </div>
-                </div>
-                <div className="space-y-2 pt-3 border-t border-white/[0.05]">
-                  <StatRow label="Atualizada em"        value="18/05/2026" />
-                  <StatRow label="Adicionadas este mês" value="24" />
-                  <StatRow label="Favoritas"            value="87" />
-                  <StatRow label="Usadas em projetos"   value="312" />
-                </div>
-              </div>
+                )
+              })()}
             </aside>
           </div>
 
