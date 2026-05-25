@@ -334,7 +334,11 @@ export default function FreelancerDetailPage() {
         isFotografo={isFotografo}
       />
 
-    <main className={`relative z-10 min-h-screen px-4 sm:px-6 py-6 mx-auto lg:pl-[230px] lg:pr-4 ${tab === null ? 'max-w-none' : 'max-w-3xl'}`}>
+    <main className={`relative z-10 min-h-screen px-4 sm:px-6 py-6 mx-auto lg:pl-[230px] lg:pr-4 ${
+      tab === null ? 'max-w-none'
+        : (['casamentos', 'edicao', 'album', 'pagamentos'] as Array<string | null>).includes(tab) ? 'max-w-[1500px]'
+        : 'max-w-3xl'
+    }`}>
       {/* Tabs — horizontal apenas em mobile (desktop usa sidebar) */}
       <div className="mb-6 relative flex items-center gap-1 lg:hidden">
         <button onClick={() => { const el = document.getElementById('admin-tab-scroll'); if (el) el.scrollBy({ left: -160, behavior: 'smooth' }) }}
@@ -1243,15 +1247,30 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
   const sorted = [...casamentos].sort((a,b) => (a.data_casamento??'') < (b.data_casamento??'') ? -1 : 1)
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4 fade-in-up">
+
+      {/* ── Header premium da página ─────────────────────────────────── */}
+      <div className="flex items-end justify-between mb-2 px-1">
+        <div>
+          <p className="text-[11px] tracking-[0.5em] text-gold/70 uppercase mb-2 font-light">Os teus eventos</p>
+          <h2 className="text-3xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
+            <span className="italic text-gold">Casamentos</span> Atribuídos
+          </h2>
+          <div className="mt-3 h-px w-20 bg-gradient-to-r from-gold/70 via-gold/30 to-transparent" />
+        </div>
+        <p className="text-[13px] text-white/40 italic" style={{ fontFamily: 'Georgia, serif' }}>
+          {casamentos.length} {casamentos.length === 1 ? 'evento' : 'eventos'} no total
+        </p>
+      </div>
 
       {/* ── Texto Intro (editável) ── */}
-      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] px-5 py-4 space-y-2">
+      <div className="rounded-2xl border border-white/[0.08] px-5 py-4 space-y-2"
+        style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
         <div className="flex items-center justify-between">
-          <p className="text-[14px] tracking-[0.35em] text-white/30 uppercase">Texto Intro — Secção Casamentos</p>
+          <p className="text-[11px] tracking-[0.4em] text-gold/60 uppercase font-light">Texto Intro · Secção Casamentos</p>
           {!editingIntro && (
             <button onClick={() => setEditingIntro(true)}
-              className="px-3 py-1 rounded-lg text-[14px] border border-white/10 text-white/40 hover:text-white/70 hover:border-white/20 transition-all tracking-widest uppercase">
+              className="px-3 py-1 rounded-lg text-[10px] border border-white/10 text-white/40 hover:text-gold hover:border-gold/30 transition-all tracking-[0.3em] uppercase">
               Editar
             </button>
           )}
@@ -1277,8 +1296,9 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
 
       <div className="flex justify-end">
         <button onClick={() => { setShowAdd(true); setEditing(null); setForm({}) }}
-          className="px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-[14px] font-semibold tracking-widest hover:bg-gold/20 transition-all uppercase">
-          + Adicionar
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black text-[12px] font-semibold tracking-[0.25em] hover:bg-gold/90 transition-all uppercase"
+          style={{ boxShadow: '0 0 20px -4px rgba(201,168,76,0.5)' }}>
+          <span className="text-lg leading-none">+</span> Adicionar Evento
         </button>
       </div>
 
@@ -1299,28 +1319,66 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
             onCancel={() => setEditing(null)} onDelete={() => del(c.id)} />
         ) : (
           <div key={c.id} onClick={() => setFicha(c)}
-            className={`flex items-center gap-4 px-4 py-3 rounded-xl border transition-all group cursor-pointer hover:border-white/20 ${isUrgent ? 'border-red-500/25 bg-red-500/5' : isPast ? 'border-white/[0.04] bg-white/[0.01] opacity-60' : 'border-white/[0.06] bg-white/[0.02]'}`}>
-            <div className={`flex-shrink-0 flex flex-col items-center justify-center w-12 h-12 rounded-xl border text-center ${isUrgent ? 'bg-red-500/15 border-red-500/30' : isPast ? 'bg-white/[0.03] border-white/[0.06]' : 'bg-gold/8 border-gold/20'}`}>
+            className={`relative flex items-center gap-5 px-5 py-4 rounded-2xl border transition-all group cursor-pointer ${
+              isUrgent
+                ? 'border-red-500/30 hover:border-red-500/50'
+                : isPast
+                  ? 'border-white/[0.04] opacity-60 hover:opacity-80'
+                  : 'border-white/[0.08] hover:border-gold/40'
+            }`}
+            style={{
+              background: isUrgent
+                ? 'linear-gradient(135deg, rgba(239,68,68,0.06), rgba(11,11,11,0.7))'
+                : isPast
+                  ? 'rgba(255,255,255,0.01)'
+                  : 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))',
+              boxShadow: !isPast ? '0 10px 30px -10px rgba(0,0,0,0.5)' : undefined,
+            }}>
+            {/* Date thumbnail premium */}
+            <div className={`flex-shrink-0 flex flex-col items-center justify-center w-16 h-16 rounded-2xl border ${
+              isUrgent
+                ? 'bg-red-500/10 border-red-500/30'
+                : isPast
+                  ? 'bg-white/[0.02] border-white/[0.05]'
+                  : 'border-gold/25'
+            }`}
+              style={!isPast && !isUrgent ? {
+                background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.15), rgba(201,164,92,0.04))',
+                boxShadow: '0 0 22px -6px rgba(201,164,92,0.3)'
+              } : undefined}>
               {c.data_casamento ? (
                 <>
-                  <span className={`text-base font-bold leading-none ${isUrgent ? 'text-red-400' : isPast ? 'text-white/25' : 'text-gold'}`}>
+                  <span className={`text-xl font-light leading-none tabular-nums ${isUrgent ? 'text-red-400' : isPast ? 'text-white/25' : 'text-gold'}`} style={{ fontFamily: 'Georgia, serif' }}>
                     {c.data_casamento.split('-')[2]}
                   </span>
-                  <span className={`text-[14px] uppercase tracking-wide ${isUrgent ? 'text-red-400/60' : isPast ? 'text-white/15' : 'text-gold/60'}`}>
+                  <span className={`text-[10px] uppercase tracking-[0.25em] mt-1 ${isUrgent ? 'text-red-400/60' : isPast ? 'text-white/15' : 'text-gold/70'}`}>
                     {MESES[parseInt(c.data_casamento.split('-')[1])-1]}
                   </span>
                 </>
-              ) : <span className="text-white/20 text-[14px]">—</span>}
+              ) : <span className="text-white/20 text-base">—</span>}
             </div>
+            {/* Info */}
             <div className="flex-1 min-w-0">
-              <p className="text-[14px] font-semibold text-white/85 truncate group-hover:text-white transition-colors">{c.local}</p>
-              <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
-                {c.data_casamento && <span className="text-[14px] text-white/35">{fmtDate(c.data_casamento)}</span>}
-                {c.videografo && <span className="text-[14px] text-white/30">🎥 {c.videografo}</span>}
+              <h3 className={`text-[16px] font-light truncate transition-colors mb-1 ${isPast ? 'text-white/45' : 'text-white/90 group-hover:text-gold'}`} style={{ fontFamily: 'Georgia, serif' }}>
+                {c.local}
+              </h3>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                {c.data_casamento && (
+                  <span className="text-[12px] text-white/45 italic" style={{ fontFamily: 'Georgia, serif' }}>
+                    {fmtDate(c.data_casamento)}
+                  </span>
+                )}
+                {c.videografo && (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] text-white/40">
+                    <span className="text-gold/50">🎥</span> {c.videografo}
+                  </span>
+                )}
+                {c.equipa_foto && c.equipa_foto.length > 0 && (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] text-white/40">
+                    <span className="text-gold/50">📷</span> {c.equipa_foto.join(', ')}
+                  </span>
+                )}
               </div>
-              {c.equipa_foto && c.equipa_foto.length > 0 && (
-                <p className="text-[14px] text-white/25 mt-0.5">📷 {c.equipa_foto.join(', ')}</p>
-              )}
             </div>
             <div className="flex flex-col items-end gap-1 flex-shrink-0">
               {dtu !== null && dtu >= 0 && (
