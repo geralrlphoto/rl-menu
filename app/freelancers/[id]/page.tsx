@@ -500,6 +500,65 @@ export default function FreelancerDetailPage() {
             ))}
           </div>
 
+          {/* ── Novos Eventos (últimos 4 casamentos adicionados) ──── */}
+          {casamentos.length > 0 && (
+            <div className="rounded-2xl border border-white/[0.08] p-5 mb-6"
+              style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-[15px] font-semibold text-white">Novos Eventos</h3>
+                  <span className="inline-flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full bg-gold text-black uppercase tracking-widest font-bold"
+                    style={{ boxShadow: '0 0 10px rgba(201,164,92,0.7)' }}>
+                    <span className="w-1 h-1 rounded-full bg-black animate-pulse" />
+                    {Math.min(casamentos.length, 4)} novo{Math.min(casamentos.length, 4) === 1 ? '' : 's'}
+                  </span>
+                </div>
+                <button onClick={() => setTab('casamentos')}
+                  className="text-[11px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors">
+                  Ver todos →
+                </button>
+              </div>
+              <div className="space-y-3">
+                {(() => {
+                  const placeholderImgs = [
+                    'https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=300&fit=crop',
+                    'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400&h=300&fit=crop',
+                    'https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=400&h=300&fit=crop',
+                    'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=400&h=300&fit=crop',
+                  ]
+                  // Últimos 4 adicionados = últimos 4 do array (mais recentes ao fim), invertidos
+                  const ultimos = [...casamentos].slice(-4).reverse()
+                  return ultimos.map((c, idx) => (
+                    <button key={c.id} onClick={() => setTab('casamentos')}
+                      className="w-full text-left relative group flex items-center gap-3 p-2 rounded-xl border border-white/[0.04] hover:border-gold/25 hover:bg-white/[0.02] transition-all cursor-pointer">
+                      <div className="w-16 h-12 rounded-lg overflow-hidden shrink-0 border border-white/10">
+                        <img src={placeholderImgs[idx % placeholderImgs.length]} alt={c.local}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <p className="text-[13px] font-medium text-white truncate">{c.local}</p>
+                          <span className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-md bg-gold text-black uppercase tracking-wider shrink-0 font-bold"
+                            style={{ boxShadow: '0 0 10px rgba(201,164,92,0.7)' }}>
+                            <span className="w-1 h-1 rounded-full bg-black animate-pulse" />
+                            Novo
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-white/35">Casamento</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-[10px] text-white/35 mb-0.5">Data do evento</p>
+                        <p className="text-[12px] font-semibold text-gold">
+                          {c.data_casamento ? fmtDate(c.data_casamento).split(' · ')[0] : '—'}
+                        </p>
+                      </div>
+                    </button>
+                  ))
+                })()}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             <div className="lg:col-span-2 flex flex-col gap-5">
             {/* Próximo Casamento — destaque */}
