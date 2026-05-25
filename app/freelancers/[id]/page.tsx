@@ -317,7 +317,7 @@ export default function FreelancerDetailPage() {
         isFotografo={isFotografo}
       />
 
-    <main className={`relative z-10 min-h-screen px-4 py-10 mx-auto lg:pl-[260px] lg:pr-6 ${tab === null ? 'max-w-[1600px]' : 'max-w-3xl'}`}>
+    <main className={`relative z-10 min-h-screen px-4 sm:px-8 py-6 mx-auto lg:pl-[260px] lg:pr-6 ${tab === null ? 'max-w-[1600px]' : 'max-w-3xl'}`}>
       {/* Tabs — horizontal apenas em mobile (desktop usa sidebar) */}
       <div className="mb-6 relative flex items-center gap-1 lg:hidden">
         <button onClick={() => { const el = document.getElementById('admin-tab-scroll'); if (el) el.scrollBy({ left: -160, behavior: 'smooth' }) }}
@@ -390,11 +390,11 @@ export default function FreelancerDetailPage() {
         return (
           <>
           {/* ── HERO Card (estilo Painel Criativo) ─────────────────── */}
-          <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] mb-5"
+          <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] mb-6"
             style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.5)' }}>
             <div className="absolute inset-0 z-0">
               <img
-                src={freelancer?.foto_url || 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1600&h=400&fit=crop'}
+                src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1600&h=400&fit=crop"
                 alt=""
                 className="w-full h-full object-cover"
               />
@@ -403,13 +403,16 @@ export default function FreelancerDetailPage() {
               style={{ background: 'linear-gradient(90deg, rgba(11,11,11,0.96) 0%, rgba(11,11,11,0.85) 35%, rgba(11,11,11,0.45) 65%, rgba(11,11,11,0.1) 100%)' }} />
             <div className="relative z-10 flex items-start justify-between gap-6 px-8 sm:px-12 py-12 sm:py-16">
               <div className="max-w-xl flex items-center gap-5">
-                {freelancer?.foto_url && (
-                  <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gold/50 shrink-0"
-                    style={{ boxShadow: '0 0 28px -4px rgba(201,164,92,0.4)' }}>
-                    <img src={freelancer.foto_url}
-                      alt={freelancer.nome} className="w-full h-full object-cover" />
-                  </div>
-                )}
+                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gold/50 shrink-0"
+                  style={{ boxShadow: '0 0 28px -4px rgba(201,164,92,0.4)' }}>
+                  {freelancer?.foto_url ? (
+                    <img src={freelancer.foto_url} alt={freelancer.nome} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-gold/30 to-gold/10 flex items-center justify-center text-gold text-xl font-bold">
+                      {primeiroNome.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
                 <div>
                   <h1 className="text-4xl sm:text-5xl font-light text-white tracking-tight">
                     Olá, <span className="font-semibold">{primeiroNome}</span>!
