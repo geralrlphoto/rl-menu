@@ -92,7 +92,6 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'calendario',  label: 'Calendário',          icon: '◉', href: '/painel-editor/calendario' },
   { key: 'workflow',    label: 'Workflow',            icon: '☰', href: '/painel-editor/workflow' },
   { key: 'biblioteca',  label: 'Biblioteca',          icon: '♪', href: '/painel-editor/musicas' },
-  { key: 'notas',       label: 'Notas',               icon: '✦' },
   { key: 'dados',       label: 'Dados Pessoais',      icon: '☻', href: '/painel-editor/dados-pessoais' },
 ]
 
