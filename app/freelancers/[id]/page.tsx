@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { TasksWidget, MiniCalendar, NotesWidget } from '@/app/components/FreelancerWidgets'
+import { TasksWidget, MiniCalendar } from '@/app/components/FreelancerWidgets'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -673,9 +673,8 @@ export default function FreelancerDetailPage() {
 
             </div>
 
-            {/* ── COLUNA LATERAL (1/3) — Notas + Alertas ─────────────── */}
+            {/* ── COLUNA LATERAL (1/3) — Alertas ─────────────────────── */}
             <aside className="lg:col-span-1 flex flex-col gap-4">
-              <NotesWidget freelancerId={id} />
 
               {/* Alerta mensagens não lidas */}
               {mensagensNaoLidas > 0 && (
