@@ -767,7 +767,7 @@ export default function PainelEditor() {
 
       {/* ── SIDEBAR ───────────────────────────────────────────────────────── */}
       <aside
-        className="hidden md:flex fixed top-0 left-0 bottom-0 w-[220px] z-30 flex-col"
+        className="flex fixed top-0 left-0 bottom-0 w-[220px] z-30 flex-col"
         style={{
           background: 'linear-gradient(180deg, rgba(15,12,8,0.95) 0%, rgba(11,9,5,0.98) 100%)',
           backdropFilter: 'blur(20px)',
@@ -826,7 +826,7 @@ export default function PainelEditor() {
       </aside>
 
       {/* ── MAIN ──────────────────────────────────────────────────────────── */}
-      <main className="relative z-10 md:pl-[220px]">
+      <main className="relative z-10 pl-[220px]">
         <div className="px-6 sm:px-8 py-6">
 
           {/* ── HERO ──────────────────────────────────────────────────── */}
