@@ -56,7 +56,7 @@ const NAV_ITEMS = [
   { key: 'tarefas',     label: 'Tarefas',             icon: '◷', href: '/painel-fotografo/tarefas' },
   { key: 'calendario',  label: 'Calendário',          icon: '◉', href: '/painel-fotografo/calendario' },
   { key: 'workflow',    label: 'Workflow',            icon: '☰', href: '/painel-fotografo/workflow' },
-  { key: 'biblioteca',  label: 'Biblioteca',          icon: '♪', href: '/painel-fotografo/musicas', active: true },
+  { key: 'edicao',      label: 'Edição Fotos',        icon: '◐', href: '/painel-fotografo/edicao-fotos', active: true },
   { key: 'dados',       label: 'Dados Pessoais',      icon: '☻', href: '/painel-fotografo/dados-pessoais' },
 ]
 
