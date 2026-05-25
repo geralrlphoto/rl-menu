@@ -567,7 +567,7 @@ export default function NovosProjetosPage() {
         {/* Logo */}
         <div className="px-6 pt-8 pb-7 border-b border-white/[0.04]">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-2xl font-serif italic text-gold" style={{ fontFamily: 'Georgia, serif' }}>W</span>
+            <img src="/logo_marca_advocacia__8_-removebg-preview.png" alt="RL" className="w-7 h-7 object-contain" />
             <p className="text-[12px] tracking-[0.4em] text-gold/70 font-light uppercase">Wedding</p>
           </div>
           <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase ml-9">Moments Films</p>

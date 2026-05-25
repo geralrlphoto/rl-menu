@@ -192,9 +192,9 @@ function Sidebar({ profile }: { profile: FreelancerProfile }) {
       }}>
       <div className="px-6 pt-7 pb-6 border-b border-white/[0.04]">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl border border-gold/40 flex items-center justify-center"
+          <div className="w-12 h-12 rounded-2xl border border-gold/40 flex items-center justify-center overflow-hidden"
             style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.2), rgba(201,164,92,0.04))', boxShadow: '0 0 20px rgba(201,164,92,0.15)' }}>
-            <span className="text-xl">📷</span>
+            <img src="/logo_marca_advocacia__8_-removebg-preview.png" alt="RL" className="w-8 h-8 object-contain" />
           </div>
           <div>
             <p className="text-[14px] tracking-[0.18em] text-gold font-bold uppercase leading-tight" style={{ fontFamily: 'Georgia, serif' }}>Wedding</p>

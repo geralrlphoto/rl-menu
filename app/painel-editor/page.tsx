@@ -775,9 +775,9 @@ export default function PainelEditor() {
       >
         {/* Logo */}
         <div className="px-6 pt-8 pb-8 flex flex-col items-center border-b border-white/[0.04]">
-          <div className="w-14 h-14 rounded-2xl border border-gold/40 flex items-center justify-center mb-2"
+          <div className="w-14 h-14 rounded-2xl border border-gold/40 flex items-center justify-center mb-2 overflow-hidden"
             style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.18), rgba(201,164,92,0.04))', boxShadow: '0 0 20px rgba(201,164,92,0.15)' }}>
-            <span className="text-2xl font-serif italic" style={{ color: '#C9A45C', fontFamily: 'Georgia, serif' }}>W</span>
+            <img src="/logo_marca_advocacia__8_-removebg-preview.png" alt="RL" className="w-9 h-9 object-contain" />
           </div>
           <p className="text-[10px] tracking-[0.4em] text-gold/70 font-light uppercase mt-1">Video Editor</p>
         </div>
