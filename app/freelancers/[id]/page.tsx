@@ -318,49 +318,6 @@ export default function FreelancerDetailPage() {
       />
 
     <main className={`relative z-10 min-h-screen px-4 py-10 mx-auto lg:pl-[260px] lg:pr-6 ${tab === null ? 'max-w-[1600px]' : 'max-w-3xl'}`}>
-      {/* Header */}
-      <div className="mb-6">
-        <Link href="/freelancers" className="text-[14px] tracking-[0.3em] text-white/25 hover:text-white/50 uppercase transition-colors">
-          ← Freelancers
-        </Link>
-        <div className="flex items-start justify-between mt-2 gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-widest text-white uppercase">{freelancer.nome}</h1>
-            <div className="flex flex-wrap items-center gap-2 mt-1">
-              {freelancer.status && (
-                <span className="text-[14px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-semibold bg-gold/10 text-gold border-gold/30">
-                  {freelancer.status}
-                </span>
-              )}
-              {freelancer.is_template && (
-                <span className="text-[14px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-semibold bg-white/10 text-white border-white/30">
-                  ⌘ Centro de Comando
-                </span>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-4 mt-2">
-              {freelancer.contato && <a href={`tel:${freelancer.contato}`} className="text-[14px] text-white/40 hover:text-white/70 transition-colors">📞 {freelancer.contato}</a>}
-              {freelancer.email && <a href={`mailto:${freelancer.email}`} className="text-[14px] text-white/40 hover:text-white/70 transition-colors">✉ {freelancer.email}</a>}
-              {freelancer.nome_sos && <span className="text-[14px] text-white/25">SOS: {freelancer.nome_sos}{freelancer.contato_sos ? ` · ${freelancer.contato_sos}` : ''}</span>}
-            </div>
-            <PasswordDisplay password={freelancer.password} freelancerId={freelancer.id} />
-          </div>
-          {upcoming && (
-            <div className={`flex-shrink-0 flex items-center gap-3 px-4 py-3 rounded-xl border ${dtu !== null && dtu <= 15 ? 'border-red-500/30 bg-red-500/5' : 'border-emerald-500/20 bg-emerald-500/5'}`}>
-              <div className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl ${dtu !== null && dtu <= 15 ? 'bg-red-500/15 border border-red-500/30' : 'bg-emerald-500/10 border border-emerald-500/20'}`}>
-                <span className={`text-lg font-bold leading-none ${dtu !== null && dtu <= 15 ? 'text-red-400' : 'text-emerald-400'}`}>{dtu === 0 ? '!' : dtu}</span>
-                <span className={`text-[14px] uppercase tracking-wide ${dtu !== null && dtu <= 15 ? 'text-red-400/60' : 'text-emerald-400/60'}`}>{dtu === 0 ? 'HOJE' : 'd'}</span>
-              </div>
-              <div>
-                <p className="text-[14px] text-white/25 uppercase tracking-widest mb-0.5">Próximo</p>
-                <p className="text-[14px] font-semibold text-white/80 max-w-[160px] truncate">{upcoming.local}</p>
-                <p className="text-[14px] text-white/35">{fmtDate(upcoming.data_casamento).split(' · ')[0]}</p>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* Tabs — horizontal apenas em mobile (desktop usa sidebar) */}
       <div className="mb-6 relative flex items-center gap-1 lg:hidden">
         <button onClick={() => { const el = document.getElementById('admin-tab-scroll'); if (el) el.scrollBy({ left: -160, behavior: 'smooth' }) }}
