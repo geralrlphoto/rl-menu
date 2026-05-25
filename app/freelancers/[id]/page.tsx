@@ -295,13 +295,23 @@ export default function FreelancerDetailPage() {
 
   return (
     <div className="min-h-screen text-white relative" style={{ background: '#0B0B0B' }}>
-      {/* ── Animação gold suave (Próximo Casamento) ──────────────────── */}
+      {/* ── Animações premium ─────────────────────────────────────────── */}
       <style jsx global>{`
         @keyframes proxCasamentoGlow {
           0%, 100% { box-shadow: 0 0 24px -4px rgba(201,164,92,0.30), 0 0 60px -10px rgba(201,164,92,0.18), inset 0 0 0 1px rgba(201,164,92,0.30); }
           50%      { box-shadow: 0 0 36px 0 rgba(201,164,92,0.55), 0 0 80px -4px rgba(201,164,92,0.35), inset 0 0 0 1px rgba(201,164,92,0.55); }
         }
         .prox-casamento-glow { animation: proxCasamentoGlow 3s ease-in-out infinite; }
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(12px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in-up { animation: fadeInUp 0.5s ease-out both; }
+        .fade-in-1 { animation: fadeInUp 0.5s ease-out 0.05s both; }
+        .fade-in-2 { animation: fadeInUp 0.5s ease-out 0.10s both; }
+        .fade-in-3 { animation: fadeInUp 0.5s ease-out 0.15s both; }
+        .fade-in-4 { animation: fadeInUp 0.5s ease-out 0.20s both; }
+        .fade-in-5 { animation: fadeInUp 0.5s ease-out 0.25s both; }
       `}</style>
       {/* ── Background atmosférico (igual ao /painel-fotografo) ───────── */}
       <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'radial-gradient(ellipse 80% 60% at 80% 20%, rgba(201,164,92,0.06), transparent 65%)' }} />
@@ -324,7 +334,7 @@ export default function FreelancerDetailPage() {
         isFotografo={isFotografo}
       />
 
-    <main className={`relative z-10 min-h-screen px-4 sm:px-8 py-6 mx-auto lg:pl-[260px] lg:pr-6 ${tab === null ? 'max-w-none' : 'max-w-3xl'}`}>
+    <main className={`relative z-10 min-h-screen px-4 sm:px-6 py-6 mx-auto lg:pl-[230px] lg:pr-4 ${tab === null ? 'max-w-none' : 'max-w-3xl'}`}>
       {/* Tabs — horizontal apenas em mobile (desktop usa sidebar) */}
       <div className="mb-6 relative flex items-center gap-1 lg:hidden">
         <button onClick={() => { const el = document.getElementById('admin-tab-scroll'); if (el) el.scrollBy({ left: -160, behavior: 'smooth' }) }}
@@ -466,7 +476,7 @@ export default function FreelancerDetailPage() {
         return (
           <>
           {/* ── HERO Card (estilo Painel Criativo) ─────────────────── */}
-          <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] mb-6"
+          <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] mb-6 fade-in-up"
             style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.5)' }}>
             <div className="absolute inset-0 z-0">
               <img
@@ -490,14 +500,14 @@ export default function FreelancerDetailPage() {
                   )}
                 </div>
                 <div>
-                  <h1 className="text-4xl sm:text-5xl font-light text-white tracking-tight">
-                    Olá, <span className="font-semibold">{primeiroNome}</span>!
+                  <h1 className="text-4xl sm:text-5xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
+                    Olá, <span className="font-semibold italic text-gold">{primeiroNome}</span>
                   </h1>
-                  <p className="text-[16px] text-white/65 mt-3 leading-relaxed font-light">
+                  <p className="text-[16px] text-white/65 mt-4 leading-relaxed font-light italic" style={{ fontFamily: 'Georgia, serif' }}>
                     Que hoje seja mais um dia de transformar momentos<br />em memórias inesquecíveis.
                   </p>
-                  <div className="mt-5 h-px w-20 bg-gradient-to-r from-gold/70 via-gold/30 to-transparent" />
-                  <p className="text-[12px] tracking-[0.4em] text-gold/70 uppercase mt-4">Painel criativo RL Photo.Video</p>
+                  <div className="mt-5 h-px w-24 bg-gradient-to-r from-gold/80 via-gold/40 to-transparent" />
+                  <p className="text-[11px] tracking-[0.5em] text-gold/70 uppercase mt-4 font-light">Painel Criativo · RL Photo.Video</p>
                 </div>
               </div>
 
@@ -535,23 +545,23 @@ export default function FreelancerDetailPage() {
           {/* ── Próximo Casamento (destaque com glow gold pulsante) ─ */}
           {proximoCasamento && (
             <div onClick={() => setTab('casamentos')}
-              className="cursor-pointer prox-casamento-glow bg-gradient-to-br from-gold/[0.10] to-gold/[0.02] border border-gold/40 rounded-2xl p-6 sm:p-7 hover:border-gold/60 transition-all mb-6">
-              <p className="text-[14px] tracking-[0.4em] text-gold/80 uppercase font-bold mb-3">Próximo Casamento</p>
+              className="cursor-pointer prox-casamento-glow fade-in-1 bg-gradient-to-br from-gold/[0.10] to-gold/[0.02] border border-gold/40 rounded-2xl p-6 sm:p-7 hover:border-gold/60 transition-all mb-6">
+              <p className="text-[11px] tracking-[0.5em] text-gold/80 uppercase font-light mb-3">Próximo Casamento</p>
               <div className="flex items-end justify-between gap-4 flex-wrap">
                 <div>
-                  <h2 className="text-2xl font-semibold text-white mb-1">{proximoCasamento.local}</h2>
-                  <p className="text-[14px] text-white/55">{fmtDate(proximoCasamento.data_casamento)}</p>
+                  <h2 className="text-3xl sm:text-4xl font-light text-white mb-2 tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>{proximoCasamento.local}</h2>
+                  <p className="text-[13px] text-white/55 italic" style={{ fontFamily: 'Georgia, serif' }}>{fmtDate(proximoCasamento.data_casamento)}</p>
                 </div>
                 <div className={`text-right ${dtuProximo !== null && dtuProximo <= 15 ? 'text-red-400' : 'text-gold'}`}>
-                  <p className="text-4xl font-black leading-none">{dtuProximo === 0 ? 'HOJE' : dtuProximo}</p>
-                  <p className="text-[14px] tracking-widest uppercase mt-1">{dtuProximo === 0 ? '' : dtuProximo === 1 ? 'dia' : 'dias'}</p>
+                  <p className="text-5xl font-light leading-none tabular-nums" style={{ fontFamily: 'Georgia, serif' }}>{dtuProximo === 0 ? 'HOJE' : dtuProximo}</p>
+                  <p className="text-[11px] tracking-[0.4em] uppercase mt-1.5 font-light">{dtuProximo === 0 ? '' : dtuProximo === 1 ? 'dia' : 'dias'}</p>
                 </div>
               </div>
             </div>
           )}
 
           {/* ── CTAs ─────────────────────────────────────────────── */}
-          <div className="flex flex-wrap items-center gap-3 mb-6">
+          <div className="flex flex-wrap items-center gap-3 mb-6 fade-in-2">
             <button onClick={() => setTab('casamentos')}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black text-[14px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
               style={{ boxShadow: '0 0 20px -4px rgba(201,168,76,0.5)' }}>
@@ -564,7 +574,7 @@ export default function FreelancerDetailPage() {
           </div>
 
           {/* ── KPI CARDS premium (igual ao /painel-fotografo) ────── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6 fade-in-3">
             {([
               { label: 'Casamentos',  value: totalCasamentos.toString(),  sub: 'Total atribuídos',  icon: '◫', tab: 'casamentos' as const },
               { label: 'Em Edição',   value: totalEmEdicao.toString(),    sub: 'Em edição ativa',   icon: '✎', tab: 'edicao' as const },
@@ -597,14 +607,14 @@ export default function FreelancerDetailPage() {
           </div>
 
           {/* ── 3-COL: Novos Eventos | Calendário | Tarefas ───────── */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5 fade-in-4">
             {/* Col 1: Novos Eventos */}
             {casamentos.length > 0 ? (
               <div className="rounded-2xl border border-white/[0.08] p-5"
                 style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-[15px] font-semibold text-white">Novos Eventos</h3>
+                    <h3 className="text-[15px] font-light text-white" style={{ fontFamily: 'Georgia, serif' }}>Novos <span className="italic text-gold">Eventos</span></h3>
                     <span className="inline-flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full bg-gold text-black uppercase tracking-widest font-bold"
                       style={{ boxShadow: '0 0 10px rgba(201,164,92,0.7)' }}>
                       <span className="w-1 h-1 rounded-full bg-black animate-pulse" />
@@ -664,7 +674,7 @@ export default function FreelancerDetailPage() {
           </div>
 
           {/* ── 3-COL: Casamentos Editados | Performance | Resumo Financeiro ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5 fade-in-5">
 
             {/* COL 1: Casamentos Editados */}
             {(() => {
@@ -679,7 +689,7 @@ export default function FreelancerDetailPage() {
                 <div className="rounded-2xl border border-white/[0.08] p-5"
                   style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-[15px] font-semibold text-white">Casamentos Editados</h3>
+                    <h3 className="text-[15px] font-light text-white" style={{ fontFamily: 'Georgia, serif' }}>Casamentos <span className="italic text-gold">Editados</span></h3>
                     <button onClick={() => setTab('edicao')}
                       className="text-[11px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors">
                       Ver todos →
@@ -752,7 +762,7 @@ export default function FreelancerDetailPage() {
                 <div className="rounded-2xl border border-white/[0.08] p-5"
                   style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-[15px] font-semibold text-white">Performance</h3>
+                    <h3 className="text-[15px] font-light text-white" style={{ fontFamily: 'Georgia, serif' }}><span className="italic text-gold">Performance</span></h3>
                     <button onClick={() => setTab('edicao')}
                       className="text-[11px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors">
                       Ver →
@@ -827,7 +837,7 @@ export default function FreelancerDetailPage() {
             <div className="rounded-2xl border border-white/[0.08] p-5"
               style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[15px] font-semibold text-white">Resumo Financeiro</h3>
+                <h3 className="text-[15px] font-light text-white" style={{ fontFamily: 'Georgia, serif' }}>Resumo <span className="italic text-gold">Financeiro</span></h3>
                 <button onClick={() => setTab('pagamentos')}
                   className="text-[11px] tracking-wider text-white/40 hover:text-gold transition-colors px-2 py-1 rounded-md border border-white/10 hover:border-gold/30">
                   Este mês ▾
@@ -1112,7 +1122,7 @@ function SidebarNavAdmin({
 
   return (
     <aside
-      className="hidden lg:flex fixed top-0 left-0 bottom-0 w-[240px] z-20 flex-col"
+      className="hidden lg:flex fixed top-0 left-0 bottom-0 w-[220px] z-20 flex-col"
       style={{
         background: 'linear-gradient(180deg, rgba(10,8,5,0.85) 0%, rgba(14,11,7,0.92) 100%)',
         backdropFilter: 'blur(16px)',
