@@ -1497,8 +1497,9 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
               {/* RIGHT — ACTIONS */}
               <div className="flex flex-col items-end justify-between gap-3">
                 <button onClick={() => setFicha(c)}
-                  className="px-3 py-2 rounded-lg border border-gold/30 text-gold text-[11px] tracking-widest uppercase font-semibold hover:bg-gold/10 transition-all">
-                  Abrir ficha
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gold/30 text-gold text-[12px] tracking-wider uppercase font-semibold hover:bg-gold/10 transition-all whitespace-nowrap"
+                  style={{ boxShadow: '0 0 12px -4px rgba(201,164,92,0.3)' }}>
+                  Abrir Casamento <span className="text-base">›</span>
                 </button>
                 <div className="flex items-center gap-1.5">
                   {!isPast && !c.data_confirmada && !c.indisponivel && (
