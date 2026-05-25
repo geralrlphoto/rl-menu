@@ -295,6 +295,14 @@ export default function FreelancerDetailPage() {
 
   return (
     <div className="min-h-screen text-white relative" style={{ background: '#0B0B0B' }}>
+      {/* ── Animação gold suave (Próximo Casamento) ──────────────────── */}
+      <style jsx global>{`
+        @keyframes proxCasamentoGlow {
+          0%, 100% { box-shadow: 0 0 24px -4px rgba(201,164,92,0.30), 0 0 60px -10px rgba(201,164,92,0.18), inset 0 0 0 1px rgba(201,164,92,0.30); }
+          50%      { box-shadow: 0 0 36px 0 rgba(201,164,92,0.55), 0 0 80px -4px rgba(201,164,92,0.35), inset 0 0 0 1px rgba(201,164,92,0.55); }
+        }
+        .prox-casamento-glow { animation: proxCasamentoGlow 3s ease-in-out infinite; }
+      `}</style>
       {/* ── Background atmosférico (igual ao /painel-fotografo) ───────── */}
       <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'radial-gradient(ellipse 80% 60% at 80% 20%, rgba(201,164,92,0.06), transparent 65%)' }} />
       <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'radial-gradient(ellipse 60% 50% at 20% 80%, rgba(201,164,92,0.04), transparent 70%)' }} />
@@ -455,6 +463,24 @@ export default function FreelancerDetailPage() {
             </div>
           </div>
 
+          {/* ── Próximo Casamento (destaque com glow gold pulsante) ─ */}
+          {proximoCasamento && (
+            <div onClick={() => setTab('casamentos')}
+              className="cursor-pointer prox-casamento-glow bg-gradient-to-br from-gold/[0.10] to-gold/[0.02] border border-gold/40 rounded-2xl p-6 sm:p-7 hover:border-gold/60 transition-all mb-6">
+              <p className="text-[14px] tracking-[0.4em] text-gold/80 uppercase font-bold mb-3">Próximo Casamento</p>
+              <div className="flex items-end justify-between gap-4 flex-wrap">
+                <div>
+                  <h2 className="text-2xl font-semibold text-white mb-1">{proximoCasamento.local}</h2>
+                  <p className="text-[14px] text-white/55">{fmtDate(proximoCasamento.data_casamento)}</p>
+                </div>
+                <div className={`text-right ${dtuProximo !== null && dtuProximo <= 15 ? 'text-red-400' : 'text-gold'}`}>
+                  <p className="text-4xl font-black leading-none">{dtuProximo === 0 ? 'HOJE' : dtuProximo}</p>
+                  <p className="text-[14px] tracking-widest uppercase mt-1">{dtuProximo === 0 ? '' : dtuProximo === 1 ? 'dia' : 'dias'}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ── CTAs ─────────────────────────────────────────────── */}
           <div className="flex flex-wrap items-center gap-3 mb-6">
             <button onClick={() => setTab('casamentos')}
@@ -569,25 +595,6 @@ export default function FreelancerDetailPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             <div className="lg:col-span-2 flex flex-col gap-5">
-            {/* Próximo Casamento — destaque */}
-            {proximoCasamento && (
-              <div onClick={() => setTab('casamentos')}
-                className="cursor-pointer bg-gradient-to-br from-gold/[0.08] to-gold/[0.02] border border-gold/30 rounded-2xl p-6 sm:p-7 hover:border-gold/50 transition-all"
-                style={{ boxShadow: '0 0 24px -8px rgba(201,168,76,0.25)' }}>
-                <p className="text-[14px] tracking-[0.4em] text-gold/70 uppercase font-bold mb-3">Próximo Casamento</p>
-                <div className="flex items-end justify-between gap-4 flex-wrap">
-                  <div>
-                    <h2 className="text-2xl font-semibold text-white mb-1">{proximoCasamento.local}</h2>
-                    <p className="text-[14px] text-white/55">{fmtDate(proximoCasamento.data_casamento)}</p>
-                  </div>
-                  <div className={`text-right ${dtuProximo !== null && dtuProximo <= 15 ? 'text-red-400' : 'text-gold'}`}>
-                    <p className="text-4xl font-black leading-none">{dtuProximo === 0 ? 'HOJE' : dtuProximo}</p>
-                    <p className="text-[14px] tracking-widest uppercase mt-1">{dtuProximo === 0 ? '' : dtuProximo === 1 ? 'dia' : 'dias'}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Atalhos */}
             <div>
               <h3 className="text-[14px] tracking-[0.4em] text-gold uppercase font-bold mb-3">Atalhos</h3>
