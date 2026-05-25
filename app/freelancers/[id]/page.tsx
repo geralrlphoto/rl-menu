@@ -317,7 +317,7 @@ export default function FreelancerDetailPage() {
         isFotografo={isFotografo}
       />
 
-    <main className={`relative z-10 min-h-screen px-4 sm:px-8 py-6 mx-auto lg:pl-[260px] lg:pr-6 ${tab === null ? 'max-w-[1600px]' : 'max-w-3xl'}`}>
+    <main className={`relative z-10 min-h-screen px-4 sm:px-8 py-6 mx-auto lg:pl-[260px] lg:pr-6 ${tab === null ? 'max-w-none' : 'max-w-3xl'}`}>
       {/* Tabs — horizontal apenas em mobile (desktop usa sidebar) */}
       <div className="mb-6 relative flex items-center gap-1 lg:hidden">
         <button onClick={() => { const el = document.getElementById('admin-tab-scroll'); if (el) el.scrollBy({ left: -160, behavior: 'smooth' }) }}
