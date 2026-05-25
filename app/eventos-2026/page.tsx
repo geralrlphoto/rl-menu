@@ -85,6 +85,8 @@ const SERVICOS_DIA   = [
   'Dança dos Noivos',
   'Festa',
   'Sessão Noivos',
+  'Foto Lembrança',
+  'Sneak Peak',
 ] as const
 
 type NovoEventoForm = {

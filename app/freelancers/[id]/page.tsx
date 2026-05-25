@@ -1796,6 +1796,8 @@ const SERVICOS_DIA_CASAMENTO = [
   'Dança dos Noivos',
   'Festa',
   'Sessão Noivos',
+  'Foto Lembrança',
+  'Sneak Peak',
 ]
 
 function CasamentoForm({ form, setForm, saving, onSave, onCancel, onDelete }: any) {
