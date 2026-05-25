@@ -30,11 +30,6 @@ const SKILLS = [
   { label: 'Direção Criativa',  value: 85 },
 ]
 
-const DEVICES = [
-  { device: 'MacBook Pro 16"', sub: 'macOS · Chrome 124.0.0.0', location: 'Lisboa, Portugal', when: '19/05/2026 às 14:32', current: true,  icon: '◫' },
-  { device: 'iPhone 14 Pro',   sub: 'iOS · Safari Mobile',       location: 'Lisboa, Portugal', when: '19/05/2026 às 09:15', current: false, icon: '◫' },
-]
-
 const RECENT_ACTIVITY = [
   { ico: '+', titulo: 'Projeto criado',       sub: 'Amanda & Lucas',    quando: 'Hoje, 14:32', cor: '#a78bfa' },
   { ico: '↓', titulo: 'Material recebido',    sub: 'Beatriz & Gabriel', quando: 'Hoje, 11:15', cor: '#60a5fa' },
@@ -91,11 +86,6 @@ export default function DadosPessoaisPage() {
             <WorkPreferencesCard editMode={editMode} onToggle={() => setEditMode(!editMode)} profile={profile} onChange={updateProfile} />
             <PaymentInfoCard editMode={editMode} onToggle={() => setEditMode(!editMode)} profile={profile} onChange={updateProfile} />
             <SecurityCard />
-          </div>
-
-          {/* Devices full width */}
-          <div className="mt-5">
-            <DevicesCard />
           </div>
 
           <p className="text-center text-[10px] tracking-[0.4em] uppercase text-white/15 mt-12 mb-4">RL Photo.Video · Perfil do Editor</p>
@@ -638,33 +628,6 @@ function SecRow({ ico, label, value, action, valueClass, small }: { ico: string;
 // ────────────────────────────────────────────────────────────────────────
 //  DEVICES
 // ────────────────────────────────────────────────────────────────────────
-
-function DevicesCard() {
-  return (
-    <Card>
-      <CardHeader title="Dispositivos Conectados" />
-      <div className="rounded-xl border border-white/[0.05] overflow-hidden">
-        {DEVICES.map((d, i) => (
-          <div key={i} className={`grid grid-cols-[auto_1fr_auto_auto_auto] gap-4 items-center px-4 py-4 ${i < DEVICES.length-1 ? 'border-b border-white/[0.04]' : ''} hover:bg-white/[0.02] transition-colors`}>
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg text-gold border border-gold/25 bg-gold/[0.06]">{d.icon}</div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <p className="text-[13px] font-semibold text-white truncate">{d.device}</p>
-                {d.current && (
-                  <span className="text-[9px] px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 tracking-widest uppercase font-bold">Este Dispositivo</span>
-                )}
-              </div>
-              <p className="text-[11px] text-white/40 mt-0.5 truncate">{d.sub}</p>
-            </div>
-            <p className="text-[12px] text-white/55 hidden sm:block">{d.location}</p>
-            <p className="text-[12px] text-white/55 hidden md:block">{d.when}</p>
-            <button className="w-8 h-8 rounded-lg text-white/35 hover:text-gold hover:bg-white/[0.04] transition-all flex items-center justify-center">⋮</button>
-          </div>
-        ))}
-      </div>
-    </Card>
-  )
-}
 
 // ────────────────────────────────────────────────────────────────────────
 //  HELPERS
