@@ -3149,10 +3149,47 @@ function PagamentosAdminTab({ freelancerId, pagamentos, casamentos, onRefresh }:
   // ── Distribuição por status ──────────────────────────────────────────────
   const aReceberPuros = pagamentos.filter(p => p.status === 'PENDENTE' && !isAtrasado(p))
   const aReceberTotalPuros = aReceberPuros.reduce((s, p) => s + (p.valor ?? 0), 0)
-  const totalProjetos = totalPago + aReceberTotalPuros + atrasadosTotal
+  const cancelados = pagamentos.filter(p => p.status === 'CANCELADO')
+  const canceladosTotal = cancelados.reduce((s, p) => s + (p.valor ?? 0), 0)
+  const totalProjetos = totalPago + aReceberTotalPuros + atrasadosTotal + canceladosTotal
   const pct = (v: number) => totalProjetos > 0 ? Math.round((v / totalProjetos) * 100) : 0
 
   const mesAtualLabel = new Date(year, month, 1).toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' })
+  const MONTH_LABELS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+
+  // ── Receitas Mensais (gráfico) ───────────────────────────────────────────
+  const monthlyRevenue = (() => {
+    const perMonth = new Array(12).fill(0) as number[]
+    pagamentos.forEach(p => {
+      if (p.status !== 'PAGO' || !p.data_pago) return
+      const d = new Date(p.data_pago)
+      if (d.getFullYear() !== year) return
+      const idx = d.getMonth()
+      if (idx >= 0 && idx < 12) perMonth[idx] += p.valor ?? 0
+    })
+    const cumulative = new Array(12).fill(0) as number[]
+    let acc = 0
+    for (let i = 0; i < 12; i++) {
+      if (i <= month) { acc += perMonth[i]; cumulative[i] = acc }
+      else cumulative[i] = acc
+    }
+    return cumulative
+  })()
+
+  const chartPath = (() => {
+    const w = 460, h = 110, pad = 8
+    const max = Math.max(1, ...monthlyRevenue)
+    const step = (w - pad*2) / (monthlyRevenue.length - 1)
+    const pts = monthlyRevenue.map((v, i) => ({ x: pad + i * step, y: h - pad - (v / max) * (h - pad*2) }))
+    let d = `M ${pts[0].x} ${pts[0].y}`
+    for (let i = 1; i < pts.length; i++) {
+      const p0 = pts[i-1], p1 = pts[i]
+      const cx = (p0.x + p1.x) / 2
+      d += ` Q ${cx} ${p0.y}, ${cx} ${(p0.y + p1.y) / 2} T ${p1.x} ${p1.y}`
+    }
+    const highlight = pts[month]
+    return { path: d, last: pts[pts.length-1], highlight, pts, w, h, currentValue: monthlyRevenue[month] }
+  })()
 
   async function handleAdd() {
     if (!form.descricao.trim()) return
@@ -3494,25 +3531,62 @@ function PagamentosAdminTab({ freelancerId, pagamentos, casamentos, onRefresh }:
             )}
           </div>
 
+          {/* Receitas Mensais (gráfico) */}
+          <div className="rounded-2xl border border-white/[0.06] p-5"
+            style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.35), rgba(11,11,11,0.65))' }}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[13px] font-semibold text-white">Receitas Mensais</h3>
+              <button className="text-[10px] tracking-widest uppercase text-white/35 hover:text-gold transition-colors border border-white/10 px-2 py-1 rounded-md">{year} ▾</button>
+            </div>
+            <div className="relative">
+              <svg viewBox={`0 0 ${chartPath.w} ${chartPath.h}`} className="w-full h-32">
+                <defs>
+                  <linearGradient id="goldAreaFL" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#C9A45C" stopOpacity="0.4" />
+                    <stop offset="100%" stopColor="#C9A45C" stopOpacity="0" />
+                  </linearGradient>
+                  <linearGradient id="goldStrokeFL" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#C9A45C" />
+                    <stop offset="50%" stopColor="#E8C76D" />
+                    <stop offset="100%" stopColor="#C9A45C" />
+                  </linearGradient>
+                </defs>
+                <path d={`${chartPath.path} L ${chartPath.last.x} ${chartPath.h} L 8 ${chartPath.h} Z`} fill="url(#goldAreaFL)" />
+                <path d={chartPath.path} fill="none" stroke="url(#goldStrokeFL)" strokeWidth="2.2" strokeLinecap="round" />
+                <circle cx={chartPath.highlight.x} cy={chartPath.highlight.y} r="4" fill="#C9A45C" />
+                <circle cx={chartPath.highlight.x} cy={chartPath.highlight.y} r="9" fill="#C9A45C" opacity="0.18" />
+              </svg>
+              <div className="absolute top-1 right-1 px-2.5 py-1.5 rounded-lg bg-black/80 border border-gold/30">
+                <p className="text-[11px] text-gold font-bold leading-none">{fmtEuro(chartPath.currentValue)}</p>
+                <p className="text-[9px] text-white/40 mt-0.5 capitalize">{MONTH_LABELS_PT[month]} {year}</p>
+              </div>
+            </div>
+            <div className="flex justify-between mt-2 text-[10px] text-white/30 px-1">
+              <span>Jan</span><span>Fev</span><span>Mar</span><span>Abr</span><span>Mai</span><span>Jun</span><span>Jul</span><span>Ago</span><span>Set</span><span>Out</span><span>Nov</span><span>Dez</span>
+            </div>
+          </div>
+
+          {/* Distribuição */}
           <div className="rounded-2xl border border-white/[0.06] p-5"
             style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.35), rgba(11,11,11,0.65))' }}>
             <h3 className="text-[13px] font-semibold text-white mb-4">Distribuição</h3>
             <div className="space-y-3">
               {([
-                { label: 'Recebidos', dotCls: 'bg-emerald-400', value: totalPago,           pctVal: pct(totalPago) },
-                { label: 'A receber', dotCls: 'bg-yellow-400',  value: aReceberTotalPuros,  pctVal: pct(aReceberTotalPuros) },
-                { label: 'Atrasados', dotCls: 'bg-red-400',     value: atrasadosTotal,      pctVal: pct(atrasadosTotal) },
+                { label: 'Recebidos',  color: '#34d399', value: totalPago,           pctVal: pct(totalPago) },
+                { label: 'A receber',  color: '#facc15', value: aReceberTotalPuros,  pctVal: pct(aReceberTotalPuros) },
+                { label: 'Atrasados',  color: '#ef4444', value: atrasadosTotal,      pctVal: pct(atrasadosTotal) },
+                { label: 'Cancelados', color: '#737373', value: canceladosTotal,     pctVal: pct(canceladosTotal) },
               ] as const).map(d => (
                 <div key={d.label} className="space-y-1">
-                  <div className="flex items-center justify-between text-[11px]">
+                  <div className="flex items-center justify-between text-[12px]">
                     <span className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${d.dotCls}`}></span>
+                      <span className="w-2 h-2 rounded-full" style={{ background: d.color }}></span>
                       <span className="text-white/65">{d.label}</span>
                     </span>
-                    <span className="text-white/85 font-mono">{fmtEuro(d.value)}</span>
+                    <span className="text-white/85 font-medium">{fmtEuro(d.value)}</span>
                   </div>
-                  <div className="h-1 rounded-full bg-white/[0.05] overflow-hidden">
-                    <div className={`h-full ${d.dotCls}/70`} style={{ width: `${d.pctVal}%`, background: d.dotCls === 'bg-emerald-400' ? 'rgba(52,211,153,0.7)' : d.dotCls === 'bg-yellow-400' ? 'rgba(250,204,21,0.7)' : 'rgba(248,113,113,0.7)' }} />
+                  <div className="h-1 rounded-full bg-white/[0.06] overflow-hidden">
+                    <div className="h-full transition-all" style={{ width: `${d.pctVal}%`, background: d.color, boxShadow: `0 0 8px ${d.color}80` }} />
                   </div>
                 </div>
               ))}
