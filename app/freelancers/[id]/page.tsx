@@ -3524,10 +3524,11 @@ function UrlEntryCard({
   const urlBlockedByStatus = (field.tipo === 'selecao' || field.tipo === 'editadas') && status !== 'ENTREGUE'
   const urlLocked = locked || urlBlockedByStatus
 
-  // ── 'Ver Fotos Selecionadas pelos Noivos' (apenas Fotos Editadas) ──
+  // ── 'Ver Fotos Selecionadas pelos Noivos' (Fotos Editadas + Maquete Álbum) ──
   // Botão visível assim que status passa de AGUARDAR (i.e., EM EDIÇÃO em diante).
   // Abre um MODAL inline (não nova janela) com a ficha da seleção.
-  const editadasUnlocked = field.tipo === 'editadas' && status !== 'AGUARDAR'
+  const editorTipo = field.tipo === 'editadas' || field.tipo === 'album'
+  const editadasUnlocked = editorTipo && status !== 'AGUARDAR'
   const [openingSelecao, setOpeningSelecao] = useState(false)
   const [selecaoPreview, setSelecaoPreview] = useState<any | null>(null)
   const [selecaoError, setSelecaoError] = useState<string | null>(null)
@@ -3714,8 +3715,8 @@ function UrlEntryCard({
         <p className="text-[11px] text-white/45 italic leading-relaxed mt-1">🔒 {lockedReason}</p>
       )}
 
-      {/* Botão Ver Fotos Selecionadas pelos Noivos (só para Fotos Editadas, com status > AGUARDAR) */}
-      {field.tipo === 'editadas' && !locked && (
+      {/* Botão Ver Fotos Selecionadas pelos Noivos (Fotos Editadas + Maquete Álbum, status > AGUARDAR) */}
+      {editorTipo && !locked && (
         editadasUnlocked ? (
           <button onClick={e => { e.stopPropagation(); abrirFotosSelecionadas() }}
             disabled={openingSelecao}
@@ -3742,6 +3743,11 @@ function UrlEntryCard({
       {!locked && urlBlockedByStatus && field.tipo === 'selecao' && (
         <p className="text-[11px] text-amber-300/80 italic leading-relaxed mt-1 px-1">
           ⓘ O link só fica disponível quando marcares o trabalho como <span className="font-bold not-italic uppercase">Entregue</span> abaixo. Ao mudar para Entregue, o portal dos noivos também é atualizado automaticamente.
+        </p>
+      )}
+      {!locked && field.tipo === 'album' && status === 'AGUARDAR' && (
+        <p className="text-[11px] text-amber-300/80 italic leading-relaxed mt-1 px-1">
+          ⓘ Muda o estado para <span className="font-bold not-italic uppercase text-amber-200">Em Edição</span> para teres acesso às fotos escolhidas pelos noivos para a maquete do álbum. Cada alteração de estado atualiza automaticamente o portal dos noivos.
         </p>
       )}
       {saving && <p className="text-[11px] text-gold/50 italic">A guardar URL...</p>}

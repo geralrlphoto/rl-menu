@@ -221,6 +221,23 @@ function FichaModal({ row, onClose, onSaved }: {
       body: JSON.stringify({ notion_page_id: row.id, editor: next }),
     })
 
+    // 1.b — Sincroniza para evento_equipa (mesmo storage que /eventos-2026/[id])
+    //        para desbloquear o card 'Fotos Editadas' no portal do freelancer
+    if (row.referencia) {
+      try {
+        await fetch('/api/evento-equipa', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            referencia: row.referencia,
+            local: row.nome_noivos ?? '',
+            data_casamento: row.date || null,
+            editor_fotos: next ? [next] : [],
+          }),
+        })
+      } catch { /* não bloqueia */ }
+    }
+
     // 2. Create freelancer_edicao entry (basic — editor uses the Ver Seleção button to see details)
     if (next) {
       try {
@@ -308,6 +325,23 @@ function FichaModal({ row, onClose, onSaved }: {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ notion_page_id: row.id, editor_album: next }),
     })
+
+    // 1.b — Sincroniza para evento_equipa para desbloquear o card 'Maquete Álbum'
+    //        no portal do freelancer (que lê de evento_equipa.editor_album)
+    if (row.referencia) {
+      try {
+        await fetch('/api/evento-equipa', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            referencia: row.referencia,
+            local: row.nome_noivos ?? '',
+            data_casamento: row.date || null,
+            editor_album: next ? [next] : [],
+          }),
+        })
+      } catch { /* não bloqueia */ }
+    }
 
     try {
       const { freelancers } = await fetch('/api/freelancers').then(r => r.json())
