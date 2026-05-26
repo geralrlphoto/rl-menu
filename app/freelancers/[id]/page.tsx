@@ -993,62 +993,65 @@ function FreelancerDetailInner() {
           </div>
 
           {/* ── Prazos de Entrega · Seleção de Fotos (30 dias após evento) ── */}
+          {/*    Largura = mesma de uma coluna do grid acima (Casamentos Editados) */}
           {prazosSelecao.length > 0 && (
-            <div className={`mb-5 rounded-xl px-4 py-3 transition-all ${
-              prazosCriticos.length > 0
-                ? 'prazo-critico-glow border border-red-500/40 bg-gradient-to-br from-red-500/[0.08] to-red-500/[0.02]'
-                : 'border border-amber-500/25 bg-gradient-to-br from-amber-500/[0.04] to-amber-500/[0.01]'
-            }`}>
-              <div className="flex items-center justify-between mb-2 flex-wrap gap-x-3 gap-y-1">
-                <div className="flex items-center gap-2">
-                  <p className={`text-[11px] tracking-[0.35em] uppercase font-semibold ${
-                    prazosCriticos.length > 0 ? 'text-red-300' : 'text-amber-300/90'
-                  }`}>
-                    {prazosCriticos.length > 0 ? '⚠ Prazo Crítico' : '◷ Prazos a Cumprir'} · Seleção de Fotos
-                  </p>
-                  {prazosCriticos.length > 0 && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/20 border border-red-500/40 text-red-200 font-bold uppercase tracking-wider animate-pulse">
-                      {prazosCriticos.length} {prazosCriticos.length === 1 ? 'urgente' : 'urgentes'}
-                    </span>
-                  )}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+              <div className={`rounded-xl px-4 py-3 transition-all ${
+                prazosCriticos.length > 0
+                  ? 'prazo-critico-glow border border-red-500/40 bg-gradient-to-br from-red-500/[0.08] to-red-500/[0.02]'
+                  : 'border border-amber-500/25 bg-gradient-to-br from-amber-500/[0.04] to-amber-500/[0.01]'
+              }`}>
+                <div className="flex items-center justify-between mb-2 flex-wrap gap-x-3 gap-y-1">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <p className={`text-[11px] tracking-[0.3em] uppercase font-semibold truncate ${
+                      prazosCriticos.length > 0 ? 'text-red-300' : 'text-amber-300/90'
+                    }`}>
+                      {prazosCriticos.length > 0 ? '⚠ Crítico' : '◷ Prazos'} · Seleção
+                    </p>
+                    {prazosCriticos.length > 0 && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/20 border border-red-500/40 text-red-200 font-bold uppercase tracking-wider animate-pulse shrink-0">
+                        {prazosCriticos.length}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-white/35 italic" style={{ fontFamily: 'Georgia, serif' }}>30 dias</p>
                 </div>
-                <p className="text-[11px] text-white/35 italic" style={{ fontFamily: 'Georgia, serif' }}>30 dias após cada evento</p>
-              </div>
-              <div className="space-y-1.5">
-                {prazosSelecao.slice(0, 5).map(p => {
-                  const critical = p.daysLeft <= PRAZO_AVISO_DIAS
-                  const expired = p.daysLeft < 0
-                  let deadlineLabel = '—'
-                  try {
-                    if (!isNaN(p.deadline.getTime())) {
-                      const dd = String(p.deadline.getDate()).padStart(2, '0')
-                      deadlineLabel = `${dd} ${MESES[p.deadline.getMonth()]}`
-                    }
-                  } catch { /* keep '—' */ }
-                  return (
-                    <button key={p.c.id} onClick={() => setTab('casamentos')}
-                      className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg border transition-all text-left ${
-                        critical
-                          ? 'border-red-500/35 bg-red-500/[0.05] hover:bg-red-500/[0.1]'
-                          : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.04]'
-                      }`}>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[13px] text-white truncate font-medium leading-tight">{p.c.local}</p>
-                        <p className="text-[11px] text-white/45 italic mt-0.5 leading-tight" style={{ fontFamily: 'Georgia, serif' }}>
-                          Evento: {fmtDate(p.c.data_casamento).split(' · ')[0]} · Prazo até {deadlineLabel}
-                        </p>
-                      </div>
-                      <div className={`flex items-baseline gap-1.5 shrink-0 ${critical ? 'text-red-300' : 'text-amber-300/90'}`}>
-                        <p className="text-xl font-light leading-none tabular-nums" style={{ fontFamily: 'Georgia, serif' }}>
-                          {expired ? `+${Math.abs(p.daysLeft)}` : p.daysLeft}
-                        </p>
-                        <p className="text-[10px] tracking-[0.25em] uppercase font-semibold">
-                          {expired ? 'atraso' : (p.daysLeft === 1 ? 'dia' : 'dias')}
-                        </p>
-                      </div>
-                    </button>
-                  )
-                })}
+                <div className="space-y-1.5">
+                  {prazosSelecao.slice(0, 5).map(p => {
+                    const critical = p.daysLeft <= PRAZO_AVISO_DIAS
+                    const expired = p.daysLeft < 0
+                    let deadlineLabel = '—'
+                    try {
+                      if (!isNaN(p.deadline.getTime())) {
+                        const dd = String(p.deadline.getDate()).padStart(2, '0')
+                        deadlineLabel = `${dd} ${MESES[p.deadline.getMonth()]}`
+                      }
+                    } catch { /* keep '—' */ }
+                    return (
+                      <button key={p.c.id} onClick={() => setTab('casamentos')}
+                        className={`w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg border transition-all text-left ${
+                          critical
+                            ? 'border-red-500/35 bg-red-500/[0.05] hover:bg-red-500/[0.1]'
+                            : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.04]'
+                        }`}>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[12px] text-white truncate font-medium leading-tight">{p.c.local}</p>
+                          <p className="text-[10px] text-white/45 italic leading-tight" style={{ fontFamily: 'Georgia, serif' }}>
+                            até {deadlineLabel}
+                          </p>
+                        </div>
+                        <div className={`flex items-baseline gap-1 shrink-0 ${critical ? 'text-red-300' : 'text-amber-300/90'}`}>
+                          <p className="text-lg font-light leading-none tabular-nums" style={{ fontFamily: 'Georgia, serif' }}>
+                            {expired ? `+${Math.abs(p.daysLeft)}` : p.daysLeft}
+                          </p>
+                          <p className="text-[9px] tracking-[0.2em] uppercase font-semibold">
+                            {expired ? 'atr.' : 'd'}
+                          </p>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
             </div>
           )}
