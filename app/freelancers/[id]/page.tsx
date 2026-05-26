@@ -3428,6 +3428,28 @@ function UrlEntryCard({
     : null
   const hasUrl = url.trim().length > 0
 
+  // ── Aviso de prazo (apenas para Seleção de Fotos: 30 dias após o evento) ──
+  const deadlineNotice = (() => {
+    if (field.tipo !== 'selecao' || sentAt || !casamentoData) return null
+    try {
+      const dateStr = String(casamentoData).slice(0, 10)
+      const parts = dateStr.split('-').map(Number)
+      if (parts.length !== 3 || parts.some(n => !Number.isFinite(n))) return null
+      const [y, m, d] = parts
+      const dEvento = new Date(y, m - 1, d)
+      if (isNaN(dEvento.getTime())) return null
+      const deadline = new Date(dEvento.getTime() + 30 * 86400000)
+      const today = new Date(); today.setHours(0, 0, 0, 0)
+      const daysLeft = Math.ceil((deadline.getTime() - today.getTime()) / 86400000)
+      const dd = String(deadline.getDate()).padStart(2, '0')
+      const deadlineStr = `${dd} ${MESES[deadline.getMonth()]} ${deadline.getFullYear()}`
+      const expired = daysLeft < 0
+      const critical = daysLeft <= 5
+      const urgent = daysLeft <= 15
+      return { daysLeft, deadlineStr, expired, critical, urgent }
+    } catch { return null }
+  })()
+
   async function saveUrl(newVal: string) {
     if (newVal === initialUrl) return
     setSaving(true)
@@ -3484,6 +3506,33 @@ function UrlEntryCard({
           </a>
         )}
       </div>
+
+      {/* Aviso de prazo (Seleção de Fotos: 30 dias após o evento) */}
+      {deadlineNotice && (
+        <div className={`flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg border ${
+          deadlineNotice.critical
+            ? 'border-red-500/40 bg-red-500/[0.08]'
+            : deadlineNotice.urgent
+              ? 'border-amber-500/30 bg-amber-500/[0.06]'
+              : 'border-gold/20 bg-gold/[0.04]'
+        }`}>
+          <span className={`text-[11px] tracking-wider uppercase font-semibold ${
+            deadlineNotice.critical ? 'text-red-300' : deadlineNotice.urgent ? 'text-amber-300' : 'text-gold/85'
+          }`}>
+            ⏱ Prazo {deadlineNotice.deadlineStr}
+          </span>
+          <span className={`text-[11px] font-bold tabular-nums whitespace-nowrap ${
+            deadlineNotice.critical ? 'text-red-300' : deadlineNotice.urgent ? 'text-amber-300' : 'text-gold/85'
+          }`}>
+            {deadlineNotice.expired
+              ? `+${Math.abs(deadlineNotice.daysLeft)}d atraso`
+              : deadlineNotice.daysLeft === 0
+                ? 'HOJE'
+                : `${deadlineNotice.daysLeft}d`}
+          </span>
+        </div>
+      )}
+
       <input
         type="url"
         value={url}
