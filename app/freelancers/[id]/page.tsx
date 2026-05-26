@@ -3053,12 +3053,56 @@ function PagamentosAdminTab({ freelancerId, pagamentos, casamentos, onRefresh }:
   const [saving, setSaving]   = useState(false)
   const [editId, setEditId]   = useState<string | null>(null)
   const [editForm, setEditForm] = useState<PagaFormValues | null>(null)
+  const [filter, setFilter] = useState<'Todos'|'Recebidos'|'A receber'|'Atrasados'|'Cancelados'>('Todos')
 
-  const totalPago     = pagamentos.filter(p => p.status === 'PAGO').reduce((s, p) => s + (p.valor ?? 0), 0)
-  const totalPendente = pagamentos.filter(p => p.status !== 'PAGO').reduce((s, p) => s + (p.valor ?? 0), 0)
-  const totalGeral    = pagamentos.reduce((s, p) => s + (p.valor ?? 0), 0)
+  function fmtEuro(v: number) { return `${v.toFixed(2).replace('.', ',')} €` }
 
-  function fmtEuro(v: number) { return `${v.toFixed(2).replace('.', ',')}€` }
+  // ── KPIs ──────────────────────────────────────────────────────────────────
+  const today = new Date(); today.setHours(0,0,0,0)
+  const year = today.getFullYear()
+  const month = today.getMonth()
+  const totalPago = pagamentos.filter(p => p.status === 'PAGO').reduce((s, p) => s + (p.valor ?? 0), 0)
+  const aReceber  = pagamentos.filter(p => p.status === 'PENDENTE').reduce((s, p) => s + (p.valor ?? 0), 0)
+  const recebidoMes = pagamentos.filter(p => {
+    if (p.status !== 'PAGO' || !p.data_pago) return false
+    const d = new Date(p.data_pago)
+    return d.getFullYear() === year && d.getMonth() === month
+  }).reduce((s, p) => s + (p.valor ?? 0), 0)
+  const atrasados = pagamentos.filter(p => {
+    if (p.status === 'PAGO' || p.status === 'CANCELADO') return false
+    if (!p.data_prevista) return false
+    return new Date(p.data_prevista) < today
+  })
+  const atrasadosTotal = atrasados.reduce((s, p) => s + (p.valor ?? 0), 0)
+  const totalAnual = pagamentos.filter(p => {
+    if (p.status !== 'PAGO' || !p.data_pago) return false
+    return new Date(p.data_pago).getFullYear() === year
+  }).reduce((s, p) => s + (p.valor ?? 0), 0)
+  const isAtrasado = (p: Pagamento) => atrasados.some(a => a.id === p.id)
+
+  // ── Filter ────────────────────────────────────────────────────────────────
+  const filtered = pagamentos.filter(p => {
+    if (filter === 'Todos') return true
+    if (filter === 'Recebidos') return p.status === 'PAGO'
+    if (filter === 'A receber') return p.status === 'PENDENTE' && !isAtrasado(p)
+    if (filter === 'Atrasados') return isAtrasado(p)
+    if (filter === 'Cancelados') return p.status === 'CANCELADO'
+    return true
+  })
+
+  // ── Próximos recebimentos (pendentes ordenados por data_prevista) ─────────
+  const proximos = pagamentos
+    .filter(p => p.status === 'PENDENTE' && p.data_prevista && !isAtrasado(p))
+    .sort((a, b) => (a.data_prevista ?? '').localeCompare(b.data_prevista ?? ''))
+    .slice(0, 5)
+
+  // ── Distribuição por status ──────────────────────────────────────────────
+  const aReceberPuros = pagamentos.filter(p => p.status === 'PENDENTE' && !isAtrasado(p))
+  const aReceberTotalPuros = aReceberPuros.reduce((s, p) => s + (p.valor ?? 0), 0)
+  const totalProjetos = totalPago + aReceberTotalPuros + atrasadosTotal
+  const pct = (v: number) => totalProjetos > 0 ? Math.round((v / totalProjetos) * 100) : 0
+
+  const mesAtualLabel = new Date(year, month, 1).toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' })
 
   async function handleAdd() {
     if (!form.descricao.trim()) return
@@ -3109,6 +3153,7 @@ function PagamentosAdminTab({ freelancerId, pagamentos, casamentos, onRefresh }:
   async function handleDelete(id: string) {
     if (!confirm('Remover pagamento?')) return
     await fetch(`/api/freelancer-pagamentos?id=${id}`, { method: 'DELETE' })
+    setEditId(null); setEditForm(null)
     onRefresh()
   }
 
@@ -3122,98 +3167,264 @@ function PagamentosAdminTab({ freelancerId, pagamentos, casamentos, onRefresh }:
   }
 
   return (
-    <div className="space-y-4">
-      {/* Resumo */}
-      <div className="grid grid-cols-3 gap-2">
-        {[
-          { label: 'Total', val: totalGeral, cls: 'text-white/70' },
-          { label: 'Pago', val: totalPago, cls: 'text-emerald-400' },
-          { label: 'Pendente', val: totalPendente, cls: 'text-yellow-400' },
-        ].map(({ label, val, cls }) => (
-          <div key={label} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-3">
-            <p className="text-[14px] tracking-widest uppercase text-white/25 mb-0.5">{label}</p>
-            <p className={`text-lg font-light ${cls}`}>{fmtEuro(val)}</p>
+    <div className="space-y-6">
+      {/* ── HERO ────────────────────────────────────────────────────────── */}
+      <div className="relative overflow-hidden rounded-3xl border border-white/[0.08]"
+        style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.6)' }}>
+        <div className="absolute inset-0 z-0">
+          <img src="https://images.unsplash.com/photo-1606800052052-a08af7148866?w=1600&h=400&fit=crop"
+            alt="" className="w-full h-full object-cover scale-105" style={{ filter: 'blur(2px)' }} />
+        </div>
+        <div className="absolute inset-0 z-[1]"
+          style={{ background: 'linear-gradient(90deg, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.85) 40%, rgba(10,10,10,0.5) 70%, rgba(10,10,10,0.15) 100%)' }} />
+        <div className="relative z-10 flex items-start justify-between gap-6 px-8 sm:px-12 py-10">
+          <div className="max-w-xl">
+            <p className="text-[12px] tracking-[0.5em] text-gold/70 uppercase mb-2">Sincronizado com Casamentos</p>
+            <h1 className="text-4xl sm:text-5xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
+              PAGA<span className="italic text-gold">mentos</span>
+            </h1>
+            <div className="mt-4 h-px w-16 bg-gradient-to-r from-gold/70 to-transparent" />
+            <p className="text-[14px] text-white/55 mt-4 leading-relaxed max-w-md">
+              Acompanha os pagamentos sincronizados com os casamentos atribuídos a este freelancer.
+            </p>
+            <div className="flex flex-wrap items-center gap-3 mt-4">
+              <span className="text-[11px] tracking-widest uppercase px-2.5 py-1 rounded-full bg-white/[0.05] border border-white/10 text-white/55">
+                {pagamentos.filter(p => p.status === 'PENDENTE').length} faturas pendentes
+              </span>
+              {atrasados.length > 0 && (
+                <span className="text-[11px] tracking-widest uppercase px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/25 text-red-300">
+                  {atrasados.length} em atraso
+                </span>
+              )}
+            </div>
+          </div>
+          <button onClick={() => { setShowAdd(true); setEditId(null) }}
+            className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gold text-black text-[13px] font-semibold tracking-wider hover:bg-gold/90 transition-all shrink-0"
+            style={{ boxShadow: '0 0 24px -4px rgba(201,164,92,0.5)' }}>
+            <span className="text-lg leading-none">+</span> Novo Pagamento
+          </button>
+        </div>
+      </div>
+
+      {/* ── KPI cards ───────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {([
+          { label: 'Recebido este Mês', value: fmtEuro(recebidoMes), icon: '↓', sub: mesAtualLabel },
+          { label: 'A Receber',         value: fmtEuro(aReceberTotalPuros), icon: '◷', sub: `${aReceberPuros.length} pagamentos` },
+          { label: 'Atrasados',         value: fmtEuro(atrasadosTotal),     icon: '!', sub: `${atrasados.length} pagamentos`, red: true },
+          { label: 'Total Anual',       value: fmtEuro(totalAnual),         icon: '€', sub: String(year) },
+        ] as const).map(k => (
+          <div key={k.label} className="group relative overflow-hidden rounded-2xl border border-white/[0.08] p-5 hover:border-gold/30 transition-all"
+            style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.6), rgba(11,11,11,0.85))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
+            <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{ background: 'radial-gradient(circle, rgba(201,164,92,0.18), transparent 70%)' }} />
+            <div className="relative flex items-center gap-4">
+              <div className={`w-14 h-14 rounded-2xl border flex items-center justify-center text-2xl ${(k as any).red ? 'border-red-500/30 text-red-300' : 'border-gold/30 text-gold'}`}
+                style={{ background: (k as any).red
+                  ? 'radial-gradient(circle at 30% 30%, rgba(239,68,68,0.15), rgba(239,68,68,0.04))'
+                  : 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.15), rgba(201,164,92,0.04))',
+                  boxShadow: (k as any).red ? '0 0 20px -4px rgba(239,68,68,0.25)' : '0 0 22px -4px rgba(201,164,92,0.25)' }}>
+                {k.icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-1">{k.label}</p>
+                <p className="text-2xl font-bold text-white leading-none">{k.value}</p>
+                <p className="text-[11px] text-white/35 mt-1.5 capitalize">{k.sub}</p>
+              </div>
+            </div>
           </div>
         ))}
       </div>
 
-      <div className="flex justify-end">
-        <button onClick={() => { setShowAdd(true); setEditId(null) }}
-          className="px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-[14px] font-semibold tracking-widest hover:bg-gold/20 transition-all uppercase">
-          + Pagamento
-        </button>
-      </div>
-
+      {/* ── Add form (inline expansível) ────────────────────────────────── */}
       {showAdd && (
-        <div className="bg-white/[0.02] border border-gold/20 rounded-2xl p-5 space-y-3">
-          <p className="text-[14px] tracking-[0.3em] text-gold/60 uppercase">Novo Pagamento</p>
+        <div className="rounded-2xl p-5 space-y-3"
+          style={{ background: 'linear-gradient(135deg, rgba(201,164,92,0.06), rgba(11,11,11,0.85))', border: '1px solid rgba(201,164,92,0.30)', boxShadow: '0 0 24px -8px rgba(201,164,92,0.30)' }}>
+          <p className="text-[12px] tracking-[0.4em] text-gold uppercase">Novo Pagamento</p>
           <PagaForm f={form} setF={setForm} casamentos={casamentos} />
           <div className="flex justify-end gap-2 pt-1">
-            <button onClick={() => setShowAdd(false)} className="px-3 py-1.5 rounded-lg text-[14px] border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
+            <button onClick={() => setShowAdd(false)} className="px-4 py-2 rounded-lg text-[12px] tracking-widest uppercase border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
             <button onClick={handleAdd} disabled={saving || !form.descricao.trim()}
-              className="px-4 py-1.5 rounded-lg text-[14px] bg-gold text-black font-semibold hover:bg-gold/80 disabled:opacity-40 transition-all">
-              {saving ? '...' : 'Guardar'}
+              className="px-5 py-2 rounded-lg text-[12px] tracking-widest uppercase bg-gold text-black font-semibold hover:bg-gold/85 disabled:opacity-40 transition-all">
+              {saving ? '…' : 'Guardar'}
             </button>
           </div>
         </div>
       )}
 
-      {pagamentos.length === 0 && !showAdd && (
-        <p className="text-center py-8 text-white/20 text-[14px] tracking-widest">Sem pagamentos registados.</p>
-      )}
+      {/* ── Main grid: tabela + side panels ─────────────────────────────── */}
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-4">
+        <div className="space-y-4">
+          {/* Filter tabs */}
+          <div className="flex flex-wrap gap-2">
+            {(['Todos','Recebidos','A receber','Atrasados','Cancelados'] as const).map(f => (
+              <button key={f} onClick={() => setFilter(f)}
+                className={`px-4 py-2 rounded-xl text-[11px] tracking-[0.25em] uppercase border transition-all ${
+                  filter === f
+                    ? 'bg-gold/15 border-gold/40 text-gold font-semibold'
+                    : 'bg-white/[0.02] border-white/10 text-white/50 hover:text-white/85 hover:border-white/25'
+                }`}>{f}</button>
+            ))}
+          </div>
 
-      {pagamentos.map(p => (
-        editId === p.id && editForm ? (
-          <div key={p.id} className="bg-white/[0.02] border border-white/20 rounded-2xl p-5 space-y-3">
-            <p className={labelCls}>Editar</p>
+          {/* Tabela */}
+          <div className="rounded-2xl border border-white/[0.06] overflow-hidden"
+            style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.35), rgba(11,11,11,0.65))' }}>
+            {filtered.length === 0 ? (
+              <p className="text-center py-12 text-white/30 text-[11px] tracking-[0.3em] uppercase">
+                {pagamentos.length === 0 ? 'Sem pagamentos registados' : 'Sem resultados neste filtro'}
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[700px]">
+                  <thead>
+                    <tr className="border-b border-white/[0.06] bg-black/20">
+                      <th className="text-left px-4 py-3 text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium">Casamento</th>
+                      <th className="text-left px-3 py-3 text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium">Descrição</th>
+                      <th className="text-right px-3 py-3 text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium">Valor</th>
+                      <th className="text-left px-3 py-3 text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium">Estado</th>
+                      <th className="text-left px-3 py-3 text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium">Data</th>
+                      <th className="px-3 py-3 text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium text-right">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map(p => {
+                      const c = p.casamento_id ? casamentos.find(c => c.id === p.casamento_id) : null
+                      const atrasado = isAtrasado(p)
+                      return (
+                        <tr key={p.id} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors group">
+                          <td className="px-4 py-3 max-w-[200px]">
+                            {c ? (
+                              <div>
+                                <p className="text-[13px] text-white/85 font-medium truncate">{c.local}</p>
+                                {c.data_casamento && <p className="text-[10px] text-white/35">{c.data_casamento}</p>}
+                              </div>
+                            ) : (
+                              <p className="text-[12px] text-white/25 italic">—</p>
+                            )}
+                          </td>
+                          <td className="px-3 py-3 text-[13px] text-white/75">
+                            {p.descricao}
+                            {p.notas && <p className="text-[10px] text-white/30 italic mt-0.5 truncate max-w-[200px]">{p.notas}</p>}
+                          </td>
+                          <td className="px-3 py-3 text-right text-[13px] text-white/85 font-mono whitespace-nowrap">{p.valor != null ? fmtEuro(p.valor) : '—'}</td>
+                          <td className="px-3 py-3">
+                            {p.status === 'PAGO' ? (
+                              <span className="text-[10px] px-3 py-1 rounded-full border bg-emerald-500/15 text-emerald-300 border-emerald-500/30 tracking-widest uppercase font-semibold">✓ Pago</span>
+                            ) : p.status === 'CANCELADO' ? (
+                              <span className="text-[10px] px-3 py-1 rounded-full border bg-white/[0.04] text-white/40 border-white/15 tracking-widest uppercase font-semibold">Cancelado</span>
+                            ) : atrasado ? (
+                              <button onClick={() => quickPago(p.id)}
+                                className="text-[10px] px-3 py-1 rounded-full border bg-red-500/15 text-red-300 border-red-500/30 tracking-widest uppercase font-semibold hover:bg-emerald-500/15 hover:text-emerald-300 hover:border-emerald-500/30 transition-all">
+                                Atrasado
+                              </button>
+                            ) : (
+                              <button onClick={() => quickPago(p.id)}
+                                className="text-[10px] px-3 py-1 rounded-full border bg-yellow-500/15 text-yellow-300 border-yellow-500/30 tracking-widest uppercase font-semibold hover:bg-emerald-500/15 hover:text-emerald-300 hover:border-emerald-500/30 transition-all">
+                                {p.status}
+                              </button>
+                            )}
+                          </td>
+                          <td className="px-3 py-3 text-[12px] whitespace-nowrap">
+                            {p.data_pago ? <span className="text-emerald-400/70">{p.data_pago}</span> :
+                              p.data_prevista ? <span className={atrasado ? 'text-red-400' : 'text-white/50'}>{p.data_prevista}</span> :
+                              <span className="text-white/20">—</span>}
+                          </td>
+                          <td className="px-3 py-3 text-right">
+                            <button onClick={() => {
+                                setEditId(p.id)
+                                setEditForm({ casamento_id: p.casamento_id ?? '', descricao: p.descricao, valor: p.valor?.toString() ?? '', data_prevista: p.data_prevista ?? '', data_pago: p.data_pago ?? '', status: p.status, notas: p.notas ?? '' })
+                                setShowAdd(false)
+                              }}
+                              className="text-white/25 hover:text-gold transition-colors text-xs px-2"
+                              title="Editar">⋮</button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Side panels ──────────────────────────────────────────────── */}
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-white/[0.06] p-5"
+            style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.35), rgba(11,11,11,0.65))' }}>
+            <h3 className="text-[13px] font-semibold text-white mb-4">Próximos Recebimentos</h3>
+            {proximos.length === 0 ? (
+              <p className="text-[11px] text-white/30 italic text-center py-3">Sem pagamentos a receber.</p>
+            ) : (
+              <div className="space-y-2">
+                {proximos.map(p => {
+                  const c = p.casamento_id ? casamentos.find(c => c.id === p.casamento_id) : null
+                  return (
+                    <div key={p.id} className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-white/[0.02] border border-white/[0.03]">
+                      <div className="min-w-0">
+                        <p className="text-[12px] text-white/80 truncate">{c?.local ?? p.descricao}</p>
+                        <p className="text-[10px] text-white/35">{p.data_prevista}</p>
+                      </div>
+                      <p className="text-[13px] text-gold font-mono whitespace-nowrap">{fmtEuro(p.valor ?? 0)}</p>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-2xl border border-white/[0.06] p-5"
+            style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.35), rgba(11,11,11,0.65))' }}>
+            <h3 className="text-[13px] font-semibold text-white mb-4">Distribuição</h3>
+            <div className="space-y-3">
+              {([
+                { label: 'Recebidos', dotCls: 'bg-emerald-400', value: totalPago,           pctVal: pct(totalPago) },
+                { label: 'A receber', dotCls: 'bg-yellow-400',  value: aReceberTotalPuros,  pctVal: pct(aReceberTotalPuros) },
+                { label: 'Atrasados', dotCls: 'bg-red-400',     value: atrasadosTotal,      pctVal: pct(atrasadosTotal) },
+              ] as const).map(d => (
+                <div key={d.label} className="space-y-1">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${d.dotCls}`}></span>
+                      <span className="text-white/65">{d.label}</span>
+                    </span>
+                    <span className="text-white/85 font-mono">{fmtEuro(d.value)}</span>
+                  </div>
+                  <div className="h-1 rounded-full bg-white/[0.05] overflow-hidden">
+                    <div className={`h-full ${d.dotCls}/70`} style={{ width: `${d.pctVal}%`, background: d.dotCls === 'bg-emerald-400' ? 'rgba(52,211,153,0.7)' : d.dotCls === 'bg-yellow-400' ? 'rgba(250,204,21,0.7)' : 'rgba(248,113,113,0.7)' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Edit modal ──────────────────────────────────────────────────── */}
+      {editId && editForm && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => { setEditId(null); setEditForm(null) }}>
+          <div className="bg-[#0e0b07] border border-gold/20 rounded-2xl p-6 max-w-lg w-full max-h-[85vh] overflow-y-auto shadow-2xl"
+            style={{ boxShadow: '0 30px 60px -10px rgba(0,0,0,0.7), 0 0 40px -10px rgba(201,164,92,0.25)' }}
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/[0.06]">
+              <p className="text-[12px] tracking-[0.4em] text-gold uppercase">Editar Pagamento</p>
+              <button onClick={() => { setEditId(null); setEditForm(null) }} className="text-white/40 hover:text-white/85 text-base w-7 h-7 flex items-center justify-center">✕</button>
+            </div>
             <PagaForm f={editForm} setF={setEditForm as any} casamentos={casamentos} />
-            <div className="flex justify-between pt-1">
-              <button onClick={() => handleDelete(p.id)} className="text-[14px] text-red-400/50 hover:text-red-400 transition-colors">✕ Remover</button>
+            <div className="flex justify-between pt-4 mt-3 border-t border-white/[0.06]">
+              <button onClick={() => handleDelete(editId)} className="text-[11px] text-red-400/60 hover:text-red-400 tracking-widest uppercase transition-colors">✕ Remover</button>
               <div className="flex gap-2">
-                <button onClick={() => { setEditId(null); setEditForm(null) }} className="px-3 py-1.5 rounded-lg text-[14px] border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
+                <button onClick={() => { setEditId(null); setEditForm(null) }} className="px-4 py-2 rounded-lg text-[12px] tracking-widest uppercase border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
                 <button onClick={handleEdit} disabled={saving}
-                  className="px-4 py-1.5 rounded-lg text-[14px] bg-gold text-black font-semibold hover:bg-gold/80 disabled:opacity-40 transition-all">
-                  {saving ? '...' : 'Guardar'}
+                  className="px-5 py-2 rounded-lg text-[12px] tracking-widest uppercase bg-gold text-black font-semibold hover:bg-gold/85 disabled:opacity-40 transition-all">
+                  {saving ? '…' : 'Guardar'}
                 </button>
               </div>
             </div>
           </div>
-        ) : (
-          <div key={p.id} className="flex items-center gap-4 px-4 py-3 rounded-xl border border-white/[0.06] bg-white/[0.02] group">
-            <div className="flex-1 min-w-0">
-              {p.casamento_id && (() => { const c = casamentos.find(c => c.id === p.casamento_id); return c ? <p className="text-[14px] tracking-[0.2em] text-gold/50 uppercase mb-0.5">📍 {c.local}{c.data_casamento ? ` · ${c.data_casamento}` : ''}</p> : null })()}
-              <p className="text-[14px] text-white/80">{p.descricao}</p>
-              <div className="flex flex-wrap gap-x-3 mt-0.5">
-                {p.data_prevista && <span className="text-[14px] text-white/30">Previsto: {fmtDate(p.data_prevista).split(' · ')[0]}</span>}
-                {p.data_pago && <span className="text-[14px] text-emerald-400/60">Pago: {fmtDate(p.data_pago).split(' · ')[0]}</span>}
-                {p.notas && <span className="text-[14px] text-white/20 italic">{p.notas}</span>}
-              </div>
-            </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <span className="text-base font-light text-white/70">{p.valor != null ? fmtEuro(p.valor) : '—'}</span>
-              {p.status !== 'PAGO' ? (
-                <button onClick={() => quickPago(p.id)}
-                  className="text-[14px] px-2.5 py-1 rounded-full border bg-yellow-500/15 text-yellow-400 border-yellow-500/30 hover:bg-emerald-500/15 hover:text-emerald-400 hover:border-emerald-500/30 tracking-widest uppercase font-medium transition-all">
-                  {p.status}
-                </button>
-              ) : (
-                <span className="text-[14px] px-2.5 py-1 rounded-full border bg-emerald-500/15 text-emerald-400 border-emerald-500/30 tracking-widest uppercase font-medium">
-                  PAGO ✓
-                </span>
-              )}
-              <button
-                onClick={() => {
-                  setEditId(p.id)
-                  setEditForm({ casamento_id: p.casamento_id ?? '', descricao: p.descricao, valor: p.valor?.toString() ?? '', data_prevista: p.data_prevista ?? '', data_pago: p.data_pago ?? '', status: p.status, notas: p.notas ?? '' })
-                  setShowAdd(false)
-                }}
-                className="text-white/20 hover:text-white/60 transition-colors opacity-0 group-hover:opacity-100">
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-              </button>
-            </div>
-          </div>
-        )
-      ))}
+        </div>
+      )}
     </div>
   )
 }
