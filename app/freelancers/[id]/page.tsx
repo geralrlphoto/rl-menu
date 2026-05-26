@@ -228,6 +228,55 @@ export default function FreelancerDetailPage() {
   const isVideografo = freelancer?.status === 'VIDEOGRAFO'
   const isFotografo  = freelancer?.status === 'FOTOGRAFO'
 
+  // ── Prazos de entrega (Seleção de Fotos: 30 dias após o evento) ─────
+  const PRAZO_SELECAO_DIAS = 30
+  const PRAZO_AVISO_DIAS = 5
+  const prazosSelecao = (() => {
+    const today = new Date(); today.setHours(0,0,0,0)
+    return casamentos
+      .filter(c => c.data_casamento && !c.url_selecao_enviado_em)
+      .map(c => {
+        const [y, m, d] = (c.data_casamento ?? '').split('-').map(Number)
+        const dEvento = new Date(y, m - 1, d)
+        if (dEvento.getTime() > today.getTime()) return null            // evento ainda não aconteceu
+        const deadline = new Date(dEvento.getTime() + PRAZO_SELECAO_DIAS * 86400000)
+        const daysLeft = Math.ceil((deadline.getTime() - today.getTime()) / 86400000)
+        return { c, deadline, daysLeft }
+      })
+      .filter((x): x is { c: Casamento; deadline: Date; daysLeft: number } => x !== null)
+      .sort((a, b) => a.daysLeft - b.daysLeft)
+  })()
+  const prazosCriticos = prazosSelecao.filter(p => p.daysLeft <= PRAZO_AVISO_DIAS)
+
+  // Criar notificação automática (idempotente) sempre que um prazo entrar em estado crítico
+  useEffect(() => {
+    if (!freelancer?.id || prazosCriticos.length === 0) return
+    prazosCriticos.forEach(async (p) => {
+      const tituloBase = `⚠ Prazo Seleção de Fotos · ${p.c.local}`
+      const exists = notificacoes.some(n => n.titulo.startsWith('⚠ Prazo Seleção de Fotos') && n.titulo.includes(p.c.local))
+      if (exists) return
+      const expired = p.daysLeft < 0
+      const mensagem = expired
+        ? `O prazo de envio da Seleção de Fotos de ${p.c.local} (30 dias após o evento) expirou há ${Math.abs(p.daysLeft)} dia${Math.abs(p.daysLeft) === 1 ? '' : 's'}.`
+        : `Faltam ${p.daysLeft} dia${p.daysLeft === 1 ? '' : 's'} para o prazo de envio da Seleção de Fotos de ${p.c.local}. (Prazo: 30 dias após o evento)`
+      try {
+        await fetch('/api/freelancer-notificacoes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            freelancer_id: freelancer.id,
+            titulo: tituloBase,
+            mensagem,
+            tipo: 'prazo_selecao',
+            lida: false,
+          }),
+        })
+      } catch { /* ignora — re-tenta no próximo render */ }
+    })
+    // refresca notificações depois de criar (carrega() é assíncrono e pode disparar loop;
+    // basta deixar o utilizador ver na próxima refrescagem natural)
+  }, [prazosCriticos.length, freelancer?.id])
+
   function handleIntroHomeChange(val: string) {
     setIntroHome(val)
     setIntroHomeStatus('saving')
@@ -324,6 +373,11 @@ export default function FreelancerDetailPage() {
           50%      { box-shadow: 0 0 36px 0 rgba(201,164,92,0.55), 0 0 80px -4px rgba(201,164,92,0.35), inset 0 0 0 1px rgba(201,164,92,0.55); }
         }
         .prox-casamento-glow { animation: proxCasamentoGlow 3s ease-in-out infinite; }
+        @keyframes prazoCriticoGlow {
+          0%, 100% { box-shadow: 0 0 24px -4px rgba(239,68,68,0.32), 0 0 60px -10px rgba(239,68,68,0.20), inset 0 0 0 1px rgba(239,68,68,0.35); }
+          50%      { box-shadow: 0 0 40px 0 rgba(239,68,68,0.65), 0 0 90px -4px rgba(239,68,68,0.40), inset 0 0 0 1px rgba(239,68,68,0.65); }
+        }
+        .prazo-critico-glow { animation: prazoCriticoGlow 2.5s ease-in-out infinite; }
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(12px); }
           to   { opacity: 1; transform: translateY(0); }
@@ -583,6 +637,60 @@ export default function FreelancerDetailPage() {
                   <p className="text-5xl font-light leading-none tabular-nums" style={{ fontFamily: 'Georgia, serif' }}>{dtuProximo === 0 ? 'HOJE' : dtuProximo}</p>
                   <p className="text-[11px] tracking-[0.4em] uppercase mt-1.5 font-light">{dtuProximo === 0 ? '' : dtuProximo === 1 ? 'dia' : 'dias'}</p>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Prazos de Entrega · Seleção de Fotos (30 dias após evento) ── */}
+          {prazosSelecao.length > 0 && (
+            <div className={`fade-in-1 mb-6 rounded-2xl p-5 sm:p-6 transition-all ${
+              prazosCriticos.length > 0
+                ? 'prazo-critico-glow border border-red-500/40 bg-gradient-to-br from-red-500/[0.10] to-red-500/[0.02]'
+                : 'border border-amber-500/25 bg-gradient-to-br from-amber-500/[0.05] to-amber-500/[0.01]'
+            }`}>
+              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <div className="flex items-center gap-3">
+                  <p className={`text-[12px] tracking-[0.4em] uppercase font-semibold ${
+                    prazosCriticos.length > 0 ? 'text-red-300' : 'text-amber-300/90'
+                  }`}>
+                    {prazosCriticos.length > 0 ? '⚠ Prazo Crítico' : '◷ Prazos a Cumprir'} · Seleção de Fotos
+                  </p>
+                  {prazosCriticos.length > 0 && (
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-red-500/20 border border-red-500/40 text-red-200 font-bold uppercase tracking-wider animate-pulse">
+                      {prazosCriticos.length} {prazosCriticos.length === 1 ? 'urgente' : 'urgentes'}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[12px] text-white/40 italic" style={{ fontFamily: 'Georgia, serif' }}>30 dias após cada evento</p>
+              </div>
+              <div className="space-y-2">
+                {prazosSelecao.slice(0, 5).map(p => {
+                  const critical = p.daysLeft <= PRAZO_AVISO_DIAS
+                  const expired = p.daysLeft < 0
+                  return (
+                    <button key={p.c.id} onClick={() => setTab('casamentos')}
+                      className={`w-full flex items-center justify-between gap-3 p-3 rounded-xl border transition-all text-left ${
+                        critical
+                          ? 'border-red-500/35 bg-red-500/[0.06] hover:bg-red-500/[0.1]'
+                          : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.04]'
+                      }`}>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[14px] text-white truncate font-medium">{p.c.local}</p>
+                        <p className="text-[12px] text-white/50 italic mt-0.5" style={{ fontFamily: 'Georgia, serif' }}>
+                          Evento: {fmtDate(p.c.data_casamento).split(' · ')[0]} · Prazo até {p.deadline.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })}
+                        </p>
+                      </div>
+                      <div className={`text-right shrink-0 ${critical ? 'text-red-300' : 'text-amber-300/90'}`}>
+                        <p className="text-2xl font-light leading-none tabular-nums" style={{ fontFamily: 'Georgia, serif' }}>
+                          {expired ? `+${Math.abs(p.daysLeft)}` : p.daysLeft}
+                        </p>
+                        <p className="text-[10px] tracking-[0.3em] uppercase mt-1 font-semibold">
+                          {expired ? 'atraso' : (p.daysLeft === 1 ? 'dia' : 'dias')}
+                        </p>
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )}
