@@ -3217,24 +3217,9 @@ function UrlEntryCard({
     if (!url.trim()) return
     setSending(true)
     try {
+      // 1) Garantir URL guardada
       await saveUrl(url.trim())
-      const res = await fetch('/api/send-trabalho-enviado', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tipo: field.tipo,
-          url: url.trim(),
-          freelancer_nome: freelancerNome,
-          casamento_local: casamentoLocal,
-          casamento_data: casamentoData,
-          casamento_id: casamentoId,
-        }),
-      })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        alert('Erro ao enviar email: ' + (err.error ?? 'desconhecido'))
-        return
-      }
+      // 2) Guardar timestamp do envio (aparece no sino do admin)
       const now = new Date().toISOString()
       await fetch('/api/freelancer-casamentos', {
         method: 'PATCH',
