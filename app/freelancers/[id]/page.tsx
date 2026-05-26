@@ -1626,8 +1626,8 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
             {expandedId === c.id && (
               <div className="relative px-5 pb-5 pt-4 border-t border-gold/15 animate-in fade-in slide-in-from-top-1 space-y-4">
                 {/* Helper text */}
-                <p className="text-[11px] text-white/40 italic leading-relaxed">
-                  Sempre que tiveres uma edição pronta, cola aqui o link para ficar guardado. Depois clica em <span className="text-gold/80 font-semibold not-italic">Enviar Notificação</span> para o admin receber um email com o trabalho. A data de envio fica registada e não desaparece.
+                <p className="text-[13px] text-white/55 italic leading-relaxed">
+                  Sempre que tiveres uma edição pronta, cola aqui o link para ficar guardado. Depois clica em <span className="text-gold/90 font-semibold not-italic">Enviar Notificação</span> para o admin receber um email com o trabalho. A data de envio fica registada e não desaparece.
                 </p>
 
                 {/* Grid de URLs do casamento */}
@@ -3329,7 +3329,7 @@ function UrlEntryCard({
   }
 
   return (
-    <div className={`relative rounded-xl border bg-black/30 p-3 flex flex-col gap-2 ${locked ? 'border-white/[0.04] opacity-60' : 'border-white/[0.06]'}`}>
+    <div className={`relative rounded-xl border bg-black/30 p-3.5 flex flex-col gap-2.5 ${locked ? 'border-white/[0.04] opacity-60' : 'border-white/[0.06]'}`}>
       {/* Lock overlay com ícone + mensagem */}
       {locked && (
         <div className="absolute top-2 right-2 z-10" title={lockedReason ?? ''}>
@@ -3342,12 +3342,12 @@ function UrlEntryCard({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-gold/70 text-base">{field.icon}</span>
-          <p className="text-[10px] tracking-[0.25em] uppercase text-white/45 font-light">{field.label}</p>
+          <p className="text-[12px] tracking-[0.25em] uppercase text-white/60 font-light">{field.label}</p>
         </div>
         {hasUrl && !locked && (
           <a href={url} target="_blank" rel="noopener noreferrer"
             onClick={e => e.stopPropagation()}
-            className="text-[10px] text-gold/70 hover:text-gold tracking-wider uppercase transition-colors">
+            className="text-[11px] text-gold/80 hover:text-gold tracking-wider uppercase transition-colors">
             Abrir ↗
           </a>
         )}
@@ -3360,19 +3360,19 @@ function UrlEntryCard({
         onClick={e => e.stopPropagation()}
         onChange={e => setUrl(e.target.value)}
         onBlur={e => saveUrl(e.target.value.trim())}
-        className={`w-full bg-black/40 border rounded-lg px-2.5 py-1.5 text-[11px] outline-none transition-colors ${
-          locked ? 'border-white/[0.04] text-white/20 cursor-not-allowed' : 'border-white/[0.06] text-white/85 placeholder:text-white/20 focus:border-gold/40'
+        className={`w-full bg-black/40 border rounded-lg px-3 py-2 text-[13px] outline-none transition-colors ${
+          locked ? 'border-white/[0.04] text-white/30 cursor-not-allowed' : 'border-white/[0.06] text-white/90 placeholder:text-white/25 focus:border-gold/40'
         }`}
       />
       {sentAtFmt ? (
-        <div className="flex items-center justify-between text-[10px]">
-          <span className="inline-flex items-center gap-1 text-emerald-400/85 tracking-wider uppercase font-semibold">
+        <div className="flex items-center justify-between text-[12px]">
+          <span className="inline-flex items-center gap-1 text-emerald-400/90 tracking-wider uppercase font-semibold">
             ✓ Enviado · {sentAtFmt}
           </span>
           {hasUrl && !locked && (
             <button onClick={e => { e.stopPropagation(); enviarNotificacao() }}
               disabled={sending}
-              className="text-white/30 hover:text-gold tracking-wider uppercase transition-colors disabled:opacity-50">
+              className="text-white/40 hover:text-gold tracking-wider uppercase transition-colors disabled:opacity-50">
               {sending ? '...' : '↻ Reenviar'}
             </button>
           )}
@@ -3381,24 +3381,24 @@ function UrlEntryCard({
         <button
           disabled={locked || !hasUrl || sending}
           onClick={e => { e.stopPropagation(); enviarNotificacao() }}
-          className={`w-full text-[10px] tracking-wider uppercase font-semibold rounded-lg px-2 py-1.5 transition-all ${
+          className={`w-full text-[12px] tracking-wider uppercase font-semibold rounded-lg px-2.5 py-2 transition-all ${
             !locked && hasUrl
               ? 'bg-gold text-black hover:bg-gold/90'
-              : 'bg-white/[0.04] text-white/20 cursor-not-allowed border border-white/[0.06]'
+              : 'bg-white/[0.04] text-white/30 cursor-not-allowed border border-white/[0.06]'
           } ${sending ? 'opacity-50' : ''}`}
           style={!locked && hasUrl ? { boxShadow: '0 0 12px -4px rgba(201,164,92,0.5)' } : undefined}>
           {sending ? 'A enviar...' : '✉ Enviar Notificação'}
         </button>
       )}
       {locked && lockedReason && (
-        <p className="text-[9px] text-white/30 italic leading-relaxed mt-1">🔒 {lockedReason}</p>
+        <p className="text-[11px] text-white/45 italic leading-relaxed mt-1">🔒 {lockedReason}</p>
       )}
-      {saving && <p className="text-[9px] text-gold/40 italic">A guardar URL...</p>}
+      {saving && <p className="text-[11px] text-gold/50 italic">A guardar URL...</p>}
 
       {/* Estado — para Seleção, Provas e Editadas */}
       {STATUS_OPTIONS_BY_TIPO[field.tipo] && (
-        <div className="pt-2 mt-1 border-t border-white/[0.04]">
-          <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-1.5">
+        <div className="pt-2.5 mt-1 border-t border-white/[0.04]">
+          <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 mb-1.5">
             {STATUS_LABEL_BY_TIPO[field.tipo] ?? 'Estado'}
           </p>
           <div className="grid grid-cols-2 gap-1">
@@ -3408,15 +3408,15 @@ function UrlEntryCard({
                 <button key={opt}
                   disabled={locked}
                   onClick={e => { e.stopPropagation(); saveStatus(opt) }}
-                  className={`text-[9px] px-2 py-1.5 rounded-md tracking-wider uppercase font-semibold border transition-all ${locked ? 'opacity-40 cursor-not-allowed' : ''} ${
-                    active ? STATUS_CLS[opt] : 'bg-transparent text-white/35 border-white/[0.06] hover:text-white/70 hover:border-white/15'
+                  className={`text-[11px] px-2 py-1.5 rounded-md tracking-wider uppercase font-semibold border transition-all ${locked ? 'opacity-40 cursor-not-allowed' : ''} ${
+                    active ? STATUS_CLS[opt] : 'bg-transparent text-white/45 border-white/[0.06] hover:text-white/75 hover:border-white/15'
                   }`}>
                   {opt}
                 </button>
               )
             })}
           </div>
-          {savingStatus && <p className="text-[9px] text-gold/40 italic mt-1">A guardar...</p>}
+          {savingStatus && <p className="text-[10px] text-gold/50 italic mt-1">A guardar...</p>}
         </div>
       )}
     </div>
