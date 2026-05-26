@@ -142,21 +142,30 @@ export async function PATCH(req: NextRequest) {
 
   // 3 — save optional fields — silently ignored se coluna não existir
   if (Object.keys(optFields).length > 0) {
-    // Auto-set status_*_alterado_em quando um status muda
-    //   (sino do admin para detectar atualizações em tempo real)
-    const nowIso = new Date().toISOString()
-    if (optFields.status_selecao  !== undefined && optFields.status_selecao_alterado_em  === undefined) optFields.status_selecao_alterado_em  = nowIso
-    if (optFields.status_editadas !== undefined && optFields.status_editadas_alterado_em === undefined) optFields.status_editadas_alterado_em = nowIso
-    if (optFields.status_album    !== undefined && optFields.status_album_alterado_em    === undefined) optFields.status_album_alterado_em    = nowIso
-    if (optFields.status_provas   !== undefined && optFields.status_provas_alterado_em   === undefined) optFields.status_provas_alterado_em   = nowIso
-
-    // Tenta tudo de uma vez primeiro; se falhar, tenta um por um para isolar
+    // PASSO 3a — guardar PRIMEIRO os campos opcionais "core" sem os timestamps
+    //            de alteração de estado, para não falhar se essas colunas não
+    //            existirem ainda na DB. Os status são CRÍTICOS — não podem ser
+    //            silenciosamente perdidos.
     const { error } = await supabase.from('freelancer_casamentos').update(optFields).eq('id', id)
     if (error) {
       // Tenta um por um (degrada gracioso por coluna em falta)
       for (const [k, v] of Object.entries(optFields)) {
-        await supabase.from('freelancer_casamentos').update({ [k]: v }).eq('id', id).then(() => {}).catch(() => {})
+        const { error: e2 } = await supabase.from('freelancer_casamentos').update({ [k]: v }).eq('id', id)
+        if (e2) console.warn(`[freelancer-casamentos PATCH] coluna '${k}' falhou:`, e2.message)
       }
+    }
+
+    // PASSO 3b — separadamente tenta gravar os timestamps de alteração de
+    //            estado. Se as colunas não existirem, falha em silêncio
+    //            (não afeta o save do status em si).
+    const nowIso = new Date().toISOString()
+    const tsMap: Record<string, string> = {}
+    if (optFields.status_selecao  !== undefined) tsMap.status_selecao_alterado_em  = nowIso
+    if (optFields.status_editadas !== undefined) tsMap.status_editadas_alterado_em = nowIso
+    if (optFields.status_album    !== undefined) tsMap.status_album_alterado_em    = nowIso
+    if (optFields.status_provas   !== undefined) tsMap.status_provas_alterado_em   = nowIso
+    for (const [k, v] of Object.entries(tsMap)) {
+      await supabase.from('freelancer_casamentos').update({ [k]: v }).eq('id', id).then(() => {}, () => {})
     }
   }
 
