@@ -8,9 +8,33 @@ function db() {
 export async function GET(req: NextRequest) {
   const fid = req.nextUrl.searchParams.get('freelancer_id')
   if (!fid) return NextResponse.json({ error: 'freelancer_id required' }, { status: 400 })
-  const { data, error } = await db().from('freelancer_casamentos').select('*').eq('freelancer_id', fid).order('data_casamento')
+  const supabase = db()
+  const { data, error } = await supabase.from('freelancer_casamentos').select('*').eq('freelancer_id', fid).order('data_casamento')
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ casamentos: data ?? [] })
+
+  // ── Fallback: para casamentos com `referencia` mas sem servicos_dia,
+  //    enriquece com dados do evento (eventos_2026/2027).
+  const casamentos = data ?? []
+  const refs = casamentos
+    .filter((c: any) => c.referencia && (!c.servicos_dia || c.servicos_dia.length === 0))
+    .map((c: any) => c.referencia)
+  if (refs.length > 0) {
+    try {
+      const { data: events } = await supabase
+        .from('eventos_2026')
+        .select('referencia, servicos_dia, local_cerimonia, hora_inicio')
+        .in('referencia', refs)
+      const byRef = new Map<string, any>((events ?? []).map((e: any) => [e.referencia, e]))
+      casamentos.forEach((c: any) => {
+        const ev = c.referencia ? byRef.get(c.referencia) : null
+        if (!ev) return
+        if (!c.servicos_dia    || c.servicos_dia.length === 0) c.servicos_dia    = ev.servicos_dia ?? c.servicos_dia
+        if (!c.local_cerimonia) c.local_cerimonia = ev.local_cerimonia ?? c.local_cerimonia
+        if (!c.hora_inicio)     c.hora_inicio     = ev.hora_inicio ?? c.hora_inicio
+      })
+    } catch { /* tabela ou coluna pode não existir; ignora */ }
+  }
+  return NextResponse.json({ casamentos })
 }
 
 export async function POST(req: NextRequest) {

@@ -264,10 +264,27 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       }
       const table = ano === 2027 ? 'eventos_2027' : 'eventos_2026'
       // Tenta por notion_id primeiro
-      const { data: byNotion } = await supabase().from(table).update(evFields).eq('notion_id', id).select('id')
+      const { data: byNotion } = await supabase().from(table).update(evFields).eq('notion_id', id).select('id, referencia')
       // Se não houve match (evento órfão sem notion_id), tenta por id (Supabase PK)
       if (!byNotion || byNotion.length === 0) {
         await supabase().from(table).update(evFields).eq('id', id)
+      }
+
+      // ── Sync para freelancer_casamentos (servicos_dia + local_cerimonia + hora_inicio) ──
+      // Quando admin edita o evento, propaga estes campos para todos os
+      // freelancer_casamentos com a mesma referência. Assim a ficha do
+      // freelancer reflecte automaticamente os dados do evento.
+      if (body.servicos_dia !== undefined || body.local_cerimonia !== undefined || body.hora_inicio !== undefined) {
+        const refToSync = (byNotion?.[0]?.referencia ?? body.referencia) as string | undefined
+        if (refToSync) {
+          const fcFields: Record<string, any> = {}
+          if (body.servicos_dia !== undefined)    fcFields.servicos_dia    = body.servicos_dia
+          if (body.local_cerimonia !== undefined) fcFields.local_cerimonia = body.local_cerimonia
+          if (body.hora_inicio !== undefined)     fcFields.hora_inicio     = body.hora_inicio
+          if (Object.keys(fcFields).length > 0) {
+            await supabase().from('freelancer_casamentos').update(fcFields).eq('referencia', refToSync).then(() => {}).catch(() => {})
+          }
+        }
       }
     }
 
@@ -428,6 +445,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       local:            getProp(p, 'LOCAL', 'text') ?? contrato?.local_cerimonia ?? '',
       tipo_evento:      getProp(p, 'TIPO DE EVENTO', 'multi_select'),
       tipo_servico:     getProp(p, 'TIPO DE SERVIÇO', 'multi_select'),
+      servicos_dia:     (getProp(p, 'SERVIÇOS DO DIA', 'multi_select') ?? []).length > 0
+                          ? getProp(p, 'SERVIÇOS DO DIA', 'multi_select')
+                          : ((sbRow as any)?.servicos_dia ?? []),
       servico_extra:    getProp(p, 'SERVIÇO EXTRA', 'multi_select'),
       status:           getProp(p, 'Status', 'status'),
       fotografo:        getProp(p, 'FOTOGRAFO', 'multi_select'),
