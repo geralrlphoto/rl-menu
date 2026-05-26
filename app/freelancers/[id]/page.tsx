@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { TasksWidget, MiniCalendar } from '@/app/components/FreelancerWidgets'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -150,6 +150,8 @@ function PasswordDisplay({ password, freelancerId }: { password: string | null; 
 
 export default function FreelancerDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const searchParams = useSearchParams()
+  const viewAsFreelancer = searchParams?.get('view') === 'freelancer'
   const [tab, setTab] = useState<'casamentos'|'edicao'|'album'|'valores'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'|null>(null)
   const [editForm, setEditForm] = useState<{ nome: string; status: string; contato: string; email: string; nome_sos: string; contato_sos: string } | null>(null)
   const [editSaving, setEditSaving] = useState(false)
@@ -310,7 +312,7 @@ export default function FreelancerDetailPage() {
     { key: 'pagamentos',   label: 'Pagamentos', count: pagamentos.length },
     { key: 'mensagens',    label: 'Msgs',   count: mensagens.filter(m => m.remetente === 'freelancer' && !m.lida_admin).length },
     { key: 'notificacoes', label: 'Notif.', count: notificacoes.filter(n => !n.lida).length },
-    { key: 'definicoes',   label: 'Definições' },
+    ...(!viewAsFreelancer ? [{ key: 'definicoes' as const, label: 'Definições' }] : []),
   ]
 
   return (
@@ -352,6 +354,7 @@ export default function FreelancerDetailPage() {
         }}
         isVideografo={isVideografo}
         isFotografo={isFotografo}
+        viewAsFreelancer={viewAsFreelancer}
       />
 
     <main className={`relative z-10 min-h-screen px-4 sm:px-6 py-6 mx-auto lg:pl-[230px] lg:pr-4 ${
@@ -1098,7 +1101,7 @@ export default function FreelancerDetailPage() {
       )}
 
       {/* Tab content */}
-      {tab === 'casamentos'   && <CasamentosTab freelancerId={id} casamentos={casamentos} onRefresh={load} freelancerStatus={freelancer?.status ?? null} freelancer={freelancer} />}
+      {tab === 'casamentos'   && <CasamentosTab freelancerId={id} casamentos={casamentos} onRefresh={load} freelancerStatus={freelancer?.status ?? null} freelancer={freelancer} viewAsFreelancer={viewAsFreelancer} />}
       {tab === 'edicao'       && <EdicaoTab freelancerId={id} edicao={edicao} onRefresh={load} />}
       {tab === 'album'        && <AlbumTab freelancerId={id} album={album} onRefresh={load} />}
       {tab === 'valores'      && <ValoresTab freelancerId={id} valores={valores} onRefresh={load} />}
@@ -1122,6 +1125,7 @@ function SidebarNavAdmin({
   counts,
   isVideografo,
   isFotografo,
+  viewAsFreelancer,
 }: {
   freelancer: Freelancer | null
   tab: AdminTabKey
@@ -1129,6 +1133,7 @@ function SidebarNavAdmin({
   counts: { casamentos: number; edicao: number; album: number; pagamentos: number; mensagens: number; notificacoes: number }
   isVideografo: boolean
   isFotografo: boolean
+  viewAsFreelancer?: boolean
 }) {
   const items: Array<{ key: AdminTabKey; label: string; icon: string; count?: number }> = [
     { key: null,             label: 'Início',         icon: '⌂' },
@@ -1141,7 +1146,7 @@ function SidebarNavAdmin({
     { key: 'pagamentos',     label: 'Pagamentos',     icon: '$', count: counts.pagamentos },
     { key: 'mensagens',      label: 'Mensagens',      icon: '✉', count: counts.mensagens },
     { key: 'notificacoes',   label: 'Notificações',   icon: '◉', count: counts.notificacoes },
-    { key: 'definicoes',     label: 'Definições',     icon: '⚙' },
+    ...(!viewAsFreelancer ? [{ key: 'definicoes' as AdminTabKey, label: 'Definições', icon: '⚙' }] : []),
   ]
 
   return (
@@ -1157,7 +1162,9 @@ function SidebarNavAdmin({
       <div className="px-6 pt-8 pb-6 border-b border-gold/10">
         <p className="text-[14px] tracking-[0.45em] text-gold/60 uppercase">RL</p>
         <p className="text-[14px] tracking-[0.18em] text-gold font-light uppercase mt-0.5">Photo<span className="text-white/40">.</span>Video</p>
-        <p className="text-[14px] tracking-[0.3em] text-white/30 uppercase mt-2">Admin · Edição</p>
+        {!viewAsFreelancer && (
+          <p className="text-[14px] tracking-[0.3em] text-white/30 uppercase mt-2">Admin · Edição</p>
+        )}
         <div className="mt-3 h-px w-8 bg-gold/40" />
       </div>
 
@@ -1208,10 +1215,12 @@ function SidebarNavAdmin({
 
       {/* Footer */}
       <div className="px-5 py-4 border-t border-white/[0.04]">
-        <a href={`/freelancer-view/${freelancer?.id ?? ''}`} target="_blank" rel="noopener noreferrer"
-          className="block text-[14px] tracking-[0.25em] uppercase text-white/40 hover:text-gold transition-colors mb-2">
-          ↗ Ver como freelancer
-        </a>
+        {!viewAsFreelancer && (
+          <a href={`/freelancer-view/${freelancer?.id ?? ''}`} target="_blank" rel="noopener noreferrer"
+            className="block text-[14px] tracking-[0.25em] uppercase text-white/40 hover:text-gold transition-colors mb-2">
+            ↗ Ver como freelancer
+          </a>
+        )}
         <p className="text-[14px] text-white/15">© RL Photo.Video</p>
       </div>
     </aside>
@@ -1222,7 +1231,7 @@ function SidebarNavAdmin({
 
 const DEFAULT_INTRO = `Aqui encontras todos os eventos que te foram atribuídos ao longo do ano. Sempre que um novo evento for adicionado, deverás confirmar a tua disponibilidade.\n\nA 3 dias do evento tens acesso ao briefing com toda a informação necessária para o dia — percurso, contactos, detalhes da cerimónia e muito mais.`
 
-function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, freelancer }: { freelancerId: string; casamentos: Casamento[]; onRefresh: () => void; freelancerStatus: string | null; freelancer: Freelancer | null }) {
+function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, freelancer, viewAsFreelancer }: { freelancerId: string; casamentos: Casamento[]; onRefresh: () => void; freelancerStatus: string | null; freelancer: Freelancer | null; viewAsFreelancer?: boolean }) {
   const [editing, setEditing] = useState<Casamento | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState<Partial<Casamento>>({})
@@ -1326,11 +1335,13 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button onClick={() => { setShowAdd(true); setEditing(null); setForm({}) }}
-              className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gold text-black text-[13px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
-              style={{ boxShadow: '0 0 24px -4px rgba(201,164,92,0.5)' }}>
-              <span className="text-lg leading-none">+</span> Novo Evento
-            </button>
+            {!viewAsFreelancer && (
+              <button onClick={() => { setShowAdd(true); setEditing(null); setForm({}) }}
+                className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gold text-black text-[13px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
+                style={{ boxShadow: '0 0 24px -4px rgba(201,164,92,0.5)' }}>
+                <span className="text-lg leading-none">+</span> Novo Evento
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -1600,11 +1611,13 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                       ✓ Confirmar
                     </button>
                   )}
-                  <button onClick={e => { e.stopPropagation(); del(c.id) }}
-                    className="w-8 h-8 rounded-lg border border-white/10 text-white/40 hover:text-red-400 hover:border-red-500/30 transition-all flex items-center justify-center"
-                    title="Eliminar">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
-                  </button>
+                  {!viewAsFreelancer && (
+                    <button onClick={e => { e.stopPropagation(); del(c.id) }}
+                      className="w-8 h-8 rounded-lg border border-white/10 text-white/40 hover:text-red-400 hover:border-red-500/30 transition-all flex items-center justify-center"
+                      title="Eliminar">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -1708,17 +1721,19 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                     ))}
                   </div>
 
-                  {/* RIGHT: editar */}
-                  <button onClick={() => {
-                    setEditing(c)
-                    setForm({ local: c.local, data_casamento: c.data_casamento ?? '', equipa_foto: c.equipa_foto ?? [], videografo: c.videografo ?? '', briefing_url: c.briefing_url ?? '', servicos_dia: c.servicos_dia ?? [], local_cerimonia: c.local_cerimonia ?? '', hora_inicio: c.hora_inicio ?? '' })
-                    setShowAdd(false)
-                    setExpandedId(null)
-                  }}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/[0.05] border border-white/10 text-white/50 text-[11px] tracking-widest uppercase font-semibold hover:bg-white/[0.08] hover:text-white/80 transition-all">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                    Editar
-                  </button>
+                  {/* RIGHT: editar (apenas para admin) */}
+                  {!viewAsFreelancer && (
+                    <button onClick={() => {
+                      setEditing(c)
+                      setForm({ local: c.local, data_casamento: c.data_casamento ?? '', equipa_foto: c.equipa_foto ?? [], videografo: c.videografo ?? '', briefing_url: c.briefing_url ?? '', servicos_dia: c.servicos_dia ?? [], local_cerimonia: c.local_cerimonia ?? '', hora_inicio: c.hora_inicio ?? '' })
+                      setShowAdd(false)
+                      setExpandedId(null)
+                    }}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/[0.05] border border-white/10 text-white/50 text-[11px] tracking-widest uppercase font-semibold hover:bg-white/[0.08] hover:text-white/80 transition-all">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                      Editar
+                    </button>
+                  )}
                 </div>
               </div>
             )}
