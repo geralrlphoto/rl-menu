@@ -3570,6 +3570,8 @@ function FotosConvidadosBox({
       <h3 className="text-[11px] tracking-[0.3em] uppercase text-blue-300/80">Fotos Convidados</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <FotosConvidadosSub
+          referencia={referencia}
+          listaKey="fotos_convidados_email_lista"
           label="Fotos via Email"
           prazoLabel="15 dias após o evento"
           enviada={estado.email}
@@ -3586,6 +3588,8 @@ function FotosConvidadosBox({
           fmt={fmt}
         />
         <FotosConvidadosSub
+          referencia={referencia}
+          listaKey="fotos_convidados_ctt_lista"
           label="Fotos via CTT"
           prazoLabel="30 dias após o evento"
           enviada={estado.ctt}
@@ -3607,8 +3611,10 @@ function FotosConvidadosBox({
 }
 
 function FotosConvidadosSub({
-  label, prazoLabel, enviada, deadline, onMark, onReset, fmt,
+  referencia, listaKey, label, prazoLabel, enviada, deadline, onMark, onReset, fmt,
 }: {
+  referencia: string
+  listaKey: string
   label: string
   prazoLabel: string
   enviada: string | null
@@ -3642,17 +3648,127 @@ function FotosConvidadosSub({
             : <span className="text-white/30">Pendente</span>
         }
       </p>
-      <button
-        disabled={busy}
-        onClick={handleMark}
-        className={`mt-1 px-3 py-2 rounded-lg text-[10px] font-semibold tracking-[0.2em] uppercase border transition-all ${
-          enviada ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-                  : 'bg-blue-500/15 text-blue-300 border-blue-500/30 hover:bg-blue-500/25'
-        } ${busy ? 'opacity-50 cursor-wait' : ''}`}
-      >
-        {busy ? 'A guardar…' : enviada ? '✓ Fotos Enviadas' : 'Marcar Fotos Enviadas'}
-      </button>
+      <div className="flex gap-2 mt-1">
+        <button
+          disabled={busy}
+          onClick={handleMark}
+          className={`flex-1 px-3 py-2 rounded-lg text-[10px] font-semibold tracking-[0.2em] uppercase border transition-all ${
+            enviada ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                    : 'bg-blue-500/15 text-blue-300 border-blue-500/30 hover:bg-blue-500/25'
+          } ${busy ? 'opacity-50 cursor-wait' : ''}`}
+        >
+          {busy ? 'A guardar…' : enviada ? '✓ Fotos Enviadas' : 'Marcar Fotos Enviadas'}
+        </button>
+        <ListaConvidadosButton referencia={referencia} listaKey={listaKey} label={label} />
+      </div>
     </div>
+  )
+}
+
+// ─── ListaConvidadosButton — botão "LISTA" + modal com nomes ───────────────
+function ListaConvidadosButton({
+  referencia, listaKey, label,
+}: { referencia: string; listaKey: string; label: string }) {
+  const [open, setOpen] = useState(false)
+  const [lista, setLista] = useState<string[]>([])
+  const [novoNome, setNovoNome] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
+
+  async function abrir() {
+    setOpen(true)
+    setLoading(true)
+    try {
+      const p = await fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`).then(r => r.json())
+      const s = p?.portal?.settings ?? p?.settings ?? {}
+      setLista(Array.isArray(s[listaKey]) ? s[listaKey] : [])
+    } catch { /* ignore */ }
+    setLoading(false)
+  }
+
+  async function guardar(next: string[]) {
+    setLista(next)
+    await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia, updates: { settings: { [listaKey]: next } } }) })
+  }
+
+  function adicionar() {
+    const t = novoNome.trim()
+    if (!t) return
+    if (lista.includes(t)) { setNovoNome(''); return }
+    guardar([...lista, t])
+    setNovoNome('')
+  }
+
+  function remover(nome: string) {
+    guardar(lista.filter(n => n !== nome))
+  }
+
+  useEffect(() => {
+    if (!open) return
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open])
+
+  return (
+    <>
+      <button onClick={abrir}
+        className="px-3 py-2 rounded-lg text-[10px] font-semibold tracking-[0.2em] uppercase border border-white/15 text-white/60 hover:bg-white/[0.05] hover:text-white/85 transition-all">
+        Lista{lista.length > 0 ? ` (${lista.length})` : ''}
+      </button>
+      {mounted && open && createPortal(
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setOpen(false)}>
+          <div className="bg-[#0f0f0f] border border-white/10 rounded-2xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto flex flex-col gap-4"
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between gap-3 border-b border-white/[0.06] pb-3">
+              <div>
+                <p className="text-[9px] tracking-[0.4em] uppercase text-blue-300/70">Lista de Convidados</p>
+                <h3 className="text-sm text-white/85 font-semibold mt-0.5">{label}</h3>
+              </div>
+              <button onClick={() => setOpen(false)}
+                className="w-7 h-7 flex items-center justify-center rounded-full border border-white/10 text-white/40 hover:text-white/80 hover:border-white/30">✕</button>
+            </div>
+
+            {loading ? (
+              <p className="text-xs text-white/40 italic">A carregar…</p>
+            ) : lista.length === 0 ? (
+              <p className="text-xs text-white/40 italic py-4 text-center">Ainda não há nomes adicionados.</p>
+            ) : (
+              <ul className="flex flex-col gap-1.5">
+                {lista.map((n, i) => (
+                  <li key={`${n}-${i}`} className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-white/[0.06] bg-white/[0.02]">
+                    <span className="text-sm text-white/80">{n}</span>
+                    <button onClick={() => remover(n)}
+                      className="w-5 h-5 flex items-center justify-center rounded-full text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-all text-xs">✕</button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <div className="flex gap-2 pt-3 border-t border-white/[0.06]">
+              <input
+                type="text"
+                value={novoNome}
+                onChange={e => setNovoNome(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); adicionar() } }}
+                placeholder="Nome do convidado…"
+                className="flex-1 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/85 placeholder-white/25 focus:outline-none focus:border-blue-400/40"
+                autoFocus
+              />
+              <button onClick={adicionar}
+                disabled={!novoNome.trim()}
+                className="px-4 py-2 rounded-lg text-[11px] font-semibold tracking-[0.2em] uppercase border bg-blue-500/15 text-blue-300 border-blue-500/30 hover:bg-blue-500/25 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                + Adicionar
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
   )
 }
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import EventoTarefas from './EventoTarefas'
@@ -3580,9 +3581,9 @@ export default function EventoPage() {
           <h2 className="text-[10px] tracking-[0.35em] uppercase" style={{ color: 'rgba(99,165,255,0.8)' }}>Fotos Convidados</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {([
-              { label: 'Fotos via Email', prazoDias: 15, prazoLabel: '15 dias após o evento', state: fotosConvidadosEmailEnviada, setState: setFotosConvidadosEmailEnviada, key: 'fotos_convidados_email_enviada' },
-              { label: 'Fotos via CTT',   prazoDias: 30, prazoLabel: '30 dias após o evento', state: fotosConvidadosCttEnviada,   setState: setFotosConvidadosCttEnviada,   key: 'fotos_convidados_ctt_enviada' },
-            ]).map(({ label, prazoDias, prazoLabel, state, setState, key }) => {
+              { label: 'Fotos via Email', prazoDias: 15, prazoLabel: '15 dias após o evento', state: fotosConvidadosEmailEnviada, setState: setFotosConvidadosEmailEnviada, key: 'fotos_convidados_email_enviada', listaKey: 'fotos_convidados_email_lista' },
+              { label: 'Fotos via CTT',   prazoDias: 30, prazoLabel: '30 dias após o evento', state: fotosConvidadosCttEnviada,   setState: setFotosConvidadosCttEnviada,   key: 'fotos_convidados_ctt_enviada',   listaKey: 'fotos_convidados_ctt_lista' },
+            ]).map(({ label, prazoDias, prazoLabel, state, setState, key, listaKey }) => {
               // Aviso de prazo
               let deadline: { daysLeft: number; deadlineStr: string; expired: boolean; critical: boolean } | null = null
               if (!state && e.data_evento) {
@@ -3624,20 +3625,25 @@ export default function EventoPage() {
                         : <span className="text-white/25">Pendente</span>
                     }
                   </p>
-                  <button
-                    onClick={async () => {
-                      if (!evento?.referencia) return
-                      const today = new Date().toISOString().split('T')[0]
-                      await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [key]: today } } }) })
-                      setState(today)
-                    }}
-                    className={`mt-1 px-4 py-2 rounded-lg text-[11px] font-semibold tracking-[0.2em] uppercase border transition-all ${
-                      state ? 'bg-green-500/20 text-green-400 border-green-500/30'
-                            : 'bg-blue-500/20 text-blue-300 border-blue-500/30 hover:bg-blue-500/30'
-                    }`}
-                  >
-                    {state ? '✓ Fotos Enviadas' : 'Marcar Fotos Enviadas'}
-                  </button>
+                  <div className="flex gap-2 mt-1">
+                    <button
+                      onClick={async () => {
+                        if (!evento?.referencia) return
+                        const today = new Date().toISOString().split('T')[0]
+                        await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [key]: today } } }) })
+                        setState(today)
+                      }}
+                      className={`flex-1 px-4 py-2 rounded-lg text-[11px] font-semibold tracking-[0.2em] uppercase border transition-all ${
+                        state ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                              : 'bg-blue-500/20 text-blue-300 border-blue-500/30 hover:bg-blue-500/30'
+                      }`}
+                    >
+                      {state ? '✓ Fotos Enviadas' : 'Marcar Fotos Enviadas'}
+                    </button>
+                    {evento?.referencia && (
+                      <ListaConvidadosAdminButton referencia={evento.referencia} listaKey={listaKey} label={label} />
+                    )}
+                  </div>
                 </div>
               )
             })}
@@ -3891,5 +3897,112 @@ export default function EventoPage() {
         }
       `}</style>
     </main>
+  )
+}
+
+// ─── ListaConvidadosAdminButton — botão "LISTA" + modal com nomes ───────────
+function ListaConvidadosAdminButton({
+  referencia, listaKey, label,
+}: { referencia: string; listaKey: string; label: string }) {
+  const [open, setOpen] = useState(false)
+  const [lista, setLista] = useState<string[]>([])
+  const [novoNome, setNovoNome] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
+
+  async function abrir() {
+    setOpen(true)
+    setLoading(true)
+    try {
+      const p = await fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`).then(r => r.json())
+      const s = p?.portal?.settings ?? p?.settings ?? {}
+      setLista(Array.isArray(s[listaKey]) ? s[listaKey] : [])
+    } catch { /* ignore */ }
+    setLoading(false)
+  }
+
+  async function guardar(next: string[]) {
+    setLista(next)
+    await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia, updates: { settings: { [listaKey]: next } } }) })
+  }
+
+  function adicionar() {
+    const t = novoNome.trim()
+    if (!t) return
+    if (lista.includes(t)) { setNovoNome(''); return }
+    guardar([...lista, t])
+    setNovoNome('')
+  }
+
+  function remover(nome: string) {
+    guardar(lista.filter(n => n !== nome))
+  }
+
+  useEffect(() => {
+    if (!open) return
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open])
+
+  return (
+    <>
+      <button onClick={abrir}
+        className="px-4 py-2 rounded-lg text-[11px] font-semibold tracking-[0.2em] uppercase border border-white/15 text-white/60 hover:bg-white/[0.05] hover:text-white/85 transition-all">
+        Lista{lista.length > 0 ? ` (${lista.length})` : ''}
+      </button>
+      {mounted && open && createPortal(
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setOpen(false)}>
+          <div className="bg-[#0f0f0f] border border-white/10 rounded-2xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto flex flex-col gap-4"
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between gap-3 border-b border-white/[0.06] pb-3">
+              <div>
+                <p className="text-[9px] tracking-[0.4em] uppercase text-blue-300/70">Lista de Convidados</p>
+                <h3 className="text-sm text-white/85 font-semibold mt-0.5">{label}</h3>
+              </div>
+              <button onClick={() => setOpen(false)}
+                className="w-7 h-7 flex items-center justify-center rounded-full border border-white/10 text-white/40 hover:text-white/80 hover:border-white/30">✕</button>
+            </div>
+
+            {loading ? (
+              <p className="text-xs text-white/40 italic">A carregar…</p>
+            ) : lista.length === 0 ? (
+              <p className="text-xs text-white/40 italic py-4 text-center">Ainda não há nomes adicionados.</p>
+            ) : (
+              <ul className="flex flex-col gap-1.5">
+                {lista.map((n, i) => (
+                  <li key={`${n}-${i}`} className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-white/[0.06] bg-white/[0.02]">
+                    <span className="text-sm text-white/80">{n}</span>
+                    <button onClick={() => remover(n)}
+                      className="w-5 h-5 flex items-center justify-center rounded-full text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-all text-xs">✕</button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <div className="flex gap-2 pt-3 border-t border-white/[0.06]">
+              <input
+                type="text"
+                value={novoNome}
+                onChange={e => setNovoNome(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); adicionar() } }}
+                placeholder="Nome do convidado…"
+                className="flex-1 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/85 placeholder-white/25 focus:outline-none focus:border-blue-400/40"
+                autoFocus
+              />
+              <button onClick={adicionar}
+                disabled={!novoNome.trim()}
+                className="px-4 py-2 rounded-lg text-[11px] font-semibold tracking-[0.2em] uppercase border bg-blue-500/15 text-blue-300 border-blue-500/30 hover:bg-blue-500/25 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                + Adicionar
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
   )
 }
