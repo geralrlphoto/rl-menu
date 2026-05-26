@@ -185,6 +185,8 @@ function FreelancerDetailInner() {
   const [mensagens, setMensagens] = useState<Mensagem[]>([])
   // Mapa referencia → data_entrada (quando os noivos enviaram fotos para edição)
   const [fotosSelecaoMap, setFotosSelecaoMap] = useState<Record<string, string>>({})
+  // Mapa referencia → data envio "Fotos Convidados" (portais.settings.fotos_convidados_enviada)
+  const [fotosConvidadosMap, setFotosConvidadosMap] = useState<Record<string, string | null>>({})
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(async () => {
@@ -220,6 +222,19 @@ function FreelancerDetailInner() {
       if (row.referencia && row.data_entrada) fsMap[row.referencia] = row.data_entrada
     }
     setFotosSelecaoMap(fsMap)
+    // Carrega estado "Fotos Convidados" por referência (portais.settings.fotos_convidados_enviada)
+    const refs = Array.from(new Set((cRes.casamentos ?? []).map((c: any) => c.referencia).filter(Boolean))) as string[]
+    if (refs.length) {
+      const fcMap: Record<string, string | null> = {}
+      await Promise.all(refs.map(async (ref) => {
+        try {
+          const p = await fetch(`/api/portais?ref=${encodeURIComponent(ref)}`).then(r => r.json())
+          const s = p?.portal?.settings ?? p?.settings ?? {}
+          fcMap[ref] = s.fotos_convidados_enviada ?? null
+        } catch { /* ignore */ }
+      }))
+      setFotosConvidadosMap(fcMap)
+    }
     setLoading(false)
   }, [id])
 
@@ -1915,6 +1930,18 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                   })}
                 </div>
 
+                {/* ── Fotos Convidados ──────────────────────────────── */}
+                {c.referencia && (
+                  <FotosConvidadosRow
+                    referencia={c.referencia}
+                    enviada={fotosConvidadosMap[c.referencia] ?? null}
+                    onChange={(next) => setFotosConvidadosMap(prev => ({ ...prev, [c.referencia!]: next }))}
+                    freelancerId={c.freelancer_id}
+                    freelancerNome={freelancer?.nome ?? ''}
+                    casamentoLocal={c.local}
+                  />
+                )}
+
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-5">
                   {/* LEFT: ações principais */}
                   <div className="flex flex-wrap items-center gap-2">
@@ -3500,6 +3527,70 @@ function NotasTab({ freelancer, onRefresh }: { freelancer: Freelancer; onRefresh
         </div>
       )}
       </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── FotosConvidadosRow — 1 botão "Fotos Enviadas" + notificação admin ───
+function FotosConvidadosRow({
+  referencia,
+  enviada,
+  onChange,
+  freelancerId,
+  freelancerNome,
+  casamentoLocal,
+}: {
+  referencia: string
+  enviada: string | null
+  onChange: (next: string | null) => void
+  freelancerId: string
+  freelancerNome: string
+  casamentoLocal: string
+}) {
+  const [busy, setBusy] = useState(false)
+
+  async function marcar() {
+    setBusy(true)
+    const today = new Date().toISOString().split('T')[0]
+    try {
+      await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia, updates: { settings: { fotos_convidados_enviada: today, fotos_convidados_enviada_por: freelancerNome, fotos_convidados_enviada_freelancer_id: freelancerId } } }) })
+      onChange(today)
+    } finally { setBusy(false) }
+  }
+
+  async function repor() {
+    await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia, updates: { settings: { fotos_convidados_enviada: null } } }) })
+    onChange(null)
+  }
+
+  return (
+    <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.03] p-4 flex items-center justify-between gap-3">
+      <div>
+        <h3 className="text-[11px] tracking-[0.3em] uppercase text-blue-300/80 mb-1">Fotos Convidados</h3>
+        <p className="text-[11px] font-mono">
+          {enviada
+            ? <span className="text-emerald-400/80">Enviadas em {new Date(enviada).toLocaleDateString('pt-PT')}</span>
+            : <span className="text-white/30">Pendente</span>
+          }
+        </p>
+      </div>
+      <div className="flex items-center gap-2">
+        {enviada && (
+          <button onClick={repor}
+            className="w-6 h-6 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-all text-xs"
+            title="Repor como pendente">✕</button>
+        )}
+        <button
+          disabled={busy}
+          onClick={marcar}
+          className={`px-4 py-2 rounded-lg text-[11px] font-semibold tracking-[0.2em] uppercase border transition-all ${
+            enviada ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                    : 'bg-blue-500/15 text-blue-300 border-blue-500/30 hover:bg-blue-500/25'
+          } ${busy ? 'opacity-50 cursor-wait' : ''}`}
+        >
+          {busy ? 'A guardar…' : enviada ? '✓ Fotos Enviadas' : 'Marcar Fotos Enviadas'}
+        </button>
       </div>
     </div>
   )

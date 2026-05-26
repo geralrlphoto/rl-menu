@@ -2189,6 +2189,7 @@ export default function EventoPage() {
   const [preWeddingEnviada, setPreWeddingEnviada] = useState<string | null>(null)
   const [fotosFinaisEnviada, setFotosFinaisEnviada] = useState<string | null>(null)
   const [galeriasEnviada, setGaleriasEnviada] = useState<string | null>(null)
+  const [fotosConvidadosEnviada, setFotosConvidadosEnviada] = useState<string | null>(null)
   const [actionUrls, setActionUrls] = useState<Record<string, string>>({
     selecao: '', prewedding: '', fotos_finais: '', galerias: '', maquete: '',
   })
@@ -2476,6 +2477,7 @@ export default function EventoPage() {
               if (s.prewedding_enviada)       setPreWeddingEnviada(s.prewedding_enviada)
               if (s.fotos_finais_enviada)     setFotosFinaisEnviada(s.fotos_finais_enviada)
               if (s.galerias_enviada)         setGaleriasEnviada(s.galerias_enviada)
+              if (s.fotos_convidados_enviada) setFotosConvidadosEnviada(s.fotos_convidados_enviada)
               if (s.video_prewedding_enviada) setVideoPreWeddingEnviada(s.video_prewedding_enviada)
               if (s.wedding_film_enviada)     setWeddingFilmEnviada(s.wedding_film_enviada)
               if (s.same_day_edit_enviada)    setSameDayEditEnviada(s.same_day_edit_enviada)
@@ -3168,7 +3170,7 @@ export default function EventoPage() {
           {/* Linhas de estado */}
           <div className="flex flex-col gap-2">
             {prazoSelFotos && (
-              <EstadoRow label="Prazo Seleção de Fotos (30 dias)" dateStr={prazoSelFotos}
+              <EstadoRow label="Prazo Selecção de Fotos (30 dias)" dateStr={prazoSelFotos}
                 estado={e.sel_fotos_estado} options={['Aguardar','Em Edição','Entregue','S/SERVIÇO']}
                 field="sel_fotos_estado" eventId={e.id} onSaved={handleSaved} />
             )}
@@ -3567,6 +3569,47 @@ export default function EventoPage() {
                 {i < arr.length - 1 && <div className="h-px bg-white/5 mt-4" />}
               </div>
             )})}
+          </div>
+        </div>
+
+        {/* ── Fotos Convidados ── */}
+        <div className="print:hidden rounded-2xl p-6 flex items-center justify-between gap-3"
+          style={{ background: 'rgba(56,130,246,0.04)', border: '1px solid rgba(56,130,246,0.18)' }}>
+          <div>
+            <h2 className="text-[10px] tracking-[0.35em] uppercase mb-1" style={{ color: 'rgba(99,165,255,0.8)' }}>Fotos Convidados</h2>
+            <p className="text-xs font-mono">
+              {fotosConvidadosEnviada
+                ? <span className="text-green-400/70">Enviadas em {new Date(fotosConvidadosEnviada).toLocaleDateString('pt-PT')}</span>
+                : <span className="text-white/25">Pendente</span>
+              }
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {fotosConvidadosEnviada && (
+              <button
+                onClick={async () => {
+                  if (!evento?.referencia) return
+                  await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { fotos_convidados_enviada: null } } }) })
+                  setFotosConvidadosEnviada(null)
+                }}
+                className="w-6 h-6 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-all text-xs"
+                title="Repor como Pendente"
+              >✕</button>
+            )}
+            <button
+              onClick={async () => {
+                if (!evento?.referencia) return
+                const today = new Date().toISOString().split('T')[0]
+                await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { fotos_convidados_enviada: today } } }) })
+                setFotosConvidadosEnviada(today)
+              }}
+              className={`px-5 py-2.5 rounded-xl text-xs font-semibold tracking-[0.2em] uppercase border transition-all ${
+                fotosConvidadosEnviada ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                                       : 'bg-blue-500/20 text-blue-300 border-blue-500/30 hover:bg-blue-500/30'
+              }`}
+            >
+              {fotosConvidadosEnviada ? '✓ Fotos Enviadas' : 'Fotos Enviadas'}
+            </button>
           </div>
         </div>
 

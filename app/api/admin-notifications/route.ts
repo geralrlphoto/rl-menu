@@ -18,6 +18,7 @@ const TIPO_LABELS: Record<string, string> = {
   status_editadas:      'Estado · Fotos Editadas',
   status_album:         'Estado · Maquete Álbum',
   status_provas:        'Estado · Fotos Prova',
+  fotos_convidados:     'Fotos Convidados Enviadas',
 }
 
 const TIPO_ICONS: Record<string, string> = {
@@ -30,6 +31,7 @@ const TIPO_ICONS: Record<string, string> = {
   status_editadas:      '✓',
   status_album:         '◐',
   status_provas:        '◧',
+  fotos_convidados:     '✉',
 }
 
 type Notif = {
@@ -173,6 +175,35 @@ export async function GET() {
       }
     } catch (err) {
       console.warn('[admin-notifications] fotos_selecao read failed:', err)
+    }
+
+    // ── Notificações de FOTOS CONVIDADOS (portais.settings.fotos_convidados_enviada) ──
+    try {
+      const { data: portais } = await supabase
+        .from('portais')
+        .select('referencia, settings')
+        .limit(500)
+      for (const p of (portais ?? []) as any[]) {
+        const s = p.settings ?? {}
+        const sent = s.fotos_convidados_enviada
+        if (!sent) continue
+        const por = s.fotos_convidados_enviada_por ?? '—'
+        notifications.push({
+          id: `fotos_convidados::${p.referencia}`,
+          tipo: 'fotos_convidados',
+          tipo_label: TIPO_LABELS.fotos_convidados,
+          tipo_icon: TIPO_ICONS.fotos_convidados,
+          casamento_id: '',
+          freelancer_id: s.fotos_convidados_enviada_freelancer_id ?? '',
+          freelancer_nome: por,
+          local: p.referencia ?? '—',
+          data_casamento: null,
+          url: `/eventos-2026?ref=${encodeURIComponent(p.referencia ?? '')}`,
+          sent_at: typeof sent === 'string' && sent.length === 10 ? `${sent}T00:00:00.000Z` : sent,
+        })
+      }
+    } catch (err) {
+      console.warn('[admin-notifications] portais read failed:', err)
     }
 
     // Ordenar por sent_at DESC

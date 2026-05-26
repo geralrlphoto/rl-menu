@@ -306,7 +306,7 @@ function EntregasSection({ referencia }: { referencia: string }) {
   const fotosEdDate   = data.fotosDataEntrada ? addWorkingDays(data.fotosDataEntrada, 30) : null
 
   const rows = [
-    prazoSelFotos ? { label: 'Prazo Seleção de Fotos (30 dias)', estado: data.sel_fotos_estado, dateStr: prazoSelFotos, editable: false, stateKey: '' } : null,
+    prazoSelFotos ? { label: 'Prazo Selecção de Fotos (30 dias)', estado: data.sel_fotos_estado, dateStr: prazoSelFotos, editable: false, stateKey: '' } : null,
     prazoVideo    ? { label: 'Prazo Entrega Vídeo (180 dias úteis)', estado: data.video_estado, dateStr: prazoVideo, editable: false, stateKey: '' } : null,
     { label: 'Fotos para Edição', estado: data.fotos_edicao_estado, dateStr: fotosEdDate, editable: false, stateKey: '' },
     { label: 'Álbum', estado: data.album_estado, dateStr: data.albumDataPrevista, editable: false, stateKey: '' },
