@@ -52,14 +52,17 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ casamentos })
 }
 
+const OPTIONAL_COLS = ['servicos_dia', 'referencia', 'local_cerimonia', 'hora_inicio', 'url_selecao', 'url_provas', 'url_editadas', 'url_album'] as const
+
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  // Tentar primeiro com colunas opcionais; se falhar por coluna inexistente, retry sem elas
-  const { servicos_dia, referencia, local_cerimonia, hora_inicio, ...core } = body
   const supabase = db()
-  let { data, error } = await supabase.from('freelancer_casamentos').insert({ ...core, servicos_dia, referencia, local_cerimonia, hora_inicio }).select().single()
-  if (error && /column .* (servicos_dia|referencia|local_cerimonia|hora_inicio)/i.test(error.message)) {
+  // Tentar primeiro com TODAS as colunas opcionais; se falhar por coluna inexistente, retry sem elas
+  let { data, error } = await supabase.from('freelancer_casamentos').insert(body).select().single()
+  if (error && /column .* of relation/i.test(error.message)) {
     // Retry sem as colunas opcionais
+    const core: any = { ...body }
+    OPTIONAL_COLS.forEach(c => delete core[c])
     const res2 = await supabase.from('freelancer_casamentos').insert(core).select().single()
     data = res2.data; error = res2.error
   }
@@ -68,14 +71,25 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const { id, confirmado_em, indisponivel_em, confirmado_videografo_em, indisponivel_videografo_em, servicos_dia, referencia, local_cerimonia, hora_inicio, ...fields } = await req.json()
+  const body = await req.json()
+  const { id, confirmado_em, indisponivel_em, confirmado_videografo_em, indisponivel_videografo_em, ...rest } = body
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
   const supabase = db()
 
+  // Separa core (sempre safe) das colunas opcionais (podem não existir)
+  const coreFields: Record<string, any> = {}
+  const optFields: Record<string, any> = {}
+  for (const [k, v] of Object.entries(rest)) {
+    if ((OPTIONAL_COLS as readonly string[]).includes(k)) optFields[k] = v
+    else coreFields[k] = v
+  }
+
   // 1 — save core fields (always works)
-  const { error } = await supabase.from('freelancer_casamentos').update(fields).eq('id', id)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (Object.keys(coreFields).length > 0) {
+    const { error } = await supabase.from('freelancer_casamentos').update(coreFields).eq('id', id)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  }
 
   // 2 — save timestamps separately (silently ignored if columns don't exist yet)
   const tsFields: Record<string, string> = {}
@@ -88,14 +102,16 @@ export async function PATCH(req: NextRequest) {
     await supabase.from('freelancer_casamentos').update(tsFields).eq('id', id).then(() => {}).catch(() => {})
   }
 
-  // 3 — save optional fields (servicos_dia, referencia, local_cerimonia, hora_inicio) — silently ignored if columns don't exist yet
-  const optFields: Record<string, any> = {}
-  if (servicos_dia !== undefined)   optFields.servicos_dia   = servicos_dia
-  if (referencia !== undefined)     optFields.referencia     = referencia
-  if (local_cerimonia !== undefined) optFields.local_cerimonia = local_cerimonia
-  if (hora_inicio !== undefined)    optFields.hora_inicio    = hora_inicio
+  // 3 — save optional fields — silently ignored se coluna não existir
   if (Object.keys(optFields).length > 0) {
-    await supabase.from('freelancer_casamentos').update(optFields).eq('id', id).then(() => {}).catch(() => {})
+    // Tenta tudo de uma vez primeiro; se falhar, tenta um por um para isolar
+    const { error } = await supabase.from('freelancer_casamentos').update(optFields).eq('id', id)
+    if (error) {
+      // Tenta um por um (degrada gracioso por coluna em falta)
+      for (const [k, v] of Object.entries(optFields)) {
+        await supabase.from('freelancer_casamentos').update({ [k]: v }).eq('id', id).then(() => {}).catch(() => {})
+      }
+    }
   }
 
   return NextResponse.json({ ok: true })

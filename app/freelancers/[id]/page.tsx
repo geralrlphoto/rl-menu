@@ -23,6 +23,10 @@ type Casamento = {
   referencia?: string | null
   local_cerimonia?: string | null
   hora_inicio?: string | null
+  url_selecao?: string | null
+  url_provas?: string | null
+  url_editadas?: string | null
+  url_album?: string | null
 }
 type Edicao = {
   id: string; freelancer_id: string; nome: string; status: string; local: string | null
@@ -1595,7 +1599,53 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
 
             {/* ── EXPANDED PANEL (inline accordion) ─────────────────── */}
             {expandedId === c.id && (
-              <div className="relative px-5 pb-5 pt-3 border-t border-gold/15 animate-in fade-in slide-in-from-top-1">
+              <div className="relative px-5 pb-5 pt-4 border-t border-gold/15 animate-in fade-in slide-in-from-top-1 space-y-4">
+                {/* Grid de URLs do casamento */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {[
+                    { key: 'url_selecao' as const, label: 'Seleção de Fotos', icon: '◫', placeholder: 'https://...' },
+                    { key: 'url_provas' as const, label: 'Fotos Prova', icon: '◧', placeholder: 'https://...' },
+                    { key: 'url_editadas' as const, label: 'Fotos Editadas', icon: '✓', placeholder: 'https://...' },
+                    { key: 'url_album' as const, label: 'Maquete Álbum', icon: '◐', placeholder: 'https://...' },
+                  ].map(field => {
+                    const currentValue = (c as any)[field.key] ?? ''
+                    return (
+                      <div key={field.key} className="rounded-xl border border-white/[0.06] bg-black/30 p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-gold/70 text-base">{field.icon}</span>
+                            <p className="text-[10px] tracking-[0.25em] uppercase text-white/45 font-light">{field.label}</p>
+                          </div>
+                          {currentValue && (
+                            <a href={currentValue} target="_blank" rel="noopener noreferrer"
+                              onClick={e => e.stopPropagation()}
+                              className="text-[10px] text-gold/70 hover:text-gold tracking-wider uppercase transition-colors">
+                              Abrir ↗
+                            </a>
+                          )}
+                        </div>
+                        <input
+                          type="url"
+                          defaultValue={currentValue}
+                          placeholder={field.placeholder}
+                          onClick={e => e.stopPropagation()}
+                          onBlur={async (e) => {
+                            const newVal = e.target.value.trim()
+                            if (newVal === currentValue) return
+                            await fetch('/api/freelancer-casamentos', {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ id: c.id, [field.key]: newVal || null }),
+                            })
+                            onRefresh()
+                          }}
+                          className="w-full bg-black/40 border border-white/[0.06] rounded-lg px-2.5 py-1.5 text-[11px] text-white/85 placeholder:text-white/20 outline-none focus:border-gold/40 transition-colors"
+                        />
+                      </div>
+                    )
+                  })}
+                </div>
+
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-5">
                   {/* LEFT: ações principais */}
                   <div className="flex flex-wrap items-center gap-2">
