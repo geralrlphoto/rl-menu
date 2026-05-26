@@ -215,29 +215,8 @@ function FreelancerDetailInner() {
 
   useEffect(() => { load() }, [load])
 
-  if (loading) return (
-    <main className="min-h-screen flex items-center justify-center">
-      <p className="text-white/20 text-[14px] tracking-widest uppercase">A carregar...</p>
-    </main>
-  )
-
-  if (!freelancer) return (
-    <main className="min-h-screen flex items-center justify-center">
-      <p className="text-red-400/50 text-[14px]">Freelancer não encontrado.</p>
-    </main>
-  )
-
-  // Lista de próximos (ordenados) e o próximo (primeiro da lista)
-  const upcomingList = casamentos
-    .filter(c => c.data_casamento && (daysUntil(c.data_casamento) ?? -1) >= 0)
-    .sort((a,b) => (a.data_casamento ?? '') < (b.data_casamento ?? '') ? -1 : 1)
-  const upcoming = upcomingList[0] ?? null
-  const dtu = upcoming ? daysUntil(upcoming.data_casamento) : null
-
-  const isVideografo = freelancer?.status === 'VIDEOGRAFO'
-  const isFotografo  = freelancer?.status === 'FOTOGRAFO'
-
   // ── Prazos de entrega (Seleção de Fotos: 30 dias após o evento) ─────
+  //   Calculado SEMPRE (antes de early returns) para respeitar Rules of Hooks
   const PRAZO_SELECAO_DIAS = 30
   const PRAZO_AVISO_DIAS = 5
   type PrazoEntry = { c: Casamento; deadline: Date; daysLeft: number }
@@ -264,6 +243,8 @@ function FreelancerDetailInner() {
   const prazosCriticos = prazosSelecao.filter(p => p.daysLeft <= PRAZO_AVISO_DIAS)
 
   // Criar notificação automática (idempotente) sempre que um prazo entrar em estado crítico
+  //   IMPORTANTE: este useEffect TEM de ficar antes das early-returns (loading/!freelancer)
+  //   para evitar 'Rendered more hooks than during the previous render'.
   useEffect(() => {
     if (!freelancer?.id || prazosCriticos.length === 0) return
     prazosCriticos.forEach(async (p) => {
@@ -289,6 +270,28 @@ function FreelancerDetailInner() {
       } catch { /* ignora — re-tenta no próximo render */ }
     })
   }, [prazosCriticos.length, freelancer?.id])
+
+  if (loading) return (
+    <main className="min-h-screen flex items-center justify-center">
+      <p className="text-white/20 text-[14px] tracking-widest uppercase">A carregar...</p>
+    </main>
+  )
+
+  if (!freelancer) return (
+    <main className="min-h-screen flex items-center justify-center">
+      <p className="text-red-400/50 text-[14px]">Freelancer não encontrado.</p>
+    </main>
+  )
+
+  // Lista de próximos (ordenados) e o próximo (primeiro da lista)
+  const upcomingList = casamentos
+    .filter(c => c.data_casamento && (daysUntil(c.data_casamento) ?? -1) >= 0)
+    .sort((a,b) => (a.data_casamento ?? '') < (b.data_casamento ?? '') ? -1 : 1)
+  const upcoming = upcomingList[0] ?? null
+  const dtu = upcoming ? daysUntil(upcoming.data_casamento) : null
+
+  const isVideografo = freelancer?.status === 'VIDEOGRAFO'
+  const isFotografo  = freelancer?.status === 'FOTOGRAFO'
 
   function handleIntroHomeChange(val: string) {
     setIntroHome(val)
