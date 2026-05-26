@@ -522,6 +522,23 @@ export default function FreelancersPage() {
                               ✦ Maquete
                             </Link>
 
+                            {/* Botão Ver como Freelancer: SEMPRE visível (emerald) */}
+                            <Link href={`/freelancer-view/${f.id}`} target="_blank" rel="noopener noreferrer"
+                              className="flex-shrink-0 inline-flex items-center gap-1.5 text-[10px] px-3 py-1.5 rounded-lg border tracking-widest uppercase font-bold transition-all hover:scale-[1.02]"
+                              style={{
+                                background: 'linear-gradient(135deg, rgba(52,211,153,0.12), rgba(52,211,153,0.03))',
+                                borderColor: 'rgba(52,211,153,0.4)',
+                                color: '#34d399',
+                                boxShadow: '0 0 10px rgba(52,211,153,0.15)',
+                              }}
+                              title={`Abrir portal real do freelancer ${f.nome} (em nova tab)`}>
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                              </svg>
+                              Ver como Freelancer ↗
+                            </Link>
+
                             <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0">
                               <CopiarUrlButton id={f.id} />
                               <button onClick={() => { setPwEditId(f.id); setPwDraft(f.password ?? '') }}
