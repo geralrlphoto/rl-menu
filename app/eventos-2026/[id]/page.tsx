@@ -2192,6 +2192,8 @@ export default function EventoPage() {
   const [galeriasEnviada, setGaleriasEnviada] = useState<string | null>(null)
   const [fotosConvidadosEmailEnviada, setFotosConvidadosEmailEnviada] = useState<string | null>(null)
   const [fotosConvidadosCttEnviada, setFotosConvidadosCttEnviada] = useState<string | null>(null)
+  const [fotosConvidadosEmailLista, setFotosConvidadosEmailLista] = useState<string[]>([])
+  const [fotosConvidadosCttLista, setFotosConvidadosCttLista] = useState<string[]>([])
   const [actionUrls, setActionUrls] = useState<Record<string, string>>({
     selecao: '', prewedding: '', fotos_finais: '', galerias: '', maquete: '',
   })
@@ -2481,6 +2483,8 @@ export default function EventoPage() {
               if (s.galerias_enviada)         setGaleriasEnviada(s.galerias_enviada)
               if (s.fotos_convidados_email_enviada) setFotosConvidadosEmailEnviada(s.fotos_convidados_email_enviada)
               if (s.fotos_convidados_ctt_enviada)   setFotosConvidadosCttEnviada(s.fotos_convidados_ctt_enviada)
+              if (Array.isArray(s.fotos_convidados_email_lista)) setFotosConvidadosEmailLista(s.fotos_convidados_email_lista)
+              if (Array.isArray(s.fotos_convidados_ctt_lista))   setFotosConvidadosCttLista(s.fotos_convidados_ctt_lista)
               if (s.video_prewedding_enviada) setVideoPreWeddingEnviada(s.video_prewedding_enviada)
               if (s.wedding_film_enviada)     setWeddingFilmEnviada(s.wedding_film_enviada)
               if (s.same_day_edit_enviada)    setSameDayEditEnviada(s.same_day_edit_enviada)
@@ -3581,9 +3585,9 @@ export default function EventoPage() {
           <h2 className="text-[10px] tracking-[0.35em] uppercase" style={{ color: 'rgba(99,165,255,0.8)' }}>Fotos Convidados</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {([
-              { label: 'Fotos via Email', prazoDias: 15, prazoLabel: '15 dias após o evento', state: fotosConvidadosEmailEnviada, setState: setFotosConvidadosEmailEnviada, key: 'fotos_convidados_email_enviada', listaKey: 'fotos_convidados_email_lista' },
-              { label: 'Fotos via CTT',   prazoDias: 30, prazoLabel: '30 dias após o evento', state: fotosConvidadosCttEnviada,   setState: setFotosConvidadosCttEnviada,   key: 'fotos_convidados_ctt_enviada',   listaKey: 'fotos_convidados_ctt_lista' },
-            ]).map(({ label, prazoDias, prazoLabel, state, setState, key, listaKey }) => {
+              { label: 'Fotos via Email', prazoDias: 15, prazoLabel: '15 dias após o evento', state: fotosConvidadosEmailEnviada, setState: setFotosConvidadosEmailEnviada, key: 'fotos_convidados_email_enviada', listaKey: 'fotos_convidados_email_lista', lista: fotosConvidadosEmailLista, setLista: setFotosConvidadosEmailLista },
+              { label: 'Fotos via CTT',   prazoDias: 30, prazoLabel: '30 dias após o evento', state: fotosConvidadosCttEnviada,   setState: setFotosConvidadosCttEnviada,   key: 'fotos_convidados_ctt_enviada',   listaKey: 'fotos_convidados_ctt_lista',   lista: fotosConvidadosCttLista,   setLista: setFotosConvidadosCttLista },
+            ]).map(({ label, prazoDias, prazoLabel, state, setState, key, listaKey, lista, setLista }) => {
               // Aviso de prazo
               let deadline: { daysLeft: number; deadlineStr: string; expired: boolean; critical: boolean } | null = null
               if (!state && e.data_evento) {
@@ -3625,23 +3629,34 @@ export default function EventoPage() {
                         : <span className="text-white/25">Pendente</span>
                     }
                   </p>
+                  {(lista.length === 0 && !state) && (
+                    <p className="text-[10px] text-amber-300/90 bg-amber-500/[0.06] border border-amber-500/20 rounded-md px-2 py-1.5">
+                      ⚠ Adiciona na <strong>Lista</strong> os convidados que adquiriram fotografias para desbloquear o botão.
+                    </p>
+                  )}
                   <div className="flex gap-2 mt-1">
                     <button
+                      disabled={lista.length === 0 && !state}
                       onClick={async () => {
                         if (!evento?.referencia) return
+                        if (lista.length === 0 && !state) {
+                          alert('Adiciona primeiro o nome dos convidados que adquiriram fotografias na "Lista". Só depois podes marcar como enviadas.')
+                          return
+                        }
                         const today = new Date().toISOString().split('T')[0]
                         await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [key]: today } } }) })
                         setState(today)
                       }}
                       className={`flex-1 px-4 py-2 rounded-lg text-[11px] font-semibold tracking-[0.2em] uppercase border transition-all ${
                         state ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                              : (lista.length === 0) ? 'bg-white/[0.03] text-white/25 border-white/10 cursor-not-allowed'
                               : 'bg-blue-500/20 text-blue-300 border-blue-500/30 hover:bg-blue-500/30'
                       }`}
                     >
-                      {state ? '✓ Fotos Enviadas' : 'Marcar Fotos Enviadas'}
+                      {state ? '✓ Fotos Enviadas' : (lista.length === 0) ? '🔒 Bloqueado' : 'Marcar Fotos Enviadas'}
                     </button>
                     {evento?.referencia && (
-                      <ListaConvidadosAdminButton referencia={evento.referencia} listaKey={listaKey} label={label} />
+                      <ListaConvidadosAdminButton referencia={evento.referencia} listaKey={listaKey} label={label} lista={lista} onListaChange={setLista} />
                     )}
                   </div>
                 </div>
@@ -3900,31 +3915,18 @@ export default function EventoPage() {
   )
 }
 
-// ─── ListaConvidadosAdminButton — botão "LISTA" + modal com nomes ───────────
+// ─── ListaConvidadosAdminButton — botão "LISTA" + modal (controlado) ────────
 function ListaConvidadosAdminButton({
-  referencia, listaKey, label,
-}: { referencia: string; listaKey: string; label: string }) {
+  referencia, listaKey, label, lista, onListaChange,
+}: { referencia: string; listaKey: string; label: string; lista: string[]; onListaChange: (next: string[]) => void }) {
   const [open, setOpen] = useState(false)
-  const [lista, setLista] = useState<string[]>([])
   const [novoNome, setNovoNome] = useState('')
-  const [loading, setLoading] = useState(false)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => { setMounted(true) }, [])
 
-  async function abrir() {
-    setOpen(true)
-    setLoading(true)
-    try {
-      const p = await fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`).then(r => r.json())
-      const s = p?.portal?.settings ?? p?.settings ?? {}
-      setLista(Array.isArray(s[listaKey]) ? s[listaKey] : [])
-    } catch { /* ignore */ }
-    setLoading(false)
-  }
-
   async function guardar(next: string[]) {
-    setLista(next)
+    onListaChange(next)
     await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia, updates: { settings: { [listaKey]: next } } }) })
   }
 
@@ -3949,9 +3951,13 @@ function ListaConvidadosAdminButton({
 
   return (
     <>
-      <button onClick={abrir}
-        className="px-4 py-2 rounded-lg text-[11px] font-semibold tracking-[0.2em] uppercase border border-white/15 text-white/60 hover:bg-white/[0.05] hover:text-white/85 transition-all">
-        Lista{lista.length > 0 ? ` (${lista.length})` : ''}
+      <button onClick={() => setOpen(true)}
+        className={`px-4 py-2 rounded-lg text-[11px] font-semibold tracking-[0.2em] uppercase border transition-all ${
+          lista.length === 0
+            ? 'border-amber-500/40 text-amber-300 bg-amber-500/[0.05] hover:bg-amber-500/[0.12] animate-pulse'
+            : 'border-white/15 text-white/60 hover:bg-white/[0.05] hover:text-white/85'
+        }`}>
+        Lista{lista.length > 0 ? ` (${lista.length})` : ' ⚠'}
       </button>
       {mounted && open && createPortal(
         <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
@@ -3967,9 +3973,11 @@ function ListaConvidadosAdminButton({
                 className="w-7 h-7 flex items-center justify-center rounded-full border border-white/10 text-white/40 hover:text-white/80 hover:border-white/30">✕</button>
             </div>
 
-            {loading ? (
-              <p className="text-xs text-white/40 italic">A carregar…</p>
-            ) : lista.length === 0 ? (
+            <p className="text-[11px] text-amber-300/90 bg-amber-500/[0.06] border border-amber-500/20 rounded-md px-3 py-2 leading-snug">
+              ⚠ Coloca aqui o nome dos convidados que <strong>adquiriram fotografias</strong>. Só depois consegues marcar como enviadas.
+            </p>
+
+            {lista.length === 0 ? (
               <p className="text-xs text-white/40 italic py-4 text-center">Ainda não há nomes adicionados.</p>
             ) : (
               <ul className="flex flex-col gap-1.5">
