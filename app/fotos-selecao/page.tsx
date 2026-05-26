@@ -366,6 +366,42 @@ function FichaModal({ row, onClose, onSaved }: {
               }),
             })
           }
+
+          // 5. Notificação no portal do freelancer (sino vermelho)
+          //    Idempotente: evita duplicar se já existe para o mesmo álbum
+          try {
+            const titulo = `◐ Nova edição de álbum · ${row.nome_noivos || 'Novo casamento'}`
+            const existingNotifs = await fetch(`/api/freelancer-notificacoes?freelancer_id=${fl.id}`).then(r => r.json())
+            const dup = (existingNotifs.notificacoes ?? []).some((n: any) =>
+              n.titulo === titulo && n.tipo === 'nova_edicao_album'
+            )
+            if (!dup) {
+              await fetch('/api/freelancer-notificacoes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  freelancer_id: fl.id,
+                  titulo,
+                  mensagem: `Foi-te atribuída uma nova maquete de álbum${row.referencia ? ` (${row.referencia})` : ''}. As referências já estão disponíveis no teu portal.`,
+                  tipo: 'nova_edicao_album',
+                  lida: false,
+                }),
+              })
+            }
+          } catch { /* não bloqueia o fluxo */ }
+
+          // 6. Email automático com o card 'Nova edição de álbum'
+          try {
+            await fetch('/api/send-edicao-album-email', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                freelancer_id: fl.id,
+                nome_noivos:   row.nome_noivos ?? null,
+                referencia:    row.referencia  ?? null,
+              }),
+            })
+          } catch { /* não bloqueia o fluxo */ }
         }
       }
     } catch { /* silently ignore */ }
