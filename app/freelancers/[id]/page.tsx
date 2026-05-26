@@ -3452,6 +3452,11 @@ function UrlEntryCard({
     : null
   const hasUrl = url.trim().length > 0
 
+  // ── URL apenas editável quando status = ENTREGUE (Seleção de Fotos) ──
+  // O membro só pode colar o link quando marca o trabalho como entregue.
+  const urlBlockedByStatus = field.tipo === 'selecao' && status !== 'ENTREGUE'
+  const urlLocked = locked || urlBlockedByStatus
+
   // ── Aviso de prazo (apenas para Seleção de Fotos: 30 dias após o evento) ──
   const deadlineNotice = (() => {
     if (field.tipo !== 'selecao' || sentAt || !casamentoData) return null
@@ -3560,13 +3565,13 @@ function UrlEntryCard({
       <input
         type="url"
         value={url}
-        placeholder={locked ? 'Bloqueado' : 'https://...'}
-        disabled={locked}
+        placeholder={locked ? 'Bloqueado' : urlBlockedByStatus ? 'Disponível ao marcar ENTREGUE' : 'https://...'}
+        disabled={urlLocked}
         onClick={e => e.stopPropagation()}
         onChange={e => setUrl(e.target.value)}
         onBlur={e => saveUrl(e.target.value.trim())}
         className={`w-full bg-black/40 border rounded-lg px-3 py-2 text-[13px] outline-none transition-colors ${
-          locked ? 'border-white/[0.04] text-white/30 cursor-not-allowed' : 'border-white/[0.06] text-white/90 placeholder:text-white/25 focus:border-gold/40'
+          urlLocked ? 'border-white/[0.04] text-white/30 cursor-not-allowed' : 'border-white/[0.06] text-white/90 placeholder:text-white/25 focus:border-gold/40'
         }`}
       />
       {sentAtFmt ? (
@@ -3574,7 +3579,7 @@ function UrlEntryCard({
           <span className="inline-flex items-center gap-1 text-emerald-400/90 tracking-wider uppercase font-semibold">
             ✓ Enviado · {sentAtFmt}
           </span>
-          {hasUrl && !locked && (
+          {hasUrl && !urlLocked && (
             <button onClick={e => { e.stopPropagation(); enviarNotificacao() }}
               disabled={sending}
               className="text-white/40 hover:text-gold tracking-wider uppercase transition-colors disabled:opacity-50">
@@ -3584,19 +3589,24 @@ function UrlEntryCard({
         </div>
       ) : (
         <button
-          disabled={locked || !hasUrl || sending}
+          disabled={urlLocked || !hasUrl || sending}
           onClick={e => { e.stopPropagation(); enviarNotificacao() }}
           className={`w-full text-[12px] tracking-wider uppercase font-semibold rounded-lg px-2.5 py-2 transition-all ${
-            !locked && hasUrl
+            !urlLocked && hasUrl
               ? 'bg-gold text-black hover:bg-gold/90'
               : 'bg-white/[0.04] text-white/30 cursor-not-allowed border border-white/[0.06]'
           } ${sending ? 'opacity-50' : ''}`}
-          style={!locked && hasUrl ? { boxShadow: '0 0 12px -4px rgba(201,164,92,0.5)' } : undefined}>
+          style={!urlLocked && hasUrl ? { boxShadow: '0 0 12px -4px rgba(201,164,92,0.5)' } : undefined}>
           {sending ? 'A enviar...' : '✉ Enviar Notificação'}
         </button>
       )}
       {locked && lockedReason && (
         <p className="text-[11px] text-white/45 italic leading-relaxed mt-1">🔒 {lockedReason}</p>
+      )}
+      {!locked && urlBlockedByStatus && (
+        <p className="text-[11px] text-amber-300/80 italic leading-relaxed mt-1 px-1">
+          ⓘ O link só fica disponível quando marcares o trabalho como <span className="font-bold not-italic uppercase">Entregue</span> abaixo. Ao mudar para Entregue, o portal dos noivos também é atualizado automaticamente.
+        </p>
       )}
       {saving && <p className="text-[11px] text-gold/50 italic">A guardar URL...</p>}
 

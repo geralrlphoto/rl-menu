@@ -149,6 +149,35 @@ export async function PATCH(req: NextRequest) {
     }
   }
 
+  // 4 — Sync para portal dos noivos: quando status_selecao = 'ENTREGUE',
+  //     atualiza sel_fotos_estado='Entregue' na tabela eventos_2026/2027
+  //     (que é o que o portal-cliente/batizado lê para "Estado das Entregas").
+  if (optFields.status_selecao === 'ENTREGUE') {
+    try {
+      const { data: fc } = await supabase
+        .from('freelancer_casamentos')
+        .select('referencia, evento_id, local, data_casamento')
+        .eq('id', id)
+        .maybeSingle()
+      if (fc) {
+        const ano = (fc.data_casamento ?? '').slice(0, 4)
+        const table = ano === '2027' ? 'eventos_2027' : 'eventos_2026'
+        // Tenta pela referencia primeiro
+        if (fc.referencia) {
+          await supabase.from(table).update({ sel_fotos_estado: 'Entregue' }).eq('referencia', fc.referencia).then(() => {}, () => {})
+        }
+        // Fallback: tenta por evento_id (notion id) ou local+data
+        if (fc.evento_id && !String(fc.evento_id).startsWith('ref_')) {
+          await supabase.from(table).update({ sel_fotos_estado: 'Entregue' }).eq('notion_id', fc.evento_id).then(() => {}, () => {})
+        }
+        if (fc.local && fc.data_casamento) {
+          await supabase.from(table).update({ sel_fotos_estado: 'Entregue' })
+            .ilike('local', fc.local).eq('data_evento', fc.data_casamento).then(() => {}, () => {})
+        }
+      }
+    } catch { /* não bloqueia o save */ }
+  }
+
   return NextResponse.json({ ok: true })
 }
 
