@@ -283,6 +283,13 @@ function EditEquipaField({ label, field, multi, eventoId, referencia, local, dat
     await persist(next)
   }
 
+  async function removeOne(name: string) {
+    const next = value.filter(x => x !== name)
+    setValue(next)
+    onChanged?.(next)
+    await persist(next)
+  }
+
   const tagCls = (name: string) => {
     const isUnavail = unavailableNames?.includes(name.toUpperCase())
     if (isUnavail) return 'text-[10px] px-1.5 py-0.5 rounded-md bg-red-500/15 text-red-400 border border-red-500/30'
@@ -299,8 +306,18 @@ function EditEquipaField({ label, field, multi, eventoId, referencia, local, dat
           className="w-full text-left px-2 py-1 -mx-2 rounded-lg hover:bg-white/5 transition-colors flex items-center gap-2 min-h-[28px]">
           {value.length > 0
             ? <span className="flex flex-wrap gap-1">{value.map(v => (
-                <span key={v} className={tagCls(v)}>
-                  {unavailableNames?.includes(v.toUpperCase()) && <span className="mr-1">⚠</span>}{v}
+                <span key={v} className={`${tagCls(v)} inline-flex items-center gap-1 group/chip`}>
+                  {unavailableNames?.includes(v.toUpperCase()) && <span>⚠</span>}
+                  <span>{v}</span>
+                  <span
+                    role="button"
+                    title={`Remover ${v}`}
+                    onClick={(ev) => { ev.stopPropagation(); ev.preventDefault(); removeOne(v) }}
+                    onMouseDown={(ev) => ev.stopPropagation()}
+                    className="ml-0.5 w-3.5 h-3.5 inline-flex items-center justify-center rounded-full text-[9px] leading-none cursor-pointer bg-white/5 hover:bg-red-500/30 hover:text-red-300 transition-colors opacity-60 hover:opacity-100"
+                  >
+                    ×
+                  </span>
                 </span>
               ))}</span>
             : <span className="text-white/20 italic text-sm">Clica para editar</span>}
