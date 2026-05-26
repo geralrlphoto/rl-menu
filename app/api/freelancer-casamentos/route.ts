@@ -22,16 +22,13 @@ export async function GET(req: NextRequest) {
   )
   if (needsEnrich.length > 0) {
     try {
-      // Fetch todos os eventos (filtra pelos refs primeiro, depois fallback ao local)
-      const refs = needsEnrich.filter((c: any) => c.referencia).map((c: any) => c.referencia)
-      const datas = needsEnrich.filter((c: any) => c.data_casamento).map((c: any) => c.data_casamento)
+      // Fetch eventos por data_evento (suficiente: depois filtramos em memória por local/ref)
+      const datas = Array.from(new Set(needsEnrich.filter((c: any) => c.data_casamento).map((c: any) => c.data_casamento)))
+      if (datas.length === 0) return NextResponse.json({ casamentos })
       const { data: events } = await supabase
         .from('eventos_2026')
         .select('referencia, local, data_evento, servicos_dia, local_cerimonia, hora_inicio')
-        .or([
-          refs.length > 0 ? `referencia.in.(${refs.join(',')})` : null,
-          datas.length > 0 ? `data_evento.in.(${datas.join(',')})` : null,
-        ].filter(Boolean).join(','))
+        .in('data_evento', datas)
 
       const byRef = new Map<string, any>((events ?? []).filter((e: any) => e.referencia).map((e: any) => [e.referencia, e]))
       casamentos.forEach((c: any) => {
