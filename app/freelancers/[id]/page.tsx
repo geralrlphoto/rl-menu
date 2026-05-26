@@ -1624,41 +1624,39 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                     { key: 'url_provas',   ts: 'url_provas_enviado_em',   tipo: 'provas',   label: 'Fotos Prova',      icon: '◧' },
                     { key: 'url_editadas', ts: 'url_editadas_enviado_em', tipo: 'editadas', label: 'Fotos Editadas',   icon: '✓' },
                     { key: 'url_album',    ts: 'url_album_enviado_em',    tipo: 'album',    label: 'Maquete Álbum',    icon: '◐' },
-                  ] as const).map(field => (
-                    {(() => {
-                      // Lock check: o card só desbloqueia quando o editor correspondente
-                      // estiver atribuído na ficha do evento /eventos-2026/[id]
-                      const editorFotos = Array.isArray(c.editor_fotos) ? c.editor_fotos : (c.editor_fotos ? [c.editor_fotos] : [])
-                      const editorAlbum = Array.isArray(c.editor_album) ? c.editor_album : (c.editor_album ? [c.editor_album] : [])
-                      const lockedReason =
-                        field.tipo === 'album' && editorAlbum.length === 0
-                          ? 'Aguarda atribuição do "Editor de Álbum" na ficha do evento (/eventos-2026)'
-                        : (field.tipo === 'selecao' || field.tipo === 'provas' || field.tipo === 'editadas') && editorFotos.length === 0
-                          ? 'Aguarda atribuição do "Editor de Fotos" na ficha do evento (/eventos-2026)'
-                          : null
-                      return (
-                        <UrlEntryCard
-                          key={field.key}
-                          field={field}
-                          casamentoId={c.id}
-                          casamentoLocal={c.local}
-                          casamentoData={c.data_casamento}
-                          freelancerNome={freelancer?.nome ?? ''}
-                          initialUrl={(c as any)[field.key] ?? ''}
-                          initialSentAt={(c as any)[field.ts] ?? null}
-                          initialStatus={
-                            field.tipo === 'editadas' ? (c.status_editadas ?? 'AGUARDAR') :
-                            field.tipo === 'selecao'  ? (c.status_selecao  ?? 'AGUARDAR') :
-                            field.tipo === 'provas'   ? (c.status_provas   ?? 'AGUARDAR') :
-                            field.tipo === 'album'    ? (c.status_album    ?? 'AGUARDAR') :
-                            null
-                          }
-                          lockedReason={lockedReason}
-                          onRefresh={onRefresh}
-                        />
-                      )
-                    })()}
-                  ))}
+                  ] as const).map(field => {
+                    // Lock check: o card só desbloqueia quando o editor correspondente
+                    // estiver atribuído na ficha do evento /eventos-2026/[id]
+                    const editorFotos = Array.isArray(c.editor_fotos) ? c.editor_fotos : (c.editor_fotos ? [c.editor_fotos] : [])
+                    const editorAlbum = Array.isArray(c.editor_album) ? c.editor_album : (c.editor_album ? [c.editor_album] : [])
+                    const lockedReason =
+                      field.tipo === 'album' && editorAlbum.length === 0
+                        ? 'Aguarda atribuição do "Editor de Álbum" na ficha do evento (/eventos-2026)'
+                      : (field.tipo === 'selecao' || field.tipo === 'provas' || field.tipo === 'editadas') && editorFotos.length === 0
+                        ? 'Aguarda atribuição do "Editor de Fotos" na ficha do evento (/eventos-2026)'
+                        : null
+                    return (
+                      <UrlEntryCard
+                        key={field.key}
+                        field={field}
+                        casamentoId={c.id}
+                        casamentoLocal={c.local}
+                        casamentoData={c.data_casamento}
+                        freelancerNome={freelancer?.nome ?? ''}
+                        initialUrl={(c as any)[field.key] ?? ''}
+                        initialSentAt={(c as any)[field.ts] ?? null}
+                        initialStatus={
+                          field.tipo === 'editadas' ? (c.status_editadas ?? 'AGUARDAR') :
+                          field.tipo === 'selecao'  ? (c.status_selecao  ?? 'AGUARDAR') :
+                          field.tipo === 'provas'   ? (c.status_provas   ?? 'AGUARDAR') :
+                          field.tipo === 'album'    ? (c.status_album    ?? 'AGUARDAR') :
+                          null
+                        }
+                        lockedReason={lockedReason}
+                        onRefresh={onRefresh}
+                      />
+                    )
+                  })}
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-5">
