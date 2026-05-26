@@ -34,6 +34,7 @@ type Casamento = {
   status_editadas?: string | null
   status_selecao?: string | null
   status_provas?: string | null
+  status_album?: string | null
 }
 type Edicao = {
   id: string; freelancer_id: string; nome: string; status: string; local: string | null
@@ -1633,6 +1634,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                         field.tipo === 'editadas' ? (c.status_editadas ?? 'AGUARDAR') :
                         field.tipo === 'selecao'  ? (c.status_selecao  ?? 'AGUARDAR') :
                         field.tipo === 'provas'   ? (c.status_provas   ?? 'AGUARDAR') :
+                        field.tipo === 'album'    ? (c.status_album    ?? 'AGUARDAR') :
                         null
                       }
                       onRefresh={onRefresh}
@@ -3180,6 +3182,7 @@ const STATUS_OPTIONS_BY_TIPO: Record<string, string[]> = {
   selecao:  ['AGUARDAR', 'EM SELEÇÃO', 'SELECIONADAS', 'ENTREGUE'],
   editadas: ['AGUARDAR', 'EM EDIÇÃO',  'EDITADAS',     'ENTREGUE'],
   provas:   ['AGUARDAR', 'GALERIA PUBLICADA'],
+  album:    ['AGUARDAR', 'EM EDIÇÃO',  'CONCLUIDO',    'ENTREGUE'],
 }
 const STATUS_CLS: Record<string, string> = {
   'AGUARDAR':          'bg-white/[0.06] text-white/55 border-white/15',
@@ -3187,6 +3190,7 @@ const STATUS_CLS: Record<string, string> = {
   'EM SELEÇÃO':        'bg-amber-500/15 text-amber-300 border-amber-500/40',
   'EDITADAS':          'bg-blue-500/15 text-blue-300 border-blue-500/40',
   'SELECIONADAS':      'bg-blue-500/15 text-blue-300 border-blue-500/40',
+  'CONCLUIDO':         'bg-blue-500/15 text-blue-300 border-blue-500/40',
   'GALERIA PUBLICADA': 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40',
   'ENTREGUE':          'bg-emerald-500/15 text-emerald-300 border-emerald-500/40',
 }
@@ -3194,11 +3198,13 @@ const STATUS_COL_BY_TIPO: Record<string, string> = {
   selecao:  'status_selecao',
   editadas: 'status_editadas',
   provas:   'status_provas',
+  album:    'status_album',
 }
 const STATUS_LABEL_BY_TIPO: Record<string, string> = {
   selecao:  'Estado da Seleção',
   editadas: 'Estado da Edição',
   provas:   'Estado das Provas',
+  album:    'Estado do Álbum',
 }
 
 function UrlEntryCard({
