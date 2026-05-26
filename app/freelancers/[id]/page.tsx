@@ -514,7 +514,7 @@ function FreelancerDetailInner() {
         viewAsFreelancer={viewAsFreelancer}
       />
 
-    <main className={`relative z-10 min-h-screen px-4 sm:px-6 py-6 mx-auto lg:pl-[230px] lg:pr-4 ${
+    <main className={`relative z-10 min-h-screen px-4 sm:px-6 py-6 mx-auto lg:pl-[252px] lg:pr-4 ${
       tab === null ? 'max-w-none'
         : (['casamentos', 'edicao', 'album', 'pagamentos'] as Array<string | null>).includes(tab) ? 'max-w-[1500px]'
         : 'max-w-3xl'
@@ -1416,62 +1416,90 @@ function SidebarNavAdmin({
 
   return (
     <aside
-      className="hidden lg:flex fixed top-0 left-0 bottom-0 w-[220px] z-20 flex-col"
+      className="hidden lg:flex fixed top-0 left-0 bottom-0 w-[240px] z-20 flex-col"
       style={{
-        background: 'linear-gradient(180deg, rgba(10,8,5,0.85) 0%, rgba(14,11,7,0.92) 100%)',
-        backdropFilter: 'blur(16px)',
-        borderRight: '1px solid rgba(201,168,76,0.12)',
+        background: 'linear-gradient(180deg, #0a0805 0%, #0e0b07 50%, #0a0805 100%)',
+        borderRight: '0.5px solid rgba(201,164,92,0.18)',
+        boxShadow: 'inset -1px 0 30px rgba(201,164,92,0.04), 4px 0 24px rgba(0,0,0,0.45)',
+        fontFamily: 'Georgia, "Times New Roman", serif',
       }}
     >
+      {/* Top corner ornaments */}
+      <div className="absolute top-0 left-0 w-[28px] h-[28px] pointer-events-none" style={{ borderTop: '0.5px solid rgba(201,164,92,0.25)', borderLeft: '0.5px solid rgba(201,164,92,0.25)' }} />
+      <div className="absolute top-0 right-0 w-[28px] h-[28px] pointer-events-none" style={{ borderTop: '0.5px solid rgba(201,164,92,0.25)', borderRight: '0.5px solid rgba(201,164,92,0.25)' }} />
+
       {/* Logo */}
-      <div className="px-6 pt-8 pb-6 border-b border-gold/10">
-        <p className="text-[14px] tracking-[0.45em] text-gold/60 uppercase">RL</p>
-        <p className="text-[14px] tracking-[0.18em] text-gold font-light uppercase mt-0.5">Photo<span className="text-white/40">.</span>Video</p>
+      <div className="px-7 pt-10 pb-6 text-center">
+        <p className="text-[10px] tracking-[0.5em] uppercase font-light" style={{ color: '#7a6340' }}>RL</p>
+        <p className="text-[22px] leading-tight mt-1" style={{ color: '#f0e8d8', fontWeight: 400 }}>
+          Photo<span className="italic" style={{ color: '#c9a96e' }}>.video</span>
+        </p>
         {!viewAsFreelancer && (
-          <p className="text-[14px] tracking-[0.3em] text-white/30 uppercase mt-2">Admin · Edição</p>
+          <div className="flex items-center justify-center gap-2 mt-4">
+            <div className="h-px w-5" style={{ background: 'linear-gradient(90deg, transparent, rgba(201,164,92,0.45))' }} />
+            <p className="text-[8px] tracking-[0.45em] uppercase" style={{ color: '#7a6340' }}>Admin</p>
+            <span className="text-[7px]" style={{ color: '#7a6340' }}>◆</span>
+            <p className="text-[8px] tracking-[0.45em] uppercase" style={{ color: '#7a6340' }}>Edição</p>
+            <div className="h-px w-5" style={{ background: 'linear-gradient(90deg, rgba(201,164,92,0.45), transparent)' }} />
+          </div>
         )}
-        <div className="mt-3 h-px w-8 bg-gold/40" />
       </div>
+
+      <div className="h-px mx-7" style={{ background: 'linear-gradient(90deg, transparent, rgba(201,164,92,0.25), transparent)' }} />
 
       {/* User */}
       {freelancer && (
-        <div className="px-5 py-4 border-b border-white/[0.04] flex items-center gap-3">
+        <div className="px-6 py-5 flex items-center gap-4">
           {freelancer.foto_url ? (
-            <img src={freelancer.foto_url} alt={freelancer.nome} className="w-9 h-9 rounded-full object-cover border border-gold/30" />
+            <img src={freelancer.foto_url} alt={freelancer.nome}
+              className="w-11 h-11 rounded-full object-cover"
+              style={{ border: '0.5px solid #c9a96e', boxShadow: '0 0 14px rgba(201,164,92,0.22)' }} />
           ) : (
-            <div className="w-9 h-9 rounded-full bg-gold/15 border border-gold/30 flex items-center justify-center text-gold text-[14px] font-bold">
+            <div className="w-11 h-11 rounded-full flex items-center justify-center text-[14px]"
+              style={{ background: 'rgba(201,164,92,0.10)', border: '0.5px solid #c9a96e', color: '#c9a96e', fontStyle: 'italic', boxShadow: '0 0 14px rgba(201,164,92,0.22)' }}>
               {(freelancer.nome ?? '?').charAt(0)}
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <p className="text-[14px] text-white/85 font-medium truncate">{freelancer.nome}</p>
+            <p className="text-[15px] truncate font-normal" style={{ color: '#f0e8d8' }}>{freelancer.nome}</p>
             {freelancer.status && (
-              <p className="text-[14px] tracking-[0.25em] uppercase text-gold/60 mt-0.5">{freelancer.status}</p>
+              <p className="text-[9px] tracking-[0.4em] uppercase mt-1 italic" style={{ color: '#c9a96e', opacity: 0.75 }}>{freelancer.status}</p>
             )}
           </div>
         </div>
       )}
 
+      <div className="h-px mx-7" style={{ background: 'linear-gradient(90deg, transparent, rgba(201,164,92,0.18), transparent)' }} />
+
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
+      <nav className="flex-1 overflow-y-auto px-4 py-5 flex flex-col gap-0.5">
         {items.map((it, i) => {
           const active = tab === it.key
           return (
             <button
               key={i}
               onClick={() => setTab(it.key)}
-              className={`w-full group flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ${
-                active
-                  ? 'bg-gold/10 border border-gold/25 text-gold'
-                  : 'border border-transparent text-white/45 hover:text-white/85 hover:bg-white/[0.03]'
-              }`}
+              className="group relative w-full flex items-center gap-3 pl-4 pr-3 py-2.5 text-left transition-all"
+              style={{
+                background: active ? 'linear-gradient(90deg, rgba(201,164,92,0.10) 0%, rgba(201,164,92,0.02) 60%, transparent 100%)' : 'transparent',
+                borderLeft: active ? '1.5px solid #c9a96e' : '1.5px solid transparent',
+                boxShadow: active ? 'inset 12px 0 24px -16px rgba(201,164,92,0.5)' : 'none',
+              }}
             >
-              <span className={`w-5 text-center text-base ${active ? 'text-gold' : 'text-white/30 group-hover:text-white/60'}`}>{it.icon}</span>
-              <span className="flex-1 text-[14px] tracking-[0.2em] uppercase font-medium">{it.label}</span>
+              <span className="w-5 text-center text-[14px] transition-colors"
+                style={{ color: active ? '#c9a96e' : 'rgba(255,255,255,0.30)' }}>{it.icon}</span>
+              {active ? (
+                <span className="flex-1 text-[14px] italic" style={{ color: '#c9a96e' }}>{it.label}</span>
+              ) : (
+                <span className="flex-1 text-[10px] tracking-[0.3em] uppercase font-light text-white/45 group-hover:text-white/85 transition-colors">{it.label}</span>
+              )}
               {it.count && it.count > 0 ? (
-                <span className={`text-[14px] px-1.5 py-0.5 rounded-full font-bold ${
-                  active ? 'bg-gold/20 text-gold' : 'bg-white/[0.06] text-white/40'
-                }`}>{it.count}</span>
+                <span className="text-[10px] px-1.5 min-w-[22px] text-center font-mono leading-tight py-0.5 rounded-sm"
+                  style={{
+                    border: active ? '0.5px solid #c9a96e' : '0.5px solid rgba(255,255,255,0.15)',
+                    color: active ? '#c9a96e' : 'rgba(255,255,255,0.40)',
+                    background: 'transparent',
+                  }}>{it.count}</span>
               ) : null}
             </button>
           )
@@ -1479,15 +1507,24 @@ function SidebarNavAdmin({
       </nav>
 
       {/* Footer */}
-      <div className="px-5 py-4 border-t border-white/[0.04]">
+      <div className="px-6 py-5 mt-auto">
+        <div className="h-px mb-4" style={{ background: 'linear-gradient(90deg, transparent, rgba(201,164,92,0.25), transparent)' }} />
         {!viewAsFreelancer && (
           <a href={`/freelancer-view/${freelancer?.id ?? ''}`} target="_blank" rel="noopener noreferrer"
-            className="block text-[14px] tracking-[0.25em] uppercase text-white/40 hover:text-gold transition-colors mb-2">
+            className="block text-[9px] tracking-[0.4em] uppercase transition-colors mb-3 text-center"
+            style={{ color: '#7a6340' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#c9a96e'}
+            onMouseLeave={e => e.currentTarget.style.color = '#7a6340'}>
             ↗ Ver como freelancer
           </a>
         )}
-        <p className="text-[14px] text-white/15">© RL Photo.Video</p>
+        <div className="text-center text-[10px] tracking-[0.4em]" style={{ color: '#5a4828' }}>—&nbsp;·&nbsp;◆&nbsp;·&nbsp;—</div>
+        <p className="text-[10px] italic text-center mt-2" style={{ color: '#5a4f3a' }}>© RL Photo · Video</p>
       </div>
+
+      {/* Bottom corner ornaments */}
+      <div className="absolute bottom-0 left-0 w-[28px] h-[28px] pointer-events-none" style={{ borderBottom: '0.5px solid rgba(201,164,92,0.25)', borderLeft: '0.5px solid rgba(201,164,92,0.25)' }} />
+      <div className="absolute bottom-0 right-0 w-[28px] h-[28px] pointer-events-none" style={{ borderBottom: '0.5px solid rgba(201,164,92,0.25)', borderRight: '0.5px solid rgba(201,164,92,0.25)' }} />
     </aside>
   )
 }

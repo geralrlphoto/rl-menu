@@ -767,41 +767,62 @@ export default function PainelEditor() {
 
       {/* ── SIDEBAR ───────────────────────────────────────────────────────── */}
       <aside
-        className="flex fixed top-0 left-0 bottom-0 w-[220px] z-30 flex-col"
+        className="flex fixed top-0 left-0 bottom-0 w-[240px] z-30 flex-col"
         style={{
-          background: 'linear-gradient(180deg, rgba(15,12,8,0.95) 0%, rgba(11,9,5,0.98) 100%)',
-          backdropFilter: 'blur(20px)',
-          borderRight: '1px solid rgba(201,164,92,0.12)',
+          background: 'linear-gradient(180deg, #0a0805 0%, #0e0b07 50%, #0a0805 100%)',
+          borderRight: '0.5px solid rgba(201,164,92,0.18)',
+          boxShadow: 'inset -1px 0 30px rgba(201,164,92,0.04), 4px 0 24px rgba(0,0,0,0.45)',
+          fontFamily: 'Georgia, "Times New Roman", serif',
         }}
       >
+        {/* Top corner ornaments */}
+        <div className="absolute top-0 left-0 w-[28px] h-[28px] pointer-events-none" style={{ borderTop: '0.5px solid rgba(201,164,92,0.25)', borderLeft: '0.5px solid rgba(201,164,92,0.25)' }} />
+        <div className="absolute top-0 right-0 w-[28px] h-[28px] pointer-events-none" style={{ borderTop: '0.5px solid rgba(201,164,92,0.25)', borderRight: '0.5px solid rgba(201,164,92,0.25)' }} />
+
         {/* Logo */}
-        <div className="px-6 pt-8 pb-8 flex flex-col items-center border-b border-white/[0.04]">
-          <div className="w-14 h-14 rounded-2xl border border-gold/40 flex items-center justify-center mb-2 overflow-hidden"
-            style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.18), rgba(201,164,92,0.04))', boxShadow: '0 0 20px rgba(201,164,92,0.15)' }}>
-            <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png" alt="RL" className="w-10 h-10 object-contain" />
+        <div className="px-6 pt-10 pb-7 flex flex-col items-center">
+          <div className="w-16 h-16 flex items-center justify-center mb-3 overflow-hidden relative"
+            style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.18), rgba(201,164,92,0.03))', border: '0.5px solid #c9a96e', boxShadow: '0 0 22px rgba(201,164,92,0.18)' }}>
+            <div className="absolute top-0 left-0 w-2 h-2" style={{ borderTop: '0.5px solid #c9a96e', borderLeft: '0.5px solid #c9a96e' }} />
+            <div className="absolute top-0 right-0 w-2 h-2" style={{ borderTop: '0.5px solid #c9a96e', borderRight: '0.5px solid #c9a96e' }} />
+            <div className="absolute bottom-0 left-0 w-2 h-2" style={{ borderBottom: '0.5px solid #c9a96e', borderLeft: '0.5px solid #c9a96e' }} />
+            <div className="absolute bottom-0 right-0 w-2 h-2" style={{ borderBottom: '0.5px solid #c9a96e', borderRight: '0.5px solid #c9a96e' }} />
+            <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png" alt="RL" className="w-11 h-11 object-contain" />
           </div>
-          <p className="text-[10px] tracking-[0.4em] text-gold/70 font-light uppercase mt-1">{profileFuncao}</p>
+          <div className="flex items-center gap-2">
+            <div className="h-px w-3" style={{ background: 'linear-gradient(90deg, transparent, rgba(201,164,92,0.45))' }} />
+            <p className="text-[9px] tracking-[0.5em] uppercase font-light italic" style={{ color: '#c9a96e', opacity: 0.85 }}>{profileFuncao}</p>
+            <div className="h-px w-3" style={{ background: 'linear-gradient(90deg, rgba(201,164,92,0.45), transparent)' }} />
+          </div>
         </div>
 
+        <div className="h-px mx-7" style={{ background: 'linear-gradient(90deg, transparent, rgba(201,164,92,0.25), transparent)' }} />
+
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto px-3 py-5 space-y-0.5">
+        <nav className="flex-1 overflow-y-auto px-4 py-5 flex flex-col gap-0.5">
           {NAV_ITEMS.map(it => {
             const isActive = active === it.key
-            const cls = `w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all group ${
-              isActive
-                ? 'bg-gold/10 border border-gold/30 text-gold'
-                : 'border border-transparent text-white/45 hover:text-white/90 hover:bg-white/[0.03]'
-            }`
             const inner = (
               <>
-                <span className={`w-5 text-center text-base ${isActive ? 'text-gold' : 'text-white/35 group-hover:text-white/70'}`}>{it.icon}</span>
-                <span className="text-[13px] font-medium tracking-wide">{it.label}</span>
+                <span className="w-5 text-center text-[14px] transition-colors"
+                  style={{ color: isActive ? '#c9a96e' : 'rgba(255,255,255,0.30)' }}>{it.icon}</span>
+                {isActive ? (
+                  <span className="flex-1 text-[14px] italic" style={{ color: '#c9a96e' }}>{it.label}</span>
+                ) : (
+                  <span className="flex-1 text-[10px] tracking-[0.3em] uppercase font-light text-white/45 group-hover:text-white/85 transition-colors">{it.label}</span>
+                )}
               </>
             )
+            const styleProps = {
+              background: isActive ? 'linear-gradient(90deg, rgba(201,164,92,0.10) 0%, rgba(201,164,92,0.02) 60%, transparent 100%)' : 'transparent',
+              borderLeft: isActive ? '1.5px solid #c9a96e' : '1.5px solid transparent',
+              boxShadow: isActive ? 'inset 12px 0 24px -16px rgba(201,164,92,0.5)' : 'none',
+            }
+            const cls = 'group w-full flex items-center gap-3 pl-4 pr-3 py-2.5 text-left transition-all'
 
             if (it.href) {
               return (
-                <Link key={it.key} href={it.href} className={cls}>{inner}</Link>
+                <Link key={it.key} href={it.href} className={cls} style={styleProps}>{inner}</Link>
               )
             }
             return (
@@ -809,7 +830,7 @@ export default function PainelEditor() {
                 key={it.key}
                 onClick={() => setActive(it.key)}
                 className={cls}
-                style={isActive ? { boxShadow: '0 0 18px -4px rgba(201,164,92,0.35)' } : {}}
+                style={styleProps}
               >
                 {inner}
               </button>
@@ -818,15 +839,20 @@ export default function PainelEditor() {
         </nav>
 
         {/* Quote */}
-        <div className="px-5 py-5 border-t border-white/[0.04]">
-          <p className="text-gold/40 text-2xl font-serif leading-none mb-2">&ldquo;</p>
-          <p className="text-[11px] text-white/35 italic leading-relaxed">Cada corte conta uma história.</p>
-          <p className="text-[11px] text-white/35 italic leading-relaxed">Cada história merece emoção.</p>
+        <div className="px-6 py-5 mt-auto">
+          <div className="h-px mb-4" style={{ background: 'linear-gradient(90deg, transparent, rgba(201,164,92,0.25), transparent)' }} />
+          <div className="text-center text-[10px] tracking-[0.4em] mb-2" style={{ color: '#5a4828' }}>—&nbsp;·&nbsp;◆&nbsp;·&nbsp;—</div>
+          <p className="text-[11px] italic leading-relaxed text-center" style={{ color: '#7a6340' }}>Cada corte conta uma história.</p>
+          <p className="text-[11px] italic leading-relaxed text-center" style={{ color: '#7a6340' }}>Cada história merece emoção.</p>
         </div>
+
+        {/* Bottom corner ornaments */}
+        <div className="absolute bottom-0 left-0 w-[28px] h-[28px] pointer-events-none" style={{ borderBottom: '0.5px solid rgba(201,164,92,0.25)', borderLeft: '0.5px solid rgba(201,164,92,0.25)' }} />
+        <div className="absolute bottom-0 right-0 w-[28px] h-[28px] pointer-events-none" style={{ borderBottom: '0.5px solid rgba(201,164,92,0.25)', borderRight: '0.5px solid rgba(201,164,92,0.25)' }} />
       </aside>
 
       {/* ── MAIN ──────────────────────────────────────────────────────────── */}
-      <main className="relative z-10 pl-[220px]">
+      <main className="relative z-10 pl-[240px]">
         <div className="px-6 sm:px-8 py-6">
 
           {/* ── HERO ──────────────────────────────────────────────────── */}
