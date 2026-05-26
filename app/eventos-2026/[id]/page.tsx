@@ -2684,13 +2684,25 @@ export default function EventoPage() {
           {(e.tipo_servico ?? []).map(t => (
             <span key={t} className="text-xs px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/25 text-blue-400/80">{t}</span>
           ))}
-          <ServicosDiaEditor
-            value={e.servicos_dia ?? []}
-            eventId={e.id}
-            onSaved={(arr) => handleSaved('servicos_dia', arr)}
-          />
         </div>
         <p className="print:hidden text-[10px] text-white/15 mt-3 tracking-wider">Clica em qualquer campo para editar · guarda automaticamente no Notion</p>
+      </div>
+
+      <div className="h-px bg-gold/15 my-7" />
+
+      {/* ── Serviços do Dia (secção própria) ───────────────────────────── */}
+      <div className="print:hidden bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="text-[11px] tracking-[0.4em] text-gold uppercase font-light">Serviços do Dia</h2>
+            <p className="text-[10px] text-white/30 mt-1 italic">O que vai ser fotografado/filmado neste evento — aparece na ficha do freelancer.</p>
+          </div>
+        </div>
+        <ServicosDiaEditor
+          value={e.servicos_dia ?? []}
+          eventId={e.id}
+          onSaved={(arr) => handleSaved('servicos_dia', arr)}
+        />
       </div>
 
       <div className="h-px bg-gold/15 my-7" />
