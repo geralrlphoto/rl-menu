@@ -41,6 +41,57 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ equipa: data ?? null })
 }
 
+// Helper — cria notificação no portal do freelancer (idempotente por nome+role+evento)
+async function notifyAddedMembers(
+  supabase: any,
+  names: string[],
+  role: string,
+  local: string | null,
+  data_casamento: string | null,
+  referencia: string | null,
+) {
+  if (!names?.length) return
+  // Formato amigável da data (DD/MM/YYYY ou nada)
+  let dateLabel = ''
+  if (data_casamento) {
+    try {
+      const dateStr = String(data_casamento).slice(0, 10)
+      const [y, m, d] = dateStr.split('-').map(Number)
+      if ([y, m, d].every(n => Number.isFinite(n))) {
+        const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+        dateLabel = `${String(d).padStart(2,'0')} ${MESES[m-1]} ${y}`
+      }
+    } catch {/* keep empty */}
+  }
+  const localStr = local ? String(local).trim() : ''
+  for (const name of names) {
+    if (!name || !name.trim()) continue
+    const { data: fl } = await supabase.from('freelancers').select('id').ilike('nome', name).maybeSingle()
+    if (!fl) continue
+    // Idempotência básica: evita duplicar a mesma notificação (mesmo título recente)
+    const titulo = `✨ Nova atribuição · ${role}`
+    const mensagem = localStr
+      ? `Foste atribuído como ${role} no casamento em ${localStr}${dateLabel ? ` (${dateLabel})` : ''}.`
+      : `Foste atribuído como ${role}${dateLabel ? ` para o evento de ${dateLabel}` : ''}.`
+    // Verifica se já existe uma notificação idêntica (não lida) deste tipo para este freelancer+evento
+    const { data: existing } = await supabase
+      .from('freelancer_notificacoes')
+      .select('id, lida')
+      .eq('freelancer_id', fl.id)
+      .eq('titulo', titulo)
+      .eq('mensagem', mensagem)
+      .maybeSingle()
+    if (existing) continue  // já criada — não duplica
+    await supabase.from('freelancer_notificacoes').insert({
+      freelancer_id: fl.id,
+      titulo,
+      mensagem,
+      tipo: 'atribuicao_equipa',
+      lida: false,
+    })
+  }
+}
+
 export async function PATCH(req: NextRequest) {
   const body = await req.json()
   const { evento_id, referencia, local, data_casamento, fotografo, videografo, editor_album, editor_video, editor_fotos } = body
@@ -62,6 +113,9 @@ export async function PATCH(req: NextRequest) {
 
   const oldFoto: string[] = existing?.fotografo ?? []
   const oldVideo: string[] = existing?.videografo ?? []
+  const oldEditorAlbum: string[] = Array.isArray(existing?.editor_album) ? existing.editor_album : (existing?.editor_album ? [existing.editor_album] : [])
+  const oldEditorVideo: string[] = Array.isArray(existing?.editor_video) ? existing.editor_video : (existing?.editor_video ? [existing.editor_video] : [])
+  const oldEditorFotos: string[] = Array.isArray(existing?.editor_fotos) ? existing.editor_fotos : (existing?.editor_fotos ? [existing.editor_fotos] : [])
   const newFoto: string[] = fotografo !== undefined ? fotografo : oldFoto
   const newVideo: string[] = videografo !== undefined ? videografo : oldVideo
 
@@ -228,6 +282,38 @@ export async function PATCH(req: NextRequest) {
         }
       }
     }
+  }
+
+  // ── Notificações para membros recém-adicionados ─────────────────────
+  // Por cada papel: encontra os nomes adicionados (diff old vs new) e cria
+  // entrada em freelancer_notificacoes (sino do portal do freelancer).
+  try {
+    if (fotografo !== undefined) {
+      const added = newFoto.filter(n => !oldFoto.includes(n))
+      await notifyAddedMembers(supabase, added, 'Fotógrafo', local ?? null, data_casamento ?? null, referencia ?? null)
+    }
+    if (videografo !== undefined) {
+      const added = newVideo.filter(n => !oldVideo.includes(n))
+      await notifyAddedMembers(supabase, added, 'Videógrafo', local ?? null, data_casamento ?? null, referencia ?? null)
+    }
+    if (editor_fotos !== undefined) {
+      const newEditorFotos: string[] = Array.isArray(editor_fotos) ? editor_fotos : (editor_fotos ? [editor_fotos] : [])
+      const added = newEditorFotos.filter(n => !oldEditorFotos.includes(n))
+      await notifyAddedMembers(supabase, added, 'Editor de Fotos', local ?? null, data_casamento ?? null, referencia ?? null)
+    }
+    if (editor_album !== undefined) {
+      const newEditorAlbum: string[] = Array.isArray(editor_album) ? editor_album : (editor_album ? [editor_album] : [])
+      const added = newEditorAlbum.filter(n => !oldEditorAlbum.includes(n))
+      await notifyAddedMembers(supabase, added, 'Editor de Álbum', local ?? null, data_casamento ?? null, referencia ?? null)
+    }
+    if (editor_video !== undefined) {
+      const newEditorVideo: string[] = Array.isArray(editor_video) ? editor_video : (editor_video ? [editor_video] : [])
+      const added = newEditorVideo.filter(n => !oldEditorVideo.includes(n))
+      await notifyAddedMembers(supabase, added, 'Editor de Vídeo', local ?? null, data_casamento ?? null, referencia ?? null)
+    }
+  } catch (err) {
+    // Não falha o upsert se a tabela freelancer_notificacoes não existir
+    console.error('[evento-equipa PATCH] notificacoes:', err)
   }
 
   return NextResponse.json({ ok: true, fotografo: newFoto, videografo: newVideo })

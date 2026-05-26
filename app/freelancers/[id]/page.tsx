@@ -394,6 +394,11 @@ function FreelancerDetailInner() {
           50%      { box-shadow: 0 0 40px 0 rgba(239,68,68,0.65), 0 0 90px -4px rgba(239,68,68,0.40), inset 0 0 0 1px rgba(239,68,68,0.65); }
         }
         .prazo-critico-glow { animation: prazoCriticoGlow 2.5s ease-in-out infinite; }
+        @keyframes bellRedGlow {
+          0%, 100% { box-shadow: 0 0 8px 0 rgba(239,68,68,0.45), 0 0 18px -4px rgba(239,68,68,0.25); }
+          50%      { box-shadow: 0 0 14px 2px rgba(239,68,68,0.75), 0 0 26px -2px rgba(239,68,68,0.55); }
+        }
+        .bell-red-glow { animation: bellRedGlow 1.8s ease-in-out infinite; }
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(12px); }
           to   { opacity: 1; transform: translateY(0); }
@@ -610,10 +615,27 @@ function FreelancerDetailInner() {
 
               {/* Top-right: notif + messages + profile chip */}
               <div className="flex items-center gap-3 shrink-0">
-                <button title="Notificações"
-                  className="w-10 h-10 rounded-full border border-white/15 bg-black/40 backdrop-blur-md text-white/70 hover:text-gold hover:border-gold/40 transition-all flex items-center justify-center">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-                </button>
+                {(() => {
+                  const notifNaoLidas = notificacoes.filter(n => !n.lida).length
+                  const hasUnread = notifNaoLidas > 0
+                  return (
+                    <button title={hasUnread ? `${notifNaoLidas} notificação${notifNaoLidas === 1 ? '' : 'ões'} por ler` : 'Notificações'}
+                      onClick={() => setTab('notificacoes')}
+                      className={`relative w-10 h-10 rounded-full border bg-black/40 backdrop-blur-md transition-all flex items-center justify-center ${
+                        hasUnread
+                          ? 'bell-red-glow border-red-500/55 text-red-300 hover:text-red-200 hover:border-red-400/70'
+                          : 'border-white/15 text-white/70 hover:text-gold hover:border-gold/40'
+                      }`}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+                      {hasUnread && (
+                        <span className="absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1 border border-red-300"
+                          style={{ boxShadow: '0 0 8px rgba(239,68,68,0.7)' }}>
+                          {notifNaoLidas > 9 ? '9+' : notifNaoLidas}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })()}
                 <button title="Mensagens"
                   className="w-10 h-10 rounded-full border border-white/15 bg-black/40 backdrop-blur-md text-white/70 hover:text-gold hover:border-gold/40 transition-all flex items-center justify-center relative">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
