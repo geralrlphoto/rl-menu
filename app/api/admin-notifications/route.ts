@@ -9,29 +9,31 @@ function db() {
 }
 
 const TIPO_LABELS: Record<string, string> = {
-  selecao:              'Seleção de Fotos',
-  provas:               'Fotos Prova',
-  editadas:             'Fotos Editadas',
-  album:                'Maquete Álbum',
-  nova_selecao:         'Nova Seleção dos Noivos',
-  status_selecao:       'Estado · Seleção de Fotos',
-  status_editadas:      'Estado · Fotos Editadas',
-  status_album:         'Estado · Maquete Álbum',
-  status_provas:        'Estado · Fotos Prova',
-  fotos_convidados:     'Fotos Convidados Enviadas',
+  selecao:                  'Seleção de Fotos',
+  provas:                   'Fotos Prova',
+  editadas:                 'Fotos Editadas',
+  album:                    'Maquete Álbum',
+  nova_selecao:             'Nova Seleção dos Noivos',
+  status_selecao:           'Estado · Seleção de Fotos',
+  status_editadas:          'Estado · Fotos Editadas',
+  status_album:             'Estado · Maquete Álbum',
+  status_provas:            'Estado · Fotos Prova',
+  fotos_convidados_email:   'Fotos Convidados · Email Enviado',
+  fotos_convidados_ctt:     'Fotos Convidados · CTT Enviado',
 }
 
 const TIPO_ICONS: Record<string, string> = {
-  selecao:              '◫',
-  provas:               '◧',
-  editadas:             '✓',
-  album:                '◐',
-  nova_selecao:         '★',
-  status_selecao:       '◫',
-  status_editadas:      '✓',
-  status_album:         '◐',
-  status_provas:        '◧',
-  fotos_convidados:     '✉',
+  selecao:                  '◫',
+  provas:                   '◧',
+  editadas:                 '✓',
+  album:                    '◐',
+  nova_selecao:             '★',
+  status_selecao:           '◫',
+  status_editadas:          '✓',
+  status_album:             '◐',
+  status_provas:            '◧',
+  fotos_convidados_email:   '@',
+  fotos_convidados_ctt:     '✉',
 }
 
 type Notif = {
@@ -177,7 +179,8 @@ export async function GET() {
       console.warn('[admin-notifications] fotos_selecao read failed:', err)
     }
 
-    // ── Notificações de FOTOS CONVIDADOS (portais.settings.fotos_convidados_enviada) ──
+    // ── Notificações de FOTOS CONVIDADOS (portais.settings) ──
+    //    Dois canais separados: email_enviada (15d) e ctt_enviada (30d).
     try {
       const { data: portais } = await supabase
         .from('portais')
@@ -185,22 +188,26 @@ export async function GET() {
         .limit(500)
       for (const p of (portais ?? []) as any[]) {
         const s = p.settings ?? {}
-        const sent = s.fotos_convidados_enviada
-        if (!sent) continue
-        const por = s.fotos_convidados_enviada_por ?? '—'
-        notifications.push({
-          id: `fotos_convidados::${p.referencia}`,
-          tipo: 'fotos_convidados',
-          tipo_label: TIPO_LABELS.fotos_convidados,
-          tipo_icon: TIPO_ICONS.fotos_convidados,
-          casamento_id: '',
-          freelancer_id: s.fotos_convidados_enviada_freelancer_id ?? '',
-          freelancer_nome: por,
-          local: p.referencia ?? '—',
-          data_casamento: null,
-          url: `/eventos-2026?ref=${encodeURIComponent(p.referencia ?? '')}`,
-          sent_at: typeof sent === 'string' && sent.length === 10 ? `${sent}T00:00:00.000Z` : sent,
-        })
+        const canais: Array<{ key: 'fotos_convidados_email' | 'fotos_convidados_ctt'; sent: string | null }> = [
+          { key: 'fotos_convidados_email', sent: s.fotos_convidados_email_enviada ?? null },
+          { key: 'fotos_convidados_ctt',   sent: s.fotos_convidados_ctt_enviada   ?? null },
+        ]
+        for (const { key, sent } of canais) {
+          if (!sent) continue
+          notifications.push({
+            id: `${key}::${p.referencia}`,
+            tipo: key,
+            tipo_label: TIPO_LABELS[key],
+            tipo_icon: TIPO_ICONS[key],
+            casamento_id: '',
+            freelancer_id: '',
+            freelancer_nome: p.referencia ?? '—',
+            local: p.referencia ?? '—',
+            data_casamento: null,
+            url: `/eventos-2026?ref=${encodeURIComponent(p.referencia ?? '')}`,
+            sent_at: typeof sent === 'string' && sent.length === 10 ? `${sent}T00:00:00.000Z` : sent,
+          })
+        }
       }
     } catch (err) {
       console.warn('[admin-notifications] portais read failed:', err)

@@ -2189,7 +2189,8 @@ export default function EventoPage() {
   const [preWeddingEnviada, setPreWeddingEnviada] = useState<string | null>(null)
   const [fotosFinaisEnviada, setFotosFinaisEnviada] = useState<string | null>(null)
   const [galeriasEnviada, setGaleriasEnviada] = useState<string | null>(null)
-  const [fotosConvidadosEnviada, setFotosConvidadosEnviada] = useState<string | null>(null)
+  const [fotosConvidadosEmailEnviada, setFotosConvidadosEmailEnviada] = useState<string | null>(null)
+  const [fotosConvidadosCttEnviada, setFotosConvidadosCttEnviada] = useState<string | null>(null)
   const [actionUrls, setActionUrls] = useState<Record<string, string>>({
     selecao: '', prewedding: '', fotos_finais: '', galerias: '', maquete: '',
   })
@@ -2477,7 +2478,8 @@ export default function EventoPage() {
               if (s.prewedding_enviada)       setPreWeddingEnviada(s.prewedding_enviada)
               if (s.fotos_finais_enviada)     setFotosFinaisEnviada(s.fotos_finais_enviada)
               if (s.galerias_enviada)         setGaleriasEnviada(s.galerias_enviada)
-              if (s.fotos_convidados_enviada) setFotosConvidadosEnviada(s.fotos_convidados_enviada)
+              if (s.fotos_convidados_email_enviada) setFotosConvidadosEmailEnviada(s.fotos_convidados_email_enviada)
+              if (s.fotos_convidados_ctt_enviada)   setFotosConvidadosCttEnviada(s.fotos_convidados_ctt_enviada)
               if (s.video_prewedding_enviada) setVideoPreWeddingEnviada(s.video_prewedding_enviada)
               if (s.wedding_film_enviada)     setWeddingFilmEnviada(s.wedding_film_enviada)
               if (s.same_day_edit_enviada)    setSameDayEditEnviada(s.same_day_edit_enviada)
@@ -3572,44 +3574,73 @@ export default function EventoPage() {
           </div>
         </div>
 
-        {/* ── Fotos Convidados ── */}
-        <div className="print:hidden rounded-2xl p-6 flex items-center justify-between gap-3"
+        {/* ── Fotos Convidados (Email 15d / CTT 30d) ── */}
+        <div className="print:hidden rounded-2xl p-6 flex flex-col gap-4"
           style={{ background: 'rgba(56,130,246,0.04)', border: '1px solid rgba(56,130,246,0.18)' }}>
-          <div>
-            <h2 className="text-[10px] tracking-[0.35em] uppercase mb-1" style={{ color: 'rgba(99,165,255,0.8)' }}>Fotos Convidados</h2>
-            <p className="text-xs font-mono">
-              {fotosConvidadosEnviada
-                ? <span className="text-green-400/70">Enviadas em {new Date(fotosConvidadosEnviada).toLocaleDateString('pt-PT')}</span>
-                : <span className="text-white/25">Pendente</span>
+          <h2 className="text-[10px] tracking-[0.35em] uppercase" style={{ color: 'rgba(99,165,255,0.8)' }}>Fotos Convidados</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {([
+              { label: 'Fotos via Email', prazoDias: 15, prazoLabel: '15 dias após o evento', state: fotosConvidadosEmailEnviada, setState: setFotosConvidadosEmailEnviada, key: 'fotos_convidados_email_enviada' },
+              { label: 'Fotos via CTT',   prazoDias: 30, prazoLabel: '30 dias após o evento', state: fotosConvidadosCttEnviada,   setState: setFotosConvidadosCttEnviada,   key: 'fotos_convidados_ctt_enviada' },
+            ]).map(({ label, prazoDias, prazoLabel, state, setState, key }) => {
+              // Aviso de prazo
+              let deadline: { daysLeft: number; deadlineStr: string; expired: boolean; critical: boolean } | null = null
+              if (!state && e.data_evento) {
+                try {
+                  const [y, m, d] = String(e.data_evento).slice(0, 10).split('-').map(Number)
+                  const dEvento = new Date(y, m - 1, d)
+                  if (!isNaN(dEvento.getTime())) {
+                    const dl = new Date(dEvento.getTime() + prazoDias * 86400000)
+                    const today = new Date(); today.setHours(0, 0, 0, 0)
+                    const daysLeft = Math.ceil((dl.getTime() - today.getTime()) / 86400000)
+                    deadline = { daysLeft, deadlineStr: dl.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' }), expired: daysLeft < 0, critical: daysLeft <= 5 }
+                  }
+                } catch { /* ignore */ }
               }
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {fotosConvidadosEnviada && (
-              <button
-                onClick={async () => {
-                  if (!evento?.referencia) return
-                  await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { fotos_convidados_enviada: null } } }) })
-                  setFotosConvidadosEnviada(null)
-                }}
-                className="w-6 h-6 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-all text-xs"
-                title="Repor como Pendente"
-              >✕</button>
-            )}
-            <button
-              onClick={async () => {
-                if (!evento?.referencia) return
-                const today = new Date().toISOString().split('T')[0]
-                await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { fotos_convidados_enviada: today } } }) })
-                setFotosConvidadosEnviada(today)
-              }}
-              className={`px-5 py-2.5 rounded-xl text-xs font-semibold tracking-[0.2em] uppercase border transition-all ${
-                fotosConvidadosEnviada ? 'bg-green-500/20 text-green-400 border-green-500/30'
-                                       : 'bg-blue-500/20 text-blue-300 border-blue-500/30 hover:bg-blue-500/30'
-              }`}
-            >
-              {fotosConvidadosEnviada ? '✓ Fotos Enviadas' : 'Fotos Enviadas'}
-            </button>
+              return (
+                <div key={key} className="rounded-xl border border-white/[0.06] bg-black/20 p-4 flex flex-col gap-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm text-white/75 font-semibold">{label}</p>
+                    {state && (
+                      <button onClick={async () => {
+                          if (!evento?.referencia) return
+                          await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [key]: null } } }) })
+                          setState(null)
+                        }}
+                        className="w-6 h-6 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-all text-xs"
+                        title="Repor como pendente">✕</button>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-white/30 italic">Prazo: {prazoLabel}</p>
+                  <p className="text-xs font-mono">
+                    {state
+                      ? <span className="text-green-400/70">Enviadas em {new Date(state).toLocaleDateString('pt-PT')}</span>
+                      : deadline
+                        ? deadline.expired
+                          ? <span className="text-red-400">Expirou há {Math.abs(deadline.daysLeft)} dia{Math.abs(deadline.daysLeft) === 1 ? '' : 's'} ({deadline.deadlineStr})</span>
+                          : deadline.critical
+                            ? <span className="text-amber-400">Faltam {deadline.daysLeft} dia{deadline.daysLeft === 1 ? '' : 's'} ({deadline.deadlineStr})</span>
+                            : <span className="text-white/50">Até {deadline.deadlineStr} ({deadline.daysLeft} dias)</span>
+                        : <span className="text-white/25">Pendente</span>
+                    }
+                  </p>
+                  <button
+                    onClick={async () => {
+                      if (!evento?.referencia) return
+                      const today = new Date().toISOString().split('T')[0]
+                      await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [key]: today } } }) })
+                      setState(today)
+                    }}
+                    className={`mt-1 px-4 py-2 rounded-lg text-[11px] font-semibold tracking-[0.2em] uppercase border transition-all ${
+                      state ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                            : 'bg-blue-500/20 text-blue-300 border-blue-500/30 hover:bg-blue-500/30'
+                    }`}
+                  >
+                    {state ? '✓ Fotos Enviadas' : 'Marcar Fotos Enviadas'}
+                  </button>
+                </div>
+              )
+            })}
           </div>
         </div>
 

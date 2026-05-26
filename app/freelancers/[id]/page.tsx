@@ -185,8 +185,8 @@ function FreelancerDetailInner() {
   const [mensagens, setMensagens] = useState<Mensagem[]>([])
   // Mapa referencia → data_entrada (quando os noivos enviaram fotos para edição)
   const [fotosSelecaoMap, setFotosSelecaoMap] = useState<Record<string, string>>({})
-  // Mapa referencia → data envio "Fotos Convidados" (portais.settings.fotos_convidados_enviada)
-  const [fotosConvidadosMap, setFotosConvidadosMap] = useState<Record<string, string | null>>({})
+  // Mapa referencia → { email, ctt } para "Fotos Convidados" (portais.settings.fotos_convidados_*_enviada)
+  const [fotosConvidadosMap, setFotosConvidadosMap] = useState<Record<string, { email: string | null; ctt: string | null }>>({})
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(async () => {
@@ -223,16 +223,19 @@ function FreelancerDetailInner() {
     }
     setFotosSelecaoMap(fsMap)
     setLoading(false)
-    // Carrega estado "Fotos Convidados" em background (não bloqueia o render)
+    // Carrega estado "Fotos Convidados" (email + ctt) em background (não bloqueia o render)
     const refs = Array.from(new Set((cRes.casamentos ?? []).map((c: any) => c.referencia).filter(Boolean))) as string[]
     if (refs.length) {
       ;(async () => {
-        const fcMap: Record<string, string | null> = {}
+        const fcMap: Record<string, { email: string | null; ctt: string | null }> = {}
         for (const ref of refs) {
           try {
             const p = await fetch(`/api/portais?ref=${encodeURIComponent(ref)}`).then(r => r.json())
             const s = p?.portal?.settings ?? p?.settings ?? {}
-            fcMap[ref] = s.fotos_convidados_enviada ?? null
+            fcMap[ref] = {
+              email: s.fotos_convidados_email_enviada ?? null,
+              ctt:   s.fotos_convidados_ctt_enviada   ?? null,
+            }
           } catch { /* ignore */ }
         }
         setFotosConvidadosMap(fcMap)
@@ -1489,7 +1492,7 @@ function SidebarNavAdmin({
 
 const DEFAULT_INTRO = `Aqui encontras todos os eventos que te foram atribuídos ao longo do ano. Sempre que um novo evento for adicionado, deverás confirmar a tua disponibilidade.\n\nA 3 dias do evento tens acesso ao briefing com toda a informação necessária para o dia — percurso, contactos, detalhes da cerimónia e muito mais.`
 
-function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, freelancer, viewAsFreelancer, fotosSelecaoMap, fotosConvidadosMap, setFotosConvidadosMap }: { freelancerId: string; casamentos: Casamento[]; onRefresh: () => void; freelancerStatus: string | null; freelancer: Freelancer | null; viewAsFreelancer?: boolean; fotosSelecaoMap: Record<string, string>; fotosConvidadosMap: Record<string, string | null>; setFotosConvidadosMap: (updater: (prev: Record<string, string | null>) => Record<string, string | null>) => void }) {
+function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, freelancer, viewAsFreelancer, fotosSelecaoMap, fotosConvidadosMap, setFotosConvidadosMap }: { freelancerId: string; casamentos: Casamento[]; onRefresh: () => void; freelancerStatus: string | null; freelancer: Freelancer | null; viewAsFreelancer?: boolean; fotosSelecaoMap: Record<string, string>; fotosConvidadosMap: Record<string, { email: string | null; ctt: string | null }>; setFotosConvidadosMap: (updater: (prev: Record<string, { email: string | null; ctt: string | null }>) => Record<string, { email: string | null; ctt: string | null }>) => void }) {
   const [editing, setEditing] = useState<Casamento | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState<Partial<Casamento>>({})
@@ -1932,15 +1935,13 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                   })}
                 </div>
 
-                {/* ── Fotos Convidados ──────────────────────────────── */}
+                {/* ── Fotos Convidados (Email + CTT) ──────────────────── */}
                 {c.referencia && (
-                  <FotosConvidadosRow
+                  <FotosConvidadosBox
                     referencia={c.referencia}
-                    enviada={fotosConvidadosMap[c.referencia] ?? null}
+                    estado={fotosConvidadosMap[c.referencia] ?? { email: null, ctt: null }}
                     onChange={(next) => setFotosConvidadosMap(prev => ({ ...prev, [c.referencia!]: next }))}
-                    freelancerId={c.freelancer_id}
-                    freelancerNome={freelancer?.nome ?? ''}
-                    casamentoLocal={c.local}
+                    dataCasamento={c.data_casamento}
                   />
                 )}
 
@@ -3534,66 +3535,123 @@ function NotasTab({ freelancer, onRefresh }: { freelancer: Freelancer; onRefresh
   )
 }
 
-// ─── FotosConvidadosRow — 1 botão "Fotos Enviadas" + notificação admin ───
-function FotosConvidadosRow({
+// ─── FotosConvidadosBox — 2 secções (Email 15d / CTT 30d) ──────────────────
+function FotosConvidadosBox({
   referencia,
-  enviada,
+  estado,
   onChange,
-  freelancerId,
-  freelancerNome,
-  casamentoLocal,
+  dataCasamento,
 }: {
   referencia: string
-  enviada: string | null
-  onChange: (next: string | null) => void
-  freelancerId: string
-  freelancerNome: string
-  casamentoLocal: string
+  estado: { email: string | null; ctt: string | null }
+  onChange: (next: { email: string | null; ctt: string | null }) => void
+  dataCasamento: string | null
 }) {
-  const [busy, setBusy] = useState(false)
+  const fmt = (d: string | null) => d ? new Date(d).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' }) : null
 
-  async function marcar() {
-    setBusy(true)
-    const today = new Date().toISOString().split('T')[0]
+  function deadlineInfo(prazoDias: number, enviada: string | null) {
+    if (enviada || !dataCasamento) return null
     try {
-      await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia, updates: { settings: { fotos_convidados_enviada: today, fotos_convidados_enviada_por: freelancerNome, fotos_convidados_enviada_freelancer_id: freelancerId } } }) })
-      onChange(today)
-    } finally { setBusy(false) }
-  }
-
-  async function repor() {
-    await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia, updates: { settings: { fotos_convidados_enviada: null } } }) })
-    onChange(null)
+      const parts = String(dataCasamento).slice(0, 10).split('-').map(Number)
+      if (parts.length !== 3 || parts.some(n => !Number.isFinite(n))) return null
+      const [y, m, d] = parts
+      const dEvento = new Date(y, m - 1, d)
+      if (isNaN(dEvento.getTime())) return null
+      const deadline = new Date(dEvento.getTime() + prazoDias * 86400000)
+      const today = new Date(); today.setHours(0, 0, 0, 0)
+      const daysLeft = Math.ceil((deadline.getTime() - today.getTime()) / 86400000)
+      const deadlineStr = deadline.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' })
+      return { daysLeft, deadlineStr, expired: daysLeft < 0, critical: daysLeft <= 5 }
+    } catch { return null }
   }
 
   return (
-    <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.03] p-4 flex items-center justify-between gap-3">
-      <div>
-        <h3 className="text-[11px] tracking-[0.3em] uppercase text-blue-300/80 mb-1">Fotos Convidados</h3>
-        <p className="text-[11px] font-mono">
-          {enviada
-            ? <span className="text-emerald-400/80">Enviadas em {new Date(enviada).toLocaleDateString('pt-PT')}</span>
-            : <span className="text-white/30">Pendente</span>
-          }
-        </p>
+    <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.03] p-4 flex flex-col gap-3">
+      <h3 className="text-[11px] tracking-[0.3em] uppercase text-blue-300/80">Fotos Convidados</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <FotosConvidadosSub
+          label="Fotos via Email"
+          prazoLabel="15 dias após o evento"
+          enviada={estado.email}
+          deadline={deadlineInfo(15, estado.email)}
+          onMark={async () => {
+            const today = new Date().toISOString().split('T')[0]
+            await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia, updates: { settings: { fotos_convidados_email_enviada: today } } }) })
+            onChange({ email: today, ctt: estado.ctt })
+          }}
+          onReset={async () => {
+            await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia, updates: { settings: { fotos_convidados_email_enviada: null } } }) })
+            onChange({ email: null, ctt: estado.ctt })
+          }}
+          fmt={fmt}
+        />
+        <FotosConvidadosSub
+          label="Fotos via CTT"
+          prazoLabel="30 dias após o evento"
+          enviada={estado.ctt}
+          deadline={deadlineInfo(30, estado.ctt)}
+          onMark={async () => {
+            const today = new Date().toISOString().split('T')[0]
+            await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia, updates: { settings: { fotos_convidados_ctt_enviada: today } } }) })
+            onChange({ email: estado.email, ctt: today })
+          }}
+          onReset={async () => {
+            await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia, updates: { settings: { fotos_convidados_ctt_enviada: null } } }) })
+            onChange({ email: estado.email, ctt: null })
+          }}
+          fmt={fmt}
+        />
       </div>
-      <div className="flex items-center gap-2">
+    </div>
+  )
+}
+
+function FotosConvidadosSub({
+  label, prazoLabel, enviada, deadline, onMark, onReset, fmt,
+}: {
+  label: string
+  prazoLabel: string
+  enviada: string | null
+  deadline: { daysLeft: number; deadlineStr: string; expired: boolean; critical: boolean } | null
+  onMark: () => Promise<void>
+  onReset: () => Promise<void>
+  fmt: (d: string | null) => string | null
+}) {
+  const [busy, setBusy] = useState(false)
+  async function handleMark() { setBusy(true); try { await onMark() } finally { setBusy(false) } }
+  return (
+    <div className="rounded-xl border border-white/[0.06] bg-black/20 p-3 flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[12px] text-white/75 font-semibold">{label}</p>
         {enviada && (
-          <button onClick={repor}
-            className="w-6 h-6 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-all text-xs"
+          <button onClick={onReset}
+            className="w-5 h-5 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-all text-[10px]"
             title="Repor como pendente">✕</button>
         )}
-        <button
-          disabled={busy}
-          onClick={marcar}
-          className={`px-4 py-2 rounded-lg text-[11px] font-semibold tracking-[0.2em] uppercase border transition-all ${
-            enviada ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-                    : 'bg-blue-500/15 text-blue-300 border-blue-500/30 hover:bg-blue-500/25'
-          } ${busy ? 'opacity-50 cursor-wait' : ''}`}
-        >
-          {busy ? 'A guardar…' : enviada ? '✓ Fotos Enviadas' : 'Marcar Fotos Enviadas'}
-        </button>
       </div>
+      <p className="text-[10px] text-white/30 italic">Prazo: {prazoLabel}</p>
+      <p className="text-[11px] font-mono">
+        {enviada
+          ? <span className="text-emerald-400/80">Enviadas em {fmt(enviada)}</span>
+          : deadline
+            ? deadline.expired
+              ? <span className="text-red-400">Expirou há {Math.abs(deadline.daysLeft)} dia{Math.abs(deadline.daysLeft) === 1 ? '' : 's'} ({deadline.deadlineStr})</span>
+              : deadline.critical
+                ? <span className="text-amber-400">Faltam {deadline.daysLeft} dia{deadline.daysLeft === 1 ? '' : 's'} ({deadline.deadlineStr})</span>
+                : <span className="text-white/50">Até {deadline.deadlineStr} ({deadline.daysLeft} dias)</span>
+            : <span className="text-white/30">Pendente</span>
+        }
+      </p>
+      <button
+        disabled={busy}
+        onClick={handleMark}
+        className={`mt-1 px-3 py-2 rounded-lg text-[10px] font-semibold tracking-[0.2em] uppercase border transition-all ${
+          enviada ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                  : 'bg-blue-500/15 text-blue-300 border-blue-500/30 hover:bg-blue-500/25'
+        } ${busy ? 'opacity-50 cursor-wait' : ''}`}
+      >
+        {busy ? 'A guardar…' : enviada ? '✓ Fotos Enviadas' : 'Marcar Fotos Enviadas'}
+      </button>
     </div>
   )
 }
