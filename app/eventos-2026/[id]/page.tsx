@@ -56,6 +56,8 @@ type Evento = {
   fotografo: string[]
   videografo: string[]
   editor_fotos: string
+  editor_album: string[]
+  editor_video: string[]
   proposta: string
   valor_liquido: number | null
   valor_foto: number | null
@@ -216,7 +218,7 @@ function EditMultiField({ label, value, field, eventId, onSaved }: {
 
 // ─── Equipa field — salva no Supabase, NÃO no Notion ──────────────────────────
 function EditEquipaField({ label, field, multi, eventoId, referencia, local, dataCasamento, initialValue, options, onChanged, unavailableNames }: {
-  label: string; field: 'fotografo' | 'videografo'; multi: boolean
+  label: string; field: 'fotografo' | 'videografo' | 'editor_album' | 'editor_video'; multi: boolean
   eventoId: string; referencia: string; local: string; dataCasamento: string
   initialValue: string[]; options: string[]; onChanged?: (val: string[]) => void
   unavailableNames?: string[]
@@ -2189,9 +2191,12 @@ export default function EventoPage() {
   const [notifVideoErro, setNotifVideoErro] = useState<string | null>(null)
   const [equipaFoto, setEquipaFoto] = useState<string[]>([])
   const [equipaVideo, setEquipaVideo] = useState<string[]>([])
+  const [equipaEditorAlbum, setEquipaEditorAlbum] = useState<string[]>([])
+  const [equipaEditorVideo, setEquipaEditorVideo] = useState<string[]>([])
   const [unavailableNames, setUnavailableNames] = useState<string[]>([])
   const [optionsFoto, setOptionsFoto] = useState<string[]>(['ALEXANDRE CAPÃO','PATRICIO FERREIRA','SONIA CARVALHO','RUI GARRIDO','BRUNO DE CARVALHO','PEDRO MARTINS'])
   const [optionsVideo, setOptionsVideo] = useState<string[]>(['RUI GONÇALVES','LUIS SOARES'])
+  const [optionsAllTeam, setOptionsAllTeam] = useState<string[]>([])
 
   function loadPagamentos(ref: string, showRefresh = false) {
     if (showRefresh) setPagamentosRefreshing(true)
@@ -2346,8 +2351,11 @@ export default function EventoPage() {
         const video = (d.freelancers as any[])
           .filter(f => f.status === 'VIDEOGRAFO')
           .map(f => (f.nome as string).toUpperCase())
+        const all = (d.freelancers as any[])
+          .map(f => (f.nome as string).toUpperCase())
         if (foto.length > 0) setOptionsFoto(foto)
         if (video.length > 0) setOptionsVideo(video)
+        if (all.length > 0) setOptionsAllTeam(all)
       })
       .catch(() => {})
   }, [])
@@ -2359,8 +2367,10 @@ export default function EventoPage() {
         if (d.error) { setError(d.error); setLoading(false); return }
         const ev = d.event
         setEvento(ev)
-        if (ev.fotografo?.length)  setEquipaFoto(ev.fotografo)
-        if (ev.videografo?.length) setEquipaVideo(ev.videografo)
+        if (ev.fotografo?.length)     setEquipaFoto(ev.fotografo)
+        if (ev.videografo?.length)    setEquipaVideo(ev.videografo)
+        if (ev.editor_album?.length)  setEquipaEditorAlbum(ev.editor_album)
+        if (ev.editor_video?.length)  setEquipaEditorVideo(ev.editor_video)
         setLoading(false)
 
         if (ev.referencia) {
@@ -3207,6 +3217,18 @@ export default function EventoPage() {
               unavailableNames={unavailableNames}
               onChanged={setEquipaVideo} />
             <EditField label="Editor de Fotos" value={e.editor_fotos} field="editor_fotos" eventId={e.id} onSaved={handleSaved} />
+            <EditEquipaField label="Editor de Álbum" field="editor_album" multi={false}
+              eventoId={e.id} referencia={e.referencia ?? ''} local={e.local ?? ''} dataCasamento={e.data_evento ?? ''}
+              initialValue={e.editor_album ?? []}
+              options={optionsAllTeam}
+              unavailableNames={unavailableNames}
+              onChanged={setEquipaEditorAlbum} />
+            <EditEquipaField label="Editor de Vídeo" field="editor_video" multi={false}
+              eventoId={e.id} referencia={e.referencia ?? ''} local={e.local ?? ''} dataCasamento={e.data_evento ?? ''}
+              initialValue={e.editor_video ?? []}
+              options={optionsAllTeam}
+              unavailableNames={unavailableNames}
+              onChanged={setEquipaEditorVideo} />
             <EditField label="Agendamento Email" value={e.agendamento_email} field="agendamento_email" eventId={e.id} onSaved={handleSaved} />
           </div>
 

@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   const body = await req.json()
-  const { evento_id, referencia, local, data_casamento, fotografo, videografo } = body
+  const { evento_id, referencia, local, data_casamento, fotografo, videografo, editor_album, editor_video } = body
 
   if (!evento_id && !referencia) return NextResponse.json({ error: 'evento_id or referencia required' }, { status: 400 })
 
@@ -73,20 +73,28 @@ export async function PATCH(req: NextRequest) {
   if (data_casamento !== undefined) upsertData.data_casamento = data_casamento || null
   if (fotografo !== undefined) upsertData.fotografo = newFoto
   if (videografo !== undefined) upsertData.videografo = newVideo
+  if (editor_album !== undefined) upsertData.editor_album = editor_album
+  if (editor_video !== undefined) upsertData.editor_video = editor_video
 
   let upsertError: any = null
-  if (existing) {
-    // Update existing record
-    const key = existing.evento_id ? { evento_id: existing.evento_id } : { referencia: existing.referencia }
-    const col = Object.keys(key)[0] as string
-    const val = Object.values(key)[0] as string
-    const { error } = await supabase.from('evento_equipa').update(upsertData).eq(col, val)
-    upsertError = error
-  } else {
-    // Insert new record — use referencia as anchor if no evento_id
-    if (!upsertData.evento_id) upsertData.evento_id = `ref_${referencia}`
-    const { error } = await supabase.from('evento_equipa').insert(upsertData)
-    upsertError = error
+  async function doSave(payload: any) {
+    if (existing) {
+      const key = existing.evento_id ? { evento_id: existing.evento_id } : { referencia: existing.referencia }
+      const col = Object.keys(key)[0] as string
+      const val = Object.values(key)[0] as string
+      const { error } = await supabase.from('evento_equipa').update(payload).eq(col, val)
+      return error
+    } else {
+      if (!payload.evento_id) payload.evento_id = `ref_${referencia}`
+      const { error } = await supabase.from('evento_equipa').insert(payload)
+      return error
+    }
+  }
+  upsertError = await doSave(upsertData)
+  // Retry sem colunas opcionais (editor_album / editor_video) se falhar por coluna inexistente
+  if (upsertError && /column .* (editor_album|editor_video)/i.test(upsertError.message ?? '')) {
+    const { editor_album: _ea, editor_video: _ev, ...core } = upsertData
+    upsertError = await doSave(core)
   }
 
   if (upsertError) return NextResponse.json({ error: upsertError.message }, { status: 500 })

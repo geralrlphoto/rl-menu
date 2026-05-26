@@ -476,6 +476,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       fotografo:        getProp(p, 'FOTOGRAFO', 'multi_select'),
       videografo:       getProp(p, 'VÍDEOGRAFO ', 'multi_select'),
       editor_fotos:     getProp(p, 'EDITOR DE FOTOS', 'select'),
+      // editor_album e editor_video são carregados separadamente via /api/evento-equipa
+      editor_album:     [],
+      editor_video:     [],
       proposta:         getProp(p, 'PROPOSTA ESCOLHIDA', 'select') ?? contrato?.proposta ?? null,
       valor_liquido:    getProp(p, 'VALOR LIQUIDO A RECEBER', 'number'),
       valor_foto:       getProp(p, 'VALOR SERVIÇO FOTO', 'number') ?? sbRow?.valor_foto ?? null,
