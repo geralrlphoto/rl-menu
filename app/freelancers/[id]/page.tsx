@@ -3216,6 +3216,24 @@ function PagamentosAdminTab({ freelancerId, pagamentos, casamentos, onRefresh }:
     onRefresh()
   }
 
+  // Define estado + método via dropdown (Aguarda | Pago:Método)
+  async function setStatusMethod(p: Pagamento, val: string) {
+    const today = new Date().toISOString().split('T')[0]
+    if (val === 'Aguarda') {
+      await fetch('/api/freelancer-pagamentos', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: p.id, status: 'PENDENTE', data_pago: null }),
+      })
+    } else if (val.startsWith('Pago:')) {
+      const method = val.replace('Pago:', '')
+      await fetch('/api/freelancer-pagamentos', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: p.id, status: 'PAGO', data_pago: p.data_pago ?? today, notas: method }),
+      })
+    }
+    onRefresh()
+  }
+
   return (
     <div className="space-y-6">
       {/* ── HERO ────────────────────────────────────────────────────────── */}
@@ -3372,7 +3390,7 @@ function PagamentosAdminTab({ freelancerId, pagamentos, casamentos, onRefresh }:
                           </td>
                           {/* Valor */}
                           <td className="px-3 py-3 text-right text-[13px] text-white/85 font-mono whitespace-nowrap">{p?.valor != null ? fmtEuro(p.valor) : <span className="text-white/25">—</span>}</td>
-                          {/* Estado */}
+                          {/* Estado (dropdown: Aguarda / Pago · MBWay/Transferência/Numerário) */}
                           <td className="px-3 py-3">
                             {!p ? (
                               <button onClick={() => {
@@ -3383,20 +3401,30 @@ function PagamentosAdminTab({ freelancerId, pagamentos, casamentos, onRefresh }:
                                 className="text-[10px] px-3 py-1 rounded-full border bg-blue-500/10 text-blue-300 border-blue-500/30 tracking-widest uppercase font-semibold hover:bg-blue-500/20 transition-all">
                                 + Registar
                               </button>
-                            ) : p.status === 'PAGO' ? (
-                              <span className="text-[10px] px-3 py-1 rounded-full border bg-emerald-500/15 text-emerald-300 border-emerald-500/30 tracking-widest uppercase font-semibold">✓ Pago{method ? ` · ${method}` : ''}</span>
                             ) : p.status === 'CANCELADO' ? (
                               <span className="text-[10px] px-3 py-1 rounded-full border bg-white/[0.04] text-white/40 border-white/15 tracking-widest uppercase font-semibold">Cancelado</span>
-                            ) : atrasado ? (
-                              <button onClick={() => quickPago(p.id)}
-                                className="text-[10px] px-3 py-1 rounded-full border bg-red-500/15 text-red-300 border-red-500/30 tracking-widest uppercase font-semibold hover:bg-emerald-500/15 hover:text-emerald-300 hover:border-emerald-500/30 transition-all">
-                                Atrasado
-                              </button>
                             ) : (
-                              <button onClick={() => quickPago(p.id)}
-                                className="text-[10px] px-3 py-1 rounded-full border bg-yellow-500/15 text-yellow-300 border-yellow-500/30 tracking-widest uppercase font-semibold hover:bg-emerald-500/15 hover:text-emerald-300 hover:border-emerald-500/30 transition-all">
-                                {p.status}
-                              </button>
+                              <select
+                                value={p.status === 'PAGO' ? `Pago:${method || 'MBWay'}` : 'Aguarda'}
+                                onChange={e => setStatusMethod(p, e.target.value)}
+                                className={`text-[10px] tracking-widest uppercase font-semibold cursor-pointer focus:outline-none rounded-full border px-3 py-1 appearance-none pr-7 bg-no-repeat bg-right ${
+                                  p.status === 'PAGO'
+                                    ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/25'
+                                    : atrasado
+                                      ? 'bg-red-500/15 text-red-300 border-red-500/40 hover:bg-red-500/25'
+                                      : 'bg-yellow-500/15 text-yellow-300 border-yellow-500/40 hover:bg-yellow-500/25'
+                                }`}
+                                style={{
+                                  backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23c9a96e' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+                                  backgroundPosition: 'right 8px center',
+                                  backgroundSize: '10px',
+                                }}
+                              >
+                                <option value="Aguarda" style={{ background: '#1a1206', color: '#fde68a' }}>⏳ Aguarda</option>
+                                <option value="Pago:MBWay" style={{ background: '#1a1206', color: '#6ee7b7' }}>✓ Pago · MBWay</option>
+                                <option value="Pago:Transferência" style={{ background: '#1a1206', color: '#6ee7b7' }}>✓ Pago · Transferência</option>
+                                <option value="Pago:Numerário" style={{ background: '#1a1206', color: '#6ee7b7' }}>✓ Pago · Numerário</option>
+                              </select>
                             )}
                           </td>
                           {/* Data */}
