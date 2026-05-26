@@ -1513,10 +1513,50 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                   )}
                 </div>
 
-                {/* Serviços do Dia (badges) */}
-                {c.servicos_dia && c.servicos_dia.length > 0 && (
-                  <div className="mt-2">
-                    <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-1.5">Serviços do Dia</p>
+                {/* Serviços do Dia (badges) — sempre visível */}
+                <div className="mt-2">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-[9px] tracking-[0.3em] uppercase text-white/35">Serviços do Dia</p>
+                    {(!c.servicos_dia || c.servicos_dia.length === 0) && (
+                      <button onClick={async (e) => {
+                        e.stopPropagation()
+                        try {
+                          // Procura evento por local+data e copia servicos_dia
+                          const res = await fetch(`/api/eventos-supabase?ano=${(c.data_casamento ?? '').slice(0,4)}`).then(r => r.json())
+                          const events = (res?.events ?? []) as any[]
+                          const ev = events.find((e: any) =>
+                            (e.data_evento ?? '').slice(0,10) === (c.data_casamento ?? '').slice(0,10) &&
+                            e.local && (
+                              String(e.local).toLowerCase().includes(c.local.toLowerCase()) ||
+                              c.local.toLowerCase().includes(String(e.local).toLowerCase())
+                            )
+                          )
+                          if (ev && ev.servicos_dia && ev.servicos_dia.length > 0) {
+                            await fetch('/api/freelancer-casamentos', {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                id: c.id,
+                                servicos_dia: ev.servicos_dia,
+                                local_cerimonia: ev.local_cerimonia,
+                                hora_inicio: ev.hora_inicio,
+                                referencia: ev.referencia,
+                              }),
+                            })
+                            onRefresh()
+                          } else {
+                            alert('Nenhum evento correspondente encontrado em /eventos-2026 com mesmo local + data.')
+                          }
+                        } catch (err) {
+                          alert('Erro ao sincronizar: ' + (err as Error).message)
+                        }
+                      }}
+                        className="text-[9px] px-2 py-0.5 rounded-full border border-gold/30 text-gold/70 hover:text-gold hover:bg-gold/10 transition-all tracking-wider uppercase">
+                        ↻ Sincronizar do evento
+                      </button>
+                    )}
+                  </div>
+                  {c.servicos_dia && c.servicos_dia.length > 0 ? (
                     <div className="flex flex-wrap gap-1.5">
                       {c.servicos_dia.map((s, i) => (
                         <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-gold/10 border border-gold/25 text-gold/85 tracking-wide">
@@ -1524,8 +1564,10 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                         </span>
                       ))}
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <p className="text-[11px] text-white/30 italic">Sem serviços definidos — clica em "Editar" abaixo para adicionar, ou "Sincronizar do evento" se já estiverem definidos em /eventos-2026.</p>
+                  )}
+                </div>
               </div>
 
               {/* RIGHT — ACTIONS */}

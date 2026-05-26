@@ -98,6 +98,10 @@ export async function GET(req: NextRequest) {
         video_estado:        row.video_estado ?? null,
         fotos_edicao_estado: row.fotos_edicao_estado ?? null,
         album_estado:        row.album_estado ?? null,
+        // Serviços do dia + cerimónia + hora
+        servicos_dia:        parseArr(row.servicos_dia),
+        local_cerimonia:     row.local_cerimonia ?? null,
+        hora_inicio:         row.hora_inicio ?? null,
       }
     })
 
