@@ -12,28 +12,43 @@ export async function GET(req: NextRequest) {
   const { data, error } = await supabase.from('freelancer_casamentos').select('*').eq('freelancer_id', fid).order('data_casamento')
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // ── Fallback: enriquece casamentos com dados do evento (eventos_2026/2027).
-  //    Tenta match por referência primeiro; se não houver, tenta por
-  //    local + data_casamento (case-insensitive contains).
+  // ── Fallback: enriquece casamentos com dados do evento (eventos_2026/2027) e equipa.
   const casamentos = data ?? []
-  const needsEnrich = casamentos.filter((c: any) =>
-    (!c.servicos_dia || c.servicos_dia.length === 0) ||
-    !c.local_cerimonia || !c.hora_inicio
-  )
-  if (needsEnrich.length > 0) {
-    try {
-      // Fetch eventos por data_evento (suficiente: depois filtramos em memória por local/ref)
-      const datas = Array.from(new Set(needsEnrich.filter((c: any) => c.data_casamento).map((c: any) => c.data_casamento)))
-      if (datas.length === 0) return NextResponse.json({ casamentos })
+  try {
+    const datas = Array.from(new Set(casamentos.filter((c: any) => c.data_casamento).map((c: any) => c.data_casamento)))
+    if (datas.length > 0) {
+      // 1) Buscar eventos por data
       const { data: events } = await supabase
         .from('eventos_2026')
         .select('referencia, local, data_evento, servicos_dia, local_cerimonia, hora_inicio')
         .in('data_evento', datas)
 
+      // 2) Buscar todas as evento_equipa (filtra por referencia/evento_id quando possível)
+      const refs = Array.from(new Set(casamentos.filter((c: any) => c.referencia).map((c: any) => c.referencia)))
+      let equipa: any[] = []
+      if (refs.length > 0) {
+        const { data: eq } = await supabase
+          .from('evento_equipa')
+          .select('referencia, evento_id, local, data_casamento, fotografo, videografo, editor_fotos, editor_album, editor_video')
+          .in('referencia', refs)
+        equipa = eq ?? []
+      }
+      // Também procura por local+data para casamentos sem referencia
+      const localData = casamentos.filter((c: any) => !c.referencia && c.local && c.data_casamento)
+      if (localData.length > 0) {
+        const { data: eq2 } = await supabase
+          .from('evento_equipa')
+          .select('referencia, evento_id, local, data_casamento, fotografo, videografo, editor_fotos, editor_album, editor_video')
+          .in('data_casamento', Array.from(new Set(localData.map((c: any) => c.data_casamento))))
+        equipa = [...equipa, ...(eq2 ?? [])]
+      }
+
       const byRef = new Map<string, any>((events ?? []).filter((e: any) => e.referencia).map((e: any) => [e.referencia, e]))
+      const equipaByRef = new Map<string, any>(equipa.filter((e: any) => e.referencia).map((e: any) => [e.referencia, e]))
+
       casamentos.forEach((c: any) => {
+        // ── EVENTO (servicos_dia, local_cerimonia, hora_inicio) ──
         let ev: any = c.referencia ? byRef.get(c.referencia) : null
-        // Fallback: match por local (case-insensitive contains) + data
         if (!ev && c.local && c.data_casamento) {
           const localLower = c.local.toLowerCase().trim()
           ev = (events ?? []).find((e: any) =>
@@ -41,14 +56,29 @@ export async function GET(req: NextRequest) {
             e.local && (e.local.toLowerCase().includes(localLower) || localLower.includes(e.local.toLowerCase()))
           )
         }
-        if (!ev) return
-        if (!c.servicos_dia    || c.servicos_dia.length === 0) c.servicos_dia    = ev.servicos_dia ?? c.servicos_dia
-        if (!c.local_cerimonia) c.local_cerimonia = ev.local_cerimonia ?? c.local_cerimonia
-        if (!c.hora_inicio)     c.hora_inicio     = ev.hora_inicio ?? c.hora_inicio
-        if (!c.referencia)      c.referencia      = ev.referencia ?? c.referencia
+        if (ev) {
+          if (!c.servicos_dia || c.servicos_dia.length === 0) c.servicos_dia = ev.servicos_dia ?? c.servicos_dia
+          if (!c.local_cerimonia) c.local_cerimonia = ev.local_cerimonia ?? c.local_cerimonia
+          if (!c.hora_inicio)     c.hora_inicio     = ev.hora_inicio ?? c.hora_inicio
+          if (!c.referencia)      c.referencia      = ev.referencia ?? c.referencia
+        }
+
+        // ── EQUIPA (editor_fotos, editor_album, editor_video) ──
+        let eq: any = c.referencia ? equipaByRef.get(c.referencia) : null
+        if (!eq && c.local && c.data_casamento) {
+          const localLower = c.local.toLowerCase().trim()
+          eq = equipa.find((e: any) =>
+            e.data_casamento === c.data_casamento &&
+            e.local && (e.local.toLowerCase().includes(localLower) || localLower.includes(e.local.toLowerCase()))
+          )
+        }
+        // Expor editores como array (mesmo se text[] ou string) — usado pelo frontend p/ unlock
+        c.editor_fotos = eq?.editor_fotos ?? []
+        c.editor_album = eq?.editor_album ?? []
+        c.editor_video = eq?.editor_video ?? []
       })
-    } catch { /* tabela ou coluna pode não existir; ignora */ }
-  }
+    }
+  } catch { /* tabela ou coluna pode não existir; ignora */ }
   return NextResponse.json({ casamentos })
 }
 

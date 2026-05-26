@@ -35,6 +35,10 @@ type Casamento = {
   status_selecao?: string | null
   status_provas?: string | null
   status_album?: string | null
+  // Editores atribuídos ao evento (vêm da tabela evento_equipa)
+  editor_fotos?: string[] | string | null
+  editor_album?: string[] | string | null
+  editor_video?: string[] | string | null
 }
 type Edicao = {
   id: string; freelancer_id: string; nome: string; status: string; local: string | null
@@ -1621,24 +1625,39 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                     { key: 'url_editadas', ts: 'url_editadas_enviado_em', tipo: 'editadas', label: 'Fotos Editadas',   icon: '✓' },
                     { key: 'url_album',    ts: 'url_album_enviado_em',    tipo: 'album',    label: 'Maquete Álbum',    icon: '◐' },
                   ] as const).map(field => (
-                    <UrlEntryCard
-                      key={field.key}
-                      field={field}
-                      casamentoId={c.id}
-                      casamentoLocal={c.local}
-                      casamentoData={c.data_casamento}
-                      freelancerNome={freelancer?.nome ?? ''}
-                      initialUrl={(c as any)[field.key] ?? ''}
-                      initialSentAt={(c as any)[field.ts] ?? null}
-                      initialStatus={
-                        field.tipo === 'editadas' ? (c.status_editadas ?? 'AGUARDAR') :
-                        field.tipo === 'selecao'  ? (c.status_selecao  ?? 'AGUARDAR') :
-                        field.tipo === 'provas'   ? (c.status_provas   ?? 'AGUARDAR') :
-                        field.tipo === 'album'    ? (c.status_album    ?? 'AGUARDAR') :
-                        null
-                      }
-                      onRefresh={onRefresh}
-                    />
+                    {(() => {
+                      // Lock check: o card só desbloqueia quando o editor correspondente
+                      // estiver atribuído na ficha do evento /eventos-2026/[id]
+                      const editorFotos = Array.isArray(c.editor_fotos) ? c.editor_fotos : (c.editor_fotos ? [c.editor_fotos] : [])
+                      const editorAlbum = Array.isArray(c.editor_album) ? c.editor_album : (c.editor_album ? [c.editor_album] : [])
+                      const lockedReason =
+                        field.tipo === 'album' && editorAlbum.length === 0
+                          ? 'Aguarda atribuição do "Editor de Álbum" na ficha do evento (/eventos-2026)'
+                        : (field.tipo === 'selecao' || field.tipo === 'provas' || field.tipo === 'editadas') && editorFotos.length === 0
+                          ? 'Aguarda atribuição do "Editor de Fotos" na ficha do evento (/eventos-2026)'
+                          : null
+                      return (
+                        <UrlEntryCard
+                          key={field.key}
+                          field={field}
+                          casamentoId={c.id}
+                          casamentoLocal={c.local}
+                          casamentoData={c.data_casamento}
+                          freelancerNome={freelancer?.nome ?? ''}
+                          initialUrl={(c as any)[field.key] ?? ''}
+                          initialSentAt={(c as any)[field.ts] ?? null}
+                          initialStatus={
+                            field.tipo === 'editadas' ? (c.status_editadas ?? 'AGUARDAR') :
+                            field.tipo === 'selecao'  ? (c.status_selecao  ?? 'AGUARDAR') :
+                            field.tipo === 'provas'   ? (c.status_provas   ?? 'AGUARDAR') :
+                            field.tipo === 'album'    ? (c.status_album    ?? 'AGUARDAR') :
+                            null
+                          }
+                          lockedReason={lockedReason}
+                          onRefresh={onRefresh}
+                        />
+                      )
+                    })()}
                   ))}
                 </div>
 
@@ -3216,6 +3235,7 @@ function UrlEntryCard({
   initialUrl,
   initialSentAt,
   initialStatus,
+  lockedReason,
   onRefresh,
 }: {
   field: { key: string; ts: string; tipo: string; label: string; icon: string }
@@ -3226,8 +3246,10 @@ function UrlEntryCard({
   initialUrl: string
   initialSentAt: string | null
   initialStatus?: string | null
+  lockedReason?: string | null
   onRefresh: () => void
 }) {
+  const locked = !!lockedReason
   // Estado LOCAL — não desaparece quando lista re-renderiza
   const [url, setUrl] = useState(initialUrl ?? '')
   const [sentAt, setSentAt] = useState<string | null>(initialSentAt ?? null)
@@ -3294,13 +3316,22 @@ function UrlEntryCard({
   }
 
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-black/30 p-3 flex flex-col gap-2">
+    <div className={`relative rounded-xl border bg-black/30 p-3 flex flex-col gap-2 ${locked ? 'border-white/[0.04] opacity-60' : 'border-white/[0.06]'}`}>
+      {/* Lock overlay com ícone + mensagem */}
+      {locked && (
+        <div className="absolute top-2 right-2 z-10" title={lockedReason ?? ''}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/40">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0110 0v4"/>
+          </svg>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-gold/70 text-base">{field.icon}</span>
           <p className="text-[10px] tracking-[0.25em] uppercase text-white/45 font-light">{field.label}</p>
         </div>
-        {hasUrl && (
+        {hasUrl && !locked && (
           <a href={url} target="_blank" rel="noopener noreferrer"
             onClick={e => e.stopPropagation()}
             className="text-[10px] text-gold/70 hover:text-gold tracking-wider uppercase transition-colors">
@@ -3311,18 +3342,21 @@ function UrlEntryCard({
       <input
         type="url"
         value={url}
-        placeholder="https://..."
+        placeholder={locked ? 'Bloqueado' : 'https://...'}
+        disabled={locked}
         onClick={e => e.stopPropagation()}
         onChange={e => setUrl(e.target.value)}
         onBlur={e => saveUrl(e.target.value.trim())}
-        className="w-full bg-black/40 border border-white/[0.06] rounded-lg px-2.5 py-1.5 text-[11px] text-white/85 placeholder:text-white/20 outline-none focus:border-gold/40 transition-colors"
+        className={`w-full bg-black/40 border rounded-lg px-2.5 py-1.5 text-[11px] outline-none transition-colors ${
+          locked ? 'border-white/[0.04] text-white/20 cursor-not-allowed' : 'border-white/[0.06] text-white/85 placeholder:text-white/20 focus:border-gold/40'
+        }`}
       />
       {sentAtFmt ? (
         <div className="flex items-center justify-between text-[10px]">
           <span className="inline-flex items-center gap-1 text-emerald-400/85 tracking-wider uppercase font-semibold">
             ✓ Enviado · {sentAtFmt}
           </span>
-          {hasUrl && (
+          {hasUrl && !locked && (
             <button onClick={e => { e.stopPropagation(); enviarNotificacao() }}
               disabled={sending}
               className="text-white/30 hover:text-gold tracking-wider uppercase transition-colors disabled:opacity-50">
@@ -3332,16 +3366,19 @@ function UrlEntryCard({
         </div>
       ) : (
         <button
-          disabled={!hasUrl || sending}
+          disabled={locked || !hasUrl || sending}
           onClick={e => { e.stopPropagation(); enviarNotificacao() }}
           className={`w-full text-[10px] tracking-wider uppercase font-semibold rounded-lg px-2 py-1.5 transition-all ${
-            hasUrl
+            !locked && hasUrl
               ? 'bg-gold text-black hover:bg-gold/90'
               : 'bg-white/[0.04] text-white/20 cursor-not-allowed border border-white/[0.06]'
           } ${sending ? 'opacity-50' : ''}`}
-          style={hasUrl ? { boxShadow: '0 0 12px -4px rgba(201,164,92,0.5)' } : undefined}>
+          style={!locked && hasUrl ? { boxShadow: '0 0 12px -4px rgba(201,164,92,0.5)' } : undefined}>
           {sending ? 'A enviar...' : '✉ Enviar Notificação'}
         </button>
+      )}
+      {locked && lockedReason && (
+        <p className="text-[9px] text-white/30 italic leading-relaxed mt-1">🔒 {lockedReason}</p>
       )}
       {saving && <p className="text-[9px] text-gold/40 italic">A guardar URL...</p>}
 
@@ -3356,8 +3393,9 @@ function UrlEntryCard({
               const active = status === opt
               return (
                 <button key={opt}
+                  disabled={locked}
                   onClick={e => { e.stopPropagation(); saveStatus(opt) }}
-                  className={`text-[9px] px-2 py-1.5 rounded-md tracking-wider uppercase font-semibold border transition-all ${
+                  className={`text-[9px] px-2 py-1.5 rounded-md tracking-wider uppercase font-semibold border transition-all ${locked ? 'opacity-40 cursor-not-allowed' : ''} ${
                     active ? STATUS_CLS[opt] : 'bg-transparent text-white/35 border-white/[0.06] hover:text-white/70 hover:border-white/15'
                   }`}>
                   {opt}
