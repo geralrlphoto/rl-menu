@@ -9,17 +9,19 @@ function db() {
 }
 
 const TIPO_LABELS: Record<string, string> = {
-  selecao:  'Seleção de Fotos',
-  provas:   'Fotos Prova',
-  editadas: 'Fotos Editadas',
-  album:    'Maquete Álbum',
+  selecao:       'Seleção de Fotos',
+  provas:        'Fotos Prova',
+  editadas:      'Fotos Editadas',
+  album:         'Maquete Álbum',
+  nova_selecao:  'Nova Seleção dos Noivos',
 }
 
 const TIPO_ICONS: Record<string, string> = {
-  selecao:  '◫',
-  provas:   '◧',
-  editadas: '✓',
-  album:    '◐',
+  selecao:       '◫',
+  provas:        '◧',
+  editadas:      '✓',
+  album:         '◐',
+  nova_selecao:  '★',
 }
 
 type Notif = {
@@ -88,6 +90,36 @@ export async function GET() {
           sent_at: sentAt,
         })
       }
+    }
+
+    // ── Notificações de NOVA SELEÇÃO DOS NOIVOS (tabela fotos_selecao) ──
+    // Sempre que os noivos submetem o formulário Tally, é criada uma row em
+    // fotos_selecao. Mostramos no sino do admin para o avisar.
+    try {
+      const { data: selecoes } = await supabase
+        .from('fotos_selecao')
+        .select('id, nome_noivos, referencia, date, data_entrada, created_at')
+        .order('data_entrada', { ascending: false, nullsFirst: false })
+        .limit(50)
+      for (const s of (selecoes ?? []) as any[]) {
+        const sent = s.data_entrada || s.created_at
+        if (!sent) continue
+        notifications.push({
+          id: `nova_selecao::${s.id}`,
+          tipo: 'nova_selecao',
+          tipo_label: TIPO_LABELS.nova_selecao,
+          tipo_icon: TIPO_ICONS.nova_selecao,
+          casamento_id: '',
+          freelancer_id: '',
+          freelancer_nome: s.nome_noivos ?? '—',
+          local: s.referencia ?? '—',
+          data_casamento: s.date ?? null,
+          url: `/secao/${s.id}`,
+          sent_at: typeof sent === 'string' && sent.length === 10 ? `${sent}T00:00:00.000Z` : sent,
+        })
+      }
+    } catch (err) {
+      console.warn('[admin-notifications] fotos_selecao read failed:', err)
     }
 
     // Ordenar por sent_at DESC
