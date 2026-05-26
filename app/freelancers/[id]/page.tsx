@@ -3800,6 +3800,13 @@ function ListaConvidadosButton({
   )
 }
 
+// ─── Templates predefinidos por canal ───────────────────────────────────────
+const WORKFLOW_DEFAULTS: Record<string, string> = {
+  fotos_convidados_email_workflow:
+    'Enviar todas as fotos sem marca de água com qualidade 70% para fotos.rlphoto@gmail.com.\n\nTodas as fotos por via email são enviadas através do nosso email fotos.rlphoto@gmail.com.',
+  fotos_convidados_ctt_workflow: '',
+}
+
 // ─── WorkflowButton — botão "+ Workflow" + modal com textarea (controlado) ──
 function WorkflowButton({
   referencia, workflowKey, label, workflow, onWorkflowChange,
@@ -3810,7 +3817,9 @@ function WorkflowButton({
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => { setMounted(true) }, [])
-  useEffect(() => { if (open) setDraft(workflow) }, [open, workflow])
+  useEffect(() => {
+    if (open) setDraft(workflow || WORKFLOW_DEFAULTS[workflowKey] || '')
+  }, [open, workflow, workflowKey])
 
   async function guardar() {
     setSaving(true)
