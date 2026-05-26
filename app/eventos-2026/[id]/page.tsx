@@ -4065,48 +4065,83 @@ function WorkflowAdminButton({
         title={workflow ? 'Ver / editar workflow' : 'Adicionar workflow de envio'}
         className={`px-4 py-2 rounded-lg text-[11px] font-semibold tracking-[0.2em] uppercase border transition-all ${
           workflow
-            ? 'border-blue-400/30 text-blue-300 bg-blue-500/[0.05] hover:bg-blue-500/[0.12]'
+            ? 'border-[#c9a96e]/40 text-[#c9a96e] bg-[#c9a96e]/[0.06] hover:bg-[#c9a96e]/[0.12]'
             : 'border-white/15 text-white/60 hover:bg-white/[0.05] hover:text-white/85'
         }`}>
         {workflow ? '✓ Workflow' : '+ Workflow'}
       </button>
       {mounted && open && createPortal(
-        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          style={{ background: 'rgba(14,11,7,0.92)', backdropFilter: 'blur(6px)' }}
           onClick={() => setOpen(false)}>
-          <div className="bg-[#0f0f0f] border border-white/10 rounded-2xl p-6 max-w-lg w-full max-h-[85vh] overflow-y-auto flex flex-col gap-4"
+          <div className="relative max-w-xl w-full max-h-[90vh] overflow-y-auto"
+            style={{ background: '#120e09', border: '0.5px solid #4a3a1e', fontFamily: 'Georgia, "Times New Roman", serif' }}
             onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between gap-3 border-b border-white/[0.06] pb-3">
-              <div>
-                <p className="text-[9px] tracking-[0.4em] uppercase text-blue-300/70">Workflow de Envio</p>
-                <h3 className="text-sm text-white/85 font-semibold mt-0.5">{label}</h3>
+
+            {/* Corner ornaments (top) */}
+            <div className="absolute top-0 left-0 w-[50px] h-[50px] pointer-events-none" style={{ borderTop: '0.5px solid #3a2a12', borderLeft: '0.5px solid #3a2a12' }} />
+            <div className="absolute top-0 right-0 w-[50px] h-[50px] pointer-events-none" style={{ borderTop: '0.5px solid #3a2a12', borderRight: '0.5px solid #3a2a12' }} />
+
+            {/* Close */}
+            <button onClick={() => setOpen(false)}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-[#7a6340] hover:text-[#c9a96e] transition-colors text-base z-10"
+              title="Fechar (Esc)">✕</button>
+
+            <div className="px-12 pt-12 pb-10 flex flex-col gap-6">
+              {/* Header */}
+              <div className="text-center">
+                <p className="text-[9px] tracking-[0.5em] uppercase mb-3" style={{ color: '#7a6340' }}>Workflow de Envio</p>
+                <h2 className="text-[28px] leading-tight" style={{ color: '#f0e8d8', fontWeight: 400 }}>{label.split(' via ')[0]}</h2>
+                {label.includes(' via ') && (
+                  <p className="text-[22px] italic mt-0.5" style={{ color: '#c9a96e', fontWeight: 300 }}>via {label.split(' via ')[1]}</p>
+                )}
+                <div className="my-5 text-[12px] tracking-[0.35em]" style={{ color: '#6a5430' }}>&mdash;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&mdash;</div>
               </div>
-              <button onClick={() => setOpen(false)}
-                className="w-7 h-7 flex items-center justify-center rounded-full border border-white/10 text-white/40 hover:text-white/80 hover:border-white/30">✕</button>
+
+              {/* Description */}
+              <p className="text-[13px] italic leading-relaxed text-center" style={{ color: '#a09070' }}>
+                Descreve o procedimento de envio das fotos aos convidados —<br/>passos, contactos e observações.
+              </p>
+
+              {/* Textarea */}
+              <textarea
+                value={draft}
+                onChange={e => setDraft(e.target.value)}
+                placeholder="Os passos do envio…"
+                rows={10}
+                spellCheck={false}
+                style={{ fontFamily: 'Georgia, "Times New Roman", serif', background: '#0e0b07', borderColor: '#4a3a1e', color: '#d4c9b0' }}
+                className="w-full border px-5 py-4 text-[14px] leading-[1.7] focus:outline-none resize-y min-h-[200px] placeholder:text-[#5a4f3a] placeholder:italic"
+                onFocus={e => e.currentTarget.style.borderColor = '#c9a96e'}
+                onBlur={e => e.currentTarget.style.borderColor = '#4a3a1e'}
+                autoFocus
+              />
+
+              {/* Actions */}
+              <div className="flex gap-4 pt-2 justify-end items-center">
+                <button onClick={() => setOpen(false)}
+                  className="px-5 py-3 text-[10px] tracking-[0.4em] uppercase transition-colors"
+                  style={{ color: '#7a6340' }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#c9a96e'}
+                  onMouseLeave={e => e.currentTarget.style.color = '#7a6340'}>
+                  Cancelar
+                </button>
+                <button onClick={guardar} disabled={saving}
+                  className="px-8 py-3 text-[10px] tracking-[0.4em] uppercase transition-all disabled:opacity-50 disabled:cursor-wait"
+                  style={{ background: 'transparent', color: '#c9a96e', border: '0.5px solid #c9a96e' }}
+                  onMouseEnter={e => { if (!saving) { e.currentTarget.style.background = '#c9a96e'; e.currentTarget.style.color = '#0e0b07' } }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#c9a96e' }}>
+                  {saving ? 'A guardar…' : 'Guardar'}
+                </button>
+              </div>
+
+              {/* Footer mark */}
+              <p className="text-[9px] tracking-[0.5em] uppercase text-center mt-2" style={{ color: '#3a2a12' }}>RL Photo · Video</p>
             </div>
 
-            <p className="text-[11px] text-blue-300/80 bg-blue-500/[0.06] border border-blue-500/20 rounded-md px-3 py-2 leading-snug">
-              Descreve aqui o procedimento de envio das fotos aos convidados (passos, contactos, observações).
-            </p>
-
-            <textarea
-              value={draft}
-              onChange={e => setDraft(e.target.value)}
-              placeholder="Ex: 1. Verificar lista de convidados&#10;2. Preparar pasta partilhada Google Drive&#10;3. Enviar email com link a cada nome…"
-              rows={10}
-              className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-3 text-sm text-white/85 placeholder-white/25 focus:outline-none focus:border-blue-400/40 font-mono leading-relaxed resize-y min-h-[180px]"
-              autoFocus
-            />
-
-            <div className="flex gap-2 pt-3 border-t border-white/[0.06] justify-end">
-              <button onClick={() => setOpen(false)}
-                className="px-4 py-2 rounded-lg text-[11px] font-semibold tracking-[0.2em] uppercase border border-white/10 text-white/50 hover:bg-white/[0.04]">
-                Cancelar
-              </button>
-              <button onClick={guardar} disabled={saving}
-                className="px-5 py-2 rounded-lg text-[11px] font-semibold tracking-[0.2em] uppercase border bg-blue-500/20 text-blue-300 border-blue-500/30 hover:bg-blue-500/30 disabled:opacity-50 disabled:cursor-wait transition-all">
-                {saving ? 'A guardar…' : 'Guardar'}
-              </button>
-            </div>
+            {/* Corner ornaments (bottom) */}
+            <div className="absolute bottom-0 left-0 w-[50px] h-[50px] pointer-events-none" style={{ borderBottom: '0.5px solid #3a2a12', borderLeft: '0.5px solid #3a2a12' }} />
+            <div className="absolute bottom-0 right-0 w-[50px] h-[50px] pointer-events-none" style={{ borderBottom: '0.5px solid #3a2a12', borderRight: '0.5px solid #3a2a12' }} />
           </div>
         </div>,
         document.body
