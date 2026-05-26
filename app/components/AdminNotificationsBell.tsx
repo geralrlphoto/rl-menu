@@ -18,6 +18,21 @@ type Notif = {
 }
 
 const LS_KEY = 'admin_notif_last_seen'
+const LS_DISMISSED = 'admin_notif_dismissed'
+
+function loadDismissed(): Set<string> {
+  if (typeof window === 'undefined') return new Set()
+  try {
+    const raw = localStorage.getItem(LS_DISMISSED)
+    if (!raw) return new Set()
+    const arr = JSON.parse(raw)
+    return new Set(Array.isArray(arr) ? arr : [])
+  } catch { return new Set() }
+}
+function saveDismissed(s: Set<string>) {
+  if (typeof window === 'undefined') return
+  try { localStorage.setItem(LS_DISMISSED, JSON.stringify(Array.from(s))) } catch {}
+}
 
 function fmtRel(iso: string): string {
   try {
@@ -39,16 +54,33 @@ export function AdminNotificationsBell() {
   const [open, setOpen] = useState(false)
   const [popPos, setPopPos] = useState<{ top: number; left: number } | null>(null)
   const [mounted, setMounted] = useState(false)
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set())
+  const [showHistory, setShowHistory] = useState(false)
   const buttonRef = useRef<HTMLButtonElement | null>(null)
   const popRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => { setMounted(true) }, [])
 
-  // Load last seen do localStorage
+  // Load last seen + dismissed do localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return
     setLastSeen(localStorage.getItem(LS_KEY))
+    setDismissed(loadDismissed())
   }, [])
+
+  function dismissOne(id: string) {
+    setDismissed(prev => {
+      const next = new Set(prev); next.add(id); saveDismissed(next); return next
+    })
+  }
+  function restoreOne(id: string) {
+    setDismissed(prev => {
+      const next = new Set(prev); next.delete(id); saveDismissed(next); return next
+    })
+  }
+  function restoreAll() {
+    setDismissed(prev => { const next = new Set<string>(); saveDismissed(next); return next })
+  }
 
   // Fetch notifs on mount + interval 60s
   useEffect(() => {
@@ -98,9 +130,14 @@ export function AdminNotificationsBell() {
     return () => document.removeEventListener('keydown', onKey)
   }, [open])
 
+  // Lista visível na vista principal (exclui dispensadas)
+  const visibleNotifs = notifs.filter(n => !dismissed.has(n.id))
+  // Contador de não lidas usa só as visíveis para não 'piscar' por notifs antigas dispensadas
   const unreadCount = lastSeen
-    ? notifs.filter(n => (n.sent_at || '') > lastSeen).length
-    : notifs.length
+    ? visibleNotifs.filter(n => (n.sent_at || '') > lastSeen).length
+    : visibleNotifs.length
+  // Lista a renderizar conforme o modo
+  const listToRender = showHistory ? notifs : visibleNotifs
 
   function markAllAsRead() {
     const now = new Date().toISOString()
@@ -166,20 +203,31 @@ export function AdminNotificationsBell() {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
             <div className="flex items-center gap-2">
-              <p className="text-[11px] tracking-[0.35em] uppercase text-gold/85 font-semibold">Notificações</p>
-              {unreadCount > 0 && (
+              <p className="text-[11px] tracking-[0.35em] uppercase text-gold/85 font-semibold">
+                {showHistory ? 'Histórico' : 'Notificações'}
+              </p>
+              {!showHistory && unreadCount > 0 && (
                 <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gold/20 text-gold border border-gold/30 tracking-wider uppercase font-bold">
                   {unreadCount} novas
                 </span>
               )}
+              {showHistory && dismissed.size > 0 && (
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/[0.06] text-white/55 border border-white/15 tracking-wider uppercase font-bold">
+                  {dismissed.size} arquivada{dismissed.size === 1 ? '' : 's'}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2">
-              {unreadCount > 0 && (
+              {!showHistory && unreadCount > 0 && (
                 <button onClick={markAllAsRead}
                   className="text-[9px] tracking-wider uppercase text-white/40 hover:text-gold transition-colors">
-                  Marcar como lidas
+                  Marcar lidas
                 </button>
               )}
+              <button onClick={() => setShowHistory(s => !s)}
+                className="text-[9px] tracking-wider uppercase text-white/40 hover:text-gold transition-colors">
+                {showHistory ? '← Voltar' : 'Ver todas'}
+              </button>
               <button onClick={() => setOpen(false)}
                 className="w-6 h-6 flex items-center justify-center rounded text-white/30 hover:text-white/70 hover:bg-white/[0.04] transition-colors"
                 title="Fechar">
@@ -188,42 +236,73 @@ export function AdminNotificationsBell() {
             </div>
           </div>
 
+          {/* Sub-header em modo histórico */}
+          {showHistory && dismissed.size > 0 && (
+            <div className="px-4 py-2 border-b border-white/[0.04] flex items-center justify-between bg-white/[0.01]">
+              <p className="text-[10px] text-white/35 italic">Notificações arquivadas aparecem aqui. Carrega em ↺ para restaurar.</p>
+              <button onClick={restoreAll}
+                className="text-[9px] tracking-wider uppercase text-white/45 hover:text-gold transition-colors">
+                Restaurar todas
+              </button>
+            </div>
+          )}
+
           {/* List */}
           <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 100px)' }}>
-            {notifs.length === 0 ? (
+            {listToRender.length === 0 ? (
               <div className="px-4 py-8 text-center">
                 <p className="text-3xl opacity-20 mb-2">✉</p>
-                <p className="text-[11px] text-white/35 italic">Sem notificações</p>
+                <p className="text-[11px] text-white/35 italic">
+                  {showHistory ? 'Sem histórico' : 'Sem notificações'}
+                </p>
               </div>
             ) : (
               <div className="divide-y divide-white/[0.04]">
-                {notifs.map(n => {
+                {listToRender.map(n => {
                   const isUnread = !lastSeen || (n.sent_at || '') > lastSeen
+                  const isDismissed = dismissed.has(n.id)
                   return (
-                    <a key={n.id} href={n.url} target="_blank" rel="noopener noreferrer"
-                      className="block px-4 py-3 hover:bg-white/[0.02] transition-colors group">
-                      <div className="flex items-start gap-3">
-                        <span className={`shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-[14px] mt-0.5 ${
-                          isUnread ? 'bg-gold/15 text-gold border border-gold/30' : 'bg-white/[0.04] text-white/40 border border-white/[0.06]'
-                        }`}>
-                          {n.tipo_icon}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2 mb-0.5">
-                            <p className={`text-[12px] font-semibold truncate ${isUnread ? 'text-white' : 'text-white/65'}`}>
-                              {n.tipo_label}
-                            </p>
-                            {isUnread && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-gold shrink-0 mt-1.5"
-                                style={{ boxShadow: '0 0 6px rgba(201,164,92,0.8)' }} />
-                            )}
+                    <div key={n.id}
+                      className={`relative group transition-colors ${isDismissed ? 'opacity-50' : 'hover:bg-white/[0.02]'}`}>
+                      <a href={n.url} target="_blank" rel="noopener noreferrer"
+                        className="block px-4 py-3 pr-10">
+                        <div className="flex items-start gap-3">
+                          <span className={`shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-[14px] mt-0.5 ${
+                            isUnread && !isDismissed ? 'bg-gold/15 text-gold border border-gold/30' : 'bg-white/[0.04] text-white/40 border border-white/[0.06]'
+                          }`}>
+                            {n.tipo_icon}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2 mb-0.5">
+                              <p className={`text-[12px] font-semibold truncate ${isUnread && !isDismissed ? 'text-white' : 'text-white/65'}`}>
+                                {n.tipo_label}
+                              </p>
+                              {isUnread && !isDismissed && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-gold shrink-0 mt-1.5"
+                                  style={{ boxShadow: '0 0 6px rgba(201,164,92,0.8)' }} />
+                              )}
+                            </div>
+                            <p className="text-[11px] text-white/60 truncate">{n.freelancer_nome} · {n.local}</p>
+                            <p className="text-[10px] text-white/30 mt-0.5">{fmtRel(n.sent_at)}</p>
                           </div>
-                          <p className="text-[11px] text-white/60 truncate">{n.freelancer_nome} · {n.local}</p>
-                          <p className="text-[10px] text-white/30 mt-0.5">{fmtRel(n.sent_at)}</p>
+                          <span className="text-[10px] text-white/20 group-hover:text-gold transition-colors mt-1">↗</span>
                         </div>
-                        <span className="text-[10px] text-white/20 group-hover:text-gold transition-colors mt-1">↗</span>
-                      </div>
-                    </a>
+                      </a>
+                      {/* Botão arquivar/restaurar — separado do <a> para não navegar */}
+                      {isDismissed ? (
+                        <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); restoreOne(n.id) }}
+                          title="Restaurar"
+                          className="absolute top-2.5 right-2.5 w-6 h-6 flex items-center justify-center rounded-md text-white/30 hover:text-emerald-300 hover:bg-emerald-500/10 transition-colors opacity-60 group-hover:opacity-100">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12a9 9 0 1015-6.7L21 8M21 3v5h-5"/></svg>
+                        </button>
+                      ) : (
+                        <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); dismissOne(n.id) }}
+                          title="Arquivar (fica no histórico)"
+                          className="absolute top-2.5 right-2.5 w-6 h-6 flex items-center justify-center rounded-md text-white/20 hover:text-red-300 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                      )}
+                    </div>
                   )
                 })}
               </div>
