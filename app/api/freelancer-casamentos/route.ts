@@ -56,7 +56,7 @@ const OPTIONAL_COLS = [
   'servicos_dia', 'referencia', 'local_cerimonia', 'hora_inicio',
   'url_selecao', 'url_provas', 'url_editadas', 'url_album',
   'url_selecao_enviado_em', 'url_provas_enviado_em', 'url_editadas_enviado_em', 'url_album_enviado_em',
-  'status_editadas', 'status_selecao',
+  'status_editadas', 'status_selecao', 'status_provas',
 ] as const
 
 export async function POST(req: NextRequest) {
