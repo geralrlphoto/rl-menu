@@ -229,10 +229,12 @@ function FreelancerDetailInner() {
   //   Calculado SEMPRE (antes de early returns) para respeitar Rules of Hooks
   //   Seleção de Fotos:   30 dias após o evento
   //   Fotos Editadas:     30 dias após os noivos enviarem fotos (fotos_selecao.data_entrada)
+  //   Maquete Álbum:      30 dias após os noivos enviarem fotos (fotos_selecao.data_entrada)
   const PRAZO_SELECAO_DIAS = 30
   const PRAZO_EDICAO_DIAS  = 30
+  const PRAZO_ALBUM_DIAS   = 30
   const PRAZO_AVISO_DIAS = 5
-  type PrazoEntry = { c: Casamento; deadline: Date; daysLeft: number; tipo: 'selecao' | 'edicao' }
+  type PrazoEntry = { c: Casamento; deadline: Date; daysLeft: number; tipo: 'selecao' | 'edicao' | 'album' }
   function parseDateLocal(s: string | null | undefined): Date | null {
     if (!s) return null
     const dateStr = String(s).slice(0, 10)
@@ -267,6 +269,16 @@ function FreelancerDetailInner() {
             out.push({ c, deadline, daysLeft, tipo: 'edicao' })
           }
         }
+        // 3) Maquete Álbum — mesma data de partida que Fotos Editadas (fotos_selecao.data_entrada)
+        if (c.referencia && !c.url_album_enviado_em && c.status_album !== 'ENTREGUE') {
+          const dataEntrada = fotosSelecaoMap[c.referencia]
+          const dEntrada = parseDateLocal(dataEntrada)
+          if (dEntrada && dEntrada.getTime() <= today.getTime()) {
+            const deadline = new Date(dEntrada.getTime() + PRAZO_ALBUM_DIAS * 86400000)
+            const daysLeft = Math.ceil((deadline.getTime() - today.getTime()) / 86400000)
+            out.push({ c, deadline, daysLeft, tipo: 'album' })
+          }
+        }
       }
       return out.sort((a, b) => a.daysLeft - b.daysLeft)
     } catch { return [] }
@@ -279,15 +291,25 @@ function FreelancerDetailInner() {
   useEffect(() => {
     if (!freelancer?.id || prazosCriticos.length === 0) return
     prazosCriticos.forEach(async (p) => {
-      const label = p.tipo === 'edicao' ? 'Fotos para Edição' : 'Seleção de Fotos'
+      const labelByTipo = {
+        selecao: 'Seleção de Fotos',
+        edicao:  'Fotos para Edição',
+        album:   'Maquete Álbum',
+      } as const
+      const tipoByPrazo = {
+        selecao: 'prazo_selecao',
+        edicao:  'prazo_edicao',
+        album:   'prazo_album',
+      } as const
+      const label = labelByTipo[p.tipo]
       const titulo = `⚠ Prazo ${label} · ${p.c.local}`
       const prefix = `⚠ Prazo ${label}`
       const exists = notificacoes.some(n => n.titulo.startsWith(prefix) && n.titulo.includes(p.c.local))
       if (exists) return
       const expired = p.daysLeft < 0
-      const referenceText = p.tipo === 'edicao'
-        ? '30 dias após o envio das fotos pelos noivos'
-        : '30 dias após o evento'
+      const referenceText = p.tipo === 'selecao'
+        ? '30 dias após o evento'
+        : '30 dias após o envio das fotos pelos noivos'
       const mensagem = expired
         ? `O prazo de entrega de ${label} de ${p.c.local} (${referenceText}) expirou há ${Math.abs(p.daysLeft)} dia${Math.abs(p.daysLeft) === 1 ? '' : 's'}.`
         : `Faltam ${p.daysLeft} dia${p.daysLeft === 1 ? '' : 's'} para o prazo de entrega de ${label} de ${p.c.local}. (Prazo: ${referenceText})`
@@ -299,7 +321,7 @@ function FreelancerDetailInner() {
             freelancer_id: freelancer.id,
             titulo,
             mensagem,
-            tipo: p.tipo === 'edicao' ? 'prazo_edicao' : 'prazo_selecao',
+            tipo: tipoByPrazo[p.tipo],
             lida: false,
           }),
         })
@@ -1079,10 +1101,12 @@ function FreelancerDetailInner() {
                         deadlineLabel = `${dd} ${MESES[p.deadline.getMonth()]}`
                       }
                     } catch { /* keep '—' */ }
-                    const tipoLabel = p.tipo === 'edicao' ? 'Edição' : 'Seleção'
+                    const tipoLabel = p.tipo === 'edicao' ? 'Edição' : p.tipo === 'album' ? 'Álbum' : 'Seleção'
                     const tipoCls = p.tipo === 'edicao'
                       ? 'bg-blue-500/20 text-blue-200 border-blue-500/35'
-                      : 'bg-gold/15 text-gold/90 border-gold/30'
+                      : p.tipo === 'album'
+                        ? 'bg-purple-500/20 text-purple-200 border-purple-500/35'
+                        : 'bg-gold/15 text-gold/90 border-gold/30'
                     return (
                       <button key={`${p.tipo}-${p.c.id}`} onClick={() => setTab('casamentos')}
                         className={`w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg border transition-all text-left ${
@@ -3564,12 +3588,13 @@ function UrlEntryCard({
 
   // ── Aviso de prazo ────────────────────────────────────────────
   //   - Seleção de Fotos: 30 dias após o evento (casamentoData)
-  //   - Fotos Editadas:    30 dias após os noivos enviarem (fotosDataEntrada)
+  //   - Fotos Editadas:   30 dias após os noivos enviarem (fotosDataEntrada)
+  //   - Maquete Álbum:    30 dias após os noivos enviarem (fotosDataEntrada)
   const deadlineNotice = (() => {
     if (sentAt) return null
     let baseDateStr: string | null = null
     if (field.tipo === 'selecao') baseDateStr = casamentoData
-    else if (field.tipo === 'editadas') baseDateStr = fotosDataEntrada ?? null
+    else if (field.tipo === 'editadas' || field.tipo === 'album') baseDateStr = fotosDataEntrada ?? null
     if (!baseDateStr) return null
     try {
       const dateStr = String(baseDateStr).slice(0, 10)
@@ -3737,7 +3762,7 @@ function UrlEntryCard({
       {/* Notice — diferencia entre Seleção de Fotos e Fotos Editadas */}
       {!locked && urlBlockedByStatus && field.tipo === 'editadas' && (
         <p className="text-[11px] text-amber-300/80 italic leading-relaxed mt-1 px-1">
-          ⓘ Muda o estado para <span className="font-bold not-italic uppercase text-amber-200">Em Edição</span> para teres acesso às fotos escolhidas pelos noivos. O link da pasta editada só fica disponível ao marcar <span className="font-bold not-italic uppercase text-amber-200">Entregue</span>. Cada alteração de estado atualiza automaticamente o portal dos noivos ("Fotos para Edição").
+          ⓘ Muda o estado para <span className="font-bold not-italic uppercase text-amber-200">Em Edição</span> para teres acesso às fotos escolhidas pelos noivos. Prazo de <span className="font-bold not-italic text-amber-200">30 dias</span> após o envio das fotos pelos noivos. O link da pasta editada só fica disponível ao marcar <span className="font-bold not-italic uppercase text-amber-200">Entregue</span>. Cada alteração de estado atualiza automaticamente o portal dos noivos ("Fotos para Edição").
         </p>
       )}
       {!locked && urlBlockedByStatus && field.tipo === 'selecao' && (
@@ -3747,7 +3772,7 @@ function UrlEntryCard({
       )}
       {!locked && field.tipo === 'album' && status === 'AGUARDAR' && (
         <p className="text-[11px] text-amber-300/80 italic leading-relaxed mt-1 px-1">
-          ⓘ Muda o estado para <span className="font-bold not-italic uppercase text-amber-200">Em Edição</span> para teres acesso às fotos escolhidas pelos noivos para a maquete do álbum. Cada alteração de estado atualiza automaticamente o portal dos noivos.
+          ⓘ Muda o estado para <span className="font-bold not-italic uppercase text-amber-200">Em Edição</span> para teres acesso às fotos escolhidas pelos noivos. Prazo de <span className="font-bold not-italic text-amber-200">30 dias</span> após o envio das fotos pelos noivos. Cada alteração de estado atualiza automaticamente o portal dos noivos.
         </p>
       )}
       {saving && <p className="text-[11px] text-gold/50 italic">A guardar URL...</p>}
