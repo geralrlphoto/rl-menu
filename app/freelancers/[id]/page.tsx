@@ -231,20 +231,26 @@ export default function FreelancerDetailPage() {
   // ── Prazos de entrega (Seleção de Fotos: 30 dias após o evento) ─────
   const PRAZO_SELECAO_DIAS = 30
   const PRAZO_AVISO_DIAS = 5
-  const prazosSelecao = (() => {
-    const today = new Date(); today.setHours(0,0,0,0)
-    return casamentos
-      .filter(c => c.data_casamento && !c.url_selecao_enviado_em)
-      .map(c => {
-        const [y, m, d] = (c.data_casamento ?? '').split('-').map(Number)
+  type PrazoEntry = { c: Casamento; deadline: Date; daysLeft: number }
+  const prazosSelecao: PrazoEntry[] = (() => {
+    try {
+      const today = new Date(); today.setHours(0, 0, 0, 0)
+      const out: PrazoEntry[] = []
+      for (const c of casamentos) {
+        if (!c.data_casamento || c.url_selecao_enviado_em) continue
+        const dateStr = String(c.data_casamento).slice(0, 10)           // garante 'YYYY-MM-DD'
+        const parts = dateStr.split('-').map(Number)
+        if (parts.length !== 3 || parts.some(n => !Number.isFinite(n))) continue
+        const [y, m, d] = parts
         const dEvento = new Date(y, m - 1, d)
-        if (dEvento.getTime() > today.getTime()) return null            // evento ainda não aconteceu
+        if (isNaN(dEvento.getTime())) continue
+        if (dEvento.getTime() > today.getTime()) continue                // evento futuro — sem prazo ainda
         const deadline = new Date(dEvento.getTime() + PRAZO_SELECAO_DIAS * 86400000)
         const daysLeft = Math.ceil((deadline.getTime() - today.getTime()) / 86400000)
-        return { c, deadline, daysLeft }
-      })
-      .filter((x): x is { c: Casamento; deadline: Date; daysLeft: number } => x !== null)
-      .sort((a, b) => a.daysLeft - b.daysLeft)
+        out.push({ c, deadline, daysLeft })
+      }
+      return out.sort((a, b) => a.daysLeft - b.daysLeft)
+    } catch { return [] }
   })()
   const prazosCriticos = prazosSelecao.filter(p => p.daysLeft <= PRAZO_AVISO_DIAS)
 
@@ -273,8 +279,6 @@ export default function FreelancerDetailPage() {
         })
       } catch { /* ignora — re-tenta no próximo render */ }
     })
-    // refresca notificações depois de criar (carrega() é assíncrono e pode disparar loop;
-    // basta deixar o utilizador ver na próxima refrescagem natural)
   }, [prazosCriticos.length, freelancer?.id])
 
   function handleIntroHomeChange(val: string) {
@@ -667,6 +671,14 @@ export default function FreelancerDetailPage() {
                 {prazosSelecao.slice(0, 5).map(p => {
                   const critical = p.daysLeft <= PRAZO_AVISO_DIAS
                   const expired = p.daysLeft < 0
+                  // Format deadline defensively — toLocaleDateString may throw on Invalid Date in some envs
+                  let deadlineLabel = '—'
+                  try {
+                    if (!isNaN(p.deadline.getTime())) {
+                      const dd = String(p.deadline.getDate()).padStart(2, '0')
+                      deadlineLabel = `${dd} ${MESES[p.deadline.getMonth()]}`
+                    }
+                  } catch { /* keep '—' */ }
                   return (
                     <button key={p.c.id} onClick={() => setTab('casamentos')}
                       className={`w-full flex items-center justify-between gap-3 p-3 rounded-xl border transition-all text-left ${
@@ -677,7 +689,7 @@ export default function FreelancerDetailPage() {
                       <div className="min-w-0 flex-1">
                         <p className="text-[14px] text-white truncate font-medium">{p.c.local}</p>
                         <p className="text-[12px] text-white/50 italic mt-0.5" style={{ fontFamily: 'Georgia, serif' }}>
-                          Evento: {fmtDate(p.c.data_casamento).split(' · ')[0]} · Prazo até {p.deadline.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })}
+                          Evento: {fmtDate(p.c.data_casamento).split(' · ')[0]} · Prazo até {deadlineLabel}
                         </p>
                       </div>
                       <div className={`text-right shrink-0 ${critical ? 'text-red-300' : 'text-amber-300/90'}`}>
