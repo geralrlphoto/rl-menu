@@ -222,20 +222,22 @@ function FreelancerDetailInner() {
       if (row.referencia && row.data_entrada) fsMap[row.referencia] = row.data_entrada
     }
     setFotosSelecaoMap(fsMap)
-    // Carrega estado "Fotos Convidados" por referência (portais.settings.fotos_convidados_enviada)
+    setLoading(false)
+    // Carrega estado "Fotos Convidados" em background (não bloqueia o render)
     const refs = Array.from(new Set((cRes.casamentos ?? []).map((c: any) => c.referencia).filter(Boolean))) as string[]
     if (refs.length) {
-      const fcMap: Record<string, string | null> = {}
-      await Promise.all(refs.map(async (ref) => {
-        try {
-          const p = await fetch(`/api/portais?ref=${encodeURIComponent(ref)}`).then(r => r.json())
-          const s = p?.portal?.settings ?? p?.settings ?? {}
-          fcMap[ref] = s.fotos_convidados_enviada ?? null
-        } catch { /* ignore */ }
-      }))
-      setFotosConvidadosMap(fcMap)
+      ;(async () => {
+        const fcMap: Record<string, string | null> = {}
+        for (const ref of refs) {
+          try {
+            const p = await fetch(`/api/portais?ref=${encodeURIComponent(ref)}`).then(r => r.json())
+            const s = p?.portal?.settings ?? p?.settings ?? {}
+            fcMap[ref] = s.fotos_convidados_enviada ?? null
+          } catch { /* ignore */ }
+        }
+        setFotosConvidadosMap(fcMap)
+      })()
     }
-    setLoading(false)
   }, [id])
 
   useEffect(() => { load() }, [load])
