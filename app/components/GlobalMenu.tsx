@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
+import { AdminNotificationsBell } from './AdminNotificationsBell'
 
 const HIDDEN_PATHS = ['/login', '/portal-cliente', '/portal-batizado', '/freelancer-view', '/r/', '/b/', '/nova-lead', '/portal-media']
 // Paths em que o menu lateral permanente é colapsado (só botão flutuante visível)
@@ -201,6 +202,13 @@ export default function GlobalMenu() {
 
       {/* Nav links */}
       <nav className="relative flex-1 min-h-0 overflow-y-auto px-3 pb-4 pt-3 flex flex-col gap-0.5">
+        {/* Sino de Notificações (admin) — só no menu RL Photo (não no MEDIA) */}
+        {!isMedia && (
+          <>
+            <AdminNotificationsBell />
+            <div className="relative h-px my-1.5 mx-1" style={{ background: 'rgba(255,255,255,0.06)' }} />
+          </>
+        )}
         {navLinks.map(({ href, label, sub, icon, exact }: any) => (
           <NavItem key={href} href={href} label={label} sub={sub} icon={icon} exact={exact} />
         ))}
