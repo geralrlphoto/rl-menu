@@ -3329,6 +3329,28 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh }: { freel
     onRefresh()
   }
 
+  async function handleMarkRead(id: string, lida: boolean) {
+    await fetch('/api/freelancer-notificacoes', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, lida }),
+    })
+    onRefresh()
+  }
+
+  async function handleMarkAllRead() {
+    const naoLidas = notificacoes.filter(n => !n.lida)
+    if (naoLidas.length === 0) return
+    await Promise.all(naoLidas.map(n =>
+      fetch('/api/freelancer-notificacoes', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: n.id, lida: true }),
+      })
+    ))
+    onRefresh()
+  }
+
   async function handleDelete(id: string) {
     await fetch(`/api/freelancer-notificacoes?id=${id}`, { method: 'DELETE' })
     onRefresh()
@@ -3368,26 +3390,57 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh }: { freel
       {notificacoes.length === 0 ? (
         <p className="text-center py-6 text-white/20 text-[14px] tracking-widest">Sem notificações enviadas.</p>
       ) : (
-        <div className="space-y-2">
-          {notificacoes.map(n => (
-            <div key={n.id} className="flex items-start gap-3 px-4 py-3 rounded-xl border border-white/[0.06] bg-white/[0.02] group">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-[14px] tracking-widest uppercase text-white/30 font-semibold">{n.tipo}</span>
-                  {n.lida
-                    ? <span className="text-[14px] text-white/20">✓ lida</span>
-                    : <span className="text-[14px] text-gold/50">• não lida</span>
-                  }
-                </div>
-                <p className="text-[14px] text-white/70">{n.titulo}</p>
-                {n.mensagem && <p className="text-[14px] text-white/40 mt-0.5">{n.mensagem}</p>}
-                <p className="text-[14px] text-white/20 mt-1">{new Date(n.created_at).toLocaleDateString('pt-PT')}</p>
-              </div>
-              <button onClick={() => handleDelete(n.id)}
-                className="text-white/15 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 mt-0.5 flex-shrink-0">✕</button>
+        <>
+          {/* Botão 'Marcar todas como lidas' (só quando há não lidas) */}
+          {notificacoes.some(n => !n.lida) && (
+            <div className="flex justify-end mb-2">
+              <button onClick={handleMarkAllRead}
+                className="px-3 py-1.5 rounded-lg text-[11px] tracking-widest uppercase text-white/45 hover:text-gold border border-white/10 hover:border-gold/30 transition-all">
+                ✓ Marcar todas como lidas
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+          <div className="space-y-2">
+            {notificacoes.map(n => (
+              <div key={n.id}
+                className={`flex items-start gap-3 px-4 py-3 rounded-xl border group transition-colors ${
+                  n.lida ? 'border-white/[0.04] bg-white/[0.01]' : 'border-gold/20 bg-gold/[0.03]'
+                }`}>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-[14px] tracking-widest uppercase text-white/30 font-semibold">{n.tipo}</span>
+                    {n.lida
+                      ? <span className="text-[14px] text-emerald-400/55">✓ lida</span>
+                      : <span className="text-[14px] text-gold/70 font-bold">• não lida</span>
+                    }
+                  </div>
+                  <p className={`text-[14px] ${n.lida ? 'text-white/60' : 'text-white/85 font-medium'}`}>{n.titulo}</p>
+                  {n.mensagem && <p className="text-[14px] text-white/40 mt-0.5">{n.mensagem}</p>}
+                  <p className="text-[14px] text-white/20 mt-1">{new Date(n.created_at).toLocaleDateString('pt-PT')}</p>
+                </div>
+                <div className="flex items-center gap-1.5 mt-0.5 flex-shrink-0">
+                  {!n.lida && (
+                    <button onClick={() => handleMarkRead(n.id, true)}
+                      title="Marcar como lida"
+                      className="px-2 py-1 rounded-md text-[10px] tracking-wider uppercase font-semibold border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 hover:border-emerald-400/50 transition-all">
+                      ✓ Lida
+                    </button>
+                  )}
+                  {n.lida && (
+                    <button onClick={() => handleMarkRead(n.id, false)}
+                      title="Marcar como não lida"
+                      className="px-2 py-1 rounded-md text-[10px] tracking-wider uppercase font-semibold border border-white/10 bg-white/[0.03] text-white/40 hover:text-gold hover:border-gold/30 transition-all opacity-0 group-hover:opacity-100">
+                      ↺ Não lida
+                    </button>
+                  )}
+                  <button onClick={() => handleDelete(n.id)}
+                    title="Apagar"
+                    className="w-7 h-7 flex items-center justify-center rounded-md text-white/15 hover:text-red-400 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100">✕</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   )
