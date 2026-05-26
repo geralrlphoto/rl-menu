@@ -182,11 +182,13 @@ function FreelancerDetailInner() {
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([])
   const [mensagens, setMensagens] = useState<Mensagem[]>([])
+  // Mapa referencia → data_entrada (quando os noivos enviaram fotos para edição)
+  const [fotosSelecaoMap, setFotosSelecaoMap] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(async () => {
     setLoading(true)
-    const [fRes, cRes, eRes, aRes, vRes, iRes, pRes, nRes, mRes] = await Promise.all([
+    const [fRes, cRes, eRes, aRes, vRes, iRes, pRes, nRes, mRes, fsRes] = await Promise.all([
       fetch(`/api/freelancers`).then(r => r.json()),
       fetch(`/api/freelancer-casamentos?freelancer_id=${id}`).then(r => r.json()),
       fetch(`/api/freelancer-edicao?freelancer_id=${id}`).then(r => r.json()),
@@ -196,6 +198,7 @@ function FreelancerDetailInner() {
       fetch(`/api/freelancer-pagamentos?freelancer_id=${id}`).then(r => r.json()).catch(() => ({ pagamentos: [] })),
       fetch(`/api/freelancer-notificacoes?freelancer_id=${id}`).then(r => r.json()).catch(() => ({ notificacoes: [] })),
       fetch(`/api/freelancer-mensagens?freelancer_id=${id}`).then(r => r.json()).catch(() => ({ mensagens: [] })),
+      fetch(`/api/fotos-selecao`).then(r => r.json()).catch(() => ({ rows: [] })),
     ])
     const f = (fRes.freelancers ?? []).find((x: Freelancer) => x.id === id) ?? null
     setFreelancer(f)
@@ -210,32 +213,59 @@ function FreelancerDetailInner() {
     setPagamentos(pRes.pagamentos ?? [])
     setNotificacoes(nRes.notificacoes ?? [])
     setMensagens(mRes.mensagens ?? [])
+    // Constrói mapa referencia → data_entrada
+    const fsMap: Record<string, string> = {}
+    for (const row of (fsRes.rows ?? []) as Array<{ referencia?: string | null; data_entrada?: string | null }>) {
+      if (row.referencia && row.data_entrada) fsMap[row.referencia] = row.data_entrada
+    }
+    setFotosSelecaoMap(fsMap)
     setLoading(false)
   }, [id])
 
   useEffect(() => { load() }, [load])
 
-  // ── Prazos de entrega (Seleção de Fotos: 30 dias após o evento) ─────
+  // ── Prazos de entrega ────────────────────────────────────────────────
   //   Calculado SEMPRE (antes de early returns) para respeitar Rules of Hooks
+  //   Seleção de Fotos:   30 dias após o evento
+  //   Fotos Editadas:     30 dias após os noivos enviarem fotos (fotos_selecao.data_entrada)
   const PRAZO_SELECAO_DIAS = 30
+  const PRAZO_EDICAO_DIAS  = 30
   const PRAZO_AVISO_DIAS = 5
-  type PrazoEntry = { c: Casamento; deadline: Date; daysLeft: number }
+  type PrazoEntry = { c: Casamento; deadline: Date; daysLeft: number; tipo: 'selecao' | 'edicao' }
+  function parseDateLocal(s: string | null | undefined): Date | null {
+    if (!s) return null
+    const dateStr = String(s).slice(0, 10)
+    const parts = dateStr.split('-').map(Number)
+    if (parts.length !== 3 || parts.some(n => !Number.isFinite(n))) return null
+    const [y, m, d] = parts
+    const dt = new Date(y, m - 1, d)
+    return isNaN(dt.getTime()) ? null : dt
+  }
   const prazosSelecao: PrazoEntry[] = (() => {
     try {
       const today = new Date(); today.setHours(0, 0, 0, 0)
       const out: PrazoEntry[] = []
       for (const c of casamentos) {
-        if (!c.data_casamento || c.url_selecao_enviado_em) continue
-        const dateStr = String(c.data_casamento).slice(0, 10)           // garante 'YYYY-MM-DD'
-        const parts = dateStr.split('-').map(Number)
-        if (parts.length !== 3 || parts.some(n => !Number.isFinite(n))) continue
-        const [y, m, d] = parts
-        const dEvento = new Date(y, m - 1, d)
-        if (isNaN(dEvento.getTime())) continue
-        if (dEvento.getTime() > today.getTime()) continue                // evento futuro — sem prazo ainda
-        const deadline = new Date(dEvento.getTime() + PRAZO_SELECAO_DIAS * 86400000)
-        const daysLeft = Math.ceil((deadline.getTime() - today.getTime()) / 86400000)
-        out.push({ c, deadline, daysLeft })
+        // 1) Seleção de Fotos — prazo conta a partir do evento
+        if (c.data_casamento && !c.url_selecao_enviado_em && c.status_selecao !== 'ENTREGUE') {
+          const dEvento = parseDateLocal(c.data_casamento)
+          if (dEvento && dEvento.getTime() <= today.getTime()) {
+            const deadline = new Date(dEvento.getTime() + PRAZO_SELECAO_DIAS * 86400000)
+            const daysLeft = Math.ceil((deadline.getTime() - today.getTime()) / 86400000)
+            out.push({ c, deadline, daysLeft, tipo: 'selecao' })
+          }
+        }
+        // 2) Fotos Editadas — prazo conta a partir do dia em que os noivos
+        //    enviaram as fotos selecionadas (fotos_selecao.data_entrada)
+        if (c.referencia && !c.url_editadas_enviado_em && c.status_editadas !== 'ENTREGUE') {
+          const dataEntrada = fotosSelecaoMap[c.referencia]
+          const dEntrada = parseDateLocal(dataEntrada)
+          if (dEntrada && dEntrada.getTime() <= today.getTime()) {
+            const deadline = new Date(dEntrada.getTime() + PRAZO_EDICAO_DIAS * 86400000)
+            const daysLeft = Math.ceil((deadline.getTime() - today.getTime()) / 86400000)
+            out.push({ c, deadline, daysLeft, tipo: 'edicao' })
+          }
+        }
       }
       return out.sort((a, b) => a.daysLeft - b.daysLeft)
     } catch { return [] }
@@ -248,22 +278,27 @@ function FreelancerDetailInner() {
   useEffect(() => {
     if (!freelancer?.id || prazosCriticos.length === 0) return
     prazosCriticos.forEach(async (p) => {
-      const tituloBase = `⚠ Prazo Seleção de Fotos · ${p.c.local}`
-      const exists = notificacoes.some(n => n.titulo.startsWith('⚠ Prazo Seleção de Fotos') && n.titulo.includes(p.c.local))
+      const label = p.tipo === 'edicao' ? 'Fotos para Edição' : 'Seleção de Fotos'
+      const titulo = `⚠ Prazo ${label} · ${p.c.local}`
+      const prefix = `⚠ Prazo ${label}`
+      const exists = notificacoes.some(n => n.titulo.startsWith(prefix) && n.titulo.includes(p.c.local))
       if (exists) return
       const expired = p.daysLeft < 0
+      const referenceText = p.tipo === 'edicao'
+        ? '30 dias após o envio das fotos pelos noivos'
+        : '30 dias após o evento'
       const mensagem = expired
-        ? `O prazo de envio da Seleção de Fotos de ${p.c.local} (30 dias após o evento) expirou há ${Math.abs(p.daysLeft)} dia${Math.abs(p.daysLeft) === 1 ? '' : 's'}.`
-        : `Faltam ${p.daysLeft} dia${p.daysLeft === 1 ? '' : 's'} para o prazo de envio da Seleção de Fotos de ${p.c.local}. (Prazo: 30 dias após o evento)`
+        ? `O prazo de entrega de ${label} de ${p.c.local} (${referenceText}) expirou há ${Math.abs(p.daysLeft)} dia${Math.abs(p.daysLeft) === 1 ? '' : 's'}.`
+        : `Faltam ${p.daysLeft} dia${p.daysLeft === 1 ? '' : 's'} para o prazo de entrega de ${label} de ${p.c.local}. (Prazo: ${referenceText})`
       try {
         await fetch('/api/freelancer-notificacoes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             freelancer_id: freelancer.id,
-            titulo: tituloBase,
+            titulo,
             mensagem,
-            tipo: 'prazo_selecao',
+            tipo: p.tipo === 'edicao' ? 'prazo_edicao' : 'prazo_selecao',
             lida: false,
           }),
         })
@@ -1008,7 +1043,7 @@ function FreelancerDetailInner() {
 
           </div>
 
-          {/* ── Prazos de Entrega · Seleção de Fotos (30 dias após evento) ── */}
+          {/* ── Prazos de Entrega · Seleção + Fotos Editadas (30 dias cada) ── */}
           {/*    Largura = mesma de uma coluna do grid acima (Casamentos Editados) */}
           {prazosSelecao.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
@@ -1022,7 +1057,7 @@ function FreelancerDetailInner() {
                     <p className={`text-[11px] tracking-[0.3em] uppercase font-semibold truncate ${
                       prazosCriticos.length > 0 ? 'text-red-300' : 'text-amber-300/90'
                     }`}>
-                      {prazosCriticos.length > 0 ? '⚠ Crítico' : '◷ Prazos'} · Seleção
+                      {prazosCriticos.length > 0 ? '⚠ Crítico' : '◷ Prazos'} · Entrega
                     </p>
                     {prazosCriticos.length > 0 && (
                       <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/20 border border-red-500/40 text-red-200 font-bold uppercase tracking-wider animate-pulse shrink-0">
@@ -1043,15 +1078,24 @@ function FreelancerDetailInner() {
                         deadlineLabel = `${dd} ${MESES[p.deadline.getMonth()]}`
                       }
                     } catch { /* keep '—' */ }
+                    const tipoLabel = p.tipo === 'edicao' ? 'Edição' : 'Seleção'
+                    const tipoCls = p.tipo === 'edicao'
+                      ? 'bg-blue-500/20 text-blue-200 border-blue-500/35'
+                      : 'bg-gold/15 text-gold/90 border-gold/30'
                     return (
-                      <button key={p.c.id} onClick={() => setTab('casamentos')}
+                      <button key={`${p.tipo}-${p.c.id}`} onClick={() => setTab('casamentos')}
                         className={`w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg border transition-all text-left ${
                           critical
                             ? 'border-red-500/35 bg-red-500/[0.05] hover:bg-red-500/[0.1]'
                             : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.04]'
                         }`}>
                         <div className="min-w-0 flex-1">
-                          <p className="text-[12px] text-white truncate font-medium leading-tight">{p.c.local}</p>
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className={`text-[8px] px-1 py-px rounded uppercase tracking-wider font-bold border shrink-0 ${tipoCls}`}>
+                              {tipoLabel}
+                            </span>
+                            <p className="text-[12px] text-white truncate font-medium leading-tight">{p.c.local}</p>
+                          </div>
                           <p className="text-[10px] text-white/45 italic leading-tight" style={{ fontFamily: 'Georgia, serif' }}>
                             até {deadlineLabel}
                           </p>
@@ -1273,7 +1317,7 @@ function FreelancerDetailInner() {
       )}
 
       {/* Tab content */}
-      {tab === 'casamentos'   && <CasamentosTab freelancerId={id} casamentos={casamentos} onRefresh={load} freelancerStatus={freelancer?.status ?? null} freelancer={freelancer} viewAsFreelancer={viewAsFreelancer} />}
+      {tab === 'casamentos'   && <CasamentosTab freelancerId={id} casamentos={casamentos} onRefresh={load} freelancerStatus={freelancer?.status ?? null} freelancer={freelancer} viewAsFreelancer={viewAsFreelancer} fotosSelecaoMap={fotosSelecaoMap} />}
       {tab === 'edicao'       && <EdicaoTab freelancerId={id} edicao={edicao} onRefresh={load} />}
       {tab === 'album'        && <AlbumTab freelancerId={id} album={album} onRefresh={load} />}
       {tab === 'valores'      && <ValoresTab freelancerId={id} valores={valores} onRefresh={load} />}
@@ -1403,7 +1447,7 @@ function SidebarNavAdmin({
 
 const DEFAULT_INTRO = `Aqui encontras todos os eventos que te foram atribuídos ao longo do ano. Sempre que um novo evento for adicionado, deverás confirmar a tua disponibilidade.\n\nA 3 dias do evento tens acesso ao briefing com toda a informação necessária para o dia — percurso, contactos, detalhes da cerimónia e muito mais.`
 
-function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, freelancer, viewAsFreelancer }: { freelancerId: string; casamentos: Casamento[]; onRefresh: () => void; freelancerStatus: string | null; freelancer: Freelancer | null; viewAsFreelancer?: boolean }) {
+function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, freelancer, viewAsFreelancer, fotosSelecaoMap }: { freelancerId: string; casamentos: Casamento[]; onRefresh: () => void; freelancerStatus: string | null; freelancer: Freelancer | null; viewAsFreelancer?: boolean; fotosSelecaoMap: Record<string, string> }) {
   const [editing, setEditing] = useState<Casamento | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState<Partial<Casamento>>({})
@@ -1828,6 +1872,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                         casamentoLocal={c.local}
                         casamentoData={c.data_casamento}
                         casamentoReferencia={c.referencia ?? null}
+                        fotosDataEntrada={c.referencia ? (fotosSelecaoMap[c.referencia] ?? null) : null}
                         freelancerNome={freelancer?.nome ?? ''}
                         initialUrl={(c as any)[field.key] ?? ''}
                         initialSentAt={(c as any)[field.ts] ?? null}
@@ -3418,6 +3463,7 @@ function UrlEntryCard({
   casamentoLocal,
   casamentoData,
   casamentoReferencia,
+  fotosDataEntrada,
   freelancerNome,
   initialUrl,
   initialSentAt,
@@ -3430,6 +3476,7 @@ function UrlEntryCard({
   casamentoLocal: string
   casamentoData: string | null
   casamentoReferencia?: string | null
+  fotosDataEntrada?: string | null
   freelancerNome: string
   initialUrl: string
   initialSentAt: string | null
@@ -3500,17 +3547,23 @@ function UrlEntryCard({
     } finally { setOpeningSelecao(false) }
   }
 
-  // ── Aviso de prazo (apenas para Seleção de Fotos: 30 dias após o evento) ──
+  // ── Aviso de prazo ────────────────────────────────────────────
+  //   - Seleção de Fotos: 30 dias após o evento (casamentoData)
+  //   - Fotos Editadas:    30 dias após os noivos enviarem (fotosDataEntrada)
   const deadlineNotice = (() => {
-    if (field.tipo !== 'selecao' || sentAt || !casamentoData) return null
+    if (sentAt) return null
+    let baseDateStr: string | null = null
+    if (field.tipo === 'selecao') baseDateStr = casamentoData
+    else if (field.tipo === 'editadas') baseDateStr = fotosDataEntrada ?? null
+    if (!baseDateStr) return null
     try {
-      const dateStr = String(casamentoData).slice(0, 10)
+      const dateStr = String(baseDateStr).slice(0, 10)
       const parts = dateStr.split('-').map(Number)
       if (parts.length !== 3 || parts.some(n => !Number.isFinite(n))) return null
       const [y, m, d] = parts
-      const dEvento = new Date(y, m - 1, d)
-      if (isNaN(dEvento.getTime())) return null
-      const deadline = new Date(dEvento.getTime() + 30 * 86400000)
+      const dBase = new Date(y, m - 1, d)
+      if (isNaN(dBase.getTime())) return null
+      const deadline = new Date(dBase.getTime() + 30 * 86400000)
       const today = new Date(); today.setHours(0, 0, 0, 0)
       const daysLeft = Math.ceil((deadline.getTime() - today.getTime()) / 86400000)
       const dd = String(deadline.getDate()).padStart(2, '0')
