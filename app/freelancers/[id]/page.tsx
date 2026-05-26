@@ -1211,7 +1211,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState<Partial<Casamento>>({})
   const [saving, setSaving] = useState(false)
-  const [ficha, setFicha] = useState<Casamento | null>(null)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
   const [editingIntro, setEditingIntro] = useState(false)
   const [introValue, setIntroValue] = useState(freelancer?.intro_casamentos ?? DEFAULT_INTRO)
   const [savingIntro, setSavingIntro] = useState(false)
@@ -1430,7 +1430,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
 
             <div className="relative grid grid-cols-1 lg:grid-cols-[280px_1fr_auto] gap-5 p-5">
               {/* THUMB */}
-              <button onClick={() => setFicha(c)}
+              <button onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}
                 className="relative aspect-[16/10] rounded-xl overflow-hidden border border-white/10 group/img cursor-pointer">
                 <img src={img} alt={c.local} className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-700" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
@@ -1530,10 +1530,10 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
 
               {/* RIGHT — ACTIONS */}
               <div className="flex flex-col items-end justify-between gap-3">
-                <button onClick={() => setFicha(c)}
+                <button onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gold/30 text-gold text-[12px] tracking-wider uppercase font-semibold hover:bg-gold/10 transition-all whitespace-nowrap"
                   style={{ boxShadow: '0 0 12px -4px rgba(201,164,92,0.3)' }}>
-                  Abrir Casamento <span className="text-base">›</span>
+                  {expandedId === c.id ? <>Fechar <span className="text-base">⌃</span></> : <>Abrir Casamento <span className="text-base">⌄</span></>}
                 </button>
                 <div className="flex items-center gap-1.5">
                   {!isPast && !c.data_confirmada && !c.indisponivel && (
@@ -1550,26 +1550,78 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                 </div>
               </div>
             </div>
+
+            {/* ── EXPANDED PANEL (inline accordion) ─────────────────── */}
+            {expandedId === c.id && (
+              <div className="relative px-5 pb-5 pt-3 border-t border-gold/15 animate-in fade-in slide-in-from-top-1">
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-5">
+                  {/* LEFT: ações principais */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* Briefing */}
+                    {c.briefing_url && (
+                      <a href={c.briefing_url} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gold/30 text-gold text-[11px] tracking-widest uppercase font-semibold hover:bg-gold/10 transition-all">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        Briefing ↗
+                      </a>
+                    )}
+                    {/* Confirmar fotógrafo */}
+                    {!isPast && (c.data_confirmada ? (
+                      <button onClick={async () => { await fetch('/api/freelancer-casamentos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id, data_confirmada: false }) }); onRefresh() }}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-emerald-500/30 text-emerald-300 text-[11px] tracking-widest uppercase font-semibold hover:bg-emerald-500/20 transition-all">
+                        ✓ Confirmado 📷
+                      </button>
+                    ) : (
+                      <button onClick={async () => { await fetch('/api/freelancer-casamentos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id, data_confirmada: true, indisponivel: false }) }); onRefresh() }}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gold/30 text-gold text-[11px] tracking-widest uppercase font-semibold hover:bg-gold/10 transition-all">
+                        Confirmar 📷
+                      </button>
+                    ))}
+                    {/* Indisponível fotógrafo */}
+                    {!isPast && (c.indisponivel ? (
+                      <button onClick={async () => { await fetch('/api/freelancer-casamentos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id, indisponivel: false }) }); onRefresh() }}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-[11px] tracking-widest uppercase font-semibold hover:bg-red-500/20 transition-all">
+                        ✕ Indisponível 📷
+                      </button>
+                    ) : (
+                      <button onClick={async () => { await fetch('/api/freelancer-casamentos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id, indisponivel: true, data_confirmada: false }) }); onRefresh() }}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-white/10 text-white/40 text-[11px] tracking-widest uppercase font-semibold hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 transition-all">
+                        Indisponível 📷
+                      </button>
+                    ))}
+                    {/* Confirmar videógrafo (se existir) */}
+                    {c.videografo && !isPast && (c.data_confirmada_videografo ? (
+                      <button onClick={async () => { await fetch('/api/freelancer-casamentos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id, data_confirmada_videografo: false }) }); onRefresh() }}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-emerald-500/30 text-emerald-300 text-[11px] tracking-widest uppercase font-semibold hover:bg-emerald-500/20 transition-all">
+                        ✓ Confirmado 🎥
+                      </button>
+                    ) : (
+                      <button onClick={async () => { await fetch('/api/freelancer-casamentos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id, data_confirmada_videografo: true, indisponivel_videografo: false }) }); onRefresh() }}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gold/30 text-gold text-[11px] tracking-widest uppercase font-semibold hover:bg-gold/10 transition-all">
+                        Confirmar 🎥
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* RIGHT: editar */}
+                  <button onClick={() => {
+                    setEditing(c)
+                    setForm({ local: c.local, data_casamento: c.data_casamento ?? '', equipa_foto: c.equipa_foto ?? [], videografo: c.videografo ?? '', briefing_url: c.briefing_url ?? '', servicos_dia: c.servicos_dia ?? [], local_cerimonia: c.local_cerimonia ?? '', hora_inicio: c.hora_inicio ?? '' })
+                    setShowAdd(false)
+                    setExpandedId(null)
+                  }}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/[0.05] border border-white/10 text-white/50 text-[11px] tracking-widest uppercase font-semibold hover:bg-white/[0.08] hover:text-white/80 transition-all">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    Editar
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )
       })}
       </div>
 
-      {ficha && (
-        <CasamentoFicha
-          casamento={ficha}
-          isVideografo={freelancerStatus === 'VIDEOGRAFO'}
-          onClose={() => setFicha(null)}
-          onConfirm={() => { onRefresh() }}
-          onDelete={async () => { await del(ficha.id); setFicha(null) }}
-          onEdit={() => {
-            setEditing(ficha)
-            setForm({ local: ficha.local, data_casamento: ficha.data_casamento ?? '', equipa_foto: ficha.equipa_foto ?? [], videografo: ficha.videografo ?? '', briefing_url: ficha.briefing_url ?? '', servicos_dia: ficha.servicos_dia ?? [], local_cerimonia: ficha.local_cerimonia ?? '', hora_inicio: ficha.hora_inicio ?? '' })
-            setShowAdd(false)
-            setFicha(null)
-          }}
-        />
-      )}
     </div>
   )
 }
