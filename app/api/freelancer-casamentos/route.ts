@@ -12,25 +12,43 @@ export async function GET(req: NextRequest) {
   const { data, error } = await supabase.from('freelancer_casamentos').select('*').eq('freelancer_id', fid).order('data_casamento')
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // ── Fallback: para casamentos com `referencia` mas sem servicos_dia,
-  //    enriquece com dados do evento (eventos_2026/2027).
+  // ── Fallback: enriquece casamentos com dados do evento (eventos_2026/2027).
+  //    Tenta match por referência primeiro; se não houver, tenta por
+  //    local + data_casamento (case-insensitive contains).
   const casamentos = data ?? []
-  const refs = casamentos
-    .filter((c: any) => c.referencia && (!c.servicos_dia || c.servicos_dia.length === 0))
-    .map((c: any) => c.referencia)
-  if (refs.length > 0) {
+  const needsEnrich = casamentos.filter((c: any) =>
+    (!c.servicos_dia || c.servicos_dia.length === 0) ||
+    !c.local_cerimonia || !c.hora_inicio
+  )
+  if (needsEnrich.length > 0) {
     try {
+      // Fetch todos os eventos (filtra pelos refs primeiro, depois fallback ao local)
+      const refs = needsEnrich.filter((c: any) => c.referencia).map((c: any) => c.referencia)
+      const datas = needsEnrich.filter((c: any) => c.data_casamento).map((c: any) => c.data_casamento)
       const { data: events } = await supabase
         .from('eventos_2026')
-        .select('referencia, servicos_dia, local_cerimonia, hora_inicio')
-        .in('referencia', refs)
-      const byRef = new Map<string, any>((events ?? []).map((e: any) => [e.referencia, e]))
+        .select('referencia, local, data_evento, servicos_dia, local_cerimonia, hora_inicio')
+        .or([
+          refs.length > 0 ? `referencia.in.(${refs.join(',')})` : null,
+          datas.length > 0 ? `data_evento.in.(${datas.join(',')})` : null,
+        ].filter(Boolean).join(','))
+
+      const byRef = new Map<string, any>((events ?? []).filter((e: any) => e.referencia).map((e: any) => [e.referencia, e]))
       casamentos.forEach((c: any) => {
-        const ev = c.referencia ? byRef.get(c.referencia) : null
+        let ev: any = c.referencia ? byRef.get(c.referencia) : null
+        // Fallback: match por local (case-insensitive contains) + data
+        if (!ev && c.local && c.data_casamento) {
+          const localLower = c.local.toLowerCase().trim()
+          ev = (events ?? []).find((e: any) =>
+            e.data_evento === c.data_casamento &&
+            e.local && (e.local.toLowerCase().includes(localLower) || localLower.includes(e.local.toLowerCase()))
+          )
+        }
         if (!ev) return
         if (!c.servicos_dia    || c.servicos_dia.length === 0) c.servicos_dia    = ev.servicos_dia ?? c.servicos_dia
         if (!c.local_cerimonia) c.local_cerimonia = ev.local_cerimonia ?? c.local_cerimonia
         if (!c.hora_inicio)     c.hora_inicio     = ev.hora_inicio ?? c.hora_inicio
+        if (!c.referencia)      c.referencia      = ev.referencia ?? c.referencia
       })
     } catch { /* tabela ou coluna pode não existir; ignora */ }
   }

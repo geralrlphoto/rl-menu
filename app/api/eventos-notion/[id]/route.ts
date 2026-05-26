@@ -272,18 +272,41 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
       // ── Sync para freelancer_casamentos (servicos_dia + local_cerimonia + hora_inicio) ──
       // Quando admin edita o evento, propaga estes campos para todos os
-      // freelancer_casamentos com a mesma referência. Assim a ficha do
-      // freelancer reflecte automaticamente os dados do evento.
+      // freelancer_casamentos com a mesma referência (ou local+data se sem ref).
       if (body.servicos_dia !== undefined || body.local_cerimonia !== undefined || body.hora_inicio !== undefined) {
         const refToSync = (byNotion?.[0]?.referencia ?? body.referencia) as string | undefined
-        if (refToSync) {
-          const fcFields: Record<string, any> = {}
-          if (body.servicos_dia !== undefined)    fcFields.servicos_dia    = body.servicos_dia
-          if (body.local_cerimonia !== undefined) fcFields.local_cerimonia = body.local_cerimonia
-          if (body.hora_inicio !== undefined)     fcFields.hora_inicio     = body.hora_inicio
-          if (Object.keys(fcFields).length > 0) {
-            await supabase().from('freelancer_casamentos').update(fcFields).eq('referencia', refToSync).then(() => {}).catch(() => {})
+        const fcFields: Record<string, any> = {}
+        if (body.servicos_dia !== undefined)    fcFields.servicos_dia    = body.servicos_dia
+        if (body.local_cerimonia !== undefined) fcFields.local_cerimonia = body.local_cerimonia
+        if (body.hora_inicio !== undefined)     fcFields.hora_inicio     = body.hora_inicio
+        if (Object.keys(fcFields).length > 0) {
+          const sb = supabase()
+          // 1) Match por referência
+          if (refToSync) {
+            await sb.from('freelancer_casamentos').update(fcFields).eq('referencia', refToSync).then(() => {}).catch(() => {})
           }
+          // 2) Fallback: match por local + data_evento (case-insensitive)
+          //    Útil para casamentos sem referencia ainda associada
+          try {
+            // Buscar local/data do evento (do payload ou do row Supabase)
+            let eventLocal: string | undefined = body.local
+            let eventData: string | undefined = body.data_evento
+            if (!eventLocal || !eventData) {
+              const { data: evRow } = await sb.from(table).select('local, data_evento').eq('id', byNotion?.[0]?.id ?? id).maybeSingle()
+              if (evRow) {
+                eventLocal = eventLocal ?? evRow.local
+                eventData = eventData ?? evRow.data_evento
+              }
+            }
+            if (eventLocal && eventData) {
+              // Match por ilike (case-insensitive contains) no local + data exata
+              await sb.from('freelancer_casamentos')
+                .update(fcFields)
+                .ilike('local', `%${eventLocal}%`)
+                .eq('data_casamento', eventData)
+                .then(() => {}).catch(() => {})
+            }
+          } catch { /* ignora se colunas não existem */ }
         }
       }
     }
