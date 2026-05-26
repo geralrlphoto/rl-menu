@@ -3335,7 +3335,7 @@ function PagamentosAdminTab({ freelancerId, pagamentos, casamentos, onRefresh }:
                       <th className="text-left px-3 py-3 text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium">Estado</th>
                       <th className="text-left px-3 py-3 text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium">Data</th>
                       <th className="text-left px-3 py-3 text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium">Método</th>
-                      <th className="text-left px-3 py-3 text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium">Workflow</th>
+                      <th className="text-left px-3 py-3 text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium">Estado</th>
                       <th className="px-3 py-3 text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium text-right">Ações</th>
                     </tr>
                   </thead>
