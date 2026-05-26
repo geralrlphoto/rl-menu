@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef, Suspense } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
 import { TasksWidget, MiniCalendar } from '@/app/components/FreelancerWidgets'
@@ -3525,28 +3526,40 @@ function UrlEntryCard({
 
   // ── 'Ver Fotos Selecionadas pelos Noivos' (apenas Fotos Editadas) ──
   // Botão visível assim que status passa de AGUARDAR (i.e., EM EDIÇÃO em diante).
-  // Abre /secao/{id} onde {id} vem de fotos_selecao via referencia.
+  // Abre um MODAL inline (não nova janela) com a ficha da seleção.
   const editadasUnlocked = field.tipo === 'editadas' && status !== 'AGUARDAR'
   const [openingSelecao, setOpeningSelecao] = useState(false)
+  const [selecaoPreview, setSelecaoPreview] = useState<any | null>(null)
+  const [selecaoError, setSelecaoError] = useState<string | null>(null)
+
   async function abrirFotosSelecionadas() {
     if (!casamentoReferencia) {
-      alert('Esta atribuição não tem referência associada — peça ao admin para a definir na ficha do evento.')
+      setSelecaoError('Esta atribuição não tem referência associada — peça ao admin para a definir na ficha do evento.')
       return
     }
-    setOpeningSelecao(true)
+    setOpeningSelecao(true); setSelecaoError(null)
     try {
       const res = await fetch(`/api/fotos-selecao-by-ref?ref=${encodeURIComponent(casamentoReferencia)}`).then(r => r.json())
-      const fsId = res?.row?.id
-      if (fsId) {
-        // Vai para a página da ficha (apenas a seleção dos noivos — contagens + detalhes)
-        window.open(`/fotos-selecao/${fsId}`, '_blank', 'noopener,noreferrer')
+      const row = res?.row
+      if (row?.id) {
+        setSelecaoPreview(row)
       } else {
-        alert('Os noivos ainda não submeteram a seleção de fotos para edição. Quando o fizerem o link fica disponível aqui.')
+        setSelecaoError('Os noivos ainda não submeteram a seleção de fotos para edição. Quando o fizerem aparece aqui.')
       }
     } catch (e) {
-      alert('Não foi possível abrir a seleção. Tenta de novo dentro de momentos.')
+      setSelecaoError('Não foi possível abrir a seleção. Tenta de novo dentro de momentos.')
     } finally { setOpeningSelecao(false) }
   }
+
+  // Fechar modal com Escape
+  useEffect(() => {
+    if (!selecaoPreview && !selecaoError) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') { setSelecaoPreview(null); setSelecaoError(null) }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [selecaoPreview, selecaoError])
 
   // ── Aviso de prazo ────────────────────────────────────────────
   //   - Seleção de Fotos: 30 dias após o evento (casamentoData)
@@ -3776,6 +3789,125 @@ function UrlEntryCard({
           </div>
         )
       })()}
+
+      {/* ── Modal Preview: Seleção dos Noivos (Fotos Editadas) ── */}
+      {(selecaoPreview || selecaoError) && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          onClick={() => { setSelecaoPreview(null); setSelecaoError(null) }}>
+          <div className="absolute inset-0 bg-black/85 backdrop-blur-md" />
+          <div className="relative z-10 w-full max-w-2xl rounded-3xl overflow-hidden border border-gold/25 shadow-2xl"
+            style={{ background: 'linear-gradient(180deg, #100c08, #0b0905)' }}
+            onClick={e => e.stopPropagation()}>
+            {/* Linha gold no topo */}
+            <div className="h-0.5 w-full bg-gold/60" />
+
+            {/* Header */}
+            <div className="px-7 sm:px-8 pt-6 pb-4 border-b border-white/[0.05] flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-[10px] tracking-[0.5em] text-gold/65 uppercase mb-1.5">Seleção dos Noivos</p>
+                <h2 className="text-2xl sm:text-3xl font-light tracking-[0.12em] text-white uppercase truncate" style={{ fontFamily: 'Georgia, serif' }}>
+                  {selecaoPreview?.nome_noivos || casamentoLocal || '—'}
+                </h2>
+                {selecaoPreview?.referencia && (
+                  <p className="text-[11px] text-white/35 mt-1 tracking-widest">{selecaoPreview.referencia}</p>
+                )}
+              </div>
+              <button onClick={() => { setSelecaoPreview(null); setSelecaoError(null) }}
+                className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/35 hover:text-white hover:border-white/30 transition-all shrink-0"
+                title="Fechar (Esc)">✕</button>
+            </div>
+
+            {/* Body */}
+            <div className="px-7 sm:px-8 py-5 max-h-[70vh] overflow-y-auto">
+              {selecaoError ? (
+                <div className="py-8 text-center">
+                  <p className="text-2xl opacity-30 mb-2">📷</p>
+                  <p className="text-[13px] text-white/55 italic leading-relaxed">{selecaoError}</p>
+                </div>
+              ) : selecaoPreview && (() => {
+                const counts: Array<{ label: string; value: string | null }> = [
+                  { label: 'Sessão Noivos',  value: selecaoPreview.sessao_noivos },
+                  { label: 'Fotos da Noiva', value: selecaoPreview.fotos_noiva },
+                  { label: 'Fotos do Noivo', value: selecaoPreview.fotos_noivo },
+                  { label: 'Convidados',     value: selecaoPreview.convidados },
+                  { label: 'Cerimónia',      value: selecaoPreview.cerimonia },
+                  { label: 'Bolo & Bouquet', value: selecaoPreview.bolo_bouquet },
+                  { label: 'Sala & Animação',value: selecaoPreview.sala_animacao },
+                  { label: 'Fotos p/ Álbum', value: selecaoPreview.fotos_album },
+                ]
+                const totalFotos = counts.reduce((acc, c) => {
+                  const n = Number(c.value); return acc + (Number.isFinite(n) ? n : 0)
+                }, 0)
+                const fmt = (d: string | null | undefined) => {
+                  if (!d) return '—'
+                  try {
+                    const dt = new Date(d)
+                    return dt.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' })
+                  } catch { return d }
+                }
+                return (
+                  <>
+                    {/* Datas */}
+                    <div className="grid grid-cols-2 gap-3 mb-5">
+                      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                        <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Data do Evento</p>
+                        <p className="text-[14px] text-white/85 font-medium">{fmt(selecaoPreview.date)}</p>
+                      </div>
+                      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                        <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Data de Entrada</p>
+                        <p className="text-[14px] text-white/85 font-medium">{fmt(selecaoPreview.data_entrada)}</p>
+                      </div>
+                    </div>
+
+                    {/* Total */}
+                    <div className="mb-5 rounded-2xl border border-gold/30 p-5"
+                      style={{
+                        background: 'linear-gradient(135deg, rgba(201,164,92,0.10), rgba(201,164,92,0.02))',
+                        boxShadow: '0 0 24px -8px rgba(201,164,92,0.3), inset 0 0 0 1px rgba(201,164,92,0.10)',
+                      }}>
+                      <p className="text-[10px] tracking-[0.4em] text-gold/70 uppercase mb-1.5">Total de Fotos para Edição</p>
+                      <p className="text-4xl sm:text-5xl font-light text-gold tabular-nums" style={{ fontFamily: 'Georgia, serif' }}>
+                        {totalFotos.toLocaleString('pt-PT')}
+                      </p>
+                    </div>
+
+                    {/* Contagens */}
+                    <p className="text-[10px] tracking-[0.4em] text-white/35 uppercase mb-2">Contagem de Fotos</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5">
+                      {counts.map(c => (
+                        <div key={c.label} className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-2.5">
+                          <p className="text-[9px] tracking-[0.25em] text-white/30 uppercase mb-1 leading-tight">{c.label}</p>
+                          <p className="text-xl text-white/90 font-light tabular-nums leading-none" style={{ fontFamily: 'Georgia, serif' }}>
+                            {c.value || '—'}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Detalhes */}
+                    {selecaoPreview.detalhes && (
+                      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                        <p className="text-[10px] tracking-[0.4em] text-white/35 uppercase mb-2">Detalhes & Observações</p>
+                        <p className="text-[13px] text-white/75 leading-relaxed whitespace-pre-wrap">{selecaoPreview.detalhes}</p>
+                      </div>
+                    )}
+                  </>
+                )
+              })()}
+            </div>
+
+            {/* Footer */}
+            <div className="px-7 sm:px-8 py-3 border-t border-white/[0.05] flex items-center justify-between bg-black/30">
+              <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase">RL Photo · Video</p>
+              <button onClick={() => { setSelecaoPreview(null); setSelecaoError(null) }}
+                className="text-[10px] tracking-widest uppercase text-white/35 hover:text-gold transition-colors">
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   )
 }
