@@ -3080,15 +3080,65 @@ function PagamentosAdminTab({ freelancerId, pagamentos, casamentos, onRefresh }:
   }).reduce((s, p) => s + (p.valor ?? 0), 0)
   const isAtrasado = (p: Pagamento) => atrasados.some(a => a.id === p.id)
 
-  // ── Filter ────────────────────────────────────────────────────────────────
-  const filtered = pagamentos.filter(p => {
+  // ── Rows: cada casamento → 1 linha (com/sem pagamento associado) ─────────
+  type PagaRow = { key: string; casamento: Casamento | null; pagamento: Pagamento | null }
+  const rows: PagaRow[] = (() => {
+    const out: PagaRow[] = []
+    const linkedIds = new Set<string>()
+    // Ordena casamentos por data_casamento DESC
+    const orderedCasamentos = [...casamentos].sort((a, b) => (b.data_casamento ?? '').localeCompare(a.data_casamento ?? ''))
+    for (const c of orderedCasamentos) {
+      const linked = pagamentos.filter(p => p.casamento_id === c.id)
+      if (linked.length === 0) {
+        out.push({ key: `c-${c.id}`, casamento: c, pagamento: null })
+      } else {
+        for (const p of linked) {
+          out.push({ key: `p-${p.id}`, casamento: c, pagamento: p })
+          linkedIds.add(p.id)
+        }
+      }
+    }
+    // Pagamentos sem casamento_id
+    for (const p of pagamentos) {
+      if (!linkedIds.has(p.id) && !p.casamento_id) {
+        out.push({ key: `p-${p.id}`, casamento: null, pagamento: p })
+      }
+    }
+    return out
+  })()
+
+  // ── Filter (aplicado sobre rows) ─────────────────────────────────────────
+  const filtered = rows.filter(r => {
+    const p = r.pagamento
     if (filter === 'Todos') return true
-    if (filter === 'Recebidos') return p.status === 'PAGO'
-    if (filter === 'A receber') return p.status === 'PENDENTE' && !isAtrasado(p)
-    if (filter === 'Atrasados') return isAtrasado(p)
-    if (filter === 'Cancelados') return p.status === 'CANCELADO'
+    if (filter === 'Recebidos') return p?.status === 'PAGO'
+    if (filter === 'A receber') return !p || (p.status === 'PENDENTE' && !isAtrasado(p))
+    if (filter === 'Atrasados') return p ? isAtrasado(p) : false
+    if (filter === 'Cancelados') return p?.status === 'CANCELADO'
     return true
   })
+
+  // ── Workflow status por casamento (NOVO / EM EDIÇÃO / REVISÃO / FINALIZADO)
+  function workflowBadge(c: Casamento | null): { label: string; cls: string } | null {
+    if (!c) return null
+    const statuses = [c.status_selecao, c.status_provas, c.status_editadas, c.status_album].filter(Boolean) as string[]
+    if (statuses.length === 0) return { label: 'NOVO', cls: 'bg-blue-500/15 text-blue-300 border-blue-500/30' }
+    const allFinal = statuses.every(s => s === 'ENTREGUE' || s === 'GALERIA PUBLICADA' || s === 'CONCLUIDO')
+    if (allFinal) return { label: 'FINALIZADO', cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' }
+    if (statuses.some(s => s === 'EM EDIÇÃO' || s === 'EM SELEÇÃO')) return { label: 'EM EDIÇÃO', cls: 'bg-amber-500/15 text-amber-300 border-amber-500/30' }
+    if (statuses.some(s => s === 'SELECIONADAS' || s === 'EDITADAS' || s === 'GALERIA PUBLICADA')) return { label: 'REVISÃO', cls: 'bg-orange-500/15 text-orange-300 border-orange-500/30' }
+    return { label: 'NOVO', cls: 'bg-blue-500/15 text-blue-300 border-blue-500/30' }
+  }
+
+  // ── Extrair método de pagamento das notas (MBWay / Transferência / Numerário)
+  function paymentMethod(p: Pagamento | null): string {
+    if (!p?.notas) return p?.status === 'PAGO' ? 'MBWay' : ''
+    const n = p.notas.toLowerCase()
+    if (n.includes('mbway')) return 'MBWay'
+    if (n.includes('transferência') || n.includes('transferencia')) return 'Transferência'
+    if (n.includes('numerário') || n.includes('numerario')) return 'Numerário'
+    return p.status === 'PAGO' ? 'MBWay' : ''
+  }
 
   // ── Próximos recebimentos (pendentes ordenados por data_prevista) ─────────
   const proximos = pagamentos
@@ -3272,45 +3322,69 @@ function PagamentosAdminTab({ freelancerId, pagamentos, casamentos, onRefresh }:
             style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.35), rgba(11,11,11,0.65))' }}>
             {filtered.length === 0 ? (
               <p className="text-center py-12 text-white/30 text-[11px] tracking-[0.3em] uppercase">
-                {pagamentos.length === 0 ? 'Sem pagamentos registados' : 'Sem resultados neste filtro'}
+                {rows.length === 0 ? 'Sem casamentos nem pagamentos' : 'Sem resultados neste filtro'}
               </p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[700px]">
+                <table className="w-full min-w-[900px]">
                   <thead>
                     <tr className="border-b border-white/[0.06] bg-black/20">
-                      <th className="text-left px-4 py-3 text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium">Casamento</th>
+                      <th className="text-left px-4 py-3 text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium">Projeto/Casal</th>
                       <th className="text-left px-3 py-3 text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium">Descrição</th>
                       <th className="text-right px-3 py-3 text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium">Valor</th>
                       <th className="text-left px-3 py-3 text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium">Estado</th>
                       <th className="text-left px-3 py-3 text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium">Data</th>
+                      <th className="text-left px-3 py-3 text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium">Método</th>
+                      <th className="text-left px-3 py-3 text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium">Workflow</th>
                       <th className="px-3 py-3 text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium text-right">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map(p => {
-                      const c = p.casamento_id ? casamentos.find(c => c.id === p.casamento_id) : null
-                      const atrasado = isAtrasado(p)
+                    {filtered.map(r => {
+                      const c = r.casamento
+                      const p = r.pagamento
+                      const atrasado = p ? isAtrasado(p) : false
+                      const wf = workflowBadge(c)
+                      const method = paymentMethod(p)
                       return (
-                        <tr key={p.id} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors group">
+                        <tr key={r.key} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors group">
+                          {/* Projeto/Casal */}
                           <td className="px-4 py-3 max-w-[200px]">
                             {c ? (
                               <div>
                                 <p className="text-[13px] text-white/85 font-medium truncate">{c.local}</p>
-                                {c.data_casamento && <p className="text-[10px] text-white/35">{c.data_casamento}</p>}
+                                {c.data_casamento && <p className="text-[10px] text-white/35">Casamento {c.data_casamento}</p>}
                               </div>
                             ) : (
                               <p className="text-[12px] text-white/25 italic">—</p>
                             )}
                           </td>
-                          <td className="px-3 py-3 text-[13px] text-white/75">
-                            {p.descricao}
-                            {p.notas && <p className="text-[10px] text-white/30 italic mt-0.5 truncate max-w-[200px]">{p.notas}</p>}
+                          {/* Descrição */}
+                          <td className="px-3 py-3 text-[13px] whitespace-nowrap">
+                            {p ? (
+                              <>
+                                <span className="text-white/75">{p.descricao}</span>
+                                {p.notas && <p className="text-[10px] text-white/30 italic mt-0.5 truncate max-w-[160px]">{p.notas}</p>}
+                              </>
+                            ) : (
+                              <span className="text-white/35 italic">Pagamento Único</span>
+                            )}
                           </td>
-                          <td className="px-3 py-3 text-right text-[13px] text-white/85 font-mono whitespace-nowrap">{p.valor != null ? fmtEuro(p.valor) : '—'}</td>
+                          {/* Valor */}
+                          <td className="px-3 py-3 text-right text-[13px] text-white/85 font-mono whitespace-nowrap">{p?.valor != null ? fmtEuro(p.valor) : <span className="text-white/25">—</span>}</td>
+                          {/* Estado */}
                           <td className="px-3 py-3">
-                            {p.status === 'PAGO' ? (
-                              <span className="text-[10px] px-3 py-1 rounded-full border bg-emerald-500/15 text-emerald-300 border-emerald-500/30 tracking-widest uppercase font-semibold">✓ Pago</span>
+                            {!p ? (
+                              <button onClick={() => {
+                                  setShowAdd(true)
+                                  setEditId(null)
+                                  setForm({ casamento_id: c?.id ?? '', descricao: 'Pagamento Único', valor: '', data_prevista: '', data_pago: '', status: 'PENDENTE', notas: '' })
+                                }}
+                                className="text-[10px] px-3 py-1 rounded-full border bg-blue-500/10 text-blue-300 border-blue-500/30 tracking-widest uppercase font-semibold hover:bg-blue-500/20 transition-all">
+                                + Registar
+                              </button>
+                            ) : p.status === 'PAGO' ? (
+                              <span className="text-[10px] px-3 py-1 rounded-full border bg-emerald-500/15 text-emerald-300 border-emerald-500/30 tracking-widest uppercase font-semibold">✓ Pago{method ? ` · ${method}` : ''}</span>
                             ) : p.status === 'CANCELADO' ? (
                               <span className="text-[10px] px-3 py-1 rounded-full border bg-white/[0.04] text-white/40 border-white/15 tracking-widest uppercase font-semibold">Cancelado</span>
                             ) : atrasado ? (
@@ -3325,19 +3399,37 @@ function PagamentosAdminTab({ freelancerId, pagamentos, casamentos, onRefresh }:
                               </button>
                             )}
                           </td>
+                          {/* Data */}
                           <td className="px-3 py-3 text-[12px] whitespace-nowrap">
-                            {p.data_pago ? <span className="text-emerald-400/70">{p.data_pago}</span> :
-                              p.data_prevista ? <span className={atrasado ? 'text-red-400' : 'text-white/50'}>{p.data_prevista}</span> :
+                            {p?.data_pago ? <span className="text-emerald-400/70">{p.data_pago}</span> :
+                              p?.data_prevista ? <span className={atrasado ? 'text-red-400' : 'text-white/50'}>{p.data_prevista}</span> :
                               <span className="text-white/20">—</span>}
                           </td>
+                          {/* Método */}
+                          <td className="px-3 py-3 text-[12px] whitespace-nowrap">
+                            {method ? (
+                              <span className="inline-flex items-center gap-1.5 text-[11px] text-white/65 px-2 py-1 rounded-md border border-white/[0.08] bg-white/[0.02]">
+                                <span className="text-gold/70">▦</span> {method}
+                              </span>
+                            ) : <span className="text-white/20">—</span>}
+                          </td>
+                          {/* Workflow */}
+                          <td className="px-3 py-3 whitespace-nowrap">
+                            {wf ? (
+                              <span className={`text-[10px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-semibold ${wf.cls}`}>{wf.label}</span>
+                            ) : <span className="text-white/20 text-[11px]">—</span>}
+                          </td>
+                          {/* Ações */}
                           <td className="px-3 py-3 text-right">
-                            <button onClick={() => {
-                                setEditId(p.id)
-                                setEditForm({ casamento_id: p.casamento_id ?? '', descricao: p.descricao, valor: p.valor?.toString() ?? '', data_prevista: p.data_prevista ?? '', data_pago: p.data_pago ?? '', status: p.status, notas: p.notas ?? '' })
-                                setShowAdd(false)
-                              }}
-                              className="text-white/25 hover:text-gold transition-colors text-xs px-2"
-                              title="Editar">⋮</button>
+                            {p && (
+                              <button onClick={() => {
+                                  setEditId(p.id)
+                                  setEditForm({ casamento_id: p.casamento_id ?? '', descricao: p.descricao, valor: p.valor?.toString() ?? '', data_prevista: p.data_prevista ?? '', data_pago: p.data_pago ?? '', status: p.status, notas: p.notas ?? '' })
+                                  setShowAdd(false)
+                                }}
+                                className="text-white/25 hover:text-gold transition-colors text-base px-2"
+                                title="Editar">⋮</button>
+                            )}
                           </td>
                         </tr>
                       )
