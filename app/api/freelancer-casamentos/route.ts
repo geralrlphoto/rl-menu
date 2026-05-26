@@ -150,8 +150,9 @@ export async function PATCH(req: NextRequest) {
   }
 
   // 4 — Sync para portal dos noivos: quando status_selecao = 'ENTREGUE',
-  //     atualiza sel_fotos_estado='Entregue' na tabela eventos_2026/2027
-  //     (que é o que o portal-cliente/batizado lê para "Estado das Entregas").
+  //     atualiza sel_fotos_estado='Entregue' em Supabase (eventos_2026/2027)
+  //     E em Notion (propriedade 'ESTADO SEL. FOTOS'), porque o portal lê
+  //     Notion primeiro e só usa Supabase para preencher campos vazios.
   if (optFields.status_selecao === 'ENTREGUE') {
     try {
       const { data: fc } = await supabase
@@ -160,22 +161,71 @@ export async function PATCH(req: NextRequest) {
         .eq('id', id)
         .maybeSingle()
       if (fc) {
-        const ano = (fc.data_casamento ?? '').slice(0, 4)
-        const table = ano === '2027' ? 'eventos_2027' : 'eventos_2026'
-        // Tenta pela referencia primeiro
-        if (fc.referencia) {
-          await supabase.from(table).update({ sel_fotos_estado: 'Entregue' }).eq('referencia', fc.referencia).then(() => {}, () => {})
+        let notionId: string | null = null
+        let matchedTable: string | null = null
+
+        // 1) Procura o evento em Supabase (eventos_2026 ou _2027) — várias estratégias
+        for (const t of ['eventos_2026', 'eventos_2027']) {
+          if (matchedTable) break
+          // a) Por referencia
+          if (fc.referencia) {
+            const { data } = await supabase.from(t).select('id, notion_id').eq('referencia', fc.referencia).maybeSingle()
+            if (data) {
+              await supabase.from(t).update({ sel_fotos_estado: 'Entregue' }).eq('id', data.id)
+              notionId = data.notion_id ?? null
+              matchedTable = t
+              continue
+            }
+          }
+          // b) Por evento_id (notion_id) — se for um ID real e não 'ref_XXX'
+          if (fc.evento_id && !String(fc.evento_id).startsWith('ref_')) {
+            const { data } = await supabase.from(t).select('id, notion_id')
+              .or(`notion_id.eq.${fc.evento_id},id.eq.${fc.evento_id}`).maybeSingle()
+            if (data) {
+              await supabase.from(t).update({ sel_fotos_estado: 'Entregue' }).eq('id', data.id)
+              notionId = data.notion_id ?? fc.evento_id
+              matchedTable = t
+              continue
+            }
+          }
+          // c) Por local + data
+          if (fc.local && fc.data_casamento) {
+            const { data } = await supabase.from(t).select('id, notion_id')
+              .ilike('local', fc.local).eq('data_evento', fc.data_casamento).maybeSingle()
+            if (data) {
+              await supabase.from(t).update({ sel_fotos_estado: 'Entregue' }).eq('id', data.id)
+              notionId = data.notion_id ?? null
+              matchedTable = t
+              continue
+            }
+          }
         }
-        // Fallback: tenta por evento_id (notion id) ou local+data
-        if (fc.evento_id && !String(fc.evento_id).startsWith('ref_')) {
-          await supabase.from(table).update({ sel_fotos_estado: 'Entregue' }).eq('notion_id', fc.evento_id).then(() => {}, () => {})
-        }
-        if (fc.local && fc.data_casamento) {
-          await supabase.from(table).update({ sel_fotos_estado: 'Entregue' })
-            .ilike('local', fc.local).eq('data_evento', fc.data_casamento).then(() => {}, () => {})
+
+        // 2) Se conseguimos um notion_id real, atualiza também a propriedade
+        //    'ESTADO SEL. FOTOS' no Notion — é o que o portal lê primeiro.
+        if (notionId && process.env.NOTION_TOKEN) {
+          try {
+            await fetch(`https://api.notion.com/v1/pages/${notionId}`, {
+              method: 'PATCH',
+              headers: {
+                'Authorization': `Bearer ${process.env.NOTION_TOKEN}`,
+                'Notion-Version': '2022-06-28',
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                properties: {
+                  'ESTADO SEL. FOTOS': { select: { name: 'Entregue' } },
+                },
+              }),
+            })
+          } catch (e) {
+            console.warn('[freelancer-casamentos sync sel_fotos] Notion update failed:', e)
+          }
         }
       }
-    } catch { /* não bloqueia o save */ }
+    } catch (err) {
+      console.error('[freelancer-casamentos sync sel_fotos]', err)
+    }
   }
 
   return NextResponse.json({ ok: true })
