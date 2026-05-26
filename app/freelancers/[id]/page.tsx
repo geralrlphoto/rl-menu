@@ -1378,17 +1378,17 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
             </select>
           </div>
         </div>
-        <p className="text-[11px] text-white/35 mt-3">{filtered.length} {filtered.length === 1 ? 'evento' : 'eventos'} · {casamentos.length} no total</p>
+        <p className="text-[12px] text-white/45 mt-3">{filtered.length} {filtered.length === 1 ? 'evento' : 'eventos'} · {casamentos.length} no total</p>
       </div>
 
       {/* ── TEXTO INTRO (editável, recolhido) ───────────────────────── */}
       <div className="rounded-2xl border border-white/[0.06] px-5 py-4 space-y-2"
         style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.3), rgba(11,11,11,0.5))' }}>
         <div className="flex items-center justify-between">
-          <p className="text-[11px] tracking-[0.4em] text-gold/60 uppercase font-light">Texto Intro · Secção Casamentos</p>
+          <p className="text-[12px] tracking-[0.4em] text-gold/60 uppercase font-light">Texto Intro · Secção Casamentos</p>
           {!editingIntro && (
             <button onClick={() => setEditingIntro(true)}
-              className="px-3 py-1 rounded-lg text-[10px] border border-white/10 text-white/40 hover:text-gold hover:border-gold/30 transition-all tracking-[0.3em] uppercase">
+              className="px-3 py-1 rounded-lg text-[11px] border border-white/10 text-white/40 hover:text-gold hover:border-gold/30 transition-all tracking-[0.3em] uppercase">
               Editar
             </button>
           )}
@@ -1408,7 +1408,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
             </div>
           </div>
         ) : (
-          <p className="text-[13px] text-white/60 leading-relaxed whitespace-pre-wrap">{introValue}</p>
+          <p className="text-[14px] text-white/60 leading-relaxed whitespace-pre-wrap">{introValue}</p>
         )}
       </div>
 
@@ -1464,15 +1464,15 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                 {/* Date label top-left */}
                 {c.data_casamento && (
                   <div className="absolute top-3 left-3 px-3 py-1.5 rounded-lg backdrop-blur-md border border-white/15 bg-black/50">
-                    <p className={`text-[16px] font-light leading-none tabular-nums ${isUrgent ? 'text-red-300' : 'text-gold'}`} style={{ fontFamily: 'Georgia, serif' }}>
-                      {c.data_casamento.split('-')[2]} <span className="text-[10px] uppercase tracking-[0.2em] opacity-70">{MESES[parseInt(c.data_casamento.split('-')[1])-1]}</span>
+                    <p className={`text-[18px] font-light leading-none tabular-nums ${isUrgent ? 'text-red-300' : 'text-gold'}`} style={{ fontFamily: 'Georgia, serif' }}>
+                      {c.data_casamento.split('-')[2]} <span className="text-[11px] uppercase tracking-[0.2em] opacity-70">{MESES[parseInt(c.data_casamento.split('-')[1])-1]}</span>
                     </p>
                   </div>
                 )}
                 {/* Counter dias bottom-right */}
                 {dtu !== null && !isPast && (
                   <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded-lg backdrop-blur-md border border-white/15 bg-black/50">
-                    <p className={`text-[11px] font-bold tracking-widest uppercase ${isUrgent ? 'text-red-300' : 'text-white/70'}`}>
+                    <p className={`text-[12px] font-bold tracking-widest uppercase ${isUrgent ? 'text-red-300' : 'text-white/75'}`}>
                       {dtu === 0 ? 'HOJE' : `${dtu} dias`}
                     </p>
                   </div>
@@ -1484,19 +1484,19 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                 <div>
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     {statusBadge && (
-                      <span className={`text-[10px] px-2 py-0.5 rounded-md border tracking-widest uppercase font-bold ${statusBadge.cls}`}>
+                      <span className={`text-[11px] px-2 py-1 rounded-md border tracking-widest uppercase font-bold ${statusBadge.cls}`}>
                         {statusBadge.label}
                       </span>
                     )}
                     {isUrgent && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-red-500/15 border border-red-500/40 text-red-300 uppercase tracking-widest font-bold animate-pulse">
+                      <span className="text-[11px] px-2 py-1 rounded-md bg-red-500/15 border border-red-500/40 text-red-300 uppercase tracking-widest font-bold animate-pulse">
                         URGENTE
                       </span>
                     )}
                   </div>
                   <h2 className="text-2xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>{c.local}</h2>
                   {c.data_casamento && (
-                    <p className="text-[12px] text-white/45 italic mt-1" style={{ fontFamily: 'Georgia, serif' }}>{fmtDate(c.data_casamento)}</p>
+                    <p className="text-[13px] text-white/55 italic mt-1" style={{ fontFamily: 'Georgia, serif' }}>{fmtDate(c.data_casamento)}</p>
                   )}
                 </div>
 
@@ -1504,38 +1504,38 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mt-1">
                   {c.hora_inicio && (
                     <div>
-                      <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-0.5">Hora Início</p>
-                      <p className="text-[12px] text-white/80 truncate">⏱ {c.hora_inicio}</p>
+                      <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 mb-0.5">Hora Início</p>
+                      <p className="text-[13px] text-white/85 truncate">⏱ {c.hora_inicio}</p>
                     </div>
                   )}
                   <div>
-                    <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-0.5">Quinta</p>
-                    <p className="text-[12px] text-white/80 truncate">🏛 {c.local || '—'}</p>
+                    <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 mb-0.5">Quinta</p>
+                    <p className="text-[13px] text-white/85 truncate">🏛 {c.local || '—'}</p>
                   </div>
                   {c.local_cerimonia && (
                     <div>
-                      <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-0.5">Cerimónia</p>
-                      <p className="text-[12px] text-white/80 truncate">⛪ {c.local_cerimonia}</p>
+                      <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 mb-0.5">Cerimónia</p>
+                      <p className="text-[13px] text-white/85 truncate">⛪ {c.local_cerimonia}</p>
                     </div>
                   )}
                   {c.equipa_foto && c.equipa_foto.length > 0 && (
                     <div>
-                      <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-0.5">Equipa Foto</p>
-                      <p className="text-[12px] text-white/80 truncate">📷 {c.equipa_foto.join(', ')}</p>
+                      <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 mb-0.5">Equipa Foto</p>
+                      <p className="text-[13px] text-white/85 truncate">📷 {c.equipa_foto.join(', ')}</p>
                     </div>
                   )}
                   {c.videografo && (
                     <div>
-                      <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-0.5">Videógrafo</p>
-                      <p className="text-[12px] text-white/80 truncate">🎥 {c.videografo}</p>
+                      <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 mb-0.5">Videógrafo</p>
+                      <p className="text-[13px] text-white/85 truncate">🎥 {c.videografo}</p>
                     </div>
                   )}
                   {c.briefing_url && (
                     <div>
-                      <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-0.5">Briefing</p>
+                      <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 mb-0.5">Briefing</p>
                       <a href={c.briefing_url} target="_blank" rel="noopener noreferrer"
                         onClick={e => e.stopPropagation()}
-                        className="text-[12px] text-gold/80 hover:text-gold underline truncate inline-block">📄 Ver briefing</a>
+                        className="text-[13px] text-gold/80 hover:text-gold underline truncate inline-block">📄 Ver briefing</a>
                     </div>
                   )}
                 </div>
@@ -1543,7 +1543,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                 {/* Serviços do Dia (badges) — sempre visível */}
                 <div className="mt-2">
                   <div className="flex items-center justify-between mb-1.5">
-                    <p className="text-[9px] tracking-[0.3em] uppercase text-white/35">Serviços do Dia</p>
+                    <p className="text-[11px] tracking-[0.3em] uppercase text-white/45">Serviços do Dia</p>
                     {(!c.servicos_dia || c.servicos_dia.length === 0) && (
                       <button onClick={async (e) => {
                         e.stopPropagation()
@@ -1578,7 +1578,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                           alert('Erro ao sincronizar: ' + (err as Error).message)
                         }
                       }}
-                        className="text-[9px] px-2 py-0.5 rounded-full border border-gold/30 text-gold/70 hover:text-gold hover:bg-gold/10 transition-all tracking-wider uppercase">
+                        className="text-[11px] px-2.5 py-1 rounded-full border border-gold/30 text-gold/80 hover:text-gold hover:bg-gold/10 transition-all tracking-wider uppercase">
                         ↻ Sincronizar do evento
                       </button>
                     )}
@@ -1586,13 +1586,13 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                   {c.servicos_dia && c.servicos_dia.length > 0 ? (
                     <div className="flex flex-wrap gap-1.5">
                       {c.servicos_dia.map((s, i) => (
-                        <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-gold/10 border border-gold/25 text-gold/85 tracking-wide">
+                        <span key={i} className="text-[12px] px-2.5 py-1 rounded-full bg-gold/10 border border-gold/25 text-gold/90 tracking-wide">
                           {s}
                         </span>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-[11px] text-white/30 italic">Sem serviços definidos — clica em "Editar" abaixo para adicionar, ou "Sincronizar do evento" se já estiverem definidos em /eventos-2026.</p>
+                    <p className="text-[13px] text-white/40 italic">Sem serviços definidos — clica em "Editar" abaixo para adicionar, ou "Sincronizar do evento" se já estiverem definidos em /eventos-2026.</p>
                   )}
                 </div>
               </div>
