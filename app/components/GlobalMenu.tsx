@@ -1,7 +1,7 @@
 ﻿'use client'
 
 import { usePathname, useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { AdminNotificationsBell } from './AdminNotificationsBell'
@@ -84,6 +84,15 @@ const LINKS = [
 ]
 
 export default function GlobalMenu() {
+  // useSearchParams requires Suspense em Next.js 16
+  return (
+    <Suspense fallback={null}>
+      <GlobalMenuInner />
+    </Suspense>
+  )
+}
+
+function GlobalMenuInner() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [open, setOpen] = useState(false)

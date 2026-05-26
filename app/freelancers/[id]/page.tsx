@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef, Suspense } from 'react'
 import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
 import { TasksWidget, MiniCalendar } from '@/app/components/FreelancerWidgets'
@@ -149,6 +149,15 @@ function PasswordDisplay({ password, freelancerId }: { password: string | null; 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function FreelancerDetailPage() {
+  // useSearchParams requires Suspense in Next.js 16 — wrap inner component
+  return (
+    <Suspense fallback={<div className="min-h-screen" style={{ background: '#0B0B0B' }} />}>
+      <FreelancerDetailInner />
+    </Suspense>
+  )
+}
+
+function FreelancerDetailInner() {
   const { id } = useParams<{ id: string }>()
   const searchParams = useSearchParams()
   const viewAsFreelancer = searchParams?.get('view') === 'freelancer'
