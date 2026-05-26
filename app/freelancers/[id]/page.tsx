@@ -1827,6 +1827,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                         casamentoId={c.id}
                         casamentoLocal={c.local}
                         casamentoData={c.data_casamento}
+                        casamentoReferencia={c.referencia ?? null}
                         freelancerNome={freelancer?.nome ?? ''}
                         initialUrl={(c as any)[field.key] ?? ''}
                         initialSentAt={(c as any)[field.ts] ?? null}
@@ -3416,6 +3417,7 @@ function UrlEntryCard({
   casamentoId,
   casamentoLocal,
   casamentoData,
+  casamentoReferencia,
   freelancerNome,
   initialUrl,
   initialSentAt,
@@ -3427,6 +3429,7 @@ function UrlEntryCard({
   casamentoId: string
   casamentoLocal: string
   casamentoData: string | null
+  casamentoReferencia?: string | null
   freelancerNome: string
   initialUrl: string
   initialSentAt: string | null
@@ -3468,10 +3471,34 @@ function UrlEntryCard({
     : null
   const hasUrl = url.trim().length > 0
 
-  // ── URL apenas editável quando status = ENTREGUE (Seleção de Fotos) ──
+  // ── URL apenas editável quando status = ENTREGUE (Seleção & Fotos Editadas) ──
   // O membro só pode colar o link quando marca o trabalho como entregue.
-  const urlBlockedByStatus = field.tipo === 'selecao' && status !== 'ENTREGUE'
+  const urlBlockedByStatus = (field.tipo === 'selecao' || field.tipo === 'editadas') && status !== 'ENTREGUE'
   const urlLocked = locked || urlBlockedByStatus
+
+  // ── 'Ver Fotos Selecionadas pelos Noivos' (apenas Fotos Editadas) ──
+  // Botão visível assim que status passa de AGUARDAR (i.e., EM EDIÇÃO em diante).
+  // Abre /secao/{id} onde {id} vem de fotos_selecao via referencia.
+  const editadasUnlocked = field.tipo === 'editadas' && status !== 'AGUARDAR'
+  const [openingSelecao, setOpeningSelecao] = useState(false)
+  async function abrirFotosSelecionadas() {
+    if (!casamentoReferencia) {
+      alert('Esta atribuição não tem referência associada — peça ao admin para a definir na ficha do evento.')
+      return
+    }
+    setOpeningSelecao(true)
+    try {
+      const res = await fetch(`/api/fotos-selecao-by-ref?ref=${encodeURIComponent(casamentoReferencia)}`).then(r => r.json())
+      const fsId = res?.row?.id
+      if (fsId) {
+        window.open(`/secao/${fsId}`, '_blank', 'noopener,noreferrer')
+      } else {
+        alert('Os noivos ainda não submeteram a seleção de fotos para edição. Quando o fizerem o link fica disponível aqui.')
+      }
+    } catch (e) {
+      alert('Não foi possível abrir a seleção. Tenta de novo dentro de momentos.')
+    } finally { setOpeningSelecao(false) }
+  }
 
   // ── Aviso de prazo (apenas para Seleção de Fotos: 30 dias após o evento) ──
   const deadlineNotice = (() => {
@@ -3619,7 +3646,33 @@ function UrlEntryCard({
       {locked && lockedReason && (
         <p className="text-[11px] text-white/45 italic leading-relaxed mt-1">🔒 {lockedReason}</p>
       )}
-      {!locked && urlBlockedByStatus && (
+
+      {/* Botão Ver Fotos Selecionadas pelos Noivos (só para Fotos Editadas, com status > AGUARDAR) */}
+      {field.tipo === 'editadas' && !locked && (
+        editadasUnlocked ? (
+          <button onClick={e => { e.stopPropagation(); abrirFotosSelecionadas() }}
+            disabled={openingSelecao}
+            className="w-full text-[12px] tracking-wider uppercase font-semibold rounded-lg px-2.5 py-2 transition-all bg-blue-500/15 border border-blue-500/40 text-blue-200 hover:bg-blue-500/25 hover:border-blue-400/60 disabled:opacity-50 flex items-center justify-center gap-1.5"
+            style={{ boxShadow: '0 0 10px -4px rgba(59,130,246,0.5)' }}>
+            {openingSelecao
+              ? 'A abrir...'
+              : <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg> Ver Fotos Selecionadas pelos Noivos ↗</>
+            }
+          </button>
+        ) : (
+          <div className="w-full text-[11px] tracking-wider uppercase font-semibold rounded-lg px-2.5 py-2 bg-white/[0.03] border border-white/10 text-white/30 flex items-center justify-center gap-1.5 cursor-not-allowed">
+            🔒 Ver Fotos Selecionadas pelos Noivos
+          </div>
+        )
+      )}
+
+      {/* Notice — diferencia entre Seleção de Fotos e Fotos Editadas */}
+      {!locked && urlBlockedByStatus && field.tipo === 'editadas' && (
+        <p className="text-[11px] text-amber-300/80 italic leading-relaxed mt-1 px-1">
+          ⓘ Muda o estado para <span className="font-bold not-italic uppercase text-amber-200">Em Edição</span> para teres acesso às fotos escolhidas pelos noivos. O link da pasta editada só fica disponível ao marcar <span className="font-bold not-italic uppercase text-amber-200">Entregue</span>. Cada alteração de estado atualiza automaticamente o portal dos noivos ("Fotos para Edição").
+        </p>
+      )}
+      {!locked && urlBlockedByStatus && field.tipo === 'selecao' && (
         <p className="text-[11px] text-amber-300/80 italic leading-relaxed mt-1 px-1">
           ⓘ O link só fica disponível quando marcares o trabalho como <span className="font-bold not-italic uppercase">Entregue</span> abaixo. Ao mudar para Entregue, o portal dos noivos também é atualizado automaticamente.
         </p>
