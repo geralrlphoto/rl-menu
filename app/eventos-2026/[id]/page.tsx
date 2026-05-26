@@ -2194,6 +2194,8 @@ export default function EventoPage() {
   const [fotosConvidadosCttEnviada, setFotosConvidadosCttEnviada] = useState<string | null>(null)
   const [fotosConvidadosEmailLista, setFotosConvidadosEmailLista] = useState<string[]>([])
   const [fotosConvidadosCttLista, setFotosConvidadosCttLista] = useState<string[]>([])
+  const [fotosConvidadosEmailWorkflow, setFotosConvidadosEmailWorkflow] = useState<string>('')
+  const [fotosConvidadosCttWorkflow, setFotosConvidadosCttWorkflow] = useState<string>('')
   const [actionUrls, setActionUrls] = useState<Record<string, string>>({
     selecao: '', prewedding: '', fotos_finais: '', galerias: '', maquete: '',
   })
@@ -2485,6 +2487,8 @@ export default function EventoPage() {
               if (s.fotos_convidados_ctt_enviada)   setFotosConvidadosCttEnviada(s.fotos_convidados_ctt_enviada)
               if (Array.isArray(s.fotos_convidados_email_lista)) setFotosConvidadosEmailLista(s.fotos_convidados_email_lista)
               if (Array.isArray(s.fotos_convidados_ctt_lista))   setFotosConvidadosCttLista(s.fotos_convidados_ctt_lista)
+              if (typeof s.fotos_convidados_email_workflow === 'string') setFotosConvidadosEmailWorkflow(s.fotos_convidados_email_workflow)
+              if (typeof s.fotos_convidados_ctt_workflow === 'string')   setFotosConvidadosCttWorkflow(s.fotos_convidados_ctt_workflow)
               if (s.video_prewedding_enviada) setVideoPreWeddingEnviada(s.video_prewedding_enviada)
               if (s.wedding_film_enviada)     setWeddingFilmEnviada(s.wedding_film_enviada)
               if (s.same_day_edit_enviada)    setSameDayEditEnviada(s.same_day_edit_enviada)
@@ -3585,9 +3589,9 @@ export default function EventoPage() {
           <h2 className="text-[10px] tracking-[0.35em] uppercase" style={{ color: 'rgba(99,165,255,0.8)' }}>Fotos Convidados</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {([
-              { label: 'Fotos via Email', prazoDias: 15, prazoLabel: '15 dias após o evento', state: fotosConvidadosEmailEnviada, setState: setFotosConvidadosEmailEnviada, key: 'fotos_convidados_email_enviada', listaKey: 'fotos_convidados_email_lista', lista: fotosConvidadosEmailLista, setLista: setFotosConvidadosEmailLista },
-              { label: 'Fotos via CTT',   prazoDias: 30, prazoLabel: '30 dias após o evento', state: fotosConvidadosCttEnviada,   setState: setFotosConvidadosCttEnviada,   key: 'fotos_convidados_ctt_enviada',   listaKey: 'fotos_convidados_ctt_lista',   lista: fotosConvidadosCttLista,   setLista: setFotosConvidadosCttLista },
-            ]).map(({ label, prazoDias, prazoLabel, state, setState, key, listaKey, lista, setLista }) => {
+              { label: 'Fotos via Email', prazoDias: 15, prazoLabel: '15 dias após o evento', state: fotosConvidadosEmailEnviada, setState: setFotosConvidadosEmailEnviada, key: 'fotos_convidados_email_enviada', listaKey: 'fotos_convidados_email_lista', lista: fotosConvidadosEmailLista, setLista: setFotosConvidadosEmailLista, workflowKey: 'fotos_convidados_email_workflow', workflow: fotosConvidadosEmailWorkflow, setWorkflow: setFotosConvidadosEmailWorkflow },
+              { label: 'Fotos via CTT',   prazoDias: 30, prazoLabel: '30 dias após o evento', state: fotosConvidadosCttEnviada,   setState: setFotosConvidadosCttEnviada,   key: 'fotos_convidados_ctt_enviada',   listaKey: 'fotos_convidados_ctt_lista',   lista: fotosConvidadosCttLista,   setLista: setFotosConvidadosCttLista,   workflowKey: 'fotos_convidados_ctt_workflow',   workflow: fotosConvidadosCttWorkflow,   setWorkflow: setFotosConvidadosCttWorkflow },
+            ]).map(({ label, prazoDias, prazoLabel, state, setState, key, listaKey, lista, setLista, workflowKey, workflow, setWorkflow }) => {
               // Aviso de prazo
               let deadline: { daysLeft: number; deadlineStr: string; expired: boolean; critical: boolean } | null = null
               if (!state && e.data_evento) {
@@ -3657,6 +3661,9 @@ export default function EventoPage() {
                     </button>
                     {evento?.referencia && (
                       <ListaConvidadosAdminButton referencia={evento.referencia} listaKey={listaKey} label={label} lista={lista} onListaChange={setLista} />
+                    )}
+                    {evento?.referencia && (
+                      <WorkflowAdminButton referencia={evento.referencia} workflowKey={workflowKey} label={label} workflow={workflow} onWorkflowChange={setWorkflow} />
                     )}
                   </div>
                 </div>
@@ -4005,6 +4012,90 @@ function ListaConvidadosAdminButton({
                 disabled={!novoNome.trim()}
                 className="px-4 py-2 rounded-lg text-[11px] font-semibold tracking-[0.2em] uppercase border bg-blue-500/15 text-blue-300 border-blue-500/30 hover:bg-blue-500/25 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
                 + Adicionar
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
+  )
+}
+
+// ─── WorkflowAdminButton — botão "+ Workflow" + modal com textarea ──────────
+function WorkflowAdminButton({
+  referencia, workflowKey, label, workflow, onWorkflowChange,
+}: { referencia: string; workflowKey: string; label: string; workflow: string; onWorkflowChange: (next: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [draft, setDraft] = useState(workflow)
+  const [saving, setSaving] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
+  useEffect(() => { if (open) setDraft(workflow) }, [open, workflow])
+
+  async function guardar() {
+    setSaving(true)
+    try {
+      onWorkflowChange(draft)
+      await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia, updates: { settings: { [workflowKey]: draft } } }) })
+      setOpen(false)
+    } finally { setSaving(false) }
+  }
+
+  useEffect(() => {
+    if (!open) return
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open])
+
+  return (
+    <>
+      <button onClick={() => setOpen(true)}
+        title={workflow ? 'Ver / editar workflow' : 'Adicionar workflow de envio'}
+        className={`px-4 py-2 rounded-lg text-[11px] font-semibold tracking-[0.2em] uppercase border transition-all ${
+          workflow
+            ? 'border-blue-400/30 text-blue-300 bg-blue-500/[0.05] hover:bg-blue-500/[0.12]'
+            : 'border-white/15 text-white/60 hover:bg-white/[0.05] hover:text-white/85'
+        }`}>
+        {workflow ? '✓ Workflow' : '+ Workflow'}
+      </button>
+      {mounted && open && createPortal(
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setOpen(false)}>
+          <div className="bg-[#0f0f0f] border border-white/10 rounded-2xl p-6 max-w-lg w-full max-h-[85vh] overflow-y-auto flex flex-col gap-4"
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between gap-3 border-b border-white/[0.06] pb-3">
+              <div>
+                <p className="text-[9px] tracking-[0.4em] uppercase text-blue-300/70">Workflow de Envio</p>
+                <h3 className="text-sm text-white/85 font-semibold mt-0.5">{label}</h3>
+              </div>
+              <button onClick={() => setOpen(false)}
+                className="w-7 h-7 flex items-center justify-center rounded-full border border-white/10 text-white/40 hover:text-white/80 hover:border-white/30">✕</button>
+            </div>
+
+            <p className="text-[11px] text-blue-300/80 bg-blue-500/[0.06] border border-blue-500/20 rounded-md px-3 py-2 leading-snug">
+              Descreve aqui o procedimento de envio das fotos aos convidados (passos, contactos, observações).
+            </p>
+
+            <textarea
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              placeholder="Ex: 1. Verificar lista de convidados&#10;2. Preparar pasta partilhada Google Drive&#10;3. Enviar email com link a cada nome…"
+              rows={10}
+              className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-3 text-sm text-white/85 placeholder-white/25 focus:outline-none focus:border-blue-400/40 font-mono leading-relaxed resize-y min-h-[180px]"
+              autoFocus
+            />
+
+            <div className="flex gap-2 pt-3 border-t border-white/[0.06] justify-end">
+              <button onClick={() => setOpen(false)}
+                className="px-4 py-2 rounded-lg text-[11px] font-semibold tracking-[0.2em] uppercase border border-white/10 text-white/50 hover:bg-white/[0.04]">
+                Cancelar
+              </button>
+              <button onClick={guardar} disabled={saving}
+                className="px-5 py-2 rounded-lg text-[11px] font-semibold tracking-[0.2em] uppercase border bg-blue-500/20 text-blue-300 border-blue-500/30 hover:bg-blue-500/30 disabled:opacity-50 disabled:cursor-wait transition-all">
+                {saving ? 'A guardar…' : 'Guardar'}
               </button>
             </div>
           </div>

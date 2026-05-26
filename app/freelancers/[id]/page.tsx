@@ -185,8 +185,8 @@ function FreelancerDetailInner() {
   const [mensagens, setMensagens] = useState<Mensagem[]>([])
   // Mapa referencia → data_entrada (quando os noivos enviaram fotos para edição)
   const [fotosSelecaoMap, setFotosSelecaoMap] = useState<Record<string, string>>({})
-  // Mapa referencia → { email, ctt, emailLista, cttLista } para "Fotos Convidados"
-  const [fotosConvidadosMap, setFotosConvidadosMap] = useState<Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[] }>>({})
+  // Mapa referencia → { email, ctt, listas, workflows } para "Fotos Convidados"
+  const [fotosConvidadosMap, setFotosConvidadosMap] = useState<Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>>({})
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(async () => {
@@ -227,7 +227,7 @@ function FreelancerDetailInner() {
     const refs = Array.from(new Set((cRes.casamentos ?? []).map((c: any) => c.referencia).filter(Boolean))) as string[]
     if (refs.length) {
       ;(async () => {
-        const fcMap: Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[] }> = {}
+        const fcMap: Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }> = {}
         for (const ref of refs) {
           try {
             const p = await fetch(`/api/portais?ref=${encodeURIComponent(ref)}`).then(r => r.json())
@@ -237,6 +237,8 @@ function FreelancerDetailInner() {
               ctt:   s.fotos_convidados_ctt_enviada   ?? null,
               emailLista: Array.isArray(s.fotos_convidados_email_lista) ? s.fotos_convidados_email_lista : [],
               cttLista:   Array.isArray(s.fotos_convidados_ctt_lista)   ? s.fotos_convidados_ctt_lista   : [],
+              emailWorkflow: typeof s.fotos_convidados_email_workflow === 'string' ? s.fotos_convidados_email_workflow : '',
+              cttWorkflow:   typeof s.fotos_convidados_ctt_workflow   === 'string' ? s.fotos_convidados_ctt_workflow   : '',
             }
           } catch { /* ignore */ }
         }
@@ -1494,7 +1496,7 @@ function SidebarNavAdmin({
 
 const DEFAULT_INTRO = `Aqui encontras todos os eventos que te foram atribuídos ao longo do ano. Sempre que um novo evento for adicionado, deverás confirmar a tua disponibilidade.\n\nA 3 dias do evento tens acesso ao briefing com toda a informação necessária para o dia — percurso, contactos, detalhes da cerimónia e muito mais.`
 
-function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, freelancer, viewAsFreelancer, fotosSelecaoMap, fotosConvidadosMap, setFotosConvidadosMap }: { freelancerId: string; casamentos: Casamento[]; onRefresh: () => void; freelancerStatus: string | null; freelancer: Freelancer | null; viewAsFreelancer?: boolean; fotosSelecaoMap: Record<string, string>; fotosConvidadosMap: Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[] }>; setFotosConvidadosMap: (updater: (prev: Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[] }>) => Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[] }>) => void }) {
+function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, freelancer, viewAsFreelancer, fotosSelecaoMap, fotosConvidadosMap, setFotosConvidadosMap }: { freelancerId: string; casamentos: Casamento[]; onRefresh: () => void; freelancerStatus: string | null; freelancer: Freelancer | null; viewAsFreelancer?: boolean; fotosSelecaoMap: Record<string, string>; fotosConvidadosMap: Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>; setFotosConvidadosMap: (updater: (prev: Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>) => Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>) => void }) {
   const [editing, setEditing] = useState<Casamento | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState<Partial<Casamento>>({})
@@ -1941,7 +1943,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                 {c.referencia && (
                   <FotosConvidadosBox
                     referencia={c.referencia}
-                    estado={fotosConvidadosMap[c.referencia] ?? { email: null, ctt: null, emailLista: [], cttLista: [] }}
+                    estado={fotosConvidadosMap[c.referencia] ?? { email: null, ctt: null, emailLista: [], cttLista: [], emailWorkflow: '', cttWorkflow: '' }}
                     onChange={(next) => setFotosConvidadosMap(prev => ({ ...prev, [c.referencia!]: next }))}
                     dataCasamento={c.data_casamento}
                   />
@@ -3545,8 +3547,8 @@ function FotosConvidadosBox({
   dataCasamento,
 }: {
   referencia: string
-  estado: { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[] }
-  onChange: (next: { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[] }) => void
+  estado: { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }
+  onChange: (next: { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }) => void
   dataCasamento: string | null
 }) {
   const fmt = (d: string | null) => d ? new Date(d).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' }) : null
@@ -3574,12 +3576,15 @@ function FotosConvidadosBox({
         <FotosConvidadosSub
           referencia={referencia}
           listaKey="fotos_convidados_email_lista"
+          workflowKey="fotos_convidados_email_workflow"
           label="Fotos via Email"
           prazoLabel="15 dias após o evento"
           enviada={estado.email}
           deadline={deadlineInfo(15, estado.email)}
           lista={estado.emailLista}
           onListaChange={(next) => onChange({ ...estado, emailLista: next })}
+          workflow={estado.emailWorkflow}
+          onWorkflowChange={(next) => onChange({ ...estado, emailWorkflow: next })}
           onMark={async () => {
             const today = new Date().toISOString().split('T')[0]
             await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia, updates: { settings: { fotos_convidados_email_enviada: today } } }) })
@@ -3594,12 +3599,15 @@ function FotosConvidadosBox({
         <FotosConvidadosSub
           referencia={referencia}
           listaKey="fotos_convidados_ctt_lista"
+          workflowKey="fotos_convidados_ctt_workflow"
           label="Fotos via CTT"
           prazoLabel="30 dias após o evento"
           enviada={estado.ctt}
           deadline={deadlineInfo(30, estado.ctt)}
           lista={estado.cttLista}
           onListaChange={(next) => onChange({ ...estado, cttLista: next })}
+          workflow={estado.cttWorkflow}
+          onWorkflowChange={(next) => onChange({ ...estado, cttWorkflow: next })}
           onMark={async () => {
             const today = new Date().toISOString().split('T')[0]
             await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia, updates: { settings: { fotos_convidados_ctt_enviada: today } } }) })
@@ -3617,16 +3625,19 @@ function FotosConvidadosBox({
 }
 
 function FotosConvidadosSub({
-  referencia, listaKey, label, prazoLabel, enviada, deadline, lista, onListaChange, onMark, onReset, fmt,
+  referencia, listaKey, workflowKey, label, prazoLabel, enviada, deadline, lista, onListaChange, workflow, onWorkflowChange, onMark, onReset, fmt,
 }: {
   referencia: string
   listaKey: string
+  workflowKey: string
   label: string
   prazoLabel: string
   enviada: string | null
   deadline: { daysLeft: number; deadlineStr: string; expired: boolean; critical: boolean } | null
   lista: string[]
   onListaChange: (next: string[]) => void
+  workflow: string
+  onWorkflowChange: (next: string) => void
   onMark: () => Promise<void>
   onReset: () => Promise<void>
   fmt: (d: string | null) => string | null
@@ -3669,12 +3680,12 @@ function FotosConvidadosSub({
           ⚠ Adiciona na <strong>Lista</strong> os convidados que adquiriram fotografias para desbloquear o botão.
         </p>
       )}
-      <div className="flex gap-2 mt-1">
+      <div className="flex gap-2 mt-1 flex-wrap">
         <button
           disabled={busy || marcarBloqueado}
           onClick={handleMark}
           title={marcarBloqueado ? 'Adiciona nomes na Lista para desbloquear' : undefined}
-          className={`flex-1 px-3 py-2 rounded-lg text-[10px] font-semibold tracking-[0.2em] uppercase border transition-all ${
+          className={`flex-1 min-w-[140px] px-3 py-2 rounded-lg text-[10px] font-semibold tracking-[0.2em] uppercase border transition-all ${
             enviada ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
                     : marcarBloqueado ? 'bg-white/[0.03] text-white/25 border-white/10 cursor-not-allowed'
                     : 'bg-blue-500/15 text-blue-300 border-blue-500/30 hover:bg-blue-500/25'
@@ -3683,6 +3694,7 @@ function FotosConvidadosSub({
           {busy ? 'A guardar…' : enviada ? '✓ Fotos Enviadas' : marcarBloqueado ? '🔒 Bloqueado' : 'Marcar Fotos Enviadas'}
         </button>
         <ListaConvidadosButton referencia={referencia} listaKey={listaKey} label={label} lista={lista} onListaChange={onListaChange} />
+        <WorkflowButton referencia={referencia} workflowKey={workflowKey} label={label} workflow={workflow} onWorkflowChange={onWorkflowChange} />
       </div>
     </div>
   )
@@ -3778,6 +3790,90 @@ function ListaConvidadosButton({
                 disabled={!novoNome.trim()}
                 className="px-4 py-2 rounded-lg text-[11px] font-semibold tracking-[0.2em] uppercase border bg-blue-500/15 text-blue-300 border-blue-500/30 hover:bg-blue-500/25 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
                 + Adicionar
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
+  )
+}
+
+// ─── WorkflowButton — botão "+ Workflow" + modal com textarea (controlado) ──
+function WorkflowButton({
+  referencia, workflowKey, label, workflow, onWorkflowChange,
+}: { referencia: string; workflowKey: string; label: string; workflow: string; onWorkflowChange: (next: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [draft, setDraft] = useState(workflow)
+  const [saving, setSaving] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
+  useEffect(() => { if (open) setDraft(workflow) }, [open, workflow])
+
+  async function guardar() {
+    setSaving(true)
+    try {
+      onWorkflowChange(draft)
+      await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia, updates: { settings: { [workflowKey]: draft } } }) })
+      setOpen(false)
+    } finally { setSaving(false) }
+  }
+
+  useEffect(() => {
+    if (!open) return
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open])
+
+  return (
+    <>
+      <button onClick={() => setOpen(true)}
+        title={workflow ? 'Ver / editar workflow' : 'Adicionar workflow de envio'}
+        className={`px-3 py-2 rounded-lg text-[10px] font-semibold tracking-[0.2em] uppercase border transition-all ${
+          workflow
+            ? 'border-blue-400/30 text-blue-300 bg-blue-500/[0.05] hover:bg-blue-500/[0.12]'
+            : 'border-white/15 text-white/60 hover:bg-white/[0.05] hover:text-white/85'
+        }`}>
+        {workflow ? '✓ Workflow' : '+ Workflow'}
+      </button>
+      {mounted && open && createPortal(
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setOpen(false)}>
+          <div className="bg-[#0f0f0f] border border-white/10 rounded-2xl p-6 max-w-lg w-full max-h-[85vh] overflow-y-auto flex flex-col gap-4"
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between gap-3 border-b border-white/[0.06] pb-3">
+              <div>
+                <p className="text-[9px] tracking-[0.4em] uppercase text-blue-300/70">Workflow de Envio</p>
+                <h3 className="text-sm text-white/85 font-semibold mt-0.5">{label}</h3>
+              </div>
+              <button onClick={() => setOpen(false)}
+                className="w-7 h-7 flex items-center justify-center rounded-full border border-white/10 text-white/40 hover:text-white/80 hover:border-white/30">✕</button>
+            </div>
+
+            <p className="text-[11px] text-blue-300/80 bg-blue-500/[0.06] border border-blue-500/20 rounded-md px-3 py-2 leading-snug">
+              Descreve aqui o procedimento de envio das fotos aos convidados (passos, contactos, observações).
+            </p>
+
+            <textarea
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              placeholder="Ex: 1. Verificar lista de convidados&#10;2. Preparar pasta partilhada Google Drive&#10;3. Enviar email com link a cada nome…"
+              rows={10}
+              className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-3 text-sm text-white/85 placeholder-white/25 focus:outline-none focus:border-blue-400/40 font-mono leading-relaxed resize-y min-h-[180px]"
+              autoFocus
+            />
+
+            <div className="flex gap-2 pt-3 border-t border-white/[0.06] justify-end">
+              <button onClick={() => setOpen(false)}
+                className="px-4 py-2 rounded-lg text-[11px] font-semibold tracking-[0.2em] uppercase border border-white/10 text-white/50 hover:bg-white/[0.04]">
+                Cancelar
+              </button>
+              <button onClick={guardar} disabled={saving}
+                className="px-5 py-2 rounded-lg text-[11px] font-semibold tracking-[0.2em] uppercase border bg-blue-500/20 text-blue-300 border-blue-500/30 hover:bg-blue-500/30 disabled:opacity-50 disabled:cursor-wait transition-all">
+                {saving ? 'A guardar…' : 'Guardar'}
               </button>
             </div>
           </div>
