@@ -3734,29 +3734,48 @@ function UrlEntryCard({
       {saving && <p className="text-[11px] text-gold/50 italic">A guardar URL...</p>}
 
       {/* Estado — para Seleção, Provas e Editadas */}
-      {STATUS_OPTIONS_BY_TIPO[field.tipo] && (
-        <div className="pt-2.5 mt-1 border-t border-white/[0.04]">
-          <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 mb-1.5">
-            {STATUS_LABEL_BY_TIPO[field.tipo] ?? 'Estado'}
-          </p>
-          <div className="grid grid-cols-2 gap-1">
-            {STATUS_OPTIONS_BY_TIPO[field.tipo].map(opt => {
-              const active = status === opt
-              return (
-                <button key={opt}
-                  disabled={locked}
-                  onClick={e => { e.stopPropagation(); saveStatus(opt) }}
-                  className={`text-[11px] px-2 py-1.5 rounded-md tracking-wider uppercase font-semibold border transition-all ${locked ? 'opacity-40 cursor-not-allowed' : ''} ${
-                    active ? STATUS_CLS[opt] : 'bg-transparent text-white/45 border-white/[0.06] hover:text-white/75 hover:border-white/15'
-                  }`}>
-                  {opt}
-                </button>
-              )
-            })}
+      {STATUS_OPTIONS_BY_TIPO[field.tipo] && (() => {
+        const options = STATUS_OPTIONS_BY_TIPO[field.tipo]
+        const currentIdx = options.indexOf(status)
+        return (
+          <div className="pt-2.5 mt-1 border-t border-white/[0.04]">
+            <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 mb-1.5">
+              {STATUS_LABEL_BY_TIPO[field.tipo] ?? 'Estado'}
+            </p>
+            <div className="grid grid-cols-2 gap-1">
+              {options.map((opt, idx) => {
+                const active = status === opt
+                // Estados anteriores ao atual ficam bloqueados (workflow one-way)
+                const isPrevious = currentIdx >= 0 && idx < currentIdx
+                const isDisabled = locked || isPrevious
+                return (
+                  <button key={opt}
+                    disabled={isDisabled}
+                    title={isPrevious ? 'Estado anterior bloqueado — não é possível voltar atrás' : undefined}
+                    onClick={e => { e.stopPropagation(); if (!isDisabled) saveStatus(opt) }}
+                    className={`relative text-[11px] px-2 py-1.5 rounded-md tracking-wider uppercase font-semibold border transition-all ${
+                      locked
+                        ? 'opacity-40 cursor-not-allowed'
+                        : isPrevious
+                          ? 'opacity-35 cursor-not-allowed bg-white/[0.02] text-white/35 border-white/[0.05]'
+                          : ''
+                    } ${
+                      active
+                        ? STATUS_CLS[opt]
+                        : !isPrevious && !locked
+                          ? 'bg-transparent text-white/45 border-white/[0.06] hover:text-white/75 hover:border-white/15'
+                          : 'bg-transparent text-white/30 border-white/[0.04]'
+                    }`}>
+                    {isPrevious && <span className="absolute top-1 right-1.5 text-[8px] opacity-60">🔒</span>}
+                    {opt}
+                  </button>
+                )
+              })}
+            </div>
+            {savingStatus && <p className="text-[10px] text-gold/50 italic mt-1">A guardar...</p>}
           </div>
-          {savingStatus && <p className="text-[10px] text-gold/50 italic mt-1">A guardar...</p>}
-        </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
