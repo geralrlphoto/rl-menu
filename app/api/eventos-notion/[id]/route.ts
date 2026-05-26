@@ -309,6 +309,76 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           } catch { /* ignora se colunas não existem */ }
         }
       }
+
+      // ── Sync ESTADOS para freelancer_casamentos (bidireccional) ───────────
+      // Quando admin edita sel_fotos_estado/video_estado/album_estado/fotos_edicao_estado,
+      // propaga para freelancer_casamentos.status_selecao/_video/_album/_editadas.
+      //
+      // Mapeamento portal (capitalizado) → freelancer (UPPERCASE):
+      const STATUS_PORTAL_TO_FREELANCER: Record<string, Record<string, string>> = {
+        sel_fotos_estado: {
+          'Aguardar':  'AGUARDAR',
+          'Em Edição': 'EM SELEÇÃO',
+          'Concluído': 'SELECIONADAS',
+          'Entregue':  'ENTREGUE',
+        },
+        fotos_edicao_estado: {
+          'Aguardar':  'AGUARDAR',
+          'Em Edição': 'EM EDIÇÃO',
+          'Concluído': 'EDITADAS',
+          'Entregue':  'ENTREGUE',
+        },
+        album_estado: {
+          'Aguardar':       'AGUARDAR',
+          'Em Edição':      'EM EDIÇÃO',
+          'Em Aprovação':   'EM EDIÇÃO',
+          'Aprovado':       'CONCLUIDO',
+          'Concluído':      'CONCLUIDO',
+          'Entregue':       'ENTREGUE',
+        },
+      }
+      const PORTAL_TO_FC_COL: Record<string, string> = {
+        sel_fotos_estado:    'status_selecao',
+        fotos_edicao_estado: 'status_editadas',
+        album_estado:        'status_album',
+      }
+      const statusUpdates: Record<string, string> = {}
+      for (const [portalKey, mapping] of Object.entries(STATUS_PORTAL_TO_FREELANCER)) {
+        if (body[portalKey] === undefined) continue
+        const portalVal = String(body[portalKey] ?? '')
+        const fcVal = mapping[portalVal]
+        if (!fcVal) continue
+        statusUpdates[PORTAL_TO_FC_COL[portalKey]] = fcVal
+      }
+      if (Object.keys(statusUpdates).length > 0) {
+        const refForFc = (byNotion?.[0]?.referencia ?? body.referencia) as string | undefined
+        const sb = supabase()
+        // a) Match por referencia (mais fiável)
+        if (refForFc) {
+          await sb.from('freelancer_casamentos').update(statusUpdates).eq('referencia', refForFc).then(() => {}).catch(() => {})
+        }
+        // b) Match por evento_id (notion_id)
+        await sb.from('freelancer_casamentos').update(statusUpdates).eq('evento_id', id).then(() => {}).catch(() => {})
+        // c) Fallback: local + data
+        try {
+          let eventLocal: string | undefined = body.local
+          let eventData: string | undefined = body.data_evento
+          if (!eventLocal || !eventData) {
+            const { data: evRow } = await sb.from(table).select('local, data_evento').eq('id', byNotion?.[0]?.id ?? id).maybeSingle()
+            if (evRow) {
+              eventLocal = eventLocal ?? evRow.local
+              eventData = eventData ?? evRow.data_evento
+            }
+          }
+          if (eventLocal && eventData) {
+            await sb.from('freelancer_casamentos')
+              .update(statusUpdates)
+              .ilike('local', `%${eventLocal}%`)
+              .eq('data_casamento', eventData)
+              .then(() => {}).catch(() => {})
+          }
+        } catch { /* ignora */ }
+      }
     }
 
     if (!notionOk && Object.keys(properties).length > 0) {
