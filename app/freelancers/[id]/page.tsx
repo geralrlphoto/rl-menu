@@ -613,8 +613,24 @@ function FreelancerDetailInner() {
                 </div>
               </div>
 
-              {/* Top-right: notif + messages + profile chip */}
+              {/* Top-right: alerta prazos + notif + messages + profile chip */}
               <div className="flex items-center gap-3 shrink-0">
+                {/* Alerta de prazos críticos (Seleção de Fotos a expirar) */}
+                {prazosCriticos.length > 0 && (
+                  <button title={`${prazosCriticos.length} prazo${prazosCriticos.length === 1 ? '' : 's'} a terminar — Seleção de Fotos`}
+                    onClick={() => setTab('casamentos')}
+                    className="relative w-10 h-10 rounded-full border bg-black/40 backdrop-blur-md transition-all flex items-center justify-center bell-red-glow border-red-500/60 text-red-300 hover:text-red-200 hover:border-red-400/80">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                      <line x1="12" y1="9" x2="12" y2="13"/>
+                      <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1 border border-red-300"
+                      style={{ boxShadow: '0 0 8px rgba(239,68,68,0.8)' }}>
+                      {prazosCriticos.length > 9 ? '9+' : prazosCriticos.length}
+                    </span>
+                  </button>
+                )}
                 {(() => {
                   const notifNaoLidas = notificacoes.filter(n => !n.lida).length
                   const hasUnread = notifNaoLidas > 0
