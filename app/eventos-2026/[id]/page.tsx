@@ -793,6 +793,20 @@ function FotosSelecaoRef({ referencia }: { referencia: string }) {
 
 // ─── Editor de Tipo de Evento (multi-select com badges) ───────────────────────
 const TIPOS_EVENTO_OPTIONS = ['CASAMENTO', 'BATIZADO', 'ANIVERSÁRIO', 'SESSÃO FOTO', 'CORPORATIVO']
+const SERVICOS_DIA_OPTIONS = [
+  'Making Off Noiva',
+  'Making Off Noivo',
+  'Cerimónia Civil',
+  'Cerimónia Igreja',
+  'Cocktail',
+  'Banquete',
+  'Corte do Bolo',
+  'Dança dos Noivos',
+  'Festa',
+  'Sessão Noivos',
+  'Foto Lembrança',
+  'Sneak Peak',
+]
 
 function TipoEventoEditor({ value, eventId, referencia, onSaved }: {
   value: string[]
@@ -872,6 +886,86 @@ function TipoEventoEditor({ value, eventId, referencia, onSaved }: {
             <p className="text-[10px] tracking-[0.3em] text-gold/60 uppercase mb-2">Tipo de Evento</p>
             <div className="flex flex-col gap-1.5">
               {TIPOS_EVENTO_OPTIONS.map(opt => {
+                const checked = local.includes(opt)
+                return (
+                  <button key={opt} onClick={() => toggle(opt)}
+                    className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs transition-all text-left ${checked ? 'bg-gold/15 border border-gold/30 text-gold' : 'hover:bg-white/[0.04] text-white/60 border border-transparent'}`}>
+                    <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${checked ? 'border-gold bg-gold/30' : 'border-white/25'}`}>
+                      {checked && <span className="text-gold text-[9px]">✓</span>}
+                    </span>
+                    {opt}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── ServicosDiaEditor — multi-select inline para serviços do dia ─────────────
+function ServicosDiaEditor({ value, eventId, onSaved }: {
+  value: string[]
+  eventId: string
+  onSaved: (arr: string[]) => void
+}) {
+  const [open, setOpen]   = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [local, setLocal] = useState<string[]>(value ?? [])
+
+  useEffect(() => { setLocal(value ?? []) }, [JSON.stringify(value)])
+
+  async function persist(next: string[]) {
+    setSaving(true)
+    try {
+      await fetch(`/api/eventos-notion/${eventId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ servicos_dia: next }),
+      }).catch(() => null)
+      onSaved(next)
+    } finally { setSaving(false) }
+  }
+
+  async function toggle(opt: string) {
+    const next = local.includes(opt) ? local.filter(x => x !== opt) : [...local, opt]
+    setLocal(next)
+    await persist(next)
+  }
+
+  return (
+    <div className="relative inline-flex flex-wrap gap-2 items-center">
+      {local.length === 0 ? (
+        <button onClick={() => setOpen(o => !o)}
+          className="text-xs px-3 py-1 rounded-full border border-dashed border-gold/40 text-gold/60 hover:border-gold hover:text-gold hover:bg-gold/5 transition-all">
+          + Serviços do Dia
+        </button>
+      ) : (
+        <>
+          {local.map(t => (
+            <button key={t} onClick={() => toggle(t)}
+              title="Clica para remover"
+              className="group flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-gold/10 border border-gold/25 text-gold/85 hover:bg-red-500/15 hover:border-red-500/30 hover:text-red-400 transition-all tracking-wide">
+              {t}
+              <span className="opacity-0 group-hover:opacity-100 transition-opacity">×</span>
+            </button>
+          ))}
+          <button onClick={() => setOpen(o => !o)}
+            className="text-[10px] px-2 py-1 rounded-full border border-white/15 text-white/40 hover:border-gold/40 hover:text-gold/70 transition-all">
+            ✎ Editar
+          </button>
+        </>
+      )}
+      {saving && <span className="text-[10px] text-gold/40 animate-pulse">A guardar...</span>}
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute top-full left-0 mt-2 z-50 rounded-xl border border-white/15 bg-[#0d0d0e] p-3 min-w-[240px] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.8)]">
+            <p className="text-[10px] tracking-[0.3em] text-gold/60 uppercase mb-2">Serviços do Dia</p>
+            <div className="flex flex-col gap-1.5 max-h-[300px] overflow-y-auto">
+              {SERVICOS_DIA_OPTIONS.map(opt => {
                 const checked = local.includes(opt)
                 return (
                   <button key={opt} onClick={() => toggle(opt)}
@@ -2590,9 +2684,11 @@ export default function EventoPage() {
           {(e.tipo_servico ?? []).map(t => (
             <span key={t} className="text-xs px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/25 text-blue-400/80">{t}</span>
           ))}
-          {(e.servicos_dia ?? []).map((t: string) => (
-            <span key={t} className="text-xs px-2.5 py-1 rounded-full bg-gold/10 border border-gold/30 text-gold/85 tracking-wide">{t}</span>
-          ))}
+          <ServicosDiaEditor
+            value={e.servicos_dia ?? []}
+            eventId={e.id}
+            onSaved={(arr) => handleSaved('servicos_dia', arr)}
+          />
         </div>
         <p className="print:hidden text-[10px] text-white/15 mt-3 tracking-wider">Clica em qualquer campo para editar · guarda automaticamente no Notion</p>
       </div>

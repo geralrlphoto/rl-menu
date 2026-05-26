@@ -68,6 +68,7 @@ const FIELD_MAP: Record<string, { key: string; type: string }> = {
   nome_disco:       { key: 'NOME DO DISCO',              type: 'multi_select' },
   backup_disco:     { key: 'BACKUP DISCO',               type: 'multi_select' },
   servico_extra:        { key: 'SERVIÇO EXTRA',              type: 'multi_select' },
+  servicos_dia:         { key: 'SERVIÇOS DO DIA',            type: 'multi_select' },
   fotos_edicao_estado:  { key: 'FOTOS P/ EDIÇÃO',            type: 'select' },
   sel_fotos_estado:     { key: 'ESTADO SEL. FOTOS',          type: 'select' },
   video_estado:         { key: 'ESTADO DO VIDEO',            type: 'select' },
@@ -206,6 +207,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       fotografo:           'fotografo',
       tipo_evento:         'tipo_evento',
       tipo_servico:        'tipo_servico',
+      servicos_dia:        'servicos_dia',
       referencia:          'referencia',
       fotos_enviadas:      'fotos_enviadas',
       // Estado das Entregas — guardados em Supabase para fiabilidade
@@ -222,7 +224,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     // Colunas que são text (guardam JSON string)
     const JSON_STRING_COLS = new Set(['tipo_evento', 'fotografo'])
     // Colunas que são array Postgres (text[])
-    const PG_ARRAY_COLS = new Set(['tipo_servico'])
+    const PG_ARRAY_COLS = new Set(['tipo_servico', 'servicos_dia'])
     for (const [internal, col] of Object.entries(eventosSyncMap)) {
       if (body[internal] !== undefined) {
         const v = body[internal]
