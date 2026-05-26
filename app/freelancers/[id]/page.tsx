@@ -3525,16 +3525,25 @@ function UrlEntryCard({
 
   async function saveStatus(newStatus: string) {
     if (newStatus === status) return
+    const previous = status
     setStatus(newStatus)
     setSavingStatus(true)
     try {
       const statusCol = STATUS_COL_BY_TIPO[field.tipo]
       if (!statusCol) return
-      await fetch('/api/freelancer-casamentos', {
+      const res = await fetch('/api/freelancer-casamentos', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: casamentoId, [statusCol]: newStatus }),
       })
+      const data = await res.json().catch(() => ({}))
+      // Se a coluna não existir, devolve `failed: { [col]: msg }`
+      if (data?.failed && data.failed[statusCol]) {
+        console.error(`[saveStatus] ${statusCol} falhou:`, data.failed[statusCol])
+        // Reverte localmente
+        setStatus(previous)
+        alert(`Não foi possível guardar o estado.\n\nA coluna "${statusCol}" não existe na base de dados.\n\nPara resolver, corre o seguinte SQL no Supabase:\n\nALTER TABLE freelancer_casamentos\nADD COLUMN IF NOT EXISTS status_selecao TEXT,\nADD COLUMN IF NOT EXISTS status_editadas TEXT,\nADD COLUMN IF NOT EXISTS status_album TEXT,\nADD COLUMN IF NOT EXISTS status_provas TEXT;`)
+      }
     } finally { setSavingStatus(false) }
   }
 

@@ -140,24 +140,25 @@ export async function PATCH(req: NextRequest) {
     await supabase.from('freelancer_casamentos').update(tsFields).eq('id', id).then(() => {}).catch(() => {})
   }
 
-  // 3 — save optional fields — silently ignored se coluna não existir
+  // 3 — save optional fields — devolve diagnóstico para o cliente
+  const optErrors: Record<string, string> = {}
+  const optSaved: string[] = []
   if (Object.keys(optFields).length > 0) {
-    // PASSO 3a — guardar PRIMEIRO os campos opcionais "core" sem os timestamps
-    //            de alteração de estado, para não falhar se essas colunas não
-    //            existirem ainda na DB. Os status são CRÍTICOS — não podem ser
-    //            silenciosamente perdidos.
-    const { error } = await supabase.from('freelancer_casamentos').update(optFields).eq('id', id)
-    if (error) {
-      // Tenta um por um (degrada gracioso por coluna em falta)
-      for (const [k, v] of Object.entries(optFields)) {
-        const { error: e2 } = await supabase.from('freelancer_casamentos').update({ [k]: v }).eq('id', id)
-        if (e2) console.warn(`[freelancer-casamentos PATCH] coluna '${k}' falhou:`, e2.message)
+    // PASSO 3a — guarda os campos opcionais "core" (status_*, url_*, etc.)
+    //            Cada coluna em separado para isolar falhas: se status_album
+    //            não tiver coluna na DB, ainda assim outras (url_*) gravam.
+    for (const [k, v] of Object.entries(optFields)) {
+      const { error: eCol } = await supabase.from('freelancer_casamentos').update({ [k]: v }).eq('id', id)
+      if (eCol) {
+        optErrors[k] = eCol.message
+        console.warn(`[freelancer-casamentos PATCH] coluna '${k}' falhou:`, eCol.message)
+      } else {
+        optSaved.push(k)
       }
     }
 
-    // PASSO 3b — separadamente tenta gravar os timestamps de alteração de
-    //            estado. Se as colunas não existirem, falha em silêncio
-    //            (não afeta o save do status em si).
+    // PASSO 3b — timestamps de alteração de estado (sino do admin).
+    //            Falha silenciosa se as colunas alterado_em não existirem.
     const nowIso = new Date().toISOString()
     const tsMap: Record<string, string> = {}
     if (optFields.status_selecao  !== undefined) tsMap.status_selecao_alterado_em  = nowIso
@@ -283,7 +284,12 @@ export async function PATCH(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true })
+  // Devolve diagnóstico: colunas que falharam (para o frontend mostrar)
+  return NextResponse.json({
+    ok: true,
+    saved: optSaved,
+    failed: Object.keys(optErrors).length > 0 ? optErrors : undefined,
+  })
 }
 
 export async function DELETE(req: NextRequest) {
