@@ -657,68 +657,6 @@ function FreelancerDetailInner() {
             </div>
           )}
 
-          {/* ── Prazos de Entrega · Seleção de Fotos (30 dias após evento) ── */}
-          {prazosSelecao.length > 0 && (
-            <div className={`fade-in-1 mb-6 rounded-2xl p-5 sm:p-6 transition-all ${
-              prazosCriticos.length > 0
-                ? 'prazo-critico-glow border border-red-500/40 bg-gradient-to-br from-red-500/[0.10] to-red-500/[0.02]'
-                : 'border border-amber-500/25 bg-gradient-to-br from-amber-500/[0.05] to-amber-500/[0.01]'
-            }`}>
-              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-                <div className="flex items-center gap-3">
-                  <p className={`text-[12px] tracking-[0.4em] uppercase font-semibold ${
-                    prazosCriticos.length > 0 ? 'text-red-300' : 'text-amber-300/90'
-                  }`}>
-                    {prazosCriticos.length > 0 ? '⚠ Prazo Crítico' : '◷ Prazos a Cumprir'} · Seleção de Fotos
-                  </p>
-                  {prazosCriticos.length > 0 && (
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-red-500/20 border border-red-500/40 text-red-200 font-bold uppercase tracking-wider animate-pulse">
-                      {prazosCriticos.length} {prazosCriticos.length === 1 ? 'urgente' : 'urgentes'}
-                    </span>
-                  )}
-                </div>
-                <p className="text-[12px] text-white/40 italic" style={{ fontFamily: 'Georgia, serif' }}>30 dias após cada evento</p>
-              </div>
-              <div className="space-y-2">
-                {prazosSelecao.slice(0, 5).map(p => {
-                  const critical = p.daysLeft <= PRAZO_AVISO_DIAS
-                  const expired = p.daysLeft < 0
-                  // Format deadline defensively — toLocaleDateString may throw on Invalid Date in some envs
-                  let deadlineLabel = '—'
-                  try {
-                    if (!isNaN(p.deadline.getTime())) {
-                      const dd = String(p.deadline.getDate()).padStart(2, '0')
-                      deadlineLabel = `${dd} ${MESES[p.deadline.getMonth()]}`
-                    }
-                  } catch { /* keep '—' */ }
-                  return (
-                    <button key={p.c.id} onClick={() => setTab('casamentos')}
-                      className={`w-full flex items-center justify-between gap-3 p-3 rounded-xl border transition-all text-left ${
-                        critical
-                          ? 'border-red-500/35 bg-red-500/[0.06] hover:bg-red-500/[0.1]'
-                          : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.04]'
-                      }`}>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[14px] text-white truncate font-medium">{p.c.local}</p>
-                        <p className="text-[12px] text-white/50 italic mt-0.5" style={{ fontFamily: 'Georgia, serif' }}>
-                          Evento: {fmtDate(p.c.data_casamento).split(' · ')[0]} · Prazo até {deadlineLabel}
-                        </p>
-                      </div>
-                      <div className={`text-right shrink-0 ${critical ? 'text-red-300' : 'text-amber-300/90'}`}>
-                        <p className="text-2xl font-light leading-none tabular-nums" style={{ fontFamily: 'Georgia, serif' }}>
-                          {expired ? `+${Math.abs(p.daysLeft)}` : p.daysLeft}
-                        </p>
-                        <p className="text-[10px] tracking-[0.3em] uppercase mt-1 font-semibold">
-                          {expired ? 'atraso' : (p.daysLeft === 1 ? 'dia' : 'dias')}
-                        </p>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
           {/* ── CTAs ─────────────────────────────────────────────── */}
           <div className="flex flex-wrap items-center gap-3 mb-6 fade-in-2">
             <button onClick={() => setTab('casamentos')}
@@ -1031,6 +969,67 @@ function FreelancerDetailInner() {
             </div>
 
           </div>
+
+          {/* ── Prazos de Entrega · Seleção de Fotos (30 dias após evento) ── */}
+          {prazosSelecao.length > 0 && (
+            <div className={`mb-5 rounded-2xl p-5 sm:p-6 transition-all ${
+              prazosCriticos.length > 0
+                ? 'prazo-critico-glow border border-red-500/40 bg-gradient-to-br from-red-500/[0.10] to-red-500/[0.02]'
+                : 'border border-amber-500/25 bg-gradient-to-br from-amber-500/[0.05] to-amber-500/[0.01]'
+            }`}>
+              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <div className="flex items-center gap-3">
+                  <p className={`text-[12px] tracking-[0.4em] uppercase font-semibold ${
+                    prazosCriticos.length > 0 ? 'text-red-300' : 'text-amber-300/90'
+                  }`}>
+                    {prazosCriticos.length > 0 ? '⚠ Prazo Crítico' : '◷ Prazos a Cumprir'} · Seleção de Fotos
+                  </p>
+                  {prazosCriticos.length > 0 && (
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-red-500/20 border border-red-500/40 text-red-200 font-bold uppercase tracking-wider animate-pulse">
+                      {prazosCriticos.length} {prazosCriticos.length === 1 ? 'urgente' : 'urgentes'}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[12px] text-white/40 italic" style={{ fontFamily: 'Georgia, serif' }}>30 dias após cada evento</p>
+              </div>
+              <div className="space-y-2">
+                {prazosSelecao.slice(0, 5).map(p => {
+                  const critical = p.daysLeft <= PRAZO_AVISO_DIAS
+                  const expired = p.daysLeft < 0
+                  let deadlineLabel = '—'
+                  try {
+                    if (!isNaN(p.deadline.getTime())) {
+                      const dd = String(p.deadline.getDate()).padStart(2, '0')
+                      deadlineLabel = `${dd} ${MESES[p.deadline.getMonth()]}`
+                    }
+                  } catch { /* keep '—' */ }
+                  return (
+                    <button key={p.c.id} onClick={() => setTab('casamentos')}
+                      className={`w-full flex items-center justify-between gap-3 p-3 rounded-xl border transition-all text-left ${
+                        critical
+                          ? 'border-red-500/35 bg-red-500/[0.06] hover:bg-red-500/[0.1]'
+                          : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.04]'
+                      }`}>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[14px] text-white truncate font-medium">{p.c.local}</p>
+                        <p className="text-[12px] text-white/50 italic mt-0.5" style={{ fontFamily: 'Georgia, serif' }}>
+                          Evento: {fmtDate(p.c.data_casamento).split(' · ')[0]} · Prazo até {deadlineLabel}
+                        </p>
+                      </div>
+                      <div className={`text-right shrink-0 ${critical ? 'text-red-300' : 'text-amber-300/90'}`}>
+                        <p className="text-2xl font-light leading-none tabular-nums" style={{ fontFamily: 'Georgia, serif' }}>
+                          {expired ? `+${Math.abs(p.daysLeft)}` : p.daysLeft}
+                        </p>
+                        <p className="text-[10px] tracking-[0.3em] uppercase mt-1 font-semibold">
+                          {expired ? 'atraso' : (p.daysLeft === 1 ? 'dia' : 'dias')}
+                        </p>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             <div className="lg:col-span-2 flex flex-col gap-5">
