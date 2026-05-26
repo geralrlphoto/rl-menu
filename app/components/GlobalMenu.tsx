@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
@@ -85,10 +85,13 @@ const LINKS = [
 
 export default function GlobalMenu() {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [open, setOpen] = useState(false)
 
   const isHidden = HIDDEN_EXACT.includes(pathname) || HIDDEN_PATHS.some(p => pathname.startsWith(p))
-  if (isHidden) return null
+  // Esconder também quando ?view=freelancer (modo "Ver como Freelancer")
+  const isFreelancerView = searchParams?.get('view') === 'freelancer'
+  if (isHidden || isFreelancerView) return null
 
   // Em paths colapsados: sidebar permanente escondida, só botão flutuante (drawer)
   const isCollapsed = COLLAPSED_PATHS.some(p => pathname.startsWith(p))

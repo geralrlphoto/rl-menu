@@ -522,8 +522,8 @@ export default function FreelancersPage() {
                               ✦ Maquete
                             </Link>
 
-                            {/* Botão Ver como Freelancer: abre a ficha do freelancer em nova tab */}
-                            <Link href={`/freelancers/${f.id}`} target="_blank" rel="noopener noreferrer"
+                            {/* Botão Ver como Freelancer: abre a ficha do freelancer em nova tab (sem menu admin) */}
+                            <Link href={`/freelancers/${f.id}?view=freelancer`} target="_blank" rel="noopener noreferrer"
                               className="flex-shrink-0 inline-flex items-center gap-1.5 text-[10px] px-3 py-1.5 rounded-lg border tracking-widest uppercase font-bold transition-all hover:scale-[1.02]"
                               style={{
                                 background: 'linear-gradient(135deg, rgba(52,211,153,0.12), rgba(52,211,153,0.03))',
