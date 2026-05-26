@@ -87,6 +87,9 @@ const OPTIONAL_COLS = [
   'url_selecao', 'url_provas', 'url_editadas', 'url_album',
   'url_selecao_enviado_em', 'url_provas_enviado_em', 'url_editadas_enviado_em', 'url_album_enviado_em',
   'status_editadas', 'status_selecao', 'status_provas', 'status_album',
+  // Timestamps de alteração de estado (para notificações ao admin)
+  'status_selecao_alterado_em', 'status_editadas_alterado_em',
+  'status_album_alterado_em', 'status_provas_alterado_em',
 ] as const
 
 export async function POST(req: NextRequest) {
@@ -139,6 +142,14 @@ export async function PATCH(req: NextRequest) {
 
   // 3 — save optional fields — silently ignored se coluna não existir
   if (Object.keys(optFields).length > 0) {
+    // Auto-set status_*_alterado_em quando um status muda
+    //   (sino do admin para detectar atualizações em tempo real)
+    const nowIso = new Date().toISOString()
+    if (optFields.status_selecao  !== undefined && optFields.status_selecao_alterado_em  === undefined) optFields.status_selecao_alterado_em  = nowIso
+    if (optFields.status_editadas !== undefined && optFields.status_editadas_alterado_em === undefined) optFields.status_editadas_alterado_em = nowIso
+    if (optFields.status_album    !== undefined && optFields.status_album_alterado_em    === undefined) optFields.status_album_alterado_em    = nowIso
+    if (optFields.status_provas   !== undefined && optFields.status_provas_alterado_em   === undefined) optFields.status_provas_alterado_em   = nowIso
+
     // Tenta tudo de uma vez primeiro; se falhar, tenta um por um para isolar
     const { error } = await supabase.from('freelancer_casamentos').update(optFields).eq('id', id)
     if (error) {

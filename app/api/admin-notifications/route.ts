@@ -9,19 +9,27 @@ function db() {
 }
 
 const TIPO_LABELS: Record<string, string> = {
-  selecao:       'Seleção de Fotos',
-  provas:        'Fotos Prova',
-  editadas:      'Fotos Editadas',
-  album:         'Maquete Álbum',
-  nova_selecao:  'Nova Seleção dos Noivos',
+  selecao:              'Seleção de Fotos',
+  provas:               'Fotos Prova',
+  editadas:             'Fotos Editadas',
+  album:                'Maquete Álbum',
+  nova_selecao:         'Nova Seleção dos Noivos',
+  status_selecao:       'Estado · Seleção de Fotos',
+  status_editadas:      'Estado · Fotos Editadas',
+  status_album:         'Estado · Maquete Álbum',
+  status_provas:        'Estado · Fotos Prova',
 }
 
 const TIPO_ICONS: Record<string, string> = {
-  selecao:       '◫',
-  provas:        '◧',
-  editadas:      '✓',
-  album:         '◐',
-  nova_selecao:  '★',
+  selecao:              '◫',
+  provas:               '◧',
+  editadas:             '✓',
+  album:                '◐',
+  nova_selecao:         '★',
+  status_selecao:       '◫',
+  status_editadas:      '✓',
+  status_album:         '◐',
+  status_provas:        '◧',
 }
 
 type Notif = {
@@ -44,11 +52,26 @@ export async function GET() {
   // Buscar casamentos com qualquer url_*_enviado_em preenchido (com tolerância a colunas ausentes)
   // Trazemos também o nome do freelancer via join manual
   try {
-    const { data: casamentos, error } = await supabase
+    // Inclui também as colunas de status + timestamps de alteração
+    //   Se alguma coluna não existir, faz fallback ao select sem essas colunas
+    let casamentos: any[] | null = null
+    let error: any = null
+    const cols = 'id, freelancer_id, local, data_casamento, url_selecao, url_provas, url_editadas, url_album, url_selecao_enviado_em, url_provas_enviado_em, url_editadas_enviado_em, url_album_enviado_em, status_selecao, status_editadas, status_album, status_provas, status_selecao_alterado_em, status_editadas_alterado_em, status_album_alterado_em, status_provas_alterado_em'
+    let res = await supabase
       .from('freelancer_casamentos')
-      .select('id, freelancer_id, local, data_casamento, url_selecao, url_provas, url_editadas, url_album, url_selecao_enviado_em, url_provas_enviado_em, url_editadas_enviado_em, url_album_enviado_em')
+      .select(cols)
       .order('data_casamento', { ascending: false })
       .limit(200)
+    if (res.error) {
+      // Fallback: apenas colunas core (sem status/alterado_em)
+      res = await supabase
+        .from('freelancer_casamentos')
+        .select('id, freelancer_id, local, data_casamento, url_selecao, url_provas, url_editadas, url_album, url_selecao_enviado_em, url_provas_enviado_em, url_editadas_enviado_em, url_album_enviado_em')
+        .order('data_casamento', { ascending: false })
+        .limit(200)
+    }
+    casamentos = res.data
+    error = res.error
 
     if (error) {
       // Provavelmente colunas ainda não foram criadas — devolve array vazio
@@ -88,6 +111,36 @@ export async function GET() {
           data_casamento: c.data_casamento,
           url,
           sent_at: sentAt,
+        })
+      }
+    }
+
+    // ── Notificações de ALTERAÇÃO DE ESTADO (status_*_alterado_em) ──
+    // Sempre que o freelancer (ou admin via mesmo PATCH) mexe num status,
+    // a coluna status_*_alterado_em é atualizada → criamos uma notif aqui.
+    const statusTipos = [
+      { col: 'status_selecao_alterado_em',  val: 'status_selecao',  notif_tipo: 'status_selecao'  },
+      { col: 'status_editadas_alterado_em', val: 'status_editadas', notif_tipo: 'status_editadas' },
+      { col: 'status_album_alterado_em',    val: 'status_album',    notif_tipo: 'status_album'    },
+      { col: 'status_provas_alterado_em',   val: 'status_provas',   notif_tipo: 'status_provas'   },
+    ]
+    for (const c of (casamentos ?? []) as any[]) {
+      for (const st of statusTipos) {
+        const ts = c[st.col]
+        const value = c[st.val]
+        if (!ts || !value) continue
+        notifications.push({
+          id: `${st.notif_tipo}::${c.id}::${ts}`,
+          tipo: st.notif_tipo,
+          tipo_label: `${TIPO_LABELS[st.notif_tipo]} — ${value}`,
+          tipo_icon: TIPO_ICONS[st.notif_tipo],
+          casamento_id: c.id,
+          freelancer_id: c.freelancer_id,
+          freelancer_nome: nomesById.get(c.freelancer_id) ?? '—',
+          local: c.local ?? '—',
+          data_casamento: c.data_casamento,
+          url: `/freelancers/${c.freelancer_id}`,
+          sent_at: ts,
         })
       }
     }
