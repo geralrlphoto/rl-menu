@@ -3538,7 +3538,8 @@ function UrlEntryCard({
       const res = await fetch(`/api/fotos-selecao-by-ref?ref=${encodeURIComponent(casamentoReferencia)}`).then(r => r.json())
       const fsId = res?.row?.id
       if (fsId) {
-        window.open(`/secao/${fsId}`, '_blank', 'noopener,noreferrer')
+        // Vai para a página da ficha (apenas a seleção dos noivos — contagens + detalhes)
+        window.open(`/fotos-selecao/${fsId}`, '_blank', 'noopener,noreferrer')
       } else {
         alert('Os noivos ainda não submeteram a seleção de fotos para edição. Quando o fizerem o link fica disponível aqui.')
       }

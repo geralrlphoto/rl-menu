@@ -8,6 +8,13 @@ function db() {
   )
 }
 
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const { data, error } = await db().from('fotos_selecao').select('*').eq('id', id).maybeSingle()
+  if (error) return NextResponse.json({ row: null, error: error.message }, { status: 500 })
+  return NextResponse.json({ row: data ?? null })
+}
+
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const body = await req.json()

@@ -246,6 +246,43 @@ function FichaModal({ row, onClose, onSaved }: {
               }),
             })
           }
+
+          // 2.b — Criar notificação no portal do freelancer (sino)
+          //       Idempotente: evita duplicar se já existe a mesma para este editor+noivos
+          try {
+            const titulo = `★ Nova edição de fotos · ${row.nome_noivos || 'Novo casamento'}`
+            const existingNotifs = await fetch(`/api/freelancer-notificacoes?freelancer_id=${fl.id}`).then(r => r.json())
+            const dup = (existingNotifs.notificacoes ?? []).some((n: any) =>
+              n.titulo === titulo && n.tipo === 'nova_edicao_fotos'
+            )
+            if (!dup) {
+              await fetch('/api/freelancer-notificacoes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  freelancer_id: fl.id,
+                  titulo,
+                  mensagem: `Foi-te atribuída uma nova edição de fotos${row.referencia ? ` (${row.referencia})` : ''}. As fotos selecionadas pelos noivos já estão disponíveis no teu portal.`,
+                  tipo: 'nova_edicao_fotos',
+                  lida: false,
+                }),
+              })
+            }
+          } catch { /* não bloqueia o fluxo */ }
+
+          // 2.c — Enviar email com o card "Nova edição de fotos"
+          try {
+            await fetch('/api/send-edicao-fotos-email', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                freelancer_id: fl.id,
+                nome_noivos:   row.nome_noivos ?? null,
+                referencia:    row.referencia  ?? null,
+              }),
+            })
+          } catch { /* não bloqueia o fluxo */ }
+
           setEditorFeedback(`✓ Enviado para ${fl.nome}`)
         } else {
           setEditorFeedback('⚠ Editor não encontrado nos freelancers')
