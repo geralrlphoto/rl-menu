@@ -149,11 +149,50 @@ export async function PATCH(req: NextRequest) {
     }
   }
 
-  // 4 — Sync para portal dos noivos: quando status_selecao = 'ENTREGUE',
-  //     atualiza sel_fotos_estado='Entregue' em Supabase (eventos_2026/2027)
-  //     E em Notion (propriedade 'ESTADO SEL. FOTOS'), porque o portal lê
-  //     Notion primeiro e só usa Supabase para preencher campos vazios.
-  if (optFields.status_selecao === 'ENTREGUE') {
+  // 4 — Sync para portal dos noivos (bidireccional): qualquer alteração de
+  //     status_selecao/editadas/album propaga para eventos_2026/2027 e Notion.
+  //     O portal lê Notion primeiro → precisamos de atualizar ambos os lados.
+  //
+  // Mapeamento freelancer (UPPERCASE) → portal (capitalized):
+  const FC_TO_PORTAL_STATUS: Record<string, Record<string, string>> = {
+    status_selecao: {
+      'AGUARDAR':     'Aguardar',
+      'EM SELEÇÃO':   'Em Edição',
+      'SELECIONADAS': 'Concluído',
+      'ENTREGUE':     'Entregue',
+    },
+    status_editadas: {
+      'AGUARDAR':  'Aguardar',
+      'EM EDIÇÃO': 'Em Edição',
+      'EDITADAS':  'Concluído',
+      'ENTREGUE':  'Entregue',
+    },
+    status_album: {
+      'AGUARDAR':  'Aguardar',
+      'EM EDIÇÃO': 'Em Edição',
+      'CONCLUIDO': 'Aprovado',
+      'ENTREGUE':  'Entregue',
+    },
+  }
+  const FC_TO_PORTAL_COL: Record<string, { sb: string; notion: string }> = {
+    status_selecao:  { sb: 'sel_fotos_estado',    notion: 'ESTADO SEL. FOTOS' },
+    status_editadas: { sb: 'fotos_edicao_estado', notion: 'FOTOS P/ EDIÇÃO' },
+    status_album:    { sb: 'album_estado',        notion: 'ESTADO ÁLBUM' },
+  }
+  // Recolhe todas as alterações de estado nesta request
+  const eventStatusSb: Record<string, string> = {}
+  const eventStatusNotion: Record<string, any> = {}
+  for (const [fcCol, mapping] of Object.entries(FC_TO_PORTAL_STATUS)) {
+    if (optFields[fcCol] === undefined) continue
+    const fcVal = String(optFields[fcCol] ?? '')
+    const portalVal = mapping[fcVal]
+    if (!portalVal) continue
+    const cols = FC_TO_PORTAL_COL[fcCol]
+    eventStatusSb[cols.sb] = portalVal
+    eventStatusNotion[cols.notion] = { select: { name: portalVal } }
+  }
+
+  if (Object.keys(eventStatusSb).length > 0) {
     try {
       const { data: fc } = await supabase
         .from('freelancer_casamentos')
@@ -171,7 +210,7 @@ export async function PATCH(req: NextRequest) {
           if (fc.referencia) {
             const { data } = await supabase.from(t).select('id, notion_id').eq('referencia', fc.referencia).maybeSingle()
             if (data) {
-              await supabase.from(t).update({ sel_fotos_estado: 'Entregue' }).eq('id', data.id)
+              await supabase.from(t).update(eventStatusSb).eq('id', data.id)
               notionId = data.notion_id ?? null
               matchedTable = t
               continue
@@ -182,7 +221,7 @@ export async function PATCH(req: NextRequest) {
             const { data } = await supabase.from(t).select('id, notion_id')
               .or(`notion_id.eq.${fc.evento_id},id.eq.${fc.evento_id}`).maybeSingle()
             if (data) {
-              await supabase.from(t).update({ sel_fotos_estado: 'Entregue' }).eq('id', data.id)
+              await supabase.from(t).update(eventStatusSb).eq('id', data.id)
               notionId = data.notion_id ?? fc.evento_id
               matchedTable = t
               continue
@@ -193,7 +232,7 @@ export async function PATCH(req: NextRequest) {
             const { data } = await supabase.from(t).select('id, notion_id')
               .ilike('local', fc.local).eq('data_evento', fc.data_casamento).maybeSingle()
             if (data) {
-              await supabase.from(t).update({ sel_fotos_estado: 'Entregue' }).eq('id', data.id)
+              await supabase.from(t).update(eventStatusSb).eq('id', data.id)
               notionId = data.notion_id ?? null
               matchedTable = t
               continue
@@ -201,8 +240,8 @@ export async function PATCH(req: NextRequest) {
           }
         }
 
-        // 2) Se conseguimos um notion_id real, atualiza também a propriedade
-        //    'ESTADO SEL. FOTOS' no Notion — é o que o portal lê primeiro.
+        // 2) Se conseguimos um notion_id real, atualiza também as propriedades
+        //    no Notion (que é o que o portal lê primeiro).
         if (notionId && process.env.NOTION_TOKEN) {
           try {
             await fetch(`https://api.notion.com/v1/pages/${notionId}`, {
@@ -212,19 +251,15 @@ export async function PATCH(req: NextRequest) {
                 'Notion-Version': '2022-06-28',
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify({
-                properties: {
-                  'ESTADO SEL. FOTOS': { select: { name: 'Entregue' } },
-                },
-              }),
+              body: JSON.stringify({ properties: eventStatusNotion }),
             })
           } catch (e) {
-            console.warn('[freelancer-casamentos sync sel_fotos] Notion update failed:', e)
+            console.warn('[freelancer-casamentos sync status] Notion update failed:', e)
           }
         }
       }
     } catch (err) {
-      console.error('[freelancer-casamentos sync sel_fotos]', err)
+      console.error('[freelancer-casamentos sync status]', err)
     }
   }
 
