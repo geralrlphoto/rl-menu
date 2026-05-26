@@ -32,6 +32,7 @@ type Casamento = {
   url_editadas_enviado_em?: string | null
   url_album_enviado_em?: string | null
   status_editadas?: string | null
+  status_selecao?: string | null
 }
 type Edicao = {
   id: string; freelancer_id: string; nome: string; status: string; local: string | null
@@ -1627,7 +1628,11 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                       freelancerNome={freelancer?.nome ?? ''}
                       initialUrl={(c as any)[field.key] ?? ''}
                       initialSentAt={(c as any)[field.ts] ?? null}
-                      initialStatus={field.tipo === 'editadas' ? (c.status_editadas ?? 'AGUARDAR') : null}
+                      initialStatus={
+                        field.tipo === 'editadas' ? (c.status_editadas ?? 'AGUARDAR') :
+                        field.tipo === 'selecao'  ? (c.status_selecao  ?? 'AGUARDAR') :
+                        null
+                      }
                       onRefresh={onRefresh}
                     />
                   ))}
@@ -3169,12 +3174,21 @@ function NotasTab({ freelancer, onRefresh }: { freelancer: Freelancer; onRefresh
 }
 
 // ─── UrlEntryCard — card de URL com estado local + botão enviar notificação ───
-const STATUS_EDITADAS_OPTIONS = ['AGUARDAR', 'EM EDIÇÃO', 'EDITADAS', 'ENTREGUE'] as const
+const STATUS_OPTIONS_BY_TIPO: Record<string, string[]> = {
+  selecao:  ['AGUARDAR', 'EM SELEÇÃO', 'SELECIONADAS', 'ENTREGUE'],
+  editadas: ['AGUARDAR', 'EM EDIÇÃO',  'EDITADAS',     'ENTREGUE'],
+}
 const STATUS_CLS: Record<string, string> = {
-  'AGUARDAR':  'bg-white/[0.06] text-white/55 border-white/15',
-  'EM EDIÇÃO': 'bg-amber-500/15 text-amber-300 border-amber-500/40',
-  'EDITADAS':  'bg-blue-500/15 text-blue-300 border-blue-500/40',
-  'ENTREGUE':  'bg-emerald-500/15 text-emerald-300 border-emerald-500/40',
+  'AGUARDAR':     'bg-white/[0.06] text-white/55 border-white/15',
+  'EM EDIÇÃO':    'bg-amber-500/15 text-amber-300 border-amber-500/40',
+  'EM SELEÇÃO':   'bg-amber-500/15 text-amber-300 border-amber-500/40',
+  'EDITADAS':     'bg-blue-500/15 text-blue-300 border-blue-500/40',
+  'SELECIONADAS': 'bg-blue-500/15 text-blue-300 border-blue-500/40',
+  'ENTREGUE':     'bg-emerald-500/15 text-emerald-300 border-emerald-500/40',
+}
+const STATUS_COL_BY_TIPO: Record<string, string> = {
+  selecao:  'status_selecao',
+  editadas: 'status_editadas',
 }
 
 function UrlEntryCard({
@@ -3216,10 +3230,12 @@ function UrlEntryCard({
     setStatus(newStatus)
     setSavingStatus(true)
     try {
+      const statusCol = STATUS_COL_BY_TIPO[field.tipo]
+      if (!statusCol) return
       await fetch('/api/freelancer-casamentos', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: casamentoId, status_editadas: newStatus }),
+        body: JSON.stringify({ id: casamentoId, [statusCol]: newStatus }),
       })
     } finally { setSavingStatus(false) }
   }
@@ -3313,12 +3329,14 @@ function UrlEntryCard({
       )}
       {saving && <p className="text-[9px] text-gold/40 italic">A guardar URL...</p>}
 
-      {/* Estado da edição — só no card 'Fotos Editadas' */}
-      {field.tipo === 'editadas' && (
+      {/* Estado — para 'Fotos Editadas' e 'Seleção de Fotos' */}
+      {STATUS_OPTIONS_BY_TIPO[field.tipo] && (
         <div className="pt-2 mt-1 border-t border-white/[0.04]">
-          <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-1.5">Estado da Edição</p>
+          <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-1.5">
+            {field.tipo === 'selecao' ? 'Estado da Seleção' : 'Estado da Edição'}
+          </p>
           <div className="grid grid-cols-2 gap-1">
-            {STATUS_EDITADAS_OPTIONS.map(opt => {
+            {STATUS_OPTIONS_BY_TIPO[field.tipo].map(opt => {
               const active = status === opt
               return (
                 <button key={opt}
