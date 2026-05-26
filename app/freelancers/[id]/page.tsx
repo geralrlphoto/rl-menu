@@ -1421,7 +1421,7 @@ function SidebarNavAdmin({
         background: 'linear-gradient(180deg, #0a0805 0%, #0e0b07 50%, #0a0805 100%)',
         borderRight: '0.5px solid rgba(201,164,92,0.18)',
         boxShadow: 'inset -1px 0 30px rgba(201,164,92,0.04), 4px 0 24px rgba(0,0,0,0.45)',
-        fontFamily: 'Georgia, "Times New Roman", serif',
+        fontFamily: 'var(--font-cormorant), Georgia, "Times New Roman", serif',
       }}
     >
       {/* Top corner ornaments */}
@@ -3890,7 +3890,7 @@ function WorkflowButton({
           style={{ background: 'rgba(14,11,7,0.92)', backdropFilter: 'blur(6px)' }}
           onClick={() => setOpen(false)}>
           <div className="relative max-w-xl w-full max-h-[90vh] overflow-y-auto"
-            style={{ background: '#120e09', border: '0.5px solid #4a3a1e', fontFamily: 'Georgia, "Times New Roman", serif' }}
+            style={{ background: '#120e09', border: '0.5px solid #4a3a1e', fontFamily: 'var(--font-cormorant), Georgia, "Times New Roman", serif' }}
             onClick={e => e.stopPropagation()}>
 
             {/* Corner ornaments (top) */}
@@ -3925,7 +3925,7 @@ function WorkflowButton({
                 placeholder="Os passos do envio…"
                 rows={10}
                 spellCheck={false}
-                style={{ fontFamily: 'Georgia, "Times New Roman", serif', background: '#0e0b07', borderColor: '#4a3a1e', color: '#d4c9b0' }}
+                style={{ fontFamily: 'var(--font-cormorant), Georgia, "Times New Roman", serif', background: '#0e0b07', borderColor: '#4a3a1e', color: '#d4c9b0' }}
                 className="w-full border px-5 py-4 text-[14px] leading-[1.7] focus:outline-none resize-y min-h-[200px] placeholder:text-[#5a4f3a] placeholder:italic"
                 onFocus={e => e.currentTarget.style.borderColor = '#c9a96e'}
                 onBlur={e => e.currentTarget.style.borderColor = '#4a3a1e'}

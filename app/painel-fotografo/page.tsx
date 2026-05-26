@@ -772,7 +772,7 @@ export default function PainelEditor() {
           background: 'linear-gradient(180deg, #0a0805 0%, #0e0b07 50%, #0a0805 100%)',
           borderRight: '0.5px solid rgba(201,164,92,0.18)',
           boxShadow: 'inset -1px 0 30px rgba(201,164,92,0.04), 4px 0 24px rgba(0,0,0,0.45)',
-          fontFamily: 'Georgia, "Times New Roman", serif',
+          fontFamily: 'var(--font-cormorant), Georgia, "Times New Roman", serif',
         }}
       >
         {/* Top corner ornaments */}
