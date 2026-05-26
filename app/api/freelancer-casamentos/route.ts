@@ -52,7 +52,11 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ casamentos })
 }
 
-const OPTIONAL_COLS = ['servicos_dia', 'referencia', 'local_cerimonia', 'hora_inicio', 'url_selecao', 'url_provas', 'url_editadas', 'url_album'] as const
+const OPTIONAL_COLS = [
+  'servicos_dia', 'referencia', 'local_cerimonia', 'hora_inicio',
+  'url_selecao', 'url_provas', 'url_editadas', 'url_album',
+  'url_selecao_enviado_em', 'url_provas_enviado_em', 'url_editadas_enviado_em', 'url_album_enviado_em',
+] as const
 
 export async function POST(req: NextRequest) {
   const body = await req.json()

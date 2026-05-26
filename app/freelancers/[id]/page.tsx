@@ -27,6 +27,10 @@ type Casamento = {
   url_provas?: string | null
   url_editadas?: string | null
   url_album?: string | null
+  url_selecao_enviado_em?: string | null
+  url_provas_enviado_em?: string | null
+  url_editadas_enviado_em?: string | null
+  url_album_enviado_em?: string | null
 }
 type Edicao = {
   id: string; freelancer_id: string; nome: string; status: string; local: string | null
@@ -1600,18 +1604,27 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
             {/* ── EXPANDED PANEL (inline accordion) ─────────────────── */}
             {expandedId === c.id && (
               <div className="relative px-5 pb-5 pt-4 border-t border-gold/15 animate-in fade-in slide-in-from-top-1 space-y-4">
+                {/* Helper text */}
+                <p className="text-[11px] text-white/40 italic leading-relaxed">
+                  Sempre que tiveres uma edição pronta, cola aqui o link para ficar guardado. Depois clica em <span className="text-gold/80 font-semibold not-italic">Enviar Notificação</span> para o admin receber um email com o trabalho. A data de envio fica registada e não desaparece.
+                </p>
+
                 {/* Grid de URLs do casamento */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {[
-                    { key: 'url_selecao' as const, label: 'Seleção de Fotos', icon: '◫', placeholder: 'https://...' },
-                    { key: 'url_provas' as const, label: 'Fotos Prova', icon: '◧', placeholder: 'https://...' },
-                    { key: 'url_editadas' as const, label: 'Fotos Editadas', icon: '✓', placeholder: 'https://...' },
-                    { key: 'url_album' as const, label: 'Maquete Álbum', icon: '◐', placeholder: 'https://...' },
+                    { key: 'url_selecao' as const,  ts: 'url_selecao_enviado_em' as const,  tipo: 'selecao'  as const, label: 'Seleção de Fotos', icon: '◫' },
+                    { key: 'url_provas' as const,   ts: 'url_provas_enviado_em' as const,   tipo: 'provas'   as const, label: 'Fotos Prova',      icon: '◧' },
+                    { key: 'url_editadas' as const, ts: 'url_editadas_enviado_em' as const, tipo: 'editadas' as const, label: 'Fotos Editadas',   icon: '✓' },
+                    { key: 'url_album' as const,    ts: 'url_album_enviado_em' as const,    tipo: 'album'    as const, label: 'Maquete Álbum',    icon: '◐' },
                   ].map(field => {
                     const currentValue = (c as any)[field.key] ?? ''
+                    const sentAt = (c as any)[field.ts] as string | null | undefined
+                    const sentAtFmt = sentAt
+                      ? new Date(sentAt).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                      : null
                     return (
-                      <div key={field.key} className="rounded-xl border border-white/[0.06] bg-black/30 p-3">
-                        <div className="flex items-center justify-between mb-2">
+                      <div key={field.key} className="rounded-xl border border-white/[0.06] bg-black/30 p-3 flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <span className="text-gold/70 text-base">{field.icon}</span>
                             <p className="text-[10px] tracking-[0.25em] uppercase text-white/45 font-light">{field.label}</p>
@@ -1627,7 +1640,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                         <input
                           type="url"
                           defaultValue={currentValue}
-                          placeholder={field.placeholder}
+                          placeholder="https://..."
                           onClick={e => e.stopPropagation()}
                           onBlur={async (e) => {
                             const newVal = e.target.value.trim()
@@ -1641,6 +1654,88 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                           }}
                           className="w-full bg-black/40 border border-white/[0.06] rounded-lg px-2.5 py-1.5 text-[11px] text-white/85 placeholder:text-white/20 outline-none focus:border-gold/40 transition-colors"
                         />
+                        {/* Botão Enviar Notificação / Estado enviado */}
+                        {sentAtFmt ? (
+                          <div className="flex items-center justify-between text-[10px]">
+                            <span className="inline-flex items-center gap-1 text-emerald-400/85 tracking-wider uppercase font-semibold">
+                              ✓ Enviado · {sentAtFmt}
+                            </span>
+                            {currentValue && (
+                              <button onClick={async (e) => {
+                                e.stopPropagation()
+                                const now = new Date().toISOString()
+                                try {
+                                  await fetch('/api/send-trabalho-enviado', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                      tipo: field.tipo,
+                                      url: currentValue,
+                                      freelancer_nome: freelancer?.nome ?? '',
+                                      casamento_local: c.local,
+                                      casamento_data: c.data_casamento,
+                                      casamento_id: c.id,
+                                    }),
+                                  })
+                                  await fetch('/api/freelancer-casamentos', {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ id: c.id, [field.ts]: now }),
+                                  })
+                                  onRefresh()
+                                } catch (err) {
+                                  alert('Erro ao reenviar: ' + (err as Error).message)
+                                }
+                              }}
+                                className="text-white/30 hover:text-gold tracking-wider uppercase transition-colors">
+                                ↻ Reenviar
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          <button
+                            disabled={!currentValue}
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              if (!currentValue) return
+                              try {
+                                const res = await fetch('/api/send-trabalho-enviado', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    tipo: field.tipo,
+                                    url: currentValue,
+                                    freelancer_nome: freelancer?.nome ?? '',
+                                    casamento_local: c.local,
+                                    casamento_data: c.data_casamento,
+                                    casamento_id: c.id,
+                                  }),
+                                })
+                                if (!res.ok) {
+                                  const err = await res.json().catch(() => ({}))
+                                  alert('Erro ao enviar email: ' + (err.error ?? 'desconhecido'))
+                                  return
+                                }
+                                const now = new Date().toISOString()
+                                await fetch('/api/freelancer-casamentos', {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ id: c.id, [field.ts]: now }),
+                                })
+                                onRefresh()
+                              } catch (err) {
+                                alert('Erro: ' + (err as Error).message)
+                              }
+                            }}
+                            className={`w-full text-[10px] tracking-wider uppercase font-semibold rounded-lg px-2 py-1.5 transition-all ${
+                              currentValue
+                                ? 'bg-gold text-black hover:bg-gold/90'
+                                : 'bg-white/[0.04] text-white/20 cursor-not-allowed border border-white/[0.06]'
+                            }`}
+                            style={currentValue ? { boxShadow: '0 0 12px -4px rgba(201,164,92,0.5)' } : undefined}>
+                            ✉ Enviar Notificação
+                          </button>
+                        )}
                       </div>
                     )
                   })}
