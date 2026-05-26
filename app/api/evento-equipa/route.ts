@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   const body = await req.json()
-  const { evento_id, referencia, local, data_casamento, fotografo, videografo, editor_album, editor_video } = body
+  const { evento_id, referencia, local, data_casamento, fotografo, videografo, editor_album, editor_video, editor_fotos } = body
 
   if (!evento_id && !referencia) return NextResponse.json({ error: 'evento_id or referencia required' }, { status: 400 })
 
@@ -75,6 +75,7 @@ export async function PATCH(req: NextRequest) {
   if (videografo !== undefined) upsertData.videografo = newVideo
   if (editor_album !== undefined) upsertData.editor_album = editor_album
   if (editor_video !== undefined) upsertData.editor_video = editor_video
+  if (editor_fotos !== undefined) upsertData.editor_fotos = editor_fotos
 
   let upsertError: any = null
   async function doSave(payload: any) {
@@ -91,9 +92,9 @@ export async function PATCH(req: NextRequest) {
     }
   }
   upsertError = await doSave(upsertData)
-  // Retry sem colunas opcionais (editor_album / editor_video) se falhar por coluna inexistente
-  if (upsertError && /column .* (editor_album|editor_video)/i.test(upsertError.message ?? '')) {
-    const { editor_album: _ea, editor_video: _ev, ...core } = upsertData
+  // Retry sem colunas opcionais se falhar por coluna inexistente (editor_album/video/fotos como text[])
+  if (upsertError && /column .* (editor_album|editor_video|editor_fotos)/i.test(upsertError.message ?? '')) {
+    const { editor_album: _ea, editor_video: _ev, editor_fotos: _ef, ...core } = upsertData
     upsertError = await doSave(core)
   }
 

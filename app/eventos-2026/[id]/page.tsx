@@ -218,7 +218,7 @@ function EditMultiField({ label, value, field, eventId, onSaved }: {
 
 // ─── Equipa field — salva no Supabase, NÃO no Notion ──────────────────────────
 function EditEquipaField({ label, field, multi, eventoId, referencia, local, dataCasamento, initialValue, options, onChanged, unavailableNames }: {
-  label: string; field: 'fotografo' | 'videografo' | 'editor_album' | 'editor_video'; multi: boolean
+  label: string; field: 'fotografo' | 'videografo' | 'editor_album' | 'editor_video' | 'editor_fotos'; multi: boolean
   eventoId: string; referencia: string; local: string; dataCasamento: string
   initialValue: string[]; options: string[]; onChanged?: (val: string[]) => void
   unavailableNames?: string[]
@@ -2193,6 +2193,7 @@ export default function EventoPage() {
   const [equipaVideo, setEquipaVideo] = useState<string[]>([])
   const [equipaEditorAlbum, setEquipaEditorAlbum] = useState<string[]>([])
   const [equipaEditorVideo, setEquipaEditorVideo] = useState<string[]>([])
+  const [equipaEditorFotos, setEquipaEditorFotos] = useState<string[]>([])
   const [unavailableNames, setUnavailableNames] = useState<string[]>([])
   const [optionsFoto, setOptionsFoto] = useState<string[]>(['ALEXANDRE CAPÃO','PATRICIO FERREIRA','SONIA CARVALHO','RUI GARRIDO','BRUNO DE CARVALHO','PEDRO MARTINS'])
   const [optionsVideo, setOptionsVideo] = useState<string[]>(['RUI GONÇALVES','LUIS SOARES'])
@@ -2371,6 +2372,7 @@ export default function EventoPage() {
         if (ev.videografo?.length)    setEquipaVideo(ev.videografo)
         if (ev.editor_album?.length)  setEquipaEditorAlbum(ev.editor_album)
         if (ev.editor_video?.length)  setEquipaEditorVideo(ev.editor_video)
+        if (ev.editor_fotos) setEquipaEditorFotos([ev.editor_fotos])
         setLoading(false)
 
         if (ev.referencia) {
@@ -3216,7 +3218,12 @@ export default function EventoPage() {
               options={optionsVideo}
               unavailableNames={unavailableNames}
               onChanged={setEquipaVideo} />
-            <EditField label="Editor de Fotos" value={e.editor_fotos} field="editor_fotos" eventId={e.id} onSaved={handleSaved} />
+            <EditEquipaField label="Editor de Fotos" field="editor_fotos" multi={false}
+              eventoId={e.id} referencia={e.referencia ?? ''} local={e.local ?? ''} dataCasamento={e.data_evento ?? ''}
+              initialValue={e.editor_fotos ? [e.editor_fotos] : []}
+              options={optionsAllTeam}
+              unavailableNames={unavailableNames}
+              onChanged={setEquipaEditorFotos} />
             <EditEquipaField label="Editor de Álbum" field="editor_album" multi={false}
               eventoId={e.id} referencia={e.referencia ?? ''} local={e.local ?? ''} dataCasamento={e.data_evento ?? ''}
               initialValue={e.editor_album ?? []}
