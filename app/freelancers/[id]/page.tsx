@@ -813,7 +813,7 @@ function FreelancerDetailInner() {
 
             return (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
-                <div className="rounded-2xl border border-rose-500/35 p-3.5"
+                <div className="lg:col-start-3 rounded-2xl border border-rose-500/35 p-3.5"
                   style={{
                     background: 'linear-gradient(135deg, rgba(40,8,12,0.5), rgba(20,5,8,0.7))',
                     boxShadow: '0 0 28px -10px rgba(244,63,94,0.45), inset 0 0 0 1px rgba(244,63,94,0.05)',
