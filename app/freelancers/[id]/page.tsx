@@ -916,11 +916,22 @@ function FreelancerDetailInner() {
             )}
 
             {/* Col 2: Calendário */}
-            <MiniCalendar casamentos={casamentos} taskDates={taskDates} onClickDate={(iso) => {
-              // Se a data clicada é só de tarefa (não de casamento), vai para Tarefas
-              const isWedding = casamentos.some(c => c.data_casamento === iso)
-              setTab(isWedding ? 'casamentos' : 'tarefas')
-            }} />
+            <MiniCalendar
+              casamentos={casamentos}
+              taskDates={taskDates}
+              editionDates={edicao.filter(e => e.data_entrega).map(e => (e.data_entrega ?? '').slice(0, 10)).filter(Boolean)}
+              albumDates={album.filter(a => a.data_entrega).map(a => (a.data_entrega ?? '').slice(0, 10)).filter(Boolean)}
+              notifDates={notificacoes.map(n => (n.created_at ?? '').slice(0, 10)).filter(Boolean)}
+              onClickDate={(iso) => {
+                // Decide para onde ir com base no que existe nesse dia
+                if (casamentos.some(c => c.data_casamento === iso)) { setTab('casamentos'); return }
+                if (taskDates.includes(iso)) { setTab('tarefas'); return }
+                if (edicao.some(e => (e.data_entrega ?? '').slice(0,10) === iso)) { setTab('edicao'); return }
+                if (album.some(a => (a.data_entrega ?? '').slice(0,10) === iso)) { setTab('album'); return }
+                if (notificacoes.some(n => (n.created_at ?? '').slice(0,10) === iso)) { setTab('notificacoes'); return }
+                setTab('calendario')
+              }}
+            />
 
             {/* Col 3: Tarefas */}
             <TasksWidget freelancerId={id} />
@@ -1406,7 +1417,7 @@ function FreelancerDetailInner() {
       {tab === 'edicao'       && <EdicaoTab freelancerId={id} edicao={edicao} onRefresh={load} />}
       {tab === 'album'        && <AlbumTab freelancerId={id} album={album} onRefresh={load} />}
       {tab === 'tarefas'      && <TarefasTab freelancerId={id} viewAsFreelancer={viewAsFreelancer} freelancer={freelancer} notificacoes={notificacoes} onRefresh={load} />}
-      {tab === 'calendario'   && <CalendarioTab freelancerId={id} casamentos={casamentos} edicao={edicao} album={album} freelancer={freelancer} />}
+      {tab === 'calendario'   && <CalendarioTab freelancerId={id} casamentos={casamentos} edicao={edicao} album={album} notificacoes={notificacoes} freelancer={freelancer} />}
       {tab === 'info'         && <InfoTab freelancerId={id} info={info} onRefresh={load} />}
       {tab === 'notas'        && <NotasTab freelancer={freelancer} onRefresh={load} />}
       {tab === 'pagamentos'   && <PagamentosAdminTab freelancerId={id} pagamentos={pagamentos} casamentos={casamentos} onRefresh={load} />}
@@ -4420,16 +4431,17 @@ function NovaTarefaModal({ onClose, onCreate }: { onClose: () => void; onCreate:
 type CalEvento = {
   id: string
   iso: string          // YYYY-MM-DD
-  type: 'casamento' | 'edicao' | 'album' | 'tarefa-pessoal' | 'tarefa-atribuida' | 'prazo-selecao' | 'prazo-edicao'
+  type: 'casamento' | 'edicao' | 'album' | 'tarefa-pessoal' | 'tarefa-atribuida' | 'prazo-selecao' | 'prazo-edicao' | 'notificacao'
   title: string
   subtitle?: string
 }
 
-function CalendarioTab({ freelancerId, casamentos, edicao, album, freelancer }: {
+function CalendarioTab({ freelancerId, casamentos, edicao, album, notificacoes, freelancer }: {
   freelancerId: string
   casamentos: Casamento[]
   edicao: Edicao[]
   album: Album[]
+  notificacoes: Notificacao[]
   freelancer: Freelancer | null
 }) {
   const today = new Date(); today.setHours(0,0,0,0)
@@ -4486,6 +4498,19 @@ function CalendarioTab({ freelancerId, casamentos, edicao, album, freelancer }: 
     taskDates.forEach((t, i) => {
       out.push({ id: `tk-${i}`, iso: t.iso, type: 'tarefa-pessoal', title: t.text, subtitle: t.project || 'Tarefa pessoal' })
     })
+    // Notificações recebidas (data de criação)
+    notificacoes.forEach(n => {
+      if (!n.created_at) return
+      const iso = String(n.created_at).slice(0, 10)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return
+      out.push({
+        id: `notif-${n.id}`,
+        iso,
+        type: 'notificacao',
+        title: n.titulo || 'Notificação',
+        subtitle: n.tipo ? `Tipo: ${n.tipo}` : undefined,
+      })
+    })
     return out
   })()
 
@@ -4512,10 +4537,10 @@ function CalendarioTab({ freelancerId, casamentos, edicao, album, freelancer }: 
 
   // KPIs
   const kpis = {
-    casamentos: eventos.filter(e => e.type === 'casamento').length,
-    tarefas:    eventos.filter(e => e.type === 'tarefa-pessoal' || e.type === 'tarefa-atribuida').length,
-    entregas:   eventos.filter(e => e.type === 'edicao' || e.type === 'album').length,
-    prazos:     eventos.filter(e => e.type === 'prazo-selecao' || e.type === 'prazo-edicao').length,
+    casamentos:    eventos.filter(e => e.type === 'casamento').length,
+    tarefas:       eventos.filter(e => e.type === 'tarefa-pessoal' || e.type === 'tarefa-atribuida').length,
+    entregas:      eventos.filter(e => e.type === 'edicao' || e.type === 'album').length,
+    notificacoes:  eventos.filter(e => e.type === 'notificacao').length,
   }
 
   // Eventos do dia selecionado
@@ -4541,6 +4566,7 @@ function CalendarioTab({ freelancerId, casamentos, edicao, album, freelancer }: 
     'tarefa-atribuida':  { color: 'text-violet-300',   bg: 'bg-violet-500/15',     border: 'border-violet-500/35',    label: 'Atribuída',    icon: '✈' },
     'prazo-selecao':     { color: 'text-amber-300',    bg: 'bg-amber-500/15',      border: 'border-amber-500/35',     label: 'Prazo Sel.',   icon: '⏱' },
     'prazo-edicao':      { color: 'text-red-300',      bg: 'bg-red-500/15',        border: 'border-red-500/35',       label: 'Prazo Ed.',    icon: '⏱' },
+    'notificacao':       { color: 'text-rose-300',     bg: 'bg-rose-500/15',       border: 'border-rose-500/35',      label: 'Notificação',  icon: '◉' },
   }
 
   return (
@@ -4575,10 +4601,10 @@ function CalendarioTab({ freelancerId, casamentos, edicao, album, freelancer }: 
       {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Casamentos', value: kpis.casamentos, accent: 'border-gold/25 bg-gold/[0.04]',           text: 'text-gold',         sub: 'text-gold/60' },
-          { label: 'Tarefas',    value: kpis.tarefas,    accent: 'border-emerald-500/25 bg-emerald-500/[0.04]', text: 'text-emerald-300',  sub: 'text-emerald-300/60' },
-          { label: 'Entregas',   value: kpis.entregas,   accent: 'border-blue-500/25 bg-blue-500/[0.04]',   text: 'text-blue-300',     sub: 'text-blue-300/60' },
-          { label: 'Prazos',     value: kpis.prazos,     accent: 'border-amber-500/25 bg-amber-500/[0.04]', text: 'text-amber-300',    sub: 'text-amber-300/60' },
+          { label: 'Casamentos',   value: kpis.casamentos,    accent: 'border-gold/25 bg-gold/[0.04]',           text: 'text-gold',         sub: 'text-gold/60' },
+          { label: 'Tarefas',      value: kpis.tarefas,       accent: 'border-emerald-500/25 bg-emerald-500/[0.04]', text: 'text-emerald-300',  sub: 'text-emerald-300/60' },
+          { label: 'Entregas',     value: kpis.entregas,      accent: 'border-blue-500/25 bg-blue-500/[0.04]',   text: 'text-blue-300',     sub: 'text-blue-300/60' },
+          { label: 'Notificações', value: kpis.notificacoes,  accent: 'border-rose-500/25 bg-rose-500/[0.04]',   text: 'text-rose-300',     sub: 'text-rose-300/60' },
         ].map((k, i) => (
           <div key={i} className={`rounded-2xl border p-4 ${k.accent}`}>
             <p className={`text-[10px] tracking-[0.3em] uppercase mb-1 ${k.sub}`}>{k.label}</p>
@@ -4659,7 +4685,7 @@ function CalendarioTab({ freelancerId, casamentos, edicao, album, freelancer }: 
 
           {/* Legenda */}
           <div className="mt-4 pt-3 border-t border-white/[0.05] flex items-center justify-center gap-x-4 gap-y-1.5 flex-wrap text-[10px]">
-            {(['casamento','tarefa-pessoal','edicao','album','prazo-selecao'] as Array<CalEvento['type']>).map(t => (
+            {(['casamento','tarefa-pessoal','edicao','album','prazo-selecao','notificacao'] as Array<CalEvento['type']>).map(t => (
               <span key={t} className="flex items-center gap-1.5 text-white/45">
                 <span className={`w-2 h-2 rounded-sm border ${typeMeta[t].border} ${typeMeta[t].bg}`} />
                 <span className="tracking-wider uppercase">{typeMeta[t].label}</span>

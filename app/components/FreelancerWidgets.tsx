@@ -95,17 +95,26 @@ type CasamentoLite = { id: string; data_casamento: string | null }
 export function MiniCalendar({
   casamentos,
   taskDates,
+  editionDates,
+  albumDates,
+  notifDates,
   onClickDate,
 }: {
   casamentos: CasamentoLite[]
-  taskDates?: string[]                // datas de tarefas (ISO YYYY-MM-DD)
+  taskDates?: string[]      // tarefas (azul)
+  editionDates?: string[]   // edições concluídas / entregues (purple)
+  albumDates?: string[]     // álbuns concluídos / entregues (magenta)
+  notifDates?: string[]     // notificações recebidas (red)
   onClickDate?: (d: string) => void
 }) {
   const today = new Date(); today.setHours(0,0,0,0)
   const [view, setView] = useState({ y: today.getFullYear(), m: today.getMonth() })
 
-  const datasCasamento = new Set(casamentos.map(c => c.data_casamento).filter(Boolean) as string[])
-  const datasTarefa    = new Set((taskDates ?? []).filter(Boolean))
+  const datasCasamento  = new Set(casamentos.map(c => c.data_casamento).filter(Boolean) as string[])
+  const datasTarefa     = new Set((taskDates ?? []).filter(Boolean))
+  const datasEdicao     = new Set((editionDates ?? []).filter(Boolean))
+  const datasAlbum      = new Set((albumDates ?? []).filter(Boolean))
+  const datasNotif      = new Set((notifDates ?? []).filter(Boolean))
 
   function changeMonth(delta: number) {
     const d = new Date(view.y, view.m + delta, 1)
@@ -116,7 +125,16 @@ export function MiniCalendar({
   const lastDay = new Date(view.y, view.m + 1, 0).getDate()
   const startWeekday = first.getDay()
 
-  type Cell = { day: number | null; iso?: string; isToday?: boolean; hasEvent?: boolean; hasTask?: boolean }
+  type Cell = {
+    day: number | null
+    iso?: string
+    isToday?: boolean
+    hasEvent?: boolean
+    hasTask?: boolean
+    hasEdicao?: boolean
+    hasAlbum?: boolean
+    hasNotif?: boolean
+  }
   const cells: Cell[] = []
   for (let i = 0; i < startWeekday; i++) cells.push({ day: null })
   for (let d = 1; d <= lastDay; d++) {
@@ -124,8 +142,11 @@ export function MiniCalendar({
     const isTodayCell = (view.y === today.getFullYear() && view.m === today.getMonth() && d === today.getDate())
     cells.push({
       day: d, iso, isToday: isTodayCell,
-      hasEvent: datasCasamento.has(iso),
-      hasTask:  datasTarefa.has(iso),
+      hasEvent:  datasCasamento.has(iso),
+      hasTask:   datasTarefa.has(iso),
+      hasEdicao: datasEdicao.has(iso),
+      hasAlbum:  datasAlbum.has(iso),
+      hasNotif:  datasNotif.has(iso),
     })
   }
 
@@ -149,15 +170,21 @@ export function MiniCalendar({
       <div className="grid grid-cols-7 gap-1">
         {cells.map((c, i) => {
           if (c.day === null) return <div key={i} />
-          const hasAny = c.hasEvent || c.hasTask
-          // Estilo: casamento (gold preenchido) tem prioridade; só-tarefa fica azul outline
+          const hasAny = c.hasEvent || c.hasTask || c.hasEdicao || c.hasAlbum || c.hasNotif
+          // Estilo: casamento (gold) tem prioridade visual; tarefa (azul), edição (roxo), álbum (magenta), notif (vermelho) seguem hierarquia
           const cls = c.isToday
             ? 'bg-gold text-black font-bold'
             : c.hasEvent
               ? 'bg-gold/15 text-gold border border-gold/30 hover:bg-gold/25 cursor-pointer'
-              : c.hasTask
-                ? 'bg-blue-500/10 text-blue-300 border border-blue-500/30 hover:bg-blue-500/20 cursor-pointer'
-                : 'text-white/35'
+              : c.hasNotif
+                ? 'bg-red-500/10 text-red-300 border border-red-500/30 hover:bg-red-500/20 cursor-pointer'
+                : c.hasEdicao
+                  ? 'bg-purple-500/10 text-purple-300 border border-purple-500/30 hover:bg-purple-500/20 cursor-pointer'
+                  : c.hasAlbum
+                    ? 'bg-fuchsia-500/10 text-fuchsia-300 border border-fuchsia-500/30 hover:bg-fuchsia-500/20 cursor-pointer'
+                    : c.hasTask
+                      ? 'bg-blue-500/10 text-blue-300 border border-blue-500/30 hover:bg-blue-500/20 cursor-pointer'
+                      : 'text-white/35'
           return (
             <button
               key={i}
@@ -166,11 +193,14 @@ export function MiniCalendar({
               className={`relative aspect-square flex items-center justify-center text-[14px] rounded-md transition-all ${cls}`}
             >
               {c.day}
-              {/* Dots: casamento (gold) e/ou tarefa (azul) */}
-              {!c.isToday && (c.hasEvent || c.hasTask) && (
+              {/* Dots: todos os tipos presentes */}
+              {!c.isToday && hasAny && (
                 <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 flex items-center gap-0.5">
-                  {c.hasEvent && <span className="w-1 h-1 rounded-full bg-gold" />}
-                  {c.hasTask  && <span className="w-1 h-1 rounded-full bg-blue-400" />}
+                  {c.hasEvent  && <span className="w-1 h-1 rounded-full bg-gold" />}
+                  {c.hasNotif  && <span className="w-1 h-1 rounded-full bg-red-400" />}
+                  {c.hasEdicao && <span className="w-1 h-1 rounded-full bg-purple-400" />}
+                  {c.hasAlbum  && <span className="w-1 h-1 rounded-full bg-fuchsia-400" />}
+                  {c.hasTask   && <span className="w-1 h-1 rounded-full bg-blue-400" />}
                 </span>
               )}
             </button>
@@ -178,10 +208,13 @@ export function MiniCalendar({
         })}
       </div>
 
-      <div className="mt-3 flex items-center justify-center gap-3 text-[14px] text-white/35 flex-wrap">
-        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-gold" /> Hoje</span>
-        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm border border-gold/40 bg-gold/15" /> Casamento</span>
-        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm border border-blue-500/40 bg-blue-500/10" /> Tarefa</span>
+      <div className="mt-3 flex items-center justify-center gap-x-3 gap-y-1.5 text-[11px] text-white/35 flex-wrap">
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-gold" /> Hoje</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm border border-gold/40 bg-gold/15" /> Casamento</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm border border-purple-500/40 bg-purple-500/10" /> Edição</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm border border-fuchsia-500/40 bg-fuchsia-500/10" /> Álbum</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm border border-blue-500/40 bg-blue-500/10" /> Tarefa</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm border border-red-500/40 bg-red-500/10" /> Notif.</span>
       </div>
     </div>
   )
