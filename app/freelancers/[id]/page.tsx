@@ -1590,16 +1590,17 @@ function SidebarNavAdmin({
   isFotografo: boolean
   viewAsFreelancer?: boolean
 }) {
-  const items: Array<{ key: AdminTabKey; label: string; icon: string; count?: number }> = [
+  // Sidebar items — sem números/badges à frente (regra do utilizador)
+  const items: Array<{ key: AdminTabKey; label: string; icon: string }> = [
     { key: null,             label: 'Início',         icon: '⌂' },
-    { key: 'casamentos',     label: 'Casamentos',     icon: '◆', count: counts.casamentos },
-    ...(!isVideografo ? [{ key: 'edicao' as AdminTabKey, label: 'Edição Fotos', icon: '✎', count: counts.edicao }] : []),
-    ...(isFotografo ? [{ key: 'album' as AdminTabKey, label: 'Edição Álbum', icon: '◫', count: counts.album }] : []),
+    { key: 'casamentos',     label: 'Casamentos',     icon: '◆' },
+    ...(!isVideografo ? [{ key: 'edicao' as AdminTabKey, label: 'Edição Fotos', icon: '✎' }] : []),
+    ...(isFotografo ? [{ key: 'album' as AdminTabKey, label: 'Edição Álbum', icon: '◫' }] : []),
     { key: 'tarefas',        label: 'Tarefas',        icon: '◷' },
     { key: 'calendario',     label: 'Calendário',     icon: '◉' },
-    { key: 'pagamentos',     label: 'Pagamentos',     icon: '$', count: counts.pagamentos },
-    { key: 'mensagens',      label: 'Mensagens',      icon: '✉', count: counts.mensagens },
-    { key: 'notificacoes',   label: 'Notificações',   icon: '◉', count: counts.notificacoes },
+    { key: 'pagamentos',     label: 'Pagamentos',     icon: '$' },
+    { key: 'mensagens',      label: 'Mensagens',      icon: '✉' },
+    { key: 'notificacoes',   label: 'Notificações',   icon: '◉' },
     { key: 'definicoes' as AdminTabKey, label: 'Dados Pessoais', icon: '☻' },
   ]
 
@@ -1688,14 +1689,6 @@ function SidebarNavAdmin({
               ) : (
                 <span className="flex-1 text-[10px] tracking-[0.3em] uppercase font-light text-white/45 group-hover:text-white/85 transition-colors">{it.label}</span>
               )}
-              {it.count && it.count > 0 ? (
-                <span className="text-[10px] px-1.5 min-w-[22px] text-center font-mono leading-tight py-0.5 rounded-sm"
-                  style={{
-                    border: active ? '0.5px solid #c9a96e' : '0.5px solid rgba(255,255,255,0.15)',
-                    color: active ? '#c9a96e' : 'rgba(255,255,255,0.40)',
-                    background: 'transparent',
-                  }}>{it.count}</span>
-              ) : null}
             </button>
           )
         })}
