@@ -6539,6 +6539,29 @@ function parseNotifMeta(mensagem: string | null | undefined): NotifMeta {
   } catch { return { cleanMensagem: mensagem.replace(/^__META__.+?__\/META__\n?/, '') } }
 }
 
+// Parse o META específico de 'atribuicao_equipa' (shape diferente do parseNotifMeta genérico)
+function parseAtribuicaoEquipaMeta(mensagem: string | null | undefined): {
+  referencia?: string | null
+  role?: string | null
+  local?: string | null
+  data_casamento?: string | null
+  freelancerNome?: string | null
+} {
+  if (!mensagem) return {}
+  const m = mensagem.match(/^__META__(.+?)__\/META__\n?/)
+  if (!m) return {}
+  try {
+    const parsed = JSON.parse(m[1])
+    return {
+      referencia:     parsed?.atribuicao?.referencia ?? null,
+      role:           parsed?.atribuicao?.role ?? null,
+      local:          parsed?.atribuicao?.local ?? null,
+      data_casamento: parsed?.atribuicao?.data_casamento ?? null,
+      freelancerNome: parsed?.freelancerNome ?? null,
+    }
+  } catch { return {} }
+}
+
 function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh, viewAsFreelancer }: { freelancerId: string; notificacoes: Notificacao[]; onRefresh: () => void; viewAsFreelancer?: boolean }) {
   const [form, setForm] = useState({ titulo: '', mensagem: '', tipo: 'alerta' })
   const [sending, setSending] = useState(false)
@@ -6548,6 +6571,52 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh, viewAsFre
   const [activeTab, setActiveTab] = useState<'recebidas'|'enviadas'>('recebidas')
   const [sentNotifs, setSentNotifs] = useState<Notificacao[]>([])
   const [loadingSent, setLoadingSent] = useState(false)
+  const [respondingAtribuicao, setRespondingAtribuicao] = useState<string | null>(null) // id da notif em curso
+
+  // Resposta à atribuição: cria entrada no casamento + envia email ao admin
+  async function responderAtribuicao(n: Notificacao, resposta: 'confirmar' | 'indisponivel') {
+    const meta = parseAtribuicaoEquipaMeta(n.mensagem)
+    setRespondingAtribuicao(n.id)
+    try {
+      // 1) Atualiza freelancer_casamento (apenas para Fotógrafo/Videógrafo — roles do dia)
+      const roleLower = (meta.role || '').toLowerCase()
+      const isDayRole = roleLower.includes('fot') || roleLower.includes('vid')
+      if (isDayRole && meta.referencia) {
+        try {
+          const r = await fetch(`/api/freelancer-casamentos?freelancer_id=${encodeURIComponent(n.freelancer_id)}`).then(r => r.json())
+          const c = (r.casamentos ?? []).find((c: any) => c.referencia === meta.referencia)
+          if (c?.id) {
+            const patch = resposta === 'confirmar'
+              ? { data_confirmada: true, indisponivel: false }
+              : { indisponivel: true, data_confirmada: false }
+            await fetch('/api/freelancer-casamentos', {
+              method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: c.id, ...patch }),
+            })
+          }
+        } catch { /* não bloqueia */ }
+      }
+      // 2) Envia email ao admin
+      try {
+        await fetch('/api/send-admin-notification', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tipo: resposta === 'confirmar' ? 'confirmou' : 'indisponivel',
+            freelancer_nome: meta.freelancerNome || freelancerName,
+            referencia: meta.referencia,
+            data_evento: meta.data_casamento,
+            local: meta.local,
+          }),
+        })
+      } catch { /* não bloqueia */ }
+      // 3) Marca notificação como lida
+      await fetch('/api/freelancer-notificacoes', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: n.id, lida: true }),
+      })
+      onRefresh()
+    } finally { setRespondingAtribuicao(null) }
+  }
 
   // Carrega tarefas enviadas (notifs em que sou o senderId no META)
   useEffect(() => {
@@ -6845,11 +6914,13 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh, viewAsFre
                 const isTaskResposta = n.tipo === 'resposta_tarefa'
                 const isTaskConcluida = n.tipo === 'tarefa_concluida'
                 const isTaskMessage  = isTaskAssigned || isTaskResposta || isTaskConcluida
+                const isAtribuicao   = n.tipo === 'atribuicao_equipa'
 
                 // Accent visual por tipo
                 const accent = isTaskAssigned ? { border: 'border-blue-500/35', bg: 'bg-blue-500/[0.05]', text: 'text-blue-300', glow: 'rgba(59,130,246,0.35)', icon: '✈', badge: '✈ NOVA TAREFA' }
                   : isTaskResposta ? { border: 'border-indigo-500/35', bg: 'bg-indigo-500/[0.05]', text: 'text-indigo-300', glow: 'rgba(99,102,241,0.35)', icon: '↩', badge: '↩ NOVA RESPOSTA' }
                   : isTaskConcluida ? { border: 'border-emerald-500/35', bg: 'bg-emerald-500/[0.05]', text: 'text-emerald-300', glow: 'rgba(52,211,153,0.35)', icon: '✓', badge: '✓ TAREFA CONCLUÍDA' }
+                  : isAtribuicao ? { border: 'border-gold/45', bg: 'bg-gold/[0.06]', text: 'text-gold', glow: 'rgba(201,164,92,0.4)', icon: '✨', badge: '✨ NOVA ATRIBUIÇÃO' }
                   : { border: 'border-gold/30', bg: 'bg-gold/[0.04]', text: 'text-gold', glow: 'rgba(201,164,92,0.35)', icon: '◉', badge: '• não lida' }
 
                 return (
@@ -6888,6 +6959,24 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh, viewAsFre
 
                   {/* Acções à direita */}
                   <div className="flex flex-col items-end gap-1.5 mt-0.5 flex-shrink-0">
+                    {/* Atribuição equipa: Confirmar / Indisponível */}
+                    {isAtribuicao && !n.lida && (
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <button onClick={() => responderAtribuicao(n, 'confirmar')}
+                          disabled={respondingAtribuicao === n.id}
+                          title="Confirmar atribuição (notifica o admin)"
+                          className="px-3 py-1.5 rounded-md text-[9px] tracking-[0.2em] uppercase font-bold bg-gold text-black hover:bg-gold/90 disabled:opacity-50 transition-all whitespace-nowrap"
+                          style={{ boxShadow: '0 0 12px -4px rgba(201,164,92,0.55)' }}>
+                          ✓ Confirmar
+                        </button>
+                        <button onClick={() => responderAtribuicao(n, 'indisponivel')}
+                          disabled={respondingAtribuicao === n.id}
+                          title="Marcar como indisponível (notifica o admin)"
+                          className="px-3 py-1.5 rounded-md text-[9px] tracking-[0.2em] uppercase font-bold border border-rose-500/45 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20 hover:border-rose-400/65 disabled:opacity-50 transition-all whitespace-nowrap">
+                          ✕ Indisponível
+                        </button>
+                      </div>
+                    )}
                     {isTaskMessage && meta.threadId && (
                       <button onClick={() => setViewingThread({ threadId: meta.threadId!, title: meta.threadTitle || n.titulo })}
                         title="Ver toda a conversação desta tarefa"
