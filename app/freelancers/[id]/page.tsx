@@ -2906,17 +2906,70 @@ function EdicaoForm({ form, setForm, saving, onSave, onCancel, onDelete, selecao
 }
 
 // ─── Tarefas Tab ──────────────────────────────────────────────────────────────
-// Página completa de tarefas — usa o mesmo localStorage do TasksWidget do Início,
-// portanto qualquer alteração aqui aparece também lá (e vice-versa).
+// Página de tarefas no mesmo estilo de /painel-editor/tarefas.
+// Persistência: localStorage 'freelancer_{id}_tasks' (compatível com TasksWidget)
 
-type TarefaItem = { id: string; text: string; done: boolean; createdAt?: string; doneAt?: string }
+type TarefaPriority = 'Alta' | 'Média' | 'Baixa'
+type TarefaStatus   = 'Pendente' | 'Em andamento' | 'Concluída'
+type TarefaItem = {
+  id: string
+  text: string
+  done: boolean
+  createdAt?: string
+  doneAt?: string
+  priority?: TarefaPriority
+  status?: TarefaStatus
+  dueDate?: string                  // ISO YYYY-MM-DD
+  project?: string                  // nome livre do projeto/casamento
+  resultado?: string
+}
+
+function tarefaStatus(t: TarefaItem): TarefaStatus {
+  if (t.status) return t.status
+  return t.done ? 'Concluída' : 'Pendente'
+}
+function tarefaPriority(t: TarefaItem): TarefaPriority { return t.priority ?? 'Média' }
+function tarefaPrioCls(p: TarefaPriority) {
+  if (p === 'Alta')  return 'bg-red-500/15 text-red-300 border-red-500/30'
+  if (p === 'Média') return 'bg-yellow-500/15 text-yellow-300 border-yellow-500/30'
+  return 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+}
+function todayIso(): string {
+  const d = new Date(); d.setHours(0,0,0,0)
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+}
+function deadlineLabel(iso?: string): string {
+  if (!iso) return ''
+  const today = new Date(); today.setHours(0,0,0,0)
+  const [y, m, d] = iso.split('-').map(Number)
+  if (!y || !m || !d) return ''
+  const target = new Date(y, m-1, d)
+  const diff = Math.round((target.getTime() - today.getTime()) / 86400000)
+  if (diff === 0) return 'Hoje'
+  if (diff === 1) return 'Amanhã'
+  if (diff === -1) return 'Ontem'
+  if (diff > 1 && diff < 8)  return `${diff} dias`
+  if (diff < 0 && diff > -8) return `${Math.abs(diff)} dias atrás`
+  const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+  return `${String(d).padStart(2,'0')} ${meses[m-1]}`
+}
+function isOverdueT(t: TarefaItem): boolean {
+  if (!t.dueDate) return false
+  if (tarefaStatus(t) === 'Concluída') return false
+  return t.dueDate < todayIso()
+}
 
 function TarefasTab({ freelancerId }: { freelancerId: string }) {
   const KEY = `freelancer_${freelancerId}_tasks`
   const [tasks, setTasks] = useState<TarefaItem[]>([])
-  const [novo, setNovo] = useState('')
   const [loaded, setLoaded] = useState(false)
-  const [filter, setFilter] = useState<'todas'|'pendentes'|'concluidas'>('todas')
+  const [filter, setFilter] = useState<'Todas'|'Pendentes'|'Em andamento'|'Concluídas'|'Atrasadas'>('Todas')
+  const [search, setSearch] = useState('')
+  const [showCompleted, setShowCompleted] = useState(false)
+  const [showNewModal, setShowNewModal] = useState(false)
+  // Calendário
+  const today = new Date(); today.setHours(0,0,0,0)
+  const [calView, setCalView] = useState({ y: today.getFullYear(), m: today.getMonth() })
 
   useEffect(() => {
     try {
@@ -2925,163 +2978,504 @@ function TarefasTab({ freelancerId }: { freelancerId: string }) {
     } catch {}
     setLoaded(true)
   }, [KEY])
-
   useEffect(() => {
     if (!loaded) return
     try { localStorage.setItem(KEY, JSON.stringify(tasks)) } catch {}
   }, [tasks, KEY, loaded])
 
-  function adicionar() {
-    const t = novo.trim()
-    if (!t) return
-    setTasks(prev => [...prev, { id: crypto.randomUUID(), text: t, done: false, createdAt: new Date().toISOString() }])
-    setNovo('')
+  function addTask(t: TarefaItem) {
+    setTasks(prev => [t, ...prev])
   }
-  function toggle(id: string) {
-    setTasks(prev => prev.map(t => t.id === id
-      ? { ...t, done: !t.done, doneAt: !t.done ? new Date().toISOString() : undefined }
-      : t))
+  function toggleTask(id: string) {
+    setTasks(prev => prev.map(t => {
+      if (t.id !== id) return t
+      const isDone = tarefaStatus(t) === 'Concluída'
+      if (isDone) {
+        // Concluída → Pendente (revert)
+        return { ...t, done: false, status: 'Pendente', doneAt: undefined }
+      }
+      return { ...t, done: true, status: 'Concluída', doneAt: new Date().toISOString() }
+    }))
   }
-  function remover(id: string) {
+  function setTaskStatus(id: string, status: TarefaStatus) {
+    setTasks(prev => prev.map(t => {
+      if (t.id !== id) return t
+      const done = status === 'Concluída'
+      return { ...t, status, done, doneAt: done ? (t.doneAt ?? new Date().toISOString()) : undefined }
+    }))
+  }
+  function deleteTask(id: string) {
     if (!confirm('Eliminar esta tarefa?')) return
     setTasks(prev => prev.filter(t => t.id !== id))
   }
-  function limparConcluidas() {
-    const n = tasks.filter(t => t.done).length
-    if (n === 0) return
-    if (!confirm(`Eliminar ${n} tarefa${n === 1 ? '' : 's'} concluída${n === 1 ? '' : 's'}?`)) return
-    setTasks(prev => prev.filter(t => !t.done))
+
+  // Counts (sem filtro)
+  const counts = {
+    total:       tasks.length,
+    pendentes:   tasks.filter(t => tarefaStatus(t) === 'Pendente').length,
+    emAndamento: tasks.filter(t => tarefaStatus(t) === 'Em andamento').length,
+    concluidas:  tasks.filter(t => tarefaStatus(t) === 'Concluída').length,
+    atrasadas:   tasks.filter(t => isOverdueT(t)).length,
   }
 
-  const pend = tasks.filter(t => !t.done).length
-  const concl = tasks.length - pend
-  const total = tasks.length
-  const pct = total > 0 ? Math.round((concl / total) * 100) : 0
+  // Filtro principal
+  let filtered = tasks
+  if (filter === 'Pendentes')      filtered = filtered.filter(t => tarefaStatus(t) === 'Pendente')
+  else if (filter === 'Em andamento') filtered = filtered.filter(t => tarefaStatus(t) === 'Em andamento')
+  else if (filter === 'Concluídas')   filtered = filtered.filter(t => tarefaStatus(t) === 'Concluída')
+  else if (filter === 'Atrasadas')    filtered = filtered.filter(t => isOverdueT(t))
+  if (search.trim()) {
+    const q = search.toLowerCase()
+    filtered = filtered.filter(t => t.text.toLowerCase().includes(q) || (t.project ?? '').toLowerCase().includes(q))
+  }
 
-  const filteredTasks = tasks.filter(t => {
-    if (filter === 'pendentes') return !t.done
-    if (filter === 'concluidas') return t.done
-    return true
+  const todayIsoStr = todayIso()
+  const hoje      = filtered.filter(t => t.dueDate === todayIsoStr && (showCompleted || tarefaStatus(t) !== 'Concluída'))
+  const atrasadas = filtered.filter(t => isOverdueT(t) && t.dueDate !== todayIsoStr)
+  const proximas  = filtered.filter(t => t.dueDate && t.dueDate > todayIsoStr && tarefaStatus(t) !== 'Concluída').sort((a, b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''))
+  const semData   = filtered.filter(t => !t.dueDate && tarefaStatus(t) !== 'Concluída')
+  const concluidas = filtered.filter(t => tarefaStatus(t) === 'Concluída' && t.dueDate !== todayIsoStr)
+
+  // Donut
+  const segments = (() => {
+    const total = counts.pendentes + counts.emAndamento + counts.concluidas + counts.atrasadas
+    if (total === 0) return [] as Array<{ color: string; from: number; to: number }>
+    const items = [
+      { value: counts.pendentes,   color: '#94a3b8' },
+      { value: counts.emAndamento, color: '#facc15' },
+      { value: counts.concluidas,  color: '#34d399' },
+      { value: counts.atrasadas,   color: '#ef4444' },
+    ]
+    const segs: Array<{ color: string; from: number; to: number }> = []
+    let acc = 0
+    items.forEach(it => {
+      if (it.value === 0) return
+      const from = acc
+      const to = acc + (it.value / total) * 360
+      segs.push({ color: it.color, from, to })
+      acc = to
+    })
+    return segs
+  })()
+  const donutTotal = counts.pendentes + counts.emAndamento + counts.concluidas + counts.atrasadas
+
+  // Calendário cells
+  const firstDay = new Date(calView.y, calView.m, 1).getDay()
+  const lastDate = new Date(calView.y, calView.m + 1, 0).getDate()
+  const prevLastDate = new Date(calView.y, calView.m, 0).getDate()
+  const markedDays = new Map<number, number>()
+  tasks.forEach(t => {
+    if (!t.dueDate) return
+    const [yy, mm, dd] = t.dueDate.split('-').map(Number)
+    if (yy === calView.y && mm - 1 === calView.m && dd) {
+      markedDays.set(dd, (markedDays.get(dd) ?? 0) + 1)
+    }
   })
+  type Cell = { day: number; current: boolean; isToday: boolean; hasTask: boolean }
+  const cells: Cell[] = []
+  for (let i = firstDay - 1; i >= 0; i--) cells.push({ day: prevLastDate - i, current: false, isToday: false, hasTask: false })
+  for (let d = 1; d <= lastDate; d++) {
+    const isToday = calView.y === today.getFullYear() && calView.m === today.getMonth() && d === today.getDate()
+    cells.push({ day: d, current: true, isToday, hasTask: (markedDays.get(d) ?? 0) > 0 })
+  }
+  while (cells.length % 7 !== 0) cells.push({ day: cells.length - lastDate - firstDay + 1, current: false, isToday: false, hasTask: false })
+
+  // Próximos prazos (3)
+  const proxPrazos = [...proximas, ...atrasadas].sort((a, b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? '')).slice(0, 3)
+
+  // ── Componente: TaskRow ─────────────────────────────────────
+  function TaskRow({ t }: { t: TarefaItem }) {
+    const status = tarefaStatus(t)
+    const prio = tarefaPriority(t)
+    const overdue = isOverdueT(t)
+    const done = status === 'Concluída'
+    return (
+      <div className={`group flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${
+        done ? 'border-white/[0.04] bg-white/[0.01] opacity-70'
+             : overdue ? 'border-red-500/25 bg-red-500/[0.03] hover:bg-red-500/[0.06]'
+                       : 'border-white/[0.07] bg-white/[0.02] hover:border-gold/25 hover:bg-white/[0.04]'
+      }`}>
+        <button onClick={() => toggleTask(t.id)}
+          className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-all ${
+            done ? 'bg-emerald-500/25 border-emerald-500/55 text-emerald-300'
+                 : 'border-white/25 hover:border-gold/60 hover:bg-gold/10'
+          }`}>
+          {done && <span className="text-[10px] leading-none">✓</span>}
+        </button>
+        <div className="flex-1 min-w-0">
+          <p className={`text-[13px] font-medium truncate ${done ? 'line-through text-white/40' : 'text-white/90'}`}>
+            {t.text}
+          </p>
+          <p className="text-[11px] text-white/35 truncate italic">
+            {t.project || 'Sem projeto associado'}
+          </p>
+        </div>
+        <span className={`text-[10px] px-2 py-0.5 rounded-md border tracking-widest uppercase font-bold shrink-0 ${tarefaPrioCls(prio)}`}>
+          {prio}
+        </span>
+        {t.dueDate && (
+          <span className={`text-[10px] tracking-wider whitespace-nowrap shrink-0 flex items-center gap-1 ${
+            overdue ? 'text-red-300' : 'text-white/55'
+          }`}>
+            <span>📅</span> {deadlineLabel(t.dueDate)}
+          </span>
+        )}
+        {status === 'Em andamento' && (
+          <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 shrink-0 tracking-widest uppercase font-bold">
+            ◷
+          </span>
+        )}
+        <div className="relative shrink-0">
+          <button onClick={() => deleteTask(t.id)}
+            title="Eliminar"
+            className="w-6 h-6 flex items-center justify-center rounded text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100">
+            ✕
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Componente: Section ─────────────────────────────────────
+  function Section({ title, count, accent, children }: { title: string; count: number; accent?: 'red' | 'emerald'; children: React.ReactNode }) {
+    const accentBadgeCls = accent === 'red'
+      ? 'bg-red-500/15 text-red-300 border-red-500/30'
+      : accent === 'emerald'
+        ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+        : 'bg-gold/15 text-gold border-gold/30'
+    return (
+      <div className="rounded-2xl border border-white/[0.06] p-4"
+        style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.5))' }}>
+        <div className="flex items-center gap-2 mb-3">
+          <h3 className="text-[14px] font-light text-white" style={{ fontFamily: 'Georgia, serif' }}>{title}</h3>
+          <span className={`text-[10px] px-1.5 py-0.5 rounded-md border tracking-wider font-bold ${accentBadgeCls}`}>{count}</span>
+        </div>
+        <div className="space-y-1.5">{children}</div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-5">
-      {/* Header com KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4">
-          <p className="text-[10px] tracking-[0.3em] uppercase text-white/35 mb-1">Total</p>
-          <p className="text-3xl font-light text-white leading-none tabular-nums" style={{ fontFamily: 'Georgia, serif' }}>{total}</p>
+      {/* HERO da página Tarefas */}
+      <div className="relative overflow-hidden rounded-3xl border border-white/[0.08]"
+        style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.5)' }}>
+        <div className="absolute inset-0 z-0">
+          <img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=1600&h=380&fit=crop" alt=""
+            className="w-full h-full object-cover" />
         </div>
-        <div className="rounded-2xl border border-gold/25 bg-gold/[0.04] p-4">
-          <p className="text-[10px] tracking-[0.3em] uppercase text-gold/70 mb-1">Pendentes</p>
-          <p className="text-3xl font-light text-gold leading-none tabular-nums" style={{ fontFamily: 'Georgia, serif' }}>{pend}</p>
-        </div>
-        <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.04] p-4">
-          <p className="text-[10px] tracking-[0.3em] uppercase text-emerald-300/70 mb-1">Concluídas</p>
-          <p className="text-3xl font-light text-emerald-300 leading-none tabular-nums" style={{ fontFamily: 'Georgia, serif' }}>{concl}</p>
-        </div>
-        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4">
-          <p className="text-[10px] tracking-[0.3em] uppercase text-white/35 mb-1">Progresso</p>
-          <p className="text-3xl font-light text-white leading-none tabular-nums" style={{ fontFamily: 'Georgia, serif' }}>{pct}%</p>
-        </div>
-      </div>
-
-      {/* Barra de progresso */}
-      {total > 0 && (
-        <div className="rounded-full h-1.5 bg-white/[0.05] overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-gold via-emerald-400 to-emerald-500 transition-all duration-500"
-            style={{ width: `${pct}%`, boxShadow: '0 0 12px rgba(201,164,92,0.4)' }} />
-        </div>
-      )}
-
-      {/* Input nova tarefa */}
-      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4">
-        <p className="text-[11px] tracking-[0.35em] uppercase text-gold/70 font-semibold mb-3">Nova Tarefa</p>
-        <div className="flex items-center gap-2">
-          <input
-            value={novo}
-            onChange={e => setNovo(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') adicionar() }}
-            placeholder="O que precisa de ser feito?"
-            className="flex-1 bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-[14px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40 transition-colors"
-          />
-          <button
-            onClick={adicionar}
-            disabled={!novo.trim()}
-            className="px-4 py-2.5 rounded-lg bg-gold text-black text-[12px] font-bold tracking-wider uppercase hover:bg-gold/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-            style={novo.trim() ? { boxShadow: '0 0 12px -4px rgba(201,164,92,0.5)' } : undefined}
-          >+ Adicionar</button>
-        </div>
-      </div>
-
-      {/* Filtros + Lista */}
-      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4">
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <div className="flex items-center gap-1.5">
-            {([
-              { key: 'todas',       label: 'Todas',       count: total },
-              { key: 'pendentes',   label: 'Pendentes',   count: pend },
-              { key: 'concluidas',  label: 'Concluídas',  count: concl },
-            ] as const).map(f => (
-              <button key={f.key} onClick={() => setFilter(f.key)}
-                className={`px-3 py-1.5 rounded-lg text-[11px] tracking-widest uppercase font-semibold transition-all border ${
-                  filter === f.key
-                    ? 'bg-gold/15 border-gold/40 text-gold'
-                    : 'bg-transparent border-white/[0.06] text-white/45 hover:text-white/75 hover:border-white/15'
-                }`}>
-                {f.label} <span className="opacity-70">({f.count})</span>
-              </button>
-            ))}
+        <div className="absolute inset-0 z-[1]"
+          style={{ background: 'linear-gradient(90deg, rgba(11,11,11,0.96) 0%, rgba(11,11,11,0.86) 40%, rgba(11,11,11,0.5) 70%, rgba(11,11,11,0.15) 100%)' }} />
+        <div className="relative z-10 flex items-start justify-between gap-4 px-6 sm:px-8 py-7 sm:py-9 flex-wrap">
+          <div className="flex items-center gap-5">
+            <div className="w-14 h-14 rounded-2xl border border-gold/30 flex items-center justify-center text-2xl text-gold shrink-0"
+              style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.15), rgba(201,164,92,0.04))', boxShadow: '0 0 22px -4px rgba(201,164,92,0.25)' }}>
+              ◷
+            </div>
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>Tarefas</h1>
+              <p className="text-[13px] text-white/55 mt-1 max-w-md">Gerencia todas as tuas tarefas. Sincronizadas com os teus projetos e prazos.</p>
+            </div>
           </div>
-          {concl > 0 && (
-            <button onClick={limparConcluidas}
-              className="text-[10px] tracking-widest uppercase text-white/35 hover:text-red-400 transition-colors">
-              ✕ Limpar concluídas
+          <button onClick={() => setShowNewModal(true)}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black text-[13px] font-bold tracking-wider hover:bg-gold/90 transition-all"
+            style={{ boxShadow: '0 0 20px -4px rgba(201,164,92,0.5)' }}>
+            <span className="text-lg leading-none">+</span> Nova Tarefa
+          </button>
+        </div>
+      </div>
+
+      {/* GRID 2/3 + 1/3 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* MAIN — lista */}
+        <div className="lg:col-span-2 flex flex-col gap-4">
+
+          {/* Filter Bar */}
+          <div className="rounded-2xl border border-white/[0.06] p-4"
+            style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.5))' }}>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-1">
+                {(['Todas','Pendentes','Em andamento','Concluídas','Atrasadas'] as const).map(f => (
+                  <button key={f} onClick={() => setFilter(f)}
+                    className={`relative px-3 py-2 text-[13px] tracking-wide transition-all ${
+                      filter === f ? 'text-gold' : 'text-white/45 hover:text-white/80'
+                    }`}>
+                    {f}
+                    {filter === f && <span className="absolute bottom-0 left-3 right-3 h-px bg-gold" />}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-[14px]">⌕</span>
+                  <input value={search} onChange={e => setSearch(e.target.value)}
+                    placeholder="Pesquisar tarefa…"
+                    className="bg-black/30 border border-white/[0.08] rounded-lg pl-9 pr-3 py-2 text-[12px] text-white placeholder:text-white/30 focus:outline-none focus:border-gold/40 w-56" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Secções */}
+          {hoje.length > 0 && <Section title="Tarefas de Hoje" count={hoje.length}>{hoje.map(t => <TaskRow key={t.id} t={t} />)}</Section>}
+          {atrasadas.length > 0 && <Section title="Atrasadas" count={atrasadas.length} accent="red">{atrasadas.map(t => <TaskRow key={t.id} t={t} />)}</Section>}
+          {proximas.length > 0 && <Section title="Próximas Tarefas" count={proximas.length}>{proximas.map(t => <TaskRow key={t.id} t={t} />)}</Section>}
+          {semData.length > 0 && filter === 'Todas' && <Section title="Sem prazo" count={semData.length}>{semData.map(t => <TaskRow key={t.id} t={t} />)}</Section>}
+
+          {!showCompleted && concluidas.length > 0 && (
+            <button onClick={() => setShowCompleted(true)}
+              className="w-full py-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] text-[12px] tracking-widest uppercase text-white/45 hover:text-gold hover:border-gold/30 transition-all">
+              Mostrar concluídas ({concluidas.length}) ⌄
             </button>
+          )}
+          {showCompleted && concluidas.length > 0 && (
+            <Section title="Concluídas" count={concluidas.length} accent="emerald">{concluidas.map(t => <TaskRow key={t.id} t={t} />)}</Section>
+          )}
+
+          {filtered.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-white/[0.08] text-center py-16">
+              <p className="text-gold/40 text-4xl font-serif leading-none mb-3">∅</p>
+              <p className="text-[14px] text-white/35">Sem tarefas com este filtro.</p>
+            </div>
           )}
         </div>
 
-        {filteredTasks.length === 0 ? (
-          <div className="py-10 text-center">
-            <span className="text-4xl opacity-20 block mb-2">{filter === 'concluidas' ? '✓' : filter === 'pendentes' ? '◷' : '✦'}</span>
-            <p className="text-[12px] text-white/35 italic">
-              {filter === 'concluidas' ? 'Nada concluído ainda.' : filter === 'pendentes' ? 'Sem tarefas pendentes — bom trabalho!' : 'Sem tarefas. Adiciona a primeira acima.'}
-            </p>
+        {/* RIGHT — sidebar */}
+        <aside className="lg:col-span-1 flex flex-col gap-4">
+
+          {/* Visão Geral (donut) */}
+          <div className="rounded-2xl border border-white/[0.06] p-4"
+            style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.5))' }}>
+            <p className="text-[11px] tracking-[0.35em] uppercase text-gold/70 font-semibold mb-3">Visão Geral</p>
+            <div className="flex items-center gap-5">
+              <div className="relative w-24 h-24 shrink-0">
+                <svg width="96" height="96" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
+                  {segments.map((s, i) => {
+                    const a1 = (s.from - 90) * Math.PI / 180
+                    const a2 = (s.to - 90) * Math.PI / 180
+                    const x1 = 50 + 40 * Math.cos(a1), y1 = 50 + 40 * Math.sin(a1)
+                    const x2 = 50 + 40 * Math.cos(a2), y2 = 50 + 40 * Math.sin(a2)
+                    const large = (s.to - s.from) > 180 ? 1 : 0
+                    return <path key={i} d={`M ${x1} ${y1} A 40 40 0 ${large} 1 ${x2} ${y2}`} fill="none" stroke={s.color} strokeWidth="10" strokeLinecap="butt" />
+                  })}
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <p className="text-2xl font-light text-white tabular-nums leading-none" style={{ fontFamily: 'Georgia, serif' }}>{donutTotal}</p>
+                  <p className="text-[8px] tracking-widest uppercase text-white/30">Tarefas</p>
+                </div>
+              </div>
+              <div className="flex-1 space-y-2 text-[12px]">
+                {[
+                  { color: '#94a3b8', label: 'Pendentes', value: counts.pendentes },
+                  { color: '#facc15', label: 'Em andamento', value: counts.emAndamento },
+                  { color: '#34d399', label: 'Concluídas', value: counts.concluidas },
+                  { color: '#ef4444', label: 'Atrasada', value: counts.atrasadas },
+                ].map(it => (
+                  <div key={it.label} className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full" style={{ background: it.color }} />
+                    <span className="text-white/85 tabular-nums font-semibold w-5">{it.value}</span>
+                    <span className="text-white/55">{it.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        ) : (
-          <ul className="space-y-1.5">
-            {filteredTasks.map(t => (
-              <li key={t.id}
-                className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all ${
-                  t.done
-                    ? 'border-white/[0.04] bg-white/[0.01]'
-                    : 'border-white/[0.08] bg-white/[0.02] hover:border-gold/25 hover:bg-white/[0.04]'
-                }`}>
-                <button onClick={() => toggle(t.id)}
-                  className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-all ${
-                    t.done
-                      ? 'bg-emerald-500/25 border-emerald-500/55 text-emerald-300'
-                      : 'border-white/25 hover:border-gold/60 hover:bg-gold/10'
-                  }`}>
-                  {t.done && <span className="text-[12px] leading-none">✓</span>}
-                </button>
-                <span className={`flex-1 text-[14px] leading-snug ${t.done ? 'line-through text-white/35' : 'text-white/85'}`}>
-                  {t.text}
-                </span>
-                {t.done && t.doneAt && (
-                  <span className="text-[10px] text-emerald-400/55 tracking-wider whitespace-nowrap">
-                    {new Date(t.doneAt).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })}
-                  </span>
-                )}
-                <button onClick={() => remover(t.id)}
-                  title="Eliminar"
-                  className="w-6 h-6 flex items-center justify-center rounded-md text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100">
-                  ✕
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+
+          {/* Sincronização */}
+          <div className="rounded-2xl border border-emerald-500/15 p-4"
+            style={{ background: 'linear-gradient(135deg, rgba(16,40,28,0.4), rgba(11,11,11,0.5))' }}>
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-300 text-lg shrink-0">↻</div>
+              <div className="flex-1">
+                <p className="text-[13px] font-semibold text-white mb-0.5">Sincronização</p>
+                <p className="text-[11px] text-white/50 leading-relaxed">Todas as tarefas estão sincronizadas com os projetos e prazos.</p>
+                <p className="text-[11px] text-emerald-300 mt-2 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" style={{ boxShadow: '0 0 6px rgba(52,211,153,0.7)' }} />
+                  Sincronizado agora
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Calendário */}
+          <div className="rounded-2xl border border-white/[0.06] p-4"
+            style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.5))' }}>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[11px] tracking-[0.35em] uppercase text-gold/70 font-semibold">Calendário</p>
+              <div className="flex items-center gap-1.5">
+                <button onClick={() => { const d = new Date(calView.y, calView.m - 1, 1); setCalView({ y: d.getFullYear(), m: d.getMonth() }) }}
+                  className="w-6 h-6 rounded-md border border-white/10 text-white/50 hover:text-gold hover:border-gold/30 transition-all text-[12px]">‹</button>
+                <button onClick={() => setCalView({ y: today.getFullYear(), m: today.getMonth() })}
+                  className="text-[10px] tracking-widest uppercase text-white/45 hover:text-gold transition-colors px-2 py-1 rounded-md border border-white/10">Hoje</button>
+                <button onClick={() => { const d = new Date(calView.y, calView.m + 1, 1); setCalView({ y: d.getFullYear(), m: d.getMonth() }) }}
+                  className="w-6 h-6 rounded-md border border-white/10 text-white/50 hover:text-gold hover:border-gold/30 transition-all text-[12px]">›</button>
+              </div>
+            </div>
+            <p className="text-center text-[13px] tracking-wider text-white/85 mb-2 font-light">
+              {['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][calView.m]} {calView.y}
+            </p>
+            <div className="grid grid-cols-7 gap-1 mb-1">
+              {['D','S','T','Q','Q','S','S'].map((d, i) => (
+                <div key={i} className="text-center text-[10px] tracking-widest uppercase text-white/30 py-1">{d}</div>
+              ))}
+            </div>
+            <div className="grid grid-cols-7 gap-1">
+              {cells.map((c, i) => {
+                const cls = `w-full h-full flex items-center justify-center text-[11px] rounded-md transition-all ${
+                  c.isToday ? 'bg-gold text-black font-bold'
+                    : c.hasTask && c.current ? 'text-gold border border-gold/30 hover:bg-gold/10'
+                    : c.current ? 'text-white/65 hover:bg-white/[0.04]'
+                    : 'text-white/15'
+                }`
+                return (
+                  <div key={i} className="aspect-square relative">
+                    <div className={cls}
+                      style={c.isToday ? { boxShadow: '0 0 12px rgba(201,164,92,0.5)' } : {}}>
+                      {c.day}
+                    </div>
+                    {c.hasTask && c.current && !c.isToday && (
+                      <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-gold pointer-events-none" />
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Próximos Prazos */}
+          {proxPrazos.length > 0 && (
+            <div className="rounded-2xl border border-white/[0.06] p-4"
+              style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.5))' }}>
+              <p className="text-[11px] tracking-[0.35em] uppercase text-gold/70 font-semibold mb-3">Próximos Prazos</p>
+              <div className="space-y-2">
+                {proxPrazos.map(t => (
+                  <div key={t.id} className="flex items-center gap-3 p-2.5 rounded-xl border border-white/[0.06] hover:border-gold/30 hover:bg-white/[0.02] transition-all">
+                    <div className="w-9 h-9 rounded-lg border border-gold/30 bg-gold/10 flex items-center justify-center text-gold text-base shrink-0">◷</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-medium text-white truncate">{t.text}</p>
+                      <p className="text-[11px] text-white/40 truncate">{t.project || 'Sem projeto'}</p>
+                    </div>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-md border tracking-widest uppercase font-bold ${
+                      isOverdueT(t) ? 'bg-red-500/15 text-red-300 border-red-500/30' : 'bg-gold/15 text-gold border-gold/30'
+                    }`}>
+                      {deadlineLabel(t.dueDate)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </aside>
+      </div>
+
+      {/* Modal Nova Tarefa */}
+      {showNewModal && (
+        <NovaTarefaModal
+          onClose={() => setShowNewModal(false)}
+          onCreate={(t) => { addTask(t); setShowNewModal(false) }}
+        />
+      )}
+    </div>
+  )
+}
+
+// ── Modal Nova Tarefa ─────────────────────────────────────
+function NovaTarefaModal({ onClose, onCreate }: { onClose: () => void; onCreate: (t: TarefaItem) => void }) {
+  const [text, setText] = useState('')
+  const [priority, setPriority] = useState<TarefaPriority>('Média')
+  const [dueDate, setDueDate] = useState('')
+  const [project, setProject] = useState('')
+  const [status, setStatus] = useState<TarefaStatus>('Pendente')
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  function submit() {
+    const t = text.trim()
+    if (!t) return
+    onCreate({
+      id: crypto.randomUUID(),
+      text: t,
+      done: status === 'Concluída',
+      status,
+      priority,
+      dueDate: dueDate || undefined,
+      project: project.trim() || undefined,
+      createdAt: new Date().toISOString(),
+      doneAt: status === 'Concluída' ? new Date().toISOString() : undefined,
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/85 backdrop-blur-md" />
+      <div className="relative z-10 w-full max-w-md rounded-3xl overflow-hidden border border-gold/25 shadow-2xl"
+        style={{ background: 'linear-gradient(180deg, #100c08, #0b0905)' }}
+        onClick={e => e.stopPropagation()}>
+        <div className="h-0.5 w-full bg-gold/60" />
+        <div className="px-6 pt-5 pb-3 border-b border-white/[0.05] flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[10px] tracking-[0.5em] text-gold/65 uppercase mb-1">Nova Tarefa</p>
+            <h2 className="text-xl font-light tracking-[0.05em] text-white" style={{ fontFamily: 'Georgia, serif' }}>Criar tarefa</h2>
+          </div>
+          <button onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/35 hover:text-white hover:border-white/30 transition-all">✕</button>
+        </div>
+        <div className="px-6 py-5 space-y-3">
+          <div>
+            <label className="block text-[10px] tracking-[0.3em] uppercase text-white/35 mb-1">Título</label>
+            <input value={text} onChange={e => setText(e.target.value)} autoFocus
+              onKeyDown={e => { if (e.key === 'Enter') submit() }}
+              placeholder="O que precisa de ser feito?"
+              className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[10px] tracking-[0.3em] uppercase text-white/35 mb-1">Prioridade</label>
+              <select value={priority} onChange={e => setPriority(e.target.value as TarefaPriority)}
+                className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-[13px] text-white focus:outline-none focus:border-gold/40 [color-scheme:dark]">
+                <option value="Alta">Alta</option>
+                <option value="Média">Média</option>
+                <option value="Baixa">Baixa</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-[10px] tracking-[0.3em] uppercase text-white/35 mb-1">Estado</label>
+              <select value={status} onChange={e => setStatus(e.target.value as TarefaStatus)}
+                className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-[13px] text-white focus:outline-none focus:border-gold/40 [color-scheme:dark]">
+                <option value="Pendente">Pendente</option>
+                <option value="Em andamento">Em andamento</option>
+                <option value="Concluída">Concluída</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-[10px] tracking-[0.3em] uppercase text-white/35 mb-1">Prazo</label>
+            <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)}
+              className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-[13px] text-white focus:outline-none focus:border-gold/40 [color-scheme:dark]" />
+          </div>
+          <div>
+            <label className="block text-[10px] tracking-[0.3em] uppercase text-white/35 mb-1">Projeto / Casamento</label>
+            <input value={project} onChange={e => setProject(e.target.value)}
+              placeholder="Nome do casamento (opcional)"
+              className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40" />
+          </div>
+        </div>
+        <div className="px-6 py-4 border-t border-white/[0.05] flex items-center justify-end gap-2">
+          <button onClick={onClose}
+            className="px-4 py-2 rounded-lg text-[11px] tracking-wider uppercase text-white/55 hover:text-white border border-white/10 hover:border-white/30 transition-all">
+            Cancelar
+          </button>
+          <button onClick={submit} disabled={!text.trim()}
+            className="px-5 py-2 rounded-lg text-[11px] tracking-wider uppercase font-bold bg-gold text-black hover:bg-gold/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            style={text.trim() ? { boxShadow: '0 0 12px -4px rgba(201,164,92,0.5)' } : undefined}>
+            + Criar tarefa
+          </button>
+        </div>
       </div>
     </div>
   )
