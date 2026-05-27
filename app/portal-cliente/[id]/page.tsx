@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
 import { NotionBlocks, plainText, richText, type Block } from '../NotionRenderer'
 import BlockEditor from '../BlockEditor'
+import BriefingExtensions, { type BriefingExt } from './BriefingExtensions'
 
 const PORTAL_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
 
@@ -921,7 +922,7 @@ function PortalSubPageContent() {
   const [briefingLinks, setBriefingLinks] = useState<Record<string, string>>({})
   const [pageHeaders, setPageHeaders] = useState<Record<string, string>>({})
   const [uploadingPageHeader, setUploadingPageHeader] = useState(false)
-  const [briefingInfo, setBriefingInfo] = useState<Record<string, { fields?: Array<{ label: string; value: string }>; infoGeral?: string; equipa?: Array<{ role: string; name: string }> }>>({})
+  const [briefingInfo, setBriefingInfo] = useState<Record<string, BriefingExt>>({})
   const [editingBriefingInfo, setEditingBriefingInfo] = useState(false)
   const [briefingFieldsForm, setBriefingFieldsForm] = useState<Array<{ label: string; value: string }>>([])
   const [editingInfoGeral, setEditingInfoGeral] = useState(false)
@@ -1282,6 +1283,16 @@ function PortalSubPageContent() {
     setBriefingInfo(newBI)
     setEditingEquipa(false)
     setSavingEquipa(false)
+  }
+
+  // Save genérico para todas as secções do BriefingExtensions
+  async function handleSaveBriefingExt(patch: Partial<BriefingExt>) {
+    if (!id) return
+    const existing = briefingInfo[id as string] ?? {}
+    const updated = { ...existing, ...patch }
+    const newBI = { ...briefingInfo, [id as string]: updated }
+    setBriefingInfo(newBI) // optimistic
+    await savePortalSettings({ ...portalSettingsObj, briefingInfo: newBI })
   }
 
   async function handleSaveCalloutLinks() {
@@ -2356,11 +2367,21 @@ function PortalSubPageContent() {
                               ['heading_1','heading_2','heading_3'].includes(b.type) &&
                               plainText(b[b.type]?.rich_text ?? []).toUpperCase().includes('BRIEFING GERAL')
                             )
+                            const briefingExtBlock = (
+                              <BriefingExtensions
+                                info={equipaBI as BriefingExt}
+                                isAdmin={isAdmin}
+                                onSave={handleSaveBriefingExt}
+                                pageTitle={title}
+                                portalRef={portalRef || refParam || undefined}
+                              />
+                            )
                             if (briefingGeralIdx === -1) {
                               return (
                                 <>
                                   {enviarBriefingBtn}
                                   {equipaBox}
+                                  {briefingExtBlock}
                                   <NotionBlocks blocks={otherBlocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
                                   {cardsGrid}
                                 </>
@@ -2371,6 +2392,7 @@ function PortalSubPageContent() {
                                 <NotionBlocks blocks={otherBlocks.slice(0, briefingGeralIdx)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
                                 {enviarBriefingBtn}
                                 {equipaBox}
+                                {briefingExtBlock}
                                 <NotionBlocks blocks={[otherBlocks[briefingGeralIdx]]} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
                                 {cardsGrid}
                                 <NotionBlocks blocks={otherBlocks.slice(briefingGeralIdx + 1)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />

@@ -36,3 +36,26 @@ body {
   40%  { box-shadow: 20px 0 40px rgba(0,0,0,0.85); }
   100% { transform: rotateY(180deg); box-shadow: -4px 0 10px rgba(0,0,0,0.4); }
 }
+
+/* ── Print / PDF — usado pelo botão ↓ PDF do Briefing ─────────────────────── */
+@media print {
+  @page { size: A4; margin: 12mm; }
+  body { background: #ffffff !important; color: #111111 !important; }
+  /* Esconde chrome (sidebar, header global, botões editar/upload, navegação) */
+  nav, header[role="banner"], .no-print, button, a[href^="tel:"] svg, .fixed { display: none !important; }
+  /* Reduz cards a preto sobre branco para legibilidade */
+  section, [class*="rounded-2xl"], [class*="rounded-xl"] {
+    background: #ffffff !important;
+    color: #111111 !important;
+    border-color: #d4d4d4 !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+  }
+  * {
+    color: #111111 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* Mantém títulos dourados visíveis em impressão */
+  [class*="text-gold"], h1, h2, h3 { color: #8a6f1c !important; }
+}
