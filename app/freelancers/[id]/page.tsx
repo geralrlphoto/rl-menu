@@ -1616,12 +1616,19 @@ function SidebarNavAdmin({
       <div className="absolute top-0 left-0 w-[28px] h-[28px] pointer-events-none" style={{ borderTop: '0.5px solid rgba(201,164,92,0.25)', borderLeft: '0.5px solid rgba(201,164,92,0.25)' }} />
       <div className="absolute top-0 right-0 w-[28px] h-[28px] pointer-events-none" style={{ borderTop: '0.5px solid rgba(201,164,92,0.25)', borderRight: '0.5px solid rgba(201,164,92,0.25)' }} />
 
-      {/* Logo */}
-      <div className="px-7 pt-10 pb-6 text-center">
-        <p className="text-[10px] tracking-[0.5em] uppercase font-light" style={{ color: '#7a6340' }}>RL</p>
-        <p className="text-[22px] leading-tight mt-1" style={{ color: '#f0e8d8', fontWeight: 400 }}>
-          Photo<span className="italic" style={{ color: '#c9a96e' }}>.video</span>
-        </p>
+      {/* Logo — caixa gold com o logo RL Photo·Video */}
+      <div className="px-6 pt-9 pb-6 flex flex-col items-center">
+        <div className="w-16 h-16 rounded-2xl border border-gold/40 flex items-center justify-center overflow-hidden"
+          style={{
+            background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.18), rgba(201,164,92,0.04))',
+            boxShadow: '0 0 22px rgba(201,164,92,0.18)',
+          }}>
+          <img
+            src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
+            alt="RL Photo·Video"
+            className="w-11 h-11 object-contain"
+          />
+        </div>
         {!viewAsFreelancer && (
           <div className="flex items-center justify-center gap-2 mt-4">
             <div className="h-px w-5" style={{ background: 'linear-gradient(90deg, transparent, rgba(201,164,92,0.45))' }} />
