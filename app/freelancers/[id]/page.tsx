@@ -3008,6 +3008,27 @@ function TarefasTab({ freelancerId }: { freelancerId: string }) {
   const [showSendModal, setShowSendModal] = useState(false)                       // modal 'Enviar Tarefa' para outro membro
   const [completingTask, setCompletingTask] = useState<TarefaItem | null>(null)  // tarefa a concluir (precisa de resposta)
   const [viewingTask, setViewingTask] = useState<TarefaItem | null>(null)        // tarefa concluída cujo resultado se quer ver
+  const [mainTab, setMainTab] = useState<'minhas'|'enviadas'>('minhas')           // separador no topo da página Tarefas
+  const [sentTasks, setSentTasks] = useState<Notificacao[]>([])
+  const [loadingSent, setLoadingSent] = useState(false)
+  const [viewingThreadTask, setViewingThreadTask] = useState<{ threadId: string; title: string } | null>(null)
+  const [currentFreelancerName, setCurrentFreelancerName] = useState('')
+
+  // Carrega 'Tarefas Enviadas' (notifs cujo senderId no META sou eu)
+  useEffect(() => {
+    if (!freelancerId) return
+    setLoadingSent(true)
+    fetch(`/api/freelancer-notificacoes?sent_by=${encodeURIComponent(freelancerId)}`)
+      .then(r => r.json())
+      .then(d => setSentTasks((d.notificacoes ?? []) as Notificacao[]))
+      .catch(() => setSentTasks([]))
+      .finally(() => setLoadingSent(false))
+    // Nome do membro actual (para o modal de conversação)
+    fetch('/api/freelancers').then(r => r.json()).then(d => {
+      const me = (d.freelancers ?? []).find((f: any) => f.id === freelancerId)
+      if (me) setCurrentFreelancerName(me.nome ?? '')
+    }).catch(() => {})
+  }, [freelancerId, mainTab])
   // Calendário
   const today = new Date(); today.setHours(0,0,0,0)
   const [calView, setCalView] = useState({ y: today.getFullYear(), m: today.getMonth() })
@@ -3266,15 +3287,108 @@ function TarefasTab({ freelancerId }: { freelancerId: string }) {
         </div>
       </div>
 
-      {/* GRID 2/3 + 1/3 */}
-      {/* Aviso: regra de conclusão obrigatória */}
+      {/* Separador: Minhas Tarefas | Tarefas Enviadas */}
+      <div className="flex items-center gap-1 border-b border-white/[0.06]">
+        {([
+          { key: 'minhas'   as const, label: 'Minhas Tarefas',    count: tasks.length },
+          { key: 'enviadas' as const, label: 'Tarefas Enviadas',  count: sentTasks.length },
+        ]).map(t => (
+          <button key={t.key} onClick={() => setMainTab(t.key)}
+            className={`relative px-4 py-2.5 text-[13px] tracking-[0.2em] uppercase font-semibold transition-all ${
+              mainTab === t.key ? 'text-gold' : 'text-white/40 hover:text-white/75'
+            }`}>
+            {t.label}
+            <span className={`ml-2 text-[10px] px-1.5 py-0.5 rounded-full ${
+              mainTab === t.key ? 'bg-gold/20 text-gold border border-gold/30' : 'bg-white/[0.06] text-white/40'
+            }`}>{t.count}</span>
+            {mainTab === t.key && <span className="absolute bottom-0 left-3 right-3 h-px bg-gold" />}
+          </button>
+        ))}
+      </div>
+
+      {/* Aviso: regra de conclusão obrigatória (só nas Minhas Tarefas) */}
+      {mainTab === 'minhas' && (
       <div className="flex items-start gap-3 px-4 py-3 rounded-2xl border border-amber-500/25 bg-amber-500/[0.04]">
         <span className="text-amber-300 text-base shrink-0 mt-0.5">ⓘ</span>
         <p className="text-[12px] text-amber-100/85 leading-relaxed">
           Para marcares uma tarefa como <span className="font-bold not-italic uppercase">Concluída</span> tens de escrever uma <span className="font-bold not-italic">resposta de conclusão</span> a descrever o que foi feito. A resposta fica registada e não pode ser alterada.
         </p>
       </div>
+      )}
 
+      {/* Tab: Tarefas Enviadas — agrupadas por threadId */}
+      {mainTab === 'enviadas' && (
+        <div className="space-y-3">
+          {loadingSent ? (
+            <p className="text-center py-6 text-white/30 text-[13px] italic">A carregar tarefas enviadas…</p>
+          ) : sentTasks.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-white/[0.08] text-center py-14">
+              <span className="text-5xl opacity-20 block mb-3">✈</span>
+              <p className="text-[14px] text-white/55 italic mb-1">Ainda não enviaste tarefas a outros membros.</p>
+              <p className="text-[12px] text-white/30">
+                Carrega em <span className="text-blue-300/85 font-semibold">✈ Enviar Tarefa</span> no topo para começar.
+              </p>
+            </div>
+          ) : (() => {
+            const groups = new Map<string, { items: Notificacao[]; firstMeta: ReturnType<typeof parseNotifMeta> | null }>()
+            sentTasks.forEach(n => {
+              const meta = parseNotifMeta(n.mensagem)
+              const key = meta.threadId || `solo-${n.id}`
+              if (!groups.has(key)) groups.set(key, { items: [], firstMeta: meta })
+              groups.get(key)!.items.push(n)
+            })
+            const sorted = Array.from(groups.entries()).sort((a, b) => {
+              const ta = a[1].items[a[1].items.length - 1].created_at || ''
+              const tb = b[1].items[b[1].items.length - 1].created_at || ''
+              return tb.localeCompare(ta)
+            })
+            return sorted.map(([threadId, group]) => {
+              const meta = group.firstMeta
+              const lastItem = group.items[group.items.length - 1]
+              const recipientIds = Array.from(new Set(group.items.map(i => i.freelancer_id)))
+              const threadTitle = meta?.threadTitle || lastItem.titulo
+              const concluded = group.items.some(i => i.tipo === 'tarefa_concluida')
+              const lastDate = new Date(lastItem.created_at)
+              const dateLabel = `${lastDate.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })} · ${lastDate.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}`
+              return (
+                <div key={threadId}
+                  className={`flex items-start gap-3 px-4 py-3.5 rounded-xl border transition-all hover:border-gold/30 hover:bg-white/[0.02] ${
+                    concluded ? 'border-emerald-500/25 bg-emerald-500/[0.03]' : 'border-white/[0.08] bg-white/[0.02]'
+                  }`}>
+                  <div className="w-11 h-11 rounded-lg border border-blue-500/30 bg-blue-500/10 flex items-center justify-center text-blue-300 text-base shrink-0">
+                    {concluded ? '✓' : '✈'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className="text-[14px] text-white font-medium truncate">{threadTitle}</span>
+                      {concluded && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 tracking-wider uppercase font-bold">
+                          Concluída
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[12px] text-white/50 truncate">
+                      Para: <span className="text-white/75">{recipientIds.length > 1 ? `${recipientIds.length} membros` : '1 membro'}</span>
+                      <span className="text-white/25"> · </span>
+                      {group.items.length} mensagem{group.items.length === 1 ? '' : 's'}
+                    </p>
+                    <p className="text-[10px] text-white/30 mt-0.5">Última atualização: {dateLabel}</p>
+                  </div>
+                  {meta?.threadId && (
+                    <button onClick={() => setViewingThreadTask({ threadId: meta.threadId!, title: threadTitle })}
+                      className="px-3 py-1.5 rounded-md text-[11px] tracking-wider uppercase font-bold border border-gold/35 bg-gold/10 text-gold hover:bg-gold/20 hover:border-gold/55 transition-all flex items-center gap-1 shrink-0">
+                      💬 Ver Conversação
+                    </button>
+                  )}
+                </div>
+              )
+            })
+          })()}
+        </div>
+      )}
+
+      {/* GRID 2/3 + 1/3 (só na tab Minhas Tarefas) */}
+      {mainTab === 'minhas' && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* MAIN — lista */}
         <div className="lg:col-span-2 flex flex-col gap-4">
@@ -3457,6 +3571,7 @@ function TarefasTab({ freelancerId }: { freelancerId: string }) {
           )}
         </aside>
       </div>
+      )}
 
       {/* Modal Nova Tarefa */}
       {showNewModal && (
@@ -3488,6 +3603,42 @@ function TarefasTab({ freelancerId }: { freelancerId: string }) {
         <EnviarTarefaModal
           senderId={freelancerId}
           onClose={() => setShowSendModal(false)}
+        />
+      )}
+
+      {/* Modal Conversação (a partir do tab Tarefas Enviadas) */}
+      {viewingThreadTask && (
+        <ConversacaoModal
+          threadId={viewingThreadTask.threadId}
+          title={viewingThreadTask.title}
+          currentFreelancerId={freelancerId}
+          currentFreelancerName={currentFreelancerName}
+          onClose={() => setViewingThreadTask(null)}
+          onConcluir={async () => {
+            // Conclusão a partir da página Tarefas — envia notif aos participantes
+            const threadId = viewingThreadTask.threadId
+            const title = viewingThreadTask.title
+            const meta = JSON.stringify({
+              senderId: freelancerId, senderName: currentFreelancerName,
+              threadId, creatorId: freelancerId, creatorName: currentFreelancerName,
+              threadTitle: title,
+            })
+            const msg = [`__META__${meta}__/META__`, `A tarefa foi marcada como concluída por ${currentFreelancerName || 'o criador'}.`].join('\n')
+            const res = await fetch(`/api/freelancer-notificacoes?thread_id=${encodeURIComponent(threadId)}`).then(r => r.json())
+            const partIds = Array.from(new Set(((res.notificacoes ?? []) as Notificacao[]).map(n => n.freelancer_id))).filter(id => id !== freelancerId)
+            await Promise.all(partIds.map(pid =>
+              fetch('/api/freelancer-notificacoes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ freelancer_id: pid, titulo: `✓ Tarefa concluída — ${title}`, mensagem: msg, tipo: 'tarefa_concluida', lida: false }),
+              })
+            ))
+            setViewingThreadTask(null)
+            // refrescar sentTasks
+            const reloaded = await fetch(`/api/freelancer-notificacoes?sent_by=${encodeURIComponent(freelancerId)}`).then(r => r.json())
+            setSentTasks((reloaded.notificacoes ?? []) as Notificacao[])
+          }}
+          onResponder={() => { /* não aplicável nesta view */ }}
         />
       )}
     </div>
