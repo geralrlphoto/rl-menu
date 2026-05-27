@@ -812,47 +812,49 @@ function FreelancerDetailInner() {
             } as const
 
             return (
-              <div className="mb-6 rounded-2xl border border-rose-500/35 p-4"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(40,8,12,0.5), rgba(20,5,8,0.7))',
-                  boxShadow: '0 0 36px -12px rgba(244,63,94,0.45), inset 0 0 0 1px rgba(244,63,94,0.05)',
-                }}>
-                {/* Header */}
-                <div className="flex items-center justify-between gap-3 mb-3">
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-rose-300 text-base">⚠</span>
-                    <p className="text-[11px] tracking-[0.35em] uppercase font-bold text-rose-300">Crítico · Entrega</p>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-200 border border-rose-500/40 font-bold tabular-nums">
-                      {atrasados.length}
-                    </span>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
+                <div className="rounded-2xl border border-rose-500/35 p-3.5"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(40,8,12,0.5), rgba(20,5,8,0.7))',
+                    boxShadow: '0 0 28px -10px rgba(244,63,94,0.45), inset 0 0 0 1px rgba(244,63,94,0.05)',
+                  }}>
+                  {/* Header */}
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-rose-300 text-sm">⚠</span>
+                      <p className="text-[10px] tracking-[0.3em] uppercase font-bold text-rose-300 truncate">Crítico · Entrega</p>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-200 border border-rose-500/40 font-bold tabular-nums shrink-0">
+                        {atrasados.length}
+                      </span>
+                    </div>
+                    <p className="text-[10px] italic text-rose-200/55 shrink-0">30 dias</p>
                   </div>
-                  <p className="text-[11px] italic text-rose-200/60">30 dias</p>
-                </div>
 
-                {/* Linhas */}
-                <div className="space-y-2">
-                  {atrasados.map(p => {
-                    const m = KIND_META[p.tipo as keyof typeof KIND_META] ?? KIND_META.selecao
-                    const diasAtraso = Math.abs(p.daysLeft)
-                    return (
-                      <button key={`${p.tipo}-${p.c.id}`} onClick={() => setTab(m.targetTab)}
-                        className="w-full group flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-rose-500/25 bg-rose-500/[0.04] hover:border-rose-500/45 hover:bg-rose-500/[0.08] transition-all text-left">
-                        <span className={`px-2 py-1 rounded-md text-[9px] tracking-[0.2em] uppercase font-bold border ${m.chipBg} ${m.chipBorder} ${m.chipText} shrink-0 min-w-[68px] text-center`}>
-                          {m.label}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[14px] text-white font-bold tracking-wide truncate">{(p.c.local ?? '—').toUpperCase()}</p>
-                          <p className="text-[11px] text-rose-200/55 italic mt-0.5">{fmtShortDate(p.deadline)}</p>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <p className="text-rose-300 font-bold tabular-nums leading-none" style={{ fontFamily: 'Georgia, serif', fontSize: '24px' }}>
-                            +{diasAtraso}
-                            <span className="text-[10px] text-rose-300/75 tracking-[0.25em] uppercase ml-1.5 font-bold">atr.</span>
-                          </p>
-                        </div>
-                      </button>
-                    )
-                  })}
+                  {/* Linhas — compactas */}
+                  <div className="space-y-1.5">
+                    {atrasados.map(p => {
+                      const m = KIND_META[p.tipo as keyof typeof KIND_META] ?? KIND_META.selecao
+                      const diasAtraso = Math.abs(p.daysLeft)
+                      return (
+                        <button key={`${p.tipo}-${p.c.id}`} onClick={() => setTab(m.targetTab)}
+                          className="w-full group flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-rose-500/25 bg-rose-500/[0.04] hover:border-rose-500/45 hover:bg-rose-500/[0.08] transition-all text-left">
+                          <span className={`px-1.5 py-0.5 rounded text-[8px] tracking-[0.18em] uppercase font-bold border ${m.chipBg} ${m.chipBorder} ${m.chipText} shrink-0 min-w-[56px] text-center`}>
+                            {m.label}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] text-white font-semibold tracking-wide truncate leading-tight">{(p.c.local ?? '—').toUpperCase()}</p>
+                            <p className="text-[9px] text-rose-200/55 italic leading-tight">{fmtShortDate(p.deadline)}</p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="text-rose-300 font-bold tabular-nums leading-none" style={{ fontFamily: 'Georgia, serif', fontSize: '16px' }}>
+                              +{diasAtraso}
+                              <span className="text-[8px] text-rose-300/75 tracking-[0.2em] uppercase ml-1 font-bold">atr.</span>
+                            </p>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
             )
