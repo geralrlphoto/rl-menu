@@ -796,63 +796,19 @@ function FreelancerDetailInner() {
 
           {/* ── CRÍTICO · ENTREGA — logo a seguir ao cabeçalho ─── */}
           {(() => {
-            const todayMid = new Date(); todayMid.setHours(0,0,0,0)
+            // Reusa prazosSelecao (mesma fonte de dados do bloco antigo).
+            // Aqui filtra-se só os atrasados (daysLeft < 0).
+            const atrasados = prazosSelecao.filter(p => p.daysLeft < 0)
+            if (atrasados.length === 0) return null
+
             const MESES_PT_SHORT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
-            const fmtShortDate = (iso: string) => {
-              try {
-                const d = new Date(iso)
-                return `até ${String(d.getDate()).padStart(2,'0')} ${MESES_PT_SHORT[d.getMonth()]}`
-              } catch { return '' }
+            const fmtShortDate = (d: Date) => {
+              try { return `até ${String(d.getDate()).padStart(2,'0')} ${MESES_PT_SHORT[d.getMonth()]}` } catch { return '' }
             }
-
-            type EntregaItem = {
-              key: string
-              kind: 'edicao' | 'album'
-              local: string
-              deadlineISO: string
-              diasAtraso: number
-              onClick: () => void
-            }
-            const items: EntregaItem[] = []
-
-            // 1) EDIÇÃO atrasada — edicao com data_final_entrega < hoje e não concluído
-            edicao.forEach(e => {
-              if (e.status === 'CONCLUÍDO') return
-              if (!e.data_final_entrega) return
-              const d = new Date(e.data_final_entrega); d.setHours(0,0,0,0)
-              if (d >= todayMid) return
-              const diasAtraso = Math.round((todayMid.getTime() - d.getTime()) / 86400000)
-              items.push({
-                key: `edicao-${e.id}`, kind: 'edicao',
-                local: (e.local ?? e.nome ?? '—').toUpperCase(),
-                deadlineISO: e.data_final_entrega, diasAtraso,
-                onClick: () => setTab('edicao'),
-              })
-            })
-
-            // 2) ÁLBUM atrasado — album com data_entrega < hoje e não entregue
-            album.forEach(a => {
-              if (a.status === 'ENTREGUE') return
-              if (!a.data_entrega) return
-              const d = new Date(a.data_entrega); d.setHours(0,0,0,0)
-              if (d >= todayMid) return
-              const diasAtraso = Math.round((todayMid.getTime() - d.getTime()) / 86400000)
-              items.push({
-                key: `album-${a.id}`, kind: 'album',
-                local: (a.local ?? a.nome ?? '—').toUpperCase(),
-                deadlineISO: a.data_entrega, diasAtraso,
-                onClick: () => setTab('album'),
-              })
-            })
-
-            if (items.length === 0) return null
-
-            // Ordena por dias de atraso DESC (mais antigos primeiro)
-            items.sort((a, b) => b.diasAtraso - a.diasAtraso)
-
             const KIND_META = {
-              edicao: { label: 'EDIÇÃO', chipBg: 'bg-blue-500/15',   chipBorder: 'border-blue-500/45',   chipText: 'text-blue-200' },
-              album:  { label: 'ÁLBUM',  chipBg: 'bg-purple-500/15', chipBorder: 'border-purple-500/45', chipText: 'text-purple-200' },
+              edicao:  { label: 'EDIÇÃO',  chipBg: 'bg-blue-500/15',   chipBorder: 'border-blue-500/45',   chipText: 'text-blue-200',   targetTab: 'edicao' as const },
+              album:   { label: 'ÁLBUM',   chipBg: 'bg-purple-500/15', chipBorder: 'border-purple-500/45', chipText: 'text-purple-200', targetTab: 'album' as const },
+              selecao: { label: 'SELEÇÃO',chipBg: 'bg-gold/15',       chipBorder: 'border-gold/50',       chipText: 'text-gold',       targetTab: 'casamentos' as const },
             } as const
 
             return (
@@ -867,7 +823,7 @@ function FreelancerDetailInner() {
                     <span className="text-rose-300 text-base">⚠</span>
                     <p className="text-[11px] tracking-[0.35em] uppercase font-bold text-rose-300">Crítico · Entrega</p>
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-200 border border-rose-500/40 font-bold tabular-nums">
-                      {items.length}
+                      {atrasados.length}
                     </span>
                   </div>
                   <p className="text-[11px] italic text-rose-200/60">30 dias</p>
@@ -875,21 +831,22 @@ function FreelancerDetailInner() {
 
                 {/* Linhas */}
                 <div className="space-y-2">
-                  {items.map(it => {
-                    const m = KIND_META[it.kind]
+                  {atrasados.map(p => {
+                    const m = KIND_META[p.tipo as keyof typeof KIND_META] ?? KIND_META.selecao
+                    const diasAtraso = Math.abs(p.daysLeft)
                     return (
-                      <button key={it.key} onClick={it.onClick}
+                      <button key={`${p.tipo}-${p.c.id}`} onClick={() => setTab(m.targetTab)}
                         className="w-full group flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-rose-500/25 bg-rose-500/[0.04] hover:border-rose-500/45 hover:bg-rose-500/[0.08] transition-all text-left">
                         <span className={`px-2 py-1 rounded-md text-[9px] tracking-[0.2em] uppercase font-bold border ${m.chipBg} ${m.chipBorder} ${m.chipText} shrink-0 min-w-[68px] text-center`}>
                           {m.label}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[14px] text-white font-bold tracking-wide truncate">{it.local}</p>
-                          <p className="text-[11px] text-rose-200/55 italic mt-0.5">{fmtShortDate(it.deadlineISO)}</p>
+                          <p className="text-[14px] text-white font-bold tracking-wide truncate">{(p.c.local ?? '—').toUpperCase()}</p>
+                          <p className="text-[11px] text-rose-200/55 italic mt-0.5">{fmtShortDate(p.deadline)}</p>
                         </div>
                         <div className="text-right shrink-0">
                           <p className="text-rose-300 font-bold tabular-nums leading-none" style={{ fontFamily: 'Georgia, serif', fontSize: '24px' }}>
-                            +{it.diasAtraso}
+                            +{diasAtraso}
                             <span className="text-[10px] text-rose-300/75 tracking-[0.25em] uppercase ml-1.5 font-bold">atr.</span>
                           </p>
                         </div>
