@@ -2460,8 +2460,11 @@ export default function EventoPage() {
             .then(f => {
               const dataEntrada = f.row?.data_entrada ?? null
               setFotosDataEntrada(dataEntrada)
-              // Auto: se tem data de entrada e estado ainda é Aguardar → marcar Enviado
-              if (dataEntrada && (!ev.fotos_edicao_estado || ev.fotos_edicao_estado === 'Aguardar')) {
+              // Auto: se tem data de entrada e o estado AINDA NÃO foi definido (null/undefined),
+              // marcar Enviado pela primeira vez. NÃO sobrescrever 'Aguardar' definido pelo
+              // utilizador — caso contrário, escolher 'Aguardar' manualmente seria revertido
+              // a cada refresh.
+              if (dataEntrada && !ev.fotos_edicao_estado) {
                 setEvento(prev => prev ? { ...prev, fotos_edicao_estado: 'Enviado' } : prev)
                 fetch(`/api/eventos-notion/${ev.id}`, {
                   method: 'PATCH',
