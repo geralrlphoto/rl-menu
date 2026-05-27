@@ -1607,7 +1607,28 @@ function NotificacoesTab({ notificacoes, onRefresh }: { notificacoes: Notificaca
         })
       } catch { /* não bloqueia */ }
 
-      // 3) Marca a notificação original como lida
+      // 3) Cria notificação para o admin ver no /freelancers/[id]?tab=notificacoes
+      try {
+        const nome = freelancerNome || 'O membro'
+        const tituloResp = resposta === 'confirmar'
+          ? `✓ ${nome} confirmou · ${role}`
+          : `✕ ${nome} marcou-se indisponível · ${role}`
+        const corpoResp = resposta === 'confirmar'
+          ? `Confirmou a disponibilidade para o evento${local ? ` em ${local}` : ''}.`
+          : `Está indisponível para o evento${local ? ` em ${local}` : ''}.`
+        await fetch('/api/freelancer-notificacoes', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            freelancer_id: n.freelancer_id,
+            titulo: tituloResp,
+            mensagem: corpoResp,
+            tipo: resposta === 'confirmar' ? 'atribuicao_confirmada' : 'atribuicao_indisponivel',
+            lida: false,
+          }),
+        })
+      } catch { /* não bloqueia */ }
+
+      // 4) Marca a notificação original como lida
       await fetch('/api/freelancer-notificacoes', {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: n.id, lida: true }),

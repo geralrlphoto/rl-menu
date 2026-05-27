@@ -6610,7 +6610,31 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh, viewAsFre
           }),
         })
       } catch { /* não bloqueia */ }
-      // 3) Marca notificação como lida
+      // 3) Cria notificação na lista de Notificações deste freelancer
+      //    (visível no admin /freelancers/[id]?tab=notificacoes E no portal do freelancer).
+      //    O admin vê assim 'Foto·Vídeo Confirmou atribuição' ou 'Marcou-se indisponível'.
+      try {
+        const nome = meta.freelancerNome || freelancerName || 'O membro'
+        const role = meta.role || ''
+        const local = meta.local || ''
+        const tituloResp = resposta === 'confirmar'
+          ? `✓ ${nome} confirmou · ${role}`
+          : `✕ ${nome} marcou-se indisponível · ${role}`
+        const corpoResp = resposta === 'confirmar'
+          ? `Confirmou a disponibilidade para o evento${local ? ` em ${local}` : ''}.`
+          : `Está indisponível para o evento${local ? ` em ${local}` : ''}.`
+        await fetch('/api/freelancer-notificacoes', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            freelancer_id: n.freelancer_id,
+            titulo: tituloResp,
+            mensagem: corpoResp,
+            tipo: resposta === 'confirmar' ? 'atribuicao_confirmada' : 'atribuicao_indisponivel',
+            lida: false,
+          }),
+        })
+      } catch { /* não bloqueia */ }
+      // 4) Marca notificação original (a 'Nova atribuição') como lida
       await fetch('/api/freelancer-notificacoes', {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: n.id, lida: true }),

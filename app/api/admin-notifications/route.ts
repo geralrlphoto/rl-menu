@@ -151,6 +151,41 @@ export async function GET() {
       }
     }
 
+    // ── Respostas de atribuição (membro confirmou ou está indisponível) ──
+    try {
+      const { data: respostas } = await supabase
+        .from('freelancer_notificacoes')
+        .select('id, freelancer_id, titulo, mensagem, tipo, created_at')
+        .in('tipo', ['atribuicao_confirmada', 'atribuicao_indisponivel'])
+        .order('created_at', { ascending: false })
+        .limit(50)
+      const respRecipIds = Array.from(new Set((respostas ?? []).map((n: any) => n.freelancer_id).filter(Boolean)))
+      const respNomes = new Map<string, string>(nomesById)
+      const respMissing = respRecipIds.filter(id => !respNomes.has(id))
+      if (respMissing.length > 0) {
+        const { data: fls3 } = await supabase.from('freelancers').select('id, nome').in('id', respMissing)
+        for (const f of (fls3 ?? []) as any[]) respNomes.set(f.id, f.nome)
+      }
+      for (const n of (respostas ?? []) as any[]) {
+        const isConf = n.tipo === 'atribuicao_confirmada'
+        notifications.push({
+          id: `atrib_resp::${n.id}`,
+          tipo: n.tipo,
+          tipo_label: isConf ? 'Membro confirmou atribuição' : 'Membro marcou-se indisponível',
+          tipo_icon: isConf ? '✓' : '✕',
+          casamento_id: '',
+          freelancer_id: n.freelancer_id,
+          freelancer_nome: respNomes.get(n.freelancer_id) ?? '—',
+          local: (n.titulo ?? '').slice(0, 80),
+          data_casamento: null,
+          url: `/freelancers/${n.freelancer_id}?tab=notificacoes`,
+          sent_at: n.created_at,
+        })
+      }
+    } catch (err) {
+      console.warn('[admin-notifications] atribuicao_resposta read failed:', err)
+    }
+
     // ── Tarefas enviadas entre membros (freelancer_notificacoes tipo='nova_tarefa_atribuida') ──
     try {
       const { data: tasksSent } = await supabase
