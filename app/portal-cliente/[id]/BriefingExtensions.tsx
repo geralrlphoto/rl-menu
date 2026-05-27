@@ -1100,7 +1100,51 @@ function BriefingSidebar({ items, activeId, onClick }: { items: NavItem[]; activ
   )
 }
 
-// ─── Visão Geral (KPI dashboard) ─────────────────────────────────────────────
+// ─── Visão Geral (KPI dashboard premium) ─────────────────────────────────────
+
+type KpiAccent = 'gold' | 'rose' | 'blue' | 'emerald' | 'amber' | 'purple'
+
+function KpiCard({ icon, label, value, sub, accent, filled, onClick }: {
+  icon: string
+  label: string
+  value: string
+  sub: string
+  accent: KpiAccent
+  filled: boolean
+  onClick: () => void
+}) {
+  const accents: Record<KpiAccent, { iconBg: string; iconBorder: string; iconText: string }> = {
+    gold:    { iconBg: 'bg-gold/10',         iconBorder: 'border-gold/35',         iconText: 'text-gold' },
+    rose:    { iconBg: 'bg-rose-500/12',     iconBorder: 'border-rose-500/40',     iconText: 'text-rose-300' },
+    blue:    { iconBg: 'bg-blue-500/12',     iconBorder: 'border-blue-500/35',     iconText: 'text-blue-300' },
+    emerald: { iconBg: 'bg-emerald-500/12',  iconBorder: 'border-emerald-500/35',  iconText: 'text-emerald-300' },
+    amber:   { iconBg: 'bg-amber-500/12',    iconBorder: 'border-amber-500/35',    iconText: 'text-amber-300' },
+    purple:  { iconBg: 'bg-purple-500/12',   iconBorder: 'border-purple-500/35',   iconText: 'text-purple-300' },
+  }
+  const a = accents[accent]
+  return (
+    <button onClick={onClick}
+      className="group relative text-left p-4 rounded-xl border border-white/[0.07] bg-white/[0.015] hover:border-white/15 hover:bg-white/[0.03] transition-all"
+      style={{ boxShadow: '0 8px 22px -16px rgba(0,0,0,0.5)' }}>
+      {/* Top: ícone + label */}
+      <div className="flex items-center justify-between mb-3">
+        <span className={`w-8 h-8 rounded-lg border ${a.iconBorder} ${a.iconBg} ${a.iconText} flex items-center justify-center text-[13px] shrink-0`}>
+          {icon}
+        </span>
+        <span className="text-[8px] tracking-[0.35em] uppercase font-bold text-white/40 group-hover:text-white/70 transition-colors truncate">{label}</span>
+      </div>
+      {/* Valor */}
+      <p className={`leading-none tabular-nums ${filled ? 'text-white' : 'text-white/25'}`}
+        style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '28px', fontWeight: 300 }}>
+        {value}
+      </p>
+      {/* Sub */}
+      <p className={`text-[10px] mt-1.5 tracking-wide truncate ${filled ? 'text-white/55' : 'text-white/30 italic'}`}>{sub}</p>
+      {/* Setinha hover */}
+      <span className="absolute top-3 right-3 text-gold/0 group-hover:text-gold/70 transition-all duration-200 text-xs">›</span>
+    </button>
+  )
+}
 
 function VisaoGeralSection({ info, onJump }: { info: BriefingExt; onJump: (id: string) => void }) {
   const equipaN     = info.equipa?.length ?? 0
@@ -1118,52 +1162,106 @@ function VisaoGeralSection({ info, onJump }: { info: BriefingExt; onJump: (id: s
   const moodN       = info.moodboard?.length ?? 0
   const { filled, total, pct } = calcProgress(info)
 
-  const kpis: Array<{ id: string; icon: string; label: string; value: string; sub: string; accent: 'gold'|'rose'|'blue'|'emerald'|'amber'|'purple'; target: string }> = [
-    { id: 'k-crono',  icon: '⌚', label: 'Cronograma',     value: String(cronogramaN), sub: cronogramaN > 0 ? 'momentos definidos' : 'por definir',         accent: 'gold',    target: 'cronograma' },
-    { id: 'k-mapas',  icon: '◉', label: 'Localizações',   value: String(mapasN),      sub: mapasN > 0 ? 'sítios com Maps' : 'sem locais',                   accent: 'gold',    target: 'mapas' },
-    { id: 'k-equip',  icon: '⌘', label: 'Equipa',         value: String(equipaN),     sub: equipaN > 0 ? 'profissional' + (equipaN === 1 ? '' : 'is') : 'sem equipa', accent: 'gold', target: 'equipa' },
-    { id: 'k-mom',    icon: '✓', label: 'Momentos',       value: momentosN > 0 ? `${momentosDone}/${momentosN}` : '0', sub: momentosN > 0 ? 'obrigatórios' : 'por definir', accent: 'emerald', target: 'momentos' },
-    { id: 'k-vips',   icon: '★', label: 'VIPs',           value: String(vipsN),       sub: vipsN > 0 ? 'convidados-chave' : 'sem VIPs',                      accent: 'gold',    target: 'vips' },
-    { id: 'k-mood',   icon: '◧', label: 'Referências',    value: String(moodN),       sub: moodN > 0 ? 'imagens · mood' : 'sem referências',                accent: 'gold',    target: 'moodboard' },
-    { id: 'k-ply',    icon: '♫', label: 'Playlist',       value: String(playlistN),   sub: playlistN > 0 ? 'músicas' : 'sem música',                        accent: 'purple',  target: 'playlist' },
-    { id: 'k-cont',   icon: '✆', label: 'Contactos',      value: String(contactosN),  sub: contactosN > 0 ? 'fornecedores' : 'sem contactos',               accent: 'blue',    target: 'contactos' },
-    { id: 'k-rest',   icon: '◆', label: 'Restrições',     value: String(restricoesN), sub: restricoesN > 0 ? 'regras do local' : 'sem regras',              accent: 'amber',   target: 'restricoes' },
-    { id: 'k-pre',    icon: '◴', label: 'Pré-Evento',     value: tarefasN > 0 ? `${tarefasDone}/${tarefasN}` : '0', sub: tarefasN > 0 ? 'tarefas T-7…T-0' : 'sem tarefas', accent: 'amber', target: 'tarefas-pre' },
-    { id: 'k-notas',  icon: '⚠', label: 'Notas Sensíveis',value: temNotas ? '!' : '0',sub: temNotas ? 'requer atenção' : 'tudo limpo',                       accent: 'rose',    target: 'notas-sensiveis' },
-    { id: 'k-prog',   icon: '◐', label: 'Completo',       value: `${pct}%`,           sub: `${filled} de ${total} secções`,                                  accent: 'gold',    target: 'cronograma' },
-  ]
+  const sing = (n: number, s: string, p: string) => n === 1 ? s : p
 
-  const accents = {
-    gold:    { bg: 'bg-gold/[0.06]',     border: 'border-gold/30',    text: 'text-gold',         glow: 'rgba(201,164,92,0.35)', valColor: 'text-white' },
-    rose:    { bg: 'bg-rose-500/15',     border: 'border-rose-500/40',text: 'text-rose-300',     glow: 'rgba(244,63,94,0.35)',  valColor: 'text-rose-200' },
-    blue:    { bg: 'bg-blue-500/12',     border: 'border-blue-500/35',text: 'text-blue-300',     glow: 'rgba(59,130,246,0.3)',  valColor: 'text-white' },
-    emerald: { bg: 'bg-emerald-500/12',  border: 'border-emerald-500/35',text:'text-emerald-300',glow: 'rgba(52,211,153,0.3)',  valColor: 'text-white' },
-    amber:   { bg: 'bg-amber-500/12',    border: 'border-amber-500/35',text:'text-amber-300',    glow: 'rgba(245,158,11,0.3)',  valColor: 'text-white' },
-    purple:  { bg: 'bg-purple-500/12',   border: 'border-purple-500/35',text:'text-purple-300',  glow: 'rgba(168,85,247,0.3)',  valColor: 'text-white' },
-  }
+  // KPI cards agrupados
+  const operacional = [
+    { id: 'k-crono',  icon: '⌚', label: 'Cronograma',  value: String(cronogramaN), sub: cronogramaN > 0 ? `${sing(cronogramaN, 'momento', 'momentos')} definidos` : 'por definir',            accent: 'gold' as KpiAccent,    target: 'cronograma', filled: cronogramaN > 0 },
+    { id: 'k-mapas',  icon: '◉', label: 'Localizações',value: String(mapasN),      sub: mapasN > 0 ? `${sing(mapasN, 'local', 'locais')} com Maps` : 'sem locais',                            accent: 'gold' as KpiAccent,    target: 'mapas',      filled: mapasN > 0 },
+    { id: 'k-equip',  icon: '⌘', label: 'Equipa',      value: String(equipaN),     sub: equipaN > 0 ? `${sing(equipaN, 'profissional', 'profissionais')}` : 'por definir',                    accent: 'gold' as KpiAccent,    target: 'equipa',     filled: equipaN > 0 },
+  ]
+  const criativo = [
+    { id: 'k-mom',    icon: '✓', label: 'Momentos',    value: momentosN > 0 ? `${momentosDone}/${momentosN}` : '—', sub: momentosN > 0 ? 'obrigatórios marcados' : 'por definir',              accent: 'emerald' as KpiAccent, target: 'momentos',  filled: momentosN > 0 },
+    { id: 'k-vips',   icon: '★', label: 'VIPs',        value: String(vipsN),       sub: vipsN > 0 ? `${sing(vipsN, 'convidado-chave', 'convidados-chave')}` : 'sem VIPs',                      accent: 'gold' as KpiAccent,    target: 'vips',       filled: vipsN > 0 },
+    { id: 'k-mood',   icon: '◧', label: 'Referências', value: String(moodN),       sub: moodN > 0 ? `${sing(moodN, 'imagem', 'imagens')} de mood` : 'sem referências',                         accent: 'gold' as KpiAccent,    target: 'moodboard',  filled: moodN > 0 },
+    { id: 'k-ply',    icon: '♫', label: 'Playlist',    value: String(playlistN),   sub: playlistN > 0 ? `${sing(playlistN, 'música', 'músicas')}` : 'sem música',                              accent: 'purple' as KpiAccent,  target: 'playlist',   filled: playlistN > 0 },
+  ]
+  const logistica = [
+    { id: 'k-cont',   icon: '✆', label: 'Contactos',   value: String(contactosN),  sub: contactosN > 0 ? `${sing(contactosN, 'fornecedor', 'fornecedores')}` : 'sem contactos',                accent: 'blue' as KpiAccent,    target: 'contactos',  filled: contactosN > 0 },
+    { id: 'k-rest',   icon: '◆', label: 'Restrições',  value: String(restricoesN), sub: restricoesN > 0 ? `${sing(restricoesN, 'regra do local', 'regras do local')}` : 'sem regras',          accent: 'amber' as KpiAccent,   target: 'restricoes', filled: restricoesN > 0 },
+    { id: 'k-notas',  icon: '⚠', label: 'Atenção',     value: temNotas ? '!' : '—',sub: temNotas ? 'requer atenção' : 'tudo limpo',                                                            accent: 'rose' as KpiAccent,    target: 'notas-sensiveis', filled: temNotas },
+    { id: 'k-pre',    icon: '◴', label: 'Pré-Evento',  value: tarefasN > 0 ? `${tarefasDone}/${tarefasN}` : '—', sub: tarefasN > 0 ? 'tarefas T-7…T-0' : 'sem tarefas',                         accent: 'amber' as KpiAccent,   target: 'tarefas-pre', filled: tarefasN > 0 },
+  ]
 
   return (
     <Section id="visao" icon="▣" label="Visão Geral" title="Resumo do briefing"
       subtitle="Estado de cada área num só ecrã">
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
-        {kpis.map(k => {
-          const a = accents[k.accent]
-          const highlight = k.value !== '0' && k.value !== '0%'
-          return (
-            <button key={k.id} onClick={() => onJump(k.target)}
-              className={`p-3.5 rounded-xl border text-left group transition-all hover:scale-[1.02] ${a.border} ${a.bg}`}
-              style={highlight ? { boxShadow: `0 0 16px -8px ${a.glow}` } : undefined}>
-              <div className="flex items-center justify-between mb-2">
-                <span className={`text-base ${a.text}`}>{k.icon}</span>
-                <span className={`text-[8px] tracking-[0.3em] uppercase font-bold ${a.text} opacity-65`}>{k.label}</span>
-              </div>
-              <p className={`text-[24px] leading-none font-bold tabular-nums ${highlight ? a.valColor : 'text-white/30'}`} style={{ fontFamily: 'Cormorant Garamond, Georgia, serif' }}>
-                {k.value}
+      {/* ─── Hero card: Conclusão Geral ───────────────────────────── */}
+      <div className="relative overflow-hidden rounded-2xl border border-gold/20 mb-5"
+        style={{ background: 'linear-gradient(110deg, rgba(201,164,92,0.08) 0%, rgba(20,15,8,0.5) 50%, rgba(11,11,11,0.55) 100%)' }}>
+        <span className="pointer-events-none absolute -top-16 -right-16 w-48 h-48 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(201,164,92,0.18), transparent 70%)' }} />
+        <div className="relative px-6 py-5 flex items-center justify-between gap-6 flex-wrap">
+          <div className="flex items-center gap-5 min-w-0">
+            <div className="relative w-16 h-16 shrink-0 flex items-center justify-center">
+              {/* anel SVG */}
+              <svg viewBox="0 0 36 36" className="absolute inset-0 w-full h-full -rotate-90">
+                <circle cx="18" cy="18" r="15.5" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="2.5" />
+                <circle cx="18" cy="18" r="15.5" fill="none" stroke="#C9A45C" strokeWidth="2.5"
+                  strokeDasharray={`${(pct / 100) * 97.4} 97.4`}
+                  strokeLinecap="round"
+                  style={{ transition: 'stroke-dasharray 600ms ease' }} />
+              </svg>
+              <span className="relative text-gold font-bold tabular-nums text-[13px]">{pct}%</span>
+            </div>
+            <div>
+              <p className="text-[10px] tracking-[0.5em] text-gold/60 uppercase mb-1.5">Conclusão do Briefing</p>
+              <p className="text-white font-light tracking-tight" style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '22px' }}>
+                {pct === 100 ? 'Briefing completo' : pct >= 50 ? 'Em bom ritmo' : pct > 0 ? 'A começar' : 'Por iniciar'}
+                <span className="text-white/45 italic"> · {filled} de {total} secções</span>
               </p>
-              <p className={`text-[10px] mt-1.5 ${highlight ? 'text-white/55' : 'text-white/30'} truncate`}>{k.sub}</p>
-            </button>
-          )
-        })}
+            </div>
+          </div>
+          <div className="flex-1 min-w-[180px] max-w-md">
+            <div className="h-1.5 rounded-full bg-white/[0.05] overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-gold/70 to-gold transition-all duration-700"
+                style={{ width: `${pct}%`, boxShadow: '0 0 10px rgba(201,164,92,0.55)' }} />
+            </div>
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-[9px] tracking-[0.3em] text-white/30 uppercase">Início</span>
+              <span className="text-[9px] tracking-[0.3em] text-gold/60 uppercase">Pronto</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ─── Grupo: OPERACIONAL ──────────────────────────────────── */}
+      <div className="mb-5">
+        <div className="flex items-center gap-2 mb-2.5">
+          <span className="text-[9px] tracking-[0.4em] text-gold/55 uppercase font-bold">Operacional</span>
+          <span className="flex-1 h-px bg-gradient-to-r from-gold/20 to-transparent" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          {operacional.map(k => (
+            <KpiCard key={k.id} icon={k.icon} label={k.label} value={k.value} sub={k.sub} accent={k.accent} filled={k.filled} onClick={() => onJump(k.target)} />
+          ))}
+        </div>
+      </div>
+
+      {/* ─── Grupo: CRIATIVO ──────────────────────────────────────── */}
+      <div className="mb-5">
+        <div className="flex items-center gap-2 mb-2.5">
+          <span className="text-[9px] tracking-[0.4em] text-gold/55 uppercase font-bold">Criativo</span>
+          <span className="flex-1 h-px bg-gradient-to-r from-gold/20 to-transparent" />
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          {criativo.map(k => (
+            <KpiCard key={k.id} icon={k.icon} label={k.label} value={k.value} sub={k.sub} accent={k.accent} filled={k.filled} onClick={() => onJump(k.target)} />
+          ))}
+        </div>
+      </div>
+
+      {/* ─── Grupo: LOGÍSTICA & PREPARAÇÃO ──────────────────────── */}
+      <div>
+        <div className="flex items-center gap-2 mb-2.5">
+          <span className="text-[9px] tracking-[0.4em] text-gold/55 uppercase font-bold">Logística & Preparação</span>
+          <span className="flex-1 h-px bg-gradient-to-r from-gold/20 to-transparent" />
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          {logistica.map(k => (
+            <KpiCard key={k.id} icon={k.icon} label={k.label} value={k.value} sub={k.sub} accent={k.accent} filled={k.filled} onClick={() => onJump(k.target)} />
+          ))}
+        </div>
       </div>
     </Section>
   )
