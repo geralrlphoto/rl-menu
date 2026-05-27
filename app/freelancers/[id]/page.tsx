@@ -603,8 +603,11 @@ function FreelancerDetailInner() {
         const totalEmEdicao = edicao.filter(e => e.status === 'EM EDIÇÃO').length
         const totalConcluidos = edicao.filter(e => e.status === 'CONCLUÍDO').length
         const totalAguardando = edicao.filter(e => e.status === 'NOVO TRABALHO').length
+        // Regra: só contam pagamentos ligados a casamentos atribuídos.
+        // 'Se não tem eventos, não houve pagamento.'
+        const casamentoIdsSet = new Set(casamentos.map(c => c.id))
         const totalRecebido = pagamentos
-          .filter(p => p.status === 'PAGO')
+          .filter(p => p.status === 'PAGO' && p.casamento_id && casamentoIdsSet.has(p.casamento_id))
           .reduce((s, p) => s + (Number(p.valor) || 0), 0)
         const totalRecebidoLabel = totalRecebido.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
         const anoAtual = new Date().getFullYear()
@@ -5765,7 +5768,7 @@ function PagaForm({ f, setF, casamentos }: { f: PagaFormValues; setF: (v: PagaFo
   )
 }
 
-function PagamentosAdminTab({ freelancerId, pagamentos, casamentos, onRefresh }: { freelancerId: string; pagamentos: Pagamento[]; casamentos: Casamento[]; onRefresh: () => void }) {
+function PagamentosAdminTab({ freelancerId, pagamentos: pagamentosRaw, casamentos, onRefresh }: { freelancerId: string; pagamentos: Pagamento[]; casamentos: Casamento[]; onRefresh: () => void }) {
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm]       = useState<PagaFormValues>({ casamento_id: '', descricao: '', valor: '', data_prevista: '', data_pago: '', status: 'PENDENTE', notas: '' })
   const [saving, setSaving]   = useState(false)
@@ -5774,6 +5777,15 @@ function PagamentosAdminTab({ freelancerId, pagamentos, casamentos, onRefresh }:
   const [filter, setFilter] = useState<'Todos'|'Recebidos'|'A receber'|'Atrasados'|'Cancelados'>('Todos')
 
   function fmtEuro(v: number) { return `${v.toFixed(2).replace('.', ',')} €` }
+
+  // ── Regra do utilizador: 'se não tem eventos, não houve pagamento'.
+  //    Filtra pagamentos órfãos (sem casamento_id) ou cujo casamento_id
+  //    já não existe na lista atual de casamentos atribuídos.
+  const casamentoIds = useMemo(() => new Set(casamentos.map(c => c.id)), [casamentos])
+  const pagamentos = useMemo(
+    () => pagamentosRaw.filter(p => !!p.casamento_id && casamentoIds.has(p.casamento_id)),
+    [pagamentosRaw, casamentoIds]
+  )
 
   // ── KPIs ──────────────────────────────────────────────────────────────────
   const today = new Date(); today.setHours(0,0,0,0)
