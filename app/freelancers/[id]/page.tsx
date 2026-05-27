@@ -694,6 +694,72 @@ function FreelancerDetailInner() {
 
         return (
           <>
+          {/* ── CRÍTICO · ENTREGA — em cima do cabeçalho (canto direito) ── */}
+          {(() => {
+            // Reusa prazosSelecao (mesma fonte de dados do bloco antigo).
+            // Aqui filtra-se só os atrasados (daysLeft < 0).
+            const atrasados = prazosSelecao.filter(p => p.daysLeft < 0)
+            if (atrasados.length === 0) return null
+
+            const MESES_PT_SHORT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+            const fmtShortDate = (d: Date) => {
+              try { return `até ${String(d.getDate()).padStart(2,'0')} ${MESES_PT_SHORT[d.getMonth()]}` } catch { return '' }
+            }
+            const KIND_META = {
+              edicao:  { label: 'EDIÇÃO',  chipBg: 'bg-blue-500/15',   chipBorder: 'border-blue-500/45',   chipText: 'text-blue-200',   targetTab: 'edicao' as const },
+              album:   { label: 'ÁLBUM',   chipBg: 'bg-purple-500/15', chipBorder: 'border-purple-500/45', chipText: 'text-purple-200', targetTab: 'album' as const },
+              selecao: { label: 'SELEÇÃO',chipBg: 'bg-gold/15',       chipBorder: 'border-gold/50',       chipText: 'text-gold',       targetTab: 'casamentos' as const },
+            } as const
+
+            return (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-4">
+                <div className="lg:col-start-3 rounded-2xl border border-rose-500/35 p-3.5"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(40,8,12,0.5), rgba(20,5,8,0.7))',
+                    boxShadow: '0 0 28px -10px rgba(244,63,94,0.45), inset 0 0 0 1px rgba(244,63,94,0.05)',
+                  }}>
+                  {/* Header */}
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-rose-300 text-sm">⚠</span>
+                      <p className="text-[10px] tracking-[0.3em] uppercase font-bold text-rose-300 truncate">Crítico · Entrega</p>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-200 border border-rose-500/40 font-bold tabular-nums shrink-0">
+                        {atrasados.length}
+                      </span>
+                    </div>
+                    <p className="text-[10px] italic text-rose-200/55 shrink-0">30 dias</p>
+                  </div>
+
+                  {/* Linhas — compactas */}
+                  <div className="space-y-1.5">
+                    {atrasados.map(p => {
+                      const m = KIND_META[p.tipo as keyof typeof KIND_META] ?? KIND_META.selecao
+                      const diasAtraso = Math.abs(p.daysLeft)
+                      return (
+                        <button key={`${p.tipo}-${p.c.id}`} onClick={() => setTab(m.targetTab)}
+                          className="w-full group flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-rose-500/25 bg-rose-500/[0.04] hover:border-rose-500/45 hover:bg-rose-500/[0.08] transition-all text-left">
+                          <span className={`px-1.5 py-0.5 rounded text-[8px] tracking-[0.18em] uppercase font-bold border ${m.chipBg} ${m.chipBorder} ${m.chipText} shrink-0 min-w-[56px] text-center`}>
+                            {m.label}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] text-white font-semibold tracking-wide truncate leading-tight">{(p.c.local ?? '—').toUpperCase()}</p>
+                            <p className="text-[9px] text-rose-200/55 italic leading-tight">{fmtShortDate(p.deadline)}</p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="text-rose-300 font-bold tabular-nums leading-none" style={{ fontFamily: 'Georgia, serif', fontSize: '16px' }}>
+                              +{diasAtraso}
+                              <span className="text-[8px] text-rose-300/75 tracking-[0.2em] uppercase ml-1 font-bold">atr.</span>
+                            </p>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
+
           {/* ── HERO Card (estilo Painel Criativo) ─────────────────── */}
           <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] mb-6 fade-in-up"
             style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.5)' }}>
@@ -793,72 +859,6 @@ function FreelancerDetailInner() {
               </div>
             </div>
           </div>
-
-          {/* ── CRÍTICO · ENTREGA — logo a seguir ao cabeçalho ─── */}
-          {(() => {
-            // Reusa prazosSelecao (mesma fonte de dados do bloco antigo).
-            // Aqui filtra-se só os atrasados (daysLeft < 0).
-            const atrasados = prazosSelecao.filter(p => p.daysLeft < 0)
-            if (atrasados.length === 0) return null
-
-            const MESES_PT_SHORT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
-            const fmtShortDate = (d: Date) => {
-              try { return `até ${String(d.getDate()).padStart(2,'0')} ${MESES_PT_SHORT[d.getMonth()]}` } catch { return '' }
-            }
-            const KIND_META = {
-              edicao:  { label: 'EDIÇÃO',  chipBg: 'bg-blue-500/15',   chipBorder: 'border-blue-500/45',   chipText: 'text-blue-200',   targetTab: 'edicao' as const },
-              album:   { label: 'ÁLBUM',   chipBg: 'bg-purple-500/15', chipBorder: 'border-purple-500/45', chipText: 'text-purple-200', targetTab: 'album' as const },
-              selecao: { label: 'SELEÇÃO',chipBg: 'bg-gold/15',       chipBorder: 'border-gold/50',       chipText: 'text-gold',       targetTab: 'casamentos' as const },
-            } as const
-
-            return (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
-                <div className="lg:col-start-3 rounded-2xl border border-rose-500/35 p-3.5"
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(40,8,12,0.5), rgba(20,5,8,0.7))',
-                    boxShadow: '0 0 28px -10px rgba(244,63,94,0.45), inset 0 0 0 1px rgba(244,63,94,0.05)',
-                  }}>
-                  {/* Header */}
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-rose-300 text-sm">⚠</span>
-                      <p className="text-[10px] tracking-[0.3em] uppercase font-bold text-rose-300 truncate">Crítico · Entrega</p>
-                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-200 border border-rose-500/40 font-bold tabular-nums shrink-0">
-                        {atrasados.length}
-                      </span>
-                    </div>
-                    <p className="text-[10px] italic text-rose-200/55 shrink-0">30 dias</p>
-                  </div>
-
-                  {/* Linhas — compactas */}
-                  <div className="space-y-1.5">
-                    {atrasados.map(p => {
-                      const m = KIND_META[p.tipo as keyof typeof KIND_META] ?? KIND_META.selecao
-                      const diasAtraso = Math.abs(p.daysLeft)
-                      return (
-                        <button key={`${p.tipo}-${p.c.id}`} onClick={() => setTab(m.targetTab)}
-                          className="w-full group flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-rose-500/25 bg-rose-500/[0.04] hover:border-rose-500/45 hover:bg-rose-500/[0.08] transition-all text-left">
-                          <span className={`px-1.5 py-0.5 rounded text-[8px] tracking-[0.18em] uppercase font-bold border ${m.chipBg} ${m.chipBorder} ${m.chipText} shrink-0 min-w-[56px] text-center`}>
-                            {m.label}
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[12px] text-white font-semibold tracking-wide truncate leading-tight">{(p.c.local ?? '—').toUpperCase()}</p>
-                            <p className="text-[9px] text-rose-200/55 italic leading-tight">{fmtShortDate(p.deadline)}</p>
-                          </div>
-                          <div className="text-right shrink-0">
-                            <p className="text-rose-300 font-bold tabular-nums leading-none" style={{ fontFamily: 'Georgia, serif', fontSize: '16px' }}>
-                              +{diasAtraso}
-                              <span className="text-[8px] text-rose-300/75 tracking-[0.2em] uppercase ml-1 font-bold">atr.</span>
-                            </p>
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
-            )
-          })()}
 
           {/* ── Próximo Casamento (destaque com glow gold pulsante) ─ */}
           {proximoCasamento && (
