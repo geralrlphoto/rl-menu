@@ -3538,9 +3538,15 @@ function EnviarTarefaModal({ senderId, onClose }: { senderId: string; onClose: (
     try {
       const prazoLabel = dueDate ? new Date(dueDate).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' }) : null
       const titleFull  = `✈ Nova tarefa de ${senderName || 'um colega'} — ${titulo.trim()}`
-      // Marker invisível com senderId para permitir 'Responder' depois.
-      //   __META__{json}__/META__ é removido pelo renderer.
-      const meta = JSON.stringify({ senderId, senderName })
+      // Marker invisível com senderId + threadId para permitir 'Responder' +
+      // 'Ver Conversação' depois. __META__{json}__/META__ é removido pelo renderer.
+      const threadId = (typeof crypto !== 'undefined' && 'randomUUID' in crypto) ? crypto.randomUUID() : `t-${Date.now()}-${Math.random().toString(36).slice(2)}`
+      const meta = JSON.stringify({
+        senderId, senderName,
+        threadId,
+        creatorId: senderId, creatorName: senderName,
+        threadTitle: titulo.trim(),
+      })
       const mensagem = [
         `__META__${meta}__/META__`,
         descricao.trim() ? descricao.trim() : null,
@@ -5003,13 +5009,30 @@ function MensagensAdminTab({ freelancerId, freelancerNome, casamentos, mensagens
 // ─── Notificações Admin Tab ───────────────────────────────────────────────────
 
 // Extrai meta JSON do início da mensagem (__META__{...}__/META__\n)
-function parseNotifMeta(mensagem: string | null | undefined): { senderId?: string; senderName?: string; cleanMensagem: string } {
+type NotifMeta = {
+  senderId?: string
+  senderName?: string
+  threadId?: string
+  creatorId?: string
+  creatorName?: string
+  threadTitle?: string
+  cleanMensagem: string
+}
+function parseNotifMeta(mensagem: string | null | undefined): NotifMeta {
   if (!mensagem) return { cleanMensagem: '' }
   const m = mensagem.match(/^__META__(.+?)__\/META__\n?/)
   if (!m) return { cleanMensagem: mensagem }
   try {
     const meta = JSON.parse(m[1])
-    return { senderId: meta.senderId, senderName: meta.senderName, cleanMensagem: mensagem.slice(m[0].length) }
+    return {
+      senderId:    meta.senderId,
+      senderName:  meta.senderName,
+      threadId:    meta.threadId,
+      creatorId:   meta.creatorId,
+      creatorName: meta.creatorName,
+      threadTitle: meta.threadTitle,
+      cleanMensagem: mensagem.slice(m[0].length),
+    }
   } catch { return { cleanMensagem: mensagem.replace(/^__META__.+?__\/META__\n?/, '') } }
 }
 
@@ -5017,7 +5040,46 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh }: { freel
   const [form, setForm] = useState({ titulo: '', mensagem: '', tipo: 'alerta' })
   const [sending, setSending] = useState(false)
   const [respondingNotif, setRespondingNotif] = useState<Notificacao | null>(null)
+  const [viewingThread, setViewingThread] = useState<{ threadId: string; title: string } | null>(null)
   const [freelancerName, setFreelancerName] = useState('')
+
+  async function concluirTarefaThread(threadId: string) {
+    // Marca tarefa como concluída — adiciona nota de conclusão como notif tipo='tarefa_concluida'
+    // que aparece em todos os intervenientes (vamos mandar a TODOS os senders da thread).
+    const respTitulo = `✓ Tarefa concluída — ${viewingThread?.title || 'Tarefa'}`
+    const meta = JSON.stringify({
+      senderId: freelancerId,
+      senderName: freelancerName,
+      threadId,
+      creatorId: freelancerId,
+      creatorName: freelancerName,
+      threadTitle: viewingThread?.title || '',
+    })
+    const respMensagem = [
+      `__META__${meta}__/META__`,
+      `A tarefa foi marcada como concluída por ${freelancerName || 'o criador'}.`,
+    ].join('\n')
+    // Carrega todos os participantes da thread
+    const res = await fetch(`/api/freelancer-notificacoes?thread_id=${encodeURIComponent(threadId)}`).then(r => r.json())
+    const allNotifs = (res.notificacoes ?? []) as Notificacao[]
+    const participantIds = Array.from(new Set(allNotifs.map(n => n.freelancer_id))).filter(id => id !== freelancerId)
+    // Notifica cada participante (não o próprio)
+    await Promise.all(participantIds.map(pid =>
+      fetch('/api/freelancer-notificacoes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          freelancer_id: pid,
+          titulo: respTitulo,
+          mensagem: respMensagem,
+          tipo: 'tarefa_concluida',
+          lida: false,
+        }),
+      })
+    ))
+    setViewingThread(null)
+    onRefresh()
+  }
 
   // Buscar o nome do freelancer actual para incluir na resposta
   useEffect(() => {
@@ -5028,14 +5090,25 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh }: { freel
   }, [freelancerId])
 
   async function sendResposta(notif: Notificacao, resposta: string) {
-    const { senderId, senderName } = parseNotifMeta(notif.mensagem)
+    const parsedMeta = parseNotifMeta(notif.mensagem)
+    const { senderId, threadId, creatorId, creatorName, threadTitle } = parsedMeta
     if (!senderId) {
       alert('Não foi possível identificar quem enviou a tarefa. Marca como lida e contacta o admin.')
       return
     }
-    const tituloOriginal = (notif.titulo ?? '').replace(/^✈ Nova tarefa de [^—]+— /, '')
+    const tituloOriginal = threadTitle || (notif.titulo ?? '').replace(/^[✈↩] (Nova tarefa|Resposta) de [^—]+— /, '')
     const respTitulo = `↩ Resposta de ${freelancerName || 'um colega'} — ${tituloOriginal}`
+    // Mantém threadId + creatorId no META para continuar a conversação
+    const newMeta = JSON.stringify({
+      senderId: freelancerId,
+      senderName: freelancerName,
+      threadId: threadId ?? `t-legacy-${notif.id}`,
+      creatorId: creatorId ?? senderId,
+      creatorName: creatorName ?? '',
+      threadTitle: tituloOriginal,
+    })
     const respMensagem = [
+      `__META__${newMeta}__/META__`,
       resposta.trim(),
       '',
       `Em resposta a: "${tituloOriginal}"`,
@@ -5165,15 +5238,19 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh }: { freel
             {notificacoes.map(n => {
               const meta = parseNotifMeta(n.mensagem)
               const isTaskAssigned = n.tipo === 'nova_tarefa_atribuida'
+              const isTaskResposta = n.tipo === 'resposta_tarefa'
+              const isTaskConcluida = n.tipo === 'tarefa_concluida'
+              const isTaskMessage  = isTaskAssigned || isTaskResposta || isTaskConcluida
+              const isCreator      = !!meta.creatorId && meta.creatorId === freelancerId
               const isTaskHighlight = isTaskAssigned && !n.lida
+              const accentBorder = isTaskAssigned ? 'border-blue-500/35 bg-blue-500/[0.05]'
+                : isTaskResposta ? 'border-indigo-500/35 bg-indigo-500/[0.05]'
+                : isTaskConcluida ? 'border-emerald-500/35 bg-emerald-500/[0.05]'
+                : 'border-gold/20 bg-gold/[0.03]'
               return (
               <div key={n.id}
                 className={`flex items-start gap-3 px-4 py-3 rounded-xl border group transition-colors ${
-                  n.lida
-                    ? 'border-white/[0.04] bg-white/[0.01]'
-                    : isTaskAssigned
-                      ? 'border-blue-500/35 bg-blue-500/[0.05]'
-                      : 'border-gold/20 bg-gold/[0.03]'
+                  n.lida ? 'border-white/[0.04] bg-white/[0.01]' : accentBorder
                 }`}>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
@@ -5184,7 +5261,11 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh }: { freel
                       ? <span className="text-[14px] text-emerald-400/55">✓ lida</span>
                       : isTaskAssigned
                         ? <span className="text-[14px] text-blue-300 font-bold">✈ NOVA TAREFA</span>
-                        : <span className="text-[14px] text-gold/70 font-bold">• não lida</span>
+                        : isTaskResposta
+                          ? <span className="text-[14px] text-indigo-300 font-bold">↩ NOVA RESPOSTA</span>
+                          : isTaskConcluida
+                            ? <span className="text-[14px] text-emerald-300 font-bold">✓ TAREFA CONCLUÍDA</span>
+                            : <span className="text-[14px] text-gold/70 font-bold">• não lida</span>
                     }
                   </div>
                   <p className={`text-[14px] ${n.lida ? 'text-white/60' : 'text-white/90 font-medium'}`}>{n.titulo}</p>
@@ -5192,8 +5273,16 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh }: { freel
                   <p className="text-[12px] text-white/25 mt-1.5">{new Date(n.created_at).toLocaleDateString('pt-PT')}</p>
                 </div>
                 <div className="flex flex-col items-end gap-1.5 mt-0.5 flex-shrink-0">
-                  {/* RESPONDER — só para tarefas atribuídas */}
-                  {isTaskAssigned && meta.senderId && (
+                  {/* VER CONVERSAÇÃO — qualquer mensagem de tarefa com threadId */}
+                  {isTaskMessage && meta.threadId && (
+                    <button onClick={() => setViewingThread({ threadId: meta.threadId!, title: meta.threadTitle || n.titulo })}
+                      title="Ver toda a conversação desta tarefa"
+                      className="px-3 py-1.5 rounded-md text-[10px] tracking-wider uppercase font-bold border border-gold/35 bg-gold/10 text-gold hover:bg-gold/20 hover:border-gold/55 transition-all flex items-center gap-1">
+                      💬 Ver Conversação
+                    </button>
+                  )}
+                  {/* RESPONDER — só para tarefas atribuídas/respostas (não concluídas), e não és o próprio remetente */}
+                  {!isTaskConcluida && (isTaskAssigned || isTaskResposta) && meta.senderId && meta.senderId !== freelancerId && (
                     <button onClick={() => setRespondingNotif(n)}
                       title="Responder ao remetente"
                       className="px-3 py-1.5 rounded-md text-[10px] tracking-wider uppercase font-bold border border-blue-500/45 bg-blue-500/20 text-blue-200 hover:bg-blue-500/30 hover:border-blue-400/60 transition-all flex items-center gap-1"
@@ -5236,8 +5325,186 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh }: { freel
           onSend={(resposta) => sendResposta(respondingNotif, resposta)}
         />
       )}
+
+      {/* Modal Conversação da Tarefa */}
+      {viewingThread && (
+        <ConversacaoModal
+          threadId={viewingThread.threadId}
+          title={viewingThread.title}
+          currentFreelancerId={freelancerId}
+          currentFreelancerName={freelancerName}
+          onClose={() => setViewingThread(null)}
+          onConcluir={() => concluirTarefaThread(viewingThread.threadId)}
+          onResponder={(notif) => { setRespondingNotif(notif); setViewingThread(null) }}
+        />
+      )}
     </div>
   )
+}
+
+// ── Modal Conversação — mostra toda a thread de uma tarefa ────────
+function ConversacaoModal({ threadId, title, currentFreelancerId, currentFreelancerName, onClose, onConcluir, onResponder }: {
+  threadId: string
+  title: string
+  currentFreelancerId: string
+  currentFreelancerName: string
+  onClose: () => void
+  onConcluir: () => void | Promise<void>
+  onResponder: (notif: Notificacao) => void
+}) {
+  const [mounted, setMounted] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [messages, setMessages] = useState<Notificacao[]>([])
+  const [nomesById, setNomesById] = useState<Record<string, string>>({})
+  const [concluindo, setConcluindo] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  useEffect(() => {
+    setLoading(true)
+    Promise.all([
+      fetch(`/api/freelancer-notificacoes?thread_id=${encodeURIComponent(threadId)}`).then(r => r.json()),
+      fetch('/api/freelancers').then(r => r.json()),
+    ]).then(([t, f]) => {
+      setMessages((t.notificacoes ?? []) as Notificacao[])
+      const map: Record<string, string> = {}
+      ;(f.freelancers ?? []).forEach((fl: any) => { map[fl.id] = fl.nome })
+      setNomesById(map)
+    }).finally(() => setLoading(false))
+  }, [threadId])
+
+  if (!mounted || typeof document === 'undefined') return null
+
+  // Ordena por data (asc — mais antiga primeiro, conversação natural)
+  const sorted = [...messages].sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''))
+  // Encontra creator
+  const firstMeta = sorted.length > 0 ? parseNotifMeta(sorted[0].mensagem) : null
+  const creatorId = firstMeta?.creatorId
+  const isCreator = creatorId === currentFreelancerId
+  const concluded = sorted.some(m => m.tipo === 'tarefa_concluida')
+
+  // Última mensagem dirigida a mim (que posso responder)
+  const lastForMe = [...sorted].reverse().find(m =>
+    m.freelancer_id === currentFreelancerId &&
+    (m.tipo === 'nova_tarefa_atribuida' || m.tipo === 'resposta_tarefa')
+  )
+
+  async function handleConcluir() {
+    if (concluded || concluindo) return
+    setConcluindo(true)
+    try { await onConcluir() }
+    finally { setConcluindo(false) }
+  }
+
+  const modal = (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/90 backdrop-blur-md" />
+      <div className="relative z-10 w-full max-w-2xl rounded-3xl overflow-hidden border border-gold/30 shadow-2xl flex flex-col"
+        style={{ background: 'linear-gradient(180deg, #100c08, #0a0805)', maxHeight: '85vh' }}
+        onClick={e => e.stopPropagation()}>
+        <div className="h-0.5 w-full bg-gold/70" />
+        <div className="px-6 pt-5 pb-3 border-b border-white/[0.05] flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] tracking-[0.5em] text-gold/75 uppercase mb-1">Conversação da Tarefa</p>
+            <h2 className="text-xl font-light tracking-[0.05em] text-white truncate" style={{ fontFamily: 'Georgia, serif' }}>{title}</h2>
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap text-[11px]">
+              {creatorId && (
+                <span className="text-white/40">
+                  Criada por <span className="text-gold/85">{nomesById[creatorId] || (firstMeta?.creatorName ?? '—')}</span>
+                </span>
+              )}
+              <span className="text-white/25">·</span>
+              <span className="text-white/40">{sorted.length} mensagem{sorted.length === 1 ? '' : 's'}</span>
+              {concluded && (
+                <>
+                  <span className="text-white/25">·</span>
+                  <span className="text-emerald-400 font-semibold">✓ Concluída</span>
+                </>
+              )}
+            </div>
+          </div>
+          <button onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/35 hover:text-white hover:border-white/30 transition-all shrink-0">✕</button>
+        </div>
+
+        {/* Body — chat-like */}
+        <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-5 space-y-3">
+          {loading ? (
+            <p className="text-center text-white/35 text-[12px] italic py-8">A carregar conversação…</p>
+          ) : sorted.length === 0 ? (
+            <p className="text-center text-white/35 text-[12px] italic py-8">Sem mensagens nesta thread.</p>
+          ) : (
+            sorted.map((m, i) => {
+              const meta = parseNotifMeta(m.mensagem)
+              const recipientName = nomesById[m.freelancer_id] ?? '—'
+              const senderName = meta.senderName || nomesById[meta.senderId ?? ''] || 'Sistema'
+              const isOwnSent  = meta.senderId === currentFreelancerId
+              const isConcluida = m.tipo === 'tarefa_concluida'
+              const dt = new Date(m.created_at)
+              const tsLabel = `${dt.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })} · ${dt.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}`
+              const bubbleAccent = isConcluida
+                ? 'border-emerald-500/30 bg-emerald-500/[0.08]'
+                : isOwnSent
+                  ? 'border-gold/30 bg-gold/[0.06]'
+                  : 'border-blue-500/25 bg-blue-500/[0.05]'
+              return (
+                <div key={m.id || i} className={`flex ${isOwnSent ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[85%] rounded-2xl border px-4 py-3 ${bubbleAccent}`}>
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className={`text-[10px] tracking-wider uppercase font-bold ${
+                        isConcluida ? 'text-emerald-300' : isOwnSent ? 'text-gold' : 'text-blue-300'
+                      }`}>
+                        {isConcluida ? '✓ Concluída' : isOwnSent ? `Tu` : senderName}
+                      </span>
+                      <span className="text-[10px] text-white/25">→ {recipientName}</span>
+                      <span className="text-[10px] text-white/25 ml-auto">{tsLabel}</span>
+                    </div>
+                    <p className="text-[13px] text-white/85 leading-relaxed whitespace-pre-wrap">{meta.cleanMensagem || '—'}</p>
+                  </div>
+                </div>
+              )
+            })
+          )}
+        </div>
+
+        {/* Footer com ações */}
+        <div className="px-6 py-4 border-t border-white/[0.05] flex items-center justify-between gap-2 bg-black/30 flex-wrap">
+          <p className="text-[11px] text-white/40 italic">
+            {concluded ? 'Esta tarefa já foi concluída.'
+              : isCreator ? 'És o/a criador/a — podes concluir esta tarefa.'
+              : 'Só quem criou a tarefa pode concluí-la.'}
+          </p>
+          <div className="flex items-center gap-2">
+            {!concluded && lastForMe && (
+              <button onClick={() => onResponder(lastForMe)}
+                className="px-4 py-2 rounded-lg text-[11px] tracking-wider uppercase font-bold border border-blue-500/45 bg-blue-500/20 text-blue-200 hover:bg-blue-500/30 hover:border-blue-400/60 transition-all"
+                style={{ boxShadow: '0 0 12px -4px rgba(59,130,246,0.55)' }}>
+                ↩ Responder
+              </button>
+            )}
+            {!concluded && isCreator && (
+              <button onClick={handleConcluir} disabled={concluindo}
+                className="px-5 py-2 rounded-lg text-[11px] tracking-wider uppercase font-bold bg-emerald-500 text-black hover:bg-emerald-400 disabled:opacity-50 transition-all"
+                style={{ boxShadow: '0 0 14px -4px rgba(52,211,153,0.6)' }}>
+                {concluindo ? 'A concluir...' : '✓ Concluir Tarefa'}
+              </button>
+            )}
+            <button onClick={onClose}
+              className="px-4 py-2 rounded-lg text-[11px] tracking-wider uppercase text-white/55 hover:text-white border border-white/10 hover:border-white/30 transition-all">
+              Fechar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+
+  return createPortal(modal, document.body)
 }
 
 // ── Modal Responder à Tarefa atribuída ────────────────────────────

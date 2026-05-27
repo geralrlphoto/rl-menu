@@ -13,11 +13,24 @@ function supabase() {
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const freelancer_id = searchParams.get('freelancer_id')
+  const thread_id = searchParams.get('thread_id')
   let query = supabase()
     .from('freelancer_notificacoes')
     .select('*')
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: true })
   if (freelancer_id) query = query.eq('freelancer_id', freelancer_id)
+  if (thread_id) {
+    // Pesquisa o marcador META JSON na mensagem por threadId
+    query = query.ilike('mensagem', `%"threadId":"${thread_id}"%`)
+  }
+  // Quando não há filtros explícitos, default order desc para listagem
+  if (!thread_id) {
+    query = supabase()
+      .from('freelancer_notificacoes')
+      .select('*')
+      .order('created_at', { ascending: false })
+    if (freelancer_id) query = query.eq('freelancer_id', freelancer_id)
+  }
   const { data, error } = await query
   if (error) { console.error('[freelancer-notificacoes GET]', error); return NextResponse.json({ notificacoes: [] }) }
   return NextResponse.json({ notificacoes: data ?? [] })
