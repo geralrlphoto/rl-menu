@@ -2150,26 +2150,59 @@ function PortalSubPageContent() {
                           (col.children ?? []).some((c: Block) => c.type === 'callout' && (c.children ?? []).some((ch: Block) => ch.type === 'image'))
                         ))
                       )
+                      // Mapeia título do card → ícone + descrição (fallback genérico se outro título)
+                      const CARD_META: Record<string, { icon: string; desc: string }> = {
+                        'NOIVO':     { icon: '♂', desc: 'Detalhes do noivo · contactos e logística' },
+                        'NOIVA':     { icon: '♀', desc: 'Detalhes da noiva · contactos e logística' },
+                        'CERIMÓNIA': { icon: '✦', desc: 'Local, horário e detalhes da cerimónia' },
+                        'CERIMONIA': { icon: '✦', desc: 'Local, horário e detalhes da cerimónia' },
+                        'QUINTA':    { icon: '◇', desc: 'Recinto, copo-de-água e espaços' },
+                        'FESTA':     { icon: '◈', desc: 'Música, ambiente e momentos especiais' },
+                      }
                       const cardsGrid = childPages.length > 0 && (
-                        <div className="grid grid-cols-2 gap-3 mt-6">
-                          {childPages.map(cp => {
-                            const pageTitle = cp.child_page?.title ?? ''
-                            const href = `/portal-cliente/${cp.id}?title=${encodeURIComponent(pageTitle)}&from=${id}&fromTitle=${encodeURIComponent(title)}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}`
-                            return (
-                              <Link key={cp.id} href={href}>
-                                <div className="relative flex flex-col items-center justify-center gap-2 px-4 py-8 rounded-2xl border border-white/40 bg-black cursor-pointer group hover:border-white/70 transition-all duration-300 overflow-hidden"
-                                  style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}>
-                                  <span className="absolute inset-0 rounded-2xl pointer-events-none transition-all duration-300 group-hover:opacity-100 opacity-0"
-                                    style={{ boxShadow: '0 0 32px 6px rgba(255,255,255,0.28), inset 0 0 40px 0 rgba(255,255,255,0.08)' }} />
-                                  <span className="text-xs font-bold tracking-[0.3em] uppercase text-white group-hover:text-white transition-all duration-300"
-                                    style={{ textShadow: '0 0 14px rgba(255,255,255,0.9), 0 0 28px rgba(255,255,255,0.5)' }}>
-                                    {pageTitle}
-                                  </span>
-                                  <span className="text-[9px] text-white/50 tracking-widest group-hover:text-white/80 transition-colors">Abrir →</span>
-                                </div>
-                              </Link>
-                            )
-                          })}
+                        <div className="mt-8">
+                          <div className="flex items-end justify-between mb-4 gap-3 flex-wrap">
+                            <div>
+                              <p className="text-[10px] tracking-[0.4em] text-gold/70 uppercase mb-1.5">Briefing por Área</p>
+                              <h3 className="text-xl text-white font-light tracking-tight" style={{ fontFamily: 'Cormorant Garamond, Georgia, serif' }}>
+                                Fichas <span className="italic text-gold/80">individuais</span>
+                              </h3>
+                            </div>
+                            <span className="text-[10px] tracking-widest text-white/30 uppercase">{childPages.length} secções</span>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {childPages.map(cp => {
+                              const pageTitle = cp.child_page?.title ?? ''
+                              const key = pageTitle.toUpperCase().trim()
+                              const meta = CARD_META[key] ?? { icon: '◆', desc: 'Aceder a esta secção do briefing' }
+                              const href = `/portal-cliente/${cp.id}?title=${encodeURIComponent(pageTitle)}&from=${id}&fromTitle=${encodeURIComponent(title)}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}`
+                              return (
+                                <Link key={cp.id} href={href} className="block group">
+                                  <div className="relative h-full px-5 py-6 rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.025] to-transparent overflow-hidden transition-all duration-300 hover:border-gold/35 hover:from-gold/[0.05] hover:to-transparent"
+                                    style={{ boxShadow: '0 12px 30px -16px rgba(0,0,0,0.5)' }}>
+                                    {/* Soft gold glow on hover */}
+                                    <span className="absolute -top-12 -right-12 w-32 h-32 rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                                      style={{ background: 'radial-gradient(circle, rgba(201,164,92,0.18), transparent 70%)' }} />
+                                    <div className="relative flex items-start gap-4">
+                                      {/* Ícone gold */}
+                                      <div className="w-12 h-12 rounded-xl border border-gold/30 bg-gold/[0.06] flex items-center justify-center text-gold text-lg shrink-0 group-hover:bg-gold/[0.12] group-hover:border-gold/50 transition-all"
+                                        style={{ boxShadow: '0 0 14px -6px rgba(201,164,92,0.5)' }}>
+                                        {meta.icon}
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-[10px] tracking-[0.35em] text-gold/65 uppercase mb-1.5 group-hover:text-gold/85 transition-colors">{pageTitle}</p>
+                                        <p className="text-[12px] text-white/55 leading-relaxed line-clamp-2">{meta.desc}</p>
+                                      </div>
+                                    </div>
+                                    <div className="mt-4 pt-3 border-t border-white/[0.05] flex items-center justify-between">
+                                      <span className="text-[9px] tracking-[0.3em] text-white/35 uppercase">Abrir Ficha</span>
+                                      <span className="text-gold/60 text-base group-hover:text-gold group-hover:translate-x-0.5 transition-all">›</span>
+                                    </div>
+                                  </div>
+                                </Link>
+                              )
+                            })}
+                          </div>
                         </div>
                       )
                       return (
@@ -2178,97 +2211,147 @@ function PortalSubPageContent() {
                             const ROLES = ['Fotógrafo', 'Videógrafo', 'Assistente', 'Editor']
                             const equipaBI = briefingInfo[id as string] ?? {}
                             const equipa = equipaBI.equipa ?? []
+                            const ROLE_ICONS: Record<string, string> = {
+                              'Fotógrafo':  '◉',
+                              'Videógrafo': '▶',
+                              'Assistente': '◇',
+                              'Editor':     '✎',
+                            }
                             const equipaBox = (
-                              <div className="mb-6 pb-6 border-b border-white/[0.06]">
-                                <div className="flex items-center justify-between mb-3">
-                                  <span className="text-[10px] tracking-[0.3em] text-white/60 uppercase">Equipa</span>
+                              <div className="mb-6 rounded-2xl border border-white/[0.08] overflow-hidden"
+                                style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.45), rgba(11,11,11,0.55))', boxShadow: '0 20px 40px -20px rgba(0,0,0,0.5)' }}>
+                                <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-white/[0.05]">
+                                  <div className="flex items-center gap-3">
+                                    <span className="w-8 h-8 rounded-lg border border-gold/35 bg-gold/[0.08] flex items-center justify-center text-gold text-sm">⌘</span>
+                                    <div>
+                                      <p className="text-[10px] tracking-[0.4em] text-gold/70 uppercase">Equipa Atribuída</p>
+                                      <p className="text-[11px] text-white/40 mt-0.5">{equipa.length > 0 ? `${equipa.length} profissional${equipa.length === 1 ? '' : 'is'}` : 'Define os profissionais deste evento'}</p>
+                                    </div>
+                                  </div>
                                   {!editingEquipa && (
                                     <button onClick={() => { setEquipaForm(equipa.length ? equipa.map(e => ({ ...e })) : [{ role: 'Fotógrafo', name: '' }]); setEditingEquipa(true) }}
-                                      className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors text-white/30 hover:text-white/70">
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      className="px-2.5 py-1.5 rounded-md text-[9px] tracking-[0.25em] uppercase font-bold border border-gold/30 bg-gold/[0.06] text-gold/85 hover:bg-gold/15 hover:border-gold/55 transition-all flex items-center gap-1.5">
+                                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                                       </svg>
+                                      Editar
                                     </button>
                                   )}
                                 </div>
-                                {editingEquipa ? (
-                                  <div className="space-y-2">
-                                    {equipaForm.map((member, idx) => (
-                                      <div key={idx} className="flex gap-2 items-center">
-                                        <select value={member.role}
-                                          onChange={e => setEquipaForm(f => f.map((x, i) => i === idx ? { ...x, role: e.target.value } : x))}
-                                          className="bg-white/[0.04] border border-white/10 rounded-lg px-2 py-2 text-xs text-white/70 outline-none focus:border-gold/40 transition-colors shrink-0">
-                                          {ROLES.map(r => <option key={r} value={r} className="bg-neutral-900">{r}</option>)}
-                                        </select>
-                                        <input type="text" value={member.name}
-                                          onChange={e => setEquipaForm(f => f.map((x, i) => i === idx ? { ...x, name: e.target.value } : x))}
-                                          placeholder="Nome do profissional"
-                                          className="flex-1 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
-                                        <button onClick={() => setEquipaForm(f => f.filter((_, i) => i !== idx))}
-                                          className="p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-white/[0.04] transition-colors shrink-0">
-                                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                <div className="px-5 py-4">
+                                  {editingEquipa ? (
+                                    <div className="space-y-2">
+                                      {equipaForm.map((member, idx) => (
+                                        <div key={idx} className="flex gap-2 items-center">
+                                          <select value={member.role}
+                                            onChange={e => setEquipaForm(f => f.map((x, i) => i === idx ? { ...x, role: e.target.value } : x))}
+                                            className="bg-black/40 border border-white/10 rounded-lg px-2.5 py-2.5 text-[12px] text-white/85 outline-none focus:border-gold/50 transition-colors shrink-0 [color-scheme:dark]">
+                                            {ROLES.map(r => <option key={r} value={r} className="bg-neutral-900">{r}</option>)}
+                                          </select>
+                                          <input type="text" value={member.name}
+                                            onChange={e => setEquipaForm(f => f.map((x, i) => i === idx ? { ...x, name: e.target.value } : x))}
+                                            placeholder="Nome do profissional"
+                                            className="flex-1 bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-[13px] text-white outline-none focus:border-gold/50 transition-colors placeholder:text-white/20" />
+                                          <button onClick={() => setEquipaForm(f => f.filter((_, i) => i !== idx))}
+                                            className="w-9 h-9 flex items-center justify-center rounded-lg text-white/25 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/30 transition-all shrink-0">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                          </button>
+                                        </div>
+                                      ))}
+                                      <button onClick={() => setEquipaForm(f => [...f, { role: 'Fotógrafo', name: '' }])}
+                                        className="w-full py-2.5 rounded-xl border border-dashed border-gold/25 text-gold/60 hover:text-gold hover:border-gold/50 hover:bg-gold/[0.04] text-[11px] tracking-[0.3em] uppercase font-bold transition-all">
+                                        + Adicionar Membro
+                                      </button>
+                                      <div className="flex gap-2 pt-1.5">
+                                        <button onClick={handleSaveEquipa} disabled={savingEquipa}
+                                          className="flex-1 py-2.5 rounded-xl bg-gold text-black font-bold text-[11px] tracking-[0.25em] uppercase hover:bg-gold/90 transition-all disabled:opacity-50"
+                                          style={!savingEquipa ? { boxShadow: '0 0 14px -4px rgba(201,164,92,0.55)' } : undefined}>
+                                          {savingEquipa ? 'A guardar…' : '✓ Guardar'}
+                                        </button>
+                                        <button onClick={() => setEditingEquipa(false)}
+                                          className="flex-1 py-2.5 rounded-xl border border-white/15 text-white/60 text-[11px] tracking-[0.25em] uppercase font-bold hover:bg-white/[0.04] hover:text-white/85 transition-all">
+                                          Cancelar
                                         </button>
                                       </div>
-                                    ))}
-                                    <button onClick={() => setEquipaForm(f => [...f, { role: 'Fotógrafo', name: '' }])}
-                                      className="w-full py-2 rounded-xl border border-dashed border-white/20 text-white/30 hover:text-white/60 hover:border-white/40 text-xs tracking-widest transition-all">
-                                      + Adicionar Membro
-                                    </button>
-                                    <div className="flex gap-2 pt-1">
-                                      <button onClick={handleSaveEquipa} disabled={savingEquipa}
-                                        className="flex-1 py-2 rounded-xl bg-gold text-black font-semibold text-xs tracking-widest hover:bg-gold/80 transition-all disabled:opacity-50">
-                                        {savingEquipa ? 'A guardar...' : 'Guardar'}
-                                      </button>
-                                      <button onClick={() => setEditingEquipa(false)}
-                                        className="flex-1 py-2 rounded-xl border border-white/10 text-white/50 text-xs tracking-widest hover:bg-white/[0.04] transition-all">
-                                        Cancelar
-                                      </button>
                                     </div>
-                                  </div>
-                                ) : equipa.length > 0 ? (
-                                  <div className="space-y-2">
-                                    {equipa.map((member, idx) => (
-                                      <div key={idx} className="flex items-center justify-between px-4 py-2.5 bg-white/[0.02] border border-white/[0.06] rounded-xl">
-                                        <span className="text-[10px] tracking-widest text-white/35 uppercase">{member.role}</span>
-                                        <span className="text-sm text-white/70 font-medium">{member.name || <span className="text-white/20 text-xs italic">—</span>}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <p className="text-xs text-white/20 italic px-1">Sem equipa definida.</p>
-                                )}
+                                  ) : equipa.length > 0 ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                      {equipa.map((member, idx) => (
+                                        <div key={idx} className="flex items-center gap-3 px-3.5 py-3 rounded-xl bg-white/[0.025] border border-white/[0.06] hover:border-gold/25 hover:bg-gold/[0.03] transition-colors">
+                                          <span className="w-9 h-9 rounded-lg border border-gold/30 bg-gold/[0.06] flex items-center justify-center text-gold text-base shrink-0">
+                                            {ROLE_ICONS[member.role] ?? '◆'}
+                                          </span>
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-[9px] tracking-[0.3em] text-gold/60 uppercase mb-0.5">{member.role}</p>
+                                            <p className="text-[13px] text-white/85 font-medium truncate">{member.name || <span className="text-white/25 italic text-[12px]">Sem nome</span>}</p>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div className="text-center py-6">
+                                      <span className="text-3xl opacity-15 block mb-2">⌘</span>
+                                      <p className="text-[12px] text-white/35 italic">Sem equipa definida.</p>
+                                      <p className="text-[10px] text-white/25 mt-1">Clica em <span className="text-gold/65 font-medium">Editar</span> para adicionar membros.</p>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             )
-                            const enviarBriefingBtn = (portalRef || refParam) ? (
-                              <div className="mb-5 flex justify-end">
-                                <button
-                                  onClick={handleEnviarBriefing}
-                                  disabled={sendingBriefing || briefingSent}
-                                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold tracking-widest uppercase transition-all ${
-                                    briefingSent
-                                      ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 cursor-default'
-                                      : 'bg-white/[0.06] border border-white/20 text-white/70 hover:bg-white/[0.12] hover:border-white/40 hover:text-white disabled:opacity-50'
-                                  }`}
-                                >
-                                  {briefingSent ? (
-                                    <>
-                                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                                      Briefing Enviado
-                                    </>
-                                  ) : sendingBriefing ? (
-                                    <>
-                                      <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                                      A enviar...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                                      Enviar Briefing
-                                    </>
+                            // ── Banner premium: introdução + ação Enviar Briefing ───
+                            const briefingHero = (
+                              <div className="mb-6 rounded-2xl border border-white/[0.08] overflow-hidden relative"
+                                style={{ background: 'linear-gradient(120deg, rgba(20,15,8,0.55), rgba(11,11,11,0.55) 60%, rgba(201,164,92,0.05))', boxShadow: '0 20px 50px -25px rgba(0,0,0,0.6)' }}>
+                                <span className="pointer-events-none absolute -top-12 -right-16 w-48 h-48 rounded-full"
+                                  style={{ background: 'radial-gradient(circle, rgba(201,164,92,0.16), transparent 70%)' }} />
+                                <div className="relative px-5 sm:px-7 py-5 sm:py-6 flex items-center justify-between gap-4 flex-wrap">
+                                  <div className="flex items-start gap-4 min-w-0">
+                                    <div className="w-11 h-11 rounded-xl border border-gold/35 bg-gold/10 flex items-center justify-center text-gold text-lg shrink-0"
+                                      style={{ boxShadow: '0 0 18px -6px rgba(201,164,92,0.55)' }}>◧</div>
+                                    <div className="min-w-0">
+                                      <p className="text-[9px] tracking-[0.5em] text-gold/65 uppercase mb-1.5">Briefing do Evento</p>
+                                      <h2 className="text-[18px] sm:text-[20px] text-white font-light tracking-tight leading-tight" style={{ fontFamily: 'Cormorant Garamond, Georgia, serif' }}>
+                                        Toda a informação <span className="italic text-gold/80">organizada</span>
+                                      </h2>
+                                      <p className="text-[11px] text-white/45 mt-1.5 leading-relaxed max-w-md">
+                                        Define a equipa, consulta as fichas individuais e envia o briefing final para a equipa quando estiver pronto.
+                                      </p>
+                                    </div>
+                                  </div>
+                                  {(portalRef || refParam) && (
+                                    <button
+                                      onClick={handleEnviarBriefing}
+                                      disabled={sendingBriefing || briefingSent}
+                                      className={`relative inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[11px] font-bold tracking-[0.25em] uppercase transition-all shrink-0 ${
+                                        briefingSent
+                                          ? 'bg-emerald-500/15 border border-emerald-500/45 text-emerald-300 cursor-default'
+                                          : sendingBriefing
+                                            ? 'bg-white/[0.04] border border-white/15 text-white/50 cursor-wait'
+                                            : 'bg-gold text-black hover:bg-gold/90'
+                                      }`}
+                                      style={!briefingSent && !sendingBriefing ? { boxShadow: '0 0 18px -4px rgba(201,164,92,0.55)' } : briefingSent ? { boxShadow: '0 0 14px -4px rgba(52,211,153,0.4)' } : undefined}>
+                                      {briefingSent ? (
+                                        <>
+                                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                          Briefing Enviado
+                                        </>
+                                      ) : sendingBriefing ? (
+                                        <>
+                                          <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                          A enviar…
+                                        </>
+                                      ) : (
+                                        <>
+                                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                                          Enviar Briefing
+                                        </>
+                                      )}
+                                    </button>
                                   )}
-                                </button>
+                                </div>
                               </div>
-                            ) : null
+                            )
+                            const enviarBriefingBtn = briefingHero
                             const briefingGeralIdx = otherBlocks.findIndex(b =>
                               ['heading_1','heading_2','heading_3'].includes(b.type) &&
                               plainText(b[b.type]?.rich_text ?? []).toUpperCase().includes('BRIEFING GERAL')
