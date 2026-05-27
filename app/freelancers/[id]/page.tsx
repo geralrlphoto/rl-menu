@@ -2357,12 +2357,18 @@ function CasamentoForm({ form, setForm, saving, onSave, onCancel, onDelete }: an
 const STATUS_ALBUM = ['AGUARDAR', 'EM EDIÇÃO', 'EM APROVAÇÃO', 'APROVADO', 'ENTREGUE'] as const
 type StatusAlbum = typeof STATUS_ALBUM[number]
 
-const ALBUM_STYLE: Record<StatusAlbum, { col: string; badge: string }> = {
-  'AGUARDAR':      { col: 'border-white/20 text-white/40',                                badge: 'bg-white/[0.06] text-white/50 border-white/20' },
-  'EM EDIÇÃO':     { col: 'border-yellow-500/30 text-yellow-400',                          badge: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30' },
-  'EM APROVAÇÃO':  { col: 'border-blue-500/30 text-blue-400',                              badge: 'bg-blue-500/15 text-blue-400 border-blue-500/30' },
-  'APROVADO':      { col: 'border-emerald-500/30 text-emerald-400',                        badge: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
-  'ENTREGUE':      { col: 'border-purple-500/30 text-purple-400',                          badge: 'bg-purple-500/15 text-purple-400 border-purple-500/30' },
+const ALBUM_STYLE: Record<StatusAlbum, {
+  colBorder: string
+  colAccent: string
+  badge: string
+  dot: string
+  glow: string
+}> = {
+  'AGUARDAR':      { colBorder: 'rgba(255,255,255,0.10)',     colAccent: 'rgba(255,255,255,0.40)', badge: 'bg-white/[0.06] text-white/50 border-white/20',          dot: '#a0a0a0', glow: 'rgba(255,255,255,0.06)' },
+  'EM EDIÇÃO':     { colBorder: 'rgba(250,204,21,0.30)',      colAccent: 'rgba(250,204,21,0.90)',  badge: 'bg-yellow-500/15 text-yellow-300 border-yellow-500/30',   dot: '#facc15', glow: 'rgba(250,204,21,0.12)' },
+  'EM APROVAÇÃO':  { colBorder: 'rgba(56,130,246,0.35)',      colAccent: 'rgba(99,165,255,0.90)',  badge: 'bg-blue-500/15 text-blue-300 border-blue-500/30',          dot: '#3b82f6', glow: 'rgba(56,130,246,0.14)' },
+  'APROVADO':      { colBorder: 'rgba(52,211,153,0.30)',      colAccent: 'rgba(52,211,153,0.90)',  badge: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30', dot: '#34d399', glow: 'rgba(52,211,153,0.12)' },
+  'ENTREGUE':      { colBorder: 'rgba(168,85,247,0.35)',      colAccent: 'rgba(192,132,252,0.90)', badge: 'bg-purple-500/15 text-purple-300 border-purple-500/30',    dot: '#a855f7', glow: 'rgba(168,85,247,0.14)' },
 }
 
 function AlbumTab({ freelancerId, album, onRefresh }: { freelancerId: string; album: Album[]; onRefresh: () => void }) {
@@ -2408,80 +2414,215 @@ function AlbumTab({ freelancerId, album, onRefresh }: { freelancerId: string; al
     onRefresh()
   }
 
+  const countByStatus = STATUS_ALBUM.reduce((acc, s) => { acc[s] = album.filter(a => a.status === s).length; return acc }, {} as Record<string, number>)
+  const totalAlbuns = album.length
+
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
-        <button onClick={() => { setShowAdd(true); setEditing(null); setForm({ status: 'AGUARDAR' }) }}
-          className="px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-[14px] font-semibold tracking-widest hover:bg-gold/20 transition-all uppercase">
-          + Adicionar
-        </button>
+    <div className="space-y-6">
+      {/* ── HERO ────────────────────────────────────────────────────────── */}
+      <div className="relative overflow-hidden rounded-3xl border border-white/[0.08]"
+        style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.6)' }}>
+        <div className="absolute inset-0 z-0">
+          <img src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=1600&h=400&fit=crop"
+            alt="" className="w-full h-full object-cover scale-105" style={{ filter: 'blur(2px)' }} />
+        </div>
+        <div className="absolute inset-0 z-[1]"
+          style={{ background: 'linear-gradient(90deg, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.85) 40%, rgba(10,10,10,0.5) 70%, rgba(10,10,10,0.15) 100%)' }} />
+        <div className="relative z-10 flex items-start justify-between gap-6 px-8 sm:px-12 py-10">
+          <div className="max-w-xl">
+            <p className="text-[12px] tracking-[0.5em] text-gold/70 uppercase mb-2">Edição & Aprovação</p>
+            <h1 className="text-4xl sm:text-5xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
+              ÁL<span className="italic text-gold">buns</span>
+            </h1>
+            <div className="mt-4 h-px w-16 bg-gradient-to-r from-gold/70 to-transparent" />
+            <p className="text-[14px] text-white/55 mt-4 leading-relaxed max-w-md">
+              Acompanha o estado dos álbuns deste freelancer — desde a maquete em edição até à entrega final.
+            </p>
+            <div className="flex flex-wrap items-center gap-3 mt-4">
+              {countByStatus['EM EDIÇÃO'] > 0 && (
+                <span className="text-[11px] tracking-widest uppercase px-2.5 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/25 text-yellow-300">
+                  {countByStatus['EM EDIÇÃO']} em edição
+                </span>
+              )}
+              {countByStatus['EM APROVAÇÃO'] > 0 && (
+                <span className="text-[11px] tracking-widest uppercase px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/25 text-blue-300">
+                  {countByStatus['EM APROVAÇÃO']} a aprovar
+                </span>
+              )}
+              {countByStatus['ENTREGUE'] > 0 && (
+                <span className="text-[11px] tracking-widest uppercase px-2.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/25 text-purple-300">
+                  {countByStatus['ENTREGUE']} entregues
+                </span>
+              )}
+            </div>
+          </div>
+          <button onClick={() => { setShowAdd(true); setEditing(null); setForm({ status: 'AGUARDAR' }) }}
+            className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gold text-black text-[13px] font-semibold tracking-wider hover:bg-gold/90 transition-all shrink-0"
+            style={{ boxShadow: '0 0 24px -4px rgba(201,164,92,0.5)' }}>
+            <span className="text-lg leading-none">+</span> Adicionar Álbum
+          </button>
+        </div>
       </div>
 
-      {showAdd && <AlbumForm form={form} setForm={setForm} saving={saving} onSave={save} onCancel={() => setShowAdd(false)} selecaoList={selecaoList} />}
-
-      {/* Kanban — scroll horizontal em mobile */}
-      <div className="flex gap-3 overflow-x-auto pb-2">
-        {STATUS_ALBUM.map(status => {
-          const items = album.filter(a => a.status === status)
-          const style = ALBUM_STYLE[status]
-          return (
-            <div key={status} className="flex-shrink-0 w-[220px] space-y-2">
-              {/* Column header */}
-              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[14px] font-bold tracking-widest uppercase bg-white/[0.02] ${style.col}`}>
-                <span>{status}</span>
-                <span className="ml-auto opacity-50">({items.length})</span>
+      {/* ── KPI cards ───────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {([
+          { label: 'Total Álbuns',  value: totalAlbuns,              icon: '◫', sub: 'em todos os estados' },
+          { label: 'Em Edição',     value: countByStatus['EM EDIÇÃO'], icon: '✎', sub: 'maquetes em curso' },
+          { label: 'Em Aprovação',  value: countByStatus['EM APROVAÇÃO'], icon: '◷', sub: 'aguarda noivos' },
+          { label: 'Entregues',     value: countByStatus['ENTREGUE'], icon: '✓', sub: 'finalizados', purple: true },
+        ] as const).map(k => (
+          <div key={k.label} className="group relative overflow-hidden rounded-2xl border border-white/[0.08] p-5 hover:border-gold/30 transition-all"
+            style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.6), rgba(11,11,11,0.85))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
+            <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{ background: 'radial-gradient(circle, rgba(201,164,92,0.18), transparent 70%)' }} />
+            <div className="relative flex items-center gap-4">
+              <div className={`w-14 h-14 rounded-2xl border flex items-center justify-center text-2xl ${(k as any).purple ? 'border-purple-500/30 text-purple-300' : 'border-gold/30 text-gold'}`}
+                style={{ background: (k as any).purple
+                  ? 'radial-gradient(circle at 30% 30%, rgba(168,85,247,0.15), rgba(168,85,247,0.04))'
+                  : 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.15), rgba(201,164,92,0.04))',
+                  boxShadow: (k as any).purple ? '0 0 20px -4px rgba(168,85,247,0.25)' : '0 0 22px -4px rgba(201,164,92,0.25)' }}>
+                {k.icon}
               </div>
-              {/* Cards */}
-              {items.map(item => (
-                editing?.id === item.id ? (
-                  <AlbumForm key={item.id} form={form} setForm={setForm} saving={saving} onSave={save}
-                    onCancel={() => setEditing(null)} onDelete={() => del(item.id)} selecaoList={selecaoList} />
-                ) : (
-                  <div key={item.id} className="p-3 rounded-xl border border-white/[0.06] bg-white/[0.02] space-y-2 group">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-[14px] font-semibold text-white/80 leading-tight">{item.nome}</p>
-                      <button onClick={() => { setEditing(item); setForm({ ...item }); setShowAdd(false) }}
-                        className="opacity-0 group-hover:opacity-100 p-1 rounded text-white/25 hover:text-white/60 flex-shrink-0 transition-all">
-                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                      </button>
-                    </div>
-                    {item.data_casamento && <p className="text-[14px] text-white/30">{fmtDate(item.data_casamento).split(' · ')[0]}</p>}
-                    {item.local && <p className="text-[14px] text-white/25">📍 {item.local}</p>}
-                    {item.data_entrega && <p className="text-[14px] text-white/25">Entrega: {fmtDate(item.data_entrega).split(' · ')[0]}</p>}
-                    {item.referencia_album
-                      ? <p className="text-[14px] font-mono text-emerald-400/70 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded w-fit">🔗 {item.referencia_album}</p>
-                      : <p className="text-[14px] text-red-400/60 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded w-fit">⚠ sem referência — sync desativado</p>
-                    }
-                    {item.fotos_album && (
-                      <div className="border-t border-white/[0.04] pt-1.5">
-                        <p className="text-[14px] text-white/25 uppercase tracking-widest mb-1">Fotos Álbum</p>
-                        <p className="text-[14px] text-white/50 whitespace-pre-wrap leading-relaxed">{item.fotos_album}</p>
-                      </div>
-                    )}
-                    {item.texto_album && (
-                      <div className="border-t border-white/[0.04] pt-1.5">
-                        <p className="text-[14px] text-white/25 uppercase tracking-widest mb-1">Texto Álbum</p>
-                        <p className="text-[14px] text-white/50 whitespace-pre-wrap leading-relaxed">{item.texto_album}</p>
-                      </div>
-                    )}
-                    {/* Status dropdown */}
-                    <div className="pt-1 border-t border-white/[0.04]">
-                      <select
-                        value={item.status}
-                        disabled={changingId === item.id}
-                        onChange={e => changeStatus(item, e.target.value)}
-                        className={`w-full text-[14px] font-bold tracking-widest uppercase px-2 py-1.5 rounded-lg border cursor-pointer outline-none transition-all bg-black/40 ${style.badge} disabled:opacity-50`}>
-                        {STATUS_ALBUM.map(s => (
-                          <option key={s} value={s} className="bg-neutral-900 text-white">{s}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                )
-              ))}
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-1">{k.label}</p>
+                <p className="text-2xl font-bold text-white leading-none">{k.value}</p>
+                <p className="text-[11px] text-white/35 mt-1.5">{k.sub}</p>
+              </div>
             </div>
-          )
-        })}
+          </div>
+        ))}
+      </div>
+
+      {/* ── Add form (inline) ───────────────────────────────────────────── */}
+      {showAdd && (
+        <div className="rounded-2xl p-5 space-y-3"
+          style={{ background: 'linear-gradient(135deg, rgba(201,164,92,0.06), rgba(11,11,11,0.85))', border: '1px solid rgba(201,164,92,0.30)', boxShadow: '0 0 24px -8px rgba(201,164,92,0.30)' }}>
+          <p className="text-[12px] tracking-[0.4em] text-gold uppercase">Novo Álbum</p>
+          <AlbumForm form={form} setForm={setForm} saving={saving} onSave={save} onCancel={() => setShowAdd(false)} selecaoList={selecaoList} />
+        </div>
+      )}
+
+      {/* ── Kanban premium ──────────────────────────────────────────────── */}
+      <div className="overflow-x-auto pb-2 -mx-2 px-2">
+        <div className="flex gap-4 min-w-max">
+          {STATUS_ALBUM.map(status => {
+            const items = album.filter(a => a.status === status)
+            const style = ALBUM_STYLE[status]
+            return (
+              <div key={status} className="w-[280px] flex-shrink-0 flex flex-col gap-3">
+                {/* Column header */}
+                <div className="relative overflow-hidden rounded-2xl p-4"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(20,15,8,0.45), rgba(11,11,11,0.75))',
+                    border: `1px solid ${style.colBorder}`,
+                    boxShadow: `0 0 24px -10px ${style.glow}`,
+                  }}>
+                  <div className="absolute top-0 left-0 right-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${style.colAccent}, transparent)`, opacity: 0.6 }} />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full" style={{ background: style.dot, boxShadow: `0 0 8px ${style.dot}` }} />
+                      <h3 className="text-[11px] tracking-[0.3em] uppercase font-semibold" style={{ color: style.colAccent }}>{status}</h3>
+                    </div>
+                    <span className="text-[10px] tracking-widest font-mono px-2 py-0.5 rounded-md border" style={{ color: style.colAccent, borderColor: style.colBorder, background: 'rgba(0,0,0,0.3)' }}>
+                      {items.length}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Cards */}
+                <div className="flex flex-col gap-3 min-h-[100px]">
+                  {items.length === 0 && (
+                    <div className="rounded-xl border border-dashed border-white/[0.08] p-6 text-center">
+                      <p className="text-[10px] tracking-[0.3em] uppercase text-white/20">vazio</p>
+                    </div>
+                  )}
+                  {items.map(item => (
+                    editing?.id === item.id ? (
+                      <div key={item.id} className="rounded-xl p-4 space-y-3"
+                        style={{ background: 'linear-gradient(135deg, rgba(201,164,92,0.06), rgba(11,11,11,0.85))', border: '1px solid rgba(201,164,92,0.30)' }}>
+                        <p className="text-[10px] tracking-[0.4em] text-gold uppercase">Editar</p>
+                        <AlbumForm form={form} setForm={setForm} saving={saving} onSave={save}
+                          onCancel={() => setEditing(null)} onDelete={() => del(item.id)} selecaoList={selecaoList} />
+                      </div>
+                    ) : (
+                      <div key={item.id} className="group relative overflow-hidden rounded-xl p-4 flex flex-col gap-2.5 transition-all hover:border-gold/30"
+                        style={{
+                          background: 'linear-gradient(135deg, rgba(20,15,8,0.35), rgba(11,11,11,0.65))',
+                          border: '1px solid rgba(255,255,255,0.06)',
+                          boxShadow: '0 4px 14px -4px rgba(0,0,0,0.4)',
+                        }}>
+                        {/* Vertical accent line */}
+                        <div className="absolute top-0 bottom-0 left-0 w-[2px]" style={{ background: `linear-gradient(180deg, ${style.dot}, transparent)`, opacity: 0.5 }} />
+
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-[13px] font-semibold text-white/90 leading-tight pr-1">{item.nome}</p>
+                          <button onClick={() => { setEditing(item); setForm({ ...item }); setShowAdd(false) }}
+                            className="opacity-0 group-hover:opacity-100 p-1 rounded text-white/30 hover:text-gold flex-shrink-0 transition-all"
+                            title="Editar">
+                            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                          </button>
+                        </div>
+
+                        {item.data_casamento && (
+                          <p className="text-[11px] text-white/45 italic" style={{ fontFamily: 'Georgia, serif' }}>{fmtDate(item.data_casamento).split(' · ')[0]}</p>
+                        )}
+
+                        {(item.local || item.data_entrega) && (
+                          <div className="flex flex-wrap gap-2 text-[10px]">
+                            {item.local && <span className="text-white/35">📍 {item.local}</span>}
+                            {item.data_entrega && <span className="text-white/35">⏵ {fmtDate(item.data_entrega).split(' · ')[0]}</span>}
+                          </div>
+                        )}
+
+                        {item.referencia_album
+                          ? <span className="inline-flex items-center gap-1.5 text-[10px] font-mono text-emerald-300/80 bg-emerald-500/10 border border-emerald-500/25 px-2 py-1 rounded-md w-fit">🔗 {item.referencia_album}</span>
+                          : <span className="inline-flex items-center gap-1.5 text-[10px] text-red-300/70 bg-red-500/8 border border-red-500/20 px-2 py-1 rounded-md w-fit">⚠ sem referência</span>
+                        }
+
+                        {(item.fotos_album || item.texto_album) && (
+                          <div className="border-t border-white/[0.04] pt-2 space-y-1.5">
+                            {item.fotos_album && (
+                              <div>
+                                <p className="text-[9px] text-white/30 uppercase tracking-[0.3em] mb-0.5">Fotos</p>
+                                <p className="text-[11px] text-white/55 whitespace-pre-wrap leading-snug line-clamp-3">{item.fotos_album}</p>
+                              </div>
+                            )}
+                            {item.texto_album && (
+                              <div>
+                                <p className="text-[9px] text-white/30 uppercase tracking-[0.3em] mb-0.5">Texto</p>
+                                <p className="text-[11px] text-white/55 whitespace-pre-wrap leading-snug line-clamp-3">{item.texto_album}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Status dropdown */}
+                        <div className="pt-2 border-t border-white/[0.04]">
+                          <select
+                            value={item.status}
+                            disabled={changingId === item.id}
+                            onChange={e => changeStatus(item, e.target.value)}
+                            className={`w-full text-[10px] font-bold tracking-[0.25em] uppercase px-3 py-2 rounded-lg border cursor-pointer outline-none transition-all appearance-none pr-7 ${style.badge} disabled:opacity-50`}
+                            style={{
+                              backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23c9a96e' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+                              backgroundRepeat: 'no-repeat',
+                              backgroundPosition: 'right 10px center',
+                              backgroundSize: '10px',
+                            }}>
+                            {STATUS_ALBUM.map(s => (
+                              <option key={s} value={s} style={{ background: '#1a1206', color: '#fff' }}>{s}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    )
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )
