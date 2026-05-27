@@ -825,113 +825,125 @@ function FreelancerDetailInner() {
             </button>
           </div>
 
-          {/* ── ALERTAS CRÍTICOS — só renderiza quando há algo a alertar ─── */}
+          {/* ── CRÍTICO · ENTREGA — atrasos de Edição, Álbum, Seleção ─── */}
           {(() => {
             const todayMid = new Date(); todayMid.setHours(0,0,0,0)
-            const alerts: Array<{
+            const MESES_PT_SHORT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+            const fmtShortDate = (iso: string) => {
+              try {
+                const d = new Date(iso)
+                return `até ${String(d.getDate()).padStart(2,'0')} ${MESES_PT_SHORT[d.getMonth()]}`
+              } catch { return '' }
+            }
+
+            type EntregaItem = {
               key: string
-              icon: string
-              title: string
-              detail: string
-              accent: 'rose'|'amber'|'gold'|'blue'
+              kind: 'edicao' | 'album' | 'selecao'
+              local: string
+              deadlineISO: string
+              diasAtraso: number
               onClick: () => void
-            }> = []
-            // 1) Casamentos não confirmados a < 14 dias
-            casamentos.forEach(c => {
-              if (c.data_confirmada || c.indisponivel) return
-              if (!c.data_casamento) return
-              const d = new Date(c.data_casamento); d.setHours(0,0,0,0)
-              const diff = Math.round((d.getTime() - todayMid.getTime()) / 86400000)
-              if (diff < 0 || diff > 14) return
-              alerts.push({
-                key: `conf-${c.id}`, icon: '📷',
-                title: `Confirmar disponibilidade · ${c.local ?? 'evento'}`,
-                detail: diff === 0 ? 'É hoje' : diff === 1 ? 'É amanhã' : `Daqui a ${diff} dias`,
-                accent: diff <= 3 ? 'rose' : 'amber',
-                onClick: () => setTab('casamentos'),
-              })
-            })
-            // 2) Atribuições de equipa pendentes (notificação não lida)
-            notificacoes.filter(n => n.tipo === 'atribuicao_equipa' && !n.lida).forEach(n => {
-              alerts.push({
-                key: `atr-${n.id}`, icon: '✨',
-                title: 'Nova atribuição por confirmar',
-                detail: n.titulo.replace(/^✨\s*/, ''),
-                accent: 'gold',
-                onClick: () => setTab('notificacoes'),
-              })
-            })
-            // 3) Edições atrasadas
+            }
+            const items: EntregaItem[] = []
+
+            // 1) EDIÇÃO atrasada — edicao com data_final_entrega < hoje e não concluído
             edicao.forEach(e => {
               if (e.status === 'CONCLUÍDO') return
               if (!e.data_final_entrega) return
               const d = new Date(e.data_final_entrega); d.setHours(0,0,0,0)
               if (d >= todayMid) return
               const diasAtraso = Math.round((todayMid.getTime() - d.getTime()) / 86400000)
-              alerts.push({
-                key: `edi-${e.id}`, icon: '⏱',
-                title: `Edição atrasada · ${e.local ?? e.nome}`,
-                detail: `${diasAtraso} dia${diasAtraso === 1 ? '' : 's'} de atraso`,
-                accent: 'rose',
+              items.push({
+                key: `edicao-${e.id}`, kind: 'edicao',
+                local: (e.local ?? e.nome ?? '—').toUpperCase(),
+                deadlineISO: e.data_final_entrega, diasAtraso,
                 onClick: () => setTab('edicao'),
               })
             })
-            // 4) Pagamentos atrasados (pendentes + data_prevista < hoje)
-            pagamentos.filter(p => p.status === 'PENDENTE' && p.casamento_id && casamentoIdsSet.has(p.casamento_id) && p.data_prevista && new Date(p.data_prevista) < todayMid)
-              .forEach(p => {
-                const diasAtraso = Math.round((todayMid.getTime() - new Date(p.data_prevista!).getTime()) / 86400000)
-                alerts.push({
-                  key: `pag-${p.id}`, icon: '€',
-                  title: `Pagamento em atraso · ${(p.valor ?? 0).toFixed(2).replace('.',',')} €`,
-                  detail: `${diasAtraso} dia${diasAtraso === 1 ? '' : 's'} de atraso · ${p.descricao}`,
-                  accent: 'rose',
-                  onClick: () => setTab('pagamentos'),
-                })
+
+            // 2) ÁLBUM atrasado — album com data_entrega < hoje e não entregue
+            album.forEach(a => {
+              if (a.status === 'ENTREGUE') return
+              if (!a.data_entrega) return
+              const d = new Date(a.data_entrega); d.setHours(0,0,0,0)
+              if (d >= todayMid) return
+              const diasAtraso = Math.round((todayMid.getTime() - d.getTime()) / 86400000)
+              items.push({
+                key: `album-${a.id}`, kind: 'album',
+                local: (a.local ?? a.nome ?? '—').toUpperCase(),
+                deadlineISO: a.data_entrega, diasAtraso,
+                onClick: () => setTab('album'),
               })
-            // 5) Mensagens não lidas
-            if (mensagensNaoLidas > 0) {
-              alerts.push({
-                key: 'msg-unread', icon: '✉',
-                title: `${mensagensNaoLidas} mensagem${mensagensNaoLidas === 1 ? '' : 's'} por ler`,
-                detail: 'Conversação com o membro',
-                accent: 'blue',
-                onClick: () => setTab('mensagens'),
+            })
+
+            // 3) SELEÇÃO atrasada — casamento com seleção não entregue e prazo passado
+            //    Regra de prazo: 30 dias após o casamento → noivos têm de submeter seleção.
+            casamentos.forEach(c => {
+              if (!c.data_casamento) return
+              const status = c.status_selecao ?? ''
+              if (status === 'ENTREGUE' || status === 'GALERIA PUBLICADA' || status === 'CONCLUIDO') return
+              const cas = new Date(c.data_casamento); cas.setHours(0,0,0,0)
+              if (cas > todayMid) return  // casamento ainda no futuro — não há prazo de seleção
+              const deadline = new Date(cas); deadline.setDate(deadline.getDate() + 30)
+              if (deadline >= todayMid) return  // ainda dentro do prazo
+              const diasAtraso = Math.round((todayMid.getTime() - deadline.getTime()) / 86400000)
+              items.push({
+                key: `sel-${c.id}`, kind: 'selecao',
+                local: (c.local ?? '—').toUpperCase(),
+                deadlineISO: deadline.toISOString(), diasAtraso,
+                onClick: () => setTab('casamentos'),
               })
-            }
-            if (alerts.length === 0) return null
-            // Limita a 6 e prioriza rose > amber > gold > blue
-            const priority = { rose: 0, amber: 1, gold: 2, blue: 3 }
-            const sorted = alerts.sort((a, b) => priority[a.accent] - priority[b.accent]).slice(0, 6)
-            const accents = {
-              rose:  { border: 'border-rose-500/35',   bg: 'bg-rose-500/[0.06]',    iconBg: 'bg-rose-500/15 border-rose-500/45',    text: 'text-rose-300',    glow: 'rgba(244,63,94,0.25)' },
-              amber: { border: 'border-amber-500/35',  bg: 'bg-amber-500/[0.06]',   iconBg: 'bg-amber-500/15 border-amber-500/45',  text: 'text-amber-300',   glow: 'rgba(245,158,11,0.25)' },
-              gold:  { border: 'border-gold/40',       bg: 'bg-gold/[0.05]',        iconBg: 'bg-gold/15 border-gold/45',            text: 'text-gold',        glow: 'rgba(201,164,92,0.25)' },
-              blue:  { border: 'border-blue-500/35',   bg: 'bg-blue-500/[0.06]',    iconBg: 'bg-blue-500/15 border-blue-500/45',    text: 'text-blue-300',    glow: 'rgba(59,130,246,0.25)' },
-            }
+            })
+
+            if (items.length === 0) return null
+
+            // Ordena por dias de atraso DESC (mais antigos primeiro)
+            items.sort((a, b) => b.diasAtraso - a.diasAtraso)
+
+            const KIND_META = {
+              edicao:  { label: 'EDIÇÃO',  chipBg: 'bg-blue-500/15',   chipBorder: 'border-blue-500/45',   chipText: 'text-blue-200' },
+              album:   { label: 'ÁLBUM',   chipBg: 'bg-purple-500/15', chipBorder: 'border-purple-500/45', chipText: 'text-purple-200' },
+              selecao: { label: 'SELEÇÃO', chipBg: 'bg-gold/15',       chipBorder: 'border-gold/50',       chipText: 'text-gold' },
+            } as const
+
             return (
-              <div className="mb-5 rounded-2xl border border-white/[0.08] overflow-hidden"
-                style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.5), rgba(11,11,11,0.6))' }}>
-                <div className="px-5 py-3 border-b border-white/[0.05] flex items-center justify-between gap-3">
+              <div className="mb-5 rounded-2xl border border-rose-500/35 p-4"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(40,8,12,0.5), rgba(20,5,8,0.7))',
+                  boxShadow: '0 0 36px -12px rgba(244,63,94,0.45), inset 0 0 0 1px rgba(244,63,94,0.05)',
+                }}>
+                {/* Header */}
+                <div className="flex items-center justify-between gap-3 mb-3">
                   <div className="flex items-center gap-2.5">
-                    <span className="w-7 h-7 rounded-lg border border-rose-500/45 bg-rose-500/15 flex items-center justify-center text-rose-300 text-sm"
-                      style={{ boxShadow: '0 0 14px -4px rgba(244,63,94,0.4)' }}>!</span>
-                    <p className="text-[10px] tracking-[0.4em] text-rose-300/80 uppercase font-bold">Alertas Críticos</p>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300 border border-rose-500/35 font-bold tabular-nums">{sorted.length}</span>
+                    <span className="text-rose-300 text-base">⚠</span>
+                    <p className="text-[11px] tracking-[0.35em] uppercase font-bold text-rose-300">Crítico · Entrega</p>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-200 border border-rose-500/40 font-bold tabular-nums">
+                      {items.length}
+                    </span>
                   </div>
+                  <p className="text-[11px] italic text-rose-200/60">30 dias</p>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 p-3">
-                  {sorted.map(a => {
-                    const ac = accents[a.accent]
+
+                {/* Linhas */}
+                <div className="space-y-2">
+                  {items.map(it => {
+                    const m = KIND_META[it.kind]
                     return (
-                      <button key={a.key} onClick={a.onClick}
-                        className={`group text-left flex items-start gap-2.5 px-3 py-2.5 rounded-xl border ${ac.border} ${ac.bg} hover:brightness-110 transition-all`}
-                        style={{ boxShadow: `0 0 16px -10px ${ac.glow}` }}>
-                        <span className={`w-8 h-8 rounded-lg border flex items-center justify-center text-[13px] shrink-0 ${ac.iconBg} ${ac.text}`}>{a.icon}</span>
+                      <button key={it.key} onClick={it.onClick}
+                        className="w-full group flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-rose-500/25 bg-rose-500/[0.04] hover:border-rose-500/45 hover:bg-rose-500/[0.08] transition-all text-left">
+                        <span className={`px-2 py-1 rounded-md text-[9px] tracking-[0.2em] uppercase font-bold border ${m.chipBg} ${m.chipBorder} ${m.chipText} shrink-0 min-w-[68px] text-center`}>
+                          {m.label}
+                        </span>
                         <div className="flex-1 min-w-0">
-                          <p className={`text-[12px] font-semibold truncate ${ac.text}`}>{a.title}</p>
-                          <p className="text-[10px] text-white/55 mt-0.5 truncate">{a.detail}</p>
+                          <p className="text-[14px] text-white font-bold tracking-wide truncate">{it.local}</p>
+                          <p className="text-[11px] text-rose-200/55 italic mt-0.5">{fmtShortDate(it.deadlineISO)}</p>
                         </div>
-                        <span className={`text-[12px] ${ac.text} opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all shrink-0`}>›</span>
+                        <div className="text-right shrink-0">
+                          <p className="text-rose-300 font-bold tabular-nums leading-none" style={{ fontFamily: 'Georgia, serif', fontSize: '24px' }}>
+                            +{it.diasAtraso}
+                            <span className="text-[10px] text-rose-300/75 tracking-[0.25em] uppercase ml-1.5 font-bold">atr.</span>
+                          </p>
+                        </div>
                       </button>
                     )
                   })}
