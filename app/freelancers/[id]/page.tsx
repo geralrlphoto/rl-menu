@@ -2140,6 +2140,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                           null
                         }
                         lockedReason={lockedReason}
+                        isAdmin={!viewAsFreelancer}
                         onRefresh={onRefresh}
                       />
                     )
@@ -7951,6 +7952,7 @@ function UrlEntryCard({
   initialSentAt,
   initialStatus,
   lockedReason,
+  isAdmin,
   onRefresh,
 }: {
   field: { key: string; ts: string; tipo: string; label: string; icon: string }
@@ -7964,9 +7966,12 @@ function UrlEntryCard({
   initialSentAt: string | null
   initialStatus?: string | null
   lockedReason?: string | null
+  isAdmin?: boolean
   onRefresh: () => void
 }) {
-  const locked = !!lockedReason
+  // Admin ignora todos os locks — pode mudar qualquer estado em qualquer altura
+  // e atualizar o URL mesmo sem o status ser ENTREGUE.
+  const locked = !isAdmin && !!lockedReason
   // Estado LOCAL — não desaparece quando lista re-renderiza
   const [url, setUrl] = useState(initialUrl ?? '')
   const [sentAt, setSentAt] = useState<string | null>(initialSentAt ?? null)
@@ -8011,7 +8016,8 @@ function UrlEntryCard({
 
   // ── URL apenas editável quando status = ENTREGUE (Seleção & Fotos Editadas) ──
   // O membro só pode colar o link quando marca o trabalho como entregue.
-  const urlBlockedByStatus = (field.tipo === 'selecao' || field.tipo === 'editadas') && status !== 'ENTREGUE'
+  // ADMIN: bypass total — pode editar o URL em qualquer estado.
+  const urlBlockedByStatus = !isAdmin && (field.tipo === 'selecao' || field.tipo === 'editadas') && status !== 'ENTREGUE'
   const urlLocked = locked || urlBlockedByStatus
 
   // ── 'Ver Fotos Selecionadas pelos Noivos' (Fotos Editadas + Maquete Álbum) ──
@@ -8255,13 +8261,14 @@ function UrlEntryCard({
             <div className="grid grid-cols-2 gap-1">
               {options.map((opt, idx) => {
                 const active = status === opt
-                // Estados anteriores ao atual ficam bloqueados (workflow one-way)
-                const isPrevious = currentIdx >= 0 && idx < currentIdx
+                // Estados anteriores ao atual ficam bloqueados para o freelancer (workflow one-way).
+                // Admin pode voltar atrás livremente.
+                const isPrevious = !isAdmin && currentIdx >= 0 && idx < currentIdx
                 const isDisabled = locked || isPrevious
                 return (
                   <button key={opt}
                     disabled={isDisabled}
-                    title={isPrevious ? 'Estado anterior bloqueado — não é possível voltar atrás' : undefined}
+                    title={isPrevious ? 'Estado anterior bloqueado — não é possível voltar atrás' : isAdmin && currentIdx >= 0 && idx < currentIdx ? 'Admin pode reverter para este estado' : undefined}
                     onClick={e => { e.stopPropagation(); if (!isDisabled) saveStatus(opt) }}
                     className={`relative text-[11px] px-2 py-1.5 rounded-md tracking-wider uppercase font-semibold border transition-all ${
                       locked
