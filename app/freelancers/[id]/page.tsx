@@ -822,37 +822,52 @@ function FreelancerDetailInner() {
             </button>
           </div>
 
-          {/* ── KPI CARDS premium (igual ao /painel-fotografo) ────── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6 fade-in-3">
+          {/* ── KPI CARDS premium — layout simétrico vertical ───── */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6 fade-in-3">
             {([
-              { label: 'Casamentos',  value: totalCasamentos.toString(),  sub: 'Total atribuídos',  icon: '◫', tab: 'casamentos' as const },
-              { label: 'Em Edição',   value: totalEmEdicao.toString(),    sub: 'Em edição ativa',   icon: '✎', tab: 'edicao' as const },
-              { label: 'Concluídos',  value: totalConcluidos.toString(),  sub: 'Entregues',         icon: '✓', tab: 'edicao' as const },
-              { label: 'Aguardando',  value: totalAguardando.toString(),  sub: 'Por iniciar',       icon: '◷', tab: 'edicao' as const },
-              { label: 'Recebimentos', value: totalRecebidoLabel,         sub: `Total ${anoAtual}`,  icon: '€', tab: 'pagamentos' as const },
-            ]).map((k, i) => (
-              <button key={i} onClick={() => setTab(k.tab)}
-                className="group relative overflow-hidden rounded-2xl border border-white/[0.08] p-5 hover:border-gold/30 transition-all cursor-pointer text-left w-full"
-                style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.6), rgba(11,11,11,0.85))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}
-              >
-                <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ background: 'radial-gradient(circle, rgba(201,164,92,0.18), transparent 70%)' }} />
-                <div className="relative flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl border border-gold/30 flex items-center justify-center text-2xl text-gold"
-                      style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.15), rgba(201,164,92,0.04))', boxShadow: '0 0 22px -4px rgba(201,164,92,0.25)' }}>
+              { label: 'Casamentos',  value: totalCasamentos.toString(),  sub: 'Total atribuídos',  icon: '◫', tab: 'casamentos' as const, accent: 'gold' },
+              { label: 'Em Edição',   value: totalEmEdicao.toString(),    sub: 'Em edição ativa',   icon: '✎', tab: 'edicao' as const,     accent: 'amber' },
+              { label: 'Concluídos',  value: totalConcluidos.toString(),  sub: 'Entregues',         icon: '✓', tab: 'edicao' as const,     accent: 'emerald' },
+              { label: 'Aguardando',  value: totalAguardando.toString(),  sub: 'Por iniciar',       icon: '◷', tab: 'edicao' as const,     accent: 'blue' },
+              { label: 'Recebimentos', value: totalRecebidoLabel,         sub: `Total ${anoAtual}`, icon: '€', tab: 'pagamentos' as const, accent: 'gold' },
+            ] as const).map((k, i) => {
+              const accents = {
+                gold:    { iconBg: 'bg-gold/10',         iconBorder: 'border-gold/35',         iconText: 'text-gold',         arrowText: 'text-gold/60 group-hover:text-gold' },
+                amber:   { iconBg: 'bg-amber-500/12',    iconBorder: 'border-amber-500/35',    iconText: 'text-amber-300',    arrowText: 'text-amber-300/55 group-hover:text-amber-300' },
+                emerald: { iconBg: 'bg-emerald-500/12',  iconBorder: 'border-emerald-500/35',  iconText: 'text-emerald-300',  arrowText: 'text-emerald-300/55 group-hover:text-emerald-300' },
+                blue:    { iconBg: 'bg-blue-500/12',     iconBorder: 'border-blue-500/35',     iconText: 'text-blue-300',     arrowText: 'text-blue-300/55 group-hover:text-blue-300' },
+              }[k.accent]
+              return (
+                <button key={i} onClick={() => setTab(k.tab)}
+                  className="group relative overflow-hidden rounded-2xl border border-white/[0.08] p-4 hover:border-gold/30 transition-all cursor-pointer text-left w-full h-full flex flex-col"
+                  style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.55), rgba(11,11,11,0.7))', boxShadow: '0 14px 30px -16px rgba(0,0,0,0.5)' }}
+                >
+                  {/* Glow ao hover */}
+                  <span className="pointer-events-none absolute -top-10 -right-10 w-32 h-32 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{ background: 'radial-gradient(circle, rgba(201,164,92,0.16), transparent 70%)' }} />
+
+                  {/* Top: ícone + setinha — sempre nas mesmas posições */}
+                  <div className="relative flex items-start justify-between mb-3">
+                    <span className={`w-10 h-10 rounded-xl border ${accents.iconBorder} ${accents.iconBg} ${accents.iconText} flex items-center justify-center text-[16px] shrink-0`}>
                       {k.icon}
-                    </div>
-                    <div>
-                      <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 font-medium mb-1">{k.label}</p>
-                      <p className="text-3xl font-bold text-white leading-none">{k.value}</p>
-                      <p className="text-[11px] text-white/35 mt-1.5">{k.sub}</p>
-                    </div>
+                    </span>
+                    <span className={`w-7 h-7 rounded-full border border-white/10 flex items-center justify-center text-[12px] transition-colors ${accents.arrowText}`}>›</span>
                   </div>
-                  <span className="w-9 h-9 rounded-full border border-gold/30 flex items-center justify-center text-gold/60 group-hover:text-gold group-hover:bg-gold/10 transition-all">›</span>
-                </div>
-              </button>
-            ))}
+
+                  {/* Label */}
+                  <p className="relative text-[9px] tracking-[0.4em] uppercase text-white/45 font-bold mb-2">{k.label}</p>
+
+                  {/* Valor — Cormorant para coerência com Visão Geral */}
+                  <p className="relative leading-none tabular-nums text-white"
+                    style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(1.75rem, 2.4vw, 2.25rem)', fontWeight: 300 }}>
+                    {k.value}
+                  </p>
+
+                  {/* Sub */}
+                  <p className="relative text-[10px] text-white/40 mt-auto pt-3 tracking-wide truncate">{k.sub}</p>
+                </button>
+              )
+            })}
           </div>
 
           {/* ── 3-COL: Novos Eventos | Calendário | Tarefas ───────── */}
