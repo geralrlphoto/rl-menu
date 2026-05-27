@@ -3428,7 +3428,9 @@ function TarefasTab({ freelancerId }: { freelancerId: string }) {
 // ── Modal Concluir Tarefa — exige resposta antes de marcar como Concluída ───
 function ConcluirTarefaModal({ task, onClose, onConfirm }: { task: TarefaItem; onClose: () => void; onConfirm: (resposta: string) => void }) {
   const [resposta, setResposta] = useState('')
+  const [mounted, setMounted] = useState(false)
 
+  useEffect(() => { setMounted(true) }, [])
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', onKey)
@@ -3439,9 +3441,11 @@ function ConcluirTarefaModal({ task, onClose, onConfirm }: { task: TarefaItem; o
   const valid = resposta.trim().length >= minLen
   function submit() { if (valid) onConfirm(resposta.trim()) }
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/85 backdrop-blur-md" />
+  if (!mounted || typeof document === 'undefined') return null
+
+  const modal = (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/90 backdrop-blur-md" />
       <div className="relative z-10 w-full max-w-lg rounded-3xl overflow-hidden border border-emerald-500/30 shadow-2xl"
         style={{ background: 'linear-gradient(180deg, #0a1410, #060b09)' }}
         onClick={e => e.stopPropagation()}>
@@ -3504,6 +3508,8 @@ function ConcluirTarefaModal({ task, onClose, onConfirm }: { task: TarefaItem; o
       </div>
     </div>
   )
+
+  return createPortal(modal, document.body)
 }
 
 // ── Modal Nova Tarefa ─────────────────────────────────────
@@ -3584,7 +3590,8 @@ function NovaTarefaModal({ onClose, onCreate }: { onClose: () => void; onCreate:
                 className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-[13px] text-white focus:outline-none focus:border-gold/40 [color-scheme:dark]">
                 <option value="Pendente">Pendente</option>
                 <option value="Em andamento">Em andamento</option>
-                <option value="Concluída">Concluída</option>
+                {/* 'Concluída' NÃO está disponível aqui: só pode ser definido via
+                    o fluxo de conclusão (com resposta obrigatória). */}
               </select>
             </div>
           </div>
