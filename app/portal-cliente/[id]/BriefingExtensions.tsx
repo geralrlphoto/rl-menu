@@ -14,7 +14,7 @@
  * portalSettingsObj (Supabase). O parent passa `info` + `onSave`.
  */
 
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef, type ReactNode } from 'react'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -47,6 +47,13 @@ type Props = {
   pageTitle?: string
   portalRef?: string
   dataEvento?: string | null
+  local?: string | null
+  // Slots opcionais: o parent passa os blocos antigos (CTA Enviar Briefing,
+  // card Equipa, grid Fichas Individuais) e o componente posiciona-os no
+  // layout novo.
+  enviarBriefingNode?: ReactNode
+  equipaNode?: ReactNode
+  fichasNode?: ReactNode
 }
 
 const uid = () => `b-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
@@ -851,48 +858,447 @@ function HistoricoSection({ info }: { info: BriefingExt }) {
   )
 }
 
-// ─── Main export ─────────────────────────────────────────────────────────────
+// ─── Calculadora de progresso ────────────────────────────────────────────────
 
-export default function BriefingExtensions({ info, isAdmin, onSave }: Props) {
-  // Wrapper que regista no histórico automaticamente
-  async function saveWithLog(patch: Partial<BriefingExt>) {
-    const action = describePatch(patch)
-    const historico = [...(info.historico ?? []), { at: new Date().toISOString(), who: isAdmin ? 'Admin' : 'Cliente', action }]
-    await onSave({ ...patch, historico })
+function calcProgress(info: BriefingExt) {
+  const checks: Array<{ key: keyof BriefingExt; label: string }> = [
+    { key: 'cronograma',     label: 'Cronograma' },
+    { key: 'mapas',          label: 'Mapas' },
+    { key: 'equipa',         label: 'Equipa' },
+    { key: 'momentos',       label: 'Momentos' },
+    { key: 'vips',           label: 'VIPs' },
+    { key: 'moodboard',      label: 'Mood Board' },
+    { key: 'playlist',       label: 'Playlist' },
+    { key: 'restricoes',     label: 'Restrições' },
+    { key: 'contactos',      label: 'Contactos' },
+    { key: 'tarefasPre',     label: 'Tarefas Pré' },
+  ]
+  const filled = checks.filter(c => {
+    const v = info[c.key]
+    if (Array.isArray(v)) return v.length > 0
+    if (typeof v === 'string') return v.trim().length > 0
+    return false
+  })
+  return { filled: filled.length, total: checks.length, pct: Math.round((filled.length / checks.length) * 100) }
+}
+
+// ─── Hero Premium ────────────────────────────────────────────────────────────
+
+function BriefingHero({
+  info, dataEvento, local, pageTitle, isAdmin, viewMode, setViewMode, onSave, enviarBriefingNode,
+}: {
+  info: BriefingExt
+  dataEvento?: string | null
+  local?: string | null
+  pageTitle?: string
+  isAdmin: boolean
+  viewMode: 'admin' | 'client'
+  setViewMode: (v: 'admin' | 'client') => void
+  onSave: (p: Partial<BriefingExt>) => void | Promise<void>
+  enviarBriefingNode?: ReactNode
+}) {
+  const status = info.status ?? 'rascunho'
+  const cfg = STATUS_CFG[status]
+  const [statusOpen, setStatusOpen] = useState(false)
+  const { filled, total, pct } = calcProgress(info)
+
+  const dateLabel = useMemo(() => {
+    if (!dataEvento) return null
+    try {
+      const d = new Date(dataEvento)
+      return d.toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })
+    } catch { return dataEvento }
+  }, [dataEvento])
+
+  function handlePrint() { if (typeof window !== 'undefined') window.print() }
+  function handlePresent() {
+    if (typeof document === 'undefined') return
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen?.()
+    else document.exitFullscreen?.()
   }
 
   return (
-    <div className="space-y-4">
-      {/* Toolbar */}
-      <Toolbar info={info} isAdmin={isAdmin} onSave={saveWithLog} />
+    <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] mb-5"
+      style={{ background: 'linear-gradient(125deg, rgba(20,15,8,0.7) 0%, rgba(11,11,11,0.6) 55%, rgba(201,164,92,0.08) 100%)', boxShadow: '0 30px 60px -25px rgba(0,0,0,0.6)' }}>
+      {/* Glow no canto */}
+      <span className="pointer-events-none absolute -top-20 -right-20 w-72 h-72 rounded-full"
+        style={{ background: 'radial-gradient(circle, rgba(201,164,92,0.16), transparent 70%)' }} />
+      <span className="pointer-events-none absolute -bottom-24 -left-24 w-60 h-60 rounded-full"
+        style={{ background: 'radial-gradient(circle, rgba(201,164,92,0.10), transparent 70%)' }} />
 
-      {/* Operacionais */}
-      <CronogramaSection info={info} isAdmin={isAdmin} onSave={saveWithLog} />
-      <MapasSection info={info} isAdmin={isAdmin} onSave={saveWithLog} />
+      <div className="relative px-5 sm:px-8 py-6 sm:py-7">
+        {/* Linha 1: label, view mode toggle */}
+        <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+          <p className="text-[9px] tracking-[0.5em] text-gold/65 uppercase">RL Photo·Video · Briefing</p>
+          {isAdmin && (
+            <div className="inline-flex items-center rounded-full border border-white/10 bg-black/40 p-1 gap-1">
+              {(['admin', 'client'] as const).map(m => (
+                <button key={m} onClick={() => setViewMode(m)}
+                  className={`px-3 py-1 rounded-full text-[9px] tracking-[0.3em] uppercase font-bold transition-all ${
+                    viewMode === m ? 'bg-gold text-black' : 'text-white/45 hover:text-white/75'
+                  }`}>
+                  {m === 'admin' ? '◆ Admin' : '◯ Cliente'}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
-      {/* Criativos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <MomentosSection info={info} isAdmin={isAdmin} onSave={saveWithLog} />
-        <VipsSection info={info} isAdmin={isAdmin} onSave={saveWithLog} />
+        {/* Linha 2: ícone + título grande + data/local à direita */}
+        <div className="flex items-start justify-between gap-5 flex-wrap mb-5">
+          <div className="flex items-start gap-4 min-w-0">
+            <div className="w-14 h-14 rounded-2xl border border-gold/40 bg-gold/[0.08] flex items-center justify-center text-gold text-2xl shrink-0"
+              style={{ boxShadow: '0 0 22px -6px rgba(201,164,92,0.5)' }}>◧</div>
+            <div className="min-w-0">
+              <h1 className="font-light text-white tracking-tight leading-tight"
+                style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(1.5rem, 3.5vw, 2.4rem)' }}>
+                {pageTitle || 'Briefing do Evento'}
+              </h1>
+              <p className="text-[12px] text-white/50 mt-1 leading-relaxed max-w-md">
+                Toda a informação organizada para a equipa e os noivos consultarem em qualquer momento.
+              </p>
+            </div>
+          </div>
+
+          {/* Cartão data/local */}
+          {(dateLabel || local) && (
+            <div className="flex items-center gap-4 px-4 py-3 rounded-2xl border border-white/[0.08] bg-black/30">
+              {dateLabel && (
+                <div>
+                  <p className="text-[8px] tracking-[0.35em] text-gold/55 uppercase mb-1">Data</p>
+                  <p className="text-[13px] text-white font-medium tabular-nums">{dateLabel}</p>
+                </div>
+              )}
+              {dateLabel && local && <span className="w-px h-7 bg-white/10" />}
+              {local && (
+                <div>
+                  <p className="text-[8px] tracking-[0.35em] text-gold/55 uppercase mb-1">Local</p>
+                  <p className="text-[13px] text-white font-medium truncate max-w-[180px]">{local}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Linha 3: status + progress + actions */}
+        <div className="flex items-center gap-4 flex-wrap">
+          {/* Status pill */}
+          <div className="relative">
+            <button onClick={() => isAdmin && setStatusOpen(s => !s)} disabled={!isAdmin}
+              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border ${cfg.bg} ${cfg.border} ${cfg.text} text-[10px] tracking-[0.25em] uppercase font-bold transition-all ${isAdmin ? 'hover:opacity-90 cursor-pointer' : 'cursor-default'}`}
+              style={{ boxShadow: `0 0 14px -4px ${cfg.glow}` }}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'currentColor', boxShadow: `0 0 8px ${cfg.glow}` }} />
+              {cfg.label}
+              {isAdmin && <span className="opacity-60 ml-0.5">▾</span>}
+            </button>
+            {statusOpen && (
+              <div className="absolute top-full left-0 mt-1.5 z-30 rounded-xl border border-white/10 bg-[#0a0a0a] shadow-2xl overflow-hidden min-w-[200px]">
+                {(Object.keys(STATUS_CFG) as Array<keyof typeof STATUS_CFG>).map(k => (
+                  <button key={k} onClick={() => { onSave({ status: k }); setStatusOpen(false) }}
+                    className={`w-full px-3 py-2.5 text-left text-[11px] tracking-widest uppercase font-bold transition-all flex items-center gap-2 ${STATUS_CFG[k].text} hover:bg-white/[0.04]`}>
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'currentColor' }} />
+                    {STATUS_CFG[k].label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Progress bar */}
+          <div className="flex-1 min-w-[160px] max-w-[420px]">
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-[9px] tracking-[0.3em] text-white/40 uppercase">Briefing · {pct}%</p>
+              <p className="text-[9px] text-gold/65 tracking-widest">{filled}/{total} secções</p>
+            </div>
+            <div className="h-1.5 rounded-full bg-white/[0.05] overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-gold/70 to-gold transition-all duration-500"
+                style={{ width: `${pct}%`, boxShadow: '0 0 10px rgba(201,164,92,0.5)' }} />
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-2 ml-auto flex-wrap">
+            <button onClick={handlePrint} title="Exportar como PDF (Ctrl+P)"
+              className="px-3 py-2 rounded-lg text-[10px] tracking-[0.25em] uppercase font-bold border border-white/12 bg-white/[0.04] text-white/65 hover:text-gold hover:border-gold/40 hover:bg-gold/[0.06] transition-all flex items-center gap-1.5">
+              ↓ PDF
+            </button>
+            <button onClick={handlePresent} title="Modo apresentação (fullscreen)"
+              className="px-3 py-2 rounded-lg text-[10px] tracking-[0.25em] uppercase font-bold border border-white/12 bg-white/[0.04] text-white/65 hover:text-gold hover:border-gold/40 hover:bg-gold/[0.06] transition-all flex items-center gap-1.5">
+              ▶ Apresentar
+            </button>
+            {enviarBriefingNode}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Sidebar Navegação ───────────────────────────────────────────────────────
+
+type NavItem = { id: string; label: string; icon: string; group: string; accent?: string }
+
+function BriefingSidebar({ items, activeId, onClick }: { items: NavItem[]; activeId: string; onClick: (id: string) => void }) {
+  // Agrupa por group preservando ordem
+  const groups = useMemo(() => {
+    const m = new Map<string, NavItem[]>()
+    for (const it of items) {
+      if (!m.has(it.group)) m.set(it.group, [])
+      m.get(it.group)!.push(it)
+    }
+    return Array.from(m.entries())
+  }, [items])
+
+  return (
+    <aside className="lg:sticky lg:top-4 lg:self-start">
+      {/* Mobile: horizontal scroll strip */}
+      <div className="lg:hidden -mx-1 overflow-x-auto pb-2 no-scrollbar">
+        <div className="flex items-center gap-1.5 px-1 whitespace-nowrap">
+          {items.map(it => {
+            const active = activeId === it.id
+            return (
+              <button key={it.id} onClick={() => onClick(it.id)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] tracking-widest uppercase font-bold transition-all ${
+                  active ? 'border-gold/55 bg-gold/15 text-gold' : 'border-white/10 bg-white/[0.03] text-white/55 hover:text-white/85 hover:border-white/25'
+                }`}>
+                <span className="text-[11px]">{it.icon}</span>
+                {it.label}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
-      <MoodboardSection info={info} isAdmin={isAdmin} onSave={saveWithLog} />
-      <PlaylistSection info={info} isAdmin={isAdmin} onSave={saveWithLog} />
+      {/* Desktop: vertical sticky sidebar */}
+      <nav className="hidden lg:block rounded-2xl border border-white/[0.08] overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.45), rgba(11,11,11,0.6))' }}>
+        <div className="px-4 py-3 border-b border-white/[0.05]">
+          <p className="text-[9px] tracking-[0.4em] text-gold/60 uppercase font-bold">Navegação</p>
+        </div>
+        <div className="py-2 max-h-[calc(100vh-220px)] overflow-y-auto">
+          {groups.map(([groupName, groupItems]) => (
+            <div key={groupName} className="mb-2 last:mb-0">
+              <p className="px-4 py-1.5 text-[8px] tracking-[0.3em] text-white/30 uppercase font-bold">{groupName}</p>
+              {groupItems.map(it => {
+                const active = activeId === it.id
+                return (
+                  <button key={it.id} onClick={() => onClick(it.id)}
+                    className={`group w-full flex items-center gap-2.5 px-4 py-2 text-left transition-all ${
+                      active ? 'bg-gold/[0.08] text-gold' : 'text-white/55 hover:text-white hover:bg-white/[0.025]'
+                    }`}>
+                    <span className={`w-1 self-stretch rounded-full transition-all ${active ? 'bg-gold' : 'bg-transparent'}`} />
+                    <span className={`text-[14px] shrink-0 ${active ? 'text-gold' : 'text-white/45 group-hover:text-white/75'}`}>{it.icon}</span>
+                    <span className={`text-[11px] tracking-wider truncate flex-1 ${active ? 'font-bold' : 'font-medium'}`}>{it.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          ))}
+        </div>
+      </nav>
+    </aside>
+  )
+}
 
-      {/* Logística */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <RestricoesSection info={info} isAdmin={isAdmin} onSave={saveWithLog} />
-        <ContactosSection info={info} isAdmin={isAdmin} onSave={saveWithLog} />
+// ─── Visão Geral (KPI dashboard) ─────────────────────────────────────────────
+
+function VisaoGeralSection({ info, onJump }: { info: BriefingExt; onJump: (id: string) => void }) {
+  const equipaN     = info.equipa?.length ?? 0
+  const cronogramaN = info.cronograma?.length ?? 0
+  const mapasN      = info.mapas?.length ?? 0
+  const momentosN   = info.momentos?.length ?? 0
+  const momentosDone= info.momentos?.filter(m => m.done).length ?? 0
+  const vipsN       = info.vips?.length ?? 0
+  const playlistN   = info.playlist?.length ?? 0
+  const contactosN  = info.contactos?.length ?? 0
+  const tarefasN    = info.tarefasPre?.length ?? 0
+  const tarefasDone = info.tarefasPre?.filter(t => t.done).length ?? 0
+  const restricoesN = info.restricoes?.length ?? 0
+  const temNotas    = !!(info.notasSensiveis ?? '').trim()
+  const moodN       = info.moodboard?.length ?? 0
+  const { filled, total, pct } = calcProgress(info)
+
+  const kpis: Array<{ id: string; icon: string; label: string; value: string; sub: string; accent: 'gold'|'rose'|'blue'|'emerald'|'amber'|'purple'; target: string }> = [
+    { id: 'k-crono',  icon: '⌚', label: 'Cronograma',     value: String(cronogramaN), sub: cronogramaN > 0 ? 'momentos definidos' : 'por definir',         accent: 'gold',    target: 'cronograma' },
+    { id: 'k-mapas',  icon: '◉', label: 'Localizações',   value: String(mapasN),      sub: mapasN > 0 ? 'sítios com Maps' : 'sem locais',                   accent: 'gold',    target: 'mapas' },
+    { id: 'k-equip',  icon: '⌘', label: 'Equipa',         value: String(equipaN),     sub: equipaN > 0 ? 'profissional' + (equipaN === 1 ? '' : 'is') : 'sem equipa', accent: 'gold', target: 'equipa' },
+    { id: 'k-mom',    icon: '✓', label: 'Momentos',       value: momentosN > 0 ? `${momentosDone}/${momentosN}` : '0', sub: momentosN > 0 ? 'obrigatórios' : 'por definir', accent: 'emerald', target: 'momentos' },
+    { id: 'k-vips',   icon: '★', label: 'VIPs',           value: String(vipsN),       sub: vipsN > 0 ? 'convidados-chave' : 'sem VIPs',                      accent: 'gold',    target: 'vips' },
+    { id: 'k-mood',   icon: '◧', label: 'Referências',    value: String(moodN),       sub: moodN > 0 ? 'imagens · mood' : 'sem referências',                accent: 'gold',    target: 'moodboard' },
+    { id: 'k-ply',    icon: '♫', label: 'Playlist',       value: String(playlistN),   sub: playlistN > 0 ? 'músicas' : 'sem música',                        accent: 'purple',  target: 'playlist' },
+    { id: 'k-cont',   icon: '✆', label: 'Contactos',      value: String(contactosN),  sub: contactosN > 0 ? 'fornecedores' : 'sem contactos',               accent: 'blue',    target: 'contactos' },
+    { id: 'k-rest',   icon: '◆', label: 'Restrições',     value: String(restricoesN), sub: restricoesN > 0 ? 'regras do local' : 'sem regras',              accent: 'amber',   target: 'restricoes' },
+    { id: 'k-pre',    icon: '◴', label: 'Pré-Evento',     value: tarefasN > 0 ? `${tarefasDone}/${tarefasN}` : '0', sub: tarefasN > 0 ? 'tarefas T-7…T-0' : 'sem tarefas', accent: 'amber', target: 'tarefas-pre' },
+    { id: 'k-notas',  icon: '⚠', label: 'Notas Sensíveis',value: temNotas ? '!' : '0',sub: temNotas ? 'requer atenção' : 'tudo limpo',                       accent: 'rose',    target: 'notas-sensiveis' },
+    { id: 'k-prog',   icon: '◐', label: 'Completo',       value: `${pct}%`,           sub: `${filled} de ${total} secções`,                                  accent: 'gold',    target: 'cronograma' },
+  ]
+
+  const accents = {
+    gold:    { bg: 'bg-gold/[0.06]',     border: 'border-gold/30',    text: 'text-gold',         glow: 'rgba(201,164,92,0.35)', valColor: 'text-white' },
+    rose:    { bg: 'bg-rose-500/15',     border: 'border-rose-500/40',text: 'text-rose-300',     glow: 'rgba(244,63,94,0.35)',  valColor: 'text-rose-200' },
+    blue:    { bg: 'bg-blue-500/12',     border: 'border-blue-500/35',text: 'text-blue-300',     glow: 'rgba(59,130,246,0.3)',  valColor: 'text-white' },
+    emerald: { bg: 'bg-emerald-500/12',  border: 'border-emerald-500/35',text:'text-emerald-300',glow: 'rgba(52,211,153,0.3)',  valColor: 'text-white' },
+    amber:   { bg: 'bg-amber-500/12',    border: 'border-amber-500/35',text:'text-amber-300',    glow: 'rgba(245,158,11,0.3)',  valColor: 'text-white' },
+    purple:  { bg: 'bg-purple-500/12',   border: 'border-purple-500/35',text:'text-purple-300',  glow: 'rgba(168,85,247,0.3)',  valColor: 'text-white' },
+  }
+
+  return (
+    <Section id="visao" icon="▣" label="Visão Geral" title="Resumo do briefing"
+      subtitle="Estado de cada área num só ecrã">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+        {kpis.map(k => {
+          const a = accents[k.accent]
+          const highlight = k.value !== '0' && k.value !== '0%'
+          return (
+            <button key={k.id} onClick={() => onJump(k.target)}
+              className={`p-3.5 rounded-xl border text-left group transition-all hover:scale-[1.02] ${a.border} ${a.bg}`}
+              style={highlight ? { boxShadow: `0 0 16px -8px ${a.glow}` } : undefined}>
+              <div className="flex items-center justify-between mb-2">
+                <span className={`text-base ${a.text}`}>{k.icon}</span>
+                <span className={`text-[8px] tracking-[0.3em] uppercase font-bold ${a.text} opacity-65`}>{k.label}</span>
+              </div>
+              <p className={`text-[24px] leading-none font-bold tabular-nums ${highlight ? a.valColor : 'text-white/30'}`} style={{ fontFamily: 'Cormorant Garamond, Georgia, serif' }}>
+                {k.value}
+              </p>
+              <p className={`text-[10px] mt-1.5 ${highlight ? 'text-white/55' : 'text-white/30'} truncate`}>{k.sub}</p>
+            </button>
+          )
+        })}
       </div>
+    </Section>
+  )
+}
 
-      {/* Sensíveis & Workflow (clientes veem Notas Sensíveis mas NÃO veem Notas Privadas) */}
-      <NotasSensiveisSection info={info} isAdmin={isAdmin} onSave={saveWithLog} />
+// ─── Main export ─────────────────────────────────────────────────────────────
 
-      <TarefasPreSection info={info} isAdmin={isAdmin} onSave={saveWithLog} />
+export default function BriefingExtensions({
+  info, isAdmin, onSave, pageTitle, dataEvento, local,
+  enviarBriefingNode, equipaNode, fichasNode,
+}: Props) {
+  const [viewMode, setViewMode] = useState<'admin' | 'client'>(isAdmin ? 'admin' : 'client')
+  const effectiveAdmin = isAdmin && viewMode === 'admin'
+  const [activeId, setActiveId] = useState('visao')
+  const contentRef = useRef<HTMLDivElement>(null)
 
-      {/* Admin-only */}
-      {isAdmin && <NotasPrivadasSection info={info} onSave={saveWithLog} />}
-      {isAdmin && <HistoricoSection info={info} />}
+  // Wrapper que regista no histórico automaticamente
+  async function saveWithLog(patch: Partial<BriefingExt>) {
+    const action = describePatch(patch)
+    const historico = [...(info.historico ?? []), { at: new Date().toISOString(), who: effectiveAdmin ? 'Admin' : 'Cliente', action }]
+    await onSave({ ...patch, historico })
+  }
+
+  // Definição da navegação
+  const nav: NavItem[] = useMemo(() => {
+    const base: NavItem[] = [
+      { id: 'visao',        label: 'Visão Geral',   icon: '▣', group: 'Início' },
+      { id: 'cronograma',   label: 'Cronograma',    icon: '⌚', group: 'Operacional' },
+      { id: 'mapas',        label: 'Mapas',         icon: '◉', group: 'Operacional' },
+      { id: 'equipa',       label: 'Equipa & Fichas', icon: '⌘', group: 'Operacional' },
+      { id: 'momentos',     label: 'Momentos',      icon: '✓', group: 'Criativo' },
+      { id: 'vips',         label: 'VIPs',          icon: '★', group: 'Criativo' },
+      { id: 'moodboard',    label: 'Mood Board',    icon: '◧', group: 'Criativo' },
+      { id: 'playlist',     label: 'Playlist',      icon: '♫', group: 'Criativo' },
+      { id: 'restricoes',   label: 'Restrições',    icon: '◆', group: 'Logística' },
+      { id: 'contactos',    label: 'Contactos',     icon: '✆', group: 'Logística' },
+      { id: 'notas-sensiveis', label: 'Notas Sensíveis', icon: '⚠', group: 'Logística' },
+      { id: 'tarefas-pre',  label: 'Tarefas Pré',   icon: '◴', group: 'Preparação' },
+    ]
+    if (effectiveAdmin) {
+      base.push(
+        { id: 'notas-privadas', label: 'Notas Privadas', icon: '◬', group: 'Admin' },
+        { id: 'historico',      label: 'Histórico',      icon: '◷', group: 'Admin' },
+      )
+    }
+    return base
+  }, [effectiveAdmin])
+
+  // Smooth scroll para uma secção
+  function scrollTo(id: string) {
+    if (typeof document === 'undefined') return
+    const el = document.getElementById(id)
+    if (el) {
+      const y = el.getBoundingClientRect().top + window.scrollY - 80
+      window.scrollTo({ top: y, behavior: 'smooth' })
+    }
+    setActiveId(id)
+  }
+
+  // Scroll-spy: descobre que secção está visível
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const ids = nav.map(n => n.id)
+    function onScroll() {
+      const offsets = ids
+        .map(id => ({ id, top: document.getElementById(id)?.getBoundingClientRect().top ?? Infinity }))
+        .filter(o => o.top < 200)
+        .sort((a, b) => b.top - a.top)
+      const visible = offsets[0]
+      if (visible && visible.id !== activeId) setActiveId(visible.id)
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [nav, activeId])
+
+  // Helpers para mostrar/esconder em modo cliente
+  const showAdminEditing = effectiveAdmin // pass to sections
+
+  return (
+    <div className="briefing-premium">
+      {/* HERO */}
+      <BriefingHero
+        info={info}
+        dataEvento={dataEvento}
+        local={local}
+        pageTitle={pageTitle}
+        isAdmin={isAdmin}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        onSave={saveWithLog}
+        enviarBriefingNode={enviarBriefingNode}
+      />
+
+      {/* Layout 2 colunas — sidebar à esquerda, conteúdo à direita */}
+      <div className="grid grid-cols-1 lg:grid-cols-[210px_1fr] gap-5 items-start">
+        <BriefingSidebar items={nav} activeId={activeId} onClick={scrollTo} />
+
+        <div ref={contentRef} className="space-y-4 min-w-0">
+          {/* Visão Geral (KPIs) */}
+          <VisaoGeralSection info={info} onJump={scrollTo} />
+
+          {/* Operacional */}
+          <CronogramaSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
+          <MapasSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
+
+          {/* Equipa + Fichas Individuais combinados num bloco visual */}
+          <section id="equipa" className="space-y-4">
+            {equipaNode}
+            {fichasNode}
+          </section>
+
+          {/* Criativos — grid 2 col */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <MomentosSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
+            <VipsSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
+          </div>
+
+          <MoodboardSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
+          <PlaylistSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
+
+          {/* Logística — grid 2 col */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <RestricoesSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
+            <ContactosSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
+          </div>
+
+          <NotasSensiveisSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
+          <TarefasPreSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
+
+          {/* Admin-only */}
+          {effectiveAdmin && <NotasPrivadasSection info={info} onSave={saveWithLog} />}
+          {effectiveAdmin && <HistoricoSection info={info} />}
+        </div>
+      </div>
     </div>
   )
 }

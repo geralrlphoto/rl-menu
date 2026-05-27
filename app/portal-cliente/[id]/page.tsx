@@ -2309,64 +2309,43 @@ function PortalSubPageContent() {
                                 </div>
                               </div>
                             )
-                            // ── Banner premium: introdução + ação Enviar Briefing ───
-                            const briefingHero = (
-                              <div className="mb-6 rounded-2xl border border-white/[0.08] overflow-hidden relative"
-                                style={{ background: 'linear-gradient(120deg, rgba(20,15,8,0.55), rgba(11,11,11,0.55) 60%, rgba(201,164,92,0.05))', boxShadow: '0 20px 50px -25px rgba(0,0,0,0.6)' }}>
-                                <span className="pointer-events-none absolute -top-12 -right-16 w-48 h-48 rounded-full"
-                                  style={{ background: 'radial-gradient(circle, rgba(201,164,92,0.16), transparent 70%)' }} />
-                                <div className="relative px-5 sm:px-7 py-5 sm:py-6 flex items-center justify-between gap-4 flex-wrap">
-                                  <div className="flex items-start gap-4 min-w-0">
-                                    <div className="w-11 h-11 rounded-xl border border-gold/35 bg-gold/10 flex items-center justify-center text-gold text-lg shrink-0"
-                                      style={{ boxShadow: '0 0 18px -6px rgba(201,164,92,0.55)' }}>◧</div>
-                                    <div className="min-w-0">
-                                      <p className="text-[9px] tracking-[0.5em] text-gold/65 uppercase mb-1.5">Briefing do Evento</p>
-                                      <h2 className="text-[18px] sm:text-[20px] text-white font-light tracking-tight leading-tight" style={{ fontFamily: 'Cormorant Garamond, Georgia, serif' }}>
-                                        Toda a informação <span className="italic text-gold/80">organizada</span>
-                                      </h2>
-                                      <p className="text-[11px] text-white/45 mt-1.5 leading-relaxed max-w-md">
-                                        Define a equipa, consulta as fichas individuais e envia o briefing final para a equipa quando estiver pronto.
-                                      </p>
-                                    </div>
-                                  </div>
-                                  {(portalRef || refParam) && (
-                                    <button
-                                      onClick={handleEnviarBriefing}
-                                      disabled={sendingBriefing || briefingSent}
-                                      className={`relative inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[11px] font-bold tracking-[0.25em] uppercase transition-all shrink-0 ${
-                                        briefingSent
-                                          ? 'bg-emerald-500/15 border border-emerald-500/45 text-emerald-300 cursor-default'
-                                          : sendingBriefing
-                                            ? 'bg-white/[0.04] border border-white/15 text-white/50 cursor-wait'
-                                            : 'bg-gold text-black hover:bg-gold/90'
-                                      }`}
-                                      style={!briefingSent && !sendingBriefing ? { boxShadow: '0 0 18px -4px rgba(201,164,92,0.55)' } : briefingSent ? { boxShadow: '0 0 14px -4px rgba(52,211,153,0.4)' } : undefined}>
-                                      {briefingSent ? (
-                                        <>
-                                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                                          Briefing Enviado
-                                        </>
-                                      ) : sendingBriefing ? (
-                                        <>
-                                          <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                                          A enviar…
-                                        </>
-                                      ) : (
-                                        <>
-                                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                                          Enviar Briefing
-                                        </>
-                                      )}
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            )
-                            const enviarBriefingBtn = briefingHero
+                            // (Hero antigo removido — o BriefingExtensions tem agora um hero próprio mais rico.)
                             const briefingGeralIdx = otherBlocks.findIndex(b =>
                               ['heading_1','heading_2','heading_3'].includes(b.type) &&
                               plainText(b[b.type]?.rich_text ?? []).toUpperCase().includes('BRIEFING GERAL')
                             )
+                            // Slot do botão Enviar Briefing (versão compacta, sem hero — o hero é gerado pelo BriefingExtensions)
+                            const enviarBtnSlot = (portalRef || refParam) ? (
+                              <button
+                                onClick={handleEnviarBriefing}
+                                disabled={sendingBriefing || briefingSent}
+                                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-bold tracking-[0.25em] uppercase transition-all ${
+                                  briefingSent
+                                    ? 'bg-emerald-500/15 border border-emerald-500/45 text-emerald-300 cursor-default'
+                                    : sendingBriefing
+                                      ? 'bg-white/[0.04] border border-white/15 text-white/50 cursor-wait'
+                                      : 'bg-gold text-black hover:bg-gold/90'
+                                }`}
+                                style={!briefingSent && !sendingBriefing ? { boxShadow: '0 0 18px -4px rgba(201,164,92,0.55)' } : briefingSent ? { boxShadow: '0 0 14px -4px rgba(52,211,153,0.4)' } : undefined}>
+                                {briefingSent ? (
+                                  <>
+                                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                    Briefing Enviado
+                                  </>
+                                ) : sendingBriefing ? (
+                                  <>
+                                    <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                    A enviar…
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                                    Enviar Briefing
+                                  </>
+                                )}
+                              </button>
+                            ) : null
+
                             const briefingExtBlock = (
                               <BriefingExtensions
                                 info={equipaBI as BriefingExt}
@@ -2374,28 +2353,24 @@ function PortalSubPageContent() {
                                 onSave={handleSaveBriefingExt}
                                 pageTitle={title}
                                 portalRef={portalRef || refParam || undefined}
+                                dataEvento={eventoData?.data_evento ?? null}
+                                local={eventoData?.local ?? null}
+                                enviarBriefingNode={enviarBtnSlot}
+                                equipaNode={equipaBox}
+                                fichasNode={cardsGrid}
                               />
                             )
-                            if (briefingGeralIdx === -1) {
-                              return (
-                                <>
-                                  {enviarBriefingBtn}
-                                  {equipaBox}
-                                  {briefingExtBlock}
-                                  <NotionBlocks blocks={otherBlocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
-                                  {cardsGrid}
-                                </>
-                              )
-                            }
+                            // Notion content (Briefing Geral) – mostrado entre o hero e o resto do briefing
+                            const notionPre  = briefingGeralIdx === -1 ? otherBlocks : otherBlocks.slice(0, briefingGeralIdx)
+                            const notionMid  = briefingGeralIdx === -1 ? []         : [otherBlocks[briefingGeralIdx]]
+                            const notionPost = briefingGeralIdx === -1 ? []         : otherBlocks.slice(briefingGeralIdx + 1)
+                            const backUrl = fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined
                             return (
                               <>
-                                <NotionBlocks blocks={otherBlocks.slice(0, briefingGeralIdx)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
-                                {enviarBriefingBtn}
-                                {equipaBox}
+                                {notionPre.length > 0 && <NotionBlocks blocks={notionPre} hiddenNav={settings.hiddenNav} backUrl={backUrl} />}
+                                {notionMid.length > 0 && <NotionBlocks blocks={notionMid} hiddenNav={settings.hiddenNav} backUrl={backUrl} />}
                                 {briefingExtBlock}
-                                <NotionBlocks blocks={[otherBlocks[briefingGeralIdx]]} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
-                                {cardsGrid}
-                                <NotionBlocks blocks={otherBlocks.slice(briefingGeralIdx + 1)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
+                                {notionPost.length > 0 && <NotionBlocks blocks={notionPost} hiddenNav={settings.hiddenNav} backUrl={backUrl} />}
                               </>
                             )
                           })()}
