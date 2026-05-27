@@ -516,7 +516,7 @@ function FreelancerDetailInner() {
 
     <main className={`relative z-10 min-h-screen px-4 sm:px-6 py-6 mx-auto lg:pl-[252px] lg:pr-4 ${
       tab === null ? 'max-w-none'
-        : (['casamentos', 'edicao', 'album', 'pagamentos'] as Array<string | null>).includes(tab) ? 'max-w-[1500px]'
+        : (['casamentos', 'edicao', 'album', 'pagamentos', 'tarefas'] as Array<string | null>).includes(tab) ? 'max-w-[1500px]'
         : 'max-w-3xl'
     }`}>
       {/* Tabs — horizontal apenas em mobile (desktop usa sidebar) */}
