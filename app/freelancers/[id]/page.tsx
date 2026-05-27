@@ -2921,6 +2921,7 @@ type TarefaItem = {
   status?: TarefaStatus
   dueDate?: string                  // ISO YYYY-MM-DD
   project?: string                  // nome livre do projeto/casamento
+  description?: string              // descrição livre / notas
   resultado?: string
 }
 
@@ -3105,10 +3106,21 @@ function TarefasTab({ freelancerId }: { freelancerId: string }) {
         <div className="flex-1 min-w-0">
           <p className={`text-[13px] font-medium truncate ${done ? 'line-through text-white/40' : 'text-white/90'}`}>
             {t.text}
+            {t.description && (
+              <span title={t.description}
+                className="ml-2 text-[10px] text-gold/50 hover:text-gold cursor-help">ⓘ</span>
+            )}
           </p>
-          <p className="text-[11px] text-white/35 truncate italic">
-            {t.project || 'Sem projeto associado'}
-          </p>
+          {t.description ? (
+            <p className="text-[11px] text-white/50 truncate" title={t.description}>{t.description}</p>
+          ) : (
+            <p className="text-[11px] text-white/35 truncate italic">
+              {t.project || 'Sem projeto associado'}
+            </p>
+          )}
+          {t.description && t.project && (
+            <p className="text-[10px] text-white/30 truncate italic">{t.project}</p>
+          )}
         </div>
         <span className={`text-[10px] px-2 py-0.5 rounded-md border tracking-widest uppercase font-bold shrink-0 ${tarefaPrioCls(prio)}`}>
           {prio}
@@ -3383,6 +3395,7 @@ function TarefasTab({ freelancerId }: { freelancerId: string }) {
 // ── Modal Nova Tarefa ─────────────────────────────────────
 function NovaTarefaModal({ onClose, onCreate }: { onClose: () => void; onCreate: (t: TarefaItem) => void }) {
   const [text, setText] = useState('')
+  const [description, setDescription] = useState('')
   const [priority, setPriority] = useState<TarefaPriority>('Média')
   const [dueDate, setDueDate] = useState('')
   const [project, setProject] = useState('')
@@ -3400,6 +3413,7 @@ function NovaTarefaModal({ onClose, onCreate }: { onClose: () => void; onCreate:
     onCreate({
       id: crypto.randomUUID(),
       text: t,
+      description: description.trim() || undefined,
       done: status === 'Concluída',
       status,
       priority,
@@ -3429,9 +3443,16 @@ function NovaTarefaModal({ onClose, onCreate }: { onClose: () => void; onCreate:
           <div>
             <label className="block text-[10px] tracking-[0.3em] uppercase text-white/35 mb-1">Título</label>
             <input value={text} onChange={e => setText(e.target.value)} autoFocus
-              onKeyDown={e => { if (e.key === 'Enter') submit() }}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } }}
               placeholder="O que precisa de ser feito?"
               className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40" />
+          </div>
+          <div>
+            <label className="block text-[10px] tracking-[0.3em] uppercase text-white/35 mb-1">Descrição</label>
+            <textarea value={description} onChange={e => setDescription(e.target.value)}
+              rows={4}
+              placeholder="Detalhes adicionais, instruções, links… (opcional)"
+              className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40 resize-none leading-relaxed" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
