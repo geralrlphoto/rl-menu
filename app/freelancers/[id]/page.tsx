@@ -794,38 +794,7 @@ function FreelancerDetailInner() {
             </div>
           </div>
 
-          {/* ── Próximo Casamento (destaque com glow gold pulsante) ─ */}
-          {proximoCasamento && (
-            <div onClick={() => setTab('casamentos')}
-              className="cursor-pointer prox-casamento-glow fade-in-1 bg-gradient-to-br from-gold/[0.10] to-gold/[0.02] border border-gold/40 rounded-2xl p-6 sm:p-7 hover:border-gold/60 transition-all mb-6">
-              <p className="text-[11px] tracking-[0.5em] text-gold/80 uppercase font-light mb-3">Próximo Casamento</p>
-              <div className="flex items-end justify-between gap-4 flex-wrap">
-                <div>
-                  <h2 className="text-3xl sm:text-4xl font-light text-white mb-2 tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>{proximoCasamento.local}</h2>
-                  <p className="text-[13px] text-white/55 italic" style={{ fontFamily: 'Georgia, serif' }}>{fmtDate(proximoCasamento.data_casamento)}</p>
-                </div>
-                <div className={`text-right ${dtuProximo !== null && dtuProximo <= 15 ? 'text-red-400' : 'text-gold'}`}>
-                  <p className="text-5xl font-light leading-none tabular-nums" style={{ fontFamily: 'Georgia, serif' }}>{dtuProximo === 0 ? 'HOJE' : dtuProximo}</p>
-                  <p className="text-[11px] tracking-[0.4em] uppercase mt-1.5 font-light">{dtuProximo === 0 ? '' : dtuProximo === 1 ? 'dia' : 'dias'}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ── CTAs ─────────────────────────────────────────────── */}
-          <div className="flex flex-wrap items-center gap-3 mb-6 fade-in-2">
-            <button onClick={() => setTab('casamentos')}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black text-[14px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
-              style={{ boxShadow: '0 0 20px -4px rgba(201,168,76,0.5)' }}>
-              <span className="text-lg leading-none">+</span> Ver Casamentos
-            </button>
-            <button onClick={() => setTab('casamentos')}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/15 text-white/85 text-[14px] font-medium tracking-wider hover:bg-white/[0.05] hover:border-white/30 transition-all">
-              <span className="text-base leading-none">◷</span> Confirmar Disponibilidade
-            </button>
-          </div>
-
-          {/* ── CRÍTICO · ENTREGA — entre o cabeçalho e os KPIs ─── */}
+          {/* ── CRÍTICO · ENTREGA — logo a seguir ao cabeçalho ─── */}
           {(() => {
             const todayMid = new Date(); todayMid.setHours(0,0,0,0)
             const MESES_PT_SHORT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
@@ -931,6 +900,37 @@ function FreelancerDetailInner() {
               </div>
             )
           })()}
+
+          {/* ── Próximo Casamento (destaque com glow gold pulsante) ─ */}
+          {proximoCasamento && (
+            <div onClick={() => setTab('casamentos')}
+              className="cursor-pointer prox-casamento-glow fade-in-1 bg-gradient-to-br from-gold/[0.10] to-gold/[0.02] border border-gold/40 rounded-2xl p-6 sm:p-7 hover:border-gold/60 transition-all mb-6">
+              <p className="text-[11px] tracking-[0.5em] text-gold/80 uppercase font-light mb-3">Próximo Casamento</p>
+              <div className="flex items-end justify-between gap-4 flex-wrap">
+                <div>
+                  <h2 className="text-3xl sm:text-4xl font-light text-white mb-2 tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>{proximoCasamento.local}</h2>
+                  <p className="text-[13px] text-white/55 italic" style={{ fontFamily: 'Georgia, serif' }}>{fmtDate(proximoCasamento.data_casamento)}</p>
+                </div>
+                <div className={`text-right ${dtuProximo !== null && dtuProximo <= 15 ? 'text-red-400' : 'text-gold'}`}>
+                  <p className="text-5xl font-light leading-none tabular-nums" style={{ fontFamily: 'Georgia, serif' }}>{dtuProximo === 0 ? 'HOJE' : dtuProximo}</p>
+                  <p className="text-[11px] tracking-[0.4em] uppercase mt-1.5 font-light">{dtuProximo === 0 ? '' : dtuProximo === 1 ? 'dia' : 'dias'}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── CTAs ─────────────────────────────────────────────── */}
+          <div className="flex flex-wrap items-center gap-3 mb-6 fade-in-2">
+            <button onClick={() => setTab('casamentos')}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black text-[14px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
+              style={{ boxShadow: '0 0 20px -4px rgba(201,168,76,0.5)' }}>
+              <span className="text-lg leading-none">+</span> Ver Casamentos
+            </button>
+            <button onClick={() => setTab('casamentos')}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/15 text-white/85 text-[14px] font-medium tracking-wider hover:bg-white/[0.05] hover:border-white/30 transition-all">
+              <span className="text-base leading-none">◷</span> Confirmar Disponibilidade
+            </button>
+          </div>
 
           {/* ── KPI CARDS premium — layout simétrico vertical ───── */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6 fade-in-3">
