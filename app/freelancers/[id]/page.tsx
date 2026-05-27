@@ -4447,6 +4447,7 @@ function CalendarioTab({ freelancerId, casamentos, edicao, album, notificacoes, 
   const today = new Date(); today.setHours(0,0,0,0)
   const [view, setView] = useState({ y: today.getFullYear(), m: today.getMonth() })
   const [selectedIso, setSelectedIso] = useState<string | null>(null)
+  const [previewIso, setPreviewIso] = useState<string | null>(null)            // modal de preview do dia
   const [taskDates, setTaskDates] = useState<Array<{ iso: string; text: string; project?: string }>>([])
 
   // Lê tarefas do localStorage
@@ -4643,7 +4644,7 @@ function CalendarioTab({ freelancerId, casamentos, edicao, album, notificacoes, 
               const eventCount = c.events.length
               return (
                 <button key={i}
-                  onClick={() => c.current && c.iso && setSelectedIso(c.iso)}
+                  onClick={() => { if (c.current && c.iso) { setSelectedIso(c.iso); setPreviewIso(c.iso) } }}
                   disabled={!c.current}
                   className={`relative aspect-square sm:min-h-[80px] sm:aspect-auto p-1.5 sm:p-2 rounded-lg border text-left transition-all ${
                     c.isToday
@@ -4750,7 +4751,7 @@ function CalendarioTab({ freelancerId, casamentos, edicao, album, notificacoes, 
                   const diff = Math.round((dt.getTime() - today.getTime()) / 86400000)
                   const label = diff === 0 ? 'Hoje' : diff === 1 ? 'Amanhã' : `+${diff}d`
                   return (
-                    <button key={e.id} onClick={() => { setView({ y, m: mm - 1 }); setSelectedIso(e.iso) }}
+                    <button key={e.id} onClick={() => { setView({ y, m: mm - 1 }); setSelectedIso(e.iso); setPreviewIso(e.iso) }}
                       className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg border border-white/[0.05] hover:border-gold/25 hover:bg-white/[0.03] transition-all text-left">
                       <div className="flex flex-col items-center justify-center w-10 shrink-0">
                         <span className={`text-[16px] font-light leading-none ${m.color}`} style={{ fontFamily: 'Georgia, serif' }}>{String(d).padStart(2,'0')}</span>
@@ -4769,8 +4770,132 @@ function CalendarioTab({ freelancerId, casamentos, edicao, album, notificacoes, 
           </div>
         </aside>
       </div>
+
+      {/* Modal Preview do Dia — abre ao clicar numa célula */}
+      {previewIso && (
+        <DiaPreviewModal
+          iso={previewIso}
+          events={byDay.get(previewIso) ?? []}
+          typeMeta={typeMeta}
+          onClose={() => setPreviewIso(null)}
+        />
+      )}
     </div>
   )
+}
+
+// ── Modal Preview de Dia — mostra todos os eventos de uma data ────────
+function DiaPreviewModal({ iso, events, typeMeta, onClose }: {
+  iso: string
+  events: CalEvento[]
+  typeMeta: Record<string, { color: string; bg: string; border: string; label: string; icon: string }>
+  onClose: () => void
+}) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  if (!mounted || typeof document === 'undefined') return null
+
+  const [y, m, d] = iso.split('-').map(Number)
+  const dt = new Date(y, m - 1, d)
+  const today = new Date(); today.setHours(0,0,0,0)
+  const diff = Math.round((dt.getTime() - today.getTime()) / 86400000)
+  const diffLabel = diff === 0 ? 'Hoje' : diff === 1 ? 'Amanhã' : diff === -1 ? 'Ontem' : diff > 0 ? `Em ${diff} dias` : `Há ${Math.abs(diff)} dias`
+  const weekday = dt.toLocaleDateString('pt-PT', { weekday: 'long' })
+  const dateLong = dt.toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })
+
+  // Agrupar por tipo
+  const byType = new Map<string, CalEvento[]>()
+  events.forEach(e => {
+    if (!byType.has(e.type)) byType.set(e.type, [])
+    byType.get(e.type)!.push(e)
+  })
+  const typeOrder: CalEvento['type'][] = ['casamento', 'prazo-selecao', 'prazo-edicao', 'edicao', 'album', 'tarefa-atribuida', 'tarefa-pessoal', 'notificacao']
+
+  const modal = (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/90 backdrop-blur-md" />
+      <div className="relative z-10 w-full max-w-xl rounded-3xl overflow-hidden border border-gold/25 shadow-2xl flex flex-col"
+        style={{ background: 'linear-gradient(180deg, #100c08, #0a0805)', maxHeight: '85vh' }}
+        onClick={e => e.stopPropagation()}>
+        <div className="h-0.5 w-full bg-gold/70" />
+        <div className="px-6 pt-5 pb-4 border-b border-white/[0.05] flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] tracking-[0.5em] text-gold/75 uppercase mb-1">Preview do Dia</p>
+            <h2 className="text-2xl font-light text-white tracking-wider" style={{ fontFamily: 'Georgia, serif' }}>
+              <span className="capitalize italic text-gold">{weekday}</span>
+              <span className="text-white/40"> · </span>
+              <span>{dateLong}</span>
+            </h2>
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              <span className={`text-[10px] px-2 py-0.5 rounded-md border tracking-widest uppercase font-bold ${
+                diff === 0 ? 'bg-gold text-black border-gold' : diff < 0 ? 'bg-white/[0.06] text-white/50 border-white/15' : 'bg-gold/15 text-gold border-gold/35'
+              }`}>{diffLabel}</span>
+              <span className="text-[11px] text-white/40">
+                {events.length} {events.length === 1 ? 'evento' : 'eventos'}
+              </span>
+            </div>
+          </div>
+          <button onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/35 hover:text-white hover:border-white/30 transition-all shrink-0">✕</button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          {events.length === 0 ? (
+            <div className="py-12 text-center">
+              <span className="text-5xl opacity-15 block mb-3">∅</span>
+              <p className="text-[14px] text-white/45 italic">Nada agendado para este dia.</p>
+              <p className="text-[12px] text-white/25 mt-2">Aproveita para descansar ou avançar com tarefas pendentes.</p>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {typeOrder.filter(t => byType.has(t)).map(t => {
+                const m = typeMeta[t]
+                const arr = byType.get(t)!
+                return (
+                  <div key={t}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`w-7 h-7 rounded-lg border flex items-center justify-center text-[13px] ${m.border} ${m.bg} ${m.color}`}>{m.icon}</span>
+                      <p className={`text-[11px] tracking-[0.35em] uppercase font-bold ${m.color}`}>{m.label}</p>
+                      <span className="text-[10px] text-white/30">·</span>
+                      <span className="text-[10px] text-white/35">{arr.length}</span>
+                    </div>
+                    <div className="space-y-2">
+                      {arr.map(e => (
+                        <div key={e.id} className={`flex items-start gap-3 px-3.5 py-3 rounded-xl border ${m.border} hover:${m.bg} transition-all`}
+                          style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.015), transparent)' }}>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[14px] text-white font-medium leading-tight">{e.title}</p>
+                            {e.subtitle && (
+                              <p className="text-[11px] text-white/45 italic mt-1">{e.subtitle}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="px-6 py-3 border-t border-white/[0.05] flex items-center justify-end bg-black/30">
+          <button onClick={onClose}
+            className="px-4 py-2 rounded-lg text-[11px] tracking-wider uppercase text-white/55 hover:text-white border border-white/10 hover:border-white/30 transition-all">
+            Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
+  return createPortal(modal, document.body)
 }
 
 // ─── Valores Tab ──────────────────────────────────────────────────────────────
