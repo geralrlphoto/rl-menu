@@ -2776,82 +2776,197 @@ function EdicaoTab({ freelancerId, edicao, onRefresh }: { freelancerId: string; 
     onRefresh()
   }
 
+  // KPIs
+  const total       = edicao.length
+  const novos       = edicao.filter(e => e.status === 'NOVO TRABALHO').length
+  const emEdicao    = edicao.filter(e => e.status === 'EM EDIÇÃO').length
+  const concluidos  = edicao.filter(e => e.status === 'CONCLUÍDO').length
+  const pct         = total > 0 ? Math.round((concluidos / total) * 100) : 0
+
+  // Mapa de estilo premium por estado
+  const colMeta: Record<string, { label: string; accent: string; border: string; bg: string; dot: string; iconBg: string; icon: string; chip: string }> = {
+    'NOVO TRABALHO': { label: 'Novo Trabalho', accent: 'text-blue-300',    border: 'border-blue-500/30',    bg: 'bg-gradient-to-br from-blue-500/[0.04] to-transparent',    dot: 'bg-blue-400',    iconBg: 'bg-blue-500/15 border-blue-500/35 text-blue-300',    icon: '◷', chip: 'bg-blue-500/20 text-blue-200 border-blue-500/40' },
+    'EM EDIÇÃO':     { label: 'Em Edição',     accent: 'text-amber-300',   border: 'border-amber-500/30',   bg: 'bg-gradient-to-br from-amber-500/[0.04] to-transparent',   dot: 'bg-amber-400',   iconBg: 'bg-amber-500/15 border-amber-500/35 text-amber-300', icon: '✎', chip: 'bg-amber-500/20 text-amber-200 border-amber-500/40' },
+    'CONCLUÍDO':     { label: 'Concluído',     accent: 'text-emerald-300', border: 'border-emerald-500/30', bg: 'bg-gradient-to-br from-emerald-500/[0.04] to-transparent', dot: 'bg-emerald-400', iconBg: 'bg-emerald-500/15 border-emerald-500/35 text-emerald-300', icon: '✓', chip: 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40' },
+  }
+
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
-        <button onClick={() => { setShowAdd(true); setEditing(null); setForm({ status: 'NOVO TRABALHO' }) }}
-          className="px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-[14px] font-semibold tracking-widest hover:bg-gold/20 transition-all uppercase">
-          + Adicionar
-        </button>
+    <div className="space-y-5">
+      {/* HERO premium */}
+      <div className="relative overflow-hidden rounded-3xl border border-white/[0.08]"
+        style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.5)' }}>
+        <div className="absolute inset-0 z-0">
+          <img src="https://images.unsplash.com/photo-1554080353-a576cf803bda?w=1600&h=380&fit=crop" alt=""
+            className="w-full h-full object-cover" />
+        </div>
+        <div className="absolute inset-0 z-[1]"
+          style={{ background: 'linear-gradient(90deg, rgba(11,11,11,0.96) 0%, rgba(11,11,11,0.86) 40%, rgba(11,11,11,0.5) 70%, rgba(11,11,11,0.15) 100%)' }} />
+        <div className="relative z-10 flex items-start justify-between gap-4 px-6 sm:px-8 py-7 sm:py-9 flex-wrap">
+          <div className="flex items-center gap-5">
+            <div className="w-14 h-14 rounded-2xl border border-gold/30 flex items-center justify-center text-2xl text-gold shrink-0"
+              style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.15), rgba(201,164,92,0.04))', boxShadow: '0 0 22px -4px rgba(201,164,92,0.25)' }}>
+              ✎
+            </div>
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>Edição de <span className="italic text-gold">Fotos</span></h1>
+              <p className="text-[13px] text-white/55 mt-1 max-w-md">Gerencia os teus trabalhos de edição. Sincronizado com as seleções de fotos dos noivos.</p>
+            </div>
+          </div>
+          <button onClick={() => { setShowAdd(true); setEditing(null); setForm({ status: 'NOVO TRABALHO' }) }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black text-[13px] font-bold tracking-wider hover:bg-gold/90 transition-all"
+            style={{ boxShadow: '0 0 20px -4px rgba(201,164,92,0.5)' }}>
+            <span className="text-lg leading-none">+</span> Adicionar
+          </button>
+        </div>
       </div>
 
+      {/* KPIs */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: 'Total Jobs',    value: total.toString(),       sub: 'Atribuídos a ti',   color: 'border-white/[0.08] bg-white/[0.02]', text: 'text-white', accent: 'text-white/35' },
+          { label: 'Novo Trabalho', value: novos.toString(),       sub: 'Por iniciar',       color: 'border-blue-500/25 bg-blue-500/[0.04]', text: 'text-blue-300', accent: 'text-blue-300/70' },
+          { label: 'Em Edição',     value: emEdicao.toString(),    sub: 'Em curso',          color: 'border-amber-500/25 bg-amber-500/[0.04]', text: 'text-amber-300', accent: 'text-amber-300/70' },
+          { label: 'Concluídos',    value: concluidos.toString(),  sub: `${pct}% do total`,  color: 'border-emerald-500/25 bg-emerald-500/[0.04]', text: 'text-emerald-300', accent: 'text-emerald-300/70' },
+        ].map((k, i) => (
+          <div key={i} className={`rounded-2xl border p-4 ${k.color}`}>
+            <p className={`text-[10px] tracking-[0.3em] uppercase mb-1 ${k.accent}`}>{k.label}</p>
+            <p className={`text-3xl font-light leading-none tabular-nums ${k.text}`} style={{ fontFamily: 'Georgia, serif' }}>{k.value}</p>
+            <p className="text-[11px] text-white/35 mt-1.5">{k.sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Barra de progresso (se há trabalhos) */}
+      {total > 0 && (
+        <div className="rounded-full h-1.5 bg-white/[0.05] overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-blue-400 via-amber-400 to-emerald-500 transition-all duration-500"
+            style={{ width: `${pct}%`, boxShadow: '0 0 12px rgba(52,211,153,0.4)' }} />
+        </div>
+      )}
+
+      {/* Form Adicionar (inline em cima do kanban) */}
       {showAdd && <EdicaoForm form={form} setForm={setForm} saving={saving} onSave={save} onCancel={() => setShowAdd(false)} selecaoList={selecaoList} />}
 
-      {/* Kanban columns */}
+      {/* Kanban premium */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {STATUS_EDICAO.map(status => {
           const jobs = edicao.filter(e => e.status === status)
+          const cfg = colMeta[status] ?? colMeta['NOVO TRABALHO']
           return (
-            <div key={status} className="space-y-2">
-              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[14px] font-bold tracking-widest uppercase ${STATUS_STYLE[status]}`}>
-                <span>{status}</span>
-                <span className="ml-auto opacity-60">({jobs.length})</span>
+            <div key={status} className={`rounded-2xl border p-3 ${cfg.border} ${cfg.bg}`}>
+              {/* Column header */}
+              <div className="flex items-center gap-2 px-2 py-2 mb-2 border-b border-white/[0.05]">
+                <span className={`w-8 h-8 rounded-lg border flex items-center justify-center text-[14px] ${cfg.iconBg}`}>{cfg.icon}</span>
+                <h3 className={`text-[12px] tracking-[0.3em] uppercase font-bold ${cfg.accent}`}>{cfg.label}</h3>
+                <span className={`ml-auto text-[10px] px-2 py-0.5 rounded-full border font-bold tracking-wider ${cfg.chip}`}>
+                  {jobs.length}
+                </span>
               </div>
-              {jobs.map(job => (
-                editing?.id === job.id ? (
-                  <EdicaoForm key={job.id} form={form} setForm={setForm} saving={saving} onSave={save}
-                    onCancel={() => setEditing(null)} onDelete={() => del(job.id)} selecaoList={selecaoList} />
-                ) : (
-                  <div key={job.id} className="p-3 rounded-xl border border-white/[0.06] bg-white/[0.02] space-y-2 group">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-[14px] font-semibold text-white/80 leading-tight">{job.nome}</p>
-                      <button onClick={() => { setEditing(job); setForm({ ...job }); setShowAdd(false) }}
-                        className="opacity-0 group-hover:opacity-100 p-1 rounded text-white/25 hover:text-white/60 flex-shrink-0 transition-all">
-                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                      </button>
-                    </div>
-                    {job.data_casamento && <p className="text-[14px] text-white/30">{fmtDate(job.data_casamento).split(' · ')[0]}</p>}
-                    {job.local && <p className="text-[14px] text-white/25">📍 {job.local}</p>}
-                    {job.data_entrega && <p className="text-[14px] text-white/25">Entrega: {fmtDate(job.data_entrega).split(' · ')[0]}</p>}
-                    {job.referencia
-                      ? <p className="text-[14px] font-mono text-emerald-400/70 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded w-fit">🔗 {job.referencia}</p>
-                      : <p className="text-[14px] text-red-400/60 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded w-fit">⚠ sem referência — sync desativado</p>
-                    }
-                    {/* Foto counts */}
-                    {[['Convidados', job.convidados],['Cerimónia', job.cerimonia],['Detalhes', job.detalhes],['Sala', job.sala_animacao],['Álbum', job.fotos_album],['Bolo/Bouquet', job.bolo_bouquet],['Noivos', job.sessao_noivos],['Noiva', job.fotos_noiva],['Noivo', job.fotos_noivo]].some(([,v]) => v) && (
-                      <div className="flex flex-wrap gap-1 pt-1 border-t border-white/[0.04]">
-                        {[['C', job.convidados],['Cer', job.cerimonia],['Det', job.detalhes],['Sala', job.sala_animacao],['Alb', job.fotos_album],['B/B', job.bolo_bouquet],['Nv', job.sessao_noivos],['Noiva', job.fotos_noiva],['Noivo', job.fotos_noivo]].filter(([,v]) => v).map(([k,v]) => (
-                          <span key={k as string} className="text-[14px] bg-white/[0.04] text-white/35 px-1.5 py-0.5 rounded">{k}: {v}</span>
-                        ))}
-                      </div>
-                    )}
-                    {/* Estado dropdown + Ver Seleção */}
-                    <div className="flex flex-col gap-2 pt-1">
-                      <div className="relative">
-                        <select
-                          value={job.status}
-                          onChange={ev => changeStatus(job, ev.target.value)}
-                          style={{ boxShadow: '0 0 14px 2px rgba(255,255,255,0.10), 0 0 5px 1px rgba(255,255,255,0.12), inset 0 0 12px 0 rgba(255,255,255,0.03)' }}
-                          className="appearance-none w-full text-[14px] tracking-[0.2em] uppercase font-semibold px-3 py-2 pr-7 rounded-xl border border-white/20 bg-white/[0.05] text-white outline-none cursor-pointer transition-all hover:border-white/40 hover:bg-white/[0.08] [color-scheme:dark]"
-                        >
-                          {STATUS_EDICAO.map(s => (
-                            <option key={s} value={s} className="bg-zinc-900 text-white">{s}</option>
-                          ))}
-                        </select>
-                        <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[14px] text-white/50">▾</span>
-                      </div>
-                      <a
-                        href={`/fotos-selecao?ref=${encodeURIComponent(job.nome)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[14px] px-3 py-1.5 rounded-lg border border-gold/30 bg-gold/5 text-gold/70 hover:text-gold hover:border-gold/50 hover:bg-gold/10 transition-all tracking-widest uppercase text-center"
-                      >
-                        Ver Seleção
-                      </a>
-                    </div>
+
+              {/* Cards */}
+              <div className="space-y-2.5">
+                {jobs.length === 0 ? (
+                  <div className="py-8 text-center text-[11px] text-white/25 italic">
+                    Sem trabalhos
                   </div>
-                )
-              ))}
+                ) : jobs.map(job => (
+                  editing?.id === job.id ? (
+                    <EdicaoForm key={job.id} form={form} setForm={setForm} saving={saving} onSave={save}
+                      onCancel={() => setEditing(null)} onDelete={() => del(job.id)} selecaoList={selecaoList} />
+                  ) : (
+                    <div key={job.id}
+                      className="group relative overflow-hidden rounded-xl border border-white/[0.07] bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-3.5 hover:border-gold/30 hover:from-white/[0.06] transition-all"
+                      style={{ boxShadow: '0 6px 16px -8px rgba(0,0,0,0.5)' }}>
+                      {/* hover gold sweep */}
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-gold/0 via-gold/[0.04] to-gold/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
+
+                      <div className="relative">
+                        {/* Header */}
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="min-w-0">
+                            <p className="text-[14px] font-semibold text-white leading-tight truncate" style={{ fontFamily: 'Georgia, serif' }}>{job.nome}</p>
+                            {job.data_casamento && (
+                              <p className="text-[11px] text-white/40 italic mt-0.5" style={{ fontFamily: 'Georgia, serif' }}>
+                                {fmtDate(job.data_casamento).split(' · ')[0]}
+                              </p>
+                            )}
+                          </div>
+                          <button onClick={() => { setEditing(job); setForm({ ...job }); setShowAdd(false) }}
+                            title="Editar"
+                            className="opacity-0 group-hover:opacity-100 w-7 h-7 flex items-center justify-center rounded-md text-white/30 hover:text-gold hover:bg-gold/10 transition-all">
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                          </button>
+                        </div>
+
+                        {/* Meta */}
+                        {(job.local || job.data_entrega) && (
+                          <div className="space-y-0.5 mb-2">
+                            {job.local && (
+                              <p className="text-[11px] text-white/50 truncate">📍 {job.local}</p>
+                            )}
+                            {job.data_entrega && (
+                              <p className="text-[11px] text-amber-300/70 flex items-center gap-1">
+                                <span>📅</span> Entrega: {fmtDate(job.data_entrega).split(' · ')[0]}
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Referência */}
+                        {job.referencia ? (
+                          <div className="inline-flex items-center gap-1.5 text-[10px] font-mono bg-emerald-500/10 border border-emerald-500/25 text-emerald-300/85 px-2 py-1 rounded-md mb-2">
+                            <span>🔗</span> {job.referencia}
+                          </div>
+                        ) : (
+                          <div className="inline-flex items-center gap-1.5 text-[10px] bg-red-500/10 border border-red-500/25 text-red-300/85 px-2 py-1 rounded-md mb-2">
+                            <span>⚠</span> sem referência
+                          </div>
+                        )}
+
+                        {/* Foto counts (mais elegante) */}
+                        {[['Convidados', job.convidados],['Cerimónia', job.cerimonia],['Detalhes', job.detalhes],['Sala', job.sala_animacao],['Álbum', job.fotos_album],['Bolo/Bouquet', job.bolo_bouquet],['Noivos', job.sessao_noivos],['Noiva', job.fotos_noiva],['Noivo', job.fotos_noivo]].some(([,v]) => v) && (
+                          <div className="grid grid-cols-3 gap-1 mb-2 pt-2 border-t border-white/[0.04]">
+                            {[
+                              ['Conv', job.convidados], ['Cer', job.cerimonia], ['Det', job.detalhes],
+                              ['Sala', job.sala_animacao], ['Álb', job.fotos_album], ['B/B', job.bolo_bouquet],
+                              ['Nv', job.sessao_noivos], ['Noiva', job.fotos_noiva], ['Noivo', job.fotos_noivo],
+                            ].filter(([,v]) => v).slice(0, 9).map(([k, v]) => (
+                              <div key={k as string} className="bg-white/[0.03] border border-white/[0.06] rounded-md px-1.5 py-1 text-center">
+                                <p className="text-[8px] tracking-widest uppercase text-white/30">{k}</p>
+                                <p className="text-[12px] font-bold text-gold/85 tabular-nums leading-none mt-0.5">{v}</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Estado dropdown + Ver Seleção */}
+                        <div className="flex flex-col gap-1.5 mt-2">
+                          <div className="relative">
+                            <select
+                              value={job.status}
+                              onChange={ev => changeStatus(job, ev.target.value)}
+                              className={`appearance-none w-full text-[10px] tracking-[0.25em] uppercase font-bold px-2.5 py-1.5 pr-7 rounded-md border outline-none cursor-pointer transition-all [color-scheme:dark] ${cfg.chip} hover:opacity-90`}
+                            >
+                              {STATUS_EDICAO.map(s => (
+                                <option key={s} value={s} className="bg-zinc-900 text-white">{s}</option>
+                              ))}
+                            </select>
+                            <span className={`pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] ${cfg.accent}`}>▾</span>
+                          </div>
+                          <a
+                            href={`/fotos-selecao?ref=${encodeURIComponent(job.referencia || job.nome)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[10px] px-2.5 py-1.5 rounded-md border border-gold/30 bg-gold/5 text-gold/80 hover:text-gold hover:border-gold/50 hover:bg-gold/10 transition-all tracking-widest uppercase text-center font-bold flex items-center justify-center gap-1"
+                          >
+                            👁 Ver Seleção
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                ))}
+              </div>
             </div>
           )
         })}
