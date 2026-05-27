@@ -2969,6 +2969,7 @@ function TarefasTab({ freelancerId }: { freelancerId: string }) {
   const [showCompleted, setShowCompleted] = useState(false)
   const [showNewModal, setShowNewModal] = useState(false)
   const [completingTask, setCompletingTask] = useState<TarefaItem | null>(null)  // tarefa a concluir (precisa de resposta)
+  const [viewingTask, setViewingTask] = useState<TarefaItem | null>(null)        // tarefa concluída cujo resultado se quer ver
   // Calendário
   const today = new Date(); today.setHours(0,0,0,0)
   const [calView, setCalView] = useState({ y: today.getFullYear(), m: today.getMonth() })
@@ -3152,6 +3153,13 @@ function TarefasTab({ freelancerId }: { freelancerId: string }) {
           <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 shrink-0 tracking-widest uppercase font-bold">
             ◷
           </span>
+        )}
+        {done && t.resultado && (
+          <button onClick={() => setViewingTask(t)}
+            title="Ver resposta de conclusão"
+            className="text-[10px] px-2 py-1 rounded-md bg-emerald-500/15 border border-emerald-500/35 text-emerald-300 hover:bg-emerald-500/25 hover:border-emerald-400/55 shrink-0 tracking-wider uppercase font-bold transition-all flex items-center gap-1">
+            <span>✎</span> Ver Resposta
+          </button>
         )}
         <div className="relative shrink-0">
           <button onClick={() => deleteTask(t.id)}
@@ -3421,8 +3429,107 @@ function TarefasTab({ freelancerId }: { freelancerId: string }) {
           onConfirm={(resposta) => completeWithResponse(completingTask.id, resposta)}
         />
       )}
+
+      {/* Modal Ver Resposta (read-only) — tarefas concluídas */}
+      {viewingTask && (
+        <VerRespostaModal
+          task={viewingTask}
+          onClose={() => setViewingTask(null)}
+        />
+      )}
     </div>
   )
+}
+
+// ── Modal Ver Resposta — apresenta a resposta de conclusão (read-only) ──
+function VerRespostaModal({ task, onClose }: { task: TarefaItem; onClose: () => void }) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  if (!mounted || typeof document === 'undefined') return null
+
+  let doneAtLabel = ''
+  if (task.doneAt) {
+    try {
+      const d = new Date(task.doneAt)
+      doneAtLabel = d.toLocaleString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+    } catch {/* keep empty */}
+  }
+
+  const modal = (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/90 backdrop-blur-md" />
+      <div className="relative z-10 w-full max-w-lg rounded-3xl overflow-hidden border border-emerald-500/30 shadow-2xl"
+        style={{ background: 'linear-gradient(180deg, #0a1410, #060b09)' }}
+        onClick={e => e.stopPropagation()}>
+        <div className="h-0.5 w-full bg-emerald-500/70" />
+        <div className="px-6 pt-5 pb-3 border-b border-white/[0.05] flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] tracking-[0.5em] text-emerald-300/85 uppercase mb-1">Resposta de Conclusão</p>
+            <h2 className="text-xl font-light tracking-[0.05em] text-white truncate" style={{ fontFamily: 'Georgia, serif' }}>
+              {task.text}
+            </h2>
+            {doneAtLabel && (
+              <p className="text-[11px] text-emerald-400/65 mt-1.5 flex items-center gap-1.5">
+                <span>✓</span> Concluída em {doneAtLabel}
+              </p>
+            )}
+          </div>
+          <button onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/35 hover:text-white hover:border-white/30 transition-all shrink-0">✕</button>
+        </div>
+
+        <div className="px-6 py-5 space-y-3">
+          {/* Resposta */}
+          <div>
+            <label className="block text-[10px] tracking-[0.3em] uppercase text-white/45 mb-1.5">Resposta do Membro</label>
+            <div className="bg-black/40 border border-emerald-500/20 rounded-lg px-4 py-3 text-[14px] text-white/90 leading-relaxed whitespace-pre-wrap min-h-[80px]">
+              {task.resultado || <span className="text-white/30 italic">Sem resposta registada.</span>}
+            </div>
+          </div>
+
+          {/* Descrição original (se existia) */}
+          {task.description && (
+            <div>
+              <label className="block text-[10px] tracking-[0.3em] uppercase text-white/35 mb-1.5">Descrição Original</label>
+              <div className="bg-black/30 border border-white/[0.06] rounded-lg px-4 py-3 text-[13px] text-white/65 leading-relaxed whitespace-pre-wrap italic">
+                {task.description}
+              </div>
+            </div>
+          )}
+
+          {/* Metadata */}
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <span className={`text-[10px] px-2 py-0.5 rounded-md border tracking-widest uppercase font-bold ${tarefaPrioCls(tarefaPriority(task))}`}>
+              {tarefaPriority(task)}
+            </span>
+            {task.project && (
+              <span className="text-[11px] text-white/45 italic">{task.project}</span>
+            )}
+            {task.dueDate && (
+              <span className="text-[11px] text-white/40 ml-auto">
+                Prazo: {deadlineLabel(task.dueDate)}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="px-6 py-3 border-t border-white/[0.05] flex items-center justify-end bg-black/30">
+          <button onClick={onClose}
+            className="px-4 py-2 rounded-lg text-[11px] tracking-wider uppercase text-white/65 hover:text-white border border-white/10 hover:border-white/30 transition-all">
+            Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
+  return createPortal(modal, document.body)
 }
 
 // ── Modal Concluir Tarefa — exige resposta antes de marcar como Concluída ───
