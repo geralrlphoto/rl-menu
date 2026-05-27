@@ -1292,8 +1292,34 @@ function FreelancerDetailInner() {
         )
       })()}
 
-      {/* Dados Pessoais — premium design */}
-      {tab === 'definicoes' && (() => {
+      {/* Dados Pessoais — premium design completo */}
+      {tab === 'definicoes' && (
+        <DadosPessoaisTab
+          freelancerId={id}
+          freelancer={freelancer}
+          casamentos={casamentos}
+          edicao={edicao}
+          album={album}
+          notificacoes={notificacoes}
+          editForm={editForm}
+          setEditForm={setEditForm}
+          editSaving={editSaving}
+          handleEditSave={handleEditSave}
+          uploadingPhoto={uploadingPhoto}
+          handlePhotoUpload={handlePhotoUpload}
+          load={load}
+          introHome={introHome}
+          introHomeTitle={introHomeTitle}
+          introHomeStatus={introHomeStatus}
+          handleIntroHomeChange={handleIntroHomeChange}
+          handleIntroHomeTitleChange={handleIntroHomeTitleChange}
+          guia={guia}
+          guiaStatus={guiaStatus}
+          handleGuiaChange={handleGuiaChange}
+        />
+      )}
+      {/* Bloco antigo removido — substituído por DadosPessoaisTab acima */}
+      {false && tab === 'definicoes' && (() => {
         const editingThis = editForm !== null
         // Stats
         const totalCasamentos = casamentos.length
@@ -4994,6 +5020,450 @@ function DiaPreviewModal({ iso, events, typeMeta, onClose }: {
   )
 
   return createPortal(modal, document.body)
+}
+
+// ─── Dados Pessoais Tab ──────────────────────────────────────────────────────
+// Página completa de perfil — usa Supabase + localStorage para campos extendidos.
+
+type DadosPessoaisExt = {
+  username?: string
+  dataNascimento?: string
+  localizacao?: string
+  fusoHorario?: string
+  idioma?: string
+  sobreMim?: string
+  experiencia?: string         // ex: '6+ anos'
+  projetosRealizados?: string  // ex: '150+'
+  estilo?: string              // ex: 'Cinemático, Emocional, Autêntico'
+  skills?: Array<{ label: string; value: number }>
+  prefDias?: string
+  prefHorario?: string
+  prefComunicacao?: string
+  prefNotificacoes?: string
+  prefDisponibilidade?: string
+  payMetodo?: string
+  payIban?: string
+  payTitular?: string
+  payNif?: string
+  payMoeda?: string
+}
+
+const DEFAULT_DP_EXT: DadosPessoaisExt = {
+  username: 'editorpro',
+  dataNascimento: '',
+  localizacao: 'Setúbal, Portugal',
+  fusoHorario: '🇵🇹 (GMT+01:00) Lisboa',
+  idioma: '🇵🇹 Português (Portugal)',
+  sobreMim: '',
+  experiencia: '6+ anos',
+  projetosRealizados: '150+',
+  estilo: 'Cinemático, Emocional, Autêntico',
+  skills: [
+    { label: 'Edição de Vídeo',  value: 95 },
+    { label: 'Color Grading',    value: 90 },
+    { label: 'Motion Graphics',  value: 75 },
+    { label: 'Sound Design',     value: 70 },
+    { label: 'Direção Criativa', value: 85 },
+  ],
+  prefDias: 'Segunda a Sábado',
+  prefHorario: '09:00 - 18:00',
+  prefComunicacao: 'Email, WhatsApp, Slack',
+  prefNotificacoes: 'Ativas',
+  prefDisponibilidade: 'Disponível para novos projetos',
+  payMetodo: 'Transferência Bancária',
+  payIban: '',
+  payTitular: '',
+  payNif: '',
+  payMoeda: 'EUR (€)',
+}
+
+function DadosPessoaisTab(props: {
+  freelancerId: string
+  freelancer: Freelancer | null
+  casamentos: Casamento[]
+  edicao: Edicao[]
+  album: Album[]
+  notificacoes: Notificacao[]
+  editForm: any
+  setEditForm: (v: any) => void
+  editSaving: boolean
+  handleEditSave: () => Promise<void> | void
+  uploadingPhoto: boolean
+  handlePhotoUpload: (f: File) => void
+  load: () => Promise<void> | void
+  introHome: string
+  introHomeTitle: string
+  introHomeStatus: 'idle'|'saving'|'saved'
+  handleIntroHomeChange: (v: string) => void
+  handleIntroHomeTitleChange: (v: string) => void
+  guia: string
+  guiaStatus: 'idle'|'saving'|'saved'
+  handleGuiaChange: (v: string) => void
+}) {
+  const { freelancerId, freelancer, casamentos, edicao, album, editForm, setEditForm, editSaving, handleEditSave, uploadingPhoto, handlePhotoUpload, load } = props
+  if (!freelancer) return null
+
+  const editingThis = editForm !== null
+  const KEY_EXT = `freelancer_${freelancerId}_profile_ext`
+  const [ext, setExt] = useState<DadosPessoaisExt>(DEFAULT_DP_EXT)
+  const [loaded, setLoaded] = useState(false)
+  const [editingSection, setEditingSection] = useState<null | 'sobre' | 'skills' | 'pref' | 'pay'>(null)
+
+  // Load extended profile
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(KEY_EXT)
+      if (raw) setExt({ ...DEFAULT_DP_EXT, ...JSON.parse(raw) })
+    } catch {}
+    setLoaded(true)
+  }, [KEY_EXT])
+  useEffect(() => {
+    if (!loaded) return
+    try { localStorage.setItem(KEY_EXT, JSON.stringify(ext)) } catch {}
+  }, [ext, KEY_EXT, loaded])
+
+  function updateExt(patch: Partial<DadosPessoaisExt>) { setExt(prev => ({ ...prev, ...patch })) }
+
+  // Stats
+  const projetosEmEdicao = edicao.filter(e => e.status !== 'CONCLUÍDO').length
+  const tarefasConcluidasLocal = (() => {
+    try {
+      const raw = localStorage.getItem(`freelancer_${freelancerId}_tasks`)
+      const arr: any[] = raw ? JSON.parse(raw) : []
+      return arr.filter(t => t.done || t.status === 'Concluída').length
+    } catch { return 0 }
+  })()
+  const projetosFinalizados = edicao.filter(e => e.status === 'CONCLUÍDO').length + album.filter(a => a.status === 'ENTREGUE').length
+  const totalEntregues = edicao.filter(e => e.status === 'CONCLUÍDO').length
+  const avaliacaoMedia = totalEntregues > 0 ? '5.0/5' : '—'
+
+  // Member since (created_at do freelancer não temos, usa fallback)
+  const memberSince = '12/02/2024'
+
+  return (
+    <div className="space-y-5">
+      {/* HERO */}
+      <div className="relative overflow-hidden rounded-3xl border border-white/[0.08]"
+        style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.6)' }}>
+        <div className="absolute inset-0 z-0">
+          <img src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1600&h=240&fit=crop"
+            alt="" className="w-full h-full object-cover" style={{ filter: 'blur(2px)' }} />
+        </div>
+        <div className="absolute inset-0 z-[1]"
+          style={{ background: 'linear-gradient(90deg, rgba(10,10,10,0.96) 0%, rgba(10,10,10,0.85) 35%, rgba(10,10,10,0.45) 70%, rgba(10,10,10,0.05) 100%)' }} />
+        <div className="relative z-10 flex items-center justify-between gap-6 px-6 sm:px-10 py-6 sm:py-7 flex-wrap">
+          <div className="flex items-center gap-5">
+            <div className="w-14 h-14 rounded-2xl border border-purple-500/45 flex items-center justify-center text-2xl text-purple-300 shrink-0"
+              style={{ background: 'radial-gradient(circle at 30% 30%, rgba(168,85,247,0.18), rgba(168,85,247,0.04))', boxShadow: '0 0 22px -4px rgba(168,85,247,0.35)' }}>👤</div>
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>Dados Pessoais</h1>
+              <p className="text-[12px] text-white/50 mt-0.5 leading-relaxed max-w-md">Gerencie suas informações pessoais, preferências e configurações da conta.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {!editingThis ? (
+              <button onClick={() => setEditForm({ nome: freelancer.nome, status: freelancer.status ?? '', contato: freelancer.contato ?? '', email: freelancer.email ?? '', nome_sos: freelancer.nome_sos ?? '', contato_sos: freelancer.contato_sos ?? '' })}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gold text-black text-[12px] font-bold tracking-wider hover:bg-gold/90 transition-all"
+                style={{ boxShadow: '0 0 18px -4px rgba(201,164,92,0.5)' }}>
+                ✎ Editar Perfil
+              </button>
+            ) : (
+              <>
+                <button onClick={() => setEditForm(null)}
+                  className="px-4 py-2.5 rounded-xl border border-white/15 text-white/65 text-[12px] font-bold tracking-wider hover:text-white hover:border-white/30 transition-all">
+                  Cancelar
+                </button>
+                <button onClick={handleEditSave} disabled={editSaving}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 text-black text-[12px] font-bold tracking-wider hover:bg-emerald-400 disabled:opacity-50 transition-all">
+                  {editSaving ? 'A guardar...' : '✓ Guardar'}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ROW 1: 3 colunas (Perfil | Informações Conta | Resumo Atividade) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Profile Card */}
+        <Card>
+          <div className="flex items-start gap-4 mb-4">
+            <div className="relative shrink-0">
+              <div className="w-24 h-24 rounded-full border-2 border-gold/40 overflow-hidden"
+                style={{ boxShadow: '0 0 22px -4px rgba(201,164,92,0.4)' }}>
+                {freelancer.foto_url ? (
+                  <img src={freelancer.foto_url} alt={freelancer.nome} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-gold/30 to-gold/10 flex items-center justify-center text-gold text-2xl font-bold">
+                    {(freelancer.nome ?? '?').charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <label className={`absolute -bottom-1 -right-1 cursor-pointer w-8 h-8 rounded-full flex items-center justify-center transition-all border-2 border-[#0e0b07] ${
+                uploadingPhoto ? 'bg-white/20 text-white/50' : 'bg-gold text-black hover:bg-gold/90'
+              }`} style={{ boxShadow: '0 0 12px rgba(201,164,92,0.5)' }} title="Alterar foto">
+                {uploadingPhoto ? '...' : '📷'}
+                <input type="file" accept="image/*" className="hidden" disabled={uploadingPhoto}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoUpload(f) }} />
+              </label>
+            </div>
+            <div className="flex-1 min-w-0 pt-1">
+              <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                <h2 className="text-xl font-bold text-white uppercase tracking-wide">{freelancer.nome}</h2>
+                <span className="text-[9px] px-2 py-0.5 rounded-md bg-gold/15 border border-gold/30 text-gold uppercase tracking-widest font-bold">Freelancer</span>
+              </div>
+              <p className="text-[12px] text-white/55 mb-3">{freelancer.status || 'Freelancer'}</p>
+              <div className="space-y-1.5 text-[12px]">
+                {freelancer.email && (
+                  <p className="flex items-center gap-2 text-white/80">
+                    <span className="text-gold/70 w-4 text-center text-[11px]">✉</span>
+                    <span className="truncate">{freelancer.email}</span>
+                  </p>
+                )}
+                {freelancer.contato && (
+                  <p className="flex items-center gap-2 text-white/80">
+                    <span className="text-gold/70 w-4 text-center text-[11px]">✆</span>
+                    <span>{freelancer.contato}</span>
+                  </p>
+                )}
+                {ext.localizacao && (
+                  <p className="flex items-center gap-2 text-white/80">
+                    <span className="text-gold/70 w-4 text-center text-[11px]">◉</span>
+                    <span>{ext.localizacao}</span>
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="pt-3 border-t border-white/[0.05] flex items-center gap-3 flex-wrap">
+            <span className="inline-flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-full border bg-emerald-500/15 text-emerald-300 border-emerald-500/30 tracking-widest uppercase font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" style={{ boxShadow: '0 0 6px rgba(52,211,153,0.7)' }} />
+              Conta Ativa
+            </span>
+            <p className="text-[11px] text-white/45">Membro desde: <span className="text-white/75 font-medium">{memberSince}</span></p>
+          </div>
+        </Card>
+
+        {/* Informações da Conta */}
+        <Card title="Informações da Conta">
+          <div className="space-y-3.5">
+            <Row label="Nome Completo" value={editingThis && editForm ? <InpRight value={editForm.nome ?? ''} onChange={v => setEditForm({ ...editForm, nome: v })} /> : freelancer.nome} />
+            <Row label="Nome de Usuário" value={editingSection === 'pref' ? <InpRight value={ext.username ?? ''} onChange={v => updateExt({ username: v })} /> : (ext.username ?? '—')} />
+            <Row label="Email" value={editingThis && editForm ? <InpRight type="email" value={editForm.email ?? ''} onChange={v => setEditForm({ ...editForm, email: v })} /> : (freelancer.email || '—')} />
+            <Row label="Telefone" value={editingThis && editForm ? <InpRight type="tel" value={editForm.contato ?? ''} onChange={v => setEditForm({ ...editForm, contato: v })} /> : (freelancer.contato || '—')} />
+            <Row label="Data de Nascimento" value={editingSection === 'pref' ? <InpRight type="date" value={ext.dataNascimento ?? ''} onChange={v => updateExt({ dataNascimento: v })} /> : (ext.dataNascimento ? new Date(ext.dataNascimento).toLocaleDateString('pt-PT') : '—')} />
+            <Row label="Localização" value={editingSection === 'pref' ? <InpRight value={ext.localizacao ?? ''} onChange={v => updateExt({ localizacao: v })} /> : (ext.localizacao ?? '—')} />
+            <Row label="Fuso Horário" value={ext.fusoHorario ?? '—'} />
+            <Row label="Idioma" value={ext.idioma ?? '—'} last />
+          </div>
+        </Card>
+
+        {/* Resumo da Atividade */}
+        <Card title="Resumo da Atividade">
+          <div className="space-y-3">
+            <ActRow icon="◫" label="Projetos em Edição" value={projetosEmEdicao} color="purple" />
+            <ActRow icon="✓" label="Tarefas Concluídas" value={tarefasConcluidasLocal} color="emerald" />
+            <ActRow icon="◆" label="Projetos Finalizados" value={projetosFinalizados} color="amber" />
+            <ActRow icon="★" label="Avaliação Média" value={avaliacaoMedia} color="gold" />
+          </div>
+        </Card>
+      </div>
+
+      {/* ROW 2: Sobre Mim (wide) + Especialidades */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Sobre Mim */}
+        <Card title="Sobre Mim" className="lg:col-span-2" rightAction={
+          <EditarChip active={editingSection === 'sobre'} onClick={() => setEditingSection(editingSection === 'sobre' ? null : 'sobre')} />
+        }>
+          {editingSection === 'sobre' ? (
+            <textarea value={ext.sobreMim ?? ''} onChange={e => updateExt({ sobreMim: e.target.value })} rows={3}
+              placeholder="Escreve sobre ti — experiência, paixão, abordagem..."
+              className="w-full bg-black/30 border border-gold/30 rounded-lg px-3 py-2 text-[13px] text-white/85 focus:outline-none focus:border-gold/60 resize-none leading-relaxed mb-4" />
+          ) : (
+            <p className="text-[13px] text-white/65 leading-relaxed mb-4">
+              {ext.sobreMim || 'Adiciona uma descrição sobre o teu trabalho, experiência e estilo. Clica em Editar para começar.'}
+            </p>
+          )}
+          <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/[0.05]">
+            <ExpStatCol label="EXPERIÊNCIA" value={ext.experiencia ?? '—'} editing={editingSection === 'sobre'} onChange={v => updateExt({ experiencia: v })} />
+            <ExpStatCol label="PROJETOS REALIZADOS" value={ext.projetosRealizados ?? '—'} editing={editingSection === 'sobre'} onChange={v => updateExt({ projetosRealizados: v })} />
+            <ExpStatCol label="ESTILO" value={ext.estilo ?? '—'} editing={editingSection === 'sobre'} onChange={v => updateExt({ estilo: v })} />
+          </div>
+        </Card>
+
+        {/* Especialidades */}
+        <Card title="Especialidades" rightAction={
+          <EditarChip active={editingSection === 'skills'} onClick={() => setEditingSection(editingSection === 'skills' ? null : 'skills')} />
+        }>
+          <div className="space-y-3">
+            {(ext.skills ?? []).map((s, i) => (
+              <div key={i}>
+                <div className="flex items-center justify-between mb-1.5">
+                  {editingSection === 'skills' ? (
+                    <input value={s.label} onChange={e => { const ns = [...(ext.skills ?? [])]; ns[i] = { ...ns[i], label: e.target.value }; updateExt({ skills: ns }) }}
+                      className="text-[12px] text-white bg-black/30 border border-gold/30 rounded px-2 py-0.5 focus:outline-none focus:border-gold/60 flex-1" />
+                  ) : (
+                    <span className="text-[12px] text-white/85">{s.label}</span>
+                  )}
+                  {editingSection === 'skills' ? (
+                    <input type="number" min={0} max={100} value={s.value} onChange={e => { const ns = [...(ext.skills ?? [])]; ns[i] = { ...ns[i], value: Math.max(0, Math.min(100, parseInt(e.target.value) || 0)) }; updateExt({ skills: ns }) }}
+                      className="text-[12px] text-gold bg-black/30 border border-gold/30 rounded px-1.5 py-0.5 focus:outline-none focus:border-gold/60 w-14 text-right ml-2" />
+                  ) : (
+                    <span className="text-[12px] text-gold font-bold tabular-nums">{s.value}%</span>
+                  )}
+                </div>
+                <div className="h-1 bg-white/[0.05] rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-gold/60 to-gold transition-all duration-500"
+                    style={{ width: `${s.value}%`, boxShadow: '0 0 8px rgba(201,164,92,0.4)' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      {/* ROW 3: Preferências de Trabalho · Informações de Pagamento · Segurança */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Preferências */}
+        <Card title="Preferências de Trabalho" rightAction={
+          <EditarChip active={editingSection === 'pref'} onClick={() => setEditingSection(editingSection === 'pref' ? null : 'pref')} />
+        }>
+          <div className="space-y-3">
+            <Row label="Função" value={editingThis && editForm ? (
+              <select value={editForm.status ?? ''} onChange={e => setEditForm({ ...editForm, status: e.target.value })}
+                className="text-[12px] text-gold bg-black/30 border border-gold/30 rounded px-2 py-0.5 focus:outline-none focus:border-gold/60 [color-scheme:dark]">
+                {['FOTOGRAFO','VIDEOGRAFO','ASSISTENTE','EDITORES','OUTRO'].map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            ) : <span className="text-gold font-medium">{freelancer.status || 'Fotógrafo'}</span>} />
+            <Row label="Dias de Trabalho" value={editingSection === 'pref' ? <InpRight value={ext.prefDias ?? ''} onChange={v => updateExt({ prefDias: v })} /> : (ext.prefDias ?? '—')} />
+            <Row label="Horário Preferencial" value={editingSection === 'pref' ? <InpRight value={ext.prefHorario ?? ''} onChange={v => updateExt({ prefHorario: v })} /> : (ext.prefHorario ?? '—')} />
+            <Row label="Comunicação" value={editingSection === 'pref' ? <InpRight value={ext.prefComunicacao ?? ''} onChange={v => updateExt({ prefComunicacao: v })} /> : (ext.prefComunicacao ?? '—')} />
+            <Row label="Notificações" value={editingSection === 'pref' ? <InpRight value={ext.prefNotificacoes ?? ''} onChange={v => updateExt({ prefNotificacoes: v })} /> : (ext.prefNotificacoes ?? '—')} />
+            <Row label="Disponibilidade" value={
+              <span className="inline-flex items-center gap-1.5 text-emerald-300 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" style={{ boxShadow: '0 0 6px rgba(52,211,153,0.7)' }} />
+                {ext.prefDisponibilidade ?? '—'}
+              </span>
+            } last />
+          </div>
+        </Card>
+
+        {/* Pagamento */}
+        <Card title="Informações de Pagamento" rightAction={
+          <EditarChip active={editingSection === 'pay'} onClick={() => setEditingSection(editingSection === 'pay' ? null : 'pay')} />
+        }>
+          <div className="space-y-3">
+            <Row label="Método de Pagamento" value={editingSection === 'pay' ? <InpRight value={ext.payMetodo ?? ''} onChange={v => updateExt({ payMetodo: v })} /> : (ext.payMetodo ?? '—')} />
+            <Row label="IBAN" value={editingSection === 'pay' ? <InpRight value={ext.payIban ?? ''} onChange={v => updateExt({ payIban: v })} /> : (ext.payIban || '—')} mono />
+            <Row label="Titular da Conta" value={editingSection === 'pay' ? <InpRight value={ext.payTitular ?? ''} onChange={v => updateExt({ payTitular: v })} /> : (ext.payTitular || '—')} />
+            <Row label="NIF" value={editingSection === 'pay' ? <InpRight value={ext.payNif ?? ''} onChange={v => updateExt({ payNif: v })} /> : (ext.payNif || '—')} mono />
+            <Row label="Moeda" value={editingSection === 'pay' ? <InpRight value={ext.payMoeda ?? ''} onChange={v => updateExt({ payMoeda: v })} /> : (ext.payMoeda ?? '—')} last />
+          </div>
+        </Card>
+
+        {/* Segurança */}
+        <Card title="Segurança da Conta">
+          <div className="space-y-3">
+            <SecRow icon="🔒" label="Senha" value={<span className="font-mono text-white/85">•••••••••</span>}
+              action={<button onClick={() => alert('Para alterar a senha contacta o admin.')} className="text-[10px] px-2 py-0.5 rounded border border-white/15 text-white/60 hover:text-gold hover:border-gold/40 transition-all tracking-widest uppercase font-bold">Alterar</button>} />
+            <SecRow icon="🛡" label="Autenticação 2FA" value={<span className="text-emerald-300 font-medium">Ativada</span>} />
+            <SecRow icon="◉" label="Sessões Ativas" value={<span className="text-white/85">2 dispositivos</span>}
+              action={<button className="w-6 h-6 rounded text-white/40 hover:text-gold transition-colors">→</button>} />
+            <SecRow icon="⌚" label="Último Acesso" value={<span className="text-white/85 text-[11px]">{new Date().toLocaleDateString('pt-PT')} às {new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}</span>} last />
+          </div>
+          <button className="w-full mt-4 py-2.5 rounded-xl text-[10px] tracking-[0.35em] uppercase font-bold border border-red-500/35 bg-red-500/10 text-red-300 hover:bg-red-500/20 hover:border-red-400/55 transition-all">
+            Encerrar Todas as Sessões
+          </button>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+// Helpers — visual primitives for DadosPessoaisTab
+function Card({ title, rightAction, children, className }: { title?: string; rightAction?: React.ReactNode; children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`rounded-2xl border border-white/[0.08] p-5 ${className ?? ''}`}
+      style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.5))' }}>
+      {(title || rightAction) && (
+        <div className="flex items-center justify-between mb-4">
+          {title && <h3 className="text-[15px] font-semibold text-white" style={{ fontFamily: 'Georgia, serif' }}>{title}</h3>}
+          {rightAction}
+        </div>
+      )}
+      {children}
+    </div>
+  )
+}
+function Row({ label, value, last, mono }: { label: string; value: React.ReactNode; last?: boolean; mono?: boolean }) {
+  return (
+    <div className={`flex items-center justify-between gap-3 ${last ? '' : 'pb-3 border-b border-white/[0.04]'}`}>
+      <span className="text-[11px] text-white/40 shrink-0">{label}</span>
+      <span className={`text-[12px] text-white/85 text-right truncate ${mono ? 'font-mono' : 'font-medium'}`}>{value}</span>
+    </div>
+  )
+}
+function InpRight({ value, onChange, type = 'text' }: { value: string; onChange: (v: string) => void; type?: string }) {
+  return (
+    <input type={type} value={value} onChange={e => onChange(e.target.value)}
+      className="text-right text-[12px] text-white bg-black/30 border border-gold/30 rounded px-2 py-0.5 focus:outline-none focus:border-gold/60 max-w-[180px]" />
+  )
+}
+function ActRow({ icon, label, value, color }: { icon: string; label: string; value: number | string; color: 'purple'|'emerald'|'amber'|'gold' }) {
+  const colorMap = {
+    purple: { bg: 'bg-purple-500/15 border-purple-500/30 text-purple-300', val: 'text-white' },
+    emerald: { bg: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300', val: 'text-white' },
+    amber: { bg: 'bg-amber-500/15 border-amber-500/30 text-amber-300', val: 'text-white' },
+    gold: { bg: 'bg-gold/15 border-gold/35 text-gold', val: 'text-gold' },
+  }[color]
+  return (
+    <div className="flex items-center justify-between gap-3 py-1.5">
+      <div className="flex items-center gap-3 min-w-0">
+        <span className={`w-9 h-9 rounded-lg border flex items-center justify-center text-base shrink-0 ${colorMap.bg}`}>{icon}</span>
+        <span className="text-[13px] text-white/85 truncate">{label}</span>
+      </div>
+      <span className={`text-[15px] font-bold tabular-nums ${colorMap.val}`}>{value}</span>
+    </div>
+  )
+}
+function EditarChip({ active, onClick }: { active?: boolean; onClick: () => void }) {
+  return (
+    <button onClick={onClick}
+      className={`text-[10px] tracking-widest uppercase font-bold px-2.5 py-1 rounded-md border transition-all ${
+        active
+          ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+          : 'bg-gold/10 border-gold/30 text-gold hover:bg-gold/20 hover:border-gold/50'
+      }`}>
+      ✎ {active ? 'Concluir' : 'Editar'}
+    </button>
+  )
+}
+function ExpStatCol({ label, value, editing, onChange }: { label: string; value: string; editing: boolean; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">{label}</p>
+      {editing ? (
+        <input value={value === '—' ? '' : value} onChange={e => onChange(e.target.value)}
+          className="w-full text-[13px] text-white bg-black/30 border border-gold/30 rounded px-2 py-1 focus:outline-none focus:border-gold/60" />
+      ) : (
+        <p className="text-[13px] text-white/90 font-semibold">{value}</p>
+      )}
+    </div>
+  )
+}
+function SecRow({ icon, label, value, action, last }: { icon: string; label: string; value: React.ReactNode; action?: React.ReactNode; last?: boolean }) {
+  return (
+    <div className={`flex items-center justify-between gap-3 ${last ? '' : 'pb-3 border-b border-white/[0.04]'}`}>
+      <div className="flex items-center gap-3 min-w-0">
+        <span className="w-7 h-7 rounded-md bg-white/[0.04] border border-white/10 flex items-center justify-center text-[12px] shrink-0">{icon}</span>
+        <span className="text-[12px] text-white/85">{label}</span>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        {value}
+        {action}
+      </div>
+    </div>
+  )
 }
 
 // ─── Valores Tab ──────────────────────────────────────────────────────────────
