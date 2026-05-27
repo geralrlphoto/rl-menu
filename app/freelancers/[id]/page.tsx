@@ -162,7 +162,7 @@ function FreelancerDetailInner() {
   const { id } = useParams<{ id: string }>()
   const searchParams = useSearchParams()
   const viewAsFreelancer = searchParams?.get('view') === 'freelancer'
-  const [tab, setTab] = useState<'casamentos'|'edicao'|'album'|'tarefas'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'|null>(null)
+  const [tab, setTab] = useState<'casamentos'|'edicao'|'album'|'tarefas'|'calendario'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'|null>(null)
   const [editForm, setEditForm] = useState<{ nome: string; status: string; contato: string; email: string; nome_sos: string; contato_sos: string } | null>(null)
   const [editSaving, setEditSaving] = useState(false)
   const [introHome, setIntroHome] = useState('')
@@ -482,11 +482,12 @@ function FreelancerDetailInner() {
     setEditSaving(false)
   }
 
-  const tabs: { key: 'casamentos'|'edicao'|'album'|'tarefas'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'; label: string; count?: number }[] = [
+  const tabs: { key: 'casamentos'|'edicao'|'album'|'tarefas'|'calendario'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'; label: string; count?: number }[] = [
     { key: 'casamentos',   label: 'Casamentos',  count: casamentos.length },
     ...(!isVideografo ? [{ key: 'edicao' as const, label: 'Edição Fotos', count: edicao.length }] : []),
     ...(isFotografo ? [{ key: 'album' as const, label: 'Edição Álbum', count: album.length }] : []),
     { key: 'tarefas',      label: 'Tarefas' },
+    { key: 'calendario',   label: 'Calendário' },
     { key: 'pagamentos',   label: 'Pagamentos', count: pagamentos.length },
     { key: 'mensagens',    label: 'Msgs',   count: mensagens.filter(m => m.remetente === 'freelancer' && !m.lida_admin).length },
     { key: 'notificacoes', label: 'Notif.', count: notificacoes.filter(n => !n.lida).length },
@@ -547,7 +548,7 @@ function FreelancerDetailInner() {
 
     <main className={`relative z-10 min-h-screen px-4 sm:px-6 py-6 mx-auto lg:pl-[252px] lg:pr-4 ${
       tab === null ? 'max-w-none'
-        : (['casamentos', 'edicao', 'album', 'pagamentos', 'tarefas'] as Array<string | null>).includes(tab) ? 'max-w-[1500px]'
+        : (['casamentos', 'edicao', 'album', 'pagamentos', 'tarefas', 'calendario'] as Array<string | null>).includes(tab) ? 'max-w-[1500px]'
         : 'max-w-3xl'
     }`}>
       {/* Tabs — horizontal apenas em mobile (desktop usa sidebar) */}
@@ -1405,6 +1406,7 @@ function FreelancerDetailInner() {
       {tab === 'edicao'       && <EdicaoTab freelancerId={id} edicao={edicao} onRefresh={load} />}
       {tab === 'album'        && <AlbumTab freelancerId={id} album={album} onRefresh={load} />}
       {tab === 'tarefas'      && <TarefasTab freelancerId={id} viewAsFreelancer={viewAsFreelancer} freelancer={freelancer} notificacoes={notificacoes} onRefresh={load} />}
+      {tab === 'calendario'   && <CalendarioTab freelancerId={id} casamentos={casamentos} edicao={edicao} album={album} freelancer={freelancer} />}
       {tab === 'info'         && <InfoTab freelancerId={id} info={info} onRefresh={load} />}
       {tab === 'notas'        && <NotasTab freelancer={freelancer} onRefresh={load} />}
       {tab === 'pagamentos'   && <PagamentosAdminTab freelancerId={id} pagamentos={pagamentos} casamentos={casamentos} onRefresh={load} />}
@@ -1416,7 +1418,7 @@ function FreelancerDetailInner() {
 }
 
 // ─── SidebarNavAdmin ───────────────────────────────────────────────────────
-type AdminTabKey = 'casamentos'|'edicao'|'album'|'tarefas'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'|null
+type AdminTabKey = 'casamentos'|'edicao'|'album'|'tarefas'|'calendario'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'|null
 
 function SidebarNavAdmin({
   freelancer,
@@ -1441,6 +1443,7 @@ function SidebarNavAdmin({
     ...(!isVideografo ? [{ key: 'edicao' as AdminTabKey, label: 'Edição Fotos', icon: '✎', count: counts.edicao }] : []),
     ...(isFotografo ? [{ key: 'album' as AdminTabKey, label: 'Edição Álbum', icon: '◫', count: counts.album }] : []),
     { key: 'tarefas',        label: 'Tarefas',        icon: '◷' },
+    { key: 'calendario',     label: 'Calendário',     icon: '◉' },
     { key: 'pagamentos',     label: 'Pagamentos',     icon: '$', count: counts.pagamentos },
     { key: 'mensagens',      label: 'Mensagens',      icon: '✉', count: counts.mensagens },
     { key: 'notificacoes',   label: 'Notificações',   icon: '◉', count: counts.notificacoes },
@@ -4406,6 +4409,339 @@ function NovaTarefaModal({ onClose, onCreate }: { onClose: () => void; onCreate:
             + Criar tarefa
           </button>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Calendário Tab ──────────────────────────────────────────────────────────
+// Calendário full-page com todos os eventos: casamentos, edições, álbuns, tarefas.
+
+type CalEvento = {
+  id: string
+  iso: string          // YYYY-MM-DD
+  type: 'casamento' | 'edicao' | 'album' | 'tarefa-pessoal' | 'tarefa-atribuida' | 'prazo-selecao' | 'prazo-edicao'
+  title: string
+  subtitle?: string
+}
+
+function CalendarioTab({ freelancerId, casamentos, edicao, album, freelancer }: {
+  freelancerId: string
+  casamentos: Casamento[]
+  edicao: Edicao[]
+  album: Album[]
+  freelancer: Freelancer | null
+}) {
+  const today = new Date(); today.setHours(0,0,0,0)
+  const [view, setView] = useState({ y: today.getFullYear(), m: today.getMonth() })
+  const [selectedIso, setSelectedIso] = useState<string | null>(null)
+  const [taskDates, setTaskDates] = useState<Array<{ iso: string; text: string; project?: string }>>([])
+
+  // Lê tarefas do localStorage
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(`freelancer_${freelancerId}_tasks`)
+      const tasks: any[] = raw ? JSON.parse(raw) : []
+      const arr: Array<{ iso: string; text: string; project?: string }> = []
+      tasks.forEach(t => {
+        if (t?.dueDate && typeof t.dueDate === 'string') {
+          const iso = t.dueDate.slice(0, 10)
+          if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+            arr.push({ iso, text: t.text || '—', project: t.project })
+          }
+        }
+      })
+      setTaskDates(arr)
+    } catch { setTaskDates([]) }
+  }, [freelancerId])
+
+  // Compila eventos
+  const eventos: CalEvento[] = (() => {
+    const out: CalEvento[] = []
+    // Casamentos
+    casamentos.forEach(c => {
+      if (c.data_casamento) {
+        out.push({ id: `cas-${c.id}`, iso: c.data_casamento.slice(0,10), type: 'casamento', title: c.local, subtitle: 'Casamento' })
+      }
+      // Prazo seleção (30 dias após evento)
+      if (c.data_casamento && !c.url_selecao_enviado_em) {
+        try {
+          const [y, m, d] = c.data_casamento.slice(0,10).split('-').map(Number)
+          const dEvent = new Date(y, m-1, d)
+          const dDeadline = new Date(dEvent.getTime() + 30 * 86400000)
+          const iso = `${dDeadline.getFullYear()}-${String(dDeadline.getMonth()+1).padStart(2,'0')}-${String(dDeadline.getDate()).padStart(2,'0')}`
+          out.push({ id: `psel-${c.id}`, iso, type: 'prazo-selecao', title: c.local, subtitle: 'Prazo Seleção' })
+        } catch {}
+      }
+    })
+    // Edições com data_entrega
+    edicao.forEach(e => {
+      if (e.data_entrega) out.push({ id: `ed-${e.id}`, iso: e.data_entrega.slice(0,10), type: 'edicao', title: e.nome, subtitle: 'Entrega Edição' })
+    })
+    // Álbuns com data_entrega
+    album.forEach(a => {
+      if (a.data_entrega) out.push({ id: `alb-${a.id}`, iso: a.data_entrega.slice(0,10), type: 'album', title: a.nome, subtitle: 'Entrega Álbum' })
+    })
+    // Tarefas do localStorage
+    taskDates.forEach((t, i) => {
+      out.push({ id: `tk-${i}`, iso: t.iso, type: 'tarefa-pessoal', title: t.text, subtitle: t.project || 'Tarefa pessoal' })
+    })
+    return out
+  })()
+
+  // Index por dia
+  const byDay = new Map<string, CalEvento[]>()
+  eventos.forEach(e => {
+    if (!byDay.has(e.iso)) byDay.set(e.iso, [])
+    byDay.get(e.iso)!.push(e)
+  })
+
+  // Cells do mês
+  const firstDay = new Date(view.y, view.m, 1).getDay()
+  const lastDate = new Date(view.y, view.m + 1, 0).getDate()
+  const prevLastDate = new Date(view.y, view.m, 0).getDate()
+  type Cell = { day: number; current: boolean; isToday: boolean; iso?: string; events: CalEvento[] }
+  const cells: Cell[] = []
+  for (let i = firstDay - 1; i >= 0; i--) cells.push({ day: prevLastDate - i, current: false, isToday: false, events: [] })
+  for (let d = 1; d <= lastDate; d++) {
+    const iso = `${view.y}-${String(view.m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+    const isToday = view.y === today.getFullYear() && view.m === today.getMonth() && d === today.getDate()
+    cells.push({ day: d, current: true, isToday, iso, events: byDay.get(iso) ?? [] })
+  }
+  while (cells.length % 7 !== 0) cells.push({ day: cells.length - lastDate - firstDay + 1, current: false, isToday: false, events: [] })
+
+  // KPIs
+  const kpis = {
+    casamentos: eventos.filter(e => e.type === 'casamento').length,
+    tarefas:    eventos.filter(e => e.type === 'tarefa-pessoal' || e.type === 'tarefa-atribuida').length,
+    entregas:   eventos.filter(e => e.type === 'edicao' || e.type === 'album').length,
+    prazos:     eventos.filter(e => e.type === 'prazo-selecao' || e.type === 'prazo-edicao').length,
+  }
+
+  // Eventos do dia selecionado
+  const todayIsoStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`
+  const selIso = selectedIso ?? todayIsoStr
+  const selEvents = byDay.get(selIso) ?? []
+  const selDate = (() => {
+    const [y, m, d] = selIso.split('-').map(Number)
+    return new Date(y, m-1, d)
+  })()
+
+  // Próximos eventos (futuros, sorted)
+  const proximos = eventos
+    .filter(e => e.iso >= todayIsoStr)
+    .sort((a, b) => a.iso.localeCompare(b.iso))
+    .slice(0, 6)
+
+  const typeMeta: Record<CalEvento['type'], { color: string; bg: string; border: string; label: string; icon: string }> = {
+    'casamento':         { color: 'text-gold',         bg: 'bg-gold/15',           border: 'border-gold/35',          label: 'Casamento',    icon: '◆' },
+    'edicao':            { color: 'text-blue-300',     bg: 'bg-blue-500/15',       border: 'border-blue-500/35',      label: 'Edição',       icon: '✎' },
+    'album':             { color: 'text-purple-300',   bg: 'bg-purple-500/15',     border: 'border-purple-500/35',    label: 'Álbum',        icon: '◫' },
+    'tarefa-pessoal':    { color: 'text-emerald-300',  bg: 'bg-emerald-500/15',    border: 'border-emerald-500/35',   label: 'Tarefa',       icon: '◷' },
+    'tarefa-atribuida':  { color: 'text-violet-300',   bg: 'bg-violet-500/15',     border: 'border-violet-500/35',    label: 'Atribuída',    icon: '✈' },
+    'prazo-selecao':     { color: 'text-amber-300',    bg: 'bg-amber-500/15',      border: 'border-amber-500/35',     label: 'Prazo Sel.',   icon: '⏱' },
+    'prazo-edicao':      { color: 'text-red-300',      bg: 'bg-red-500/15',        border: 'border-red-500/35',       label: 'Prazo Ed.',    icon: '⏱' },
+  }
+
+  return (
+    <div className="space-y-5">
+      {/* HERO */}
+      <div className="relative overflow-hidden rounded-3xl border border-white/[0.08]"
+        style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.5)' }}>
+        <div className="absolute inset-0 z-0">
+          <img src="https://images.unsplash.com/photo-1606800052052-a08af7148866?w=1600&h=380&fit=crop" alt="" className="w-full h-full object-cover" />
+        </div>
+        <div className="absolute inset-0 z-[1]" style={{ background: 'linear-gradient(90deg, rgba(11,11,11,0.96) 0%, rgba(11,11,11,0.86) 40%, rgba(11,11,11,0.5) 70%, rgba(11,11,11,0.15) 100%)' }} />
+        <div className="relative z-10 flex items-start justify-between gap-4 px-6 sm:px-8 py-7 sm:py-9 flex-wrap">
+          <div className="flex items-center gap-5">
+            <div className="w-14 h-14 rounded-2xl border border-gold/30 flex items-center justify-center text-2xl text-gold shrink-0"
+              style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.15), rgba(201,164,92,0.04))', boxShadow: '0 0 22px -4px rgba(201,164,92,0.25)' }}>
+              ◉
+            </div>
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>Calendário</h1>
+              <p className="text-[13px] text-white/55 mt-1 max-w-md">Vista mensal com casamentos, entregas, prazos e tarefas — tudo num só sítio.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button onClick={() => setView({ y: today.getFullYear(), m: today.getMonth() })}
+              className="px-4 py-2.5 rounded-xl border border-white/15 text-white/75 hover:text-gold hover:border-gold/40 text-[13px] tracking-wider uppercase font-bold transition-all">
+              Hoje
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* KPIs */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: 'Casamentos', value: kpis.casamentos, accent: 'border-gold/25 bg-gold/[0.04]',           text: 'text-gold',         sub: 'text-gold/60' },
+          { label: 'Tarefas',    value: kpis.tarefas,    accent: 'border-emerald-500/25 bg-emerald-500/[0.04]', text: 'text-emerald-300',  sub: 'text-emerald-300/60' },
+          { label: 'Entregas',   value: kpis.entregas,   accent: 'border-blue-500/25 bg-blue-500/[0.04]',   text: 'text-blue-300',     sub: 'text-blue-300/60' },
+          { label: 'Prazos',     value: kpis.prazos,     accent: 'border-amber-500/25 bg-amber-500/[0.04]', text: 'text-amber-300',    sub: 'text-amber-300/60' },
+        ].map((k, i) => (
+          <div key={i} className={`rounded-2xl border p-4 ${k.accent}`}>
+            <p className={`text-[10px] tracking-[0.3em] uppercase mb-1 ${k.sub}`}>{k.label}</p>
+            <p className={`text-3xl font-light leading-none tabular-nums ${k.text}`} style={{ fontFamily: 'Georgia, serif' }}>{k.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* GRID 2/3 Calendário + 1/3 Sidebar */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Calendário */}
+        <div className="lg:col-span-2 rounded-2xl border border-white/[0.08] p-5"
+          style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.5))' }}>
+          {/* Header navegação */}
+          <div className="flex items-center justify-between mb-4">
+            <button onClick={() => { const d = new Date(view.y, view.m - 1, 1); setView({ y: d.getFullYear(), m: d.getMonth() }) }}
+              className="w-9 h-9 rounded-lg border border-white/15 text-white/55 hover:text-gold hover:border-gold/40 transition-all text-base">‹</button>
+            <h2 className="text-2xl font-light text-white tracking-wider" style={{ fontFamily: 'Georgia, serif' }}>
+              <span className="italic text-gold">{['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][view.m]}</span> {view.y}
+            </h2>
+            <button onClick={() => { const d = new Date(view.y, view.m + 1, 1); setView({ y: d.getFullYear(), m: d.getMonth() }) }}
+              className="w-9 h-9 rounded-lg border border-white/15 text-white/55 hover:text-gold hover:border-gold/40 transition-all text-base">›</button>
+          </div>
+
+          {/* Cabeçalhos dos dias */}
+          <div className="grid grid-cols-7 gap-1.5 mb-2">
+            {['DOM','SEG','TER','QUA','QUI','SEX','SÁB'].map(d => (
+              <div key={d} className="text-center text-[10px] tracking-widest uppercase text-white/30 py-1">{d}</div>
+            ))}
+          </div>
+
+          {/* Células */}
+          <div className="grid grid-cols-7 gap-1.5">
+            {cells.map((c, i) => {
+              const selected = c.iso === selIso
+              const eventCount = c.events.length
+              return (
+                <button key={i}
+                  onClick={() => c.current && c.iso && setSelectedIso(c.iso)}
+                  disabled={!c.current}
+                  className={`relative aspect-square sm:min-h-[80px] sm:aspect-auto p-1.5 sm:p-2 rounded-lg border text-left transition-all ${
+                    c.isToday
+                      ? 'bg-gold text-black font-bold border-gold'
+                      : selected
+                        ? 'bg-gold/15 text-gold border-gold/40'
+                        : c.current
+                          ? eventCount > 0
+                            ? 'bg-white/[0.03] border-white/[0.08] text-white/75 hover:border-gold/30 hover:bg-white/[0.06]'
+                            : 'bg-white/[0.01] border-white/[0.04] text-white/50 hover:border-white/15'
+                          : 'bg-transparent border-transparent text-white/20'
+                  }`}>
+                  <p className={`text-[13px] sm:text-[14px] font-semibold leading-none mb-1 ${c.isToday ? 'text-black' : ''}`}>
+                    {c.day}
+                  </p>
+                  {/* Mini-eventos (até 3) */}
+                  <div className="hidden sm:flex flex-col gap-0.5 mt-1">
+                    {c.events.slice(0, 3).map((e, j) => (
+                      <span key={j} className={`text-[8px] px-1 py-px rounded truncate ${
+                        c.isToday ? 'bg-black/15 text-black/80' : `${typeMeta[e.type].bg} ${typeMeta[e.type].color}`
+                      }`} title={e.title}>
+                        {e.title}
+                      </span>
+                    ))}
+                    {eventCount > 3 && (
+                      <span className={`text-[8px] ${c.isToday ? 'text-black/60' : 'text-white/40'}`}>+{eventCount - 3}</span>
+                    )}
+                  </div>
+                  {/* Mobile: só pontos */}
+                  <div className="sm:hidden flex items-center justify-center gap-0.5 mt-1">
+                    {c.events.slice(0, 3).map((e, j) => (
+                      <span key={j} className={`w-1 h-1 rounded-full ${typeMeta[e.type].bg.replace('/15', '')}`} />
+                    ))}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Legenda */}
+          <div className="mt-4 pt-3 border-t border-white/[0.05] flex items-center justify-center gap-x-4 gap-y-1.5 flex-wrap text-[10px]">
+            {(['casamento','tarefa-pessoal','edicao','album','prazo-selecao'] as Array<CalEvento['type']>).map(t => (
+              <span key={t} className="flex items-center gap-1.5 text-white/45">
+                <span className={`w-2 h-2 rounded-sm border ${typeMeta[t].border} ${typeMeta[t].bg}`} />
+                <span className="tracking-wider uppercase">{typeMeta[t].label}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Sidebar — eventos do dia + próximos */}
+        <aside className="space-y-4">
+          {/* Eventos do dia selecionado */}
+          <div className="rounded-2xl border border-white/[0.08] p-4"
+            style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.5))' }}>
+            <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+              <div>
+                <p className="text-[11px] tracking-[0.35em] uppercase text-gold/75 font-semibold">Eventos do Dia</p>
+                <p className="text-[13px] text-white/85 mt-0.5" style={{ fontFamily: 'Georgia, serif' }}>
+                  {selDate.toLocaleDateString('pt-PT', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
+                </p>
+              </div>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-gold/15 text-gold border border-gold/30 tracking-wider uppercase font-bold">
+                {selEvents.length}
+              </span>
+            </div>
+            {selEvents.length === 0 ? (
+              <div className="py-8 text-center">
+                <span className="text-3xl opacity-20 block mb-1">∅</span>
+                <p className="text-[11px] text-white/30 italic">Sem eventos nesta data.</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {selEvents.map(e => {
+                  const m = typeMeta[e.type]
+                  return (
+                    <div key={e.id} className={`flex items-start gap-3 px-3 py-2.5 rounded-xl border ${m.border} ${m.bg}/30 hover:${m.bg}/50 transition-all`}>
+                      <div className={`w-9 h-9 rounded-lg border ${m.border} ${m.bg} flex items-center justify-center text-base shrink-0 ${m.color}`}>{m.icon}</div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-medium text-white truncate">{e.title}</p>
+                        <p className={`text-[10px] ${m.color}/75 tracking-wider uppercase mt-0.5`}>{m.label}</p>
+                        {e.subtitle && <p className="text-[10px] text-white/40 mt-0.5 truncate italic">{e.subtitle}</p>}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Próximos eventos */}
+          <div className="rounded-2xl border border-white/[0.08] p-4"
+            style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.5))' }}>
+            <p className="text-[11px] tracking-[0.35em] uppercase text-gold/75 font-semibold mb-3">Próximos Eventos</p>
+            {proximos.length === 0 ? (
+              <p className="text-[11px] text-white/30 italic text-center py-6">Sem eventos futuros.</p>
+            ) : (
+              <div className="space-y-1.5">
+                {proximos.map(e => {
+                  const m = typeMeta[e.type]
+                  const [y, mm, d] = e.iso.split('-').map(Number)
+                  const dt = new Date(y, mm-1, d)
+                  const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+                  const diff = Math.round((dt.getTime() - today.getTime()) / 86400000)
+                  const label = diff === 0 ? 'Hoje' : diff === 1 ? 'Amanhã' : `+${diff}d`
+                  return (
+                    <button key={e.id} onClick={() => { setView({ y, m: mm - 1 }); setSelectedIso(e.iso) }}
+                      className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg border border-white/[0.05] hover:border-gold/25 hover:bg-white/[0.03] transition-all text-left">
+                      <div className="flex flex-col items-center justify-center w-10 shrink-0">
+                        <span className={`text-[16px] font-light leading-none ${m.color}`} style={{ fontFamily: 'Georgia, serif' }}>{String(d).padStart(2,'0')}</span>
+                        <span className="text-[8px] tracking-widest uppercase text-white/30 mt-0.5">{meses[mm-1]}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-medium text-white truncate">{e.title}</p>
+                        <p className={`text-[10px] ${m.color}/70 tracking-wide`}>{m.icon} {m.label}</p>
+                      </div>
+                      <span className="text-[9px] text-white/35 tracking-wider uppercase shrink-0">{label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </aside>
       </div>
     </div>
   )
