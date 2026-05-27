@@ -1546,7 +1546,7 @@ function FreelancerDetailInner() {
       {tab === 'notas'        && <NotasTab freelancer={freelancer} onRefresh={load} />}
       {tab === 'pagamentos'   && <PagamentosAdminTab freelancerId={id} pagamentos={pagamentos} casamentos={casamentos} onRefresh={load} />}
       {tab === 'mensagens'    && <MensagensAdminTab freelancerId={id} freelancerNome={freelancer?.nome ?? ''} casamentos={casamentos} mensagens={mensagens} onRefresh={load} />}
-      {tab === 'notificacoes' && <NotificacoesAdminTab freelancerId={id} notificacoes={notificacoes} onRefresh={load} />}
+      {tab === 'notificacoes' && <NotificacoesAdminTab freelancerId={id} notificacoes={notificacoes} onRefresh={load} viewAsFreelancer={viewAsFreelancer} />}
     </main>
     </div>
   )
@@ -6511,7 +6511,7 @@ function parseNotifMeta(mensagem: string | null | undefined): NotifMeta {
   } catch { return { cleanMensagem: mensagem.replace(/^__META__.+?__\/META__\n?/, '') } }
 }
 
-function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh }: { freelancerId: string; notificacoes: Notificacao[]; onRefresh: () => void }) {
+function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh, viewAsFreelancer }: { freelancerId: string; notificacoes: Notificacao[]; onRefresh: () => void; viewAsFreelancer?: boolean }) {
   const [form, setForm] = useState({ titulo: '', mensagem: '', tipo: 'alerta' })
   const [sending, setSending] = useState(false)
   const [respondingNotif, setRespondingNotif] = useState<Notificacao | null>(null)
@@ -6715,60 +6715,62 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh }: { freel
         </div>
       </div>
 
-      {/* ── ENVIAR NOTIFICAÇÃO (Card premium) ────────────────────── */}
-      <div className="rounded-2xl border border-white/[0.08] p-5"
-        style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.5))' }}>
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <div className="flex items-center gap-3">
-            <span className="w-8 h-8 rounded-lg border border-gold/35 bg-gold/10 flex items-center justify-center text-gold text-sm">✎</span>
-            <div>
-              <h3 className="text-[15px] font-semibold text-white" style={{ fontFamily: 'Georgia, serif' }}>Enviar Notificação</h3>
-              <p className="text-[11px] text-white/40">Aparece no sino do membro + email opcional.</p>
+      {/* ── ENVIAR NOTIFICAÇÃO (Card premium) — só admin ─────────── */}
+      {!viewAsFreelancer && (
+        <div className="rounded-2xl border border-white/[0.08] p-5"
+          style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.5))' }}>
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <div className="flex items-center gap-3">
+              <span className="w-8 h-8 rounded-lg border border-gold/35 bg-gold/10 flex items-center justify-center text-gold text-sm">✎</span>
+              <div>
+                <h3 className="text-[15px] font-semibold text-white" style={{ fontFamily: 'Georgia, serif' }}>Enviar Notificação</h3>
+                <p className="text-[11px] text-white/40">Aparece no sino do membro + email opcional.</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
-          {/* Tipo */}
-          <div className="lg:col-span-3">
-            <label className="block text-[10px] tracking-[0.3em] uppercase text-white/40 mb-1.5">Tipo</label>
-            <select value={form.tipo} onChange={e => setForm(v => ({ ...v, tipo: e.target.value }))}
-              className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/50 [color-scheme:dark] transition-colors">
-              <option value="alerta" style={optStyle}>⚠ Alerta</option>
-              <option value="pagamento" style={optStyle}>💰 Pagamento</option>
-              <option value="briefing" style={optStyle}>📋 Briefing</option>
-            </select>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
+            {/* Tipo */}
+            <div className="lg:col-span-3">
+              <label className="block text-[10px] tracking-[0.3em] uppercase text-white/40 mb-1.5">Tipo</label>
+              <select value={form.tipo} onChange={e => setForm(v => ({ ...v, tipo: e.target.value }))}
+                className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/50 [color-scheme:dark] transition-colors">
+                <option value="alerta" style={optStyle}>⚠ Alerta</option>
+                <option value="pagamento" style={optStyle}>💰 Pagamento</option>
+                <option value="briefing" style={optStyle}>📋 Briefing</option>
+              </select>
+            </div>
+            {/* Título */}
+            <div className="lg:col-span-9">
+              <label className="block text-[10px] tracking-[0.3em] uppercase text-white/40 mb-1.5">
+                Título <span className="text-rose-300">*</span>
+              </label>
+              <input value={form.titulo} onChange={e => setForm(v => ({ ...v, titulo: e.target.value }))}
+                placeholder="Ex: Novo evento adicionado"
+                className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/50 transition-colors" />
+            </div>
+            {/* Mensagem */}
+            <div className="lg:col-span-12">
+              <label className="block text-[10px] tracking-[0.3em] uppercase text-white/40 mb-1.5">Mensagem</label>
+              <textarea value={form.mensagem} onChange={e => setForm(v => ({ ...v, mensagem: e.target.value }))}
+                rows={3} placeholder="Mensagem opcional…"
+                className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/50 resize-none leading-relaxed transition-colors" />
+            </div>
           </div>
-          {/* Título */}
-          <div className="lg:col-span-9">
-            <label className="block text-[10px] tracking-[0.3em] uppercase text-white/40 mb-1.5">
-              Título <span className="text-rose-300">*</span>
-            </label>
-            <input value={form.titulo} onChange={e => setForm(v => ({ ...v, titulo: e.target.value }))}
-              placeholder="Ex: Novo evento adicionado"
-              className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/50 transition-colors" />
-          </div>
-          {/* Mensagem */}
-          <div className="lg:col-span-12">
-            <label className="block text-[10px] tracking-[0.3em] uppercase text-white/40 mb-1.5">Mensagem</label>
-            <textarea value={form.mensagem} onChange={e => setForm(v => ({ ...v, mensagem: e.target.value }))}
-              rows={3} placeholder="Mensagem opcional…"
-              className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/50 resize-none leading-relaxed transition-colors" />
-          </div>
-        </div>
 
-        <div className="flex justify-end mt-4">
-          <button onClick={handleSend} disabled={sending || !form.titulo.trim()}
-            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[12px] font-bold tracking-wider uppercase transition-all ${
-              sending || !form.titulo.trim()
-                ? 'bg-white/[0.04] text-white/25 border border-white/10 cursor-not-allowed'
-                : 'bg-gold text-black hover:bg-gold/90'
-            }`}
-            style={!sending && form.titulo.trim() ? { boxShadow: '0 0 18px -4px rgba(201,164,92,0.5)' } : undefined}>
-            {sending ? 'A enviar…' : '✈ Enviar Notificação'}
-          </button>
+          <div className="flex justify-end mt-4">
+            <button onClick={handleSend} disabled={sending || !form.titulo.trim()}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[12px] font-bold tracking-wider uppercase transition-all ${
+                sending || !form.titulo.trim()
+                  ? 'bg-white/[0.04] text-white/25 border border-white/10 cursor-not-allowed'
+                  : 'bg-gold text-black hover:bg-gold/90'
+              }`}
+              style={!sending && form.titulo.trim() ? { boxShadow: '0 0 18px -4px rgba(201,164,92,0.5)' } : undefined}>
+              {sending ? 'A enviar…' : '✈ Enviar Notificação'}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── TABS Recebidas | Enviadas ────────────────────────────── */}
       <div className="rounded-2xl border border-white/[0.08] overflow-hidden"
