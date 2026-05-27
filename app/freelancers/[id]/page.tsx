@@ -1406,7 +1406,7 @@ function FreelancerDetailInner() {
       {tab === 'casamentos'   && <CasamentosTab freelancerId={id} casamentos={casamentos} onRefresh={load} freelancerStatus={freelancer?.status ?? null} freelancer={freelancer} viewAsFreelancer={viewAsFreelancer} fotosSelecaoMap={fotosSelecaoMap} fotosConvidadosMap={fotosConvidadosMap} setFotosConvidadosMap={setFotosConvidadosMap} />}
       {tab === 'edicao'       && <EdicaoTab freelancerId={id} edicao={edicao} onRefresh={load} />}
       {tab === 'album'        && <AlbumTab freelancerId={id} album={album} onRefresh={load} />}
-      {tab === 'tarefas'      && <TarefasTab freelancerId={id} />}
+      {tab === 'tarefas'      && <TarefasTab freelancerId={id} viewAsFreelancer={viewAsFreelancer} freelancer={freelancer} />}
       {tab === 'info'         && <InfoTab freelancerId={id} info={info} onRefresh={load} />}
       {tab === 'notas'        && <NotasTab freelancer={freelancer} onRefresh={load} />}
       {tab === 'pagamentos'   && <PagamentosAdminTab freelancerId={id} pagamentos={pagamentos} casamentos={casamentos} onRefresh={load} />}
@@ -2997,8 +2997,9 @@ function isOverdueT(t: TarefaItem): boolean {
   return t.dueDate < todayIso()
 }
 
-function TarefasTab({ freelancerId }: { freelancerId: string }) {
+function TarefasTab({ freelancerId, viewAsFreelancer, freelancer }: { freelancerId: string; viewAsFreelancer?: boolean; freelancer: Freelancer | null }) {
   const KEY = `freelancer_${freelancerId}_tasks`
+  const [showAdminAssignModal, setShowAdminAssignModal] = useState(false)
   const [tasks, setTasks] = useState<TarefaItem[]>([])
   const [loaded, setLoaded] = useState(false)
   const [filter, setFilter] = useState<'Todas'|'Pendentes'|'Em andamento'|'Concluídas'|'Atrasadas'>('Todas')
@@ -3273,6 +3274,14 @@ function TarefasTab({ freelancerId }: { freelancerId: string }) {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            {/* ADMIN: Atribuir tarefa a este freelancer (visível só quando NÃO é vista 'como freelancer') */}
+            {!viewAsFreelancer && (
+              <button onClick={() => setShowAdminAssignModal(true)}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-purple-500/45 bg-purple-500/15 text-purple-200 text-[13px] font-bold tracking-wider hover:bg-purple-500/25 hover:border-purple-400/60 transition-all"
+                style={{ boxShadow: '0 0 12px -4px rgba(168,85,247,0.5)' }}>
+                ✓ Atribuir Tarefa
+              </button>
+            )}
             <button onClick={() => setShowSendModal(true)}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-blue-500/40 bg-blue-500/10 text-blue-200 text-[13px] font-bold tracking-wider hover:bg-blue-500/20 hover:border-blue-400/60 transition-all"
               style={{ boxShadow: '0 0 12px -4px rgba(59,130,246,0.45)' }}>
@@ -3603,6 +3612,15 @@ function TarefasTab({ freelancerId }: { freelancerId: string }) {
         <EnviarTarefaModal
           senderId={freelancerId}
           onClose={() => setShowSendModal(false)}
+        />
+      )}
+
+      {/* Modal ADMIN: Atribuir Tarefa a este freelancer */}
+      {showAdminAssignModal && (
+        <AtribuirTarefaAdminModal
+          freelancerId={freelancerId}
+          freelancerNome={freelancer?.nome ?? ''}
+          onClose={() => setShowAdminAssignModal(false)}
         />
       )}
 
@@ -5599,6 +5617,183 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh }: { freel
       )}
     </div>
   )
+}
+
+// ── Modal Atribuir Tarefa (Admin → Freelancer específico) ────────
+function AtribuirTarefaAdminModal({ freelancerId, freelancerNome, onClose }: { freelancerId: string; freelancerNome: string; onClose: () => void }) {
+  const [mounted, setMounted] = useState(false)
+  const [titulo, setTitulo] = useState('')
+  const [descricao, setDescricao] = useState('')
+  const [priority, setPriority] = useState<TarefaPriority>('Média')
+  const [dueDate, setDueDate] = useState('')
+  const [sending, setSending] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => { setMounted(true) }, [])
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  const valid = titulo.trim().length >= 3
+  async function submit() {
+    if (!valid || sending) return
+    setSending(true); setError(null)
+    try {
+      const prazoLabel = dueDate ? new Date(dueDate).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' }) : null
+      const threadId = (typeof crypto !== 'undefined' && 'randomUUID' in crypto) ? crypto.randomUUID() : `t-${Date.now()}-${Math.random().toString(36).slice(2)}`
+      const ADMIN_SENDER = 'admin'
+      const ADMIN_NAME   = 'Admin RL Photo·Video'
+      const titleFull = `✓ Nova tarefa do Admin — ${titulo.trim()}`
+      const meta = JSON.stringify({
+        senderId: ADMIN_SENDER, senderName: ADMIN_NAME,
+        threadId, creatorId: ADMIN_SENDER, creatorName: ADMIN_NAME,
+        threadTitle: titulo.trim(),
+      })
+      const mensagem = [
+        `__META__${meta}__/META__`,
+        descricao.trim() || null,
+        `Prioridade: ${priority}`,
+        prazoLabel ? `Prazo: ${prazoLabel}` : null,
+        `Atribuída por: ${ADMIN_NAME}`,
+        'Esta tarefa precisa da tua resposta no portal.',
+      ].filter(Boolean).join('\n')
+
+      // 1) Notificação no portal (sino vermelho)
+      await fetch('/api/freelancer-notificacoes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          freelancer_id: freelancerId,
+          titulo: titleFull,
+          mensagem,
+          tipo: 'nova_tarefa_atribuida',
+          lida: false,
+        }),
+      })
+
+      // 2) Email com o card 'Nova tarefa atribuída'
+      try {
+        await fetch('/api/send-nova-tarefa-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            freelancer_id: freelancerId,
+            titulo: titulo.trim(),
+            descricao: descricao.trim() || null,
+            prazo: prazoLabel,
+            prioridade: priority,
+          }),
+        })
+      } catch { /* opcional */ }
+
+      setSuccess(true)
+      setTimeout(() => onClose(), 1600)
+    } catch (e: any) {
+      setError(e?.message ?? 'Erro ao atribuir tarefa')
+    } finally { setSending(false) }
+  }
+
+  if (!mounted || typeof document === 'undefined') return null
+
+  const modal = (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/90 backdrop-blur-md" />
+      <div className="relative z-10 w-full max-w-md rounded-3xl overflow-hidden border border-purple-500/35 shadow-2xl"
+        style={{ background: 'linear-gradient(180deg, #14081a, #0a050e)' }}
+        onClick={e => e.stopPropagation()}>
+        <div className="h-0.5 w-full bg-purple-500/75" />
+        <div className="px-6 pt-5 pb-3 border-b border-white/[0.05] flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[10px] tracking-[0.5em] text-purple-300/85 uppercase mb-1">Atribuir Tarefa</p>
+            <h2 className="text-lg font-light tracking-[0.05em] text-white" style={{ fontFamily: 'Georgia, serif' }}>
+              Para <span className="italic text-purple-200">{freelancerNome || 'este membro'}</span>
+            </h2>
+          </div>
+          <button onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/35 hover:text-white hover:border-white/30 transition-all">✕</button>
+        </div>
+
+        {success ? (
+          <div className="px-6 py-10 text-center">
+            <div className="w-14 h-14 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-300 text-2xl mx-auto mb-3"
+              style={{ boxShadow: '0 0 24px -4px rgba(52,211,153,0.5)' }}>✓</div>
+            <p className="text-[14px] text-white font-medium">Tarefa atribuída!</p>
+            <p className="text-[12px] text-white/55 mt-1">{freelancerNome} foi notificado por sino + email com o card.</p>
+          </div>
+        ) : (
+          <>
+            <div className="px-6 py-5 space-y-3">
+              {/* Banner explicativo */}
+              <div className="flex items-start gap-3 px-3 py-2.5 rounded-xl border border-purple-500/25 bg-purple-500/[0.06]">
+                <span className="text-purple-300 text-base shrink-0 mt-0.5">ⓘ</span>
+                <p className="text-[11px] text-purple-100/85 leading-relaxed">
+                  O membro recebe a tarefa no <span className="font-semibold">sino do portal</span> (em vermelho) e por <span className="font-semibold">email</span> com o card visual. Vai precisar de dar resposta.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-[10px] tracking-[0.3em] uppercase text-white/45 mb-1.5">
+                  Título <span className="text-red-300">*</span>
+                </label>
+                <input value={titulo} onChange={e => setTitulo(e.target.value)} autoFocus
+                  placeholder="O que precisa de ser feito?"
+                  className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-purple-400/50" />
+              </div>
+
+              <div>
+                <label className="block text-[10px] tracking-[0.3em] uppercase text-white/45 mb-1.5">Descrição</label>
+                <textarea value={descricao} onChange={e => setDescricao(e.target.value)} rows={3}
+                  placeholder="Detalhes, instruções, contexto…"
+                  className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-purple-400/50 resize-none leading-relaxed" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] tracking-[0.3em] uppercase text-white/45 mb-1.5">Prioridade</label>
+                  <select value={priority} onChange={e => setPriority(e.target.value as TarefaPriority)}
+                    className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-[13px] text-white focus:outline-none focus:border-purple-400/50 [color-scheme:dark]">
+                    <option value="Alta">Alta</option>
+                    <option value="Média">Média</option>
+                    <option value="Baixa">Baixa</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] tracking-[0.3em] uppercase text-white/45 mb-1.5">Prazo</label>
+                  <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-[13px] text-white focus:outline-none focus:border-purple-400/50 [color-scheme:dark]" />
+                </div>
+              </div>
+
+              {error && (
+                <p className="text-[11px] text-red-300 bg-red-500/10 border border-red-500/30 rounded-md px-3 py-2">⚠ {error}</p>
+              )}
+            </div>
+
+            <div className="px-6 py-4 border-t border-white/[0.05] flex items-center justify-end gap-2 bg-black/30">
+              <button onClick={onClose}
+                className="px-4 py-2 rounded-lg text-[11px] tracking-wider uppercase text-white/55 hover:text-white border border-white/10 hover:border-white/30 transition-all">
+                Cancelar
+              </button>
+              <button onClick={submit} disabled={!valid || sending}
+                className={`px-5 py-2 rounded-lg text-[11px] tracking-wider uppercase font-bold transition-all ${
+                  valid && !sending
+                    ? 'bg-purple-500 text-white hover:bg-purple-400'
+                    : 'bg-white/[0.04] text-white/25 cursor-not-allowed border border-white/10'
+                }`}
+                style={valid && !sending ? { boxShadow: '0 0 14px -4px rgba(168,85,247,0.6)' } : undefined}>
+                {sending ? 'A atribuir...' : '✓ Atribuir Tarefa'}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+
+  return createPortal(modal, document.body)
 }
 
 // ── Modal Conversação — mostra toda a thread de uma tarefa ────────
