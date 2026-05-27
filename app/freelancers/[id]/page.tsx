@@ -3005,6 +3005,7 @@ function TarefasTab({ freelancerId }: { freelancerId: string }) {
   const [search, setSearch] = useState('')
   const [showCompleted, setShowCompleted] = useState(false)
   const [showNewModal, setShowNewModal] = useState(false)
+  const [showSendModal, setShowSendModal] = useState(false)                       // modal 'Enviar Tarefa' para outro membro
   const [completingTask, setCompletingTask] = useState<TarefaItem | null>(null)  // tarefa a concluir (precisa de resposta)
   const [viewingTask, setViewingTask] = useState<TarefaItem | null>(null)        // tarefa concluída cujo resultado se quer ver
   // Calendário
@@ -3250,11 +3251,18 @@ function TarefasTab({ freelancerId }: { freelancerId: string }) {
               <p className="text-[13px] text-white/55 mt-1 max-w-md">Gerencia todas as tuas tarefas. Sincronizadas com os teus projetos e prazos.</p>
             </div>
           </div>
-          <button onClick={() => setShowNewModal(true)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black text-[13px] font-bold tracking-wider hover:bg-gold/90 transition-all"
-            style={{ boxShadow: '0 0 20px -4px rgba(201,164,92,0.5)' }}>
-            <span className="text-lg leading-none">+</span> Nova Tarefa
-          </button>
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <button onClick={() => setShowSendModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-blue-500/40 bg-blue-500/10 text-blue-200 text-[13px] font-bold tracking-wider hover:bg-blue-500/20 hover:border-blue-400/60 transition-all"
+              style={{ boxShadow: '0 0 12px -4px rgba(59,130,246,0.45)' }}>
+              ✈ Enviar Tarefa
+            </button>
+            <button onClick={() => setShowNewModal(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black text-[13px] font-bold tracking-wider hover:bg-gold/90 transition-all"
+              style={{ boxShadow: '0 0 20px -4px rgba(201,164,92,0.5)' }}>
+              <span className="text-lg leading-none">+</span> Nova Tarefa
+            </button>
+          </div>
         </div>
       </div>
 
@@ -3474,8 +3482,214 @@ function TarefasTab({ freelancerId }: { freelancerId: string }) {
           onClose={() => setViewingTask(null)}
         />
       )}
+
+      {/* Modal Enviar Tarefa para outro membro */}
+      {showSendModal && (
+        <EnviarTarefaModal
+          senderId={freelancerId}
+          onClose={() => setShowSendModal(false)}
+        />
+      )}
     </div>
   )
+}
+
+// ── Modal Enviar Tarefa — envia tarefa para outro membro da equipa ──
+function EnviarTarefaModal({ senderId, onClose }: { senderId: string; onClose: () => void }) {
+  const [mounted, setMounted] = useState(false)
+  const [members, setMembers] = useState<Array<{ id: string; nome: string; status: string | null; email: string | null }>>([])
+  const [senderName, setSenderName] = useState('')
+  const [recipientId, setRecipientId] = useState('')
+  const [titulo, setTitulo] = useState('')
+  const [descricao, setDescricao] = useState('')
+  const [priority, setPriority] = useState<TarefaPriority>('Média')
+  const [dueDate, setDueDate] = useState('')
+  const [sending, setSending] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => { setMounted(true) }, [])
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  useEffect(() => {
+    fetch('/api/freelancers')
+      .then(r => r.json())
+      .then(d => {
+        const list = (d.freelancers ?? []) as Array<{ id: string; nome: string; status: string | null; email: string | null }>
+        // Encontra nome do remetente
+        const me = list.find(f => f.id === senderId)
+        if (me) setSenderName(me.nome ?? '')
+        // Exclui o próprio
+        setMembers(list.filter(f => f.id !== senderId).sort((a, b) => (a.nome ?? '').localeCompare(b.nome ?? '')))
+      })
+      .catch(() => setMembers([]))
+  }, [senderId])
+
+  const recipient = members.find(m => m.id === recipientId)
+  const valid = recipientId && titulo.trim().length >= 3
+
+  async function submit() {
+    if (!valid) return
+    setSending(true); setError(null)
+    try {
+      const prazoLabel = dueDate ? new Date(dueDate).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' }) : null
+      const titleFull  = `✈ Nova tarefa de ${senderName || 'um colega'} — ${titulo.trim()}`
+      const mensagem = [
+        descricao.trim() ? descricao.trim() : null,
+        `Prioridade: ${priority}`,
+        prazoLabel ? `Prazo: ${prazoLabel}` : null,
+        senderName ? `Enviada por: ${senderName}` : null,
+        'Esta tarefa precisa da tua resposta.',
+      ].filter(Boolean).join('\n')
+
+      // 1) Notificação no portal do destinatário (sino vermelho)
+      await fetch('/api/freelancer-notificacoes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          freelancer_id: recipientId,
+          titulo: titleFull,
+          mensagem,
+          tipo: 'nova_tarefa_atribuida',
+          lida: false,
+        }),
+      })
+
+      // 2) Email para o destinatário (template já existente — texto curto)
+      try {
+        await fetch('/api/send-notif-freelancer-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ freelancer_id: recipientId, titulo: titleFull }),
+        })
+      } catch { /* opcional */ }
+
+      setSuccess(true)
+      // Fechar após 1.5s
+      setTimeout(() => { onClose() }, 1500)
+    } catch (e: any) {
+      setError(e?.message ?? 'Erro ao enviar tarefa')
+    } finally { setSending(false) }
+  }
+
+  if (!mounted || typeof document === 'undefined') return null
+
+  const modal = (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/90 backdrop-blur-md" />
+      <div className="relative z-10 w-full max-w-md rounded-3xl overflow-hidden border border-blue-500/30 shadow-2xl"
+        style={{ background: 'linear-gradient(180deg, #0a1018, #060810)' }}
+        onClick={e => e.stopPropagation()}>
+        <div className="h-0.5 w-full bg-blue-500/70" />
+        <div className="px-6 pt-5 pb-3 border-b border-white/[0.05] flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[10px] tracking-[0.5em] text-blue-300/85 uppercase mb-1">Enviar Tarefa</p>
+            <h2 className="text-xl font-light tracking-[0.05em] text-white" style={{ fontFamily: 'Georgia, serif' }}>Para a equipa</h2>
+          </div>
+          <button onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/35 hover:text-white hover:border-white/30 transition-all">✕</button>
+        </div>
+
+        {success ? (
+          <div className="px-6 py-10 text-center">
+            <div className="w-14 h-14 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-300 text-2xl mx-auto mb-3"
+              style={{ boxShadow: '0 0 24px -4px rgba(52,211,153,0.5)' }}>✓</div>
+            <p className="text-[14px] text-white font-medium">Tarefa enviada!</p>
+            <p className="text-[12px] text-white/55 mt-1">{recipient?.nome} foi notificado por sino + email.</p>
+          </div>
+        ) : (
+          <>
+            <div className="px-6 py-5 space-y-3">
+              {/* Banner azul explicativo */}
+              <div className="flex items-start gap-3 px-3 py-2.5 rounded-xl border border-blue-500/25 bg-blue-500/[0.05]">
+                <span className="text-blue-300 text-base shrink-0 mt-0.5">ⓘ</span>
+                <p className="text-[11px] text-blue-100/85 leading-relaxed">
+                  O membro escolhido recebe a tarefa no <span className="font-semibold">sino do portal</span> e por <span className="font-semibold">email</span>. Vai precisar de dar resposta.
+                </p>
+              </div>
+
+              {/* Destinatário */}
+              <div>
+                <label className="block text-[10px] tracking-[0.3em] uppercase text-white/45 mb-1.5">
+                  Destinatário <span className="text-red-300">*</span>
+                </label>
+                <select value={recipientId} onChange={e => setRecipientId(e.target.value)}
+                  className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-[13px] text-white focus:outline-none focus:border-blue-400/50 [color-scheme:dark]">
+                  <option value="">— Escolhe um membro —</option>
+                  {members.map(m => (
+                    <option key={m.id} value={m.id}>{m.nome}{m.status ? ` · ${m.status}` : ''}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Título */}
+              <div>
+                <label className="block text-[10px] tracking-[0.3em] uppercase text-white/45 mb-1.5">
+                  Título <span className="text-red-300">*</span>
+                </label>
+                <input value={titulo} onChange={e => setTitulo(e.target.value)} autoFocus
+                  placeholder="O que precisa de ser feito?"
+                  className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-blue-400/50" />
+              </div>
+
+              {/* Descrição */}
+              <div>
+                <label className="block text-[10px] tracking-[0.3em] uppercase text-white/45 mb-1.5">Descrição</label>
+                <textarea value={descricao} onChange={e => setDescricao(e.target.value)} rows={3}
+                  placeholder="Detalhes, instruções, contexto… (opcional)"
+                  className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-blue-400/50 resize-none leading-relaxed" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] tracking-[0.3em] uppercase text-white/45 mb-1.5">Prioridade</label>
+                  <select value={priority} onChange={e => setPriority(e.target.value as TarefaPriority)}
+                    className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-[13px] text-white focus:outline-none focus:border-blue-400/50 [color-scheme:dark]">
+                    <option value="Alta">Alta</option>
+                    <option value="Média">Média</option>
+                    <option value="Baixa">Baixa</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] tracking-[0.3em] uppercase text-white/45 mb-1.5">Prazo</label>
+                  <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-[13px] text-white focus:outline-none focus:border-blue-400/50 [color-scheme:dark]" />
+                </div>
+              </div>
+
+              {error && (
+                <p className="text-[11px] text-red-300 bg-red-500/10 border border-red-500/30 rounded-md px-3 py-2">
+                  ⚠ {error}
+                </p>
+              )}
+            </div>
+
+            <div className="px-6 py-4 border-t border-white/[0.05] flex items-center justify-end gap-2 bg-black/30">
+              <button onClick={onClose}
+                className="px-4 py-2 rounded-lg text-[11px] tracking-wider uppercase text-white/55 hover:text-white border border-white/10 hover:border-white/30 transition-all">
+                Cancelar
+              </button>
+              <button onClick={submit} disabled={!valid || sending}
+                className={`px-5 py-2 rounded-lg text-[11px] tracking-wider uppercase font-bold transition-all ${
+                  valid && !sending
+                    ? 'bg-blue-500 text-white hover:bg-blue-400'
+                    : 'bg-white/[0.04] text-white/25 cursor-not-allowed border border-white/10'
+                }`}
+                style={valid && !sending ? { boxShadow: '0 0 14px -4px rgba(59,130,246,0.6)' } : undefined}>
+                {sending ? 'A enviar...' : '✈ Enviar Tarefa'}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+
+  return createPortal(modal, document.body)
 }
 
 // ── Modal Ver Resposta — apresenta a resposta de conclusão (read-only) ──

@@ -20,6 +20,7 @@ const TIPO_LABELS: Record<string, string> = {
   status_provas:            'Estado · Fotos Prova',
   fotos_convidados_email:   'Fotos Convidados · Email Enviado',
   fotos_convidados_ctt:     'Fotos Convidados · CTT Enviado',
+  nova_tarefa_atribuida:    'Tarefa enviada entre membros',
 }
 
 const TIPO_ICONS: Record<string, string> = {
@@ -34,6 +35,7 @@ const TIPO_ICONS: Record<string, string> = {
   status_provas:            '◧',
   fotos_convidados_email:   '@',
   fotos_convidados_ctt:     '✉',
+  nova_tarefa_atribuida:    '✈',
 }
 
 type Notif = {
@@ -147,6 +149,41 @@ export async function GET() {
           sent_at: ts,
         })
       }
+    }
+
+    // ── Tarefas enviadas entre membros (freelancer_notificacoes tipo='nova_tarefa_atribuida') ──
+    try {
+      const { data: tasksSent } = await supabase
+        .from('freelancer_notificacoes')
+        .select('id, freelancer_id, titulo, mensagem, created_at')
+        .eq('tipo', 'nova_tarefa_atribuida')
+        .order('created_at', { ascending: false })
+        .limit(50)
+      // Map de id → nome para destinatários
+      const recipIds = Array.from(new Set((tasksSent ?? []).map((n: any) => n.freelancer_id).filter(Boolean)))
+      const moreNomesById = new Map<string, string>(nomesById)
+      const missing = recipIds.filter(id => !moreNomesById.has(id))
+      if (missing.length > 0) {
+        const { data: fls2 } = await supabase.from('freelancers').select('id, nome').in('id', missing)
+        for (const f of (fls2 ?? []) as any[]) moreNomesById.set(f.id, f.nome)
+      }
+      for (const n of (tasksSent ?? []) as any[]) {
+        notifications.push({
+          id: `nova_tarefa::${n.id}`,
+          tipo: 'nova_tarefa_atribuida',
+          tipo_label: TIPO_LABELS.nova_tarefa_atribuida,
+          tipo_icon: TIPO_ICONS.nova_tarefa_atribuida,
+          casamento_id: '',
+          freelancer_id: n.freelancer_id,
+          freelancer_nome: moreNomesById.get(n.freelancer_id) ?? '—',
+          local: (n.titulo ?? '').replace(/^✈ Nova tarefa de /,'').slice(0, 80),
+          data_casamento: null,
+          url: `/freelancers/${n.freelancer_id}`,
+          sent_at: n.created_at,
+        })
+      }
+    } catch (err) {
+      console.warn('[admin-notifications] nova_tarefa_atribuida read failed:', err)
     }
 
     // ── Notificações de NOVA SELEÇÃO DOS NOIVOS (tabela fotos_selecao) ──
