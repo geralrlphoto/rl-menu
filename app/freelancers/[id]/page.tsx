@@ -548,7 +548,7 @@ function FreelancerDetailInner() {
 
     <main className={`relative z-10 min-h-screen px-4 sm:px-6 py-6 mx-auto lg:pl-[252px] lg:pr-4 ${
       tab === null ? 'max-w-none'
-        : (['casamentos', 'edicao', 'album', 'pagamentos', 'tarefas', 'calendario', 'definicoes'] as Array<string | null>).includes(tab) ? 'max-w-[1500px]'
+        : (['casamentos', 'edicao', 'album', 'pagamentos', 'tarefas', 'calendario', 'definicoes', 'notificacoes'] as Array<string | null>).includes(tab) ? 'max-w-[1500px]'
         : 'max-w-3xl'
     }`}>
       {/* Tabs — horizontal apenas em mobile (desktop usa sidebar) */}
@@ -6679,226 +6679,301 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh }: { freel
     onRefresh()
   }
 
+  // Estatísticas
+  const totalRecebidas = notificacoes.length
+  const naoLidas = notificacoes.filter(n => !n.lida).length
+  const tarefasAtivas = notificacoes.filter(n => n.tipo === 'nova_tarefa_atribuida' && !n.lida).length
+  const respostasPendentes = notificacoes.filter(n => n.tipo === 'resposta_tarefa' && !n.lida).length
+
   return (
-    <div className="space-y-6">
-      <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 space-y-3">
-        <p className={labelCls}>Enviar Notificação</p>
-        <div>
-          <label className={labelCls}>Tipo</label>
-          <select value={form.tipo} onChange={e => setForm(v => ({ ...v, tipo: e.target.value }))} className={selectCls}>
-            <option value="alerta" style={optStyle}>⚠ Alerta</option>
-            <option value="pagamento" style={optStyle}>💰 Pagamento</option>
-            <option value="briefing" style={optStyle}>📋 Briefing</option>
-          </select>
+    <div className="space-y-5">
+      {/* ── HERO ────────────────────────────────────────────────── */}
+      <div className="relative overflow-hidden rounded-3xl border border-white/[0.08]"
+        style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.6)' }}>
+        <div className="absolute inset-0 z-0">
+          <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=1600&h=240&fit=crop"
+            alt="" className="w-full h-full object-cover" style={{ filter: 'blur(2px)' }} />
         </div>
-        <div>
-          <label className={labelCls}>Título *</label>
-          <input value={form.titulo} onChange={e => setForm(v => ({ ...v, titulo: e.target.value }))}
-            placeholder="Ex: Novo evento adicionado" className={inputCls} />
-        </div>
-        <div>
-          <label className={labelCls}>Mensagem</label>
-          <textarea value={form.mensagem} onChange={e => setForm(v => ({ ...v, mensagem: e.target.value }))}
-            rows={3} placeholder="Mensagem opcional..."
-            className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-[14px] text-white/80 outline-none focus:border-gold/40 transition-colors resize-none placeholder:text-white/15" />
-        </div>
-        <div className="flex justify-end">
-          <button onClick={handleSend} disabled={sending || !form.titulo.trim()}
-            className="px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-[14px] font-semibold tracking-widest hover:bg-gold/20 disabled:opacity-40 transition-all uppercase">
-            {sending ? 'A enviar...' : 'Enviar'}
-          </button>
-        </div>
-      </div>
-
-      {/* Separador: Recebidas | Enviadas */}
-      <div className="flex items-center gap-1 mb-3 border-b border-white/[0.06]">
-        {([
-          { key: 'recebidas' as const, label: 'Recebidas', count: notificacoes.length },
-          { key: 'enviadas'  as const, label: 'Tarefas Enviadas', count: sentNotifs.length },
-        ]).map(t => (
-          <button key={t.key} onClick={() => setActiveTab(t.key)}
-            className={`relative px-4 py-2.5 text-[12px] tracking-[0.2em] uppercase font-semibold transition-all ${
-              activeTab === t.key
-                ? 'text-gold'
-                : 'text-white/40 hover:text-white/75'
-            }`}>
-            {t.label}
-            <span className={`ml-2 text-[10px] px-1.5 py-0.5 rounded-full ${
-              activeTab === t.key ? 'bg-gold/20 text-gold border border-gold/30' : 'bg-white/[0.06] text-white/40'
-            }`}>{t.count}</span>
-            {activeTab === t.key && <span className="absolute bottom-0 left-3 right-3 h-px bg-gold" />}
-          </button>
-        ))}
-      </div>
-
-      {activeTab === 'recebidas' && (notificacoes.length === 0 ? (
-        <p className="text-center py-6 text-white/20 text-[14px] tracking-widest">Sem notificações recebidas.</p>
-      ) : (
-        <>
-          {/* Botão 'Marcar todas como lidas' (só quando há não lidas) */}
-          {notificacoes.some(n => !n.lida) && (
-            <div className="flex justify-end mb-2">
-              <button onClick={handleMarkAllRead}
-                className="px-3 py-1.5 rounded-lg text-[11px] tracking-widest uppercase text-white/45 hover:text-gold border border-white/10 hover:border-gold/30 transition-all">
-                ✓ Marcar todas como lidas
-              </button>
+        <div className="absolute inset-0 z-[1]"
+          style={{ background: 'linear-gradient(90deg, rgba(10,10,10,0.96) 0%, rgba(10,10,10,0.85) 35%, rgba(10,10,10,0.45) 70%, rgba(10,10,10,0.05) 100%)' }} />
+        <div className="relative z-10 flex items-center justify-between gap-6 px-6 sm:px-10 py-6 sm:py-7 flex-wrap">
+          <div className="flex items-center gap-5">
+            <div className="w-14 h-14 rounded-2xl border border-rose-500/45 flex items-center justify-center text-2xl text-rose-300 shrink-0"
+              style={{ background: 'radial-gradient(circle at 30% 30%, rgba(244,63,94,0.18), rgba(244,63,94,0.04))', boxShadow: '0 0 22px -4px rgba(244,63,94,0.35)' }}>◉</div>
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>Notificações</h1>
+              <p className="text-[12px] text-white/50 mt-0.5 leading-relaxed max-w-md">Envia alertas e gere a conversação de tarefas com este membro.</p>
             </div>
-          )}
-          <div className="space-y-2">
-            {notificacoes.map(n => {
-              const meta = parseNotifMeta(n.mensagem)
-              const isTaskAssigned = n.tipo === 'nova_tarefa_atribuida'
-              const isTaskResposta = n.tipo === 'resposta_tarefa'
-              const isTaskConcluida = n.tipo === 'tarefa_concluida'
-              const isTaskMessage  = isTaskAssigned || isTaskResposta || isTaskConcluida
-              const isCreator      = !!meta.creatorId && meta.creatorId === freelancerId
-              const isTaskHighlight = isTaskAssigned && !n.lida
-              const accentBorder = isTaskAssigned ? 'border-blue-500/35 bg-blue-500/[0.05]'
-                : isTaskResposta ? 'border-indigo-500/35 bg-indigo-500/[0.05]'
-                : isTaskConcluida ? 'border-emerald-500/35 bg-emerald-500/[0.05]'
-                : 'border-gold/20 bg-gold/[0.03]'
-              return (
-              <div key={n.id}
-                className={`flex items-start gap-3 px-4 py-3 rounded-xl border group transition-colors ${
-                  n.lida ? 'border-white/[0.04] bg-white/[0.01]' : accentBorder
-                }`}>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className={`text-[14px] tracking-widest uppercase font-semibold ${
-                      isTaskHighlight ? 'text-blue-300' : 'text-white/30'
-                    }`}>{n.tipo}</span>
-                    {n.lida
-                      ? <span className="text-[14px] text-emerald-400/55">✓ lida</span>
-                      : isTaskAssigned
-                        ? <span className="text-[14px] text-blue-300 font-bold">✈ NOVA TAREFA</span>
-                        : isTaskResposta
-                          ? <span className="text-[14px] text-indigo-300 font-bold">↩ NOVA RESPOSTA</span>
-                          : isTaskConcluida
-                            ? <span className="text-[14px] text-emerald-300 font-bold">✓ TAREFA CONCLUÍDA</span>
-                            : <span className="text-[14px] text-gold/70 font-bold">• não lida</span>
-                    }
-                  </div>
-                  <p className={`text-[14px] ${n.lida ? 'text-white/60' : 'text-white/90 font-medium'}`}>{n.titulo}</p>
-                  {meta.cleanMensagem && <p className="text-[13px] text-white/55 mt-1 whitespace-pre-wrap leading-relaxed">{meta.cleanMensagem}</p>}
-                  <p className="text-[12px] text-white/25 mt-1.5">{new Date(n.created_at).toLocaleDateString('pt-PT')}</p>
-                </div>
-                <div className="flex flex-col items-end gap-1.5 mt-0.5 flex-shrink-0">
-                  {/* VER CONVERSAÇÃO — qualquer mensagem de tarefa com threadId */}
-                  {isTaskMessage && meta.threadId && (
-                    <button onClick={() => setViewingThread({ threadId: meta.threadId!, title: meta.threadTitle || n.titulo })}
-                      title="Ver toda a conversação desta tarefa"
-                      className="px-3 py-1.5 rounded-md text-[10px] tracking-wider uppercase font-bold border border-gold/35 bg-gold/10 text-gold hover:bg-gold/20 hover:border-gold/55 transition-all flex items-center gap-1">
-                      💬 Ver Conversação
-                    </button>
-                  )}
-                  {/* RESPONDER — só para tarefas atribuídas/respostas (não concluídas), e não és o próprio remetente */}
-                  {!isTaskConcluida && (isTaskAssigned || isTaskResposta) && meta.senderId && meta.senderId !== freelancerId && (
-                    <button onClick={() => setRespondingNotif(n)}
-                      title="Responder ao remetente"
-                      className="px-3 py-1.5 rounded-md text-[10px] tracking-wider uppercase font-bold border border-blue-500/45 bg-blue-500/20 text-blue-200 hover:bg-blue-500/30 hover:border-blue-400/60 transition-all flex items-center gap-1"
-                      style={{ boxShadow: '0 0 10px -4px rgba(59,130,246,0.5)' }}>
-                      ↩ Responder
-                    </button>
-                  )}
-                  <div className="flex items-center gap-1.5">
-                    {!n.lida && (
-                      <button onClick={() => handleMarkRead(n.id, true)}
-                        title="Marcar como lida"
-                        className="px-2 py-1 rounded-md text-[10px] tracking-wider uppercase font-semibold border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 hover:border-emerald-400/50 transition-all">
-                        ✓ Lida
-                      </button>
-                    )}
-                    {n.lida && (
-                      <button onClick={() => handleMarkRead(n.id, false)}
-                        title="Marcar como não lida"
-                        className="px-2 py-1 rounded-md text-[10px] tracking-wider uppercase font-semibold border border-white/10 bg-white/[0.03] text-white/40 hover:text-gold hover:border-gold/30 transition-all opacity-0 group-hover:opacity-100">
-                        ↺ Não lida
-                      </button>
-                    )}
-                    <button onClick={() => handleDelete(n.id)}
-                      title="Apagar"
-                      className="w-7 h-7 flex items-center justify-center rounded-md text-white/15 hover:text-red-400 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100">✕</button>
-                  </div>
-                </div>
-              </div>
-              )
-            })}
           </div>
-        </>
-      ))}
+          {/* KPIs no hero */}
+          <div className="flex items-center gap-2 flex-wrap shrink-0">
+            <NotifHeroKpi label="Não lidas" value={naoLidas} accent="rose" />
+            <NotifHeroKpi label="Tarefas" value={tarefasAtivas} accent="blue" />
+            <NotifHeroKpi label="Respostas" value={respostasPendentes} accent="indigo" />
+            <NotifHeroKpi label="Total" value={totalRecebidas} accent="gold" />
+          </div>
+        </div>
+      </div>
 
-      {/* Tab: Tarefas Enviadas — notifs em que o senderId do META sou eu */}
-      {activeTab === 'enviadas' && (
-        loadingSent ? (
-          <p className="text-center py-6 text-white/30 text-[13px] italic">A carregar tarefas enviadas…</p>
-        ) : sentNotifs.length === 0 ? (
-          <div className="text-center py-10">
-            <span className="text-4xl opacity-20 block mb-2">✈</span>
-            <p className="text-[13px] text-white/35 italic">Ainda não enviaste tarefas a outros membros.</p>
-            <p className="text-[11px] text-white/25 mt-1">Vai a <span className="text-gold/70">Tarefas → ✈ Enviar Tarefa</span> para começar.</p>
+      {/* ── ENVIAR NOTIFICAÇÃO (Card premium) ────────────────────── */}
+      <div className="rounded-2xl border border-white/[0.08] p-5"
+        style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.5))' }}>
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div className="flex items-center gap-3">
+            <span className="w-8 h-8 rounded-lg border border-gold/35 bg-gold/10 flex items-center justify-center text-gold text-sm">✎</span>
+            <div>
+              <h3 className="text-[15px] font-semibold text-white" style={{ fontFamily: 'Georgia, serif' }}>Enviar Notificação</h3>
+              <p className="text-[11px] text-white/40">Aparece no sino do membro + email opcional.</p>
+            </div>
           </div>
-        ) : (
-          <div className="space-y-2">
-            {/* Agrupa por threadId */}
-            {(() => {
-              const groups = new Map<string, { items: Notificacao[]; firstMeta: ReturnType<typeof parseNotifMeta> | null }>()
-              sentNotifs.forEach(n => {
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
+          {/* Tipo */}
+          <div className="lg:col-span-3">
+            <label className="block text-[10px] tracking-[0.3em] uppercase text-white/40 mb-1.5">Tipo</label>
+            <select value={form.tipo} onChange={e => setForm(v => ({ ...v, tipo: e.target.value }))}
+              className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/50 [color-scheme:dark] transition-colors">
+              <option value="alerta" style={optStyle}>⚠ Alerta</option>
+              <option value="pagamento" style={optStyle}>💰 Pagamento</option>
+              <option value="briefing" style={optStyle}>📋 Briefing</option>
+            </select>
+          </div>
+          {/* Título */}
+          <div className="lg:col-span-9">
+            <label className="block text-[10px] tracking-[0.3em] uppercase text-white/40 mb-1.5">
+              Título <span className="text-rose-300">*</span>
+            </label>
+            <input value={form.titulo} onChange={e => setForm(v => ({ ...v, titulo: e.target.value }))}
+              placeholder="Ex: Novo evento adicionado"
+              className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/50 transition-colors" />
+          </div>
+          {/* Mensagem */}
+          <div className="lg:col-span-12">
+            <label className="block text-[10px] tracking-[0.3em] uppercase text-white/40 mb-1.5">Mensagem</label>
+            <textarea value={form.mensagem} onChange={e => setForm(v => ({ ...v, mensagem: e.target.value }))}
+              rows={3} placeholder="Mensagem opcional…"
+              className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/50 resize-none leading-relaxed transition-colors" />
+          </div>
+        </div>
+
+        <div className="flex justify-end mt-4">
+          <button onClick={handleSend} disabled={sending || !form.titulo.trim()}
+            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[12px] font-bold tracking-wider uppercase transition-all ${
+              sending || !form.titulo.trim()
+                ? 'bg-white/[0.04] text-white/25 border border-white/10 cursor-not-allowed'
+                : 'bg-gold text-black hover:bg-gold/90'
+            }`}
+            style={!sending && form.titulo.trim() ? { boxShadow: '0 0 18px -4px rgba(201,164,92,0.5)' } : undefined}>
+            {sending ? 'A enviar…' : '✈ Enviar Notificação'}
+          </button>
+        </div>
+      </div>
+
+      {/* ── TABS Recebidas | Enviadas ────────────────────────────── */}
+      <div className="rounded-2xl border border-white/[0.08] overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.5))' }}>
+        <div className="flex items-center justify-between gap-3 px-5 pt-4 pb-0 flex-wrap">
+          <div className="flex items-center gap-1 border-b border-white/[0.06] -mb-px">
+            {([
+              { key: 'recebidas' as const, label: 'Recebidas', count: notificacoes.length, icon: '◉' },
+              { key: 'enviadas'  as const, label: 'Tarefas Enviadas', count: sentNotifs.length, icon: '✈' },
+            ]).map(t => (
+              <button key={t.key} onClick={() => setActiveTab(t.key)}
+                className={`relative px-4 py-2.5 text-[11px] tracking-[0.25em] uppercase font-bold transition-all flex items-center gap-2 ${
+                  activeTab === t.key ? 'text-gold' : 'text-white/40 hover:text-white/75'
+                }`}>
+                <span className="text-[13px]">{t.icon}</span>
+                {t.label}
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full transition-colors ${
+                  activeTab === t.key ? 'bg-gold/15 text-gold border border-gold/35' : 'bg-white/[0.06] text-white/40 border border-white/10'
+                }`}>{t.count}</span>
+                {activeTab === t.key && <span className="absolute bottom-0 left-3 right-3 h-px bg-gold" />}
+              </button>
+            ))}
+          </div>
+          {activeTab === 'recebidas' && notificacoes.some(n => !n.lida) && (
+            <button onClick={handleMarkAllRead}
+              className="px-3 py-1.5 rounded-lg text-[10px] tracking-widest uppercase font-bold text-white/55 hover:text-gold border border-white/10 hover:border-gold/40 hover:bg-gold/5 transition-all">
+              ✓ Marcar todas como lidas
+            </button>
+          )}
+        </div>
+
+        <div className="px-5 pb-5 pt-4">
+          {/* ── RECEBIDAS ──────────────────────────────────────── */}
+          {activeTab === 'recebidas' && (notificacoes.length === 0 ? (
+            <div className="text-center py-12">
+              <span className="text-5xl opacity-15 block mb-3">◉</span>
+              <p className="text-[13px] text-white/35 italic">Sem notificações recebidas.</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {notificacoes.map(n => {
                 const meta = parseNotifMeta(n.mensagem)
-                const key = meta.threadId || `solo-${n.id}`
-                if (!groups.has(key)) groups.set(key, { items: [], firstMeta: meta })
-                groups.get(key)!.items.push(n)
-              })
-              const sorted = Array.from(groups.entries()).sort((a, b) => {
-                const ta = a[1].items[a[1].items.length - 1].created_at || ''
-                const tb = b[1].items[b[1].items.length - 1].created_at || ''
-                return tb.localeCompare(ta)
-              })
-              return sorted.map(([threadId, group]) => {
-                const meta = group.firstMeta
-                const lastItem = group.items[group.items.length - 1]
-                const lastMeta = parseNotifMeta(lastItem.mensagem)
-                // Última msg dirigida a quem
-                const recipientNames = Array.from(new Set(group.items.map(i => i.freelancer_id)))
-                const threadTitle = meta?.threadTitle || lastItem.titulo
-                const concluded = group.items.some(i => i.tipo === 'tarefa_concluida')
-                const lastDate = new Date(lastItem.created_at)
-                const dateLabel = `${lastDate.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })} · ${lastDate.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}`
+                const isTaskAssigned = n.tipo === 'nova_tarefa_atribuida'
+                const isTaskResposta = n.tipo === 'resposta_tarefa'
+                const isTaskConcluida = n.tipo === 'tarefa_concluida'
+                const isTaskMessage  = isTaskAssigned || isTaskResposta || isTaskConcluida
+
+                // Accent visual por tipo
+                const accent = isTaskAssigned ? { border: 'border-blue-500/35', bg: 'bg-blue-500/[0.05]', text: 'text-blue-300', glow: 'rgba(59,130,246,0.35)', icon: '✈', badge: '✈ NOVA TAREFA' }
+                  : isTaskResposta ? { border: 'border-indigo-500/35', bg: 'bg-indigo-500/[0.05]', text: 'text-indigo-300', glow: 'rgba(99,102,241,0.35)', icon: '↩', badge: '↩ NOVA RESPOSTA' }
+                  : isTaskConcluida ? { border: 'border-emerald-500/35', bg: 'bg-emerald-500/[0.05]', text: 'text-emerald-300', glow: 'rgba(52,211,153,0.35)', icon: '✓', badge: '✓ TAREFA CONCLUÍDA' }
+                  : { border: 'border-gold/30', bg: 'bg-gold/[0.04]', text: 'text-gold', glow: 'rgba(201,164,92,0.35)', icon: '◉', badge: '• não lida' }
+
                 return (
-                  <div key={threadId}
-                    className={`flex items-start gap-3 px-4 py-3 rounded-xl border transition-all hover:border-gold/30 hover:bg-white/[0.02] ${
-                      concluded ? 'border-emerald-500/25 bg-emerald-500/[0.03]' : 'border-white/[0.07] bg-white/[0.02]'
-                    }`}>
-                    <div className="w-10 h-10 rounded-lg border border-blue-500/30 bg-blue-500/10 flex items-center justify-center text-blue-300 text-base shrink-0">
-                      {concluded ? '✓' : '✈'}
+                <div key={n.id}
+                  className={`flex items-start gap-3 px-4 py-3.5 rounded-xl border group transition-all hover:border-white/15 ${
+                    n.lida ? 'border-white/[0.06] bg-white/[0.015]' : `${accent.border} ${accent.bg}`
+                  }`}
+                  style={!n.lida ? { boxShadow: `0 0 24px -10px ${accent.glow}` } : undefined}>
+                  {/* Ícone à esquerda */}
+                  <div className={`w-10 h-10 rounded-lg border flex items-center justify-center text-base shrink-0 ${
+                    n.lida ? 'border-white/10 bg-white/[0.03] text-white/35' : `${accent.border} ${accent.bg} ${accent.text}`
+                  }`}>
+                    {accent.icon}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className={`text-[9px] tracking-[0.3em] uppercase font-bold px-1.5 py-0.5 rounded border ${
+                        n.lida ? 'border-white/10 bg-white/[0.03] text-white/35' : `${accent.border} ${accent.bg} ${accent.text}`
+                      }`}>{n.tipo.replace(/_/g, ' ')}</span>
+                      {n.lida
+                        ? <span className="text-[10px] text-emerald-400/60 inline-flex items-center gap-1 tracking-widest uppercase font-bold">✓ Lida</span>
+                        : <span className={`text-[10px] tracking-widest uppercase font-bold ${accent.text}`}>{accent.badge}</span>
+                      }
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                        <span className="text-[13px] text-white font-medium truncate">{threadTitle}</span>
-                        {concluded && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 tracking-wider uppercase font-bold">
-                            Concluída
-                          </span>
+                    <p className={`text-[14px] mb-0.5 leading-snug ${n.lida ? 'text-white/65' : 'text-white font-medium'}`}>{n.titulo}</p>
+                    {meta.cleanMensagem && (
+                      <p className="text-[12px] text-white/50 mt-1 whitespace-pre-wrap leading-relaxed line-clamp-3">{meta.cleanMensagem}</p>
+                    )}
+                    <p className="text-[10px] text-white/25 mt-1.5 tabular-nums tracking-wider">
+                      {new Date(n.created_at).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      {' · '}
+                      {new Date(n.created_at).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+
+                  {/* Acções à direita */}
+                  <div className="flex flex-col items-end gap-1.5 mt-0.5 flex-shrink-0">
+                    {isTaskMessage && meta.threadId && (
+                      <button onClick={() => setViewingThread({ threadId: meta.threadId!, title: meta.threadTitle || n.titulo })}
+                        title="Ver toda a conversação desta tarefa"
+                        className="px-3 py-1.5 rounded-md text-[9px] tracking-[0.2em] uppercase font-bold border border-gold/40 bg-gold/10 text-gold hover:bg-gold/20 hover:border-gold/60 transition-all whitespace-nowrap">
+                        💬 Ver Conversação
+                      </button>
+                    )}
+                    {!isTaskConcluida && (isTaskAssigned || isTaskResposta) && meta.senderId && meta.senderId !== freelancerId && (
+                      <button onClick={() => setRespondingNotif(n)}
+                        title="Responder ao remetente"
+                        className="px-3 py-1.5 rounded-md text-[9px] tracking-[0.2em] uppercase font-bold border border-blue-500/45 bg-blue-500/20 text-blue-100 hover:bg-blue-500/30 hover:border-blue-400/65 transition-all whitespace-nowrap"
+                        style={{ boxShadow: '0 0 10px -4px rgba(59,130,246,0.5)' }}>
+                        ↩ Responder
+                      </button>
+                    )}
+                    <div className="flex items-center gap-1.5">
+                      {!n.lida ? (
+                        <button onClick={() => handleMarkRead(n.id, true)}
+                          title="Marcar como lida"
+                          className="px-2.5 py-1 rounded-md text-[9px] tracking-[0.15em] uppercase font-bold border border-emerald-500/35 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 hover:border-emerald-400/55 transition-all">
+                          ✓ Lida
+                        </button>
+                      ) : (
+                        <button onClick={() => handleMarkRead(n.id, false)}
+                          title="Marcar como não lida"
+                          className="px-2 py-1 rounded-md text-[9px] tracking-[0.15em] uppercase font-bold border border-white/10 bg-white/[0.03] text-white/45 hover:text-gold hover:border-gold/35 transition-all opacity-0 group-hover:opacity-100">
+                          ↺ Não lida
+                        </button>
+                      )}
+                      <button onClick={() => handleDelete(n.id)}
+                        title="Apagar"
+                        className="w-7 h-7 flex items-center justify-center rounded-md text-white/20 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/30 transition-all opacity-0 group-hover:opacity-100">✕</button>
+                    </div>
+                  </div>
+                </div>
+                )
+              })}
+            </div>
+          ))}
+
+          {/* ── ENVIADAS ───────────────────────────────────────── */}
+          {activeTab === 'enviadas' && (
+            loadingSent ? (
+              <div className="text-center py-12">
+                <span className="inline-block w-8 h-8 border-2 border-gold/30 border-t-gold rounded-full animate-spin mb-3" />
+                <p className="text-[13px] text-white/35 italic">A carregar tarefas enviadas…</p>
+              </div>
+            ) : sentNotifs.length === 0 ? (
+              <div className="text-center py-12">
+                <span className="text-5xl opacity-15 block mb-3">✈</span>
+                <p className="text-[13px] text-white/35 italic">Ainda não enviaste tarefas a outros membros.</p>
+                <p className="text-[11px] text-white/25 mt-2">Vai a <span className="text-gold/70 font-medium">Tarefas → ✈ Enviar Tarefa</span> para começar.</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {(() => {
+                  const groups = new Map<string, { items: Notificacao[]; firstMeta: ReturnType<typeof parseNotifMeta> | null }>()
+                  sentNotifs.forEach(n => {
+                    const meta = parseNotifMeta(n.mensagem)
+                    const key = meta.threadId || `solo-${n.id}`
+                    if (!groups.has(key)) groups.set(key, { items: [], firstMeta: meta })
+                    groups.get(key)!.items.push(n)
+                  })
+                  const sorted = Array.from(groups.entries()).sort((a, b) => {
+                    const ta = a[1].items[a[1].items.length - 1].created_at || ''
+                    const tb = b[1].items[b[1].items.length - 1].created_at || ''
+                    return tb.localeCompare(ta)
+                  })
+                  return sorted.map(([threadId, group]) => {
+                    const meta = group.firstMeta
+                    const lastItem = group.items[group.items.length - 1]
+                    const recipientNames = Array.from(new Set(group.items.map(i => i.freelancer_id)))
+                    const threadTitle = meta?.threadTitle || lastItem.titulo
+                    const concluded = group.items.some(i => i.tipo === 'tarefa_concluida')
+                    const lastDate = new Date(lastItem.created_at)
+                    const dateLabel = `${lastDate.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })} · ${lastDate.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}`
+                    return (
+                      <div key={threadId}
+                        className={`flex items-start gap-3 px-4 py-3.5 rounded-xl border transition-all group hover:border-gold/30 hover:bg-white/[0.025] ${
+                          concluded ? 'border-emerald-500/25 bg-emerald-500/[0.04]' : 'border-blue-500/20 bg-blue-500/[0.03]'
+                        }`}>
+                        <div className={`w-10 h-10 rounded-lg border flex items-center justify-center text-base shrink-0 ${
+                          concluded ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300' : 'border-blue-500/40 bg-blue-500/10 text-blue-300'
+                        }`} style={{ boxShadow: concluded ? '0 0 12px -4px rgba(52,211,153,0.4)' : '0 0 12px -4px rgba(59,130,246,0.4)' }}>
+                          {concluded ? '✓' : '✈'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className="text-[13px] text-white font-medium truncate">{threadTitle}</span>
+                            {concluded && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/35 tracking-[0.2em] uppercase font-bold">
+                                Concluída
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-white/45 truncate">
+                            <span className="text-white/65">{recipientNames.length > 1 ? `${recipientNames.length} membros` : '1 membro'}</span>
+                            {' · '}{group.items.length} mensagem{group.items.length === 1 ? '' : 's'}
+                          </p>
+                          <p className="text-[10px] text-white/25 mt-1 tabular-nums tracking-wider">Última atualização · {dateLabel}</p>
+                        </div>
+                        {meta?.threadId && (
+                          <button onClick={() => setViewingThread({ threadId: meta.threadId!, title: threadTitle })}
+                            className="px-3 py-1.5 rounded-md text-[9px] tracking-[0.2em] uppercase font-bold border border-gold/40 bg-gold/10 text-gold hover:bg-gold/20 hover:border-gold/60 transition-all flex items-center gap-1 shrink-0">
+                            💬 Ver
+                          </button>
                         )}
                       </div>
-                      <p className="text-[11px] text-white/45 truncate">
-                        Para: {recipientNames.length > 1 ? `${recipientNames.length} membros` : '1 membro'}
-                        {' · '}{group.items.length} mensagem{group.items.length === 1 ? '' : 's'}
-                      </p>
-                      <p className="text-[10px] text-white/25 mt-0.5">Última atualização: {dateLabel}</p>
-                    </div>
-                    {meta?.threadId && (
-                      <button onClick={() => setViewingThread({ threadId: meta.threadId!, title: threadTitle })}
-                        className="px-3 py-1.5 rounded-md text-[10px] tracking-wider uppercase font-bold border border-gold/35 bg-gold/10 text-gold hover:bg-gold/20 hover:border-gold/55 transition-all flex items-center gap-1 shrink-0">
-                        💬 Ver
-                      </button>
-                    )}
-                  </div>
-                )
-              })
-            })()}
-          </div>
-        )
-      )}
+                    )
+                  })
+                })()}
+              </div>
+            )
+          )}
+        </div>
+      </div>
 
       {/* Modal Responder à Tarefa */}
       {respondingNotif && (
@@ -6921,6 +6996,23 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh }: { freel
           onResponder={(notif) => { setRespondingNotif(notif); setViewingThread(null) }}
         />
       )}
+    </div>
+  )
+}
+
+// KPI pill no hero das Notificações
+function NotifHeroKpi({ label, value, accent }: { label: string; value: number; accent: 'rose' | 'blue' | 'indigo' | 'gold' }) {
+  const map = {
+    rose:   { bg: 'bg-rose-500/15',   border: 'border-rose-500/35',   text: 'text-rose-300',   glow: 'rgba(244,63,94,0.35)' },
+    blue:   { bg: 'bg-blue-500/15',   border: 'border-blue-500/35',   text: 'text-blue-300',   glow: 'rgba(59,130,246,0.35)' },
+    indigo: { bg: 'bg-indigo-500/15', border: 'border-indigo-500/35', text: 'text-indigo-300', glow: 'rgba(99,102,241,0.35)' },
+    gold:   { bg: 'bg-gold/15',       border: 'border-gold/35',       text: 'text-gold',       glow: 'rgba(201,164,92,0.35)' },
+  }[accent]
+  return (
+    <div className={`inline-flex flex-col items-center px-3.5 py-2 rounded-xl border ${map.bg} ${map.border}`}
+      style={{ boxShadow: value > 0 ? `0 0 14px -6px ${map.glow}` : undefined }}>
+      <span className={`text-[18px] leading-none font-bold tabular-nums ${value > 0 ? map.text : 'text-white/35'}`}>{value}</span>
+      <span className={`text-[8px] tracking-[0.25em] uppercase mt-0.5 font-bold ${value > 0 ? map.text + '/85' : 'text-white/30'}`}>{label}</span>
     </div>
   )
 }
