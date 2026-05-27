@@ -3538,7 +3538,11 @@ function EnviarTarefaModal({ senderId, onClose }: { senderId: string; onClose: (
     try {
       const prazoLabel = dueDate ? new Date(dueDate).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' }) : null
       const titleFull  = `✈ Nova tarefa de ${senderName || 'um colega'} — ${titulo.trim()}`
+      // Marker invisível com senderId para permitir 'Responder' depois.
+      //   __META__{json}__/META__ é removido pelo renderer.
+      const meta = JSON.stringify({ senderId, senderName })
       const mensagem = [
+        `__META__${meta}__/META__`,
         descricao.trim() ? descricao.trim() : null,
         `Prioridade: ${priority}`,
         prazoLabel ? `Prazo: ${prazoLabel}` : null,
@@ -4998,9 +5002,74 @@ function MensagensAdminTab({ freelancerId, freelancerNome, casamentos, mensagens
 
 // ─── Notificações Admin Tab ───────────────────────────────────────────────────
 
+// Extrai meta JSON do início da mensagem (__META__{...}__/META__\n)
+function parseNotifMeta(mensagem: string | null | undefined): { senderId?: string; senderName?: string; cleanMensagem: string } {
+  if (!mensagem) return { cleanMensagem: '' }
+  const m = mensagem.match(/^__META__(.+?)__\/META__\n?/)
+  if (!m) return { cleanMensagem: mensagem }
+  try {
+    const meta = JSON.parse(m[1])
+    return { senderId: meta.senderId, senderName: meta.senderName, cleanMensagem: mensagem.slice(m[0].length) }
+  } catch { return { cleanMensagem: mensagem.replace(/^__META__.+?__\/META__\n?/, '') } }
+}
+
 function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh }: { freelancerId: string; notificacoes: Notificacao[]; onRefresh: () => void }) {
   const [form, setForm] = useState({ titulo: '', mensagem: '', tipo: 'alerta' })
   const [sending, setSending] = useState(false)
+  const [respondingNotif, setRespondingNotif] = useState<Notificacao | null>(null)
+  const [freelancerName, setFreelancerName] = useState('')
+
+  // Buscar o nome do freelancer actual para incluir na resposta
+  useEffect(() => {
+    fetch('/api/freelancers').then(r => r.json()).then(d => {
+      const me = (d.freelancers ?? []).find((f: any) => f.id === freelancerId)
+      if (me) setFreelancerName(me.nome ?? '')
+    }).catch(() => {})
+  }, [freelancerId])
+
+  async function sendResposta(notif: Notificacao, resposta: string) {
+    const { senderId, senderName } = parseNotifMeta(notif.mensagem)
+    if (!senderId) {
+      alert('Não foi possível identificar quem enviou a tarefa. Marca como lida e contacta o admin.')
+      return
+    }
+    const tituloOriginal = (notif.titulo ?? '').replace(/^✈ Nova tarefa de [^—]+— /, '')
+    const respTitulo = `↩ Resposta de ${freelancerName || 'um colega'} — ${tituloOriginal}`
+    const respMensagem = [
+      resposta.trim(),
+      '',
+      `Em resposta a: "${tituloOriginal}"`,
+      freelancerName ? `De: ${freelancerName}` : null,
+    ].filter(Boolean).join('\n')
+    // 1) Cria notificação no portal do remetente original
+    await fetch('/api/freelancer-notificacoes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        freelancer_id: senderId,
+        titulo: respTitulo,
+        mensagem: respMensagem,
+        tipo: 'resposta_tarefa',
+        lida: false,
+      }),
+    })
+    // 2) Email opcional ao remetente
+    try {
+      await fetch('/api/send-notif-freelancer-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ freelancer_id: senderId, titulo: respTitulo }),
+      })
+    } catch { /* não bloqueia */ }
+    // 3) Marca a original como lida
+    await fetch('/api/freelancer-notificacoes', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: notif.id, lida: true }),
+    })
+    setRespondingNotif(null)
+    onRefresh()
+  }
 
   async function handleSend() {
     if (!form.titulo.trim()) return
@@ -5093,49 +5162,182 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh }: { freel
             </div>
           )}
           <div className="space-y-2">
-            {notificacoes.map(n => (
+            {notificacoes.map(n => {
+              const meta = parseNotifMeta(n.mensagem)
+              const isTaskAssigned = n.tipo === 'nova_tarefa_atribuida'
+              const isTaskHighlight = isTaskAssigned && !n.lida
+              return (
               <div key={n.id}
                 className={`flex items-start gap-3 px-4 py-3 rounded-xl border group transition-colors ${
-                  n.lida ? 'border-white/[0.04] bg-white/[0.01]' : 'border-gold/20 bg-gold/[0.03]'
+                  n.lida
+                    ? 'border-white/[0.04] bg-white/[0.01]'
+                    : isTaskAssigned
+                      ? 'border-blue-500/35 bg-blue-500/[0.05]'
+                      : 'border-gold/20 bg-gold/[0.03]'
                 }`}>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-[14px] tracking-widest uppercase text-white/30 font-semibold">{n.tipo}</span>
+                    <span className={`text-[14px] tracking-widest uppercase font-semibold ${
+                      isTaskHighlight ? 'text-blue-300' : 'text-white/30'
+                    }`}>{n.tipo}</span>
                     {n.lida
                       ? <span className="text-[14px] text-emerald-400/55">✓ lida</span>
-                      : <span className="text-[14px] text-gold/70 font-bold">• não lida</span>
+                      : isTaskAssigned
+                        ? <span className="text-[14px] text-blue-300 font-bold">✈ NOVA TAREFA</span>
+                        : <span className="text-[14px] text-gold/70 font-bold">• não lida</span>
                     }
                   </div>
-                  <p className={`text-[14px] ${n.lida ? 'text-white/60' : 'text-white/85 font-medium'}`}>{n.titulo}</p>
-                  {n.mensagem && <p className="text-[14px] text-white/40 mt-0.5">{n.mensagem}</p>}
-                  <p className="text-[14px] text-white/20 mt-1">{new Date(n.created_at).toLocaleDateString('pt-PT')}</p>
+                  <p className={`text-[14px] ${n.lida ? 'text-white/60' : 'text-white/90 font-medium'}`}>{n.titulo}</p>
+                  {meta.cleanMensagem && <p className="text-[13px] text-white/55 mt-1 whitespace-pre-wrap leading-relaxed">{meta.cleanMensagem}</p>}
+                  <p className="text-[12px] text-white/25 mt-1.5">{new Date(n.created_at).toLocaleDateString('pt-PT')}</p>
                 </div>
-                <div className="flex items-center gap-1.5 mt-0.5 flex-shrink-0">
-                  {!n.lida && (
-                    <button onClick={() => handleMarkRead(n.id, true)}
-                      title="Marcar como lida"
-                      className="px-2 py-1 rounded-md text-[10px] tracking-wider uppercase font-semibold border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 hover:border-emerald-400/50 transition-all">
-                      ✓ Lida
+                <div className="flex flex-col items-end gap-1.5 mt-0.5 flex-shrink-0">
+                  {/* RESPONDER — só para tarefas atribuídas */}
+                  {isTaskAssigned && meta.senderId && (
+                    <button onClick={() => setRespondingNotif(n)}
+                      title="Responder ao remetente"
+                      className="px-3 py-1.5 rounded-md text-[10px] tracking-wider uppercase font-bold border border-blue-500/45 bg-blue-500/20 text-blue-200 hover:bg-blue-500/30 hover:border-blue-400/60 transition-all flex items-center gap-1"
+                      style={{ boxShadow: '0 0 10px -4px rgba(59,130,246,0.5)' }}>
+                      ↩ Responder
                     </button>
                   )}
-                  {n.lida && (
-                    <button onClick={() => handleMarkRead(n.id, false)}
-                      title="Marcar como não lida"
-                      className="px-2 py-1 rounded-md text-[10px] tracking-wider uppercase font-semibold border border-white/10 bg-white/[0.03] text-white/40 hover:text-gold hover:border-gold/30 transition-all opacity-0 group-hover:opacity-100">
-                      ↺ Não lida
-                    </button>
-                  )}
-                  <button onClick={() => handleDelete(n.id)}
-                    title="Apagar"
-                    className="w-7 h-7 flex items-center justify-center rounded-md text-white/15 hover:text-red-400 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100">✕</button>
+                  <div className="flex items-center gap-1.5">
+                    {!n.lida && (
+                      <button onClick={() => handleMarkRead(n.id, true)}
+                        title="Marcar como lida"
+                        className="px-2 py-1 rounded-md text-[10px] tracking-wider uppercase font-semibold border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 hover:border-emerald-400/50 transition-all">
+                        ✓ Lida
+                      </button>
+                    )}
+                    {n.lida && (
+                      <button onClick={() => handleMarkRead(n.id, false)}
+                        title="Marcar como não lida"
+                        className="px-2 py-1 rounded-md text-[10px] tracking-wider uppercase font-semibold border border-white/10 bg-white/[0.03] text-white/40 hover:text-gold hover:border-gold/30 transition-all opacity-0 group-hover:opacity-100">
+                        ↺ Não lida
+                      </button>
+                    )}
+                    <button onClick={() => handleDelete(n.id)}
+                      title="Apagar"
+                      className="w-7 h-7 flex items-center justify-center rounded-md text-white/15 hover:text-red-400 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100">✕</button>
+                  </div>
                 </div>
               </div>
-            ))}
+              )
+            })}
           </div>
         </>
       )}
+
+      {/* Modal Responder à Tarefa */}
+      {respondingNotif && (
+        <ResponderTarefaModal
+          notif={respondingNotif}
+          onClose={() => setRespondingNotif(null)}
+          onSend={(resposta) => sendResposta(respondingNotif, resposta)}
+        />
+      )}
     </div>
   )
+}
+
+// ── Modal Responder à Tarefa atribuída ────────────────────────────
+function ResponderTarefaModal({ notif, onClose, onSend }: { notif: Notificacao; onClose: () => void; onSend: (resposta: string) => Promise<void> | void }) {
+  const [mounted, setMounted] = useState(false)
+  const [resposta, setResposta] = useState('')
+  const [sending, setSending] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  const minLen = 5
+  const valid = resposta.trim().length >= minLen
+  async function submit() {
+    if (!valid || sending) return
+    setSending(true)
+    try { await onSend(resposta.trim()) }
+    finally { setSending(false) }
+  }
+
+  if (!mounted || typeof document === 'undefined') return null
+
+  const meta = parseNotifMeta(notif.mensagem)
+
+  const modal = (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/90 backdrop-blur-md" />
+      <div className="relative z-10 w-full max-w-lg rounded-3xl overflow-hidden border border-blue-500/30 shadow-2xl"
+        style={{ background: 'linear-gradient(180deg, #0a1018, #060810)' }}
+        onClick={e => e.stopPropagation()}>
+        <div className="h-0.5 w-full bg-blue-500/70" />
+        <div className="px-6 pt-5 pb-3 border-b border-white/[0.05] flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] tracking-[0.5em] text-blue-300/85 uppercase mb-1">Responder à Tarefa</p>
+            <h2 className="text-lg font-light tracking-[0.05em] text-white truncate" style={{ fontFamily: 'Georgia, serif' }}>
+              {notif.titulo}
+            </h2>
+            {meta.senderName && (
+              <p className="text-[11px] text-blue-300/60 mt-1">De: {meta.senderName}</p>
+            )}
+          </div>
+          <button onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/35 hover:text-white hover:border-white/30 transition-all shrink-0">✕</button>
+        </div>
+
+        <div className="px-6 py-5 space-y-4">
+          {/* Tarefa original em destaque */}
+          {meta.cleanMensagem && (
+            <div className="bg-black/40 border border-white/[0.06] rounded-lg px-4 py-3 text-[12px] text-white/60 leading-relaxed whitespace-pre-wrap max-h-32 overflow-y-auto">
+              {meta.cleanMensagem}
+            </div>
+          )}
+
+          {/* Resposta */}
+          <div>
+            <label className="block text-[10px] tracking-[0.3em] uppercase text-white/45 mb-1.5">
+              A tua resposta <span className="text-red-300">*</span>
+            </label>
+            <textarea
+              value={resposta}
+              onChange={e => setResposta(e.target.value)}
+              autoFocus
+              rows={5}
+              placeholder="Aceito a tarefa, faço até dia X… / Não consigo porque… / Já está feita, link aqui…"
+              className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-blue-400/50 resize-none leading-relaxed"
+            />
+            <p className={`text-[11px] mt-1.5 ${valid ? 'text-blue-300/70' : 'text-white/35'}`}>
+              {resposta.trim().length}/{minLen} caracteres mínimos {valid ? '✓' : ''}
+            </p>
+          </div>
+
+          <p className="text-[11px] text-white/40 italic leading-relaxed">
+            A tua resposta vai aparecer no sino + email do remetente original. Esta notificação será marcada como lida automaticamente.
+          </p>
+        </div>
+
+        <div className="px-6 py-4 border-t border-white/[0.05] flex items-center justify-end gap-2 bg-black/30">
+          <button onClick={onClose} disabled={sending}
+            className="px-4 py-2 rounded-lg text-[11px] tracking-wider uppercase text-white/55 hover:text-white border border-white/10 hover:border-white/30 transition-all disabled:opacity-40">
+            Cancelar
+          </button>
+          <button onClick={submit} disabled={!valid || sending}
+            className={`px-5 py-2 rounded-lg text-[11px] tracking-wider uppercase font-bold transition-all ${
+              valid && !sending
+                ? 'bg-blue-500 text-white hover:bg-blue-400'
+                : 'bg-white/[0.04] text-white/25 cursor-not-allowed border border-white/10'
+            }`}
+            style={valid && !sending ? { boxShadow: '0 0 14px -4px rgba(59,130,246,0.6)' } : undefined}>
+            {sending ? 'A enviar...' : '↩ Enviar Resposta'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
+  return createPortal(modal, document.body)
 }
 
 // ─── Notas Tab ────────────────────────────────────────────────────────────────
