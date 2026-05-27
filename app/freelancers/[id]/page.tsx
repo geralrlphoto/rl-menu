@@ -2968,6 +2968,7 @@ function TarefasTab({ freelancerId }: { freelancerId: string }) {
   const [search, setSearch] = useState('')
   const [showCompleted, setShowCompleted] = useState(false)
   const [showNewModal, setShowNewModal] = useState(false)
+  const [completingTask, setCompletingTask] = useState<TarefaItem | null>(null)  // tarefa a concluir (precisa de resposta)
   // Calendário
   const today = new Date(); today.setHours(0,0,0,0)
   const [calView, setCalView] = useState({ y: today.getFullYear(), m: today.getMonth() })
@@ -2988,21 +2989,36 @@ function TarefasTab({ freelancerId }: { freelancerId: string }) {
     setTasks(prev => [t, ...prev])
   }
   function toggleTask(id: string) {
+    const t = tasks.find(x => x.id === id)
+    if (!t) return
+    // Concluída → não permitir voltar atrás (regra de negócio premium)
+    if (tarefaStatus(t) === 'Concluída') return
+    // Para concluir, OBRIGA o membro a escrever resposta — abre modal
+    setCompletingTask(t)
+  }
+  function completeWithResponse(id: string, resposta: string) {
     setTasks(prev => prev.map(t => {
       if (t.id !== id) return t
-      const isDone = tarefaStatus(t) === 'Concluída'
-      if (isDone) {
-        // Concluída → Pendente (revert)
-        return { ...t, done: false, status: 'Pendente', doneAt: undefined }
+      return {
+        ...t,
+        done: true,
+        status: 'Concluída',
+        doneAt: new Date().toISOString(),
+        resultado: resposta.trim(),
       }
-      return { ...t, done: true, status: 'Concluída', doneAt: new Date().toISOString() }
     }))
+    setCompletingTask(null)
   }
   function setTaskStatus(id: string, status: TarefaStatus) {
+    // Se vai para Concluída, força o fluxo do modal
+    if (status === 'Concluída') {
+      const t = tasks.find(x => x.id === id)
+      if (t) setCompletingTask(t)
+      return
+    }
     setTasks(prev => prev.map(t => {
       if (t.id !== id) return t
-      const done = status === 'Concluída'
-      return { ...t, status, done, doneAt: done ? (t.doneAt ?? new Date().toISOString()) : undefined }
+      return { ...t, status, done: false, doneAt: undefined }
     }))
   }
   function deleteTask(id: string) {
@@ -3198,6 +3214,14 @@ function TarefasTab({ freelancerId }: { freelancerId: string }) {
       </div>
 
       {/* GRID 2/3 + 1/3 */}
+      {/* Aviso: regra de conclusão obrigatória */}
+      <div className="flex items-start gap-3 px-4 py-3 rounded-2xl border border-amber-500/25 bg-amber-500/[0.04]">
+        <span className="text-amber-300 text-base shrink-0 mt-0.5">ⓘ</span>
+        <p className="text-[12px] text-amber-100/85 leading-relaxed">
+          Para marcares uma tarefa como <span className="font-bold not-italic uppercase">Concluída</span> tens de escrever uma <span className="font-bold not-italic">resposta de conclusão</span> a descrever o que foi feito. A resposta fica registada e não pode ser alterada.
+        </p>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* MAIN — lista */}
         <div className="lg:col-span-2 flex flex-col gap-4">
@@ -3388,6 +3412,96 @@ function TarefasTab({ freelancerId }: { freelancerId: string }) {
           onCreate={(t) => { addTask(t); setShowNewModal(false) }}
         />
       )}
+
+      {/* Modal Concluir Tarefa — exige resposta de conclusão */}
+      {completingTask && (
+        <ConcluirTarefaModal
+          task={completingTask}
+          onClose={() => setCompletingTask(null)}
+          onConfirm={(resposta) => completeWithResponse(completingTask.id, resposta)}
+        />
+      )}
+    </div>
+  )
+}
+
+// ── Modal Concluir Tarefa — exige resposta antes de marcar como Concluída ───
+function ConcluirTarefaModal({ task, onClose, onConfirm }: { task: TarefaItem; onClose: () => void; onConfirm: (resposta: string) => void }) {
+  const [resposta, setResposta] = useState('')
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  const minLen = 10
+  const valid = resposta.trim().length >= minLen
+  function submit() { if (valid) onConfirm(resposta.trim()) }
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/85 backdrop-blur-md" />
+      <div className="relative z-10 w-full max-w-lg rounded-3xl overflow-hidden border border-emerald-500/30 shadow-2xl"
+        style={{ background: 'linear-gradient(180deg, #0a1410, #060b09)' }}
+        onClick={e => e.stopPropagation()}>
+        <div className="h-0.5 w-full bg-emerald-500/70" />
+        <div className="px-6 pt-5 pb-3 border-b border-white/[0.05] flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[10px] tracking-[0.5em] text-emerald-300/85 uppercase mb-1">Concluir Tarefa</p>
+            <h2 className="text-xl font-light tracking-[0.05em] text-white" style={{ fontFamily: 'Georgia, serif' }}>
+              {task.text}
+            </h2>
+          </div>
+          <button onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/35 hover:text-white hover:border-white/30 transition-all">✕</button>
+        </div>
+
+        <div className="px-6 py-5 space-y-4">
+          {/* Alerta sobre a regra */}
+          <div className="flex items-start gap-3 px-4 py-3 rounded-xl border border-amber-500/30 bg-amber-500/[0.06]">
+            <span className="text-amber-300 text-xl shrink-0 mt-0.5">⚠</span>
+            <div className="text-[12px] text-amber-100/85 leading-relaxed">
+              Para marcares esta tarefa como <span className="font-bold not-italic uppercase">Concluída</span>, tens de escrever uma <span className="font-bold not-italic">resposta de conclusão</span> a descrever o que foi feito.
+              <br />
+              <span className="text-amber-200/65 italic">Esta resposta fica registada e não pode ser alterada depois de submetida.</span>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[10px] tracking-[0.3em] uppercase text-white/45 mb-1.5">
+              Resposta de conclusão <span className="text-red-300">*</span>
+            </label>
+            <textarea
+              value={resposta}
+              onChange={e => setResposta(e.target.value)}
+              autoFocus
+              rows={5}
+              placeholder="Descreve o que foi feito, links/ficheiros entregues, observações…"
+              className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-emerald-500/40 resize-none leading-relaxed"
+            />
+            <p className={`text-[11px] mt-1.5 ${valid ? 'text-emerald-400/70' : 'text-white/35'}`}>
+              {resposta.trim().length}/{minLen} caracteres mínimos {valid ? '✓' : ''}
+            </p>
+          </div>
+        </div>
+
+        <div className="px-6 py-4 border-t border-white/[0.05] flex items-center justify-end gap-2 bg-black/30">
+          <button onClick={onClose}
+            className="px-4 py-2 rounded-lg text-[11px] tracking-wider uppercase text-white/55 hover:text-white border border-white/10 hover:border-white/30 transition-all">
+            Cancelar
+          </button>
+          <button onClick={submit} disabled={!valid}
+            className={`px-5 py-2 rounded-lg text-[11px] tracking-wider uppercase font-bold transition-all ${
+              valid
+                ? 'bg-emerald-500 text-black hover:bg-emerald-400'
+                : 'bg-white/[0.04] text-white/25 cursor-not-allowed border border-white/10'
+            }`}
+            style={valid ? { boxShadow: '0 0 14px -4px rgba(52,211,153,0.7)' } : undefined}>
+            ✓ Concluir Tarefa
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
