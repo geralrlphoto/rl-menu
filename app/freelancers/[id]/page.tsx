@@ -5042,6 +5042,20 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh }: { freel
   const [respondingNotif, setRespondingNotif] = useState<Notificacao | null>(null)
   const [viewingThread, setViewingThread] = useState<{ threadId: string; title: string } | null>(null)
   const [freelancerName, setFreelancerName] = useState('')
+  const [activeTab, setActiveTab] = useState<'recebidas'|'enviadas'>('recebidas')
+  const [sentNotifs, setSentNotifs] = useState<Notificacao[]>([])
+  const [loadingSent, setLoadingSent] = useState(false)
+
+  // Carrega tarefas enviadas (notifs em que sou o senderId no META)
+  useEffect(() => {
+    if (!freelancerId) return
+    setLoadingSent(true)
+    fetch(`/api/freelancer-notificacoes?sent_by=${encodeURIComponent(freelancerId)}`)
+      .then(r => r.json())
+      .then(d => setSentNotifs((d.notificacoes ?? []) as Notificacao[]))
+      .catch(() => setSentNotifs([]))
+      .finally(() => setLoadingSent(false))
+  }, [freelancerId, notificacoes.length])
 
   async function concluirTarefaThread(threadId: string) {
     // Marca tarefa como concluída — adiciona nota de conclusão como notif tipo='tarefa_concluida'
@@ -5221,8 +5235,29 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh }: { freel
         </div>
       </div>
 
-      {notificacoes.length === 0 ? (
-        <p className="text-center py-6 text-white/20 text-[14px] tracking-widest">Sem notificações enviadas.</p>
+      {/* Separador: Recebidas | Enviadas */}
+      <div className="flex items-center gap-1 mb-3 border-b border-white/[0.06]">
+        {([
+          { key: 'recebidas' as const, label: 'Recebidas', count: notificacoes.length },
+          { key: 'enviadas'  as const, label: 'Tarefas Enviadas', count: sentNotifs.length },
+        ]).map(t => (
+          <button key={t.key} onClick={() => setActiveTab(t.key)}
+            className={`relative px-4 py-2.5 text-[12px] tracking-[0.2em] uppercase font-semibold transition-all ${
+              activeTab === t.key
+                ? 'text-gold'
+                : 'text-white/40 hover:text-white/75'
+            }`}>
+            {t.label}
+            <span className={`ml-2 text-[10px] px-1.5 py-0.5 rounded-full ${
+              activeTab === t.key ? 'bg-gold/20 text-gold border border-gold/30' : 'bg-white/[0.06] text-white/40'
+            }`}>{t.count}</span>
+            {activeTab === t.key && <span className="absolute bottom-0 left-3 right-3 h-px bg-gold" />}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'recebidas' && (notificacoes.length === 0 ? (
+        <p className="text-center py-6 text-white/20 text-[14px] tracking-widest">Sem notificações recebidas.</p>
       ) : (
         <>
           {/* Botão 'Marcar todas como lidas' (só quando há não lidas) */}
@@ -5315,6 +5350,79 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh }: { freel
             })}
           </div>
         </>
+      ))}
+
+      {/* Tab: Tarefas Enviadas — notifs em que o senderId do META sou eu */}
+      {activeTab === 'enviadas' && (
+        loadingSent ? (
+          <p className="text-center py-6 text-white/30 text-[13px] italic">A carregar tarefas enviadas…</p>
+        ) : sentNotifs.length === 0 ? (
+          <div className="text-center py-10">
+            <span className="text-4xl opacity-20 block mb-2">✈</span>
+            <p className="text-[13px] text-white/35 italic">Ainda não enviaste tarefas a outros membros.</p>
+            <p className="text-[11px] text-white/25 mt-1">Vai a <span className="text-gold/70">Tarefas → ✈ Enviar Tarefa</span> para começar.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {/* Agrupa por threadId */}
+            {(() => {
+              const groups = new Map<string, { items: Notificacao[]; firstMeta: ReturnType<typeof parseNotifMeta> | null }>()
+              sentNotifs.forEach(n => {
+                const meta = parseNotifMeta(n.mensagem)
+                const key = meta.threadId || `solo-${n.id}`
+                if (!groups.has(key)) groups.set(key, { items: [], firstMeta: meta })
+                groups.get(key)!.items.push(n)
+              })
+              const sorted = Array.from(groups.entries()).sort((a, b) => {
+                const ta = a[1].items[a[1].items.length - 1].created_at || ''
+                const tb = b[1].items[b[1].items.length - 1].created_at || ''
+                return tb.localeCompare(ta)
+              })
+              return sorted.map(([threadId, group]) => {
+                const meta = group.firstMeta
+                const lastItem = group.items[group.items.length - 1]
+                const lastMeta = parseNotifMeta(lastItem.mensagem)
+                // Última msg dirigida a quem
+                const recipientNames = Array.from(new Set(group.items.map(i => i.freelancer_id)))
+                const threadTitle = meta?.threadTitle || lastItem.titulo
+                const concluded = group.items.some(i => i.tipo === 'tarefa_concluida')
+                const lastDate = new Date(lastItem.created_at)
+                const dateLabel = `${lastDate.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })} · ${lastDate.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}`
+                return (
+                  <div key={threadId}
+                    className={`flex items-start gap-3 px-4 py-3 rounded-xl border transition-all hover:border-gold/30 hover:bg-white/[0.02] ${
+                      concluded ? 'border-emerald-500/25 bg-emerald-500/[0.03]' : 'border-white/[0.07] bg-white/[0.02]'
+                    }`}>
+                    <div className="w-10 h-10 rounded-lg border border-blue-500/30 bg-blue-500/10 flex items-center justify-center text-blue-300 text-base shrink-0">
+                      {concluded ? '✓' : '✈'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                        <span className="text-[13px] text-white font-medium truncate">{threadTitle}</span>
+                        {concluded && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 tracking-wider uppercase font-bold">
+                            Concluída
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-white/45 truncate">
+                        Para: {recipientNames.length > 1 ? `${recipientNames.length} membros` : '1 membro'}
+                        {' · '}{group.items.length} mensagem{group.items.length === 1 ? '' : 's'}
+                      </p>
+                      <p className="text-[10px] text-white/25 mt-0.5">Última atualização: {dateLabel}</p>
+                    </div>
+                    {meta?.threadId && (
+                      <button onClick={() => setViewingThread({ threadId: meta.threadId!, title: threadTitle })}
+                        className="px-3 py-1.5 rounded-md text-[10px] tracking-wider uppercase font-bold border border-gold/35 bg-gold/10 text-gold hover:bg-gold/20 hover:border-gold/55 transition-all flex items-center gap-1 shrink-0">
+                        💬 Ver
+                      </button>
+                    )}
+                  </div>
+                )
+              })
+            })()}
+          </div>
+        )
       )}
 
       {/* Modal Responder à Tarefa */}

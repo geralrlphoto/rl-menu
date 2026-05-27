@@ -14,23 +14,25 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const freelancer_id = searchParams.get('freelancer_id')
   const thread_id = searchParams.get('thread_id')
+  const sent_by   = searchParams.get('sent_by')
+
+  // Constrói query
+  let asc = thread_id ? true : false   // thread = chronological asc, lista = desc
   let query = supabase()
     .from('freelancer_notificacoes')
     .select('*')
-    .order('created_at', { ascending: true })
-  if (freelancer_id) query = query.eq('freelancer_id', freelancer_id)
+    .order('created_at', { ascending: asc })
+
   if (thread_id) {
-    // Pesquisa o marcador META JSON na mensagem por threadId
+    // Pesquisa por threadId no META
     query = query.ilike('mensagem', `%"threadId":"${thread_id}"%`)
+  } else if (sent_by) {
+    // 'Tarefas enviadas por mim' — pesquisa por senderId no META
+    query = query.ilike('mensagem', `%"senderId":"${sent_by}"%`)
+  } else if (freelancer_id) {
+    query = query.eq('freelancer_id', freelancer_id)
   }
-  // Quando não há filtros explícitos, default order desc para listagem
-  if (!thread_id) {
-    query = supabase()
-      .from('freelancer_notificacoes')
-      .select('*')
-      .order('created_at', { ascending: false })
-    if (freelancer_id) query = query.eq('freelancer_id', freelancer_id)
-  }
+
   const { data, error } = await query
   if (error) { console.error('[freelancer-notificacoes GET]', error); return NextResponse.json({ notificacoes: [] }) }
   return NextResponse.json({ notificacoes: data ?? [] })
