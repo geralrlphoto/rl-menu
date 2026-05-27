@@ -66,20 +66,30 @@ async function notifyAddedMembers(
   const localStr = local ? String(local).trim() : ''
   for (const name of names) {
     if (!name || !name.trim()) continue
-    const { data: fl } = await supabase.from('freelancers').select('id').ilike('nome', name).maybeSingle()
+    const { data: fl } = await supabase.from('freelancers').select('id, nome').ilike('nome', name).maybeSingle()
     if (!fl) continue
     // Idempotência básica: evita duplicar a mesma notificação (mesmo título recente)
     const titulo = `✨ Nova atribuição · ${role}`
-    const mensagem = localStr
+    // Incluímos __META__ com info necessária para os botões Confirmar/Indisponível
+    // (referencia, role, local, data) sem afetar o que o utilizador vê — o parser
+    // de mensagem na UI esconde o bloco META.
+    const meta = JSON.stringify({
+      atribuicao: { referencia: referencia ?? null, role, local: localStr || null, data_casamento: data_casamento ?? null },
+      freelancerId: fl.id,
+      freelancerNome: fl.nome ?? name,
+    })
+    const bodyText = localStr
       ? `Foste atribuído como ${role} no casamento em ${localStr}${dateLabel ? ` (${dateLabel})` : ''}.`
       : `Foste atribuído como ${role}${dateLabel ? ` para o evento de ${dateLabel}` : ''}.`
-    // Verifica se já existe uma notificação idêntica (não lida) deste tipo para este freelancer+evento
+    const mensagem = `__META__${meta}__/META__\n${bodyText}`
+    // Verifica se já existe uma notificação idêntica para este freelancer (por título + referência)
+    // Usa LIKE no META para identificar duplicação por referência
     const { data: existing } = await supabase
       .from('freelancer_notificacoes')
       .select('id, lida')
       .eq('freelancer_id', fl.id)
       .eq('titulo', titulo)
-      .eq('mensagem', mensagem)
+      .ilike('mensagem', `%"referencia":"${referencia ?? ''}"%`)
       .maybeSingle()
     if (existing) continue  // já criada — não duplica
     await supabase.from('freelancer_notificacoes').insert({

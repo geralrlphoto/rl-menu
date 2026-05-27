@@ -1534,7 +1534,21 @@ const NOTIF_STYLE: Record<string, { card: string; dot: string }> = {
   'briefing':  { card: 'border-purple-500/25 bg-purple-500/[0.04]',   dot: 'bg-purple-400'  },
 }
 
+// Parse __META__{...}__/META__ block from notification message
+function parseAtribuicaoMeta(msg: string | null) {
+  if (!msg) return { meta: null as any, clean: '' }
+  const m = msg.match(/__META__(.*?)__\/META__/s)
+  if (!m) return { meta: null, clean: msg }
+  try {
+    const parsed = JSON.parse(m[1])
+    return { meta: parsed, clean: msg.replace(/__META__.*?__\/META__\n?/s, '').trim() }
+  } catch {
+    return { meta: null, clean: msg.replace(/__META__.*?__\/META__\n?/s, '').trim() }
+  }
+}
+
 function NotificacoesTab({ notificacoes, onRefresh }: { notificacoes: Notificacao[]; onRefresh: () => void }) {
+  const [submitting, setSubmitting] = useState<string | null>(null)
 
   async function markLida(id: string) {
     await fetch('/api/freelancer-notificacoes', {
@@ -1543,6 +1557,64 @@ function NotificacoesTab({ notificacoes, onRefresh }: { notificacoes: Notificaca
       body: JSON.stringify({ id, lida: true }),
     })
     onRefresh()
+  }
+
+  // Resposta à atribuição: cria notificação para o admin + marca lida + opcionalmente atualiza
+  // o casamento (data_confirmada=true ou indisponivel=true).
+  async function responderAtribuicao(n: Notificacao, resposta: 'confirmar' | 'indisponivel') {
+    const { meta } = parseAtribuicaoMeta(n.mensagem)
+    const referencia = meta?.atribuicao?.referencia ?? null
+    const role = meta?.atribuicao?.role ?? ''
+    const local = meta?.atribuicao?.local ?? ''
+    const data_casamento = meta?.atribuicao?.data_casamento ?? null
+    const freelancerNome = meta?.freelancerNome ?? ''
+    setSubmitting(n.id)
+    try {
+      // 1) Atualizar casamento (se houver) — só para fotografo/videografo (roles do dia)
+      const roleLower = (role || '').toLowerCase()
+      const isDayRole = roleLower.includes('fot') || roleLower.includes('vid')
+      if (isDayRole && referencia) {
+        const patch = resposta === 'confirmar'
+          ? { data_confirmada: true, indisponivel: false }
+          : { indisponivel: true, data_confirmada: false }
+        // Atualiza o casamento por referencia + freelancer_id (no META)
+        try {
+          // Procura o casamento deste freelancer com esta referência
+          const r = await fetch(`/api/freelancer-casamentos?freelancer_id=${encodeURIComponent(n.freelancer_id)}`).then(r => r.json())
+          const c = (r.casamentos ?? []).find((c: any) => c.referencia === referencia)
+          if (c?.id) {
+            await fetch('/api/freelancer-casamentos', {
+              method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: c.id, ...patch }),
+            })
+          }
+        } catch { /* não bloqueia */ }
+      }
+
+      // 2) Notificar o admin via email (o endpoint suporta tipo='confirmou' ou
+      //    qualquer outro — o template muda automaticamente entre 'confirmou
+      //    a data' e 'está indisponível')
+      try {
+        await fetch('/api/send-admin-notification', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tipo: resposta === 'confirmar' ? 'confirmou' : 'indisponivel',
+            freelancer_nome: freelancerNome,
+            referencia,
+            data_evento: data_casamento,
+            local,
+          }),
+        })
+      } catch { /* não bloqueia */ }
+
+      // 3) Marca a notificação original como lida
+      await fetch('/api/freelancer-notificacoes', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: n.id, lida: true }),
+      })
+
+      onRefresh()
+    } finally { setSubmitting(null) }
   }
 
   function fmtRelative(dateStr: string) {
@@ -1564,34 +1636,64 @@ function NotificacoesTab({ notificacoes, onRefresh }: { notificacoes: Notificaca
           <p className="text-white/15 text-[14px] tracking-widest">Sem notificações.</p>
         </div>
       ) : (
-        notificacoes.map(n => (
-          <div key={n.id} className={`rounded-2xl border p-4 transition-all ${
-            n.lida
-              ? 'border-emerald-500/35 bg-emerald-500/[0.06]'
-              : 'border-red-500/45 bg-red-500/[0.07]'
-          }`}>
-            <div className="flex items-start gap-3">
-              <div className={`w-2.5 h-2.5 rounded-full mt-2 flex-shrink-0 ${n.lida ? 'bg-emerald-400' : 'bg-red-400'}`} />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2 mb-1">
-                  <p className="text-base font-semibold text-white leading-tight">{n.titulo}</p>
-                  <span className="text-[14px] text-white/30 whitespace-nowrap flex-shrink-0 mt-0.5">{fmtRelative(n.created_at)}</span>
+        notificacoes.map(n => {
+          const isAtribuicao = n.tipo === 'atribuicao_equipa'
+          const { clean } = parseAtribuicaoMeta(n.mensagem)
+          const display = clean || n.mensagem
+          const isSubmitting = submitting === n.id
+          return (
+            <div key={n.id} className={`rounded-2xl border p-4 transition-all ${
+              n.lida
+                ? 'border-emerald-500/35 bg-emerald-500/[0.06]'
+                : isAtribuicao
+                  ? 'border-gold/45 bg-gold/[0.06]'
+                  : 'border-red-500/45 bg-red-500/[0.07]'
+            }`}>
+              <div className="flex items-start gap-3">
+                <div className={`w-2.5 h-2.5 rounded-full mt-2 flex-shrink-0 ${
+                  n.lida ? 'bg-emerald-400' : isAtribuicao ? 'bg-gold' : 'bg-red-400'
+                }`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <p className="text-base font-semibold text-white leading-tight">{n.titulo}</p>
+                    <span className="text-[14px] text-white/30 whitespace-nowrap flex-shrink-0 mt-0.5">{fmtRelative(n.created_at)}</span>
+                  </div>
+                  {display && (
+                    <p className="text-base text-white leading-relaxed mt-1">{display}</p>
+                  )}
+                  {/* ── Atribuição equipa: Confirmar / Indisponível ── */}
+                  {isAtribuicao && !n.lida && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        onClick={() => responderAtribuicao(n, 'confirmar')}
+                        disabled={isSubmitting}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gold text-black text-[13px] font-bold tracking-[0.15em] uppercase hover:bg-gold/90 disabled:opacity-50 transition-all"
+                        style={!isSubmitting ? { boxShadow: '0 0 14px -4px rgba(201,164,92,0.55)' } : undefined}>
+                        ✓ Confirmar
+                      </button>
+                      <button
+                        onClick={() => responderAtribuicao(n, 'indisponivel')}
+                        disabled={isSubmitting}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-rose-500/45 bg-rose-500/10 text-rose-200 text-[13px] font-bold tracking-[0.15em] uppercase hover:bg-rose-500/20 hover:border-rose-400/65 disabled:opacity-50 transition-all">
+                        ✕ Indisponível
+                      </button>
+                      {isSubmitting && <span className="text-[12px] text-white/45 italic self-center">A enviar resposta…</span>}
+                    </div>
+                  )}
+                  {/* ── Botão genérico 'Lida' para notificações não-atribuição ── */}
+                  {!isAtribuicao && !n.lida && (
+                    <button
+                      onClick={() => markLida(n.id)}
+                      className="mt-3 text-[14px] tracking-[0.2em] uppercase px-3 py-1.5 rounded-full border border-emerald-500/35 text-emerald-400/80 hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-400/50 transition-all font-semibold"
+                    >
+                      ✓ Lida
+                    </button>
+                  )}
                 </div>
-                {n.mensagem && (
-                  <p className="text-base text-white leading-relaxed mt-1">{n.mensagem}</p>
-                )}
-                {!n.lida && (
-                  <button
-                    onClick={() => markLida(n.id)}
-                    className="mt-3 text-[14px] tracking-[0.2em] uppercase px-3 py-1.5 rounded-full border border-emerald-500/35 text-emerald-400/80 hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-400/50 transition-all font-semibold"
-                  >
-                    ✓ Lida
-                  </button>
-                )}
               </div>
             </div>
-          </div>
-        ))
+          )
+        })
       )}
     </section>
   )
