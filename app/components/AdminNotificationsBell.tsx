@@ -15,6 +15,20 @@ type Notif = {
   data_casamento: string | null
   url: string
   sent_at: string
+  referencia?: string | null
+  urls?: {
+    selecao?: string | null
+    provas?: string | null
+    editadas?: string | null
+    album?: string | null
+  }
+  status?: {
+    selecao?: string | null
+    provas?: string | null
+    editadas?: string | null
+    album?: string | null
+  }
+  mensagem?: string | null
 }
 
 const LS_KEY = 'admin_notif_last_seen'
@@ -56,6 +70,7 @@ export function AdminNotificationsBell() {
   const [mounted, setMounted] = useState(false)
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
   const [showHistory, setShowHistory] = useState(false)
+  const [previewNotif, setPreviewNotif] = useState<Notif | null>(null)
   const buttonRef = useRef<HTMLButtonElement | null>(null)
   const popRef = useRef<HTMLDivElement | null>(null)
 
@@ -264,8 +279,7 @@ export function AdminNotificationsBell() {
                   return (
                     <div key={n.id}
                       className={`relative group transition-colors ${isDismissed ? 'opacity-50' : 'hover:bg-white/[0.02]'}`}>
-                      <a href={n.url} target="_blank" rel="noopener noreferrer"
-                        className="block px-4 py-3 pr-10">
+                      <div className="block px-4 py-3 pr-10">
                         <div className="flex items-start gap-3">
                           <span className={`shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-[14px] mt-0.5 ${
                             isUnread && !isDismissed ? 'bg-gold/15 text-gold border border-gold/30' : 'bg-white/[0.04] text-white/40 border border-white/[0.06]'
@@ -283,12 +297,25 @@ export function AdminNotificationsBell() {
                               )}
                             </div>
                             <p className="text-[11px] text-white/60 truncate">{n.freelancer_nome} · {n.local}</p>
-                            <p className="text-[10px] text-white/30 mt-0.5">{fmtRel(n.sent_at)}</p>
+                            {/* Chip referência + botão Ver Mais */}
+                            <div className="flex items-center justify-between gap-2 mt-1.5">
+                              {n.referencia ? (
+                                <span className="text-[9px] tracking-[0.15em] uppercase px-1.5 py-0.5 rounded font-bold bg-gold/10 text-gold/85 border border-gold/30">
+                                  {n.referencia}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-white/30">{fmtRel(n.sent_at)}</span>
+                              )}
+                              <button onClick={() => setPreviewNotif(n)}
+                                className="text-[9px] tracking-[0.18em] uppercase font-bold text-white/45 hover:text-gold border border-white/10 hover:border-gold/40 px-2 py-0.5 rounded transition-all">
+                                Ver Mais
+                              </button>
+                            </div>
+                            {n.referencia && <p className="text-[9px] text-white/30 mt-1">{fmtRel(n.sent_at)}</p>}
                           </div>
-                          <span className="text-[10px] text-white/20 group-hover:text-gold transition-colors mt-1">↗</span>
                         </div>
-                      </a>
-                      {/* Botão arquivar/restaurar — separado do <a> para não navegar */}
+                      </div>
+                      {/* Botão arquivar/restaurar — separado para não navegar */}
                       {isDismissed ? (
                         <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); restoreOne(n.id) }}
                           title="Restaurar"
@@ -307,6 +334,136 @@ export function AdminNotificationsBell() {
                 })}
               </div>
             )}
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ── Modal Preview · Ver Mais ──────────────────────────── */}
+      {previewNotif && mounted && createPortal(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+          onClick={() => setPreviewNotif(null)}>
+          <div className="absolute inset-0 bg-black/90 backdrop-blur-md" />
+          <div className="relative z-10 w-full max-w-lg rounded-3xl overflow-hidden border border-gold/30"
+            style={{ background: 'linear-gradient(180deg, #100c08, #0b0905)', boxShadow: '0 30px 70px -10px rgba(0,0,0,0.85), 0 0 30px -8px rgba(201,164,92,0.35)' }}
+            onClick={e => e.stopPropagation()}>
+            {/* Linha gold topo */}
+            <div className="h-0.5 w-full bg-gold/65" />
+
+            {/* Header */}
+            <div className="px-6 pt-5 pb-4 border-b border-white/[0.05] flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3 min-w-0">
+                <span className="w-10 h-10 rounded-xl border border-gold/35 bg-gold/[0.08] flex items-center justify-center text-gold text-base shrink-0"
+                  style={{ boxShadow: '0 0 18px -6px rgba(201,164,92,0.5)' }}>
+                  {previewNotif.tipo_icon}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[10px] tracking-[0.4em] text-gold/65 uppercase mb-1">{previewNotif.tipo_label}</p>
+                  <h3 className="text-lg text-white font-light tracking-tight truncate" style={{ fontFamily: 'Georgia, serif' }}>
+                    {previewNotif.local}
+                  </h3>
+                </div>
+              </div>
+              <button onClick={() => setPreviewNotif(null)}
+                className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/35 hover:text-white hover:border-white/30 transition-all shrink-0"
+                title="Fechar (Esc)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+              {/* Meta info: referência · membro · data · sent */}
+              <div className="grid grid-cols-2 gap-3">
+                {previewNotif.referencia && (
+                  <div className="p-3 rounded-xl border border-gold/25 bg-gold/[0.05]">
+                    <p className="text-[9px] tracking-[0.35em] text-gold/65 uppercase mb-1">Referência</p>
+                    <p className="text-[14px] text-gold font-bold tracking-wide font-mono">{previewNotif.referencia}</p>
+                  </div>
+                )}
+                <div className="p-3 rounded-xl border border-white/[0.07] bg-white/[0.025]">
+                  <p className="text-[9px] tracking-[0.35em] text-white/45 uppercase mb-1">Membro</p>
+                  <p className="text-[13px] text-white/90 font-medium truncate">{previewNotif.freelancer_nome}</p>
+                </div>
+                {previewNotif.data_casamento && (
+                  <div className="p-3 rounded-xl border border-white/[0.07] bg-white/[0.025]">
+                    <p className="text-[9px] tracking-[0.35em] text-white/45 uppercase mb-1">Data do Evento</p>
+                    <p className="text-[13px] text-white/90 font-medium tabular-nums">
+                      {new Date(previewNotif.data_casamento).toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })}
+                    </p>
+                  </div>
+                )}
+                <div className="p-3 rounded-xl border border-white/[0.07] bg-white/[0.025]">
+                  <p className="text-[9px] tracking-[0.35em] text-white/45 uppercase mb-1">Enviado</p>
+                  <p className="text-[13px] text-white/90 font-medium">{fmtRel(previewNotif.sent_at)}</p>
+                </div>
+              </div>
+
+              {/* Mensagem (se existir) */}
+              {previewNotif.mensagem && (
+                <div className="p-3.5 rounded-xl border border-white/[0.06] bg-white/[0.02]">
+                  <p className="text-[9px] tracking-[0.35em] text-white/40 uppercase mb-1.5">Mensagem</p>
+                  <p className="text-[12px] text-white/75 leading-relaxed whitespace-pre-wrap">{previewNotif.mensagem}</p>
+                </div>
+              )}
+
+              {/* Entregas (URLs) */}
+              {previewNotif.urls && Object.values(previewNotif.urls).some(u => !!u) && (
+                <div>
+                  <p className="text-[9px] tracking-[0.4em] text-gold/60 uppercase font-bold mb-2">Entregas do Evento</p>
+                  <div className="space-y-1.5">
+                    {([
+                      { key: 'selecao',  label: 'Seleção de Fotos', icon: '◫', color: 'gold' },
+                      { key: 'provas',   label: 'Fotos Prova',      icon: '◧', color: 'blue' },
+                      { key: 'editadas', label: 'Fotos Editadas',   icon: '✓', color: 'emerald' },
+                      { key: 'album',    label: 'Maquete Álbum',    icon: '◐', color: 'purple' },
+                    ] as const).map(item => {
+                      const url = previewNotif.urls?.[item.key]
+                      const status = previewNotif.status?.[item.key]
+                      const cls = {
+                        gold:    'border-gold/30 bg-gold/[0.05] text-gold',
+                        blue:    'border-blue-500/30 bg-blue-500/[0.05] text-blue-300',
+                        emerald: 'border-emerald-500/30 bg-emerald-500/[0.05] text-emerald-300',
+                        purple:  'border-purple-500/30 bg-purple-500/[0.05] text-purple-300',
+                      }[item.color]
+                      return (
+                        <div key={item.key} className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg border ${url ? cls : 'border-white/[0.05] bg-white/[0.015]'}`}>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className={`text-[12px] ${url ? '' : 'text-white/25'}`}>{item.icon}</span>
+                            <p className={`text-[11px] tracking-wider uppercase font-bold truncate ${url ? '' : 'text-white/30'}`}>{item.label}</p>
+                            {status && (
+                              <span className="text-[8px] tracking-wider uppercase font-bold px-1.5 py-0.5 rounded bg-white/[0.06] text-white/55 border border-white/10 shrink-0">
+                                {status}
+                              </span>
+                            )}
+                          </div>
+                          {url ? (
+                            <a href={url} target="_blank" rel="noopener noreferrer"
+                              className="text-[9px] tracking-[0.2em] uppercase font-bold px-2.5 py-1 rounded-md border border-current opacity-80 hover:opacity-100 transition-opacity whitespace-nowrap">
+                              Abrir ↗
+                            </a>
+                          ) : (
+                            <span className="text-[9px] text-white/25 italic">—</span>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-3 border-t border-white/[0.05] bg-black/30 flex items-center justify-between gap-3">
+              <a href={`/freelancers/${previewNotif.freelancer_id}`}
+                className="text-[10px] tracking-[0.25em] uppercase font-bold text-gold/85 hover:text-gold transition-colors">
+                Ir à ficha do membro →
+              </a>
+              <button onClick={() => setPreviewNotif(null)}
+                className="px-4 py-1.5 rounded-lg text-[10px] tracking-widest uppercase font-bold text-white/55 hover:text-white border border-white/15 hover:border-white/30 transition-all">
+                Fechar
+              </button>
+            </div>
           </div>
         </div>,
         document.body

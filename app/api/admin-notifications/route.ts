@@ -50,6 +50,21 @@ type Notif = {
   data_casamento: string | null
   url: string
   sent_at: string        // ISO timestamp
+  // Detalhes adicionais para o modal 'Ver Mais'
+  referencia?: string | null
+  urls?: {
+    selecao?: string | null
+    provas?: string | null
+    editadas?: string | null
+    album?: string | null
+  }
+  status?: {
+    selecao?: string | null
+    provas?: string | null
+    editadas?: string | null
+    album?: string | null
+  }
+  mensagem?: string | null
 }
 
 export async function GET() {
@@ -62,7 +77,7 @@ export async function GET() {
     //   Se alguma coluna não existir, faz fallback ao select sem essas colunas
     let casamentos: any[] | null = null
     let error: any = null
-    const cols = 'id, freelancer_id, local, data_casamento, url_selecao, url_provas, url_editadas, url_album, url_selecao_enviado_em, url_provas_enviado_em, url_editadas_enviado_em, url_album_enviado_em, status_selecao, status_editadas, status_album, status_provas, status_selecao_alterado_em, status_editadas_alterado_em, status_album_alterado_em, status_provas_alterado_em'
+    const cols = 'id, freelancer_id, referencia, local, data_casamento, url_selecao, url_provas, url_editadas, url_album, url_selecao_enviado_em, url_provas_enviado_em, url_editadas_enviado_em, url_album_enviado_em, status_selecao, status_editadas, status_album, status_provas, status_selecao_alterado_em, status_editadas_alterado_em, status_album_alterado_em, status_provas_alterado_em'
     let res = await supabase
       .from('freelancer_casamentos')
       .select(cols)
@@ -72,7 +87,7 @@ export async function GET() {
       // Fallback: apenas colunas core (sem status/alterado_em)
       res = await supabase
         .from('freelancer_casamentos')
-        .select('id, freelancer_id, local, data_casamento, url_selecao, url_provas, url_editadas, url_album, url_selecao_enviado_em, url_provas_enviado_em, url_editadas_enviado_em, url_album_enviado_em')
+        .select('id, freelancer_id, referencia, local, data_casamento, url_selecao, url_provas, url_editadas, url_album, url_selecao_enviado_em, url_provas_enviado_em, url_editadas_enviado_em, url_album_enviado_em')
         .order('data_casamento', { ascending: false })
         .limit(200)
     }
@@ -95,10 +110,30 @@ export async function GET() {
       nomesById = new Map((freelancers ?? []).map((f: any) => [f.id, f.nome]))
     }
 
+    // Helper para construir o snapshot completo do casamento (urls + status)
+    function buildExtras(c: any) {
+      return {
+        referencia: c.referencia ?? null,
+        urls: {
+          selecao:  c.url_selecao ?? null,
+          provas:   c.url_provas ?? null,
+          editadas: c.url_editadas ?? null,
+          album:    c.url_album ?? null,
+        },
+        status: {
+          selecao:  c.status_selecao ?? null,
+          provas:   c.status_provas ?? null,
+          editadas: c.status_editadas ?? null,
+          album:    c.status_album ?? null,
+        },
+      }
+    }
+
     // Expandir para notificações (1 casamento pode gerar até 4 notifs)
     const tipos = ['selecao', 'provas', 'editadas', 'album'] as const
     const notifications: Notif[] = []
     for (const c of (casamentos ?? []) as any[]) {
+      const extras = buildExtras(c)
       for (const tipo of tipos) {
         const tsField = `url_${tipo}_enviado_em`
         const urlField = `url_${tipo}`
@@ -117,6 +152,7 @@ export async function GET() {
           data_casamento: c.data_casamento,
           url,
           sent_at: sentAt,
+          ...extras,
         })
       }
     }
@@ -131,11 +167,13 @@ export async function GET() {
       { col: 'status_provas_alterado_em',   val: 'status_provas',   notif_tipo: 'status_provas'   },
     ]
     for (const c of (casamentos ?? []) as any[]) {
+      const extras = buildExtras(c)
       for (const st of statusTipos) {
         const ts = c[st.col]
         const value = c[st.val]
         if (!ts || !value) continue
         notifications.push({
+          ...extras,
           id: `${st.notif_tipo}::${c.id}::${ts}`,
           tipo: st.notif_tipo,
           tipo_label: `${TIPO_LABELS[st.notif_tipo]} — ${value}`,
