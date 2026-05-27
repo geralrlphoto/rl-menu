@@ -92,11 +92,20 @@ export function TasksWidget({ freelancerId }: { freelancerId: string }) {
 // ─── MiniCalendar ──────────────────────────────────────────────────────────
 type CasamentoLite = { id: string; data_casamento: string | null }
 
-export function MiniCalendar({ casamentos, onClickDate }: { casamentos: CasamentoLite[]; onClickDate?: (d: string) => void }) {
+export function MiniCalendar({
+  casamentos,
+  taskDates,
+  onClickDate,
+}: {
+  casamentos: CasamentoLite[]
+  taskDates?: string[]                // datas de tarefas (ISO YYYY-MM-DD)
+  onClickDate?: (d: string) => void
+}) {
   const today = new Date(); today.setHours(0,0,0,0)
   const [view, setView] = useState({ y: today.getFullYear(), m: today.getMonth() })
 
-  const datas = new Set(casamentos.map(c => c.data_casamento).filter(Boolean) as string[])
+  const datasCasamento = new Set(casamentos.map(c => c.data_casamento).filter(Boolean) as string[])
+  const datasTarefa    = new Set((taskDates ?? []).filter(Boolean))
 
   function changeMonth(delta: number) {
     const d = new Date(view.y, view.m + delta, 1)
@@ -107,12 +116,17 @@ export function MiniCalendar({ casamentos, onClickDate }: { casamentos: Casament
   const lastDay = new Date(view.y, view.m + 1, 0).getDate()
   const startWeekday = first.getDay()
 
-  const cells: Array<{ day: number | null; iso?: string; isToday?: boolean; hasEvent?: boolean }> = []
+  type Cell = { day: number | null; iso?: string; isToday?: boolean; hasEvent?: boolean; hasTask?: boolean }
+  const cells: Cell[] = []
   for (let i = 0; i < startWeekday; i++) cells.push({ day: null })
   for (let d = 1; d <= lastDay; d++) {
     const iso = `${view.y}-${String(view.m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
     const isTodayCell = (view.y === today.getFullYear() && view.m === today.getMonth() && d === today.getDate())
-    cells.push({ day: d, iso, isToday: isTodayCell, hasEvent: datas.has(iso) })
+    cells.push({
+      day: d, iso, isToday: isTodayCell,
+      hasEvent: datasCasamento.has(iso),
+      hasTask:  datasTarefa.has(iso),
+    })
   }
 
   return (
@@ -135,31 +149,39 @@ export function MiniCalendar({ casamentos, onClickDate }: { casamentos: Casament
       <div className="grid grid-cols-7 gap-1">
         {cells.map((c, i) => {
           if (c.day === null) return <div key={i} />
+          const hasAny = c.hasEvent || c.hasTask
+          // Estilo: casamento (gold preenchido) tem prioridade; só-tarefa fica azul outline
+          const cls = c.isToday
+            ? 'bg-gold text-black font-bold'
+            : c.hasEvent
+              ? 'bg-gold/15 text-gold border border-gold/30 hover:bg-gold/25 cursor-pointer'
+              : c.hasTask
+                ? 'bg-blue-500/10 text-blue-300 border border-blue-500/30 hover:bg-blue-500/20 cursor-pointer'
+                : 'text-white/35'
           return (
             <button
               key={i}
-              onClick={() => c.hasEvent && c.iso && onClickDate?.(c.iso)}
-              disabled={!c.hasEvent}
-              className={`relative aspect-square flex items-center justify-center text-[14px] rounded-md transition-all ${
-                c.isToday
-                  ? 'bg-gold text-black font-bold'
-                  : c.hasEvent
-                    ? 'bg-gold/15 text-gold border border-gold/30 hover:bg-gold/25 cursor-pointer'
-                    : 'text-white/35'
-              }`}
+              onClick={() => hasAny && c.iso && onClickDate?.(c.iso)}
+              disabled={!hasAny}
+              className={`relative aspect-square flex items-center justify-center text-[14px] rounded-md transition-all ${cls}`}
             >
               {c.day}
-              {c.hasEvent && !c.isToday && (
-                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-gold" />
+              {/* Dots: casamento (gold) e/ou tarefa (azul) */}
+              {!c.isToday && (c.hasEvent || c.hasTask) && (
+                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 flex items-center gap-0.5">
+                  {c.hasEvent && <span className="w-1 h-1 rounded-full bg-gold" />}
+                  {c.hasTask  && <span className="w-1 h-1 rounded-full bg-blue-400" />}
+                </span>
               )}
             </button>
           )
         })}
       </div>
 
-      <div className="mt-3 flex items-center justify-center gap-3 text-[14px] text-white/35">
+      <div className="mt-3 flex items-center justify-center gap-3 text-[14px] text-white/35 flex-wrap">
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-gold" /> Hoje</span>
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm border border-gold/40 bg-gold/15" /> Casamento</span>
+        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm border border-blue-500/40 bg-blue-500/10" /> Tarefa</span>
       </div>
     </div>
   )

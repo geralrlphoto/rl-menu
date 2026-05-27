@@ -187,7 +187,40 @@ function FreelancerDetailInner() {
   const [fotosSelecaoMap, setFotosSelecaoMap] = useState<Record<string, string>>({})
   // Mapa referencia → { email, ctt, listas, workflows } para "Fotos Convidados"
   const [fotosConvidadosMap, setFotosConvidadosMap] = useState<Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>>({})
+  // Datas das tarefas (do localStorage) — para marcar no MiniCalendar
+  const [taskDates, setTaskDates] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Lê datas das tarefas do localStorage e refresca em focus
+  useEffect(() => {
+    if (!id) return
+    function loadTaskDates() {
+      try {
+        const raw = localStorage.getItem(`freelancer_${id}_tasks`)
+        const tasks: any[] = raw ? JSON.parse(raw) : []
+        const dates = tasks
+          .map(t => t?.dueDate)
+          .filter((d): d is string => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}/.test(d))
+          .map(d => d.slice(0, 10))
+        setTaskDates(Array.from(new Set(dates)))
+      } catch { setTaskDates([]) }
+    }
+    loadTaskDates()
+    const onFocus = () => loadTaskDates()
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === `freelancer_${id}_tasks`) loadTaskDates()
+    }
+    window.addEventListener('focus', onFocus)
+    window.addEventListener('storage', onStorage)
+    // Polling leve para refletir alterações na mesma aba (TarefasTab muda localStorage
+    // mas storage event não dispara no mesmo window que escreveu)
+    const iv = setInterval(loadTaskDates, 3000)
+    return () => {
+      window.removeEventListener('focus', onFocus)
+      window.removeEventListener('storage', onStorage)
+      clearInterval(iv)
+    }
+  }, [id])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -884,7 +917,11 @@ function FreelancerDetailInner() {
             )}
 
             {/* Col 2: Calendário */}
-            <MiniCalendar casamentos={casamentos} onClickDate={() => setTab('casamentos')} />
+            <MiniCalendar casamentos={casamentos} taskDates={taskDates} onClickDate={(iso) => {
+              // Se a data clicada é só de tarefa (não de casamento), vai para Tarefas
+              const isWedding = casamentos.some(c => c.data_casamento === iso)
+              setTab(isWedding ? 'casamentos' : 'tarefas')
+            }} />
 
             {/* Col 3: Tarefas */}
             <TasksWidget freelancerId={id} />
