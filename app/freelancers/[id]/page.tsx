@@ -3013,7 +3013,63 @@ function TarefasTab({ freelancerId, viewAsFreelancer, freelancer, notificacoes, 
   const [sentTasks, setSentTasks] = useState<Notificacao[]>([])
   const [loadingSent, setLoadingSent] = useState(false)
   const [viewingThreadTask, setViewingThreadTask] = useState<{ threadId: string; title: string } | null>(null)
+  const [respondingNotif, setRespondingNotif] = useState<Notificacao | null>(null)
   const [currentFreelancerName, setCurrentFreelancerName] = useState('')
+
+  // Envia resposta a uma tarefa atribuída — replica a lógica do NotificacoesAdminTab
+  async function respondToAssignedTask(notif: Notificacao, resposta: string) {
+    const parsedMeta = parseNotifMeta(notif.mensagem)
+    const { senderId, threadId, creatorId, creatorName, threadTitle } = parsedMeta
+    if (!senderId) {
+      alert('Não foi possível identificar quem enviou a tarefa.')
+      return
+    }
+    const tituloOriginal = threadTitle || (notif.titulo ?? '').replace(/^[✈↩✓] (Nova tarefa(?: do| de)? \w+|Resposta de [^—]+)— /, '')
+    const respTitulo = `↩ Resposta de ${currentFreelancerName || 'um colega'} — ${tituloOriginal}`
+    const newMeta = JSON.stringify({
+      senderId: freelancerId, senderName: currentFreelancerName,
+      threadId: threadId ?? `t-legacy-${notif.id}`,
+      creatorId: creatorId ?? senderId,
+      creatorName: creatorName ?? '',
+      threadTitle: tituloOriginal,
+    })
+    const respMensagem = [
+      `__META__${newMeta}__/META__`,
+      resposta.trim(),
+      '',
+      `Em resposta a: "${tituloOriginal}"`,
+      currentFreelancerName ? `De: ${currentFreelancerName}` : null,
+    ].filter(Boolean).join('\n')
+    // 1) Notificação para o remetente original
+    if (senderId !== 'admin') {
+      await fetch('/api/freelancer-notificacoes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          freelancer_id: senderId,
+          titulo: respTitulo,
+          mensagem: respMensagem,
+          tipo: 'resposta_tarefa',
+          lida: false,
+        }),
+      })
+      try {
+        await fetch('/api/send-notif-freelancer-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ freelancer_id: senderId, titulo: respTitulo }),
+        })
+      } catch {/* opcional */}
+    }
+    // 2) Marca a original como lida
+    await fetch('/api/freelancer-notificacoes', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: notif.id, lida: true }),
+    })
+    setRespondingNotif(null)
+    onRefresh()
+  }
 
   // Carrega 'Tarefas Enviadas' (notifs cujo senderId no META sou eu)
   useEffect(() => {
@@ -3376,13 +3432,22 @@ function TarefasTab({ freelancerId, viewAsFreelancer, freelancer, notificacoes, 
                         {meta.senderName || 'Sistema'} · {dateLabel}
                       </p>
                     </div>
-                    {meta.threadId && (
-                      <button onClick={() => setViewingThreadTask({ threadId: meta.threadId!, title: meta.threadTitle || n.titulo })}
-                        title="Ver conversação da tarefa"
-                        className="px-3 py-1.5 rounded-md text-[10px] tracking-wider uppercase font-bold border border-purple-500/45 bg-purple-500/20 text-purple-200 hover:bg-purple-500/30 hover:border-purple-400/60 transition-all shrink-0">
-                        💬 Ver
+                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                      {/* Responder — sempre disponível para tarefas atribuídas */}
+                      <button onClick={() => setRespondingNotif(n)}
+                        title="Responder à tarefa"
+                        className="px-3 py-1.5 rounded-md text-[10px] tracking-wider uppercase font-bold border border-blue-500/45 bg-blue-500/20 text-blue-200 hover:bg-blue-500/30 hover:border-blue-400/60 transition-all"
+                        style={{ boxShadow: '0 0 10px -4px rgba(59,130,246,0.5)' }}>
+                        ↩ Responder
                       </button>
-                    )}
+                      {meta.threadId && (
+                        <button onClick={() => setViewingThreadTask({ threadId: meta.threadId!, title: meta.threadTitle || n.titulo })}
+                          title="Ver conversação da tarefa"
+                          className="px-3 py-1.5 rounded-md text-[10px] tracking-wider uppercase font-bold border border-purple-500/45 bg-purple-500/20 text-purple-200 hover:bg-purple-500/30 hover:border-purple-400/60 transition-all">
+                          💬 Ver
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )
               })}
@@ -3687,6 +3752,15 @@ function TarefasTab({ freelancerId, viewAsFreelancer, freelancer, notificacoes, 
           freelancerId={freelancerId}
           freelancerNome={freelancer?.nome ?? ''}
           onClose={() => setShowAdminAssignModal(false)}
+        />
+      )}
+
+      {/* Modal Responder a tarefa atribuída — directo a partir desta página */}
+      {respondingNotif && (
+        <ResponderTarefaModal
+          notif={respondingNotif}
+          onClose={() => setRespondingNotif(null)}
+          onSend={(resposta) => respondToAssignedTask(respondingNotif, resposta)}
         />
       )}
 
