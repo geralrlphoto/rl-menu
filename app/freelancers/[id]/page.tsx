@@ -1406,7 +1406,7 @@ function FreelancerDetailInner() {
       {tab === 'casamentos'   && <CasamentosTab freelancerId={id} casamentos={casamentos} onRefresh={load} freelancerStatus={freelancer?.status ?? null} freelancer={freelancer} viewAsFreelancer={viewAsFreelancer} fotosSelecaoMap={fotosSelecaoMap} fotosConvidadosMap={fotosConvidadosMap} setFotosConvidadosMap={setFotosConvidadosMap} />}
       {tab === 'edicao'       && <EdicaoTab freelancerId={id} edicao={edicao} onRefresh={load} />}
       {tab === 'album'        && <AlbumTab freelancerId={id} album={album} onRefresh={load} />}
-      {tab === 'tarefas'      && <TarefasTab freelancerId={id} viewAsFreelancer={viewAsFreelancer} freelancer={freelancer} />}
+      {tab === 'tarefas'      && <TarefasTab freelancerId={id} viewAsFreelancer={viewAsFreelancer} freelancer={freelancer} notificacoes={notificacoes} onRefresh={load} />}
       {tab === 'info'         && <InfoTab freelancerId={id} info={info} onRefresh={load} />}
       {tab === 'notas'        && <NotasTab freelancer={freelancer} onRefresh={load} />}
       {tab === 'pagamentos'   && <PagamentosAdminTab freelancerId={id} pagamentos={pagamentos} casamentos={casamentos} onRefresh={load} />}
@@ -2997,7 +2997,7 @@ function isOverdueT(t: TarefaItem): boolean {
   return t.dueDate < todayIso()
 }
 
-function TarefasTab({ freelancerId, viewAsFreelancer, freelancer }: { freelancerId: string; viewAsFreelancer?: boolean; freelancer: Freelancer | null }) {
+function TarefasTab({ freelancerId, viewAsFreelancer, freelancer, notificacoes, onRefresh }: { freelancerId: string; viewAsFreelancer?: boolean; freelancer: Freelancer | null; notificacoes: Notificacao[]; onRefresh: () => void }) {
   const KEY = `freelancer_${freelancerId}_tasks`
   const [showAdminAssignModal, setShowAdminAssignModal] = useState(false)
   const [tasks, setTasks] = useState<TarefaItem[]>([])
@@ -3324,6 +3324,72 @@ function TarefasTab({ freelancerId, viewAsFreelancer, freelancer }: { freelancer
         </p>
       </div>
       )}
+
+      {/* ── Tarefas Atribuídas a Mim (do admin / outros membros) ── */}
+      {mainTab === 'minhas' && (() => {
+        const tarefasAtribuidas = notificacoes.filter(n =>
+          n.tipo === 'nova_tarefa_atribuida' && !n.lida
+        )
+        if (tarefasAtribuidas.length === 0) return null
+        return (
+          <div className="rounded-2xl border border-purple-500/30 p-4"
+            style={{ background: 'linear-gradient(135deg, rgba(40,15,55,0.4), rgba(11,11,11,0.5))' }}>
+            <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <h3 className="text-[14px] font-light text-white" style={{ fontFamily: 'Georgia, serif' }}>
+                  Tarefas <span className="italic text-purple-300">Atribuídas a Mim</span>
+                </h3>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-200 font-bold uppercase tracking-wider animate-pulse">
+                  {tarefasAtribuidas.length} nova{tarefasAtribuidas.length === 1 ? '' : 's'}
+                </span>
+              </div>
+              <p className="text-[11px] text-white/35 italic">Recebidas via portal · respondem com '↩ Responder'</p>
+            </div>
+            <div className="space-y-2">
+              {tarefasAtribuidas.map(n => {
+                const meta = parseNotifMeta(n.mensagem)
+                const dt = new Date(n.created_at)
+                const dateLabel = `${dt.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })}`
+                const isAdmin = meta.senderId === 'admin'
+                return (
+                  <div key={n.id} className="flex items-start gap-3 px-3 py-3 rounded-xl border border-purple-500/20 bg-purple-500/[0.05] hover:bg-purple-500/[0.1] transition-all">
+                    <div className="w-10 h-10 rounded-lg border border-purple-500/35 bg-purple-500/15 flex items-center justify-center text-purple-200 text-base shrink-0">
+                      {isAdmin ? '✓' : '✈'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                        <p className="text-[13px] text-white font-medium truncate">
+                          {meta.threadTitle || n.titulo.replace(/^[✈✓] /, '').replace(/^Nova tarefa do? \w+ — /, '')}
+                        </p>
+                        {isAdmin && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/25 border border-purple-500/40 text-purple-200 tracking-wider uppercase font-bold">
+                            Admin
+                          </span>
+                        )}
+                      </div>
+                      {meta.cleanMensagem && (
+                        <p className="text-[11px] text-white/55 leading-relaxed line-clamp-2 whitespace-pre-wrap">
+                          {meta.cleanMensagem.split('\n').slice(0, 2).join(' · ')}
+                        </p>
+                      )}
+                      <p className="text-[10px] text-white/30 mt-1">
+                        {meta.senderName || 'Sistema'} · {dateLabel}
+                      </p>
+                    </div>
+                    {meta.threadId && (
+                      <button onClick={() => setViewingThreadTask({ threadId: meta.threadId!, title: meta.threadTitle || n.titulo })}
+                        title="Ver conversação da tarefa"
+                        className="px-3 py-1.5 rounded-md text-[10px] tracking-wider uppercase font-bold border border-purple-500/45 bg-purple-500/20 text-purple-200 hover:bg-purple-500/30 hover:border-purple-400/60 transition-all shrink-0">
+                        💬 Ver
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Tab: Tarefas Enviadas — agrupadas por threadId */}
       {mainTab === 'enviadas' && (

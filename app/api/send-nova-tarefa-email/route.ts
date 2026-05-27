@@ -57,28 +57,6 @@ export async function POST(req: NextRequest) {
             width="320" alt="Nova tarefa atribuída"
             style="display:block;width:100%;max-width:320px;border:0;" />
         </a>
-        ${titulo ? `
-        <p style="margin:20px 0 4px;font-family:Georgia,'Times New Roman',serif;font-size:18px;color:#f0e8d8;letter-spacing:0.02em;">
-          ${titulo}
-        </p>` : ''}
-        ${descricao ? `
-        <p style="margin:8px auto 0;max-width:420px;font-family:Georgia,'Times New Roman',serif;font-size:13px;color:#a09070;line-height:1.6;font-style:italic;">
-          ${descricao}
-        </p>` : ''}
-        ${(prazo || prioridade) ? `
-        <p style="margin:14px 0 0;font-family:Georgia,'Times New Roman',serif;font-size:11px;color:#7a6340;letter-spacing:0.35em;text-transform:uppercase;">
-          ${prioridade ? `Prioridade: ${prioridade}` : ''}${prioridade && prazo ? ' &nbsp;·&nbsp; ' : ''}${prazo ? `Prazo: ${prazo}` : ''}
-        </p>` : ''}
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px auto 0;">
-          <tr>
-            <td align="center" style="border-radius:8px;background:#c9a96e;">
-              <a href="${portalUrl}" target="_blank"
-                style="display:inline-block;padding:14px 36px;background:#c9a96e;color:#0e0b07;text-decoration:none;font-family:Georgia,'Times New Roman',serif;font-size:12px;letter-spacing:0.4em;font-weight:700;border-radius:8px;border:1px solid #c9a96e;">
-                ABRIR PORTAL &nbsp;→
-              </a>
-            </td>
-          </tr>
-        </table>
       </td>
     </tr>
   </table>
