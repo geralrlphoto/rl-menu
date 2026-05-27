@@ -8,9 +8,43 @@ function db() {
 export async function GET(req: NextRequest) {
   const fid = req.nextUrl.searchParams.get('freelancer_id')
   if (!fid) return NextResponse.json({ error: 'freelancer_id required' }, { status: 400 })
-  const { data, error } = await db().from('freelancer_album').select('*').eq('freelancer_id', fid).order('data_casamento')
+  const supabase = db()
+  const { data, error } = await supabase.from('freelancer_album').select('*').eq('freelancer_id', fid).order('data_casamento')
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ album: data ?? [] })
+
+  const rows = data ?? []
+
+  // ── Filtro: só mostra álbuns onde este freelancer está atribuído como
+  //          `editor_album` em `evento_equipa`. Records sem referencia_album
+  //          (manuais) ficam visíveis.
+  try {
+    const refs = Array.from(new Set(rows.filter((r: any) => r.referencia_album).map((r: any) => r.referencia_album)))
+    if (refs.length === 0) return NextResponse.json({ album: rows })
+
+    const { data: equipa } = await supabase
+      .from('evento_equipa')
+      .select('referencia, editor_album')
+      .in('referencia', refs)
+
+    const editorByRef = new Map<string, string[]>()
+    for (const e of (equipa ?? []) as any[]) {
+      if (!e.referencia) continue
+      const list = Array.isArray(e.editor_album) ? e.editor_album : (e.editor_album ? [e.editor_album] : [])
+      editorByRef.set(e.referencia, list)
+    }
+
+    const filtered = rows.filter((r: any) => {
+      if (!r.referencia_album) return true
+      const editores = editorByRef.get(r.referencia_album)
+      if (!editores) return false
+      return editores.includes(fid)
+    })
+
+    return NextResponse.json({ album: filtered })
+  } catch (err) {
+    console.warn('[freelancer-album GET] filter by evento_equipa failed:', err)
+    return NextResponse.json({ album: rows })
+  }
 }
 
 export async function POST(req: NextRequest) {

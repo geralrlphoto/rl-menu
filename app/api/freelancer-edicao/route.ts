@@ -8,9 +8,49 @@ function db() {
 export async function GET(req: NextRequest) {
   const fid = req.nextUrl.searchParams.get('freelancer_id')
   if (!fid) return NextResponse.json({ error: 'freelancer_id required' }, { status: 400 })
-  const { data, error } = await db().from('freelancer_edicao').select('*').eq('freelancer_id', fid).order('data_casamento')
+  const supabase = db()
+  const { data, error } = await supabase.from('freelancer_edicao').select('*').eq('freelancer_id', fid).order('data_casamento')
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ edicao: data ?? [] })
+
+  const rows = data ?? []
+
+  // ── Filtro: só mostra trabalhos onde este freelancer está atribuído
+  //          como `editor_fotos` em `evento_equipa` para a referência.
+  // Regra do utilizador: "se eu não escolhi ninguém aqui, não pode aparecer
+  // nada no portal do membro". Aplica-se SÓ a records que têm `referencia`
+  // — records manualmente criados sem referência ficam visíveis.
+  try {
+    const refs = Array.from(new Set(rows.filter((r: any) => r.referencia).map((r: any) => r.referencia)))
+    if (refs.length === 0) return NextResponse.json({ edicao: rows })
+
+    const { data: equipa } = await supabase
+      .from('evento_equipa')
+      .select('referencia, editor_fotos')
+      .in('referencia', refs)
+
+    const editorByRef = new Map<string, string[]>()
+    for (const e of (equipa ?? []) as any[]) {
+      if (!e.referencia) continue
+      const list = Array.isArray(e.editor_fotos) ? e.editor_fotos : (e.editor_fotos ? [e.editor_fotos] : [])
+      editorByRef.set(e.referencia, list)
+    }
+
+    const filtered = rows.filter((r: any) => {
+      // Sem referência → mantém (job manual)
+      if (!r.referencia) return true
+      const editores = editorByRef.get(r.referencia)
+      // Sem entrada em evento_equipa → não há editor atribuído → esconde
+      if (!editores) return false
+      // Freelancer não está na lista de editores → esconde
+      return editores.includes(fid)
+    })
+
+    return NextResponse.json({ edicao: filtered })
+  } catch (err) {
+    // Se a tabela evento_equipa não existir ou falhar, devolve tudo (não bloqueia)
+    console.warn('[freelancer-edicao GET] filter by evento_equipa failed:', err)
+    return NextResponse.json({ edicao: rows })
+  }
 }
 
 export async function POST(req: NextRequest) {
