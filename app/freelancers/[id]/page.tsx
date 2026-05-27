@@ -707,7 +707,7 @@ function FreelancerDetailInner() {
 
             type EntregaItem = {
               key: string
-              kind: 'edicao' | 'album' | 'selecao'
+              kind: 'edicao' | 'album'
               local: string
               deadlineISO: string
               diasAtraso: number
@@ -745,34 +745,14 @@ function FreelancerDetailInner() {
               })
             })
 
-            // 3) SELEÇÃO atrasada — casamento com seleção não entregue e prazo passado
-            //    Regra de prazo: 30 dias após o casamento → noivos têm de submeter seleção.
-            casamentos.forEach(c => {
-              if (!c.data_casamento) return
-              const status = c.status_selecao ?? ''
-              if (status === 'ENTREGUE' || status === 'GALERIA PUBLICADA' || status === 'CONCLUIDO') return
-              const cas = new Date(c.data_casamento); cas.setHours(0,0,0,0)
-              if (cas > todayMid) return  // casamento ainda no futuro — não há prazo de seleção
-              const deadline = new Date(cas); deadline.setDate(deadline.getDate() + 30)
-              if (deadline >= todayMid) return  // ainda dentro do prazo
-              const diasAtraso = Math.round((todayMid.getTime() - deadline.getTime()) / 86400000)
-              items.push({
-                key: `sel-${c.id}`, kind: 'selecao',
-                local: (c.local ?? '—').toUpperCase(),
-                deadlineISO: deadline.toISOString(), diasAtraso,
-                onClick: () => setTab('casamentos'),
-              })
-            })
-
             if (items.length === 0) return null
 
             // Ordena por dias de atraso DESC (mais antigos primeiro)
             items.sort((a, b) => b.diasAtraso - a.diasAtraso)
 
             const KIND_META = {
-              edicao:  { label: 'EDIÇÃO',  chipBg: 'bg-blue-500/15',   chipBorder: 'border-blue-500/45',   chipText: 'text-blue-200' },
-              album:   { label: 'ÁLBUM',   chipBg: 'bg-purple-500/15', chipBorder: 'border-purple-500/45', chipText: 'text-purple-200' },
-              selecao: { label: 'SELEÇÃO', chipBg: 'bg-gold/15',       chipBorder: 'border-gold/50',       chipText: 'text-gold' },
+              edicao: { label: 'EDIÇÃO', chipBg: 'bg-blue-500/15',   chipBorder: 'border-blue-500/45',   chipText: 'text-blue-200' },
+              album:  { label: 'ÁLBUM',  chipBg: 'bg-purple-500/15', chipBorder: 'border-purple-500/45', chipText: 'text-purple-200' },
             } as const
 
             return (
