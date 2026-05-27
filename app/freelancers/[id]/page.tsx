@@ -825,6 +825,121 @@ function FreelancerDetailInner() {
             </button>
           </div>
 
+          {/* ── ALERTAS CRÍTICOS — só renderiza quando há algo a alertar ─── */}
+          {(() => {
+            const todayMid = new Date(); todayMid.setHours(0,0,0,0)
+            const alerts: Array<{
+              key: string
+              icon: string
+              title: string
+              detail: string
+              accent: 'rose'|'amber'|'gold'|'blue'
+              onClick: () => void
+            }> = []
+            // 1) Casamentos não confirmados a < 14 dias
+            casamentos.forEach(c => {
+              if (c.data_confirmada || c.indisponivel) return
+              if (!c.data_casamento) return
+              const d = new Date(c.data_casamento); d.setHours(0,0,0,0)
+              const diff = Math.round((d.getTime() - todayMid.getTime()) / 86400000)
+              if (diff < 0 || diff > 14) return
+              alerts.push({
+                key: `conf-${c.id}`, icon: '📷',
+                title: `Confirmar disponibilidade · ${c.local ?? 'evento'}`,
+                detail: diff === 0 ? 'É hoje' : diff === 1 ? 'É amanhã' : `Daqui a ${diff} dias`,
+                accent: diff <= 3 ? 'rose' : 'amber',
+                onClick: () => setTab('casamentos'),
+              })
+            })
+            // 2) Atribuições de equipa pendentes (notificação não lida)
+            notificacoes.filter(n => n.tipo === 'atribuicao_equipa' && !n.lida).forEach(n => {
+              alerts.push({
+                key: `atr-${n.id}`, icon: '✨',
+                title: 'Nova atribuição por confirmar',
+                detail: n.titulo.replace(/^✨\s*/, ''),
+                accent: 'gold',
+                onClick: () => setTab('notificacoes'),
+              })
+            })
+            // 3) Edições atrasadas
+            edicao.forEach(e => {
+              if (e.status === 'CONCLUÍDO') return
+              if (!e.data_final_entrega) return
+              const d = new Date(e.data_final_entrega); d.setHours(0,0,0,0)
+              if (d >= todayMid) return
+              const diasAtraso = Math.round((todayMid.getTime() - d.getTime()) / 86400000)
+              alerts.push({
+                key: `edi-${e.id}`, icon: '⏱',
+                title: `Edição atrasada · ${e.local ?? e.nome}`,
+                detail: `${diasAtraso} dia${diasAtraso === 1 ? '' : 's'} de atraso`,
+                accent: 'rose',
+                onClick: () => setTab('edicao'),
+              })
+            })
+            // 4) Pagamentos atrasados (pendentes + data_prevista < hoje)
+            pagamentos.filter(p => p.status === 'PENDENTE' && p.casamento_id && casamentoIdsSet.has(p.casamento_id) && p.data_prevista && new Date(p.data_prevista) < todayMid)
+              .forEach(p => {
+                const diasAtraso = Math.round((todayMid.getTime() - new Date(p.data_prevista!).getTime()) / 86400000)
+                alerts.push({
+                  key: `pag-${p.id}`, icon: '€',
+                  title: `Pagamento em atraso · ${(p.valor ?? 0).toFixed(2).replace('.',',')} €`,
+                  detail: `${diasAtraso} dia${diasAtraso === 1 ? '' : 's'} de atraso · ${p.descricao}`,
+                  accent: 'rose',
+                  onClick: () => setTab('pagamentos'),
+                })
+              })
+            // 5) Mensagens não lidas
+            if (mensagensNaoLidas > 0) {
+              alerts.push({
+                key: 'msg-unread', icon: '✉',
+                title: `${mensagensNaoLidas} mensagem${mensagensNaoLidas === 1 ? '' : 's'} por ler`,
+                detail: 'Conversação com o membro',
+                accent: 'blue',
+                onClick: () => setTab('mensagens'),
+              })
+            }
+            if (alerts.length === 0) return null
+            // Limita a 6 e prioriza rose > amber > gold > blue
+            const priority = { rose: 0, amber: 1, gold: 2, blue: 3 }
+            const sorted = alerts.sort((a, b) => priority[a.accent] - priority[b.accent]).slice(0, 6)
+            const accents = {
+              rose:  { border: 'border-rose-500/35',   bg: 'bg-rose-500/[0.06]',    iconBg: 'bg-rose-500/15 border-rose-500/45',    text: 'text-rose-300',    glow: 'rgba(244,63,94,0.25)' },
+              amber: { border: 'border-amber-500/35',  bg: 'bg-amber-500/[0.06]',   iconBg: 'bg-amber-500/15 border-amber-500/45',  text: 'text-amber-300',   glow: 'rgba(245,158,11,0.25)' },
+              gold:  { border: 'border-gold/40',       bg: 'bg-gold/[0.05]',        iconBg: 'bg-gold/15 border-gold/45',            text: 'text-gold',        glow: 'rgba(201,164,92,0.25)' },
+              blue:  { border: 'border-blue-500/35',   bg: 'bg-blue-500/[0.06]',    iconBg: 'bg-blue-500/15 border-blue-500/45',    text: 'text-blue-300',    glow: 'rgba(59,130,246,0.25)' },
+            }
+            return (
+              <div className="mb-5 rounded-2xl border border-white/[0.08] overflow-hidden"
+                style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.5), rgba(11,11,11,0.6))' }}>
+                <div className="px-5 py-3 border-b border-white/[0.05] flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-7 h-7 rounded-lg border border-rose-500/45 bg-rose-500/15 flex items-center justify-center text-rose-300 text-sm"
+                      style={{ boxShadow: '0 0 14px -4px rgba(244,63,94,0.4)' }}>!</span>
+                    <p className="text-[10px] tracking-[0.4em] text-rose-300/80 uppercase font-bold">Alertas Críticos</p>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300 border border-rose-500/35 font-bold tabular-nums">{sorted.length}</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 p-3">
+                  {sorted.map(a => {
+                    const ac = accents[a.accent]
+                    return (
+                      <button key={a.key} onClick={a.onClick}
+                        className={`group text-left flex items-start gap-2.5 px-3 py-2.5 rounded-xl border ${ac.border} ${ac.bg} hover:brightness-110 transition-all`}
+                        style={{ boxShadow: `0 0 16px -10px ${ac.glow}` }}>
+                        <span className={`w-8 h-8 rounded-lg border flex items-center justify-center text-[13px] shrink-0 ${ac.iconBg} ${ac.text}`}>{a.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-[12px] font-semibold truncate ${ac.text}`}>{a.title}</p>
+                          <p className="text-[10px] text-white/55 mt-0.5 truncate">{a.detail}</p>
+                        </div>
+                        <span className={`text-[12px] ${ac.text} opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all shrink-0`}>›</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })()}
+
           {/* ── KPI CARDS premium — layout simétrico vertical ───── */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6 fade-in-3">
             {([
