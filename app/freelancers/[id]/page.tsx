@@ -162,7 +162,7 @@ function FreelancerDetailInner() {
   const { id } = useParams<{ id: string }>()
   const searchParams = useSearchParams()
   const viewAsFreelancer = searchParams?.get('view') === 'freelancer'
-  const [tab, setTab] = useState<'casamentos'|'edicao'|'album'|'valores'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'|null>(null)
+  const [tab, setTab] = useState<'casamentos'|'edicao'|'album'|'tarefas'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'|null>(null)
   const [editForm, setEditForm] = useState<{ nome: string; status: string; contato: string; email: string; nome_sos: string; contato_sos: string } | null>(null)
   const [editSaving, setEditSaving] = useState(false)
   const [introHome, setIntroHome] = useState('')
@@ -449,11 +449,11 @@ function FreelancerDetailInner() {
     setEditSaving(false)
   }
 
-  const tabs: { key: 'casamentos'|'edicao'|'album'|'valores'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'; label: string; count?: number }[] = [
+  const tabs: { key: 'casamentos'|'edicao'|'album'|'tarefas'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'; label: string; count?: number }[] = [
     { key: 'casamentos',   label: 'Casamentos',  count: casamentos.length },
     ...(!isVideografo ? [{ key: 'edicao' as const, label: 'Edição Fotos', count: edicao.length }] : []),
     ...(isFotografo ? [{ key: 'album' as const, label: 'Edição Álbum', count: album.length }] : []),
-    { key: 'valores',      label: 'Valores' },
+    { key: 'tarefas',      label: 'Tarefas' },
     { key: 'info',         label: 'Info' },
     { key: 'notas',        label: 'Notas' },
     { key: 'pagamentos',   label: 'Pagamentos', count: pagamentos.length },
@@ -1369,7 +1369,7 @@ function FreelancerDetailInner() {
       {tab === 'casamentos'   && <CasamentosTab freelancerId={id} casamentos={casamentos} onRefresh={load} freelancerStatus={freelancer?.status ?? null} freelancer={freelancer} viewAsFreelancer={viewAsFreelancer} fotosSelecaoMap={fotosSelecaoMap} fotosConvidadosMap={fotosConvidadosMap} setFotosConvidadosMap={setFotosConvidadosMap} />}
       {tab === 'edicao'       && <EdicaoTab freelancerId={id} edicao={edicao} onRefresh={load} />}
       {tab === 'album'        && <AlbumTab freelancerId={id} album={album} onRefresh={load} />}
-      {tab === 'valores'      && <ValoresTab freelancerId={id} valores={valores} onRefresh={load} />}
+      {tab === 'tarefas'      && <TarefasTab freelancerId={id} />}
       {tab === 'info'         && <InfoTab freelancerId={id} info={info} onRefresh={load} />}
       {tab === 'notas'        && <NotasTab freelancer={freelancer} onRefresh={load} />}
       {tab === 'pagamentos'   && <PagamentosAdminTab freelancerId={id} pagamentos={pagamentos} casamentos={casamentos} onRefresh={load} />}
@@ -1381,7 +1381,7 @@ function FreelancerDetailInner() {
 }
 
 // ─── SidebarNavAdmin ───────────────────────────────────────────────────────
-type AdminTabKey = 'casamentos'|'edicao'|'album'|'valores'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'|null
+type AdminTabKey = 'casamentos'|'edicao'|'album'|'tarefas'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'|null
 
 function SidebarNavAdmin({
   freelancer,
@@ -1405,7 +1405,7 @@ function SidebarNavAdmin({
     { key: 'casamentos',     label: 'Casamentos',     icon: '◆', count: counts.casamentos },
     ...(!isVideografo ? [{ key: 'edicao' as AdminTabKey, label: 'Edição Fotos', icon: '✎', count: counts.edicao }] : []),
     ...(isFotografo ? [{ key: 'album' as AdminTabKey, label: 'Edição Álbum', icon: '◫', count: counts.album }] : []),
-    { key: 'valores',        label: 'Valores',        icon: '€' },
+    { key: 'tarefas',        label: 'Tarefas',        icon: '◷' },
     { key: 'info',           label: 'Info',           icon: 'ⓘ' },
     { key: 'notas',          label: 'Notas',          icon: '✦' },
     { key: 'pagamentos',     label: 'Pagamentos',     icon: '$', count: counts.pagamentos },
@@ -2900,6 +2900,188 @@ function EdicaoForm({ form, setForm, saving, onSave, onCancel, onDelete, selecao
             {saving ? 'A guardar...' : 'Guardar'}
           </button>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Tarefas Tab ──────────────────────────────────────────────────────────────
+// Página completa de tarefas — usa o mesmo localStorage do TasksWidget do Início,
+// portanto qualquer alteração aqui aparece também lá (e vice-versa).
+
+type TarefaItem = { id: string; text: string; done: boolean; createdAt?: string; doneAt?: string }
+
+function TarefasTab({ freelancerId }: { freelancerId: string }) {
+  const KEY = `freelancer_${freelancerId}_tasks`
+  const [tasks, setTasks] = useState<TarefaItem[]>([])
+  const [novo, setNovo] = useState('')
+  const [loaded, setLoaded] = useState(false)
+  const [filter, setFilter] = useState<'todas'|'pendentes'|'concluidas'>('todas')
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(KEY)
+      if (raw) setTasks(JSON.parse(raw))
+    } catch {}
+    setLoaded(true)
+  }, [KEY])
+
+  useEffect(() => {
+    if (!loaded) return
+    try { localStorage.setItem(KEY, JSON.stringify(tasks)) } catch {}
+  }, [tasks, KEY, loaded])
+
+  function adicionar() {
+    const t = novo.trim()
+    if (!t) return
+    setTasks(prev => [...prev, { id: crypto.randomUUID(), text: t, done: false, createdAt: new Date().toISOString() }])
+    setNovo('')
+  }
+  function toggle(id: string) {
+    setTasks(prev => prev.map(t => t.id === id
+      ? { ...t, done: !t.done, doneAt: !t.done ? new Date().toISOString() : undefined }
+      : t))
+  }
+  function remover(id: string) {
+    if (!confirm('Eliminar esta tarefa?')) return
+    setTasks(prev => prev.filter(t => t.id !== id))
+  }
+  function limparConcluidas() {
+    const n = tasks.filter(t => t.done).length
+    if (n === 0) return
+    if (!confirm(`Eliminar ${n} tarefa${n === 1 ? '' : 's'} concluída${n === 1 ? '' : 's'}?`)) return
+    setTasks(prev => prev.filter(t => !t.done))
+  }
+
+  const pend = tasks.filter(t => !t.done).length
+  const concl = tasks.length - pend
+  const total = tasks.length
+  const pct = total > 0 ? Math.round((concl / total) * 100) : 0
+
+  const filteredTasks = tasks.filter(t => {
+    if (filter === 'pendentes') return !t.done
+    if (filter === 'concluidas') return t.done
+    return true
+  })
+
+  return (
+    <div className="space-y-5">
+      {/* Header com KPIs */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4">
+          <p className="text-[10px] tracking-[0.3em] uppercase text-white/35 mb-1">Total</p>
+          <p className="text-3xl font-light text-white leading-none tabular-nums" style={{ fontFamily: 'Georgia, serif' }}>{total}</p>
+        </div>
+        <div className="rounded-2xl border border-gold/25 bg-gold/[0.04] p-4">
+          <p className="text-[10px] tracking-[0.3em] uppercase text-gold/70 mb-1">Pendentes</p>
+          <p className="text-3xl font-light text-gold leading-none tabular-nums" style={{ fontFamily: 'Georgia, serif' }}>{pend}</p>
+        </div>
+        <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.04] p-4">
+          <p className="text-[10px] tracking-[0.3em] uppercase text-emerald-300/70 mb-1">Concluídas</p>
+          <p className="text-3xl font-light text-emerald-300 leading-none tabular-nums" style={{ fontFamily: 'Georgia, serif' }}>{concl}</p>
+        </div>
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4">
+          <p className="text-[10px] tracking-[0.3em] uppercase text-white/35 mb-1">Progresso</p>
+          <p className="text-3xl font-light text-white leading-none tabular-nums" style={{ fontFamily: 'Georgia, serif' }}>{pct}%</p>
+        </div>
+      </div>
+
+      {/* Barra de progresso */}
+      {total > 0 && (
+        <div className="rounded-full h-1.5 bg-white/[0.05] overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-gold via-emerald-400 to-emerald-500 transition-all duration-500"
+            style={{ width: `${pct}%`, boxShadow: '0 0 12px rgba(201,164,92,0.4)' }} />
+        </div>
+      )}
+
+      {/* Input nova tarefa */}
+      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4">
+        <p className="text-[11px] tracking-[0.35em] uppercase text-gold/70 font-semibold mb-3">Nova Tarefa</p>
+        <div className="flex items-center gap-2">
+          <input
+            value={novo}
+            onChange={e => setNovo(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') adicionar() }}
+            placeholder="O que precisa de ser feito?"
+            className="flex-1 bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-[14px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40 transition-colors"
+          />
+          <button
+            onClick={adicionar}
+            disabled={!novo.trim()}
+            className="px-4 py-2.5 rounded-lg bg-gold text-black text-[12px] font-bold tracking-wider uppercase hover:bg-gold/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            style={novo.trim() ? { boxShadow: '0 0 12px -4px rgba(201,164,92,0.5)' } : undefined}
+          >+ Adicionar</button>
+        </div>
+      </div>
+
+      {/* Filtros + Lista */}
+      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div className="flex items-center gap-1.5">
+            {([
+              { key: 'todas',       label: 'Todas',       count: total },
+              { key: 'pendentes',   label: 'Pendentes',   count: pend },
+              { key: 'concluidas',  label: 'Concluídas',  count: concl },
+            ] as const).map(f => (
+              <button key={f.key} onClick={() => setFilter(f.key)}
+                className={`px-3 py-1.5 rounded-lg text-[11px] tracking-widest uppercase font-semibold transition-all border ${
+                  filter === f.key
+                    ? 'bg-gold/15 border-gold/40 text-gold'
+                    : 'bg-transparent border-white/[0.06] text-white/45 hover:text-white/75 hover:border-white/15'
+                }`}>
+                {f.label} <span className="opacity-70">({f.count})</span>
+              </button>
+            ))}
+          </div>
+          {concl > 0 && (
+            <button onClick={limparConcluidas}
+              className="text-[10px] tracking-widest uppercase text-white/35 hover:text-red-400 transition-colors">
+              ✕ Limpar concluídas
+            </button>
+          )}
+        </div>
+
+        {filteredTasks.length === 0 ? (
+          <div className="py-10 text-center">
+            <span className="text-4xl opacity-20 block mb-2">{filter === 'concluidas' ? '✓' : filter === 'pendentes' ? '◷' : '✦'}</span>
+            <p className="text-[12px] text-white/35 italic">
+              {filter === 'concluidas' ? 'Nada concluído ainda.' : filter === 'pendentes' ? 'Sem tarefas pendentes — bom trabalho!' : 'Sem tarefas. Adiciona a primeira acima.'}
+            </p>
+          </div>
+        ) : (
+          <ul className="space-y-1.5">
+            {filteredTasks.map(t => (
+              <li key={t.id}
+                className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all ${
+                  t.done
+                    ? 'border-white/[0.04] bg-white/[0.01]'
+                    : 'border-white/[0.08] bg-white/[0.02] hover:border-gold/25 hover:bg-white/[0.04]'
+                }`}>
+                <button onClick={() => toggle(t.id)}
+                  className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-all ${
+                    t.done
+                      ? 'bg-emerald-500/25 border-emerald-500/55 text-emerald-300'
+                      : 'border-white/25 hover:border-gold/60 hover:bg-gold/10'
+                  }`}>
+                  {t.done && <span className="text-[12px] leading-none">✓</span>}
+                </button>
+                <span className={`flex-1 text-[14px] leading-snug ${t.done ? 'line-through text-white/35' : 'text-white/85'}`}>
+                  {t.text}
+                </span>
+                {t.done && t.doneAt && (
+                  <span className="text-[10px] text-emerald-400/55 tracking-wider whitespace-nowrap">
+                    {new Date(t.doneAt).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })}
+                  </span>
+                )}
+                <button onClick={() => remover(t.id)}
+                  title="Eliminar"
+                  className="w-6 h-6 flex items-center justify-center rounded-md text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100">
+                  ✕
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   )
