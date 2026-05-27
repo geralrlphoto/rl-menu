@@ -163,6 +163,21 @@ function FreelancerDetailInner() {
   const searchParams = useSearchParams()
   const viewAsFreelancer = searchParams?.get('view') === 'freelancer'
   const [tab, setTab] = useState<'casamentos'|'edicao'|'album'|'tarefas'|'calendario'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'|null>(null)
+  // Toggle do card Crítico · Entrega — persistente em localStorage
+  const [criticoOpen, setCriticoOpen] = useState(true)
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem('critico_entrega_open')
+      if (v !== null) setCriticoOpen(v === '1')
+    } catch {}
+  }, [])
+  function toggleCritico() {
+    setCriticoOpen(prev => {
+      const next = !prev
+      try { localStorage.setItem('critico_entrega_open', next ? '1' : '0') } catch {}
+      return next
+    })
+  }
   const [editForm, setEditForm] = useState<{ nome: string; status: string; contato: string; email: string; nome_sos: string; contato_sos: string } | null>(null)
   const [editSaving, setEditSaving] = useState(false)
   const [introHome, setIntroHome] = useState('')
@@ -810,13 +825,16 @@ function FreelancerDetailInner() {
             } as const
 
             return (
-              <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-5 -mt-24 mb-6">
-                <div className="lg:col-start-3 rounded-2xl border border-rose-500/35 p-3.5 backdrop-blur-sm"
+              <div className={`relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6 ${criticoOpen ? '-mt-24' : '-mt-16'}`}>
+                <div className={`lg:col-start-3 rounded-2xl border border-rose-500/35 backdrop-blur-sm transition-all duration-300 ${criticoOpen ? 'p-3.5' : 'p-2.5'}`}
                   style={{
                     background: 'linear-gradient(135deg, rgba(40,8,12,0.85), rgba(20,5,8,0.92))',
                     boxShadow: '0 0 28px -10px rgba(244,63,94,0.55), inset 0 0 0 1px rgba(244,63,94,0.06)',
                   }}>
-                  <div className="flex items-center justify-between gap-2 mb-2">
+                  {/* Header — clicável + chevron */}
+                  <button onClick={toggleCritico}
+                    className={`w-full flex items-center justify-between gap-2 ${criticoOpen ? 'mb-2' : 'mb-0'} group cursor-pointer text-left`}
+                    title={criticoOpen ? 'Fechar' : 'Abrir alertas'}>
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="text-rose-300 text-sm">⚠</span>
                       <p className="text-[10px] tracking-[0.3em] uppercase font-bold text-rose-300 truncate">Crítico · Entrega</p>
@@ -824,33 +842,41 @@ function FreelancerDetailInner() {
                         {atrasados.length}
                       </span>
                     </div>
-                    <p className="text-[10px] italic text-rose-200/55 shrink-0">30 dias</p>
-                  </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {criticoOpen && <p className="text-[10px] italic text-rose-200/55">30 dias</p>}
+                      <span className={`w-6 h-6 rounded-full border border-rose-500/40 bg-rose-500/15 text-rose-300 flex items-center justify-center text-[10px] transition-transform duration-300 group-hover:bg-rose-500/25 group-hover:border-rose-400/60 ${criticoOpen ? 'rotate-180' : 'rotate-0'}`}>
+                        ▾
+                      </span>
+                    </div>
+                  </button>
 
-                  <div className="space-y-1.5">
-                    {atrasados.map(p => {
-                      const m = KIND_META[p.tipo as keyof typeof KIND_META] ?? KIND_META.selecao
-                      const diasAtraso = Math.abs(p.daysLeft)
-                      return (
-                        <button key={`${p.tipo}-${p.c.id}`} onClick={() => setTab(m.targetTab)}
-                          className="w-full group flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-rose-500/25 bg-rose-500/[0.08] hover:border-rose-500/45 hover:bg-rose-500/[0.12] transition-all text-left">
-                          <span className={`px-1.5 py-0.5 rounded text-[8px] tracking-[0.18em] uppercase font-bold border ${m.chipBg} ${m.chipBorder} ${m.chipText} shrink-0 min-w-[56px] text-center`}>
-                            {m.label}
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[12px] text-white font-semibold tracking-wide truncate leading-tight">{(p.c.local ?? '—').toUpperCase()}</p>
-                            <p className="text-[9px] text-rose-200/55 italic leading-tight">{fmtShortDate(p.deadline)}</p>
-                          </div>
-                          <div className="text-right shrink-0">
-                            <p className="text-rose-300 font-bold tabular-nums leading-none" style={{ fontFamily: 'Georgia, serif', fontSize: '16px' }}>
-                              +{diasAtraso}
-                              <span className="text-[8px] text-rose-300/75 tracking-[0.2em] uppercase ml-1 font-bold">atr.</span>
-                            </p>
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
+                  {/* Lista — só quando aberto */}
+                  {criticoOpen && (
+                    <div className="space-y-1.5">
+                      {atrasados.map(p => {
+                        const m = KIND_META[p.tipo as keyof typeof KIND_META] ?? KIND_META.selecao
+                        const diasAtraso = Math.abs(p.daysLeft)
+                        return (
+                          <button key={`${p.tipo}-${p.c.id}`} onClick={() => setTab(m.targetTab)}
+                            className="w-full group flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-rose-500/25 bg-rose-500/[0.08] hover:border-rose-500/45 hover:bg-rose-500/[0.12] transition-all text-left">
+                            <span className={`px-1.5 py-0.5 rounded text-[8px] tracking-[0.18em] uppercase font-bold border ${m.chipBg} ${m.chipBorder} ${m.chipText} shrink-0 min-w-[56px] text-center`}>
+                              {m.label}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[12px] text-white font-semibold tracking-wide truncate leading-tight">{(p.c.local ?? '—').toUpperCase()}</p>
+                              <p className="text-[9px] text-rose-200/55 italic leading-tight">{fmtShortDate(p.deadline)}</p>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <p className="text-rose-300 font-bold tabular-nums leading-none" style={{ fontFamily: 'Georgia, serif', fontSize: '16px' }}>
+                                +{diasAtraso}
+                                <span className="text-[8px] text-rose-300/75 tracking-[0.2em] uppercase ml-1 font-bold">atr.</span>
+                              </p>
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
             )
