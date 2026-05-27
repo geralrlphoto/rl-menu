@@ -1305,22 +1305,7 @@ function FreelancerDetailInner() {
 
             </div>
 
-            {/* ── COLUNA LATERAL (1/3) — Alertas ─────────────────────── */}
-            <aside className="lg:col-span-1 flex flex-col gap-4">
-
-              {/* Alerta mensagens não lidas */}
-              {mensagensNaoLidas > 0 && (
-                <button onClick={() => setTab('mensagens')}
-                  className="bg-blue-500/[0.06] border border-blue-500/25 hover:bg-blue-500/[0.1] rounded-2xl p-4 text-left transition-all flex items-center gap-3">
-                  <span className="text-2xl">💬</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[14px] tracking-widest uppercase font-bold text-blue-300/85">Mensagens</p>
-                    <p className="text-[14px] text-white/40 mt-0.5">{mensagensNaoLidas} {mensagensNaoLidas === 1 ? 'nova' : 'novas'}</p>
-                  </div>
-                  <span className="text-[14px] tracking-widest uppercase font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/40">{mensagensNaoLidas}</span>
-                </button>
-              )}
-            </aside>
+            {/* (Cartão lateral 'Mensagens' removido a pedido do utilizador.) */}
           </div>
           </>
         )
