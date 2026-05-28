@@ -2356,6 +2356,7 @@ function CasamentoFicha({ casamento: c, onClose, onEdit, onConfirm, onDelete, is
   const [confirmadoVideo, setConfirmadoVideo] = useState(c.data_confirmada_videografo ?? false)
   const [indisponivelFoto, setIndisponivelFoto] = useState(c.indisponivel ?? false)
   const [indisponivelVideo, setIndisponivelVideo] = useState(c.indisponivel_videografo ?? false)
+  const [showBriefingPreview, setShowBriefingPreview] = useState(false)
 
   async function patch(fields: Record<string, any>) {
     await fetch('/api/freelancer-casamentos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id, ...fields }) })
@@ -2443,16 +2444,23 @@ function CasamentoFicha({ casamento: c, onClose, onEdit, onConfirm, onDelete, is
             <p className="text-[14px] text-white/70">{c.videografo || <span className="text-white/20 italic">Não definido</span>}</p>
           </div>
 
-          {/* Briefing */}
+          {/* Briefing — bloqueado se ainda não foi enviado */}
           <div>
             <p className="text-[14px] tracking-[0.3em] text-white/25 uppercase mb-2">Briefing</p>
             {c.briefing_url ? (
-              <a href={c.briefing_url} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-[14px] text-gold/70 hover:text-gold transition-colors border border-gold/20 px-3 py-1.5 rounded-lg hover:bg-gold/5">
-                Abrir Briefing ↗
-              </a>
+              <button onClick={() => setShowBriefingPreview(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gold text-black text-[12px] tracking-widest uppercase font-bold hover:bg-gold/90 transition-all"
+                style={{ boxShadow: '0 0 14px -4px rgba(201,164,92,0.55)' }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                Ver Briefing
+              </button>
             ) : (
-              <p className="text-[14px] text-white/20 italic">Sem briefing</p>
+              <button disabled
+                title="Envia o briefing primeiro em /portal-cliente para desbloquear este botão"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-white/10 bg-white/[0.03] text-white/30 text-[12px] tracking-widest uppercase font-bold cursor-not-allowed">
+                <span className="text-[13px]">🔒</span>
+                Ver Briefing
+              </button>
             )}
           </div>
 
@@ -2554,6 +2562,46 @@ function CasamentoFicha({ casamento: c, onClose, onEdit, onConfirm, onDelete, is
           </button>
         </div>
       </div>
+
+      {/* ── Modal Preview · Ver Briefing ────────────────────── */}
+      {showBriefingPreview && c.briefing_url && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+          onClick={() => setShowBriefingPreview(false)}>
+          <div className="absolute inset-0 bg-black/90 backdrop-blur-md" />
+          <div className="relative z-10 w-full max-w-5xl h-[88vh] rounded-3xl overflow-hidden border border-gold/30 flex flex-col"
+            style={{ background: 'linear-gradient(180deg, #100c08, #0b0905)', boxShadow: '0 30px 70px -10px rgba(0,0,0,0.85), 0 0 32px -8px rgba(201,164,92,0.35)' }}
+            onClick={e => e.stopPropagation()}>
+            <div className="h-0.5 w-full bg-gold/65 shrink-0" />
+            <div className="px-6 pt-5 pb-4 border-b border-white/[0.05] flex items-start justify-between gap-3 shrink-0">
+              <div className="flex items-start gap-3 min-w-0">
+                <span className="w-10 h-10 rounded-xl border border-gold/35 bg-gold/[0.08] flex items-center justify-center text-gold text-base shrink-0"
+                  style={{ boxShadow: '0 0 18px -6px rgba(201,164,92,0.5)' }}>◧</span>
+                <div className="min-w-0">
+                  <p className="text-[10px] tracking-[0.4em] text-gold/65 uppercase mb-1">Briefing do Evento</p>
+                  <h3 className="text-lg text-white font-light tracking-tight truncate" style={{ fontFamily: 'Georgia, serif' }}>
+                    {c.local || 'Briefing'}
+                  </h3>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <a href={c.briefing_url} target="_blank" rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-lg text-[10px] tracking-[0.25em] uppercase font-bold border border-gold/30 bg-gold/[0.06] text-gold hover:bg-gold/15 hover:border-gold/55 transition-all">
+                  Abrir em separador ↗
+                </a>
+                <button onClick={() => setShowBriefingPreview(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/35 hover:text-white hover:border-white/30 transition-all"
+                  title="Fechar (Esc)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-hidden bg-black/40">
+              <iframe src={c.briefing_url} title="Briefing preview" className="w-full h-full border-0" />
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   )
 }
