@@ -191,7 +191,10 @@ export default function PdfPage() {
           <SideRail num={num} pagina="01 / 03" />
 
           {/* Top tagline */}
-          <div style={{ position: 'absolute', top: '14mm', left: 0, right: '18mm', display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ position: 'absolute', top: '14mm', left: '32mm', right: '22mm', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <p style={{ fontSize: 8, letterSpacing: '0.55em', textTransform: 'uppercase', color: MUTE, margin: 0, fontWeight: 700 }}>
+              Emitido em {dataDeHoje()}
+            </p>
             <p style={{ fontSize: 8, letterSpacing: '0.6em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>
               Proposta de Orçamento · {num}
             </p>
@@ -213,18 +216,20 @@ export default function PdfPage() {
               </div>
             </div>
 
-            {/* Espaço vertical largo */}
-            <div style={{ flex: 1, minHeight: 60 }} />
+            {/* Espaço vertical (controlado) */}
+            <div style={{ flex: 1, minHeight: 36 }} />
 
             {/* Linha mestre */}
-            <div style={{ height: 1, background: LINE, marginBottom: 26 }} />
+            <div style={{ height: 1, background: LINE, marginBottom: 22 }} />
 
             <p style={{ fontSize: 10, letterSpacing: '0.5em', textTransform: 'uppercase', color: MUTE, margin: 0, fontWeight: 700 }}>
               Proposta apresentada a
             </p>
             <h1 className="serif" style={{
-              fontSize: 78, color: NAVY_DEEP, margin: '14px 0 0', fontWeight: 500,
-              lineHeight: 0.98, letterSpacing: '-0.025em',
+              fontSize: orcamento.cliente.length > 22 ? 60 : 72,
+              color: NAVY_DEEP, margin: '14px 0 0', fontWeight: 500,
+              lineHeight: 1.02, letterSpacing: '-0.022em',
+              wordBreak: 'break-word',
             }}>
               {orcamento.cliente}
             </h1>
@@ -313,14 +318,15 @@ export default function PdfPage() {
               Oito etapas, do primeiro briefing aos resultados finais.
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 28px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 28px' }}>
               {PROCESSO.map((p, i) => (
                 <div key={i} style={{
                   display: 'grid',
                   gridTemplateColumns: '36px 1fr',
                   gap: 12,
                   alignItems: 'flex-start',
-                  paddingTop: 8,
+                  paddingTop: 10,
+                  paddingBottom: 6,
                   borderTop: `1px solid ${LINE_SOFT}`,
                 }}>
                   <span className="mono" style={{
@@ -373,8 +379,8 @@ export default function PdfPage() {
             </div>
           </section>
 
-          {/* Os Nossos Dados + Closing */}
-          <section style={{ position: 'absolute', bottom: '24mm', left: '32mm', right: '22mm' }}>
+          {/* Os Nossos Dados — flow natural, sem overlap */}
+          <section style={{ paddingLeft: '32mm', paddingRight: '22mm', paddingTop: '14mm', marginTop: 'auto', paddingBottom: '20mm' }}>
             <div style={{ borderTop: `2px solid ${NAVY_DEEP}`, paddingTop: 12 }}>
               <p style={{ fontSize: 10, letterSpacing: '0.5em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>
                 Os Nossos Dados
@@ -388,7 +394,7 @@ export default function PdfPage() {
                   <p style={{ fontSize: 10, color: SUB, margin: '3px 0 0', fontStyle: 'italic' }}>
                     a exercer sob a marca <span style={{ color: NAVY_DEEP, fontWeight: 600 }}>{RL_DADOS.marca}</span> ({RL_DADOS.marcaB2B}).
                   </p>
-                  <div style={{ marginTop: 8, display: 'grid', gridTemplateColumns: 'auto auto', gap: '4px 18px', fontSize: 10, color: SUB }}>
+                  <div style={{ marginTop: 8, display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 18px', fontSize: 10, color: SUB }}>
                     <span style={{ color: MUTE, letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: 8, fontWeight: 700, alignSelf: 'center' }}>NIF</span>
                     <span style={{ color: INK, fontWeight: 600 }}>{RL_DADOS.nif}</span>
                     <span style={{ color: MUTE, letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: 8, fontWeight: 700, alignSelf: 'center' }}>CAE</span>
@@ -402,30 +408,26 @@ export default function PdfPage() {
                 </div>
 
                 {/* Direita — contactos + assinatura */}
-                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    <p style={{ fontSize: 8, letterSpacing: '0.45em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>
-                      Contactos
-                    </p>
-                    <p style={{ fontSize: 11, color: INK, margin: '6px 0 0', fontWeight: 600 }}>
-                      {RL_DADOS.email}
-                    </p>
-                    <p style={{ fontSize: 11, color: INK, margin: '2px 0 0', fontWeight: 600 }}>
-                      {RL_DADOS.telefone}
-                    </p>
-                    <p style={{ fontSize: 11, color: INK, margin: '2px 0 0', fontWeight: 600 }}>
-                      {RL_DADOS.site}
-                    </p>
-                  </div>
-                  <p className="serif" style={{ fontSize: 16, color: NAVY_DEEP, margin: '14px 0 0', fontWeight: 500, lineHeight: 1.15, fontStyle: 'italic' }}>
+                <div>
+                  <p style={{ fontSize: 8, letterSpacing: '0.45em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>
+                    Contactos
+                  </p>
+                  <p style={{ fontSize: 11, color: INK, margin: '6px 0 0', fontWeight: 600 }}>
+                    {RL_DADOS.email}
+                  </p>
+                  <p style={{ fontSize: 11, color: INK, margin: '2px 0 0', fontWeight: 600 }}>
+                    {RL_DADOS.telefone}
+                  </p>
+                  <p style={{ fontSize: 11, color: INK, margin: '2px 0 0', fontWeight: 600 }}>
+                    {RL_DADOS.site}
+                  </p>
+                  <p className="serif" style={{ fontSize: 18, color: NAVY_DEEP, margin: '16px 0 0', fontWeight: 500, lineHeight: 1.15, fontStyle: 'italic' }}>
                     Obrigado pela confiança.
                   </p>
                 </div>
               </div>
             </div>
           </section>
-
-          <PageBottomBar />
         </Page>
 
       </main>
@@ -520,13 +522,13 @@ function CoverFooter() {
     <footer style={{
       position: 'absolute', bottom: '12mm', left: '32mm', right: '22mm',
       paddingTop: 10, borderTop: `1px solid ${LINE}`,
-      display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
     }}>
-      <p className="serif" style={{ fontSize: 14, color: NAVY_DEEP, margin: 0, fontStyle: 'italic', fontWeight: 500 }}>
+      <p className="serif" style={{ fontSize: 15, color: NAVY_DEEP, margin: 0, fontStyle: 'italic', fontWeight: 500 }}>
         More than a product, an experience.
       </p>
-      <p style={{ fontSize: 9, color: NAVY, margin: 0, letterSpacing: '0.4em', textTransform: 'uppercase', fontWeight: 700 }}>
-        Emitido em {dataDeHoje()}
+      <p style={{ fontSize: 9, color: MUTE, margin: 0, letterSpacing: '0.45em', textTransform: 'uppercase', fontWeight: 700 }}>
+        {RL_DADOS.site} · {RL_DADOS.telefone}
       </p>
     </footer>
   )
