@@ -161,9 +161,9 @@ export default async function PhotoDashboard() {
     // Álbuns APROVADOS pelos noivos — ficam aqui até admin marcar como ENTREGUE
     supabase
       .from('albuns_casamento')
-      .select('id, nome, ref_evento, data_aprovacao')
+      .select('id, nome, ref_evento, data_aprovacao, data_prevista_entrega')
       .eq('status', 'APROVADO')
-      .order('data_aprovacao', { ascending: false, nullsFirst: false })
+      .order('data_prevista_entrega', { ascending: true, nullsFirst: false })
       .limit(20),
   ])
 
@@ -178,11 +178,30 @@ export default async function PhotoDashboard() {
 
   // Antes: lia 'PARA APROVAÇÃO' do Notion (notif para o admin actuar).
   // Agora: lê APROVADO do Supabase. Ficam aqui até o admin clicar 'Entregue'.
-  const albumsAprovacao = (albunsAprovadosSb ?? []).map((a: any) => ({
-    id: a.id as string,
-    nome: a.nome ?? '—',
-    ref:  a.ref_evento ?? '',
-  }))
+  //         Inclui a data limite de entrega (30 dias após aprovação) para
+  //         o admin saber até quando tem de produzir o álbum.
+  const MESES_SHORT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+  function fmtPrazoEntrega(iso: string | null): { label: string; daysLeft: number | null } {
+    if (!iso) return { label: '', daysLeft: null }
+    try {
+      const d = new Date(iso + 'T12:00:00')
+      const day = String(d.getDate()).padStart(2, '0')
+      const today = new Date(); today.setHours(0,0,0,0)
+      const dl = Math.round((d.getTime() - today.getTime()) / 86400000)
+      const sufixo = dl < 0 ? ` · ${Math.abs(dl)}d atraso` : dl === 0 ? ' · Hoje' : dl <= 7 ? ` · ${dl}d` : ''
+      return { label: `Entrega até ${day} ${MESES_SHORT[d.getMonth()]} ${d.getFullYear()}${sufixo}`, daysLeft: dl }
+    } catch { return { label: '', daysLeft: null } }
+  }
+  const albumsAprovacao = (albunsAprovadosSb ?? []).map((a: any) => {
+    const prazo = fmtPrazoEntrega(a.data_prevista_entrega)
+    return {
+      id: a.id as string,
+      nome: a.nome ?? '—',
+      ref:  a.ref_evento ?? '',
+      prazoLabel: prazo.label,
+      daysLeft: prazo.daysLeft,
+    }
+  })
 
   function parseVideoFormula(formula: string | null): number {
     if (!formula) return 999
@@ -366,7 +385,8 @@ export default async function PhotoDashboard() {
         })),
         ...albumsAprovacao.map(a => ({
           main: a.nome,
-          sub: a.ref,
+          // Mostra ref + data limite. Se houver atraso, fica em vermelho via tag visual.
+          sub: [a.ref, a.prazoLabel].filter(Boolean).join(' · '),
           tag: '✓ Entregue',
           tagColor: 'text-emerald-300',
           albumId: a.id,
