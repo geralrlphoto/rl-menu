@@ -2067,14 +2067,9 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                       <p className="text-[13px] text-white/85 truncate">🎥 {c.videografo}</p>
                     </div>
                   )}
-                  {c.briefing_url && (
-                    <div>
-                      <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 mb-0.5">Briefing</p>
-                      <a href={c.briefing_url} target="_blank" rel="noopener noreferrer"
-                        onClick={e => e.stopPropagation()}
-                        className="text-[13px] text-gold/80 hover:text-gold underline truncate inline-block">📄 Ver briefing</a>
-                    </div>
-                  )}
+                  {/* (Removido: bloco 'Briefing · Ver briefing' duplicado — o
+                       botão Ver Briefing já existe abaixo nas acções principais
+                       e na modal CasamentoFicha.) */}
                 </div>
 
                 {/* Serviços do Dia (badges) — sempre visível */}
