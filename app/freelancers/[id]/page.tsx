@@ -965,19 +965,23 @@ function FreelancerDetailInner() {
             )
           })()}
 
-          {/* ── Próximo Casamento (destaque com glow gold pulsante) ─ */}
+          {/* ── Próximo Casamento (destaque com glow gold pulsante) ─
+              Largura alinhada com "Novos Eventos" (col 1 de 3) — em mobile
+              ocupa toda a largura, em desktop fica 1/3. */}
           {proximoCasamento && (
-            <div onClick={() => setTab('casamentos')}
-              className="cursor-pointer prox-casamento-glow fade-in-1 bg-gradient-to-br from-gold/[0.10] to-gold/[0.02] border border-gold/40 rounded-2xl p-6 sm:p-7 hover:border-gold/60 transition-all mb-6">
-              <p className="text-[11px] tracking-[0.5em] text-gold/80 uppercase font-light mb-3">Próximo Casamento</p>
-              <div className="flex items-end justify-between gap-4 flex-wrap">
-                <div>
-                  <h2 className="text-3xl sm:text-4xl font-light text-white mb-2 tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>{proximoCasamento.local}</h2>
-                  <p className="text-[13px] text-white/55 italic" style={{ fontFamily: 'Georgia, serif' }}>{fmtDate(proximoCasamento.data_casamento)}</p>
-                </div>
-                <div className={`text-right ${dtuProximo !== null && dtuProximo <= 15 ? 'text-red-400' : 'text-gold'}`}>
-                  <p className="text-5xl font-light leading-none tabular-nums" style={{ fontFamily: 'Georgia, serif' }}>{dtuProximo === 0 ? 'HOJE' : dtuProximo}</p>
-                  <p className="text-[11px] tracking-[0.4em] uppercase mt-1.5 font-light">{dtuProximo === 0 ? '' : dtuProximo === 1 ? 'dia' : 'dias'}</p>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
+              <div onClick={() => setTab('casamentos')}
+                className="cursor-pointer prox-casamento-glow fade-in-1 bg-gradient-to-br from-gold/[0.10] to-gold/[0.02] border border-gold/40 rounded-2xl p-6 sm:p-7 hover:border-gold/60 transition-all">
+                <p className="text-[11px] tracking-[0.5em] text-gold/80 uppercase font-light mb-3">Próximo Casamento</p>
+                <div className="flex items-end justify-between gap-4 flex-wrap">
+                  <div className="min-w-0">
+                    <h2 className="text-2xl sm:text-3xl font-light text-white mb-2 tracking-tight truncate" style={{ fontFamily: 'Georgia, serif' }}>{proximoCasamento.local}</h2>
+                    <p className="text-[13px] text-white/55 italic" style={{ fontFamily: 'Georgia, serif' }}>{fmtDate(proximoCasamento.data_casamento)}</p>
+                  </div>
+                  <div className={`text-right shrink-0 ${dtuProximo !== null && dtuProximo <= 15 ? 'text-red-400' : 'text-gold'}`}>
+                    <p className="text-5xl font-light leading-none tabular-nums" style={{ fontFamily: 'Georgia, serif' }}>{dtuProximo === 0 ? 'HOJE' : dtuProximo}</p>
+                    <p className="text-[11px] tracking-[0.4em] uppercase mt-1.5 font-light">{dtuProximo === 0 ? '' : dtuProximo === 1 ? 'dia' : 'dias'}</p>
+                  </div>
                 </div>
               </div>
             </div>
