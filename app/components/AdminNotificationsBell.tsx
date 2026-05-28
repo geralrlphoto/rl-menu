@@ -71,6 +71,9 @@ export function AdminNotificationsBell() {
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
   const [showHistory, setShowHistory] = useState(false)
   const [previewNotif, setPreviewNotif] = useState<Notif | null>(null)
+  // Pesquisa + filtro de referência (só usado em modo histórico)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterRef, setFilterRef] = useState<string>('')
   const buttonRef = useRef<HTMLButtonElement | null>(null)
   const popRef = useRef<HTMLDivElement | null>(null)
 
@@ -151,8 +154,22 @@ export function AdminNotificationsBell() {
   const unreadCount = lastSeen
     ? visibleNotifs.filter(n => (n.sent_at || '') > lastSeen).length
     : visibleNotifs.length
+
   // Lista a renderizar conforme o modo
-  const listToRender = showHistory ? notifs : visibleNotifs
+  // No histórico aplicamos pesquisa de texto + filtro de referência
+  const baseList = showHistory ? notifs : visibleNotifs
+  const q = searchQuery.trim().toLowerCase()
+  const listToRender = baseList.filter(n => {
+    if (filterRef && (n.referencia ?? '') !== filterRef) return false
+    if (!q) return true
+    const haystack = [
+      n.tipo_label, n.tipo, n.freelancer_nome, n.local, n.referencia, n.mensagem,
+    ].filter(Boolean).join(' ').toLowerCase()
+    return haystack.includes(q)
+  })
+  // Lista única de referências disponíveis para o dropdown
+  const refOptions = Array.from(new Set(baseList.map(n => n.referencia).filter(Boolean))) as string[]
+  refOptions.sort()
 
   function markAllAsRead() {
     const now = new Date().toISOString()
@@ -239,7 +256,7 @@ export function AdminNotificationsBell() {
                   Marcar lidas
                 </button>
               )}
-              <button onClick={() => setShowHistory(s => !s)}
+              <button onClick={() => { setShowHistory(s => !s); setSearchQuery(''); setFilterRef('') }}
                 className="text-[9px] tracking-wider uppercase text-white/40 hover:text-gold transition-colors">
                 {showHistory ? '← Voltar' : 'Ver todas'}
               </button>
@@ -259,6 +276,47 @@ export function AdminNotificationsBell() {
                 className="text-[9px] tracking-wider uppercase text-white/45 hover:text-gold transition-colors">
                 Restaurar todas
               </button>
+            </div>
+          )}
+
+          {/* ── Pesquisa + Filtro por referência (só em modo histórico) ── */}
+          {showHistory && (
+            <div className="px-4 py-3 border-b border-white/[0.05] bg-black/30 space-y-2">
+              {/* Caixa pesquisa */}
+              <div className="relative">
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/30 text-[12px] pointer-events-none">🔍</span>
+                <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Pesquisar notificações…"
+                  className="w-full bg-white/[0.04] border border-white/10 rounded-lg pl-7 pr-7 py-1.5 text-[11px] text-white placeholder:text-white/30 outline-none focus:border-gold/45 transition-colors" />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors text-[14px]"
+                    title="Limpar pesquisa">×</button>
+                )}
+              </div>
+              {/* Filtro referência */}
+              <div className="flex items-center gap-2">
+                <label className="text-[9px] tracking-[0.3em] uppercase text-gold/55 shrink-0">Referência</label>
+                <select value={filterRef} onChange={e => setFilterRef(e.target.value)}
+                  className="flex-1 bg-white/[0.04] border border-white/10 rounded-lg px-2 py-1.5 text-[11px] text-white outline-none focus:border-gold/45 [color-scheme:dark] transition-colors">
+                  <option value="" className="bg-neutral-900">Todas ({refOptions.length})</option>
+                  {refOptions.map(ref => (
+                    <option key={ref} value={ref} className="bg-neutral-900">{ref}</option>
+                  ))}
+                </select>
+                {(filterRef || searchQuery) && (
+                  <button onClick={() => { setFilterRef(''); setSearchQuery('') }}
+                    className="text-[9px] tracking-wider uppercase text-white/40 hover:text-gold transition-colors px-2 py-1 rounded border border-white/10 hover:border-gold/30 whitespace-nowrap">
+                    Limpar
+                  </button>
+                )}
+              </div>
+              {/* Contagem dos resultados */}
+              {(filterRef || searchQuery) && (
+                <p className="text-[9px] text-white/40 italic">
+                  {listToRender.length} resultado{listToRender.length === 1 ? '' : 's'}{filterRef ? ` para ${filterRef}` : ''}
+                </p>
+              )}
             </div>
           )}
 
