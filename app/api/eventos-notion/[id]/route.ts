@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { revalidatePath } from 'next/cache'
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN!
 
@@ -380,6 +381,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         } catch { /* ignora */ }
       }
     }
+
+    // Invalida o cache do dashboard /photo (que faz fetch ao Notion com
+    // revalidate: 120). Garante que os prazos atualizados aparecem
+    // imediatamente em vez de aguardar 2 minutos pelo cache.
+    try {
+      revalidatePath('/photo')
+      revalidatePath('/relatorio-diario')
+    } catch { /* ignora */ }
 
     if (!notionOk && Object.keys(properties).length > 0) {
       // Notion falhou mas Supabase deve ter sincronizado — devolve ok mas com aviso
