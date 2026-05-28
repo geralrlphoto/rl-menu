@@ -103,16 +103,62 @@ export async function PATCH(req: NextRequest) {
       .update({ status: 'APROVADO' })
       .eq('referencia_album', data.ref_evento)
 
-    // Notify admin
     const ref = data.ref_evento
     const eventoRes = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://rl-menu-lake.vercel.app'}/api/evento-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json()).catch(() => null)
     const ev = eventoRes?.evento
     const nomeNoivos = ev?.cliente ?? (ev?.nome_noiva && ev?.nome_noivo ? `${ev.nome_noiva} & ${ev.nome_noivo}` : ev?.nome_noiva ?? ev?.nome_noivo ?? data.nome ?? ref)
+
+    // Notify admin (email)
     fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://rl-menu-lake.vercel.app'}/api/send-admin-notification`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tipo: 'album_aprovado', nome_noivos: nomeNoivos, referencia: ref }),
     }).catch(() => null)
+
+    // Cria notificação em freelancer_notificacoes para o(s) editor(es) de álbum
+    // → aparece na lista de Notificações do /freelancers/[id]?tab=notificacoes
+    // e também no sino global do admin (via /api/admin-notifications).
+    try {
+      const { data: equipa } = await supabase
+        .from('evento_equipa')
+        .select('editor_album')
+        .eq('referencia', ref)
+        .maybeSingle()
+      const editores: string[] = Array.isArray(equipa?.editor_album)
+        ? equipa!.editor_album
+        : (equipa?.editor_album ? [equipa.editor_album] : [])
+      if (editores.length > 0) {
+        const { data: fls } = await supabase
+          .from('freelancers')
+          .select('id, nome')
+          .in('nome', editores)
+        const titulo = `✓ Álbum aprovado · ${nomeNoivos}`
+        const meta = JSON.stringify({ referencia: ref, nomeNoivos, data_aprovacao: updates.data_aprovacao ?? new Date().toISOString() })
+        const corpo = `Os noivos ${nomeNoivos} aprovaram a maquete do álbum (${ref}). Podes avançar com a produção.`
+        const mensagem = `__META__${meta}__/META__\n${corpo}`
+        for (const fl of (fls ?? []) as any[]) {
+          // Idempotência: não duplica se já existir notif não lida com a mesma referência
+          const { data: existing } = await supabase
+            .from('freelancer_notificacoes')
+            .select('id')
+            .eq('freelancer_id', fl.id)
+            .eq('tipo', 'album_aprovado')
+            .ilike('mensagem', `%"referencia":"${ref}"%`)
+            .eq('lida', false)
+            .maybeSingle()
+          if (existing) continue
+          await supabase.from('freelancer_notificacoes').insert({
+            freelancer_id: fl.id,
+            titulo,
+            mensagem,
+            tipo: 'album_aprovado',
+            lida: false,
+          })
+        }
+      }
+    } catch (err) {
+      console.warn('[albuns-casamento APROVADO] notificações falharam:', err)
+    }
   }
 
   // When delivered: clean up alteration requests

@@ -196,7 +196,7 @@ export async function GET() {
       const { data: respostas } = await supabase
         .from('freelancer_notificacoes')
         .select('id, freelancer_id, titulo, mensagem, tipo, created_at')
-        .in('tipo', ['atribuicao_confirmada', 'atribuicao_indisponivel'])
+        .in('tipo', ['atribuicao_confirmada', 'atribuicao_indisponivel', 'album_aprovado'])
         .order('created_at', { ascending: false })
         .limit(50)
       const respRecipIds = Array.from(new Set((respostas ?? []).map((n: any) => n.freelancer_id).filter(Boolean)))
@@ -208,17 +208,29 @@ export async function GET() {
       }
       for (const n of (respostas ?? []) as any[]) {
         const isConf = n.tipo === 'atribuicao_confirmada'
+        const isAlbum = n.tipo === 'album_aprovado'
+        // Tenta extrair a referência do META para mostrar no chip dourado
+        let referencia: string | null = null
+        try {
+          const m = (n.mensagem ?? '').match(/__META__(.+?)__\/META__/)
+          if (m) referencia = (JSON.parse(m[1])?.referencia ?? null) as string | null
+        } catch { /* keep null */ }
         notifications.push({
-          id: `atrib_resp::${n.id}`,
+          id: `${n.tipo}::${n.id}`,
           tipo: n.tipo,
-          tipo_label: isConf ? 'Membro confirmou atribuição' : 'Membro marcou-se indisponível',
-          tipo_icon: isConf ? '✓' : '✕',
+          tipo_label: isAlbum
+            ? 'Álbum Aprovado pelos Noivos'
+            : isConf ? 'Membro confirmou atribuição' : 'Membro marcou-se indisponível',
+          tipo_icon: isAlbum ? '✓' : (isConf ? '✓' : '✕'),
           casamento_id: '',
           freelancer_id: n.freelancer_id,
           freelancer_nome: respNomes.get(n.freelancer_id) ?? '—',
           local: (n.titulo ?? '').slice(0, 80),
           data_casamento: null,
-          url: `/freelancers/${n.freelancer_id}?tab=notificacoes`,
+          referencia,
+          url: isAlbum && referencia
+            ? `/eventos-2026?ref=${encodeURIComponent(referencia)}`
+            : `/freelancers/${n.freelancer_id}?tab=notificacoes`,
           sent_at: n.created_at,
         })
       }
