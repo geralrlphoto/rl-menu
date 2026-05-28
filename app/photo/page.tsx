@@ -218,6 +218,13 @@ export default async function PhotoDashboard() {
     }
     return { nome, ref, diasRestantes, label, tipo }
   }).filter(f => f.diasRestantes <= 15)
+   // Ordena: atrasados (mais antigos primeiro) → críticos próximos → resto
+   .sort((a, b) => a.diasRestantes - b.diasRestantes)
+
+  // Breakdown de estados críticos para mostrar no subtítulo
+  const fotosAtrasados = fotosAlerta.filter(f => f.diasRestantes < 0).length
+  const fotosCriticos  = fotosAlerta.filter(f => f.diasRestantes >= 0 && f.diasRestantes <= 3).length
+  const fotosUrgentes  = fotosAlerta.filter(f => f.diasRestantes > 3 && f.diasRestantes <= 7).length
 
   const videosAlerta = (videosRes.results ?? [])
     .map((p: any) => {
@@ -229,6 +236,11 @@ export default async function PhotoDashboard() {
       return { cliente, referencia, diasRestantes }
     })
     .filter((v: any) => v.diasRestantes <= 15)
+    .sort((a: any, b: any) => a.diasRestantes - b.diasRestantes)
+
+  const videosAtrasados = videosAlerta.filter((v: any) => v.diasRestantes < 0).length
+  const videosCriticos  = videosAlerta.filter((v: any) => v.diasRestantes >= 0 && v.diasRestantes <= 3).length
+  const videosUrgentes  = videosAlerta.filter((v: any) => v.diasRestantes > 3 && v.diasRestantes <= 7).length
 
   // ── Pré-wedding reservas ──────────────────────────────────────────────────
   const ps = parsePortalSettings(portalRes.results ?? [])
@@ -320,7 +332,13 @@ export default async function PhotoDashboard() {
     {
       key: 'prazos-fotos',
       title: ['PRAZOS', 'FOTOS'],
-      subtitle: fotosAlerta.length > 0 ? `${fotosAlerta.length} prazo${fotosAlerta.length !== 1 ? 's' : ''} urgente${fotosAlerta.length !== 1 ? 's' : ''}` : 'Sem prazos urgentes',
+      subtitle: fotosAlerta.length === 0
+        ? 'Sem prazos urgentes'
+        : [
+            fotosAtrasados > 0 && `⚠ ${fotosAtrasados} atrasado${fotosAtrasados !== 1 ? 's' : ''}`,
+            fotosCriticos  > 0 && `${fotosCriticos} crítico${fotosCriticos !== 1 ? 's' : ''}`,
+            fotosUrgentes  > 0 && `${fotosUrgentes} urgente${fotosUrgentes !== 1 ? 's' : ''}`,
+          ].filter(Boolean).join(' · ') || `${fotosAlerta.length} prazo${fotosAlerta.length !== 1 ? 's' : ''}`,
       empty: 'Todos os prazos em dia',
       items: fotosAlerta.map(f => ({
         main: f.nome,
@@ -364,9 +382,13 @@ export default async function PhotoDashboard() {
     {
       key: 'videos-prazo',
       title: ['VÍDEOS', 'PRAZO'],
-      subtitle: videosAlerta.length > 0
-        ? `${videosAlerta.length} com prazo ≤ 15 dias`
-        : 'Sem prazos urgentes',
+      subtitle: videosAlerta.length === 0
+        ? 'Sem prazos urgentes'
+        : [
+            videosAtrasados > 0 && `⚠ ${videosAtrasados} atrasado${videosAtrasados !== 1 ? 's' : ''}`,
+            videosCriticos  > 0 && `${videosCriticos} crítico${videosCriticos !== 1 ? 's' : ''}`,
+            videosUrgentes  > 0 && `${videosUrgentes} urgente${videosUrgentes !== 1 ? 's' : ''}`,
+          ].filter(Boolean).join(' · ') || `${videosAlerta.length} prazo${videosAlerta.length !== 1 ? 's' : ''}`,
       empty: 'Todos os vídeos em dia',
       items: videosAlerta.map(v => ({
         main: v.cliente,

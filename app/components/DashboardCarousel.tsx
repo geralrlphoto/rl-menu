@@ -148,7 +148,9 @@ export function DashboardCarousel({ cols }: { cols: DashCol[] }) {
               </div>
 
               {/* Subtítulo */}
-              <p className="text-[11px] text-[#C9A84C]/70 italic font-semibold tracking-wider mb-4">{col.subtitle}</p>
+              <p className={`text-[11px] italic font-semibold tracking-wider mb-4 ${
+                col.subtitle.startsWith('⚠') ? 'text-red-400' : 'text-[#C9A84C]/70'
+              }`}>{col.subtitle}</p>
 
               {/* Lista */}
               <div className="flex flex-col gap-2.5 flex-1">
