@@ -929,8 +929,10 @@ function RelatorioVideoModal({ c, freelancerNome, onClose, onSubmitted }: { c: C
 }
 
 // ── Casamento Ficha (read-only) ───────────────────────────────────────────────
-function CasamentoFicha({ c, onClose, onConfirm, isVideografo, freelancerNome }: {
+function CasamentoFicha({ c, onClose, onConfirm, isVideografo, freelancerNome, notificacoes, onRefreshNotifs }: {
   c: Casamento; onClose: () => void; onConfirm: (id: string) => void; isVideografo: boolean; freelancerNome: string
+  notificacoes?: Notificacao[]
+  onRefreshNotifs?: () => void
 }) {
   const dtu = daysUntil(c.data_casamento)
   const isUrgent = dtu !== null && dtu >= 0 && dtu <= 15
@@ -1093,13 +1095,48 @@ function CasamentoFicha({ c, onClose, onConfirm, isVideografo, freelancerNome }:
           )}
           <div>
             <p className="text-[14px] tracking-[0.3em] text-white uppercase mb-2">Briefing</p>
-            {c.briefing_url ? (
-              <button onClick={() => setBriefingOpen(true)}
-                className="inline-flex items-center gap-1.5 text-[14px] text-gold/70 hover:text-gold transition-colors border border-gold/20 px-3 py-1.5 rounded-lg hover:bg-gold/5">
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                Ver Briefing
-              </button>
-            ) : <p className="text-[14px] text-white/20 italic">Sem briefing</p>}
+            {c.briefing_url ? (() => {
+              // Detecta notificação 'briefing_enviado' não lida para esta referência → glow gold pulsante
+              const briefingNotif = (notificacoes ?? []).find(n =>
+                n.tipo === 'briefing_enviado' &&
+                !n.lida &&
+                (!c.referencia || (n.mensagem ?? '').includes(`"referencia":"${c.referencia}"`))
+              )
+              const hasUnread = !!briefingNotif
+              return (
+                <>
+                  <style jsx>{`
+                    @keyframes briefingPulse {
+                      0%, 100% { box-shadow: 0 0 0 rgba(201,164,92,0.0), 0 0 18px -4px rgba(201,164,92,0.45); }
+                      50%      { box-shadow: 0 0 0 rgba(201,164,92,0.0), 0 0 32px 4px rgba(201,164,92,0.85); }
+                    }
+                    .briefing-glow { animation: briefingPulse 1.6s ease-in-out infinite; }
+                  `}</style>
+                  <button
+                    onClick={async () => {
+                      // Marca a notif briefing_enviado como lida (se houver)
+                      if (briefingNotif) {
+                        try {
+                          await fetch('/api/freelancer-notificacoes', {
+                            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id: briefingNotif.id, lida: true }),
+                          })
+                          onRefreshNotifs?.()
+                        } catch { /* não bloqueia abertura do modal */ }
+                      }
+                      setBriefingOpen(true)
+                    }}
+                    className={`inline-flex items-center gap-1.5 text-[14px] transition-all px-3 py-1.5 rounded-lg ${
+                      hasUnread
+                        ? 'briefing-glow bg-gold text-black font-bold tracking-wide hover:bg-gold/90'
+                        : 'text-gold/70 hover:text-gold border border-gold/20 hover:bg-gold/5'
+                    }`}>
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    {hasUnread ? '✨ Novo Briefing!' : 'Ver Briefing'}
+                  </button>
+                </>
+              )
+            })() : <p className="text-[14px] text-white/20 italic">Sem briefing</p>}
           </div>
           {isVideografo && (
             <div>
@@ -2625,6 +2662,8 @@ export default function FreelancerViewPage() {
               c={ficha}
               isVideografo={freelancer?.status === 'VIDEOGRAFO'}
               freelancerNome={freelancer?.nome ?? ''}
+              notificacoes={notificacoes}
+              onRefreshNotifs={loadData}
               onClose={() => setFicha(null)}
               onConfirm={(id) => {
                 const isVid = freelancer?.status === 'VIDEOGRAFO'

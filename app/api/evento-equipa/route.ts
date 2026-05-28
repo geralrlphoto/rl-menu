@@ -378,5 +378,66 @@ export async function POST(req: NextRequest) {
       .eq('data_casamento', data_casamento)
   }
 
+  // ── Criar notificação para todos os freelancers atribuídos a este evento ──
+  //    (idempotente: se já existe notificação 'briefing_enviado' para o mesmo
+  //     freelancer+referencia, atualiza o created_at em vez de criar duplicada).
+  try {
+    let memberIds: string[] = []
+    if (referencia) {
+      const { data: fcs } = await supabase
+        .from('freelancer_casamentos')
+        .select('freelancer_id, local, data_casamento')
+        .eq('referencia', referencia)
+      memberIds = Array.from(new Set((fcs ?? []).map((r: any) => r.freelancer_id).filter(Boolean)))
+    } else if (resolvedEventoId) {
+      const { data: fcs } = await supabase
+        .from('freelancer_casamentos')
+        .select('freelancer_id')
+        .eq('evento_id', resolvedEventoId)
+      memberIds = Array.from(new Set((fcs ?? []).map((r: any) => r.freelancer_id).filter(Boolean)))
+    }
+
+    let dateLabel = ''
+    if (data_casamento) {
+      try {
+        const dateStr = String(data_casamento).slice(0, 10)
+        const [y, m, d] = dateStr.split('-').map(Number)
+        if ([y, m, d].every(n => Number.isFinite(n))) {
+          const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+          dateLabel = `${String(d).padStart(2,'0')} ${MESES[m-1]} ${y}`
+        }
+      } catch {/* keep empty */}
+    }
+    const localStr = local ? String(local).trim() : ''
+    const titulo = '◧ Novo Briefing disponível'
+    const meta = JSON.stringify({ briefing_url, referencia: referencia ?? null, local: localStr || null, data_casamento: data_casamento ?? null })
+    const corpo = localStr
+      ? `O briefing do casamento em ${localStr}${dateLabel ? ` (${dateLabel})` : ''} foi atualizado pelo admin. Carrega para consultar.`
+      : `O briefing do teu próximo evento${dateLabel ? ` de ${dateLabel}` : ''} foi atualizado.`
+    const mensagem = `__META__${meta}__/META__\n${corpo}`
+
+    for (const fid of memberIds) {
+      // Idempotência: se já existe entrada não lida com a mesma referência → não duplica
+      const { data: existing } = await supabase
+        .from('freelancer_notificacoes')
+        .select('id')
+        .eq('freelancer_id', fid)
+        .eq('tipo', 'briefing_enviado')
+        .ilike('mensagem', `%"referencia":"${referencia ?? ''}"%`)
+        .eq('lida', false)
+        .maybeSingle()
+      if (existing) continue
+      await supabase.from('freelancer_notificacoes').insert({
+        freelancer_id: fid,
+        titulo,
+        mensagem,
+        tipo: 'briefing_enviado',
+        lida: false,
+      })
+    }
+  } catch (err) {
+    console.error('[evento-equipa POST] notificações briefing falharam:', err)
+  }
+
   return NextResponse.json({ ok: true })
 }
