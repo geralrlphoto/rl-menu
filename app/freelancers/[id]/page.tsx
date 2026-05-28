@@ -1644,7 +1644,6 @@ function SidebarNavAdmin({
     { key: 'tarefas',        label: 'Tarefas',        icon: '◷' },
     { key: 'calendario',     label: 'Calendário',     icon: '◉' },
     { key: 'pagamentos',     label: 'Pagamentos',     icon: '$' },
-    { key: 'mensagens',      label: 'Mensagens',      icon: '✉' },
     { key: 'notificacoes',   label: 'Notificações',   icon: '◉' },
     { key: 'definicoes' as AdminTabKey, label: 'Dados Pessoais', icon: '☻' },
   ]
