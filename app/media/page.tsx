@@ -48,7 +48,7 @@ export default async function MediaDashboard() {
 
       {/* ── Hero — imagem RL PROD com fade para o fundo escuro ─────── */}
       <div className="relative z-10 shrink-0 overflow-hidden w-full"
-        style={{ height: 'min(78vh, 760px)', minHeight: '480px' }}>
+        style={{ height: 'min(48vh, 440px)', minHeight: '320px' }}>
 
         {/* Fallback visível se a imagem ainda não foi adicionada em /public/media-hero.jpg */}
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-0 pointer-events-none">
