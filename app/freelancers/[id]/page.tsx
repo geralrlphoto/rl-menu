@@ -2199,7 +2199,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                       title={alertasAtivos
                         ? 'Alertas de fotografia ATIVOS — clica para desativar (RL não responsável pela fotografia)'
                         : 'Alertas de fotografia DESATIVADOS — clica para reativar'}>
-                      {alertasAtivos ? '🔔 Alertas Foto' : '🔕 Sem Alertas'}
+                      {alertasAtivos ? '🔔 Alerta Ativo' : '🔕 Alerta Desativo'}
                     </button>
                   )
                 })()}
