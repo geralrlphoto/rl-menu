@@ -8517,6 +8517,67 @@ function UrlEntryCard({
   const [sending, setSending] = useState(false)
   const [savingStatus, setSavingStatus] = useState(false)
 
+  // ── Workflow modal (admin escreve, todos lêem) ─────────────────────────
+  //    Persistência: portais.settings.workflow_<tipo> com referencia
+  //    especial '__app_workflow__' (linha global, partilhada entre eventos).
+  const WORKFLOW_REF = '__app_workflow__'
+  const workflowKey = `workflow_${field.tipo}`
+  const [workflowOpen, setWorkflowOpen]     = useState(false)
+  const [workflowText, setWorkflowText]     = useState<string>('')
+  const [workflowDraft, setWorkflowDraft]   = useState<string>('')
+  const [workflowSaving, setWorkflowSaving] = useState(false)
+  const [workflowLoaded, setWorkflowLoaded] = useState(false)
+
+  // Carrega o texto guardado (uma vez por mount)
+  useEffect(() => {
+    let cancel = false
+    ;(async () => {
+      try {
+        const r = await fetch(`/api/portais?ref=${encodeURIComponent(WORKFLOW_REF)}`, { cache: 'no-store' })
+        const j = await r.json().catch(() => ({}))
+        const txt = j?.portal?.settings?.[workflowKey] ?? ''
+        if (!cancel) {
+          setWorkflowText(typeof txt === 'string' ? txt : '')
+          setWorkflowLoaded(true)
+        }
+      } catch {
+        if (!cancel) setWorkflowLoaded(true)
+      }
+    })()
+    return () => { cancel = true }
+  }, [workflowKey])
+
+  async function saveWorkflow() {
+    if (!isAdmin) return
+    setWorkflowSaving(true)
+    try {
+      const res = await fetch('/api/portais', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          referencia: WORKFLOW_REF,
+          updates: { settings: { [workflowKey]: workflowDraft } },
+        }),
+      })
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}))
+        alert('Falha ao guardar workflow: ' + (j.error ?? res.status))
+        return
+      }
+      setWorkflowText(workflowDraft)
+      setWorkflowOpen(false)
+    } catch (err: any) {
+      alert('Erro ao guardar: ' + (err?.message ?? 'desconhecido'))
+    } finally {
+      setWorkflowSaving(false)
+    }
+  }
+
+  function openWorkflow() {
+    setWorkflowDraft(workflowText)
+    setWorkflowOpen(true)
+  }
+
   // Sync com props quando refresh externo
   useEffect(() => { setUrl(initialUrl ?? '') }, [initialUrl])
   useEffect(() => { setSentAt(initialSentAt ?? null) }, [initialSentAt])
@@ -8700,6 +8761,28 @@ function UrlEntryCard({
         <div className="flex items-center gap-2">
           <span className="text-gold/70 text-base">{field.icon}</span>
           <p className="text-[12px] tracking-[0.25em] uppercase text-white/60 font-light">{field.label}</p>
+          {/* Botão alerta workflow — laranja pulsante; admin SEMPRE vê,
+              freelancer só vê se houver workflow guardado para ler */}
+          {(isAdmin || (workflowLoaded && workflowText.trim().length > 0)) && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); openWorkflow() }}
+              title={workflowText.trim() ? 'Ver workflow' : 'Adicionar workflow'}
+              className="ml-1 inline-flex items-center justify-center w-5 h-5 rounded-full border transition-all"
+              style={{
+                background: workflowText.trim() ? 'rgba(251,146,60,0.18)' : 'rgba(251,146,60,0.06)',
+                borderColor: workflowText.trim() ? 'rgba(251,146,60,0.55)' : 'rgba(251,146,60,0.30)',
+                color: '#fb923c',
+                animation: workflowText.trim() ? 'workflowPulse 2.4s ease-in-out infinite' : undefined,
+                boxShadow: workflowText.trim() ? '0 0 10px -2px rgba(251,146,60,0.45)' : undefined,
+              }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </button>
+          )}
         </div>
         {hasUrl && !locked && (
           <a href={url} target="_blank" rel="noopener noreferrer"
@@ -8985,6 +9068,102 @@ function UrlEntryCard({
         </div>,
         document.body
       )}
+
+      {/* ── Modal Workflow (alerta laranja) ──────────────────────────── */}
+      {workflowOpen && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4"
+          onClick={() => setWorkflowOpen(false)}>
+          <div className="absolute inset-0 bg-black/85 backdrop-blur-md" />
+          <div className="relative z-10 w-full max-w-xl rounded-3xl overflow-hidden border shadow-2xl"
+            style={{
+              background: 'linear-gradient(180deg, #1a0f06, #0b0905)',
+              borderColor: 'rgba(251,146,60,0.35)',
+              boxShadow: '0 30px 80px -20px rgba(0,0,0,0.7), 0 0 24px -4px rgba(251,146,60,0.25)',
+            }}
+            onClick={e => e.stopPropagation()}>
+            <div className="h-1 w-full" style={{ background: '#fb923c' }} />
+
+            {/* Header */}
+            <div className="px-7 sm:px-8 pt-6 pb-4 border-b border-white/[0.05] flex items-start justify-between gap-4">
+              <div className="min-w-0 flex items-start gap-3">
+                <span className="inline-flex items-center justify-center w-10 h-10 rounded-xl shrink-0"
+                  style={{ background: 'rgba(251,146,60,0.15)', border: '1px solid rgba(251,146,60,0.4)', color: '#fb923c' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                  </svg>
+                </span>
+                <div>
+                  <p className="text-[10px] tracking-[0.5em] uppercase font-bold" style={{ color: '#fb923c' }}>Workflow</p>
+                  <h2 className="text-xl font-light tracking-[0.12em] text-white uppercase mt-1" style={{ fontFamily: 'Georgia, serif' }}>
+                    {field.label}
+                  </h2>
+                </div>
+              </div>
+              <button onClick={() => setWorkflowOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/35 hover:text-white hover:border-white/30 transition-all shrink-0"
+                title="Fechar">{'✕'}</button>
+            </div>
+
+            {/* Body */}
+            <div className="px-7 sm:px-8 py-5">
+              {isAdmin ? (
+                <>
+                  <p className="text-[11px] tracking-widest uppercase font-bold mb-2" style={{ color: 'rgba(251,146,60,0.85)' }}>
+                    Modo edição (admin)
+                  </p>
+                  <p className="text-[12px] text-white/55 italic mb-3 leading-relaxed">
+                    Explica aqui o workflow desta secção. Fica guardado e visível para todos os membros que abrirem o alerta.
+                  </p>
+                  <textarea
+                    value={workflowDraft}
+                    onChange={(e) => setWorkflowDraft(e.target.value)}
+                    rows={9}
+                    placeholder={'Ex:\n1. Confirma com os noivos que receberam o link\n2. Marca como ENTREGUE\n3. Aguarda confirmacao para a fase seguinte...'}
+                    className="w-full bg-black/30 border border-white/10 focus:border-orange-500/40 rounded-lg px-3.5 py-3 text-[13.5px] text-white outline-none placeholder:text-white/20 resize-none leading-relaxed transition-colors"
+                  />
+                </>
+              ) : (
+                workflowText.trim().length > 0 ? (
+                  <p className="text-[14px] text-white/85 leading-relaxed whitespace-pre-wrap">{workflowText}</p>
+                ) : (
+                  <p className="text-[13px] text-white/40 italic leading-relaxed">
+                    Ainda nao existe workflow definido para esta seccao.
+                  </p>
+                )
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-7 sm:px-8 py-3 border-t border-white/[0.05] flex items-center justify-between bg-black/30">
+              <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase">Workflow Interno</p>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setWorkflowOpen(false)}
+                  className="text-[10px] tracking-widest uppercase text-white/45 hover:text-white transition-colors">
+                  {isAdmin ? 'Cancelar' : 'Fechar'}
+                </button>
+                {isAdmin && (
+                  <button onClick={saveWorkflow} disabled={workflowSaving}
+                    className="text-[10px] tracking-[0.3em] uppercase font-bold px-4 py-1.5 rounded-md transition-all disabled:opacity-50"
+                    style={{ background: '#fb923c', color: '#1a0f06', boxShadow: '0 0 14px -3px rgba(251,146,60,0.6)' }}>
+                    {workflowSaving ? 'A guardar...' : 'Guardar'}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Pulse keyframes para o botao laranja */}
+      <style jsx global>{`
+        @keyframes workflowPulse {
+          0%, 100% { box-shadow: 0 0 10px -2px rgba(251,146,60,0.4); }
+          50%      { box-shadow: 0 0 14px -1px rgba(251,146,60,0.85); }
+        }
+      `}</style>
     </div>
   )
 }
