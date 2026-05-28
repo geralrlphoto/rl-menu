@@ -1952,10 +1952,31 @@ export default function FreelancerViewPage() {
   }, [])
 
   // Check session
+  //   1) Se existir cookie fl_session válido para este id (set pelo /login),
+  //      o middleware já permitiu — autentica automaticamente.
+  //   2) Se for admin (rl_auth), também passa diretamente.
+  //   3) Fallback: gate antigo via sessionStorage.
   useEffect(() => {
-    const ok = sessionStorage.getItem(`freelancerAuth_${id}`) === 'true'
-    setAuthed(ok)
-    setChecking(false)
+    let canceled = false
+    ;(async () => {
+      const ssOk = sessionStorage.getItem(`freelancerAuth_${id}`) === 'true'
+      if (ssOk) {
+        if (!canceled) { setAuthed(true); setChecking(false) }
+        return
+      }
+      try {
+        const r = await fetch('/api/freelancer-auth', { cache: 'no-store' })
+        const j = await r.json().catch(() => ({}))
+        if (!canceled && j?.ok && j?.session?.id === id) {
+          sessionStorage.setItem(`freelancerAuth_${id}`, 'true')
+          setAuthed(true)
+          setChecking(false)
+          return
+        }
+      } catch { /* ignore */ }
+      if (!canceled) { setAuthed(false); setChecking(false) }
+    })()
+    return () => { canceled = true }
   }, [id])
 
   const loadData = useCallback(async () => {
@@ -2066,12 +2087,13 @@ export default function FreelancerViewPage() {
           notificacoes: notificacoes.filter(n => !n.lida).length,
         }}
         isFotografo={isFotografo}
-        onLogout={() => {
-          if (confirm('Tens a certeza que queres sair?')) {
-            sessionStorage.removeItem(`freelancerAuth_${id}`)
-            setAuthed(false)
-            setTab(null)
-          }
+        onLogout={async () => {
+          if (!confirm('Tens a certeza que queres sair?')) return
+          sessionStorage.removeItem(`freelancerAuth_${id}`)
+          try { await fetch('/api/freelancer-auth', { method: 'DELETE' }) } catch { /* ignore */ }
+          setAuthed(false)
+          setTab(null)
+          window.location.href = '/login'
         }}
       />
 
@@ -2285,12 +2307,13 @@ export default function FreelancerViewPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => {
-                    if (confirm('Tens a certeza que queres sair?')) {
-                      sessionStorage.removeItem(`freelancerAuth_${id}`)
-                      setAuthed(false)
-                      setTab(null)
-                    }
+                  onClick={async () => {
+                    if (!confirm('Tens a certeza que queres sair?')) return
+                    sessionStorage.removeItem(`freelancerAuth_${id}`)
+                    try { await fetch('/api/freelancer-auth', { method: 'DELETE' }) } catch { /* ignore */ }
+                    setAuthed(false)
+                    setTab(null)
+                    window.location.href = '/login'
                   }}
                   className="w-10 h-10 rounded-xl border border-white/15 bg-black/40 backdrop-blur-md hover:border-red-500/40 hover:bg-red-500/[0.06] transition-all flex items-center justify-center text-white/65 hover:text-red-400"
                   title="Sair"

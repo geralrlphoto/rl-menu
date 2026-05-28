@@ -1,8 +1,34 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { verifyFlSession } from '@/lib/freelancer-session'
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+
+  // ── 1) Acesso ao portal do freelancer (/freelancer-view/<id>) ───────
+  //   Admin (com cookie rl_auth válido) passa. Freelancer só passa se
+  //   o seu fl_session.id coincidir com o <id> da URL.
+  //   Sem credenciais → redireciona para /login com ?next=…
+  const flMatch = pathname.match(/^\/freelancer-view\/([^/]+)/)
+  if (flMatch) {
+    const targetId = flMatch[1]
+    const adminAuth = request.cookies.get('rl_auth')?.value
+    if (adminAuth && adminAuth === process.env.AUTH_SECRET) {
+      return NextResponse.next()
+    }
+    const flCookie = request.cookies.get('fl_session')?.value
+    const session = await verifyFlSession(flCookie)
+    if (session && session.id === targetId) {
+      return NextResponse.next()
+    }
+    // Sessão existe mas o id é DIFERENTE → forbidden, manda para o portal próprio.
+    if (session) {
+      return NextResponse.redirect(new URL(`/freelancer-view/${session.id}`, request.url))
+    }
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('next', pathname)
+    return NextResponse.redirect(loginUrl)
+  }
 
   // Allow login page and auth API
   if (
@@ -37,7 +63,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/portal-cliente') ||
     pathname.startsWith('/portal-batizado') ||
     (pathname.includes('/contrato') && !pathname.startsWith('/api')) ||
-    pathname.startsWith('/freelancer-view') ||
+    // (/freelancer-view é tratado no bloco acima — requer fl_session OU rl_auth)
     pathname.startsWith('/r/') ||
     pathname.startsWith('/b/') ||
     pathname.startsWith('/secao/') ||
