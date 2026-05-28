@@ -133,6 +133,42 @@ export default async function MediaDashboard() {
             </Link>
           ))}
 
+          {/* Card estático — Proposta Criativa */}
+          <Link href="/media/proposta-criativa"
+            className="group relative overflow-hidden border border-white/[0.07] hover:border-white/20
+                       bg-white/[0.02] hover:bg-white/[0.04]
+                       transition-all duration-500 rounded-sm"
+            style={{ minHeight: '160px' }}
+          >
+            <div className="absolute top-4 left-4 pointer-events-none">
+              <div className="w-4 h-px bg-white/20 group-hover:bg-white/50 transition-colors duration-300" />
+              <div className="w-px h-4 bg-white/20 group-hover:bg-white/50 transition-colors duration-300 mt-0" />
+            </div>
+            <div className="absolute bottom-4 right-4 pointer-events-none flex flex-col items-end">
+              <div className="w-px h-4 bg-white/20 group-hover:bg-white/50 transition-colors duration-300" />
+              <div className="w-4 h-px bg-white/20 group-hover:bg-white/50 transition-colors duration-300" />
+            </div>
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+              style={{ boxShadow: 'inset 0 0 40px rgba(200,220,255,0.04)' }} />
+            <div className="relative z-10 flex flex-col justify-between h-full p-6" style={{ minHeight: '160px' }}>
+              <div className="flex items-start justify-between">
+                <span className="text-[20px] text-white/10 group-hover:text-white/25 transition-colors duration-300 select-none">✦</span>
+                <span className="text-[9px] font-mono text-white/15 group-hover:text-white/30 transition-colors duration-300">
+                  {String(items.length + 1).padStart(2, '0')}
+                </span>
+              </div>
+              <div>
+                <h2 className="text-[11px] tracking-[0.4em] font-medium text-white/55 group-hover:text-white/85 uppercase transition-colors duration-300">
+                  Proposta Criativa
+                </h2>
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="h-px w-0 group-hover:w-6 bg-white/40 transition-all duration-500" />
+                  <span className="text-white/0 group-hover:text-white/30 text-xs transition-colors duration-500">→</span>
+                </div>
+              </div>
+            </div>
+          </Link>
+
           {/* Card estático — Orçamentos */}
           <Link href="/media/orcamentos"
             className="group relative overflow-hidden border border-white/[0.07] hover:border-white/20
@@ -154,7 +190,7 @@ export default async function MediaDashboard() {
               <div className="flex items-start justify-between">
                 <span className="text-[20px] text-white/10 group-hover:text-white/25 transition-colors duration-300 select-none">◊</span>
                 <span className="text-[9px] font-mono text-white/15 group-hover:text-white/30 transition-colors duration-300">
-                  {String(items.length + 1).padStart(2, '0')}
+                  {String(items.length + 2).padStart(2, '0')}
                 </span>
               </div>
               <div>
@@ -190,7 +226,7 @@ export default async function MediaDashboard() {
               <div className="flex items-start justify-between">
                 <span className="text-[20px] text-white/10 group-hover:text-white/25 transition-colors duration-300 select-none">◑</span>
                 <span className="text-[9px] font-mono text-white/15 group-hover:text-white/30 transition-colors duration-300">
-                  {String(items.length + 2).padStart(2, '0')}
+                  {String(items.length + 3).padStart(2, '0')}
                 </span>
               </div>
               <div>
