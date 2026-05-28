@@ -40,6 +40,12 @@ type Casamento = {
   editor_fotos?: string[] | string | null
   editor_album?: string[] | string | null
   editor_video?: string[] | string | null
+  // Noivos (enriquecido pelo backend a partir de eventos_2026.cliente / dados_contrato_cps)
+  nome_noivos?: string | null
+  nome_noiva?: string | null
+  nome_noivo?: string | null
+  // Toggle admin: false ⇒ casamento NÃO gera alertas/prazos de fotografia
+  alertas_fotografia_ativos?: boolean | null
 }
 type Edicao = {
   id: string; freelancer_id: string; nome: string; status: string; local: string | null
@@ -321,6 +327,9 @@ function FreelancerDetailInner() {
       const today = new Date(); today.setHours(0, 0, 0, 0)
       const out: PrazoEntry[] = []
       for (const c of casamentos) {
+        // Skip casamentos onde o admin desativou os alertas de fotografia
+        // (eventos onde a RL não é responsável pela parte fotográfica).
+        if (c.alertas_fotografia_ativos === false) continue
         // 1) Seleção de Fotos — prazo conta a partir do evento
         if (c.data_casamento && !c.url_selecao_enviado_em && c.status_selecao !== 'ENTREGUE') {
           const dEvento = parseDateLocal(c.data_casamento)
@@ -2031,7 +2040,16 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                       </span>
                     )}
                   </div>
-                  <h2 className="text-2xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>{c.local}</h2>
+                  {c.nome_noivos && (
+                    <h2 className="text-2xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
+                      {c.nome_noivos}
+                    </h2>
+                  )}
+                  <p className={c.nome_noivos
+                    ? 'text-[13px] text-white/55 italic mt-0.5'
+                    : 'text-2xl font-light text-white tracking-tight'} style={{ fontFamily: 'Georgia, serif' }}>
+                    {c.nome_noivos ? <>📍 {c.local}</> : c.local}
+                  </p>
                   {c.data_casamento && (
                     <p className="text-[13px] text-white/55 italic mt-1" style={{ fontFamily: 'Georgia, serif' }}>{fmtDate(c.data_casamento)}</p>
                   )}
@@ -2151,6 +2169,40 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                     </button>
                   )}
                 </div>
+
+                {/* ── ADMIN: Toggle alertas de fotografia ──
+                     Quando OFF, este casamento NÃO entra nos cards de
+                     PRAZOS FOTOS / PRAZOS ÁLBUNS do dashboard /photo.
+                     Útil para casamentos onde a RL NÃO é responsável
+                     pela parte da fotografia. */}
+                {!viewAsFreelancer && (() => {
+                  const alertasAtivos = c.alertas_fotografia_ativos !== false
+                  return (
+                    <button onClick={async e => {
+                      e.stopPropagation()
+                      try {
+                        await fetch('/api/freelancer-casamentos', {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ id: c.id, alertas_fotografia_ativos: !alertasAtivos }),
+                        })
+                        onRefresh()
+                      } catch (err) {
+                        alert('Erro ao alterar alertas: ' + (err as Error).message)
+                      }
+                    }}
+                      className={`px-2.5 py-1 rounded-md border text-[10px] tracking-widest uppercase whitespace-nowrap transition-all ${
+                        alertasAtivos
+                          ? 'border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/10'
+                          : 'border-white/15 text-white/45 hover:bg-white/5'
+                      }`}
+                      title={alertasAtivos
+                        ? 'Alertas de fotografia ATIVOS — clica para desativar (RL não responsável pela fotografia)'
+                        : 'Alertas de fotografia DESATIVADOS — clica para reativar'}>
+                      {alertasAtivos ? '🔔 Alertas Foto' : '🔕 Sem Alertas'}
+                    </button>
+                  )
+                })()}
               </div>
             </div>
 

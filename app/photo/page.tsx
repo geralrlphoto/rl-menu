@@ -167,6 +167,26 @@ export default async function PhotoDashboard() {
       .limit(20),
   ])
 
+  // ── Refs com alertas de fotografia DESATIVADOS pelo admin ───────────────
+  //   Para eventos onde a RL não é responsável pela parte fotográfica, o
+  //   admin desliga o sino no card do casamento (/freelancers/[id]).
+  //   Esses eventos NÃO aparecem nos PRAZOS FOTOS aqui.
+  //   Se a coluna ainda não existir na DB, falha silenciosamente (set vazio).
+  const alertasOffRefs = await (async () => {
+    try {
+      const { data, error } = await supabase
+        .from('freelancer_casamentos')
+        .select('referencia')
+        .eq('alertas_fotografia_ativos', false)
+      if (error) return new Set<string>()
+      const set = new Set<string>()
+      for (const r of (data ?? []) as Array<{ referencia: string | null }>) {
+        if (r.referencia) set.add(r.referencia)
+      }
+      return set
+    } catch { return new Set<string>() }
+  })()
+
   // ── Parsear Notion ────────────────────────────────────────────────────────
   const prazosAlbuns = (prazosRes.results ?? []).map((p: any) => {
     const props = p.properties ?? {}
@@ -237,7 +257,7 @@ export default async function PhotoDashboard() {
       if (d <= 15 && d < diasRestantes) { diasRestantes = d; tipo = 'fotos'; label = 'Fotos Edição' }
     }
     return { nome, ref, diasRestantes, label, tipo, eventoId }
-  }).filter(f => f.diasRestantes <= 15)
+  }).filter(f => f.diasRestantes <= 15 && !alertasOffRefs.has(f.ref))
    // Ordena: atrasados (mais antigos primeiro) → críticos próximos → resto
    .sort((a, b) => a.diasRestantes - b.diasRestantes)
 

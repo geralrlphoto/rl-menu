@@ -20,8 +20,19 @@ export async function GET(req: NextRequest) {
       // 1) Buscar eventos por data
       const { data: events } = await supabase
         .from('eventos_2026')
-        .select('referencia, local, data_evento, servicos_dia, local_cerimonia, hora_inicio')
+        .select('referencia, local, data_evento, servicos_dia, local_cerimonia, hora_inicio, cliente')
         .in('data_evento', datas)
+      // 1b) Fallback noivos via dados_contrato_cps (nome_noiva + nome_noivo)
+      const refs0 = Array.from(new Set(casamentos.filter((c: any) => c.referencia).map((c: any) => c.referencia)))
+      let cpsRows: any[] = []
+      if (refs0.length > 0) {
+        const { data: cps } = await supabase
+          .from('dados_contrato_cps')
+          .select('referencia_evento, nome_noivos, nome_noiva, nome_noivo')
+          .in('referencia_evento', refs0)
+        cpsRows = cps ?? []
+      }
+      const cpsByRef = new Map<string, any>(cpsRows.filter((r: any) => r.referencia_evento).map((r: any) => [r.referencia_evento, r]))
 
       // 2) Buscar todas as evento_equipa (filtra por referencia/evento_id quando possível)
       const refs = Array.from(new Set(casamentos.filter((c: any) => c.referencia).map((c: any) => c.referencia)))
@@ -63,6 +74,17 @@ export async function GET(req: NextRequest) {
           if (!c.referencia)      c.referencia      = ev.referencia ?? c.referencia
         }
 
+        // ── NOIVOS (cliente em eventos / fallback dados_contrato_cps) ──
+        const cps = c.referencia ? cpsByRef.get(c.referencia) : null
+        const noivosNome =
+          (ev?.cliente && String(ev.cliente).trim()) ||
+          (cps?.nome_noivos && String(cps.nome_noivos).trim()) ||
+          (cps?.nome_noiva && cps?.nome_noivo ? `${cps.nome_noiva} & ${cps.nome_noivo}` : null) ||
+          cps?.nome_noiva || cps?.nome_noivo || null
+        c.nome_noivos = noivosNome
+        c.nome_noiva  = cps?.nome_noiva ?? null
+        c.nome_noivo  = cps?.nome_noivo ?? null
+
         // ── EQUIPA (editor_fotos, editor_album, editor_video) ──
         let eq: any = c.referencia ? equipaByRef.get(c.referencia) : null
         if (!eq && c.local && c.data_casamento) {
@@ -90,6 +112,9 @@ const OPTIONAL_COLS = [
   // Timestamps de alteração de estado (para notificações ao admin)
   'status_selecao_alterado_em', 'status_editadas_alterado_em',
   'status_album_alterado_em', 'status_provas_alterado_em',
+  // Toggle admin: quando false, este casamento NÃO gera alertas/prazos
+  // de fotografia (útil para eventos onde a RL não é responsável pela foto).
+  'alertas_fotografia_ativos',
 ] as const
 
 export async function POST(req: NextRequest) {
