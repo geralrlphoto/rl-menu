@@ -427,23 +427,52 @@ export function AdminNotificationsBell() {
                         purple:  'border-purple-500/30 bg-purple-500/[0.05] text-purple-300',
                       }[item.color]
                       return (
-                        <div key={item.key} className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg border ${url ? cls : 'border-white/[0.05] bg-white/[0.015]'}`}>
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className={`text-[12px] ${url ? '' : 'text-white/25'}`}>{item.icon}</span>
-                            <p className={`text-[11px] tracking-wider uppercase font-bold truncate ${url ? '' : 'text-white/30'}`}>{item.label}</p>
-                            {status && (
-                              <span className="text-[8px] tracking-wider uppercase font-bold px-1.5 py-0.5 rounded bg-white/[0.06] text-white/55 border border-white/10 shrink-0">
-                                {status}
-                              </span>
+                        <div key={item.key} className={`rounded-lg border ${url ? cls : 'border-white/[0.05] bg-white/[0.015]'}`}>
+                          {/* Cabeçalho da entrega */}
+                          <div className="flex items-center justify-between gap-3 px-3 py-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className={`text-[12px] ${url ? '' : 'text-white/25'}`}>{item.icon}</span>
+                              <p className={`text-[11px] tracking-wider uppercase font-bold truncate ${url ? '' : 'text-white/30'}`}>{item.label}</p>
+                              {status && (
+                                <span className="text-[8px] tracking-wider uppercase font-bold px-1.5 py-0.5 rounded bg-white/[0.06] text-white/55 border border-white/10 shrink-0">
+                                  {status}
+                                </span>
+                              )}
+                            </div>
+                            {url ? (
+                              <a href={url} target="_blank" rel="noopener noreferrer"
+                                className="text-[9px] tracking-[0.2em] uppercase font-bold px-2.5 py-1 rounded-md border border-current opacity-80 hover:opacity-100 transition-opacity whitespace-nowrap">
+                                Abrir ↗
+                              </a>
+                            ) : (
+                              <span className="text-[9px] text-white/25 italic">—</span>
                             )}
                           </div>
-                          {url ? (
-                            <a href={url} target="_blank" rel="noopener noreferrer"
-                              className="text-[9px] tracking-[0.2em] uppercase font-bold px-2.5 py-1 rounded-md border border-current opacity-80 hover:opacity-100 transition-opacity whitespace-nowrap">
-                              Abrir ↗
-                            </a>
-                          ) : (
-                            <span className="text-[9px] text-white/25 italic">—</span>
+                          {/* URL copiável (só se houver) */}
+                          {url && (
+                            <div className="flex items-center gap-2 px-3 pb-2 pt-0">
+                              <input type="text" readOnly value={url}
+                                onClick={e => (e.target as HTMLInputElement).select()}
+                                className="flex-1 bg-black/50 border border-white/10 rounded-md px-2 py-1.5 text-[10px] font-mono text-white/75 outline-none focus:border-white/25 truncate" />
+                              <button
+                                onClick={async (e) => {
+                                  try {
+                                    await navigator.clipboard.writeText(url)
+                                    const btn = e.currentTarget
+                                    const orig = btn.textContent
+                                    btn.textContent = '✓'
+                                    btn.classList.add('!text-emerald-300', '!border-emerald-500/40', '!bg-emerald-500/10')
+                                    setTimeout(() => {
+                                      btn.textContent = orig ?? '⎘'
+                                      btn.classList.remove('!text-emerald-300', '!border-emerald-500/40', '!bg-emerald-500/10')
+                                    }, 1500)
+                                  } catch {}
+                                }}
+                                title="Copiar URL"
+                                className="w-7 h-7 flex items-center justify-center rounded-md border border-white/10 bg-white/[0.04] text-white/55 hover:text-gold hover:border-gold/40 hover:bg-gold/[0.06] transition-all text-[12px] shrink-0">
+                                ⎘
+                              </button>
+                            </div>
                           )}
                         </div>
                       )
