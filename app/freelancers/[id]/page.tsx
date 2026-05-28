@@ -8323,7 +8323,10 @@ function UrlEntryCard({
           urlLocked ? 'border-white/[0.04] text-white/30 cursor-not-allowed' : 'border-white/[0.06] text-white/90 placeholder:text-white/25 focus:border-gold/40'
         }`}
       />
-      {sentAtFmt ? (
+      {/* Mostra 'Enviado · data' SÓ se o estado actual for um dos estados de entrega
+          final ('ENTREGUE' ou 'GALERIA PUBLICADA'). Se o admin reverteu o estado,
+          o trabalho deixou de estar entregue → mostra de novo o botão Enviar. */}
+      {sentAtFmt && (status === 'ENTREGUE' || status === 'GALERIA PUBLICADA') ? (
         <div className="flex items-center justify-between text-[12px]">
           <span className="inline-flex items-center gap-1 text-emerald-400/90 tracking-wider uppercase font-semibold">
             ✓ Enviado · {sentAtFmt}
@@ -8346,7 +8349,7 @@ function UrlEntryCard({
               : 'bg-white/[0.04] text-white/30 cursor-not-allowed border border-white/[0.06]'
           } ${sending ? 'opacity-50' : ''}`}
           style={!urlLocked && hasUrl ? { boxShadow: '0 0 12px -4px rgba(201,164,92,0.5)' } : undefined}>
-          {sending ? 'A enviar...' : '✉ Enviar Notificação'}
+          {sending ? 'A enviar...' : sentAtFmt ? '↻ Reenviar Notificação' : '✉ Enviar Notificação'}
         </button>
       )}
       {locked && lockedReason && (
