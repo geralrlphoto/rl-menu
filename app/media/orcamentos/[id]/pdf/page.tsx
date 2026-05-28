@@ -29,6 +29,20 @@ type Orcamento = {
   validade: string | null; estado: Estado; notas: string | null; criado_em: string
 }
 
+/* ─── Dados oficiais da RL PROD (sincronizados com contrato de prestação) ─── */
+const RL_DADOS = {
+  titular:  'Liliana Sofia Fernandes Barreto Gonçalves',
+  marca:    'RL Photo — Fotografia & Vídeo',
+  marcaB2B: 'RL PROD',
+  nif:      '238 076 415',
+  cae:      '74200',
+  sede:     'Centro Comercial Os Mochos, Loja 124',
+  cp:       '2955-185 Pinhal Novo',
+  email:    'geral.rlphoto@gmail.com',
+  telefone: '+351 916 162 728',
+  site:     'www.rlprod.pt',
+}
+
 /* ─── Paleta — RL PROD oficial ─── */
 const PAPER       = '#e3ded2'   // creme texturado mais frio
 const PAPER_SOFT  = '#ece8dc'   // ligeira variação para superfícies
@@ -359,27 +373,54 @@ export default function PdfPage() {
             </div>
           </section>
 
-          {/* Closing */}
-          <section style={{ position: 'absolute', bottom: '26mm', left: '32mm', right: '22mm', paddingTop: 12, borderTop: `1px solid ${NAVY_DEEP}` }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 24, marginTop: 14, alignItems: 'flex-end' }}>
-              <div>
-                <p className="serif" style={{ fontSize: 24, color: NAVY_DEEP, margin: 0, fontWeight: 500, lineHeight: 1.1, fontStyle: 'italic' }}>
-                  Obrigado pela confiança.
-                </p>
-                <p style={{ fontSize: 11, color: SUB, margin: '8px 0 0', lineHeight: 1.55 }}>
-                  Estamos disponíveis para qualquer esclarecimento adicional ou ajuste à proposta.
-                </p>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <p style={{ fontSize: 8, letterSpacing: '0.45em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>
-                  Contacto
-                </p>
-                <p style={{ fontSize: 11, color: INK, margin: '6px 0 0', fontWeight: 600 }}>
-                  geral@rlphotovideo.pt
-                </p>
-                <p style={{ fontSize: 11, color: INK, margin: '2px 0 0', fontWeight: 600 }}>
-                  www.rlprod.pt
-                </p>
+          {/* Os Nossos Dados + Closing */}
+          <section style={{ position: 'absolute', bottom: '24mm', left: '32mm', right: '22mm' }}>
+            <div style={{ borderTop: `2px solid ${NAVY_DEEP}`, paddingTop: 12 }}>
+              <p style={{ fontSize: 10, letterSpacing: '0.5em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>
+                Os Nossos Dados
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 28, marginTop: 10 }}>
+                {/* Esquerda — identificação legal */}
+                <div>
+                  <p style={{ fontSize: 12, color: INK, margin: 0, fontWeight: 700 }}>
+                    {RL_DADOS.titular}
+                  </p>
+                  <p style={{ fontSize: 10, color: SUB, margin: '3px 0 0', fontStyle: 'italic' }}>
+                    a exercer sob a marca <span style={{ color: NAVY_DEEP, fontWeight: 600 }}>{RL_DADOS.marca}</span> ({RL_DADOS.marcaB2B}).
+                  </p>
+                  <div style={{ marginTop: 8, display: 'grid', gridTemplateColumns: 'auto auto', gap: '4px 18px', fontSize: 10, color: SUB }}>
+                    <span style={{ color: MUTE, letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: 8, fontWeight: 700, alignSelf: 'center' }}>NIF</span>
+                    <span style={{ color: INK, fontWeight: 600 }}>{RL_DADOS.nif}</span>
+                    <span style={{ color: MUTE, letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: 8, fontWeight: 700, alignSelf: 'center' }}>CAE</span>
+                    <span style={{ color: INK, fontWeight: 600 }}>{RL_DADOS.cae} <span style={{ color: SUB, fontWeight: 400, fontStyle: 'italic', fontSize: 9 }}>· Atividades Fotográficas e Vídeo</span></span>
+                    <span style={{ color: MUTE, letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: 8, fontWeight: 700, alignSelf: 'flex-start' }}>Sede</span>
+                    <span style={{ color: INK, lineHeight: 1.45 }}>
+                      {RL_DADOS.sede}<br />
+                      {RL_DADOS.cp}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Direita — contactos + assinatura */}
+                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <p style={{ fontSize: 8, letterSpacing: '0.45em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>
+                      Contactos
+                    </p>
+                    <p style={{ fontSize: 11, color: INK, margin: '6px 0 0', fontWeight: 600 }}>
+                      {RL_DADOS.email}
+                    </p>
+                    <p style={{ fontSize: 11, color: INK, margin: '2px 0 0', fontWeight: 600 }}>
+                      {RL_DADOS.telefone}
+                    </p>
+                    <p style={{ fontSize: 11, color: INK, margin: '2px 0 0', fontWeight: 600 }}>
+                      {RL_DADOS.site}
+                    </p>
+                  </div>
+                  <p className="serif" style={{ fontSize: 16, color: NAVY_DEEP, margin: '14px 0 0', fontWeight: 500, lineHeight: 1.15, fontStyle: 'italic' }}>
+                    Obrigado pela confiança.
+                  </p>
+                </div>
               </div>
             </div>
           </section>
@@ -469,7 +510,7 @@ function PageBottomBar() {
       position: 'absolute', bottom: '8mm', left: '32mm', right: '22mm', textAlign: 'center',
       margin: 0, fontSize: 8, letterSpacing: '0.5em', textTransform: 'uppercase', color: MUTE, fontWeight: 600,
     }}>
-      geral@rlphotovideo.pt · www.rlprod.pt
+      {RL_DADOS.email} · {RL_DADOS.telefone} · {RL_DADOS.site}
     </p>
   )
 }
