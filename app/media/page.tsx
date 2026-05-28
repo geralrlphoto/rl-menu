@@ -46,39 +46,50 @@ export default async function MediaDashboard() {
         style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(180,200,255,0.04) 0%, transparent 70%)' }}
       />
 
-      {/* ── Hero ─────────────────────────────────────────────────────── */}
-      <div className="relative z-10 shrink-0 overflow-hidden" style={{ height: '320px' }}>
-        {/* Radial glow hero */}
-        <div className="absolute inset-0 pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse 60% 80% at 50% 50%, rgba(180,200,255,0.06) 0%, transparent 70%)' }} />
+      {/* ── Hero — imagem RL PROD com fade para o fundo escuro ─────── */}
+      <div className="relative z-10 shrink-0 overflow-hidden w-full"
+        style={{ height: 'min(78vh, 760px)', minHeight: '480px' }}>
 
-        {/* Logout — topo direito */}
-        <div className="absolute top-5 right-6 z-10">
-          <LogoutButton />
-        </div>
-
-        {/* Conteúdo centrado */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-          {/* Logo */}
+        {/* Fallback visível se a imagem ainda não foi adicionada em /public/media-hero.jpg */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-0 pointer-events-none">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo-rl-prod-branco.png"
-            alt="RL PROD"
-            className="w-16 h-16 object-contain opacity-80"
+            alt=""
+            className="w-20 h-20 object-contain opacity-50"
             style={{ filter: 'brightness(1.2)' }}
           />
           <div className="flex flex-col items-center gap-1">
-            <p className="text-[7px] tracking-[0.7em] text-white/20 uppercase">Menu Interno</p>
-            <h1 className="text-3xl sm:text-4xl font-extralight tracking-[0.55em] text-white/85 uppercase mt-1">
+            <p className="text-[7px] tracking-[0.7em] text-white/25 uppercase">Menu Interno</p>
+            <h1 className="text-3xl sm:text-4xl font-extralight tracking-[0.55em] text-white/70 uppercase mt-1">
               RL PROD
             </h1>
-            <p className="text-[9px] font-extralight tracking-[0.4em] text-white/30 uppercase">Photography & Video</p>
+            <p className="text-[9px] font-extralight tracking-[0.4em] text-white/35 uppercase">Photography &amp; Video (for brands)</p>
           </div>
-          <div className="flex items-center gap-3 mt-1">
-            <div className="h-px w-12 bg-gradient-to-r from-transparent to-white/15" />
-            <div className="w-1 h-1 rounded-full bg-white/20" />
-            <div className="h-px w-12 bg-gradient-to-l from-transparent to-white/15" />
-          </div>
+        </div>
+
+        {/* Imagem hero (deve ser guardada em /public/media-hero.jpg) — cobre o fallback */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/media-hero.jpg"
+          alt="RL PROD · Photography & Video"
+          className="absolute inset-0 w-full h-full object-cover z-[1]"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).style.display = 'none'
+          }}
+        />
+
+        {/* Vinheta subtil (escurece ligeiramente bordas) */}
+        <div className="absolute inset-0 pointer-events-none z-[2]"
+          style={{ background: 'radial-gradient(ellipse 95% 85% at 50% 45%, transparent 0%, rgba(5,5,7,0.18) 75%, rgba(5,5,7,0.45) 100%)' }} />
+
+        {/* FADE PRINCIPAL — transparente em cima, #050507 sólido em baixo */}
+        <div className="absolute inset-0 pointer-events-none z-[3]"
+          style={{ background: 'linear-gradient(180deg, transparent 0%, transparent 40%, rgba(5,5,7,0.30) 60%, rgba(5,5,7,0.70) 80%, rgba(5,5,7,0.95) 94%, #050507 100%)' }} />
+
+        {/* Logout — topo direito */}
+        <div className="absolute top-5 right-6 z-30">
+          <LogoutButton />
         </div>
       </div>
 
