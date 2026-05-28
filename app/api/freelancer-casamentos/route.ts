@@ -105,6 +105,15 @@ export async function GET(req: NextRequest) {
           ? false
           : true
 
+        // ── STATUS FALLBACK (portais.settings.status_*) ──
+        //    Quando o admin altera o estado e a coluna ainda não existe na
+        //    tabela freelancer_casamentos, o frontend grava em
+        //    portais.settings.status_<tipo>. Aqui usamos esse valor como
+        //    fallback se a coluna direta estiver vazia/null.
+        for (const col of ['status_selecao', 'status_provas', 'status_editadas', 'status_album'] as const) {
+          if (c[col] == null && portalSettings[col]) c[col] = portalSettings[col]
+        }
+
         // ── EQUIPA (editor_fotos, editor_album, editor_video) ──
         let eq: any = c.referencia ? equipaByRef.get(c.referencia) : null
         if (!eq && c.local && c.data_casamento) {

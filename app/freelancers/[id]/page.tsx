@@ -8395,13 +8395,42 @@ function UrlEntryCard({
         body: JSON.stringify({ id: casamentoId, [statusCol]: newStatus }),
       })
       const data = await res.json().catch(() => ({}))
+
       // Se a coluna não existir, devolve `failed: { [col]: msg }`
-      if (data?.failed && data.failed[statusCol]) {
+      const columnMissing = !!(data?.failed && data.failed[statusCol])
+
+      if (columnMissing) {
+        // ADMIN BYPASS — quando a coluna ainda não foi adicionada à DB,
+        // guarda em portais.settings.<statusCol>. Mantém a UI a refletir
+        // o novo estado e o portal /photo/admin lê este fallback.
+        // (O membro normal não chega aqui porque o backend faz allow
+        //  para admin; mas se chegar, mostramos a mensagem clássica.)
+        if (isAdmin && casamentoReferencia) {
+          try {
+            const pRes = await fetch('/api/portais', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                referencia: casamentoReferencia,
+                updates: { settings: { [statusCol]: newStatus } },
+              }),
+            })
+            if (pRes.ok) {
+              // Sucesso via fallback — mantém UI e sincroniza parent
+              onRefresh()
+              return
+            }
+          } catch { /* cai para o alert abaixo */ }
+        }
         console.error(`[saveStatus] ${statusCol} falhou:`, data.failed[statusCol])
         // Reverte localmente
         setStatus(previous)
         alert(`Não foi possível guardar o estado.\n\nA coluna "${statusCol}" não existe na base de dados.\n\nPara resolver, corre o seguinte SQL no Supabase:\n\nALTER TABLE freelancer_casamentos\nADD COLUMN IF NOT EXISTS status_selecao TEXT,\nADD COLUMN IF NOT EXISTS status_editadas TEXT,\nADD COLUMN IF NOT EXISTS status_album TEXT,\nADD COLUMN IF NOT EXISTS status_provas TEXT;`)
+        return
       }
+
+      // Sucesso → sincroniza dados do parent (cache pode estar stale)
+      onRefresh()
     } finally { setSavingStatus(false) }
   }
 
@@ -8688,7 +8717,11 @@ function UrlEntryCard({
                 )
               })}
             </div>
-            {savingStatus && <p className="text-[10px] text-gold/50 italic mt-1">A guardar...</p>}
+            {savingStatus
+              ? <p className="text-[10px] text-gold/50 italic mt-1">A guardar...</p>
+              : isAdmin && status !== (initialStatus ?? 'AGUARDAR')
+                ? <p className="text-[10px] text-emerald-400/85 italic mt-1">✓ Estado atualizado pelo admin</p>
+                : null}
           </div>
         )
       })()}
