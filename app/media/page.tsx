@@ -68,10 +68,10 @@ export default async function MediaDashboard() {
           </div>
         </div>
 
-        {/* Imagem hero (deve ser guardada em /public/media-hero.jpg) — cobre o fallback */}
+        {/* Imagem hero (em /public/MEDIA HERO.png) — cobre o fallback */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/media-hero.jpg"
+          src="/MEDIA%20HERO.png"
           alt="RL PROD · Photography & Video"
           className="absolute inset-0 w-full h-full object-cover z-[1]"
           onError={(e) => {
