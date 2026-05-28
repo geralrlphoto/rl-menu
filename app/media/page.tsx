@@ -68,11 +68,15 @@ export default async function MediaDashboard() {
           </div>
         </div>
 
-        {/* Imagem hero — como background-image (compatível com server components,
-            falha silenciosamente se o ficheiro não existir e deixa o fallback visível). */}
+        {/* Imagem hero — contain para garantir que TODO o logo e tagline são
+            visíveis (não corta topo/fundo). Cor de fundo coincide com o navy
+            da imagem, por isso as margens laterais blendam-se de forma invisível. */}
         <div
-          className="absolute inset-0 z-[1] bg-cover bg-center"
-          style={{ backgroundImage: 'url("/MEDIA%20HERO.png")' }}
+          className="absolute inset-0 z-[1] bg-contain bg-center bg-no-repeat"
+          style={{
+            backgroundImage: 'url("/MEDIA%20HERO.png")',
+            backgroundColor: '#0c1a2a',
+          }}
           aria-label="RL PROD · Photography & Video"
         />
 
