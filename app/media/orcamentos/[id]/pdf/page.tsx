@@ -22,7 +22,16 @@ type Proposta = { id: string; titulo: string; valor: number; servicos: ServicoSe
 type Orcamento = {
   id: string; cliente: string; contacto: string | null; email: string | null
   cobertura: Cobertura | null; resumo: string | null; propostas: Proposta[]
+  data_inicio: string | null; data_fim: string | null
   validade: string | null; estado: Estado; notas: string | null; criado_em: string
+}
+
+function fmtIntervaloEvento(inicio: string | null, fim: string | null): string {
+  if (!inicio && !fim) return 'A definir'
+  if (inicio && !fim) return fmtData(inicio)
+  if (!inicio && fim) return `Até ${fmtData(fim)}`
+  if (inicio === fim) return fmtData(inicio)
+  return `${fmtData(inicio)} → ${fmtData(fim)}`
 }
 
 function fmtEur(n: number) {
@@ -144,6 +153,11 @@ export default function PdfPage() {
             <div style={{ textAlign: 'right' }}>
               <p style={{ fontFamily: 'system-ui, sans-serif', fontSize: 9, letterSpacing: '0.45em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: 0 }}>Orçamento</p>
               <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', fontStyle: 'italic', margin: '6px 0 0' }}>Emitido em {dataDeHoje()}</p>
+              {(orcamento.data_inicio || orcamento.data_fim) && (
+                <p style={{ fontSize: 11, color: 'rgba(110,231,183,0.95)', fontStyle: 'italic', margin: '2px 0 0', fontWeight: 600 }}>
+                  Evento · {fmtIntervaloEvento(orcamento.data_inicio, orcamento.data_fim)}
+                </p>
+              )}
               {orcamento.validade && (
                 <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', fontStyle: 'italic', margin: '2px 0 0' }}>Válido até {fmtData(orcamento.validade)}</p>
               )}
@@ -165,11 +179,18 @@ export default function PdfPage() {
                 {[orcamento.contacto, orcamento.email].filter(Boolean).join(' · ')}
               </p>
             )}
-            {orcamento.cobertura && (
-              <p style={{ marginTop: 12, display: 'inline-block', fontFamily: 'system-ui, sans-serif', fontSize: 10, letterSpacing: '0.3em', textTransform: 'uppercase', fontWeight: 700, padding: '5px 12px', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 999, color: 'rgba(255,255,255,0.85)' }}>
-                Cobertura · {orcamento.cobertura}
-              </p>
-            )}
+            <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {orcamento.cobertura && (
+                <span style={{ display: 'inline-block', fontFamily: 'system-ui, sans-serif', fontSize: 10, letterSpacing: '0.3em', textTransform: 'uppercase', fontWeight: 700, padding: '5px 12px', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 999, color: 'rgba(255,255,255,0.85)' }}>
+                  Cobertura · {orcamento.cobertura}
+                </span>
+              )}
+              {(orcamento.data_inicio || orcamento.data_fim) && (
+                <span style={{ display: 'inline-block', fontFamily: 'system-ui, sans-serif', fontSize: 10, letterSpacing: '0.3em', textTransform: 'uppercase', fontWeight: 700, padding: '5px 12px', border: '1px solid rgba(110,231,183,0.4)', background: 'rgba(110,231,183,0.06)', borderRadius: 999, color: 'rgba(110,231,183,0.95)' }}>
+                  📅 {fmtIntervaloEvento(orcamento.data_inicio, orcamento.data_fim)}
+                </span>
+              )}
+            </div>
           </section>
 
           {/* RESUMO */}

@@ -37,7 +37,9 @@ type Orcamento = {
   cobertura: Cobertura | null
   resumo: string | null
   propostas: Proposta[]
-  validade: string | null
+  data_inicio: string | null  // YYYY-MM-DD — data de início do evento
+  data_fim: string | null     // YYYY-MM-DD — data final do evento (opcional, p/ multi-dia)
+  validade: string | null     // YYYY-MM-DD — validade do orçamento (resposta do cliente)
   estado: Estado
   notas: string | null
   criado_em: string
@@ -153,12 +155,23 @@ function migrate(raw: any[]): Orcamento[] {
         descricao: p.descricao ?? null,
         servicos: Array.isArray(p.servicos) ? p.servicos : [],
       })),
+      data_inicio: r.data_inicio ?? null,
+      data_fim: r.data_fim ?? null,
       validade: r.validade ?? null,
       estado: (r.estado as Estado) ?? 'Pendente',
       notas: r.notas ?? null,
       criado_em: r.criado_em ?? new Date().toISOString(),
     }
   })
+}
+
+/** Formata intervalo de datas do evento: dia único, intervalo, ou em falta. */
+function fmtIntervaloEvento(inicio: string | null, fim: string | null): string {
+  if (!inicio && !fim) return 'A definir'
+  if (inicio && !fim) return fmtData(inicio)
+  if (!inicio && fim) return `Até ${fmtData(fim)}`
+  if (inicio === fim) return fmtData(inicio)
+  return `${fmtData(inicio)} → ${fmtData(fim)}`
 }
 
 /* ─── Page ────────────────────────────────────────────────────────────────── */
@@ -330,6 +343,9 @@ export default function OrcamentosPage() {
                     <div className="col-span-2 md:col-span-1 min-w-0">
                       <p className="text-[14px] text-white truncate">{o.cliente}</p>
                       {o.contacto && <p className="text-[11px] text-white/40 truncate mt-0.5">{o.contacto}{o.email ? ` · ${o.email}` : ''}</p>}
+                      {(o.data_inicio || o.data_fim) && (
+                        <p className="text-[10px] text-emerald-300/70 tracking-widest uppercase mt-1">📅 {fmtIntervaloEvento(o.data_inicio, o.data_fim)}</p>
+                      )}
                     </div>
 
                     <div>
@@ -373,6 +389,12 @@ export default function OrcamentosPage() {
 
                   {expandedId === o.id && (
                     <div className="px-5 pb-5 pt-1 bg-black/30 border-b border-white/[0.04]">
+                      {(o.data_inicio || o.data_fim) && (
+                        <div className="mb-3 rounded-lg border border-emerald-500/15 bg-emerald-500/[0.04] p-3 inline-block">
+                          <p className="text-[9px] tracking-[0.4em] uppercase text-emerald-300/70 mb-0.5">📅 Data do Evento</p>
+                          <p className="text-[14px] text-white/90 font-medium">{fmtIntervaloEvento(o.data_inicio, o.data_fim)}</p>
+                        </div>
+                      )}
                       {o.resumo && (
                         <div className="mb-3">
                           <p className="text-[9px] tracking-[0.4em] uppercase text-white/30 mb-1">Resumo do Serviço</p>
@@ -491,14 +513,16 @@ function OrcamentoForm({
   onClose: () => void
   onSave: (o: Orcamento) => void
 }) {
-  const [cliente, setCliente]     = useState(initial?.cliente ?? '')
-  const [contacto, setContacto]   = useState(initial?.contacto ?? '')
-  const [email, setEmail]         = useState(initial?.email ?? '')
-  const [cobertura, setCobertura] = useState<Cobertura | null>(initial?.cobertura ?? null)
-  const [resumo, setResumo]       = useState(initial?.resumo ?? '')
-  const [validade, setValidade]   = useState(initial?.validade ?? '')
-  const [estado, setEstado]       = useState<Estado>(initial?.estado ?? 'Pendente')
-  const [notas, setNotas]         = useState(initial?.notas ?? '')
+  const [cliente, setCliente]       = useState(initial?.cliente ?? '')
+  const [contacto, setContacto]     = useState(initial?.contacto ?? '')
+  const [email, setEmail]           = useState(initial?.email ?? '')
+  const [cobertura, setCobertura]   = useState<Cobertura | null>(initial?.cobertura ?? null)
+  const [resumo, setResumo]         = useState(initial?.resumo ?? '')
+  const [dataInicio, setDataInicio] = useState(initial?.data_inicio ?? '')
+  const [dataFim, setDataFim]       = useState(initial?.data_fim ?? '')
+  const [validade, setValidade]     = useState(initial?.validade ?? '')
+  const [estado, setEstado]         = useState<Estado>(initial?.estado ?? 'Pendente')
+  const [notas, setNotas]           = useState(initial?.notas ?? '')
   const [propostas, setPropostas] = useState<Proposta[]>(
     initial?.propostas && initial.propostas.length > 0 ? initial.propostas : [emptyProposta()]
   )
@@ -542,6 +566,10 @@ function OrcamentoForm({
     if (!cobertura) { alert('Escolhe a cobertura (Fotografia, Vídeo ou ambos).'); return }
     if (propostas.some(p => !p.titulo.trim())) { alert('Cada proposta precisa de um título.'); return }
 
+    if (dataInicio && dataFim && dataFim < dataInicio) {
+      alert('A data final do evento não pode ser anterior à data de início.')
+      return
+    }
     const o: Orcamento = {
       id:        initial?.id ?? uid(),
       cliente:   cliente.trim(),
@@ -555,10 +583,12 @@ function OrcamentoForm({
         valor: typeof p.valor === 'number' ? p.valor : parseFloat(String(p.valor).replace(',', '.')) || 0,
         descricao: p.descricao?.trim() || null,
       })),
-      validade:  validade || null,
+      data_inicio: dataInicio || null,
+      data_fim:    dataFim || null,
+      validade:    validade || null,
       estado,
-      notas:     notas.trim() || null,
-      criado_em: initial?.criado_em ?? new Date().toISOString(),
+      notas:       notas.trim() || null,
+      criado_em:   initial?.criado_em ?? new Date().toISOString(),
     }
     onSave(o)
   }
@@ -631,6 +661,31 @@ function OrcamentoForm({
               })}
             </div>
           </Field>
+
+          {/* Datas do Evento */}
+          <div>
+            <span className="text-[10px] tracking-[0.4em] uppercase text-white/45 block mb-1.5">
+              Data do Evento <span className="text-white/25 normal-case tracking-wide">(intervalo opcional para multi-dia)</span>
+            </span>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <span className="text-[9px] tracking-[0.3em] uppercase text-white/35 block mb-1">Início</span>
+                <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)}
+                  className={inputCls + ' [color-scheme:dark]'} />
+              </div>
+              <div>
+                <span className="text-[9px] tracking-[0.3em] uppercase text-white/35 block mb-1">Fim</span>
+                <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} min={dataInicio || undefined}
+                  className={inputCls + ' [color-scheme:dark]'} />
+              </div>
+            </div>
+            {dataInicio && dataFim && dataInicio === dataFim && (
+              <p className="text-[10px] text-white/40 mt-1.5 italic">Evento de um dia.</p>
+            )}
+            {dataInicio && dataFim && dataInicio !== dataFim && (
+              <p className="text-[10px] text-emerald-300/70 mt-1.5 italic">Evento multi-dia ({fmtIntervaloEvento(dataInicio, dataFim)}).</p>
+            )}
+          </div>
 
           <Field label="Resumo do Serviço">
             <textarea value={resumo} onChange={e => setResumo(e.target.value)} rows={2}
