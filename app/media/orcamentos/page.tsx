@@ -4,36 +4,85 @@ import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 
 /* ─────────────────────────────────────────────────────────────────────────── *
- *  RL PROD · Orçamentos
+ *  RL PROD · Orçamentos (B2B / Empresas)
  *
- *  Persistência local (localStorage) — versão inicial. Quando o fluxo
- *  estiver maduro promovemos para `orcamentos` em Supabase.
- *
- *  Estrutura:
- *    Orçamento (cabeçalho do dossier de proposta) →
- *      tem 1 a 3 Propostas (alternativas que o cliente pode escolher)
+ *  Persistência local (localStorage) — versão inicial.
+ *  Estrutura: Orçamento → 1..3 Propostas → cada uma com serviços
+ *  selecionados a partir de catálogo fixo.
  * ─────────────────────────────────────────────────────────────────────────── */
 
 type Estado    = 'Pendente' | 'Aprovado' | 'Rejeitado' | 'Expirado'
 type Cobertura = 'Fotografia' | 'Vídeo' | 'Fotografia e Vídeo'
 
+type ServicoSelected = {
+  catalogId: string
+  nome: string
+  desc: string
+  duracao?: string         // só Reportagem
+}
+
 type Proposta = {
   id: string
   titulo: string
   valor: number
+  servicos: ServicoSelected[]
   descricao: string | null
 }
 
 type Orcamento = {
   id: string
-  cliente: string
+  cliente: string             // nome da empresa
+  contacto: string | null     // pessoa de contacto
+  email: string | null
   cobertura: Cobertura | null
   resumo: string | null
-  propostas: Proposta[]          // 1..3
-  validade: string | null        // YYYY-MM-DD
+  propostas: Proposta[]
+  validade: string | null
   estado: Estado
   notas: string | null
-  criado_em: string              // ISO
+  criado_em: string
+}
+
+/* ─── Catálogo de Serviços (B2B) ──────────────────────────────────────────── */
+
+type CatalogItem = {
+  id: string
+  nome: string
+  desc: string
+  categoria: 'Equipa' | 'Cobertura' | 'Entregáveis' | 'Qualidade' | 'Pré-produção' | 'Pós-produção'
+  hasDuration?: boolean
+  durations?: string[]
+}
+
+const CATALOG: CatalogItem[] = [
+  // Equipa
+  { id: 'videografo_1',     categoria: 'Equipa',         nome: 'Um Videógrafo',                       desc: '1 profissional dedicado à captação de imagem em movimento, garante a cobertura essencial do evento.' },
+  { id: 'videografo_2',     categoria: 'Equipa',         nome: 'Dois Videógrafos',                    desc: 'Dupla de videógrafos para cobertura simultânea — planos amplos + planos de detalhe ou diferentes locais ao mesmo tempo.' },
+  { id: 'videografo_3',     categoria: 'Equipa',         nome: 'Três Videógrafos',                    desc: 'Cobertura multicâmara completa com três ângulos em simultâneo, ideal para eventos de grande dimensão ou multistage.' },
+  { id: 'editor',           categoria: 'Pós-produção',   nome: 'Um Editor',                           desc: 'Pós-produção dedicada por editor sénior — montagem narrativa, correção de cor, mistura de áudio e exportação final.' },
+  // Cobertura
+  { id: 'reportagem',       categoria: 'Cobertura',      nome: 'Reportagem do Evento',                desc: 'Cobertura contínua do evento durante o período contratado, captação em formato documental e dinâmico.', hasDuration: true, durations: ['4h', '6h', '8h'] },
+  { id: 'drone',            categoria: 'Cobertura',      nome: 'Drone',                               desc: 'Imagens aéreas com drone profissional certificado — planos amplos do espaço, chegada de convidados, vistas exteriores.' },
+  { id: 'same_day_edit',    categoria: 'Cobertura',      nome: 'Same Day Edit',                       desc: 'Edição expressa entregue no próprio dia do evento, ideal para projeção em ecrã durante o jantar ou closing.' },
+  // Entregáveis
+  { id: 'vertical_1',       categoria: 'Entregáveis',    nome: 'Um Vídeo Vertical (redes sociais)',   desc: 'Versão optimizada 9:16 para Instagram Reels, TikTok ou Stories, com legendas e ritmo próprio para mobile.' },
+  { id: 'vertical_2',       categoria: 'Entregáveis',    nome: 'Dois Vídeos Verticais (redes sociais)', desc: 'Pack de 2 vídeos verticais com cortes distintos para múltiplos posts ao longo da campanha.' },
+  { id: 'plataforma',       categoria: 'Entregáveis',    nome: 'Acesso à Plataforma do Cliente',      desc: 'Portal privado RL PROD para visualizar, partilhar e descarregar todo o material entregue, sem necessidade de WeTransfer.' },
+  // Qualidade
+  { id: 'fhd',              categoria: 'Qualidade',      nome: 'Qualidade Full HD',                   desc: 'Captação e entrega em 1920×1080 (Full HD) — padrão broadcast, compatível com qualquer ecrã ou plataforma.' },
+  { id: 'uhd_4k',           categoria: 'Qualidade',      nome: 'Qualidade 4K',                        desc: 'Captação e entrega em 4K (3840×2160) — máxima resolução para projeção em grande formato e arquivo future-proof.' },
+  // Pré-produção
+  { id: 'reuniao_1',        categoria: 'Pré-produção',   nome: '1 Reunião antes do evento',           desc: 'Sessão de briefing prévio para alinhar objetivos, estética visual, mensagem-chave e logística no terreno.' },
+  { id: 'reuniao_2',        categoria: 'Pré-produção',   nome: '2 Reuniões antes do evento',          desc: 'Duas sessões de planeamento — kick-off inicial + revisão técnica final na semana do evento.' },
+]
+
+const CATEGORIA_CLS: Record<CatalogItem['categoria'], string> = {
+  'Equipa':         'border-amber-500/30 text-amber-200 bg-amber-500/[0.05]',
+  'Cobertura':      'border-violet-500/30 text-violet-200 bg-violet-500/[0.05]',
+  'Entregáveis':    'border-cyan-500/30 text-cyan-200 bg-cyan-500/[0.05]',
+  'Qualidade':      'border-emerald-500/30 text-emerald-200 bg-emerald-500/[0.05]',
+  'Pré-produção':   'border-sky-500/30 text-sky-200 bg-sky-500/[0.05]',
+  'Pós-produção':   'border-fuchsia-500/30 text-fuchsia-200 bg-fuchsia-500/[0.05]',
 }
 
 const LS_KEY = 'rl_orcamentos_v1'
@@ -48,9 +97,9 @@ const ESTADO_CLS: Record<Estado, string> = {
 }
 
 const COBERTURA_META: Record<Cobertura, { icon: string; cls: string }> = {
-  'Fotografia':          { icon: '◐', cls: 'border-amber-500/30 text-amber-200 bg-amber-500/[0.06]' },
-  'Vídeo':               { icon: '▶', cls: 'border-violet-500/30 text-violet-200 bg-violet-500/[0.06]' },
-  'Fotografia e Vídeo':  { icon: '◑', cls: 'border-emerald-500/30 text-emerald-200 bg-emerald-500/[0.06]' },
+  'Fotografia':         { icon: '◐', cls: 'border-amber-500/30 text-amber-200 bg-amber-500/[0.06]' },
+  'Vídeo':              { icon: '▶', cls: 'border-violet-500/30 text-violet-200 bg-violet-500/[0.06]' },
+  'Fotografia e Vídeo': { icon: '◑', cls: 'border-emerald-500/30 text-emerald-200 bg-emerald-500/[0.06]' },
 }
 
 /* ─── helpers ─────────────────────────────────────────────────────────────── */
@@ -84,40 +133,26 @@ function valorRange(o: Orcamento): { min: number; max: number } {
   return { min: Math.min(...valores), max: Math.max(...valores) }
 }
 
-/** Migra registos antigos (formato v0 com campos `servico` / `valor` planos) */
+/** Migra registos antigos (formato v0 / v1) para nova estrutura com serviços */
 function migrate(raw: any[]): Orcamento[] {
   return (raw ?? []).map((r: any) => {
-    if (Array.isArray(r.propostas)) {
-      // já novo
-      return {
-        id: r.id ?? uid(),
-        cliente: r.cliente ?? '',
-        cobertura: r.cobertura ?? null,
-        resumo: r.resumo ?? null,
-        propostas: r.propostas.map((p: any) => ({
-          id: p.id ?? uid(),
-          titulo: p.titulo ?? 'Proposta',
-          valor: typeof p.valor === 'number' ? p.valor : parseFloat(p.valor) || 0,
-          descricao: p.descricao ?? null,
-        })),
-        validade: r.validade ?? null,
-        estado: (r.estado as Estado) ?? 'Pendente',
-        notas: r.notas ?? null,
-        criado_em: r.criado_em ?? new Date().toISOString(),
-      }
-    }
-    // formato v0 — converter `servico`+`valor` numa proposta única
+    const propostasIn = Array.isArray(r.propostas)
+      ? r.propostas
+      : [{ id: uid(), titulo: r.servico || 'Proposta', valor: r.valor || 0, descricao: null, servicos: [] }]
     return {
       id: r.id ?? uid(),
       cliente: r.cliente ?? '',
-      cobertura: null,
-      resumo: r.servico ?? null,
-      propostas: [{
-        id: uid(),
-        titulo: r.servico || 'Proposta única',
-        valor: typeof r.valor === 'number' ? r.valor : parseFloat(r.valor) || 0,
-        descricao: null,
-      }],
+      contacto: r.contacto ?? null,
+      email: r.email ?? null,
+      cobertura: r.cobertura ?? null,
+      resumo: r.resumo ?? r.servico ?? null,
+      propostas: propostasIn.map((p: any) => ({
+        id: p.id ?? uid(),
+        titulo: p.titulo ?? 'Proposta',
+        valor: typeof p.valor === 'number' ? p.valor : parseFloat(p.valor) || 0,
+        descricao: p.descricao ?? null,
+        servicos: Array.isArray(p.servicos) ? p.servicos : [],
+      })),
       validade: r.validade ?? null,
       estado: (r.estado as Estado) ?? 'Pendente',
       notas: r.notas ?? null,
@@ -138,7 +173,6 @@ export default function OrcamentosPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
-  // hydrate
   useEffect(() => {
     try {
       const raw = localStorage.getItem(LS_KEY)
@@ -151,13 +185,11 @@ export default function OrcamentosPage() {
     setHydrated(true)
   }, [])
 
-  // persist
   useEffect(() => {
     if (!hydrated) return
     try { localStorage.setItem(LS_KEY, JSON.stringify(orcamentos)) } catch { /* ignore */ }
   }, [orcamentos, hydrated])
 
-  // KPIs
   const total      = orcamentos.length
   const pendentes  = orcamentos.filter(o => o.estado === 'Pendente').length
   const aprovados  = orcamentos.filter(o => o.estado === 'Aprovado').length
@@ -168,7 +200,7 @@ export default function OrcamentosPage() {
     return orcamentos
       .filter(o => filter === 'Todos' || o.estado === filter)
       .filter(o => coberturaFilter === 'Todas' || o.cobertura === coberturaFilter)
-      .filter(o => !q || `${o.cliente} ${o.cobertura ?? ''} ${o.resumo ?? ''} ${o.notas ?? ''} ${o.propostas.map(p => p.titulo + ' ' + (p.descricao ?? '')).join(' ')}`.toLowerCase().includes(q))
+      .filter(o => !q || `${o.cliente} ${o.contacto ?? ''} ${o.email ?? ''} ${o.cobertura ?? ''} ${o.resumo ?? ''} ${o.notas ?? ''} ${o.propostas.map(p => p.titulo + ' ' + (p.descricao ?? '') + ' ' + p.servicos.map(s => s.nome).join(' ')).join(' ')}`.toLowerCase().includes(q))
       .sort((a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime())
   }, [orcamentos, search, filter, coberturaFilter])
 
@@ -191,7 +223,6 @@ export default function OrcamentosPage() {
 
   return (
     <main className="min-h-screen text-white relative overflow-hidden" style={{ background: '#050507' }}>
-      {/* grid bg */}
       <div className="pointer-events-none fixed inset-0 z-0"
         style={{
           backgroundImage: `
@@ -205,29 +236,26 @@ export default function OrcamentosPage() {
 
       <div className="relative z-10 max-w-[1280px] mx-auto px-6 sm:px-10 py-10">
 
-        {/* Top nav */}
         <div className="flex items-center justify-between mb-10">
           <Link href="/media"
             className="text-[10px] tracking-[0.5em] uppercase text-white/35 hover:text-white/85 transition-colors flex items-center gap-2">
             <span className="text-base leading-none">‹</span> RL PROD · Menu
           </Link>
-          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase">Gestão Interna</p>
+          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase">Gestão Interna · B2B</p>
         </div>
 
-        {/* Hero */}
         <header className="mb-8">
-          <p className="text-[10px] tracking-[0.55em] uppercase text-white/40 mb-3">Photography & Video</p>
+          <p className="text-[10px] tracking-[0.55em] uppercase text-white/40 mb-3">Eventos Corporate · Empresas</p>
           <h1 className="text-5xl sm:text-6xl font-extralight tracking-tight leading-[1.05]"
             style={{ fontFamily: 'Cormorant Garamond, Georgia, serif' }}>
             Orçamentos<br />
-            <em className="text-white/55 italic">Gestão de Propostas.</em>
+            <em className="text-white/55 italic">Empresas.</em>
           </h1>
           <p className="text-[13px] text-white/45 mt-4 max-w-xl leading-relaxed">
-            Centraliza pedidos, acompanha o estado de cada proposta (até 3 alternativas por cliente) e converte em projeto quando aprovado.
+            Constrói propostas para clientes corporate a partir de um catálogo de serviços RL PROD. Até 3 alternativas por dossier, exporta em PDF profissional.
           </p>
         </header>
 
-        {/* KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-10">
           <Kpi label="Total Orçamentos" value={total.toString()}      sub="Histórico completo"     accent="text-white" />
           <Kpi label="Pendentes"        value={pendentes.toString()}  sub="A aguardar resposta"    accent="text-blue-300" />
@@ -235,12 +263,11 @@ export default function OrcamentosPage() {
           <Kpi label="Volume Aprovado"  value={fmtEur(valorTotal)}    sub={`${aprovados} orçamento${aprovados === 1 ? '' : 's'} · valor máx.`} accent="text-white" />
         </div>
 
-        {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-3 mb-5">
           <div className="flex items-center gap-2 bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 flex-1 min-w-[220px] max-w-md focus-within:border-white/25 transition-colors">
             <span className="text-white/35 text-[12px]">⌕</span>
             <input value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Procurar cliente, cobertura, proposta…"
+              placeholder="Procurar empresa, contacto, serviço…"
               className="bg-transparent outline-none flex-1 text-[13px] text-white/85 placeholder:text-white/25" />
           </div>
 
@@ -262,7 +289,6 @@ export default function OrcamentosPage() {
           </button>
         </div>
 
-        {/* Cobertura filter row */}
         <div className="flex items-center gap-2 mb-7 flex-wrap">
           <span className="text-[9px] tracking-[0.4em] uppercase text-white/30">Cobertura</span>
           {(['Todas', ...COBERTURAS] as const).map(c => {
@@ -282,14 +308,12 @@ export default function OrcamentosPage() {
           })}
         </div>
 
-        {/* Lista */}
         {filtered.length === 0 ? (
           <EmptyState onCreate={() => { setEditingId(null); setShowForm(true) }} hasAny={orcamentos.length > 0} />
         ) : (
           <div className="rounded-2xl border border-white/[0.07] overflow-hidden bg-white/[0.015]">
-            {/* table header */}
-            <div className="hidden md:grid grid-cols-[2fr_1.4fr_1.4fr_1fr_1.1fr_80px] gap-4 px-5 py-3 border-b border-white/[0.05] bg-white/[0.02]">
-              <Th>Cliente</Th>
+            <div className="hidden md:grid grid-cols-[2fr_1.4fr_1.4fr_1fr_1.1fr_120px] gap-4 px-5 py-3 border-b border-white/[0.05] bg-white/[0.02]">
+              <Th>Empresa</Th>
               <Th>Cobertura</Th>
               <Th right>Propostas · Valor</Th>
               <Th>Validade</Th>
@@ -301,15 +325,13 @@ export default function OrcamentosPage() {
               const sameValor = range.min === range.max
               return (
                 <div key={o.id}>
-                  <div className="grid grid-cols-2 md:grid-cols-[2fr_1.4fr_1.4fr_1fr_1.1fr_80px] gap-4 px-5 py-4 border-b border-white/[0.04] last:border-b-0 hover:bg-white/[0.02] transition-colors items-center cursor-pointer"
+                  <div className="grid grid-cols-2 md:grid-cols-[2fr_1.4fr_1.4fr_1fr_1.1fr_120px] gap-4 px-5 py-4 border-b border-white/[0.04] last:border-b-0 hover:bg-white/[0.02] transition-colors items-center cursor-pointer"
                     onClick={() => setExpandedId(expandedId === o.id ? null : o.id)}>
-                    {/* Cliente */}
                     <div className="col-span-2 md:col-span-1 min-w-0">
                       <p className="text-[14px] text-white truncate">{o.cliente}</p>
-                      {o.resumo && <p className="text-[11px] text-white/35 truncate mt-0.5">{o.resumo}</p>}
+                      {o.contacto && <p className="text-[11px] text-white/40 truncate mt-0.5">{o.contacto}{o.email ? ` · ${o.email}` : ''}</p>}
                     </div>
 
-                    {/* Cobertura */}
                     <div>
                       {o.cobertura ? (
                         <span className={`inline-flex items-center gap-1.5 text-[10px] tracking-widest uppercase font-bold px-2.5 py-1 rounded-full border ${COBERTURA_META[o.cobertura].cls}`}>
@@ -318,7 +340,6 @@ export default function OrcamentosPage() {
                       ) : <span className="text-[11px] text-white/30">—</span>}
                     </div>
 
-                    {/* Propostas · Valor */}
                     <div className="md:text-right">
                       <p className="text-[14px] text-white/90 font-medium tabular-nums">
                         {sameValor ? fmtEur(range.max) : `${fmtEur(range.min)} – ${fmtEur(range.max)}`}
@@ -328,10 +349,8 @@ export default function OrcamentosPage() {
                       </p>
                     </div>
 
-                    {/* Validade */}
                     <div className="text-[12px] text-white/55">{fmtData(o.validade)}</div>
 
-                    {/* Estado */}
                     <div onClick={e => e.stopPropagation()}>
                       <select value={o.estado} onChange={e => changeEstado(o.id, e.target.value as Estado)}
                         className={`appearance-none w-full text-[10px] tracking-widest uppercase font-bold px-2.5 py-1.5 rounded-md border outline-none cursor-pointer transition-all [color-scheme:dark] ${ESTADO_CLS[o.estado]}`}>
@@ -339,8 +358,10 @@ export default function OrcamentosPage() {
                       </select>
                     </div>
 
-                    {/* Actions */}
                     <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
+                      <a href={`/media/orcamentos/${o.id}/pdf`} target="_blank" rel="noopener noreferrer"
+                        className="w-8 h-8 rounded-md border border-white/[0.08] hover:border-white/40 hover:bg-white/[0.04] text-white/55 hover:text-white transition-all flex items-center justify-center text-[12px]"
+                        title="Exportar PDF">⎙</a>
                       <button onClick={() => { setEditingId(o.id); setShowForm(true) }}
                         className="w-8 h-8 rounded-md border border-white/[0.08] hover:border-white/30 hover:bg-white/[0.04] text-white/55 hover:text-white transition-all flex items-center justify-center text-[12px]"
                         title="Editar">✎</button>
@@ -350,7 +371,6 @@ export default function OrcamentosPage() {
                     </div>
                   </div>
 
-                  {/* Expanded details */}
                   {expandedId === o.id && (
                     <div className="px-5 pb-5 pt-1 bg-black/30 border-b border-white/[0.04]">
                       {o.resumo && (
@@ -366,8 +386,18 @@ export default function OrcamentosPage() {
                               <p className="text-[9px] tracking-[0.4em] uppercase text-white/35">Proposta {i + 1}</p>
                               <p className="text-[14px] text-white font-medium tabular-nums">{fmtEur(p.valor)}</p>
                             </div>
-                            <p className="text-[13px] text-white/85 mb-1 font-medium">{p.titulo}</p>
-                            {p.descricao && <p className="text-[11px] text-white/45 leading-relaxed whitespace-pre-wrap">{p.descricao}</p>}
+                            <p className="text-[13px] text-white/85 mb-2 font-medium">{p.titulo}</p>
+                            {p.servicos.length > 0 && (
+                              <ul className="space-y-1 mb-2">
+                                {p.servicos.map(s => (
+                                  <li key={s.catalogId} className="text-[11px] text-white/55 flex items-start gap-1.5">
+                                    <span className="text-white/30 leading-tight">●</span>
+                                    <span>{s.nome}{s.duracao ? ` · ${s.duracao}` : ''}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                            {p.descricao && <p className="text-[11px] text-white/45 leading-relaxed whitespace-pre-wrap italic">{p.descricao}</p>}
                           </div>
                         ))}
                       </div>
@@ -425,9 +455,7 @@ function Th({ children, right }: { children?: React.ReactNode; right?: boolean }
 function EmptyState({ onCreate, hasAny }: { onCreate: () => void; hasAny: boolean }) {
   return (
     <div className="rounded-2xl border border-dashed border-white/[0.08] p-14 text-center bg-white/[0.01]">
-      <div className="inline-flex w-14 h-14 rounded-2xl border border-white/[0.08] items-center justify-center text-2xl text-white/30 mb-4">
-        ◊
-      </div>
+      <div className="inline-flex w-14 h-14 rounded-2xl border border-white/[0.08] items-center justify-center text-2xl text-white/30 mb-4">◊</div>
       <h3 className="text-2xl font-extralight tracking-tight text-white/85 mb-1.5"
         style={{ fontFamily: 'Cormorant Garamond, Georgia, serif' }}>
         {hasAny ? 'Nenhum orçamento corresponde aos filtros' : 'Ainda não há orçamentos'}
@@ -435,7 +463,7 @@ function EmptyState({ onCreate, hasAny }: { onCreate: () => void; hasAny: boolea
       <p className="text-[12px] text-white/40 mb-6 max-w-md mx-auto leading-relaxed">
         {hasAny
           ? 'Tenta ajustar a pesquisa, o estado ou a cobertura.'
-          : 'Cria o teu primeiro orçamento para começar a acompanhar propostas. Tudo fica guardado e organizado num só lugar.'}
+          : 'Cria o teu primeiro orçamento corporate. Tudo fica guardado e organizado num só lugar.'}
       </p>
       {!hasAny && (
         <button onClick={onCreate}
@@ -451,7 +479,7 @@ function EmptyState({ onCreate, hasAny }: { onCreate: () => void; hasAny: boolea
 /* ─── Form ────────────────────────────────────────────────────────────────── */
 
 function emptyProposta(): Proposta {
-  return { id: uid(), titulo: '', valor: 0, descricao: null }
+  return { id: uid(), titulo: '', valor: 0, descricao: null, servicos: [] }
 }
 
 function OrcamentoForm({
@@ -464,16 +492,17 @@ function OrcamentoForm({
   onSave: (o: Orcamento) => void
 }) {
   const [cliente, setCliente]     = useState(initial?.cliente ?? '')
+  const [contacto, setContacto]   = useState(initial?.contacto ?? '')
+  const [email, setEmail]         = useState(initial?.email ?? '')
   const [cobertura, setCobertura] = useState<Cobertura | null>(initial?.cobertura ?? null)
   const [resumo, setResumo]       = useState(initial?.resumo ?? '')
   const [validade, setValidade]   = useState(initial?.validade ?? '')
   const [estado, setEstado]       = useState<Estado>(initial?.estado ?? 'Pendente')
   const [notas, setNotas]         = useState(initial?.notas ?? '')
   const [propostas, setPropostas] = useState<Proposta[]>(
-    initial?.propostas && initial.propostas.length > 0
-      ? initial.propostas
-      : [emptyProposta()]
+    initial?.propostas && initial.propostas.length > 0 ? initial.propostas : [emptyProposta()]
   )
+  const [openCatalog, setOpenCatalog] = useState<string | null>(null) // proposta id
 
   function addProposta() {
     setPropostas(prev => prev.length >= 3 ? prev : [...prev, emptyProposta()])
@@ -484,16 +513,40 @@ function OrcamentoForm({
   function updateProposta(id: string, patch: Partial<Proposta>) {
     setPropostas(prev => prev.map(p => p.id === id ? { ...p, ...patch } : p))
   }
+  function toggleServico(propostaId: string, item: CatalogItem) {
+    setPropostas(prev => prev.map(p => {
+      if (p.id !== propostaId) return p
+      const exists = p.servicos.find(s => s.catalogId === item.id)
+      if (exists) {
+        return { ...p, servicos: p.servicos.filter(s => s.catalogId !== item.id) }
+      }
+      const novo: ServicoSelected = {
+        catalogId: item.id,
+        nome: item.nome,
+        desc: item.desc,
+        ...(item.hasDuration ? { duracao: item.durations?.[0] } : {}),
+      }
+      return { ...p, servicos: [...p.servicos, novo] }
+    }))
+  }
+  function updateServicoDuracao(propostaId: string, catalogId: string, duracao: string) {
+    setPropostas(prev => prev.map(p => p.id !== propostaId ? p : {
+      ...p,
+      servicos: p.servicos.map(s => s.catalogId === catalogId ? { ...s, duracao } : s),
+    }))
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!cliente.trim()) { alert('Indica o cliente.'); return }
+    if (!cliente.trim()) { alert('Indica o nome da empresa.'); return }
     if (!cobertura) { alert('Escolhe a cobertura (Fotografia, Vídeo ou ambos).'); return }
     if (propostas.some(p => !p.titulo.trim())) { alert('Cada proposta precisa de um título.'); return }
 
     const o: Orcamento = {
       id:        initial?.id ?? uid(),
       cliente:   cliente.trim(),
+      contacto:  contacto.trim() || null,
+      email:     email.trim() || null,
       cobertura,
       resumo:    resumo.trim() || null,
       propostas: propostas.map(p => ({
@@ -510,19 +563,27 @@ function OrcamentoForm({
     onSave(o)
   }
 
+  // Catálogo agrupado por categoria
+  const catalogByCat = useMemo(() => {
+    const acc: Record<string, CatalogItem[]> = {}
+    for (const it of CATALOG) {
+      (acc[it.categoria] ||= []).push(it)
+    }
+    return acc
+  }, [])
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
       <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
       <form onSubmit={handleSubmit}
         onClick={e => e.stopPropagation()}
-        className="relative z-10 w-full max-w-2xl rounded-2xl overflow-hidden border border-white/[0.1] shadow-2xl my-8"
+        className="relative z-10 w-full max-w-3xl rounded-2xl overflow-hidden border border-white/[0.1] shadow-2xl my-8"
         style={{ background: 'linear-gradient(180deg, #0c0d10, #050507)' }}>
         <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-white/35 to-transparent" />
 
-        {/* header */}
         <div className="px-7 pt-6 pb-3 border-b border-white/[0.05] flex items-start justify-between gap-4">
           <div>
-            <p className="text-[9px] tracking-[0.5em] uppercase text-white/35 mb-1">Orçamento</p>
+            <p className="text-[9px] tracking-[0.5em] uppercase text-white/35 mb-1">Orçamento · Empresas</p>
             <h2 className="text-2xl font-extralight tracking-tight text-white"
               style={{ fontFamily: 'Cormorant Garamond, Georgia, serif' }}>
               {initial ? 'Editar orçamento' : 'Novo orçamento'}
@@ -534,13 +595,23 @@ function OrcamentoForm({
           </button>
         </div>
 
-        <div className="px-7 py-5 space-y-5 max-h-[75vh] overflow-y-auto">
-          <Field label="Cliente">
-            <input value={cliente} onChange={e => setCliente(e.target.value)} placeholder="Nome dos noivos ou empresa"
+        <div className="px-7 py-5 space-y-5 max-h-[78vh] overflow-y-auto">
+          <Field label="Empresa">
+            <input value={cliente} onChange={e => setCliente(e.target.value)} placeholder="Nome da empresa"
               className={inputCls} autoFocus />
           </Field>
 
-          {/* Cobertura — 3 botões */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Field label="Pessoa de Contacto">
+              <input value={contacto} onChange={e => setContacto(e.target.value)} placeholder="Nome do responsável"
+                className={inputCls} />
+            </Field>
+            <Field label="E-mail">
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="contacto@empresa.pt"
+                className={inputCls} />
+            </Field>
+          </div>
+
           <Field label="Cobertura">
             <div className="grid grid-cols-3 gap-2">
               {COBERTURAS.map(c => {
@@ -563,7 +634,7 @@ function OrcamentoForm({
 
           <Field label="Resumo do Serviço">
             <textarea value={resumo} onChange={e => setResumo(e.target.value)} rows={2}
-              placeholder="Pequena descrição do que está incluído (ex: cobertura completa do dia, edição online, álbum 30x30)…"
+              placeholder="Resumo de alto nível do que está incluído (objetivo da campanha, contexto do evento)…"
               className={inputCls + ' resize-none'} />
           </Field>
 
@@ -596,7 +667,7 @@ function OrcamentoForm({
                   <div className="grid grid-cols-1 sm:grid-cols-[1.6fr_1fr] gap-3 mb-3">
                     <input value={p.titulo}
                       onChange={e => updateProposta(p.id, { titulo: e.target.value })}
-                      placeholder={i === 0 ? 'Ex: Pacote Essencial' : i === 1 ? 'Ex: Pacote Premium' : 'Ex: Pacote Luxe'}
+                      placeholder={i === 0 ? 'Ex: Pacote Standard' : i === 1 ? 'Ex: Pacote Premium' : 'Ex: Pacote Executive'}
                       className={inputCls} />
                     <input type="number" inputMode="decimal" min="0" step="0.01"
                       value={p.valor || ''}
@@ -604,11 +675,79 @@ function OrcamentoForm({
                       placeholder="Valor €"
                       className={inputCls + ' tabular-nums'} />
                   </div>
+
+                  {/* Serviços selecionados */}
+                  {p.servicos.length > 0 && (
+                    <div className="mb-3 rounded-lg border border-white/[0.05] bg-black/30 p-2.5">
+                      <p className="text-[9px] tracking-[0.4em] uppercase text-white/40 mb-2">Incluído ({p.servicos.length})</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {p.servicos.map(s => {
+                          const item = CATALOG.find(c => c.id === s.catalogId)
+                          return (
+                            <span key={s.catalogId} className={`inline-flex items-center gap-1.5 text-[10px] tracking-wider px-2 py-1 rounded-full border ${item ? CATEGORIA_CLS[item.categoria] : 'border-white/15 text-white/60 bg-white/[0.04]'}`}>
+                              <span>{s.nome}</span>
+                              {item?.hasDuration && item.durations && (
+                                <select value={s.duracao}
+                                  onChange={e => updateServicoDuracao(p.id, s.catalogId, e.target.value)}
+                                  className="bg-transparent border border-current/40 rounded px-1 text-[10px] cursor-pointer [color-scheme:dark]">
+                                  {item.durations.map(d => <option key={d} value={d} className="bg-zinc-900 text-white">{d}</option>)}
+                                </select>
+                              )}
+                              <button type="button" onClick={() => toggleServico(p.id, item ?? { id: s.catalogId, nome: s.nome, desc: s.desc, categoria: 'Equipa' } as any)}
+                                className="opacity-60 hover:opacity-100 ml-0.5">✕</button>
+                            </span>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Toggle Catálogo */}
+                  <button type="button" onClick={() => setOpenCatalog(openCatalog === p.id ? null : p.id)}
+                    className="w-full text-[10px] tracking-widest uppercase px-3 py-2 rounded-lg border border-white/[0.12] text-white/65 hover:text-white hover:border-white/35 transition-all flex items-center justify-center gap-2">
+                    {openCatalog === p.id ? '▴ Fechar Catálogo de Serviços' : '▾ Adicionar Serviços do Catálogo'}
+                  </button>
+
+                  {openCatalog === p.id && (
+                    <div className="mt-3 rounded-lg border border-white/[0.05] bg-black/30 p-3 space-y-3 max-h-[40vh] overflow-y-auto">
+                      {Object.entries(catalogByCat).map(([cat, items]) => (
+                        <div key={cat}>
+                          <p className="text-[9px] tracking-[0.4em] uppercase text-white/35 mb-1.5">{cat}</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                            {items.map(item => {
+                              const selected = !!p.servicos.find(s => s.catalogId === item.id)
+                              return (
+                                <button key={item.id} type="button"
+                                  onClick={() => toggleServico(p.id, item)}
+                                  title={item.desc}
+                                  className={`text-left p-2 rounded-lg border transition-all ${
+                                    selected
+                                      ? `${CATEGORIA_CLS[item.categoria]} ring-1 ring-current/50`
+                                      : 'border-white/[0.07] bg-white/[0.02] text-white/60 hover:text-white hover:border-white/25'
+                                  }`}>
+                                  <div className="flex items-start gap-2">
+                                    <span className={`mt-0.5 w-3.5 h-3.5 rounded border flex items-center justify-center text-[9px] shrink-0 ${selected ? 'bg-current/20 border-current' : 'border-white/20'}`}>
+                                      {selected ? '✓' : ''}
+                                    </span>
+                                    <div className="min-w-0">
+                                      <p className="text-[11px] font-bold tracking-wider uppercase leading-tight">{item.nome}</p>
+                                      <p className="text-[10px] opacity-65 leading-snug mt-0.5">{item.desc}</p>
+                                    </div>
+                                  </div>
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   <textarea value={p.descricao ?? ''}
                     onChange={e => updateProposta(p.id, { descricao: e.target.value })}
-                    placeholder="O que inclui esta proposta (ex: 8h de cobertura, 2 fotógrafos, álbum, etc.)"
+                    placeholder="Notas adicionais a esta proposta (opcional)…"
                     rows={2}
-                    className={inputCls + ' resize-none'} />
+                    className={inputCls + ' resize-none mt-3'} />
                 </div>
               ))}
             </div>
