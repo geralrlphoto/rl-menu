@@ -5499,9 +5499,9 @@ function DadosPessoaisTab(props: {
             </div>
           </div>
 
-          {/* Palavra-chave (admin) — reveal + copy rápido */}
+          {/* Palavra-chave / Senha (admin) — reveal + copy rápido */}
           <div className="pt-3 border-t border-white/[0.05] flex items-center gap-2 flex-wrap">
-            <span className="text-gold/70 text-[11px] tracking-[0.3em] uppercase">🔑 Palavra-chave</span>
+            <span className="text-gold/70 text-[11px] tracking-[0.3em] uppercase">🔑 Palavra-chave ou Senha</span>
             <PalavraChaveCell password={freelancer.password} />
           </div>
 
@@ -5521,7 +5521,7 @@ function DadosPessoaisTab(props: {
             <Row label="Nome de Usuário" value={editingSection === 'pref' ? <InpRight value={ext.username ?? ''} onChange={v => updateExt({ username: v })} /> : (ext.username ?? '—')} />
             <Row label="Email" value={editingThis && editForm ? <InpRight type="email" value={editForm.email ?? ''} onChange={v => setEditForm({ ...editForm, email: v })} /> : (freelancer.email || '—')} />
             <Row label="Telefone" value={editingThis && editForm ? <InpRight type="tel" value={editForm.contato ?? ''} onChange={v => setEditForm({ ...editForm, contato: v })} /> : (freelancer.contato || '—')} />
-            <Row label="Palavra-chave" value={<PalavraChaveCell password={freelancer.password} />} />
+            <Row label="Palavra-chave ou Senha" value={<PalavraChaveCell password={freelancer.password} />} />
             <Row label="Data de Nascimento" value={editingSection === 'pref' ? <InpRight type="date" value={ext.dataNascimento ?? ''} onChange={v => updateExt({ dataNascimento: v })} /> : (ext.dataNascimento ? new Date(ext.dataNascimento).toLocaleDateString('pt-PT') : '—')} />
             <Row label="Localização" value={editingSection === 'pref' ? <InpRight value={ext.localizacao ?? ''} onChange={v => updateExt({ localizacao: v })} /> : (ext.localizacao ?? '—')} />
             <Row label="Fuso Horário" value={ext.fusoHorario ?? '—'} />
