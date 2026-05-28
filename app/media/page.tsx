@@ -68,15 +68,12 @@ export default async function MediaDashboard() {
           </div>
         </div>
 
-        {/* Imagem hero (em /public/MEDIA HERO.png) — cobre o fallback */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/MEDIA%20HERO.png"
-          alt="RL PROD · Photography & Video"
-          className="absolute inset-0 w-full h-full object-cover z-[1]"
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).style.display = 'none'
-          }}
+        {/* Imagem hero — como background-image (compatível com server components,
+            falha silenciosamente se o ficheiro não existir e deixa o fallback visível). */}
+        <div
+          className="absolute inset-0 z-[1] bg-cover bg-center"
+          style={{ backgroundImage: 'url("/MEDIA%20HERO.png")' }}
+          aria-label="RL PROD · Photography & Video"
         />
 
         {/* Vinheta subtil (escurece ligeiramente bordas) */}
