@@ -21,6 +21,7 @@ const TIPO_LABELS: Record<string, string> = {
   fotos_convidados_email:   'Fotos Convidados · Email Enviado',
   fotos_convidados_ctt:     'Fotos Convidados · CTT Enviado',
   nova_tarefa_atribuida:    'Tarefa enviada entre membros',
+  album_aprovado:           'Álbum Aprovado pelos Noivos',
 }
 
 const TIPO_ICONS: Record<string, string> = {
@@ -36,6 +37,7 @@ const TIPO_ICONS: Record<string, string> = {
   fotos_convidados_email:   '@',
   fotos_convidados_ctt:     '✉',
   nova_tarefa_atribuida:    '✈',
+  album_aprovado:           '✓',
 }
 
 type Notif = {
@@ -287,6 +289,43 @@ export async function GET() {
       }
     } catch (err) {
       console.warn('[admin-notifications] fotos_selecao read failed:', err)
+    }
+
+    // ── Notificações de ÁLBUNS APROVADOS pelos noivos ──
+    //    Cada vez que os noivos clicam 'Aprovar' o álbum, a tabela
+    //    albuns_casamento ganha status='APROVADO' e data_aprovacao=<hoje>.
+    //    Mostramos no sino para o admin saber.
+    try {
+      const { data: albunsAprov } = await supabase
+        .from('albuns_casamento')
+        .select('id, nome, ref_evento, status, data_aprovacao, data_prevista_entrega, num_fotografias, updated_at, created_at')
+        .eq('status', 'APROVADO')
+        .order('data_aprovacao', { ascending: false, nullsFirst: false })
+        .limit(50)
+      for (const a of (albunsAprov ?? []) as any[]) {
+        const sent = a.data_aprovacao || a.updated_at || a.created_at
+        if (!sent) continue
+        const sentIso = typeof sent === 'string' && sent.length === 10 ? `${sent}T12:00:00.000Z` : sent
+        notifications.push({
+          id: `album_aprovado::${a.id}`,
+          tipo: 'album_aprovado',
+          tipo_label: TIPO_LABELS.album_aprovado,
+          tipo_icon: TIPO_ICONS.album_aprovado,
+          casamento_id: '',
+          freelancer_id: '',
+          freelancer_nome: a.nome ?? '—',
+          local: a.ref_evento ?? '—',
+          data_casamento: null,
+          referencia: a.ref_evento ?? null,
+          url: a.ref_evento ? `/eventos-2026?ref=${encodeURIComponent(a.ref_evento)}` : '/eventos-2026',
+          sent_at: sentIso,
+          mensagem: a.data_prevista_entrega
+            ? `Os noivos aprovaram a maquete. Entrega prevista: ${new Date(a.data_prevista_entrega).toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })}.`
+            : 'Os noivos aprovaram a maquete do álbum.',
+        })
+      }
+    } catch (err) {
+      console.warn('[admin-notifications] albuns_casamento aprovado read failed:', err)
     }
 
     // ── Notificações de FOTOS CONVIDADOS (portais.settings) ──
