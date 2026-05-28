@@ -3,12 +3,51 @@
 import Link from 'next/link'
 import { useState, useRef, useCallback, useEffect } from 'react'
 
+// Botão inline para marcar um álbum aprovado como ENTREGUE
+function DeliverAlbumButton({ albumId, fallbackTag }: { albumId: string; fallbackTag: string | null }) {
+  const [state, setState] = useState<'idle' | 'saving' | 'done' | 'error'>('idle')
+  async function deliver(e: React.MouseEvent) {
+    e.preventDefault(); e.stopPropagation()
+    if (state === 'saving' || state === 'done') return
+    if (!confirm('Marcar este álbum como ENTREGUE?\n\nEle desaparecerá desta secção e o estado fica registado em /albuns-casamento.')) return
+    setState('saving')
+    try {
+      const res = await fetch('/api/albuns-casamento', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: albumId, status: 'ENTREGUE' }),
+      })
+      if (!res.ok) throw new Error(await res.text())
+      setState('done')
+      // Recarrega a página após 800ms para refrescar a lista
+      setTimeout(() => { window.location.reload() }, 800)
+    } catch {
+      setState('error')
+    }
+  }
+  if (state === 'done') {
+    return <span className="text-[10px] font-bold tracking-wider shrink-0 mt-0.5 text-emerald-400">✓ Entregue</span>
+  }
+  if (state === 'error') {
+    return <span className="text-[10px] font-bold tracking-wider shrink-0 mt-0.5 text-red-400">Erro · tentar</span>
+  }
+  return (
+    <button
+      onClick={deliver}
+      disabled={state === 'saving'}
+      title="Marcar como ENTREGUE"
+      className="text-[9px] tracking-[0.2em] uppercase font-bold shrink-0 mt-0.5 px-2 py-1 rounded-md border border-emerald-500/35 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 hover:border-emerald-400/55 disabled:opacity-50 transition-all">
+      {state === 'saving' ? '…' : '✓ Entregue'}
+    </button>
+  )
+}
+
 export type DashCol = {
   key: string
   title: string[]
   subtitle: string
   empty: string
-  items: { main: string; sub: string; tag: string | null; tagColor: string }[]
+  items: { main: string; sub: string; tag: string | null; tagColor: string; albumId?: string; canDeliver?: boolean }[]
   href: string
 }
 
@@ -124,7 +163,9 @@ export function DashboardCarousel({ cols }: { cols: DashCol[] }) {
                           <p className="text-[10px] text-white/25 tracking-wider truncate mt-0.5">{item.sub}</p>
                         )}
                       </div>
-                      {item.tag && (
+                      {item.canDeliver && item.albumId ? (
+                        <DeliverAlbumButton albumId={item.albumId} fallbackTag={item.tag} />
+                      ) : item.tag && (
                         <span className={`text-[10px] font-semibold tracking-wider shrink-0 mt-0.5 ${item.tagColor}`}>
                           {item.tag}
                         </span>

@@ -96,6 +96,7 @@ export default async function PhotoDashboard() {
     fotosRes,
     portalRes,
     { data: refPortais },
+    { data: albunsAprovadosSb },
   ] = await Promise.all([
     supabase.from('crm_contacts').select('nome, tipo_evento, como_chegou, data_entrada, status')
       .gte('data_entrada', ago10Str)
@@ -156,6 +157,14 @@ export default async function PhotoDashboard() {
     }).then(r => r.json()).catch(() => ({ results: [] })),
 
     supabase.from('portais').select('referencia, settings, noiva, noivo'),
+
+    // Álbuns APROVADOS pelos noivos — ficam aqui até admin marcar como ENTREGUE
+    supabase
+      .from('albuns_casamento')
+      .select('id, nome, ref_evento, data_aprovacao')
+      .eq('status', 'APROVADO')
+      .order('data_aprovacao', { ascending: false, nullsFirst: false })
+      .limit(20),
   ])
 
   // ── Parsear Notion ────────────────────────────────────────────────────────
@@ -167,13 +176,13 @@ export default async function PhotoDashboard() {
     return { nome, data, dias }
   })
 
-  const albumsAprovacao = (aprovacaoRes.results ?? []).map((p: any) => {
-    const props = p.properties ?? {}
-    return {
-      nome: props['Nome']?.title?.[0]?.plain_text ?? '—',
-      ref:  props['REF. EVENTO']?.rich_text?.[0]?.plain_text ?? '',
-    }
-  })
+  // Antes: lia 'PARA APROVAÇÃO' do Notion (notif para o admin actuar).
+  // Agora: lê APROVADO do Supabase. Ficam aqui até o admin clicar 'Entregue'.
+  const albumsAprovacao = (albunsAprovadosSb ?? []).map((a: any) => ({
+    id: a.id as string,
+    nome: a.nome ?? '—',
+    ref:  a.ref_evento ?? '',
+  }))
 
   function parseVideoFormula(formula: string | null): number {
     if (!formula) return 999
@@ -336,8 +345,10 @@ export default async function PhotoDashboard() {
         ...albumsAprovacao.map(a => ({
           main: a.nome,
           sub: a.ref,
-          tag: '✓ Aprov.',
-          tagColor: 'text-[#C9A84C]/60',
+          tag: '✓ Entregue',
+          tagColor: 'text-emerald-300',
+          albumId: a.id,
+          canDeliver: true,
         })),
       ],
       href: '/albuns-casamento',
