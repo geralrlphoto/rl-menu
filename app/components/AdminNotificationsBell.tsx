@@ -492,11 +492,24 @@ export function AdminNotificationsBell() {
                   <p className="text-[13px] text-white/90 font-medium truncate">{previewNotif.freelancer_nome}</p>
                 </div>
                 {previewNotif.data_casamento && (
-                  <div className="p-3 rounded-xl border border-white/[0.07] bg-white/[0.025]">
-                    <p className="text-[9px] tracking-[0.35em] text-white/45 uppercase mb-1">Data do Evento</p>
-                    <p className="text-[13px] text-white/90 font-medium tabular-nums">
+                  <div className={`p-3 rounded-xl border ${
+                    previewNotif.tipo === 'album_aprovado'
+                      ? 'border-emerald-500/30 bg-emerald-500/[0.05]'
+                      : 'border-white/[0.07] bg-white/[0.025]'
+                  }`}>
+                    <p className={`text-[9px] tracking-[0.35em] uppercase mb-1 ${
+                      previewNotif.tipo === 'album_aprovado' ? 'text-emerald-300/75' : 'text-white/45'
+                    }`}>
+                      {previewNotif.tipo === 'album_aprovado' ? 'Entrega Prevista' : 'Data do Evento'}
+                    </p>
+                    <p className={`text-[13px] font-medium tabular-nums ${
+                      previewNotif.tipo === 'album_aprovado' ? 'text-emerald-200' : 'text-white/90'
+                    }`}>
                       {new Date(previewNotif.data_casamento).toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })}
                     </p>
+                    {previewNotif.tipo === 'album_aprovado' && (
+                      <p className="text-[10px] text-emerald-300/55 italic mt-1">30 dias após aprovação</p>
+                    )}
                   </div>
                 )}
                 <div className="p-3 rounded-xl border border-white/[0.07] bg-white/[0.025]">

@@ -78,12 +78,12 @@ export async function PATCH(req: NextRequest) {
   if (data_aprovacao !== undefined) updates.data_aprovacao = data_aprovacao
   if (data_prevista_entrega !== undefined) updates.data_prevista_entrega = data_prevista_entrega
 
-  // Auto-set dates when approving
+  // Auto-set dates when approving (entrega = aprovação + 30 dias)
   if (status === 'APROVADO' && !data_aprovacao) {
     const today = new Date().toISOString().split('T')[0]
     updates.data_aprovacao = today
     const d = new Date(today)
-    d.setDate(d.getDate() + 35)
+    d.setDate(d.getDate() + 30)
     updates.data_prevista_entrega = d.toISOString().split('T')[0]
   }
 
@@ -132,9 +132,20 @@ export async function PATCH(req: NextRequest) {
           .from('freelancers')
           .select('id, nome')
           .in('nome', editores)
+        const dataEntregaIso = updates.data_prevista_entrega ?? data?.data_prevista_entrega ?? null
+        const dataEntregaPt = dataEntregaIso
+          ? new Date(dataEntregaIso + 'T12:00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })
+          : null
         const titulo = `✓ Álbum aprovado · ${nomeNoivos}`
-        const meta = JSON.stringify({ referencia: ref, nomeNoivos, data_aprovacao: updates.data_aprovacao ?? new Date().toISOString() })
-        const corpo = `Os noivos ${nomeNoivos} aprovaram a maquete do álbum (${ref}). Podes avançar com a produção.`
+        const meta = JSON.stringify({
+          referencia: ref,
+          nomeNoivos,
+          data_aprovacao: updates.data_aprovacao ?? new Date().toISOString(),
+          data_prevista_entrega: dataEntregaIso,
+        })
+        const corpo = dataEntregaPt
+          ? `Os noivos ${nomeNoivos} aprovaram a maquete do álbum (${ref}). Entrega prevista: ${dataEntregaPt} (30 dias após aprovação).`
+          : `Os noivos ${nomeNoivos} aprovaram a maquete do álbum (${ref}). Podes avançar com a produção.`
         const mensagem = `__META__${meta}__/META__\n${corpo}`
         for (const fl of (fls ?? []) as any[]) {
           // Idempotência: não duplica se já existir notif não lida com a mesma referência

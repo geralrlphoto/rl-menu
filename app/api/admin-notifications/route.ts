@@ -209,24 +209,26 @@ export async function GET() {
       for (const n of (respostas ?? []) as any[]) {
         const isConf = n.tipo === 'atribuicao_confirmada'
         const isAlbum = n.tipo === 'album_aprovado'
-        // Tenta extrair referência E nome dos noivos do META
+        // Tenta extrair referência, nome dos noivos E data de entrega do META
         let referencia: string | null = null
         let metaNomeNoivos: string | null = null
+        let metaDataEntrega: string | null = null
         try {
           const m = (n.mensagem ?? '').match(/__META__(.+?)__\/META__/)
           if (m) {
             const parsed = JSON.parse(m[1])
             referencia = (parsed?.referencia ?? null) as string | null
             metaNomeNoivos = (parsed?.nomeNoivos ?? null) as string | null
+            metaDataEntrega = (parsed?.data_prevista_entrega ?? null) as string | null
           }
         } catch { /* keep null */ }
         // Para notifs de álbum: mostra o nome dos NOIVOS como freelancer_nome
-        // (para o admin saber logo de que casal se trata). Quando não temos
-        // os noivos, fallback para o nome do membro destinatário.
         const memberName = respNomes.get(n.freelancer_id) ?? '—'
         const displayName = isAlbum
           ? (metaNomeNoivos ?? memberName)
           : memberName
+        // Mensagem detalhada para o modal Ver Mais (mantém META oculto)
+        const cleanMensagem = (n.mensagem ?? '').replace(/^__META__.+?__\/META__\n?/s, '').trim()
         notifications.push({
           id: `${n.tipo}::${n.id}`,
           tipo: n.tipo,
@@ -238,8 +240,9 @@ export async function GET() {
           freelancer_id: n.freelancer_id,
           freelancer_nome: displayName,
           local: (n.titulo ?? '').slice(0, 80),
-          data_casamento: null,
+          data_casamento: isAlbum ? metaDataEntrega : null,
           referencia,
+          mensagem: cleanMensagem || undefined,
           url: isAlbum && referencia
             ? `/eventos-2026?ref=${encodeURIComponent(referencia)}`
             : `/freelancers/${n.freelancer_id}?tab=notificacoes`,
