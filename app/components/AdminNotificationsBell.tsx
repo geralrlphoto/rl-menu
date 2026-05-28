@@ -74,6 +74,11 @@ export function AdminNotificationsBell() {
   // Pesquisa + filtro de referência (só usado em modo histórico)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterRef, setFilterRef] = useState<string>('')
+  // Reencaminhar — apenas para notifs de álbum
+  const [forwardingNotif, setForwardingNotif] = useState<Notif | null>(null)
+  const [freelancers, setFreelancers] = useState<Array<{ id: string; nome: string; status?: string | null }>>([])
+  const [forwardingTo, setForwardingTo] = useState<string>('')
+  const [forwardState, setForwardState] = useState<'idle' | 'saving' | 'done' | 'error'>('idle')
   const buttonRef = useRef<HTMLButtonElement | null>(null)
   const popRef = useRef<HTMLDivElement | null>(null)
 
@@ -115,6 +120,49 @@ export function AdminNotificationsBell() {
     const iv = setInterval(fetchNotifs, 60_000)
     return () => { cancelled = true; clearInterval(iv) }
   }, [])
+
+  // Lista de freelancers (para o seletor de reencaminhar) — só carrega quando o modal abre
+  useEffect(() => {
+    if (!forwardingNotif || freelancers.length > 0) return
+    fetch('/api/freelancers').then(r => r.json()).then(d => {
+      setFreelancers((d.freelancers ?? []).map((f: any) => ({ id: f.id, nome: f.nome, status: f.status })))
+    }).catch(() => {})
+  }, [forwardingNotif, freelancers.length])
+
+  async function submitForward() {
+    if (!forwardingNotif || !forwardingTo) return
+    setForwardState('saving')
+    try {
+      const referencia = forwardingNotif.referencia ?? ''
+      const titulo = `↗ Reencaminhado · ${forwardingNotif.tipo_label}`
+      const meta = JSON.stringify({
+        referencia,
+        forwardedFrom: 'Admin',
+        originalLabel: forwardingNotif.tipo_label,
+      })
+      const corpo = forwardingNotif.mensagem
+        ? forwardingNotif.mensagem
+        : `Reencaminhado pelo admin: ${forwardingNotif.tipo_label}${referencia ? ` (${referencia})` : ''}.`
+      const mensagem = `__META__${meta}__/META__\n${corpo}`
+      const res = await fetch('/api/freelancer-notificacoes', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          freelancer_id: forwardingTo,
+          titulo,
+          mensagem,
+          tipo: 'album_aprovado_reencaminhado',
+          lida: false,
+        }),
+      })
+      if (!res.ok) throw new Error('failed')
+      setForwardState('done')
+      setTimeout(() => {
+        setForwardingNotif(null); setForwardingTo(''); setForwardState('idle')
+      }, 1400)
+    } catch {
+      setForwardState('error')
+    }
+  }
 
   // Calcula posição do popover relativa ao botão
   useEffect(() => {
@@ -541,16 +589,110 @@ export function AdminNotificationsBell() {
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-3 border-t border-white/[0.05] bg-black/30 flex items-center justify-between gap-3">
+            <div className="px-6 py-3 border-t border-white/[0.05] bg-black/30 flex items-center justify-between gap-3 flex-wrap">
               <a href={`/freelancers/${previewNotif.freelancer_id}`}
                 className="text-[10px] tracking-[0.25em] uppercase font-bold text-gold/85 hover:text-gold transition-colors">
                 Ir à ficha do membro →
               </a>
-              <button onClick={() => setPreviewNotif(null)}
-                className="px-4 py-1.5 rounded-lg text-[10px] tracking-widest uppercase font-bold text-white/55 hover:text-white border border-white/15 hover:border-white/30 transition-all">
-                Fechar
-              </button>
+              <div className="flex items-center gap-2">
+                {/* Botão Reencaminhar — só para notifs de álbum */}
+                {(previewNotif.tipo === 'album_aprovado' || previewNotif.tipo === 'album' || previewNotif.tipo === 'status_album') && (
+                  <button onClick={() => { setForwardingNotif(previewNotif); setPreviewNotif(null) }}
+                    className="px-4 py-1.5 rounded-lg text-[10px] tracking-widest uppercase font-bold border border-blue-500/40 bg-blue-500/10 text-blue-200 hover:bg-blue-500/20 hover:border-blue-400/60 transition-all flex items-center gap-1.5">
+                    ↗ Reencaminhar
+                  </button>
+                )}
+                <button onClick={() => setPreviewNotif(null)}
+                  className="px-4 py-1.5 rounded-lg text-[10px] tracking-widest uppercase font-bold text-white/55 hover:text-white border border-white/15 hover:border-white/30 transition-all">
+                  Fechar
+                </button>
+              </div>
             </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ── Modal Reencaminhar Álbum ─────────────────────────── */}
+      {forwardingNotif && mounted && createPortal(
+        <div className="fixed inset-0 z-[210] flex items-center justify-center p-4"
+          onClick={() => { if (forwardState !== 'saving') setForwardingNotif(null) }}>
+          <div className="absolute inset-0 bg-black/90 backdrop-blur-md" />
+          <div className="relative z-10 w-full max-w-md rounded-3xl overflow-hidden border border-blue-500/35"
+            style={{ background: 'linear-gradient(180deg, #0a0a14, #050510)', boxShadow: '0 30px 70px -10px rgba(0,0,0,0.85), 0 0 32px -8px rgba(59,130,246,0.4)' }}
+            onClick={e => e.stopPropagation()}>
+            <div className="h-0.5 w-full bg-blue-500/60" />
+            <div className="px-6 pt-5 pb-4 border-b border-white/[0.05]">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3 min-w-0">
+                  <span className="w-10 h-10 rounded-xl border border-blue-500/40 bg-blue-500/15 flex items-center justify-center text-blue-300 text-base shrink-0"
+                    style={{ boxShadow: '0 0 18px -6px rgba(59,130,246,0.55)' }}>↗</span>
+                  <div className="min-w-0">
+                    <p className="text-[10px] tracking-[0.4em] text-blue-300/75 uppercase mb-1">Reencaminhar Notificação</p>
+                    <h3 className="text-lg text-white font-light tracking-tight truncate" style={{ fontFamily: 'Georgia, serif' }}>
+                      {forwardingNotif.tipo_label}
+                    </h3>
+                    {forwardingNotif.referencia && (
+                      <span className="inline-block mt-1.5 text-[9px] tracking-[0.2em] uppercase px-1.5 py-0.5 rounded font-bold bg-gold/10 text-gold/85 border border-gold/30 font-mono">
+                        {forwardingNotif.referencia}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <button onClick={() => { if (forwardState !== 'saving') setForwardingNotif(null) }}
+                  className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/35 hover:text-white hover:border-white/30 transition-all shrink-0">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="px-6 py-5 space-y-3">
+              {forwardState === 'done' ? (
+                <div className="py-8 text-center">
+                  <div className="w-14 h-14 rounded-full bg-emerald-500/20 border border-emerald-500/45 flex items-center justify-center text-emerald-300 text-2xl mx-auto mb-3"
+                    style={{ boxShadow: '0 0 24px -4px rgba(52,211,153,0.5)' }}>✓</div>
+                  <p className="text-[14px] text-white font-medium">Reencaminhado com sucesso</p>
+                  <p className="text-[12px] text-white/55 mt-1">O membro foi notificado.</p>
+                </div>
+              ) : (
+                <>
+                  <label className="block text-[10px] tracking-[0.3em] uppercase text-white/45">Selecionar Membro</label>
+                  <select value={forwardingTo} onChange={e => setForwardingTo(e.target.value)}
+                    className="w-full bg-black/40 border border-white/12 rounded-lg px-3 py-2.5 text-[13px] text-white outline-none focus:border-blue-400/55 [color-scheme:dark] transition-colors">
+                    <option value="" className="bg-neutral-900">— Escolhe um membro —</option>
+                    {freelancers.map(f => (
+                      <option key={f.id} value={f.id} className="bg-neutral-900">
+                        {f.nome}{f.status ? ` · ${f.status}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-blue-200/55 italic">
+                    O membro selecionado vai receber a notificação na sua lista de Notificações com o aviso reencaminhado.
+                  </p>
+                  {forwardState === 'error' && (
+                    <p className="text-[11px] text-rose-300 bg-rose-500/10 border border-rose-500/30 rounded-md px-3 py-2">⚠ Erro ao reencaminhar. Tenta novamente.</p>
+                  )}
+                </>
+              )}
+            </div>
+
+            {forwardState !== 'done' && (
+              <div className="px-6 py-3 border-t border-white/[0.05] bg-black/30 flex items-center justify-end gap-2">
+                <button onClick={() => setForwardingNotif(null)} disabled={forwardState === 'saving'}
+                  className="px-4 py-1.5 rounded-lg text-[10px] tracking-widest uppercase font-bold text-white/55 hover:text-white border border-white/15 hover:border-white/30 transition-all disabled:opacity-50">
+                  Cancelar
+                </button>
+                <button onClick={submitForward} disabled={!forwardingTo || forwardState === 'saving'}
+                  className={`px-5 py-1.5 rounded-lg text-[10px] tracking-widest uppercase font-bold transition-all ${
+                    forwardingTo && forwardState !== 'saving'
+                      ? 'bg-blue-500 text-white hover:bg-blue-400'
+                      : 'bg-white/[0.04] text-white/30 cursor-not-allowed border border-white/10'
+                  }`}
+                  style={forwardingTo && forwardState !== 'saving' ? { boxShadow: '0 0 14px -4px rgba(59,130,246,0.6)' } : undefined}>
+                  {forwardState === 'saving' ? 'A enviar…' : '↗ Reencaminhar'}
+                </button>
+              </div>
+            )}
           </div>
         </div>,
         document.body
