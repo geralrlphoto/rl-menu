@@ -209,12 +209,24 @@ export async function GET() {
       for (const n of (respostas ?? []) as any[]) {
         const isConf = n.tipo === 'atribuicao_confirmada'
         const isAlbum = n.tipo === 'album_aprovado'
-        // Tenta extrair a referência do META para mostrar no chip dourado
+        // Tenta extrair referência E nome dos noivos do META
         let referencia: string | null = null
+        let metaNomeNoivos: string | null = null
         try {
           const m = (n.mensagem ?? '').match(/__META__(.+?)__\/META__/)
-          if (m) referencia = (JSON.parse(m[1])?.referencia ?? null) as string | null
+          if (m) {
+            const parsed = JSON.parse(m[1])
+            referencia = (parsed?.referencia ?? null) as string | null
+            metaNomeNoivos = (parsed?.nomeNoivos ?? null) as string | null
+          }
         } catch { /* keep null */ }
+        // Para notifs de álbum: mostra o nome dos NOIVOS como freelancer_nome
+        // (para o admin saber logo de que casal se trata). Quando não temos
+        // os noivos, fallback para o nome do membro destinatário.
+        const memberName = respNomes.get(n.freelancer_id) ?? '—'
+        const displayName = isAlbum
+          ? (metaNomeNoivos ?? memberName)
+          : memberName
         notifications.push({
           id: `${n.tipo}::${n.id}`,
           tipo: n.tipo,
@@ -224,7 +236,7 @@ export async function GET() {
           tipo_icon: isAlbum ? '✓' : (isConf ? '✓' : '✕'),
           casamento_id: '',
           freelancer_id: n.freelancer_id,
-          freelancer_nome: respNomes.get(n.freelancer_id) ?? '—',
+          freelancer_nome: displayName,
           local: (n.titulo ?? '').slice(0, 80),
           data_casamento: null,
           referencia,
