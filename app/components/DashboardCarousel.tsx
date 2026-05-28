@@ -3,6 +3,51 @@
 import Link from 'next/link'
 import { useState, useRef, useCallback, useEffect } from 'react'
 
+// Botão inline para fechar um prazo de fotos (marcar Sel.Fotos ou
+// Fotos Edição como 'Entregue' no Notion → desaparece da lista)
+function ClosePrazoButton({ eventoId, field, fallbackTag, fallbackColor }: {
+  eventoId: string
+  field: 'sel_fotos_estado' | 'fotos_edicao_estado'
+  fallbackTag: string | null
+  fallbackColor: string
+}) {
+  const [state, setState] = useState<'idle' | 'saving' | 'done' | 'error'>('idle')
+  async function close(e: React.MouseEvent) {
+    e.preventDefault(); e.stopPropagation()
+    if (state === 'saving' || state === 'done') return
+    const label = field === 'sel_fotos_estado' ? 'Seleção de Fotos' : 'Fotos Edição'
+    if (!confirm(`Fechar este prazo?\n\nMarca ${label} como ENTREGUE no Notion e o item desaparece desta lista.`)) return
+    setState('saving')
+    try {
+      const res = await fetch(`/api/eventos-notion/${eventoId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: 'Entregue' }),
+      })
+      if (!res.ok) throw new Error(await res.text())
+      setState('done')
+      setTimeout(() => { window.location.reload() }, 800)
+    } catch {
+      setState('error')
+    }
+  }
+  if (state === 'done') return <span className="text-[10px] font-bold tracking-wider shrink-0 mt-0.5 text-emerald-400">✓ Fechado</span>
+  if (state === 'error') return <span className="text-[10px] font-bold tracking-wider shrink-0 mt-0.5 text-red-400">Erro</span>
+  return (
+    <div className="flex items-center gap-1.5 shrink-0">
+      {fallbackTag && (
+        <span className={`text-[10px] font-semibold tracking-wider mt-0.5 ${fallbackColor}`}>{fallbackTag}</span>
+      )}
+      <button onClick={close} disabled={state === 'saving'}
+        title="Fechar prazo (marcar como Entregue)"
+        className="w-5 h-5 flex items-center justify-center rounded text-white/30 hover:text-emerald-300 hover:bg-emerald-500/15 border border-white/10 hover:border-emerald-500/40 transition-all disabled:opacity-50"
+        style={{ fontSize: '11px' }}>
+        {state === 'saving' ? '…' : '✕'}
+      </button>
+    </div>
+  )
+}
+
 // Botão inline para marcar um álbum aprovado como ENTREGUE
 function DeliverAlbumButton({ albumId, fallbackTag }: { albumId: string; fallbackTag: string | null }) {
   const [state, setState] = useState<'idle' | 'saving' | 'done' | 'error'>('idle')
@@ -47,7 +92,17 @@ export type DashCol = {
   title: string[]
   subtitle: string
   empty: string
-  items: { main: string; sub: string; tag: string | null; tagColor: string; albumId?: string; canDeliver?: boolean }[]
+  items: {
+    main: string
+    sub: string
+    tag: string | null
+    tagColor: string
+    albumId?: string
+    canDeliver?: boolean
+    prazoEventoId?: string
+    prazoField?: 'sel_fotos_estado' | 'fotos_edicao_estado'
+    canClose?: boolean
+  }[]
   href: string
 }
 
@@ -167,6 +222,8 @@ export function DashboardCarousel({ cols }: { cols: DashCol[] }) {
                       </div>
                       {item.canDeliver && item.albumId ? (
                         <DeliverAlbumButton albumId={item.albumId} fallbackTag={item.tag} />
+                      ) : item.canClose && item.prazoEventoId && item.prazoField ? (
+                        <ClosePrazoButton eventoId={item.prazoEventoId} field={item.prazoField} fallbackTag={item.tag} fallbackColor={item.tagColor} />
                       ) : item.tag && (
                         <span className={`text-[10px] font-semibold tracking-wider shrink-0 mt-0.5 ${item.tagColor}`}>
                           {item.tag}

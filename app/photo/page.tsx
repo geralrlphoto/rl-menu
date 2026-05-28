@@ -199,6 +199,7 @@ export default async function PhotoDashboard() {
     const props = p.properties ?? {}
     const nome = props['CLIENTE']?.rich_text?.[0]?.plain_text ?? '—'
     const ref  = props['REFERÊNCIA DO EVENTO']?.title?.[0]?.plain_text ?? ''
+    const eventoId = p.id ?? null
     const dataEvento   = props['DATA DO EVENTO']?.date?.start ?? null
     const dataEntrega  = props['DATA ENTREGA FOTOS']?.date?.start ?? null
     const selEstado    = props['ESTADO SEL. FOTOS']?.select?.name ?? null
@@ -216,7 +217,7 @@ export default async function PhotoDashboard() {
       const d = daysUntil(dataEntrega)
       if (d <= 15 && d < diasRestantes) { diasRestantes = d; tipo = 'fotos'; label = 'Fotos Edição' }
     }
-    return { nome, ref, diasRestantes, label, tipo }
+    return { nome, ref, diasRestantes, label, tipo, eventoId }
   }).filter(f => f.diasRestantes <= 15)
    // Ordena: atrasados (mais antigos primeiro) → críticos próximos → resto
    .sort((a, b) => a.diasRestantes - b.diasRestantes)
@@ -345,6 +346,9 @@ export default async function PhotoDashboard() {
         sub: `${f.label} · ${f.ref}`,
         tag: f.diasRestantes < 0 ? `${Math.abs(f.diasRestantes)}d atraso` : f.diasRestantes === 0 ? 'Hoje' : `${f.diasRestantes}d`,
         tagColor: f.diasRestantes < 0 ? 'text-red-500' : f.diasRestantes <= 3 ? 'text-red-400' : f.diasRestantes <= 7 ? 'text-amber-400' : 'text-emerald-400/80',
+        prazoEventoId: f.eventoId,
+        prazoField: f.tipo === 'sel' ? 'sel_fotos_estado' as const : f.tipo === 'fotos' ? 'fotos_edicao_estado' as const : undefined,
+        canClose: !!f.eventoId && (f.tipo === 'sel' || f.tipo === 'fotos'),
       })),
       href: '/casamentos',
     },
