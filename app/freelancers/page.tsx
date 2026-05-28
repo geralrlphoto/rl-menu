@@ -369,7 +369,7 @@ export default function FreelancersPage() {
           </Link>
 
           {/* Card: Maquete Fotógrafo (independente do Editor de Vídeo) */}
-          <Link href="/painel-fotografo"
+          <Link href="/freelancers/8694241a-7530-4dfd-8619-a8bf15b9e15e?view=freelancer"
             className="group relative overflow-hidden rounded-2xl border border-gold/30 p-5 transition-all hover:border-gold/55"
             style={{
               background: 'linear-gradient(135deg, rgba(20,15,8,0.6), rgba(11,11,11,0.85))',
