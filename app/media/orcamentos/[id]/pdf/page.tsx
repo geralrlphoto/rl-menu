@@ -4,15 +4,16 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 
 /* ─────────────────────────────────────────────────────────────────────────── *
- *  RL PROD · Proposta de Orçamento (PDF · multi página)
+ *  RL PROD · Proposta de Orçamento · Edição Editorial
  *
- *  Estrutura:
- *    Pág 1 · Capa editorial (cliente em destaque, resumo, dados do evento)
- *    Pág 2 · Propostas (uma a uma com investimento e serviços)
- *    Pág 3 · O Nosso Processo + Condições + Contacto
+ *  Linguagem visual: arquitectónica / magazine
+ *    · Coluna vertical de acento navy à esquerda (8mm) em todas as páginas
+ *    · Tipografia massiva em momentos chave (cliente, números, títulos)
+ *    · Hierarquia por escala e peso, sem caixas
+ *    · Régua horizontal a separar blocos
  *
- *  Paleta extraída do logotipo oficial RL PROD:
- *    Papel creme + azul marinho profundo (sem dourados).
+ *  Cores extraídas da identidade oficial RL PROD:
+ *    Papel creme texturado + azul-marinho profundo do logo.
  * ─────────────────────────────────────────────────────────────────────────── */
 
 const LS_KEY = 'rl_orcamentos_v1'
@@ -28,19 +29,20 @@ type Orcamento = {
   validade: string | null; estado: Estado; notas: string | null; criado_em: string
 }
 
-/* Paleta oficial */
-const PAPER       = '#e9e5dc'
-const PAPER_SOFT  = '#f1ede4'
-const NAVY        = '#284E70'
-const NAVY_DEEP   = '#1d3a55'
-const NAVY_SOFT   = '#3a6791'
-const INK         = '#1a1816'
-const SUB         = '#4f4a42'
-const MUTE        = '#7e786e'
-const LINE        = 'rgba(40, 78, 112, 0.20)'
-const LINE_SOFT   = 'rgba(40, 78, 112, 0.10)'
+/* ─── Paleta — RL PROD oficial ─── */
+const PAPER       = '#e3ded2'   // creme texturado mais frio
+const PAPER_SOFT  = '#ece8dc'   // ligeira variação para superfícies
+const PAPER_DEEP  = '#d3ccbd'   // tons mais profundos
+const NAVY        = '#2A4D6E'   // azul marinho exacto do logo
+const NAVY_DEEP   = '#1B3552'   // navy profundo (títulos)
+const NAVY_SOFT   = '#456a8a'   // acento secundário
+const INK         = '#15181c'   // tinta principal
+const SUB         = '#4a4640'   // texto secundário
+const MUTE        = '#7c766a'   // texto subtil
+const LINE        = 'rgba(42,77,110,0.22)'
+const LINE_SOFT   = 'rgba(42,77,110,0.10)'
 
-/* helpers */
+/* ─── helpers ─── */
 function fmtEur(n: number) {
   return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n || 0)
 }
@@ -69,17 +71,18 @@ function dataDeHoje() {
   return new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })
 }
 
-/* O Nosso Processo · 8 passos editoriais */
 const PROCESSO = [
-  { n: 1, titulo: 'Briefing e Imersão', desc: 'Recebemos o teu briefing, mergulhamos na marca e no contexto do evento.' },
-  { n: 2, titulo: 'Proposta',           desc: 'Desenvolvemos uma visão completa, técnica e estratégica para a tua comunicação.' },
-  { n: 3, titulo: 'Planeamento',        desc: 'Definimos como e quando tudo vai acontecer, com mapa de captação e logística.' },
-  { n: 4, titulo: 'Produção',           desc: 'Preparamos e executamos a captação no terreno com equipa e equipamento dedicados.' },
-  { n: 5, titulo: 'Edição',             desc: 'Montagem narrativa, correcção de cor, mistura de áudio e exportação final.' },
-  { n: 6, titulo: 'Aprovação',          desc: 'Apresentamos uma primeira versão, recebemos feedback e fazemos os ajustes.' },
-  { n: 7, titulo: 'Entrega',            desc: 'Conteúdos finais entregues via Plataforma do Cliente, prontos a publicar.' },
-  { n: 8, titulo: 'Feedback e Resultados', desc: 'Recolhemos a tua avaliação e analisamos o impacto da comunicação.' },
+  { titulo: 'Briefing e Imersão',     desc: 'Recebemos o briefing, mergulhamos na marca e no contexto do evento.' },
+  { titulo: 'Proposta',               desc: 'Desenvolvemos uma visão completa, técnica e estratégica para a comunicação.' },
+  { titulo: 'Planeamento',            desc: 'Definimos como e quando tudo acontece, com mapa de captação e logística.' },
+  { titulo: 'Produção',               desc: 'Captação no terreno com equipa e equipamento dedicados ao evento.' },
+  { titulo: 'Edição',                 desc: 'Montagem narrativa, correcção de cor, mistura de áudio e exportação final.' },
+  { titulo: 'Aprovação',              desc: 'Primeira versão apresentada, feedback recolhido, ajustes integrados.' },
+  { titulo: 'Entrega',                desc: 'Conteúdos finais entregues via Plataforma do Cliente, prontos a publicar.' },
+  { titulo: 'Feedback e Resultados',  desc: 'Avaliação do percurso e análise do impacto da comunicação.' },
 ]
+
+/* ─── Page ────────────────────────────────────────────────────────────────── */
 
 export default function PdfPage() {
   const { id } = useParams<{ id: string }>()
@@ -123,13 +126,13 @@ export default function PdfPage() {
   const num = orcamento.id.slice(-6).toUpperCase()
 
   const paperTexture = `
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85'/%3E%3CfeColorMatrix values='0 0 0 0 0.16  0 0 0 0 0.14  0 0 0 0 0.10  0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.92'/%3E%3CfeColorMatrix values='0 0 0 0 0.16  0 0 0 0 0.14  0 0 0 0 0.10  0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")
   `
 
   return (
     <>
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700;800&display=swap');
         @media print {
           @page { size: A4; margin: 0; }
           body { background: ${PAPER} !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -137,9 +140,10 @@ export default function PdfPage() {
           .pdf-page { box-shadow: none !important; margin: 0 !important; break-after: page; page-break-after: always; }
           .pdf-page:last-child { break-after: auto; page-break-after: auto; }
         }
-        body { background: #2b2925; }
+        body { background: #2a2825; }
         .pdf-root { font-family: 'Inter', -apple-system, sans-serif; }
         .serif { font-family: 'Cormorant Garamond', 'Georgia', serif; }
+        .mono { font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; }
       `}</style>
 
       {/* Toolbar */}
@@ -167,88 +171,71 @@ export default function PdfPage() {
 
       <main className="pdf-root" style={{ minHeight: '100vh', padding: '24px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
 
-        {/* ─── PÁGINA 1 · CAPA ────────────────────────────────────── */}
-        <PdfPage texture={paperTexture}>
-          <div style={{ height: 5, background: `linear-gradient(90deg, ${NAVY_DEEP} 0%, ${NAVY} 50%, ${NAVY_DEEP} 100%)` }} />
+        {/* ─────────────────── PÁGINA 1 · CAPA ─────────────────── */}
+        <Page texture={paperTexture}>
+          {/* Coluna vertical de acento à esquerda */}
+          <SideRail num={num} pagina="01 / 03" />
 
-          <header style={{ padding: '20mm 22mm 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 24 }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+          {/* Top tagline */}
+          <div style={{ position: 'absolute', top: '14mm', left: 0, right: '18mm', display: 'flex', justifyContent: 'flex-end' }}>
+            <p style={{ fontSize: 8, letterSpacing: '0.6em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>
+              Proposta de Orçamento · {num}
+            </p>
+          </div>
+
+          {/* Centro — logo grande + cliente massivo */}
+          <section style={{ paddingLeft: '32mm', paddingRight: '22mm', paddingTop: '40mm', display: 'flex', flexDirection: 'column', flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/logo-rl-prod-accent.png" alt="RL PROD"
-                style={{ width: 60, height: 60, objectFit: 'contain' }} />
-              <div style={{ paddingTop: 4 }}>
-                <p style={{ fontSize: 8, letterSpacing: '0.55em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>
+                style={{ width: 80, height: 80, objectFit: 'contain' }} />
+              <div>
+                <p style={{ fontSize: 9, letterSpacing: '0.55em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>
                   Photography &amp; Video (for brands)
                 </p>
-                <p style={{ fontSize: 21, letterSpacing: '0.4em', textTransform: 'uppercase', color: NAVY_DEEP, margin: '5px 0 0', fontWeight: 700 }}>
+                <p style={{ fontSize: 26, letterSpacing: '0.4em', textTransform: 'uppercase', color: NAVY_DEEP, margin: '5px 0 0', fontWeight: 700 }}>
                   RL PROD
-                </p>
-                <p style={{ fontSize: 9, color: SUB, margin: '8px 0 0', letterSpacing: '0.04em' }}>
-                  geral@rlphotovideo.pt &nbsp;·&nbsp; www.rlprod.pt
                 </p>
               </div>
             </div>
-            <div style={{ textAlign: 'right' }}>
-              <p style={{ fontSize: 9, letterSpacing: '0.45em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>
-                Proposta de Orçamento
-              </p>
-              <p className="serif" style={{ fontSize: 24, color: NAVY_DEEP, margin: '6px 0 0', fontWeight: 500, fontStyle: 'italic' }}>
-                Nº {num}
-              </p>
-              <p style={{ fontSize: 10, color: SUB, margin: '8px 0 0' }}>Emitido em {dataDeHoje()}</p>
-              {orcamento.validade && <p style={{ fontSize: 10, color: SUB, margin: '2px 0 0' }}>Válido até {fmtData(orcamento.validade)}</p>}
-            </div>
-          </header>
 
-          {/* Centro — Cliente em destaque grande */}
-          <section style={{ padding: '40mm 22mm 0', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div style={{ height: 2, background: NAVY, width: 60, marginBottom: 18 }} />
+            {/* Espaço vertical largo */}
+            <div style={{ flex: 1, minHeight: 60 }} />
+
+            {/* Linha mestre */}
+            <div style={{ height: 1, background: LINE, marginBottom: 26 }} />
+
             <p style={{ fontSize: 10, letterSpacing: '0.5em', textTransform: 'uppercase', color: MUTE, margin: 0, fontWeight: 700 }}>
               Proposta apresentada a
             </p>
             <h1 className="serif" style={{
-              fontSize: 64, color: NAVY_DEEP, margin: '12px 0 0', fontWeight: 500,
-              lineHeight: 1.0, letterSpacing: '-0.02em',
+              fontSize: 78, color: NAVY_DEEP, margin: '14px 0 0', fontWeight: 500,
+              lineHeight: 0.98, letterSpacing: '-0.025em',
             }}>
               {orcamento.cliente}
             </h1>
 
             {(orcamento.contacto || orcamento.email) && (
-              <p style={{ fontSize: 13, color: SUB, margin: '18px 0 0', letterSpacing: '0.02em' }}>
+              <p style={{ fontSize: 12, color: SUB, margin: '20px 0 0', letterSpacing: '0.02em' }}>
                 {orcamento.contacto && <span>{orcamento.contacto}</span>}
-                {orcamento.contacto && orcamento.email && <span style={{ color: NAVY, margin: '0 10px' }}>·</span>}
+                {orcamento.contacto && orcamento.email && <span className="mono" style={{ color: NAVY, margin: '0 10px', fontWeight: 700 }}>/</span>}
                 {orcamento.email && <span>{orcamento.email}</span>}
               </p>
             )}
 
-            {/* Dados do evento */}
-            <div style={{
-              marginTop: 36,
-              border: `1px solid ${LINE}`, borderLeft: `3px solid ${NAVY}`,
-              padding: '14px 20px', background: PAPER_SOFT,
-              display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20,
-              borderRadius: 2,
-            }}>
-              <div>
-                <p style={{ fontSize: 8, letterSpacing: '0.45em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>Data do Evento</p>
-                <p style={{ fontSize: 14, color: INK, margin: '4px 0 0', fontWeight: 600 }}>
-                  {fmtIntervaloEvento(orcamento.data_inicio, orcamento.data_fim)}
-                </p>
-              </div>
-              <div>
-                <p style={{ fontSize: 8, letterSpacing: '0.45em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>Cobertura</p>
-                <p style={{ fontSize: 14, color: INK, margin: '4px 0 0', fontWeight: 600 }}>
-                  {orcamento.cobertura ?? 'A definir'}
-                </p>
-              </div>
+            {/* Bloco de metadata em régua horizontal */}
+            <div style={{ marginTop: 38, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0, borderTop: `1px solid ${NAVY_DEEP}` }}>
+              <Meta label="Data do Evento" value={fmtIntervaloEvento(orcamento.data_inicio, orcamento.data_fim)} />
+              <Meta label="Cobertura" value={orcamento.cobertura ?? 'A definir'} divider />
+              <Meta label="Validade" value={orcamento.validade ? fmtData(orcamento.validade) : '30 dias após emissão'} divider />
             </div>
 
             {orcamento.resumo && (
-              <div style={{ marginTop: 26 }}>
-                <p style={{ fontSize: 9, letterSpacing: '0.45em', textTransform: 'uppercase', color: NAVY, margin: '0 0 6px', fontWeight: 700 }}>
+              <div style={{ marginTop: 34, maxWidth: '78%' }}>
+                <p style={{ fontSize: 9, letterSpacing: '0.45em', textTransform: 'uppercase', color: NAVY, margin: '0 0 8px', fontWeight: 700 }}>
                   Resumo
                 </p>
-                <p style={{ fontSize: 12, lineHeight: 1.65, color: SUB, margin: 0, whiteSpace: 'pre-wrap' }}>
+                <p style={{ fontSize: 12, lineHeight: 1.7, color: SUB, margin: 0, whiteSpace: 'pre-wrap' }}>
                   {orcamento.resumo}
                 </p>
               </div>
@@ -256,42 +243,35 @@ export default function PdfPage() {
           </section>
 
           {/* Footer capa */}
-          <footer style={{ position: 'absolute', bottom: '12mm', left: '22mm', right: '22mm', paddingTop: 10, borderTop: `1px solid ${LINE}`, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-            <p style={{ fontSize: 8, letterSpacing: '0.5em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>
-              More than a product, an experience.
-            </p>
-            <p style={{ fontSize: 9, color: NAVY, margin: 0, letterSpacing: '0.12em', fontWeight: 600 }}>
-              01 · Capa
-            </p>
-          </footer>
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 4, background: `linear-gradient(90deg, ${NAVY_DEEP} 0%, ${NAVY} 50%, ${NAVY_DEEP} 100%)` }} />
-        </PdfPage>
+          <CoverFooter />
+        </Page>
 
-        {/* ─── PÁGINA 2 · PROPOSTAS ───────────────────────────────── */}
-        <PdfPage texture={paperTexture}>
-          <PageHeader num={num} cliente={orcamento.cliente} />
+        {/* ─────────────────── PÁGINA 2 · INVESTIMENTO ─────────────────── */}
+        <Page texture={paperTexture}>
+          <SideRail num={num} pagina="02 / 03" />
+          <PageTopBar num={num} cliente={orcamento.cliente} secao="Investimento" />
 
-          <section style={{ padding: '6mm 22mm 0' }}>
+          <section style={{ paddingLeft: '32mm', paddingRight: '22mm', paddingTop: '8mm' }}>
             <p style={{ fontSize: 10, letterSpacing: '0.5em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>
-              Investimento
+              {orcamento.propostas.length === 1 ? 'A Nossa Proposta' : 'As Nossas Propostas'}
             </p>
-            <h2 className="serif" style={{ fontSize: 36, color: NAVY_DEEP, margin: '6px 0 0', fontWeight: 500, lineHeight: 1.05 }}>
-              {orcamento.propostas.length === 1 ? 'A Nossa Proposta' : `${orcamento.propostas.length} Propostas`}
+            <h2 className="serif" style={{ fontSize: 48, color: NAVY_DEEP, margin: '8px 0 0', fontWeight: 500, lineHeight: 1.0, letterSpacing: '-0.02em' }}>
+              Investimento.
             </h2>
-            <p style={{ fontSize: 11, color: SUB, margin: '6px 0 0', fontStyle: 'italic' }}>
+            <p style={{ fontSize: 11.5, color: SUB, margin: '10px 0 22px', fontStyle: 'italic', maxWidth: '72%', lineHeight: 1.55 }}>
               {orcamento.propostas.length === 1
                 ? 'Cobertura integral, com tudo o que precisas para uma comunicação de excelência.'
-                : 'Apresentamos alternativas para que escolhas a que melhor se adapta ao teu briefing.'}
+                : 'Apresentamos alternativas para que escolhas a que melhor se adapta ao briefing e ao impacto pretendido.'}
             </p>
-          </section>
 
-          <section style={{ padding: '8mm 22mm 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {orcamento.propostas.map((p, i) => (
-              <PropostaBlock key={p.id} proposta={p} numero={i + 1} />
-            ))}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {orcamento.propostas.map((p, i) => (
+                <PropostaEditorial key={p.id} proposta={p} numero={i + 1} />
+              ))}
+            </div>
 
             {orcamento.propostas.length > 1 && (
-              <p style={{ marginTop: 4, fontSize: 10.5, color: SUB, fontStyle: 'italic', textAlign: 'right' }}>
+              <p style={{ marginTop: 14, fontSize: 10.5, color: SUB, fontStyle: 'italic', textAlign: 'right' }}>
                 Investimento {totalRange.min === totalRange.max
                   ? fmtEur(totalRange.max)
                   : `entre ${fmtEur(totalRange.min)} e ${fmtEur(totalRange.max)}`}, valores líquidos sem IVA.
@@ -299,36 +279,45 @@ export default function PdfPage() {
             )}
           </section>
 
-          <PageFooter num={num} pagina="02 · Investimento" />
-        </PdfPage>
+          <PageBottomBar />
+        </Page>
 
-        {/* ─── PÁGINA 3 · PROCESSO + CONDIÇÕES ────────────────────── */}
-        <PdfPage texture={paperTexture}>
-          <PageHeader num={num} cliente={orcamento.cliente} />
+        {/* ─────────────────── PÁGINA 3 · PROCESSO + TERMOS ─────────────────── */}
+        <Page texture={paperTexture}>
+          <SideRail num={num} pagina="03 / 03" />
+          <PageTopBar num={num} cliente={orcamento.cliente} secao="Processo · Termos" />
 
-          {/* O Nosso Processo */}
-          <section style={{ padding: '6mm 22mm 0' }}>
+          {/* Processo */}
+          <section style={{ paddingLeft: '32mm', paddingRight: '22mm', paddingTop: '8mm' }}>
             <p style={{ fontSize: 10, letterSpacing: '0.5em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>
               Como Trabalhamos
             </p>
-            <h2 className="serif" style={{ fontSize: 32, color: NAVY_DEEP, margin: '6px 0 0', fontWeight: 500, lineHeight: 1.05 }}>
-              O Nosso Processo
+            <h2 className="serif" style={{ fontSize: 44, color: NAVY_DEEP, margin: '6px 0 0', fontWeight: 500, lineHeight: 1.0, letterSpacing: '-0.02em' }}>
+              O Nosso Processo.
             </h2>
-            <p style={{ fontSize: 11, color: SUB, margin: '6px 0 14px', fontStyle: 'italic' }}>
+            <p style={{ fontSize: 11, color: SUB, margin: '10px 0 18px', fontStyle: 'italic' }}>
               Oito etapas, do primeiro briefing aos resultados finais.
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 22px' }}>
-              {PROCESSO.map(p => (
-                <div key={p.n} style={{ display: 'grid', gridTemplateColumns: '32px 1fr', gap: 10, alignItems: 'flex-start' }}>
-                  <span className="serif" style={{
-                    fontSize: 26, color: NAVY, fontWeight: 500, fontStyle: 'italic',
-                    lineHeight: 1, letterSpacing: '-0.02em',
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 28px' }}>
+              {PROCESSO.map((p, i) => (
+                <div key={i} style={{
+                  display: 'grid',
+                  gridTemplateColumns: '36px 1fr',
+                  gap: 12,
+                  alignItems: 'flex-start',
+                  paddingTop: 8,
+                  borderTop: `1px solid ${LINE_SOFT}`,
+                }}>
+                  <span className="mono" style={{
+                    fontSize: 14, color: NAVY, fontWeight: 700,
+                    lineHeight: 1, letterSpacing: '0.05em',
+                    paddingTop: 2,
                   }}>
-                    {String(p.n).padStart(2, '0')}
+                    {String(i + 1).padStart(2, '0')}
                   </span>
                   <div>
-                    <p style={{ fontSize: 11, color: INK, margin: 0, fontWeight: 700, letterSpacing: '0.005em', textTransform: 'uppercase' }}>
+                    <p style={{ fontSize: 11, color: INK, margin: 0, fontWeight: 700, letterSpacing: '0.015em', textTransform: 'uppercase' }}>
                       {p.titulo}
                     </p>
                     <p style={{ fontSize: 10, color: SUB, margin: '3px 0 0', lineHeight: 1.5 }}>
@@ -341,15 +330,15 @@ export default function PdfPage() {
           </section>
 
           {/* Condições */}
-          <section style={{ padding: '12mm 22mm 0' }}>
+          <section style={{ paddingLeft: '32mm', paddingRight: '22mm', paddingTop: '12mm' }}>
             <p style={{ fontSize: 10, letterSpacing: '0.5em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>
               Termos
             </p>
-            <h2 className="serif" style={{ fontSize: 28, color: NAVY_DEEP, margin: '6px 0 14px', fontWeight: 500, lineHeight: 1.05 }}>
-              Condições Comerciais
+            <h2 className="serif" style={{ fontSize: 36, color: NAVY_DEEP, margin: '6px 0 14px', fontWeight: 500, lineHeight: 1.0, letterSpacing: '-0.02em' }}>
+              Condições Comerciais.
             </h2>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 22px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 28px' }}>
               <Condicao titulo="Validade da Proposta">
                 {orcamento.validade
                   ? `Esta proposta mantém-se válida até ${fmtData(orcamento.validade)}.`
@@ -370,17 +359,14 @@ export default function PdfPage() {
             </div>
           </section>
 
-          {/* Assinatura / contacto */}
-          <section style={{ position: 'absolute', bottom: '24mm', left: '22mm', right: '22mm', paddingTop: 14, borderTop: `1px solid ${LINE}` }}>
-            <p style={{ fontSize: 10, letterSpacing: '0.5em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>
-              Vamos falar
-            </p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 24, marginTop: 8, alignItems: 'flex-end' }}>
+          {/* Closing */}
+          <section style={{ position: 'absolute', bottom: '26mm', left: '32mm', right: '22mm', paddingTop: 12, borderTop: `1px solid ${NAVY_DEEP}` }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 24, marginTop: 14, alignItems: 'flex-end' }}>
               <div>
-                <p className="serif" style={{ fontSize: 22, color: NAVY_DEEP, margin: 0, fontWeight: 500, lineHeight: 1.1 }}>
+                <p className="serif" style={{ fontSize: 24, color: NAVY_DEEP, margin: 0, fontWeight: 500, lineHeight: 1.1, fontStyle: 'italic' }}>
                   Obrigado pela confiança.
                 </p>
-                <p style={{ fontSize: 11, color: SUB, margin: '8px 0 0', lineHeight: 1.55, fontStyle: 'italic' }}>
+                <p style={{ fontSize: 11, color: SUB, margin: '8px 0 0', lineHeight: 1.55 }}>
                   Estamos disponíveis para qualquer esclarecimento adicional ou ajuste à proposta.
                 </p>
               </div>
@@ -398,159 +384,197 @@ export default function PdfPage() {
             </div>
           </section>
 
-          <PageFooter num={num} pagina="03 · Termos" />
-        </PdfPage>
+          <PageBottomBar />
+        </Page>
 
       </main>
     </>
   )
+}
 
-  /* helpers locais para texture */
-  function PdfPage({ children, texture }: { children: React.ReactNode; texture: string }) {
-    return (
-      <div className="pdf-page" style={{
-        width: '210mm', minHeight: '297mm',
-        background: PAPER, color: INK,
-        boxShadow: '0 24px 80px rgba(0,0,0,0.55)',
-        position: 'relative', overflow: 'hidden',
-        backgroundImage: texture,
-        backgroundBlendMode: 'multiply',
-        display: 'flex', flexDirection: 'column',
+/* ─── Page shell ──────────────────────────────────────────────────────────── */
+
+function Page({ children, texture }: { children: React.ReactNode; texture: string }) {
+  return (
+    <div className="pdf-page" style={{
+      width: '210mm', minHeight: '297mm',
+      background: PAPER, color: INK,
+      boxShadow: '0 24px 80px rgba(0,0,0,0.55)',
+      position: 'relative', overflow: 'hidden',
+      backgroundImage: texture,
+      backgroundBlendMode: 'multiply',
+      display: 'flex', flexDirection: 'column',
+    }}>
+      {children}
+    </div>
+  )
+}
+
+/* ─── Lateral fixa — coluna navy + paginação rotacionada ──────────────────── */
+
+function SideRail({ num, pagina }: { num: string; pagina: string }) {
+  return (
+    <>
+      <div style={{
+        position: 'absolute', left: 0, top: 0, bottom: 0, width: '6mm',
+        background: NAVY,
+      }} />
+      <div style={{
+        position: 'absolute', left: '6mm', top: 0, bottom: 0, width: '1px',
+        background: LINE,
+      }} />
+      <p style={{
+        position: 'absolute', left: '8mm', bottom: '14mm', margin: 0,
+        fontSize: 8, letterSpacing: '0.55em', textTransform: 'uppercase',
+        color: NAVY_DEEP, fontWeight: 700,
+        transform: 'rotate(-90deg)', transformOrigin: 'left bottom',
+        whiteSpace: 'nowrap',
       }}>
-        {children}
+        Pág. {pagina} · Nº {num}
+      </p>
+    </>
+  )
+}
+
+function PageTopBar({ num, cliente, secao }: { num: string; cliente: string; secao: string }) {
+  return (
+    <div style={{
+      position: 'absolute', top: '14mm', left: '32mm', right: '22mm',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      paddingBottom: 6, borderBottom: `1px solid ${LINE}`,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo-rl-prod-accent.png" alt="RL PROD"
+          style={{ width: 28, height: 28, objectFit: 'contain' }} />
+        <p style={{ fontSize: 10, letterSpacing: '0.4em', textTransform: 'uppercase', color: NAVY_DEEP, margin: 0, fontWeight: 700 }}>
+          RL PROD
+        </p>
       </div>
-    )
-  }
-}
-
-/* ─── Page header (páginas 2 e 3) ─────────────────────────────────────────── */
-
-function PageHeader({ num, cliente }: { num: string; cliente: string }) {
-  return (
-    <>
-      <div style={{ height: 5, background: `linear-gradient(90deg, ${NAVY_DEEP} 0%, ${NAVY} 50%, ${NAVY_DEEP} 100%)` }} />
-      <header style={{ padding: '16mm 22mm 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-rl-prod-accent.png" alt="RL PROD"
-            style={{ width: 38, height: 38, objectFit: 'contain' }} />
-          <div style={{ paddingTop: 2 }}>
-            <p style={{ fontSize: 7, letterSpacing: '0.55em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>
-              Photography &amp; Video
-            </p>
-            <p style={{ fontSize: 13, letterSpacing: '0.4em', textTransform: 'uppercase', color: NAVY_DEEP, margin: '3px 0 0', fontWeight: 700 }}>
-              RL PROD
-            </p>
-          </div>
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <p style={{ fontSize: 8, letterSpacing: '0.4em', textTransform: 'uppercase', color: MUTE, margin: 0, fontWeight: 600 }}>
-            Proposta Nº {num}
-          </p>
-          <p style={{ fontSize: 10, color: SUB, margin: '4px 0 0', fontWeight: 500 }}>
-            {cliente}
-          </p>
-        </div>
-      </header>
-      <div style={{ margin: '8mm 22mm 0', height: 1, background: LINE }} />
-      <div style={{ margin: '0 22mm', height: 2, background: NAVY, width: 48 }} />
-    </>
+      <div style={{ textAlign: 'right' }}>
+        <p style={{ fontSize: 8, letterSpacing: '0.45em', textTransform: 'uppercase', color: MUTE, margin: 0, fontWeight: 700 }}>
+          {secao}
+        </p>
+        <p style={{ fontSize: 9, color: SUB, margin: '2px 0 0', fontStyle: 'italic' }}>
+          {cliente} · Nº {num}
+        </p>
+      </div>
+    </div>
   )
 }
 
-function PageFooter({ num, pagina }: { num: string; pagina: string }) {
+function PageBottomBar() {
   return (
-    <>
-      <footer style={{
-        position: 'absolute', bottom: '12mm', left: '22mm', right: '22mm',
-        paddingTop: 8, borderTop: `1px solid ${LINE}`,
-        display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
-      }}>
-        <p style={{ fontSize: 8, letterSpacing: '0.5em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>
-          RL Prod &nbsp;·&nbsp; geral@rlphotovideo.pt &nbsp;·&nbsp; www.rlprod.pt
-        </p>
-        <p style={{ fontSize: 9, color: NAVY, margin: 0, letterSpacing: '0.12em', fontWeight: 600 }}>
-          {pagina}
-        </p>
-      </footer>
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 4, background: `linear-gradient(90deg, ${NAVY_DEEP} 0%, ${NAVY} 50%, ${NAVY_DEEP} 100%)` }} />
-    </>
+    <p style={{
+      position: 'absolute', bottom: '8mm', left: '32mm', right: '22mm', textAlign: 'center',
+      margin: 0, fontSize: 8, letterSpacing: '0.5em', textTransform: 'uppercase', color: MUTE, fontWeight: 600,
+    }}>
+      geral@rlphotovideo.pt · www.rlprod.pt
+    </p>
   )
 }
 
-/* ─── Proposta Card ───────────────────────────────────────────────────────── */
+function CoverFooter() {
+  return (
+    <footer style={{
+      position: 'absolute', bottom: '12mm', left: '32mm', right: '22mm',
+      paddingTop: 10, borderTop: `1px solid ${LINE}`,
+      display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
+    }}>
+      <p className="serif" style={{ fontSize: 14, color: NAVY_DEEP, margin: 0, fontStyle: 'italic', fontWeight: 500 }}>
+        More than a product, an experience.
+      </p>
+      <p style={{ fontSize: 9, color: NAVY, margin: 0, letterSpacing: '0.4em', textTransform: 'uppercase', fontWeight: 700 }}>
+        Emitido em {dataDeHoje()}
+      </p>
+    </footer>
+  )
+}
 
-function PropostaBlock({ proposta, numero }: { proposta: Proposta; numero: number }) {
+/* ─── Meta (cell na barra horizontal da capa) ─────────────────────────────── */
+
+function Meta({ label, value, divider }: { label: string; value: string; divider?: boolean }) {
+  return (
+    <div style={{ padding: '14px 16px 0', borderLeft: divider ? `1px solid ${LINE}` : undefined }}>
+      <p style={{ fontSize: 8, letterSpacing: '0.45em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>
+        {label}
+      </p>
+      <p style={{ fontSize: 13, color: INK, margin: '6px 0 0', fontWeight: 600 }}>
+        {value}
+      </p>
+    </div>
+  )
+}
+
+/* ─── Proposta · Editorial vertical layout ────────────────────────────────── */
+
+function PropostaEditorial({ proposta, numero }: { proposta: Proposta; numero: number }) {
   return (
     <article style={{
-      border: `1px solid ${LINE}`,
-      borderRadius: 3,
-      padding: '14px 18px 16px',
-      background: PAPER_SOFT,
+      paddingTop: 14,
+      borderTop: `2px solid ${NAVY_DEEP}`,
       breakInside: 'avoid',
-      position: 'relative',
     }}>
-      <div style={{
-        display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
-        gap: 16, paddingBottom: 10, borderBottom: `1px solid ${LINE}`,
-      }}>
-        <div style={{ minWidth: 0, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-          <span className="serif" style={{
-            fontSize: 36, color: NAVY, fontStyle: 'italic', fontWeight: 500,
-            lineHeight: 1, letterSpacing: '-0.02em',
-          }}>
-            {String(numero).padStart(2, '0')}
-          </span>
-          <div>
-            <p style={{ fontSize: 8, letterSpacing: '0.45em', textTransform: 'uppercase', color: MUTE, margin: 0, fontWeight: 700 }}>Proposta</p>
-            <h3 className="serif" style={{ fontSize: 22, color: NAVY_DEEP, margin: '2px 0 0', fontWeight: 500, lineHeight: 1.15 }}>
-              {proposta.titulo || 'Proposta'}
-            </h3>
-          </div>
+      {/* Header */}
+      <header style={{ display: 'grid', gridTemplateColumns: '70px 1fr auto', gap: 14, alignItems: 'flex-start', marginBottom: 12 }}>
+        <span className="serif" style={{
+          fontSize: 56, color: NAVY, fontStyle: 'italic', fontWeight: 500,
+          lineHeight: 0.85, letterSpacing: '-0.04em', display: 'block',
+        }}>
+          {String(numero).padStart(2, '0')}
+        </span>
+        <div style={{ minWidth: 0, paddingTop: 8 }}>
+          <p style={{ fontSize: 8, letterSpacing: '0.45em', textTransform: 'uppercase', color: MUTE, margin: 0, fontWeight: 700 }}>
+            Proposta {String(numero).padStart(2, '0')}
+          </p>
+          <h3 className="serif" style={{ fontSize: 28, color: NAVY_DEEP, margin: '2px 0 0', fontWeight: 500, lineHeight: 1.1, letterSpacing: '-0.01em' }}>
+            {proposta.titulo || 'Proposta'}
+          </h3>
         </div>
-        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <p style={{ fontSize: 8, letterSpacing: '0.4em', textTransform: 'uppercase', color: MUTE, margin: 0, fontWeight: 700 }}>Investimento</p>
-          <p className="serif" style={{ fontSize: 28, color: NAVY_DEEP, margin: '2px 0 0', fontWeight: 600, letterSpacing: '-0.01em' }}>
+        <div style={{ textAlign: 'right', paddingTop: 8 }}>
+          <p style={{ fontSize: 8, letterSpacing: '0.4em', textTransform: 'uppercase', color: MUTE, margin: 0, fontWeight: 700 }}>
+            Investimento
+          </p>
+          <p className="serif" style={{ fontSize: 34, color: NAVY_DEEP, margin: '2px 0 0', fontWeight: 600, letterSpacing: '-0.015em', lineHeight: 1 }}>
             {fmtEur(proposta.valor)}
           </p>
         </div>
-      </div>
+      </header>
 
+      {/* Lista de serviços */}
       {proposta.servicos.length > 0 && (
-        <div style={{ paddingTop: 12 }}>
-          <p style={{ fontSize: 8, letterSpacing: '0.45em', textTransform: 'uppercase', color: NAVY, margin: '0 0 8px', fontWeight: 700 }}>
-            Incluído nesta proposta
-          </p>
-          <ol style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-            {proposta.servicos.map((s, idx) => (
-              <li key={s.catalogId} style={{
-                padding: '9px 0',
-                borderBottom: idx === proposta.servicos.length - 1 ? 'none' : `1px solid ${LINE_SOFT}`,
-                display: 'grid', gridTemplateColumns: '28px 1fr', gap: 10, alignItems: 'flex-start',
+        <div style={{
+          display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 28px',
+          padding: '4px 0 0 70px',
+        }}>
+          {proposta.servicos.map((s, idx) => (
+            <div key={s.catalogId} style={{
+              padding: '7px 0',
+              borderBottom: `1px solid ${LINE_SOFT}`,
+              display: 'grid', gridTemplateColumns: '24px 1fr', gap: 8, alignItems: 'flex-start',
+            }}>
+              <span className="mono" style={{
+                fontSize: 9, color: NAVY, fontWeight: 700, paddingTop: 2, letterSpacing: '0.05em',
               }}>
-                <span style={{
-                  fontFamily: 'Inter, system-ui, sans-serif', fontSize: 10, color: NAVY,
-                  fontWeight: 800, lineHeight: 1.4, letterSpacing: '0.05em', paddingTop: 1,
-                }}>
-                  {String(idx + 1).padStart(2, '0')}
-                </span>
-                <div>
-                  <p style={{ fontSize: 11.5, color: INK, margin: 0, fontWeight: 600 }}>
-                    {s.nome}{s.duracao ? ` · ${s.duracao}` : ''}
-                  </p>
-                  <p style={{ fontSize: 10, color: SUB, margin: '3px 0 0', lineHeight: 1.5 }}>
-                    {s.desc}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
+                {String(idx + 1).padStart(2, '0')}
+              </span>
+              <div>
+                <p style={{ fontSize: 11, color: INK, margin: 0, fontWeight: 600 }}>
+                  {s.nome}{s.duracao ? ` · ${s.duracao}` : ''}
+                </p>
+                <p style={{ fontSize: 9.5, color: SUB, margin: '2px 0 0', lineHeight: 1.45 }}>
+                  {s.desc}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
       {proposta.descricao && (
         <p style={{
-          marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}`,
+          marginTop: 12, paddingTop: 10, paddingLeft: 70,
+          borderTop: `1px solid ${LINE_SOFT}`,
           fontSize: 10, lineHeight: 1.55, color: SUB, fontStyle: 'italic',
         }}>
           {proposta.descricao}
@@ -562,7 +586,7 @@ function PropostaBlock({ proposta, numero }: { proposta: Proposta; numero: numbe
 
 function Condicao({ titulo, children, full }: { titulo: string; children: React.ReactNode; full?: boolean }) {
   return (
-    <div style={{ borderLeft: `2px solid ${NAVY}`, paddingLeft: 12, gridColumn: full ? '1 / -1' : undefined }}>
+    <div style={{ borderTop: `1px solid ${LINE_SOFT}`, paddingTop: 8, gridColumn: full ? '1 / -1' : undefined }}>
       <p style={{ fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: NAVY_DEEP, margin: 0, fontWeight: 700 }}>
         {titulo}
       </p>
