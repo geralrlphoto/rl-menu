@@ -3,13 +3,24 @@ import type { NextRequest } from 'next/server'
 import { verifyFlSession } from '@/lib/freelancer-session'
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+  const { pathname, search, searchParams } = request.nextUrl
 
-  // ── 1) Acesso ao portal do freelancer (/freelancer-view/<id>) ───────
-  //   Admin (com cookie rl_auth válido) passa. Freelancer só passa se
-  //   o seu fl_session.id coincidir com o <id> da URL.
-  //   Sem credenciais → redireciona para /login com ?next=…
-  const flMatch = pathname.match(/^\/freelancer-view\/([^/]+)/)
+  // ── 1) Compatibilidade: /freelancer-view/<id>  →  /freelancers/<id>?view=freelancer
+  //   URL antigo redireciona sempre para o novo padrão (admin ou membro).
+  const legacyMatch = pathname.match(/^\/freelancer-view\/([^/]+)/)
+  if (legacyMatch) {
+    const targetId = legacyMatch[1]
+    return NextResponse.redirect(new URL(`/freelancers/${targetId}?view=freelancer`, request.url))
+  }
+
+  // ── 2) Acesso ao portal do membro (/freelancers/<id>?view=freelancer) ──
+  //   Admin (rl_auth válido) entra em /freelancers/<id> com ou sem ?view.
+  //   Freelancer só entra se:
+  //     · pathname = /freelancers/<sessionId>
+  //     · query    = view=freelancer
+  //   Sessão noutro id → reencaminha para o portal próprio dele.
+  //   Sem credenciais → /login?next=…
+  const flMatch = pathname.match(/^\/freelancers\/([^/]+)(?:\/.*)?$/)
   if (flMatch) {
     const targetId = flMatch[1]
     const adminAuth = request.cookies.get('rl_auth')?.value
@@ -18,15 +29,15 @@ export async function middleware(request: NextRequest) {
     }
     const flCookie = request.cookies.get('fl_session')?.value
     const session = await verifyFlSession(flCookie)
-    if (session && session.id === targetId) {
+    const isFreelancerView = searchParams.get('view') === 'freelancer'
+    if (session && session.id === targetId && isFreelancerView) {
       return NextResponse.next()
     }
-    // Sessão existe mas o id é DIFERENTE → forbidden, manda para o portal próprio.
     if (session) {
-      return NextResponse.redirect(new URL(`/freelancer-view/${session.id}`, request.url))
+      return NextResponse.redirect(new URL(`/freelancers/${session.id}?view=freelancer`, request.url))
     }
     const loginUrl = new URL('/login', request.url)
-    loginUrl.searchParams.set('next', pathname)
+    loginUrl.searchParams.set('next', `${pathname}${search}`)
     return NextResponse.redirect(loginUrl)
   }
 

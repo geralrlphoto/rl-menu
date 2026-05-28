@@ -1792,7 +1792,7 @@ function SidebarNavAdmin({
       <div className="px-6 py-5 mt-auto">
         <div className="h-px mb-4" style={{ background: 'linear-gradient(90deg, transparent, rgba(201,164,92,0.25), transparent)' }} />
         {!viewAsFreelancer && (
-          <a href={`/freelancer-view/${freelancer?.id ?? ''}`} target="_blank" rel="noopener noreferrer"
+          <a href={`/freelancers/${freelancer?.id ?? ''}?view=freelancer`} target="_blank" rel="noopener noreferrer"
             className="block text-[9px] tracking-[0.4em] uppercase transition-colors mb-3 text-center"
             style={{ color: '#7a6340' }}
             onMouseEnter={e => e.currentTarget.style.color = '#c9a96e'}

@@ -62,7 +62,7 @@ function LoginPageInner() {
         if (canceled) return
         const j = await r.json().catch(() => ({}))
         if (j?.ok && j?.session?.id) {
-          router.replace(`/freelancer-view/${j.session.id}`)
+          router.replace(`/freelancers/${j.session.id}?view=freelancer`)
         }
       } catch { /* offline / erro — fica em login */ }
     })()
@@ -91,9 +91,18 @@ function LoginPageInner() {
       }
       // smooth transition — pequena pausa para a animação registar
       setToast('Acesso concedido. A abrir o teu portal…')
-      const target = nextFromUrl && nextFromUrl.startsWith('/freelancer-view/')
-        ? nextFromUrl
-        : (j.redirect ?? `/freelancer-view/${j.freelancer?.id ?? ''}`)
+      // Aceita ?next= legítimo (novo /freelancers/<id>?view=freelancer
+      // ou antigo /freelancer-view/<id>); caso contrário usa redirect do servidor.
+      const flId = j.freelancer?.id ?? ''
+      let target = j.redirect ?? `/freelancers/${flId}?view=freelancer`
+      if (nextFromUrl) {
+        if (nextFromUrl.startsWith('/freelancer-view/')) {
+          // Mantém para compatibilidade — middleware redireciona depois.
+          target = nextFromUrl
+        } else if (nextFromUrl.startsWith('/freelancers/') && nextFromUrl.includes('view=freelancer')) {
+          target = nextFromUrl
+        }
+      }
       setTimeout(() => {
         router.push(target)
         router.refresh()

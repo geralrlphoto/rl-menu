@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
       status: row.status,
       foto_url: row.foto_url,
     },
-    redirect: `/freelancer-view/${row.id}`,
+    redirect: `/freelancers/${row.id}?view=freelancer`,
   })
   res.cookies.set(FL_COOKIE_NAME, token, {
     httpOnly: true,

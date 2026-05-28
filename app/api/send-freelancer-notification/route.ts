@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#0d0901;padding:32px 16px;">
     <tr>
       <td align="center">
-        <a href="https://rl-menu-lake.vercel.app/freelancer-view/${freelancer.id}" style="display:block;text-decoration:none;">
+        <a href="https://rl-menu-lake.vercel.app/freelancers/${freelancer.id}?view=freelancer" style="display:block;text-decoration:none;">
           <img src="https://rl-menu-lake.vercel.app/card_novo_evento.png"
             width="560" alt="Tens novidades no portal"
             style="display:block;width:100%;max-width:560px;border:0;" />

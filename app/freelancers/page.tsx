@@ -163,7 +163,7 @@ const EMPTY_FORM: FormData = { nome: '', status: 'FOTOGRAFO', contato: '', email
 function CopiarUrlButton({ id }: { id: string }) {
   const [copied, setCopied] = useState(false)
   function copy() {
-    const url = `${window.location.origin}/freelancer-view/${id}`
+    const url = `${window.location.origin}/freelancers/${id}?view=freelancer`
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
