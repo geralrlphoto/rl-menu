@@ -58,24 +58,26 @@ type CatalogItem = {
 
 const CATALOG: CatalogItem[] = [
   // Equipa
-  { id: 'videografo_1',     categoria: 'Equipa',         nome: 'Um Videógrafo',                       desc: '1 profissional dedicado à captação de imagem em movimento, garante a cobertura essencial do evento.' },
-  { id: 'videografo_2',     categoria: 'Equipa',         nome: 'Dois Videógrafos',                    desc: 'Dupla de videógrafos para cobertura simultânea — planos amplos + planos de detalhe ou diferentes locais ao mesmo tempo.' },
-  { id: 'videografo_3',     categoria: 'Equipa',         nome: 'Três Videógrafos',                    desc: 'Cobertura multicâmara completa com três ângulos em simultâneo, ideal para eventos de grande dimensão ou multistage.' },
-  { id: 'editor',           categoria: 'Pós-produção',   nome: 'Um Editor',                           desc: 'Pós-produção dedicada por editor sénior — montagem narrativa, correção de cor, mistura de áudio e exportação final.' },
+  { id: 'videografo_1',     categoria: 'Equipa',         nome: 'Um Videógrafo',                       desc: 'Um profissional dedicado à captação de imagem em movimento. Garante a cobertura essencial do evento e a relação directa com o cliente em terreno.' },
+  { id: 'videografo_2',     categoria: 'Equipa',         nome: 'Dois Videógrafos',                    desc: 'Dupla de videógrafos para cobertura simultânea. Planos amplos e planos de detalhe ou locais distintos cobertos ao mesmo tempo.' },
+  { id: 'videografo_3',     categoria: 'Equipa',         nome: 'Três Videógrafos',                    desc: 'Cobertura multicâmara completa com três ângulos em simultâneo. Ideal para eventos de grande dimensão ou com vários palcos.' },
+  { id: 'editor',           categoria: 'Pós-produção',   nome: 'Um Editor',                           desc: 'Pós produção dedicada por editor sénior. Inclui montagem narrativa, correcção de cor, mistura de áudio e exportação final em formato de entrega.' },
   // Cobertura
-  { id: 'reportagem',       categoria: 'Cobertura',      nome: 'Reportagem do Evento',                desc: 'Cobertura contínua do evento durante o período contratado, captação em formato documental e dinâmico.', hasDuration: true, durations: ['4h', '6h', '8h'] },
-  { id: 'drone',            categoria: 'Cobertura',      nome: 'Drone',                               desc: 'Imagens aéreas com drone profissional certificado — planos amplos do espaço, chegada de convidados, vistas exteriores.' },
-  { id: 'same_day_edit',    categoria: 'Cobertura',      nome: 'Same Day Edit',                       desc: 'Edição expressa entregue no próprio dia do evento, ideal para projeção em ecrã durante o jantar ou closing.' },
+  { id: 'reportagem',       categoria: 'Cobertura',      nome: 'Reportagem do Evento',                desc: 'Cobertura contínua durante o período contratado, em formato documental e dinâmico. Captação fluida de momentos, ambiente e interacções.', hasDuration: true, durations: ['4h', '6h', '8h'] },
+  { id: 'oradores',         categoria: 'Cobertura',      nome: 'Cobertura dos Oradores',              desc: 'Captação dedicada das intervenções no palco com enquadramento facial constante, áudio de sala em qualidade broadcast e legendas opcionais em pós produção.' },
+  { id: 'drone',            categoria: 'Cobertura',      nome: 'Drone',                               desc: 'Imagens aéreas com drone profissional certificado. Planos amplos do espaço, chegada de convidados e vistas exteriores do local.' },
+  { id: 'same_day_edit',    categoria: 'Cobertura',      nome: 'Same Day Edit',                       desc: 'Edição expressa entregue no próprio dia do evento. Ideal para projecção em ecrã durante o jantar, encerramento ou momento de partilha.' },
   // Entregáveis
-  { id: 'vertical_1',       categoria: 'Entregáveis',    nome: 'Um Vídeo Vertical (redes sociais)',   desc: 'Versão optimizada 9:16 para Instagram Reels, TikTok ou Stories, com legendas e ritmo próprio para mobile.' },
-  { id: 'vertical_2',       categoria: 'Entregáveis',    nome: 'Dois Vídeos Verticais (redes sociais)', desc: 'Pack de 2 vídeos verticais com cortes distintos para múltiplos posts ao longo da campanha.' },
-  { id: 'plataforma',       categoria: 'Entregáveis',    nome: 'Acesso à Plataforma do Cliente',      desc: 'Portal privado RL PROD para visualizar, partilhar e descarregar todo o material entregue, sem necessidade de WeTransfer.' },
+  { id: 'horizontal_3min',  categoria: 'Entregáveis',    nome: 'Vídeo Horizontal até 3 min',          desc: 'Filme principal do evento em formato 16:9 com duração até 3 minutos. Versão pronta para website institucional, apresentações internas e comunicação corporate.' },
+  { id: 'vertical_1',       categoria: 'Entregáveis',    nome: 'Um Vídeo Vertical (redes sociais)',   desc: 'Versão optimizada 9:16 para Instagram Reels, TikTok ou Stories. Inclui legendas e ritmo próprio para consumo em mobile.' },
+  { id: 'vertical_2',       categoria: 'Entregáveis',    nome: 'Dois Vídeos Verticais (redes sociais)', desc: 'Pack de dois vídeos verticais com cortes distintos. Permite múltiplos posts ao longo da campanha de comunicação.' },
+  { id: 'plataforma',       categoria: 'Entregáveis',    nome: 'Acesso à Plataforma do Cliente',      desc: 'Portal privado RL PROD para visualizar, partilhar e descarregar todo o material entregue. Substitui WeTransfer e centraliza acessos da equipa.' },
   // Qualidade
-  { id: 'fhd',              categoria: 'Qualidade',      nome: 'Qualidade Full HD',                   desc: 'Captação e entrega em 1920×1080 (Full HD) — padrão broadcast, compatível com qualquer ecrã ou plataforma.' },
-  { id: 'uhd_4k',           categoria: 'Qualidade',      nome: 'Qualidade 4K',                        desc: 'Captação e entrega em 4K (3840×2160) — máxima resolução para projeção em grande formato e arquivo future-proof.' },
+  { id: 'fhd',              categoria: 'Qualidade',      nome: 'Qualidade Full HD',                   desc: 'Captação e entrega em 1920 por 1080 (Full HD). Padrão broadcast, compatível com qualquer ecrã ou plataforma de difusão.' },
+  { id: 'uhd_4k',           categoria: 'Qualidade',      nome: 'Qualidade 4K',                        desc: 'Captação e entrega em 4K (3840 por 2160). Máxima resolução para projecção em grande formato e arquivo de longa duração.' },
   // Pré-produção
-  { id: 'reuniao_1',        categoria: 'Pré-produção',   nome: '1 Reunião antes do evento',           desc: 'Sessão de briefing prévio para alinhar objetivos, estética visual, mensagem-chave e logística no terreno.' },
-  { id: 'reuniao_2',        categoria: 'Pré-produção',   nome: '2 Reuniões antes do evento',          desc: 'Duas sessões de planeamento — kick-off inicial + revisão técnica final na semana do evento.' },
+  { id: 'reuniao_1',        categoria: 'Pré-produção',   nome: '1 Reunião antes do evento',           desc: 'Sessão de briefing prévio para alinhar objectivos, estética visual, mensagem central e logística no terreno.' },
+  { id: 'reuniao_2',        categoria: 'Pré-produção',   nome: '2 Reuniões antes do evento',          desc: 'Duas sessões de planeamento. Reunião inicial de alinhamento e revisão técnica final na semana do evento.' },
 ]
 
 const CATEGORIA_CLS: Record<CatalogItem['categoria'], string> = {
