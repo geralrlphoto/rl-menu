@@ -8477,6 +8477,57 @@ const STATUS_LABEL_BY_TIPO: Record<string, string> = {
   album:    'Estado do Álbum',
 }
 
+/** Timeline vertical de passos: bola numerada · traço · bola numerada · ... */
+function WorkflowTimeline({ text }: { text: string }) {
+  // Cada linha = um passo. Remove prefixos numéricos ("1.", "1)", "1 -")
+  // para evitar duplicação com o número da bola.
+  const steps = text
+    .split('\n')
+    .map(s => s.trim())
+    .filter(Boolean)
+    .map(s => s.replace(/^\d+[\.\)\-:\s]+\s*/, '').trim())
+    .filter(Boolean)
+
+  if (steps.length === 0) return null
+  return (
+    <ol className="relative space-y-3 pl-0">
+      {steps.map((step, i) => {
+        const isLast = i === steps.length - 1
+        return (
+          <li key={i} className="relative flex items-start gap-4">
+            {/* Bola numerada */}
+            <span className="relative shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-full font-bold text-[13px] z-10"
+              style={{
+                background: 'linear-gradient(180deg, #fb923c 0%, #ea7c1f 100%)',
+                color: '#1a0f06',
+                boxShadow: '0 4px 10px -2px rgba(251,146,60,0.45), inset 0 0 0 1px rgba(255,255,255,0.18)',
+                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+              }}>
+              {i + 1}
+            </span>
+            {/* Traço de ligação para a bola seguinte */}
+            {!isLast && (
+              <span aria-hidden className="absolute pointer-events-none"
+                style={{
+                  left: '17px',
+                  top: '36px',
+                  bottom: '-12px',
+                  width: '2px',
+                  background: 'linear-gradient(180deg, rgba(251,146,60,0.55), rgba(251,146,60,0.18))',
+                  borderRadius: '2px',
+                }} />
+            )}
+            {/* Texto do passo */}
+            <p className="flex-1 pt-1.5 text-[13.5px] text-white/85 leading-[1.55] whitespace-pre-wrap">
+              {step}
+            </p>
+          </li>
+        )
+      })}
+    </ol>
+  )
+}
+
 function UrlEntryCard({
   field,
   casamentoId,
@@ -9107,26 +9158,34 @@ function UrlEntryCard({
             </div>
 
             {/* Body */}
-            <div className="px-7 sm:px-8 py-5">
+            <div className="px-7 sm:px-8 py-5 max-h-[65vh] overflow-y-auto">
               {isAdmin ? (
                 <>
                   <p className="text-[11px] tracking-widest uppercase font-bold mb-2" style={{ color: 'rgba(251,146,60,0.85)' }}>
-                    Modo edição (admin)
+                    Modo edição (admin) · uma etapa por linha
                   </p>
                   <p className="text-[12px] text-white/55 italic mb-3 leading-relaxed">
-                    Explica aqui o workflow desta secção. Fica guardado e visível para todos os membros que abrirem o alerta.
+                    Escreve cada passo do workflow numa linha separada. Aparecerá como uma sequência numerada de bolas ligadas por um traço.
                   </p>
                   <textarea
                     value={workflowDraft}
                     onChange={(e) => setWorkflowDraft(e.target.value)}
-                    rows={9}
-                    placeholder={'Ex:\n1. Confirma com os noivos que receberam o link\n2. Marca como ENTREGUE\n3. Aguarda confirmacao para a fase seguinte...'}
+                    rows={7}
+                    placeholder={'Ex:\nConfirma com os noivos que receberam o link\nMarca como ENTREGUE\nAguarda confirmacao para a fase seguinte'}
                     className="w-full bg-black/30 border border-white/10 focus:border-orange-500/40 rounded-lg px-3.5 py-3 text-[13.5px] text-white outline-none placeholder:text-white/20 resize-none leading-relaxed transition-colors"
                   />
+                  {workflowDraft.trim().length > 0 && (
+                    <div className="mt-5 pt-4 border-t border-white/[0.06]">
+                      <p className="text-[10px] tracking-widest uppercase font-bold mb-3" style={{ color: 'rgba(251,146,60,0.7)' }}>
+                        Pré-visualização
+                      </p>
+                      <WorkflowTimeline text={workflowDraft} />
+                    </div>
+                  )}
                 </>
               ) : (
                 workflowText.trim().length > 0 ? (
-                  <p className="text-[14px] text-white/85 leading-relaxed whitespace-pre-wrap">{workflowText}</p>
+                  <WorkflowTimeline text={workflowText} />
                 ) : (
                   <p className="text-[13px] text-white/40 italic leading-relaxed">
                     Ainda nao existe workflow definido para esta seccao.
