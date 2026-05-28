@@ -6,10 +6,10 @@ import { useParams } from 'next/navigation'
 /* ─────────────────────────────────────────────────────────────────────────── *
  *  RL PROD · Proposta de Orçamento (PDF)
  *
- *  Layout cinematográfico para entrega corporate. Paleta extraída do
- *  logotipo: ink profundo + azul brand como único acento. Tipografia
- *  editorial com Cormorant Garamond para títulos e Inter para corpo.
- *  Optimizado para A4 (210 × 297 mm) com print styles.
+ *  Paleta extraída da apresentação oficial do logo:
+ *    Papel creme texturado + azul marinho profundo (sem dourados).
+ *  Layout editorial corporate para entrega a empresas. Tipografia
+ *  Cormorant Garamond + Inter. Optimizado para A4.
  * ─────────────────────────────────────────────────────────────────────────── */
 
 const LS_KEY = 'rl_orcamentos_v1'
@@ -25,18 +25,18 @@ type Orcamento = {
   validade: string | null; estado: Estado; notas: string | null; criado_em: string
 }
 
-/* Paleta — inspirada na identidade RL PROD (azul brand do logo) */
-const PAPER       = '#0b0d12'   // ink profundo, undertone azul
-const PANEL       = '#11141b'   // card escuro
-const PANEL_SOFT  = '#161a23'   // card alternativo
-const INK         = '#ecf0f5'   // off white frio
-const INK_SOFT    = '#cdd3df'   // texto principal secundário
-const SUB         = '#8b93a4'   // texto secundário
-const MUTE        = '#5a6273'   // texto subtil
-const LINE        = 'rgba(255,255,255,0.07)'
-const LINE_SOFT   = 'rgba(255,255,255,0.04)'
-const ACCENT      = '#84A8E8'   // azul brand RL PROD
-const ACCENT_DEEP = '#5d83c6'   // azul mais escuro para borders e detalhes
+/* Paleta — apresentação oficial RL PROD (papel + navy do logo) */
+const PAPER       = '#e9e5dc'   // papel creme texturado
+const PAPER_SOFT  = '#f1ede4'   // papel ligeiramente mais claro (cards)
+const PAPER_DEEP  = '#dfdacf'   // papel mais profundo (subtítulos)
+const NAVY        = '#284E70'   // azul marinho do logo
+const NAVY_DEEP   = '#1d3a55'   // mais profundo (títulos, divisores)
+const NAVY_SOFT   = '#3a6791'   // mais leve (acentos secundários)
+const INK         = '#1a1816'   // texto principal
+const SUB         = '#4f4a42'   // texto secundário (mais escuro para legibilidade)
+const MUTE        = '#7e786e'   // texto tertiário
+const LINE        = 'rgba(40, 78, 112, 0.20)'  // borders navy-tinted
+const LINE_SOFT   = 'rgba(40, 78, 112, 0.10)'
 
 /* helpers */
 function fmtEur(n: number) {
@@ -93,9 +93,9 @@ export default function PdfPage() {
     return (
       <main style={{ minHeight: '100vh', background: PAPER, color: INK, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, system-ui, sans-serif' }}>
         <div style={{ textAlign: 'center' }}>
-          <p style={{ fontSize: 14, opacity: 0.5, letterSpacing: '0.4em', textTransform: 'uppercase', marginBottom: 16 }}>RL PROD</p>
+          <p style={{ fontSize: 14, color: NAVY, letterSpacing: '0.4em', textTransform: 'uppercase', marginBottom: 16, fontWeight: 700 }}>RL PROD</p>
           <p style={{ fontSize: 18 }}>Orçamento não encontrado.</p>
-          <p style={{ fontSize: 12, opacity: 0.4, marginTop: 12 }}>Os orçamentos estão guardados no browser onde foram criados.</p>
+          <p style={{ fontSize: 12, color: SUB, marginTop: 12 }}>Os orçamentos estão guardados no browser onde foram criados.</p>
         </div>
       </main>
     )
@@ -108,6 +108,11 @@ export default function PdfPage() {
   })()
   const num = orcamento.id.slice(-6).toUpperCase()
 
+  /* Paper texture via SVG noise + slight gradient */
+  const paperTexture = `
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85'/%3E%3CfeColorMatrix values='0 0 0 0 0.16  0 0 0 0 0.14  0 0 0 0 0.10  0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")
+  `
+
   return (
     <>
       <style jsx global>{`
@@ -119,30 +124,30 @@ export default function PdfPage() {
           .pdf-page { box-shadow: none !important; margin: 0 !important; break-after: page; }
           .pdf-page:last-child { break-after: auto; }
         }
-        body { background: #1a1c22; }
+        body { background: #2b2925; }
         .pdf-root { font-family: 'Inter', -apple-system, sans-serif; }
         .serif { font-family: 'Cormorant Garamond', 'Georgia', serif; }
       `}</style>
 
-      {/* Toolbar */}
+      {/* Toolbar (não imprime) */}
       <div className="no-print" style={{
         position: 'sticky', top: 0, zIndex: 50,
-        background: 'rgba(7,9,13,0.92)',
+        background: 'rgba(15,15,15,0.92)',
         backdropFilter: 'blur(10px)',
-        borderBottom: `1px solid ${LINE}`,
+        borderBottom: `1px solid rgba(255,255,255,0.08)`,
         padding: '14px 24px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
-        <p style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: 11, letterSpacing: '0.4em', textTransform: 'uppercase', color: SUB, margin: 0 }}>
+        <p style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: 11, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', margin: 0 }}>
           Pré visualização · {orcamento.cliente}
         </p>
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={() => window.history.back()}
-            style={{ fontFamily: 'Inter, system-ui, sans-serif', padding: '8px 18px', background: 'transparent', color: INK_SOFT, border: `1px solid ${LINE}`, borderRadius: 6, fontWeight: 600, fontSize: 11, cursor: 'pointer', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+            style={{ fontFamily: 'Inter, system-ui, sans-serif', padding: '8px 18px', background: 'transparent', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, fontWeight: 600, fontSize: 11, cursor: 'pointer', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
             ‹ Voltar
           </button>
           <button onClick={() => window.print()}
-            style={{ fontFamily: 'Inter, system-ui, sans-serif', padding: '8px 20px', background: ACCENT, color: '#0b0d12', border: 'none', borderRadius: 6, fontWeight: 700, fontSize: 11, cursor: 'pointer', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+            style={{ fontFamily: 'Inter, system-ui, sans-serif', padding: '8px 20px', background: NAVY, color: PAPER, border: 'none', borderRadius: 6, fontWeight: 700, fontSize: 11, cursor: 'pointer', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
             ⎙ Imprimir / Guardar PDF
           </button>
         </div>
@@ -159,25 +164,27 @@ export default function PdfPage() {
           boxShadow: '0 24px 80px rgba(0,0,0,0.55)',
           position: 'relative',
           overflow: 'hidden',
+          backgroundImage: paperTexture,
+          backgroundBlendMode: 'multiply',
         }}>
 
-          {/* Top accent bar */}
+          {/* Top accent — navy bar com glow subtil */}
           <div style={{
-            height: 3,
-            background: `linear-gradient(90deg, ${ACCENT_DEEP} 0%, ${ACCENT} 50%, ${ACCENT_DEEP} 100%)`,
+            height: 5,
+            background: `linear-gradient(90deg, ${NAVY_DEEP} 0%, ${NAVY} 50%, ${NAVY_DEEP} 100%)`,
           }} />
 
           {/* HEADER */}
           <header style={{ padding: '20mm 22mm 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 24 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo-rl-prod-branco.png" alt="RL PROD"
-                style={{ width: 54, height: 54, objectFit: 'contain', opacity: 0.95 }} />
-              <div>
-                <p style={{ fontSize: 8, letterSpacing: '0.55em', textTransform: 'uppercase', color: MUTE, margin: 0, fontWeight: 500 }}>
-                  Photography &amp; Video
+              <img src="/logo-rl-prod-accent.png" alt="RL PROD"
+                style={{ width: 60, height: 60, objectFit: 'contain' }} />
+              <div style={{ paddingTop: 4 }}>
+                <p style={{ fontSize: 8, letterSpacing: '0.55em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>
+                  Photography &amp; Video (for brands)
                 </p>
-                <p style={{ fontSize: 19, letterSpacing: '0.42em', textTransform: 'uppercase', color: INK, margin: '4px 0 0', fontWeight: 600 }}>
+                <p style={{ fontSize: 21, letterSpacing: '0.4em', textTransform: 'uppercase', color: NAVY_DEEP, margin: '5px 0 0', fontWeight: 700 }}>
                   RL PROD
                 </p>
                 <p style={{ fontSize: 9, color: SUB, margin: '8px 0 0', letterSpacing: '0.04em' }}>
@@ -186,10 +193,10 @@ export default function PdfPage() {
               </div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <p style={{ fontSize: 9, letterSpacing: '0.45em', textTransform: 'uppercase', color: ACCENT, margin: 0, fontWeight: 700 }}>
+              <p style={{ fontSize: 9, letterSpacing: '0.45em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>
                 Proposta de Orçamento
               </p>
-              <p className="serif" style={{ fontSize: 22, color: INK, margin: '6px 0 0', fontWeight: 400, fontStyle: 'italic', letterSpacing: '-0.01em' }}>
+              <p className="serif" style={{ fontSize: 24, color: NAVY_DEEP, margin: '6px 0 0', fontWeight: 500, fontStyle: 'italic', letterSpacing: '-0.01em' }}>
                 Nº {num}
               </p>
               <p style={{ fontSize: 10, color: SUB, margin: '8px 0 0' }}>
@@ -203,22 +210,22 @@ export default function PdfPage() {
             </div>
           </header>
 
-          {/* Divider */}
+          {/* Divisor */}
           <div style={{ margin: '12mm 22mm 0', height: 1, background: LINE }} />
-          <div style={{ margin: '0 22mm', height: 2, background: ACCENT, width: 56 }} />
+          <div style={{ margin: '0 22mm', height: 2, background: NAVY, width: 60 }} />
 
           {/* CLIENTE */}
           <section style={{ padding: '8mm 22mm 0' }}>
-            <p style={{ fontSize: 9, letterSpacing: '0.45em', textTransform: 'uppercase', color: MUTE, margin: 0, fontWeight: 600 }}>
+            <p style={{ fontSize: 9, letterSpacing: '0.45em', textTransform: 'uppercase', color: MUTE, margin: 0, fontWeight: 700 }}>
               Proposta apresentada a
             </p>
-            <h1 className="serif" style={{ fontSize: 40, color: INK, margin: '6px 0 0', fontWeight: 400, lineHeight: 1.05, letterSpacing: '-0.005em' }}>
+            <h1 className="serif" style={{ fontSize: 42, color: NAVY_DEEP, margin: '6px 0 0', fontWeight: 500, lineHeight: 1.05, letterSpacing: '-0.01em' }}>
               {orcamento.cliente}
             </h1>
             {(orcamento.contacto || orcamento.email) && (
-              <p style={{ fontSize: 11, color: INK_SOFT, margin: '10px 0 0', letterSpacing: '0.02em' }}>
+              <p style={{ fontSize: 11, color: SUB, margin: '10px 0 0', letterSpacing: '0.02em' }}>
                 {orcamento.contacto && <span>{orcamento.contacto}</span>}
-                {orcamento.contacto && orcamento.email && <span style={{ color: ACCENT, margin: '0 8px' }}>·</span>}
+                {orcamento.contacto && orcamento.email && <span style={{ color: NAVY, margin: '0 8px' }}>·</span>}
                 {orcamento.email && <span>{orcamento.email}</span>}
               </p>
             )}
@@ -228,23 +235,23 @@ export default function PdfPage() {
           <section style={{ padding: '8mm 22mm 0' }}>
             <div style={{
               border: `1px solid ${LINE}`,
-              borderLeft: `2px solid ${ACCENT}`,
+              borderLeft: `3px solid ${NAVY}`,
               padding: '12px 18px',
-              background: PANEL,
+              background: PAPER_SOFT,
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
               gap: 18,
               borderRadius: 2,
             }}>
               <div>
-                <p style={{ fontSize: 8, letterSpacing: '0.45em', textTransform: 'uppercase', color: MUTE, margin: 0, fontWeight: 600 }}>Data do Evento</p>
-                <p style={{ fontSize: 13, color: INK, margin: '4px 0 0', fontWeight: 500 }}>
+                <p style={{ fontSize: 8, letterSpacing: '0.45em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>Data do Evento</p>
+                <p style={{ fontSize: 13, color: INK, margin: '4px 0 0', fontWeight: 600 }}>
                   {fmtIntervaloEvento(orcamento.data_inicio, orcamento.data_fim)}
                 </p>
               </div>
               <div>
-                <p style={{ fontSize: 8, letterSpacing: '0.45em', textTransform: 'uppercase', color: MUTE, margin: 0, fontWeight: 600 }}>Cobertura</p>
-                <p style={{ fontSize: 13, color: INK, margin: '4px 0 0', fontWeight: 500 }}>
+                <p style={{ fontSize: 8, letterSpacing: '0.45em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>Cobertura</p>
+                <p style={{ fontSize: 13, color: INK, margin: '4px 0 0', fontWeight: 600 }}>
                   {orcamento.cobertura ?? 'A definir'}
                 </p>
               </div>
@@ -254,10 +261,10 @@ export default function PdfPage() {
           {/* RESUMO */}
           {orcamento.resumo && (
             <section style={{ padding: '8mm 22mm 0' }}>
-              <p style={{ fontSize: 9, letterSpacing: '0.45em', textTransform: 'uppercase', color: ACCENT, margin: '0 0 6px', fontWeight: 700 }}>
+              <p style={{ fontSize: 9, letterSpacing: '0.45em', textTransform: 'uppercase', color: NAVY, margin: '0 0 6px', fontWeight: 700 }}>
                 Resumo
               </p>
-              <p style={{ fontSize: 11.5, lineHeight: 1.65, color: INK_SOFT, margin: 0, whiteSpace: 'pre-wrap' }}>
+              <p style={{ fontSize: 11.5, lineHeight: 1.65, color: SUB, margin: 0, whiteSpace: 'pre-wrap' }}>
                 {orcamento.resumo}
               </p>
             </section>
@@ -265,7 +272,7 @@ export default function PdfPage() {
 
           {/* PROPOSTAS */}
           <section style={{ padding: '10mm 22mm 0' }}>
-            <p style={{ fontSize: 9, letterSpacing: '0.45em', textTransform: 'uppercase', color: ACCENT, margin: '0 0 8px', fontWeight: 700 }}>
+            <p style={{ fontSize: 9, letterSpacing: '0.45em', textTransform: 'uppercase', color: NAVY, margin: '0 0 8px', fontWeight: 700 }}>
               {orcamento.propostas.length === 1 ? 'Proposta' : `Propostas (${orcamento.propostas.length})`}
             </p>
 
@@ -286,10 +293,10 @@ export default function PdfPage() {
 
           {/* CONDIÇÕES */}
           <section style={{ padding: '12mm 22mm 0' }}>
-            <p style={{ fontSize: 9, letterSpacing: '0.45em', textTransform: 'uppercase', color: ACCENT, margin: '0 0 8px', fontWeight: 700 }}>
+            <p style={{ fontSize: 9, letterSpacing: '0.45em', textTransform: 'uppercase', color: NAVY, margin: '0 0 8px', fontWeight: 700 }}>
               Condições Comerciais
             </p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, fontSize: 10.5, color: INK_SOFT, lineHeight: 1.55 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, fontSize: 10.5, color: SUB, lineHeight: 1.55 }}>
               <Condicao titulo="Validade da Proposta">
                 {orcamento.validade
                   ? `Esta proposta mantém-se válida até ${fmtData(orcamento.validade)}.`
@@ -320,22 +327,22 @@ export default function PdfPage() {
             justifyContent: 'space-between',
           }}>
             <div>
-              <p style={{ fontSize: 8, letterSpacing: '0.5em', textTransform: 'uppercase', color: MUTE, margin: 0, fontWeight: 600 }}>
+              <p style={{ fontSize: 8, letterSpacing: '0.5em', textTransform: 'uppercase', color: NAVY, margin: 0, fontWeight: 700 }}>
                 RL Prod &nbsp;·&nbsp; Photography &amp; Video
               </p>
               <p style={{ fontSize: 9, color: SUB, margin: '4px 0 0', fontStyle: 'italic' }}>
                 Obrigado pela confiança. Estamos disponíveis para qualquer esclarecimento adicional.
               </p>
             </div>
-            <p style={{ fontSize: 9, color: SUB, margin: 0, letterSpacing: '0.12em' }}>
+            <p style={{ fontSize: 9, color: NAVY, margin: 0, letterSpacing: '0.12em', fontWeight: 600 }}>
               Nº {num}
             </p>
           </footer>
 
           {/* Bottom accent */}
           <div style={{
-            position: 'absolute', bottom: 0, left: 0, right: 0, height: 2,
-            background: `linear-gradient(90deg, ${ACCENT_DEEP} 0%, ${ACCENT} 50%, ${ACCENT_DEEP} 100%)`,
+            position: 'absolute', bottom: 0, left: 0, right: 0, height: 4,
+            background: `linear-gradient(90deg, ${NAVY_DEEP} 0%, ${NAVY} 50%, ${NAVY_DEEP} 100%)`,
           }} />
         </div>
       </main>
@@ -351,11 +358,11 @@ function PropostaBlock({ proposta, numero }: { proposta: Proposta; numero: numbe
       border: `1px solid ${LINE}`,
       borderRadius: 3,
       padding: '14px 18px 16px',
-      background: PANEL,
+      background: PAPER_SOFT,
       breakInside: 'avoid',
       position: 'relative',
     }}>
-      {/* Header da proposta */}
+      {/* Header */}
       <div style={{
         display: 'flex',
         alignItems: 'flex-start',
@@ -366,10 +373,10 @@ function PropostaBlock({ proposta, numero }: { proposta: Proposta; numero: numbe
       }}>
         <div style={{ minWidth: 0, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
           <span className="serif" style={{
-            fontSize: 32,
-            color: ACCENT,
+            fontSize: 34,
+            color: NAVY,
             fontStyle: 'italic',
-            fontWeight: 400,
+            fontWeight: 500,
             lineHeight: 1,
             letterSpacing: '-0.02em',
           }}>
@@ -379,16 +386,16 @@ function PropostaBlock({ proposta, numero }: { proposta: Proposta; numero: numbe
             <p style={{ fontSize: 8, letterSpacing: '0.45em', textTransform: 'uppercase', color: MUTE, margin: 0, fontWeight: 700 }}>
               Proposta
             </p>
-            <h2 className="serif" style={{ fontSize: 22, color: INK, margin: '2px 0 0', fontWeight: 500, lineHeight: 1.15 }}>
+            <h2 className="serif" style={{ fontSize: 22, color: NAVY_DEEP, margin: '2px 0 0', fontWeight: 500, lineHeight: 1.15 }}>
               {proposta.titulo || 'Proposta'}
             </h2>
           </div>
         </div>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <p style={{ fontSize: 8, letterSpacing: '0.4em', textTransform: 'uppercase', color: MUTE, margin: 0, fontWeight: 600 }}>
+          <p style={{ fontSize: 8, letterSpacing: '0.4em', textTransform: 'uppercase', color: MUTE, margin: 0, fontWeight: 700 }}>
             Investimento
           </p>
-          <p className="serif" style={{ fontSize: 26, color: INK, margin: '2px 0 0', fontWeight: 500, letterSpacing: '-0.01em' }}>
+          <p className="serif" style={{ fontSize: 28, color: NAVY_DEEP, margin: '2px 0 0', fontWeight: 600, letterSpacing: '-0.01em' }}>
             {fmtEur(proposta.valor)}
           </p>
         </div>
@@ -396,7 +403,7 @@ function PropostaBlock({ proposta, numero }: { proposta: Proposta; numero: numbe
 
       {proposta.servicos.length > 0 && (
         <div style={{ paddingTop: 12 }}>
-          <p style={{ fontSize: 8, letterSpacing: '0.45em', textTransform: 'uppercase', color: MUTE, margin: '0 0 8px', fontWeight: 600 }}>
+          <p style={{ fontSize: 8, letterSpacing: '0.45em', textTransform: 'uppercase', color: NAVY, margin: '0 0 8px', fontWeight: 700 }}>
             Incluído nesta proposta
           </p>
           <ol style={{ listStyle: 'none', padding: 0, margin: 0 }}>
@@ -405,15 +412,15 @@ function PropostaBlock({ proposta, numero }: { proposta: Proposta; numero: numbe
                 padding: '9px 0',
                 borderBottom: idx === proposta.servicos.length - 1 ? 'none' : `1px solid ${LINE_SOFT}`,
                 display: 'grid',
-                gridTemplateColumns: '26px 1fr',
+                gridTemplateColumns: '28px 1fr',
                 gap: 10,
                 alignItems: 'flex-start',
               }}>
                 <span style={{
                   fontFamily: 'Inter, system-ui, sans-serif',
                   fontSize: 10,
-                  color: ACCENT,
-                  fontWeight: 700,
+                  color: NAVY,
+                  fontWeight: 800,
                   lineHeight: 1.4,
                   letterSpacing: '0.05em',
                   paddingTop: 1,
@@ -453,11 +460,11 @@ function PropostaBlock({ proposta, numero }: { proposta: Proposta; numero: numbe
 
 function Condicao({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
-    <div style={{ borderLeft: `1px solid ${LINE}`, paddingLeft: 12 }}>
-      <p style={{ fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: INK, margin: 0, fontWeight: 700 }}>
+    <div style={{ borderLeft: `2px solid ${NAVY}`, paddingLeft: 12 }}>
+      <p style={{ fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: NAVY_DEEP, margin: 0, fontWeight: 700 }}>
         {titulo}
       </p>
-      <p style={{ fontSize: 10.5, color: INK_SOFT, margin: '4px 0 0', lineHeight: 1.55 }}>
+      <p style={{ fontSize: 10.5, color: SUB, margin: '4px 0 0', lineHeight: 1.55 }}>
         {children}
       </p>
     </div>
