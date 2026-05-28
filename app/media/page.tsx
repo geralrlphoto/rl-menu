@@ -48,7 +48,7 @@ export default async function MediaDashboard() {
 
       {/* ── Hero — imagem RL PROD com fade para o fundo escuro ─────── */}
       <div className="relative z-10 shrink-0 overflow-hidden w-full"
-        style={{ height: 'min(48vh, 440px)', minHeight: '320px' }}>
+        style={{ height: 'min(60vh, 560px)', minHeight: '400px' }}>
 
         {/* Fallback visível se a imagem ainda não foi adicionada em /public/media-hero.jpg */}
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-0 pointer-events-none">
@@ -68,11 +68,10 @@ export default async function MediaDashboard() {
           </div>
         </div>
 
-        {/* Imagem hero — contain para garantir que TODO o logo e tagline são
-            visíveis (não corta topo/fundo). Cor de fundo coincide com o navy
-            da imagem, por isso as margens laterais blendam-se de forma invisível. */}
+        {/* Imagem hero — cover para preencher toda a largura. Os cortes ligeiros
+            no topo/fundo são minimizados pelas fades em volta. */}
         <div
-          className="absolute inset-0 z-[1] bg-contain bg-center bg-no-repeat"
+          className="absolute inset-0 z-[1] bg-cover bg-center bg-no-repeat"
           style={{
             backgroundImage: 'url("/MEDIA%20HERO.png")',
             backgroundColor: '#0c1a2a',
@@ -80,13 +79,17 @@ export default async function MediaDashboard() {
           aria-label="RL PROD · Photography & Video"
         />
 
-        {/* Vinheta subtil (escurece ligeiramente bordas) */}
+        {/* Vinheta subtil (escurece ligeiramente os 4 cantos) */}
         <div className="absolute inset-0 pointer-events-none z-[2]"
-          style={{ background: 'radial-gradient(ellipse 95% 85% at 50% 45%, transparent 0%, rgba(5,5,7,0.18) 75%, rgba(5,5,7,0.45) 100%)' }} />
+          style={{ background: 'radial-gradient(ellipse 95% 85% at 50% 50%, transparent 0%, rgba(5,5,7,0.22) 72%, rgba(5,5,7,0.55) 100%)' }} />
 
-        {/* FADE PRINCIPAL — transparente em cima, #050507 sólido em baixo */}
+        {/* FADES HORIZONTAIS — lados esquerdo e direito desvanecem para #050507 */}
         <div className="absolute inset-0 pointer-events-none z-[3]"
-          style={{ background: 'linear-gradient(180deg, transparent 0%, transparent 40%, rgba(5,5,7,0.30) 60%, rgba(5,5,7,0.70) 80%, rgba(5,5,7,0.95) 94%, #050507 100%)' }} />
+          style={{ background: 'linear-gradient(90deg, #050507 0%, rgba(5,5,7,0.55) 6%, transparent 14%, transparent 86%, rgba(5,5,7,0.55) 94%, #050507 100%)' }} />
+
+        {/* FADE VERTICAL — topo subtil + fundo sólido para os cards */}
+        <div className="absolute inset-0 pointer-events-none z-[4]"
+          style={{ background: 'linear-gradient(180deg, rgba(5,5,7,0.45) 0%, rgba(5,5,7,0.05) 12%, transparent 30%, transparent 50%, rgba(5,5,7,0.35) 68%, rgba(5,5,7,0.72) 82%, rgba(5,5,7,0.95) 95%, #050507 100%)' }} />
 
         {/* Logout — topo direito */}
         <div className="absolute top-5 right-6 z-30">
