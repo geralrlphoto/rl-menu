@@ -627,33 +627,70 @@ function FreelancerDetailInner() {
         const totalRecebidoLabel = totalRecebido.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
         const anoAtual = new Date().getFullYear()
 
-        // ── Performance Stats (on-time / late / em curso / média dias) ──
+        // ── Performance Stats — agora baseado nas 4 entregas por casamento ──
+        // Regra do utilizador:
+        //   • Conta TUDO o que está nos cards (Seleção / Provas / Editadas / Álbum)
+        //   • Quando o membro envia uma entrega (url_*_enviado_em), conta como
+        //     entregue ('no prazo' se dentro de 30 dias, 'fora prazo' se depois)
+        //   • Não enviado e prazo passou → 'fora prazo'
+        //   • Não enviado e prazo dentro do limite → 'em curso'
+        //   • Só entra o que está atribuído ao membro (todos os casamentos da
+        //     lista já estão atribuídos a este freelancer, mas filtramos
+        //     entregas que ainda nem têm URL associado — só conta se o membro
+        //     tem 'acesso' à entrega através do casamento).
         const performanceStats = (() => {
-          const concluidos = edicao.filter(e => e.status === 'CONCLUÍDO')
           let onTime = 0
           let late = 0
+          let emCurso = 0
+          let total = 0
           let somaDias = 0
           let contDias = 0
-          concluidos.forEach(e => {
-            const dEntrega = e.data_entrega ? new Date(e.data_entrega) : null
-            const dFinal = e.data_final_entrega ? new Date(e.data_final_entrega) : null
-            const dCasamento = e.data_casamento ? new Date(e.data_casamento) : null
-            // on-time se entrega final <= prazo planeado
-            if (dFinal && dEntrega) {
-              if (dFinal.getTime() <= dEntrega.getTime()) onTime += 1
-              else late += 1
-            } else {
-              onTime += 1
-            }
-            // média de dias casamento → entrega final
-            if (dCasamento && dFinal) {
-              somaDias += Math.max(0, Math.round((dFinal.getTime() - dCasamento.getTime()) / 86400000))
-              contDias += 1
-            }
+          const todayMid = new Date(); todayMid.setHours(0, 0, 0, 0)
+          const PRAZO_DIAS = 30
+
+          // Para os 4 tipos de entrega
+          const tipos: Array<'selecao' | 'provas' | 'editadas' | 'album'> = ['selecao', 'provas', 'editadas', 'album']
+
+          casamentos.forEach((c: any) => {
+            tipos.forEach(tipo => {
+              const sentAt = c[`url_${tipo}_enviado_em`]
+              const url    = c[`url_${tipo}`]
+              // Só conta entregas que estão visíveis ao membro:
+              // - Ou já têm timestamp de envio
+              // - Ou têm URL preenchido (ainda por enviar mas atribuído)
+              // - Ou o casamento já passou (prazo a correr)
+              const passou = c.data_casamento ? new Date(c.data_casamento).getTime() < todayMid.getTime() : false
+              const conta = !!sentAt || !!url || passou
+              if (!conta) return
+              total += 1
+
+              // Deadline: 30 dias após a data do casamento
+              let deadline: Date | null = null
+              if (c.data_casamento) {
+                const cas = new Date(c.data_casamento); cas.setHours(0,0,0,0)
+                deadline = new Date(cas.getTime() + PRAZO_DIAS * 86400000); deadline.setHours(0,0,0,0)
+              }
+
+              if (sentAt) {
+                const sentDate = new Date(sentAt)
+                if (deadline && sentDate.getTime() <= deadline.getTime() + 86400000) onTime += 1
+                else if (deadline) late += 1
+                else onTime += 1
+                if (c.data_casamento) {
+                  const cas = new Date(c.data_casamento)
+                  const dias = Math.max(0, Math.round((sentDate.getTime() - cas.getTime()) / 86400000))
+                  somaDias += dias
+                  contDias += 1
+                }
+              } else {
+                if (deadline && deadline.getTime() < todayMid.getTime()) late += 1
+                else emCurso += 1
+              }
+            })
           })
-          const emCurso = edicao.filter(e => e.status !== 'CONCLUÍDO').length
+
           const mediaDias = contDias > 0 ? Math.round(somaDias / contDias) : 0
-          return { total: edicao.length, onTime, late, emCurso, mediaDias }
+          return { total, onTime, late, emCurso, mediaDias }
         })()
 
         // ── Chart data: receitas cumulativas por dia do mês atual ───────
