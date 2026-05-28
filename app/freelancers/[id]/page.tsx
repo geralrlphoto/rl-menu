@@ -103,6 +103,43 @@ const selectCls = "w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py
 const optStyle = { backgroundColor: '#1a1a1a', color: 'white' }
 const labelCls = "block text-[14px] text-white/25 tracking-widest uppercase mb-1"
 
+// ─── Palavra-chave (admin reveal + copy) ──────────────────────────────────────
+
+function PalavraChaveCell({ password }: { password: string | null }) {
+  const [show, setShow] = useState(false)
+  const [copied, setCopied] = useState(false)
+  if (!password) return <span className="text-white/40 italic text-[13px]">— sem palavra-chave</span>
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(password)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch { /* ignore */ }
+  }
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span className={`font-mono text-[13px] tracking-wider ${show ? 'text-gold' : 'text-white/30'} transition-colors`}>
+        {show ? password : '••••••••'}
+      </span>
+      <button onClick={() => setShow(v => !v)} title={show ? 'Ocultar' : 'Mostrar'}
+        className="text-white/40 hover:text-gold transition-colors">
+        {show
+          ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        }
+      </button>
+      <button onClick={handleCopy} title="Copiar"
+        className={`text-[10px] px-2 py-0.5 rounded border tracking-widest uppercase transition-all ${
+          copied
+            ? 'border-emerald-500/40 text-emerald-300 bg-emerald-500/10'
+            : 'border-white/15 text-white/45 hover:text-gold hover:border-gold/40'
+        }`}>
+        {copied ? '✓ Copiada' : 'Copiar'}
+      </button>
+    </span>
+  )
+}
+
 // ─── Password Display ─────────────────────────────────────────────────────────
 
 function PasswordDisplay({ password, freelancerId }: { password: string | null; freelancerId: string }) {
@@ -5461,6 +5498,13 @@ function DadosPessoaisTab(props: {
               </div>
             </div>
           </div>
+
+          {/* Palavra-chave (admin) — reveal + copy rápido */}
+          <div className="pt-3 border-t border-white/[0.05] flex items-center gap-2 flex-wrap">
+            <span className="text-gold/70 text-[11px] tracking-[0.3em] uppercase">🔑 Palavra-chave</span>
+            <PalavraChaveCell password={freelancer.password} />
+          </div>
+
           <div className="pt-3 border-t border-white/[0.05] flex items-center gap-3 flex-wrap">
             <span className="inline-flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-full border bg-emerald-500/15 text-emerald-300 border-emerald-500/30 tracking-widest uppercase font-bold">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" style={{ boxShadow: '0 0 6px rgba(52,211,153,0.7)' }} />
@@ -5477,6 +5521,7 @@ function DadosPessoaisTab(props: {
             <Row label="Nome de Usuário" value={editingSection === 'pref' ? <InpRight value={ext.username ?? ''} onChange={v => updateExt({ username: v })} /> : (ext.username ?? '—')} />
             <Row label="Email" value={editingThis && editForm ? <InpRight type="email" value={editForm.email ?? ''} onChange={v => setEditForm({ ...editForm, email: v })} /> : (freelancer.email || '—')} />
             <Row label="Telefone" value={editingThis && editForm ? <InpRight type="tel" value={editForm.contato ?? ''} onChange={v => setEditForm({ ...editForm, contato: v })} /> : (freelancer.contato || '—')} />
+            <Row label="Palavra-chave" value={<PalavraChaveCell password={freelancer.password} />} />
             <Row label="Data de Nascimento" value={editingSection === 'pref' ? <InpRight type="date" value={ext.dataNascimento ?? ''} onChange={v => updateExt({ dataNascimento: v })} /> : (ext.dataNascimento ? new Date(ext.dataNascimento).toLocaleDateString('pt-PT') : '—')} />
             <Row label="Localização" value={editingSection === 'pref' ? <InpRight value={ext.localizacao ?? ''} onChange={v => updateExt({ localizacao: v })} /> : (ext.localizacao ?? '—')} />
             <Row label="Fuso Horário" value={ext.fusoHorario ?? '—'} />
