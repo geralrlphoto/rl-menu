@@ -1118,7 +1118,42 @@ function PortalSubPageContent() {
         // API error — silently fail, portal renders without Notion blocks
         setBlocks([])
       } else {
-        setBlocks(d.blocks ?? [])
+        // Patch: para portais de casamento (CAS_*), substituir 'batizado' /
+        // 'vosso bebé' por 'casamento' nos textos vindos do Notion.
+        const ref = portalRef || refParam || ''
+        const isCasamento = /^CAS[_-]/i.test(ref)
+        const fixText = (text: string): string => isCasamento && text
+          ? text
+              .replace(/grande dia do vosso bebé/gi, 'grande dia do vosso casamento')
+              .replace(/dia do vosso bebé/gi, 'dia do vosso casamento')
+              .replace(/vosso bebé/gi, 'vosso casamento')
+              .replace(/gestão do batizado/gi, 'gestão do casamento')
+              .replace(/dia do batizado/gi, 'dia do casamento')
+              .replace(/do batizado/gi, 'do casamento')
+              .replace(/o batizado/gi, 'o casamento')
+              .replace(/\bBatizado\b/g, 'Casamento')
+              .replace(/\bBATIZADO\b/g, 'CASAMENTO')
+              .replace(/\bbatizado\b/g, 'casamento')
+          : text
+        const patchBlocks = (bks: any[]): any[] => isCasamento
+          ? bks.map(b => {
+              const out: any = { ...b }
+              const types = ['paragraph','heading_1','heading_2','heading_3','bulleted_list_item','numbered_list_item','quote','callout','to_do','toggle','code']
+              for (const t of types) {
+                if (out[t]?.rich_text && Array.isArray(out[t].rich_text)) {
+                  out[t] = { ...out[t], rich_text: out[t].rich_text.map((rt: any) => rt ? {
+                    ...rt,
+                    plain_text: rt.plain_text ? fixText(rt.plain_text) : rt.plain_text,
+                    text: rt.text ? { ...rt.text, content: rt.text.content ? fixText(rt.text.content) : rt.text.content } : rt.text,
+                  } : rt) }
+                }
+              }
+              if (out.child_page?.title) out.child_page = { ...out.child_page, title: fixText(out.child_page.title) }
+              if (Array.isArray(out.children)) out.children = patchBlocks(out.children)
+              return out
+            })
+          : bks
+        setBlocks(patchBlocks(d.blocks ?? []))
         setSettings(d.settings ?? { hiddenNav: [] })
         setSettingsBlockId(d.settingsBlockId ?? null)
       }

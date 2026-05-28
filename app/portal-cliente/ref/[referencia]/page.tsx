@@ -1013,12 +1013,51 @@ export default function PortalRefPage() {
   const [checkingPassword, setCheckingPassword] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
 
+  // Casamento usa textos genéricos no Notion que mencionam 'batizado' / 'vosso bebé'.
+  // Para portais de casamento (CAS_*), substituímos no cliente antes de renderizar
+  // para evitar o bug visual sem ter de duplicar a página Notion.
+  const isCasamento = /^CAS[_-]/i.test(referencia)
+  const fixTextForCasamento = useCallback((text: string): string => {
+    if (!isCasamento || !text) return text
+    return text
+      .replace(/grande dia do vosso bebé/gi, 'grande dia do vosso casamento')
+      .replace(/dia do vosso bebé/gi, 'dia do vosso casamento')
+      .replace(/vosso bebé/gi, 'vosso casamento')
+      .replace(/gestão do batizado/gi, 'gestão do casamento')
+      .replace(/dia do batizado/gi, 'dia do casamento')
+      .replace(/do batizado/gi, 'do casamento')
+      .replace(/o batizado/gi, 'o casamento')
+      .replace(/\bBatizado\b/g, 'Casamento')
+      .replace(/\bBATIZADO\b/g, 'CASAMENTO')
+      .replace(/\bbatizado\b/g, 'casamento')
+  }, [isCasamento])
+  const patchBlocksForCasamento = useCallback((bks: Block[]): Block[] => {
+    if (!isCasamento) return bks
+    return bks.map((b: any) => {
+      const out: any = { ...b }
+      const richTextTypes = ['paragraph','heading_1','heading_2','heading_3','bulleted_list_item','numbered_list_item','quote','callout','to_do','toggle','code']
+      for (const t of richTextTypes) {
+        if (out[t]?.rich_text && Array.isArray(out[t].rich_text)) {
+          out[t] = {
+            ...out[t],
+            rich_text: out[t].rich_text.map((rt: any) => rt?.plain_text || rt?.text?.content
+              ? { ...rt, plain_text: rt.plain_text ? fixTextForCasamento(rt.plain_text) : rt.plain_text, text: rt.text ? { ...rt.text, content: rt.text.content ? fixTextForCasamento(rt.text.content) : rt.text.content } : rt.text }
+              : rt),
+          }
+        }
+      }
+      if (out.child_page?.title) out.child_page = { ...out.child_page, title: fixTextForCasamento(out.child_page.title) }
+      if (Array.isArray(out.children)) out.children = patchBlocksForCasamento(out.children)
+      return out
+    })
+  }, [isCasamento, fixTextForCasamento])
+
   const loadBlocks = useCallback(async (bust = false) => {
     const url = bust ? `/api/portais-clientes?id=${PAGE_ID}&bust=1` : `/api/portais-clientes?id=${PAGE_ID}`
     const d = await fetch(url).then(r => r.json())
     if (d.error) setError(d.error)
-    else setBlocks(d.blocks ?? [])
-  }, [])
+    else setBlocks(patchBlocksForCasamento(d.blocks ?? []))
+  }, [patchBlocksForCasamento])
 
   const loadSettings = useCallback(async () => {
     const d = await fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`).then(r => r.json())
