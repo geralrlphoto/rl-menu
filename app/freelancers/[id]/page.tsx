@@ -2180,12 +2180,26 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                   return (
                     <button onClick={async e => {
                       e.stopPropagation()
+                      if (!c.referencia) {
+                        alert('Este casamento ainda não tem referência atribuída. Sincroniza primeiro com o evento.')
+                        return
+                      }
                       try {
-                        await fetch('/api/freelancer-casamentos', {
+                        // Toggle persistido em portais.settings.alertas_fotografia_ativos
+                        // — coluna JSONB já existe, sem necessidade de migração.
+                        const res = await fetch('/api/portais', {
                           method: 'PATCH',
                           headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ id: c.id, alertas_fotografia_ativos: !alertasAtivos }),
+                          body: JSON.stringify({
+                            referencia: c.referencia,
+                            updates: { settings: { alertas_fotografia_ativos: !alertasAtivos } },
+                          }),
                         })
+                        if (!res.ok) {
+                          const j = await res.json().catch(() => ({}))
+                          alert('Falha ao gravar alertas: ' + (j.error ?? res.status))
+                          return
+                        }
                         onRefresh()
                       } catch (err) {
                         alert('Erro ao alterar alertas: ' + (err as Error).message)

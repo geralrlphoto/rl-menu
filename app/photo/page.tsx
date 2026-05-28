@@ -171,17 +171,16 @@ export default async function PhotoDashboard() {
   //   Para eventos onde a RL não é responsável pela parte fotográfica, o
   //   admin desliga o sino no card do casamento (/freelancers/[id]).
   //   Esses eventos NÃO aparecem nos PRAZOS FOTOS aqui.
-  //   Se a coluna ainda não existir na DB, falha silenciosamente (set vazio).
+  //   Estado guardado em portais.settings.alertas_fotografia_ativos.
   const alertasOffRefs = await (async () => {
     try {
       const { data, error } = await supabase
-        .from('freelancer_casamentos')
-        .select('referencia')
-        .eq('alertas_fotografia_ativos', false)
+        .from('portais')
+        .select('referencia, settings')
       if (error) return new Set<string>()
       const set = new Set<string>()
-      for (const r of (data ?? []) as Array<{ referencia: string | null }>) {
-        if (r.referencia) set.add(r.referencia)
+      for (const r of (data ?? []) as Array<{ referencia: string | null; settings: any }>) {
+        if (r.referencia && r.settings?.alertas_fotografia_ativos === false) set.add(r.referencia)
       }
       return set
     } catch { return new Set<string>() }

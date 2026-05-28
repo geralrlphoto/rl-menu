@@ -34,6 +34,17 @@ export async function GET(req: NextRequest) {
       }
       const cpsByRef = new Map<string, any>(cpsRows.filter((r: any) => r.referencia_evento).map((r: any) => [r.referencia_evento, r]))
 
+      // 1c) Toggle de alertas (armazenado em portais.settings.alertas_fotografia_ativos)
+      let portaisRows: any[] = []
+      if (refs0.length > 0) {
+        const { data: pr } = await supabase
+          .from('portais')
+          .select('referencia, settings')
+          .in('referencia', refs0)
+        portaisRows = pr ?? []
+      }
+      const portaisByRef = new Map<string, any>(portaisRows.filter((r: any) => r.referencia).map((r: any) => [r.referencia, r]))
+
       // 2) Buscar todas as evento_equipa (filtra por referencia/evento_id quando possível)
       const refs = Array.from(new Set(casamentos.filter((c: any) => c.referencia).map((c: any) => c.referencia)))
       let equipa: any[] = []
@@ -84,6 +95,15 @@ export async function GET(req: NextRequest) {
         c.nome_noivos = noivosNome
         c.nome_noiva  = cps?.nome_noiva ?? null
         c.nome_noivo  = cps?.nome_noivo ?? null
+
+        // ── TOGGLE ALERTAS FOTOGRAFIA (vem de portais.settings) ──
+        //    Default: true (ativo). Apenas é false quando admin clicou no
+        //    botão "🔕 Alerta Desativo" no card do casamento.
+        const portal = c.referencia ? portaisByRef.get(c.referencia) : null
+        const portalSettings = portal?.settings ?? {}
+        c.alertas_fotografia_ativos = portalSettings.alertas_fotografia_ativos === false
+          ? false
+          : true
 
         // ── EQUIPA (editor_fotos, editor_album, editor_video) ──
         let eq: any = c.referencia ? equipaByRef.get(c.referencia) : null
