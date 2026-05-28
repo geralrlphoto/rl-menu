@@ -1048,7 +1048,14 @@ function FreelancerDetailInner() {
 
             {/* COL 1: Casamentos Editados */}
             {(() => {
-              const editados = edicao.filter(e => e.status === 'CONCLUÍDO').slice(0, 4)
+              // Regra: 'se o membro enviar a notificação de FOTOS EDITADAS, o
+              //         casamento já está editado e aparece aqui'.
+              //         Lemos casamentos com url_editadas_enviado_em preenchido,
+              //         ordenados pelo timestamp de envio DESC.
+              const editados = casamentos
+                .filter(c => !!c.url_editadas_enviado_em)
+                .sort((a, b) => (b.url_editadas_enviado_em ?? '').localeCompare(a.url_editadas_enviado_em ?? ''))
+                .slice(0, 4)
               const placeholderImgs = [
                 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&h=400&fit=crop',
                 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&h=400&fit=crop',
@@ -1060,7 +1067,7 @@ function FreelancerDetailInner() {
                   style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-[15px] font-light text-white" style={{ fontFamily: 'Georgia, serif' }}>Casamentos <span className="italic text-gold">Editados</span></h3>
-                    <button onClick={() => setTab('edicao')}
+                    <button onClick={() => setTab('casamentos')}
                       className="text-[11px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors">
                       Ver todos →
                     </button>
@@ -1072,23 +1079,23 @@ function FreelancerDetailInner() {
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 gap-3">
-                      {editados.map((e, idx) => {
-                        const dataLabel = e.data_final_entrega || e.data_entrega
+                      {editados.map((c, idx) => {
+                        const enviadoEm = c.url_editadas_enviado_em
                         return (
-                          <button key={e.id} onClick={() => setTab('edicao')}
+                          <button key={c.id} onClick={() => setTab('casamentos')}
                             className="group cursor-pointer text-left">
                             <div className="relative aspect-[4/3] rounded-xl overflow-hidden border border-white/[0.08] mb-2 group-hover:border-gold/30 transition-all">
                               <img src={placeholderImgs[idx % placeholderImgs.length]}
-                                alt={e.nome}
+                                alt={c.local ?? '—'}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                               <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-emerald-500/90 border border-emerald-300 flex items-center justify-center text-[10px] font-bold text-black">
                                 ✓
                               </div>
                             </div>
-                            <p className="text-[12px] font-medium text-white truncate group-hover:text-gold transition-colors">{e.nome}</p>
+                            <p className="text-[12px] font-medium text-white truncate group-hover:text-gold transition-colors">{c.local || '—'}</p>
                             <p className="text-[10px] text-white/35">
-                              {dataLabel ? `Entrega: ${fmtDate(dataLabel).split(' · ')[0]}` : 'Sem data'}
+                              {enviadoEm ? `Enviado: ${new Date(enviadoEm).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })}` : 'Sem data'}
                             </p>
                           </button>
                         )
