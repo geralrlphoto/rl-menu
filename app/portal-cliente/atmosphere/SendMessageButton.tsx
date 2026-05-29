@@ -42,30 +42,25 @@ export function SendMessageButton({
       <style jsx>{`
         .send-msg-btn {
           display: inline-flex; align-items: center; justify-content: center;
-          gap: 10px;
+          gap: 12px;
           font-family: 'Hanken Grotesk', sans-serif;
-          font-size: 12px; font-weight: 700; letter-spacing: .25em;
+          font-size: 12px; font-weight: 600; letter-spacing: .22em;
           text-transform: uppercase;
-          color: #1c150b;
-          padding: 14px 32px; border-radius: 999px;
-          border: 1px solid transparent;
-          background: linear-gradient(168deg, #efd6a2 0%, #d8b873 40%, #c19a52 78%, #b78f47 100%);
-          box-shadow:
-            inset 0 1px 0 rgba(255,250,236,.6),
-            inset 0 -1px 0 rgba(120,86,38,.4),
-            0 12px 28px -14px rgba(200,168,102,.55);
+          color: #efe7d6;
+          padding: 14px 30px; border-radius: 4px;
+          border: 1px solid rgba(200,168,102,.45);
+          background: transparent;
           cursor: pointer;
-          transition: transform .3s, box-shadow .3s, background .3s;
+          transition: border-color .25s, color .25s, background .25s;
           margin: 22px 0 6px;
         }
-        .send-msg-btn :global(svg) { stroke: #1c150b; }
+        .send-msg-btn :global(svg) { stroke: #c8a866; transition: stroke .25s; }
         .send-msg-btn:hover {
-          background: linear-gradient(168deg, #f6e1b2 0%, #e2c481 40%, #cba65c 78%, #c19a52 100%);
-          transform: translateY(-1px);
-          box-shadow:
-            inset 0 1px 0 rgba(255,253,244,.75),
-            0 18px 36px -14px rgba(200,168,102,.7);
+          color: #fff;
+          border-color: #c8a866;
+          background: rgba(200,168,102,.06);
         }
+        .send-msg-btn:hover :global(svg) { stroke: #d7bd87; }
       `}</style>
     </>
   )
