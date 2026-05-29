@@ -34,6 +34,29 @@ function LoginPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const nextFromUrl = searchParams?.get('next') ?? null
+  const posMode     = searchParams?.get('pos') === '1'
+
+  // ── Ajuste de posição da imagem hero (persistido em localStorage) ──
+  type HeroPos = { x: number; y: number; zoom: number; bright: number }
+  const HERO_POS_DEFAULT: HeroPos = { x: 50, y: 50, zoom: 105, bright: 92 }
+  const [heroPos, setHeroPos] = useState<HeroPos>(HERO_POS_DEFAULT)
+  // Carrega do localStorage no mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('login_hero_pos')
+      if (raw) {
+        const obj = JSON.parse(raw)
+        if (obj && typeof obj === 'object') {
+          setHeroPos({
+            x:      typeof obj.x === 'number' ? obj.x : HERO_POS_DEFAULT.x,
+            y:      typeof obj.y === 'number' ? obj.y : HERO_POS_DEFAULT.y,
+            zoom:   typeof obj.zoom === 'number' ? obj.zoom : HERO_POS_DEFAULT.zoom,
+            bright: typeof obj.bright === 'number' ? obj.bright : HERO_POS_DEFAULT.bright,
+          })
+        }
+      }
+    } catch { /* ignore */ }
+  }, [])
 
   const [mode, setMode] = useState<'freelancer' | 'admin'>('freelancer')
   // freelancer fields
@@ -157,11 +180,14 @@ function LoginPageInner() {
             falha se o ficheiro ainda não estiver presente; o overlay
             cobre tudo na mesma). */}
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-cover bg-center scale-105"
+          <div className="absolute inset-0 bg-cover"
             style={{
               backgroundImage: `url("${HERO_BG}")`,
               backgroundColor: '#0a1525', // fallback navy se ficheiro falta
-              filter: 'brightness(0.92) saturate(1.08) contrast(1.05)',
+              backgroundPosition: `${heroPos.x}% ${heroPos.y}%`,
+              transform: `scale(${heroPos.zoom / 100})`,
+              transformOrigin: `${heroPos.x}% ${heroPos.y}%`,
+              filter: `brightness(${heroPos.bright / 100}) saturate(1.08) contrast(1.05)`,
             }} />
           {/* overlay muito subtil — apenas para garantir legibilidade do texto */}
           <div className="absolute inset-0"
@@ -360,6 +386,79 @@ function LoginPageInner() {
           </div>
         )}
       </section>
+
+      {/* ── Painel de ajuste de posição — visível com /login?pos=1 ─────── */}
+      {posMode && (
+        <div className="fixed bottom-5 left-5 z-[100] w-[300px] rounded-2xl border shadow-2xl"
+          style={{
+            background: 'rgba(8,10,15,0.92)',
+            backdropFilter: 'blur(12px)',
+            borderColor: 'rgba(201,164,92,0.40)',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.55), 0 0 24px -4px rgba(201,164,92,0.30)',
+          }}>
+          <div className="px-4 pt-3 pb-2 border-b border-white/[0.06] flex items-center justify-between">
+            <p className="text-[9px] tracking-[0.4em] uppercase font-bold text-gold">Ajuste · Imagem Hero</p>
+            <button onClick={() => {
+              if (typeof window !== 'undefined') {
+                const url = new URL(window.location.href)
+                url.searchParams.delete('pos')
+                window.location.href = url.toString()
+              }
+            }}
+              className="text-[11px] text-white/45 hover:text-white">✕</button>
+          </div>
+          <div className="px-4 py-3 space-y-3">
+            <Slider label="Horizontal" min={0} max={100} step={1} unit="%" value={heroPos.x}
+              onChange={v => setHeroPos(p => ({ ...p, x: v }))} />
+            <Slider label="Vertical" min={0} max={100} step={1} unit="%" value={heroPos.y}
+              onChange={v => setHeroPos(p => ({ ...p, y: v }))} />
+            <Slider label="Zoom" min={100} max={250} step={5} unit="%" value={heroPos.zoom}
+              onChange={v => setHeroPos(p => ({ ...p, zoom: v }))} />
+            <Slider label="Brilho" min={20} max={120} step={2} unit="%" value={heroPos.bright}
+              onChange={v => setHeroPos(p => ({ ...p, bright: v }))} />
+          </div>
+          <div className="px-4 py-3 border-t border-white/[0.06] flex items-center justify-between gap-2 bg-black/30">
+            <button onClick={() => setHeroPos(HERO_POS_DEFAULT)}
+              className="text-[10px] tracking-widest uppercase text-white/45 hover:text-white px-2 py-1.5">
+              Repor
+            </button>
+            <button onClick={() => {
+              try {
+                localStorage.setItem('login_hero_pos', JSON.stringify(heroPos))
+                setToast('Posição guardada. Recarrega a página para ver fora do modo ajuste.')
+              } catch { setToast('Falha ao guardar localStorage.') }
+            }}
+              className="text-[10px] tracking-[0.3em] uppercase font-bold px-4 py-1.5 rounded-md transition-all"
+              style={{ background: '#c9a84c', color: '#1a1306', boxShadow: '0 0 14px -3px rgba(201,168,76,0.55)' }}>
+              Guardar
+            </button>
+          </div>
+        </div>
+      )}
     </main>
+  )
+}
+
+/* ─── Slider helper para o painel de ajuste ──────────────────────────────── */
+
+function Slider({
+  label, min, max, step, unit, value, onChange,
+}: {
+  label: string
+  min: number; max: number; step: number; unit?: string
+  value: number
+  onChange: (v: number) => void
+}) {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[9px] tracking-[0.35em] uppercase text-white/55 font-bold">{label}</span>
+        <span className="text-[10px] text-gold/85 font-bold tabular-nums">{value}{unit ?? ''}</span>
+      </div>
+      <input type="range" min={min} max={max} step={step} value={value}
+        onChange={e => onChange(parseInt(e.target.value, 10))}
+        className="w-full accent-gold cursor-pointer"
+        style={{ height: 4 }} />
+    </div>
   )
 }
