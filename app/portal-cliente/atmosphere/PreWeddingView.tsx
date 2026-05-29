@@ -185,13 +185,6 @@ export function PreWeddingView(props: PreWeddingViewProps) {
         </section>
       ))}
 
-      {/* Logo card creme */}
-      <div className="logocard">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/portal-noivos/logo-ink.png" alt="RL Photo Video" />
-        <div className="url">www.rlphotovideo.pt</div>
-      </div>
-
       {/* Marcar Pré-Wedding — usa PreWeddingSection existente */}
       {props.bookNode && (
         <div className="pw-book">
