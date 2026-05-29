@@ -5,6 +5,9 @@
    Recebe slots + reservedSlotId + callbacks. Toda a lógica de
    reservas e notificações continua no componente original
    PreWeddingSection (passado como prop bookNode).
+
+   Gestão de fotos: cada slot de foto tem upload directo na página
+   (admin). Slots: hero, intro, tript-0/1/2, cen-0/1/2.
    ============================================================ */
 
 import { type ReactNode } from 'react'
@@ -19,7 +22,18 @@ export type PreWeddingViewProps = {
   adminActions?: ReactNode
   onEditTitle?: () => void
 
-  // Conteúdo editorial (vem do Notion)
+  /** Upload directo na página: chamado por qualquer slot.
+   *  slot é uma chave estável (ex: 'hero', 'intro', 'tript-0',
+   *  'cen-1'). Persistência cabe ao parent. */
+  onUploadPhoto?: (slot: string, file: File) => void | Promise<void>
+  /** Remover foto de um slot. */
+  onRemovePhoto?: (slot: string) => void | Promise<void>
+  /** Indicador: qual slot está a fazer upload (ou null). */
+  uploadingSlot?: string | null
+
+  // Conteúdo editorial
+  /** Foto full-width logo abaixo do hero (mesma largura/altura) */
+  heroPhotoUrl?: string | null
   /** Foto à direita da intro (foto principal pré-wedding) */
   introPhotoUrl?: string | null
   /** Texto da secção introdutória (parágrafos Notion) */
@@ -46,7 +60,52 @@ export type PreWeddingViewProps = {
   bookNode?: ReactNode
 }
 
+/** Overlay de controlos (Adicionar/Trocar + Remover) sobre qualquer foto.
+ *  Renderiza apenas quando admin + onUpload definidos. */
+function SlotControls(props: {
+  slot: string
+  url?: string | null
+  isAdmin: boolean
+  uploading: boolean
+  onUpload?: (slot: string, file: File) => void | Promise<void>
+  onRemove?: (slot: string) => void | Promise<void>
+}) {
+  if (!props.isAdmin || !props.onUpload) return null
+  return (
+    <div className="imgctrl">
+      <label className="gbtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="8.5" cy="10" r="1.6" /><path d="M5 17l4.5-4 3 2.5L16 11l3 3" />
+        </svg>
+        {props.uploading ? 'A carregar…' : props.url ? 'Trocar' : 'Adicionar'}
+        <input
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          disabled={props.uploading}
+          onChange={e => {
+            const f = e.target.files?.[0]
+            if (f) props.onUpload?.(props.slot, f)
+            e.currentTarget.value = ''
+          }}
+        />
+      </label>
+      {props.url && props.onRemove && (
+        <button type="button" className="gbtn danger" onClick={() => props.onRemove?.(props.slot)}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+          Remover
+        </button>
+      )}
+    </div>
+  )
+}
+
 export function PreWeddingView(props: PreWeddingViewProps) {
+  const upSlot = props.uploadingSlot ?? null
+  const isUp = (s: string) => upSlot === s
+
   return (
     <>
       {/* Admin bar */}
@@ -81,6 +140,19 @@ export function PreWeddingView(props: PreWeddingViewProps) {
         </div>
       </header>
 
+      {/* Foto full-width logo abaixo do hero */}
+      <section className="pw-hero-photo">
+        {props.heroPhotoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={props.heroPhotoUrl} alt="" />
+        ) : (
+          <div className="ph" />
+        )}
+        <SlotControls slot="hero" url={props.heroPhotoUrl}
+          isAdmin={props.isAdmin} uploading={isUp('hero')}
+          onUpload={props.onUploadPhoto} onRemove={props.onRemovePhoto} />
+      </section>
+
       {/* Intro */}
       <section className="pw-intro">
         <div className="body">
@@ -97,82 +169,99 @@ export function PreWeddingView(props: PreWeddingViewProps) {
           ) : (
             <div className="ph" data-label="Pré-Wedding" />
           )}
+          <SlotControls slot="intro" url={props.introPhotoUrl}
+            isAdmin={props.isAdmin} uploading={isUp('intro')}
+            onUpload={props.onUploadPhoto} onRemove={props.onRemovePhoto} />
         </div>
       </section>
 
-      {/* Tríptico de imagens */}
-      {props.triptychUrls && props.triptychUrls.filter(Boolean).length > 0 && (
-        <div className="pw-tript">
-          {[0, 1, 2].map(i => {
-            const u = props.triptychUrls?.[i] ?? null
-            return (
-              <div key={i} className="frame">
-                {u ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={u} alt="" />
-                ) : (
-                  <div className="ph" data-label="Foto" />
-                )}
-              </div>
-            )
-          })}
-        </div>
-      )}
+      {/* Foto única full-width abaixo da intro (substitui o antigo tríptico) */}
+      {(() => {
+        const u = props.triptychUrls?.[0] ?? null
+        if (!props.isAdmin && !u) return null
+        return (
+          <div className="pw-tript">
+            <div className="frame">
+              {u ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={u} alt="" />
+              ) : (
+                <div className="ph" data-label="Foto" />
+              )}
+              <SlotControls slot="tript-0" url={u}
+                isAdmin={props.isAdmin} uploading={isUp('tript-0')}
+                onUpload={props.onUploadPhoto} onRemove={props.onRemovePhoto} />
+            </div>
+          </div>
+        )
+      })()}
 
       {/* 3 Cenários */}
-      {props.cenarios.map((c, i) => (
-        <section key={i} className="pw-cenario">
-          <div className="num">{c.num}</div>
-          <h3>
-            {c.titleAccent ? (
-              <>{c.title.replace(c.titleAccent, '').trim()}{' '}
-                <em>{c.titleAccent}</em></>
-            ) : c.title}
-          </h3>
-          <hr className="gold-rule" />
+      {props.cenarios.map((c, i) => {
+        const slot = `cen-${i}`
+        const url = c.photoUrl ?? null
+        return (
+          <section key={i} className="pw-cenario">
+            <div className="num">{c.num}</div>
+            <h3>
+              {c.titleAccent ? (
+                <>{c.title.replace(c.titleAccent, '').trim()}{' '}
+                  <em>{c.titleAccent}</em></>
+              ) : c.title}
+            </h3>
+            <hr className="gold-rule" />
 
-          <div className="body">
-            {c.paragraphs.map((p, j) => (
-              <p key={j} dangerouslySetInnerHTML={{ __html: highlight(p) }} />
-            ))}
+            <div className="body">
+              {c.paragraphs.map((p, j) => (
+                <p key={j} dangerouslySetInnerHTML={{ __html: highlight(p) }} />
+              ))}
 
-            {c.bullets && c.bullets.length > 0 && (
-              <ul className="cen-list">
-                {c.bullets.map((b, j) => <li key={j}>{b}</li>)}
-              </ul>
-            )}
+              {c.bullets && c.bullets.length > 0 && (
+                <ul className="cen-list">
+                  {c.bullets.map((b, j) => <li key={j}>{b}</li>)}
+                </ul>
+              )}
 
-            {c.outfit && (
-              <div className="pw-outfit">
-                <div className="card">
-                  <h4>Noivo</h4>
-                  <p>{c.outfit.noivo ?? 'Camisa clara, blazer leve, calças de algodão.'}</p>
+              {c.outfit && (
+                <div className="pw-outfit">
+                  <div className="card">
+                    <h4>Noivo</h4>
+                    <p>{c.outfit.noivo ?? 'Camisa clara, blazer leve, calças de algodão.'}</p>
+                  </div>
+                  <div className="card">
+                    <h4>Noiva</h4>
+                    <p>{c.outfit.noiva ?? 'Vestido fluido, tons neutros, calçado confortável.'}</p>
+                  </div>
                 </div>
-                <div className="card">
-                  <h4>Noiva</h4>
-                  <p>{c.outfit.noiva ?? 'Vestido fluido, tons neutros, calçado confortável.'}</p>
+              )}
+
+              {c.dica && (
+                <div className="pw-dica">
+                  <span className="ic">✦</span>
+                  <div className="txt" dangerouslySetInnerHTML={{ __html: highlight(c.dica) }} />
                 </div>
-              </div>
-            )}
-
-            {c.dica && (
-              <div className="pw-dica">
-                <span className="ic">✦</span>
-                <div className="txt" dangerouslySetInnerHTML={{ __html: highlight(c.dica) }} />
-              </div>
-            )}
-          </div>
-
-          {/* Foto grande full-width depois de cada cenário */}
-          {(c.photoUrl || props.introPhotoUrl) && (
-            <div className="pw-cenario-photo">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={c.photoUrl || props.introPhotoUrl || ''} alt="" />
+              )}
             </div>
-          )}
 
-        </section>
-      ))}
+            {/* Foto grande full-width depois de cada cenário — sempre visível
+             *  em modo admin para permitir upload directo. */}
+            {(props.isAdmin || url) && (
+              <div className="pw-cenario-photo">
+                {url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={url} alt="" />
+                ) : (
+                  <div className="ph" />
+                )}
+                <SlotControls slot={slot} url={url}
+                  isAdmin={props.isAdmin} uploading={isUp(slot)}
+                  onUpload={props.onUploadPhoto} onRemove={props.onRemovePhoto} />
+              </div>
+            )}
+
+          </section>
+        )
+      })}
 
       {/* Marcar Pré-Wedding — usa PreWeddingSection existente */}
       {props.bookNode && (

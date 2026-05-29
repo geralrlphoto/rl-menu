@@ -948,6 +948,10 @@ function PortalSubPageContent() {
   const [briefingLinks, setBriefingLinks] = useState<Record<string, string>>({})
   const [pageHeaders, setPageHeaders] = useState<Record<string, string>>({})
   const [uploadingPageHeader, setUploadingPageHeader] = useState(false)
+  /** Map de fotos da página Pré-Wedding (slot → URL). Gerido 100% no app, sem Notion.
+   *  Slots: 'hero', 'intro', 'tript-0', 'tript-1', 'tript-2', 'cen-0', 'cen-1', 'cen-2'. */
+  const [pwPhotos, setPwPhotos] = useState<Record<string, string>>({})
+  const [uploadingPwSlot, setUploadingPwSlot] = useState<string | null>(null)
   const [briefingInfo, setBriefingInfo] = useState<Record<string, BriefingExt>>({})
   const [editingBriefingInfo, setEditingBriefingInfo] = useState(false)
   const [briefingFieldsForm, setBriefingFieldsForm] = useState<Array<{ label: string; value: string }>>([])
@@ -1068,6 +1072,10 @@ function PortalSubPageContent() {
       setCalloutLinks(ps.calloutLinks ?? {})
       setBriefingLinks(ps.briefingLinks ?? {})
       setPageHeaders(ps.pageHeaders ?? {})
+      // pwPhotos é o novo formato; pwHeroPhoto era o legacy (foto abaixo do hero)
+      const photos = { ...(ps.pwPhotos ?? {}) }
+      if (ps.pwHeroPhoto && !photos.hero) photos.hero = ps.pwHeroPhoto
+      setPwPhotos(photos)
       setBriefingInfo(ps.briefingInfo ?? {})
       setCronogramaStatus(ps.cronogramaStatus ?? {})
       setSatisfacao(ps.satisfacao ?? null)
@@ -1305,6 +1313,23 @@ function PortalSubPageContent() {
     const newPH = { ...pageHeaders, [id as string]: 'none' }
     await savePortalSettings({ ...portalSettingsObj, pageHeaders: newPH })
     setPageHeaders(newPH)
+  }
+
+  // ── Fotos da página Pré-Wedding — geridas no app por slot, sem Notion ──
+  async function handleUploadPwPhoto(slot: string, file: File) {
+    setUploadingPwSlot(slot)
+    try {
+      const url = await uploadWithProgress(file, () => {})
+      const next = { ...pwPhotos, [slot]: url }
+      await savePortalSettings({ ...portalSettingsObj, pwPhotos: next })
+      setPwPhotos(next)
+    } finally { setUploadingPwSlot(null) }
+  }
+  async function handleRemovePwPhoto(slot: string) {
+    const next = { ...pwPhotos }
+    delete next[slot]
+    await savePortalSettings({ ...portalSettingsObj, pwPhotos: next })
+    setPwPhotos(next)
   }
 
   async function handleToggleDesignPremium() {
@@ -1843,26 +1868,99 @@ function PortalSubPageContent() {
     && !editingPreWedding && !editingPropostaToken && !error
   if (_atmIsPreWedding && !loading) {
     const handleEditTitlePW = () => { setTitleInput(title); setEditingTitle(true) }
-    // Extrair parágrafos do Notion para a intro
+
+    // ── Parse cenários do Notion ──────────────────────────────────────────
+    // Detecta headings com CIDADE/CAMPO/PRAIA e captura conteúdo até ao
+    // próximo cenário: parágrafos, bullets, sub-headings "o que vestir" e
+    // "dicas para".
+    type Cen = { num: string; title: string; titleAccent?: string; paragraphs: string[]; bullets: string[]; outfit?: { noivo?: string; noiva?: string }; dica?: string }
+    const cenariosFromNotion: Cen[] = []
     const introParas: string[] = []
+    let activeCen: Cen | null = null
+    let activeSub: 'intro' | 'body' | 'vestir' | 'dicas' = 'intro'
+
+    const headingText = (b: any): string => {
+      const t = b.type
+      if (t === 'heading_1') return plainText(b.heading_1?.rich_text ?? [])
+      if (t === 'heading_2') return plainText(b.heading_2?.rich_text ?? [])
+      if (t === 'heading_3') return plainText(b.heading_3?.rich_text ?? [])
+      return ''
+    }
+    const isHeading = (b: any) => typeof b?.type === 'string' && b.type.startsWith('heading_')
+
+    const detectCenario = (txt: string): Cen | null => {
+      const u = txt.toUpperCase()
+      if (u.includes('VESTIR') || u.includes('DICA')) return null
+      if (u.includes('CIDADE')) return { num: '01', title: 'Na Cidade', titleAccent: 'Cidade', paragraphs: [], bullets: [] }
+      if (u.includes('CAMPO'))  return { num: '02', title: 'No Campo',  titleAccent: 'Campo',  paragraphs: [], bullets: [] }
+      if (u.includes('PRAIA'))  return { num: '03', title: 'Na Praia',  titleAccent: 'Praia',  paragraphs: [], bullets: [] }
+      return null
+    }
+
     for (const b of blocks) {
-      if (b.type === 'paragraph') {
-        const txt = plainText(b.paragraph?.rich_text ?? [])
-        if (txt.trim()) introParas.push(txt)
+      const isH = isHeading(b)
+      const txt = isH ? headingText(b) : ''
+
+      // Detecta nova sub-secção dentro do cenário
+      if (isH && activeCen) {
+        const u = txt.toUpperCase()
+        if (u.includes('VESTIR')) { activeSub = 'vestir'; continue }
+        if (u.includes('DICA'))   { activeSub = 'dicas'; continue }
       }
-    }
-    // Imagens do Notion
-    const imageUrls: string[] = []
-    const collectImg = (bs: any[]) => {
-      for (const b of bs) {
-        if (b.type === 'image') {
-          const u = b.image?.type === 'external' ? b.image?.external?.url : b.image?.file?.url
-          if (u) imageUrls.push(u)
+
+      // Detecta novo cenário
+      if (isH) {
+        const newCen = detectCenario(txt)
+        if (newCen) {
+          if (activeCen) cenariosFromNotion.push(activeCen)
+          activeCen = newCen
+          activeSub = 'body'
+          continue
         }
-        if (b.children) collectImg(b.children)
+      }
+
+      // Captura conteúdo
+      if (b.type === 'paragraph') {
+        const p = plainText(b.paragraph?.rich_text ?? []).trim()
+        if (!p) continue
+        if (!activeCen) {
+          introParas.push(p)
+        } else if (activeSub === 'body') {
+          activeCen.paragraphs.push(p)
+        } else if (activeSub === 'dicas') {
+          activeCen.dica = (activeCen.dica ? activeCen.dica + ' ' : '') + p
+        }
+      }
+      if (b.type === 'bulleted_list_item') {
+        const li = plainText(b.bulleted_list_item?.rich_text ?? []).trim()
+        if (!li) continue
+        if (!activeCen) {
+          introParas.push('• ' + li)
+        } else if (activeSub === 'body') {
+          activeCen.bullets.push(li)
+        } else if (activeSub === 'vestir') {
+          const m = li.match(/^\s*(NOIVO|NOIVA)\s*[:\-—]\s*(.+)$/i)
+          if (m) {
+            const key = m[1].toUpperCase()
+            activeCen.outfit = activeCen.outfit ?? {}
+            if (key === 'NOIVO') activeCen.outfit.noivo = m[2]
+            else activeCen.outfit.noiva = m[2]
+          } else if (!activeCen.outfit) {
+            activeCen.outfit = { noivo: li }
+          } else if (!activeCen.outfit.noiva) {
+            activeCen.outfit.noiva = li
+          }
+        } else if (activeSub === 'dicas') {
+          activeCen.dica = (activeCen.dica ? activeCen.dica + ' • ' : '') + li
+        }
       }
     }
-    collectImg(blocks)
+    if (activeCen) cenariosFromNotion.push(activeCen)
+
+    // Se não detectou cenários no Notion → defaults editoriais
+    const cenariosFinal = cenariosFromNotion.length > 0
+      ? cenariosFromNotion
+      : DEFAULT_CENARIOS
 
     return (
       <PortalShell sidebar={_atmSidebar}>
@@ -1872,13 +1970,16 @@ function PortalSubPageContent() {
           backHref={_atmBackHref}
           isAdmin={isAdmin}
           onEditTitle={handleEditTitlePW}
-          introPhotoUrl={imageUrls[0] ?? null}
+          onUploadPhoto={isAdmin ? handleUploadPwPhoto : undefined}
+          onRemovePhoto={isAdmin ? handleRemovePwPhoto : undefined}
+          uploadingSlot={uploadingPwSlot}
+          heroPhotoUrl={pwPhotos.hero || null}
+          introPhotoUrl={pwPhotos.intro || null}
           introParagraphs={introParas.slice(0, 4)}
-          triptychUrls={[imageUrls[1], imageUrls[2], imageUrls[3]]}
-          cenarios={DEFAULT_CENARIOS.map((c, i) => ({
+          triptychUrls={[pwPhotos['tript-0']]}
+          cenarios={cenariosFinal.map((c, i) => ({
             ...c,
-            photoUrl: imageUrls[4 + i] ?? null,
-            galleryUrls: [imageUrls[7 + i * 3], imageUrls[8 + i * 3], imageUrls[9 + i * 3]],
+            photoUrl: pwPhotos[`cen-${i}`] || null,
           }))}
           adminActions={
             <>

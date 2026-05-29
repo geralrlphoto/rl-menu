@@ -6,6 +6,45 @@
    .logocard de atmosphere.css.
    ============================================================ */
 
+/* ── Foto full-width logo abaixo do hero ─────────────────────── */
+.portal-atmosphere .pw-hero-photo {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  margin-top: 14px;
+  border-radius: var(--atm-r-lg);
+  overflow: hidden;
+  border: 1px solid var(--gold-faint);
+  box-shadow: 0 40px 90px -50px rgba(0,0,0,.9);
+  background: linear-gradient(180deg, var(--surface), var(--bg-2));
+}
+.portal-atmosphere .pw-hero-photo img,
+.portal-atmosphere .pw-hero-photo .ph {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+.portal-atmosphere .pw-hero-photo .ph {
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 11px; letter-spacing: .36em; text-transform: uppercase;
+  color: var(--ink-4);
+}
+.portal-atmosphere .pw-hero-photo .ph::before {
+  content: 'Foto · Espaço reservado';
+}
+/* Admin overlay: Trocar/Remover (canto sup. direito, mesmo padrão do hero) */
+.portal-atmosphere .pw-hero-photo .imgctrl {
+  position: absolute; top: 16px; right: 16px;
+  display: flex; gap: 8px; z-index: 2;
+}
+.portal-atmosphere .pw-hero-photo .imgctrl .gbtn {
+  cursor: pointer;
+}
+@media (max-width: 980px) {
+  .portal-atmosphere .pw-hero-photo { height: 230px; }
+}
+
 /* ── Intro: texto + foto editorial ───────────────────────────── */
 .portal-atmosphere .pw-intro {
   display: grid;
@@ -50,6 +89,7 @@
   font-weight: 600;
 }
 .portal-atmosphere .pw-intro .photo {
+  position: relative;
   aspect-ratio: 3/4;
   border-radius: var(--atm-r-lg);
   overflow: hidden;
@@ -60,23 +100,40 @@
 .portal-atmosphere .pw-intro .photo .ph {
   width: 100%; height: 100%; object-fit: cover;
 }
+.portal-atmosphere .pw-intro .photo .imgctrl {
+  position: absolute; top: 12px; right: 12px;
+  display: flex; gap: 6px; z-index: 2;
+}
 
-/* ── Tríptico de imagens ─────────────────────────────────────── */
+/* ── Foto única full-width (abaixo da intro) ─────────────────── */
 .portal-atmosphere .pw-tript {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  display: block;
   margin: 36px 0 60px;
 }
 .portal-atmosphere .pw-tript .frame {
-  aspect-ratio: 4/5;
-  border-radius: 12px;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: var(--atm-r-lg);
   overflow: hidden;
   border: 1px solid var(--gold-faint);
+  box-shadow: 0 40px 80px -45px rgba(0,0,0,.85);
+  background: linear-gradient(180deg, var(--surface), var(--bg-2));
 }
 .portal-atmosphere .pw-tript .frame img,
 .portal-atmosphere .pw-tript .frame .ph {
+  position: absolute; inset: 0;
   width: 100%; height: 100%; object-fit: cover;
+}
+.portal-atmosphere .pw-tript .frame .ph {
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 11px; letter-spacing: .36em; text-transform: uppercase;
+  color: var(--ink-4);
+}
+.portal-atmosphere .pw-tript .frame .imgctrl {
+  position: absolute; top: 16px; right: 16px;
+  display: flex; gap: 8px; z-index: 2;
 }
 
 /* ── Cenário (Cidade / Campo / Praia) ────────────────────────── */
@@ -119,15 +176,32 @@
 }
 /* Foto grande full-width depois de cada cenário */
 .portal-atmosphere .pw-cenario-photo {
+  position: relative;
   margin: 36px 0 0;
   border-radius: var(--atm-r-lg);
   overflow: hidden;
   border: 1px solid var(--gold-faint);
   aspect-ratio: 16/9;
   box-shadow: 0 40px 80px -45px rgba(0,0,0,.85);
+  background: linear-gradient(180deg, var(--surface), var(--bg-2));
 }
-.portal-atmosphere .pw-cenario-photo img {
+.portal-atmosphere .pw-cenario-photo img,
+.portal-atmosphere .pw-cenario-photo .ph {
+  position: absolute; inset: 0;
   width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.portal-atmosphere .pw-cenario-photo .ph {
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 11px; letter-spacing: .36em; text-transform: uppercase;
+  color: var(--ink-4);
+}
+.portal-atmosphere .pw-cenario-photo .ph::before {
+  content: 'Foto · Espaço reservado';
+}
+.portal-atmosphere .pw-cenario-photo .imgctrl {
+  position: absolute; top: 16px; right: 16px;
+  display: flex; gap: 8px; z-index: 2;
 }
 .portal-atmosphere .pw-cenario .body p {
   font-family: 'Hanken Grotesk', sans-serif;
