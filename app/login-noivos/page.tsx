@@ -157,9 +157,16 @@ function NoivosLoginInner() {
             transition: 'opacity 900ms ease-out, transform 900ms cubic-bezier(0.16, 1, 0.3, 1)',
           }}>
 
-          {/* RL Monogram com wreath floral */}
-          <div className="mb-10 relative">
-            <RlMonogramWreath />
+          {/* Logo oficial RL PROD (mesmo da Proposta Criativa) */}
+          <div className="mb-10 relative flex items-center justify-center">
+            <img
+              src="/logo-rl-prod-branco.png"
+              alt="RL Photo · Video"
+              className="w-44 h-44 sm:w-52 sm:h-52 object-contain"
+              style={{
+                filter: 'drop-shadow(0 6px 18px rgba(45,30,18,0.32)) drop-shadow(0 0 24px rgba(201,164,92,0.25))',
+              }}
+            />
           </div>
 
           {/* Title NOIVOS */}
@@ -522,58 +529,6 @@ function NoivosLoginInner() {
 /* ──────────────────────────────────────────────────────────────────────── *
  *  Sub-componentes decorativos
  * ──────────────────────────────────────────────────────────────────────── */
-
-function RlMonogramWreath() {
-  return (
-    <div className="relative w-[180px] h-[180px] flex items-center justify-center">
-      {/* Wreath SVG circular */}
-      <svg viewBox="0 0 200 200" className="absolute inset-0 w-full h-full"
-        style={{ filter: 'drop-shadow(0 4px 14px rgba(201,164,92,0.25))' }}>
-        <defs>
-          <linearGradient id="wreathGold" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#D4B870" />
-            <stop offset="50%" stopColor="#C9A84C" />
-            <stop offset="100%" stopColor="#A88A40" />
-          </linearGradient>
-        </defs>
-        {/* Outer circle */}
-        <circle cx="100" cy="100" r="86" fill="none" stroke="url(#wreathGold)" strokeWidth="1.2" opacity="0.85" />
-        {/* Inner circle */}
-        <circle cx="100" cy="100" r="80" fill="none" stroke="url(#wreathGold)" strokeWidth="0.6" opacity="0.45" />
-        {/* Floral leaves around — esquerda */}
-        <g stroke="url(#wreathGold)" strokeWidth="1.1" fill="none" strokeLinecap="round">
-          {/* leaves left side */}
-          <path d="M14 100 Q22 90, 30 100 Q22 110, 14 100" fill="rgba(201,164,92,0.20)" />
-          <path d="M18 80 Q26 72, 34 82 Q26 90, 18 80" fill="rgba(201,164,92,0.15)" />
-          <path d="M22 120 Q30 112, 38 122 Q30 130, 22 120" fill="rgba(201,164,92,0.15)" />
-          <path d="M28 62 Q35 56, 42 64 Q35 70, 28 62" fill="rgba(201,164,92,0.12)" />
-          <path d="M30 140 Q37 134, 44 142 Q37 148, 30 140" fill="rgba(201,164,92,0.12)" />
-          {/* leaves right side */}
-          <path d="M186 100 Q178 90, 170 100 Q178 110, 186 100" fill="rgba(201,164,92,0.20)" />
-          <path d="M182 80 Q174 72, 166 82 Q174 90, 182 80" fill="rgba(201,164,92,0.15)" />
-          <path d="M178 120 Q170 112, 162 122 Q170 130, 178 120" fill="rgba(201,164,92,0.15)" />
-          <path d="M172 62 Q165 56, 158 64 Q165 70, 172 62" fill="rgba(201,164,92,0.12)" />
-          <path d="M170 140 Q163 134, 156 142 Q163 148, 170 140" fill="rgba(201,164,92,0.12)" />
-        </g>
-        {/* Heart pendant bottom */}
-        <g transform="translate(100, 188)">
-          <path d="M0,2 L-3,-2 Q-5,-4 -3,-6 Q-1,-5 0,-3 Q1,-5 3,-6 Q5,-4 3,-2 Z"
-            fill="url(#wreathGold)" />
-        </g>
-      </svg>
-
-      {/* RL monogram center */}
-      <div className="relative flex flex-col items-center"
-        style={{ fontFamily: '"Cormorant Garamond", "Playfair Display", serif' }}>
-        <div className="flex items-center" style={{ color: '#A88A40' }}>
-          <span className="text-[58px] leading-none font-light" style={{ letterSpacing: '-0.08em' }}>R</span>
-          <span className="text-[58px] leading-none font-light italic" style={{ letterSpacing: '-0.04em', marginLeft: '-8px' }}>L</span>
-        </div>
-        <span className="text-[8px] tracking-[0.4em] mt-1" style={{ color: '#A88A40', opacity: 0.7 }}>PHOTO · VIDEO</span>
-      </div>
-    </div>
-  )
-}
 
 function FloralDecoration({ position }: { position: 'top-right' | 'bottom-left' }) {
   const isTop = position === 'top-right'
