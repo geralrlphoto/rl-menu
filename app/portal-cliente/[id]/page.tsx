@@ -9,6 +9,7 @@ import BriefingExtensions, { type BriefingExt } from './BriefingExtensions'
 import '../atmosphere/atmosphere.css'
 import { PortalShell, SidebarCouple, SidebarNav, SidebarMiniCountdown, type SidebarNavItem } from '../atmosphere/PortalShell'
 import { ContratoView } from '../atmosphere/ContratoView'
+import { SendMessageButton } from '../atmosphere/SendMessageButton'
 
 const PORTAL_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
 
@@ -1639,6 +1640,17 @@ function PortalSubPageContent() {
               hiddenNav={settings.hiddenNav}
               backUrl={_atmBackHref}
             />
+
+            {/* Botão Enviar Mensagem (só páginas Atendimento) */}
+            {portalRef && title.toUpperCase().includes('ATEND') && (
+              <div style={{ textAlign: 'center', marginTop: 30 }}>
+                <SendMessageButton
+                  referencia={portalRef}
+                  nomeNoivos={[portalSettingsObj?.noiva, portalSettingsObj?.noivo].filter(Boolean).join(' & ') || null}
+                  emailNoiva={portalSettingsObj?.emailNoiva ?? null}
+                />
+              </div>
+            )}
           </div>
 
           {/* Logo card final (mesmo que o template) */}

@@ -22,6 +22,7 @@ const TIPO_LABELS: Record<string, string> = {
   fotos_convidados_ctt:     'Fotos Convidados · CTT Enviado',
   nova_tarefa_atribuida:    'Tarefa enviada entre membros',
   album_aprovado:           'Álbum Aprovado pelos Noivos',
+  mensagem_noivos:          'Mensagem dos Noivos',
 }
 
 const TIPO_ICONS: Record<string, string> = {
@@ -38,6 +39,7 @@ const TIPO_ICONS: Record<string, string> = {
   fotos_convidados_ctt:     '✉',
   nova_tarefa_atribuida:    '✈',
   album_aprovado:           '✓',
+  mensagem_noivos:          '💬',
 }
 
 type Notif = {
@@ -387,6 +389,38 @@ export async function GET() {
       }
     } catch (err) {
       console.warn('[admin-notifications] portais read failed:', err)
+    }
+
+    // ── Mensagens enviadas pelos NOIVOS (portais.settings.noivos_messages) ──
+    try {
+      const { data: portaisMsg } = await supabase
+        .from('portais')
+        .select('referencia, settings')
+        .limit(500)
+      for (const p of (portaisMsg ?? []) as any[]) {
+        const s = p.settings ?? {}
+        const msgs = Array.isArray(s.noivos_messages) ? s.noivos_messages : []
+        for (const m of msgs) {
+          if (!m?.id || !m?.ts) continue
+          notifications.push({
+            id: `mensagem_noivos::${p.referencia}::${m.id}`,
+            tipo: 'mensagem_noivos',
+            tipo_label: TIPO_LABELS.mensagem_noivos,
+            tipo_icon: TIPO_ICONS.mensagem_noivos,
+            casamento_id: '',
+            freelancer_id: '',
+            freelancer_nome: m.nome_noivos ?? p.referencia ?? '—',
+            local: p.referencia ?? '—',
+            data_casamento: null,
+            referencia: p.referencia ?? null,
+            url: p.referencia ? `/eventos-2026?ref=${encodeURIComponent(p.referencia)}` : '/eventos-2026',
+            sent_at: m.ts,
+            mensagem: String(m.mensagem ?? '').slice(0, 800),
+          })
+        }
+      }
+    } catch (err) {
+      console.warn('[admin-notifications] noivos_messages read failed:', err)
     }
 
     // Ordenar por sent_at DESC
