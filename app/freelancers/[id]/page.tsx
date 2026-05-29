@@ -1659,7 +1659,7 @@ function FreelancerDetailInner() {
       {tab === 'notas'        && <NotasTab freelancer={freelancer} onRefresh={load} />}
       {tab === 'pagamentos'   && <PagamentosAdminTab freelancerId={id} pagamentos={pagamentos} casamentos={casamentos} onRefresh={load} />}
       {tab === 'mensagens'    && <MensagensAdminTab freelancerId={id} freelancerNome={freelancer?.nome ?? ''} casamentos={casamentos} mensagens={mensagens} onRefresh={load} />}
-      {tab === 'notificacoes' && <NotificacoesAdminTab freelancerId={id} notificacoes={notificacoes} onRefresh={load} viewAsFreelancer={viewAsFreelancer} />}
+      {tab === 'notificacoes' && <NotificacoesAdminTab freelancerId={id} notificacoes={notificacoes} casamentos={casamentos} onRefresh={load} viewAsFreelancer={viewAsFreelancer} />}
     </main>
     </div>
   )
@@ -6973,7 +6973,7 @@ function parseAtribuicaoEquipaMeta(mensagem: string | null | undefined): {
   } catch { return {} }
 }
 
-function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh, viewAsFreelancer }: { freelancerId: string; notificacoes: Notificacao[]; onRefresh: () => void; viewAsFreelancer?: boolean }) {
+function NotificacoesAdminTab({ freelancerId, notificacoes, casamentos = [], onRefresh, viewAsFreelancer }: { freelancerId: string; notificacoes: Notificacao[]; casamentos?: Casamento[]; onRefresh: () => void; viewAsFreelancer?: boolean }) {
   const [form, setForm] = useState({ titulo: '', mensagem: '', tipo: 'alerta' })
   const [sending, setSending] = useState(false)
   const [respondingNotif, setRespondingNotif] = useState<Notificacao | null>(null)
@@ -6983,6 +6983,34 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh, viewAsFre
   const [sentNotifs, setSentNotifs] = useState<Notificacao[]>([])
   const [loadingSent, setLoadingSent] = useState(false)
   const [respondingAtribuicao, setRespondingAtribuicao] = useState<string | null>(null) // id da notif em curso
+  const [previewCasamento, setPreviewCasamento] = useState<Casamento | null>(null)
+
+  // Mapa rapido referencia → casamento (para resolver noivos + abrir preview)
+  const casamentosByRef = useMemo(() => {
+    const m = new Map<string, Casamento>()
+    for (const c of casamentos) {
+      if (c.referencia) m.set(c.referencia, c)
+    }
+    return m
+  }, [casamentos])
+
+  // Mapa local + data → casamento (fallback quando notificação não tem referência)
+  function findCasamentoForNotif(n: Notificacao): Casamento | null {
+    const atrMeta = parseAtribuicaoEquipaMeta(n.mensagem)
+    if (atrMeta.referencia && casamentosByRef.has(atrMeta.referencia)) {
+      return casamentosByRef.get(atrMeta.referencia)!
+    }
+    // fallback: local + data_casamento
+    if (atrMeta.local && atrMeta.data_casamento) {
+      const cand = casamentos.find(c =>
+        c.data_casamento === atrMeta.data_casamento &&
+        c.local && (c.local.toLowerCase().includes(atrMeta.local!.toLowerCase()) ||
+                    atrMeta.local!.toLowerCase().includes(c.local.toLowerCase()))
+      )
+      if (cand) return cand
+    }
+    return null
+  }
 
   // Resposta à atribuição: cria entrada no casamento + envia email ao admin
   async function responderAtribuicao(n: Notificacao, resposta: 'confirmar' | 'indisponivel') {
@@ -7381,6 +7409,14 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh, viewAsFre
                 const isTaskMessage  = isTaskAssigned || isTaskResposta || isTaskConcluida
                 const isAtribuicao   = n.tipo === 'atribuicao_equipa'
 
+                // Tenta resolver o casamento associado para mostrar os noivos
+                // e abrir a ficha em preview ao clicar.
+                const casamentoAssoc = (isAtribuicao || n.tipo === 'briefing_enviado' || n.tipo === 'album_aprovado')
+                  ? findCasamentoForNotif(n)
+                  : null
+                const noivosNome = casamentoAssoc?.nome_noivos || null
+                const clickable = !!casamentoAssoc
+
                 // Accent visual por tipo
                 const accent = isTaskAssigned ? { border: 'border-blue-500/35', bg: 'bg-blue-500/[0.05]', text: 'text-blue-300', glow: 'rgba(59,130,246,0.35)', icon: '✈', badge: '✈ NOVA TAREFA' }
                   : isTaskResposta ? { border: 'border-indigo-500/35', bg: 'bg-indigo-500/[0.05]', text: 'text-indigo-300', glow: 'rgba(99,102,241,0.35)', icon: '↩', badge: '↩ NOVA RESPOSTA' }
@@ -7390,9 +7426,10 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh, viewAsFre
 
                 return (
                 <div key={n.id}
+                  onClick={() => { if (clickable) setPreviewCasamento(casamentoAssoc) }}
                   className={`flex items-start gap-3 px-4 py-3.5 rounded-xl border group transition-all hover:border-white/15 ${
                     n.lida ? 'border-white/[0.06] bg-white/[0.015]' : `${accent.border} ${accent.bg}`
-                  }`}
+                  } ${clickable ? 'cursor-pointer hover:bg-white/[0.025]' : ''}`}
                   style={!n.lida ? { boxShadow: `0 0 24px -10px ${accent.glow}` } : undefined}>
                   {/* Ícone à esquerda */}
                   <div className={`w-10 h-10 rounded-lg border flex items-center justify-center text-base shrink-0 ${
@@ -7412,6 +7449,19 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh, viewAsFre
                       }
                     </div>
                     <p className={`text-[14px] mb-0.5 leading-snug ${n.lida ? 'text-white/65' : 'text-white font-medium'}`}>{n.titulo}</p>
+                    {/* Nome dos noivos + link "Ver Ficha" se houver casamento associado */}
+                    {noivosNome && (
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <span className="inline-flex items-center gap-1.5 text-[11px] tracking-wider text-gold/85 font-semibold">
+                          <span className="opacity-65">💍</span> {noivosNome}
+                        </span>
+                        {clickable && (
+                          <span className="text-[9px] tracking-[0.3em] uppercase text-white/30 group-hover:text-gold/80 transition-colors">
+                            · Clica para ver ficha →
+                          </span>
+                        )}
+                      </div>
+                    )}
                     {meta.cleanMensagem && (
                       <p className="text-[12px] text-white/50 mt-1 whitespace-pre-wrap leading-relaxed line-clamp-3">{meta.cleanMensagem}</p>
                     )}
@@ -7422,8 +7472,10 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh, viewAsFre
                     </p>
                   </div>
 
-                  {/* Acções à direita */}
-                  <div className="flex flex-col items-end gap-1.5 mt-0.5 flex-shrink-0">
+                  {/* Acções à direita — stopPropagation para não disparar
+                      o preview do casamento ao clicar nestes botões. */}
+                  <div className="flex flex-col items-end gap-1.5 mt-0.5 flex-shrink-0"
+                    onClick={e => e.stopPropagation()}>
                     {/* Confirmar / Indisponível removidos daqui — agora apenas
                         no card do casamento em Casamentos. A página de
                         Notificações fica como histórico/leitura. */}
@@ -7563,6 +7615,16 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh, viewAsFre
           onClose={() => setViewingThread(null)}
           onConcluir={() => concluirTarefaThread(viewingThread.threadId)}
           onResponder={(notif) => { setRespondingNotif(notif); setViewingThread(null) }}
+        />
+      )}
+
+      {/* Preview da ficha do Casamento — abre ao clicar numa notificação
+          de atribuição/briefing/álbum associada a um casamento. */}
+      {previewCasamento && (
+        <CasamentoFicha
+          casamento={previewCasamento}
+          onClose={() => setPreviewCasamento(null)}
+          onEdit={() => { /* read-only neste contexto */ }}
         />
       )}
     </div>
