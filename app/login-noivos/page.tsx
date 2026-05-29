@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 /* ─────────────────────────────────────────────────────────────────────────── *
@@ -111,12 +111,9 @@ function NoivosLoginInner() {
     setToast('Procurem o vosso link directo no e-mail RL, ou falem connosco.')
   }
 
+  const [recoverOpen, setRecoverOpen] = useState(false)
   function handleForgot() {
-    if (!email.trim()) {
-      setToast('Introduzam o vosso e-mail primeiro para recuperar a palavra-passe.')
-      return
-    }
-    setToast('Pedido enviado. A nossa equipa irá entrar em contacto.')
+    setRecoverOpen(true)
   }
 
   return (
@@ -531,6 +528,9 @@ function NoivosLoginInner() {
           </div>
         )}
       </section>
+
+      {/* ── Modal de recuperação de palavra-passe (chat-agente) ────────── */}
+      {recoverOpen && <RecoverChatModal onClose={() => setRecoverOpen(false)} />}
     </main>
   )
 }
@@ -605,6 +605,304 @@ function FloralDecoration({ position }: { position: 'top-right' | 'bottom-left' 
           </g>
         </g>
       </svg>
+    </div>
+  )
+}
+
+/* ──────────────────────────────────────────────────────────────────────── *
+ *  Recover Chat Modal — fluxo estilo agente para recuperar password.
+ *  Pergunta: email → telemóvel → NIF. Envia POST /api/noivos-recover.
+ *  Em sucesso o servidor envia a password para o email oficial da noiva.
+ * ──────────────────────────────────────────────────────────────────────── */
+
+type ChatMsg = {
+  role: 'agent' | 'user'
+  text: string
+}
+
+type ChatStep = 'email' | 'phone' | 'nif' | 'submitting' | 'done' | 'error'
+
+function RecoverChatModal({ onClose }: { onClose: () => void }) {
+  const [step, setStep]       = useState<ChatStep>('email')
+  const [messages, setMsgs]   = useState<ChatMsg[]>([
+    { role: 'agent', text: 'Olá! ♡ Estou aqui para ajudar a recuperar a vossa palavra-passe.' },
+    { role: 'agent', text: 'Primeiro, preciso de confirmar a vossa identidade. Qual é o vosso e-mail (o que deram à RL)?' },
+  ])
+  const [input, setInput]     = useState('')
+  const [emailV, setEmailV]   = useState('')
+  const [phoneV, setPhoneV]   = useState('')
+  const [nifV,   setNifV]     = useState('')
+  const [errMsg, setErrMsg]   = useState<string | null>(null)
+
+  const scrollRef = (typeof window !== 'undefined') ? null : null
+  const containerRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = containerRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [messages, step])
+
+  // Mantém o foco no input quando o utilizador está a responder
+  const inputRef = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    if (step === 'email' || step === 'phone' || step === 'nif') {
+      inputRef.current?.focus()
+    }
+  }, [step])
+
+  function addAgent(text: string) {
+    setMsgs(m => [...m, { role: 'agent', text }])
+  }
+  function addUser(text: string) {
+    setMsgs(m => [...m, { role: 'user', text }])
+  }
+
+  async function handleSend(e: React.FormEvent) {
+    e.preventDefault()
+    const v = input.trim()
+    if (!v) return
+    addUser(v)
+    setInput('')
+
+    if (step === 'email') {
+      setEmailV(v)
+      // pequena pausa para parecer mais natural
+      setTimeout(() => addAgent('Obrigado. E agora o vosso número de telemóvel?'), 350)
+      setStep('phone')
+      return
+    }
+    if (step === 'phone') {
+      setPhoneV(v)
+      setTimeout(() => addAgent('E por último, o vosso NIF (número de contribuinte).'), 350)
+      setStep('nif')
+      return
+    }
+    if (step === 'nif') {
+      setNifV(v)
+      setStep('submitting')
+      setTimeout(() => addAgent('Um momento, vou confirmar os vossos dados…'), 250)
+      try {
+        const res = await fetch('/api/noivos-recover', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: emailV, telefone: phoneV, nif: v }),
+        })
+        const j = await res.json().catch(() => ({}))
+
+        if (res.status === 429 || j?.reason === 'rate_limit') {
+          setErrMsg('rate_limit')
+          addAgent('Recebi muitos pedidos do vosso lado nos últimos minutos. Por segurança, esperem ~30 minutos antes de tentar de novo, ou falem connosco directamente.')
+          setStep('error')
+          return
+        }
+        if (j?.ok) {
+          addAgent(`Confirmado ♡ Enviei a vossa palavra-passe para ${j.sentTo ?? 'o vosso e-mail'}.`)
+          addAgent('Verifiquem também a pasta de spam. Boa sessão!')
+          setStep('done')
+          return
+        }
+        if (j?.reason === 'no_password') {
+          addAgent('Encontrei o vosso casamento, mas o portal ainda não foi activado pela nossa equipa. Falem connosco para activar o acesso.')
+          setStep('error')
+          return
+        }
+        // no_match, no_email_on_file, email_failed
+        addAgent('Não consegui confirmar a vossa identidade com esses dados. Verifiquem que escreveram correctamente o e-mail, telemóvel e NIF que deram à RL — ou cliquem "Fala connosco" se preferirem ajuda directa.')
+        setStep('error')
+      } catch {
+        addAgent('Houve um problema na ligação. Tentem outra vez ou falem connosco.')
+        setStep('error')
+      }
+    }
+  }
+
+  function handleRetry() {
+    setMsgs([
+      { role: 'agent', text: 'Vamos tentar de novo ♡' },
+      { role: 'agent', text: 'Qual é o vosso e-mail?' },
+    ])
+    setEmailV(''); setPhoneV(''); setNifV(''); setInput(''); setErrMsg(null)
+    setStep('email')
+  }
+
+  const inputDisabled = step === 'submitting' || step === 'done' || step === 'error'
+
+  const placeholder =
+    step === 'email' ? 'O vosso e-mail…' :
+    step === 'phone' ? 'O vosso telemóvel…' :
+    step === 'nif'   ? 'O vosso NIF…' :
+    ''
+
+  const inputType =
+    step === 'email' ? 'email' :
+    step === 'phone' ? 'tel' :
+    'text'
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center px-4 animate-in fade-in"
+      style={{ background: 'rgba(15,10,5,0.65)', backdropFilter: 'blur(6px)' }}
+      onClick={onClose}>
+      <div onClick={e => e.stopPropagation()}
+        className="relative w-full max-w-md rounded-3xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-3"
+        style={{
+          background: 'linear-gradient(180deg, #FAF7F2 0%, #F5EFE6 100%)',
+          border: '1.4px solid rgba(201,164,92,0.55)',
+          boxShadow: '0 30px 80px -20px rgba(0,0,0,0.55), 0 0 60px -20px rgba(201,164,92,0.45)',
+        }}>
+
+        {/* Header com avatar agente */}
+        <div className="flex items-center justify-between px-6 py-5 border-b"
+          style={{ borderColor: 'rgba(201,164,92,0.20)' }}>
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-full flex items-center justify-center"
+              style={{
+                background: 'linear-gradient(135deg, #D4B870 0%, #C9A84C 100%)',
+                boxShadow: '0 4px 14px -4px rgba(201,164,92,0.6)',
+              }}>
+              <span className="text-[18px]" style={{ color: '#FAF7F2' }}>♡</span>
+            </div>
+            <div>
+              <p className="text-[13px] font-semibold" style={{ color: '#3D2E1A', fontFamily: '"Cormorant Garamond", serif', fontSize: 18 }}>
+                Apoio aos Noivos
+              </p>
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" style={{ boxShadow: '0 0 6px rgba(16,185,129,0.7)' }} />
+                <p className="text-[10px] tracking-[0.25em] uppercase" style={{ color: '#8B7549' }}>Online · RL Photo</p>
+              </div>
+            </div>
+          </div>
+          <button onClick={onClose}
+            className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+            style={{ color: '#8B7549' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(201,164,92,0.12)'; e.currentTarget.style.color = '#3D2E1A' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8B7549' }}>
+            ✕
+          </button>
+        </div>
+
+        {/* Conversa */}
+        <div ref={containerRef}
+          className="px-5 py-5 max-h-[55vh] overflow-y-auto"
+          style={{ scrollBehavior: 'smooth' }}>
+          <div className="space-y-3">
+            {messages.map((m, i) => (
+              <div key={i}
+                className={`flex ${m.role === 'agent' ? 'justify-start' : 'justify-end'} animate-in fade-in slide-in-from-bottom-1`}>
+                <div className="max-w-[78%] px-4 py-2.5 rounded-2xl text-[13px] leading-[1.55]"
+                  style={
+                    m.role === 'agent'
+                      ? {
+                          background: 'rgba(255,253,250,0.95)',
+                          border: '1px solid rgba(201,164,92,0.30)',
+                          color: '#3D2E1A',
+                          fontFamily: 'Georgia, serif',
+                          borderTopLeftRadius: 6,
+                        }
+                      : {
+                          background: 'linear-gradient(135deg, #D4B870 0%, #C9A84C 100%)',
+                          color: '#1F1608',
+                          fontFamily: 'Georgia, serif',
+                          fontWeight: 500,
+                          borderTopRightRadius: 6,
+                          boxShadow: '0 4px 12px -4px rgba(201,164,92,0.55)',
+                        }
+                  }>
+                  {m.text}
+                </div>
+              </div>
+            ))}
+
+            {step === 'submitting' && (
+              <div className="flex justify-start">
+                <div className="px-4 py-2.5 rounded-2xl"
+                  style={{ background: 'rgba(255,253,250,0.95)', border: '1px solid rgba(201,164,92,0.30)', borderTopLeftRadius: 6 }}>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: '#C9A84C', animationDelay: '0ms' }} />
+                    <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: '#C9A84C', animationDelay: '150ms' }} />
+                    <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: '#C9A84C', animationDelay: '300ms' }} />
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Input ou estado final */}
+        {!inputDisabled && (
+          <form onSubmit={handleSend}
+            className="flex items-center gap-2 px-5 py-4 border-t"
+            style={{ borderColor: 'rgba(201,164,92,0.18)', background: 'rgba(248,239,221,0.4)' }}>
+            <input
+              ref={inputRef}
+              type={inputType}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              placeholder={placeholder}
+              autoFocus
+              inputMode={step === 'phone' ? 'tel' : step === 'nif' ? 'numeric' : undefined}
+              className="flex-1 px-4 py-2.5 rounded-xl outline-none transition-all text-[13px]"
+              style={{
+                background: 'rgba(255,253,250,0.85)',
+                border: '1.3px solid rgba(201,164,92,0.35)',
+                color: '#2D2218',
+                fontFamily: 'Georgia, serif',
+              }}
+              onFocus={e => {
+                e.currentTarget.style.borderColor = 'rgba(201,164,92,0.75)'
+                e.currentTarget.style.boxShadow = '0 0 0 4px rgba(201,164,92,0.12)'
+              }}
+              onBlur={e => {
+                e.currentTarget.style.borderColor = 'rgba(201,164,92,0.35)'
+                e.currentTarget.style.boxShadow = 'none'
+              }}
+            />
+            <button type="submit" disabled={!input.trim()}
+              className="px-4 py-2.5 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{
+                background: 'linear-gradient(135deg, #D4B870 0%, #C9A84C 100%)',
+                color: '#1F1608',
+                fontFamily: 'Georgia, serif',
+                fontWeight: 700,
+                fontSize: 12,
+                letterSpacing: '0.25em',
+                textTransform: 'uppercase',
+                boxShadow: '0 6px 18px -6px rgba(201,164,92,0.55)',
+              }}>
+              Enviar →
+            </button>
+          </form>
+        )}
+
+        {step === 'error' && (
+          <div className="px-5 py-4 border-t flex items-center justify-between"
+            style={{ borderColor: 'rgba(201,164,92,0.18)', background: 'rgba(248,239,221,0.5)' }}>
+            <button onClick={handleRetry}
+              className="text-[11px] tracking-[0.3em] uppercase font-semibold transition-colors"
+              style={{ color: '#8B7549' }}>
+              ↻ Tentar de novo
+            </button>
+            <button onClick={onClose}
+              className="text-[11px] tracking-[0.3em] uppercase font-semibold transition-colors"
+              style={{ color: '#C9A84C' }}>
+              Fechar
+            </button>
+          </div>
+        )}
+
+        {step === 'done' && (
+          <div className="px-5 py-4 border-t flex items-center justify-center"
+            style={{ borderColor: 'rgba(201,164,92,0.18)', background: 'rgba(248,239,221,0.5)' }}>
+            <button onClick={onClose}
+              className="text-[11px] tracking-[0.3em] uppercase font-bold px-6 py-2 rounded-xl"
+              style={{
+                background: 'linear-gradient(135deg, #D4B870 0%, #C9A84C 100%)',
+                color: '#1F1608',
+                boxShadow: '0 6px 16px -4px rgba(201,164,92,0.55)',
+              }}>
+              ✓ Concluído
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
