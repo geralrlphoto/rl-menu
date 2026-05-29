@@ -47,6 +47,11 @@ export type ContratoViewProps = {
 
   // Edit pencil junto ao título do hero (se admin)
   onEditTitle?: () => void
+
+  /** Nó já renderizado da secção de Fases de Pagamento — se passado
+   * substitui o grid .planscards default. Usar para passar o
+   * <PaymentPhasesSection /> existente sem perder funcionalidade. */
+  paymentPhasesNode?: ReactNode
 }
 
 export function ContratoView(props: ContratoViewProps) {
@@ -218,27 +223,32 @@ export function ContratoView(props: ContratoViewProps) {
         <span className="val"><em>€</em>{fmtEur(props.totalEur)}</span>
       </div>
 
-      {/* 3 cards plano de pagamento */}
+      {/* Fases de Pagamento — usa o componente já existente se passado, ou
+          cai para o grid default com os cartões Atmosphère */}
       <div className="proposeh">
         <div className="eyebrow">Plano de Pagamento</div>
         <h2>Faseamento</h2>
       </div>
-      <div className="planscards">
-        {props.pagamentos.map((p, i) => (
-          <div key={i} className={`plancard ${p.paid ? 'paid' : 'pending'}`}>
-            <div className="roman">{p.roman ?? toRoman(i + 1)}</div>
-            <h4>{p.label}</h4>
-            <div className="v"><em>€</em>{fmtEur(p.valor)}</div>
-            <div className="foot">
-              <span className="stt">
-                <span className="pip" />
-                {p.paid ? 'Pago' : 'Aguarda'}
-              </span>
-              {p.when && <span className="when">{p.when}</span>}
+      {props.paymentPhasesNode ? (
+        <div className="phases-slot">{props.paymentPhasesNode}</div>
+      ) : (
+        <div className="planscards">
+          {props.pagamentos.map((p, i) => (
+            <div key={i} className={`plancard ${p.paid ? 'paid' : 'pending'}`}>
+              <div className="roman">{p.roman ?? toRoman(i + 1)}</div>
+              <h4>{p.label}</h4>
+              <div className="v"><em>€</em>{fmtEur(p.valor)}</div>
+              <div className="foot">
+                <span className="stt">
+                  <span className="pip" />
+                  {p.paid ? 'Pago' : 'Aguarda'}
+                </span>
+                {p.when && <span className="when">{p.when}</span>}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </>
   )
 }

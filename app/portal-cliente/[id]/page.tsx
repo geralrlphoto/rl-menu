@@ -1685,6 +1685,15 @@ function PortalSubPageContent() {
           pagamentos={planos}
           isAdmin={isAdmin}
           onEditTitle={handleEditTitle}
+          paymentPhasesNode={
+            <PaymentPhasesSection
+              referencia={portalRef}
+              valorTotal={portalTotal}
+              pagamentos={pagamentos}
+              onRefresh={loadPagamentos}
+              refreshing={pagRefreshing}
+            />
+          }
           adminActions={
             <>
               <button type="button" className="abtn" onClick={handleRefresh} disabled={refreshing}>
