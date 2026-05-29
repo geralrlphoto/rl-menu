@@ -1577,10 +1577,7 @@ function PortalSubPageContent() {
           <div className="scrim" />
           {/* Voltar — canto superior esquerdo do hero */}
           <a className="back back-hero" href={_atmBackHref}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 6l-6 6 6 6" />
-            </svg>
-            Voltar
+            <span className="chev">‹</span> Voltar
           </a>
           {isAdmin && (
             <div className="imgctrl">
