@@ -157,14 +157,14 @@ function NoivosLoginInner() {
             transition: 'opacity 900ms ease-out, transform 900ms cubic-bezier(0.16, 1, 0.3, 1)',
           }}>
 
-          {/* Logo oficial RL PROD (mesmo da Proposta Criativa) */}
+          {/* Logo oficial RL PHOTO.VIDEO (gold) */}
           <div className="mb-10 relative flex items-center justify-center">
             <img
-              src="/logo-rl-prod-branco.png"
+              src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
               alt="RL Photo · Video"
               className="w-44 h-44 sm:w-52 sm:h-52 object-contain"
               style={{
-                filter: 'drop-shadow(0 6px 18px rgba(45,30,18,0.32)) drop-shadow(0 0 24px rgba(201,164,92,0.25))',
+                filter: 'drop-shadow(0 6px 18px rgba(45,30,18,0.32)) drop-shadow(0 0 24px rgba(201,164,92,0.40))',
               }}
             />
           </div>
