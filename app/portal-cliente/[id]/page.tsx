@@ -1641,14 +1641,85 @@ function PortalSubPageContent() {
               backUrl={_atmBackHref}
             />
 
-            {/* Botão Enviar Mensagem (só páginas Atendimento) */}
+            {/* Info + Botão Enviar Mensagem (só páginas Atendimento) */}
             {portalRef && title.toUpperCase().includes('ATEND') && (
-              <div style={{ textAlign: 'center', marginTop: 30 }}>
-                <SendMessageButton
-                  referencia={portalRef}
-                  nomeNoivos={[portalSettingsObj?.noiva, portalSettingsObj?.noivo].filter(Boolean).join(' & ') || null}
-                  emailNoiva={portalSettingsObj?.emailNoiva ?? null}
-                />
+              <div className="msg-info-wrap">
+                <div className="msg-info">
+                  <div className="msg-info-eyebrow">Canal Oficial dos Noivos</div>
+                  <h3 className="msg-info-title">
+                    Esta é a forma <em>mais organizada</em> de nos chegarem
+                  </h3>
+                  <p>
+                    Em vez de mensagens que se perdem no WhatsApp,
+                    podem (e devem) enviar todos os vossos pedidos por este canal.
+                    Cada mensagem fica registada no vosso portal e <strong>tem sempre resposta da nossa parte</strong>.
+                  </p>
+                  <p className="msg-info-note">
+                    O tempo de resposta poderá ir <strong>até 8 dias úteis</strong>.
+                    Obrigado pela vossa compreensão e confiança.
+                  </p>
+                </div>
+                <div style={{ textAlign: 'center', marginTop: 4 }}>
+                  <SendMessageButton
+                    referencia={portalRef}
+                    nomeNoivos={[portalSettingsObj?.noiva, portalSettingsObj?.noivo].filter(Boolean).join(' & ') || null}
+                    emailNoiva={portalSettingsObj?.emailNoiva ?? null}
+                  />
+                </div>
+
+                <style jsx>{`
+                  .msg-info-wrap {
+                    margin: 40px 0 10px;
+                  }
+                  .msg-info {
+                    border: 1px solid rgba(200,168,102,.22);
+                    border-left: 2px solid rgba(200,168,102,.6);
+                    background: linear-gradient(180deg, rgba(200,168,102,.04), rgba(200,168,102,.01));
+                    padding: 26px 30px 24px;
+                    border-radius: 4px;
+                    margin-bottom: 18px;
+                  }
+                  .msg-info-eyebrow {
+                    font-family: 'Hanken Grotesk', sans-serif;
+                    font-size: 10px;
+                    letter-spacing: .42em;
+                    text-transform: uppercase;
+                    color: #c8a866;
+                    font-weight: 600;
+                    margin-bottom: 12px;
+                  }
+                  .msg-info-title {
+                    font-family: 'Cormorant Garamond', serif;
+                    font-weight: 400;
+                    font-size: 24px;
+                    line-height: 1.25;
+                    color: #efe7d6;
+                    margin: 0 0 14px;
+                  }
+                  .msg-info-title em {
+                    font-style: italic;
+                    color: #d7bd87;
+                  }
+                  .msg-info p {
+                    font-family: 'Hanken Grotesk', sans-serif !important;
+                    font-size: 14.5px !important;
+                    line-height: 1.75 !important;
+                    color: #c3b8a3 !important;
+                    margin: 0 0 12px !important;
+                    font-weight: 400 !important;
+                  }
+                  .msg-info p strong {
+                    color: #efe7d6;
+                    font-weight: 600;
+                  }
+                  .msg-info-note {
+                    margin: 14px 0 0 !important;
+                    padding-top: 14px;
+                    border-top: 1px solid rgba(239,231,214,.06);
+                    font-size: 13.5px !important;
+                    color: #8c8170 !important;
+                  }
+                `}</style>
               </div>
             )}
           </div>
