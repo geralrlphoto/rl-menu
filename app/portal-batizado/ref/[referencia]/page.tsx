@@ -1070,6 +1070,37 @@ export default function PortalRefPage() {
     }
   }, [loadBlocks, loadSettings, referencia, searchParamsHook])
 
+  // ── Heartbeat de sessão dos noivos/pais (sliding window 10 min) ────────
+  useEffect(() => {
+    if (isAdmin) return
+    let canceled = false
+    let initialized = false
+    async function ping(redirectOnFail: boolean) {
+      if (document.visibilityState !== 'visible') return
+      try {
+        const r = await fetch('/api/noivos-auth', { cache: 'no-store', credentials: 'include' })
+        if (canceled) return
+        const j = await r.json().catch(() => ({}))
+        if (!j?.ok) {
+          if (redirectOnFail && initialized) {
+            window.location.href = `/login-noivos?next=${encodeURIComponent(window.location.pathname)}`
+          }
+          return
+        }
+        initialized = true
+      } catch { /* offline */ }
+    }
+    ping(false)
+    const iv = setInterval(() => ping(true), 3 * 60 * 1000)
+    const onVis = () => { if (document.visibilityState === 'visible') ping(true) }
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      canceled = true
+      clearInterval(iv)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [referencia, isAdmin])
+
   async function saveSettings(newSettings: PortalSettings) {
     await fetch('/api/portais', {
       method: 'PATCH',

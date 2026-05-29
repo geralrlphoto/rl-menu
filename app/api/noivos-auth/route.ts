@@ -176,14 +176,15 @@ export async function POST(req: NextRequest) {
     redirect,
   })
 
-  // remember=true → 90 dias persistentes; senão session cookie (morre ao
-  // fechar o browser; o JWT continua válido se reabrirem rápido).
+  // SEMPRE session cookie (sem maxAge) — morre ao fechar o browser.
+  // Segurança extra: JWT exp curto (10 min) + renovação automática
+  // pelo heartbeat enquanto os noivos estão no portal.
+  // O parâmetro `remember` é ignorado por design.
   res.cookies.set(NV_COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
-    ...(remember ? { maxAge: NV_COOKIE_MAX_AGE } : {}),
   })
 
   return res
@@ -193,7 +194,17 @@ export async function GET(req: NextRequest) {
   const c = req.cookies.get(NV_COOKIE_NAME)?.value
   const session = await verifyNvSession(c)
   if (!session) return NextResponse.json({ ok: false })
-  return NextResponse.json({
+
+  // Sliding window: cada GET válido renova o cookie por mais 10 min.
+  // O portal-cliente chama isto a cada ~3 min via heartbeat enquanto
+  // o utilizador está activo.
+  const renewed = await makeNvSession({
+    referencia: session.referencia,
+    email: session.email,
+    tipo: session.tipo,
+    role: session.role,
+  })
+  const res = NextResponse.json({
     ok: true,
     session: {
       referencia: session.referencia,
@@ -204,6 +215,14 @@ export async function GET(req: NextRequest) {
       redirect: portalPathFor(session.referencia, session.tipo),
     },
   })
+  res.cookies.set(NV_COOKIE_NAME, renewed, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    // Sem maxAge — session cookie.
+  })
+  return res
 }
 
 export async function DELETE() {

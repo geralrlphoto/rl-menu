@@ -36,7 +36,6 @@ function NoivosLoginInner() {
   const [email, setEmail]       = useState('')
   const [pwd, setPwd]           = useState('')
   const [showPwd, setShowPwd]   = useState(false)
-  const [remember, setRemember] = useState(true)
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState<string | null>(null)
   const [toast, setToast]       = useState<string | null>(null)
@@ -78,7 +77,7 @@ function NoivosLoginInner() {
       const res = await fetch('/api/noivos-auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password: pwd, remember }),
+        body: JSON.stringify({ email: email.trim(), password: pwd }),
       })
       const j = await res.json().catch(() => ({}))
       if (res.status === 404 && j?.reason === 'no_portal') {
@@ -394,27 +393,12 @@ function NoivosLoginInner() {
               </label>
             </div>
 
-            {/* Remember + Forgot */}
-            <div className="flex items-center justify-between pt-1">
-              <label className="flex items-center gap-2.5 cursor-pointer group">
-                <span className="relative flex items-center justify-center w-4 h-4 rounded-md transition-all"
-                  style={{
-                    background: remember ? '#C9A84C' : 'rgba(255,253,250,0.8)',
-                    border: '1.4px solid rgba(201,164,92,0.50)',
-                  }}>
-                  {remember && (
-                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#FAF7F2" strokeWidth="2.2">
-                      <path d="M2.5 6.2l2.6 2.4 4.4-5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
-                  <input type="checkbox" checked={remember}
-                    onChange={e => setRemember(e.target.checked)}
-                    className="absolute inset-0 opacity-0 cursor-pointer" />
-                </span>
-                <span className="text-[12px] tracking-wide" style={{ color: '#6B5A45', fontFamily: 'Georgia, serif' }}>
-                  Manter sessão iniciada
-                </span>
-              </label>
+            {/* Aviso de sessão estrita + Forgot */}
+            <div className="flex items-center justify-between pt-1 gap-3 flex-wrap">
+              <p className="text-[10.5px] tracking-wider"
+                style={{ color: '#8B7549', fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>
+                🔒 Sessão expira após 10 min de inactividade
+              </p>
               <button type="button" onClick={handleForgot}
                 className="text-[12px] tracking-wide transition-colors"
                 style={{ color: '#A88A4E', fontFamily: 'Georgia, serif', fontStyle: 'italic' }}

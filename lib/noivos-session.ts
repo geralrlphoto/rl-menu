@@ -17,8 +17,9 @@ const SECRET = () =>
   process.env.AUTH_SECRET ??
   'rl-noivos-fallback-dev-secret-do-not-use-in-prod'
 
-// 90 dias para noivos — UX priority. A sessão só dá acesso ao próprio portal.
-const SESSION_TTL_SECONDS = 60 * 60 * 24 * 90
+// 10 minutos — sessão estrita. Renovada por heartbeat (sliding window)
+// enquanto os noivos estão activos no portal.
+const SESSION_TTL_SECONDS = 60 * 10
 
 export type NvPayload = {
   referencia: string            // ex: CAS_011_26_RL — chave em `portais`
