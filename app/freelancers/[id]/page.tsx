@@ -5462,6 +5462,34 @@ function CalendarioTab({ freelancerId, casamentos, edicao, album, notificacoes, 
           events={byDay.get(previewIso) ?? []}
           typeMeta={typeMeta}
           onClose={() => setPreviewIso(null)}
+          allowDelete={!viewAsFreelancer}
+          onDeletePreWedding={async (notifId) => {
+            // Encontra a notificação para extrair a referência do PW
+            const n = notificacoes.find(x => x.id === notifId)
+            if (!n) { alert('Notificação não encontrada.'); return }
+            const meta = (() => {
+              try {
+                const m = (n.mensagem ?? '').match(/^__META__(.+?)__\/META__/)
+                return m ? JSON.parse(m[1]) : {}
+              } catch { return {} }
+            })()
+            const referencia = meta?.referencia
+            if (!referencia) { alert('Não foi possível identificar este Pré-Wedding.'); return }
+            const nomes = meta?.nomeNoivos ?? referencia
+            if (!confirm(`Eliminar o Pré-Wedding de ${nomes}?\n\nA notificação e o evento também desaparecem do calendário do membro.`)) return
+            try {
+              const res = await fetch(`/api/calendario-add/pre-wedding?referencia=${encodeURIComponent(referencia)}`, { method: 'DELETE' })
+              if (!res.ok) {
+                const j = await res.json().catch(() => ({}))
+                alert('Falha ao eliminar: ' + (j.error ?? res.status))
+                return
+              }
+              setPreviewIso(null)
+              onRefresh?.()
+            } catch (err: any) {
+              alert('Erro: ' + (err?.message ?? 'desconhecido'))
+            }
+          }}
         />
       )}
 
@@ -5588,11 +5616,13 @@ function fmtIsoShort(iso: string | null) {
 }
 
 // ── Modal Preview de Dia — mostra todos os eventos de uma data ────────
-function DiaPreviewModal({ iso, events, typeMeta, onClose }: {
+function DiaPreviewModal({ iso, events, typeMeta, onClose, onDeletePreWedding, allowDelete }: {
   iso: string
   events: CalEvento[]
   typeMeta: Record<string, { color: string; bg: string; border: string; label: string; icon: string }>
   onClose: () => void
+  onDeletePreWedding?: (notifId: string) => void
+  allowDelete?: boolean
 }) {
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
@@ -5669,17 +5699,32 @@ function DiaPreviewModal({ iso, events, typeMeta, onClose }: {
                       <span className="text-[10px] text-white/35">{arr.length}</span>
                     </div>
                     <div className="space-y-2">
-                      {arr.map(e => (
-                        <div key={e.id} className={`flex items-start gap-3 px-3.5 py-3 rounded-xl border ${m.border} hover:${m.bg} transition-all`}
-                          style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.015), transparent)' }}>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[14px] text-white font-medium leading-tight">{e.title}</p>
-                            {e.subtitle && (
-                              <p className="text-[11px] text-white/45 italic mt-1">{e.subtitle}</p>
+                      {arr.map(e => {
+                        // Pré-wedding: extrair o id da notificação para permitir delete
+                        const isPwEvent = e.type === 'pre-wedding' && e.id.startsWith('pw-')
+                        const pwNotifId = isPwEvent ? e.id.slice(3) : null
+                        return (
+                          <div key={e.id} className={`flex items-start gap-3 px-3.5 py-3 rounded-xl border ${m.border} hover:${m.bg} transition-all`}
+                            style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.015), transparent)' }}>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[14px] text-white font-medium leading-tight">{e.title}</p>
+                              {e.subtitle && (
+                                <p className="text-[11px] text-white/45 italic mt-1">{e.subtitle}</p>
+                              )}
+                            </div>
+                            {/* Botão eliminar — apenas admin, apenas Pré-Wedding por agora */}
+                            {allowDelete && isPwEvent && pwNotifId && onDeletePreWedding && (
+                              <button onClick={(ev) => { ev.stopPropagation(); onDeletePreWedding(pwNotifId) }}
+                                title="Eliminar este Pré-Wedding (também remove do calendário do membro)"
+                                className="shrink-0 w-8 h-8 rounded-lg border border-white/10 text-white/40 hover:text-red-400 hover:border-red-500/40 hover:bg-red-500/[0.06] transition-all flex items-center justify-center">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/>
+                                </svg>
+                              </button>
                             )}
                           </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </div>
                 )
