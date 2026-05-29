@@ -7015,19 +7015,53 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, casamentos = [], onR
 
   // Mapa local + data → casamento (fallback quando notificação não tem referência)
   function findCasamentoForNotif(n: Notificacao): Casamento | null {
+    // ── 1) META específico de atribuicao_equipa (estruturado) ──
     const atrMeta = parseAtribuicaoEquipaMeta(n.mensagem)
     if (atrMeta.referencia && casamentosByRef.has(atrMeta.referencia)) {
       return casamentosByRef.get(atrMeta.referencia)!
     }
-    // fallback: local + data_casamento
     if (atrMeta.local && atrMeta.data_casamento) {
+      const localLower = atrMeta.local.toLowerCase()
       const cand = casamentos.find(c =>
         c.data_casamento === atrMeta.data_casamento &&
-        c.local && (c.local.toLowerCase().includes(atrMeta.local!.toLowerCase()) ||
-                    atrMeta.local!.toLowerCase().includes(c.local.toLowerCase()))
+        c.local && (c.local.toLowerCase().includes(localLower) || localLower.includes(c.local.toLowerCase()))
       )
       if (cand) return cand
     }
+
+    // ── 2) META genérico (referência num campo top-level) ──
+    try {
+      const m = (n.mensagem ?? '').match(/^__META__(.+?)__\/META__/)
+      if (m) {
+        const obj = JSON.parse(m[1])
+        const ref = obj?.referencia || obj?.ref || obj?.casamento_referencia
+        if (ref && casamentosByRef.has(ref)) return casamentosByRef.get(ref)!
+      }
+    } catch { /* ignore */ }
+
+    // ── 3) Match por nome de local no título/mensagem (heurístico) ──
+    //     Ex.: 'Prazo Seleção · QUINTA DAS BISPAS' → procura casamento
+    //          cujo c.local case-insensitive include 'QUINTA DAS BISPAS'.
+    //     Estratégia: pega tudo a partir do separador '·' ou ':' no título,
+    //     ou usa o título inteiro como fallback. Faz o mesmo com a mensagem.
+    const haystack = `${n.titulo ?? ''} \n ${n.mensagem ?? ''}`.toLowerCase()
+    if (haystack.trim()) {
+      // Procura o casamento cujo c.local apareça inteiro como substring
+      // do título ou mensagem. Filtra locais muito curtos (<5 chars).
+      const matches = casamentos.filter(c => {
+        if (!c.local || c.local.length < 5) return false
+        return haystack.includes(c.local.toLowerCase())
+      })
+      // Em caso de match único, devolve-o. Em caso de múltiplos, prefere
+      // o que tem nome_noivos preenchido (mais útil ao utilizador).
+      if (matches.length === 1) return matches[0]
+      if (matches.length > 1) {
+        const withNoivos = matches.find(c => c.nome_noivos && c.nome_noivos.trim())
+        if (withNoivos) return withNoivos
+        return matches[0]
+      }
+    }
+
     return null
   }
 
@@ -7428,11 +7462,10 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, casamentos = [], onR
                 const isTaskMessage  = isTaskAssigned || isTaskResposta || isTaskConcluida
                 const isAtribuicao   = n.tipo === 'atribuicao_equipa'
 
-                // Tenta resolver o casamento associado para mostrar os noivos
-                // e abrir a ficha em preview ao clicar.
-                const casamentoAssoc = (isAtribuicao || n.tipo === 'briefing_enviado' || n.tipo === 'album_aprovado')
-                  ? findCasamentoForNotif(n)
-                  : null
+                // Tenta resolver o casamento associado em QUALQUER notificação
+                // (atribuição, prazos, briefing, álbum, alertas, etc.). Match
+                // por referência → local+data → heurística no texto.
+                const casamentoAssoc = findCasamentoForNotif(n)
                 const noivosNome = casamentoAssoc?.nome_noivos || null
                 const clickable = !!casamentoAssoc
 
