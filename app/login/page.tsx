@@ -17,8 +17,10 @@ import { Suspense } from 'react'
  *    - /api/auth            (admin password)   → cookie  rl_auth
  * ─────────────────────────────────────────────────────────────────────────── */
 
-const HERO_BG =
-  'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=1600&q=85&auto=format&fit=crop'
+// Imagem hero local (deve ser guardada em /public/login-hero.jpg).
+// Se ainda não estiver, o overlay navy/grain cobre por completo e o login
+// continua perfeitamente legível — vê-se apenas o degradé escuro.
+const HERO_BG = '/login-hero.jpg'
 
 export default function LoginPage() {
   return (
@@ -151,15 +153,22 @@ function LoginPageInner() {
     <main className="min-h-screen w-full grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] bg-[#0B0B0B] text-white">
       {/* ── ESQUERDA — Hero cinematográfico ─────────────────────────────── */}
       <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden">
-        {/* background image */}
+        {/* background image — div com background-image (silenciosamente
+            falha se o ficheiro ainda não estiver presente; o overlay
+            cobre tudo na mesma). */}
         <div className="absolute inset-0">
-          <img src={HERO_BG} alt="" className="w-full h-full object-cover scale-105"
-            style={{ filter: 'brightness(0.55) saturate(1.05) contrast(1.05)' }} />
-          {/* warm cinematic overlay */}
+          <div className="absolute inset-0 bg-cover bg-center scale-105"
+            style={{
+              backgroundImage: `url("${HERO_BG}")`,
+              backgroundColor: '#0a1525', // fallback navy se ficheiro falta
+              filter: 'brightness(0.62) saturate(1.05) contrast(1.05)',
+            }} />
+          {/* navy-aware cinematic overlay — harmoniza com a lente azul */}
           <div className="absolute inset-0"
-            style={{ background: 'linear-gradient(120deg, rgba(20,15,8,0.55) 0%, rgba(11,11,11,0.55) 60%, rgba(11,11,11,0.8) 100%)' }} />
+            style={{ background: 'linear-gradient(120deg, rgba(8,16,28,0.55) 0%, rgba(11,11,11,0.55) 60%, rgba(11,11,11,0.78) 100%)' }} />
+          {/* glow dourado subtil no canto (assinatura RL) */}
           <div className="absolute inset-0"
-            style={{ background: 'radial-gradient(circle at 80% 20%, rgba(201,164,92,0.18), transparent 55%)' }} />
+            style={{ background: 'radial-gradient(circle at 78% 22%, rgba(201,164,92,0.18), transparent 55%)' }} />
           {/* film grain */}
           <div className="absolute inset-0 opacity-[0.05] mix-blend-overlay"
             style={{ backgroundImage:
