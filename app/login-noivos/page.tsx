@@ -53,8 +53,8 @@ function NoivosLoginInner() {
         const r = await fetch('/api/noivos-auth', { cache: 'no-store' })
         if (canceled) return
         const j = await r.json().catch(() => ({}))
-        if (j?.ok && j?.session?.token) {
-          router.replace(`/r/${j.session.token}`)
+        if (j?.ok && j?.session?.redirect) {
+          router.replace(j.session.redirect)
         }
       } catch { /* offline / erro — fica em login */ }
     })()
@@ -80,12 +80,13 @@ function NoivosLoginInner() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim(), password: pwd, remember }),
       })
-      if (res.status === 404) {
-        setToast('Sistema de acesso em finalização. Falem connosco para receber o vosso link directo.')
+      const j = await res.json().catch(() => ({}))
+      if (res.status === 404 && j?.reason === 'no_portal') {
+        setError('O vosso portal ainda não está activo. Falem connosco para activar o acesso.')
+        setToast('Portal ainda não activo. Falem connosco.')
         setLoading(false)
         return
       }
-      const j = await res.json().catch(() => ({}))
       if (!res.ok || !j?.ok) {
         setError('E-mail ou palavra-passe incorretos.')
         setToast('E-mail ou palavra-passe incorretos.')
@@ -93,7 +94,7 @@ function NoivosLoginInner() {
         return
       }
       setToast('Bem-vindos. A abrir o vosso portal…')
-      const target = j.redirect ?? nextFromUrl ?? '/r'
+      const target = j.redirect ?? nextFromUrl ?? '/'
       setTimeout(() => {
         router.push(target)
         router.refresh()

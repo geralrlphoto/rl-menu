@@ -2,13 +2,13 @@
  * Signed noivos session cookie helpers.
  *
  * Cookie format: `nv_session = <base64url(payload)>.<base64url(hmac)>`
- * Payload      : { id, email, token, role, exp }
+ * Payload      : { referencia, email, tipo, role, exp }
  *
- * Implementação com Web Crypto (`crypto.subtle`) — funciona tanto em Node.js
- * runtime como Edge runtime (middleware Next.js).
+ * Cada portal de casamento/batizado tem uma `referencia` (ex: CAS_011_26_RL)
+ * e a sessão dos noivos guarda essa referencia + o tipo (casamento|batizado)
+ * para o redirect e para validação.
  *
- * TTL longo (90 dias) e renovado automaticamente — noivos não precisam de
- * security strict como staff. Se `remember` for false, usa session cookie.
+ * Implementação com Web Crypto — compatível com Edge runtime.
  */
 
 const SECRET = () =>
@@ -17,15 +17,15 @@ const SECRET = () =>
   process.env.AUTH_SECRET ??
   'rl-noivos-fallback-dev-secret-do-not-use-in-prod'
 
-// 90 dias para noivos (UX priority sobre security; sessão pessoal só vê o seu portal)
+// 90 dias para noivos — UX priority. A sessão só dá acesso ao próprio portal.
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 90
 
 export type NvPayload = {
-  id: string
-  email: string
-  token: string // page_token do crm_contacts → URL do portal /r/<token>
+  referencia: string            // ex: CAS_011_26_RL — chave em `portais`
+  email: string                 // email da noiva ou do noivo (o que fez login)
+  tipo: 'casamento' | 'batizado'
   role: 'noivos'
-  exp: number // epoch ms
+  exp: number                   // epoch ms
 }
 
 // ── base64url helpers ────────────────────────────────────────────────────────
@@ -107,10 +107,16 @@ export async function verifyNvSession(cookie: string | null | undefined): Promis
     if (!ok) return null
     const payload = JSON.parse(dec.decode(b64urlDecode(payloadB64))) as NvPayload
     if (typeof payload.exp !== 'number' || payload.exp < Date.now()) return null
-    if (!payload.id || !payload.token) return null
+    if (!payload.referencia) return null
     return payload
   } catch { return null }
 }
 
 export const NV_COOKIE_NAME = 'nv_session'
 export const NV_COOKIE_MAX_AGE = SESSION_TTL_SECONDS
+
+// Helper: dado um tipo de portal, devolve o path absoluto da rota do cliente.
+export function portalPathFor(referencia: string, tipo: 'casamento' | 'batizado'): string {
+  const base = tipo === 'batizado' ? '/portal-batizado' : '/portal-cliente'
+  return `${base}/ref/${encodeURIComponent(referencia)}`
+}

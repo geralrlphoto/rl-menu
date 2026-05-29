@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { NV_COOKIE_NAME, NV_COOKIE_MAX_AGE, makeNvSession, verifyNvSession } from '@/lib/noivos-session'
+import {
+  NV_COOKIE_NAME,
+  NV_COOKIE_MAX_AGE,
+  makeNvSession,
+  verifyNvSession,
+  portalPathFor,
+} from '@/lib/noivos-session'
+
+export const dynamic = 'force-dynamic'
 
 function db() {
   return createClient(
@@ -10,20 +18,27 @@ function db() {
 }
 
 /**
- * Auth endpoint para NOIVOS (clientes de casamento).
+ * Auth dos NOIVOS — usa o sistema EXISTENTE de password de portal:
  *
- * Lookup em `crm_contacts` por `email` → match com `page_content.noivos_password`.
- * (Sem migração de schema — a password é guardada no JSONB `page_content`,
- * adicionada via admin no CRM.)
+ *   1) Procura o email em `dados_contrato_cps` (email_noiva OR email_noivo).
+ *      → obtém referencia_evento + tipo_evento.
+ *   2) Busca a row em `portais` com essa referencia → settings.portalPassword.
+ *   3) Compara passwords (case-insensitive, trim).
+ *   4) Set cookie `nv_session` + redirect para
+ *      /portal-cliente/ref/<REF> (casamento) ou /portal-batizado/ref/<REF>.
+ *
+ * Sem migrações de schema. A password é definida no widget admin existente
+ * em /eventos-2026/[id] ("Definir password..." → portais.settings.portalPassword).
  *
  * POST { email, password, remember? } →
- *   200 { ok: true, redirect: '/r/<page_token>' } + cookie `nv_session`
+ *   200 { ok: true, redirect: '/portal-cliente/ref/<REF>' } + cookie
  *   401 { ok: false, reason: 'invalid_credentials' }
+ *   404 { ok: false, reason: 'no_portal' } — email existe mas ainda não há
+ *        portal criado / aprovado para este casal.
  *
  * GET → devolve a sessão actual (ou null).
  * DELETE → logout.
  */
-
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({})) as {
     email?: string
@@ -36,55 +51,92 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = db()
-  const emailNorm = email.trim().toLowerCase()
+  const emailNorm = String(email).trim().toLowerCase()
 
-  // Procura noiva/noivo por e-mail (case-insensitive). Aceita match parcial
-  // em qualquer um dos noivos (campo `email` no crm_contacts).
-  const { data: row, error: qErr } = await supabase
-    .from('crm_contacts')
-    .select('id, nome, email, page_token, page_content')
-    .ilike('email', emailNorm)
+  // ── 1) Encontrar contrato pelo email (noiva ou noivo) ──────────────────
+  //     Faz duas queries (uma por coluna) e usa a primeira que devolver row.
+  //     Usa ilike para case-insensitive.
+  let contrato: {
+    referencia_evento: string | null
+    tipo_evento: string | null
+    nome_noivos: string | null
+    email_noiva: string | null
+    email_noivo: string | null
+  } | null = null
+
+  const { data: byNoiva } = await supabase
+    .from('dados_contrato_cps')
+    .select('referencia_evento, tipo_evento, nome_noivos, email_noiva, email_noivo')
+    .ilike('email_noiva', emailNorm)
+    .order('id', { ascending: false })
+    .limit(1)
     .maybeSingle()
 
-  if (qErr) {
-    return NextResponse.json({ ok: false, reason: 'db_error', detail: qErr.message }, { status: 500 })
+  if (byNoiva) contrato = byNoiva as any
+
+  if (!contrato) {
+    const { data: byNoivo } = await supabase
+      .from('dados_contrato_cps')
+      .select('referencia_evento, tipo_evento, nome_noivos, email_noiva, email_noivo')
+      .ilike('email_noivo', emailNorm)
+      .order('id', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (byNoivo) contrato = byNoivo as any
   }
-  if (!row || !row.page_token) {
+
+  if (!contrato || !contrato.referencia_evento) {
+    // genérico para evitar user-enumeration
     return NextResponse.json({ ok: false, reason: 'invalid_credentials' }, { status: 401 })
   }
 
-  // Password está no JSONB page_content.noivos_password (set via CRM).
-  const pageContent = (typeof row.page_content === 'string'
-    ? JSON.parse(row.page_content || '{}')
-    : (row.page_content || {})) as Record<string, any>
-  const storedRaw = pageContent?.noivos_password ?? ''
+  const referencia = contrato.referencia_evento
+  const tipo: 'casamento' | 'batizado' =
+    contrato.tipo_evento === 'batizado' ? 'batizado' : 'casamento'
+
+  // ── 2) Verifica a password no portal correspondente ────────────────────
+  const { data: portalRow } = await supabase
+    .from('portais')
+    .select('settings')
+    .ilike('referencia', referencia)
+    .maybeSingle()
+
+  const storedRaw = portalRow?.settings?.portalPassword ?? ''
   const stored  = String(storedRaw).trim().toLowerCase()
   const entered = String(password).trim().toLowerCase()
 
-  if (!stored || stored !== entered) {
+  if (!stored) {
+    // Portal ainda sem password (ou portal não criado). Mensagem específica
+    // para o cliente saber que tem de falar com a equipa RL.
+    return NextResponse.json({ ok: false, reason: 'no_portal' }, { status: 404 })
+  }
+  if (stored !== entered) {
     return NextResponse.json({ ok: false, reason: 'invalid_credentials' }, { status: 401 })
   }
 
+  // ── 3) Sessão + cookie + redirect ──────────────────────────────────────
   const token = await makeNvSession({
-    id: row.id,
-    email: row.email ?? emailNorm,
-    token: row.page_token,
+    referencia,
+    email: emailNorm,
+    tipo,
     role: 'noivos',
   })
+
+  const redirect = portalPathFor(referencia, tipo)
 
   const res = NextResponse.json({
     ok: true,
     noivos: {
-      id: row.id,
-      nome: row.nome,
-      email: row.email,
-      page_token: row.page_token,
+      referencia,
+      nome_noivos: contrato.nome_noivos,
+      email: emailNorm,
+      tipo,
     },
-    redirect: `/r/${row.page_token}`,
+    redirect,
   })
 
-  // Cookie: se `remember` é true → 90 dias; senão session cookie (morre ao
-  // fechar browser, mas JWT exp ainda dura 90 dias caso reabra rápido).
+  // remember=true → 90 dias persistentes; senão session cookie (morre ao
+  // fechar o browser; o JWT continua válido se reabrirem rápido).
   res.cookies.set(NV_COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -103,11 +155,12 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     ok: true,
     session: {
-      id: session.id,
+      referencia: session.referencia,
       email: session.email,
-      token: session.token,
+      tipo: session.tipo,
       role: session.role,
       exp: session.exp,
+      redirect: portalPathFor(session.referencia, session.tipo),
     },
   })
 }
