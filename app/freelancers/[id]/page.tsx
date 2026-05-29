@@ -5434,19 +5434,61 @@ function CalendarioTab({ freelancerId, casamentos, edicao, album, notificacoes, 
                   const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
                   const diff = Math.round((dt.getTime() - today.getTime()) / 86400000)
                   const label = diff === 0 ? 'Hoje' : diff === 1 ? 'Amanhã' : `+${diff}d`
+                  // Pré-wedding: extrair o id da notificação para permitir delete
+                  const isPwEvent = e.type === 'pre-wedding' && e.id.startsWith('pw-')
+                  const pwNotifId = isPwEvent ? e.id.slice(3) : null
                   return (
-                    <button key={e.id} onClick={() => { setView({ y, m: mm - 1 }); setSelectedIso(e.iso); setPreviewIso(e.iso) }}
-                      className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg border border-white/[0.05] hover:border-gold/25 hover:bg-white/[0.03] transition-all text-left">
-                      <div className="flex flex-col items-center justify-center w-10 shrink-0">
-                        <span className={`text-[16px] font-light leading-none ${m.color}`} style={{ fontFamily: 'Georgia, serif' }}>{String(d).padStart(2,'0')}</span>
-                        <span className="text-[8px] tracking-widest uppercase text-white/30 mt-0.5">{meses[mm-1]}</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[12px] font-medium text-white truncate">{e.title}</p>
-                        <p className={`text-[10px] ${m.color}/70 tracking-wide`}>{m.icon} {m.label}</p>
-                      </div>
-                      <span className="text-[9px] text-white/35 tracking-wider uppercase shrink-0">{label}</span>
-                    </button>
+                    <div key={e.id} className="group relative flex items-stretch gap-1.5 rounded-lg border border-white/[0.05] hover:border-gold/25 hover:bg-white/[0.03] transition-all overflow-hidden">
+                      <button onClick={() => { setView({ y, m: mm - 1 }); setSelectedIso(e.iso); setPreviewIso(e.iso) }}
+                        className="flex-1 min-w-0 flex items-center gap-3 px-2.5 py-2 text-left">
+                        <div className="flex flex-col items-center justify-center w-10 shrink-0">
+                          <span className={`text-[16px] font-light leading-none ${m.color}`} style={{ fontFamily: 'Georgia, serif' }}>{String(d).padStart(2,'0')}</span>
+                          <span className="text-[8px] tracking-widest uppercase text-white/30 mt-0.5">{meses[mm-1]}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[12px] font-medium text-white truncate">{e.title}</p>
+                          <p className={`text-[10px] ${m.color}/70 tracking-wide`}>{m.icon} {m.label}</p>
+                        </div>
+                        <span className="text-[9px] text-white/35 tracking-wider uppercase shrink-0">{label}</span>
+                      </button>
+                      {/* Botão eliminar — só admin, só pré-wedding por agora */}
+                      {!viewAsFreelancer && isPwEvent && pwNotifId && (
+                        <button onClick={async (ev) => {
+                          ev.stopPropagation()
+                          const n = notificacoes.find(x => x.id === pwNotifId)
+                          if (!n) { alert('Notificação não encontrada.'); return }
+                          let referencia: string | null = null
+                          let nomes: string | null = null
+                          try {
+                            const mm2 = (n.mensagem ?? '').match(/^__META__(.+?)__\/META__/)
+                            if (mm2) {
+                              const meta = JSON.parse(mm2[1])
+                              referencia = meta?.referencia ?? null
+                              nomes = meta?.nomeNoivos ?? null
+                            }
+                          } catch { /* ignore */ }
+                          if (!referencia) { alert('Não foi possível identificar este Pré-Wedding.'); return }
+                          if (!confirm(`Eliminar o Pré-Wedding de ${nomes ?? referencia}?\n\nA notificação e o evento também desaparecem do calendário do membro.`)) return
+                          try {
+                            const res = await fetch(`/api/calendario-add/pre-wedding?referencia=${encodeURIComponent(referencia)}`, { method: 'DELETE' })
+                            if (!res.ok) {
+                              const j = await res.json().catch(() => ({}))
+                              alert('Falha ao eliminar: ' + (j.error ?? res.status))
+                              return
+                            }
+                            onRefresh?.()
+                          } catch (err: any) {
+                            alert('Erro: ' + (err?.message ?? 'desconhecido'))
+                          }
+                        }}
+                          title="Eliminar Pré-Wedding"
+                          className="shrink-0 w-9 flex items-center justify-center text-white/35 hover:text-red-400 hover:bg-red-500/[0.08] transition-all border-l border-white/[0.05]">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/>
+                          </svg>
+                        </button>
+                      )}
+                    </div>
                   )
                 })}
               </div>
