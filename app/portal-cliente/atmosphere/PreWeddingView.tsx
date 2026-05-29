@@ -163,15 +163,6 @@ export function PreWeddingView(props: PreWeddingViewProps) {
                 </div>
               )}
             </div>
-
-            <div className="cen-photo">
-              {c.photoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={c.photoUrl} alt="" />
-              ) : (
-                <div className="ph" data-label={c.title} />
-              )}
-            </div>
           </div>
 
           {c.galleryUrls && c.galleryUrls.filter(Boolean).length > 0 && (
