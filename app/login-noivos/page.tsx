@@ -45,6 +45,22 @@ function NoivosLoginInner() {
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
 
+  // Se já existe sessão de noivos válida, redireciona para o portal próprio.
+  useEffect(() => {
+    let canceled = false
+    ;(async () => {
+      try {
+        const r = await fetch('/api/noivos-auth', { cache: 'no-store' })
+        if (canceled) return
+        const j = await r.json().catch(() => ({}))
+        if (j?.ok && j?.session?.token) {
+          router.replace(`/r/${j.session.token}`)
+        }
+      } catch { /* offline / erro — fica em login */ }
+    })()
+    return () => { canceled = true }
+  }, [router])
+
   useEffect(() => {
     if (!toast) return
     const t = setTimeout(() => setToast(null), 3600)
