@@ -17,10 +17,10 @@ import { Suspense } from 'react'
  *    - /api/auth            (admin password)   → cookie  rl_auth
  * ─────────────────────────────────────────────────────────────────────────── */
 
-// Imagem hero local (deve ser guardada em /public/login-hero.jpg).
-// Se ainda não estiver, o overlay navy/grain cobre por completo e o login
-// continua perfeitamente legível — vê-se apenas o degradé escuro.
-const HERO_BG = '/login-hero.jpg'
+// Imagem hero local (/public/login hero.png — espaço + .png).
+// Encodada com %20 para o browser carregar correctamente.
+// Fallback: backgroundColor navy se ficheiro faltar.
+const HERO_BG = '/login%20hero.png'
 
 export default function LoginPage() {
   return (
