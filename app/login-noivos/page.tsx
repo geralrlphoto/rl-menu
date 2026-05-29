@@ -130,17 +130,23 @@ function NoivosLoginInner() {
           <div className="absolute inset-0 bg-cover bg-center"
             style={{
               backgroundImage: `url("${HERO_BG}")`,
-              backgroundColor: '#E8D9C2', // fallback champagne
-              filter: 'brightness(1.02) saturate(1.05)',
+              backgroundColor: '#2A1E14', // fallback dark warm
+              filter: 'brightness(0.72) saturate(1.10)',
             }} />
-          {/* Overlay quente sunset */}
+          {/* Overlay escurecer geral para garantir contraste do texto */}
           <div className="absolute inset-0"
-            style={{ background: 'linear-gradient(135deg, rgba(250,247,242,0.42) 0%, rgba(232,217,194,0.22) 40%, rgba(45,30,18,0.18) 100%)' }} />
-          {/* Glow gold subtil */}
+            style={{ background: 'rgba(20,12,6,0.45)' }} />
+          {/* Overlay quente sunset com mais densidade nos cantos */}
           <div className="absolute inset-0"
-            style={{ background: 'radial-gradient(circle at 28% 78%, rgba(201,164,92,0.18), transparent 50%)' }} />
+            style={{ background: 'linear-gradient(135deg, rgba(15,10,5,0.45) 0%, rgba(45,30,18,0.32) 45%, rgba(15,10,5,0.55) 100%)' }} />
+          {/* Vinheta radial — escurece bordos, mantém centro mais legível */}
+          <div className="absolute inset-0"
+            style={{ background: 'radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.45) 100%)' }} />
+          {/* Glow gold subtil (mais discreto agora) */}
+          <div className="absolute inset-0"
+            style={{ background: 'radial-gradient(circle at 28% 78%, rgba(201,164,92,0.14), transparent 55%)' }} />
           {/* film grain sutil */}
-          <div className="absolute inset-0 opacity-[0.035] mix-blend-overlay"
+          <div className="absolute inset-0 opacity-[0.045] mix-blend-overlay"
             style={{ backgroundImage:
               'url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22300%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.85%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23n)%22/%3E%3C/svg%3E")' }} />
         </div>
@@ -174,34 +180,36 @@ function NoivosLoginInner() {
             style={{
               fontFamily: '"Cormorant Garamond", "Playfair Display", Georgia, serif',
               fontWeight: 300,
-              color: '#3D2E1F',
+              color: '#F5EAD2',
+              textShadow: '0 2px 18px rgba(0,0,0,0.55)',
             }}>
             NOIVOS
           </h1>
 
           {/* Decorative separator */}
           <div className="flex items-center gap-3 mb-4">
-            <span className="h-px w-12" style={{ background: 'linear-gradient(to right, transparent, #C9A84C, transparent)' }} />
-            <span className="text-[10px]" style={{ color: '#C9A84C' }}>♡</span>
-            <span className="h-px w-12" style={{ background: 'linear-gradient(to right, transparent, #C9A84C, transparent)' }} />
+            <span className="h-px w-12" style={{ background: 'linear-gradient(to right, transparent, #D4B870, transparent)' }} />
+            <span className="text-[10px]" style={{ color: '#D4B870' }}>♡</span>
+            <span className="h-px w-12" style={{ background: 'linear-gradient(to right, transparent, #D4B870, transparent)' }} />
           </div>
 
           {/* Subtitle */}
           <p className="text-[11px] tracking-[0.5em] uppercase mb-16"
-            style={{ color: '#8B7549', fontWeight: 500 }}>
+            style={{ color: '#E2C68C', fontWeight: 500, textShadow: '0 1px 6px rgba(0,0,0,0.5)' }}>
             Os Vossos Momentos
           </p>
 
           {/* ACESSO AO PORTAL chip */}
           <div className="flex items-center gap-3 mb-7">
-            <span className="text-[16px]" style={{ color: '#C9A84C' }}>
+            <span className="text-[16px]" style={{ color: '#D4B870' }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M12 12c2.5 0 4-2 4-4.5S14.5 3 12 3 8 5 8 7.5 9.5 12 12 12z" />
                 <path d="M5 21c0-3 3-5 7-5s7 2 7 5" />
                 <circle cx="18" cy="6" r="1.3" fill="currentColor" stroke="none" />
               </svg>
             </span>
-            <span className="text-[10px] tracking-[0.5em] uppercase font-semibold" style={{ color: '#8B7549' }}>
+            <span className="text-[10px] tracking-[0.5em] uppercase font-semibold"
+              style={{ color: '#E2C68C', textShadow: '0 1px 6px rgba(0,0,0,0.5)' }}>
               Acesso ao Portal
             </span>
           </div>
@@ -211,15 +219,16 @@ function NoivosLoginInner() {
             style={{
               fontFamily: '"Cormorant Garamond", "Playfair Display", Georgia, serif',
               fontWeight: 400,
-              color: '#2D2218',
+              color: '#F8F1E0',
+              textShadow: '0 2px 16px rgba(0,0,0,0.55)',
             }}>
             O vosso dia,<br />
-            <em style={{ fontStyle: 'italic', color: '#8B7549' }}>a vossa história.</em>
+            <em style={{ fontStyle: 'italic', color: '#E6C988' }}>a vossa história.</em>
           </h2>
 
           {/* Description */}
           <p className="text-[13px] leading-[1.85] max-w-sm tracking-wide"
-            style={{ color: '#6B5A45', fontFamily: 'Georgia, serif' }}>
+            style={{ color: 'rgba(245,235,212,0.85)', fontFamily: 'Georgia, serif', textShadow: '0 1px 8px rgba(0,0,0,0.55)' }}>
             Acedam às vossas fotografias,<br />
             vídeos e memórias num só lugar,<br />
             de forma simples e segura.
@@ -228,10 +237,10 @@ function NoivosLoginInner() {
 
         {/* Footer signature */}
         <footer className="relative z-10 px-16 pb-8 flex items-center justify-between">
-          <p className="text-[9px] tracking-[0.5em] uppercase" style={{ color: 'rgba(45,34,24,0.45)' }}>
+          <p className="text-[9px] tracking-[0.5em] uppercase" style={{ color: 'rgba(245,235,212,0.55)' }}>
             RL Photo · Video
           </p>
-          <p className="text-[9px] tracking-[0.4em] uppercase" style={{ color: 'rgba(45,34,24,0.35)' }}>
+          <p className="text-[9px] tracking-[0.4em] uppercase" style={{ color: 'rgba(245,235,212,0.45)' }}>
             Portal Privado dos Noivos
           </p>
         </footer>
