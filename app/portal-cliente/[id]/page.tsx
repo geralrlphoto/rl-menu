@@ -1872,14 +1872,26 @@ function PortalSubPageContent() {
           backHref={_atmBackHref}
           isAdmin={isAdmin}
           onEditTitle={handleEditTitlePW}
-          introPhotoUrl={imageUrls[0] ?? null}
+          introPhotoUrl={imageUrls[0] ?? portalHeroImageUrl ?? null}
           introParagraphs={introParas.slice(0, 4)}
           triptychUrls={[imageUrls[1], imageUrls[2], imageUrls[3]]}
-          cenarios={DEFAULT_CENARIOS.map((c, i) => ({
-            ...c,
-            photoUrl: imageUrls[4 + i] ?? null,
-            galleryUrls: [imageUrls[7 + i * 3], imageUrls[8 + i * 3], imageUrls[9 + i * 3]],
-          }))}
+          cenarios={DEFAULT_CENARIOS.map((c, i) => {
+            // Fallback em cascata para a foto principal do cenário:
+            // 1) imagem específica do cenário (Notion 4/5/6)
+            // 2) introPhoto (Notion 0)
+            // 3) hero do portal
+            // 4) hero da sub-página
+            const fallback = imageUrls[0] ?? portalHeroImageUrl ?? subpageHeaderUrl ?? null
+            return {
+              ...c,
+              photoUrl: imageUrls[4 + i] ?? fallback,
+              galleryUrls: [
+                imageUrls[7 + i * 3] ?? fallback,
+                imageUrls[8 + i * 3] ?? fallback,
+                imageUrls[9 + i * 3] ?? fallback,
+              ],
+            }
+          })}
           adminActions={
             <>
               <button type="button" className="abtn" onClick={handleRefresh} disabled={refreshing}>
