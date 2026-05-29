@@ -88,6 +88,9 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/freelancer-auth') ||
     pathname.startsWith('/api/freelancers') ||
     pathname.startsWith('/api/freelancer-') ||
+    pathname.startsWith('/api/noivos-auth') ||
+    pathname.startsWith('/api/noivos-recover') ||
+    pathname === '/login-noivos' ||
     pathname.startsWith('/api/portais') ||
     pathname.startsWith('/api/pagamentos-by-ref') ||
     pathname.startsWith('/api/pagamentos-noivos') ||
