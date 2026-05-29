@@ -132,64 +132,45 @@ export function PreWeddingView(props: PreWeddingViewProps) {
           <hr className="gold-rule" />
 
           <div className="body">
-            <div>
-              {c.paragraphs.map((p, j) => (
-                <p key={j} dangerouslySetInnerHTML={{ __html: highlight(p) }} />
-              ))}
+            {c.paragraphs.map((p, j) => (
+              <p key={j} dangerouslySetInnerHTML={{ __html: highlight(p) }} />
+            ))}
 
-              {c.bullets && c.bullets.length > 0 && (
-                <ul className="cen-list">
-                  {c.bullets.map((b, j) => <li key={j}>{b}</li>)}
-                </ul>
-              )}
+            {c.bullets && c.bullets.length > 0 && (
+              <ul className="cen-list">
+                {c.bullets.map((b, j) => <li key={j}>{b}</li>)}
+              </ul>
+            )}
 
-              {c.outfit && (
-                <div className="pw-outfit">
-                  <div className="card">
-                    <h4>Noivo</h4>
-                    <p>{c.outfit.noivo ?? 'Camisa clara, blazer leve, calças de algodão.'}</p>
-                  </div>
-                  <div className="card">
-                    <h4>Noiva</h4>
-                    <p>{c.outfit.noiva ?? 'Vestido fluido, tons neutros, calçado confortável.'}</p>
-                  </div>
+            {c.outfit && (
+              <div className="pw-outfit">
+                <div className="card">
+                  <h4>Noivo</h4>
+                  <p>{c.outfit.noivo ?? 'Camisa clara, blazer leve, calças de algodão.'}</p>
                 </div>
-              )}
-
-              {c.dica && (
-                <div className="pw-dica">
-                  <span className="ic">✦</span>
-                  <div className="txt" dangerouslySetInnerHTML={{ __html: highlight(c.dica) }} />
+                <div className="card">
+                  <h4>Noiva</h4>
+                  <p>{c.outfit.noiva ?? 'Vestido fluido, tons neutros, calçado confortável.'}</p>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
-            {/* Foto do casal à direita (foto dos noivos da intro) */}
-            {(c.photoUrl || props.introPhotoUrl) && (
-              <div className="cen-photo">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={c.photoUrl || props.introPhotoUrl || ''} alt="" />
+            {c.dica && (
+              <div className="pw-dica">
+                <span className="ic">✦</span>
+                <div className="txt" dangerouslySetInnerHTML={{ __html: highlight(c.dica) }} />
               </div>
             )}
           </div>
 
-          {c.galleryUrls && c.galleryUrls.filter(Boolean).length > 0 && (
-            <div className="pw-gallery">
-              {[0, 1, 2].map(j => {
-                const u = c.galleryUrls?.[j] ?? null
-                return (
-                  <div key={j} className="frame">
-                    {u ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={u} alt="" />
-                    ) : (
-                      <div className="ph" data-label="Foto" />
-                    )}
-                  </div>
-                )
-              })}
+          {/* Foto grande full-width depois de cada cenário */}
+          {(c.photoUrl || props.introPhotoUrl) && (
+            <div className="pw-cenario-photo">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={c.photoUrl || props.introPhotoUrl || ''} alt="" />
             </div>
           )}
+
         </section>
       ))}
 
