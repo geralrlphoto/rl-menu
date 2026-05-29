@@ -6,7 +6,12 @@ export const dynamic = 'force-dynamic'
 const RESEND_KEY  = process.env.RESEND_API_KEY
 const SITE_BASE   = process.env.NEXT_PUBLIC_SITE_URL || 'https://rl-menu-lake.vercel.app'
 const NOTION_TOKEN = process.env.NOTION_TOKEN
-const NOTION_EVENTOS_DB = '1ad220116d8a804b839ddc36f1e7ecf1' // mesma DB usada em /api/contrato-cps/aprovar
+// DBs Notion onde vivem as fichas dos noivos. Há uma por ano (ver
+// app/api/eventos-notion/route.ts DB_BY_YEAR). Procuramos em ambas.
+const NOTION_EVENTOS_DBS = [
+  '1ad220116d8a804b839ddc36f1e7ecf1', // 2026
+  '2a6220116d8a80b4b439fe091b2ac804', // 2027
+]
 
 function db() {
   return createClient(
@@ -207,59 +212,73 @@ export async function POST(req: NextRequest) {
   let matched: { row: CasalRow; via: 'noiva' | 'noivo'; source: string } | null = null
   const debugRows: any[] = []
 
-  // ── a) NOTION (filter direto por email) ────────────────────────────────
+  // ── a) NOTION (filter direto por email — itera todas as DBs ano a ano) ─
   if (NOTION_TOKEN) {
-    try {
-      for (const notionEmailKey of ['E-mail da noiva', 'E-mail do noivo'] as const) {
-        const res = await fetch(`https://api.notion.com/v1/databases/${NOTION_EVENTOS_DB}/query`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${NOTION_TOKEN}`,
-            'Notion-Version': '2022-06-28',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            filter: { property: notionEmailKey, email: { equals: email } },
-            page_size: 5,
-          }),
-          cache: 'no-store',
-        })
-        if (!res.ok) continue
-        const j = await res.json().catch(() => ({}))
-        const pages = j?.results ?? []
-        for (const page of pages) {
-          const props = page.properties ?? {}
-          const getText = (k: string) =>
-            props?.[k]?.rich_text?.map((t: any) => t.plain_text).join('') ?? null
-          const getEmail = (k: string) => props?.[k]?.email ?? null
-          const getPhone = (k: string) => props?.[k]?.phone_number ?? null
-          const getTitle = (k: string) =>
-            props?.[k]?.title?.map((t: any) => t.plain_text).join('') ?? null
-          const getSelect = (k: string) => props?.[k]?.select?.name ?? null
+    for (const dbId of NOTION_EVENTOS_DBS) {
+      try {
+        for (const notionEmailKey of ['E-mail da noiva', 'E-mail do noivo'] as const) {
+          const res = await fetch(`https://api.notion.com/v1/databases/${dbId}/query`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${NOTION_TOKEN}`,
+              'Notion-Version': '2022-06-28',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              filter: { property: notionEmailKey, email: { equals: email } },
+              page_size: 5,
+            }),
+            cache: 'no-store',
+          })
+          if (!res.ok) {
+            // captura o erro real para o debug
+            const errBody = await res.text().catch(() => '')
+            debugRows.push({ src: `notion:${dbId}`, via_col: notionEmailKey, error: `${res.status} ${errBody.slice(0,160)}` })
+            continue
+          }
+          const j = await res.json().catch(() => ({}))
+          const pages = j?.results ?? []
+          for (const page of pages) {
+            const props = page.properties ?? {}
+            const getText = (k: string) =>
+              props?.[k]?.rich_text?.map((t: any) => t.plain_text).join('') ?? null
+            const getEmail = (k: string) => props?.[k]?.email ?? null
+            const getPhone = (k: string) => props?.[k]?.phone_number ?? null
+            const getTitle = (k: string) =>
+              props?.[k]?.title?.map((t: any) => t.plain_text).join('') ?? null
+            const getSelect = (k: string) => props?.[k]?.select?.name ?? null
+            const getMultiSelect = (k: string) =>
+              props?.[k]?.multi_select?.map((s: any) => s.name).join(',') ?? null
 
-          const casal: CasalRow = {
-            referencia:  getTitle('REFERÊNCIA DO EVENTO'),
-            tipo_evento: getSelect('TIPO DE EVENTO') ?? 'casamento',
-            nome_noivos: null,
-            nome_noiva:  getText('Nome da Noiva'),
-            nome_noivo:  getText('nome do noivo'),
-            email_noiva: getEmail('E-mail da noiva'),
-            email_noivo: getEmail('E-mail do noivo'),
-            tel_noiva:   getPhone('Telefone da noiva'),
-            tel_noivo:   getPhone('Telefone do noivo'),
-            nif_noiva:   getText('N.º Iden.Fiscal Noiva'),
-            nif_noivo:   getText('N.º Iden. Fiscal Noivo'),
+            const casal: CasalRow = {
+              referencia:  getTitle('REFERÊNCIA DO EVENTO'),
+              tipo_evento: getSelect('TIPO DE EVENTO')
+                          ?? getMultiSelect('TIPO DE EVENTO')
+                          ?? 'casamento',
+              nome_noivos: null,
+              nome_noiva:  getText('Nome da Noiva'),
+              nome_noivo:  getText('nome do noivo'),
+              email_noiva: getEmail('E-mail da noiva'),
+              email_noivo: getEmail('E-mail do noivo'),
+              tel_noiva:   getPhone('Telefone da noiva'),
+              tel_noivo:   getPhone('Telefone do noivo'),
+              nif_noiva:   getText('N.º Iden.Fiscal Noiva'),
+              nif_noivo:   getText('N.º Iden. Fiscal Noivo'),
+            }
+            debugRows.push({ src: `notion:${dbId.slice(0,8)}`, via_col: notionEmailKey, row: casal })
+            const via = rowMatches(casal, email, phone, nif)
+            if (via) {
+              matched = { row: casal, via, source: `notion:${dbId.slice(0,8)}` }
+              break
+            }
           }
-          debugRows.push({ src: 'notion', via_col: notionEmailKey, row: casal })
-          const via = rowMatches(casal, email, phone, nif)
-          if (via) {
-            matched = { row: casal, via, source: 'notion' }
-            break
-          }
+          if (matched) break
         }
-        if (matched) break
+      } catch (e: any) {
+        debugRows.push({ src: `notion:${dbId}`, error: String(e?.message ?? e) })
       }
-    } catch { /* silencioso */ }
+      if (matched) break
+    }
   }
 
   type Source = {
