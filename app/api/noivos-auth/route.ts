@@ -53,78 +53,62 @@ export async function POST(req: NextRequest) {
   const supabase = db()
   const emailNorm = String(email).trim().toLowerCase()
 
-  // ── 1) Encontrar referência do evento pelo email do casal ──────────────
-  //     Procura por ordem:
-  //       a) dados_contrato_cps (email_noiva ou email_noivo)
-  //       b) eventos_2026 / eventos_2027 (email_noiva ou email_noivo)
-  //         ← este é o caso quando o CPS ainda não foi preenchido mas
-  //           a ficha do evento já tem os dados dos noivos.
-  let referencia: string | null = null
-  let tipoEventoRaw: string | string[] | null = null
-  let nomeNoivos: string | null = null
+  // ── 1) Recolhe TODOS os candidatos (referência + tipo + nome) pelo email
+  //      O email pode estar em várias fichas (testes, recasamentos, etc).
+  //      Vamos tentar a password em cada candidato e ganha o que bater.
+  type Candidate = {
+    referencia: string
+    tipoEventoRaw: string | string[] | null
+    nomeNoivos: string | null
+    source: string
+  }
+  const candidates: Candidate[] = []
+  const seen = new Set<string>()
+  const pushCandidate = (c: Candidate) => {
+    const key = c.referencia.toLowerCase()
+    if (!seen.has(key)) {
+      seen.add(key)
+      candidates.push(c)
+    }
+  }
 
-  // a) dados_contrato_cps · email_noiva
-  {
+  // a) dados_contrato_cps (noiva + noivo)
+  for (const col of ['email_noiva', 'email_noivo'] as const) {
     const { data } = await supabase
       .from('dados_contrato_cps')
       .select('referencia_evento, tipo_evento, nome_noivos')
-      .ilike('email_noiva', emailNorm)
+      .ilike(col, emailNorm)
       .order('id', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-    if (data?.referencia_evento) {
-      referencia    = data.referencia_evento
-      tipoEventoRaw = data.tipo_evento
-      nomeNoivos    = data.nome_noivos
+    for (const row of data ?? []) {
+      if (row?.referencia_evento) pushCandidate({
+        referencia:    row.referencia_evento,
+        tipoEventoRaw: row.tipo_evento,
+        nomeNoivos:    row.nome_noivos,
+        source:        `cps:${col}`,
+      })
     }
   }
-  // a) dados_contrato_cps · email_noivo
-  if (!referencia) {
-    const { data } = await supabase
-      .from('dados_contrato_cps')
-      .select('referencia_evento, tipo_evento, nome_noivos')
-      .ilike('email_noivo', emailNorm)
-      .order('id', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-    if (data?.referencia_evento) {
-      referencia    = data.referencia_evento
-      tipoEventoRaw = data.tipo_evento
-      nomeNoivos    = data.nome_noivos
-    }
-  }
-  // b) Fallback: tabelas eventos_2026 / eventos_2027 (a "ficha") — Supabase
-  if (!referencia) {
-    for (const tbl of ['eventos_2026', 'eventos_2027'] as const) {
-      const { data: byNoiva } = await supabase
+
+  // b) eventos_2026 / eventos_2027 (Supabase — raramente preenchido)
+  for (const tbl of ['eventos_2026', 'eventos_2027'] as const) {
+    for (const col of ['email_noiva', 'email_noivo'] as const) {
+      const { data } = await supabase
         .from(tbl)
         .select('referencia, tipo_evento, nome_noiva, nome_noivo')
-        .ilike('email_noiva', emailNorm)
-        .limit(1)
-        .maybeSingle()
-      if (byNoiva?.referencia) {
-        referencia    = byNoiva.referencia
-        tipoEventoRaw = (byNoiva as any).tipo_evento
-        nomeNoivos    = [byNoiva.nome_noiva, byNoiva.nome_noivo].filter(Boolean).join(' & ') || null
-        break
-      }
-      const { data: byNoivo } = await supabase
-        .from(tbl)
-        .select('referencia, tipo_evento, nome_noiva, nome_noivo')
-        .ilike('email_noivo', emailNorm)
-        .limit(1)
-        .maybeSingle()
-      if (byNoivo?.referencia) {
-        referencia    = byNoivo.referencia
-        tipoEventoRaw = (byNoivo as any).tipo_evento
-        nomeNoivos    = [byNoivo.nome_noiva, byNoivo.nome_noivo].filter(Boolean).join(' & ') || null
-        break
+        .ilike(col, emailNorm)
+      for (const row of data ?? []) {
+        if (row?.referencia) pushCandidate({
+          referencia:    row.referencia,
+          tipoEventoRaw: (row as any).tipo_evento,
+          nomeNoivos:    [row.nome_noiva, row.nome_noivo].filter(Boolean).join(' & ') || null,
+          source:        `${tbl}:${col}`,
+        })
       }
     }
   }
 
-  // c) Fallback: NOTION (a ficha real vive aqui — duas DBs por ano)
-  if (!referencia && process.env.NOTION_TOKEN) {
+  // c) NOTION (duas DBs por ano — fonte primária das fichas)
+  if (process.env.NOTION_TOKEN) {
     const NOTION_EVENTOS_DBS = [
       '1ad220116d8a804b839ddc36f1e7ecf1', // 2026
       '2a6220116d8a80b4b439fe091b2ac804', // 2027
@@ -141,40 +125,40 @@ export async function POST(req: NextRequest) {
             },
             body: JSON.stringify({
               filter: { property: notionEmailKey, email: { equals: emailNorm } },
-              page_size: 1,
+              page_size: 20,
             }),
             cache: 'no-store',
           })
           if (!res.ok) continue
           const j = await res.json().catch(() => ({}))
-          const page = j?.results?.[0]
-          if (!page) continue
-          const props = page.properties ?? {}
-          const getText = (k: string) =>
-            props?.[k]?.rich_text?.map((t: any) => t.plain_text).join('') ?? null
-          const getTitle = (k: string) =>
-            props?.[k]?.title?.map((t: any) => t.plain_text).join('') ?? null
-          const getSelect = (k: string) => props?.[k]?.select?.name ?? null
-          const getMultiSelect = (k: string) =>
-            props?.[k]?.multi_select?.map((s: any) => s.name) ?? null
+          const pages = j?.results ?? []
+          for (const page of pages) {
+            const props = page.properties ?? {}
+            const getText = (k: string) =>
+              props?.[k]?.rich_text?.map((t: any) => t.plain_text).join('') ?? null
+            const getTitle = (k: string) =>
+              props?.[k]?.title?.map((t: any) => t.plain_text).join('') ?? null
+            const getSelect = (k: string) => props?.[k]?.select?.name ?? null
+            const getMultiSelect = (k: string) =>
+              props?.[k]?.multi_select?.map((s: any) => s.name) ?? null
 
-          const ref = getTitle('REFERÊNCIA DO EVENTO')
-          if (ref) {
-            referencia    = ref
-            tipoEventoRaw = getSelect('TIPO DE EVENTO') ?? getMultiSelect('TIPO DE EVENTO') ?? 'casamento'
-            const nNoiva  = getText('Nome da Noiva')
-            const nNoivo  = getText('nome do noivo')
-            nomeNoivos    = [nNoiva, nNoivo].filter(Boolean).join(' & ') || null
-            break
+            const ref = getTitle('REFERÊNCIA DO EVENTO')
+            if (!ref) continue
+            const nNoiva = getText('Nome da Noiva')
+            const nNoivo = getText('nome do noivo')
+            pushCandidate({
+              referencia:    ref,
+              tipoEventoRaw: getSelect('TIPO DE EVENTO') ?? getMultiSelect('TIPO DE EVENTO') ?? 'casamento',
+              nomeNoivos:    [nNoiva, nNoivo].filter(Boolean).join(' & ') || null,
+              source:        `notion:${dbId.slice(0,8)}:${notionEmailKey}`,
+            })
           }
-        } catch { /* tenta o próximo */ }
+        } catch { /* próximo */ }
       }
-      if (referencia) break
     }
   }
 
-  if (!referencia) {
-    // TEMP DIAGNOSTIC: sempre devolve debug até confirmar causa raiz.
+  if (candidates.length === 0) {
     return NextResponse.json({
       ok: false, reason: 'invalid_credentials',
       debug: {
@@ -186,6 +170,56 @@ export async function POST(req: NextRequest) {
     }, { status: 401 })
   }
 
+  // ── 2) Tenta a password em TODOS os candidatos ─────────────────────────
+  const entered = String(password).trim().toLowerCase()
+  const attempts: Array<{
+    referencia: string
+    source: string
+    has_portal: boolean
+    stored_len: number
+    matched: boolean
+  }> = []
+
+  let matchedCandidate: Candidate | null = null
+  let matchedPortalStored: string | null = null
+
+  for (const cand of candidates) {
+    const { data: portalRow } = await supabase
+      .from('portais')
+      .select('settings')
+      .ilike('referencia', cand.referencia)
+      .maybeSingle()
+    const storedRaw = portalRow?.settings?.portalPassword ?? ''
+    const stored = String(storedRaw).trim().toLowerCase()
+    const isMatch = !!stored && stored === entered
+    attempts.push({
+      referencia: cand.referencia,
+      source: cand.source,
+      has_portal: !!portalRow,
+      stored_len: stored.length,
+      matched: isMatch,
+    })
+    if (isMatch) {
+      matchedCandidate = cand
+      matchedPortalStored = stored
+      break
+    }
+  }
+
+  if (!matchedCandidate) {
+    return NextResponse.json({
+      ok: false, reason: 'invalid_credentials',
+      debug: {
+        step: 'password_mismatch_all',
+        candidates_tried: candidates.length,
+        entered_len: entered.length,
+        attempts,
+      },
+    }, { status: 401 })
+  }
+
+  const { referencia, tipoEventoRaw, nomeNoivos } = matchedCandidate
+
   // Normaliza tipo_evento — pode ser string ou array (em eventos_2026 vem
   // como array tipo ["casamento"] ou ["batizado"]).
   const tipoStr = Array.isArray(tipoEventoRaw)
@@ -193,45 +227,10 @@ export async function POST(req: NextRequest) {
     : String(tipoEventoRaw ?? '').toLowerCase()
   const tipo: 'casamento' | 'batizado' = /batizado/.test(tipoStr) ? 'batizado' : 'casamento'
 
-  // ── 2) Verifica a password no portal correspondente ────────────────────
-  const { data: portalRow } = await supabase
-    .from('portais')
-    .select('settings')
-    .ilike('referencia', referencia)
-    .maybeSingle()
-
-  const storedRaw = portalRow?.settings?.portalPassword ?? ''
-  const stored  = String(storedRaw).trim().toLowerCase()
-  const entered = String(password).trim().toLowerCase()
-
   console.log('[noivos-auth] match', {
-    referencia, tipo, has_portal_row: !!portalRow,
-    portalPassword_set: !!storedRaw, stored_lc_len: stored.length,
-    entered_lc_len: entered.length,
+    referencia, tipo, source: matchedCandidate.source,
+    candidates_tried: candidates.length,
   })
-
-  if (!stored) {
-    return NextResponse.json({
-      ok: false, reason: 'no_password',
-      debug: {
-        step: 'portal_no_password',
-        referencia, has_portal_row: !!portalRow,
-      },
-    }, { status: 404 })
-  }
-  if (stored !== entered) {
-    return NextResponse.json({
-      ok: false, reason: 'invalid_credentials',
-      debug: {
-        step: 'password_mismatch',
-        referencia,
-        stored_len: stored.length,
-        entered_len: entered.length,
-        stored_first2: stored.slice(0, 2),
-        entered_first2: entered.slice(0, 2),
-      },
-    }, { status: 401 })
-  }
 
   // ── 3) Sessão + cookie + redirect ──────────────────────────────────────
   const token = await makeNvSession({
