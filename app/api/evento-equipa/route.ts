@@ -435,6 +435,59 @@ export async function POST(req: NextRequest) {
         lida: false,
       })
     }
+
+    // ── EMAIL via Resend: envia card 'NOVO BRIEFING' a todos os membros
+    //     que tenham email guardado. CTA leva ao portal do membro. ──
+    if (memberIds.length > 0 && process.env.RESEND_API_KEY) {
+      const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://rl-menu-lake.vercel.app'
+      const CARD_URL = `${SITE}/card-novo-briefing.png`
+
+      const { data: members } = await supabase
+        .from('freelancers')
+        .select('id, nome, email')
+        .in('id', memberIds)
+
+      const subjectBase = localStr
+        ? `Briefing disponível — ${localStr}${dateLabel ? ` · ${dateLabel}` : ''}`
+        : 'Novo Briefing disponível'
+
+      for (const m of (members ?? []) as Array<{ id: string; nome: string | null; email: string | null }>) {
+        if (!m.email) continue
+        try {
+          await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+              to: [m.email],
+              subject: subjectBase,
+              html: `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0d0901;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0d0901;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <a href="${SITE}/freelancers/${m.id}?view=freelancer" style="display:block;text-decoration:none;">
+          <img src="${CARD_URL}"
+            width="560" alt="Briefing disponível"
+            style="display:block;width:100%;max-width:560px;border:0;" />
+        </a>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`,
+            }),
+          })
+        } catch (e) {
+          console.warn(`[evento-equipa briefing email] falhou para ${m.email}:`, e)
+        }
+      }
+    }
   } catch (err) {
     console.error('[evento-equipa POST] notificações briefing falharam:', err)
   }
