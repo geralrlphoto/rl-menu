@@ -1617,7 +1617,11 @@ function PortalSubPageContent() {
             Voltar
           </a>
           <div className="body">
-            <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={_atmBackHref} />
+            <NotionBlocks
+              blocks={blocks.filter(b => b.type !== 'image')}
+              hiddenNav={settings.hiddenNav}
+              backUrl={_atmBackHref}
+            />
           </div>
 
           {/* Logo card final (mesmo que o template) */}
