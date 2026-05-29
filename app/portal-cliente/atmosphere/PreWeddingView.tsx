@@ -163,6 +163,14 @@ export function PreWeddingView(props: PreWeddingViewProps) {
                 </div>
               )}
             </div>
+
+            {/* Foto do casal à direita (foto dos noivos da intro) */}
+            {(c.photoUrl || props.introPhotoUrl) && (
+              <div className="cen-photo">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={c.photoUrl || props.introPhotoUrl || ''} alt="" />
+              </div>
+            )}
           </div>
 
           {c.galleryUrls && c.galleryUrls.filter(Boolean).length > 0 && (

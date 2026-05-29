@@ -114,8 +114,10 @@
 }
 
 .portal-atmosphere .pw-cenario .body {
-  display: block;
-  max-width: 820px;
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 40px;
+  align-items: start;
 }
 .portal-atmosphere .pw-cenario .body p {
   font-family: 'Hanken Grotesk', sans-serif;
