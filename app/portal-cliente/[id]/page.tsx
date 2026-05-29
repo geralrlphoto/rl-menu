@@ -1755,7 +1755,7 @@ function PortalSubPageContent() {
 
   return (
     <PortalShell sidebar={_atmSidebar}>
-    <main className={isSobreViewMode ? 'relative' : 'relative max-w-[860px] mx-auto px-3 sm:px-6 py-6 sm:py-10'}>
+    <main className={isSobreViewMode ? 'relative sobre-view' : 'relative max-w-[860px] mx-auto px-3 sm:px-6 py-6 sm:py-10'}>
       {/* ── Design premium: fundo fixo cobre o viewport inteiro ── */}
       {isDesignPremium && (
         <>

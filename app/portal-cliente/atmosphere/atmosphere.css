@@ -811,3 +811,25 @@
   .portal-atmosphere .feat4 { grid-template-columns: 1fr; }
   .portal-atmosphere .hcount { gap: 8px; }
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Sobre o Menu — usa a tipografia Hanken Grotesk como o body do Contrato.
+   Aplica-se via classe .sobre-view no <main>.
+   ────────────────────────────────────────────────────────────────────────── */
+main.sobre-view, main.sobre-view * {
+  font-family: 'Hanken Grotesk', system-ui, sans-serif !important;
+}
+main.sobre-view p {
+  font-family: 'Hanken Grotesk', system-ui, sans-serif !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+}
+/* Mantém o título principal em serif (visual hierarchy) — só anula a
+   classe font-cormorant nos parágrafos / texto corrido. */
+main.sobre-view h1.font-cormorant,
+main.sobre-view h2.font-cormorant,
+main.sobre-view h3.font-cormorant,
+main.sobre-view .font-cormorant.text-gold,
+main.sobre-view .font-playfair {
+  font-family: 'Cormorant Garamond', 'Hanken Grotesk', serif !important;
+}
