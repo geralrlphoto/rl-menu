@@ -153,7 +153,7 @@ export function PreWeddingView(props: PreWeddingViewProps) {
           onUpload={props.onUploadPhoto} onRemove={props.onRemovePhoto} />
       </section>
 
-      {/* Intro */}
+      {/* Intro — texto full-width (foto à direita removida) */}
       <section className="pw-intro">
         <div className="body">
           <div className="eyebrow">Pré-Wedding</div>
@@ -161,17 +161,6 @@ export function PreWeddingView(props: PreWeddingViewProps) {
           {props.introParagraphs.slice(0, 4).map((p, i) => (
             <p key={i} dangerouslySetInnerHTML={{ __html: highlight(p) }} />
           ))}
-        </div>
-        <div className="photo">
-          {props.introPhotoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={props.introPhotoUrl} alt="" />
-          ) : (
-            <div className="ph" data-label="Pré-Wedding" />
-          )}
-          <SlotControls slot="intro" url={props.introPhotoUrl}
-            isAdmin={props.isAdmin} uploading={isUp('intro')}
-            onUpload={props.onUploadPhoto} onRemove={props.onRemovePhoto} />
         </div>
       </section>
 

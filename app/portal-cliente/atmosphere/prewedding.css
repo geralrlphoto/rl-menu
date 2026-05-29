@@ -45,16 +45,13 @@
   .portal-atmosphere .pw-hero-photo { height: 230px; }
 }
 
-/* ── Intro: texto + foto editorial ───────────────────────────── */
+/* ── Intro: texto full-width (foto à direita removida) ───────── */
 .portal-atmosphere .pw-intro {
-  display: grid;
-  grid-template-columns: 1.08fr 0.92fr;
-  gap: 48px;
-  align-items: center;
+  display: block;
   margin: 60px 0 48px;
 }
 .portal-atmosphere .pw-intro .body {
-  max-width: 560px;
+  max-width: none;
 }
 .portal-atmosphere .pw-intro .eyebrow {
   font-family: 'Hanken Grotesk', sans-serif;
