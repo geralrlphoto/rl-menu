@@ -161,14 +161,14 @@ function LoginPageInner() {
             style={{
               backgroundImage: `url("${HERO_BG}")`,
               backgroundColor: '#0a1525', // fallback navy se ficheiro falta
-              filter: 'brightness(0.62) saturate(1.05) contrast(1.05)',
+              filter: 'brightness(0.92) saturate(1.08) contrast(1.05)',
             }} />
-          {/* navy-aware cinematic overlay — harmoniza com a lente azul */}
+          {/* overlay muito subtil — apenas para garantir legibilidade do texto */}
           <div className="absolute inset-0"
-            style={{ background: 'linear-gradient(120deg, rgba(8,16,28,0.55) 0%, rgba(11,11,11,0.55) 60%, rgba(11,11,11,0.78) 100%)' }} />
+            style={{ background: 'linear-gradient(120deg, rgba(8,16,28,0.25) 0%, rgba(11,11,11,0.18) 55%, rgba(11,11,11,0.42) 100%)' }} />
           {/* glow dourado subtil no canto (assinatura RL) */}
           <div className="absolute inset-0"
-            style={{ background: 'radial-gradient(circle at 78% 22%, rgba(201,164,92,0.18), transparent 55%)' }} />
+            style={{ background: 'radial-gradient(circle at 78% 22%, rgba(201,164,92,0.14), transparent 55%)' }} />
           {/* film grain */}
           <div className="absolute inset-0 opacity-[0.05] mix-blend-overlay"
             style={{ backgroundImage:
@@ -176,14 +176,14 @@ function LoginPageInner() {
         </div>
 
         {/* TOP — Branding */}
-        <header className="relative z-10 px-12 pt-12 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl border border-gold/45 overflow-hidden flex items-center justify-center"
-            style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.22), rgba(201,164,92,0.05))', boxShadow: '0 0 22px -4px rgba(201,164,92,0.45)' }}>
-            <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png" alt="RL" className="w-8 h-8 object-contain" />
+        <header className="relative z-10 px-12 pt-12 flex items-center gap-5">
+          <div className="w-16 h-16 rounded-2xl border border-gold/45 overflow-hidden flex items-center justify-center"
+            style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.22), rgba(201,164,92,0.05))', boxShadow: '0 0 28px -4px rgba(201,164,92,0.55)' }}>
+            <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png" alt="RL" className="w-11 h-11 object-contain" />
           </div>
           <div>
-            <p className="text-[9px] tracking-[0.55em] uppercase text-white/45">Photography &amp; Video</p>
-            <p className="text-[14px] tracking-[0.35em] uppercase text-white font-light">
+            <p className="text-[10px] tracking-[0.55em] uppercase text-white/50">Photography &amp; Video</p>
+            <p className="text-[16px] tracking-[0.35em] uppercase text-white font-light mt-0.5">
               RL <span className="text-gold">PHOTO</span>.VIDEO
             </p>
           </div>
