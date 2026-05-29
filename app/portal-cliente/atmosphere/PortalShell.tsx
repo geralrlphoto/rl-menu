@@ -161,9 +161,11 @@ export function SidebarMiniCountdown({
   }, [weddingDate])
   return (
     <div className="mini">
-      <div className="lbl">Faltam</div>
-      <div className="days">{parts.totalDays}</div>
-      <div className="sub">dias para o grande dia</div>
+      <div className="c">
+        <div className="l">Faltam</div>
+        <div className="big">{String(parts.totalDays).padStart(2, '0')}</div>
+        <div className="sub">dias para o grande dia</div>
+      </div>
       {coupleCode && (
         <div className="code">
           <span className="dot" />

@@ -272,11 +272,11 @@
   border-top: 1px solid var(--line-2); width: 100%; justify-content: center;
 }
 
-/* main */
+/* main — match exact specs do template original */
 .portal-atmosphere .main {
-  max-width: 1120px;
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 36px 56px 70px;
+  padding: 30px 48px 70px;
   position: relative;
   width: 100%;
 }
@@ -286,6 +286,45 @@
   pointer-events: none; z-index: 0;
 }
 .portal-atmosphere .main > * { position: relative; z-index: 1; }
+
+/* sidebar exact: padding 32 24 26 + brand padding-bottom 24 + couple padding 22 0 */
+.portal-atmosphere .sidebar { padding: 32px 24px 26px; border-right-color: var(--gold-faint); }
+.portal-atmosphere .sidebar .brand { padding-bottom: 24px; margin-bottom: 0; }
+.portal-atmosphere .sidebar .couple {
+  padding: 22px 0; margin-bottom: 0;
+  border-bottom: 1px solid var(--line-2);
+}
+.portal-atmosphere .sidebar .couple .lbl { font-size: 10px; letter-spacing: .28em; }
+.portal-atmosphere .sidebar .couple .names { letter-spacing: 0; line-height: 1.05; margin-top: 6px; }
+.portal-atmosphere .sidebar .couple .date { margin-top: 6px; letter-spacing: .05em; }
+.portal-atmosphere .sidebar .nav-label { font-size: 10px; letter-spacing: .26em; margin: 24px 0 10px; color: var(--ink-4); }
+.portal-atmosphere .sidebar nav { gap: 2px; }
+.portal-atmosphere .sidebar nav .nv { font-weight: 500; }
+/* mini countdown — exactly como o template */
+.portal-atmosphere .sidebar .mini { padding-top: 22px; border: 0; background: transparent; box-shadow: none; }
+.portal-atmosphere .sidebar .mini .c {
+  border: 1px solid var(--gold-faint);
+  border-radius: 14px;
+  padding: 18px;
+  text-align: center;
+  background: radial-gradient(120% 120% at 50% 0%, rgba(200,168,102,.1), transparent 70%);
+}
+.portal-atmosphere .sidebar .mini .c .l {
+  font-size: 9.5px; letter-spacing: .26em; text-transform: uppercase; color: var(--ink-3);
+  font-weight: 600;
+}
+.portal-atmosphere .sidebar .mini .c .big {
+  font-family: 'Cormorant Garamond', serif; font-weight: 300;
+  font-size: 52px; line-height: 1; color: var(--gold-soft);
+  margin: 8px 0 4px;
+}
+.portal-atmosphere .sidebar .mini .c .sub { font-size: 11px; color: var(--ink-4); letter-spacing: .05em; }
+.portal-atmosphere .sidebar .mini .code {
+  margin-top: 16px; font-size: 10px; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--ink-4);
+  display: flex; align-items: center; gap: 8px; justify-content: center;
+  padding-top: 0; border-top: 0;
+}
 
 /* ── countdown band ── */
 .portal-atmosphere .cband {
@@ -473,6 +512,205 @@
 .portal-atmosphere .card-item .more {
   font-size: 10px; letter-spacing: .28em; text-transform: uppercase;
   color: var(--ink-4); font-weight: 600;
+}
+
+/* ============================================================
+   Sub-página (Atendimento style): abar + hero + article + logocard
+   Classes idênticas ao template original.
+   ============================================================ */
+.portal-atmosphere .abar {
+  display: flex; justify-content: flex-end; gap: 8px;
+  margin-bottom: 24px; flex-wrap: wrap;
+}
+.portal-atmosphere .abtn {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 12px; font-weight: 600; letter-spacing: .02em;
+  color: var(--ink-2);
+  padding: 9px 16px; border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(239,231,214,.02);
+  cursor: pointer; transition: .2s;
+}
+.portal-atmosphere .abtn svg { width: 15px; height: 15px; stroke: var(--ink-3); flex: none; }
+.portal-atmosphere .abtn:hover:not(:disabled) {
+  border-color: var(--gold-line);
+  color: var(--ink);
+  background: rgba(200,168,102,.06);
+}
+.portal-atmosphere .abtn:hover:not(:disabled) svg { stroke: var(--gold); }
+.portal-atmosphere .abtn:disabled { opacity: .4; cursor: not-allowed; }
+.portal-atmosphere .abtn.primary {
+  color: #1c150b; border-color: transparent;
+  background: linear-gradient(168deg, #efd6a2, #d4b46f 60%, #c19a52);
+  box-shadow: inset 0 1px 0 rgba(255,250,236,.5), 0 8px 20px -12px rgba(200,168,102,.55);
+}
+.portal-atmosphere .abtn.primary svg { stroke: #1c150b; }
+.portal-atmosphere .abtn.primary:hover:not(:disabled) {
+  background: linear-gradient(168deg, #f3dcaa, #ddbe79 60%, #c8a35a);
+}
+.portal-atmosphere .abtn.accent { color: var(--gold-soft); border-color: var(--gold-faint); }
+.portal-atmosphere .abtn.accent svg { stroke: var(--gold-soft); }
+
+/* hero da sub-página */
+.portal-atmosphere .subhero {
+  position: relative;
+  border-radius: var(--atm-r-lg);
+  overflow: hidden;
+  border: 1px solid var(--gold-faint);
+  height: 300px;
+  box-shadow: 0 40px 90px -50px rgba(0,0,0,.9);
+}
+.portal-atmosphere .subhero .img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.portal-atmosphere .subhero .scrim {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(18,13,8,.85) 0%, rgba(18,13,8,.45) 45%, rgba(18,13,8,.15) 100%),
+    linear-gradient(0deg, rgba(18,13,8,.7), transparent 55%);
+}
+.portal-atmosphere .subhero .imgctrl {
+  position: absolute; top: 16px; right: 16px;
+  display: flex; gap: 8px; z-index: 2;
+}
+.portal-atmosphere .gbtn {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 11px; font-weight: 600; letter-spacing: .03em;
+  color: var(--ink);
+  padding: 8px 13px; border-radius: 999px;
+  background: rgba(20,15,9,.55);
+  border: 1px solid rgba(239,231,214,.16);
+  backdrop-filter: blur(8px);
+  cursor: pointer; transition: .2s;
+}
+.portal-atmosphere .gbtn svg { width: 13px; height: 13px; stroke: currentColor; }
+.portal-atmosphere .gbtn:hover {
+  background: rgba(20,15,9,.8);
+  border-color: var(--gold-line);
+}
+.portal-atmosphere .gbtn.danger {
+  color: #d8a59b;
+  border-color: rgba(216,165,155,.3);
+}
+.portal-atmosphere .subhero .cap {
+  position: absolute; left: 34px; right: 34px; bottom: 30px; z-index: 2;
+}
+.portal-atmosphere .subhero .cap .e { color: var(--gold); }
+.portal-atmosphere .subhero .cap .title {
+  display: flex; align-items: center; gap: 16px; margin-top: 10px;
+}
+.portal-atmosphere .subhero .cap h1 {
+  font-family: 'Cormorant Garamond', serif; font-weight: 400;
+  font-size: clamp(38px, 5.5vw, 64px);
+  letter-spacing: .14em; text-transform: uppercase;
+  color: #fff; margin: 0; line-height: 1;
+}
+.portal-atmosphere .subhero .cap .pencil {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 1px solid var(--gold-line);
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: .2s; flex: none;
+}
+.portal-atmosphere .subhero .cap .pencil svg { width: 15px; height: 15px; stroke: var(--gold); }
+.portal-atmosphere .subhero .cap .pencil:hover { background: rgba(200,168,102,.12); }
+
+/* artigo */
+.portal-atmosphere .subarticle {
+  margin-top: 26px;
+  border: 1px solid var(--line);
+  border-radius: var(--atm-r-lg);
+  background: linear-gradient(180deg, var(--surface), var(--bg-2));
+  padding: 40px 48px 48px;
+}
+.portal-atmosphere .subarticle .back {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 12px; font-weight: 600; letter-spacing: .06em;
+  color: var(--ink-2);
+  padding: 9px 18px 9px 14px; border-radius: 999px;
+  border: 1px solid var(--gold-faint);
+  background: rgba(200,168,102,.05);
+  cursor: pointer; transition: .2s;
+}
+.portal-atmosphere .subarticle .back svg { width: 15px; height: 15px; stroke: var(--gold); }
+.portal-atmosphere .subarticle .back:hover { border-color: var(--gold); color: var(--ink); }
+.portal-atmosphere .subarticle h2 {
+  font-family: 'Cormorant Garamond', serif; font-weight: 500;
+  font-size: clamp(28px, 3.4vw, 40px);
+  color: var(--ink); margin: 28px 0 6px;
+}
+.portal-atmosphere .subarticle .lede-rule {
+  width: 48px; height: 2px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+  margin: 0 0 26px; border: 0;
+}
+.portal-atmosphere .subarticle .body { max-width: 680px; }
+/* Override the Tailwind-styled <p> elements that come from NotionBlocks
+   so they get the editorial body look. Selector com !important para
+   ganhar contra as classes Tailwind utility geradas no NotionRenderer. */
+.portal-atmosphere .subarticle .body p,
+.portal-atmosphere .subarticle .body div p {
+  color: var(--ink-2) !important;
+  font-size: 15.5px !important;
+  line-height: 1.9 !important;
+  margin: 0 0 18px !important;
+  text-wrap: pretty;
+  font-family: 'Hanken Grotesk', sans-serif !important;
+  font-weight: 400 !important;
+}
+.portal-atmosphere .subarticle .body p strong,
+.portal-atmosphere .subarticle .body div p strong {
+  color: var(--ink) !important;
+  font-weight: 600 !important;
+}
+.portal-atmosphere .subarticle .body p:first-child,
+.portal-atmosphere .subarticle .body p:first-of-type {
+  color: var(--ink) !important;
+  font-size: 17px !important;
+}
+.portal-atmosphere .subarticle .body h1,
+.portal-atmosphere .subarticle .body h2,
+.portal-atmosphere .subarticle .body h3 {
+  font-family: 'Cormorant Garamond', serif !important;
+  font-weight: 500 !important;
+  color: var(--ink) !important;
+  line-height: 1.1 !important;
+  margin: 28px 0 6px !important;
+}
+.portal-atmosphere .subarticle .body h1 { font-size: clamp(32px, 4vw, 48px) !important; }
+.portal-atmosphere .subarticle .body h2 { font-size: clamp(28px, 3.4vw, 40px) !important; }
+.portal-atmosphere .subarticle .body h3 { font-size: clamp(22px, 2.8vw, 32px) !important; }
+.portal-atmosphere .subarticle .body h2::after {
+  content: ''; display: block;
+  width: 48px; height: 2px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+  margin: 14px 0 26px;
+}
+
+/* logo card creme */
+.portal-atmosphere .logocard {
+  margin-top: 40px;
+  border-radius: var(--atm-r-lg);
+  padding: 54px 30px;
+  background: linear-gradient(160deg, #f3eee2, #e7ddca);
+  text-align: center;
+}
+.portal-atmosphere .logocard img {
+  width: 150px; margin: 0 auto 18px; opacity: .92; display: block;
+}
+.portal-atmosphere .logocard .url {
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 11px; letter-spacing: .24em;
+  text-transform: uppercase; color: #8a7e63;
+}
+
+/* responsivo da sub-página */
+@media (max-width: 980px) {
+  .portal-atmosphere .main { padding: 22px 18px 50px; }
+  .portal-atmosphere .abar { justify-content: flex-start; }
+  .portal-atmosphere .subhero { height: 230px; }
+  .portal-atmosphere .subhero .cap { left: 20px; right: 20px; bottom: 22px; }
+  .portal-atmosphere .subarticle { padding: 28px 22px 32px; }
 }
 
 /* ── footer ── */
