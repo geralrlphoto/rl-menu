@@ -290,6 +290,22 @@ export default function CalendarClient({
   const [pwLoading, setPwLoading] = useState(false)
   const [pwFreelancers, setPwFreelancers] = useState<FreelancerRow[]>([])
   const [pwFreelancerId, setPwFreelancerId] = useState<string>('')
+  // Períodos de indisponibilidade de TODOS os membros (carregados 1x ao abrir)
+  type DisponibPeriodo = { id: string; freelancer_id: string; data_inicio: string; data_fim: string | null; motivo: string | null }
+  const [pwIndisponib, setPwIndisponib] = useState<DisponibPeriodo[]>([])
+
+  // Helper: devolve o período que cobre dia + freelancer (ou null)
+  function getIndispMatch(freelancerId: string, iso: string): DisponibPeriodo | null {
+    if (!freelancerId || !iso) return null
+    for (const p of pwIndisponib) {
+      if (p.freelancer_id !== freelancerId) continue
+      const start = p.data_inicio
+      const end = p.data_fim || p.data_inicio
+      if (iso >= start && iso <= end) return p
+    }
+    return null
+  }
+  const pwIndispMatch = getIndispMatch(pwFreelancerId, pwDate)
 
   function openPreWedding(dateStr: string) {
     setPwDate(dateStr)
@@ -301,7 +317,8 @@ export default function CalendarClient({
       Promise.all([
         fetch('/api/calendario-add/portais-list', { cache: 'no-store' }).then(r => r.json()).catch(() => ({ portais: [] })),
         fetch('/api/freelancers', { cache: 'no-store' }).then(r => r.json()).catch(() => ({ freelancers: [] })),
-      ]).then(([dPortais, dFls]) => {
+        fetch('/api/freelancer-disponibilidade', { cache: 'no-store' }).then(r => r.json()).catch(() => ({ periodos: [] })),
+      ]).then(([dPortais, dFls, dDisp]) => {
         setPwPortais(dPortais.portais ?? [])
         // Filtra freelancers activos com email definido, ordena por nome
         const list: FreelancerRow[] = (dFls.freelancers ?? [])
@@ -309,18 +326,26 @@ export default function CalendarClient({
           .map((f: any) => ({ id: f.id, nome: f.nome, status: f.status ?? null }))
           .sort((a: FreelancerRow, b: FreelancerRow) => a.nome.localeCompare(b.nome))
         setPwFreelancers(list)
+        setPwIndisponib(dDisp.periodos ?? [])
         setPwLoading(false)
       })
-    } else if (pwFreelancers.length === 0) {
-      fetch('/api/freelancers', { cache: 'no-store' })
+    } else {
+      // Re-carrega indisponibilidades sempre (são dinâmicas)
+      fetch('/api/freelancer-disponibilidade', { cache: 'no-store' })
         .then(r => r.json())
-        .then(d => {
-          const list: FreelancerRow[] = (d.freelancers ?? [])
-            .filter((f: any) => f?.id && f?.nome)
-            .map((f: any) => ({ id: f.id, nome: f.nome, status: f.status ?? null }))
-            .sort((a: FreelancerRow, b: FreelancerRow) => a.nome.localeCompare(b.nome))
-          setPwFreelancers(list)
-        }).catch(() => {})
+        .then(d => setPwIndisponib(d.periodos ?? []))
+        .catch(() => {})
+      if (pwFreelancers.length === 0) {
+        fetch('/api/freelancers', { cache: 'no-store' })
+          .then(r => r.json())
+          .then(d => {
+            const list: FreelancerRow[] = (d.freelancers ?? [])
+              .filter((f: any) => f?.id && f?.nome)
+              .map((f: any) => ({ id: f.id, nome: f.nome, status: f.status ?? null }))
+              .sort((a: FreelancerRow, b: FreelancerRow) => a.nome.localeCompare(b.nome))
+            setPwFreelancers(list)
+          }).catch(() => {})
+      }
     }
   }
 
@@ -358,6 +383,22 @@ export default function CalendarClient({
 
   async function handleSavePreWedding() {
     if (!pwReferencia || !pwDate) return
+
+    // ── Confirma se o membro escolhido marcou indisponibilidade ──
+    const indispMatch = getIndispMatch(pwFreelancerId, pwDate)
+    if (indispMatch) {
+      const nome = pwFreelancers.find(f => f.id === pwFreelancerId)?.nome ?? 'O membro'
+      const periodo = indispMatch.data_inicio === (indispMatch.data_fim || indispMatch.data_inicio)
+        ? indispMatch.data_inicio
+        : `${indispMatch.data_inicio} → ${indispMatch.data_fim}`
+      const motivoSuffix = indispMatch.motivo ? `\nMotivo: ${indispMatch.motivo}` : ''
+      const ok = window.confirm(
+        `⚠ ${nome} marcou indisponibilidade para ${periodo}.${motivoSuffix}\n\n` +
+        `Queres mesmo assim atribuir-lhe este Pré-Wedding?`
+      )
+      if (!ok) return
+    }
+
     setPwSaving(true)
     try {
       const res = await fetch('/api/calendario-add/pre-wedding', {
@@ -1275,14 +1316,49 @@ export default function CalendarClient({
             </label>
             <select value={pwFreelancerId} onChange={e => setPwFreelancerId(e.target.value)}
               disabled={pwLoading || pwFreelancers.length === 0}
-              className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4FC3C3]/40 mb-4 disabled:opacity-50">
+              className={`w-full bg-black/30 border rounded-lg px-3 py-2 text-sm text-white focus:outline-none mb-2 disabled:opacity-50 transition-colors ${
+                pwIndispMatch ? 'border-red-500/55 focus:border-red-500/70' : 'border-white/10 focus:border-[#4FC3C3]/40'
+              }`}>
               <option value="">— Sem atribuição —</option>
-              {pwFreelancers.map(f => (
-                <option key={f.id} value={f.id}>
-                  {f.nome}{f.status ? ` · ${f.status}` : ''}
-                </option>
-              ))}
+              {pwFreelancers.map(f => {
+                // Indica indisponibilidade no próprio label
+                const indisp = getIndispMatch(f.id, pwDate)
+                return (
+                  <option key={f.id} value={f.id}>
+                    {indisp ? '⚠ ' : ''}{f.nome}{f.status ? ` · ${f.status}` : ''}{indisp ? ' (INDISPONÍVEL)' : ''}
+                  </option>
+                )
+              })}
             </select>
+            {/* Aviso laranja/vermelho quando o membro escolhido está indisponível */}
+            {pwIndispMatch && (
+              <div className="mb-4 rounded-lg p-3 flex items-start gap-2.5"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(239,68,68,0.12), rgba(239,68,68,0.04))',
+                  border: '1px solid rgba(239,68,68,0.45)',
+                  boxShadow: '0 0 14px -4px rgba(239,68,68,0.35)',
+                }}>
+                <span className="text-[14px] mt-0.5 shrink-0" style={{ color: '#fb7185' }}>⚠</span>
+                <div className="min-w-0">
+                  <p className="text-[11px] tracking-[0.25em] uppercase font-bold mb-1" style={{ color: '#fb7185' }}>
+                    Membro indisponível nesta data
+                  </p>
+                  <p className="text-[12px] text-white/80 leading-relaxed">
+                    {pwFreelancers.find(f => f.id === pwFreelancerId)?.nome ?? 'O membro'} marcou{' '}
+                    <strong className="text-white">
+                      {pwIndispMatch.data_inicio === (pwIndispMatch.data_fim || pwIndispMatch.data_inicio)
+                        ? pwIndispMatch.data_inicio
+                        : `${pwIndispMatch.data_inicio} → ${pwIndispMatch.data_fim}`}
+                    </strong> como indisponível
+                    {pwIndispMatch.motivo ? ` (${pwIndispMatch.motivo})` : ''}.
+                  </p>
+                  <p className="text-[11px] text-white/45 mt-1 italic">
+                    Podes prosseguir mesmo assim — terás de confirmar.
+                  </p>
+                </div>
+              </div>
+            )}
+            {!pwIndispMatch && <div className="mb-2" />}
 
             <div className="flex gap-3">
               <button onClick={handleSavePreWedding}
