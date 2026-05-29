@@ -1,9 +1,44 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { verifyFlSession } from '@/lib/freelancer-session'
+import { verifyNvSession, NV_COOKIE_NAME } from '@/lib/noivos-session'
 
 export async function middleware(request: NextRequest) {
   const { pathname, search, searchParams } = request.nextUrl
+
+  // ── Portal dos Noivos (casamento / batizado) ─────────────────────────────
+  //   /portal-cliente/ref/<REF>   e   /portal-batizado/ref/<REF>
+  //   exigem sessão `nv_session` válida cuja referencia bate com a URL.
+  //
+  //   Bypass:
+  //     · admin (rl_auth válido)
+  //     · ?admin=1 na URL
+  //
+  //   Sem sessão → redirect /login-noivos?next=<url>
+  //   Sessão de outro casal → redirect para o portal próprio (não permite
+  //     ver portais alheios).
+  const noivosMatch = pathname.match(/^\/(portal-cliente|portal-batizado)\/ref\/([^/?]+)/)
+  if (noivosMatch) {
+    const adminAuth = request.cookies.get('rl_auth')?.value
+    const isAdmin = (adminAuth && adminAuth === process.env.AUTH_SECRET) ||
+      searchParams.get('admin') === '1'
+    if (!isAdmin) {
+      const refUrl = decodeURIComponent(noivosMatch[2])
+      const nvCookie = request.cookies.get(NV_COOKIE_NAME)?.value
+      const session = await verifyNvSession(nvCookie)
+      if (!session) {
+        const loginUrl = new URL('/login-noivos', request.url)
+        loginUrl.searchParams.set('next', `${pathname}${search}`)
+        return NextResponse.redirect(loginUrl)
+      }
+      // Sessão noutro casamento → manda-os para o portal próprio
+      if (session.referencia.toLowerCase() !== refUrl.toLowerCase()) {
+        const ownBase = session.tipo === 'batizado' ? '/portal-batizado' : '/portal-cliente'
+        return NextResponse.redirect(new URL(`${ownBase}/ref/${encodeURIComponent(session.referencia)}`, request.url))
+      }
+      // OK — sessão bate com a referencia da URL, deixa passar
+    }
+  }
 
   // ── 1) Compatibilidade: /freelancer-view/<id>  →  /freelancers/<id>?view=freelancer
   //   URL antigo redireciona sempre para o novo padrão (admin ou membro).
