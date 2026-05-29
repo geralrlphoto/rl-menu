@@ -205,6 +205,30 @@ function FreelancerDetailInner() {
   const { id } = useParams<{ id: string }>()
   const searchParams = useSearchParams()
   const viewAsFreelancer = searchParams?.get('view') === 'freelancer'
+
+  // ── Heartbeat de presença: regista atividade do membro a cada 60s
+  //    quando a tab está visível. Roda apenas quando viewAsFreelancer
+  //    (não queremos contar admins a navegar como online).
+  useEffect(() => {
+    if (!viewAsFreelancer || !id) return
+    function ping() {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
+      fetch('/api/freelancer-presence', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ freelancer_id: id }),
+        keepalive: true,
+      }).catch(() => { /* silencioso */ })
+    }
+    ping() // primeiro tick imediato
+    const iv = setInterval(ping, 60_000) // 60s
+    const onVis = () => { if (document.visibilityState === 'visible') ping() }
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      clearInterval(iv)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [viewAsFreelancer, id])
   const [tab, setTab] = useState<'casamentos'|'edicao'|'album'|'tarefas'|'calendario'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'|null>(null)
   // ID de casamento a abrir expandido quando o utilizador entra na tab Casamentos
   // — usado pelas notificações para abrir directamente o casamento associado.
