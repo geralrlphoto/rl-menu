@@ -200,38 +200,81 @@ export async function POST(req: NextRequest) {
   const sb = db()
 
   // ── 1) Procura nos vários sítios pela ordem que faz sentido ────────────
+  //     Faz queries separadas para cada (tabela, coluna) e itera em JS.
+  //     Evita o `.or()` com `ilike` (que é frágil com @ e . no valor).
   let matched: { row: CasalRow; via: 'noiva' | 'noivo' } | null = null
+  const debugRows: any[] = []
 
-  // a) dados_contrato_cps
-  {
-    const { data: rows } = await sb
-      .from('dados_contrato_cps')
-      .select('referencia_evento, tipo_evento, nome_noivos, nome_noiva, nome_noivo, email_noiva, email_noivo, tel_noiva, tel_noivo, nif_noiva, nif_noivo')
-      .or(`email_noiva.ilike.${email},email_noivo.ilike.${email}`)
-    for (const r of rows ?? []) {
-      const casal: CasalRow = { ...(r as any), referencia: (r as any).referencia_evento }
-      const via = rowMatches(casal, email, phone, nif)
-      if (via) { matched = { row: casal, via }; break }
-    }
+  type Source = {
+    table: 'dados_contrato_cps' | 'eventos_2026' | 'eventos_2027'
+    refField: 'referencia_evento' | 'referencia'
+    cols: string
   }
+  const sources: Source[] = [
+    {
+      table: 'dados_contrato_cps',
+      refField: 'referencia_evento',
+      cols: 'referencia_evento, tipo_evento, nome_noivos, nome_noiva, nome_noivo, email_noiva, email_noivo, tel_noiva, tel_noivo, nif_noiva, nif_noivo',
+    },
+    {
+      table: 'eventos_2026',
+      refField: 'referencia',
+      cols: 'referencia, tipo_evento, nome_noiva, nome_noivo, email_noiva, email_noivo, tel_noiva, tel_noivo, nif_noiva, nif_noivo',
+    },
+    {
+      table: 'eventos_2027',
+      refField: 'referencia',
+      cols: 'referencia, tipo_evento, nome_noiva, nome_noivo, email_noiva, email_noivo, tel_noiva, tel_noivo, nif_noiva, nif_noivo',
+    },
+  ]
 
-  // b) eventos_2026 / eventos_2027
-  if (!matched) {
-    for (const tbl of ['eventos_2026', 'eventos_2027'] as const) {
-      const { data: rows } = await sb
-        .from(tbl)
-        .select('referencia, tipo_evento, nome_noiva, nome_noivo, email_noiva, email_noivo, tel_noiva, tel_noivo, nif_noiva, nif_noivo')
-        .or(`email_noiva.ilike.${email},email_noivo.ilike.${email}`)
+  for (const src of sources) {
+    for (const col of ['email_noiva', 'email_noivo'] as const) {
+      const { data: rows, error } = await sb
+        .from(src.table)
+        .select(src.cols)
+        .ilike(col, email)
+      if (error) continue
       for (const r of rows ?? []) {
-        const casal: CasalRow = r as any
+        const casal: CasalRow = {
+          ...(r as any),
+          referencia: (r as any)[src.refField] ?? null,
+        }
+        debugRows.push({ src: src.table, via_col: col, row: casal })
         const via = rowMatches(casal, email, phone, nif)
-        if (via) { matched = { row: casal, via }; break }
+        if (via) {
+          matched = { row: casal, via }
+          break
+        }
       }
       if (matched) break
     }
+    if (matched) break
   }
 
   if (!matched || !matched.row.referencia) {
+    // Em modo debug devolve quais campos não bateram (útil quando o admin
+    // a testar quer perceber qual dado falhou). Não revela valores reais.
+    if (process.env.NOIVOS_RECOVER_DEBUG === '1') {
+      return NextResponse.json({
+        ok: false,
+        reason: 'no_match',
+        debug: {
+          email_normalizado: email,
+          telefone_normalizado: phone,
+          nif_normalizado: nif,
+          encontrados_por_email: debugRows.map(d => ({
+            tabela: d.src,
+            via: d.via_col,
+            referencia: d.row.referencia,
+            tel_guardado_normalizado: normPhone(d.row.tel_noiva || d.row.tel_noivo),
+            nif_guardado_normalizado: normNif(d.row.nif_noiva || d.row.nif_noivo),
+            tel_bate: phonesEqual(normPhone(d.row.tel_noiva || d.row.tel_noivo), phone),
+            nif_bate: normNif(d.row.nif_noiva || d.row.nif_noivo) === nif,
+          })),
+        },
+      })
+    }
     return NextResponse.json({ ok: false, reason: 'no_match' })
   }
 
