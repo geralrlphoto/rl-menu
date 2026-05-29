@@ -4108,6 +4108,40 @@ function TarefasTab({ freelancerId, viewAsFreelancer, freelancer, notificacoes, 
       </div>
       )}
 
+      {/* Aviso: atribuição entre membros — visível em ambas as abas */}
+      <div className="rounded-2xl p-4 sm:p-5"
+        style={{
+          background: 'linear-gradient(135deg, rgba(168,85,247,0.10), rgba(168,85,247,0.03))',
+          border: '1px solid rgba(168,85,247,0.30)',
+          boxShadow: '0 0 18px -6px rgba(168,85,247,0.30)',
+        }}>
+        <div className="flex items-start gap-3">
+          <span className="inline-flex items-center justify-center w-9 h-9 rounded-xl shrink-0 mt-0.5"
+            style={{ background: 'rgba(168,85,247,0.18)', border: '1px solid rgba(168,85,247,0.42)', color: '#d8b4fe' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] tracking-[0.35em] uppercase font-bold mb-2" style={{ color: '#d8b4fe' }}>
+              Atribuir tarefa a outro membro
+            </p>
+            <p className="text-[13px] text-white/80 leading-relaxed mb-2.5">
+              Podes atribuir uma tarefa a <strong className="text-white">qualquer membro da equipa</strong> — basta clicar em{' '}
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] tracking-wider uppercase font-bold mx-0.5"
+                style={{ background: 'rgba(168,85,247,0.18)', color: '#d8b4fe', border: '1px solid rgba(168,85,247,0.42)' }}>
+                ✓ Atribuir Tarefa
+              </span>{' '}
+              no topo. O membro recebe notificação no sino e por email, e <strong className="text-white">é obrigado a dar uma resposta</strong> ao concluir.
+            </p>
+            <p className="text-[12px] text-white/55 italic leading-relaxed">
+              Assim, as tarefas importantes deixam de se perder em mensagens de WhatsApp — fica tudo registado, com prazo e historial de respostas.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* ── Tarefas Atribuídas a Mim (do admin / outros membros) ── */}
       {mainTab === 'minhas' && (() => {
         const tarefasAtribuidas = notificacoes.filter(n =>
