@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
       nomeNoivos    = data.nome_noivos
     }
   }
-  // b) Fallback: tabelas eventos_2026 / eventos_2027 (a "ficha")
+  // b) Fallback: tabelas eventos_2026 / eventos_2027 (a "ficha") — Supabase
   if (!referencia) {
     for (const tbl of ['eventos_2026', 'eventos_2027'] as const) {
       const { data: byNoiva } = await supabase
@@ -120,6 +120,56 @@ export async function POST(req: NextRequest) {
         nomeNoivos    = [byNoivo.nome_noiva, byNoivo.nome_noivo].filter(Boolean).join(' & ') || null
         break
       }
+    }
+  }
+
+  // c) Fallback: NOTION (a ficha real vive aqui — duas DBs por ano)
+  if (!referencia && process.env.NOTION_TOKEN) {
+    const NOTION_EVENTOS_DBS = [
+      '1ad220116d8a804b839ddc36f1e7ecf1', // 2026
+      '2a6220116d8a80b4b439fe091b2ac804', // 2027
+    ]
+    for (const dbId of NOTION_EVENTOS_DBS) {
+      for (const notionEmailKey of ['E-mail da noiva', 'E-mail do noivo'] as const) {
+        try {
+          const res = await fetch(`https://api.notion.com/v1/databases/${dbId}/query`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.NOTION_TOKEN}`,
+              'Notion-Version': '2022-06-28',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              filter: { property: notionEmailKey, email: { equals: emailNorm } },
+              page_size: 1,
+            }),
+            cache: 'no-store',
+          })
+          if (!res.ok) continue
+          const j = await res.json().catch(() => ({}))
+          const page = j?.results?.[0]
+          if (!page) continue
+          const props = page.properties ?? {}
+          const getText = (k: string) =>
+            props?.[k]?.rich_text?.map((t: any) => t.plain_text).join('') ?? null
+          const getTitle = (k: string) =>
+            props?.[k]?.title?.map((t: any) => t.plain_text).join('') ?? null
+          const getSelect = (k: string) => props?.[k]?.select?.name ?? null
+          const getMultiSelect = (k: string) =>
+            props?.[k]?.multi_select?.map((s: any) => s.name) ?? null
+
+          const ref = getTitle('REFERÊNCIA DO EVENTO')
+          if (ref) {
+            referencia    = ref
+            tipoEventoRaw = getSelect('TIPO DE EVENTO') ?? getMultiSelect('TIPO DE EVENTO') ?? 'casamento'
+            const nNoiva  = getText('Nome da Noiva')
+            const nNoivo  = getText('nome do noivo')
+            nomeNoivos    = [nNoiva, nNoivo].filter(Boolean).join(' & ') || null
+            break
+          }
+        } catch { /* tenta o próximo */ }
+      }
+      if (referencia) break
     }
   }
 
