@@ -1072,8 +1072,13 @@ export default function PortalRefPage() {
   }, [loadBlocks, loadSettings, referencia, searchParamsHook])
 
   // ── Gate tab-scoped: exige sessionStorage 'nv_active' (set no login) ───
+  //   Admins (rl_auth ou ?admin=1) bypassam SEM precisar de login noivos.
   useEffect(() => {
-    if (isAdmin) return
+    const adminViaUrl = searchParamsHook?.get('admin') === '1'
+    let adminViaSession = false
+    try { adminViaSession = sessionStorage.getItem(`portalAdmin_${referencia}`) === 'true' } catch {}
+    if (isAdmin || adminViaUrl || adminViaSession) return
+
     let active = false
     try { active = sessionStorage.getItem('nv_active') === '1' } catch {}
     if (!active) {
@@ -1083,7 +1088,7 @@ export default function PortalRefPage() {
           window.location.href = `/login-noivos?next=${encodeURIComponent(window.location.pathname)}`
         })
     }
-  }, [isAdmin])
+  }, [isAdmin, referencia, searchParamsHook])
 
   // ── Heartbeat de sessão dos noivos/pais (sliding window 10 min) ────────
   useEffect(() => {

@@ -1093,8 +1093,15 @@ export default function PortalRefPage() {
   //   passado pelo /login-noivos (sessionStorage 'nv_active'). Se ela
   //   fechou o tab/janela, o flag desaparece e a próxima visita força
   //   novo login — independente do cookie ainda estar tecnicamente vivo.
+  //   Admins (rl_auth ou ?admin=1) bypassam SEM precisar de login noivos.
   useEffect(() => {
-    if (isAdmin) return
+    // Detecta admin directamente (não espera pelo state isAdmin, que é
+    // set por outro useEffect — race condition senão).
+    const adminViaUrl = searchParamsHook?.get('admin') === '1'
+    let adminViaSession = false
+    try { adminViaSession = sessionStorage.getItem(`portalAdmin_${referencia}`) === 'true' } catch {}
+    if (isAdmin || adminViaUrl || adminViaSession) return
+
     let active = false
     try { active = sessionStorage.getItem('nv_active') === '1' } catch {}
     if (!active) {
@@ -1105,7 +1112,7 @@ export default function PortalRefPage() {
           window.location.href = `/login-noivos?next=${encodeURIComponent(window.location.pathname)}`
         })
     }
-  }, [isAdmin])
+  }, [isAdmin, referencia, searchParamsHook])
 
   // ── Heartbeat de sessão dos noivos ─────────────────────────────────────
   //    Cada GET /api/noivos-auth válido renova o cookie nv_session por
