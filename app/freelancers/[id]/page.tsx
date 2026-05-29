@@ -7394,24 +7394,9 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh, viewAsFre
 
                   {/* Acções à direita */}
                   <div className="flex flex-col items-end gap-1.5 mt-0.5 flex-shrink-0">
-                    {/* Atribuição equipa: Confirmar / Indisponível */}
-                    {isAtribuicao && !n.lida && (
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <button onClick={() => responderAtribuicao(n, 'confirmar')}
-                          disabled={respondingAtribuicao === n.id}
-                          title="Confirmar atribuição (notifica o admin)"
-                          className="px-3 py-1.5 rounded-md text-[9px] tracking-[0.2em] uppercase font-bold bg-gold text-black hover:bg-gold/90 disabled:opacity-50 transition-all whitespace-nowrap"
-                          style={{ boxShadow: '0 0 12px -4px rgba(201,164,92,0.55)' }}>
-                          ✓ Confirmar
-                        </button>
-                        <button onClick={() => responderAtribuicao(n, 'indisponivel')}
-                          disabled={respondingAtribuicao === n.id}
-                          title="Marcar como indisponível (notifica o admin)"
-                          className="px-3 py-1.5 rounded-md text-[9px] tracking-[0.2em] uppercase font-bold border border-rose-500/45 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20 hover:border-rose-400/65 disabled:opacity-50 transition-all whitespace-nowrap">
-                          ✕ Indisponível
-                        </button>
-                      </div>
-                    )}
+                    {/* Confirmar / Indisponível removidos daqui — agora apenas
+                        no card do casamento em Casamentos. A página de
+                        Notificações fica como histórico/leitura. */}
                     {isTaskMessage && meta.threadId && (
                       <button onClick={() => setViewingThread({ threadId: meta.threadId!, title: meta.threadTitle || n.titulo })}
                         title="Ver toda a conversação desta tarefa"
