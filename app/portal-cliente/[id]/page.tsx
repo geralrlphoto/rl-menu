@@ -1504,6 +1504,130 @@ function PortalSubPageContent() {
     </>
   )
 
+  // ── Atmosphère view (text-only sub-pages: Atendimento, Lista de Presentes, etc.)
+  //    Aplica-se quando NÃO está em edit-mode, NÃO é Sobre (full-screen) e NÃO é design premium.
+  //    Sub-páginas especiais (Pagamentos/Contrato/Pré-Wedding/Briefing/Guia) caem no render
+  //    existente em baixo.
+  const _atmIsSimple = !editing && !editingPhotos && !editingParceiros && !editingBriefing
+    && !editingCalloutLinks && !editingPreWedding && !editingPropostaToken
+    && !isSobreViewMode && !isDesignPremium
+    && !isPaymentsPage && !isContratoPage && !isPreWeddingPage && !isBriefingPage && !isGuiaPage && !isSobrePage
+    && !error
+  const _atmEffectiveHeader = (() => {
+    const perPage = id ? pageHeaders[id as string] : undefined
+    return perPage === 'none' ? '' : (perPage || subpageHeaderUrl || portalHeroImageUrl)
+  })()
+  const _atmBackHref = fromId
+    ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}`
+    : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : '/portal-cliente'
+
+  if (_atmIsSimple && !loading) {
+    return (
+      <PortalShell sidebar={_atmSidebar}>
+        {/* Admin actions bar */}
+        {isAdmin && (
+          <div className="atm-abar">
+            <button type="button" className="atm-abtn" onClick={handleRefresh} disabled={refreshing}>
+              <svg className={refreshing ? 'animate-spin' : ''} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 11a8 8 0 1 0-.6 4" /><path d="M20 5v6h-6" />
+              </svg>
+              {refreshing ? 'A atualizar' : 'Atualizar'}
+            </button>
+            {hasImages && (
+              <button type="button" className="atm-abtn" onClick={() => setEditingPhotos(true)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="8.5" cy="10" r="1.6" /><path d="M5 17l4.5-4 3 2.5L16 11l3 3" />
+                </svg>
+                Fotos
+              </button>
+            )}
+            <button type="button" className="atm-abtn" onClick={() => setEditing(true)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 19l1-4L16 5l3 3L9 18l-4 1Z" /><path d="M14 7l3 3" />
+              </svg>
+              Editar
+            </button>
+          </div>
+        )}
+
+        {/* Hero */}
+        <header className="atm-subhero">
+          {_atmEffectiveHeader ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={_atmEffectiveHeader} alt="" className="atm-subhero-img" />
+          ) : (
+            <div className="ph" data-label={`Fotografia · ${title}`} style={{ position: 'absolute', inset: 0 }} />
+          )}
+          <div className="atm-subhero-scrim" />
+          <div className="atm-subhero-cap">
+            <div className="eyebrow">RL Photo · Video</div>
+            <h1>{title || 'Atendimento'}</h1>
+          </div>
+        </header>
+
+        {/* Article */}
+        <article className="atm-article">
+          <a className="atm-back" href={_atmBackHref}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 6l-6 6 6 6" />
+            </svg>
+            Voltar
+          </a>
+          <div className="atm-article-body">
+            <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={_atmBackHref} />
+          </div>
+        </article>
+
+        {/* Styles para parágrafos Notion (override Tailwind p) */}
+        <style jsx global>{`
+          .portal-atmosphere .atm-article-body p {
+            color: var(--ink-2);
+            font-size: 15.5px;
+            line-height: 1.9;
+            margin: 0 0 18px;
+            text-wrap: pretty;
+          }
+          .portal-atmosphere .atm-article-body p strong { color: var(--ink); font-weight: 600; }
+          .portal-atmosphere .atm-article-body p:first-child { color: var(--ink); font-size: 17px; }
+          .portal-atmosphere .atm-article-body h1,
+          .portal-atmosphere .atm-article-body h2,
+          .portal-atmosphere .atm-article-body h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 500;
+            color: var(--ink);
+            line-height: 1.1;
+            margin: 28px 0 6px;
+          }
+          .portal-atmosphere .atm-article-body h1 { font-size: clamp(32px, 4vw, 48px); }
+          .portal-atmosphere .atm-article-body h2 { font-size: clamp(28px, 3.4vw, 40px); }
+          .portal-atmosphere .atm-article-body h3 { font-size: clamp(22px, 2.8vw, 32px); }
+          .portal-atmosphere .atm-article-body h2::after {
+            content: ''; display: block; width: 48px; height: 2px;
+            background: linear-gradient(90deg, var(--gold), transparent);
+            margin: 14px 0 26px;
+          }
+          .portal-atmosphere .atm-abtn {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-family: 'Hanken Grotesk', sans-serif;
+            font-size: 12px; font-weight: 600; letter-spacing: .02em;
+            color: var(--ink-2);
+            padding: 9px 16px; border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(239,231,214,.02);
+            cursor: pointer; transition: .2s;
+          }
+          .portal-atmosphere .atm-abtn svg { width: 15px; height: 15px; stroke: var(--ink-3); flex: none; }
+          .portal-atmosphere .atm-abtn:hover:not(:disabled) {
+            border-color: var(--gold-line); color: var(--ink);
+            background: rgba(200,168,102,.06);
+          }
+          .portal-atmosphere .atm-abtn:hover:not(:disabled) svg { stroke: var(--gold); }
+          .portal-atmosphere .atm-abtn:disabled { opacity: .4; cursor: not-allowed; }
+        `}</style>
+      </PortalShell>
+    )
+  }
+
   return (
     <PortalShell sidebar={_atmSidebar}>
     <main className={isSobreViewMode ? 'relative' : 'relative max-w-[860px] mx-auto px-3 sm:px-6 py-6 sm:py-10'}>
