@@ -59,6 +59,7 @@ export function MailIcon({ className, size = 18 }: IconProps) {
 /** Devolve o ícone para um item de nav baseado no título. */
 export function getNavIconFor(title: string, size = 18) {
   const t = (title ?? '').toUpperCase()
+  if (t === 'INÍCIO' || t === 'INICIO' || t === 'HOME')  return <HomeIcon size={size} />
   if (t.includes('SOBRE'))      return <StarIcon size={size} />
   if (t.includes('ATEND'))      return <CalendarIcon size={size} />
   if (t.includes('CONTRAT'))    return <DocumentIcon size={size} />

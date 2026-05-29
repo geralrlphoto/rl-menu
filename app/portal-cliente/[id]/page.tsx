@@ -1471,7 +1471,17 @@ function PortalSubPageContent() {
     if (portalRef) qs.set('portalRef', portalRef)
     return `/portal-cliente/${pid}?${qs.toString()}`
   }
-  const _atmNavItems: SidebarNavItem[] = parentNavPages
+  // Item "Início" no topo da nav — leva à home do portal
+  const _atmHomeHref = portalRef
+    ? `/portal-cliente/ref/${encodeURIComponent(portalRef)}`
+    : '/portal-cliente'
+  const _atmInicioItem: SidebarNavItem = {
+    id: '__inicio__',
+    label: 'Início',
+    href: _atmHomeHref,
+    active: false,
+  }
+  const _atmNavItems: SidebarNavItem[] = [_atmInicioItem, ...parentNavPages
     .filter(p => !((portalSettingsObj?.hiddenNav ?? []) as string[]).includes(p.id))
     .filter(p => {
       // Ocultar "Guia dos Noivos" (mantém só Guia Pré-Wedding)
@@ -1487,7 +1497,7 @@ function PortalSubPageContent() {
         active: id === p.id,
         href: _atmHref(p.id, t),
       }
-    })
+    })]
   const _atmWeddingIso: string | null = portalSettingsObj?.data ?? null
   const _atmWeddingDate = _atmWeddingIso
     ? (() => {
