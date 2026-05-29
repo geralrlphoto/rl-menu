@@ -1831,11 +1831,12 @@ function SidebarNavAdmin({
       <div className="px-6 py-5 mt-auto">
         <div className="h-px mb-4" style={{ background: 'linear-gradient(90deg, transparent, rgba(201,164,92,0.25), transparent)' }} />
         {!viewAsFreelancer && (
-          <a href={`/freelancers/${freelancer?.id ?? ''}?view=freelancer`} target="_blank" rel="noopener noreferrer"
+          <a href={`/login?next=${encodeURIComponent(`/freelancers/${freelancer?.id ?? ''}?view=freelancer`)}`} target="_blank" rel="noopener noreferrer"
             className="block text-[9px] tracking-[0.4em] uppercase transition-colors mb-3 text-center"
             style={{ color: '#7a6340' }}
             onMouseEnter={e => e.currentTarget.style.color = '#c9a96e'}
-            onMouseLeave={e => e.currentTarget.style.color = '#7a6340'}>
+            onMouseLeave={e => e.currentTarget.style.color = '#7a6340'}
+            title="Login como o membro (precisa do email + password dele)">
             ↗ Ver como freelancer
           </a>
         )}

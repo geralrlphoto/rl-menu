@@ -522,8 +522,10 @@ export default function FreelancersPage() {
                               ✦ Maquete
                             </Link>
 
-                            {/* Botão Ver como Freelancer: abre a ficha do freelancer em nova tab (sem menu admin) */}
-                            <Link href={`/freelancers/${f.id}?view=freelancer`} target="_blank" rel="noopener noreferrer"
+                            {/* Botão Ver como Freelancer: passa pela página de login
+                                (admin valida o fluxo real do membro: precisa do email +
+                                palavra-passe dele para entrar no portal). */}
+                            <Link href={`/login?next=${encodeURIComponent(`/freelancers/${f.id}?view=freelancer`)}`} target="_blank" rel="noopener noreferrer"
                               className="flex-shrink-0 inline-flex items-center gap-1.5 text-[10px] px-3 py-1.5 rounded-lg border tracking-widest uppercase font-bold transition-all hover:scale-[1.02]"
                               style={{
                                 background: 'linear-gradient(135deg, rgba(52,211,153,0.12), rgba(52,211,153,0.03))',
@@ -531,7 +533,7 @@ export default function FreelancersPage() {
                                 color: '#34d399',
                                 boxShadow: '0 0 10px rgba(52,211,153,0.15)',
                               }}
-                              title={`Abrir ficha do freelancer ${f.nome} (nova tab)`}>
+                              title={`Login como ${f.nome} (nova tab) — precisa do email + password do membro`}>
                               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                                 <circle cx="12" cy="12" r="3"/>
