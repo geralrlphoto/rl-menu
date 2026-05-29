@@ -23,7 +23,7 @@ export type AtmosphereData = {
   noivo?: string | null
   dataIso?: string | null         // ex: '2026-09-12' (YYYY-MM-DD)
   dataLabel?: string | null       // ex: '12 · Setembro · 2026'
-  referencia?: string | null
+  referencia?: string | null      // ex: 'CAS_150_26_RL' — usado para hrefs
 
   // hero / welcome
   heroImageUrl?: string | null
@@ -38,6 +38,19 @@ export type AtmosphereData = {
   subPages: Array<{ id: string; title: string }>
   hiddenNav?: string[]
   activeNavId?: string | null
+  /**
+   * Overrides de título por página (admin renomeou): `pageTitles[id] = 'novo'`.
+   * Se ausente usa o título original.
+   */
+  pageTitles?: Record<string, string>
+  /**
+   * Builder do URL para uma sub-página. Recebe (pageId, displayTitle) e
+   * devolve o href absoluto. Default: '/portal-cliente/<id>?title=<t>&portalRef=<ref>'.
+   * Quando há `portalRefForLinks`, esse é o `<ref>` no fallback.
+   */
+  buildSubpageHref?: (pageId: string, displayTitle: string) => string
+  /** Referência para o ?portalRef= no link default (necessário em /ref/<REF>) */
+  portalRefForLinks?: string | null
 
   // entregas — se não passar usa default ilustrativo
   deliveries?: Array<{
@@ -58,7 +71,8 @@ export type AtmosphereData = {
 }
 
 export type AtmosphereCallbacks = {
-  onSelectSubpage: (id: string) => void
+  /** Chamado quando se clica numa nav item sem href (fallback). */
+  onSelectSubpage?: (id: string) => void
 }
 
 const ROMANS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X']
@@ -84,24 +98,46 @@ export function AtmospherePortal({
 }) {
   const weddingDate = data.dataIso ? parseIsoDate(data.dataIso) : null
 
-  // Sidebar nav — sub-páginas filtradas por hiddenNav
+  // Builder de href para sub-página: usa custom, ou builder default
+  const defaultHrefBuilder = (id: string, title: string) => {
+    const ref = data.portalRefForLinks
+    const qs = new URLSearchParams()
+    qs.set('title', title)
+    if (ref) qs.set('portalRef', ref)
+    return `/portal-cliente/${id}?${qs.toString()}`
+  }
+  const hrefFor = (id: string, title: string) =>
+    data.buildSubpageHref ? data.buildSubpageHref(id, title) : defaultHrefBuilder(id, title)
+
+  const titleFor = (p: { id: string; title: string }) =>
+    (data.pageTitles?.[p.id] ?? p.title).replace(/\s*\(\d+\)\s*$/, '')
+
+  // Sidebar nav — sub-páginas filtradas por hiddenNav, com href real
   const navItems: SidebarNavItem[] = data.subPages
     .filter(p => !(data.hiddenNav ?? []).includes(p.id))
-    .map(p => ({
-      id: p.id,
-      label: p.title,
-      active: data.activeNavId === p.id,
-      onClick: () => callbacks.onSelectSubpage(p.id),
-    }))
+    .map(p => {
+      const t = titleFor(p)
+      return {
+        id: p.id,
+        label: t,
+        active: data.activeNavId === p.id,
+        href: hrefFor(p.id, t),
+        onClick: callbacks.onSelectSubpage ? () => callbacks.onSelectSubpage?.(p.id) : undefined,
+      }
+    })
 
   const exploreItems: ExploreItem[] = data.subPages
     .filter(p => !(data.hiddenNav ?? []).includes(p.id))
     .slice(0, 6)
-    .map(p => ({
-      id: p.id,
-      title: p.title,
-      onClick: () => callbacks.onSelectSubpage(p.id),
-    }))
+    .map(p => {
+      const t = titleFor(p)
+      return {
+        id: p.id,
+        title: t,
+        href: hrefFor(p.id, t),
+        onClick: callbacks.onSelectSubpage ? () => callbacks.onSelectSubpage?.(p.id) : undefined,
+      }
+    })
 
   const deliveries = data.deliveries ?? DEFAULT_DELIVERIES
 

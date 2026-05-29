@@ -1344,13 +1344,11 @@ export default function PortalRefPage() {
           subPages:    subPagesList,
           hiddenNav:   settings.hiddenNav,
           activeNavId: settings.activeNavId ?? null,
+          pageTitles:  settings.pageTitles,
+          portalRefForLinks: referencia,
           hasTasks:    (settings.tasks ?? []).length > 0,
         }}
-        callbacks={{
-          onSelectSubpage: (id) => {
-            saveSettings({ ...settings, activeNavId: id })
-          },
-        }}
+        callbacks={{}}
       />
     </>
   )
