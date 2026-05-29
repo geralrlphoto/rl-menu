@@ -7343,6 +7343,36 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, onRefresh, viewAsFre
             </div>
           ) : (
             <div className="space-y-2">
+              {/* AVISO — marcar como lidas para não ficar pendente */}
+              {notificacoes.some(n => !n.lida) && (
+                <div className="rounded-xl p-3.5 flex items-start gap-3 mb-3"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(251,146,60,0.10), rgba(251,146,60,0.03))',
+                    border: '1px solid rgba(251,146,60,0.30)',
+                  }}>
+                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg shrink-0"
+                    style={{ background: 'rgba(251,146,60,0.18)', color: '#fb923c' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                      <line x1="12" y1="9" x2="12" y2="13"/>
+                      <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] tracking-[0.25em] uppercase font-bold mb-1" style={{ color: '#fb923c' }}>
+                      Atenção · Notificações por ler
+                    </p>
+                    <p className="text-[12.5px] text-white/75 leading-relaxed">
+                      Depois de leres cada notificação, clica em{' '}
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] tracking-wider uppercase font-bold mx-0.5"
+                        style={{ background: 'rgba(110,231,183,0.15)', color: '#6ee7b7', border: '1px solid rgba(110,231,183,0.35)' }}>
+                        ✓ Lida
+                      </span>{' '}
+                      para a remover dos pendentes. Caso contrário, continua a aparecer na sineta global.
+                    </p>
+                  </div>
+                </div>
+              )}
               {notificacoes.map(n => {
                 const meta = parseNotifMeta(n.mensagem)
                 const isTaskAssigned = n.tipo === 'nova_tarefa_atribuida'
