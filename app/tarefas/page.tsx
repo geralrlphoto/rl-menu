@@ -35,6 +35,30 @@ function isOverdue(data_prazo: string | null, status: Status) {
   return new Date(data_prazo + 'T00:00:00') < new Date(new Date().toDateString())
 }
 
+/** Dias úteis (skip Sat/Sun) entre hoje e data_prazo. Negativo se prazo passou. */
+function workingDaysUntil(data_prazo: string | null): number | null {
+  if (!data_prazo) return null
+  const target = new Date(data_prazo + 'T00:00:00')
+  const today  = new Date(new Date().toDateString())
+  if (target.getTime() === today.getTime()) return 0
+  const past = target < today
+  let count = 0
+  const cur = new Date(today)
+  while ((past ? cur > target : cur < target)) {
+    cur.setDate(cur.getDate() + (past ? -1 : 1))
+    const wd = cur.getDay()
+    if (wd !== 0 && wd !== 6) count++
+  }
+  return past ? -count : count
+}
+
+/** True se faltam <= 2 dias úteis (mas ainda dentro do prazo) — alerta amarelo. */
+function isAtRisk(data_prazo: string | null, status: Status): boolean {
+  if (!data_prazo || status === 'CONCLUIDA') return false
+  const d = workingDaysUntil(data_prazo)
+  return d !== null && d >= 0 && d <= 2
+}
+
 export default function TarefasPage() {
   const [tarefas, setTarefas]       = useState<Tarefa[]>([])
   const [loading, setLoading]       = useState(true)
@@ -231,13 +255,29 @@ export default function TarefasPage() {
           {visíveis.map(t => {
             const cfg = STATUS_CONFIG[t.status]
             const overdue = isOverdue(t.data_prazo, t.status)
+            const atRisk  = !overdue && isAtRisk(t.data_prazo, t.status)
+            const daysLeft = workingDaysUntil(t.data_prazo)
             const isEditing = editId === t.id
 
             return (
               <div
                 key={t.id}
-                className={`group relative border border-white/[0.06] border-l-2 ${cfg.border} bg-white/[0.02] transition-all duration-200`}
+                className={`group relative border ${
+                  overdue ? 'border-red-500/40 border-l-2 border-l-red-500' :
+                  atRisk  ? 'border-amber-500/40 border-l-2 border-l-amber-400' :
+                  `border-white/[0.06] border-l-2 ${cfg.border}`
+                } ${overdue ? 'bg-red-500/[0.04]' : atRisk ? 'bg-amber-500/[0.03]' : 'bg-white/[0.02]'} transition-all duration-200`}
               >
+                {atRisk && !isEditing && (
+                  <div className="absolute -top-px right-3 px-2 py-0.5 bg-amber-500/90 text-black text-[9px] tracking-widest font-bold uppercase">
+                    ⚠ Faltam {daysLeft}d
+                  </div>
+                )}
+                {overdue && !isEditing && (
+                  <div className="absolute -top-px right-3 px-2 py-0.5 bg-red-500/90 text-white text-[9px] tracking-widest font-bold uppercase">
+                    Atrasada {Math.abs(daysLeft ?? 0)}d
+                  </div>
+                )}
                 {isEditing ? (
                   /* ── Modo edição ── */
                   <div className="p-5 flex flex-col gap-3">

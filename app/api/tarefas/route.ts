@@ -8,14 +8,68 @@ function db() {
   )
 }
 
+// ── Helper: soma N dias úteis a uma data ISO (skip Sat/Sun) ─────────────
+function addWorkingDays(isoStart: string, n: number): string {
+  const d = new Date(isoStart)
+  let added = 0
+  while (added < n) {
+    d.setDate(d.getDate() + 1)
+    const wd = d.getDay() // 0 Sun ... 6 Sat
+    if (wd !== 0 && wd !== 6) added++
+  }
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+
 export async function GET() {
-  const { data, error } = await db()
+  const supabase = db()
+  const { data, error } = await supabase
     .from('tarefas')
     .select('*')
     .order('created_at', { ascending: false })
+  const baseTarefas: any[] = error ? [] : (data ?? [])
 
-  if (error) return NextResponse.json({ tarefas: [] })
-  return NextResponse.json({ tarefas: data ?? [] })
+  // ── Virtual tasks: mensagens dos noivos (portais.settings.noivos_messages) ──
+  //   Cada mensagem aparece como tarefa PENDENTE com data_prazo = ts + 8 dias úteis.
+  //   Quando respondido_em existe → CONCLUIDA.
+  const virtualTarefas: any[] = []
+  try {
+    const { data: portais } = await supabase
+      .from('portais')
+      .select('referencia, settings')
+      .limit(500)
+    for (const p of (portais ?? []) as any[]) {
+      const s = p.settings ?? {}
+      const msgs = Array.isArray(s.noivos_messages) ? s.noivos_messages : []
+      for (const m of msgs) {
+        if (!m?.id || !m?.ts) continue
+        const isDone = !!m.respondido_em
+        const prazo = addWorkingDays(String(m.ts), 8)
+        const nome = m.nome_noivos ?? p.referencia ?? 'Noivos'
+        const ref = p.referencia ?? ''
+        virtualTarefas.push({
+          id: `noivos_msg::${ref}::${m.id}`,
+          titulo: `💬 Mensagem dos Noivos · ${nome}`,
+          descricao: [
+            ref ? `Referência: ${ref}` : '',
+            m.email_noiva ? `E-mail: ${m.email_noiva}` : '',
+            '',
+            String(m.mensagem ?? ''),
+          ].filter(Boolean).join('\n'),
+          status: isDone ? 'CONCLUIDA' : 'PENDENTE',
+          data_prazo: prazo,
+          created_at: m.ts,
+          updated_at: m.respondido_em ?? m.ts,
+          _is_noivos_msg: true,
+          _ref: ref,
+        })
+      }
+    }
+  } catch { /* silencioso */ }
+
+  return NextResponse.json({ tarefas: [...virtualTarefas, ...baseTarefas] })
 }
 
 export async function POST(req: Request) {
