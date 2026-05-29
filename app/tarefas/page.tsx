@@ -79,6 +79,25 @@ export default function TarefasPage() {
   const [editPrazo, setEditPrazo]   = useState('')
   const [editSaving, setEditSaving] = useState(false)
 
+  // Resposta a mensagens dos noivos
+  const [replyId, setReplyId]       = useState<string | null>(null)
+  const [replyText, setReplyText]   = useState('')
+  const [replySending, setReplySending] = useState(false)
+  async function handleSendReply(tarefaId: string) {
+    if (!replyText.trim()) return
+    setReplySending(true)
+    try {
+      await fetch(`/api/tarefas/${encodeURIComponent(tarefaId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resposta: replyText.trim(), status: 'CONCLUIDA' }),
+      })
+      setReplyId(null); setReplyText('')
+      load()
+    } catch { /* ignore */ }
+    setReplySending(false)
+  }
+
   useEffect(() => { load() }, [])
 
   function load() {
@@ -352,7 +371,7 @@ export default function TarefasPage() {
                       </div>
 
                       {t.descricao && (
-                        <p className="mt-1 text-[11px] text-white/30 leading-relaxed">{t.descricao}</p>
+                        <p className="mt-1 text-[11px] text-white/30 leading-relaxed whitespace-pre-line">{t.descricao}</p>
                       )}
 
                       <div className="mt-2.5 flex items-center gap-3 flex-wrap">
@@ -376,7 +395,51 @@ export default function TarefasPage() {
                             {overdue ? '⚠ ' : ''}{fmtDate(t.data_prazo)}
                           </span>
                         )}
+
+                        {/* Botão Responder — só para mensagens dos noivos pendentes */}
+                        {t.id.startsWith('noivos_msg::') && t.status !== 'CONCLUIDA' && replyId !== t.id && (
+                          <button
+                            onClick={() => { setReplyId(t.id); setReplyText('') }}
+                            className="ml-auto inline-flex items-center gap-1.5 px-3 py-1 rounded text-[10px] tracking-widest font-bold uppercase text-black bg-gold/90 hover:bg-gold transition-colors"
+                          >
+                            ✉ Responder
+                          </button>
+                        )}
                       </div>
+
+                      {/* Painel de resposta inline */}
+                      {t.id.startsWith('noivos_msg::') && replyId === t.id && (
+                        <div className="mt-4 p-4 border border-gold/30 rounded-lg bg-gold/[0.03]">
+                          <p className="text-[10px] tracking-widest uppercase text-gold/70 font-semibold mb-3">
+                            ✉ Responder à noiva — enviado por e-mail
+                          </p>
+                          <textarea
+                            value={replyText}
+                            onChange={e => setReplyText(e.target.value)}
+                            placeholder="Escreve a tua resposta…"
+                            rows={4}
+                            maxLength={3000}
+                            autoFocus
+                            className="w-full bg-black/40 border border-white/10 focus:border-gold/40 px-3 py-2.5 text-sm text-white/85 placeholder-white/25 focus:outline-none rounded resize-none"
+                          />
+                          <div className="mt-3 flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => { setReplyId(null); setReplyText('') }}
+                              disabled={replySending}
+                              className="px-3 py-1.5 text-[10px] tracking-widest uppercase text-white/40 hover:text-white/70 border border-white/10 rounded transition-colors disabled:opacity-30"
+                            >
+                              Cancelar
+                            </button>
+                            <button
+                              onClick={() => handleSendReply(t.id)}
+                              disabled={replySending || !replyText.trim()}
+                              className="px-4 py-1.5 text-[10px] tracking-widest font-bold uppercase text-black bg-gold hover:brightness-110 rounded transition-all disabled:opacity-40"
+                            >
+                              {replySending ? 'A enviar…' : 'Enviar e Concluir →'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
