@@ -6,6 +6,8 @@ import { useParams, useSearchParams } from 'next/navigation'
 import { NotionBlocks, plainText, richText, type Block } from '../NotionRenderer'
 import BlockEditor from '../BlockEditor'
 import BriefingExtensions, { type BriefingExt } from './BriefingExtensions'
+import '../atmosphere/atmosphere.css'
+import { PortalShell, SidebarCouple, SidebarNav, SidebarMiniCountdown, type SidebarNavItem } from '../atmosphere/PortalShell'
 
 const PORTAL_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
 
@@ -911,6 +913,27 @@ function PortalSubPageContent() {
   const [propostaTokenForm, setPropostaTokenForm] = useState('')
   const [notionServicos, setNotionServicos] = useState<{ proposta: string | null; servico_foto: string[]; servico_video: string[] } | null>(null)
   const [pageTitles, setPageTitles] = useState<Record<string, string>>({})
+  // Lista de sub-páginas do portal pai — para a sidebar Atmosphère
+  const [parentNavPages, setParentNavPages] = useState<Array<{ id: string; title: string }>>([])
+  useEffect(() => {
+    let cancelled = false
+    fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}`)
+      .then(r => r.json())
+      .then(d => {
+        if (cancelled) return
+        const out: Array<{ id: string; title: string }> = []
+        const walk = (bs: any[]) => {
+          for (const b of bs ?? []) {
+            if (b.type === 'child_page') out.push({ id: b.id, title: b.child_page?.title ?? '' })
+            if (b.children) walk(b.children)
+          }
+        }
+        walk(d?.blocks ?? [])
+        setParentNavPages(out)
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleInput, setTitleInput] = useState('')
   const [savingTitle, setSavingTitle] = useState(false)
@@ -1438,8 +1461,52 @@ function PortalSubPageContent() {
 
   const hasImages = findImageBlocks(blocks).length > 0
 
+  // ── Sidebar Atmosphère (presentation only) ────────────────────────────
+  const _atmTitleFor = (p: { id: string; title: string }) =>
+    (pageTitles[p.id] ?? p.title).replace(/\s*\(\d+\)\s*$/, '')
+  const _atmHref = (pid: string, t: string) => {
+    const qs = new URLSearchParams()
+    qs.set('title', t)
+    if (portalRef) qs.set('portalRef', portalRef)
+    return `/portal-cliente/${pid}?${qs.toString()}`
+  }
+  const _atmNavItems: SidebarNavItem[] = parentNavPages
+    .filter(p => !((portalSettingsObj?.hiddenNav ?? []) as string[]).includes(p.id))
+    .map(p => {
+      const t = _atmTitleFor(p)
+      return {
+        id: p.id,
+        label: t,
+        active: id === p.id,
+        href: _atmHref(p.id, t),
+      }
+    })
+  const _atmWeddingIso: string | null = portalSettingsObj?.data ?? null
+  const _atmWeddingDate = _atmWeddingIso
+    ? (() => {
+        const m = _atmWeddingIso.match(/^(\d{4})-(\d{2})-(\d{2})/)
+        if (!m) return null
+        return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12, 0, 0)
+      })()
+    : null
+  const _atmSidebar = (
+    <>
+      <SidebarCouple
+        noiva={portalSettingsObj?.noiva ?? null}
+        noivo={portalSettingsObj?.noivo ?? null}
+        data={portalSettingsObj?.dataFormatada ?? null}
+      />
+      <SidebarNav items={_atmNavItems} />
+      <SidebarMiniCountdown
+        weddingDate={_atmWeddingDate}
+        coupleCode={portalSettingsObj?.referencia ?? portalRef ?? null}
+      />
+    </>
+  )
+
   return (
-    <main className={isSobreViewMode ? 'relative' : 'min-h-screen relative max-w-[860px] mx-auto px-3 sm:px-6 py-6 sm:py-10'}>
+    <PortalShell sidebar={_atmSidebar}>
+    <main className={isSobreViewMode ? 'relative' : 'relative max-w-[860px] mx-auto px-3 sm:px-6 py-6 sm:py-10'}>
       {/* ── Design premium: fundo fixo cobre o viewport inteiro ── */}
       {isDesignPremium && (
         <>
@@ -3080,6 +3147,7 @@ function PortalSubPageContent() {
         </div>
       )}
     </main>
+    </PortalShell>
   )
 }
 
