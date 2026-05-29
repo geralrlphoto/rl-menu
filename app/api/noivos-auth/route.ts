@@ -174,7 +174,18 @@ export async function POST(req: NextRequest) {
   }
 
   if (!referencia) {
-    // genérico para evitar user-enumeration
+    // genérico para evitar user-enumeration. Com NOIVOS_AUTH_DEBUG=1
+    // a resposta inclui qual passo da cadeia retornou vazio.
+    if (process.env.NOIVOS_AUTH_DEBUG === '1') {
+      return NextResponse.json({
+        ok: false, reason: 'invalid_credentials',
+        debug: {
+          step: 'email_not_found',
+          email_normalizado: emailNorm,
+          notion_token_set: !!process.env.NOTION_TOKEN,
+        },
+      }, { status: 401 })
+    }
     return NextResponse.json({ ok: false, reason: 'invalid_credentials' }, { status: 401 })
   }
 
@@ -196,12 +207,42 @@ export async function POST(req: NextRequest) {
   const stored  = String(storedRaw).trim().toLowerCase()
   const entered = String(password).trim().toLowerCase()
 
+  if (process.env.NOIVOS_AUTH_DEBUG === '1') {
+    console.log('[noivos-auth] match', {
+      referencia, tipo, has_portal_row: !!portalRow,
+      portalPassword_set: !!storedRaw, stored_lc_len: stored.length,
+      entered_lc_len: entered.length,
+    })
+  }
+
   if (!stored) {
+    if (process.env.NOIVOS_AUTH_DEBUG === '1') {
+      return NextResponse.json({
+        ok: false, reason: 'no_password',
+        debug: {
+          step: 'portal_no_password',
+          referencia, has_portal_row: !!portalRow,
+        },
+      }, { status: 404 })
+    }
     // Portal ainda sem password (ou portal não criado). Mensagem específica
     // para o cliente saber que tem de falar com a equipa RL.
     return NextResponse.json({ ok: false, reason: 'no_portal' }, { status: 404 })
   }
   if (stored !== entered) {
+    if (process.env.NOIVOS_AUTH_DEBUG === '1') {
+      return NextResponse.json({
+        ok: false, reason: 'invalid_credentials',
+        debug: {
+          step: 'password_mismatch',
+          referencia,
+          stored_len: stored.length,
+          entered_len: entered.length,
+          stored_first2: stored.slice(0, 2),
+          entered_first2: entered.slice(0, 2),
+        },
+      }, { status: 401 })
+    }
     return NextResponse.json({ ok: false, reason: 'invalid_credentials' }, { status: 401 })
   }
 
