@@ -53,46 +53,87 @@ export async function POST(req: NextRequest) {
   const supabase = db()
   const emailNorm = String(email).trim().toLowerCase()
 
-  // ── 1) Encontrar contrato pelo email (noiva ou noivo) ──────────────────
-  //     Faz duas queries (uma por coluna) e usa a primeira que devolver row.
-  //     Usa ilike para case-insensitive.
-  let contrato: {
-    referencia_evento: string | null
-    tipo_evento: string | null
-    nome_noivos: string | null
-    email_noiva: string | null
-    email_noivo: string | null
-  } | null = null
+  // ── 1) Encontrar referência do evento pelo email do casal ──────────────
+  //     Procura por ordem:
+  //       a) dados_contrato_cps (email_noiva ou email_noivo)
+  //       b) eventos_2026 / eventos_2027 (email_noiva ou email_noivo)
+  //         ← este é o caso quando o CPS ainda não foi preenchido mas
+  //           a ficha do evento já tem os dados dos noivos.
+  let referencia: string | null = null
+  let tipoEventoRaw: string | string[] | null = null
+  let nomeNoivos: string | null = null
 
-  const { data: byNoiva } = await supabase
-    .from('dados_contrato_cps')
-    .select('referencia_evento, tipo_evento, nome_noivos, email_noiva, email_noivo')
-    .ilike('email_noiva', emailNorm)
-    .order('id', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-  if (byNoiva) contrato = byNoiva as any
-
-  if (!contrato) {
-    const { data: byNoivo } = await supabase
+  // a) dados_contrato_cps · email_noiva
+  {
+    const { data } = await supabase
       .from('dados_contrato_cps')
-      .select('referencia_evento, tipo_evento, nome_noivos, email_noiva, email_noivo')
+      .select('referencia_evento, tipo_evento, nome_noivos')
+      .ilike('email_noiva', emailNorm)
+      .order('id', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (data?.referencia_evento) {
+      referencia    = data.referencia_evento
+      tipoEventoRaw = data.tipo_evento
+      nomeNoivos    = data.nome_noivos
+    }
+  }
+  // a) dados_contrato_cps · email_noivo
+  if (!referencia) {
+    const { data } = await supabase
+      .from('dados_contrato_cps')
+      .select('referencia_evento, tipo_evento, nome_noivos')
       .ilike('email_noivo', emailNorm)
       .order('id', { ascending: false })
       .limit(1)
       .maybeSingle()
-    if (byNoivo) contrato = byNoivo as any
+    if (data?.referencia_evento) {
+      referencia    = data.referencia_evento
+      tipoEventoRaw = data.tipo_evento
+      nomeNoivos    = data.nome_noivos
+    }
+  }
+  // b) Fallback: tabelas eventos_2026 / eventos_2027 (a "ficha")
+  if (!referencia) {
+    for (const tbl of ['eventos_2026', 'eventos_2027'] as const) {
+      const { data: byNoiva } = await supabase
+        .from(tbl)
+        .select('referencia, tipo_evento, nome_noiva, nome_noivo')
+        .ilike('email_noiva', emailNorm)
+        .limit(1)
+        .maybeSingle()
+      if (byNoiva?.referencia) {
+        referencia    = byNoiva.referencia
+        tipoEventoRaw = (byNoiva as any).tipo_evento
+        nomeNoivos    = [byNoiva.nome_noiva, byNoiva.nome_noivo].filter(Boolean).join(' & ') || null
+        break
+      }
+      const { data: byNoivo } = await supabase
+        .from(tbl)
+        .select('referencia, tipo_evento, nome_noiva, nome_noivo')
+        .ilike('email_noivo', emailNorm)
+        .limit(1)
+        .maybeSingle()
+      if (byNoivo?.referencia) {
+        referencia    = byNoivo.referencia
+        tipoEventoRaw = (byNoivo as any).tipo_evento
+        nomeNoivos    = [byNoivo.nome_noiva, byNoivo.nome_noivo].filter(Boolean).join(' & ') || null
+        break
+      }
+    }
   }
 
-  if (!contrato || !contrato.referencia_evento) {
+  if (!referencia) {
     // genérico para evitar user-enumeration
     return NextResponse.json({ ok: false, reason: 'invalid_credentials' }, { status: 401 })
   }
 
-  const referencia = contrato.referencia_evento
-  const tipo: 'casamento' | 'batizado' =
-    contrato.tipo_evento === 'batizado' ? 'batizado' : 'casamento'
+  // Normaliza tipo_evento — pode ser string ou array (em eventos_2026 vem
+  // como array tipo ["casamento"] ou ["batizado"]).
+  const tipoStr = Array.isArray(tipoEventoRaw)
+    ? tipoEventoRaw.map(t => String(t).toLowerCase()).join(',')
+    : String(tipoEventoRaw ?? '').toLowerCase()
+  const tipo: 'casamento' | 'batizado' = /batizado/.test(tipoStr) ? 'batizado' : 'casamento'
 
   // ── 2) Verifica a password no portal correspondente ────────────────────
   const { data: portalRow } = await supabase
@@ -128,7 +169,7 @@ export async function POST(req: NextRequest) {
     ok: true,
     noivos: {
       referencia,
-      nome_noivos: contrato.nome_noivos,
+      nome_noivos: nomeNoivos,
       email: emailNorm,
       tipo,
     },
