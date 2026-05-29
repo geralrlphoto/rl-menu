@@ -528,6 +528,185 @@
 }
 .portal-atmosphere .pw-notify.done svg { stroke: var(--ok); }
 
+/* ── Secções personalizadas (texto + foto editável na página) ─ */
+.portal-atmosphere .pw-custom {
+  position: relative;
+  margin: 60px 0;
+  border-radius: 14px;
+  transition: background .2s;
+}
+.portal-atmosphere .pw-custom:hover .pw-custom-toolbar {
+  opacity: 1;
+}
+.portal-atmosphere .pw-custom-toolbar {
+  position: absolute;
+  top: -14px; right: 0;
+  display: flex; gap: 6px;
+  opacity: .45; transition: opacity .2s;
+  z-index: 3;
+}
+.portal-atmosphere .pw-custom-toolbar .tbtn {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 11px; font-weight: 600; letter-spacing: .04em;
+  padding: 6px 11px;
+  border-radius: 999px;
+  background: rgba(20,15,9,.85);
+  border: 1px solid var(--gold-faint);
+  color: var(--ink);
+  cursor: pointer; transition: .15s;
+}
+.portal-atmosphere .pw-custom-toolbar .tbtn:hover:not(:disabled) {
+  border-color: var(--gold);
+  background: rgba(30,22,14,.95);
+}
+.portal-atmosphere .pw-custom-toolbar .tbtn:disabled { opacity: .35; cursor: not-allowed; }
+.portal-atmosphere .pw-custom-toolbar .tbtn svg { width: 13px; height: 13px; }
+.portal-atmosphere .pw-custom-toolbar .tbtn.danger { color: #d99; }
+.portal-atmosphere .pw-custom-toolbar .tbtn.danger:hover:not(:disabled) { border-color: #b66; color: #fbb; }
+
+.portal-atmosphere .pw-custom-body .eyebrow {
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 11px; letter-spacing: .34em;
+  text-transform: uppercase;
+  color: var(--gold); font-weight: 600;
+  margin-bottom: 12px;
+}
+.portal-atmosphere .pw-custom-body h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 400;
+  font-size: clamp(28px, 3.4vw, 44px);
+  line-height: 1.15;
+  color: var(--ink);
+  margin: 0 0 18px;
+}
+.portal-atmosphere .pw-custom-body h2 em {
+  font-style: italic; color: var(--gold-soft);
+}
+.portal-atmosphere .pw-custom-body p {
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 15px; line-height: 1.85;
+  color: var(--ink-2);
+  margin: 0 0 14px;
+}
+.portal-atmosphere .pw-custom-body p strong { color: var(--ink); font-weight: 600; }
+.portal-atmosphere .pw-custom-body p em { color: var(--gold-soft); font-style: italic; }
+
+/* Editor inline da secção */
+.portal-atmosphere .pw-custom-edit {
+  display: flex; flex-direction: column; gap: 14px;
+  padding: 22px 24px;
+  border: 1px solid var(--gold-line);
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--surface), var(--bg-2));
+}
+.portal-atmosphere .pw-custom-edit label {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.portal-atmosphere .pw-custom-edit label > span {
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 10px; letter-spacing: .3em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 600;
+}
+.portal-atmosphere .pw-custom-edit input,
+.portal-atmosphere .pw-custom-edit textarea {
+  background: rgba(10,7,4,.6);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 14px;
+  color: var(--ink);
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 14px; line-height: 1.6;
+  outline: none;
+  transition: border-color .15s;
+}
+.portal-atmosphere .pw-custom-edit input:focus,
+.portal-atmosphere .pw-custom-edit textarea:focus {
+  border-color: var(--gold);
+}
+.portal-atmosphere .pw-custom-edit textarea {
+  min-height: 140px; resize: vertical;
+}
+.portal-atmosphere .pw-custom-edit .actions {
+  display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px;
+}
+.portal-atmosphere .pw-custom-edit .btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 11px; font-weight: 600; letter-spacing: .16em;
+  text-transform: uppercase; white-space: nowrap;
+  padding: 10px 22px;
+  border-radius: 999px;
+  cursor: pointer; transition: .15s;
+}
+.portal-atmosphere .pw-custom-edit .btn.ghost {
+  background: transparent;
+  border: 1px solid var(--gold-line);
+  color: var(--ink-2);
+}
+.portal-atmosphere .pw-custom-edit .btn.ghost:hover { border-color: var(--gold); color: var(--ink); }
+.portal-atmosphere .pw-custom-edit .btn.primary {
+  background: linear-gradient(168deg, #efd6a2, #d4b46f 60%, #c19a52);
+  border: 0; color: #1b1308;
+}
+.portal-atmosphere .pw-custom-edit .btn.primary:hover { filter: brightness(1.05); }
+
+/* Foto full-width da secção */
+.portal-atmosphere .pw-custom-photo {
+  position: relative;
+  margin: 32px 0 0;
+  aspect-ratio: 16/9;
+  border-radius: var(--atm-r-lg);
+  overflow: hidden;
+  border: 1px solid var(--gold-faint);
+  box-shadow: 0 40px 80px -45px rgba(0,0,0,.85);
+  background: linear-gradient(180deg, var(--surface), var(--bg-2));
+}
+.portal-atmosphere .pw-custom-photo img,
+.portal-atmosphere .pw-custom-photo .ph {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; object-fit: cover;
+}
+.portal-atmosphere .pw-custom-photo .ph {
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 11px; letter-spacing: .36em; text-transform: uppercase;
+  color: var(--ink-4);
+}
+.portal-atmosphere .pw-custom-photo .ph::before { content: 'Foto · Espaço reservado'; }
+.portal-atmosphere .pw-custom-photo .imgctrl {
+  position: absolute; top: 16px; right: 16px;
+  display: flex; gap: 8px; z-index: 2;
+}
+
+/* Botão "+ Nova secção" */
+.portal-atmosphere .pw-custom-add {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%;
+  margin: 32px 0;
+  padding: 18px 24px;
+  background: transparent;
+  border: 1.5px dashed var(--gold-line);
+  border-radius: 12px;
+  color: var(--gold);
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 12px; font-weight: 600; letter-spacing: .22em;
+  text-transform: uppercase;
+  cursor: pointer; transition: .2s;
+}
+.portal-atmosphere .pw-custom-add:hover {
+  border-color: var(--gold);
+  background: rgba(200,168,102,.05);
+  color: var(--gold-soft);
+}
+.portal-atmosphere .pw-custom-add .plus {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px; line-height: 1;
+  letter-spacing: 0;
+}
+
 /* ── Responsivo ────────────────────────────────────────────── */
 @media (max-width: 980px) {
   .portal-atmosphere .pw-intro { grid-template-columns: 1fr; gap: 26px; }

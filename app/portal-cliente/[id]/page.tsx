@@ -9,7 +9,7 @@ import BriefingExtensions, { type BriefingExt } from './BriefingExtensions'
 import '../atmosphere/atmosphere.css'
 import { PortalShell, SidebarCouple, SidebarNav, SidebarMiniCountdown, type SidebarNavItem } from '../atmosphere/PortalShell'
 import { ContratoView } from '../atmosphere/ContratoView'
-import { PreWeddingView, DEFAULT_CENARIOS } from '../atmosphere/PreWeddingView'
+import { PreWeddingView, DEFAULT_CENARIOS, type PwSection } from '../atmosphere/PreWeddingView'
 import { SendMessageButton } from '../atmosphere/SendMessageButton'
 
 const PORTAL_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
@@ -949,9 +949,11 @@ function PortalSubPageContent() {
   const [pageHeaders, setPageHeaders] = useState<Record<string, string>>({})
   const [uploadingPageHeader, setUploadingPageHeader] = useState(false)
   /** Map de fotos da página Pré-Wedding (slot → URL). Gerido 100% no app, sem Notion.
-   *  Slots: 'hero', 'intro', 'tript-0', 'tript-1', 'tript-2', 'cen-0', 'cen-1', 'cen-2'. */
+   *  Slots: 'hero', 'intro', 'tript-0', 'cen-0/1/2', 'custom-<id>' (secções custom). */
   const [pwPhotos, setPwPhotos] = useState<Record<string, string>>({})
   const [uploadingPwSlot, setUploadingPwSlot] = useState<string | null>(null)
+  /** Secções personalizadas (texto + foto) adicionadas pelo admin na página. */
+  const [pwSections, setPwSections] = useState<PwSection[]>([])
   const [briefingInfo, setBriefingInfo] = useState<Record<string, BriefingExt>>({})
   const [editingBriefingInfo, setEditingBriefingInfo] = useState(false)
   const [briefingFieldsForm, setBriefingFieldsForm] = useState<Array<{ label: string; value: string }>>([])
@@ -1076,6 +1078,7 @@ function PortalSubPageContent() {
       const photos = { ...(ps.pwPhotos ?? {}) }
       if (ps.pwHeroPhoto && !photos.hero) photos.hero = ps.pwHeroPhoto
       setPwPhotos(photos)
+      setPwSections(Array.isArray(ps.pwSections) ? ps.pwSections : [])
       setBriefingInfo(ps.briefingInfo ?? {})
       setCronogramaStatus(ps.cronogramaStatus ?? {})
       setSatisfacao(ps.satisfacao ?? null)
@@ -1330,6 +1333,23 @@ function PortalSubPageContent() {
     delete next[slot]
     await savePortalSettings({ ...portalSettingsObj, pwPhotos: next })
     setPwPhotos(next)
+  }
+
+  // ── Secções personalizadas (texto + foto) na página Pré-Wedding ──
+  async function handleChangePwSections(next: PwSection[]) {
+    // Limpa fotos órfãs (slots custom-<id> que já não existem)
+    const validIds = new Set(next.map(s => s.id))
+    const cleanedPhotos: Record<string, string> = {}
+    for (const [k, v] of Object.entries(pwPhotos)) {
+      if (!k.startsWith('custom-')) { cleanedPhotos[k] = v; continue }
+      const sid = k.slice('custom-'.length)
+      if (validIds.has(sid)) cleanedPhotos[k] = v
+    }
+    // Liga as URLs de foto às secções para render directo
+    const withPhotos = next.map(s => ({ ...s, photoUrl: cleanedPhotos[`custom-${s.id}`] || null }))
+    await savePortalSettings({ ...portalSettingsObj, pwSections: withPhotos, pwPhotos: cleanedPhotos })
+    setPwSections(withPhotos)
+    setPwPhotos(cleanedPhotos)
   }
 
   async function handleToggleDesignPremium() {
@@ -1981,6 +2001,8 @@ function PortalSubPageContent() {
             ...c,
             photoUrl: pwPhotos[`cen-${i}`] || null,
           }))}
+          customSections={pwSections.map(s => ({ ...s, photoUrl: pwPhotos[`custom-${s.id}`] || null }))}
+          onChangeCustomSections={isAdmin ? handleChangePwSections : undefined}
           adminActions={
             <>
               <button type="button" className="abtn" onClick={handleRefresh} disabled={refreshing}>

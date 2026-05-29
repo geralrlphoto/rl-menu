@@ -11,7 +11,10 @@
    ============================================================ */
 
 import { type ReactNode } from 'react'
+import { CustomSections, type PwSection } from './CustomSections'
 import './prewedding.css'
+
+export type { PwSection }
 
 export type PreWeddingViewProps = {
   // Hero
@@ -58,6 +61,12 @@ export type PreWeddingViewProps = {
    *  PreWeddingSection existente, mas só queremos a parte do
    *  calendário + slots + notificar. */
   bookNode?: ReactNode
+
+  /** Secções personalizadas adicionadas pelo admin directamente
+   *  na página (texto + foto opcional). Renderizadas depois dos
+   *  cenários, antes do bloco de reserva. */
+  customSections?: PwSection[]
+  onChangeCustomSections?: (next: PwSection[]) => void | Promise<void>
 }
 
 /** Overlay de controlos (Adicionar/Trocar + Remover) sobre qualquer foto.
@@ -251,6 +260,18 @@ export function PreWeddingView(props: PreWeddingViewProps) {
           </section>
         )
       })}
+
+      {/* Secções personalizadas (texto + foto, editáveis na página) */}
+      {((props.customSections && props.customSections.length > 0) || props.isAdmin) && props.onChangeCustomSections && (
+        <CustomSections
+          sections={props.customSections ?? []}
+          isAdmin={props.isAdmin}
+          uploadingSlot={props.uploadingSlot ?? null}
+          onChange={props.onChangeCustomSections}
+          onUploadPhoto={props.onUploadPhoto ?? (() => {})}
+          onRemovePhoto={props.onRemovePhoto ?? (() => {})}
+        />
+      )}
 
       {/* Marcar Pré-Wedding — usa PreWeddingSection existente */}
       {props.bookNode && (
