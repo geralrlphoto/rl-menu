@@ -8,6 +8,7 @@ import BlockEditor from '../BlockEditor'
 import BriefingExtensions, { type BriefingExt } from './BriefingExtensions'
 import '../atmosphere/atmosphere.css'
 import { PortalShell, SidebarCouple, SidebarNav, SidebarMiniCountdown, type SidebarNavItem } from '../atmosphere/PortalShell'
+import { ContratoView } from '../atmosphere/ContratoView'
 
 const PORTAL_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
 
@@ -1629,6 +1630,98 @@ function PortalSubPageContent() {
             <div className="url">www.rlphotovideo.pt</div>
           </div>
         </article>
+      </PortalShell>
+    )
+  }
+
+  // ── Atmosphère view · CONTRATO · CPS ──────────────────────────────────────
+  const _atmIsContrato = isContratoPage && !editing && !editingPhotos
+    && !editingParceiros && !editingBriefing && !editingCalloutLinks
+    && !editingPreWedding && !editingPropostaToken && !error
+  if (_atmIsContrato && !loading) {
+    const handleEditTitle = () => { setTitleInput(title); setEditingTitle(true) }
+    // Serviços vêm do CRM proposta (propostaData) ou do Notion (notionServicos)
+    const servicosFoto =
+      (propostaData?.servicos_foto && propostaData.servicos_foto.length > 0
+        ? propostaData.servicos_foto
+        : notionServicos?.servico_foto ?? [])
+    const servicosVideo =
+      (propostaData?.servicos_video && propostaData.servicos_video.length > 0
+        ? propostaData.servicos_video
+        : notionServicos?.servico_video ?? [])
+    // Total — usa portalTotal já calculado
+    const totalEur = portalTotal ?? 0
+    // Pagamentos mapped to ContratoView shape
+    const planos = (pagamentos ?? []).map((p: any, i: number) => ({
+      label: p.descricao || p.label || ['Assinatura', 'Entrada', 'Final'][i] || `Fase ${i + 1}`,
+      roman: ['I', 'II', 'III', 'IV', 'V'][i] ?? `${i + 1}`,
+      valor: Number(p.valor ?? p.amount ?? 0),
+      paid: p.pago === true || p.status === 'pago' || p.estado === 'pago' || p.paid === true,
+      when: p.data_pagamento ? new Date(p.data_pagamento).toLocaleDateString('pt-PT') : (p.previsao ?? undefined),
+    }))
+    // Investimento — para mostrar a copy "Mais do que um serviço…" usamos
+    // os parágrafos do Notion (filtra h1/h2 e imagens, fica só texto).
+    const investParagraphs: string[] = []
+    for (const b of blocks) {
+      if (b.type === 'paragraph') {
+        const txt = plainText(b.paragraph?.rich_text ?? [])
+        if (txt.trim()) investParagraphs.push(txt)
+      }
+    }
+
+    return (
+      <PortalShell sidebar={_atmSidebar}>
+        <ContratoView
+          title={title}
+          heroImageUrl={_atmEffectiveHeader}
+          backHref={_atmBackHref}
+          contratoDisponivel={!!contratoDisponivel}
+          contratoUrl={contratoUrl}
+          onPrint={() => window.print()}
+          investParagraphs={investParagraphs.slice(0, 5)}
+          servicosFoto={servicosFoto}
+          servicosVideo={servicosVideo}
+          totalEur={totalEur}
+          pagamentos={planos}
+          isAdmin={isAdmin}
+          onEditTitle={handleEditTitle}
+          adminActions={
+            <>
+              <button type="button" className="abtn" onClick={handleRefresh} disabled={refreshing}>
+                <svg className={refreshing ? 'animate-spin' : ''} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 11a8 8 0 1 0-.6 4" /><path d="M20 5v6h-6" />
+                </svg>
+                {refreshing ? 'A atualizar' : 'Atualizar'}
+              </button>
+              {hasImages && (
+                <button type="button" className="abtn" onClick={() => setEditingPhotos(true)}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="8.5" cy="10" r="1.6" /><path d="M5 17l4.5-4 3 2.5L16 11l3 3" />
+                  </svg>
+                  Fotos
+                </button>
+              )}
+              <button type="button" className="abtn primary" onClick={() => setEditing(true)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 15V4M8 8l4-4 4 4" /><path d="M5 14v5h14v-5" />
+                </svg>
+                Publicar
+              </button>
+              <button type="button" className="abtn accent" onClick={() => setEditing(true)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 3l1.8 5.7L19.5 10l-5.7 1.3L12 17l-1.8-5.7L4.5 10l5.7-1.3Z" />
+                </svg>
+                Premium
+              </button>
+              <button type="button" className="abtn" onClick={() => setEditing(true)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 19l1-4L16 5l3 3L9 18l-4 1Z" /><path d="M14 7l3 3" />
+                </svg>
+                Editar
+              </button>
+            </>
+          }
+        />
       </PortalShell>
     )
   }
