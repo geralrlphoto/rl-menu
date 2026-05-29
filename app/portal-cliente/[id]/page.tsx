@@ -1473,6 +1473,12 @@ function PortalSubPageContent() {
   }
   const _atmNavItems: SidebarNavItem[] = parentNavPages
     .filter(p => !((portalSettingsObj?.hiddenNav ?? []) as string[]).includes(p.id))
+    .filter(p => {
+      // Ocultar "Guia dos Noivos" (mantém só Guia Pré-Wedding)
+      const t = ((portalSettingsObj?.pageTitles?.[p.id] ?? p.title) || '').toUpperCase()
+      if (t.includes('GUIA DOS NOIVOS')) return false
+      return true
+    })
     .map(p => {
       const t = _atmTitleFor(p)
       return {

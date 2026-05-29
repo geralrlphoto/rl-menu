@@ -112,9 +112,16 @@ export function AtmospherePortal({
   const titleFor = (p: { id: string; title: string }) =>
     (data.pageTitles?.[p.id] ?? p.title).replace(/\s*\(\d+\)\s*$/, '')
 
+  // Ocultar "Guia dos Noivos" da nav (mantém só Guia Pré-Wedding)
+  const isHiddenByTitle = (p: { id: string; title: string }) => {
+    const t = (titleFor(p) || '').toUpperCase()
+    return t.includes('GUIA DOS NOIVOS')
+  }
+
   // Sidebar nav — sub-páginas filtradas por hiddenNav, com href real
   const navItems: SidebarNavItem[] = data.subPages
     .filter(p => !(data.hiddenNav ?? []).includes(p.id))
+    .filter(p => !isHiddenByTitle(p))
     .map(p => {
       const t = titleFor(p)
       return {
@@ -128,6 +135,7 @@ export function AtmospherePortal({
 
   const exploreItems: ExploreItem[] = data.subPages
     .filter(p => !(data.hiddenNav ?? []).includes(p.id))
+    .filter(p => !isHiddenByTitle(p))
     .slice(0, 6)
     .map(p => {
       const t = titleFor(p)
