@@ -118,8 +118,20 @@ export function AtmospherePortal({
     return t.includes('GUIA DOS NOIVOS')
   }
 
+  // Item "Início" no topo da nav — leva à home do portal
+  const homeHref = data.portalRefForLinks
+    ? `/portal-cliente/ref/${encodeURIComponent(data.portalRefForLinks)}`
+    : '/portal-cliente'
+  const inicioItem: SidebarNavItem = {
+    id: '__inicio__',
+    label: 'Início',
+    href: homeHref,
+    // Activo quando não há activeNavId (estamos na home)
+    active: !data.activeNavId,
+  }
+
   // Sidebar nav — sub-páginas filtradas por hiddenNav, com href real
-  const navItems: SidebarNavItem[] = data.subPages
+  const navItems: SidebarNavItem[] = [inicioItem, ...data.subPages
     .filter(p => !(data.hiddenNav ?? []).includes(p.id))
     .filter(p => !isHiddenByTitle(p))
     .map(p => {
@@ -131,7 +143,7 @@ export function AtmospherePortal({
         href: hrefFor(p.id, t),
         onClick: callbacks.onSelectSubpage ? () => callbacks.onSelectSubpage?.(p.id) : undefined,
       }
-    })
+    })]
 
   const exploreItems: ExploreItem[] = data.subPages
     .filter(p => !(data.hiddenNav ?? []).includes(p.id))
