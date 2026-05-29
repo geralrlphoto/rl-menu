@@ -162,8 +162,16 @@ export function PreWeddingView(props: PreWeddingViewProps) {
           onUpload={props.onUploadPhoto} onRemove={props.onRemovePhoto} />
       </section>
 
-      {/* Intro fixa removida — o conteúdo passa a ser editado via
-       *  CustomSections directamente na página. */}
+      {/* Intro — texto full-width (foto à direita removida) */}
+      <section className="pw-intro">
+        <div className="body">
+          <div className="eyebrow">Pré-Wedding</div>
+          <h2>Para que serve a <em>sessão</em></h2>
+          {props.introParagraphs.slice(0, 4).map((p, i) => (
+            <p key={i} dangerouslySetInnerHTML={{ __html: highlight(p) }} />
+          ))}
+        </div>
+      </section>
 
       {/* Foto única full-width abaixo da intro (substitui o antigo tríptico) */}
       {(() => {
@@ -186,8 +194,72 @@ export function PreWeddingView(props: PreWeddingViewProps) {
         )
       })()}
 
-      {/* Cenários fixos (Cidade/Campo/Praia) removidos — o admin cria
-       *  agora secções livres via CustomSections. */}
+      {/* 3 Cenários */}
+      {props.cenarios.map((c, i) => {
+        const slot = `cen-${i}`
+        const url = c.photoUrl ?? null
+        return (
+          <section key={i} className="pw-cenario">
+            <div className="num">{c.num}</div>
+            <h3>
+              {c.titleAccent ? (
+                <>{c.title.replace(c.titleAccent, '').trim()}{' '}
+                  <em>{c.titleAccent}</em></>
+              ) : c.title}
+            </h3>
+            <hr className="gold-rule" />
+
+            <div className="body">
+              {c.paragraphs.map((p, j) => (
+                <p key={j} dangerouslySetInnerHTML={{ __html: highlight(p) }} />
+              ))}
+
+              {c.bullets && c.bullets.length > 0 && (
+                <ul className="cen-list">
+                  {c.bullets.map((b, j) => <li key={j}>{b}</li>)}
+                </ul>
+              )}
+
+              {c.outfit && (
+                <div className="pw-outfit">
+                  <div className="card">
+                    <h4>Noivo</h4>
+                    <p>{c.outfit.noivo ?? 'Camisa clara, blazer leve, calças de algodão.'}</p>
+                  </div>
+                  <div className="card">
+                    <h4>Noiva</h4>
+                    <p>{c.outfit.noiva ?? 'Vestido fluido, tons neutros, calçado confortável.'}</p>
+                  </div>
+                </div>
+              )}
+
+              {c.dica && (
+                <div className="pw-dica">
+                  <span className="ic">✦</span>
+                  <div className="txt" dangerouslySetInnerHTML={{ __html: highlight(c.dica) }} />
+                </div>
+              )}
+            </div>
+
+            {/* Foto grande full-width depois de cada cenário — sempre visível
+             *  em modo admin para permitir upload directo. */}
+            {(props.isAdmin || url) && (
+              <div className="pw-cenario-photo">
+                {url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={url} alt="" />
+                ) : (
+                  <div className="ph" />
+                )}
+                <SlotControls slot={slot} url={url}
+                  isAdmin={props.isAdmin} uploading={isUp(slot)}
+                  onUpload={props.onUploadPhoto} onRemove={props.onRemovePhoto} />
+              </div>
+            )}
+
+          </section>
+        )
+      })}
 
       {/* Secções personalizadas (texto + foto, editáveis na página) */}
       {((props.customSections && props.customSections.length > 0) || props.isAdmin) && props.onChangeCustomSections && (
