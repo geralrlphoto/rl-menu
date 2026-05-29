@@ -3,8 +3,10 @@ import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 
-const RESEND_KEY = process.env.RESEND_API_KEY
-const SITE_BASE  = process.env.NEXT_PUBLIC_SITE_URL || 'https://rl-menu-lake.vercel.app'
+const RESEND_KEY  = process.env.RESEND_API_KEY
+const SITE_BASE   = process.env.NEXT_PUBLIC_SITE_URL || 'https://rl-menu-lake.vercel.app'
+const NOTION_TOKEN = process.env.NOTION_TOKEN
+const NOTION_EVENTOS_DB = '1ad220116d8a804b839ddc36f1e7ecf1' // mesma DB usada em /api/contrato-cps/aprovar
 
 function db() {
   return createClient(
@@ -200,10 +202,65 @@ export async function POST(req: NextRequest) {
   const sb = db()
 
   // ── 1) Procura nos vários sítios pela ordem que faz sentido ────────────
-  //     Faz queries separadas para cada (tabela, coluna) e itera em JS.
-  //     Evita o `.or()` com `ilike` (que é frágil com @ e . no valor).
-  let matched: { row: CasalRow; via: 'noiva' | 'noivo' } | null = null
+  //     a) Notion (fonte primária — é onde a ficha do casamento vive)
+  //     b) Supabase: dados_contrato_cps + eventos_2026 + eventos_2027
+  let matched: { row: CasalRow; via: 'noiva' | 'noivo'; source: string } | null = null
   const debugRows: any[] = []
+
+  // ── a) NOTION (filter direto por email) ────────────────────────────────
+  if (NOTION_TOKEN) {
+    try {
+      for (const notionEmailKey of ['E-mail da noiva', 'E-mail do noivo'] as const) {
+        const res = await fetch(`https://api.notion.com/v1/databases/${NOTION_EVENTOS_DB}/query`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${NOTION_TOKEN}`,
+            'Notion-Version': '2022-06-28',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            filter: { property: notionEmailKey, email: { equals: email } },
+            page_size: 5,
+          }),
+          cache: 'no-store',
+        })
+        if (!res.ok) continue
+        const j = await res.json().catch(() => ({}))
+        const pages = j?.results ?? []
+        for (const page of pages) {
+          const props = page.properties ?? {}
+          const getText = (k: string) =>
+            props?.[k]?.rich_text?.map((t: any) => t.plain_text).join('') ?? null
+          const getEmail = (k: string) => props?.[k]?.email ?? null
+          const getPhone = (k: string) => props?.[k]?.phone_number ?? null
+          const getTitle = (k: string) =>
+            props?.[k]?.title?.map((t: any) => t.plain_text).join('') ?? null
+          const getSelect = (k: string) => props?.[k]?.select?.name ?? null
+
+          const casal: CasalRow = {
+            referencia:  getTitle('REFERÊNCIA DO EVENTO'),
+            tipo_evento: getSelect('TIPO DE EVENTO') ?? 'casamento',
+            nome_noivos: null,
+            nome_noiva:  getText('Nome da Noiva'),
+            nome_noivo:  getText('nome do noivo'),
+            email_noiva: getEmail('E-mail da noiva'),
+            email_noivo: getEmail('E-mail do noivo'),
+            tel_noiva:   getPhone('Telefone da noiva'),
+            tel_noivo:   getPhone('Telefone do noivo'),
+            nif_noiva:   getText('N.º Iden.Fiscal Noiva'),
+            nif_noivo:   getText('N.º Iden. Fiscal Noivo'),
+          }
+          debugRows.push({ src: 'notion', via_col: notionEmailKey, row: casal })
+          const via = rowMatches(casal, email, phone, nif)
+          if (via) {
+            matched = { row: casal, via, source: 'notion' }
+            break
+          }
+        }
+        if (matched) break
+      }
+    } catch { /* silencioso */ }
+  }
 
   type Source = {
     table: 'dados_contrato_cps' | 'eventos_2026' | 'eventos_2027'
@@ -228,28 +285,30 @@ export async function POST(req: NextRequest) {
     },
   ]
 
-  for (const src of sources) {
-    for (const col of ['email_noiva', 'email_noivo'] as const) {
-      const { data: rows, error } = await sb
-        .from(src.table)
-        .select(src.cols)
-        .ilike(col, email)
-      if (error) continue
-      for (const r of rows ?? []) {
-        const casal: CasalRow = {
-          ...(r as any),
-          referencia: (r as any)[src.refField] ?? null,
+  if (!matched) {
+    for (const src of sources) {
+      for (const col of ['email_noiva', 'email_noivo'] as const) {
+        const { data: rows, error } = await sb
+          .from(src.table)
+          .select(src.cols)
+          .ilike(col, email)
+        if (error) continue
+        for (const r of rows ?? []) {
+          const casal: CasalRow = {
+            ...(r as any),
+            referencia: (r as any)[src.refField] ?? null,
+          }
+          debugRows.push({ src: src.table, via_col: col, row: casal })
+          const via = rowMatches(casal, email, phone, nif)
+          if (via) {
+            matched = { row: casal, via, source: src.table }
+            break
+          }
         }
-        debugRows.push({ src: src.table, via_col: col, row: casal })
-        const via = rowMatches(casal, email, phone, nif)
-        if (via) {
-          matched = { row: casal, via }
-          break
-        }
+        if (matched) break
       }
       if (matched) break
     }
-    if (matched) break
   }
 
   if (!matched || !matched.row.referencia) {
