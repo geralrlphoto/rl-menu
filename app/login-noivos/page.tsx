@@ -93,6 +93,11 @@ function NoivosLoginInner() {
         return
       }
       setToast('Bem-vindos. A abrir o vosso portal…')
+      // Marca este tab como "sessão activa" — quando fechar o tab/janela,
+      // sessionStorage é limpo automaticamente pelo browser e na próxima
+      // visita o portal vai exigir novo login (mesmo se o cookie ainda for
+      // tecnicamente válido).
+      try { sessionStorage.setItem('nv_active', '1') } catch {}
       const target = j.redirect ?? nextFromUrl ?? '/'
       setTimeout(() => {
         router.push(target)

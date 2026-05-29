@@ -1070,6 +1070,20 @@ export default function PortalRefPage() {
     }
   }, [loadBlocks, loadSettings, referencia, searchParamsHook])
 
+  // ── Gate tab-scoped: exige sessionStorage 'nv_active' (set no login) ───
+  useEffect(() => {
+    if (isAdmin) return
+    let active = false
+    try { active = sessionStorage.getItem('nv_active') === '1' } catch {}
+    if (!active) {
+      fetch('/api/noivos-auth', { method: 'DELETE', credentials: 'include' })
+        .catch(() => {})
+        .finally(() => {
+          window.location.href = `/login-noivos?next=${encodeURIComponent(window.location.pathname)}`
+        })
+    }
+  }, [isAdmin])
+
   // ── Heartbeat de sessão dos noivos/pais (sliding window 10 min) ────────
   useEffect(() => {
     if (isAdmin) return

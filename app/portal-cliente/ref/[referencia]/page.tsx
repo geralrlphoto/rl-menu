@@ -1087,11 +1087,28 @@ export default function PortalRefPage() {
     }
   }, [loadBlocks, loadSettings, referencia, searchParamsHook])
 
+  // ── Gate de sessão dos noivos (tab-scoped) ─────────────────────────────
+  //   Mesmo com cookie `nv_session` válido, exige que este TAB tenha
+  //   passado pelo /login-noivos (sessionStorage 'nv_active'). Se ela
+  //   fechou o tab/janela, o flag desaparece e a próxima visita força
+  //   novo login — independente do cookie ainda estar tecnicamente vivo.
+  useEffect(() => {
+    if (isAdmin) return
+    let active = false
+    try { active = sessionStorage.getItem('nv_active') === '1' } catch {}
+    if (!active) {
+      // limpa o cookie do servidor para evitar resíduos e redireciona
+      fetch('/api/noivos-auth', { method: 'DELETE', credentials: 'include' })
+        .catch(() => {})
+        .finally(() => {
+          window.location.href = `/login-noivos?next=${encodeURIComponent(window.location.pathname)}`
+        })
+    }
+  }, [isAdmin])
+
   // ── Heartbeat de sessão dos noivos ─────────────────────────────────────
   //    Cada GET /api/noivos-auth válido renova o cookie nv_session por
-  //    mais 10 min (sliding window). Se a sessão expirar ou não existir
-  //    (utilizadores admin/link directo), simplesmente não faz nada —
-  //    o portal continua acessível via portalPassword.
+  //    mais 10 min (sliding window) ENQUANTO o tab está aberto.
   useEffect(() => {
     if (isAdmin) return
     let canceled = false
@@ -1103,18 +1120,16 @@ export default function PortalRefPage() {
         if (canceled) return
         const j = await r.json().catch(() => ({}))
         if (!j?.ok) {
-          // Sessão expirou — só redireciona se já tinha sido inicializada
-          // (evita kickar admins/visitantes que nunca fizeram login noivos)
           if (redirectOnFail && initialized) {
             window.location.href = `/login-noivos?next=${encodeURIComponent(window.location.pathname)}`
           }
           return
         }
         initialized = true
-      } catch { /* offline — não faz nada */ }
+      } catch { /* offline */ }
     }
-    ping(false) // primeira chamada NÃO redireciona (só descobre se há sessão)
-    const iv = setInterval(() => ping(true), 3 * 60 * 1000) // a cada 3 min
+    ping(false)
+    const iv = setInterval(() => ping(true), 3 * 60 * 1000)
     const onVis = () => { if (document.visibilityState === 'visible') ping(true) }
     document.addEventListener('visibilitychange', onVis)
     return () => {
