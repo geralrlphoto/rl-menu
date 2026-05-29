@@ -18,7 +18,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
  *  mostra toast "Acesso temporariamente indisponível".
  * ─────────────────────────────────────────────────────────────────────────── */
 
-const HERO_BG = '/noivos%20hero.jpg'
+const HERO_BG = '/casamentos-2026.jpg'
 
 export default function NoivosLoginPage() {
   return (
