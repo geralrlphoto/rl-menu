@@ -2195,21 +2195,35 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                   style={{ boxShadow: '0 0 12px -4px rgba(201,164,92,0.3)' }}>
                   {expandedId === c.id ? <>Fechar <span className="text-base">⌃</span></> : <>Abrir Casamento <span className="text-base">⌄</span></>}
                 </button>
-                <div className="flex items-center gap-1.5">
-                  {!isPast && !c.data_confirmada && !c.indisponivel && (
+                {/* CTAs principais — Confirmar (verde) sobre Indisponível (vermelho subtil) */}
+                {!isPast && !c.data_confirmada && !c.indisponivel && (
+                  <div className="flex flex-col items-stretch gap-1.5 w-full max-w-[180px]">
                     <button onClick={async e => { e.stopPropagation(); await fetch('/api/freelancer-casamentos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id, data_confirmada: true }) }); onRefresh() }}
                       className="px-3 py-1.5 rounded-lg border border-emerald-500/30 text-emerald-300 text-[10px] tracking-widest uppercase hover:bg-emerald-500/10 transition-all">
                       ✓ Confirmar
                     </button>
-                  )}
-                  {!viewAsFreelancer && (
-                    <button onClick={e => { e.stopPropagation(); del(c.id) }}
-                      className="w-8 h-8 rounded-lg border border-white/10 text-white/40 hover:text-red-400 hover:border-red-500/30 transition-all flex items-center justify-center"
-                      title="Eliminar">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+                    <button onClick={async e => {
+                      e.stopPropagation()
+                      if (!confirm('Marcar este casamento como INDISPONÍVEL? O admin será notificado.')) return
+                      await fetch('/api/freelancer-casamentos', {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: c.id, indisponivel: true }),
+                      })
+                      onRefresh()
+                    }}
+                      className="px-3 py-1.5 rounded-lg border border-red-500/25 text-red-300/85 text-[10px] tracking-widest uppercase hover:bg-red-500/10 hover:text-red-300 transition-all">
+                      ✕ Indisponível
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
+                {!viewAsFreelancer && (
+                  <button onClick={e => { e.stopPropagation(); del(c.id) }}
+                    className="w-8 h-8 rounded-lg border border-white/10 text-white/40 hover:text-red-400 hover:border-red-500/30 transition-all flex items-center justify-center self-end"
+                    title="Eliminar">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+                  </button>
+                )}
 
                 {/* ── ADMIN: Toggle alertas de fotografia ──
                      Quando OFF, este casamento NÃO entra nos cards de
