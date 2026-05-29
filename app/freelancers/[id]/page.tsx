@@ -244,6 +244,8 @@ function FreelancerDetailInner() {
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([])
   const [mensagens, setMensagens] = useState<Mensagem[]>([])
+  // Períodos de indisponibilidade declarados pelo membro
+  const [disponibilidade, setDisponibilidade] = useState<Array<{ id: string; freelancer_id: string; data_inicio: string; data_fim: string | null; motivo: string | null }>>([])
   // Mapa referencia → data_entrada (quando os noivos enviaram fotos para edição)
   const [fotosSelecaoMap, setFotosSelecaoMap] = useState<Record<string, string>>({})
   // Mapa referencia → { email, ctt, listas, workflows } para "Fotos Convidados"
@@ -285,7 +287,7 @@ function FreelancerDetailInner() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const [fRes, cRes, eRes, aRes, vRes, iRes, pRes, nRes, mRes, fsRes] = await Promise.all([
+    const [fRes, cRes, eRes, aRes, vRes, iRes, pRes, nRes, mRes, fsRes, dRes] = await Promise.all([
       fetch(`/api/freelancers`).then(r => r.json()),
       fetch(`/api/freelancer-casamentos?freelancer_id=${id}`).then(r => r.json()),
       fetch(`/api/freelancer-edicao?freelancer_id=${id}`).then(r => r.json()),
@@ -296,6 +298,7 @@ function FreelancerDetailInner() {
       fetch(`/api/freelancer-notificacoes?freelancer_id=${id}`).then(r => r.json()).catch(() => ({ notificacoes: [] })),
       fetch(`/api/freelancer-mensagens?freelancer_id=${id}`).then(r => r.json()).catch(() => ({ mensagens: [] })),
       fetch(`/api/fotos-selecao`).then(r => r.json()).catch(() => ({ rows: [] })),
+      fetch(`/api/freelancer-disponibilidade?freelancer_id=${id}`).then(r => r.json()).catch(() => ({ periodos: [] })),
     ])
     const f = (fRes.freelancers ?? []).find((x: Freelancer) => x.id === id) ?? null
     setFreelancer(f)
@@ -310,6 +313,7 @@ function FreelancerDetailInner() {
     setPagamentos(pRes.pagamentos ?? [])
     setNotificacoes(nRes.notificacoes ?? [])
     setMensagens(mRes.mensagens ?? [])
+    setDisponibilidade(dRes.periodos ?? [])
     // Constrói mapa referencia → data_entrada
     const fsMap: Record<string, string> = {}
     for (const row of (fsRes.rows ?? []) as Array<{ referencia?: string | null; data_entrada?: string | null }>) {
@@ -1657,7 +1661,7 @@ function FreelancerDetailInner() {
       {tab === 'edicao'       && <EdicaoTab freelancerId={id} edicao={edicao} onRefresh={load} />}
       {tab === 'album'        && <AlbumTab freelancerId={id} album={album} onRefresh={load} />}
       {tab === 'tarefas'      && <TarefasTab freelancerId={id} viewAsFreelancer={viewAsFreelancer} freelancer={freelancer} notificacoes={notificacoes} onRefresh={load} />}
-      {tab === 'calendario'   && <CalendarioTab freelancerId={id} casamentos={casamentos} edicao={edicao} album={album} notificacoes={notificacoes} freelancer={freelancer} />}
+      {tab === 'calendario'   && <CalendarioTab freelancerId={id} casamentos={casamentos} edicao={edicao} album={album} notificacoes={notificacoes} freelancer={freelancer} disponibilidade={disponibilidade} onRefresh={load} viewAsFreelancer={viewAsFreelancer} />}
       {tab === 'info'         && <InfoTab freelancerId={id} info={info} onRefresh={load} />}
       {tab === 'notas'        && <NotasTab freelancer={freelancer} onRefresh={load} />}
       {tab === 'pagamentos'   && <PagamentosAdminTab freelancerId={id} pagamentos={pagamentos} casamentos={casamentos} onRefresh={load} />}
@@ -5002,14 +5006,77 @@ type CalEvento = {
   subtitle?: string
 }
 
-function CalendarioTab({ freelancerId, casamentos, edicao, album, notificacoes, freelancer }: {
+function CalendarioTab({ freelancerId, casamentos, edicao, album, notificacoes, freelancer, disponibilidade = [], onRefresh, viewAsFreelancer }: {
   freelancerId: string
   casamentos: Casamento[]
   edicao: Edicao[]
   album: Album[]
   notificacoes: Notificacao[]
   freelancer: Freelancer | null
+  disponibilidade?: Array<{ id: string; freelancer_id: string; data_inicio: string; data_fim: string | null; motivo: string | null }>
+  onRefresh?: () => void
+  viewAsFreelancer?: boolean
 }) {
+  // ── Modal para informar indisponibilidade ─────────────────────────────
+  const [showIndispForm, setShowIndispForm] = useState(false)
+  const [indispForm, setIndispForm] = useState<{ data_inicio: string; data_fim: string; motivo: string }>({ data_inicio: '', data_fim: '', motivo: '' })
+  const [savingIndisp, setSavingIndisp] = useState(false)
+  const [deletingIndisp, setDeletingIndisp] = useState<string | null>(null)
+
+  async function handleSaveIndisp() {
+    if (!indispForm.data_inicio) { alert('Indica pelo menos a data de início.'); return }
+    if (indispForm.data_fim && indispForm.data_fim < indispForm.data_inicio) {
+      alert('A data fim não pode ser anterior à data início.'); return
+    }
+    setSavingIndisp(true)
+    try {
+      const res = await fetch('/api/freelancer-disponibilidade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          freelancer_id: freelancerId,
+          data_inicio: indispForm.data_inicio,
+          data_fim: indispForm.data_fim || indispForm.data_inicio,
+          motivo: indispForm.motivo || null,
+        }),
+      })
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}))
+        alert('Falha ao guardar: ' + (j.error ?? res.status))
+        return
+      }
+      setIndispForm({ data_inicio: '', data_fim: '', motivo: '' })
+      setShowIndispForm(false)
+      onRefresh?.()
+    } finally { setSavingIndisp(false) }
+  }
+  async function handleDeleteIndisp(id: string) {
+    if (!confirm('Remover este período de indisponibilidade?')) return
+    setDeletingIndisp(id)
+    try {
+      await fetch(`/api/freelancer-disponibilidade?id=${id}`, { method: 'DELETE' })
+      onRefresh?.()
+    } finally { setDeletingIndisp(null) }
+  }
+
+  // Set de YYYY-MM-DD onde o membro está indisponível
+  const indispDays = useMemo(() => {
+    const set = new Set<string>()
+    for (const p of disponibilidade) {
+      const start = p.data_inicio
+      const end = p.data_fim || p.data_inicio
+      try {
+        const d0 = new Date(start + 'T00:00:00')
+        const d1 = new Date(end + 'T00:00:00')
+        for (let t = d0.getTime(); t <= d1.getTime(); t += 86400000) {
+          const d = new Date(t)
+          const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+          set.add(iso)
+        }
+      } catch { /* ignore */ }
+    }
+    return set
+  }, [disponibilidade])
   const today = new Date(); today.setHours(0,0,0,0)
   const [view, setView] = useState({ y: today.getFullYear(), m: today.getMonth() })
   const [selectedIso, setSelectedIso] = useState<string | null>(null)
@@ -5156,10 +5223,25 @@ function CalendarioTab({ freelancerId, casamentos, edicao, album, notificacoes, 
               <p className="text-[13px] text-white/55 mt-1 max-w-md">Vista mensal com casamentos, entregas, prazos e tarefas — tudo num só sítio.</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
             <button onClick={() => setView({ y: today.getFullYear(), m: today.getMonth() })}
               className="px-4 py-2.5 rounded-xl border border-white/15 text-white/75 hover:text-gold hover:border-gold/40 text-[13px] tracking-wider uppercase font-bold transition-all">
               Hoje
+            </button>
+            <button onClick={() => setShowIndispForm(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[12px] tracking-[0.18em] uppercase font-bold transition-all"
+              style={{
+                background: 'linear-gradient(135deg, rgba(239,68,68,0.18), rgba(239,68,68,0.06))',
+                border: '1px solid rgba(239,68,68,0.45)',
+                color: '#fca5a5',
+                boxShadow: '0 0 18px -4px rgba(239,68,68,0.4)',
+              }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              Informar Indisponibilidade
             </button>
           </div>
         </div>
@@ -5208,11 +5290,12 @@ function CalendarioTab({ freelancerId, casamentos, edicao, album, notificacoes, 
             {cells.map((c, i) => {
               const selected = c.iso === selIso
               const eventCount = c.events.length
+              const isIndisp = !!(c.iso && indispDays.has(c.iso))
               return (
                 <button key={i}
                   onClick={() => { if (c.current && c.iso) { setSelectedIso(c.iso); setPreviewIso(c.iso) } }}
                   disabled={!c.current}
-                  className={`relative aspect-square sm:min-h-[80px] sm:aspect-auto p-1.5 sm:p-2 rounded-lg border text-left transition-all ${
+                  className={`relative aspect-square sm:min-h-[80px] sm:aspect-auto p-1.5 sm:p-2 rounded-lg border text-left transition-all overflow-hidden ${
                     c.isToday
                       ? 'bg-gold text-black font-bold border-gold'
                       : selected
@@ -5222,7 +5305,16 @@ function CalendarioTab({ freelancerId, casamentos, edicao, album, notificacoes, 
                             ? 'bg-white/[0.03] border-white/[0.08] text-white/75 hover:border-gold/30 hover:bg-white/[0.06]'
                             : 'bg-white/[0.01] border-white/[0.04] text-white/50 hover:border-white/15'
                           : 'bg-transparent border-transparent text-white/20'
-                  }`}>
+                  }`}
+                  style={isIndisp && c.current && !c.isToday ? {
+                    background: 'linear-gradient(135deg, rgba(239,68,68,0.18), rgba(239,68,68,0.05))',
+                    borderColor: 'rgba(239,68,68,0.45)',
+                    boxShadow: '0 0 12px -4px rgba(239,68,68,0.35)',
+                  } : undefined}
+                  title={isIndisp ? 'Indisponível' : undefined}>
+                  {isIndisp && c.current && (
+                    <span className="absolute top-1 right-1 text-[9px] text-red-300 font-bold tracking-widest uppercase">✕</span>
+                  )}
                   <p className={`text-[13px] sm:text-[14px] font-semibold leading-none mb-1 ${c.isToday ? 'text-black' : ''}`}>
                     {c.day}
                   </p>
@@ -5346,8 +5438,127 @@ function CalendarioTab({ freelancerId, casamentos, edicao, album, notificacoes, 
           onClose={() => setPreviewIso(null)}
         />
       )}
+
+      {/* Lista das indisponibilidades atuais */}
+      {disponibilidade.length > 0 && (
+        <div className="rounded-2xl border border-red-500/15 p-5"
+          style={{ background: 'linear-gradient(135deg, rgba(239,68,68,0.06), rgba(11,11,11,0.5))' }}>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[11px] tracking-[0.4em] uppercase font-bold text-red-300/85">
+              Períodos Indisponíveis ({disponibilidade.length})
+            </p>
+            <p className="text-[11px] text-white/35 italic">Visível pelo admin nas atribuições</p>
+          </div>
+          <div className="space-y-2">
+            {disponibilidade.map(p => (
+              <div key={p.id} className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg border border-red-500/20 bg-red-500/[0.04]">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] text-white/85 font-medium">
+                    {fmtIsoShort(p.data_inicio)}
+                    {p.data_fim && p.data_fim !== p.data_inicio && ` → ${fmtIsoShort(p.data_fim)}`}
+                  </p>
+                  {p.motivo && (
+                    <p className="text-[11px] text-white/55 italic mt-0.5">{p.motivo}</p>
+                  )}
+                </div>
+                <button onClick={() => handleDeleteIndisp(p.id)} disabled={deletingIndisp === p.id}
+                  className="text-[10px] tracking-widest uppercase px-2.5 py-1 rounded-md border border-white/10 text-white/45 hover:text-red-300 hover:border-red-500/40 transition-all disabled:opacity-50">
+                  {deletingIndisp === p.id ? '...' : 'Remover'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Modal — Informar Indisponibilidade */}
+      {showIndispForm && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          onClick={() => setShowIndispForm(false)}>
+          <div className="absolute inset-0 bg-black/85 backdrop-blur-md" />
+          <div className="relative z-10 w-full max-w-md rounded-3xl overflow-hidden border shadow-2xl"
+            style={{
+              background: 'linear-gradient(180deg, #1a0808, #0b0505)',
+              borderColor: 'rgba(239,68,68,0.4)',
+              boxShadow: '0 30px 80px -20px rgba(0,0,0,0.7), 0 0 24px -4px rgba(239,68,68,0.3)',
+            }}
+            onClick={e => e.stopPropagation()}>
+            <div className="h-1 w-full" style={{ background: '#ef4444' }} />
+
+            <div className="px-7 pt-6 pb-4 border-b border-white/[0.05] flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <span className="inline-flex items-center justify-center w-10 h-10 rounded-xl"
+                  style={{ background: 'rgba(239,68,68,0.18)', border: '1px solid rgba(239,68,68,0.45)', color: '#fca5a5' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                  </svg>
+                </span>
+                <div>
+                  <p className="text-[10px] tracking-[0.5em] uppercase font-bold text-red-300/85">Indisponibilidade</p>
+                  <h2 className="text-xl font-light tracking-[0.1em] text-white uppercase mt-1" style={{ fontFamily: 'Georgia, serif' }}>
+                    Informar período
+                  </h2>
+                </div>
+              </div>
+              <button onClick={() => setShowIndispForm(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/35 hover:text-white hover:border-white/30 transition-all">
+                ✕
+              </button>
+            </div>
+
+            <div className="px-7 py-5 space-y-4">
+              <p className="text-[12px] text-white/55 italic leading-relaxed">
+                Marca os dias em que <strong className="text-white/85">não estás disponível</strong>. O admin verá um aviso ao tentar atribuir-te a casamentos ou sessões de pré-wedding nessas datas.
+              </p>
+
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="text-[9px] tracking-[0.3em] uppercase text-white/45 block mb-1.5">Início</span>
+                  <input type="date" value={indispForm.data_inicio} onChange={e => setIndispForm(f => ({ ...f, data_inicio: e.target.value }))}
+                    className="w-full bg-black/30 border border-white/10 focus:border-red-500/40 rounded-lg px-3 py-2.5 text-[13px] text-white outline-none [color-scheme:dark] transition-colors" />
+                </label>
+                <label className="block">
+                  <span className="text-[9px] tracking-[0.3em] uppercase text-white/45 block mb-1.5">Fim <span className="opacity-50 normal-case tracking-wide">(opcional)</span></span>
+                  <input type="date" value={indispForm.data_fim} onChange={e => setIndispForm(f => ({ ...f, data_fim: e.target.value }))} min={indispForm.data_inicio || undefined}
+                    className="w-full bg-black/30 border border-white/10 focus:border-red-500/40 rounded-lg px-3 py-2.5 text-[13px] text-white outline-none [color-scheme:dark] transition-colors" />
+                </label>
+              </div>
+
+              <label className="block">
+                <span className="text-[9px] tracking-[0.3em] uppercase text-white/45 block mb-1.5">Motivo <span className="opacity-50 normal-case tracking-wide">(opcional)</span></span>
+                <textarea value={indispForm.motivo} onChange={e => setIndispForm(f => ({ ...f, motivo: e.target.value }))} rows={3}
+                  placeholder="Ex: férias, evento próprio, viagem..."
+                  className="w-full bg-black/30 border border-white/10 focus:border-red-500/40 rounded-lg px-3 py-2.5 text-[13px] text-white outline-none placeholder:text-white/20 resize-none leading-relaxed transition-colors" />
+              </label>
+            </div>
+
+            <div className="px-7 py-3 border-t border-white/[0.05] flex items-center justify-end gap-2 bg-black/30">
+              <button onClick={() => setShowIndispForm(false)}
+                className="text-[10px] tracking-widest uppercase text-white/45 hover:text-white transition-colors px-3 py-1.5">
+                Cancelar
+              </button>
+              <button onClick={handleSaveIndisp} disabled={savingIndisp || !indispForm.data_inicio}
+                className="text-[10px] tracking-[0.3em] uppercase font-bold px-4 py-1.5 rounded-md transition-all disabled:opacity-50"
+                style={{ background: '#ef4444', color: '#1a0808', boxShadow: '0 0 14px -3px rgba(239,68,68,0.6)' }}>
+                {savingIndisp ? 'A guardar…' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   )
+}
+
+function fmtIsoShort(iso: string | null) {
+  if (!iso) return '—'
+  try {
+    const d = new Date(iso + 'T00:00:00')
+    return d.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' })
+  } catch { return iso }
 }
 
 // ── Modal Preview de Dia — mostra todos os eventos de uma data ────────
