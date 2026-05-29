@@ -107,7 +107,9 @@ export async function POST(req: Request) {
 }
 
 // DELETE /api/calendario-add/pre-wedding?referencia=CAS_xxx
-// Limpa o slot reservado no portal E remove o time_block correspondente.
+// Limpa o slot reservado no portal, remove o time_block correspondente E
+// apaga a notificação que foi enviada ao membro atribuído (para o PW
+// também desaparecer do calendário dele).
 export async function DELETE(req: Request) {
   const { searchParams } = new URL(req.url)
   const referencia = searchParams.get('referencia')
@@ -129,6 +131,20 @@ export async function DELETE(req: Request) {
 
   // 2. Remove o(s) time_block(s) com evento_id = pw_<referencia>
   await supabase.from('time_blocks').delete().eq('evento_id', `pw_${referencia}`)
+
+  // 3. Apaga a notificação 'pre_wedding_atribuido' enviada ao membro
+  //    (procura no META embutido por referencia exata). Assim, o evento
+  //    deixa de aparecer no calendário e na sineta do membro.
+  try {
+    await supabase
+      .from('freelancer_notificacoes')
+      .delete()
+      .eq('tipo', 'pre_wedding_atribuido')
+      .ilike('mensagem', `%"referencia":"${referencia}"%`)
+  } catch (err) {
+    console.warn('[pre-wedding DELETE] limpar notificações falhou:', err)
+    // não bloqueia — o slot/timeblock já foi removido
+  }
 
   return NextResponse.json({ ok: true })
 }
