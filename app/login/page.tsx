@@ -192,6 +192,9 @@ function LoginPageInner() {
           {/* overlay muito subtil — apenas para garantir legibilidade do texto */}
           <div className="absolute inset-0"
             style={{ background: 'linear-gradient(120deg, rgba(8,16,28,0.25) 0%, rgba(11,11,11,0.18) 55%, rgba(11,11,11,0.42) 100%)' }} />
+          {/* fade direita → esquerda: dark a fundir-se no painel preto da direita */}
+          <div className="absolute inset-0 pointer-events-none"
+            style={{ background: 'linear-gradient(to left, rgba(11,11,11,1) 0%, rgba(11,11,11,0.85) 12%, rgba(11,11,11,0.55) 28%, rgba(11,11,11,0.20) 50%, rgba(11,11,11,0) 75%)' }} />
           {/* glow dourado subtil no canto (assinatura RL) */}
           <div className="absolute inset-0"
             style={{ background: 'radial-gradient(circle at 78% 22%, rgba(201,164,92,0.14), transparent 55%)' }} />
