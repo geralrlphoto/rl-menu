@@ -49,10 +49,14 @@ export async function GET() {
         const prazo = addWorkingDays(String(m.ts), 8)
         const nome = m.nome_noivos ?? p.referencia ?? 'Noivos'
         const ref = p.referencia ?? ''
+        const tituloMsg = String(m.titulo ?? '').trim()
         virtualTarefas.push({
           id: `noivos_msg::${ref}::${m.id}`,
-          titulo: `💬 Mensagem dos Noivos · ${nome}`,
+          titulo: tituloMsg
+            ? `💬 ${tituloMsg}`
+            : `💬 Mensagem dos Noivos · ${nome}`,
           descricao: [
+            `De: ${nome}`,
             ref ? `Referência: ${ref}` : '',
             m.email_noiva ? `E-mail: ${m.email_noiva}` : '',
             '',

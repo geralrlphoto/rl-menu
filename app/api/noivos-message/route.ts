@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}))
     const referencia   = String(body?.referencia ?? '').trim()
+    const titulo       = String(body?.titulo ?? '').trim()
     const mensagem     = String(body?.mensagem ?? '').trim()
     const nome_noivos  = String(body?.nome_noivos ?? '').trim() || null
     const email_noiva  = String(body?.email_noiva ?? '').trim() || null
@@ -51,6 +52,7 @@ export async function POST(req: NextRequest) {
     const newMessage = {
       id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       ts: new Date().toISOString(),
+      titulo: titulo || null,
       mensagem,
       nome_noivos,
       email_noiva,
@@ -69,7 +71,10 @@ export async function POST(req: NextRequest) {
     // 2) Email ao admin
     if (RESEND_KEY) {
       try {
-        const html = buildAdminEmail({ referencia, mensagem, nome_noivos, email_noiva })
+        const html = buildAdminEmail({ referencia, titulo, mensagem, nome_noivos, email_noiva })
+        const assuntoEmail = titulo
+          ? `💬 ${titulo} · ${referencia}`
+          : `💬 Nova mensagem dos noivos · ${referencia}`
         await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
@@ -79,7 +84,7 @@ export async function POST(req: NextRequest) {
           body: JSON.stringify({
             from: 'RL Photo.Video <geral@rlphotovideo.pt>',
             to: [ADMIN_EMAIL],
-            subject: `💬 Nova mensagem dos noivos · ${referencia}`,
+            subject: assuntoEmail,
             html,
             reply_to: email_noiva || undefined,
           }),
@@ -95,6 +100,7 @@ export async function POST(req: NextRequest) {
 
 function buildAdminEmail(opts: {
   referencia: string
+  titulo: string
   mensagem: string
   nome_noivos: string | null
   email_noiva: string | null
@@ -112,7 +118,11 @@ function buildAdminEmail(opts: {
       <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#120e09;border:0.5px solid #4a3a1e;">
         <tr><td style="padding:48px 56px;font-family:Georgia,'Times New Roman',serif;color:#efe7d6;">
           <p style="margin:0 0 4px;font-size:10px;letter-spacing:.5em;color:#c9a96e;text-transform:uppercase;">Mensagem dos Noivos</p>
-          <h1 style="margin:6px 0 18px;font-size:30px;font-weight:400;color:#f0e8d8;line-height:1.2;">${safe(opts.nome_noivos ?? 'Casal')}</h1>
+          <h1 style="margin:6px 0 14px;font-size:30px;font-weight:400;color:#f0e8d8;line-height:1.2;">${safe(opts.nome_noivos ?? 'Casal')}</h1>
+          ${opts.titulo ? `
+            <p style="margin:0 0 4px;font-size:10px;letter-spacing:.4em;color:#7a6340;text-transform:uppercase;">Assunto</p>
+            <p style="margin:0 0 18px;font-size:18px;font-family:Georgia,serif;font-style:italic;color:#d7bd87;line-height:1.3;">${safe(opts.titulo)}</p>
+          ` : ''}
           <p style="margin:0 0 4px;font-size:10px;letter-spacing:.4em;color:#7a6340;text-transform:uppercase;">Referência</p>
           <p style="margin:0 0 22px;font-size:13px;font-family:'Courier New',monospace;color:#c9b88a;">${safe(opts.referencia)}</p>
 

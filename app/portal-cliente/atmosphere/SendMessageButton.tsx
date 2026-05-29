@@ -74,23 +74,26 @@ function SendMessageModal({
   emailNoiva?: string | null
   onClose: () => void
 }) {
+  const [titulo, setTitulo]     = useState('')
   const [mensagem, setMensagem] = useState('')
   const [sending, setSending]   = useState(false)
   const [done, setDone]         = useState(false)
   const [err, setErr]           = useState<string | null>(null)
-  const taRef = useRef<HTMLTextAreaElement>(null)
+  const titRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => { taRef.current?.focus() }, [])
+  useEffect(() => { titRef.current?.focus() }, [])
 
   async function send() {
+    const t = titulo.trim()
     const m = mensagem.trim()
+    if (!t) { setErr('Escrevam um assunto antes de enviar.'); return }
     if (!m) { setErr('Escrevam uma mensagem antes de enviar.'); return }
     setSending(true); setErr(null)
     try {
       const res = await fetch('/api/noivos-message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ referencia, mensagem: m, nome_noivos: nomeNoivos, email_noiva: emailNoiva }),
+        body: JSON.stringify({ referencia, titulo: t, mensagem: m, nome_noivos: nomeNoivos, email_noiva: emailNoiva }),
       })
       const j = await res.json().catch(() => ({}))
       if (!res.ok || !j?.ok) {
@@ -124,13 +127,24 @@ function SendMessageModal({
             <h3>Escreva-nos a vossa mensagem</h3>
             <p className="sub">Recebemos no mesmo dia útil. Podem usar este canal para pedir ajustes, partilhar ideias ou esclarecer dúvidas.</p>
 
+            <label className="fld-lab">Assunto</label>
+            <input
+              ref={titRef}
+              type="text"
+              value={titulo}
+              onChange={e => { setTitulo(e.target.value); setErr(null) }}
+              placeholder="Ex.: Ajuste à proposta · Pedido de reunião"
+              maxLength={120}
+              disabled={sending}
+            />
+
+            <label className="fld-lab">Mensagem</label>
             <textarea
-              ref={taRef}
               value={mensagem}
               onChange={e => { setMensagem(e.target.value); setErr(null) }}
               placeholder="A vossa mensagem…"
               maxLength={2000}
-              rows={7}
+              rows={6}
               disabled={sending}
             />
             <div className="count">{mensagem.length}/2000</div>
@@ -193,21 +207,44 @@ function SendMessageModal({
           font-size: 13px; color: #8c8170; line-height: 1.65;
           margin: 0 0 22px;
         }
+        .fld-lab {
+          display: block;
+          font-size: 10px; letter-spacing: .32em; text-transform: uppercase;
+          color: #8c8170; font-weight: 600;
+          margin: 0 0 8px;
+        }
+        input[type="text"] {
+          width: 100%;
+          padding: 12px 16px;
+          background: rgba(0,0,0,.35);
+          border: 1px solid rgba(200,168,102,.25);
+          border-radius: 4px;
+          color: #efe7d6;
+          font-family: 'Hanken Grotesk', sans-serif;
+          font-size: 14.5px; line-height: 1.5;
+          outline: none;
+          margin-bottom: 18px;
+          transition: border-color .2s;
+        }
+        input[type="text"]:focus { border-color: #c8a866 }
+        input[type="text"]:disabled { opacity: .5 }
+        input[type="text"]::placeholder { color: #5f574b }
         textarea {
           width: 100%;
           padding: 16px 18px;
           background: rgba(0,0,0,.35);
           border: 1px solid rgba(200,168,102,.25);
-          border-radius: 12px;
+          border-radius: 4px;
           color: #efe7d6;
           font-family: 'Hanken Grotesk', sans-serif;
           font-size: 15px; line-height: 1.7;
-          resize: vertical; min-height: 140px;
+          resize: vertical; min-height: 130px;
           outline: none;
           transition: border-color .2s;
         }
         textarea:focus { border-color: #c8a866 }
         textarea:disabled { opacity: .5 }
+        textarea::placeholder { color: #5f574b }
         .count {
           font-size: 11px; color: #5f574b;
           text-align: right; margin-top: 6px;
