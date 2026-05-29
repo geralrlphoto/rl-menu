@@ -1619,13 +1619,6 @@ function PortalSubPageContent() {
           <div className="body">
             <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={_atmBackHref} />
           </div>
-
-          {/* Logo card final (mesmo que o template) */}
-          <div className="logocard">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/portal-noivos/logo-ink.png" alt="RL Photo Video" />
-            <div className="url">www.rlphotovideo.pt</div>
-          </div>
         </article>
       </PortalShell>
     )
