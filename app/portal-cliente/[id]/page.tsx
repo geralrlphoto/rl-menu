@@ -989,7 +989,9 @@ function PortalSubPageContent() {
     }
   }, [isSobreViewMode])
 
-  const isDesignPremium   = !isSobrePage && (id ? designPremiumPages.includes(id) : false)
+  // Sobre o Menu → SEMPRE design premium (foto background fullscreen),
+  // como o Pagamentos. Outras páginas podem ser marcadas via admin toggle.
+  const isDesignPremium   = isSobrePage || (id ? designPremiumPages.includes(id) : false)
   const dpEffectivePhoto  = (() => {
     if (!isDesignPremium) return ''
     const perPage = id ? pageHeaders[id as string] : undefined
