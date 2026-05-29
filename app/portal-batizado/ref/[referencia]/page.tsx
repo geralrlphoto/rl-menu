@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
 import { plainText, type Block } from '../../NotionRenderer'
 import BlockEditor from '../../BlockEditor'
+import { NoivosLogoutButton } from '@/app/components/NoivosLogoutButton'
 
 const PAGE_ID = '35b220116d8a811b99b7f6f26648c017'
 
@@ -1102,6 +1103,7 @@ export default function PortalRefPage() {
           return
         }
         initialized = true
+        fetch('/api/noivos-presence', { method: 'POST', credentials: 'include', body: '{}', keepalive: true }).catch(() => {})
       } catch { /* offline */ }
     }
     ping(false)
@@ -1307,6 +1309,9 @@ export default function PortalRefPage() {
           </div>
         </div>
       )}
+
+      {/* Botão "Sair" para os pais/noivos — top-right fixo, esconde p/ admin */}
+      <NoivosLogoutButton referencia={referencia} isAdmin={isAdmin} />
 
       {/* ── HERO ── */}
       <section className="relative min-h-[70vh] sm:min-h-[80vh] flex items-end justify-center pb-12 overflow-hidden">

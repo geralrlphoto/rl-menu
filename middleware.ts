@@ -90,6 +90,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/freelancer-') ||
     pathname.startsWith('/api/noivos-auth') ||
     pathname.startsWith('/api/noivos-recover') ||
+    pathname.startsWith('/api/noivos-presence') ||
     pathname === '/login-noivos' ||
     pathname.startsWith('/api/portais') ||
     pathname.startsWith('/api/pagamentos-by-ref') ||

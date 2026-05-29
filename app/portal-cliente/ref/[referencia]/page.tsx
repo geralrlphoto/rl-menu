@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
 import { plainText, type Block } from '../../NotionRenderer'
 import BlockEditor from '../../BlockEditor'
+import { NoivosLogoutButton } from '@/app/components/NoivosLogoutButton'
 
 const PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
 
@@ -1126,6 +1127,8 @@ export default function PortalRefPage() {
           return
         }
         initialized = true
+        // Marca presença na referencia actual (para dashboard admin)
+        fetch('/api/noivos-presence', { method: 'POST', credentials: 'include', body: '{}', keepalive: true }).catch(() => {})
       } catch { /* offline */ }
     }
     ping(false)
@@ -1310,6 +1313,10 @@ export default function PortalRefPage() {
           </div>
         </div>
       )}
+
+      {/* Botão "Sair" para os noivos — top-right fixo, esconde p/ admin */}
+      <NoivosLogoutButton referencia={referencia} isAdmin={isAdmin} />
+
 
       {/* ── HERO ── */}
       <section className="relative min-h-[70vh] sm:min-h-[80vh] flex items-end justify-center pb-12 overflow-hidden">

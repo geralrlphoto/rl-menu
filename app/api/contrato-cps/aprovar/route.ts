@@ -169,7 +169,11 @@ function buildPortalEmail(opts: {
   tipo: 'casamento' | 'batizado'
   data?: string
   password: string
+  emailCliente?: string | null
 }): string {
+  // Botão CTA aponta para a página de login (não para o link directo do
+  // portal). Assim os noivos sempre autenticam com email + password.
+  const loginUrl = `${SITE_BASE}/login-noivos`
   const primeiroNome = (opts.nome_noivos || '').split(/[\s&]/)[0] || 'Olá'
   const tituloTipo = opts.tipo === 'batizado' ? 'O vosso espaço para o batizado' : 'O vosso espaço'
   return `<!DOCTYPE html>
@@ -190,20 +194,24 @@ function buildPortalEmail(opts: {
             ${opts.tipo === 'casamento' ? 'desde a sessão pré-wedding até à entrega final' : 'desde a sessão até à entrega das fotos e do vídeo'}.
           </p>
 
-          <table cellpadding="0" cellspacing="0" style="margin:0 auto 28px;border:0.5px solid #6a5430;width:100%;max-width:340px;background:rgba(201,169,110,0.04);">
+          <table cellpadding="0" cellspacing="0" style="margin:0 auto 18px;border:0.5px solid #6a5430;width:100%;max-width:380px;background:rgba(201,169,110,0.04);">
             <tr><td style="padding:18px 24px;text-align:center;">
-              <p style="margin:0 0 6px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;">🔑 Password de acesso</p>
+              <p style="margin:0 0 6px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;">✉ E-mail de acesso</p>
+              <p style="margin:0;font-size:14px;font-family:'Courier New',monospace;color:#f0e8d8;font-weight:500;word-break:break-all;">${opts.emailCliente ?? 'o e-mail da noiva'}</p>
+            </td></tr>
+            <tr><td style="border-top:0.5px solid #4a3a1e;padding:18px 24px;text-align:center;">
+              <p style="margin:0 0 6px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;">🔑 Palavra-passe</p>
               <p style="margin:0;font-size:22px;font-family:'Courier New',monospace;letter-spacing:0.15em;color:#f0e8d8;font-weight:600;">${opts.password}</p>
             </td></tr>
           </table>
 
-          <!-- BOTÃO BULLETPROOF (tabela = compatível com todos os clientes de email, incl. Outlook) -->
+          <!-- BOTÃO BULLETPROOF aponta para a página de login dos noivos -->
           <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 16px;">
             <tr>
               <td align="center" style="border-radius:8px;background:#c9a96e;">
-                <a href="${opts.url}" target="_blank"
+                <a href="${loginUrl}" target="_blank"
                   style="display:inline-block;padding:18px 48px;background:#c9a96e;color:#0e0b07;text-decoration:none;font-family:Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:0.4em;font-weight:700;border-radius:8px;mso-padding-alt:0;border:1px solid #c9a96e;">
-                  ABRIR PORTAL &nbsp;→
+                  ENTRAR NO PORTAL &nbsp;→
                 </a>
               </td>
             </tr>
@@ -211,7 +219,7 @@ function buildPortalEmail(opts: {
 
           <p style="margin:24px 0 0;font-size:11px;color:#5a4a30;line-height:1.6;">
             Caso o botão não funcione, copia este link:<br>
-            <a href="${opts.url}" style="color:#c9a96e;text-decoration:underline;word-break:break-all;">${opts.url}</a>
+            <a href="${loginUrl}" style="color:#c9a96e;text-decoration:underline;word-break:break-all;">${loginUrl}</a>
           </p>
         </td></tr>
       </table>
@@ -400,7 +408,7 @@ export async function POST(req: NextRequest) {
         emailSent = await sendEmail(
           clienteEmail,
           tipo === 'batizado' ? '👶 O portal do batizado está pronto' : '💍 O portal do casamento está pronto',
-          buildPortalEmail({ nome_noivos: contrato.nome_noivos, url: portalUrlExisting, tipo, data: contrato.data_casamento, password: pwd }),
+          buildPortalEmail({ nome_noivos: contrato.nome_noivos, url: portalUrlExisting, tipo, data: contrato.data_casamento, password: pwd, emailCliente }),
         )
         if (!emailSent) emailError = 'Resend rejeitou o envio'
       } else {
@@ -441,6 +449,7 @@ export async function POST(req: NextRequest) {
           tipo,
           data: contrato.data_casamento,
           password,
+          emailCliente,
         })
       )
     }
