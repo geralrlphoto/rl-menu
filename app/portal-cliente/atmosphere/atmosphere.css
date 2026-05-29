@@ -1,0 +1,540 @@
+/* ============================================================
+   RL Photo Video — Portal de Noivos · Atmosphère + Atelier
+   Tokens + primitivos scoped a .portal-atmosphere
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap');
+
+.portal-atmosphere {
+  /* warm espresso darks */
+  --bg:        #14110c;
+  --bg-2:      #181410;
+  --surface:   #1e1812;
+  --surface-2: #241d15;
+  --raised:    #2a2218;
+
+  /* champagne / gold */
+  --gold:      #c8a866;
+  --gold-soft: #d7bd87;
+  --gold-deep: #9c7c47;
+  --gold-faint: rgba(200,168,102,.16);
+  --gold-line:  rgba(200,168,102,.22);
+
+  /* text */
+  --ink:       #efe7d6;
+  --ink-2:     #c3b8a3;
+  --ink-3:     #8c8170;
+  --ink-4:     #5f574b;
+
+  /* hairlines */
+  --line:      rgba(239,231,214,.10);
+  --line-2:    rgba(239,231,214,.06);
+
+  /* status hues */
+  --ok:        #9db58b;
+  --wait:      #d2b06a;
+  --info:      #8fa6b8;
+  --done:      #b29bc4;
+
+  --atm-r-sm: 6px;
+  --atm-r:    12px;
+  --atm-r-lg: 20px;
+
+  background: #120d08;
+  color: var(--ink);
+  font-family: 'Hanken Grotesk', system-ui, sans-serif;
+  font-weight: 400;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
+}
+
+.portal-atmosphere * { box-sizing: border-box; }
+.portal-atmosphere img { display: block; max-width: 100%; }
+.portal-atmosphere a { color: inherit; text-decoration: none; }
+.portal-atmosphere ::selection { background: rgba(200,168,102,.28); color: #fff; }
+
+/* ── type primitives ── */
+.portal-atmosphere .eyebrow {
+  font-size: 11px; letter-spacing: .34em; text-transform: uppercase;
+  color: var(--gold); font-weight: 600;
+}
+.portal-atmosphere .eyebrow-muted { color: var(--ink-3); }
+.portal-atmosphere .atm-serif { font-family: 'Cormorant Garamond', serif; font-weight: 300; }
+.portal-atmosphere .display {
+  font-family: 'Cormorant Garamond', serif; font-weight: 300;
+  line-height: 1.04; letter-spacing: .01em;
+}
+
+.portal-atmosphere .rule {
+  height: 1px; border: 0; margin: 0;
+  background: linear-gradient(90deg, transparent, var(--gold-line), transparent);
+}
+.portal-atmosphere .rule-flat { height: 1px; border: 0; margin: 0; background: var(--line); }
+.portal-atmosphere .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--gold); display: inline-block;
+}
+
+/* ── status pip ── */
+.portal-atmosphere .atm-status {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 12px; letter-spacing: .04em; font-weight: 600;
+}
+.portal-atmosphere .atm-status .pip { width: 7px; height: 7px; border-radius: 50%; }
+.portal-atmosphere .atm-status.ok    { color: var(--ok); }
+.portal-atmosphere .atm-status.ok .pip    { background: var(--ok); }
+.portal-atmosphere .atm-status.wait  { color: var(--wait); }
+.portal-atmosphere .atm-status.wait .pip  { background: var(--wait); box-shadow: 0 0 0 3px rgba(210,176,106,.14); }
+.portal-atmosphere .atm-status.info  { color: var(--info); }
+.portal-atmosphere .atm-status.info .pip  { background: var(--info); }
+.portal-atmosphere .atm-status.done  { color: var(--done); }
+.portal-atmosphere .atm-status.done .pip  { background: var(--done); }
+
+/* ── image placeholder ── */
+.portal-atmosphere .ph {
+  position: relative; overflow: hidden;
+  background:
+    repeating-linear-gradient(135deg, rgba(239,231,214,.035) 0 2px, transparent 2px 11px),
+    linear-gradient(160deg, var(--surface-2), var(--bg-2));
+  display: flex; align-items: flex-end;
+}
+.portal-atmosphere .ph::after {
+  content: attr(data-label);
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--ink-4); padding: 10px 12px;
+}
+
+/* ── botões ── */
+.portal-atmosphere .atm-btn {
+  position: relative; overflow: hidden; isolation: isolate;
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  font-family: 'Hanken Grotesk', sans-serif; font-size: 12px; font-weight: 600;
+  letter-spacing: .16em; text-transform: uppercase; color: var(--ink); white-space: nowrap;
+  padding: 14px 28px; border-radius: 999px;
+  border: 1px solid var(--gold-line); background: rgba(200,168,102,.04);
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: transform .4s cubic-bezier(.2,.85,.25,1), border-color .3s, background .3s, color .3s, box-shadow .4s;
+}
+.portal-atmosphere .atm-btn svg { transition: transform .4s cubic-bezier(.2,.85,.25,1); }
+.portal-atmosphere .atm-btn:hover {
+  border-color: var(--gold); color: #fff; background: rgba(200,168,102,.09);
+  transform: translateY(-2px); box-shadow: 0 16px 32px -16px rgba(200,168,102,.5);
+}
+.portal-atmosphere .atm-btn:hover svg { transform: translate(3px,-3px); }
+.portal-atmosphere .atm-btn:active { transform: translateY(0); transition-duration: .1s; }
+
+.portal-atmosphere .atm-btn::before {
+  content: ""; position: absolute; z-index: -1; top: -10%; left: -65%; width: 42%; height: 120%;
+  background: linear-gradient(100deg, transparent, rgba(255,246,224,.45), transparent);
+  transform: skewX(-18deg); opacity: 0;
+}
+.portal-atmosphere .atm-btn:hover::before { animation: atmBtnShine .95s cubic-bezier(.3,.6,.3,1); }
+@keyframes atmBtnShine {
+  0%   { left: -65%; opacity: 0; }
+  14%  { opacity: 1; }
+  100% { left: 135%; opacity: 0; }
+}
+
+.portal-atmosphere .atm-btn.solid {
+  color: #1c150b; border-color: transparent;
+  background: linear-gradient(168deg, #efd6a2 0%, #d8b873 40%, #c19a52 78%, #b78f47 100%);
+  box-shadow: inset 0 1px 0 rgba(255,250,236,.6), inset 0 -1px 0 rgba(120,86,38,.4),
+              0 10px 26px -14px rgba(200,168,102,.55);
+}
+.portal-atmosphere .atm-btn.solid:hover {
+  color: #1c150b;
+  background: linear-gradient(168deg, #f6e1b2 0%, #e2c481 40%, #cba65c 78%, #c19a52 100%);
+  box-shadow: inset 0 1px 0 rgba(255,253,244,.75), inset 0 -1px 0 rgba(120,86,38,.35),
+              0 20px 38px -14px rgba(200,168,102,.7);
+}
+.portal-atmosphere .atm-btn.solid::before {
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.7), transparent);
+}
+
+/* ── scrollbar ── */
+.portal-atmosphere *::-webkit-scrollbar { width: 10px; height: 10px; }
+.portal-atmosphere *::-webkit-scrollbar-thumb { background: rgba(200,168,102,.2); border-radius: 10px; }
+.portal-atmosphere *::-webkit-scrollbar-track { background: transparent; }
+
+/* ============================================================
+   Shell + layout
+   ============================================================ */
+.portal-atmosphere .shell {
+  display: grid;
+  grid-template-columns: 290px 1fr;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* grão decorativo */
+.portal-atmosphere .grain {
+  position: fixed; inset: 0; z-index: 60; pointer-events: none; opacity: .5;
+  background: repeating-radial-gradient(circle at 0 0,
+    rgba(239,231,214,.018) 0, rgba(239,231,214,.018) 1px,
+    transparent 1px, transparent 4px);
+}
+
+/* sidebar */
+.portal-atmosphere .sidebar {
+  position: sticky; top: 0; align-self: start;
+  height: 100vh; overflow: auto;
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+  border-right: 1px solid var(--line);
+  display: flex; flex-direction: column;
+  padding: 28px 22px 24px;
+  z-index: 30;
+}
+
+.portal-atmosphere .sidebar .brand {
+  display: flex; align-items: center; gap: 12px;
+  padding-bottom: 24px; margin-bottom: 24px;
+  border-bottom: 1px solid var(--line-2);
+}
+.portal-atmosphere .sidebar .brand img { width: 44px; height: auto; }
+.portal-atmosphere .sidebar .brand .wm {
+  font-family: 'Cormorant Garamond', serif; font-size: 21px; font-weight: 400;
+  color: var(--ink); line-height: 1.05;
+}
+.portal-atmosphere .sidebar .brand .wm small {
+  display: block; font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 9px; letter-spacing: .3em; text-transform: uppercase;
+  color: var(--ink-4); margin-top: 4px; font-weight: 500;
+}
+
+.portal-atmosphere .sidebar .couple {
+  margin-bottom: 26px;
+}
+.portal-atmosphere .sidebar .couple .lbl {
+  font-size: 10px; letter-spacing: .32em; text-transform: uppercase;
+  color: var(--gold); font-weight: 600; margin-bottom: 8px;
+}
+.portal-atmosphere .sidebar .couple .names {
+  font-family: 'Cormorant Garamond', serif; font-weight: 400;
+  font-size: 27px; line-height: 1.1; color: var(--ink); margin-bottom: 4px;
+}
+.portal-atmosphere .sidebar .couple .date {
+  font-size: 12px; color: var(--ink-3);
+}
+
+.portal-atmosphere .sidebar .nav-label {
+  font-size: 10px; letter-spacing: .3em; text-transform: uppercase;
+  color: var(--ink-4); font-weight: 600; margin: 14px 0 10px;
+}
+.portal-atmosphere .sidebar nav { display: flex; flex-direction: column; gap: 4px; }
+.portal-atmosphere .sidebar nav .nv {
+  display: flex; align-items: center; gap: 13px;
+  padding: 11px 12px; border-radius: 9px;
+  color: var(--ink-2); font-size: 13.5px; font-weight: 600;
+  cursor: pointer; transition: background .25s, color .25s;
+  text-align: left; background: transparent; border: 0; width: 100%;
+}
+.portal-atmosphere .sidebar nav .nv svg {
+  width: 18px; height: 18px; flex: 0 0 18px;
+  stroke: var(--gold-deep); transition: stroke .25s;
+}
+.portal-atmosphere .sidebar nav .nv:hover {
+  background: rgba(200,168,102,.08); color: var(--ink);
+}
+.portal-atmosphere .sidebar nav .nv.on {
+  background: rgba(200,168,102,.12); color: var(--ink);
+}
+.portal-atmosphere .sidebar nav .nv.on svg { stroke: var(--gold); }
+
+.portal-atmosphere .sidebar .mini {
+  margin-top: auto;
+  border: 1px solid var(--gold-faint); border-radius: 14px;
+  padding: 18px 16px;
+  background:
+    radial-gradient(80% 120% at 50% 0%, rgba(200,168,102,.10), transparent 70%),
+    linear-gradient(180deg, var(--surface), var(--bg-2));
+  text-align: center;
+}
+.portal-atmosphere .sidebar .mini .lbl {
+  font-size: 10px; letter-spacing: .34em; text-transform: uppercase;
+  color: var(--gold); font-weight: 600; margin-bottom: 4px;
+}
+.portal-atmosphere .sidebar .mini .days {
+  font-family: 'Cormorant Garamond', serif; font-weight: 300;
+  font-size: 52px; color: var(--gold-soft); line-height: 1;
+  margin: 2px 0;
+}
+.portal-atmosphere .sidebar .mini .sub {
+  font-size: 10px; color: var(--ink-3); margin-bottom: 12px;
+}
+.portal-atmosphere .sidebar .mini .code {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--ink-4); padding-top: 10px;
+  border-top: 1px solid var(--line-2); width: 100%; justify-content: center;
+}
+
+/* main */
+.portal-atmosphere .main {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 36px 56px 70px;
+  position: relative;
+  width: 100%;
+}
+.portal-atmosphere .main::before {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(800px 400px at 0% 0%, rgba(200,168,102,.08), transparent 60%);
+  pointer-events: none; z-index: 0;
+}
+.portal-atmosphere .main > * { position: relative; z-index: 1; }
+
+/* ── countdown band ── */
+.portal-atmosphere .cband {
+  position: relative;
+  border: 1px solid var(--gold-faint); border-radius: 24px;
+  background: linear-gradient(180deg, rgba(36,27,16,.7), rgba(18,13,8,.4));
+  padding: 56px 48px; text-align: center;
+  overflow: hidden;
+}
+.portal-atmosphere .cband::before {
+  content: ""; position: absolute; left: 50%; top: 0; width: 60%; height: 60%;
+  background: radial-gradient(closest-side, rgba(200,168,102,.18), transparent 70%);
+  transform: translateX(-50%); pointer-events: none;
+}
+.portal-atmosphere .cband .eyebrow { margin-bottom: 16px; }
+.portal-atmosphere .cband .names {
+  font-family: 'Cormorant Garamond', serif; font-weight: 300;
+  font-size: clamp(44px, 7vw, 84px); color: #fff; line-height: 1.04;
+  margin-bottom: 14px;
+}
+.portal-atmosphere .cband .names em { font-style: italic; color: var(--gold-soft); }
+.portal-atmosphere .cband .date {
+  font-size: 12px; letter-spacing: .44em; text-transform: uppercase;
+  color: var(--ink-2); margin-bottom: 36px;
+}
+.portal-atmosphere .hcount {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 0;
+  max-width: 720px; margin: 0 auto;
+}
+.portal-atmosphere .hcount > div {
+  text-align: center; position: relative;
+  padding: 14px 8px;
+}
+.portal-atmosphere .hcount > div + div::before {
+  content: ""; position: absolute; left: 0; top: 18%; height: 64%; width: 1px;
+  background: rgba(200,168,102,.3);
+}
+.portal-atmosphere .hcount .num {
+  font-family: 'Cormorant Garamond', serif; font-weight: 300;
+  font-size: clamp(40px, 6vw, 62px); color: #fff; line-height: 1;
+}
+.portal-atmosphere .hcount .lbl {
+  font-size: 10px; letter-spacing: .28em; text-transform: uppercase;
+  color: var(--gold); font-weight: 600; margin-top: 8px;
+}
+
+/* ── welcome ── */
+.portal-atmosphere .welcome {
+  display: grid; grid-template-columns: 0.92fr 1.08fr; gap: 54px;
+  align-items: center; padding: 90px 0;
+}
+.portal-atmosphere .welcome .photo {
+  aspect-ratio: 3/4; border-radius: var(--atm-r-lg);
+  border: 1px solid var(--gold-faint);
+  box-shadow: 0 40px 90px -50px rgba(0,0,0,.9);
+  overflow: hidden;
+}
+.portal-atmosphere .welcome .photo img { width: 100%; height: 100%; object-fit: cover; }
+.portal-atmosphere .welcome h1 {
+  font-family: 'Cormorant Garamond', serif; font-weight: 400;
+  font-size: clamp(34px, 4.6vw, 56px); line-height: 1.06;
+  color: var(--ink); margin: 12px 0 18px;
+}
+.portal-atmosphere .welcome h1 em { font-style: italic; color: var(--gold-soft); }
+.portal-atmosphere .welcome p {
+  font-size: 15.5px; line-height: 1.85; color: var(--ink-2);
+  margin: 0 0 14px;
+}
+.portal-atmosphere .welcome .pull {
+  font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 23px;
+  color: var(--gold-soft); padding-left: 18px; border-left: 1px solid var(--gold);
+  margin: 22px 0 28px; line-height: 1.4;
+}
+.portal-atmosphere .welcome .actions {
+  display: flex; gap: 12px; flex-wrap: wrap;
+}
+
+/* ── gallery (cine) ── */
+.portal-atmosphere .cine-head {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  gap: 24px; margin-bottom: 22px;
+}
+.portal-atmosphere .cine-head h2 {
+  font-family: 'Cormorant Garamond', serif; font-weight: 300;
+  font-size: clamp(28px, 3.4vw, 42px); margin: 6px 0 0; color: var(--ink);
+}
+.portal-atmosphere .cine-head .sub { font-size: 13px; color: var(--ink-3); max-width: 320px; text-align: right; }
+.portal-atmosphere .cine {
+  display: grid; grid-template-columns: 1.6fr 1fr; grid-template-rows: 1fr 1fr;
+  gap: 14px; height: 540px;
+}
+.portal-atmosphere .cine .frame {
+  border: 1px solid var(--gold-faint); border-radius: 12px; overflow: hidden;
+  position: relative;
+}
+.portal-atmosphere .cine .frame img { width: 100%; height: 100%; object-fit: cover; }
+.portal-atmosphere .cine .frame.big { grid-row: 1 / 3; }
+
+/* ── deliveries ── */
+.portal-atmosphere .dcards {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;
+  margin-top: 60px;
+}
+.portal-atmosphere .dcard {
+  position: relative; border: 1px solid var(--line); border-radius: var(--atm-r-lg);
+  background: linear-gradient(180deg, var(--surface), var(--bg-2));
+  padding: 22px 24px;
+  overflow: hidden;
+}
+.portal-atmosphere .dcard::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+}
+.portal-atmosphere .dcard.ok::before   { background: var(--ok); }
+.portal-atmosphere .dcard.wait::before { background: var(--wait); }
+.portal-atmosphere .dcard.info::before { background: var(--info); }
+.portal-atmosphere .dcard.done::before { background: var(--done); }
+.portal-atmosphere .dcard .roman {
+  font-family: 'Cormorant Garamond', serif; font-size: 20px;
+  color: var(--gold-deep); margin-bottom: 4px;
+}
+.portal-atmosphere .dcard h3 {
+  font-size: 16px; font-weight: 600; margin: 0 0 4px; color: var(--ink);
+}
+.portal-atmosphere .dcard .meta { font-size: 12.5px; color: var(--ink-3); }
+.portal-atmosphere .dcard .foot {
+  display: flex; justify-content: space-between; align-items: center;
+  border-top: 1px solid var(--line-2); padding-top: 12px; margin-top: 14px;
+}
+.portal-atmosphere .dcard .when { font-size: 12px; color: var(--ink-4); }
+
+.portal-atmosphere .tasks {
+  border: 1px dashed var(--line); border-radius: var(--atm-r-lg);
+  padding: 22px 24px; background: transparent;
+  display: flex; align-items: center; gap: 14px;
+}
+.portal-atmosphere .tasks .icon {
+  width: 36px; height: 36px; border-radius: 8px;
+  border: 1px solid var(--gold-faint); color: var(--gold);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.portal-atmosphere .tasks .lbl {
+  font-size: 11px; letter-spacing: .3em; text-transform: uppercase;
+  color: var(--gold); font-weight: 600; margin-bottom: 4px;
+}
+.portal-atmosphere .tasks .msg { font-size: 13px; color: var(--ink-2); }
+
+/* ── feature grid (4 col) ── */
+.portal-atmosphere .feat-head { margin: 80px 0 22px; }
+.portal-atmosphere .feat-head h2 {
+  font-family: 'Cormorant Garamond', serif; font-weight: 300;
+  font-size: clamp(28px, 3.4vw, 42px); margin: 6px 0 0; color: var(--ink);
+}
+.portal-atmosphere .feat4 {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px;
+}
+.portal-atmosphere .feat4 .f {
+  border: 1px solid var(--line); border-radius: 12px; padding: 24px;
+  display: flex; flex-direction: column; gap: 12px;
+  background: linear-gradient(180deg, var(--surface), var(--bg-2));
+}
+.portal-atmosphere .feat4 .f .ico { color: var(--gold); width: 24px; height: 24px; }
+.portal-atmosphere .feat4 .f p { font-size: 13px; color: var(--ink-2); margin: 0; line-height: 1.5; }
+
+/* ── explore cards (3 col) ── */
+.portal-atmosphere .cards-head { margin: 80px 0 22px; }
+.portal-atmosphere .cards-head h2 {
+  font-family: 'Cormorant Garamond', serif; font-weight: 300;
+  font-size: clamp(28px, 3.4vw, 42px); margin: 6px 0 0; color: var(--ink);
+}
+.portal-atmosphere .cards-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+}
+.portal-atmosphere .card-item {
+  border: 1px solid var(--line); border-radius: 12px; padding: 24px;
+  background: linear-gradient(180deg, var(--surface), var(--bg-2));
+  transition: border-color .3s, background .3s, transform .3s;
+  cursor: pointer; text-align: left; color: inherit; display: block;
+}
+.portal-atmosphere .card-item:hover {
+  border-color: var(--gold-line); background: rgba(200,168,102,.05);
+  transform: translateY(-2px);
+}
+.portal-atmosphere .card-item .ico { color: var(--gold); width: 22px; height: 22px; margin-bottom: 12px; }
+.portal-atmosphere .card-item h3 { font-size: 15px; margin: 0 0 12px; color: var(--ink); font-weight: 600; }
+.portal-atmosphere .card-item .more {
+  font-size: 10px; letter-spacing: .28em; text-transform: uppercase;
+  color: var(--ink-4); font-weight: 600;
+}
+
+/* ── footer ── */
+.portal-atmosphere .foot {
+  text-align: center; padding: 80px 0 40px;
+  border-top: 1px solid var(--line-2); margin-top: 70px;
+}
+.portal-atmosphere .foot img { width: 118px; margin: 0 auto 26px; }
+.portal-atmosphere .foot .msg {
+  font-family: 'Cormorant Garamond', serif; font-style: italic;
+  font-size: clamp(26px, 3.8vw, 40px); color: var(--gold-soft);
+  line-height: 1.2; margin-bottom: 20px;
+}
+.portal-atmosphere .foot .sig {
+  font-size: 11px; letter-spacing: .28em; text-transform: uppercase;
+  color: var(--ink-4); font-weight: 500;
+}
+
+/* ── responsivo ── */
+.portal-atmosphere .menu-toggle { display: none; }
+
+@media (max-width: 980px) {
+  .portal-atmosphere .shell { grid-template-columns: 1fr; }
+  .portal-atmosphere .sidebar {
+    position: relative; height: auto; padding: 18px 16px;
+    border-right: 0; border-bottom: 1px solid var(--line);
+  }
+  .portal-atmosphere .sidebar .brand { padding-bottom: 14px; margin-bottom: 0; border-bottom: 0; }
+  .portal-atmosphere .sidebar .couple,
+  .portal-atmosphere .sidebar .nav-label,
+  .portal-atmosphere .sidebar nav,
+  .portal-atmosphere .sidebar .mini { display: none; }
+  .portal-atmosphere .sidebar.open .couple,
+  .portal-atmosphere .sidebar.open .nav-label,
+  .portal-atmosphere .sidebar.open nav,
+  .portal-atmosphere .sidebar.open .mini { display: flex; }
+  .portal-atmosphere .sidebar.open nav { flex-direction: column; }
+  .portal-atmosphere .sidebar.open .couple,
+  .portal-atmosphere .sidebar.open .mini { display: block; margin-top: 18px; }
+
+  .portal-atmosphere .menu-toggle {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-left: auto;
+    background: rgba(200,168,102,.06); border: 1px solid var(--gold-line);
+    color: var(--ink); padding: 8px 14px; border-radius: 999px;
+    font-size: 11px; letter-spacing: .2em; text-transform: uppercase; font-weight: 600;
+    cursor: pointer;
+  }
+  .portal-atmosphere .sidebar .brand { display: flex; align-items: center; }
+
+  .portal-atmosphere .main { padding: 28px 22px 60px; }
+  .portal-atmosphere .welcome { grid-template-columns: 1fr; gap: 30px; padding: 60px 0; }
+  .portal-atmosphere .cine { grid-template-columns: 1fr; grid-template-rows: auto; height: auto; }
+  .portal-atmosphere .cine .frame.big { grid-row: auto; aspect-ratio: 16/10; }
+  .portal-atmosphere .cine .frame { aspect-ratio: 4/3; }
+  .portal-atmosphere .dcards { grid-template-columns: 1fr; }
+  .portal-atmosphere .feat4 { grid-template-columns: repeat(2, 1fr); }
+  .portal-atmosphere .cards-grid { grid-template-columns: 1fr; }
+  .portal-atmosphere .cband { padding: 36px 24px; }
+}
+
+@media (max-width: 560px) {
+  .portal-atmosphere .feat4 { grid-template-columns: 1fr; }
+  .portal-atmosphere .hcount { gap: 8px; }
+}

@@ -1,0 +1,205 @@
+'use client'
+
+/* ============================================================
+   AtmospherePortal — view home do portal de noivos no estilo
+   "Atmosphère + Atelier". Toma os mesmos dados que a página
+   actual já tem (settings, blocks, etc.) e renderiza no novo
+   layout. Não muda lógica de negócio.
+   ============================================================ */
+
+import { type ReactNode } from 'react'
+import {
+  PortalShell, SidebarCouple, SidebarNav, SidebarMiniCountdown,
+  Countdown, Welcome, Gallery, DeliveriesGrid, DeliveryCard,
+  TasksEmpty, FeatureGrid, ExploreCards, Footer, AtmButton,
+  DEFAULT_FEATURES,
+  type SidebarNavItem, type ExploreItem, type DeliveryState,
+} from './PortalShell'
+import { ArrowUpRightIcon, MailIcon } from './icons'
+
+export type AtmosphereData = {
+  // identidade do casal
+  noiva?: string | null
+  noivo?: string | null
+  dataIso?: string | null         // ex: '2026-09-12' (YYYY-MM-DD)
+  dataLabel?: string | null       // ex: '12 · Setembro · 2026'
+  referencia?: string | null
+
+  // hero / welcome
+  heroImageUrl?: string | null
+  welcomeHeading?: string | null     // pode conter <em>
+  welcomeParagraphs?: string[]
+  welcomePull?: string | null
+
+  // galeria
+  galleryUrls?: Array<string | null | undefined>
+
+  // sub-páginas (do Notion ou hard-coded)
+  subPages: Array<{ id: string; title: string }>
+  hiddenNav?: string[]
+  activeNavId?: string | null
+
+  // entregas — se não passar usa default ilustrativo
+  deliveries?: Array<{
+    roman: string
+    title: string
+    meta?: string
+    state: DeliveryState
+    when?: string
+  }>
+
+  // tarefas (apenas para detectar empty state)
+  hasTasks?: boolean
+  tasksMessage?: string
+
+  // botões do hero do Welcome
+  primaryAction?: { label: string; onClick?: () => void; href?: string }
+  secondaryAction?: { label: string; onClick?: () => void; href?: string }
+}
+
+export type AtmosphereCallbacks = {
+  onSelectSubpage: (id: string) => void
+}
+
+const ROMANS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X']
+
+const DEFAULT_DELIVERIES: NonNullable<AtmosphereData['deliveries']> = [
+  { roman: 'I',   title: 'Seleção de Fotos', meta: 'Prazo · 30 dias',           state: 'ok',   when: 'há 12 dias' },
+  { roman: 'II',  title: 'Entrega do Vídeo', meta: 'Prazo · 180 dias úteis',    state: 'wait', when: 'previsto · 2027' },
+  { roman: 'III', title: 'Fotos para Edição', meta: 'Em curso no atelier',       state: 'ok',   when: 'há 4 dias' },
+  { roman: 'IV',  title: 'Álbum',            meta: 'Maquete em aprovação',       state: 'info', when: 'aguarda impressão' },
+  { roman: 'V',   title: 'Seleção · Acordos', meta: 'Galeria privada partilhada', state: 'done', when: 'há 1 mês' },
+]
+
+export function AtmospherePortal({
+  data,
+  callbacks,
+  adminBar,
+  children, // conteúdo extra (ex: sub-página activa) renderizado entre Welcome e Gallery
+}: {
+  data: AtmosphereData
+  callbacks: AtmosphereCallbacks
+  adminBar?: ReactNode
+  children?: ReactNode
+}) {
+  const weddingDate = data.dataIso ? parseIsoDate(data.dataIso) : null
+
+  // Sidebar nav — sub-páginas filtradas por hiddenNav
+  const navItems: SidebarNavItem[] = data.subPages
+    .filter(p => !(data.hiddenNav ?? []).includes(p.id))
+    .map(p => ({
+      id: p.id,
+      label: p.title,
+      active: data.activeNavId === p.id,
+      onClick: () => callbacks.onSelectSubpage(p.id),
+    }))
+
+  const exploreItems: ExploreItem[] = data.subPages
+    .filter(p => !(data.hiddenNav ?? []).includes(p.id))
+    .slice(0, 6)
+    .map(p => ({
+      id: p.id,
+      title: p.title,
+      onClick: () => callbacks.onSelectSubpage(p.id),
+    }))
+
+  const deliveries = data.deliveries ?? DEFAULT_DELIVERIES
+
+  const sidebar = (
+    <>
+      <SidebarCouple noiva={data.noiva} noivo={data.noivo} data={data.dataLabel} />
+      <SidebarNav items={navItems} />
+      <SidebarMiniCountdown weddingDate={weddingDate} coupleCode={data.referencia} />
+    </>
+  )
+
+  return (
+    <PortalShell sidebar={sidebar}>
+      {adminBar}
+
+      <Countdown
+        weddingDate={weddingDate}
+        noiva={data.noiva}
+        noivo={data.noivo}
+        dateLabel={data.dataLabel}
+      />
+
+      <Welcome
+        photoUrl={data.heroImageUrl}
+        heading={data.welcomeHeading ?? 'Bem-vindos ao <em>vosso</em> portal'}
+        paragraphs={data.welcomeParagraphs ?? [
+          'Este é o vosso espaço dedicado. Aqui podem acompanhar todas as etapas do vosso casamento, desde a sessão pré-wedding até à entrega final das memórias.',
+          'Cada secção foi pensada para vos manter informados e tornar o processo claro e tranquilo.',
+        ]}
+        pull={data.welcomePull ?? 'A vossa história, contada com tempo e detalhe.'}
+        actions={
+          <>
+            {data.primaryAction && (
+              <AtmButton solid {...actionProps(data.primaryAction)}>
+                {data.primaryAction.label}
+              </AtmButton>
+            )}
+            {data.secondaryAction && (
+              <AtmButton {...actionProps(data.secondaryAction)}>
+                {data.secondaryAction.label}
+              </AtmButton>
+            )}
+          </>
+        }
+      />
+
+      {children /* sub-página activa renderiza-se aqui */}
+
+      <Gallery
+        title="Momentos selecionados"
+        subtitle="Pequena selecção do trabalho recente do estúdio — para vos inspirar."
+        images={(data.galleryUrls ?? []).slice(0, 3)}
+      />
+
+      <DeliveriesGrid>
+        {deliveries.map((d, i) => (
+          <DeliveryCard
+            key={i}
+            roman={d.roman || ROMANS[i] || '—'}
+            title={d.title}
+            meta={d.meta}
+            state={d.state}
+            when={d.when}
+          />
+        ))}
+        <TasksEmpty
+          message={
+            data.hasTasks
+              ? (data.tasksMessage ?? 'Tarefas em curso — verifiquem a área de tarefas.')
+              : 'Sem tarefas pendentes — tudo em dia.'
+          }
+        />
+      </DeliveriesGrid>
+
+      <FeatureGrid items={DEFAULT_FEATURES} />
+
+      <ExploreCards items={exploreItems} />
+
+      <Footer />
+    </PortalShell>
+  )
+}
+
+/* ── helpers ─────────────────────────────────────────────────── */
+function parseIsoDate(iso: string): Date | null {
+  // aceita YYYY-MM-DD ou YYYY-MM-DDTHH:mm:ss
+  try {
+    const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/)
+    if (!m) return null
+    const y = Number(m[1]), mo = Number(m[2]) - 1, d = Number(m[3])
+    return new Date(y, mo, d, 12, 0, 0)
+  } catch { return null }
+}
+
+function actionProps(a: { onClick?: () => void; href?: string }) {
+  return {
+    onClick: a.onClick,
+    href: a.href,
+    target: a.href?.startsWith('http') ? '_blank' : undefined,
+  }
+}

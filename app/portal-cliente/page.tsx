@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { plainText, type Block } from './NotionRenderer'
 import BlockEditor from './BlockEditor'
+import { AtmospherePortal } from './atmosphere/AtmospherePortal'
 
 const PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
 
@@ -1028,12 +1029,15 @@ export default function PortalClientePage() {
     </main>
   )
 
-  // ── portal view ─────────────────────────────────────────────────────────────
-  return (
-    <div className="min-h-screen" style={{ background: 'radial-gradient(ellipse at 50% 30%, #2b1b04 0%, #120b02 40%, #080503 100%)' }}>
 
+  // ── portal view (Atmosphère + Atelier reskin — maquete) ───────────────────
+  const subPagesListM = findAllChildPages(blocks)
+  const welcomeTextM = findWelcomeText(blocks)
+
+  return (
+    <>
       {/* Admin bar */}
-      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-2 bg-black/80 backdrop-blur-sm border-b border-white/5">
+      <div className="fixed top-0 left-0 right-0 z-[80] flex items-center justify-between px-4 py-2 bg-black/80 backdrop-blur-sm border-b border-white/5">
         <Link href="/" className="text-[10px] tracking-widest text-white/25 hover:text-white/50 transition-colors uppercase">
           ‹ Menu
         </Link>
@@ -1044,322 +1048,33 @@ export default function PortalClientePage() {
           <button onClick={() => setEditing(true)} className="text-[10px] px-2.5 py-1 border border-gold/20 rounded text-gold/50 hover:text-gold hover:border-gold/40 transition-all uppercase tracking-wider">
             ✎ Configurar
           </button>
-          <button onClick={handlePublicar} disabled={publishing} className="flex items-center gap-1 text-[10px] px-2.5 py-1 border border-emerald-400/20 rounded text-emerald-400/60 hover:text-emerald-400 hover:border-emerald-400/40 transition-all uppercase tracking-wider disabled:opacity-40">
-            <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 7.5m0 0L7.5 12M12 7.5v9"/>
-            </svg>
-            {published ? '✓ Publicado' : publishing ? 'A publicar...' : 'Publicar'}
-          </button>
         </div>
       </div>
 
-      {/* ── HERO ── */}
-      <section className="relative flex flex-col items-center justify-center overflow-hidden" style={{ minHeight: '80vh' }}>
-        {/* Background */}
-        {heroImage ? (
-          <>
-            {/* Foto com fade de cima para baixo até transparência total */}
-            <div className="absolute inset-0" style={{
-              WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 50%, transparent 90%)',
-              maskImage: 'linear-gradient(to bottom, black 0%, black 50%, transparent 90%)',
-            }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={heroImage} alt="" className="w-full h-full object-cover object-center" />
-              {/* Overlay escuro para melhor legibilidade das letras */}
-              <div className="absolute inset-0 bg-black/40" />
-            </div>
-          </>
-        ) : (
-          <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 38%, #2e1c06 0%, #150d03 45%, #090604 100%)' }} />
-        )}
-
-        {/* Trocar foto button */}
-        {heroEdit.field === 'hero' ? (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-            <div className="w-full max-w-md px-4">
-              <p className="text-[10px] text-gold/60 tracking-widest uppercase mb-3 text-center">Trocar fotografia de fundo</p>
-              {/* Upload */}
-              <label className={`relative flex items-center justify-center w-full py-3 rounded-xl border border-dashed cursor-pointer transition-all mb-3 overflow-hidden
-                ${heroUploadProgress !== null ? 'border-gold/40 bg-gold/5 text-gold/70' : 'border-white/20 hover:border-gold/50 hover:bg-gold/5 text-white/40 hover:text-gold/80'}`}>
-                <input type="file" accept="image/*" className="hidden" disabled={heroUploadProgress !== null}
-                  onChange={async e => {
-                    const f = e.target.files?.[0]; if (!f) return
-                    setHeroUploadProgress(0)
-                    try {
-                      const url = await uploadWithProgress(f, setHeroUploadProgress)
-                      if (url) setHeroEdit(prev => ({ ...prev, value: url }))
-                    } finally {
-                      setHeroUploadProgress(null)
-                    }
-                    e.target.value = ''
-                  }} />
-                {heroUploadProgress !== null ? (
-                  <>
-                    <div className="absolute inset-0 bg-gold/10 transition-all duration-200" style={{ width: `${heroUploadProgress}%` }} />
-                    <div className="relative flex items-center gap-2">
-                      <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                      </svg>
-                      <span className="text-sm font-medium">{heroUploadProgress}%</span>
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                    </svg>
-                    <span className="text-sm">Carregar do dispositivo</span>
-                  </div>
-                )}
-              </label>
-              {/* URL */}
-              <input
-                value={heroEdit.value}
-                onChange={e => setHeroEdit(prev => ({ ...prev, value: e.target.value }))}
-                placeholder="ou cola um URL..."
-                className="w-full bg-white/[0.08] border border-white/20 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-gold/50 mb-3 placeholder:text-white/25"
-              />
-              {heroEdit.value && (
-                <div className="w-full h-28 rounded-lg bg-cover bg-center mb-3 border border-white/10"
-                  style={{ backgroundImage: `url(${heroEdit.value})` }} />
-              )}
-              <div className="flex gap-2 justify-center">
-                <button onClick={() => setHeroEdit({ field: null, value: '' })}
-                  className="px-4 py-2 text-xs border border-white/15 rounded-lg text-white/50 hover:text-white/80">Cancelar</button>
-                <button onClick={saveHeroField} disabled={heroSaving || heroUploadProgress !== null}
-                  className="px-5 py-2 text-xs bg-gold/20 border border-gold/40 rounded-lg text-gold hover:bg-gold/30 disabled:opacity-50">
-                  {heroSaving ? 'A guardar...' : '✓ Guardar'}
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => setHeroEdit({ field: 'hero', value: heroImage ?? '' })}
-            className="absolute bottom-4 right-4 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/50 border border-white/15 text-[10px] text-white/50 hover:text-white hover:border-white/30 transition-all backdrop-blur-sm"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            Trocar foto
-          </button>
-        )}
-
-        <div className="relative z-10 text-center px-4 pb-24">
-          {/* Portal label */}
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Leaf />
-            <p className="font-cormorant text-gold text-sm sm:text-base tracking-[0.4em] uppercase italic">Portal dos Noivos</p>
-            <Leaf flip />
-          </div>
-
-          {/* Names — inline editable */}
-          <h1 className="font-cormorant font-light text-5xl sm:text-7xl lg:text-8xl text-white leading-none tracking-wide mb-4 flex items-center justify-center gap-4 flex-wrap">
-            {heroEdit.field === 'noiva' ? (
-              <span className="flex items-center gap-2">
-                <input
-                  autoFocus
-                  value={heroEdit.value}
-                  onChange={e => setHeroEdit(prev => ({ ...prev, value: e.target.value }))}
-                  onKeyDown={e => { if (e.key === 'Enter') saveHeroField(); if (e.key === 'Escape') setHeroEdit({ field: null, value: '' }) }}
-                  className="bg-white/10 border-b-2 border-gold outline-none text-white font-cormorant font-light text-5xl sm:text-7xl lg:text-8xl text-center w-40 sm:w-56"
-                />
-                <span className="flex flex-col gap-1">
-                  <button onClick={saveHeroField} disabled={heroSaving} className="text-[10px] bg-gold/30 border border-gold/50 text-gold px-2 py-0.5 rounded hover:bg-gold/50 disabled:opacity-50">✓</button>
-                  <button onClick={() => setHeroEdit({ field: null, value: '' })} className="text-[10px] border border-white/20 text-white/40 px-2 py-0.5 rounded hover:text-white/70">✕</button>
-                </span>
-              </span>
-            ) : (
-              <button onClick={() => setHeroEdit({ field: 'noiva', value: settings.noiva || '' })}
-                className="group relative hover:opacity-80 transition-opacity cursor-text">
-                {settings.noiva || 'NOIVA'}
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] text-gold/0 group-hover:text-gold/80 transition-colors tracking-widest uppercase whitespace-nowrap">✎ editar</span>
-              </button>
-            )}
-            <span className="text-gold font-cormorant italic font-normal">&</span>
-            {heroEdit.field === 'noivo' ? (
-              <span className="flex items-center gap-2">
-                <input
-                  autoFocus
-                  value={heroEdit.value}
-                  onChange={e => setHeroEdit(prev => ({ ...prev, value: e.target.value }))}
-                  onKeyDown={e => { if (e.key === 'Enter') saveHeroField(); if (e.key === 'Escape') setHeroEdit({ field: null, value: '' }) }}
-                  className="bg-white/10 border-b-2 border-gold outline-none text-white font-cormorant font-light text-5xl sm:text-7xl lg:text-8xl text-center w-40 sm:w-56"
-                />
-                <span className="flex flex-col gap-1">
-                  <button onClick={saveHeroField} disabled={heroSaving} className="text-[10px] bg-gold/30 border border-gold/50 text-gold px-2 py-0.5 rounded hover:bg-gold/50 disabled:opacity-50">✓</button>
-                  <button onClick={() => setHeroEdit({ field: null, value: '' })} className="text-[10px] border border-white/20 text-white/40 px-2 py-0.5 rounded hover:text-white/70">✕</button>
-                </span>
-              </span>
-            ) : (
-              <button onClick={() => setHeroEdit({ field: 'noivo', value: settings.noivo || '' })}
-                className="group relative hover:opacity-80 transition-opacity cursor-text">
-                {settings.noivo || 'NOIVO'}
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] text-gold/0 group-hover:text-gold/80 transition-colors tracking-widest uppercase whitespace-nowrap">✎ editar</span>
-              </button>
-            )}
-          </h1>
-
-          {/* Date & venue */}
-          <div className="flex flex-col items-center gap-1 mt-1">
-            {settings.local && (
-              <p className="font-cormorant text-white/60 text-base sm:text-lg italic tracking-wide">
-                {settings.local}
-              </p>
-            )}
-            <p className="font-cormorant text-white/50 text-sm sm:text-base italic tracking-wide">
-              ♡ {settings.dataFormatada || '—'}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ── COUNTDOWN ── */}
-      {settings.data && (
-        <section className="py-10 sm:py-14 border-y border-white/[0.05] bg-black/30 backdrop-blur-sm">
-          <p className="font-cormorant font-light text-gold text-2xl sm:text-3xl text-center mb-6 tracking-[0.2em] uppercase">Contagem Regressiva</p>
-          <div className="flex items-center justify-center gap-4">
-            <Leaf />
-            <Countdown targetDate={settings.data} />
-            <Leaf flip />
-          </div>
-          <div className="flex justify-center mt-4">
-            <span className="text-gold/20 text-lg">♡</span>
-          </div>
-        </section>
-      )}
-
-      {/* ── REFERENCE BADGE ── */}
-      {welcomeRef && (
-        <div className="flex justify-center px-4 pb-6 pt-2">
-          <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full border border-gold/40 bg-gold/10 backdrop-blur-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse shrink-0" />
-            <span className="font-cormorant font-light text-gold text-lg sm:text-xl tracking-[0.15em]">{welcomeRef}</span>
-          </div>
-        </div>
-      )}
-
-      {/* ── QUICK ACCESS ── */}
-      {navPages.length > 0 && (
-        <section className="py-6 sm:py-10 px-4">
-          <p className="font-cormorant font-light text-white/50 text-xl sm:text-2xl text-center mb-8 tracking-[0.2em] uppercase">Acesso Rápido</p>
-          <div className="flex gap-3 overflow-x-auto pb-2 justify-start sm:justify-center snap-x snap-mandatory scrollbar-none">
-            {navPages.map(page => {
-              const isActive = settings.activeNavId === page.id
-              const displayTitle = settings.pageTitles?.[page.id] ?? page.title
-              return (
-                <Link key={page.id} href={`/portal-cliente/${page.id}?title=${encodeURIComponent(displayTitle)}`}
-                  className={`snap-start shrink-0 flex flex-col items-center gap-2 px-4 py-4 rounded-2xl border transition-all duration-300 min-w-[80px] group
-                    ${isActive ? 'bg-gold/15 border-gold/50 text-gold' : 'bg-black border-white/40 text-white/60 hover:border-white/70'}`}
-                  style={isActive
-                    ? { boxShadow: '0 0 14px 2px rgba(212,175,55,0.25)' }
-                    : { boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }
-                  }
-                >
-                  <span className={isActive ? 'text-gold' : 'text-white/80 group-hover:text-white transition-colors'}
-                    style={isActive ? undefined : { filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.9)) drop-shadow(0 0 12px rgba(255,255,255,0.5))' }}>
-                    {getNavIcon(displayTitle)}
-                  </span>
-                  <span className="text-[9px] tracking-widest uppercase text-center leading-tight max-w-[70px]"
-                    style={isActive ? undefined : { textShadow: '0 0 8px rgba(255,255,255,0.9), 0 0 16px rgba(255,255,255,0.5)' }}>
-                    {displayTitle.replace(/\s*\(\d+\)\s*$/, '')}
-                  </span>
-                  {isActive && <span className="w-1 h-1 rounded-full bg-gold" />}
-                </Link>
-              )
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* ── GALLERY ── */}
-      {galleryImages.length > 1 && (
-        <section className="px-4 pb-10 sm:pb-14">
-          <div className="grid grid-cols-3 gap-2 sm:gap-3 max-w-3xl mx-auto rounded-2xl overflow-hidden">
-            {galleryImages.map((url, i) => (
-              <div key={i} className="aspect-[3/4] sm:aspect-[2/3] bg-cover bg-center" style={{ backgroundImage: `url(${url})` }} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ── TASKS ── */}
-      <TasksSection
-        tasks={settings.tasks ?? []}
-        pageId={PAGE_ID}
-        settingsBlockId={settingsBlockId}
-        settings={settings}
-        onSettingsChange={s => { setSettings(s); if (settingsBlockId) setSettingsBlockId(settingsBlockId) }}
+      <AtmospherePortal
+        data={{
+          noiva:     settings.noiva,
+          noivo:     settings.noivo,
+          dataIso:   settings.data ?? null,
+          dataLabel: settings.dataFormatada ?? null,
+          referencia: settings.referencia ?? null,
+          heroImageUrl: settings.heroImageUrl ?? null,
+          welcomeHeading:    welcomeTextM.heading
+            ? welcomeTextM.heading.replace(/\bvosso\b/i, m => `<em>${m}</em>`)
+            : undefined,
+          welcomeParagraphs: welcomeTextM.paragraphs,
+          galleryUrls: settings.galleryUrls,
+          subPages:    subPagesListM,
+          hiddenNav:   settings.hiddenNav,
+          activeNavId: settings.activeNavId ?? null,
+          hasTasks:    (settings.tasks ?? []).length > 0,
+        }}
+        callbacks={{
+          onSelectSubpage: (id) => {
+            saveSettings({ ...settings, activeNavId: id })
+          },
+        }}
       />
-
-      {/* ── ENTREGAS ── */}
-      {settings.referencia && <EntregasSectionPC referencia={settings.referencia} />}
-
-      {/* ── WELCOME ── */}
-      <section className="py-12 sm:py-16 px-4 max-w-2xl mx-auto">
-        {welcomeHeading && (
-          <h2 className="font-cormorant font-light text-2xl sm:text-3xl text-gold mb-3 leading-tight tracking-[0.15em] uppercase text-center">
-            {welcomeHeading}
-          </h2>
-        )}
-        <div className="flex justify-center mb-6">
-          <span className="text-gold/40 text-xl">♡</span>
-        </div>
-        {welcomeParas.map((p, i) =>
-          p.trim() === '' ? (
-            <div key={i} className="h-3" />
-          ) : (
-            <p key={i} className="text-sm sm:text-base text-white/50 leading-relaxed mb-3 text-justify">{p}</p>
-          )
-        )}
-
-        {/* Feature bullets */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8">
-          {['Acompanhamento de todo o processo', 'Prazos e entregas organizados', 'Comunicação transparente', 'Acesso rápido a documentos'].map((f, i) => (
-            <div key={i} className="flex flex-col items-center gap-2 p-3">
-              <div className="w-6 h-6 rounded-full border border-gold/30 flex items-center justify-center">
-                <span className="text-gold text-xs">✓</span>
-              </div>
-              <span className="text-xs text-white/40 text-center leading-tight">{f}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── CARDS ── */}
-      {navPages.length > 0 && (
-        <section className="py-10 sm:py-14 px-4 bg-[#0d0d0d] border-t border-white/[0.04]">
-          <p className="font-cormorant font-light text-white/50 text-xl sm:text-2xl text-center mb-8 tracking-[0.2em] uppercase">O que encontram aqui</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-2xl mx-auto">
-            {navPages.slice(0, 6).map(page => {
-              const displayTitle = settings.pageTitles?.[page.id] ?? page.title
-              return (
-                <Link key={page.id} href={`/portal-cliente/${page.id}?title=${encodeURIComponent(displayTitle)}`}
-                  className="group flex flex-col gap-3 p-4 rounded-xl border border-white/[0.07] bg-white/[0.02] hover:border-gold/30 hover:bg-gold/5 transition-all">
-                  <span className="text-gold/40 group-hover:text-gold/70 transition-colors">
-                    {getNavIcon(displayTitle)}
-                  </span>
-                  <div>
-                    <p className="text-xs font-semibold text-white/70 tracking-wide uppercase leading-tight mb-1">
-                      {displayTitle.replace(/\s*\(\d+\)\s*$/, '')}
-                    </p>
-                    <p className="text-[10px] text-white/25">Ver detalhes →</p>
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* ── FOOTER ── */}
-      <footer className="py-10 text-center border-t border-white/[0.04]">
-        <p className="font-cormorant text-gold/50 text-lg sm:text-xl italic">
-          ♡ Mal podemos esperar pelo vosso grande dia!
-        </p>
-        <p className="text-[10px] text-white/15 tracking-widest mt-3 uppercase">RL Photo.Video</p>
-      </footer>
-
-    </div>
+    </>
   )
 }
