@@ -223,6 +223,12 @@ export function ContratoView(props: ContratoViewProps) {
         <span className="val"><em>€</em>{fmtEur(props.totalEur)}</span>
       </div>
 
+      {/* Logo card creme (idêntico ao Atendimento) */}
+      <div className="logocard">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/portal-noivos/logo-ink.png" alt="RL Photo Video" />
+        <div className="url">www.rlphotovideo.pt</div>
+      </div>
     </>
   )
 }
