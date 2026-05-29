@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { verifyFlSession } from '@/lib/freelancer-session'
+import { FL_COOKIE_NAME, makeFlSession, verifyFlSession } from '@/lib/freelancer-session'
 
 export const dynamic = 'force-dynamic'
 
@@ -76,21 +76,41 @@ export async function POST(req: NextRequest) {
   try {
     // 1) Preferir o id da sessão (mais seguro: o membro não pode marcar outro)
     let freelancerId: string | null = null
-    const flCookie = req.cookies.get('fl_session')?.value
+    let sessionEmail: string | null = null
+    const flCookie = req.cookies.get(FL_COOKIE_NAME)?.value
     if (flCookie) {
       const session = await verifyFlSession(flCookie)
-      if (session?.id) freelancerId = session.id
+      if (session?.id) {
+        freelancerId = session.id
+        sessionEmail = session.email ?? null
+      }
     }
     // 2) Fallback: corpo (útil para admin/debug e quando não há cookie)
+    let viaBody = false
     if (!freelancerId) {
       const body = await req.json().catch(() => ({}))
-      if (body?.freelancer_id) freelancerId = String(body.freelancer_id)
+      if (body?.freelancer_id) { freelancerId = String(body.freelancer_id); viaBody = true }
     }
     if (!freelancerId) {
       return NextResponse.json({ ok: false, error: 'no_session' }, { status: 401 })
     }
     const ts = await writePresence(freelancerId)
-    return NextResponse.json({ ok: true, last_seen: ts })
+    const res = NextResponse.json({ ok: true, last_seen: ts })
+
+    // ── Sliding window: renova o cookie fl_session quando o ping veio
+    //    de uma sessão válida. Estende o exp por mais TTL_SECONDS.
+    //    Se foi via body (admin/debug), não renova nada.
+    if (!viaBody && sessionEmail) {
+      const token = await makeFlSession({ id: freelancerId, email: sessionEmail, role: 'freelancer' })
+      res.cookies.set(FL_COOKIE_NAME, token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        // Sem maxAge — continua session cookie. O JWT exp é que controla.
+      })
+    }
+    return res
   } catch (err: any) {
     return NextResponse.json({ ok: false, error: err?.message }, { status: 500 })
   }

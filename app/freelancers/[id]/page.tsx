@@ -207,18 +207,26 @@ function FreelancerDetailInner() {
   const viewAsFreelancer = searchParams?.get('view') === 'freelancer'
 
   // ── Heartbeat de presença: regista atividade do membro a cada 60s
-  //    quando a tab está visível. Roda apenas quando viewAsFreelancer
-  //    (não queremos contar admins a navegar como online).
+  //    quando a tab está visível + renova o cookie fl_session (sliding
+  //    window). Roda apenas quando viewAsFreelancer.
+  //    Se a sessão tiver expirado (401), redirect imediato para /login.
   useEffect(() => {
     if (!viewAsFreelancer || !id) return
-    function ping() {
+    async function ping() {
       if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
-      fetch('/api/freelancer-presence', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ freelancer_id: id }),
-        keepalive: true,
-      }).catch(() => { /* silencioso */ })
+      try {
+        const res = await fetch('/api/freelancer-presence', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}), // sem freelancer_id — força uso da cookie
+          keepalive: true,
+        })
+        if (res.status === 401) {
+          // Sessão expirada → manda para login com next para voltar aqui
+          const next = `/freelancers/${id}?view=freelancer`
+          window.location.href = `/login?next=${encodeURIComponent(next)}`
+        }
+      } catch { /* offline silencioso */ }
     }
     ping() // primeiro tick imediato
     const iv = setInterval(ping, 60_000) // 60s

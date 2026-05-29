@@ -13,7 +13,9 @@ const SECRET = () =>
   process.env.AUTH_SECRET ??
   'rl-photo-video-fallback-dev-secret-do-not-use-in-prod'
 
-const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30 // 30 dias
+// TTL curto: força login a cada 30 min de inatividade. O cookie é renovado
+// pelo heartbeat de presença (sliding window) enquanto o membro está activo.
+const SESSION_TTL_SECONDS = 60 * 30 // 30 minutos
 
 export type FlPayload = {
   id: string

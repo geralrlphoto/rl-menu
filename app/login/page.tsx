@@ -37,7 +37,6 @@ function LoginPageInner() {
   // freelancer fields
   const [email, setEmail]       = useState('')
   const [pwd, setPwd]           = useState('')
-  const [remember, setRemember] = useState(true)
   const [showPwd, setShowPwd]   = useState(false)
   // admin fields
   const [adminPwd, setAdminPwd] = useState('')
@@ -80,7 +79,7 @@ function LoginPageInner() {
       const res = await fetch('/api/freelancer-auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password: pwd, remember }),
+        body: JSON.stringify({ email: email.trim(), password: pwd }),
       })
       const j = await res.json().catch(() => ({}))
       if (!res.ok || !j?.ok) {
@@ -288,17 +287,11 @@ function LoginPageInner() {
                 </div>
               </label>
 
-              {/* Remember + error */}
-              <div className="flex items-center justify-between">
-                <label className="inline-flex items-center gap-2 cursor-pointer select-none">
-                  <span className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${
-                    remember ? 'bg-gold border-gold' : 'border-white/25 bg-white/[0.03]'
-                  }`}>
-                    {remember && <span className="text-black text-[10px] font-bold leading-none">✓</span>}
-                  </span>
-                  <span className="text-[11px] tracking-widest uppercase text-white/55">Manter sessão</span>
-                  <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} className="sr-only" />
-                </label>
+              {/* Aviso sessão estrita + error */}
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <p className="text-[10px] tracking-widest uppercase text-white/35">
+                  🔒 Sessão expira após 30 min · login a cada saída do browser
+                </p>
                 {error && (
                   <span className="text-[11px] text-red-400 tracking-wider animate-in fade-in">{error}</span>
                 )}

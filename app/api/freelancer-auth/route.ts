@@ -91,8 +91,9 @@ export async function POST(req: NextRequest) {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    // remember=false → cookie de sessão (sem maxAge); remember=true (default) → 30 dias
-    ...(remember !== false ? { maxAge: FL_COOKIE_MAX_AGE } : {}),
+    // SEMPRE session cookie (sem maxAge) — expira ao fechar o browser.
+    // A segurança adicional vem do TTL curto do próprio JWT (30 min) +
+    // renovação por heartbeat enquanto o membro está activo.
     path: '/',
   })
   return res
