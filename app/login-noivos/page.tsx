@@ -319,7 +319,7 @@ function NoivosLoginInner() {
               <label className="block">
                 <span className="text-[10px] tracking-[0.4em] uppercase font-semibold mb-2 block"
                   style={{ color: '#A88A4E' }}>
-                  E-mail
+                  E-mail <span style={{ color: '#C9A84C', fontStyle: 'italic', fontWeight: 600 }}>(noiva)</span>
                 </span>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#C9A84C' }}>
