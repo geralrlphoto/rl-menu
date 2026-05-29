@@ -97,7 +97,14 @@ function NoivosLoginInner() {
       // sessionStorage é limpo automaticamente pelo browser e na próxima
       // visita o portal vai exigir novo login (mesmo se o cookie ainda for
       // tecnicamente válido).
-      try { sessionStorage.setItem('nv_active', '1') } catch {}
+      try {
+        sessionStorage.setItem('nv_active', '1')
+        // Também marca o gate antigo do portal (portalAuth_<REF>) como
+        // autenticado, para não pedir a password do portal outra vez —
+        // o login já foi feito com email + password do casamento.
+        const ref = j.noivos?.referencia
+        if (ref) sessionStorage.setItem(`portalAuth_${ref}`, 'true')
+      } catch {}
       const target = j.redirect ?? nextFromUrl ?? '/'
       setTimeout(() => {
         router.push(target)
