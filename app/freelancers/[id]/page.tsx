@@ -5001,7 +5001,7 @@ function NovaTarefaModal({ onClose, onCreate }: { onClose: () => void; onCreate:
 type CalEvento = {
   id: string
   iso: string          // YYYY-MM-DD
-  type: 'casamento' | 'edicao' | 'album' | 'tarefa-pessoal' | 'tarefa-atribuida' | 'prazo-selecao' | 'prazo-edicao' | 'notificacao'
+  type: 'casamento' | 'edicao' | 'album' | 'tarefa-pessoal' | 'tarefa-atribuida' | 'prazo-selecao' | 'prazo-edicao' | 'notificacao' | 'pre-wedding'
   title: string
   subtitle?: string
 }
@@ -5132,8 +5132,33 @@ function CalendarioTab({ freelancerId, casamentos, edicao, album, notificacoes, 
     taskDates.forEach((t, i) => {
       out.push({ id: `tk-${i}`, iso: t.iso, type: 'tarefa-pessoal', title: t.text, subtitle: t.project || 'Tarefa pessoal' })
     })
-    // Notificações recebidas (data de criação)
+    // Notificações recebidas (data de criação) + extrai PRÉ-WEDDINGS
     notificacoes.forEach(n => {
+      // ── Pré-Wedding atribuído ao membro ──
+      // O backend insere com tipo='pre_wedding_atribuido' + META JSON
+      // contendo { data, hora, local, nomeNoivos, referencia }.
+      if (n.tipo === 'pre_wedding_atribuido' && n.mensagem) {
+        const m = n.mensagem.match(/^__META__(.+?)__\/META__/)
+        if (m) {
+          try {
+            const meta = JSON.parse(m[1])
+            const pwIso = String(meta?.data ?? '').slice(0, 10)
+            if (/^\d{4}-\d{2}-\d{2}$/.test(pwIso)) {
+              const titulo = meta?.nomeNoivos || meta?.referencia || 'Pré-Wedding'
+              const sub = `📷 Pré-Wedding${meta?.hora ? ' · ' + meta.hora : ''}${meta?.local ? ' · ' + meta.local : ''}`
+              out.push({
+                id: `pw-${n.id}`,
+                iso: pwIso,
+                type: 'pre-wedding',
+                title: String(titulo),
+                subtitle: sub,
+              })
+              return // não duplica abaixo como notificação genérica
+            }
+          } catch { /* ignore */ }
+        }
+      }
+
       if (!n.created_at) return
       const iso = String(n.created_at).slice(0, 10)
       if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return
@@ -5201,6 +5226,7 @@ function CalendarioTab({ freelancerId, casamentos, edicao, album, notificacoes, 
     'prazo-selecao':     { color: 'text-amber-300',    bg: 'bg-amber-500/15',      border: 'border-amber-500/35',     label: 'Prazo Sel.',   icon: '⏱' },
     'prazo-edicao':      { color: 'text-red-300',      bg: 'bg-red-500/15',        border: 'border-red-500/35',       label: 'Prazo Ed.',    icon: '⏱' },
     'notificacao':       { color: 'text-rose-300',     bg: 'bg-rose-500/15',       border: 'border-rose-500/35',      label: 'Notificação',  icon: '◉' },
+    'pre-wedding':       { color: 'text-cyan-300',     bg: 'bg-cyan-500/15',       border: 'border-cyan-500/35',      label: 'Pré-Wedding',  icon: '📷' },
   }
 
   return (

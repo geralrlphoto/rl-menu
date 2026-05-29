@@ -279,6 +279,7 @@ export default function CalendarClient({
 
   // ── Pré-Wedding modal ──────────────────────────────────────────────────
   type PortalRow = { referencia: string; noiva: string; noivo: string; has_pw: boolean; pw_date: string | null; pw_time: string | null }
+  type FreelancerRow = { id: string; nome: string; status: string | null }
   const [pwOpen, setPwOpen]       = useState(false)
   const [pwDate, setPwDate]       = useState<string>('')
   const [pwPortais, setPwPortais] = useState<PortalRow[]>([])
@@ -287,18 +288,39 @@ export default function CalendarClient({
   const [pwLocal, setPwLocal]     = useState<string>('')
   const [pwSaving, setPwSaving]   = useState(false)
   const [pwLoading, setPwLoading] = useState(false)
+  const [pwFreelancers, setPwFreelancers] = useState<FreelancerRow[]>([])
+  const [pwFreelancerId, setPwFreelancerId] = useState<string>('')
 
   function openPreWedding(dateStr: string) {
     setPwDate(dateStr)
-    setPwReferencia(''); setPwHora('14:00'); setPwLocal('')
+    setPwReferencia(''); setPwHora('14:00'); setPwLocal(''); setPwFreelancerId('')
     setPwOpen(true)
     setChooserDate(null)
     if (pwPortais.length === 0) {
       setPwLoading(true)
-      fetch('/api/calendario-add/portais-list', { cache: 'no-store' })
+      Promise.all([
+        fetch('/api/calendario-add/portais-list', { cache: 'no-store' }).then(r => r.json()).catch(() => ({ portais: [] })),
+        fetch('/api/freelancers', { cache: 'no-store' }).then(r => r.json()).catch(() => ({ freelancers: [] })),
+      ]).then(([dPortais, dFls]) => {
+        setPwPortais(dPortais.portais ?? [])
+        // Filtra freelancers activos com email definido, ordena por nome
+        const list: FreelancerRow[] = (dFls.freelancers ?? [])
+          .filter((f: any) => f?.id && f?.nome)
+          .map((f: any) => ({ id: f.id, nome: f.nome, status: f.status ?? null }))
+          .sort((a: FreelancerRow, b: FreelancerRow) => a.nome.localeCompare(b.nome))
+        setPwFreelancers(list)
+        setPwLoading(false)
+      })
+    } else if (pwFreelancers.length === 0) {
+      fetch('/api/freelancers', { cache: 'no-store' })
         .then(r => r.json())
-        .then(d => { setPwPortais(d.portais ?? []); setPwLoading(false) })
-        .catch(() => setPwLoading(false))
+        .then(d => {
+          const list: FreelancerRow[] = (d.freelancers ?? [])
+            .filter((f: any) => f?.id && f?.nome)
+            .map((f: any) => ({ id: f.id, nome: f.nome, status: f.status ?? null }))
+            .sort((a: FreelancerRow, b: FreelancerRow) => a.nome.localeCompare(b.nome))
+          setPwFreelancers(list)
+        }).catch(() => {})
     }
   }
 
@@ -346,6 +368,7 @@ export default function CalendarClient({
           data: pwDate,
           hora: pwHora || null,
           local: pwLocal || null,
+          freelancer_id: pwFreelancerId || null,
         }),
       })
       const d = await res.json()
@@ -1245,7 +1268,21 @@ export default function CalendarClient({
             <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Local (opcional)</label>
             <input value={pwLocal} onChange={e => setPwLocal(e.target.value)}
               placeholder="ex.: Quinta da Aroeira"
-              className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#4FC3C3]/40 mb-4" />
+              className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#4FC3C3]/40 mb-3" />
+
+            <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">
+              Membro da Equipa <span className="opacity-50 normal-case tracking-wide">(notifica e aparece no calendário dele)</span>
+            </label>
+            <select value={pwFreelancerId} onChange={e => setPwFreelancerId(e.target.value)}
+              disabled={pwLoading || pwFreelancers.length === 0}
+              className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4FC3C3]/40 mb-4 disabled:opacity-50">
+              <option value="">— Sem atribuição —</option>
+              {pwFreelancers.map(f => (
+                <option key={f.id} value={f.id}>
+                  {f.nome}{f.status ? ` · ${f.status}` : ''}
+                </option>
+              ))}
+            </select>
 
             <div className="flex gap-3">
               <button onClick={handleSavePreWedding}
