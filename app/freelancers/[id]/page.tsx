@@ -206,6 +206,9 @@ function FreelancerDetailInner() {
   const searchParams = useSearchParams()
   const viewAsFreelancer = searchParams?.get('view') === 'freelancer'
   const [tab, setTab] = useState<'casamentos'|'edicao'|'album'|'tarefas'|'calendario'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'|null>(null)
+  // ID de casamento a abrir expandido quando o utilizador entra na tab Casamentos
+  // — usado pelas notificações para abrir directamente o casamento associado.
+  const [pendingExpandCasamentoId, setPendingExpandCasamentoId] = useState<string | null>(null)
   // Toggle do card Crítico · Entrega — persistente em localStorage
   const [criticoOpen, setCriticoOpen] = useState(true)
   useEffect(() => {
@@ -1650,7 +1653,7 @@ function FreelancerDetailInner() {
       })()}
 
       {/* Tab content */}
-      {tab === 'casamentos'   && <CasamentosTab freelancerId={id} casamentos={casamentos} onRefresh={load} freelancerStatus={freelancer?.status ?? null} freelancer={freelancer} viewAsFreelancer={viewAsFreelancer} fotosSelecaoMap={fotosSelecaoMap} fotosConvidadosMap={fotosConvidadosMap} setFotosConvidadosMap={setFotosConvidadosMap} />}
+      {tab === 'casamentos'   && <CasamentosTab freelancerId={id} casamentos={casamentos} onRefresh={load} freelancerStatus={freelancer?.status ?? null} freelancer={freelancer} viewAsFreelancer={viewAsFreelancer} fotosSelecaoMap={fotosSelecaoMap} fotosConvidadosMap={fotosConvidadosMap} setFotosConvidadosMap={setFotosConvidadosMap} initialExpandedId={pendingExpandCasamentoId} onExpandedHandled={() => setPendingExpandCasamentoId(null)} />}
       {tab === 'edicao'       && <EdicaoTab freelancerId={id} edicao={edicao} onRefresh={load} />}
       {tab === 'album'        && <AlbumTab freelancerId={id} album={album} onRefresh={load} />}
       {tab === 'tarefas'      && <TarefasTab freelancerId={id} viewAsFreelancer={viewAsFreelancer} freelancer={freelancer} notificacoes={notificacoes} onRefresh={load} />}
@@ -1659,7 +1662,7 @@ function FreelancerDetailInner() {
       {tab === 'notas'        && <NotasTab freelancer={freelancer} onRefresh={load} />}
       {tab === 'pagamentos'   && <PagamentosAdminTab freelancerId={id} pagamentos={pagamentos} casamentos={casamentos} onRefresh={load} />}
       {tab === 'mensagens'    && <MensagensAdminTab freelancerId={id} freelancerNome={freelancer?.nome ?? ''} casamentos={casamentos} mensagens={mensagens} onRefresh={load} />}
-      {tab === 'notificacoes' && <NotificacoesAdminTab freelancerId={id} notificacoes={notificacoes} casamentos={casamentos} onRefresh={load} viewAsFreelancer={viewAsFreelancer} />}
+      {tab === 'notificacoes' && <NotificacoesAdminTab freelancerId={id} notificacoes={notificacoes} casamentos={casamentos} onRefresh={load} viewAsFreelancer={viewAsFreelancer} onOpenCasamento={(cid) => { setPendingExpandCasamentoId(cid); setTab('casamentos') }} />}
     </main>
     </div>
   )
@@ -1815,12 +1818,27 @@ function SidebarNavAdmin({
 
 const DEFAULT_INTRO = `Aqui encontras todos os eventos que te foram atribuídos ao longo do ano. Sempre que um novo evento for adicionado, deverás confirmar a tua disponibilidade.\n\nA 3 dias do evento tens acesso ao briefing com toda a informação necessária para o dia — percurso, contactos, detalhes da cerimónia e muito mais.`
 
-function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, freelancer, viewAsFreelancer, fotosSelecaoMap, fotosConvidadosMap, setFotosConvidadosMap }: { freelancerId: string; casamentos: Casamento[]; onRefresh: () => void; freelancerStatus: string | null; freelancer: Freelancer | null; viewAsFreelancer?: boolean; fotosSelecaoMap: Record<string, string>; fotosConvidadosMap: Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>; setFotosConvidadosMap: (updater: (prev: Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>) => Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>) => void }) {
+function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, freelancer, viewAsFreelancer, fotosSelecaoMap, fotosConvidadosMap, setFotosConvidadosMap, initialExpandedId, onExpandedHandled }: { freelancerId: string; casamentos: Casamento[]; onRefresh: () => void; freelancerStatus: string | null; freelancer: Freelancer | null; viewAsFreelancer?: boolean; fotosSelecaoMap: Record<string, string>; fotosConvidadosMap: Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>; setFotosConvidadosMap: (updater: (prev: Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>) => Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>) => void; initialExpandedId?: string | null; onExpandedHandled?: () => void }) {
   const [editing, setEditing] = useState<Casamento | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState<Partial<Casamento>>({})
   const [saving, setSaving] = useState(false)
-  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [expandedId, setExpandedId] = useState<string | null>(initialExpandedId ?? null)
+  // Quando a notificação manda abrir um casamento específico, sync uma vez
+  // e notifica o parent para limpar o pending (evita re-expansão em mudanças
+  // posteriores de tab).
+  useEffect(() => {
+    if (initialExpandedId) {
+      setExpandedId(initialExpandedId)
+      // Scroll suave para o card depois do render
+      requestAnimationFrame(() => {
+        const el = typeof document !== 'undefined' ? document.getElementById(`casamento-${initialExpandedId}`) : null
+        el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      })
+      onExpandedHandled?.()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialExpandedId])
   const [editingIntro, setEditingIntro] = useState(false)
   const [introValue, setIntroValue] = useState(freelancer?.intro_casamentos ?? DEFAULT_INTRO)
   const [savingIntro, setSavingIntro] = useState(false)
@@ -2030,8 +2048,10 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
           <CasamentoForm key={c.id} form={form} setForm={setForm} saving={saving} onSave={save}
             onCancel={() => setEditing(null)} onDelete={() => del(c.id)} />
         ) : (
-          <div key={c.id}
-            className={`group relative overflow-hidden rounded-2xl border transition-all ${isPast ? 'opacity-65' : ''}`}
+          <div key={c.id} id={`casamento-${c.id}`}
+            className={`group relative overflow-hidden rounded-2xl border transition-all ${isPast ? 'opacity-65' : ''} ${
+              expandedId === c.id ? 'scroll-mt-24' : ''
+            }`}
             style={{
               background: isUrgent
                 ? 'linear-gradient(135deg, rgba(239,68,68,0.08), rgba(11,11,11,0.85))'
@@ -6973,7 +6993,7 @@ function parseAtribuicaoEquipaMeta(mensagem: string | null | undefined): {
   } catch { return {} }
 }
 
-function NotificacoesAdminTab({ freelancerId, notificacoes, casamentos = [], onRefresh, viewAsFreelancer }: { freelancerId: string; notificacoes: Notificacao[]; casamentos?: Casamento[]; onRefresh: () => void; viewAsFreelancer?: boolean }) {
+function NotificacoesAdminTab({ freelancerId, notificacoes, casamentos = [], onRefresh, viewAsFreelancer, onOpenCasamento }: { freelancerId: string; notificacoes: Notificacao[]; casamentos?: Casamento[]; onRefresh: () => void; viewAsFreelancer?: boolean; onOpenCasamento?: (casamentoId: string) => void }) {
   const [form, setForm] = useState({ titulo: '', mensagem: '', tipo: 'alerta' })
   const [sending, setSending] = useState(false)
   const [respondingNotif, setRespondingNotif] = useState<Notificacao | null>(null)
@@ -6983,7 +7003,6 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, casamentos = [], onR
   const [sentNotifs, setSentNotifs] = useState<Notificacao[]>([])
   const [loadingSent, setLoadingSent] = useState(false)
   const [respondingAtribuicao, setRespondingAtribuicao] = useState<string | null>(null) // id da notif em curso
-  const [previewCasamento, setPreviewCasamento] = useState<Casamento | null>(null)
 
   // Mapa rapido referencia → casamento (para resolver noivos + abrir preview)
   const casamentosByRef = useMemo(() => {
@@ -7426,7 +7445,13 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, casamentos = [], onR
 
                 return (
                 <div key={n.id}
-                  onClick={() => { if (clickable) setPreviewCasamento(casamentoAssoc) }}
+                  onClick={() => {
+                    if (clickable && casamentoAssoc && onOpenCasamento) {
+                      // Marca como lida ao abrir (UX: deixa de estar pendente)
+                      if (!n.lida) { handleMarkRead(n.id, true).catch(() => {}) }
+                      onOpenCasamento(casamentoAssoc.id)
+                    }
+                  }}
                   className={`flex items-start gap-3 px-4 py-3.5 rounded-xl border group transition-all hover:border-white/15 ${
                     n.lida ? 'border-white/[0.06] bg-white/[0.015]' : `${accent.border} ${accent.bg}`
                   } ${clickable ? 'cursor-pointer hover:bg-white/[0.025]' : ''}`}
@@ -7457,7 +7482,7 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, casamentos = [], onR
                         </span>
                         {clickable && (
                           <span className="text-[9px] tracking-[0.3em] uppercase text-white/30 group-hover:text-gold/80 transition-colors">
-                            · Clica para ver ficha →
+                            · Clica para abrir casamento →
                           </span>
                         )}
                       </div>
@@ -7618,15 +7643,6 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, casamentos = [], onR
         />
       )}
 
-      {/* Preview da ficha do Casamento — abre ao clicar numa notificação
-          de atribuição/briefing/álbum associada a um casamento. */}
-      {previewCasamento && (
-        <CasamentoFicha
-          casamento={previewCasamento}
-          onClose={() => setPreviewCasamento(null)}
-          onEdit={() => { /* read-only neste contexto */ }}
-        />
-      )}
     </div>
   )
 }
