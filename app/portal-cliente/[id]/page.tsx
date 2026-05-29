@@ -9,6 +9,7 @@ import BriefingExtensions, { type BriefingExt } from './BriefingExtensions'
 import '../atmosphere/atmosphere.css'
 import { PortalShell, SidebarCouple, SidebarNav, SidebarMiniCountdown, type SidebarNavItem } from '../atmosphere/PortalShell'
 import { ContratoView } from '../atmosphere/ContratoView'
+import { PreWeddingView, DEFAULT_CENARIOS } from '../atmosphere/PreWeddingView'
 import { SendMessageButton } from '../atmosphere/SendMessageButton'
 
 const PORTAL_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
@@ -1830,6 +1831,134 @@ function PortalSubPageContent() {
                 Editar
               </button>
             </>
+          }
+        />
+      </PortalShell>
+    )
+  }
+
+  // ── Atmosphère view · GUIA PRÉ-WEDDING ────────────────────────────────────
+  const _atmIsPreWedding = isPreWeddingPage && !editing && !editingPhotos
+    && !editingParceiros && !editingBriefing && !editingCalloutLinks
+    && !editingPreWedding && !editingPropostaToken && !error
+  if (_atmIsPreWedding && !loading) {
+    const handleEditTitlePW = () => { setTitleInput(title); setEditingTitle(true) }
+    // Extrair parágrafos do Notion para a intro
+    const introParas: string[] = []
+    for (const b of blocks) {
+      if (b.type === 'paragraph') {
+        const txt = plainText(b.paragraph?.rich_text ?? [])
+        if (txt.trim()) introParas.push(txt)
+      }
+    }
+    // Imagens do Notion
+    const imageUrls: string[] = []
+    const collectImg = (bs: any[]) => {
+      for (const b of bs) {
+        if (b.type === 'image') {
+          const u = b.image?.type === 'external' ? b.image?.external?.url : b.image?.file?.url
+          if (u) imageUrls.push(u)
+        }
+        if (b.children) collectImg(b.children)
+      }
+    }
+    collectImg(blocks)
+
+    return (
+      <PortalShell sidebar={_atmSidebar}>
+        <PreWeddingView
+          title={title}
+          heroImageUrl={_atmEffectiveHeader}
+          backHref={_atmBackHref}
+          isAdmin={isAdmin}
+          onEditTitle={handleEditTitlePW}
+          introPhotoUrl={imageUrls[0] ?? null}
+          introParagraphs={introParas.slice(0, 4)}
+          triptychUrls={[imageUrls[1], imageUrls[2], imageUrls[3]]}
+          cenarios={DEFAULT_CENARIOS.map((c, i) => ({
+            ...c,
+            photoUrl: imageUrls[4 + i] ?? null,
+            galleryUrls: [imageUrls[7 + i * 3], imageUrls[8 + i * 3], imageUrls[9 + i * 3]],
+          }))}
+          adminActions={
+            <>
+              <button type="button" className="abtn" onClick={handleRefresh} disabled={refreshing}>
+                <svg className={refreshing ? 'animate-spin' : ''} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 11a8 8 0 1 0-.6 4" /><path d="M20 5v6h-6" />
+                </svg>
+                {refreshing ? 'A atualizar' : 'Atualizar'}
+              </button>
+              {hasImages && (
+                <button type="button" className="abtn" onClick={() => setEditingPhotos(true)}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="8.5" cy="10" r="1.6" /><path d="M5 17l4.5-4 3 2.5L16 11l3 3" />
+                  </svg>
+                  Fotos
+                </button>
+              )}
+              <button type="button" className="abtn primary" onClick={() => setEditing(true)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 15V4M8 8l4-4 4 4" /><path d="M5 14v5h14v-5" />
+                </svg>
+                Publicar
+              </button>
+              <button type="button" className="abtn accent" onClick={() => setEditing(true)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 3l1.8 5.7L19.5 10l-5.7 1.3L12 17l-1.8-5.7L4.5 10l5.7-1.3Z" />
+                </svg>
+                Premium
+              </button>
+              <button type="button" className="abtn" onClick={() => setEditing(true)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 19l1-4L16 5l3 3L9 18l-4 1Z" /><path d="M14 7l3 3" />
+                </svg>
+                Editar
+              </button>
+            </>
+          }
+          bookNode={
+            <PreWeddingSection
+              slots={preWeddingSlots}
+              reservedSlotId={reservedSlotId}
+              reservingSlotId={reservingSlotId}
+              showReservedWarning={showReservedWarning}
+              blocks={blocks}
+              settings={settings}
+              onReserve={async (slotId: string) => {
+                setReservingSlotId(slotId)
+                try {
+                  await fetch(`/api/portais?ref=${encodeURIComponent(portalRef)}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      referencia: portalRef,
+                      updates: {
+                        settings: {
+                          ...portalSettingsObj,
+                          preWeddingReservedSlotId: slotId,
+                          preWeddingReservedAt: new Date().toISOString(),
+                        },
+                      },
+                    }),
+                  })
+                  setReservedSlotId(slotId)
+                  setShowReservedWarning(true)
+                } finally { setReservingSlotId(null) }
+              }}
+              onNotificarNoivos={async () => {
+                setSendingNotifNoivos(true)
+                try {
+                  await fetch('/api/portal-notif-prewedding', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ referencia: portalRef }),
+                  })
+                  setNotifNoivosEnviado(true)
+                } finally { setSendingNotifNoivos(false) }
+              }}
+              sendingNotifNoivos={sendingNotifNoivos}
+              notifNoivosEnviado={notifNoivosEnviado}
+            />
           }
         />
       </PortalShell>
