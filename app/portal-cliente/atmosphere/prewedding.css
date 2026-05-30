@@ -528,6 +528,13 @@
 }
 .portal-atmosphere .pw-notify.done svg { stroke: var(--ok); }
 
+/* Intro e cenários editáveis: garantir posicionamento da toolbar */
+.portal-atmosphere .pw-intro.pw-editable,
+.portal-atmosphere .pw-cenario.pw-editable {
+  position: relative;
+}
+.portal-atmosphere .pw-editable:hover .pw-custom-toolbar { opacity: 1; }
+
 /* ── Secções personalizadas (texto + foto editável na página) ─ */
 .portal-atmosphere .pw-custom {
   position: relative;

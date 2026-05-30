@@ -9,7 +9,7 @@ import BriefingExtensions, { type BriefingExt } from './BriefingExtensions'
 import '../atmosphere/atmosphere.css'
 import { PortalShell, SidebarCouple, SidebarNav, SidebarMiniCountdown, type SidebarNavItem } from '../atmosphere/PortalShell'
 import { ContratoView } from '../atmosphere/ContratoView'
-import { PreWeddingView, DEFAULT_CENARIOS, type PwSection } from '../atmosphere/PreWeddingView'
+import { PreWeddingView, DEFAULT_CENARIOS, type PwSection, type PwIntro, type PwCenario } from '../atmosphere/PreWeddingView'
 import { SendMessageButton } from '../atmosphere/SendMessageButton'
 
 const PORTAL_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
@@ -954,6 +954,10 @@ function PortalSubPageContent() {
   const [uploadingPwSlot, setUploadingPwSlot] = useState<string | null>(null)
   /** Secções personalizadas (texto + foto) adicionadas pelo admin na página. */
   const [pwSections, setPwSections] = useState<PwSection[]>([])
+  /** Intro editável (substitui leitura do Notion após migração). */
+  const [pwIntro, setPwIntro] = useState<PwIntro | null>(null)
+  /** 3 cenários editáveis (substitui leitura do Notion após migração). */
+  const [pwCenarios, setPwCenarios] = useState<PwCenario[] | null>(null)
   const [briefingInfo, setBriefingInfo] = useState<Record<string, BriefingExt>>({})
   const [editingBriefingInfo, setEditingBriefingInfo] = useState(false)
   const [briefingFieldsForm, setBriefingFieldsForm] = useState<Array<{ label: string; value: string }>>([])
@@ -1079,6 +1083,8 @@ function PortalSubPageContent() {
       if (ps.pwHeroPhoto && !photos.hero) photos.hero = ps.pwHeroPhoto
       setPwPhotos(photos)
       setPwSections(Array.isArray(ps.pwSections) ? ps.pwSections : [])
+      setPwIntro(ps.pwIntro && typeof ps.pwIntro === 'object' ? ps.pwIntro : null)
+      setPwCenarios(Array.isArray(ps.pwCenarios) ? ps.pwCenarios : null)
       setBriefingInfo(ps.briefingInfo ?? {})
       setCronogramaStatus(ps.cronogramaStatus ?? {})
       setSatisfacao(ps.satisfacao ?? null)
@@ -1333,6 +1339,20 @@ function PortalSubPageContent() {
     delete next[slot]
     await savePortalSettings({ ...portalSettingsObj, pwPhotos: next })
     setPwPhotos(next)
+  }
+
+  // ── Intro editável (substitui leitura do Notion) ──
+  async function handleSavePwIntro(next: PwIntro) {
+    await savePortalSettings({ ...portalSettingsObj, pwIntro: next })
+    setPwIntro(next)
+  }
+  // ── Cenário editável: grava por índice ──
+  async function handleSavePwCenario(idx: number, next: PwCenario) {
+    const arr = pwCenarios ? [...pwCenarios] : []
+    while (arr.length <= idx) arr.push({ num: String(arr.length + 1).padStart(2, '0'), title: '', paragraphs: [], bullets: [] })
+    arr[idx] = next
+    await savePortalSettings({ ...portalSettingsObj, pwCenarios: arr })
+    setPwCenarios(arr)
   }
 
   // ── Secções personalizadas (texto + foto) na página Pré-Wedding ──
@@ -1977,10 +1997,36 @@ function PortalSubPageContent() {
     }
     if (activeCen) cenariosFromNotion.push(activeCen)
 
-    // Se não detectou cenários no Notion → defaults editoriais
-    const cenariosFinal = cenariosFromNotion.length > 0
-      ? cenariosFromNotion
-      : DEFAULT_CENARIOS
+    // ── Estado final dos textos: settings > Notion-parsed > defaults ──
+    // 1. Intro: prefer pwIntro (settings); cai em parser do Notion.
+    const introFromNotion: PwIntro = {
+      eyebrow: 'Pré-Wedding',
+      title: 'Para que serve a *sessão*',
+      paragraphs: introParas.slice(0, 8),
+    }
+    const introFinal: PwIntro = pwIntro ?? introFromNotion
+
+    // 2. Cenários: prefer pwCenarios (settings); cai em parser; depois defaults.
+    const cenariosFinal: PwCenario[] = pwCenarios
+      ?? (cenariosFromNotion.length > 0 ? cenariosFromNotion : DEFAULT_CENARIOS as PwCenario[])
+
+    // ── Auto-migração one-shot: se settings ainda não tem pwIntro/pwCenarios
+    // mas o parser produziu conteúdo, gravar a primeira vez para nunca mais
+    // depender do Notion. Só corre uma vez por carregamento (admin only).
+    if (isAdmin) {
+      const needsIntroMigration = !pwIntro && introParas.length > 0
+      const needsCenariosMigration = !pwCenarios && cenariosFromNotion.length > 0
+      if (needsIntroMigration || needsCenariosMigration) {
+        const patch: Record<string, any> = {}
+        if (needsIntroMigration) patch.pwIntro = introFromNotion
+        if (needsCenariosMigration) patch.pwCenarios = cenariosFromNotion
+        // Fire-and-forget; o próximo refresh já lê do settings
+        savePortalSettings({ ...portalSettingsObj, ...patch }).then(() => {
+          if (needsIntroMigration) setPwIntro(introFromNotion)
+          if (needsCenariosMigration) setPwCenarios(cenariosFromNotion)
+        })
+      }
+    }
 
     return (
       <PortalShell sidebar={_atmSidebar}>
@@ -2000,7 +2046,10 @@ function PortalSubPageContent() {
           cenarios={cenariosFinal.map((c, i) => ({
             ...c,
             photoUrl: pwPhotos[`cen-${i}`] || null,
-          }))}
+          })) as any}
+          intro={introFinal}
+          onSaveIntro={isAdmin ? handleSavePwIntro : undefined}
+          onSaveCenario={isAdmin ? handleSavePwCenario : undefined}
           customSections={pwSections.map(s => ({ ...s, photoUrl: pwPhotos[`custom-${s.id}`] || null }))}
           onChangeCustomSections={isAdmin ? handleChangePwSections : undefined}
           adminActions={

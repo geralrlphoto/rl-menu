@@ -12,9 +12,11 @@
 
 import { type ReactNode } from 'react'
 import { CustomSections, type PwSection } from './CustomSections'
+import { EditableIntro, type PwIntro } from './EditableIntro'
+import { EditableCenario, type PwCenario } from './EditableCenario'
 import './prewedding.css'
 
-export type { PwSection }
+export type { PwSection, PwIntro, PwCenario }
 
 export type PreWeddingViewProps = {
   // Hero
@@ -44,18 +46,15 @@ export type PreWeddingViewProps = {
   /** Tríptico de imagens (3 fotos abaixo da intro) */
   triptychUrls?: Array<string | null | undefined>
 
-  /** 3 cenários (Cidade / Campo / Praia) */
-  cenarios: Array<{
-    num: string                    // ex: '01'
-    title: string                  // ex: 'Na Cidade'
-    titleAccent?: string           // palavra final em itálico dourado
-    paragraphs: string[]
-    photoUrl?: string | null
-    bullets?: string[]
-    outfit?: { noivo?: string; noiva?: string }
-    dica?: string
-    galleryUrls?: Array<string | null | undefined>
-  }>
+  /** 3 cenários (Cidade / Campo / Praia) — agora editáveis na página */
+  cenarios: PwCenario[]
+  /** Admin: gravar edição de um cenário (por índice) */
+  onSaveCenario?: (idx: number, next: PwCenario) => void | Promise<void>
+
+  /** Intro editável (substitui introParagraphs). Se fornecido,
+   *  rende o EditableIntro em vez do bloco legacy. */
+  intro?: PwIntro
+  onSaveIntro?: (next: PwIntro) => void | Promise<void>
 
   /** Booking slot: passa-se já renderizado o componente
    *  PreWeddingSection existente, mas só queremos a parte do
@@ -162,16 +161,24 @@ export function PreWeddingView(props: PreWeddingViewProps) {
           onUpload={props.onUploadPhoto} onRemove={props.onRemovePhoto} />
       </section>
 
-      {/* Intro — texto full-width (foto à direita removida) */}
-      <section className="pw-intro">
-        <div className="body">
-          <div className="eyebrow">Pré-Wedding</div>
-          <h2>Para que serve a <em>sessão</em></h2>
-          {props.introParagraphs.slice(0, 4).map((p, i) => (
-            <p key={i} dangerouslySetInnerHTML={{ __html: highlight(p) }} />
-          ))}
-        </div>
-      </section>
+      {/* Intro — editável no app */}
+      {props.intro ? (
+        <EditableIntro
+          intro={props.intro}
+          isAdmin={props.isAdmin}
+          onSave={props.onSaveIntro}
+        />
+      ) : (
+        <section className="pw-intro">
+          <div className="body">
+            <div className="eyebrow">Pré-Wedding</div>
+            <h2>Para que serve a <em>sessão</em></h2>
+            {props.introParagraphs.slice(0, 4).map((p, i) => (
+              <p key={i} dangerouslySetInnerHTML={{ __html: highlight(p) }} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Foto única full-width abaixo da intro (substitui o antigo tríptico) */}
       {(() => {
@@ -194,70 +201,21 @@ export function PreWeddingView(props: PreWeddingViewProps) {
         )
       })()}
 
-      {/* 3 Cenários */}
+      {/* 3 Cenários — editáveis no app */}
       {props.cenarios.map((c, i) => {
         const slot = `cen-${i}`
-        const url = c.photoUrl ?? null
         return (
-          <section key={i} className="pw-cenario">
-            <div className="num">{c.num}</div>
-            <h3>
-              {c.titleAccent ? (
-                <>{c.title.replace(c.titleAccent, '').trim()}{' '}
-                  <em>{c.titleAccent}</em></>
-              ) : c.title}
-            </h3>
-            <hr className="gold-rule" />
-
-            <div className="body">
-              {c.paragraphs.map((p, j) => (
-                <p key={j} dangerouslySetInnerHTML={{ __html: highlight(p) }} />
-              ))}
-
-              {c.bullets && c.bullets.length > 0 && (
-                <ul className="cen-list">
-                  {c.bullets.map((b, j) => <li key={j}>{b}</li>)}
-                </ul>
-              )}
-
-              {c.outfit && (
-                <div className="pw-outfit">
-                  <div className="card">
-                    <h4>Noivo</h4>
-                    <p>{c.outfit.noivo ?? 'Camisa clara, blazer leve, calças de algodão.'}</p>
-                  </div>
-                  <div className="card">
-                    <h4>Noiva</h4>
-                    <p>{c.outfit.noiva ?? 'Vestido fluido, tons neutros, calçado confortável.'}</p>
-                  </div>
-                </div>
-              )}
-
-              {c.dica && (
-                <div className="pw-dica">
-                  <span className="ic">✦</span>
-                  <div className="txt" dangerouslySetInnerHTML={{ __html: highlight(c.dica) }} />
-                </div>
-              )}
-            </div>
-
-            {/* Foto grande full-width depois de cada cenário — sempre visível
-             *  em modo admin para permitir upload directo. */}
-            {(props.isAdmin || url) && (
-              <div className="pw-cenario-photo">
-                {url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={url} alt="" />
-                ) : (
-                  <div className="ph" />
-                )}
-                <SlotControls slot={slot} url={url}
-                  isAdmin={props.isAdmin} uploading={isUp(slot)}
-                  onUpload={props.onUploadPhoto} onRemove={props.onRemovePhoto} />
-              </div>
-            )}
-
-          </section>
+          <EditableCenario
+            key={i}
+            cenario={c}
+            slotKey={slot}
+            photoUrl={(c as any).photoUrl ?? null}
+            isAdmin={props.isAdmin}
+            uploadingPhoto={isUp(slot)}
+            onSave={props.onSaveCenario ? (next) => props.onSaveCenario!(i, next) : undefined}
+            onUploadPhoto={props.onUploadPhoto ? (f) => props.onUploadPhoto!(slot, f) : undefined}
+            onRemovePhoto={props.onRemovePhoto ? () => props.onRemovePhoto!(slot) : undefined}
+          />
         )
       })}
 
