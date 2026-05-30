@@ -14,6 +14,17 @@ export type PwIntro = {
   paragraphs: string[]
 }
 
+/** Intro padrão usada quando settings.pwIntro ainda não está definido. */
+export const DEFAULT_INTRO: PwIntro = {
+  eyebrow: 'Pré-Wedding',
+  title: 'Para que serve a *sessão*',
+  paragraphs: [
+    'A sessão de pré-wedding é um momento especial para celebrarem o vosso amor antes do grande dia. Serve para criarem **memórias descontraídas**, ficarem mais à vontade com a câmara e, acima de tudo, desfrutarem de um tempo só vosso, sem pressas nem formalidades.',
+    'As imagens podem também ser usadas no convite, decoração ou vídeo do casamento.',
+    'É o início perfeito para esta nova fase juntos.',
+  ],
+}
+
 export function EditableIntro(props: {
   intro: PwIntro
   isAdmin: boolean

@@ -12,7 +12,9 @@
 
 import { type ReactNode } from 'react'
 import { CustomSections, type PwSection } from './CustomSections'
-import { EditableIntro, type PwIntro } from './EditableIntro'
+import { EditableIntro, DEFAULT_INTRO, type PwIntro } from './EditableIntro'
+
+export { DEFAULT_INTRO }
 import { EditableCenario, type PwCenario } from './EditableCenario'
 import './prewedding.css'
 

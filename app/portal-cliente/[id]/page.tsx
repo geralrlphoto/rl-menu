@@ -9,7 +9,7 @@ import BriefingExtensions, { type BriefingExt } from './BriefingExtensions'
 import '../atmosphere/atmosphere.css'
 import { PortalShell, SidebarCouple, SidebarNav, SidebarMiniCountdown, type SidebarNavItem } from '../atmosphere/PortalShell'
 import { ContratoView } from '../atmosphere/ContratoView'
-import { PreWeddingView, DEFAULT_CENARIOS, type PwSection, type PwIntro, type PwCenario } from '../atmosphere/PreWeddingView'
+import { PreWeddingView, DEFAULT_CENARIOS, DEFAULT_INTRO, type PwSection, type PwIntro, type PwCenario } from '../atmosphere/PreWeddingView'
 import { SendMessageButton } from '../atmosphere/SendMessageButton'
 
 const PORTAL_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
@@ -1909,124 +1909,9 @@ function PortalSubPageContent() {
   if (_atmIsPreWedding && !loading) {
     const handleEditTitlePW = () => { setTitleInput(title); setEditingTitle(true) }
 
-    // ── Parse cenários do Notion ──────────────────────────────────────────
-    // Detecta headings com CIDADE/CAMPO/PRAIA e captura conteúdo até ao
-    // próximo cenário: parágrafos, bullets, sub-headings "o que vestir" e
-    // "dicas para".
-    type Cen = { num: string; title: string; titleAccent?: string; paragraphs: string[]; bullets: string[]; outfit?: { noivo?: string; noiva?: string }; dica?: string }
-    const cenariosFromNotion: Cen[] = []
-    const introParas: string[] = []
-    let activeCen: Cen | null = null
-    let activeSub: 'intro' | 'body' | 'vestir' | 'dicas' = 'intro'
-
-    const headingText = (b: any): string => {
-      const t = b.type
-      if (t === 'heading_1') return plainText(b.heading_1?.rich_text ?? [])
-      if (t === 'heading_2') return plainText(b.heading_2?.rich_text ?? [])
-      if (t === 'heading_3') return plainText(b.heading_3?.rich_text ?? [])
-      return ''
-    }
-    const isHeading = (b: any) => typeof b?.type === 'string' && b.type.startsWith('heading_')
-
-    const detectCenario = (txt: string): Cen | null => {
-      const u = txt.toUpperCase()
-      if (u.includes('VESTIR') || u.includes('DICA')) return null
-      if (u.includes('CIDADE')) return { num: '01', title: 'Na Cidade', titleAccent: 'Cidade', paragraphs: [], bullets: [] }
-      if (u.includes('CAMPO'))  return { num: '02', title: 'No Campo',  titleAccent: 'Campo',  paragraphs: [], bullets: [] }
-      if (u.includes('PRAIA'))  return { num: '03', title: 'Na Praia',  titleAccent: 'Praia',  paragraphs: [], bullets: [] }
-      return null
-    }
-
-    for (const b of blocks) {
-      const isH = isHeading(b)
-      const txt = isH ? headingText(b) : ''
-
-      // Detecta nova sub-secção dentro do cenário
-      if (isH && activeCen) {
-        const u = txt.toUpperCase()
-        if (u.includes('VESTIR')) { activeSub = 'vestir'; continue }
-        if (u.includes('DICA'))   { activeSub = 'dicas'; continue }
-      }
-
-      // Detecta novo cenário
-      if (isH) {
-        const newCen = detectCenario(txt)
-        if (newCen) {
-          if (activeCen) cenariosFromNotion.push(activeCen)
-          activeCen = newCen
-          activeSub = 'body'
-          continue
-        }
-      }
-
-      // Captura conteúdo
-      if (b.type === 'paragraph') {
-        const p = plainText(b.paragraph?.rich_text ?? []).trim()
-        if (!p) continue
-        if (!activeCen) {
-          introParas.push(p)
-        } else if (activeSub === 'body') {
-          activeCen.paragraphs.push(p)
-        } else if (activeSub === 'dicas') {
-          activeCen.dica = (activeCen.dica ? activeCen.dica + ' ' : '') + p
-        }
-      }
-      if (b.type === 'bulleted_list_item') {
-        const li = plainText(b.bulleted_list_item?.rich_text ?? []).trim()
-        if (!li) continue
-        if (!activeCen) {
-          introParas.push('• ' + li)
-        } else if (activeSub === 'body') {
-          activeCen.bullets.push(li)
-        } else if (activeSub === 'vestir') {
-          const m = li.match(/^\s*(NOIVO|NOIVA)\s*[:\-—]\s*(.+)$/i)
-          if (m) {
-            const key = m[1].toUpperCase()
-            activeCen.outfit = activeCen.outfit ?? {}
-            if (key === 'NOIVO') activeCen.outfit.noivo = m[2]
-            else activeCen.outfit.noiva = m[2]
-          } else if (!activeCen.outfit) {
-            activeCen.outfit = { noivo: li }
-          } else if (!activeCen.outfit.noiva) {
-            activeCen.outfit.noiva = li
-          }
-        } else if (activeSub === 'dicas') {
-          activeCen.dica = (activeCen.dica ? activeCen.dica + ' • ' : '') + li
-        }
-      }
-    }
-    if (activeCen) cenariosFromNotion.push(activeCen)
-
-    // ── Estado final dos textos: settings > Notion-parsed > defaults ──
-    // 1. Intro: prefer pwIntro (settings); cai em parser do Notion.
-    const introFromNotion: PwIntro = {
-      eyebrow: 'Pré-Wedding',
-      title: 'Para que serve a *sessão*',
-      paragraphs: introParas.slice(0, 8),
-    }
-    const introFinal: PwIntro = pwIntro ?? introFromNotion
-
-    // 2. Cenários: prefer pwCenarios (settings); cai em parser; depois defaults.
-    const cenariosFinal: PwCenario[] = pwCenarios
-      ?? (cenariosFromNotion.length > 0 ? cenariosFromNotion : DEFAULT_CENARIOS as PwCenario[])
-
-    // ── Auto-migração one-shot: se settings ainda não tem pwIntro/pwCenarios
-    // mas o parser produziu conteúdo, gravar a primeira vez para nunca mais
-    // depender do Notion. Só corre uma vez por carregamento (admin only).
-    if (isAdmin) {
-      const needsIntroMigration = !pwIntro && introParas.length > 0
-      const needsCenariosMigration = !pwCenarios && cenariosFromNotion.length > 0
-      if (needsIntroMigration || needsCenariosMigration) {
-        const patch: Record<string, any> = {}
-        if (needsIntroMigration) patch.pwIntro = introFromNotion
-        if (needsCenariosMigration) patch.pwCenarios = cenariosFromNotion
-        // Fire-and-forget; o próximo refresh já lê do settings
-        savePortalSettings({ ...portalSettingsObj, ...patch }).then(() => {
-          if (needsIntroMigration) setPwIntro(introFromNotion)
-          if (needsCenariosMigration) setPwCenarios(cenariosFromNotion)
-        })
-      }
-    }
+    // Os textos vivem 100% em portais.settings. Notion já não é consultado.
+    const introFinal: PwIntro = pwIntro ?? DEFAULT_INTRO
+    const cenariosFinal: PwCenario[] = pwCenarios ?? (DEFAULT_CENARIOS as PwCenario[])
 
     return (
       <PortalShell sidebar={_atmSidebar}>
