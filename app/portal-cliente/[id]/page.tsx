@@ -1598,6 +1598,7 @@ function PortalSubPageContent() {
     && !editingCalloutLinks && !editingPreWedding && !editingPropostaToken
     && !isSobreViewMode && !isDesignPremium
     && !isPaymentsPage && !isContratoPage && !isPreWeddingPage && !isBriefingPage && !isGuiaPage && !isSobrePage
+    && !isFotografiasPage && !isFilmePage && !isSatisfacaoPage && !isCronogramaPage
     && !error
   const _atmEffectiveHeader = (() => {
     const perPage = id ? pageHeaders[id as string] : undefined
