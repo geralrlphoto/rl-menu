@@ -709,7 +709,7 @@ function PreWeddingSection({ slots, reservedSlotId, reservingSlotId, showReserve
 
   return (
     <>
-      <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
+      {/* NotionBlocks removido — conteúdo da página vem de portais.settings */}
       <div className="mt-8 pt-6 border-t border-white/[0.06]">
         {/* Section header */}
         <div className="flex items-center gap-3 mb-6">
