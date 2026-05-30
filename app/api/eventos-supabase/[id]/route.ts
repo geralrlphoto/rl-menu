@@ -18,13 +18,31 @@ function supabase() {
   return createClient(SUPABASE_URL, SERVICE_KEY)
 }
 
+/** Normaliza cada elemento para string. Aceita:
+ *  - "x" → "x"
+ *  - { name: "x" } → "x"  (formato Notion multi_select preservado em algumas rows)
+ *  - { plain_text: "x" } / { text: { content: "x" } }
+ *  - qualquer outro → String(v) */
+function toStr(x: any): string {
+  if (x == null) return ''
+  if (typeof x === 'string') return x
+  if (typeof x === 'object') {
+    if (typeof x.name === 'string') return x.name
+    if (typeof x.plain_text === 'string') return x.plain_text
+    if (x.text && typeof x.text.content === 'string') return x.text.content
+  }
+  return String(x)
+}
 const parseArr = (v: any): string[] => {
-  if (Array.isArray(v)) return v
+  if (Array.isArray(v)) return v.map(toStr).filter(Boolean)
   if (typeof v === 'string') {
     const s = v.trim()
     if (!s) return []
     if (s.startsWith('[')) {
-      try { const p = JSON.parse(s); return Array.isArray(p) ? p : [] } catch { return [s] }
+      try {
+        const p = JSON.parse(s)
+        return Array.isArray(p) ? p.map(toStr).filter(Boolean) : []
+      } catch { return [s] }
     }
     return s.split(',').map(x => x.trim()).filter(Boolean)
   }
@@ -51,11 +69,15 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: 'event not found' }, { status: 404 })
     }
 
-    // Equipa
+    // Equipa — só as colunas que sabemos que existem
+    const equipaFilter = [
+      `evento_id.eq.${row.notion_id ?? row.id}`,
+      row.referencia ? `referencia.eq.${row.referencia}` : null,
+    ].filter(Boolean).join(',')
     const { data: equipa } = await sb
       .from('evento_equipa')
-      .select('fotografo, videografo, editor_album, editor_video, editor_fotos')
-      .or(`evento_id.eq.${row.notion_id ?? row.id},referencia.eq.${row.referencia ?? ''}`)
+      .select('fotografo, videografo')
+      .or(equipaFilter)
       .limit(1)
       .maybeSingle()
 
@@ -101,9 +123,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       status:            row.status ?? 'Não iniciada',
       fotografo,
       videografo,
-      editor_fotos:      equipa?.editor_fotos ?? row.editor_fotos ?? null,
-      editor_album:      equipa?.editor_album ?? [],
-      editor_video:      equipa?.editor_video ?? [],
+      editor_fotos:      row.editor_fotos ?? null,
+      editor_album:      [],
+      editor_video:      [],
       proposta:          contrato?.proposta ?? null,
       valor_liquido:     row.valor_liquido ?? null,
       valor_foto:        row.valor_foto ?? null,

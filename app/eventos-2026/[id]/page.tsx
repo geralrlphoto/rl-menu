@@ -1840,7 +1840,9 @@ function PortalSection({ evento }: { evento: Evento }) {
   const referencia = evento.referencia!
   // Detecta tipo do evento (batizado vs casamento) para usar a rota correta
   const tipoEvento: 'casamento' | 'batizado' = (() => {
-    const tiposEvento = evento.tipo_evento ?? []
+    const tiposEvento = (evento.tipo_evento ?? []).map((t: any) =>
+      typeof t === 'string' ? t : (t?.name ?? String(t ?? ''))
+    )
     if (tiposEvento.map((t: string) => t.toUpperCase()).includes('BATIZADO')) return 'batizado'
     if ((referencia ?? '').toUpperCase().startsWith('BAT_')) return 'batizado'
     return 'casamento'
@@ -1932,7 +1934,7 @@ function PortalSection({ evento }: { evento: Evento }) {
     setCreating(true)
     try {
       const tiposEvento = evento.tipo_evento ?? []
-      const tipoPortal = tiposEvento.map((t: string) => t.toUpperCase()).includes('BATIZADO')
+      const tipoPortal = tiposEvento.map((t: any) => typeof t === 'string' ? t.toUpperCase() : String(t?.name ?? t ?? '').toUpperCase()).includes('BATIZADO')
         ? 'batizado'
         : 'casamento'
 
