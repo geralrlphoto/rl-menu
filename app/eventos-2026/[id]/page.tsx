@@ -2386,8 +2386,11 @@ export default function EventoPage() {
   }, [])
 
   useEffect(() => {
-    fetch(`/api/eventos-notion/${id}`)
-      .then(r => r.json())
+    // Supabase como fonte primária do evento — garante que evento.referencia
+    // está sempre coerente com o que o portal lê (sem depender do Notion).
+    // Fallback para /api/eventos-notion se o evento não estiver em Supabase.
+    fetch(`/api/eventos-supabase/${id}`)
+      .then(r => r.ok ? r.json() : fetch(`/api/eventos-notion/${id}`).then(r2 => r2.json()))
       .then(d => {
         if (d.error) { setError(d.error); setLoading(false); return }
         const ev = d.event
