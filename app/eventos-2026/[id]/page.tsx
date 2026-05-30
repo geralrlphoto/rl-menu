@@ -3568,8 +3568,15 @@ export default function EventoPage() {
                     value={url}
                     onChange={e => setActionUrls(prev => ({ ...prev, [urlKey]: e.target.value }))}
                     onBlur={async () => {
-                      if (!evento?.referencia) return
-                      await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [`${urlKey}_url`]: url } } }) })
+                      if (!evento?.referencia) {
+                        alert('❌ Este evento não tem referência preenchida em Supabase (eventos_2026.referencia). O URL NÃO foi guardado. Preenche a coluna "referencia" da row deste evento no Supabase e tenta de novo.')
+                        return
+                      }
+                      const res = await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [`${urlKey}_url`]: url } } }) })
+                      if (!res.ok) {
+                        const err = await res.json().catch(() => ({}))
+                        alert(`❌ Falhou a guardar o URL: ${err?.error ?? res.statusText}`)
+                      }
                     }}
                     className="flex-1 bg-white/[0.03] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/60 placeholder-white/20 focus:outline-none focus:border-blue-400/40 transition-colors"
                   />
