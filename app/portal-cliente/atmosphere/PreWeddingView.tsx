@@ -163,7 +163,24 @@ export function PreWeddingView(props: PreWeddingViewProps) {
           onUpload={props.onUploadPhoto} onRemove={props.onRemovePhoto} />
       </section>
 
-      {/* Intro removida da página — manter só fotos + CustomSections + calendário */}
+      {/* Intro — editável no app */}
+      {props.intro ? (
+        <EditableIntro
+          intro={props.intro}
+          isAdmin={props.isAdmin}
+          onSave={props.onSaveIntro}
+        />
+      ) : (
+        <section className="pw-intro">
+          <div className="body">
+            <div className="eyebrow">Pré-Wedding</div>
+            <h2>Para que serve a <em>sessão</em></h2>
+            {props.introParagraphs.slice(0, 4).map((p, i) => (
+              <p key={i} dangerouslySetInnerHTML={{ __html: highlight(p) }} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Foto única full-width abaixo da intro (substitui o antigo tríptico) */}
       {(() => {
@@ -186,7 +203,23 @@ export function PreWeddingView(props: PreWeddingViewProps) {
         )
       })()}
 
-      {/* Cenários removidos da página — manter só fotos + CustomSections + calendário */}
+      {/* 3 Cenários — editáveis no app */}
+      {props.cenarios.map((c, i) => {
+        const slot = `cen-${i}`
+        return (
+          <EditableCenario
+            key={i}
+            cenario={c}
+            slotKey={slot}
+            photoUrl={(c as any).photoUrl ?? null}
+            isAdmin={props.isAdmin}
+            uploadingPhoto={isUp(slot)}
+            onSave={props.onSaveCenario ? (next) => props.onSaveCenario!(i, next) : undefined}
+            onUploadPhoto={props.onUploadPhoto ? (f) => props.onUploadPhoto!(slot, f) : undefined}
+            onRemovePhoto={props.onRemovePhoto ? () => props.onRemovePhoto!(slot) : undefined}
+          />
+        )
+      })}
 
       {/* Secções personalizadas (texto + foto, editáveis na página) */}
       {((props.customSections && props.customSections.length > 0) || props.isAdmin) && props.onChangeCustomSections && (
