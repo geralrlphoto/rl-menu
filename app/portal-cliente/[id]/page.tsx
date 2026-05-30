@@ -1926,7 +1926,7 @@ function PortalSubPageContent() {
           uploadingSlot={uploadingPwSlot}
           heroPhotoUrl={pwPhotos.hero || null}
           introPhotoUrl={pwPhotos.intro || null}
-          introParagraphs={introParas.slice(0, 4)}
+          introParagraphs={introFinal.paragraphs.slice(0, 4)}
           triptychUrls={[pwPhotos['tript-0']]}
           cenarios={cenariosFinal.map((c, i) => ({
             ...c,
