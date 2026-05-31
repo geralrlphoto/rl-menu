@@ -160,6 +160,18 @@ export default async function PortalClientePage() {
                         </span>
                       </div>
                       <p className="text-[10px] tracking-[0.15em] text-white/30">{portal.cliente}</p>
+                      {/* Email do cliente */}
+                      {portal.fichaCliente?.email && (
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <svg className="w-2.5 h-2.5 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7l9 7 9-7" />
+                          </svg>
+                          <a href={`mailto:${portal.fichaCliente.email}`}
+                            className="text-[10px] tracking-[0.06em] text-white/45 hover:text-white/75 transition-colors">
+                            {portal.fichaCliente.email}
+                          </a>
+                        </div>
+                      )}
                       <div className="flex items-center gap-4 mt-2">
                         <span className="text-[8px] tracking-[0.25em] text-white/20 uppercase">{portal.tipo}</span>
                         <span className="text-white/10">·</span>
