@@ -91,8 +91,22 @@ export default async function PortalClientePage() {
 
         {/* Header */}
         <div className="mb-12">
-          <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD · Photography & Video</p>
-          <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Portal Cliente</h1>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD · Photography & Video</p>
+              <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Portal Cliente</h1>
+            </div>
+            {/* Botão Acesso ao Portal */}
+            <Link href="/media/portal-cliente/acesso"
+              className="group flex items-center gap-3 border border-white/15 bg-white/[0.04] hover:bg-white/[0.09] hover:border-white/30 px-5 py-3 transition-all duration-300">
+              <svg className="w-3.5 h-3.5 text-white/40 group-hover:text-white/80 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              <span className="text-[9px] tracking-[0.4em] text-white/50 group-hover:text-white/85 uppercase transition-colors whitespace-nowrap">Acesso ao Portal</span>
+              <span className="text-white/25 group-hover:text-white/60 group-hover:translate-x-0.5 transition-all duration-200">→</span>
+            </Link>
+          </div>
           <div className="mt-4 flex items-center gap-3">
             <div className="h-px w-12 bg-white/25" />
             <div className="h-px flex-1 bg-white/[0.04]" />
