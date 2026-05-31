@@ -6,7 +6,7 @@ import { useParams, useSearchParams } from 'next/navigation'
 import { plainText, type Block } from '../../NotionRenderer'
 import BlockEditor from '../../BlockEditor'
 import { NoivosLogoutButton } from '@/app/components/NoivosLogoutButton'
-import { AtmospherePortal } from '../../atmosphere/AtmospherePortal'
+import { AtmospherePortal, buildDeliveriesFromSettings } from '../../atmosphere/AtmospherePortal'
 
 const PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
 
@@ -1347,6 +1347,7 @@ export default function PortalRefPage() {
           pageTitles:  settings.pageTitles,
           portalRefForLinks: referencia,
           hasTasks:    (settings.tasks ?? []).length > 0,
+          deliveries:  buildDeliveriesFromSettings(settings),
         }}
         callbacks={{}}
       />

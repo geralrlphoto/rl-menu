@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { plainText, type Block } from './NotionRenderer'
 import BlockEditor from './BlockEditor'
-import { AtmospherePortal } from './atmosphere/AtmospherePortal'
+import { AtmospherePortal, buildDeliveriesFromSettings } from './atmosphere/AtmospherePortal'
 
 const PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
 
@@ -1070,6 +1070,7 @@ export default function PortalClientePage() {
           pageTitles:  settings.pageTitles,
           portalRefForLinks: settings.referencia ?? null,
           hasTasks:    (settings.tasks ?? []).length > 0,
+          deliveries:  buildDeliveriesFromSettings(settings),
         }}
         callbacks={{}}
       />

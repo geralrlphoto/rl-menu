@@ -77,13 +77,40 @@ export type AtmosphereCallbacks = {
 
 const ROMANS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X']
 
+/** Default real: tudo em "Aguarda" — usado quando settings não tem
+ *  estado nenhum gravado. Não mostra mocks fakes. */
 const DEFAULT_DELIVERIES: NonNullable<AtmosphereData['deliveries']> = [
-  { roman: 'I',   title: 'Seleção de Fotos', meta: 'Prazo · 30 dias',           state: 'ok',   when: 'há 12 dias' },
-  { roman: 'II',  title: 'Entrega do Vídeo', meta: 'Prazo · 180 dias úteis',    state: 'wait', when: 'previsto · 2027' },
-  { roman: 'III', title: 'Fotos para Edição', meta: 'Em curso no atelier',       state: 'ok',   when: 'há 4 dias' },
-  { roman: 'IV',  title: 'Álbum',            meta: 'Maquete em aprovação',       state: 'info', when: 'aguarda impressão' },
-  { roman: 'V',   title: 'Seleção · Acordos', meta: 'Galeria privada partilhada', state: 'done', when: 'há 1 mês' },
+  { roman: 'I',   title: 'Seleção de Fotos', meta: 'Prazo · 30 dias',           state: 'wait' },
+  { roman: 'II',  title: 'Entrega do Vídeo', meta: 'Prazo · 180 dias úteis',    state: 'wait' },
+  { roman: 'III', title: 'Fotos para Edição', meta: 'Em curso no atelier',       state: 'wait' },
+  { roman: 'IV',  title: 'Álbum',            meta: 'Em aprovação',               state: 'wait' },
+  { roman: 'V',   title: 'Seleção · Acordos', meta: 'Galeria privada partilhada', state: 'wait' },
 ]
+
+/** Mapeia um estado humano gravado em settings (vindo do Notion/admin)
+ *  para o DeliveryState do design Atmosphère. */
+function mapEstadoToDeliveryState(s: string | null | undefined): import('./PortalShell').DeliveryState {
+  const v = String(s ?? '').trim().toLowerCase()
+  if (!v || v === 'aguardar' || v === 'aguarda' || v.startsWith('em ediç') || v.startsWith('em selec')) return 'wait'
+  if (v === 'entregue') return 'ok'
+  if (v.startsWith('aprov') || v.startsWith('em aprov')) return 'info'
+  if (v.startsWith('conclu') || v === 'selecionadas' || v === 'editadas') return 'done'
+  return 'wait'
+}
+
+/** Constrói o array de deliveries a partir do settings do portal.
+ *  Lê: sel_fotos_estado, video_estado, fotos_edicao_estado,
+ *  album_estado, selecao_noivos_estado. Em falta → "wait". */
+export function buildDeliveriesFromSettings(settings: Record<string, any> | null | undefined): NonNullable<AtmosphereData['deliveries']> {
+  const s = settings ?? {}
+  return [
+    { roman: 'I',   title: 'Seleção de Fotos',  meta: 'Prazo · 30 dias',           state: mapEstadoToDeliveryState(s.sel_fotos_estado) },
+    { roman: 'II',  title: 'Entrega do Vídeo',  meta: 'Prazo · 180 dias úteis',    state: mapEstadoToDeliveryState(s.video_estado) },
+    { roman: 'III', title: 'Fotos para Edição', meta: 'Em curso no atelier',       state: mapEstadoToDeliveryState(s.fotos_edicao_estado) },
+    { roman: 'IV',  title: 'Álbum',             meta: 'Em aprovação',              state: mapEstadoToDeliveryState(s.album_estado) },
+    { roman: 'V',   title: 'Seleção · Acordos', meta: 'Galeria privada partilhada', state: mapEstadoToDeliveryState(s.selecao_noivos_estado) },
+  ]
+}
 
 export function AtmospherePortal({
   data,
