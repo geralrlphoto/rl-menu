@@ -28,15 +28,9 @@ export default function AcessoPortalPage() {
   const [view, setView] = useState<View>('login')
   const [flash, setFlash] = useState('')
 
-  // Se já houver sessão, redirecionar para /portal
-  const router = useRouter()
-  useEffect(() => {
-    let mounted = true
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (mounted && session) router.replace('/media/portal-cliente/acesso/portal')
-    })
-    return () => { mounted = false }
-  }, [router])
+  // Auto-redirect via Supabase removido — auth do cliente é por cookie
+  // pm_<REF> definida pelo /api/media-portal-acesso. O portal de destino
+  // (/portal-media/<ref>) faz o seu próprio check do cookie.
 
   // Auto-dismiss flash
   useEffect(() => {
@@ -128,10 +122,20 @@ function LoginForm({ go, setFlash }: { go: (v: View) => void; setFlash: (s: stri
     if (eErr || pErr) return
     setLoading(true)
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password: pw })
-      if (error) { setAuthErr('Email ou palavra-passe inválidos.'); return }
-      setFlash('Sessão iniciada com sucesso.')
-      router.push('/media/portal-cliente/acesso/portal')
+      // Auth contra media_portais: match email + senha → cookie + ref do portal
+      const res = await fetch('/api/media-portal-acesso', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, senha: pw }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.ok) {
+        setAuthErr(data?.error ?? 'Email ou palavra-passe inválidos.')
+        return
+      }
+      setFlash('Sessão iniciada. A abrir o teu portal…')
+      // Redireciona para o portal específico deste cliente
+      router.push(`/portal-media/${data.ref}`)
     } catch {
       setAuthErr('Erro de ligação. Tenta novamente.')
     } finally { setLoading(false) }
