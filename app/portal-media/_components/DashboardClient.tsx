@@ -70,6 +70,18 @@ export default function DashboardClient({
   const phaseName = (projeto.fases?.[active]?.nome) ?? `Fase ${active + 1}`
   const phasePct = Math.round(((active + 1) / totalFases) * 100)
 
+  // ── Mini-chart pagamentos ──────────────────────────────────────
+  const pagamentos = projeto.pagamentos ?? []
+  const valorTotal = pagamentos.reduce((s, p) => s + (p.valor ?? 0), 0)
+  const valorPago = pagamentos.filter(p => p.estado === 'pago').reduce((s, p) => s + (p.valor ?? 0), 0)
+  const valorPendente = valorTotal - valorPago
+  const pctPago = valorTotal > 0 ? Math.round((valorPago / valorTotal) * 100) : 0
+  const fmtEur = (n: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n)
+  const RING_R = 36
+  const RING_C = 2 * Math.PI * RING_R
+  const ringPayOffset = RING_C * (1 - pctPago / 100)
+  const ringFlowOffset = RING_C * (1 - phasePct / 100)
+
   // Stats — fallbacks honestos quando faltam dados.
   const local = projeto.local?.trim() ? projeto.local : null
   const filmagem = projeto.dataFilmagem?.trim() ? projeto.dataFilmagem : null
@@ -202,6 +214,92 @@ export default function DashboardClient({
           <div className="pcd-bar">
             <div className="pcd-bar__fill" style={{ width: `${phasePct}%` }} />
           </div>
+        </section>
+
+        {/* MINI GRÁFICOS — Pagamentos + Workflow */}
+        <section className="pcd-graphs">
+          {/* Pagamentos */}
+          <Link className="pcd-graph-card pcd-card"
+            href={`/portal-media/${projeto.ref}/pagamentos`}>
+            <div className="pcd-graph-head">
+              <p className="pcd-graph-title">Pagamentos</p>
+              <span className="pcd-graph-go">Ver tudo →</span>
+            </div>
+            <div className="pcd-graph-body">
+              <div className="pcd-mini-ring">
+                <svg width={88} height={88} viewBox="0 0 88 88">
+                  <circle className="pcd-mini-ring__track" cx={44} cy={44} r={RING_R} />
+                  <circle className="pcd-mini-ring__fill pcd-color-pay" cx={44} cy={44} r={RING_R}
+                    style={{ strokeDasharray: RING_C, strokeDashoffset: ringPayOffset, transition: 'stroke-dashoffset 1.4s cubic-bezier(.3,.1,.2,1)' }} />
+                </svg>
+                <div className="pcd-mini-ring__num">
+                  <span className="pcd-mini-ring__pct">{pctPago}<small>%</small></span>
+                  <span className="pcd-mini-ring__cap">Pago</span>
+                </div>
+              </div>
+              <div className="pcd-graph-info">
+                <div className="pcd-graph-row">
+                  <span className="pcd-graph-row__k">Total</span>
+                  <span className="pcd-graph-row__v">{fmtEur(valorTotal)}</span>
+                </div>
+                <div className="pcd-graph-row">
+                  <span className="pcd-graph-row__k">Pago</span>
+                  <span className="pcd-graph-row__v"><em>{fmtEur(valorPago)}</em></span>
+                </div>
+                <div className="pcd-graph-row">
+                  <span className="pcd-graph-row__k">Em falta</span>
+                  <span className="pcd-graph-row__v"><em className="pending">{fmtEur(valorPendente)}</em></span>
+                </div>
+              </div>
+            </div>
+          </Link>
+
+          {/* Workflow snapshot */}
+          <Link className="pcd-graph-card pcd-card"
+            href={`/portal-media/${projeto.ref}/workflow`}>
+            <div className="pcd-graph-head">
+              <p className="pcd-graph-title">Workflow</p>
+              <span className="pcd-graph-go">Ver tudo →</span>
+            </div>
+            <div className="pcd-graph-body">
+              <div className="pcd-mini-ring">
+                <svg width={88} height={88} viewBox="0 0 88 88">
+                  <circle className="pcd-mini-ring__track" cx={44} cy={44} r={RING_R} />
+                  <circle className="pcd-mini-ring__fill pcd-color-flow" cx={44} cy={44} r={RING_R}
+                    style={{ strokeDasharray: RING_C, strokeDashoffset: ringFlowOffset, transition: 'stroke-dashoffset 1.4s cubic-bezier(.3,.1,.2,1) .1s' }} />
+                </svg>
+                <div className="pcd-mini-ring__num">
+                  <span className="pcd-mini-ring__pct">{phasePct}<small>%</small></span>
+                  <span className="pcd-mini-ring__cap">Concluído</span>
+                </div>
+              </div>
+              <div className="pcd-graph-info">
+                <div className="pcd-graph-row">
+                  <span className="pcd-graph-row__k">Fase atual</span>
+                  <span className="pcd-graph-row__v" style={{ fontSize: 12, letterSpacing: '.04em' }}>{phaseName}</span>
+                </div>
+                <div className="pcd-graph-row">
+                  <span className="pcd-graph-row__k">Progresso</span>
+                  <span className="pcd-graph-row__v">{active + 1} / {totalFases}</span>
+                </div>
+              </div>
+            </div>
+            {/* Mini-timeline horizontal */}
+            <div className="pcd-mini-tl">
+              {Array.from({ length: totalFases }).map((_, i) => (
+                <span key={i} style={{ display: 'contents' }}>
+                  <span className={
+                    'pcd-mini-tl__dot' +
+                    (i < active ? ' pcd-done' : '') +
+                    (i === active ? ' pcd-doing' : '')
+                  } />
+                  {i < totalFases - 1 && (
+                    <span className={'pcd-mini-tl__seg' + (i < active ? ' pcd-done' : '')} />
+                  )}
+                </span>
+              ))}
+            </div>
+          </Link>
         </section>
 
         {/* MENU */}
