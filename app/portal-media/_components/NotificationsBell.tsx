@@ -12,8 +12,12 @@ import './portal-top-bar.css'
 
 type Notification = {
   at: string
+  type?: string                // 'fase' | 'roadmap-status' | 'generic' | ...
+  title?: string
+  body?: string
+  meta?: any
+  // backwards compat: notify_fase_log pode trazer { phase } directamente
   phase?: { n?: string; name?: string; state?: string; date?: string | null }
-  // espaço para outros tipos futuros
 }
 
 interface Props {
@@ -194,16 +198,35 @@ function EmptyState({ text }: { text: string }) {
 }
 
 function NotifRow({ n, fresh }: { n: Notification; fresh: boolean }) {
-  const phaseName = n.phase?.name ?? 'Atualização da fase'
-  const phaseNum = n.phase?.n ?? null
-  const phaseState = n.phase?.state ?? ''
-  const stateLabel = phaseState === 'done' ? 'Concluído'
-    : phaseState === 'doing' ? 'Em curso'
-    : phaseState === 'pending' ? 'Pendente'
-    : ''
-  const stateColor = phaseState === 'done' ? 'oklch(0.72 0.12 165)'
-    : phaseState === 'doing' ? 'oklch(0.80 0.11 245)'
-    : 'oklch(0.66 0.15 35)'
+  // Determina tipo + label + cor por defeito
+  const type = String(n.type ?? (n.phase ? 'fase' : 'generic'))
+  const isFase = type === 'fase' || !!n.phase
+  const isRoadmap = type === 'roadmap-status' || type === 'roadmap'
+
+  // Header label + cor
+  let headerLabel = 'Notificação'
+  let headerColor = 'oklch(0.80 0.11 245)' // accent navy default
+  if (isFase) {
+    const ps = n.phase?.state ?? ''
+    headerLabel = n.phase?.n ? `Fase ${n.phase.n}` : 'Fase'
+    if (ps) {
+      const lbl = ps === 'done' ? 'Concluído' : ps === 'doing' ? 'Em curso' : ps === 'pending' ? 'Pendente' : ps
+      headerLabel += ` · ${lbl}`
+    }
+    headerColor = ps === 'done' ? 'oklch(0.72 0.12 165)' : ps === 'doing' ? 'oklch(0.80 0.11 245)' : 'oklch(0.66 0.15 35)'
+  } else if (isRoadmap) {
+    headerLabel = 'Road Map · Estado'
+    // Cor por novo estado
+    const ne = String(n.meta?.novoEstado ?? '')
+    headerColor = ne === 'concluido' ? 'oklch(0.72 0.12 165)'
+      : ne === 'em_andamento' ? 'oklch(0.80 0.11 245)'
+      : ne === 'aguardar' ? 'oklch(0.78 0.10 80)'
+      : 'oklch(0.66 0.15 35)'
+  }
+
+  // Title + body
+  const title = (n.title ?? '').trim() || (isFase ? (n.phase?.name ?? 'Atualização da fase') : 'Atualização')
+  const body = (n.body ?? '').trim() || (isFase && n.phase?.date ? `Data: ${n.phase.date}` : '')
   const when = formatRelative(n.at)
 
   return (
@@ -215,19 +238,18 @@ function NotifRow({ n, fresh }: { n: Notification; fresh: boolean }) {
       )}
       <div className="flex items-center justify-between gap-2 mb-1">
         <p className="text-[10px] tracking-[0.2em] uppercase font-bold"
-          style={{ fontFamily: 'Space Grotesk, Manrope, sans-serif', color: stateColor }}>
-          {phaseNum ? `Fase ${phaseNum}` : 'Fase'}
-          {stateLabel ? ` · ${stateLabel}` : ''}
+          style={{ fontFamily: 'Space Grotesk, Manrope, sans-serif', color: headerColor }}>
+          {headerLabel}
         </p>
         <span className="text-[10px]" style={{ color: 'oklch(0.58 0.03 245)' }}>{when}</span>
       </div>
       <p className="text-[12.5px] leading-snug font-medium"
         style={{ color: '#fff' }}>
-        {phaseName}
+        {title}
       </p>
-      {n.phase?.date && (
+      {body && (
         <p className="text-[11px] mt-1" style={{ color: 'oklch(0.70 0.03 245)' }}>
-          Data: {n.phase.date}
+          {body}
         </p>
       )}
     </li>

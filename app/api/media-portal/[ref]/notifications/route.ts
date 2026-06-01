@@ -27,9 +27,19 @@ export async function GET(_req: NextRequest, { params }: Params) {
       .eq('ref', ref.toUpperCase())
       .maybeSingle()
     const dados = (row?.dados ?? {}) as Record<string, any>
-    const log: any[] = Array.isArray(dados.notify_fase_log) ? dados.notify_fase_log : []
-    // Devolve mais recentes primeiro
-    const sorted = [...log].sort((a, b) => String(b?.at ?? '').localeCompare(String(a?.at ?? '')))
+    // Merge dos dois logs: notify_fase_log (Workflow v2) + notify_log (genérico)
+    const faseLog: any[] = Array.isArray(dados.notify_fase_log) ? dados.notify_fase_log : []
+    const genericLog: any[] = Array.isArray(dados.notify_log) ? dados.notify_log : []
+    // Normaliza notify_fase_log para o mesmo shape: { at, type, title, body, meta }
+    const faseAsGeneric = faseLog.map((n: any) => ({
+      at: n?.at,
+      type: 'fase',
+      title: n?.phase?.name ? `Fase ${n.phase.n ?? ''} · ${n.phase.name}`.trim() : 'Atualização da fase',
+      body: n?.phase?.state ? `Estado: ${n.phase.state}` : '',
+      meta: { phase: n?.phase ?? null },
+    }))
+    const merged = [...faseAsGeneric, ...genericLog]
+    const sorted = merged.sort((a, b) => String(b?.at ?? '').localeCompare(String(a?.at ?? '')))
     return NextResponse.json({ ok: true, notifications: sorted.slice(0, 50) })
   } catch {
     return NextResponse.json({ ok: true, notifications: [] })

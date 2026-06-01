@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import type { Projeto, RoadmapColuna, RoadmapTarefa, TarefaEstado } from '@/app/portal-media/_data/mockProject'
 import AdminBar from './AdminBar'
@@ -174,15 +174,76 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
   const totalConcluidas = colunas.reduce((s, c) => s + c.tarefas.filter(t => t.estado === 'concluido').length, 0)
   const progresso      = totalTarefas > 0 ? Math.round((totalConcluidas / totalTarefas) * 100) : 0
 
+  /* Baseline do roadmap (último estado guardado) — para detectar mudanças
+     de estado das tarefas ao gravar e disparar notificações. */
+  const baselineRef = useRef<RoadmapColuna[]>(
+    roadmapValido(initial.roadmap) ? initial.roadmap! : DEFAULT_ROADMAP
+  )
+
+  /* Fire-and-forget: dispara uma notificação por cada tarefa cuja
+     'estado' mudou desde o último save. Tolerante a falhas. */
+  const notifyStatusChanges = async (prev: RoadmapColuna[], next: RoadmapColuna[]) => {
+    const changes: { coluna: string; tarefa: string; from: TarefaEstado; to: TarefaEstado }[] = []
+    const prevMap = new Map<string, { col: string; estado: TarefaEstado; titulo: string }>()
+    for (const col of prev) {
+      for (const t of col.tarefas) {
+        prevMap.set(t.id, { col: col.titulo, estado: t.estado, titulo: t.titulo })
+      }
+    }
+    for (const col of next) {
+      for (const t of col.tarefas) {
+        const p = prevMap.get(t.id)
+        if (p && p.estado !== t.estado) {
+          changes.push({ coluna: col.titulo, tarefa: t.titulo, from: p.estado, to: t.estado })
+        }
+      }
+    }
+    if (changes.length === 0) return
+    const labels: Record<string, string> = {
+      concluido: 'Concluído',
+      em_andamento: 'Em andamento',
+      nao_iniciada: 'Não iniciada',
+      aguardar: 'Aguardar',
+      enviado: 'Enviado',
+    }
+    await Promise.all(changes.map(c =>
+      fetch(`/api/media-portal/${initial.ref}/notify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'roadmap-status',
+          title: `${c.tarefa}`,
+          body: `${c.coluna} · ${labels[c.from] ?? c.from} → ${labels[c.to] ?? c.to}`,
+          meta: {
+            coluna: c.coluna,
+            tarefa: c.tarefa,
+            estadoAnterior: c.from,
+            novoEstado: c.to,
+          },
+        }),
+      }).catch(() => {})
+    ))
+  }
+
   /* ── persistência ── */
   const save = async () => {
     setSaving(true)
+    const before = baselineRef.current
+    const after = colunas
     try {
       await fetch(`/api/media-portal/${initial.ref}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roadmap: colunas, roadmapImageUrl: heroUrl }),
+        body: JSON.stringify({ roadmap: after, roadmapImageUrl: heroUrl }),
       })
+      // Após guardar com sucesso, disparar notificações por estado alterado.
+      // Só é o admin que edita (clientes não veem o botão Guardar) — isAdmin
+      // será true neste caminho, mas ficamos defensivos.
+      if (isAdmin) {
+        notifyStatusChanges(before, after)
+      }
+      // Actualiza baseline para o próximo diff
+      baselineRef.current = after
     } catch {}
     setSaving(false)
     setIsEditing(false)
