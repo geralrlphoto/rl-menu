@@ -262,6 +262,18 @@
   padding: 22px 30px 28px;
 }
 
+/* Botão "Ver Maqueta" — abre o ficheiro/link da maqueta */
+.portal-atmosphere .fotos-page .fp-view-maquete {
+  display: flex;
+  justify-content: center;
+  margin: 18px 0 6px;
+}
+.portal-atmosphere .fotos-page .fp-view-maquete .fp-approve-btn {
+  min-width: 260px;
+  padding-left: 32px;
+  padding-right: 32px;
+}
+
 /* Timeline 3 passos */
 .portal-atmosphere .fotos-page .fp-timeline {
   display: grid;

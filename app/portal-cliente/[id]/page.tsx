@@ -2059,8 +2059,8 @@ function PortalSubPageContent() {
     const fpCards: FotografiasCard[] = [
       {
         key: 'galerias',
-        title: 'GALERIA ON-LINE',
-        heading: 'Galeria On-line',
+        title: 'GALERIA ONLINE',
+        heading: 'Galeria Online',
         caption: 'Vista completa para partilharem com família e amigos',
         mark: 'G',
         url: urlGalerias,
@@ -2186,6 +2186,7 @@ function PortalSubPageContent() {
               cards={fpCards}
               separatorImageUrl={_atmEffectiveHeader || subpageHeaderUrl || portalHeroImageUrl || null}
               portalRef={fpRef}
+              maqueteUrl={String(portalSettingsObj?.maquete_url ?? '') || null}
             />
           </div>
 

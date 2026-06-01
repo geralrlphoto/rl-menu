@@ -42,8 +42,10 @@ export type FotografiasViewProps = {
   cards: FotografiasCard[]
   /** URL da imagem separadora (fallback: placeholder) */
   separatorImageUrl?: string | null
-  /** Referência do portal — passa-se ao MaquetePanel para API calls */
+  /** Referência do portal, passa-se ao MaquetePanel para API calls */
   portalRef?: string | null
+  /** URL do PDF / link da maqueta para o botão "Ver Maqueta" */
+  maqueteUrl?: string | null
   /** Node opcional para se quiser injectar um substituto da maquete */
   maquetePanelOverride?: ReactNode
 }
@@ -77,7 +79,7 @@ function fmtPt(iso?: string | null): string {
   return `${m[3]} ${MESES[Number(m[2]) - 1]} ${m[1]}`
 }
 
-function MaquetePanel({ portalRef }: { portalRef: string }) {
+function MaquetePanel({ portalRef, maqueteUrl }: { portalRef: string; maqueteUrl?: string | null }) {
   const [album, setAlbum]   = useState<AlbumState>(null)
   const [saving, setSaving] = useState(false)
   const [feedback, setFeedback] = useState('')
@@ -171,6 +173,27 @@ function MaquetePanel({ portalRef }: { portalRef: string }) {
           </div>
         )}
 
+        {/* Botão "Ver Maqueta" — abre o link/PDF da maqueta para o cliente rever */}
+        <div className="fp-view-maquete">
+          {maqueteUrl ? (
+            <a
+              className="fp-approve-btn primary"
+              href={maqueteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Ver Maqueta
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14" /><path d="M13 6l6 6-6 6" />
+              </svg>
+            </a>
+          ) : (
+            <span className="fp-approve-btn ghost" style={{ cursor: 'default', opacity: .55 }}>
+              Maqueta a aguardar
+            </span>
+          )}
+        </div>
+
         {/* Timeline 3 passos */}
         <div className="fp-timeline">
           {steps.map(s => (
@@ -244,8 +267,8 @@ export function FotografiasView(props: FotografiasViewProps) {
         <div className="eyebrow">Enviar Selecção</div>
         <h3>Esta é a forma como recebemos a <em>vossa escolha</em></h3>
         <p>
-          Noivos, este formulário é para vocês nos enviarem a vossa escolha através dele —
-          de outra forma não é considerado entregue. O processo é simples e fica imediatamente
+          Noivos, este formulário é para vocês nos enviarem a vossa escolha através dele.
+          De outra forma não é considerado entregue. O processo é simples e fica imediatamente
           registado no vosso portal.
         </p>
         <div className="actions">
@@ -264,12 +287,12 @@ export function FotografiasView(props: FotografiasViewProps) {
         <h2>Seleção de <em>Fotografias</em></h2>
         <hr className="lede-rule" />
         <p>
-          A partir do dia em que disponibilizarmos a galeria para seleção, têm acesso à pré-seleção
-          das fotos do vosso casamento. <strong>Escolhem as imagens preferidas</strong> e enviam-nos
-          a lista pelo formulário acima — é a partir dessa selecção que preparamos o vosso álbum.
+          A partir do dia em que disponibilizarmos a galeria para seleção, têm acesso à pré seleção
+          das fotos do vosso casamento. <strong>Escolhem as imagens preferidas</strong> e enviam nos
+          a lista pelo formulário acima. É a partir dessa selecção que preparamos o vosso álbum.
         </p>
         <p>
-          A galeria on-line fica disponível durante <strong>vários meses</strong> para partilharem com
+          A galeria online fica disponível durante <strong>vários meses</strong> para partilharem com
           familiares e amigos. Após a galeria de seleção fechar, o atelier inicia a montagem da
           maqueta, que depois aprovam aqui dentro do portal.
         </p>
@@ -336,7 +359,7 @@ export function FotografiasView(props: FotografiasViewProps) {
         <hr className="lede-rule" />
         <p>
           A partir da vossa selecção, o atelier monta uma <strong>maqueta dedicada</strong> ao vosso
-          casamento — escolha de duplas, ordenação narrativa, equilíbrio de tons e composição
+          casamento. Escolha de duplas, ordenação narrativa, equilíbrio de tons e composição
           editorial. É um processo demorado, feito com tempo e cuidado.
         </p>
         <p>
@@ -349,7 +372,12 @@ export function FotografiasView(props: FotografiasViewProps) {
       {/* ── Maquete + Aprovação ─────────────────────────────── */}
       {props.maquetePanelOverride
         ? props.maquetePanelOverride
-        : props.portalRef && <MaquetePanel portalRef={props.portalRef} />}
+        : props.portalRef && (
+          <MaquetePanel
+            portalRef={props.portalRef}
+            maqueteUrl={props.maqueteUrl ?? null}
+          />
+        )}
     </div>
   )
 }
