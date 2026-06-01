@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import NotificationsBell from './NotificationsBell'
+import MessagesBell from './MessagesBell'
 
 const NAV = [
   { slug: '',           label: 'Início',        desc: 'Visão geral do projeto', icon: '◈' },
@@ -62,10 +63,11 @@ export default function PortalHamburger({ portalRef, nomeProjeto }: Props) {
           </span>
         </div>
 
-        {/* Direita: sino + indicador activo */}
-        <div className="flex items-center gap-3">
+        {/* Direita: mensagens + notificações + indicador activo */}
+        <div className="flex items-center gap-2">
+          <MessagesBell portalRef={portalRef} />
           <NotificationsBell portalRef={portalRef} />
-          <div className="hidden sm:flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-2 ml-1">
             <div className="w-1.5 h-1.5 rounded-full animate-pulse"
               style={{ background: 'oklch(0.80 0.11 245)' /* accent-bright */ }} />
             <span className="text-[12px] tracking-[0.4em] uppercase"
