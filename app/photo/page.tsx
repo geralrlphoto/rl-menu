@@ -1,14 +1,19 @@
 ﻿import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
+import { unstable_cache } from 'next/cache'
 import { DashboardCarousel, type DashCol } from '@/app/components/DashboardCarousel'
 import { LogoutButton } from '@/app/components/LogoutButton'
 
 // Server-render por request — não tenta gerar estaticamente no build.
 // /photo faz 8 fetches paralelos (Supabase CRM + 7 DBs Notion) e estoura
 // o timeout de 60s do Vercel para SSG. force-dynamic salta esse passo.
-// Em produção continua a render em ~300-800ms com cache do Next runtime.
+//
+// IMPORTANTE: force-dynamic desliga o cache do fetch() (revalidate é
+// ignorado). Usamos unstable_cache abaixo para envolver cada fetch ao
+// Notion e cada query Supabase pesada — cache runtime de 600s mantém
+// o painel snappy (1ª visita lenta, restantes instantâneas).
 export const dynamic = 'force-dynamic'
-export const revalidate = 120 // ISR runtime, ignorado por force-dynamic mas mantido como fallback
+export const revalidate = 120 // mantido como fallback se algo respeitar
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -93,83 +98,113 @@ export default async function PhotoDashboard() {
   const ago10 = new Date(); ago10.setDate(ago10.getDate() - 10)
   const ago10Str = ago10.toISOString().split('T')[0]
 
+  // ── Wrappers cached (10 min runtime) ────────────────────────────────────
+  // Cada query corre uma vez por chave (recalcula só quando a data de hoje
+  // muda OU passam 10 min). Resultado: 1ª visita lenta, restantes instant.
+  const fetchNotion = (cacheKey: string, body: any, blocks = false) =>
+    unstable_cache(
+      async () => {
+        const url = blocks
+          ? `https://api.notion.com/v1/blocks/${PORTAL_PAGE_ID}/children?page_size=100`
+          : `https://api.notion.com/v1/databases/${body._db}/query`
+        const res = await fetch(url, {
+          method: blocks ? 'GET' : 'POST',
+          headers: notionH,
+          ...(blocks ? {} : { body: JSON.stringify(body) }),
+        }).then(r => r.json()).catch(() => ({ results: [] }))
+        return res
+      },
+      [cacheKey],
+      { revalidate: 600, tags: ['photo-dashboard'] }
+    )()
+
+  const getLeadsAtivas = unstable_cache(
+    async () => {
+      const { data } = await supabase.from('crm_contacts')
+        .select('nome, tipo_evento, como_chegou, data_entrada, status')
+        .gte('data_entrada', ago10Str)
+        .not('status', 'in', '("Fechou","NÃO FECHOU","Sem resposta","Encerrado","Cancelado")')
+        .order('data_entrada', { ascending: false })
+      return data ?? []
+    },
+    [`photo-leads-${ago10Str}`],
+    { revalidate: 600, tags: ['photo-dashboard'] }
+  )
+
+  const getRefPortais = unstable_cache(
+    async () => {
+      const { data } = await supabase.from('portais').select('referencia, settings, noiva, noivo')
+      return data ?? []
+    },
+    ['photo-portais'],
+    { revalidate: 600, tags: ['photo-dashboard'] }
+  )
+
+  const getAlbunsAprovadosSb = unstable_cache(
+    async () => {
+      const { data } = await supabase
+        .from('albuns_casamento')
+        .select('id, nome, ref_evento, data_aprovacao, data_prevista_entrega')
+        .eq('status', 'APROVADO')
+        .order('data_prevista_entrega', { ascending: true, nullsFirst: false })
+        .limit(20)
+      return data ?? []
+    },
+    ['photo-albuns-aprovados'],
+    { revalidate: 600, tags: ['photo-dashboard'] }
+  )
+
   const [
-    { data: leadsAtivas },
+    leadsAtivas,
     prazosRes,
     aprovacaoRes,
     videosRes,
     fotosRes,
     portalRes,
-    { data: refPortais },
-    { data: albunsAprovadosSb },
+    refPortais,
+    albunsAprovadosSb,
   ] = await Promise.all([
-    supabase.from('crm_contacts').select('nome, tipo_evento, como_chegou, data_entrada, status')
-      .gte('data_entrada', ago10Str)
-      .not('status', 'in', '("Fechou","NÃO FECHOU","Sem resposta","Encerrado","Cancelado")')
-      .order('data_entrada', { ascending: false }),
-
-    fetch(`https://api.notion.com/v1/databases/${ALBUNS_DB}/query`, {
-      method: 'POST', headers: notionH, next: { revalidate: 120 },
-      body: JSON.stringify({
-        filter: { and: [
-          { property: 'Data prevista de entrega', date: { on_or_after: todayStr } },
-          { property: 'Data prevista de entrega', date: { on_or_before: in14DaysStr } },
+    getLeadsAtivas(),
+    fetchNotion(`photo-prazos-${todayStr}`, {
+      _db: ALBUNS_DB,
+      filter: { and: [
+        { property: 'Data prevista de entrega', date: { on_or_after: todayStr } },
+        { property: 'Data prevista de entrega', date: { on_or_before: in14DaysStr } },
+      ]},
+      sorts: [{ property: 'Data prevista de entrega', direction: 'ascending' }],
+      page_size: 8,
+    }),
+    fetchNotion('photo-aprovacao', {
+      _db: ALBUNS_DB,
+      filter: { property: 'Status', status: { equals: 'PARA APROVAÇÃO' } },
+      page_size: 8,
+    }),
+    fetchNotion('photo-videos', {
+      _db: EVENTOS_DB,
+      filter: { property: 'ESTADO DO VIDEO', select: { does_not_equal: 'ENTREGUE' } },
+      sorts: [{ property: 'DATA DO EVENTO', direction: 'ascending' }],
+      page_size: 100,
+    }),
+    fetchNotion(`photo-fotos-${todayStr}`, {
+      _db: EVENTOS_DB,
+      filter: { or: [
+        { and: [
+          { property: 'DATA DO EVENTO', date: { on_or_after: ago90Str } },
+          { property: 'DATA DO EVENTO', date: { on_or_before: todayStr } },
+          { property: 'ESTADO SEL. FOTOS', select: { does_not_equal: 'Entregue' } },
         ]},
-        sorts: [{ property: 'Data prevista de entrega', direction: 'ascending' }],
-        page_size: 8,
-      }),
-    }).then(r => r.json()).catch(() => ({ results: [] })),
-
-    fetch(`https://api.notion.com/v1/databases/${ALBUNS_DB}/query`, {
-      method: 'POST', headers: notionH, next: { revalidate: 120 },
-      body: JSON.stringify({
-        filter: { property: 'Status', status: { equals: 'PARA APROVAÇÃO' } },
-        page_size: 8,
-      }),
-    }).then(r => r.json()).catch(() => ({ results: [] })),
-
-    fetch(`https://api.notion.com/v1/databases/${EVENTOS_DB}/query`, {
-      method: 'POST', headers: notionH, next: { revalidate: 120 },
-      body: JSON.stringify({
-        filter: { property: 'ESTADO DO VIDEO', select: { does_not_equal: 'ENTREGUE' } },
-        sorts: [{ property: 'DATA DO EVENTO', direction: 'ascending' }],
-        page_size: 100,
-      }),
-    }).then(r => r.json()).catch(() => ({ results: [] })),
-
-    fetch(`https://api.notion.com/v1/databases/${EVENTOS_DB}/query`, {
-      method: 'POST', headers: notionH, next: { revalidate: 120 },
-      body: JSON.stringify({
-        filter: { or: [
-          { and: [
-            { property: 'DATA DO EVENTO', date: { on_or_after: ago90Str } },
-            { property: 'DATA DO EVENTO', date: { on_or_before: todayStr } },
-            { property: 'ESTADO SEL. FOTOS', select: { does_not_equal: 'Entregue' } },
-          ]},
-          { and: [
-            { property: 'DATA ENTREGA FOTOS', date: { on_or_after: todayStr } },
-            { property: 'DATA ENTREGA FOTOS', date: { on_or_before: in15DaysStr } },
-            { property: 'FOTOS P/ EDIÇÃO', select: { does_not_equal: 'Entregue' } },
-          ]},
+        { and: [
+          { property: 'DATA ENTREGA FOTOS', date: { on_or_after: todayStr } },
+          { property: 'DATA ENTREGA FOTOS', date: { on_or_before: in15DaysStr } },
+          { property: 'FOTOS P/ EDIÇÃO', select: { does_not_equal: 'Entregue' } },
         ]},
-        sorts: [{ property: 'DATA DO EVENTO', direction: 'ascending' }],
-        page_size: 50,
-      }),
-    }).then(r => r.json()).catch(() => ({ results: [] })),
-
-    fetch(`https://api.notion.com/v1/blocks/${PORTAL_PAGE_ID}/children?page_size=100`, {
-      headers: notionH, next: { revalidate: 120 },
-    }).then(r => r.json()).catch(() => ({ results: [] })),
-
-    supabase.from('portais').select('referencia, settings, noiva, noivo'),
-
-    // Álbuns APROVADOS pelos noivos — ficam aqui até admin marcar como ENTREGUE
-    supabase
-      .from('albuns_casamento')
-      .select('id, nome, ref_evento, data_aprovacao, data_prevista_entrega')
-      .eq('status', 'APROVADO')
-      .order('data_prevista_entrega', { ascending: true, nullsFirst: false })
-      .limit(20),
+      ]},
+      sorts: [{ property: 'DATA DO EVENTO', direction: 'ascending' }],
+      page_size: 50,
+    }),
+    fetchNotion('photo-portal-blocks', null, true),
+    getRefPortais(),
+    getAlbunsAprovadosSb(),
   ])
 
   // ── Refs com alertas de fotografia DESATIVADOS pelo admin ───────────────
@@ -177,19 +212,19 @@ export default async function PhotoDashboard() {
   //   admin desliga o sino no card do casamento (/freelancers/[id]).
   //   Esses eventos NÃO aparecem nos PRAZOS FOTOS aqui.
   //   Estado guardado em portais.settings.alertas_fotografia_ativos.
-  const alertasOffRefs = await (async () => {
-    try {
-      const { data, error } = await supabase
-        .from('portais')
-        .select('referencia, settings')
-      if (error) return new Set<string>()
-      const set = new Set<string>()
+  const getAlertasOff = unstable_cache(
+    async () => {
+      const { data } = await supabase.from('portais').select('referencia, settings')
+      const out: string[] = []
       for (const r of (data ?? []) as Array<{ referencia: string | null; settings: any }>) {
-        if (r.referencia && r.settings?.alertas_fotografia_ativos === false) set.add(r.referencia)
+        if (r.referencia && r.settings?.alertas_fotografia_ativos === false) out.push(r.referencia)
       }
-      return set
-    } catch { return new Set<string>() }
-  })()
+      return out
+    },
+    ['photo-alertas-off'],
+    { revalidate: 600, tags: ['photo-dashboard'] }
+  )
+  const alertasOffRefs = new Set(await getAlertasOff())
 
   // ── Parsear Notion ────────────────────────────────────────────────────────
   const prazosAlbuns = (prazosRes.results ?? []).map((p: any) => {
