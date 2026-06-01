@@ -1,503 +1,278 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+
+/* ============================================================
+   DashboardClient — Portal do Cliente RL PROD (v2)
+   Design do handoff design_handoff_portal_cliente (Portal Dashboard.html).
+   Tema escuro navy, fiel ao login. Identidade + Welcome + Stats +
+   Fase actual (stepper) + Menu 8 tiles + Tile Interno (admin only).
+
+   A versão anterior (com AdminBar e edição inline de campos) está
+   preservada em DashboardClientLegacy.tsx para fallback futuro.
+   ============================================================ */
+
 import Link from 'next/link'
+import { useEffect, useState, type ReactNode } from 'react'
+import { Manrope, Space_Grotesk } from 'next/font/google'
 import type { Projeto } from '@/app/portal-media/_data/mockProject'
-import { MEDIA_MASTER_REF } from '@/app/portal-media/_data/mockProject'
-import AdminBar from './AdminBar'
-import EditableField from './EditableField'
-import EditableDateField from './EditableDateField'
+import './portal-dashboard.css'
 
-const NAV = [
-  { slug: 'workflow',        label: 'Workflow',        desc: 'Fases do projeto',        icon: '◈' },
-  { slug: 'roadmap',         label: 'Road Map',        desc: 'Planeamento e tarefas',   icon: '⬡' },
-  { slug: 'briefing',        label: 'Briefing',        desc: 'Objetivos e referências', icon: '◎' },
-  { slug: 'contrato',        label: 'Contrato & CPS',  desc: 'Documentos e dados',      icon: '◇' },
-  { slug: 'pagamentos',      label: 'Pagamentos',      desc: 'Estado financeiro',       icon: '◉' },
-  { slug: 'entregas',        label: 'Entregas',        desc: 'Ficheiros e revisões',    icon: '◐' },
-  { slug: 'atendimento',     label: 'Atendimento',     desc: 'Equipa e contactos',      icon: '◑' },
-  { slug: 'satisfacao',      label: 'Satisfação',      desc: 'Avaliação do projeto',    icon: '◒' },
-]
+const manrope = Manrope({ subsets: ['latin'], weight: ['400','500','600','700','800'], variable: '--font-manrope', display: 'swap' })
+const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], weight: ['400','500','600','700'], variable: '--font-space-grotesk', display: 'swap' })
 
-const FASE_CFG = {
-  concluido: { dot: 'bg-emerald-400', color: 'text-emerald-400/80' },
-  em_curso:  { dot: 'bg-blue-400 animate-pulse', color: 'text-blue-400/80' },
-  pendente:  { dot: 'bg-white/15', color: 'text-white/25' },
+/* ── Helpers ─────────────────────────────────────────────────── */
+function detectActivePhase(projeto: Projeto): number {
+  const emCurso = (projeto.fases ?? []).findIndex(f => f.estado === 'em_curso')
+  if (emCurso >= 0) return emCurso
+  const concluidas = (projeto.fases ?? []).filter(f => f.estado === 'concluido').length
+  return Math.max(0, concluidas)
 }
 
-interface Props { projeto: Projeto; isAdmin: boolean }
+/* ── Menu (links para sub-rotas existentes) ────────────────── */
+const MENU_ITEMS = [
+  { num: '01', icon: 'workflow', name: 'Workflow',         desc: 'Fases do projeto',       slug: 'workflow' },
+  { num: '02', icon: 'map',      name: 'Road Map',         desc: 'Planeamento e tarefas',  slug: 'roadmap' },
+  { num: '03', icon: 'briefing', name: 'Briefing',         desc: 'Objetivos e referências', slug: 'briefing' },
+  { num: '04', icon: 'doc',      name: 'Contrato & Dados', desc: 'Documentos e dados',     slug: 'contrato' },
+  { num: '05', icon: 'pay',      name: 'Pagamentos',       desc: 'Estado financeiro',      slug: 'pagamentos' },
+  { num: '06', icon: 'deliver',  name: 'Entregas',         desc: 'Ficheiros e revisões',   slug: 'entregas' },
+  { num: '07', icon: 'support',  name: 'Atendimento',      desc: 'Equipa e contactos',     slug: 'atendimento' },
+  { num: '08', icon: 'star',     name: 'Satisfação',       desc: 'Avaliação do projeto',   slug: 'satisfacao' },
+] as const
 
-export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
-  const [projeto, setProjeto] = useState(initial)
-  const [isEditing, setIsEditing] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const heroFileRef = useRef<HTMLInputElement>(null)
-  const logoFileRef = useRef<HTMLInputElement>(null)
-  const [heroUploading, setHeroUploading] = useState(false)
-  const [logoUploading, setLogoUploading] = useState(false)
+/* ============================================================
+   COMPONENT
+   ============================================================ */
+export default function DashboardClient({
+  projeto, isAdmin,
+}: { projeto: Projeto; isAdmin: boolean }) {
+  const totalFases = (projeto.fases ?? []).length || 5
+  const initialActive = detectActivePhase(projeto)
+  const [active, setActive] = useState(initialActive)
 
-  /* ── copiar link ── */
-  const [copiado, setCopiado] = useState(false)
-
-  const copiarLink = () => {
-    const link = `${window.location.origin}/portal-media/${projeto.ref}`
-    navigator.clipboard.writeText(link).catch(() => {})
-    setCopiado(true)
-    setTimeout(() => setCopiado(false), 2500)
-  }
-
-  /* ── última visita cliente ── */
+  // Persistência local da escolha do stepper (apenas para admin).
+  // Quando o Supabase voltar, isto pode ser substituído por uma chamada
+  // à API que escreve em media_portais.dados.fase_atual.
   useEffect(() => {
-    if (!isAdmin) {
-      fetch(`/api/media-portal/${projeto.ref}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ultimaVisitaCliente: new Date().toISOString() }),
-      }).catch(() => {})
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  /* ── senha do portal ── */
-  const [senhaInput, setSenhaInput]   = useState('')
-  const [savingSenha, setSavingSenha] = useState(false)
-  const [senhaSaved, setSenhaSaved]   = useState(false)
-
-  const saveSenha = async () => {
-    setSavingSenha(true)
-    setSenhaSaved(false)
-    await fetch(`/api/media-portal/${projeto.ref}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ senha: senhaInput.trim() || null }),
-    })
-    setProjeto(p => ({ ...p, senha: senhaInput.trim() || undefined }))
-    setSenhaSaved(true)
-    setSavingSenha(false)
-    setTimeout(() => setSenhaSaved(false), 3000)
-  }
-
-  const set = (field: keyof Projeto, value: any) =>
-    setProjeto(p => ({ ...p, [field]: value }))
-
-  const handleHeroUpload = async (file: File) => {
-    setHeroUploading(true)
+    if (!isAdmin) return
     try {
-      const fd = new FormData()
-      fd.append('file', file)
-      const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
-      const data = await res.json()
-      if (data.url) set('heroImageUrl', data.url)
-    } catch {}
-    setHeroUploading(false)
+      const k = `pcd-phase-${projeto.ref}`
+      const v = localStorage.getItem(k)
+      if (v !== null) setActive(parseInt(v, 10))
+    } catch {/* noop */}
+  }, [projeto.ref, isAdmin])
+
+  const handleStepClick = (i: number) => {
+    if (!isAdmin) return
+    setActive(i)
+    try { localStorage.setItem(`pcd-phase-${projeto.ref}`, String(i)) } catch {/* noop */}
   }
 
-  const handleLogoUpload = async (file: File) => {
-    setLogoUploading(true)
-    try {
-      const fd = new FormData()
-      fd.append('file', file)
-      const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
-      const data = await res.json()
-      if (data.url) set('heroLogoUrl', data.url)
-    } catch {}
-    setLogoUploading(false)
-  }
+  const phaseName = (projeto.fases?.[active]?.nome) ?? `Fase ${active + 1}`
+  const phasePct = Math.round(((active + 1) / totalFases) * 100)
 
-  const save = async () => {
-    setSaving(true)
-    await fetch(`/api/media-portal/${projeto.ref}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(projeto),
-    })
-    setSaving(false)
-    setIsEditing(false)
-  }
-
-  const cancel = () => { setProjeto(initial); setIsEditing(false) }
-
-  // Click on phase dot → set as current (all before = concluido, all after = pendente)
-  const setFaseAtual = (idx: number) => {
-    setProjeto(p => ({
-      ...p,
-      fases: p.fases.map((f, i) => ({
-        ...f,
-        estado: i < idx ? 'concluido' : i === idx ? 'em_curso' : 'pendente',
-      })),
-    }))
-    setIsEditing(true)
-  }
-
-  const fasesTotal = projeto.fases.length
-  const fasesConcluidas = projeto.fases.filter(f => f.estado === 'concluido').length
-  const progresso = Math.round((fasesConcluidas / fasesTotal) * 100)
-  const faseAtual = projeto.fases.find(f => f.estado === 'em_curso') ?? projeto.fases.find(f => f.estado === 'pendente')
+  // Stats — fallbacks honestos quando faltam dados.
+  const local = projeto.local?.trim() ? projeto.local : null
+  const filmagem = projeto.dataFilmagem?.trim() ? projeto.dataFilmagem : null
+  const revUsadas = projeto.revisoes?.usadas ?? 0
+  const revTotal = projeto.revisoes?.total ?? 3
+  const entrega = projeto.dataEntrega?.trim() ? projeto.dataEntrega : null
 
   return (
-    <>
-      {/* Hero image — sempre visível; fallback gradient quando sem foto */}
-      <div className="relative w-full shrink-0 overflow-hidden" style={{ height: 320 }}>
-        {projeto.heroImageUrl ? (
-          <img
-            src={projeto.heroImageUrl}
-            alt=""
-            className="w-full h-full object-cover object-center"
-            style={{
-              maskImage: 'linear-gradient(to bottom, black 0%, black 30%, transparent 100%)',
-              WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 30%, transparent 100%)',
-            }}
-          />
-        ) : (
-          /* Fallback gradient enquanto não há foto */
-          <div className="w-full h-full" style={{
-            background: 'linear-gradient(160deg, #0e1520 0%, #080e1a 40%, #04080f 100%)',
-            maskImage: 'linear-gradient(to bottom, black 0%, black 40%, transparent 100%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 40%, transparent 100%)',
-          }}>
-            {/* Grid neon subtil */}
-            <div className="absolute inset-0 pointer-events-none" style={{
-              backgroundImage: 'linear-gradient(rgba(50,100,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(50,100,255,0.03) 1px,transparent 1px)',
-              backgroundSize: '60px 60px',
-            }} />
-            {/* Neon glow topo */}
-            <div className="absolute inset-0 pointer-events-none" style={{
-              background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(40,90,255,0.10) 0%, transparent 70%)',
-            }} />
-            {/* Texto placeholder — admin pode substituir com foto */}
-            {isAdmin && !isEditing && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <p className="text-[12px] tracking-[0.5em] text-white/12 uppercase">Adicionar foto de cabeçalho</p>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+    <div className={`portal-cliente-dashboard ${manrope.variable} ${spaceGrotesk.variable}`}>
+      <div className="pcd-bg-fx" />
 
-      {/* Hero upload controls (edit mode) */}
-      {isEditing && (
-        <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 pt-4 flex flex-col gap-2">
-          <input
-            ref={heroFileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={e => { const f = e.target.files?.[0]; if (f) handleHeroUpload(f) }}
-          />
-          <div className="flex items-center gap-3 border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-            <span className="text-[12px] tracking-[0.4em] text-white/25 uppercase shrink-0">🖼 Foto cabeçalho</span>
-            <button
-              onClick={() => heroFileRef.current?.click()}
-              disabled={heroUploading}
-              className="flex-1 text-left text-[14px] text-white/40 hover:text-white/70 transition-colors disabled:opacity-40"
-            >
-              {heroUploading ? '⏳ A carregar...' : projeto.heroImageUrl ? '✓ Trocar foto' : '⬆ Carregar foto'}
-            </button>
-            {projeto.heroImageUrl && !heroUploading && (
-              <button
-                onClick={() => set('heroImageUrl', '')}
-                className="text-white/20 hover:text-white/50 text-[14px] transition-colors shrink-0"
-              >
-                ✕ Remover
-              </button>
-            )}
-          </div>
-          <input
-            ref={logoFileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={e => { const f = e.target.files?.[0]; if (f) handleLogoUpload(f) }}
-          />
-          <div className="flex items-center gap-3 border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-            <span className="text-[12px] tracking-[0.4em] text-white/25 uppercase shrink-0">Logo cliente</span>
-            <button
-              onClick={() => logoFileRef.current?.click()}
-              disabled={logoUploading}
-              className="flex-1 text-left text-[14px] text-white/40 hover:text-white/70 transition-colors disabled:opacity-40"
-            >
-              {logoUploading ? '⏳ A carregar...' : projeto.heroLogoUrl ? '✓ Trocar logo' : '⬆ Carregar logo'}
-            </button>
-            {projeto.heroLogoUrl && !logoUploading && (
-              <button
-                onClick={() => set('heroLogoUrl', '')}
-                className="text-white/20 hover:text-white/50 text-[14px] transition-colors shrink-0"
-              >
-                ✕ Remover
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      <div className="relative z-10 px-6 sm:px-12 pt-8 pb-14 max-w-5xl mx-auto">
-
-        {/* Project name */}
-        <div className="flex items-start gap-6 mb-6">
-          {/* Logo circle with color neon glow */}
-          <div className="mt-2 relative shrink-0 flex items-center justify-center">
-            {/* Neon glow — blurred copy of logo picks up its colors */}
-            {projeto.heroLogoUrl && (
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full overflow-hidden blur-lg opacity-45 pointer-events-none">
-                <img src={projeto.heroLogoUrl} aria-hidden className="w-full h-full object-cover" />
-              </div>
-            )}
-            {/* Circle */}
-            <div
-              className={`relative z-10 w-20 h-20 rounded-full border border-white/10 flex items-center justify-center overflow-hidden
-                ${isEditing ? 'cursor-pointer hover:border-white/30 transition-colors' : ''}`}
-              onClick={isEditing ? () => logoFileRef.current?.click() : undefined}
-              title={isEditing ? (projeto.heroLogoUrl ? 'Trocar logo' : 'Carregar logo') : undefined}
-            >
-              {projeto.heroLogoUrl ? (
-                <img src={projeto.heroLogoUrl} alt={projeto.nome} className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-xl text-white/20 select-none">◈</span>
-              )}
-            </div>
-          </div>
-          <div className="flex-1">
-            <EditableField value={projeto.tipo} isEditing={isEditing} onChange={v => set('tipo', v)}
-              className="text-[9px] tracking-[0.6em] text-white/20 uppercase mb-1 block" />
-            <EditableField value={projeto.nome} isEditing={isEditing} onChange={v => set('nome', v)}
-              className="text-[clamp(2rem,6vw,3.5rem)] font-extralight tracking-[0.4em] text-white/85 uppercase leading-none block" />
-            <EditableField value={projeto.cliente} isEditing={isEditing} onChange={v => set('cliente', v)}
-              className="text-[12px] tracking-[0.3em] text-white/30 uppercase mt-2 block" />
-            <div className="mt-2 flex items-center gap-2">
-              {!isEditing && <span className="text-[12px] tracking-[0.25em] text-white/20 uppercase">Estado:</span>}
-              <EditableField value={projeto.status} isEditing={isEditing} onChange={v => set('status', v)}
-                className="text-[13px] tracking-[0.25em] text-white/40 uppercase block"
-                placeholder="Estado do projeto" />
-            </div>
-          </div>
+      <div className="pcd-page">
+        {/* HERO */}
+        <div className="pcd-hero">
+          {projeto.heroImageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={projeto.heroImageUrl} alt="" />
+          ) : (
+            <div className="pcd-hero-ph">Imagem do projeto</div>
+          )}
+          <div className="pcd-hero__fade" />
+          <div className="pcd-hero__edge" />
         </div>
 
-        {/* Boas-vindas */}
-        <div className="mb-8 border border-white/[0.07] bg-white/[0.02] px-7 py-7">
-          <div className="flex items-start gap-3 mb-5">
-            <span className="text-2xl leading-none mt-1">👋</span>
-            <h2 className="text-[18px] font-light text-white/75">Bem-vindo ao Portal do Cliente</h2>
+        {/* IDENTITY */}
+        <header className="pcd-ident">
+          <div className="pcd-ident__row">
+            <div className="pcd-ident__logo">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/portal-cliente/mark-white.png" alt="RL PROD" />
+            </div>
+            <div className="pcd-ident__txt">
+              <span className="pcd-eyebrow">Produção de Fotografia e Vídeo</span>
+              <h1 className="pcd-ident__name">RL&nbsp;PROD</h1>
+            </div>
           </div>
-          <p className="text-[16px] font-light text-white/45 leading-relaxed mb-6">
-            Olá, seja bem-vindo ao <span className="text-white/65">Portal do Cliente</span>.<br />
-            Aqui encontra <span className="text-white/65">tudo o que precisa saber sobre o andamento do seu projeto</span> de forma clara, organizada e transparente.
+          <div className="pcd-ident__meta">
+            <span className="pcd-ident__client">Projeto · {projeto.nome ?? projeto.cliente ?? '—'}</span>
+            <span className="pcd-badge"><span className="pcd-pulse" />{projeto.status ?? 'Em produção'}</span>
+          </div>
+        </header>
+
+        {/* WELCOME */}
+        <section className="pcd-card pcd-welcome">
+          <div className="pcd-welcome__head">
+            <span className="pcd-ic"><IcWave /></span>
+            <h2>Bem-vindo ao Portal do Cliente</h2>
+          </div>
+          <p className="pcd-welcome__intro">
+            Olá, seja bem-vindo ao Portal do Cliente. Aqui encontra <b>tudo o que precisa saber sobre o andamento do seu projeto</b> de forma clara, organizada e transparente.
           </p>
-          <div className="grid sm:grid-cols-2 gap-6 mb-6">
-            <div>
-              <p className="text-[13px] tracking-[0.2em] text-white/40 font-medium mb-3 flex items-center gap-2"><span>🔎</span> O que pode acompanhar</p>
-              <ul className="flex flex-col gap-3">
-                {[['Workflow do Projeto','Etapas concluídas, em curso e próximas fases'],['Cronograma','Progresso detalhado de cada fase'],['Contactos Dedicados','A quem falar em cada momento'],['Documentos & Entregas','Ficheiros e registos importantes']].map(([t, d]) => (
-                  <li key={t} className="flex items-start gap-2">
-                    <span className="text-white/20 mt-1 shrink-0">—</span>
-                    <span className="text-[15px] font-light text-white/40 leading-relaxed"><span className="text-white/60 font-medium">{t}:</span> {d}</span>
-                  </li>
-                ))}
+
+          <div className="pcd-welcome__cols">
+            <div className="pcd-col">
+              <p className="pcd-col__title"><span className="pcd-ic"><IcEye /></span>O que pode acompanhar</p>
+              <ul>
+                <li><span className="pcd-mk"><IcDot /></span><span><b>Workflow do Projeto:</b> Etapas concluídas, em curso e próximas fases</span></li>
+                <li><span className="pcd-mk"><IcDot /></span><span><b>Cronograma:</b> Progresso detalhado de cada fase</span></li>
+                <li><span className="pcd-mk"><IcDot /></span><span><b>Contactos Dedicados:</b> A quem falar em cada momento</span></li>
+                <li><span className="pcd-mk"><IcDot /></span><span><b>Documentos &amp; Entregas:</b> Ficheiros e registos importantes</span></li>
               </ul>
             </div>
-            <div>
-              <p className="text-[13px] tracking-[0.2em] text-white/40 font-medium mb-3 flex items-center gap-2"><span>✅</span> Como usar</p>
-              <ol className="flex flex-col gap-3">
-                {['Navegue pelo menu para explorar cada secção.','Clique na fase do projeto para ver detalhes, prazos e status.','Use a área de contactos para falar diretamente com os responsáveis.'].map((s, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <span className="text-[13px] font-mono text-white/20 shrink-0 mt-0.5">{i + 1}.</span>
-                    <span className="text-[15px] font-light text-white/40 leading-relaxed">{s}</span>
-                  </li>
-                ))}
+            <div className="pcd-col pcd-col--how">
+              <p className="pcd-col__title"><span className="pcd-ic"><IcGrid /></span>Como usar</p>
+              <ol>
+                <li><span className="pcd-num">1</span><span>Navegue pelo menu para explorar cada secção.</span></li>
+                <li><span className="pcd-num">2</span><span>Clique na fase do projeto para ver detalhes, prazos e status.</span></li>
+                <li><span className="pcd-num">3</span><span>Use a área de contactos para falar diretamente com os responsáveis.</span></li>
               </ol>
             </div>
           </div>
-          <div className="border-t border-white/[0.05] pt-5 flex items-start gap-2">
-            <span className="text-lg shrink-0">👉</span>
-            <p className="text-[15px] font-light text-white/35 leading-relaxed">
-              Este portal foi criado para <span className="text-white/45">garantir transparência, confiança e proximidade</span> durante todo o processo. Obrigado pela confiança na nossa equipa.
-            </p>
-          </div>
-        </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-          {/* Local */}
-          <div className="border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-            <p className="text-[12px] tracking-[0.4em] text-white/25 uppercase mb-1">Local</p>
-            <EditableField value={projeto.local} isEditing={isEditing}
-              onChange={v => set('local', v)}
-              className="text-[15px] tracking-[0.15em] text-white/65 font-light block" />
-          </div>
-          {/* Filmagem */}
-          <div className="border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-            <p className="text-[12px] tracking-[0.4em] text-white/25 uppercase mb-1">Filmagem</p>
-            <EditableDateField value={projeto.dataFilmagem} isEditing={isEditing}
-              onChange={v => set('dataFilmagem', v)}
-              className="text-[15px] tracking-[0.15em] text-white/65 font-light block" />
-          </div>
-          {/* Revisões */}
-          <div className="border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-            <p className="text-[12px] tracking-[0.4em] text-white/25 uppercase mb-1">Revisões</p>
-            <p className="text-[15px] tracking-[0.15em] text-white/65 font-light">
-              {projeto.revisoes.usadas} / {projeto.revisoes.total}
-            </p>
-          </div>
-          {/* Entrega Final */}
-          <div className="border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-            <p className="text-[12px] tracking-[0.4em] text-white/25 uppercase mb-1">Entrega Final</p>
-            <EditableDateField value={projeto.dataEntrega} isEditing={isEditing}
-              onChange={v => set('dataEntrega', v)}
-              className="text-[15px] tracking-[0.15em] text-white/65 font-light block" />
-          </div>
-        </div>
-
-        {/* Progress */}
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <p className="text-[12px] tracking-[0.4em] text-white/25 uppercase truncate min-w-0">Fase Actual · {faseAtual?.nome ?? 'Concluído'}</p>
-          <p className="text-[12px] tracking-[0.4em] text-white/25 uppercase shrink-0">{progresso}%</p>
-        </div>
-        <div className="h-px w-full bg-white/[0.06] relative overflow-hidden mb-4">
-          <div className="absolute left-0 top-0 h-full bg-gradient-to-r from-amber-400/70 to-amber-400/25" style={{ width: `${progresso}%` }} />
-        </div>
-        {isAdmin && (
-          <p className="text-[12px] tracking-[0.3em] text-white/15 uppercase mb-2">
-            ↑ clica numa fase para definir a fase actual
+          <p className="pcd-welcome__foot">
+            <span className="pcd-ic"><IcHand /></span>
+            <span>Este portal foi criado para <b>garantir transparência, confiança e proximidade</b> durante todo o processo. Obrigado pela confiança na nossa equipa.</span>
           </p>
-        )}
-        <div className="flex items-start gap-0 overflow-x-auto pb-1 mb-12">
-          {projeto.fases.map((fase, i) => {
-            const cfg = FASE_CFG[fase.estado]
-            return (
-              <div key={fase.id} className="flex items-center shrink-0">
-                <div
-                  className={`flex flex-col items-center gap-1.5 px-3 transition-opacity duration-150
-                    ${isAdmin ? 'cursor-pointer hover:opacity-100 opacity-70' : ''}`}
-                  onClick={isAdmin ? () => setFaseAtual(i) : undefined}
-                  title={isAdmin ? `Definir "${fase.nome}" como fase actual` : undefined}
-                >
-                  <div className={`w-2 h-2 rounded-full transition-transform duration-150
-                    ${cfg.dot}
-                    ${isAdmin ? 'hover:scale-150' : ''}
-                    ${fase.estado === 'em_curso' ? 'animate-pulse' : ''}`}
-                  />
-                  <span className={`text-[12px] tracking-[0.2em] uppercase whitespace-nowrap ${cfg.color}`}>
-                    {fase.nome}
-                  </span>
-                </div>
-                {i < projeto.fases.length - 1 && <div className="h-px w-6 bg-white/[0.06] shrink-0" />}
-              </div>
-            )
-          })}
-        </div>
+        </section>
 
-        {/* Divider */}
-        <div className="mb-10 flex items-center gap-4">
-          <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
-          <span className="text-[12px] tracking-[0.5em] text-white/15 uppercase">Menu</span>
-          <div className="h-px flex-1 bg-gradient-to-l from-white/10 to-transparent" />
-        </div>
+        {/* STATS */}
+        <section className="pcd-stats">
+          <div className="pcd-card pcd-stat">
+            <p className="pcd-stat__k">Local</p>
+            <p className={'pcd-stat__v' + (local ? '' : ' pcd-empty')}>{local ?? 'vazio'}</p>
+          </div>
+          <div className="pcd-card pcd-stat">
+            <p className="pcd-stat__k">Filmagem</p>
+            <p className={'pcd-stat__v' + (filmagem ? '' : ' pcd-empty')}>{filmagem ?? 'sem data'}</p>
+          </div>
+          <div className="pcd-card pcd-stat">
+            <p className="pcd-stat__k">Revisões</p>
+            <p className="pcd-stat__v"><em>{revUsadas}</em> / {revTotal}</p>
+          </div>
+          <div className="pcd-card pcd-stat">
+            <p className="pcd-stat__k">Entrega final</p>
+            <p className={'pcd-stat__v' + (entrega ? '' : ' pcd-empty')}>{entrega ?? 'sem data'}</p>
+          </div>
+        </section>
 
-        {/* Nav cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-16">
-          {NAV.map((item, i) => (
-            <Link key={item.slug} href={`/portal-media/${projeto.ref}/${item.slug}`}
-              className="group relative border border-white/[0.07] hover:border-white/18 bg-white/[0.015] hover:bg-white/[0.035] transition-all duration-400 p-5 flex flex-col justify-between min-h-[110px]">
-              <div className="flex items-start justify-between mb-3">
-                <span className="text-lg text-white/10 group-hover:text-white/25 transition-colors select-none leading-none">{item.icon}</span>
-                <span className="text-[13px] font-mono text-white/12 group-hover:text-white/25 transition-colors">{String(i + 1).padStart(2, '0')}</span>
+        {/* FASE ACTUAL */}
+        <section className="pcd-card pcd-phase">
+          <div className="pcd-phase__top">
+            <p className="pcd-phase__title">Fase actual · <em>{phaseName}</em></p>
+            <span className="pcd-phase__pct">{phasePct}%</span>
+          </div>
+          {isAdmin && (
+            <p className="pcd-phase__hint"><IcCursor /> Clica numa fase para definir a fase actual</p>
+          )}
+
+          <div className="pcd-steps">
+            {Array.from({ length: totalFases }).map((_, i) => {
+              const f = projeto.fases?.[i]
+              const lbl = f?.nome ?? `Fase ${i + 1}`
+              const cls = [
+                'pcd-step',
+                i < active ? 'pcd-done' : '',
+                i === active ? 'pcd-active' : '',
+              ].filter(Boolean).join(' ')
+              return (
+                <button key={i} type="button" className={cls}
+                  onClick={() => handleStepClick(i)}
+                  disabled={!isAdmin}
+                  style={{ cursor: isAdmin ? 'pointer' : 'default' }}>
+                  <span className="pcd-step__dot" />
+                  <span className="pcd-step__lbl">{lbl}</span>
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="pcd-bar">
+            <div className="pcd-bar__fill" style={{ width: `${phasePct}%` }} />
+          </div>
+        </section>
+
+        {/* MENU */}
+        <p className="pcd-section-label">Menu</p>
+        <nav className="pcd-menu">
+          {MENU_ITEMS.map(item => (
+            <Link key={item.slug} className="pcd-tile"
+              href={`/portal-media/${projeto.ref}/${item.slug}`}>
+              <div className="pcd-tile__top">
+                <span className="pcd-tile__ic"><MenuIcon name={item.icon} /></span>
+                <span className="pcd-tile__num">{item.num}</span>
               </div>
-              <div>
-                <p className="text-[14px] tracking-[0.25em] font-medium text-white/55 group-hover:text-white/80 uppercase transition-colors leading-snug">{item.label}</p>
-                <p className="text-[13px] text-white/20 mt-1 leading-snug">{item.desc}</p>
-              </div>
+              <p className="pcd-tile__name">{item.name}</p>
+              <p className="pcd-tile__desc">{item.desc}</p>
             </Link>
           ))}
+        </nav>
 
-          {/* Card Reprodução — apenas admin */}
-          {isAdmin && (
-            <Link href={`/portal-media/${projeto.ref}/reproducao`}
-              className="group relative border border-amber-400/15 hover:border-amber-400/35 bg-amber-400/[0.02] hover:bg-amber-400/[0.05] transition-all duration-400 p-5 flex flex-col justify-between min-h-[110px]">
-              <div className="flex items-start justify-between mb-3">
-                <span className="text-lg text-amber-400/20 group-hover:text-amber-400/50 transition-colors select-none leading-none">✦</span>
-                <span className="text-[12px] tracking-[0.2em] text-amber-400/30 uppercase">Interno</span>
+        {/* INTERNO — só admin */}
+        {isAdmin && (
+          <div className="pcd-intern">
+            <Link className="pcd-tile pcd-tile--intern"
+              href={`/portal-media/${projeto.ref}/reproducao`}>
+              <span className="pcd-tag-intern">Interno</span>
+              <div className="pcd-tile__top">
+                <span className="pcd-tile__ic"><IcFilm /></span>
+                <span className="pcd-tile__num">★</span>
               </div>
-              <div>
-                <p className="text-[14px] tracking-[0.25em] font-medium text-amber-400/50 group-hover:text-amber-400/80 uppercase transition-colors leading-snug">Reprodução</p>
-                <p className="text-[13px] text-white/18 mt-1 leading-snug">Storytelling · Storyboard · Moodboard</p>
-              </div>
+              <p className="pcd-tile__name">Reprodução</p>
+              <p className="pcd-tile__desc">Storytelling · Storyboard · Moodboard</p>
             </Link>
-          )}
-        </div>
+          </div>
+        )}
 
+        <p className="pcd-foot">
+          © 2026 RL PROD · Portal do Cliente · <a href="#">Ajuda</a> · <a href="#">Contacto</a>
+        </p>
       </div>
-
-      {/* ── Painel admin: link + senha + última visita ── */}
-      {isAdmin && (
-        <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 pb-10">
-
-          {/* Copiar link do portal */}
-          <div className="border border-white/[0.06] bg-white/[0.015] px-5 py-4 mb-3">
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div>
-                <p className="text-[12px] tracking-[0.4em] text-white/30 uppercase mb-1">⎘ Link do Portal</p>
-                <p className="text-[13px] text-white/20 font-mono tracking-[0.1em] truncate max-w-[220px]">
-                  /portal-media/{projeto.ref.toLowerCase()}
-                </p>
-                {projeto.ultimaVisitaCliente && (
-                  <p className="text-[12px] text-white/15 mt-1 tracking-[0.15em]">
-                    Última visita · {new Date(projeto.ultimaVisitaCliente).toLocaleString('pt-PT', {
-                      day: '2-digit', month: 'short', year: 'numeric',
-                      hour: '2-digit', minute: '2-digit',
-                    })}
-                  </p>
-                )}
-              </div>
-              <button
-                onClick={copiarLink}
-                className={`shrink-0 border px-4 py-2 text-[12px] tracking-[0.35em] uppercase transition-colors
-                  ${copiado
-                    ? 'border-emerald-400/30 text-emerald-400/60 bg-emerald-400/[0.05]'
-                    : 'border-white/15 bg-white/[0.03] hover:bg-white/[0.07] text-white/40 hover:text-white/70'
-                  }`}
-              >
-                {copiado ? '✓ Copiado' : 'Copiar Link'}
-              </button>
-            </div>
-          </div>
-
-          <div className="border border-white/[0.06] bg-white/[0.015] px-5 py-5">
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div>
-                <p className="text-[12px] tracking-[0.4em] text-white/30 uppercase mb-1">🔑 Senha do Portal</p>
-                <p className="text-[13px] text-white/20 leading-relaxed">
-                  {projeto.senha
-                    ? `Senha activa · ${projeto.senha.replace(/./g, '●')}`
-                    : 'Sem senha · acesso livre'}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 w-full sm:flex-1 sm:max-w-xs">
-                <input
-                  type="text"
-                  value={senhaInput}
-                  onChange={e => { setSenhaInput(e.target.value); setSenhaSaved(false) }}
-                  placeholder={projeto.senha ? 'Nova senha...' : 'Definir senha...'}
-                  className="flex-1 bg-black/20 border border-white/[0.08] px-3 py-2 text-[14px] text-white/60
-                             placeholder:text-white/15 focus:outline-none focus:border-white/20 tracking-[0.15em]"
-                />
-                <button
-                  onClick={saveSenha}
-                  disabled={savingSenha || (!senhaInput.trim() && !projeto.senha)}
-                  className="shrink-0 border border-white/15 bg-white/[0.03] hover:bg-white/[0.07] px-4 py-2
-                             text-[12px] tracking-[0.3em] text-white/40 hover:text-white/70 uppercase transition-colors
-                             disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  {savingSenha ? '...' : senhaSaved ? '✓' : senhaInput.trim() ? 'Guardar' : projeto.senha ? 'Remover' : 'Guardar'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isAdmin && (
-        <AdminBar isEditing={isEditing} saving={saving}
-          onToggle={() => setIsEditing(true)} onSave={save} onCancel={cancel}
-          isMaster={projeto.ref === MEDIA_MASTER_REF} />
-      )}
-    </>
+    </div>
   )
+}
+
+/* ============================================================
+   ICONS (SVG inline, leves — reaproveitados de portal.js)
+   ============================================================ */
+function S(children: ReactNode, sw: number = 1.7, w: number = 16) {
+  return (
+    <svg width={w} height={w} viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth={sw}
+      strokeLinecap="round" strokeLinejoin="round">{children}</svg>
+  )
+}
+
+const IcWave = () => S(<path d="M7 11V5.5a1.5 1.5 0 0 1 3 0V10m0-1V4.5a1.5 1.5 0 0 1 3 0V10m0-.5V6a1.5 1.5 0 0 1 3 0v6.5c0 3.6-2.4 6.5-6 6.5-2.2 0-3.6-1-4.7-2.6l-2-3a1.5 1.5 0 0 1 2.4-1.8L7 13" />)
+const IcEye = () => S(<><path d="M2.5 12s3.3-6 9.5-6 9.5 6 9.5 6-3.3 6-9.5 6S2.5 12 2.5 12Z" /><circle cx="12" cy="12" r="2.6" /></>)
+const IcGrid = () => S(<><rect x="4" y="4" width="7" height="7" rx="1.5" /><rect x="13" y="4" width="7" height="7" rx="1.5" /><rect x="4" y="13" width="7" height="7" rx="1.5" /><rect x="13" y="13" width="7" height="7" rx="1.5" /></>)
+const IcHand = () => S(<path d="M7 11V5.5a1.5 1.5 0 0 1 3 0V10m0-1V4.5a1.5 1.5 0 0 1 3 0V10m0-.5V6a1.5 1.5 0 0 1 3 0v6.5c0 3.6-2.4 6.5-6 6.5-2.2 0-3.6-1-4.7-2.6l-2-3a1.5 1.5 0 0 1 2.4-1.8L7 13" />)
+const IcDot = () => (<svg width={7} height={7} viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" fill="currentColor" /></svg>)
+const IcCursor = () => S(<path d="M5 3l14 7-6 1.6L9 19 5 3Z" />, 1.7, 14)
+const IcFilm = () => S(<><rect x="3" y="4" width="18" height="16" rx="2.5" /><path d="M3 9h18M3 15h18M8 4v16M16 4v16" /></>, 1.6, 22)
+
+function MenuIcon({ name }: { name: string }) {
+  switch (name) {
+    case 'workflow': return S(<><circle cx="6" cy="6" r="2.5" /><circle cx="6" cy="18" r="2.5" /><circle cx="18" cy="12" r="2.5" /><path d="M8.4 6.8 15.6 11M8.4 17.2 15.6 13" /></>, 1.6, 22)
+    case 'map':      return S(<><path d="M9 4 4 6.5v13l5-2.5 6 2.5 5-2.5v-13L15 6.5 9 4Z" /><path d="M9 4v13M15 6.5v13" /></>, 1.6, 22)
+    case 'briefing': return S(<><rect x="5" y="3" width="14" height="18" rx="2.5" /><path d="M9 8h6M9 12h6M9 16h3" /></>, 1.6, 22)
+    case 'doc':      return S(<><path d="M7 3h7l4 4v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" /><path d="M14 3v4h4M9 13h6M9 17h6" /></>, 1.6, 22)
+    case 'pay':      return S(<><rect x="3" y="6" width="18" height="12" rx="2.5" /><path d="M3 10h18" /><path d="M7 14.5h3" /></>, 1.6, 22)
+    case 'deliver':  return S(<><path d="M3.5 8 12 4l8.5 4-8.5 4-8.5-4Z" /><path d="M3.5 8v8L12 20l8.5-4V8M12 12v8" /></>, 1.6, 22)
+    case 'support':  return S(<><path d="M4.5 13a7.5 7.5 0 0 1 15 0" /><rect x="3" y="13" width="3.5" height="6" rx="1.5" /><rect x="17.5" y="13" width="3.5" height="6" rx="1.5" /><path d="M19 19v.5a2.5 2.5 0 0 1-2.5 2.5H12" /></>, 1.6, 22)
+    case 'star':     return S(<path d="M12 3.5 14.6 9l6 .7-4.5 4.1 1.3 5.9L12 16.7 6.6 19.7l1.3-5.9L3.4 9.7l6-.7L12 3.5Z" />, 1.6, 22)
+    default:         return null
+  }
 }
