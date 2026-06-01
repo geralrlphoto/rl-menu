@@ -31,7 +31,9 @@ export default function NotificationsBell({ portalRef }: Props) {
   const [notifs, setNotifs] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [readAt, setReadAt] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<'new' | 'history'>('new')
   const wrapperRef = useRef<HTMLDivElement | null>(null)
+  const prevOpenRef = useRef(false)
 
   // Carrega notificações + último 'lido' do localStorage
   useEffect(() => {
@@ -65,18 +67,33 @@ export default function NotificationsBell({ portalRef }: Props) {
 
   // Marcar como lido quando o user abre o dropdown
   const handleOpen = () => {
-    const willOpen = !open
-    setOpen(willOpen)
-    if (willOpen && notifs.length > 0) {
+    setOpen(o => !o)
+  }
+
+  // Marca tudo como lido só QUANDO o dropdown fecha (assim o user
+  // vê as novas notificações ao abrir, e elas só desaparecem no
+  // próximo open).
+  useEffect(() => {
+    if (prevOpenRef.current && !open && notifs.length > 0) {
       const latest = notifs[0]?.at ?? new Date().toISOString()
       setReadAt(latest)
       try { localStorage.setItem(STORAGE_KEY_PREFIX + portalRef, latest) } catch { /* noop */ }
+      setViewMode('new') // reset view mode para próxima abertura
     }
-  }
+    prevOpenRef.current = open
+  }, [open, notifs, portalRef])
 
   const unread = readAt
     ? notifs.filter(n => String(n?.at ?? '') > readAt).length
     : notifs.length
+
+  // Lista visível: 'new' mostra só não-lidas; 'history' mostra todas
+  const visible = viewMode === 'history'
+    ? notifs
+    : (readAt
+        ? notifs.filter(n => String(n?.at ?? '') > readAt)
+        : notifs)
+  const historyCount = notifs.length - (readAt ? notifs.filter(n => String(n?.at ?? '') > readAt).length : notifs.length)
 
   return (
     <div ref={wrapperRef} className="relative">
@@ -145,38 +162,77 @@ export default function NotificationsBell({ portalRef }: Props) {
             overflow: 'hidden',
           }}
         >
-          {/* Header dropdown */}
-          <div className="flex items-center justify-between px-4 py-3"
+          {/* Header dropdown — título + toggle Novas/Histórico */}
+          <div className="px-4 py-3"
             style={{ borderBottom: '1px solid oklch(0.50 0.03 245 / 0.18)' }}>
-            <p className="text-[10.5px] tracking-[0.28em] uppercase font-semibold"
-              style={{ fontFamily: 'Space Grotesk, Manrope, sans-serif', color: 'oklch(0.80 0.11 245)' }}>
-              Notificações
-            </p>
-            {notifs.length > 0 && (
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[10.5px] tracking-[0.28em] uppercase font-semibold"
+                style={{ fontFamily: 'Space Grotesk, Manrope, sans-serif', color: 'oklch(0.80 0.11 245)' }}>
+                Notificações
+              </p>
               <span className="text-[10px] tracking-[0.14em] uppercase font-semibold"
                 style={{ color: 'oklch(0.58 0.03 245)' }}>
-                {notifs.length}
+                {viewMode === 'new' ? visible.length : `${notifs.length} no total`}
               </span>
-            )}
+            </div>
+            {/* Tabs segmented Novas / Histórico */}
+            <div className="flex items-center gap-1 p-0.5 rounded-md"
+              style={{ background: 'oklch(0.30 0.03 245 / 0.4)', border: '1px solid oklch(0.50 0.03 245 / 0.18)' }}>
+              <TabBtn active={viewMode === 'new'} onClick={() => setViewMode('new')}>
+                Novas {viewMode === 'new' && visible.length > 0 ? `· ${visible.length}` : ''}
+              </TabBtn>
+              <TabBtn active={viewMode === 'history'} onClick={() => setViewMode('history')}>
+                Histórico {viewMode === 'history' && notifs.length > 0 ? `· ${notifs.length}` : ''}
+              </TabBtn>
+            </div>
           </div>
 
           {/* Conteúdo */}
           <div className="max-h-[380px] overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
             {loading ? (
               <EmptyState text="A carregar…" />
-            ) : notifs.length === 0 ? (
-              <EmptyState text="Sem notificações por agora" />
+            ) : visible.length === 0 ? (
+              viewMode === 'new' ? (
+                <EmptyState text={notifs.length > 0
+                  ? `Sem novas. Há ${notifs.length} no histórico.`
+                  : 'Sem notificações por agora'} />
+              ) : (
+                <EmptyState text="Sem histórico" />
+              )
             ) : (
               <ul className="m-0 p-0 list-none">
-                {notifs.map((n, i) => (
-                  <NotifRow key={i} n={n} fresh={!readAt || String(n?.at ?? '') > (readAt ?? '')} />
-                ))}
+                {visible.map((n, i) => {
+                  const isRead = readAt ? String(n?.at ?? '') <= readAt : false
+                  return (
+                    <NotifRow key={i} n={n}
+                      fresh={!isRead}
+                      faded={viewMode === 'history' && isRead} />
+                  )
+                })}
               </ul>
             )}
           </div>
         </div>
       )}
     </div>
+  )
+}
+
+function TabBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex-1 px-2.5 py-1.5 rounded-[5px] text-[10.5px] tracking-[0.16em] uppercase font-semibold transition-all"
+      style={{
+        background: active ? 'oklch(0.66 0.13 245 / 0.20)' : 'transparent',
+        color: active ? '#fff' : 'oklch(0.70 0.03 245)',
+        border: active ? '1px solid oklch(0.66 0.13 245 / 0.40)' : '1px solid transparent',
+        fontFamily: 'Space Grotesk, Manrope, sans-serif',
+      }}
+    >
+      {children}
+    </button>
   )
 }
 
@@ -197,7 +253,7 @@ function EmptyState({ text }: { text: string }) {
   )
 }
 
-function NotifRow({ n, fresh }: { n: Notification; fresh: boolean }) {
+function NotifRow({ n, fresh, faded }: { n: Notification; fresh: boolean; faded?: boolean }) {
   // Determina tipo + label + cor por defeito
   const type = String(n.type ?? (n.phase ? 'fase' : 'generic'))
   const isFase = type === 'fase' || !!n.phase
@@ -231,7 +287,10 @@ function NotifRow({ n, fresh }: { n: Notification; fresh: boolean }) {
 
   return (
     <li className="relative px-4 py-3"
-      style={{ borderBottom: '1px solid oklch(0.50 0.03 245 / 0.12)' }}>
+      style={{
+        borderBottom: '1px solid oklch(0.50 0.03 245 / 0.12)',
+        opacity: faded ? 0.55 : 1,
+      }}>
       {fresh && (
         <span aria-hidden className="absolute left-1.5 top-3 w-1.5 h-1.5 rounded-full"
           style={{ background: 'oklch(0.80 0.11 245)', boxShadow: '0 0 6px oklch(0.66 0.13 245 / .6)' }} />

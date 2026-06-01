@@ -30,7 +30,9 @@ export default function MessagesBell({ portalRef }: Props) {
   const [mensagens, setMensagens] = useState<Mensagem[]>([])
   const [loading, setLoading] = useState(true)
   const [readAt, setReadAt] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<'new' | 'history'>('new')
   const wrapperRef = useRef<HTMLDivElement | null>(null)
+  const prevOpenRef = useRef(false)
 
   // Carrega mensagens + último 'lido'
   useEffect(() => {
@@ -69,20 +71,32 @@ export default function MessagesBell({ portalRef }: Props) {
   }, [open])
 
   const handleOpen = () => {
-    const willOpen = !open
-    setOpen(willOpen)
-    if (willOpen && mensagens.length > 0) {
+    setOpen(o => !o)
+  }
+
+  // Marca tudo como lido só QUANDO o dropdown fecha — assim o user
+  // vê as mensagens novas ao abrir, e elas só "desaparecem" do tab
+  // Novas no próximo open (mas continuam no Histórico).
+  useEffect(() => {
+    if (prevOpenRef.current && !open && mensagens.length > 0) {
       const latest = mensagens[0]?.criadoEm ?? new Date().toISOString()
       setReadAt(latest)
       try { localStorage.setItem(STORAGE_KEY_PREFIX + portalRef, latest) } catch { /* noop */ }
+      setViewMode('new')
     }
-  }
+    prevOpenRef.current = open
+  }, [open, mensagens, portalRef])
 
-  // Não-lidas: do admin (cliente vê novas do admin) ou do cliente (admin vê do cliente)
-  // Para simplificar mostra todas as posteriores ao último readAt.
   const unread = readAt
     ? mensagens.filter(m => String(m?.criadoEm ?? '') > readAt).length
     : mensagens.length
+
+  // Lista visível
+  const visible = viewMode === 'history'
+    ? mensagens
+    : (readAt
+        ? mensagens.filter(m => String(m?.criadoEm ?? '') > readAt)
+        : mensagens)
 
   return (
     <div ref={wrapperRef} className="relative">
@@ -150,32 +164,52 @@ export default function MessagesBell({ portalRef }: Props) {
             overflow: 'hidden',
           }}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3"
+          {/* Header + toggle Novas / Histórico */}
+          <div className="px-4 py-3"
             style={{ borderBottom: '1px solid oklch(0.50 0.03 245 / 0.18)' }}>
-            <p className="text-[10.5px] tracking-[0.28em] uppercase font-semibold"
-              style={{ fontFamily: 'Space Grotesk, Manrope, sans-serif', color: 'oklch(0.80 0.11 245)' }}>
-              Mensagens
-            </p>
-            {mensagens.length > 0 && (
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[10.5px] tracking-[0.28em] uppercase font-semibold"
+                style={{ fontFamily: 'Space Grotesk, Manrope, sans-serif', color: 'oklch(0.80 0.11 245)' }}>
+                Mensagens
+              </p>
               <span className="text-[10px] tracking-[0.14em] uppercase font-semibold"
                 style={{ color: 'oklch(0.58 0.03 245)' }}>
-                {mensagens.length}
+                {viewMode === 'new' ? visible.length : `${mensagens.length} no total`}
               </span>
-            )}
+            </div>
+            <div className="flex items-center gap-1 p-0.5 rounded-md"
+              style={{ background: 'oklch(0.30 0.03 245 / 0.4)', border: '1px solid oklch(0.50 0.03 245 / 0.18)' }}>
+              <MTabBtn active={viewMode === 'new'} onClick={() => setViewMode('new')}>
+                Novas {viewMode === 'new' && visible.length > 0 ? `· ${visible.length}` : ''}
+              </MTabBtn>
+              <MTabBtn active={viewMode === 'history'} onClick={() => setViewMode('history')}>
+                Histórico {viewMode === 'history' && mensagens.length > 0 ? `· ${mensagens.length}` : ''}
+              </MTabBtn>
+            </div>
           </div>
 
           {/* Conteúdo */}
           <div className="max-h-[360px] overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
             {loading ? (
               <EmptyMsg text="A carregar…" />
-            ) : mensagens.length === 0 ? (
-              <EmptyMsg text="Sem mensagens por agora" />
+            ) : visible.length === 0 ? (
+              viewMode === 'new' ? (
+                <EmptyMsg text={mensagens.length > 0
+                  ? `Sem novas. Há ${mensagens.length} no histórico.`
+                  : 'Sem mensagens por agora'} />
+              ) : (
+                <EmptyMsg text="Sem histórico" />
+              )
             ) : (
               <ul className="m-0 p-0 list-none">
-                {mensagens.slice(0, 8).map((m, i) => (
-                  <MsgRow key={m.id ?? i} m={m} fresh={!readAt || String(m?.criadoEm ?? '') > (readAt ?? '')} />
-                ))}
+                {visible.slice(0, viewMode === 'history' ? 30 : 8).map((m, i) => {
+                  const isRead = readAt ? String(m?.criadoEm ?? '') <= readAt : false
+                  return (
+                    <MsgRow key={m.id ?? i} m={m}
+                      fresh={!isRead}
+                      faded={viewMode === 'history' && isRead} />
+                  )
+                })}
               </ul>
             )}
           </div>
@@ -221,7 +255,25 @@ function EmptyMsg({ text }: { text: string }) {
   )
 }
 
-function MsgRow({ m, fresh }: { m: Mensagem; fresh: boolean }) {
+function MTabBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex-1 px-2.5 py-1.5 rounded-[5px] text-[10.5px] tracking-[0.16em] uppercase font-semibold transition-all"
+      style={{
+        background: active ? 'oklch(0.66 0.13 245 / 0.20)' : 'transparent',
+        color: active ? '#fff' : 'oklch(0.70 0.03 245)',
+        border: active ? '1px solid oklch(0.66 0.13 245 / 0.40)' : '1px solid transparent',
+        fontFamily: 'Space Grotesk, Manrope, sans-serif',
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
+function MsgRow({ m, fresh, faded }: { m: Mensagem; fresh: boolean; faded?: boolean }) {
   const isAdminMsg = !!m.isAdmin
   const autor = (m.autor ?? '').trim() || (isAdminMsg ? 'RL PROD' : 'Cliente')
   const texto = String(m.texto ?? '').trim() || '—'
@@ -230,7 +282,10 @@ function MsgRow({ m, fresh }: { m: Mensagem; fresh: boolean }) {
 
   return (
     <li className="relative px-4 py-3"
-      style={{ borderBottom: '1px solid oklch(0.50 0.03 245 / 0.12)' }}>
+      style={{
+        borderBottom: '1px solid oklch(0.50 0.03 245 / 0.12)',
+        opacity: faded ? 0.55 : 1,
+      }}>
       {fresh && (
         <span aria-hidden className="absolute left-1.5 top-3 w-1.5 h-1.5 rounded-full"
           style={{ background: 'oklch(0.80 0.11 245)', boxShadow: '0 0 6px oklch(0.66 0.13 245 / .6)' }} />
