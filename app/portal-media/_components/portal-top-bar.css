@@ -1,0 +1,26 @@
+/* ===== Top bar do Portal: animação para os sinos com badge ===== */
+/* Pulse suave em azul accent quando há notificações/mensagens novas. */
+
+@keyframes pm-bell-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 12px oklch(0.66 0.13 245 / 0.35),
+      0 0 0 0 oklch(0.80 0.11 245 / 0.55);
+  }
+  50% {
+    box-shadow:
+      0 0 22px oklch(0.66 0.13 245 / 0.55),
+      0 0 0 6px oklch(0.80 0.11 245 / 0.00);
+  }
+}
+
+.pm-bell-glow {
+  animation: pm-bell-pulse 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pm-bell-glow {
+    animation: none;
+    box-shadow: 0 0 14px oklch(0.66 0.13 245 / 0.45) !important;
+  }
+}

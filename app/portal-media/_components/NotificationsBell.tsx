@@ -8,6 +8,7 @@
    ============================================================ */
 
 import { useEffect, useRef, useState } from 'react'
+import './portal-top-bar.css'
 
 type Notification = {
   at: string
@@ -75,20 +76,21 @@ export default function NotificationsBell({ portalRef }: Props) {
 
   return (
     <div ref={wrapperRef} className="relative">
-      {/* Botão sino — contraste alto contra o top bar navy */}
+      {/* Botão sino — contraste alto contra o top bar navy.
+       *  Brilha em azul suave quando há por ler (pm-bell-glow). */}
       <button
         onClick={handleOpen}
         aria-label={`Notificações${unread > 0 ? ` (${unread} não lidas)` : ''}`}
-        className="relative w-9 h-9 flex items-center justify-center rounded-lg transition-all duration-150"
+        className={'relative w-9 h-9 flex items-center justify-center rounded-lg transition-all duration-150' + (unread > 0 && !open ? ' pm-bell-glow' : '')}
         style={{
           border: '1px solid oklch(0.66 0.13 245 / 0.55)',
           color: '#fff',
           background: open
             ? 'oklch(0.66 0.13 245 / 0.30)'
-            : 'oklch(0.66 0.13 245 / 0.14)',
+            : (unread > 0 ? 'oklch(0.66 0.13 245 / 0.22)' : 'oklch(0.66 0.13 245 / 0.14)'),
           boxShadow: open
             ? '0 0 0 3px oklch(0.66 0.13 245 / 0.18), 0 0 12px oklch(0.66 0.13 245 / 0.4)'
-            : '0 0 10px oklch(0.66 0.13 245 / 0.18)',
+            : (unread > 0 ? undefined : '0 0 10px oklch(0.66 0.13 245 / 0.18)'),
         }}
         onMouseEnter={e => {
           if (!open) {
