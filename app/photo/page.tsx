@@ -3,7 +3,12 @@ import Link from 'next/link'
 import { DashboardCarousel, type DashCol } from '@/app/components/DashboardCarousel'
 import { LogoutButton } from '@/app/components/LogoutButton'
 
-export const revalidate = 120 // cache 2 minutos — Notion é lento, não precisa de dados em tempo real
+// Server-render por request — não tenta gerar estaticamente no build.
+// /photo faz 8 fetches paralelos (Supabase CRM + 7 DBs Notion) e estoura
+// o timeout de 60s do Vercel para SSG. force-dynamic salta esse passo.
+// Em produção continua a render em ~300-800ms com cache do Next runtime.
+export const dynamic = 'force-dynamic'
+export const revalidate = 120 // ISR runtime, ignorado por force-dynamic mas mantido como fallback
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
