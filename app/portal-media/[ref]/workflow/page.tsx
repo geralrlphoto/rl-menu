@@ -2,7 +2,7 @@ import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import { getProjeto } from '@/app/portal-media/_data/mockProject'
-import WorkflowClient from '@/app/portal-media/_components/WorkflowClient'
+import WorkflowV2Client from '@/app/portal-media/_components/WorkflowV2Client'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,7 +30,7 @@ export default async function WorkflowPage({ params }: Props) {
 
   return (
     <main className="min-h-screen relative">
-      <WorkflowClient projeto={projeto} isAdmin={isAdmin} />
+      <WorkflowV2Client projeto={projeto} isAdmin={isAdmin} />
     </main>
   )
 }
