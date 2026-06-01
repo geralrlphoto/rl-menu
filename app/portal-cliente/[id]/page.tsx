@@ -11,6 +11,7 @@ import { PortalShell, SidebarCouple, SidebarNav, SidebarMiniCountdown, type Side
 import { ContratoView } from '../atmosphere/ContratoView'
 import { PreWeddingView, DEFAULT_CENARIOS, DEFAULT_INTRO, type PwSection, type PwIntro, type PwCenario } from '../atmosphere/PreWeddingView'
 import { SendMessageButton } from '../atmosphere/SendMessageButton'
+import { FotografiasView, type FotografiasCard } from '../atmosphere/FotografiasView'
 
 const PORTAL_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
 
@@ -2019,6 +2020,182 @@ function PortalSubPageContent() {
             />
           }
         />
+      </PortalShell>
+    )
+  }
+
+  // ── Atmosphère view · FOTOGRAFIAS ─────────────────────────────────────────
+  const _atmIsFotografias = isFotografiasPage && !editing && !editingPhotos
+    && !editingParceiros && !editingBriefing && !editingCalloutLinks
+    && !editingPreWedding && !editingPropostaToken && !error
+  if (_atmIsFotografias && !loading) {
+    const handleEditTitleFP = () => { setTitleInput(title); setEditingTitle(true) }
+    const fpEnviarUrl = guiaLinks.fotosSelecaoUrl || 'https://tally.so/r/448PrO'
+    const fpRef = portalRef || refParam || ''
+
+    // Estado das URLs de cada card — vazio = bloqueado, presente = disponível
+    const urlGalerias  = String(portalSettingsObj?.galerias_url     ?? '')
+    const urlSelecao   = String(portalSettingsObj?.selecao_url      ?? '')
+    const urlPrewed    = String(portalSettingsObj?.prewedding_url   ?? '')
+    const urlEditadas  = String(portalSettingsObj?.fotos_finais_url ?? '')
+
+    // Cálculo dos 30 dias para download de Fotos Editadas
+    const fotosFinaisEnviadaIso: string = String(portalSettingsObj?.fotos_finais_enviada ?? '')
+    let editadasFootnote: string | null = urlEditadas ? '30 dias para download' : null
+    if (urlEditadas && fotosFinaisEnviadaIso) {
+      const m = fotosFinaisEnviadaIso.match(/^(\d{4})-(\d{2})-(\d{2})/)
+      if (m) {
+        const enviada = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12)
+        const limite  = new Date(enviada.getTime() + 30 * 86400000)
+        const hoje    = new Date()
+        const ms      = limite.getTime() - hoje.getTime()
+        const dias    = Math.max(0, Math.ceil(ms / 86400000))
+        editadasFootnote = dias > 0
+          ? `Faltam ${dias} dia${dias === 1 ? '' : 's'} para download`
+          : 'Período de download expirado'
+      }
+    }
+
+    const fpCards: FotografiasCard[] = [
+      {
+        key: 'galerias',
+        title: 'GALERIA ON-LINE',
+        heading: 'Galeria On-line',
+        caption: 'Vista completa para partilharem com família e amigos',
+        mark: 'G',
+        url: urlGalerias,
+      },
+      {
+        key: 'selecao',
+        title: 'GALERIA PARA SELEÇÃO',
+        heading: 'Galeria para Seleção',
+        caption: 'Escolham as fotos preferidas para o vosso álbum',
+        mark: 'S',
+        url: urlSelecao,
+      },
+      {
+        key: 'prewedding',
+        title: 'FOTOS PRÉ-WEDDING',
+        heading: 'Fotos Pré-Wedding',
+        caption: 'A sessão antes do grande dia',
+        mark: 'P',
+        url: urlPrewed,
+      },
+      {
+        key: 'editadas',
+        title: 'FOTOS EDITADAS',
+        heading: 'Fotos Editadas',
+        caption: 'Selecção final, editada, pronta para imprimir',
+        mark: 'E',
+        url: urlEditadas,
+        footnote: editadasFootnote,
+      },
+    ]
+
+    return (
+      <PortalShell sidebar={_atmSidebar}>
+        {/* Admin actions bar */}
+        {isAdmin && (
+          <div className="abar">
+            <button type="button" className="abtn" onClick={handleRefresh} disabled={refreshing}>
+              <svg className={refreshing ? 'animate-spin' : ''} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 11a8 8 0 1 0-.6 4" /><path d="M20 5v6h-6" />
+              </svg>
+              {refreshing ? 'A atualizar' : 'Atualizar'}
+            </button>
+            {hasImages && (
+              <button type="button" className="abtn" onClick={() => setEditingPhotos(true)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="8.5" cy="10" r="1.6" /><path d="M5 17l4.5-4 3 2.5L16 11l3 3" />
+                </svg>
+                Fotos
+              </button>
+            )}
+            <button type="button" className="abtn primary" onClick={() => setEditing(true)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 15V4M8 8l4-4 4 4" /><path d="M5 14v5h14v-5" />
+              </svg>
+              Publicar
+            </button>
+            <button type="button" className="abtn accent" onClick={() => setEditing(true)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 3l1.8 5.7L19.5 10l-5.7 1.3L12 17l-1.8-5.7L4.5 10l5.7-1.3Z" />
+              </svg>
+              Premium
+            </button>
+            <button type="button" className="abtn" onClick={() => setEditing(true)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 19l1-4L16 5l3 3L9 18l-4 1Z" /><path d="M14 7l3 3" />
+              </svg>
+              Editar
+            </button>
+          </div>
+        )}
+
+        {/* Hero */}
+        <header className="subhero">
+          {_atmEffectiveHeader ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={_atmEffectiveHeader} alt="" className="img" />
+          ) : (
+            <div className="ph img" data-label={`Fotografia · ${title}`} />
+          )}
+          <div className="scrim" />
+          <a className="back back-hero" href={_atmBackHref}>
+            <span className="chev">‹</span> Voltar
+          </a>
+          {isAdmin && (
+            <div className="imgctrl">
+              <button type="button" className="gbtn" onClick={() => setEditingPhotos(true)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="8.5" cy="10" r="1.6" /><path d="M5 17l4.5-4 3 2.5L16 11l3 3" />
+                </svg>
+                Trocar
+              </button>
+              {_atmEffectiveHeader && (
+                <button type="button" className="gbtn danger" onClick={handleRemovePageHeader}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+                    <path d="M6 6l12 12M18 6L6 18" />
+                  </svg>
+                  Remover
+                </button>
+              )}
+            </div>
+          )}
+          <div className="cap">
+            <div className="eyebrow e">RL Photo · Video</div>
+            <div className="title">
+              <h1>{title || 'Fotografias'}</h1>
+              {isAdmin && (
+                <span className="pencil" onClick={handleEditTitleFP}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 19l1-4L16 5l3 3L9 18l-4 1Z" /><path d="M14 7l3 3" />
+                  </svg>
+                </span>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {/* Article — body com FotografiasView */}
+        <article className="subarticle">
+          <div className="body">
+            <FotografiasView
+              enviarFotosUrl={fpEnviarUrl}
+              selecaoAvailable={Boolean(urlSelecao)}
+              cards={fpCards}
+              separatorImageUrl={_atmEffectiveHeader || subpageHeaderUrl || portalHeroImageUrl || null}
+              portalRef={fpRef}
+            />
+          </div>
+
+          {/* Logo card final (mesmo template das outras Atmosphère) */}
+          <div className="logocard">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/portal-noivos/logo-ink.png" alt="RL Photo Video" />
+            <div className="url">www.rlphotovideo.pt</div>
+          </div>
+        </article>
       </PortalShell>
     )
   }

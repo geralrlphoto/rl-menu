@@ -1,0 +1,357 @@
+'use client'
+
+/* ============================================================
+   FotografiasView — render Atmosphère da página FOTOGRAFIAS.
+   Renderiza o conteúdo INTERNO da .subarticle .body (callout,
+   secção "Seleção de Fotografias", 4 cards 2×2, separador,
+   secção "Processo de Criação do Álbum", e maquete + aprovação).
+
+   A lógica continua nos componentes existentes:
+     - guiaLinks.fotosSelecaoUrl (callout)
+     - portalSettingsObj.{galerias_url, selecao_url, prewedding_url,
+                          fotos_finais_url, fotos_finais_enviada}
+     - MaqueteAlbumSection via /api/albuns-by-ref + PATCH
+   ============================================================ */
+
+import { useEffect, useState, type ReactNode } from 'react'
+import './fotografias.css'
+
+export type FotografiasCard = {
+  /** Stable key — 'galerias' | 'selecao' | 'prewedding' | 'editadas' */
+  key: string
+  /** Eyebrow text (small caps) — ex.: 'GALERIA ON-LINE' */
+  title: string
+  /** Cormorant heading (medium type) — ex.: 'Galeria On-line' */
+  heading: string
+  /** Small caption under heading */
+  caption?: string
+  /** Initial — short letter for the round mark */
+  mark: string
+  /** URL — empty/null = locked */
+  url?: string | null
+  /** Footnote (small italic, ex.: '30 dias para download') */
+  footnote?: string | null
+}
+
+export type FotografiasViewProps = {
+  /** Tally URL para Enviar Selecção */
+  enviarFotosUrl: string
+  /** Bloqueado vs disponível para legenda da secção */
+  selecaoAvailable?: boolean
+  /** Os 4 cartões 2×2 */
+  cards: FotografiasCard[]
+  /** URL da imagem separadora (fallback: placeholder) */
+  separatorImageUrl?: string | null
+  /** Referência do portal — passa-se ao MaquetePanel para API calls */
+  portalRef?: string | null
+  /** Node opcional para se quiser injectar um substituto da maquete */
+  maquetePanelOverride?: ReactNode
+}
+
+/* ───────────────────────────────────────────────────────────────
+   Maquete + Aprovação — usa os mesmos endpoints da MaqueteAlbumSection
+   mas com layout Atmosphère.
+   ─────────────────────────────────────────────────────────────── */
+type AlbumState = {
+  id?: string
+  status?: string
+  num_fotografias?: number | null
+  data_entrega_fotos?: string | null
+  data_aprovacao?: string | null
+  data_prevista_entrega?: string | null
+  imagem_maquete_url?: string | null
+} | null
+
+const STATUS_LABEL: Record<string, string> = {
+  AGUARDA:    'Aguardar',
+  EM_ANALISE: 'Em análise',
+  APROVADO:   'Aprovado',
+  ENTREGUE:   'Entregue',
+}
+
+function fmtPt(iso?: string | null): string {
+  if (!iso) return '—'
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (!m) return iso
+  const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+  return `${m[3]} ${MESES[Number(m[2]) - 1]} ${m[1]}`
+}
+
+function MaquetePanel({ portalRef }: { portalRef: string }) {
+  const [album, setAlbum]   = useState<AlbumState>(null)
+  const [saving, setSaving] = useState(false)
+  const [feedback, setFeedback] = useState('')
+
+  useEffect(() => {
+    if (!portalRef) return
+    fetch(`/api/albuns-by-ref?ref=${encodeURIComponent(portalRef)}`)
+      .then(r => r.json())
+      .then(d => setAlbum(d))
+      .catch(() => {})
+  }, [portalRef])
+
+  async function handleAprovar() {
+    if (!album?.id) return
+    setSaving(true)
+    setFeedback('')
+    try {
+      const res = await fetch('/api/albuns-casamento', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: album.id, status: 'APROVADO' }),
+      }).then(r => r.json())
+      if (res?.row) {
+        setAlbum(a => ({
+          ...(a ?? {}),
+          status: 'APROVADO',
+          data_aprovacao: res.row.data_aprovacao,
+          data_prevista_entrega: res.row.data_prevista_entrega,
+        }))
+        setFeedback('✓ Álbum aprovado com sucesso!')
+        setTimeout(() => setFeedback(''), 5000)
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const status     = album?.status ?? 'AGUARDA'
+  const isApproved = status === 'APROVADO' || status === 'ENTREGUE'
+
+  // Os 3 passos da timeline — estado derivado do album
+  const steps: Array<{ num: string; title: string; meta: string; done: boolean }> = [
+    {
+      num: '01',
+      title: 'Entrada das fotografias',
+      meta: album?.data_entrega_fotos ? fmtPt(album.data_entrega_fotos) : 'Aguarda registo',
+      done: Boolean(album?.data_entrega_fotos),
+    },
+    {
+      num: '02',
+      title: 'Aprovação da maqueta',
+      meta: album?.data_aprovacao ? fmtPt(album.data_aprovacao) : 'A aguardar a vossa aprovação',
+      done: Boolean(album?.data_aprovacao),
+    },
+    {
+      num: '03',
+      title: 'Entrega do álbum',
+      meta: album?.data_prevista_entrega ? fmtPt(album.data_prevista_entrega) : 'Calculada após aprovação',
+      done: status === 'ENTREGUE',
+    },
+  ]
+
+  return (
+    <section className="fp-maquete">
+      <div className="fp-maquete-head">
+        <div className="eyebrow">Maquete Álbum</div>
+        <h2>Aprovação da <em>maqueta</em></h2>
+      </div>
+      <div className="fp-maquete-body">
+        {/* Imagem da maquete (se vier de Notion ou de campo dedicado) */}
+        {album?.imagem_maquete_url && (
+          <div className="fp-maquete-img">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={album.imagem_maquete_url} alt="Maquete do álbum" />
+          </div>
+        )}
+
+        {/* Stats — só quando há registo do álbum */}
+        {album?.id && (
+          <div className="fp-stats">
+            <div className="fp-stat">
+              <div className="lbl">Fotos para Álbum</div>
+              <div className="val">{album.num_fotografias ?? '—'}</div>
+            </div>
+            <div className="fp-stat">
+              <div className="lbl">Estado</div>
+              <div className="val" style={{ fontSize: 16, color: isApproved ? 'var(--ok)' : 'var(--wait)' }}>
+                {STATUS_LABEL[status] ?? status}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Timeline 3 passos */}
+        <div className="fp-timeline">
+          {steps.map(s => (
+            <div key={s.num} className={`fp-step${s.done ? ' done' : ''}`}>
+              <span className="fp-step-pip" />
+              <div className="fp-step-num">{s.num}</div>
+              <div className="fp-step-title">{s.title}</div>
+              <div className="fp-step-meta">{s.meta}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Botões */}
+        {album?.id && !isApproved && (
+          <div className="fp-approve">
+            <button
+              type="button"
+              className="fp-approve-btn primary"
+              onClick={handleAprovar}
+              disabled={saving}
+            >
+              {saving ? 'A guardar…' : '✓ Aprovar Maqueta'}
+            </button>
+            <a
+              className="fp-approve-btn ghost"
+              href={`/portal-cliente/album-alteracao?ref=${encodeURIComponent(portalRef)}`}
+            >
+              Pedir Alterações
+            </a>
+          </div>
+        )}
+
+        {!album?.id && (
+          <p style={{ textAlign: 'center', color: 'var(--ink-3)', fontStyle: 'italic', margin: '6px 0 0' }}>
+            A preparar o vosso álbum…
+          </p>
+        )}
+
+        {isApproved && (
+          <div className="fp-approved-state">
+            <span className="check">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12l4 4 10-10" />
+              </svg>
+            </span>
+            <div>
+              <div className="label">Maqueta Aprovada</div>
+              {album?.data_aprovacao && (
+                <div className="sub">Aprovado a {fmtPt(album.data_aprovacao)}</div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {feedback && <div className="fp-feedback">{feedback}</div>}
+      </div>
+    </section>
+  )
+}
+
+/* ───────────────────────────────────────────────────────────────
+   FotografiasView (default export)
+   ─────────────────────────────────────────────────────────────── */
+export function FotografiasView(props: FotografiasViewProps) {
+  const selecaoOk = props.selecaoAvailable ?? props.cards.some(c => c.key === 'selecao' && !!c.url)
+
+  return (
+    <div className="fotos-page">
+      {/* ── Callout · Enviar Fotos ───────────────────────────── */}
+      <section className="fp-callout">
+        <div className="eyebrow">Enviar Selecção</div>
+        <h3>Esta é a forma como recebemos a <em>vossa escolha</em></h3>
+        <p>
+          Noivos, este formulário é para vocês nos enviarem a vossa escolha através dele —
+          de outra forma não é considerado entregue. O processo é simples e fica imediatamente
+          registado no vosso portal.
+        </p>
+        <div className="actions">
+          <a className="atm-btn solid" href={props.enviarFotosUrl} target="_blank" rel="noopener noreferrer">
+            Enviar Selecção
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M7 17 17 7" /><path d="M9 7h8v8" />
+            </svg>
+          </a>
+        </div>
+      </section>
+
+      {/* ── Texto editorial · Seleção de Fotografias ─────────── */}
+      <section className="fp-section">
+        <div className="eyebrow">Seleção</div>
+        <h2>Seleção de <em>Fotografias</em></h2>
+        <hr className="lede-rule" />
+        <p>
+          A partir do dia em que disponibilizarmos a galeria para seleção, têm acesso à pré-seleção
+          das fotos do vosso casamento. <strong>Escolhem as imagens preferidas</strong> e enviam-nos
+          a lista pelo formulário acima — é a partir dessa selecção que preparamos o vosso álbum.
+        </p>
+        <p>
+          A galeria on-line fica disponível durante <strong>vários meses</strong> para partilharem com
+          familiares e amigos. Após a galeria de seleção fechar, o atelier inicia a montagem da
+          maqueta, que depois aprovam aqui dentro do portal.
+        </p>
+        <div className={`fp-caption${selecaoOk ? '' : ' locked'}`}>
+          <strong>{selecaoOk ? 'Galeria de seleção disponível.' : 'Galeria de seleção a aguardar abertura.'}</strong>{' '}
+          {selecaoOk
+            ? 'Podem entrar agora e enviar a vossa lista.'
+            : 'Quando a galeria estiver pronta, o cartão fica activo e podem entrar a partir daqui.'}
+        </div>
+      </section>
+
+      {/* ── Grelha 2×2 de cards ──────────────────────────────── */}
+      <div className="fp-grid">
+        {props.cards.map(c => {
+          const available = Boolean(c.url && c.url.length > 0)
+          return (
+            <article key={c.key} className="fp-card">
+              <div className="fp-card-head">
+                <span className="fp-card-title">{c.title}</span>
+                <span className={`fp-chip ${available ? 'available' : 'locked'}`}>
+                  {available ? 'Disponível' : 'Aguardar'}
+                </span>
+              </div>
+              <div className="fp-card-logo">
+                <div className="meta">
+                  <span className="mark">{c.mark}</span>
+                  <div className="meta-title">{c.heading}</div>
+                  {c.caption && <div className="meta-sub">{c.caption}</div>}
+                </div>
+              </div>
+              <div className="fp-card-foot">
+                {available ? (
+                  <a className="fp-btn available" href={c.url!} target="_blank" rel="noopener noreferrer">
+                    Ver Mais
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14" /><path d="M13 6l6 6-6 6" />
+                    </svg>
+                  </a>
+                ) : (
+                  <span className="fp-btn locked">Aguardar</span>
+                )}
+                {c.footnote && <span className="fp-foot-note">{c.footnote}</span>}
+              </div>
+            </article>
+          )
+        })}
+      </div>
+
+      {/* ── Separador de imagem ─────────────────────────────── */}
+      <div className="fp-sep">
+        {props.separatorImageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={props.separatorImageUrl} alt="" />
+        ) : (
+          <div className="ph" style={{ width: '100%', height: '100%' }} data-label="Imagem · Casamento" />
+        )}
+        <div className="fp-sep-scrim" />
+      </div>
+
+      {/* ── Texto editorial · Processo de Criação do Álbum ──── */}
+      <section className="fp-section">
+        <div className="eyebrow">Atelier</div>
+        <h2>Processo de Criação do <em>Álbum</em></h2>
+        <hr className="lede-rule" />
+        <p>
+          A partir da vossa selecção, o atelier monta uma <strong>maqueta dedicada</strong> ao vosso
+          casamento — escolha de duplas, ordenação narrativa, equilíbrio de tons e composição
+          editorial. É um processo demorado, feito com tempo e cuidado.
+        </p>
+        <p>
+          Recebem aqui no portal o aviso para reverem a maqueta. Podem <strong>aprovar</strong> ou
+          <strong> pedir alterações</strong>. Depois de aprovada, entra na produção física e a entrega
+          fica calendarizada automaticamente.
+        </p>
+      </section>
+
+      {/* ── Maquete + Aprovação ─────────────────────────────── */}
+      {props.maquetePanelOverride
+        ? props.maquetePanelOverride
+        : props.portalRef && <MaquetePanel portalRef={props.portalRef} />}
+    </div>
+  )
+}
+
+export default FotografiasView

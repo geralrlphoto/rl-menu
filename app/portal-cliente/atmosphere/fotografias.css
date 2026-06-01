@@ -1,0 +1,453 @@
+/* ============================================================
+   FOTOGRAFIAS — sub-page Atmosphère
+   Scope: .portal-atmosphere .fotos-page
+   Reutiliza tokens de atmosphere.css (gold, ink, surface)
+   ============================================================ */
+
+/* ── Callout "Enviar Fotos" ─────────────────────────────────── */
+.portal-atmosphere .fotos-page .fp-callout {
+  margin: 8px 0 36px;
+  border: 1px solid var(--gold-faint);
+  border-left: 2px solid var(--gold);
+  border-radius: var(--atm-r);
+  padding: 26px 30px;
+  background:
+    linear-gradient(180deg, rgba(200,168,102,.05), rgba(200,168,102,.01));
+}
+.portal-atmosphere .fotos-page .fp-callout .eyebrow {
+  margin-bottom: 12px;
+}
+.portal-atmosphere .fotos-page .fp-callout h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1.22;
+  color: var(--ink);
+  margin: 0 0 12px;
+}
+.portal-atmosphere .fotos-page .fp-callout h3 em {
+  font-style: italic;
+  color: var(--gold-soft);
+}
+.portal-atmosphere .fotos-page .fp-callout p {
+  font-size: 14.5px;
+  line-height: 1.75;
+  color: var(--ink-2);
+  margin: 0 0 18px;
+}
+.portal-atmosphere .fotos-page .fp-callout .actions {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+/* ── Secção editorial · "Seleção de Fotografias" ──────────── */
+.portal-atmosphere .fotos-page .fp-section {
+  margin: 44px 0 28px;
+}
+.portal-atmosphere .fotos-page .fp-section .eyebrow {
+  margin-bottom: 14px;
+}
+.portal-atmosphere .fotos-page .fp-section h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 500;
+  font-size: clamp(28px, 3.4vw, 40px);
+  color: var(--ink);
+  margin: 0 0 6px;
+  line-height: 1.06;
+}
+.portal-atmosphere .fotos-page .fp-section h2 em {
+  font-style: italic;
+  color: var(--gold-soft);
+}
+.portal-atmosphere .fotos-page .fp-section .lede-rule {
+  width: 48px; height: 2px; border: 0;
+  background: linear-gradient(90deg, var(--gold), transparent);
+  margin: 0 0 22px;
+}
+.portal-atmosphere .fotos-page .fp-section p {
+  font-size: 15.5px;
+  line-height: 1.85;
+  color: var(--ink-2);
+  margin: 0 0 16px;
+}
+.portal-atmosphere .fotos-page .fp-section p strong { color: var(--ink); font-weight: 600; }
+.portal-atmosphere .fotos-page .fp-section .fp-caption {
+  margin-top: 18px;
+  padding: 12px 16px;
+  border-left: 2px solid var(--gold-line);
+  background: rgba(200,168,102,.04);
+  border-radius: 0 8px 8px 0;
+  font-size: 13px;
+  color: var(--ink-3);
+  letter-spacing: .02em;
+}
+.portal-atmosphere .fotos-page .fp-section .fp-caption strong {
+  color: var(--gold-soft); font-weight: 600;
+}
+.portal-atmosphere .fotos-page .fp-section .fp-caption.locked {
+  border-left-color: rgba(216,165,155,.5);
+  background: rgba(216,165,155,.04);
+}
+.portal-atmosphere .fotos-page .fp-section .fp-caption.locked strong {
+  color: #d8a59b;
+}
+
+/* ── Grelha 2×2 de cards ─────────────────────────────────────── */
+.portal-atmosphere .fotos-page .fp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin: 22px 0 36px;
+}
+.portal-atmosphere .fotos-page .fp-card {
+  display: flex; flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--atm-r);
+  background: linear-gradient(180deg, var(--surface), var(--bg-2));
+  overflow: hidden;
+  transition: border-color .35s, transform .35s, box-shadow .35s;
+}
+.portal-atmosphere .fotos-page .fp-card:hover {
+  border-color: var(--gold-line);
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px -24px rgba(200,168,102,.4);
+}
+.portal-atmosphere .fotos-page .fp-card .fp-card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 18px 0;
+}
+.portal-atmosphere .fotos-page .fp-card .fp-card-title {
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 10px; letter-spacing: .3em; text-transform: uppercase;
+  color: var(--ink-3); font-weight: 600;
+}
+.portal-atmosphere .fotos-page .fp-card .fp-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 9.5px; letter-spacing: .18em; text-transform: uppercase;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid;
+}
+.portal-atmosphere .fotos-page .fp-chip.available {
+  color: var(--gold-soft);
+  border-color: var(--gold-line);
+  background: rgba(200,168,102,.08);
+}
+.portal-atmosphere .fotos-page .fp-chip.locked {
+  color: #d8a59b;
+  border-color: rgba(216,165,155,.3);
+  background: rgba(216,165,155,.06);
+}
+.portal-atmosphere .fotos-page .fp-card .fp-card-logo {
+  display: flex; align-items: center; justify-content: center;
+  padding: 28px 18px 24px;
+  flex: 1;
+  min-height: 138px;
+}
+.portal-atmosphere .fotos-page .fp-card .fp-card-logo .mark {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  border: 1px solid var(--gold-line);
+  background:
+    radial-gradient(closest-side, rgba(200,168,102,.18), transparent 70%),
+    linear-gradient(160deg, rgba(200,168,102,.08), transparent 80%);
+  color: var(--gold-soft);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 400; font-style: italic;
+  font-size: 28px;
+  flex: none;
+  margin-bottom: 14px;
+}
+.portal-atmosphere .fotos-page .fp-card .fp-card-logo .meta {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  text-align: center;
+}
+.portal-atmosphere .fotos-page .fp-card .fp-card-logo .meta-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 400;
+  font-size: 20px;
+  color: var(--ink);
+  line-height: 1.15;
+}
+.portal-atmosphere .fotos-page .fp-card .fp-card-logo .meta-sub {
+  font-size: 12px; color: var(--ink-3);
+  line-height: 1.4;
+  max-width: 200px;
+}
+.portal-atmosphere .fotos-page .fp-card .fp-card-foot {
+  padding: 14px 16px 16px;
+  border-top: 1px solid var(--line-2);
+}
+.portal-atmosphere .fotos-page .fp-card .fp-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%;
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase;
+  padding: 11px 14px;
+  border-radius: 999px;
+  border: 1px solid;
+  cursor: pointer;
+  transition: .25s;
+  background: rgba(200,168,102,.06);
+}
+.portal-atmosphere .fotos-page .fp-btn.available {
+  color: #1c150b;
+  border-color: transparent;
+  background: linear-gradient(168deg, #efd6a2, #d4b46f 60%, #c19a52);
+  box-shadow: inset 0 1px 0 rgba(255,250,236,.5), 0 8px 20px -12px rgba(200,168,102,.55);
+}
+.portal-atmosphere .fotos-page .fp-btn.available:hover {
+  background: linear-gradient(168deg, #f3dcaa, #ddbe79 60%, #c8a35a);
+  transform: translateY(-1px);
+}
+.portal-atmosphere .fotos-page .fp-btn.locked {
+  color: #d8a59b;
+  border-color: rgba(216,165,155,.3);
+  background: rgba(216,165,155,.05);
+  cursor: not-allowed;
+}
+.portal-atmosphere .fotos-page .fp-card-foot .fp-foot-note {
+  display: block; text-align: center;
+  font-size: 10.5px; color: var(--ink-4);
+  letter-spacing: .04em;
+  margin-top: 9px;
+  font-style: italic;
+}
+
+/* ── Separador de imagem ─────────────────────────────────────── */
+.portal-atmosphere .fotos-page .fp-sep {
+  margin: 36px 0;
+  border-radius: var(--atm-r);
+  overflow: hidden;
+  border: 1px solid var(--gold-faint);
+  aspect-ratio: 16 / 6;
+  position: relative;
+  background: linear-gradient(160deg, var(--surface-2), var(--bg-2));
+}
+.portal-atmosphere .fotos-page .fp-sep img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.portal-atmosphere .fotos-page .fp-sep .fp-sep-scrim {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, transparent 40%, rgba(18,13,8,.55) 100%);
+  pointer-events: none;
+}
+
+/* ── Maquete + Aprovação ───────────────────────────────────── */
+.portal-atmosphere .fotos-page .fp-maquete {
+  margin-top: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--atm-r-lg);
+  background: linear-gradient(180deg, var(--surface), var(--bg-2));
+  overflow: hidden;
+}
+.portal-atmosphere .fotos-page .fp-maquete-head {
+  padding: 24px 30px 12px;
+  border-bottom: 1px solid var(--line-2);
+}
+.portal-atmosphere .fotos-page .fp-maquete-head .eyebrow { margin-bottom: 8px; }
+.portal-atmosphere .fotos-page .fp-maquete-head h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 500;
+  font-size: clamp(26px, 3vw, 36px);
+  color: var(--ink); margin: 0;
+  line-height: 1.12;
+}
+.portal-atmosphere .fotos-page .fp-maquete-head h2 em {
+  font-style: italic; color: var(--gold-soft);
+}
+.portal-atmosphere .fotos-page .fp-maquete-body {
+  padding: 22px 30px 28px;
+}
+
+/* Timeline 3 passos */
+.portal-atmosphere .fotos-page .fp-timeline {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+  margin: 22px 0 28px;
+}
+.portal-atmosphere .fotos-page .fp-step {
+  border: 1px solid var(--line);
+  border-radius: var(--atm-r);
+  background: rgba(18,13,8,.4);
+  padding: 16px 14px;
+  position: relative;
+}
+.portal-atmosphere .fotos-page .fp-step.done {
+  border-color: var(--gold-line);
+  background:
+    radial-gradient(80% 100% at 0% 0%, rgba(200,168,102,.1), transparent 60%),
+    rgba(200,168,102,.04);
+}
+.portal-atmosphere .fotos-page .fp-step .fp-step-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 400;
+  font-style: italic;
+  font-size: 22px;
+  color: var(--gold-deep);
+  margin-bottom: 6px;
+}
+.portal-atmosphere .fotos-page .fp-step.done .fp-step-num { color: var(--gold); }
+.portal-atmosphere .fotos-page .fp-step .fp-step-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 6px;
+  letter-spacing: .01em;
+}
+.portal-atmosphere .fotos-page .fp-step .fp-step-meta {
+  font-size: 11.5px;
+  color: var(--ink-3);
+  line-height: 1.45;
+}
+.portal-atmosphere .fotos-page .fp-step .fp-step-pip {
+  position: absolute;
+  top: 14px; right: 14px;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--ink-4);
+}
+.portal-atmosphere .fotos-page .fp-step.done .fp-step-pip {
+  background: var(--gold);
+  box-shadow: 0 0 0 3px rgba(200,168,102,.18);
+}
+
+/* Botões Aprovar / Pedir alterações */
+.portal-atmosphere .fotos-page .fp-approve {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.portal-atmosphere .fotos-page .fp-approve-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 11.5px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase;
+  padding: 14px 18px;
+  border-radius: 999px;
+  border: 1px solid;
+  cursor: pointer;
+  transition: .25s;
+  text-decoration: none;
+  text-align: center;
+}
+.portal-atmosphere .fotos-page .fp-approve-btn.primary {
+  color: #1c150b;
+  border-color: transparent;
+  background: linear-gradient(168deg, #efd6a2, #d4b46f 60%, #c19a52);
+  box-shadow: inset 0 1px 0 rgba(255,250,236,.5), 0 10px 24px -14px rgba(200,168,102,.55);
+}
+.portal-atmosphere .fotos-page .fp-approve-btn.primary:hover {
+  background: linear-gradient(168deg, #f3dcaa, #ddbe79 60%, #c8a35a);
+  transform: translateY(-1px);
+}
+.portal-atmosphere .fotos-page .fp-approve-btn.ghost {
+  color: var(--ink-2);
+  border-color: var(--gold-faint);
+  background: rgba(200,168,102,.04);
+}
+.portal-atmosphere .fotos-page .fp-approve-btn.ghost:hover {
+  border-color: var(--gold-line);
+  color: var(--ink);
+  background: rgba(200,168,102,.08);
+}
+.portal-atmosphere .fotos-page .fp-approve-btn:disabled {
+  opacity: .45; cursor: not-allowed;
+  transform: none;
+}
+
+/* Estado aprovado */
+.portal-atmosphere .fotos-page .fp-approved-state {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 20px;
+  border: 1px solid rgba(157,181,139,.3);
+  background: rgba(157,181,139,.06);
+  border-radius: var(--atm-r);
+  margin-top: 8px;
+}
+.portal-atmosphere .fotos-page .fp-approved-state .check {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(157,181,139,.45);
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--ok);
+  flex: none;
+}
+.portal-atmosphere .fotos-page .fp-approved-state .label {
+  font-size: 11px; letter-spacing: .26em; text-transform: uppercase;
+  color: var(--ok); font-weight: 700;
+}
+.portal-atmosphere .fotos-page .fp-approved-state .sub {
+  font-size: 12px; color: var(--ink-3); margin-top: 2px;
+}
+
+.portal-atmosphere .fotos-page .fp-feedback {
+  margin-top: 14px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(157,181,139,.3);
+  background: rgba(157,181,139,.06);
+  color: var(--ok);
+  font-size: 13px;
+  text-align: center;
+  letter-spacing: .04em;
+}
+
+/* Imagem da maquete (quando existir) */
+.portal-atmosphere .fotos-page .fp-maquete-img {
+  margin: 4px 0 22px;
+  border-radius: var(--atm-r);
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.portal-atmosphere .fotos-page .fp-maquete-img img {
+  width: 100%; display: block; object-fit: cover;
+}
+
+/* Estatísticas do álbum (chips) */
+.portal-atmosphere .fotos-page .fp-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 16px 0 6px;
+}
+.portal-atmosphere .fotos-page .fp-stat {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: rgba(18,13,8,.4);
+}
+.portal-atmosphere .fotos-page .fp-stat .lbl {
+  font-size: 9.5px; letter-spacing: .26em; text-transform: uppercase;
+  color: var(--ink-4); font-weight: 600;
+  margin-bottom: 4px;
+}
+.portal-atmosphere .fotos-page .fp-stat .val {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 400;
+  font-size: 20px;
+  color: var(--ink);
+}
+.portal-atmosphere .fotos-page .fp-stat.full { grid-column: 1 / -1; }
+
+/* ── Responsivo ─────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .portal-atmosphere .fotos-page .fp-grid {
+    grid-template-columns: 1fr;
+  }
+  .portal-atmosphere .fotos-page .fp-timeline {
+    grid-template-columns: 1fr;
+  }
+  .portal-atmosphere .fotos-page .fp-approve {
+    grid-template-columns: 1fr;
+  }
+  .portal-atmosphere .fotos-page .fp-maquete-head,
+  .portal-atmosphere .fotos-page .fp-maquete-body {
+    padding-left: 20px; padding-right: 20px;
+  }
+  .portal-atmosphere .fotos-page .fp-sep {
+    aspect-ratio: 16 / 9;
+  }
+}
