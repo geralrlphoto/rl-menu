@@ -225,6 +225,59 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
     ))
   }
 
+  /* Mudança rápida de estado (a partir da view mode — só admin).
+     Detecta estado anterior, atualiza local, PATCH imediato + notificação. */
+  const quickChangeEstado = async (colunaId: string, tarefaId: string, novoEstado: TarefaEstado) => {
+    let tarefaTitulo = ''
+    let colunaTitulo = ''
+    let estadoAnterior: TarefaEstado = 'nao_iniciada'
+    const next = colunas.map(col => {
+      if (col.id !== colunaId) return col
+      colunaTitulo = col.titulo
+      return {
+        ...col,
+        tarefas: col.tarefas.map(t => {
+          if (t.id !== tarefaId) return t
+          tarefaTitulo = t.titulo
+          estadoAnterior = t.estado
+          return { ...t, estado: novoEstado }
+        }),
+      }
+    })
+    if (estadoAnterior === novoEstado) return // sem mudança real
+    setColunas(next)
+    baselineRef.current = next // baseline avança aqui também
+    // PATCH ao Supabase
+    fetch(`/api/media-portal/${initial.ref}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ roadmap: next, roadmapImageUrl: heroUrl }),
+    }).catch(() => {})
+    // Notificação
+    const labels: Record<string, string> = {
+      concluido: 'Concluído',
+      em_andamento: 'Em andamento',
+      nao_iniciada: 'Não iniciada',
+      aguardar: 'Aguardar',
+      enviado: 'Enviado',
+    }
+    fetch(`/api/media-portal/${initial.ref}/notify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'roadmap-status',
+        title: tarefaTitulo,
+        body: `${colunaTitulo} · ${labels[estadoAnterior] ?? estadoAnterior} → ${labels[novoEstado] ?? novoEstado}`,
+        meta: {
+          coluna: colunaTitulo,
+          tarefa: tarefaTitulo,
+          estadoAnterior,
+          novoEstado,
+        },
+      }),
+    }).catch(() => {})
+  }
+
   /* ── persistência ── */
   const save = async () => {
     setSaving(true)
@@ -539,10 +592,18 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
                                 )}
                                 <div className="flex-1 min-w-0">
                                   <p className="text-[15px] font-light text-white/65 leading-snug mb-3">{tarefa.titulo}</p>
-                                  <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] ${cfg.pill} ${cfg.text}`}>
-                                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
-                                    {cfg.label}
-                                  </span>
+                                  {isAdmin ? (
+                                    <EstadoQuickChanger
+                                      cfg={cfg}
+                                      current={tarefa.estado}
+                                      onChange={(novoEstado) => quickChangeEstado(coluna.id, tarefa.id, novoEstado)}
+                                    />
+                                  ) : (
+                                    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] ${cfg.pill} ${cfg.text}`}>
+                                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
+                                      {cfg.label}
+                                    </span>
+                                  )}
                                   {tarefa.data && (
                                     <p className="flex items-center gap-1.5 text-[12px] text-white/20 mt-2.5">
                                       <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="shrink-0 opacity-50">
@@ -598,5 +659,108 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
       )}
     </>
   )
+}
+
+/* ============================================================
+   EstadoQuickChanger — pill clicável (admin) que abre popover
+   com os 5 estados. Click muda imediatamente + dispara
+   notificação via onChange callback.
+   ============================================================ */
+function EstadoQuickChanger({
+  cfg, current, onChange,
+}: {
+  cfg: { pill: string; dot: string; text: string; label: string }
+  current: TarefaEstado
+  onChange: (e: TarefaEstado) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const wrapperRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onDocClick = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onDocClick)
+    return () => document.removeEventListener('mousedown', onDocClick)
+  }, [open])
+
+  return (
+    <div ref={wrapperRef} className="relative inline-block">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        title="Clica para alterar o estado"
+        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] cursor-pointer transition-all ${cfg.pill} ${cfg.text}`}
+        style={{ border: '1px solid transparent' }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)' }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = 'transparent' }}
+      >
+        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
+        {cfg.label}
+        <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor"
+          strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+          className="opacity-60 ml-0.5">
+          <path d="M2 4l3 3 3-3" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          className="absolute left-0 top-[calc(100%+6px)] z-30 min-w-[180px] rounded-lg overflow-hidden"
+          style={{
+            background: 'linear-gradient(180deg, #16293a, #122230 60%, #0e1b27)',
+            border: '1px solid oklch(0.50 0.03 245 / 0.30)',
+            boxShadow: '0 14px 30px -10px rgba(0,0,0,0.55), 0 4px 8px rgba(0,0,0,0.3)',
+            fontFamily: 'Manrope, system-ui, sans-serif',
+          }}
+        >
+          {ESTADO_OPTIONS.map(opt => {
+            const optCfg = estadoCfg(opt.value)
+            const isActive = opt.value === current
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => { onChange(opt.value); setOpen(false) }}
+                className="w-full text-left px-3 py-2 flex items-center gap-2.5 text-[12px] transition-all"
+                style={{
+                  background: isActive ? 'oklch(0.66 0.13 245 / 0.16)' : 'transparent',
+                  borderBottom: '1px solid oklch(0.50 0.03 245 / 0.10)',
+                  color: '#fff',
+                }}
+                onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'oklch(0.40 0.04 245 / 0.40)' }}
+                onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
+              >
+                <span className={`w-2 h-2 rounded-full shrink-0 ${optCfg.dot}`} />
+                <span className="flex-1">{opt.label}</span>
+                {isActive && (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ color: 'oklch(0.80 0.11 245)' }}>
+                    <path d="M5 12l5 5L20 7" />
+                  </svg>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* Helper para ir buscar a config visual de um estado (cores) */
+function estadoCfg(estado: TarefaEstado): { pill: string; dot: string; text: string; label: string } {
+  switch (estado) {
+    case 'concluido':    return { pill: 'bg-emerald-500/10',  dot: 'bg-emerald-400',  text: 'text-emerald-400',  label: 'Concluído' }
+    case 'em_andamento': return { pill: 'bg-blue-500/10',     dot: 'bg-blue-400',     text: 'text-blue-400',     label: 'Em andamento' }
+    case 'aguardar':     return { pill: 'bg-yellow-500/10',   dot: 'bg-yellow-400',   text: 'text-yellow-400',   label: 'Aguardar' }
+    case 'enviado':      return { pill: 'bg-purple-500/10',   dot: 'bg-purple-400',   text: 'text-purple-400',   label: 'Enviado' }
+    case 'nao_iniciada':
+    default:             return { pill: 'bg-white/[0.03]',    dot: 'bg-white/30',     text: 'text-white/40',     label: 'Não iniciada' }
+  }
 }
 
