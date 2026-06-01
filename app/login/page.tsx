@@ -154,10 +154,14 @@ function LoginPageInner() {
         return
       }
       setToast('Bem-vindo de volta.')
+      // Redirect imediato via window.location para o browser mostrar a sua
+      // própria barra de progresso (em vez do botão a girar enquanto o
+      // /photo server component faz 8 fetches paralelos ao Notion).
+      // Default = / (brand selector — pura client component, instantâneo).
       setTimeout(() => {
-        router.push(nextFromUrl ?? '/photo')
-        router.refresh()
-      }, 500)
+        const target = nextFromUrl ?? '/'
+        window.location.assign(target)
+      }, 350)
     } catch {
       setError('Erro de ligação. Tenta novamente.')
       setLoading(false)
