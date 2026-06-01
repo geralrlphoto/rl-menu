@@ -75,42 +75,50 @@ export default function NotificationsBell({ portalRef }: Props) {
 
   return (
     <div ref={wrapperRef} className="relative">
-      {/* Botão sino */}
+      {/* Botão sino — contraste alto contra o top bar navy */}
       <button
         onClick={handleOpen}
         aria-label={`Notificações${unread > 0 ? ` (${unread} não lidas)` : ''}`}
-        className="relative w-8 h-8 flex items-center justify-center rounded-md transition-all duration-150"
+        className="relative w-9 h-9 flex items-center justify-center rounded-lg transition-all duration-150"
         style={{
-          border: '1px solid oklch(0.50 0.03 245 / 0.22)',
-          color: open ? '#fff' : 'oklch(0.70 0.03 245)',
-          background: open ? 'oklch(0.66 0.13 245 / 0.16)' : 'transparent',
+          border: '1px solid oklch(0.66 0.13 245 / 0.55)',
+          color: '#fff',
+          background: open
+            ? 'oklch(0.66 0.13 245 / 0.30)'
+            : 'oklch(0.66 0.13 245 / 0.14)',
+          boxShadow: open
+            ? '0 0 0 3px oklch(0.66 0.13 245 / 0.18), 0 0 12px oklch(0.66 0.13 245 / 0.4)'
+            : '0 0 10px oklch(0.66 0.13 245 / 0.18)',
         }}
         onMouseEnter={e => {
           if (!open) {
             e.currentTarget.style.borderColor = 'oklch(0.80 0.11 245)'
-            e.currentTarget.style.color = '#fff'
+            e.currentTarget.style.background = 'oklch(0.66 0.13 245 / 0.24)'
+            e.currentTarget.style.boxShadow = '0 0 14px oklch(0.66 0.13 245 / 0.32)'
           }
         }}
         onMouseLeave={e => {
           if (!open) {
-            e.currentTarget.style.borderColor = 'oklch(0.50 0.03 245 / 0.22)'
-            e.currentTarget.style.color = 'oklch(0.70 0.03 245)'
+            e.currentTarget.style.borderColor = 'oklch(0.66 0.13 245 / 0.55)'
+            e.currentTarget.style.background = 'oklch(0.66 0.13 245 / 0.14)'
+            e.currentTarget.style.boxShadow = '0 0 10px oklch(0.66 0.13 245 / 0.18)'
           }
         }}
       >
-        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
           <path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z" />
           <path d="M10.5 19a1.5 1.5 0 0 0 3 0" />
         </svg>
         {unread > 0 && (
           <span aria-hidden
-            className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-[3px] rounded-full flex items-center justify-center text-[9px] font-bold leading-none"
+            className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-[4px] rounded-full flex items-center justify-center text-[10px] font-bold leading-none"
             style={{
-              background: 'oklch(0.66 0.15 35)' /* pending/danger tone */,
+              background: 'oklch(0.66 0.16 30)' /* danger tone */,
               color: '#fff',
-              border: '1.5px solid #122230',
+              border: '2px solid #122230',
               fontFamily: 'Manrope, system-ui, sans-serif',
+              boxShadow: '0 0 8px oklch(0.66 0.16 30 / 0.6)',
             }}>
             {unread > 9 ? '9+' : unread}
           </span>
