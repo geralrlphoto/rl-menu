@@ -2189,6 +2189,8 @@ export default function EventoPage() {
   const [prazoFotosNoivosEstado, setPrazoFotosNoivosEstado] = useState<string>('Aguardar')
   const [maqueteEnviada, setMaqueteEnviada] = useState<string | null>(null)
   const [selecaoEnviada, setSelecaoEnviada] = useState<string | null>(null)
+  // Armazenamento: timestamp ISO de quando o backup foi confirmado pela equipa
+  const [armazenamentoBackup, setArmazenamentoBackup] = useState<string | null>(null)
   const [preWeddingEnviada, setPreWeddingEnviada] = useState<string | null>(null)
   const [fotosFinaisEnviada, setFotosFinaisEnviada] = useState<string | null>(null)
   const [galeriasEnviada, setGaleriasEnviada] = useState<string | null>(null)
@@ -2488,6 +2490,7 @@ export default function EventoPage() {
               if (s.prazo_fotos_noivos_estado)   setPrazoFotosNoivosEstado(s.prazo_fotos_noivos_estado)
               if (s.maquete_enviada)          setMaqueteEnviada(s.maquete_enviada)
               if (s.selecao_enviada)          setSelecaoEnviada(s.selecao_enviada)
+              if (s.armazenamento_backup)     setArmazenamentoBackup(s.armazenamento_backup)
               if (s.prewedding_enviada)       setPreWeddingEnviada(s.prewedding_enviada)
               if (s.fotos_finais_enviada)     setFotosFinaisEnviada(s.fotos_finais_enviada)
               if (s.galerias_enviada)         setGaleriasEnviada(s.galerias_enviada)
@@ -3491,12 +3494,101 @@ export default function EventoPage() {
         </Section>
 
         {/* ── Armazenamento ── */}
-        <Section title="Armazenamento">
+        <div
+          className="print:hidden rounded-2xl p-6 flex flex-col gap-4 transition-all duration-300"
+          style={armazenamentoBackup
+            ? {
+                background: 'rgba(251, 191, 36, 0.10)',
+                border: '1px solid rgba(251, 191, 36, 0.32)',
+                boxShadow: '0 0 24px rgba(251, 191, 36, 0.10), 0 0 6px rgba(251, 191, 36, 0.08)',
+              }
+            : {
+                background: 'rgba(255,255,255,0.02)',
+                border: '1px solid rgba(255,255,255,0.06)',
+              }}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <h2
+              className="text-[10px] tracking-[0.35em] uppercase transition-colors"
+              style={{ color: armazenamentoBackup ? 'rgba(251, 191, 36, 0.95)' : 'rgba(212, 175, 55, 0.80)' }}
+            >
+              Armazenamento
+            </h2>
+            <button
+              type="button"
+              onClick={async () => {
+                if (!e.referencia) return
+                const next = armazenamentoBackup ? null : new Date().toISOString()
+                setArmazenamentoBackup(next)
+                try {
+                  await fetch('/api/portais', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      referencia: e.referencia,
+                      updates: { settings: { armazenamento_backup: next } },
+                    }),
+                  })
+                } catch { /* ignore */ }
+              }}
+              className="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[11px] tracking-[0.18em] uppercase font-semibold transition-all"
+              style={armazenamentoBackup
+                ? {
+                    background: 'rgba(251, 191, 36, 0.18)',
+                    border: '1px solid rgba(251, 191, 36, 0.50)',
+                    color: 'rgba(251, 191, 36, 1)',
+                  }
+                : {
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    color: 'rgba(255,255,255,0.55)',
+                  }}
+              title={armazenamentoBackup ? 'Clica para desmarcar' : 'Clica para confirmar backup'}
+            >
+              {/* Checkbox */}
+              <span
+                className="w-3.5 h-3.5 shrink-0 border flex items-center justify-center transition-all rounded-[3px]"
+                style={armazenamentoBackup
+                  ? { borderColor: 'rgba(251, 191, 36, 1)', background: 'rgba(251, 191, 36, 1)' }
+                  : { borderColor: 'rgba(255,255,255,0.30)', background: 'transparent' }}
+              >
+                {armazenamentoBackup && (
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                )}
+              </span>
+              {armazenamentoBackup ? 'Backup feito' : 'Marcar Backup feito'}
+            </button>
+          </div>
+
+          {/* Carimbo da data+hora de quando foi marcado */}
+          {armazenamentoBackup && (
+            <div
+              className="-mt-1 inline-flex items-center gap-1.5 text-[11px]"
+              style={{ color: 'rgba(251, 191, 36, 0.80)' }}
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 2" />
+              </svg>
+              <span>
+                Confirmado em{' '}
+                <strong style={{ color: 'rgba(251, 191, 36, 0.98)' }}>
+                  {new Date(armazenamentoBackup).toLocaleString('pt-PT', {
+                    day: '2-digit', month: 'short', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit',
+                  })}
+                </strong>
+              </span>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <EditMultiField label="Nome do Disco" value={e.nome_disco ?? []} field="nome_disco" eventId={e.id} onSaved={handleSaved} />
             <EditMultiField label="Backup Disco" value={e.backup_disco ?? []} field="backup_disco" eventId={e.id} onSaved={handleSaved} />
           </div>
-        </Section>
+        </div>
 
         {/* ── Ações Fotografia ── */}
         <div className="print:hidden rounded-2xl p-6 flex flex-col gap-4"
