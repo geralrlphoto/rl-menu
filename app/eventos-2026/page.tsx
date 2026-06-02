@@ -450,6 +450,8 @@ function Eventos2026Inner() {
   const [showNovoEvento, setShowNovoEvento] = useState(false)
   // Set de referencias com portal ativo (existe row em `portais`)
   const [portaisAtivos, setPortaisAtivos] = useState<Set<string>>(new Set())
+  // Map ref(upper) → ISO timestamp do backup confirmado em /eventos-2026/[id]
+  const [backupsFeitos, setBackupsFeitos] = useState<Map<string, string>>(new Map())
   const router = useRouter()
   const searchParams = useSearchParams()
   const anoFiltro = parseInt(searchParams.get('ano') ?? '2026')
@@ -483,10 +485,19 @@ function Eventos2026Inner() {
     fetch('/api/portais')
       .then(r => r.json())
       .then(d => {
-        const list = (d.portais ?? d.rows ?? []) as Array<{ referencia?: string | null }>
+        const list = (d.portais ?? d.rows ?? []) as Array<{ referencia?: string | null; settings?: any }>
         const s = new Set<string>()
-        list.forEach(p => { if (p.referencia) s.add(p.referencia.toUpperCase()) })
+        const bk = new Map<string, string>()
+        list.forEach(p => {
+          if (p.referencia) {
+            const ref = p.referencia.toUpperCase()
+            s.add(ref)
+            const ts = p.settings?.armazenamento_backup
+            if (ts && typeof ts === 'string') bk.set(ref, ts)
+          }
+        })
         setPortaisAtivos(s)
+        setBackupsFeitos(bk)
       })
       .catch(() => {/* silencioso */})
   }
@@ -672,8 +683,20 @@ function Eventos2026Inner() {
 
                 {/* Lista de eventos do mês */}
                 <div className="flex flex-col gap-2">
-                  {monthEvents.map(e => (
-                    <Link key={e.id} href={`/eventos-2026/${e.notion_id ?? e.id}`} className="group flex items-center gap-3 sm:gap-5 px-3 sm:px-5 py-3 sm:py-4 bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] hover:border-gold/20 rounded-xl transition-all cursor-pointer relative">
+                  {monthEvents.map(e => {
+                    const backupTs = e.referencia ? backupsFeitos.get(e.referencia.toUpperCase()) : null
+                    const hasBackup = !!backupTs
+                    return (
+                    <Link
+                      key={e.id}
+                      href={`/eventos-2026/${e.notion_id ?? e.id}`}
+                      className={`group flex items-center gap-3 sm:gap-5 px-3 sm:px-5 py-3 sm:py-4 border rounded-xl transition-all cursor-pointer relative ${
+                        hasBackup
+                          ? 'bg-amber-500/[0.06] hover:bg-amber-500/[0.10] border-amber-400/30 hover:border-amber-400/55'
+                          : 'bg-white/[0.02] hover:bg-white/[0.05] border-white/[0.06] hover:border-gold/20'
+                      }`}
+                      style={hasBackup ? { boxShadow: '0 0 18px -8px rgba(251, 191, 36, 0.25)' } : undefined}
+                    >
 
                       {/* Data */}
                       <div className="w-16 shrink-0 text-center">
@@ -710,6 +733,19 @@ function Eventos2026Inner() {
                           </span>
                         ))}
                       </div>
+
+                      {/* Backup OK — só quando armazenamento_backup está confirmado */}
+                      {hasBackup && (
+                        <span
+                          className="inline-flex items-center gap-1.5 shrink-0 text-[10px] px-2.5 py-0.5 rounded-full border tracking-widest uppercase font-bold text-amber-300 bg-amber-400/15 border-amber-400/45"
+                          title={`Backup confirmado em ${backupTs ? new Date(backupTs).toLocaleString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}`}
+                        >
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                          Backup OK
+                        </span>
+                      )}
 
                       {/* Equipa: Fotografo · Videografo · Editor */}
                       {(e.fotografo?.length > 0 || e.videografo?.length > 0 || e.editor_fotos) && (
@@ -780,7 +816,8 @@ function Eventos2026Inner() {
                         }
                       </button>
                     </Link>
-                  ))}
+                    )
+                  })}
                 </div>
 
                 {/* Total do mês */}
