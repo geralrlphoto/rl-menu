@@ -974,6 +974,13 @@ function PortalSubPageContent() {
   /** 3 cenários editáveis (substitui leitura do Notion após migração). */
   const [pwCenarios, setPwCenarios] = useState<PwCenario[] | null>(null)
   const [briefingInfo, setBriefingInfo] = useState<Record<string, BriefingExt>>({})
+
+  // Fichas Individuais (NOIVO / NOIVA / etc.) — accordion editável com
+  // caixas de texto label + value que o admin/cliente preenche.
+  type FichaCampo = { id: string; label: string; value: string }
+  const [briefingFichas, setBriefingFichas] = useState<Record<string, FichaCampo[]>>({})
+  const [openFichaKey, setOpenFichaKey] = useState<string | null>(null)
+  const [fichaSaving, setFichaSaving] = useState(false)
   const [editingBriefingInfo, setEditingBriefingInfo] = useState(false)
   const [briefingFieldsForm, setBriefingFieldsForm] = useState<Array<{ label: string; value: string }>>([])
   const [editingInfoGeral, setEditingInfoGeral] = useState(false)
@@ -1160,6 +1167,7 @@ function PortalSubPageContent() {
       setPwIntro(ps.pwIntro && typeof ps.pwIntro === 'object' ? ps.pwIntro : null)
       setPwCenarios(Array.isArray(ps.pwCenarios) ? ps.pwCenarios : null)
       setBriefingInfo(ps.briefingInfo ?? {})
+      setBriefingFichas(ps.briefingFichas ?? {})
       setCronogramaStatus(ps.cronogramaStatus ?? {})
       setSatisfacao(ps.satisfacao ?? null)
 
@@ -3058,42 +3066,153 @@ function PortalSubPageContent() {
                               }).length} secções
                             </span>
                           </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 gap-3">
                             {childPages
                               .filter(cp => {
                                 const k = (cp.child_page?.title ?? '').toUpperCase().trim()
-                                // Esconder fichas de Cerimónia / Quinta — restantes (NOIVO, NOIVA, etc.) continuam.
                                 return k !== 'CERIMÓNIA' && k !== 'CERIMONIA' && k !== 'QUINTA'
                               })
                               .map(cp => {
                               const pageTitle = cp.child_page?.title ?? ''
                               const key = pageTitle.toUpperCase().trim()
                               const meta = CARD_META[key] ?? { icon: '◆', desc: 'Aceder a esta secção do briefing' }
-                              const href = `/portal-cliente/${cp.id}?title=${encodeURIComponent(pageTitle)}&from=${id}&fromTitle=${encodeURIComponent(title)}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}`
+                              const isOpen = openFichaKey === key
+                              // Default fields se ainda não houver
+                              const defaultCampos: FichaCampo[] = [
+                                { id: 'nome',    label: 'Nome',     value: '' },
+                                { id: 'contato', label: 'Contacto', value: '' },
+                              ]
+                              const campos = briefingFichas[key] ?? defaultCampos
+
+                              const updateCampo = (idx: number, field: 'label' | 'value', val: string) => {
+                                setBriefingFichas(prev => ({
+                                  ...prev,
+                                  [key]: (prev[key] ?? defaultCampos).map((c, i) =>
+                                    i === idx ? { ...c, [field]: val } : c
+                                  ),
+                                }))
+                              }
+                              const addCampo = () => {
+                                const newCampo: FichaCampo = {
+                                  id: `c-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                                  label: 'Novo campo',
+                                  value: '',
+                                }
+                                setBriefingFichas(prev => ({
+                                  ...prev,
+                                  [key]: [...(prev[key] ?? defaultCampos), newCampo],
+                                }))
+                              }
+                              const removeCampo = (idx: number) => {
+                                setBriefingFichas(prev => ({
+                                  ...prev,
+                                  [key]: (prev[key] ?? defaultCampos).filter((_, i) => i !== idx),
+                                }))
+                              }
+                              const saveFicha = async () => {
+                                setFichaSaving(true)
+                                try {
+                                  const newSettings = { ...portalSettingsObj, briefingFichas }
+                                  await savePortalSettings(newSettings)
+                                  setPortalSettingsObj(newSettings)
+                                } finally { setFichaSaving(false) }
+                              }
+
                               return (
-                                <Link key={cp.id} href={href} className="block group">
-                                  <div className="relative h-full px-5 py-6 rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.025] to-transparent overflow-hidden transition-all duration-300 hover:border-gold/35 hover:from-gold/[0.05] hover:to-transparent"
-                                    style={{ boxShadow: '0 12px 30px -16px rgba(0,0,0,0.5)' }}>
-                                    {/* Soft gold glow on hover */}
+                                <div key={cp.id} className="rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.025] to-transparent overflow-hidden transition-all duration-300"
+                                  style={{ boxShadow: '0 12px 30px -16px rgba(0,0,0,0.5)' }}>
+                                  {/* Header da ficha (clicável) */}
+                                  <button
+                                    type="button"
+                                    onClick={() => setOpenFichaKey(prev => prev === key ? null : key)}
+                                    className="w-full text-left relative group px-5 py-5 hover:bg-gold/[0.04] transition-all"
+                                  >
                                     <span className="absolute -top-12 -right-12 w-32 h-32 rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                                       style={{ background: 'radial-gradient(circle, rgba(201,164,92,0.18), transparent 70%)' }} />
-                                    <div className="relative flex items-start gap-4">
-                                      {/* Ícone gold */}
+                                    <div className="relative flex items-center gap-4">
                                       <div className="w-12 h-12 rounded-xl border border-gold/30 bg-gold/[0.06] flex items-center justify-center text-gold text-lg shrink-0 group-hover:bg-gold/[0.12] group-hover:border-gold/50 transition-all"
                                         style={{ boxShadow: '0 0 14px -6px rgba(201,164,92,0.5)' }}>
                                         {meta.icon}
                                       </div>
                                       <div className="flex-1 min-w-0">
                                         <p className="text-[10px] tracking-[0.35em] text-gold/65 uppercase mb-1.5 group-hover:text-gold/85 transition-colors">{pageTitle}</p>
-                                        <p className="text-[12px] text-white/55 leading-relaxed line-clamp-2">{meta.desc}</p>
+                                        <p className="text-[12px] text-white/55 leading-relaxed">{meta.desc}</p>
+                                      </div>
+                                      <span className={`text-gold/60 text-xl transition-transform duration-300 shrink-0 ${isOpen ? 'rotate-90' : ''}`}>›</span>
+                                    </div>
+                                  </button>
+
+                                  {/* Painel expansível com formulário */}
+                                  <div className={`grid transition-all duration-300 ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                                    <div className="overflow-hidden">
+                                      <div className="px-5 pb-5 pt-2 border-t border-white/[0.06]">
+                                        <p className="text-[9px] tracking-[0.4em] text-white/30 uppercase mb-4">Caixas de Texto</p>
+                                        <div className="flex flex-col gap-3">
+                                          {campos.map((campo, idx) => (
+                                            <div key={campo.id} className="flex flex-col sm:flex-row gap-2 items-start group/row">
+                                              {/* Label */}
+                                              <input
+                                                value={campo.label}
+                                                onChange={e => updateCampo(idx, 'label', e.target.value)}
+                                                placeholder="Etiqueta"
+                                                className="sm:w-44 shrink-0 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-[11px] tracking-[0.18em] uppercase text-gold/80 placeholder:text-white/20 focus:outline-none focus:border-gold/50 transition-colors font-semibold"
+                                              />
+                                              {/* Value */}
+                                              <input
+                                                value={campo.value}
+                                                onChange={e => updateCampo(idx, 'value', e.target.value)}
+                                                placeholder="Conteúdo"
+                                                className="flex-1 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/85 placeholder:text-white/25 focus:outline-none focus:border-gold/50 transition-colors"
+                                              />
+                                              {/* Remover */}
+                                              {isAdmin && (
+                                                <button
+                                                  type="button"
+                                                  onClick={() => removeCampo(idx)}
+                                                  title="Remover este campo"
+                                                  className="opacity-0 group-hover/row:opacity-100 w-9 h-9 rounded-lg text-white/30 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/30 transition-all flex items-center justify-center"
+                                                >
+                                                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                                  </svg>
+                                                </button>
+                                              )}
+                                            </div>
+                                          ))}
+
+                                          {/* Botão Adicionar */}
+                                          <button
+                                            type="button"
+                                            onClick={addCampo}
+                                            className="mt-1 self-start inline-flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] tracking-[0.25em] uppercase font-bold text-gold/85 border border-dashed border-gold/35 hover:border-gold/65 hover:bg-gold/[0.06] transition-all"
+                                          >
+                                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+                                              <path d="M12 5v14M5 12h14" />
+                                            </svg>
+                                            Adicionar Caixa de Texto
+                                          </button>
+                                        </div>
+
+                                        {/* Footer com Guardar */}
+                                        <div className="mt-5 pt-4 border-t border-white/[0.05] flex items-center justify-between gap-3">
+                                          <span className="text-[10px] text-white/30 italic">
+                                            {campos.length} caixa{campos.length === 1 ? '' : 's'} · guarda para persistir
+                                          </span>
+                                          <button
+                                            type="button"
+                                            onClick={saveFicha}
+                                            disabled={fichaSaving}
+                                            className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-[11px] tracking-[0.22em] uppercase font-bold text-black bg-gold hover:brightness-110 transition-all disabled:opacity-50"
+                                            style={{ boxShadow: '0 0 18px -8px rgba(201,164,92,0.55)' }}
+                                          >
+                                            {fichaSaving ? 'A guardar…' : '✓ Guardar Ficha'}
+                                          </button>
+                                        </div>
                                       </div>
                                     </div>
-                                    <div className="mt-4 pt-3 border-t border-white/[0.05] flex items-center justify-between">
-                                      <span className="text-[9px] tracking-[0.3em] text-white/35 uppercase">Abrir Ficha</span>
-                                      <span className="text-gold/60 text-base group-hover:text-gold group-hover:translate-x-0.5 transition-all">›</span>
-                                    </div>
                                   </div>
-                                </Link>
+                                </div>
                               )
                             })}
                           </div>
