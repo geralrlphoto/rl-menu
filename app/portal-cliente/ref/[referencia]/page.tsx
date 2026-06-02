@@ -1062,8 +1062,56 @@ export default function PortalRefPage() {
   }, [patchBlocksForCasamento])
 
   const loadSettings = useCallback(async () => {
-    const d = await fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`).then(r => r.json())
-    if (d.portal?.settings) setSettings(d.portal.settings)
+    // Carrega EM PARALELO o portal do casal (Supabase) e o template-mestre
+    // (Notion via portal_template_settings) para usar template como
+    // FALLBACK nos campos visuais. Tudo o que é específico do casal
+    // (identidade, valores, estado das entregas, mensagens, URLs das
+    // galerias, password) continua a vir só do portal individual.
+    const [d, templateD] = await Promise.all([
+      fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`).then(r => r.json()),
+      fetch(`/api/portais-clientes?id=${PAGE_ID}&bust=1`).then(r => r.json()).catch(() => null),
+    ])
+    if (d.portal?.settings) {
+      const ps: any = { ...d.portal.settings }
+      const tmpl: any = templateD?.settings ?? {}
+
+      const useTemplateIfEmpty = (campo: string) => {
+        const cur = ps[campo]
+        const isEmpty =
+          cur === undefined || cur === null || cur === '' ||
+          (Array.isArray(cur) && cur.length === 0)
+        if (isEmpty && tmpl[campo] !== undefined && tmpl[campo] !== null && tmpl[campo] !== '') {
+          ps[campo] = tmpl[campo]
+        }
+      }
+
+      // Fotos globais
+      useTemplateIfEmpty('heroImageUrl')
+      useTemplateIfEmpty('subpageHeaderUrl')
+      // pageHeaders: merge (override pessoal vence)
+      if (tmpl.pageHeaders && typeof tmpl.pageHeaders === 'object') {
+        ps.pageHeaders = { ...(tmpl.pageHeaders ?? {}), ...(ps.pageHeaders ?? {}) }
+      }
+      // pwPhotos: merge
+      if (tmpl.pwPhotos && typeof tmpl.pwPhotos === 'object') {
+        ps.pwPhotos = { ...(tmpl.pwPhotos ?? {}), ...(ps.pwPhotos ?? {}) }
+      }
+      if (!ps.pwHeroPhoto && tmpl.pwHeroPhoto) ps.pwHeroPhoto = tmpl.pwHeroPhoto
+      // Editoriais do Pré-Wedding e parceiros (só se vazios)
+      useTemplateIfEmpty('pwSections')
+      useTemplateIfEmpty('pwIntro')
+      useTemplateIfEmpty('pwCenarios')
+      useTemplateIfEmpty('parceiros')
+      // guiaLinks: merge (defaults do template; portal vence)
+      if (tmpl.guiaLinks && typeof tmpl.guiaLinks === 'object') {
+        ps.guiaLinks = { ...(tmpl.guiaLinks ?? {}), ...(ps.guiaLinks ?? {}) }
+      }
+      useTemplateIfEmpty('designPremiumPages')
+      // Galleria (fotos da home do template)
+      useTemplateIfEmpty('galleryUrls')
+
+      setSettings(ps)
+    }
     const hp = d.portal?.hasPassword ?? false
     setHasPassword(hp)
     const adminFlag = sessionStorage.getItem(`portalAdmin_${referencia}`)
