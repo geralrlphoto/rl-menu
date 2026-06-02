@@ -77,7 +77,9 @@ export default function TarefasPage() {
   const [novoDesc, setNovoDesc]     = useState('')
   const [novoPrazo, setNovoPrazo]   = useState('')
   const [novoStatus, setNovoStatus] = useState<Status>('NOVA')
+  const [novoAssign, setNovoAssign] = useState<Set<string>>(new Set())
   const [saving, setSaving]         = useState(false)
+  const [createDone, setCreateDone] = useState<{ titulo: string; nomes: string[] } | null>(null)
 
   // Edição inline
   const [editId, setEditId]         = useState<string | null>(null)
@@ -186,12 +188,51 @@ export default function TarefasPage() {
       body: JSON.stringify({ titulo: novoTitulo, descricao: novoDesc, status: novoStatus, data_prazo: novoPrazo || null }),
     })
     const d = await res.json()
+    let enviadosNomes: string[] = []
     if (d.tarefa) {
       setTarefas(prev => [d.tarefa, ...prev])
+
+      // Se foram seleccionados membros, dispara o email "Nova tarefa
+      // atribuída" a cada um (mesmo endpoint usado em /freelancers/[id])
+      if (novoAssign.size > 0) {
+        const prazoLabel = novoPrazo ? fmtDate(novoPrazo) ?? '' : ''
+        const ids = Array.from(novoAssign)
+        const results = await Promise.all(ids.map(fid =>
+          fetch('/api/send-nova-tarefa-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              freelancer_id: fid,
+              titulo: novoTitulo,
+              descricao: novoDesc ?? '',
+              prazo: prazoLabel,
+              prioridade: 'NORMAL',
+            }),
+          }).then(r => r.ok ? fid : null).catch(() => null)
+        ))
+        const okIds = results.filter(Boolean) as string[]
+        enviadosNomes = okIds.map(id => freelancers.find(f => f.id === id)?.nome ?? id)
+      }
+
+      const tituloEnviado = novoTitulo
       setNovoTitulo(''); setNovoDesc(''); setNovoPrazo(''); setNovoStatus('NOVA')
+      setNovoAssign(new Set())
       setShowForm(false)
+
+      if (enviadosNomes.length > 0) {
+        setCreateDone({ titulo: tituloEnviado, nomes: enviadosNomes })
+        setTimeout(() => setCreateDone(null), 4000)
+      }
     }
     setSaving(false)
+  }
+
+  function toggleNovoMember(id: string) {
+    setNovoAssign(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
   }
 
   async function handleStatusChange(tarefa: Tarefa, status: Status) {
@@ -297,21 +338,96 @@ export default function TarefasPage() {
               </select>
             </div>
           </div>
+          {/* Atribuir a membros — selector opcional */}
+          <div className="flex flex-col gap-2 pt-2 border-t border-white/[0.06]">
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] tracking-[0.3em] text-white/25 uppercase">
+                Atribuir a membros
+              </span>
+              {novoAssign.size > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setNovoAssign(new Set())}
+                  className="text-[9px] tracking-[0.25em] text-white/30 hover:text-white/60 uppercase transition-colors"
+                >
+                  Limpar
+                </button>
+              )}
+            </div>
+            {freelancers.length === 0 ? (
+              <p className="text-[11px] text-white/30 py-2">A carregar membros…</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-44 overflow-y-auto pr-1">
+                {freelancers.map(f => {
+                  const checked = novoAssign.has(f.id)
+                  const noEmail = !f.email
+                  return (
+                    <button
+                      key={f.id}
+                      type="button"
+                      disabled={noEmail}
+                      onClick={() => toggleNovoMember(f.id)}
+                      className={`flex items-center gap-2.5 px-3 py-2 border text-left transition-all
+                        ${checked
+                          ? 'border-gold/50 bg-gold/[0.08]'
+                          : 'border-white/[0.07] bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]'}
+                        ${noEmail ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                      title={noEmail ? 'Membro sem email definido' : ''}
+                    >
+                      <span className={`w-3.5 h-3.5 shrink-0 border flex items-center justify-center
+                        ${checked ? 'border-gold bg-gold' : 'border-white/30 bg-transparent'}`}>
+                        {checked && (
+                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                        )}
+                      </span>
+                      <span className="flex-1 min-w-0">
+                        <span className="block text-[12.5px] text-white/80 truncate">{f.nome}</span>
+                        {f.email
+                          ? <span className="block text-[10px] text-white/35 truncate">{f.email}</span>
+                          : <span className="block text-[10px] text-red-400/60">sem email</span>}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+            {novoAssign.size > 0 && (
+              <p className="text-[10px] text-gold/70 tracking-wider">
+                ✉ Vão receber email: {novoAssign.size} membro{novoAssign.size === 1 ? '' : 's'}
+              </p>
+            )}
+          </div>
+
           <div className="flex gap-2 pt-1">
             <button
               onClick={handleCreate}
               disabled={!novoTitulo.trim() || saving}
               className="flex-1 py-2.5 bg-gold/80 hover:bg-gold text-black text-[10px] tracking-[0.3em] font-semibold uppercase transition-colors disabled:opacity-40"
             >
-              {saving ? '…' : 'Criar Tarefa'}
+              {saving
+                ? '…'
+                : (novoAssign.size > 0
+                    ? `Criar e Enviar (${novoAssign.size}) →`
+                    : 'Criar Tarefa')}
             </button>
             <button
-              onClick={() => { setShowForm(false); setNovoTitulo(''); setNovoDesc(''); setNovoPrazo('') }}
+              onClick={() => { setShowForm(false); setNovoTitulo(''); setNovoDesc(''); setNovoPrazo(''); setNovoAssign(new Set()) }}
               className="px-4 text-[10px] text-white/30 hover:text-white/60 border border-white/10 transition-colors"
             >
               Cancelar
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Feedback de criar + enviar */}
+      {createDone && (
+        <div className="mb-6 p-3 border border-emerald-500/30 bg-emerald-500/[0.06] rounded">
+          <p className="text-[11px] text-emerald-300/85">
+            ✓ Tarefa <b>"{createDone.titulo}"</b> criada e enviada por email a {createDone.nomes.join(', ')}
+          </p>
         </div>
       )}
 
