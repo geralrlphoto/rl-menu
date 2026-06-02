@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { plainText, type Block } from './NotionRenderer'
 import BlockEditor from './BlockEditor'
 import { AtmospherePortal, buildDeliveriesFromSettings } from './atmosphere/AtmospherePortal'
@@ -800,6 +801,7 @@ function TasksSection({
 // ─── main page ────────────────────────────────────────────────────────────────
 
 export default function PortalClientePage() {
+  const searchParams = useSearchParams()
   const [blocks, setBlocks] = useState<Block[]>([])
   const [settings, setSettings] = useState<PortalSettings>({ hiddenNav: [] })
   const [settingsBlockId, setSettingsBlockId] = useState<string | null>(null)
@@ -828,7 +830,17 @@ export default function PortalClientePage() {
       setBlocks(d.blocks ?? [])
       setSettings(d.settings ?? { hiddenNav: [] })
       setSettingsBlockId(d.settingsBlockId ?? null)
-      if (d.isAdmin) setIsAdminUser(true)
+      // ?admin=1 na URL OU cookie rl_auth válido → activa modo admin.
+      // Também persiste em sessionStorage para que navegar entre
+      // sub-páginas mantenha o modo admin.
+      const urlAdmin = searchParams?.get('admin') === '1'
+      const storedAdmin = typeof window !== 'undefined' && sessionStorage.getItem('portalAdminMain') === 'true'
+      if (d.isAdmin || urlAdmin || storedAdmin) {
+        setIsAdminUser(true)
+        if (urlAdmin) {
+          try { sessionStorage.setItem('portalAdminMain', 'true') } catch {}
+        }
+      }
       const hp = d.hasPassword ?? false
       setHasPassword(hp)
       if (hp) {
@@ -838,7 +850,7 @@ export default function PortalClientePage() {
         setAuthenticated(true)
       }
     }
-  }, [])
+  }, [searchParams])
 
   async function handlePasswordSubmit() {
     if (!passwordInput.trim()) return
