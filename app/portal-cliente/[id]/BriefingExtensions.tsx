@@ -1408,10 +1408,8 @@ export default function BriefingExtensions({
         </div>
       )}
 
-      {/* Layout 2 colunas — sidebar à esquerda, conteúdo à direita */}
-      <div className="grid grid-cols-1 lg:grid-cols-[210px_1fr] gap-5 items-start">
-        <BriefingSidebar items={nav} activeId={activeId} onClick={scrollTo} />
-
+      {/* Layout 1 coluna — conteúdo ocupa a largura total (sidebar removida) */}
+      <div className="grid grid-cols-1 gap-5 items-start">
         <div ref={contentRef} className="space-y-4 min-w-0">
           {/* Visão Geral (KPIs) */}
           <VisaoGeralSection info={info} onJump={scrollTo} />
