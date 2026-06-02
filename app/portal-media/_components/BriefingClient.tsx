@@ -452,36 +452,50 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
               </div>
             </div>
 
-            {/* CTA — só se já foi confirmada (estado 'agendada') */}
-            {proximaSessao.estado === 'agendada' && proximaSessao.tipo === 'videochamada' && (
-              <a href={MEET_LINK} target="_blank" rel="noopener noreferrer" className="rl-hero-cta">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="6" width="12" height="12" rx="2" />
-                  <path d="M15 10l6-3v10l-6-3z" />
-                </svg>
-                Entrar na Reunião
-                <span className="rl-hero-cta-arrow">→</span>
-              </a>
-            )}
-            {proximaSessao.estado === 'agendada' && proximaSessao.tipo === 'presencial' && (
-              <a href={MAPS_LINK} target="_blank" rel="noopener noreferrer" className="rl-hero-cta">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13Z" />
-                  <circle cx="12" cy="9" r="2.6" />
-                </svg>
-                Ver Localização
-                <span className="rl-hero-cta-arrow">→</span>
-              </a>
-            )}
-            {proximaSessao.estado === 'pendente' && (
-              <p className="rl-hero-pendinfo">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="9" />
-                  <path d="M12 7v5l3 2" />
-                </svg>
-                Pedido a aguardar confirmação — o link da reunião fica disponível assim que for aceite.
-              </p>
-            )}
+            {/* CTA — derivamos o estado (sessões antigas s/ campo
+                estado caem em 'agendada' quando data está no futuro)
+                e default de tipo = 'videochamada' (caso ainda não
+                tenha sido escolhido). */}
+            {(() => {
+              const est = estadoSessao(proximaSessao)
+              const tipo = proximaSessao.tipo ?? 'videochamada'
+              if (est === 'agendada' && tipo === 'videochamada') {
+                return (
+                  <a href={MEET_LINK} target="_blank" rel="noopener noreferrer" className="rl-hero-cta">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="6" width="12" height="12" rx="2" />
+                      <path d="M15 10l6-3v10l-6-3z" />
+                    </svg>
+                    Entrar na Reunião
+                    <span className="rl-hero-cta-arrow">→</span>
+                  </a>
+                )
+              }
+              if (est === 'agendada' && tipo === 'presencial') {
+                return (
+                  <a href={MAPS_LINK} target="_blank" rel="noopener noreferrer" className="rl-hero-cta">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13Z" />
+                      <circle cx="12" cy="9" r="2.6" />
+                    </svg>
+                    Ver Localização
+                    <span className="rl-hero-cta-arrow">→</span>
+                  </a>
+                )
+              }
+              if (est === 'pendente') {
+                return (
+                  <p className="rl-hero-pendinfo">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="9" />
+                      <path d="M12 7v5l3 2" />
+                    </svg>
+                    Pedido a aguardar confirmação — o link da reunião fica disponível assim que for aceite.
+                  </p>
+                )
+              }
+              return null
+            })()}
           </section>
         )}
 
@@ -665,6 +679,35 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
                             )}
                           </div>
                         </div>
+
+                        {/* Botão "Entrar na Reunião" / "Ver Localização" para
+                            sessões agendadas no detalhe expandido (visível a
+                            todos quando estado === 'agendada'). */}
+                        {estado === 'agendada' && (
+                          <div className="rl-sess-cta">
+                            {(sessao.tipo ?? 'videochamada') === 'videochamada' ? (
+                              <a href={MEET_LINK} target="_blank" rel="noopener noreferrer"
+                                onClick={e => e.stopPropagation()}
+                                className="rl-sess-link rl-sess-link--video">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                  <rect x="3" y="6" width="12" height="12" rx="2" />
+                                  <path d="M15 10l6-3v10l-6-3z" />
+                                </svg>
+                                Entrar na Reunião
+                              </a>
+                            ) : (
+                              <a href={MAPS_LINK} target="_blank" rel="noopener noreferrer"
+                                onClick={e => e.stopPropagation()}
+                                className="rl-sess-link rl-sess-link--maps">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13Z" />
+                                  <circle cx="12" cy="9" r="2.6" />
+                                </svg>
+                                Ver Localização
+                              </a>
+                            )}
+                          </div>
+                        )}
 
                         {/* Linha admin: aprovar/recusar pendentes OU notificar + eliminar */}
                         {isAdmin && estado === 'pendente' && (
@@ -1698,6 +1741,48 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
           border-color: var(--done);
           color: #fff;
         }
+
+        /* ── Botão da reunião dentro de cada sessão expandida ── */
+        .rl-sess-cta {
+          margin-top: 14px;
+          padding-top: 14px;
+          border-top: 1px solid var(--line-soft);
+        }
+        .rl-sess-link {
+          display: inline-flex; align-items: center; gap: 9px;
+          font-family: var(--font-manrope), Manrope, sans-serif;
+          font-size: 11.5px; font-weight: 700;
+          letter-spacing: .14em; text-transform: uppercase;
+          padding: 9px 16px;
+          border-radius: 10px;
+          text-decoration: none;
+          transition: all .18s;
+        }
+        .rl-sess-link--video {
+          color: #0e1b27;
+          background: linear-gradient(135deg, var(--accent-bright), var(--accent));
+          border: 0;
+          box-shadow:
+            0 8px 22px -8px var(--accent),
+            inset 0 1px 0 rgba(255,255,255,.4);
+        }
+        .rl-sess-link--video:hover {
+          transform: translateY(-1px);
+          box-shadow:
+            0 12px 28px -8px var(--accent),
+            inset 0 1px 0 rgba(255,255,255,.5);
+        }
+        .rl-sess-link--maps {
+          color: var(--done);
+          background: color-mix(in oklch, var(--done) 14%, transparent);
+          border: 1px solid color-mix(in oklch, var(--done) 35%, transparent);
+        }
+        .rl-sess-link--maps:hover {
+          background: color-mix(in oklch, var(--done) 22%, transparent);
+          border-color: var(--done);
+          color: #fff;
+        }
+        .rl-sess-link :global(svg) { flex: none; color: inherit; }
 
         /* ── Segmented control: Videochamada / Presencial ──── */
         .rl-segmented {
