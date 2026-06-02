@@ -47,6 +47,12 @@ export interface BriefingSessao {
   data: string
   resumo: string
   notificacaoEnviada?: string
+  /** Lista de objetivos da sessão (mostrados como <ul> no painel expansível) */
+  objetivos?: string[]
+  /** Lista de palavras-chave do tom (mostradas como chips) */
+  tom?: string[]
+  /** Notas finais da sessão */
+  notas?: string
 }
 
 export interface FichaCliente {
