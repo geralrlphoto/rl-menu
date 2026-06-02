@@ -141,6 +141,28 @@ const fmtDate = (iso: string) => {
   return d.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
+/* Map: estado da tarefa → oklch token --sc (cor do strip + badge) */
+const ESTADO_OKLCH: Record<TarefaEstado, string> = {
+  concluido:    'oklch(0.72 0.12 165)',
+  em_andamento: 'oklch(0.80 0.12 245)',
+  nao_iniciada: 'oklch(0.62 0.02 245)',
+  aguardar:     'oklch(0.80 0.13 80)',
+  enviado:      'oklch(0.70 0.13 300)',
+}
+/* Map: classe Tailwind de cor da coluna → oklch token --cc (dot + rail) */
+const CORES_OKLCH: Record<string, string> = {
+  blue:    'oklch(0.70 0.13 245)',
+  cyan:    'oklch(0.74 0.12 210)',
+  emerald: 'oklch(0.74 0.13 165)',
+  yellow:  'oklch(0.80 0.13 90)',
+  amber:   'oklch(0.78 0.14 75)',
+  orange:  'oklch(0.72 0.15 50)',
+  red:     'oklch(0.65 0.18 20)',
+  purple:  'oklch(0.70 0.14 295)',
+  violet:  'oklch(0.68 0.15 280)',
+  white:   'oklch(0.85 0.02 245)',
+}
+
 /* ────────────────────────────────────────────────────────── */
 /*  COMPONENT                                                 */
 /* ────────────────────────────────────────────────────────── */
@@ -366,105 +388,105 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
   /* ────────────────────────────────────────────────────────── */
   return (
     <div className={`rl-roadmap ${manrope.variable} ${spaceGrotesk.variable}`}>
+      {/* Background fx — radial accent breathing (fixed) */}
+      <div className="rl-bg-fx" aria-hidden="true" />
+
       <HeroUploadBlock url={heroUrl} isEditing={isEditing} onChange={setHeroUrl} />
 
-      <div className="relative z-10 px-6 sm:px-10 py-10">
+      <div className="rl-page">
 
-        {/* ── Back link ── */}
-        <Link href={`/portal-media/${initial.ref}`} className="rl-back inline-flex items-center gap-2 mb-10 group">
-          <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
-          Portal {initial.nome}
-        </Link>
+        {/* ── Crumb ── */}
+        <p className="rl-crumb">
+          <Link href={`/portal-media/${initial.ref}`}>› Portal · {initial.nome}</Link>
+        </p>
 
-        {/* ── Board header ── */}
-        <div className="rl-header mb-8 flex flex-col sm:flex-row sm:items-center gap-4">
-          <div className="flex-1">
-            <p className="rl-eyebrow mb-2">RL PROD · {initial.nome}</p>
-            <h1 className="rl-title">Road Map</h1>
+        {/* ── Header (title left + stats right) ── */}
+        <header className="rl-head">
+          <div className="rl-head-l">
+            <p className="rl-eyebrow">RL PROD · {initial.nome}</p>
+            <h1 className="rl-title" aria-label="Road Map">
+              {'ROAD MAP'.split('').map((ch, i) => ch === ' '
+                ? <span key={i} className="sp" />
+                : <span key={i} style={{ animationDelay: `${(0.2 + i * 0.06).toFixed(2)}s` }}>{ch}</span>
+              )}
+            </h1>
           </div>
-
-          {/* Stats pills */}
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="rl-stats">
             <div className="rl-stat">
-              <span className="rl-stat-lbl">Fases</span>
-              <span className="rl-stat-val">{colunas.length}</span>
+              <span className="rl-stat-k">Fases</span>
+              <span className="rl-stat-v">{colunas.length}</span>
             </div>
             <div className="rl-stat">
-              <span className="rl-stat-lbl">Tarefas</span>
-              <span className="rl-stat-val">{totalConcluidas}/{totalTarefas}</span>
+              <span className="rl-stat-k">Tarefas</span>
+              <span className="rl-stat-v">{totalConcluidas}<small>/{totalTarefas}</small></span>
             </div>
-            <div className="rl-stat rl-stat--accent">
-              <span className="rl-stat-dot" />
-              <span className="rl-stat-val">{progresso}%</span>
+            <div className="rl-stat is-pct">
+              <span className="rl-stat-k">Concluído</span>
+              <span className="rl-stat-v">{progresso}<small>%</small></span>
+              <span className="rl-stat-bar"><i style={{ width: `${progresso}%` }} /></span>
             </div>
             {isAdmin && isEditing && (
-              <button onClick={addColuna} className="rl-btn-dashed">
-                + Coluna
-              </button>
+              <button onClick={addColuna} className="rl-btn-dashed">+ Coluna</button>
             )}
           </div>
-        </div>
+        </header>
 
-        {/* ── Barra de progresso global ── */}
-        <div className="rl-progress mb-8">
-          <div className="rl-progress-fill" style={{ width: `${progresso}%` }} />
-        </div>
-
-        {/* ── Explicação para o cliente ── */}
-        <div className="rl-explainer mb-10">
-          <p className="rl-explainer-eyebrow">O que é o Road Map?</p>
-          <p className="rl-explainer-lede">
+        {/* ── Explainer ── */}
+        <section className="rl-card rl-explain">
+          <h2 className="rl-explain-h">O que é o Road Map?</h2>
+          <p className="rl-explain-lead">
             O Road Map é o quadro visual que mostra, em tempo real, o estado de cada fase do seu projeto. Está organizado em colunas que representam as grandes etapas do processo, desde o briefing inicial até à entrega final.
           </p>
-          <div className="flex flex-col gap-3">
+          <div className="rl-explain-grid">
             {[
               { n: '01', t: 'Visão geral do projeto',   d: 'Num único ecrã tens o panorama completo: o que já foi concluído, o que está em curso e o que ainda está por fazer.' },
               { n: '02', t: 'Fases e tarefas',          d: 'Cada coluna é uma fase do projeto. Dentro de cada fase existem tarefas específicas, cada uma com o seu estado e data prevista.' },
               { n: '03', t: 'Estados em tempo real',    d: 'As tarefas atualizam o estado à medida que o trabalho avança: Concluído, Em andamento, Aguardar, Enviado ou Não iniciada.' },
-              { n: '04', t: 'Transparência total',      d: 'O objetivo é garantir que estás sempre informado sobre o progresso, sem teres de perguntar. Tens acesso ao mesmo quadro que a nossa equipa.' },
+              { n: '04', t: 'Transparência total',      d: 'O objetivo é garantir que estás sempre informado sobre o progresso. Tens acesso ao mesmo quadro que a nossa equipa.' },
             ].map(({ n, t, d }) => (
-              <div key={n} className="rl-explainer-row">
-                <span className="rl-explainer-num">{n}</span>
+              <div key={n} className="rl-feat">
+                <span className="rl-feat-n">{n}</span>
                 <div>
-                  <p className="rl-explainer-t">{t}</p>
-                  <p className="rl-explainer-d">{d}</p>
+                  <p className="rl-feat-t">{t}</p>
+                  <p className="rl-feat-d">{d}</p>
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </section>
 
         {/* ── Legenda de estados ── */}
-        <div className="rl-legend mb-10">
-          {ESTADO_OPTIONS.map(opt => {
-            const cfg = ESTADO_CFG[opt.value]
-            return (
-              <span key={opt.value}
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] ${cfg.pill} ${cfg.text}`}>
-                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot.replace(' animate-pulse', '')}`} />
-                {cfg.label}
-              </span>
-            )
-          })}
+        <div className="rl-legend">
+          {ESTADO_OPTIONS.map(opt => (
+            <span key={opt.value} className={`rl-chip rl-chip--${opt.value}`}>
+              <i />{opt.label}
+            </span>
+          ))}
         </div>
 
         {/* ── Board ── */}
         {colunas.length === 0 ? (
           <div className="rl-empty">
-            <p className="rl-empty-lbl mb-2">Road map vazio</p>
+            <p className="rl-empty-lbl">Road map vazio</p>
             {isAdmin && <p className="rl-empty-hint">Clica em &ldquo;Editar&rdquo; e depois em &ldquo;+ Coluna&rdquo; para começar</p>}
           </div>
         ) : (
-          <div className="overflow-x-auto -mx-6 px-6 sm:-mx-10 sm:px-10 pb-8">
-            <div className="flex gap-5 pb-2" style={{ minWidth: 'max-content' }}>
-
-              {colunas.map(coluna => {
+          <div className="rl-board" style={{ ['--rl-cols' as any]: colunas.length }}>
+              {colunas.map((coluna, ci) => {
                 const dot      = corDot[coluna.cor] ?? 'bg-white/30'
                 const lane     = corLane[coluna.cor] ?? 'bg-white/[0.02] border-white/[0.06]'
                 const concluidas = coluna.tarefas.filter(t => t.estado === 'concluido').length
+                const colCC = CORES_OKLCH[coluna.cor] ?? 'oklch(0.66 0.13 245)'
 
                 return (
-                  <div key={coluna.id} className="w-[285px] flex-shrink-0 flex flex-col">
+                  <div
+                    key={coluna.id}
+                    className="rl-col"
+                    style={{
+                      ['--cc' as any]: colCC,
+                      animationDelay: `${(0.3 + ci * 0.09).toFixed(2)}s`,
+                    }}
+                  >
 
                     {/* ── Cabeçalho da coluna ── */}
                     {isEditing ? (
@@ -488,26 +510,32 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
                         />
                       </div>
                     ) : (
-                      <div className="rl-col-head">
-                        <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${dot}`} />
-                        <span className="rl-col-name">{coluna.titulo}</span>
-                        <span className={`rl-col-count
-                          ${concluidas === coluna.tarefas.length && coluna.tarefas.length > 0
-                            ? 'rl-col-count--done'
-                            : ''}`}>
-                          {coluna.tarefas.length}
-                        </span>
-                      </div>
+                      <>
+                        <div className="rl-col-head">
+                          <span className="rl-col-dot" />
+                          <span className="rl-col-name">{coluna.titulo}</span>
+                          <span className="rl-col-count">{coluna.tarefas.length}</span>
+                        </div>
+                        <div className="rl-col-rail" style={{ animationDelay: `${(0.6 + ci * 0.09).toFixed(2)}s` }} />
+                      </>
                     )}
 
                     {/* ── Lane ── */}
-                    <div className={`border rounded-none p-2.5 flex flex-col gap-2 flex-1 min-h-[80px] ${lane}`}>
+                    <div className={isEditing ? `rl-col-body rl-col-body--edit ${lane}` : 'rl-col-body'}>
 
                       {/* ── Cards de tarefa ── */}
-                      {coluna.tarefas.map(tarefa => {
+                      {coluna.tarefas.map((tarefa, ti) => {
                         const cfg = ESTADO_CFG[tarefa.estado]
+                        const taskSC = ESTADO_OKLCH[tarefa.estado]
                         return (
-                          <div key={tarefa.id} className="rl-card group/card">
+                          <div
+                            key={tarefa.id}
+                            className="rl-task group/card"
+                            style={{
+                              ['--sc' as any]: taskSC,
+                              animationDelay: `${(0.5 + ci * 0.08 + ti * 0.05).toFixed(2)}s`,
+                            }}
+                          >
 
                             {isEditing ? (
                               /* ── Modo edição ── */
@@ -589,28 +617,31 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
                                   </div>
                                 )}
                                 <div className="flex-1 min-w-0">
-                                  <p className="rl-card-title mb-3">{tarefa.titulo}</p>
-                                  {isAdmin ? (
-                                    <EstadoQuickChanger
-                                      cfg={cfg}
-                                      current={tarefa.estado}
-                                      onChange={(novoEstado) => quickChangeEstado(coluna.id, tarefa.id, novoEstado)}
-                                    />
-                                  ) : (
-                                    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] ${cfg.pill} ${cfg.text}`}>
-                                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
-                                      {cfg.label}
-                                    </span>
-                                  )}
-                                  {tarefa.data && (
-                                    <p className="flex items-center gap-1.5 text-[12px] text-white/20 mt-2.5">
-                                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="shrink-0 opacity-50">
-                                        <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
-                                        <path d="M5 1.5V4M11 1.5V4M2 7h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-                                      </svg>
-                                      {fmtDate(tarefa.data)}
-                                    </p>
-                                  )}
+                                  <p className="rl-task-name">{tarefa.titulo}</p>
+                                  <div className="rl-task-foot">
+                                    {isAdmin ? (
+                                      <EstadoQuickChanger
+                                        cfg={cfg}
+                                        current={tarefa.estado}
+                                        onChange={(novoEstado) => quickChangeEstado(coluna.id, tarefa.id, novoEstado)}
+                                      />
+                                    ) : (
+                                      <span className={`rl-badge rl-badge--${tarefa.estado}`}>
+                                        <i />{cfg.label}
+                                      </span>
+                                    )}
+                                    {tarefa.data ? (
+                                      <span className="rl-task-date">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                          <rect x="4" y="5" width="16" height="16" rx="2.5"/>
+                                          <path d="M4 9h16M8 3v4M16 3v4"/>
+                                        </svg>
+                                        {fmtDate(tarefa.data)}
+                                      </span>
+                                    ) : (
+                                      <span className="rl-task-date" style={{ opacity: 0.6 }}>Sem data</span>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             )}
@@ -620,35 +651,29 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
 
                       {/* Botão adicionar tarefa */}
                       {isEditing && (
-                        <button onClick={() => addTarefa(coluna.id)}
-                          className="border border-dashed border-white/[0.08] hover:border-white/20 py-3 text-[12px] tracking-[0.35em] text-white/20 hover:text-white/45 uppercase transition-colors w-full">
+                        <button onClick={() => addTarefa(coluna.id)} className="rl-btn-dashed-block">
                           + Tarefa
                         </button>
                       )}
 
                       {/* Estado vazio (não edição) */}
                       {coluna.tarefas.length === 0 && !isEditing && (
-                        <div className="py-6 text-center">
-                          <p className="text-[12px] text-white/12 tracking-[0.3em] uppercase">Sem tarefas</p>
+                        <div className="rl-col-empty">
+                          <p>Sem tarefas</p>
                         </div>
                       )}
                     </div>
-
-                    {/* Barra de progresso da coluna */}
-                    {!isEditing && coluna.tarefas.length > 0 && (
-                      <div className="h-[2px] bg-white/[0.04] mt-1 relative overflow-hidden">
-                        <div
-                          className={`absolute left-0 top-0 h-full transition-all duration-500 ${dot}`}
-                          style={{ width: `${Math.round((concluidas / coluna.tarefas.length) * 100)}%`, opacity: 0.5 }}
-                        />
-                      </div>
-                    )}
                   </div>
                 )
               })}
-            </div>
           </div>
         )}
+
+        {/* ── Footer ── */}
+        <footer className="rl-foot">
+          <p className="rl-foot-tag">More than a product, <b>an experience.</b></p>
+          <p className="rl-foot-sub">RL PROD · Photography &amp; Video</p>
+        </footer>
       </div>
 
       {isAdmin && (
@@ -656,229 +681,458 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
           onToggle={() => setIsEditing(true)} onSave={save} onCancel={cancel} />
       )}
 
-      {/* ── Tokens navy do handoff design_handoff_portal_cliente ── */}
+      {/* ── Tokens + animations 1:1 ao roadmap.css do handoff RL PROD ── */}
       <style jsx>{`
         .rl-roadmap {
-          --navy-900: #142433;
+          --navy-950: #0e1b27;
+          --navy-900: #122230;
+          --navy-850: #16293a;
           --navy-800: #1f3647;
           --navy-700: #274458;
-          --navy-600: #33576f;
-          --navy-ink: #16293a;
-          --rl-accent: oklch(0.66 0.13 245);
-          --rl-accent-soft: oklch(0.80 0.11 245);
-          --rl-text: #eaf1f7;
-          --rl-text-muted: oklch(0.78 0.03 245);
-          --rl-text-faint: oklch(0.62 0.03 245);
-          --rl-text-ghost: oklch(0.48 0.03 245);
-          --rl-line: oklch(0.52 0.04 245 / 0.20);
-          --rl-line-soft: oklch(0.52 0.04 245 / 0.10);
-          --rl-surface: oklch(0.24 0.04 245 / 0.32);
-          --rl-surface-2: oklch(0.20 0.04 245 / 0.18);
-          --rl-card: #122230;
+          --accent: oklch(0.66 0.13 245);
+          --accent-bright: oklch(0.80 0.11 245);
+          --done:  oklch(0.72 0.12 165);
+          --doing: oklch(0.80 0.12 245);
+          --wait:  oklch(0.80 0.13 80);
+          --sent:  oklch(0.70 0.13 300);
+          --none:  oklch(0.62 0.02 245);
+          --ink:   #eaf1f7;
+          --soft:  oklch(0.86 0.025 245);
+          --muted: oklch(0.70 0.03 245);
+          --faint: oklch(0.56 0.03 245);
+          --line:  oklch(0.42 0.03 245 / 0.40);
+          --line-soft: oklch(0.50 0.03 245 / 0.18);
+          --rl-card-bg: oklch(0.30 0.035 245 / 0.34);
+          --rl-r: 16px;
+          --rl-r-sm: 12px;
           font-family: var(--font-manrope), Manrope, system-ui, sans-serif;
-          color: var(--rl-text);
+          color: var(--ink);
+          position: relative;
         }
-        .rl-roadmap :global(.rl-back) {
-          font-family: var(--font-manrope), Manrope, sans-serif;
-          font-size: 11.5px;
-          letter-spacing: 0.32em;
-          text-transform: uppercase;
-          color: var(--rl-text-ghost);
-          font-weight: 500;
-          transition: color .25s;
-        }
-        .rl-roadmap :global(.rl-back:hover) { color: var(--rl-text-muted); }
-
-        .rl-header {
-          border: 1px solid var(--rl-line);
+        .rl-bg-fx {
+          position: fixed; inset: 0; z-index: -1;
           background:
-            linear-gradient(180deg, oklch(0.30 0.04 245 / 0.32), oklch(0.24 0.04 245 / 0.18));
-          border-radius: 14px;
-          padding: 22px 26px;
+            radial-gradient(120% 70% at 85% -8%, var(--navy-700) 0%, transparent 42%),
+            radial-gradient(100% 60% at 0% 0%, var(--navy-800) 0%, transparent 38%),
+            linear-gradient(180deg, var(--navy-900), var(--navy-950) 55%);
+          pointer-events: none;
+        }
+        .rl-bg-fx::after {
+          content: ""; position: absolute; inset: 0;
+          background-image: radial-gradient(rgba(255,255,255,.04) 1px, transparent 1px);
+          background-size: 4px 4px; opacity: .5; mix-blend-mode: overlay;
+        }
+        .rl-bg-fx::before {
+          content: ""; position: absolute; left: 50%; top: -12%;
+          width: 55vw; height: 55vw; transform: translateX(-50%);
+          background: radial-gradient(circle, var(--accent) 0%, transparent 60%);
+          opacity: .09; filter: blur(40px);
+          animation: rlBreathe 8s ease-in-out infinite;
+        }
+        @keyframes rlBreathe {
+          0%,100% { opacity: .06; transform: translateX(-50%) scale(1); }
+          50%     { opacity: .12; transform: translateX(-50%) scale(1.1); }
+        }
+
+        .rl-page {
+          max-width: 1480px; margin: 0 auto;
+          padding: 44px clamp(20px, 3.5vw, 48px) 64px;
+          position: relative; z-index: 1;
+        }
+
+        .rl-crumb {
+          font-size: 11px; letter-spacing: .22em; text-transform: uppercase;
+          color: var(--faint); font-weight: 600;
+          margin: 0 0 22px;
+          opacity: 0; animation: rlFadeUp .6s .05s forwards;
+        }
+        .rl-roadmap :global(.rl-crumb a) {
+          color: inherit; text-decoration: none; transition: color .25s;
+        }
+        .rl-roadmap :global(.rl-crumb a:hover) { color: var(--soft); }
+        @keyframes rlFadeUp {
+          from { opacity: 0; transform: translateY(12px); }
+          to   { opacity: 1; transform: none; }
+        }
+
+        .rl-head {
+          display: flex; align-items: flex-end; justify-content: space-between;
+          gap: 26px; flex-wrap: wrap;
+          padding-bottom: 22px;
+          border-bottom: 1px solid var(--line-soft);
         }
         .rl-eyebrow {
           font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 10.5px;
-          letter-spacing: 0.42em;
-          text-transform: uppercase;
-          color: var(--rl-accent-soft);
-          font-weight: 600;
+          text-transform: uppercase; letter-spacing: .26em;
+          font-size: 10.5px; font-weight: 500;
+          color: var(--muted);
+          margin: 0 0 12px;
+          opacity: 0; animation: rlFadeUp .6s .12s forwards;
         }
         .rl-title {
           font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-weight: 500;
-          font-size: 28px;
-          line-height: 1.08;
-          letter-spacing: -0.005em;
-          color: var(--rl-text);
+          font-weight: 600;
+          font-size: clamp(30px, 5.5vw, 50px);
+          letter-spacing: .16em; text-transform: uppercase;
+          margin: 0; color: #fff;
+          display: flex; flex-wrap: wrap;
+          line-height: 1;
+        }
+        .rl-roadmap :global(.rl-title span) {
+          display: inline-block;
+          opacity: 0; transform: translateY(24px); filter: blur(10px);
+          animation: rlFocusIn .6s forwards;
+        }
+        .rl-roadmap :global(.rl-title .sp) { width: .32em; }
+        @keyframes rlFocusIn {
+          to { opacity: 1; transform: none; filter: blur(0); }
         }
 
+        .rl-stats {
+          display: flex; align-items: stretch; gap: 12px;
+          opacity: 0; animation: rlFadeUp .7s .4s forwards;
+        }
         .rl-stat {
-          display: inline-flex; align-items: center; gap: 8px;
-          border: 1px solid var(--rl-line);
-          background: var(--rl-surface-2);
-          padding: 7px 14px;
-          border-radius: 999px;
-          color: var(--rl-text-muted);
+          display: flex; flex-direction: column; gap: 5px;
+          padding: 12px 18px;
+          border: 1px solid var(--line-soft);
+          border-radius: 12px;
+          background: oklch(0.30 0.035 245 / .3);
+          min-width: 84px;
         }
-        .rl-stat-lbl {
+        .rl-stat-k {
           font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 10.5px; letter-spacing: 0.22em; text-transform: uppercase;
-          font-weight: 600; color: var(--rl-text-faint);
+          font-size: 9.5px; font-weight: 600;
+          letter-spacing: .18em; text-transform: uppercase;
+          color: var(--faint);
         }
-        .rl-stat-val {
-          font-family: var(--font-manrope), Manrope, sans-serif;
-          font-size: 13.5px; font-weight: 600; color: var(--rl-text);
+        .rl-stat-v {
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 22px; font-weight: 600; color: #fff;
+          line-height: 1;
         }
-        .rl-stat--accent {
-          border-color: oklch(0.70 0.13 245 / 0.30);
-          background: oklch(0.66 0.13 245 / 0.10);
+        .rl-stat-v small {
+          font-size: 13px; color: var(--muted); font-weight: 500;
         }
-        .rl-stat--accent .rl-stat-val { color: var(--rl-accent-soft); }
-        .rl-stat-dot {
-          width: 6px; height: 6px; border-radius: 50%;
-          background: var(--rl-accent-soft);
-          box-shadow: 0 0 8px var(--rl-accent-soft);
+        .rl-stat.is-pct .rl-stat-v { color: var(--done); }
+        .rl-stat-bar {
+          margin-top: 3px; height: 4px; border-radius: 4px;
+          background: oklch(0.40 0.03 245 / .5);
+          overflow: hidden; width: 74px; display: block;
         }
+        .rl-stat-bar i {
+          display: block; height: 100%; width: 0;
+          border-radius: 4px;
+          background: linear-gradient(90deg, var(--done), var(--doing));
+          transition: width 1.5s cubic-bezier(.3,.1,.2,1) .6s;
+          animation: rlBarIn 1.5s cubic-bezier(.3,.1,.2,1) .6s forwards;
+        }
+        @keyframes rlBarIn { from { width: 0; } }
+
         .rl-btn-dashed {
           font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase;
+          font-size: 11px; letter-spacing: .22em; text-transform: uppercase;
           font-weight: 600;
-          padding: 7px 16px; border-radius: 999px;
-          border: 1px dashed var(--rl-line);
-          color: var(--rl-text-faint);
-          background: transparent;
-          transition: .2s;
-          cursor: pointer;
+          padding: 8px 16px; border-radius: 999px;
+          border: 1px dashed var(--line);
+          color: var(--muted); background: transparent;
+          cursor: pointer; transition: .2s;
         }
         .rl-btn-dashed:hover {
-          border-color: var(--rl-accent-soft);
-          color: var(--rl-text);
-          background: oklch(0.66 0.13 245 / 0.06);
-        }
-
-        .rl-progress {
-          height: 2px; width: 100%;
-          background: var(--rl-line-soft);
-          position: relative; overflow: hidden;
-          border-radius: 999px;
-        }
-        .rl-progress-fill {
-          position: absolute; left: 0; top: 0; height: 100%;
-          background: linear-gradient(90deg, var(--rl-accent), var(--rl-accent-soft));
-          transition: width .7s cubic-bezier(.2,.85,.25,1);
-          box-shadow: 0 0 12px var(--rl-accent);
-        }
-
-        .rl-explainer {
-          border: 1px solid var(--rl-line);
-          background: var(--rl-surface-2);
-          padding: 28px 30px;
-          border-radius: 14px;
-          display: flex; flex-direction: column; gap: 16px;
-        }
-        .rl-explainer-eyebrow {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 10.5px; letter-spacing: 0.38em; text-transform: uppercase;
-          font-weight: 600; color: var(--rl-accent-soft);
-        }
-        .rl-explainer-lede {
-          font-family: var(--font-manrope), Manrope, sans-serif;
-          font-size: 15.5px; font-weight: 400; line-height: 1.7;
-          color: var(--rl-text-muted);
-          letter-spacing: 0.005em;
-        }
-        .rl-explainer-row {
-          display: flex; align-items: flex-start; gap: 18px;
-          border-top: 1px solid var(--rl-line-soft);
-          padding-top: 14px;
-        }
-        .rl-explainer-num {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 13px; font-weight: 500;
-          color: var(--rl-accent-soft);
-          flex: none;
-          padding-top: 2px;
-          min-width: 24px;
-        }
-        .rl-explainer-t {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 13.5px; letter-spacing: 0.15em;
-          color: var(--rl-text);
-          font-weight: 600;
-          margin: 0 0 6px;
-        }
-        .rl-explainer-d {
-          font-family: var(--font-manrope), Manrope, sans-serif;
-          font-size: 14.5px; font-weight: 400; line-height: 1.65;
-          color: var(--rl-text-faint);
-        }
-
-        .rl-legend {
-          display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
-          font-family: var(--font-manrope), Manrope, sans-serif;
-        }
-
-        .rl-empty {
-          border: 1px dashed var(--rl-line);
-          padding: 60px 24px;
-          text-align: center;
-          border-radius: 14px;
-          background: var(--rl-surface-2);
-        }
-        .rl-empty-lbl {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 10.5px; letter-spacing: 0.36em; text-transform: uppercase;
-          color: var(--rl-text-faint); font-weight: 600;
-        }
-        .rl-empty-hint {
-          font-family: var(--font-manrope), Manrope, sans-serif;
-          font-size: 15px; color: var(--rl-text-ghost); font-weight: 400;
-        }
-
-        .rl-col-head {
-          display: flex; align-items: center; gap: 10px;
-          padding: 4px 4px 12px;
-        }
-        .rl-col-name {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 12.5px; letter-spacing: 0.26em; text-transform: uppercase;
-          color: var(--rl-text); font-weight: 600;
-          flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .rl-col-count {
-          font-family: var(--font-manrope), Manrope, sans-serif;
-          font-size: 12px; font-weight: 600;
-          border-radius: 999px;
-          padding: 2px 10px;
-          background: var(--rl-surface-2);
-          color: var(--rl-text-faint);
-          border: 1px solid var(--rl-line-soft);
-          flex: none;
-        }
-        .rl-col-count--done {
-          background: oklch(0.62 0.13 150 / 0.14);
-          color: oklch(0.78 0.11 150);
-          border-color: oklch(0.62 0.13 150 / 0.30);
+          border-color: var(--accent-bright);
+          color: #fff;
+          background: oklch(0.66 0.13 245 / 0.08);
         }
 
         .rl-card {
-          background: var(--rl-card);
-          border: 1px solid var(--rl-line);
-          border-radius: 10px;
-          padding: 14px 14px 14px;
-          transition: border-color .25s, transform .25s, box-shadow .25s;
+          background: var(--rl-card-bg);
+          border: 1px solid var(--line-soft);
+          border-radius: var(--rl-r);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
         }
-        .rl-card:hover {
-          border-color: oklch(0.55 0.05 245 / 0.45);
-          transform: translateY(-1px);
-          box-shadow: 0 12px 24px -16px rgba(0,0,0,0.6);
+        .rl-explain {
+          margin-top: 26px;
+          padding: 26px 30px;
+          opacity: 0; animation: rlFadeUp .7s .3s forwards;
         }
-        .rl-card-title {
-          font-family: var(--font-manrope), Manrope, sans-serif;
-          font-size: 14.5px; font-weight: 500; line-height: 1.45;
-          color: var(--rl-text);
-          letter-spacing: 0.005em;
+        .rl-explain-h {
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 11px; font-weight: 600;
+          letter-spacing: .2em; text-transform: uppercase;
+          color: var(--accent-bright);
+          margin: 0 0 12px;
+        }
+        .rl-explain-lead {
+          font-size: 14.5px; line-height: 1.6;
+          color: var(--soft);
+          margin: 0 0 22px; max-width: 88ch;
+        }
+        .rl-explain-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+          gap: 20px 34px;
+        }
+        .rl-feat { display: flex; gap: 13px; }
+        .rl-feat-n {
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 11px; font-weight: 600;
+          color: var(--faint);
+          padding-top: 2px; flex: none;
+        }
+        .rl-feat-t {
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 13px; font-weight: 600;
+          letter-spacing: .02em;
+          color: var(--ink);
+          margin: 0 0 5px;
+        }
+        .rl-feat-d {
+          font-size: 12.5px; line-height: 1.5;
+          color: var(--muted);
+          margin: 0;
+        }
+
+        .rl-legend {
+          display: flex; flex-wrap: wrap; gap: 9px;
+          margin: 32px 0 18px;
+        }
+        .rl-chip {
+          display: inline-flex; align-items: center; gap: 8px;
+          font-size: 11px; font-weight: 600; letter-spacing: .04em;
+          padding: 6px 13px; border-radius: 999px;
+          border: 1px solid var(--line-soft);
+          background: oklch(0.30 0.04 245 / .3);
+          color: var(--soft);
+        }
+        .rl-chip i {
+          width: 8px; height: 8px; border-radius: 50%;
+          background: currentColor;
+        }
+        .rl-chip--concluido    { color: var(--done); }
+        .rl-chip--em_andamento { color: var(--doing); }
+        .rl-chip--nao_iniciada { color: var(--none); }
+        .rl-chip--aguardar     { color: var(--wait); }
+        .rl-chip--enviado      { color: var(--sent); }
+
+        .rl-empty {
+          border: 1px dashed var(--line);
+          padding: 60px 24px; text-align: center;
+          border-radius: var(--rl-r);
+          background: var(--rl-card-bg);
+        }
+        .rl-empty-lbl {
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 10.5px; letter-spacing: .36em; text-transform: uppercase;
+          color: var(--faint); font-weight: 600; margin: 0 0 8px;
+        }
+        .rl-empty-hint {
+          font-size: 15px; color: var(--muted); margin: 0;
+        }
+
+        .rl-board {
+          display: grid;
+          grid-auto-flow: column;
+          grid-auto-columns: minmax(248px, 1fr);
+          gap: 16px;
+          overflow-x: auto;
+          padding: 6px 2px 18px;
+          scrollbar-width: thin;
+          scrollbar-color: var(--line) transparent;
+        }
+        .rl-board::-webkit-scrollbar { height: 9px; }
+        .rl-board::-webkit-scrollbar-thumb {
+          background: var(--line); border-radius: 9px;
+        }
+        .rl-col {
+          display: flex; flex-direction: column;
+          border: 1px solid var(--line-soft);
+          border-radius: var(--rl-r);
+          background: oklch(0.22 0.03 245 / .42);
+          overflow: hidden;
+          opacity: 0; transform: translateY(16px);
+          animation: rlColIn .6s cubic-bezier(.2,.7,.2,1) forwards;
+        }
+        @keyframes rlColIn { to { opacity: 1; transform: none; } }
+
+        .rl-col-head {
+          display: flex; align-items: center; gap: 9px;
+          padding: 15px 16px 13px;
+        }
+        .rl-col-dot {
+          width: 9px; height: 9px; border-radius: 50%;
+          background: var(--cc, var(--accent));
+          box-shadow: 0 0 10px var(--cc, var(--accent));
+          flex: none;
+        }
+        .rl-col-name {
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 12px; font-weight: 600;
+          letter-spacing: .16em; text-transform: uppercase;
+          color: var(--soft);
+          flex: 1; line-height: 1.2;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .rl-col-count {
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 11px; font-weight: 600;
+          color: var(--faint);
+          background: oklch(0.34 0.03 245 / .5);
+          border-radius: 999px;
+          min-width: 22px; height: 22px;
+          display: inline-flex; align-items: center; justify-content: center;
+          padding: 0 6px; flex: none;
+        }
+        .rl-col-rail {
+          height: 3px; border-radius: 3px;
+          background: var(--cc, var(--accent));
+          margin: 0 12px 12px;
+          width: 0;
+          animation: rlRailIn 1s ease .5s forwards;
+          box-shadow: 0 0 10px var(--cc, var(--accent));
+        }
+        @keyframes rlRailIn { to { width: calc(100% - 24px); } }
+
+        .rl-col-body {
+          display: flex; flex-direction: column; gap: 11px;
+          padding: 4px 12px 14px;
+          flex: 1;
+        }
+        .rl-col-body--edit { padding-top: 12px; }
+
+        .rl-col-empty {
+          padding: 28px 0; text-align: center;
+        }
+        .rl-col-empty p {
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 10.5px; letter-spacing: .26em; text-transform: uppercase;
+          color: var(--faint); font-weight: 600; margin: 0;
+        }
+
+        .rl-task {
+          position: relative;
+          padding: 14px 15px;
+          border-radius: var(--rl-r-sm);
+          border: 1px solid var(--line-soft);
+          background:
+            linear-gradient(180deg, oklch(0.30 0.04 245 / .5), oklch(0.22 0.03 245 / .5));
+          overflow: hidden;
+          opacity: 0; transform: translateY(10px);
+          animation: rlTaskIn .5s ease forwards;
+        }
+        @keyframes rlTaskIn { to { opacity: 1; transform: none; } }
+        .rl-task::before {
+          content: ""; position: absolute; left: 0; top: 0; bottom: 0;
+          width: 3px;
+          background: var(--sc, var(--none));
+          opacity: .85;
+        }
+        .rl-task-name {
+          font-size: 13.5px; font-weight: 600; letter-spacing: .01em;
+          color: var(--ink);
+          margin: 0 0 10px; line-height: 1.35;
+        }
+        .rl-task-foot {
+          display: flex; align-items: center; justify-content: space-between;
+          gap: 8px;
+        }
+        .rl-badge {
+          display: inline-flex; align-items: center; gap: 6px;
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 10.5px; font-weight: 700; letter-spacing: .06em;
+          padding: 5px 10px; border-radius: 999px;
+          white-space: nowrap;
+        }
+        .rl-badge i {
+          width: 6px; height: 6px; border-radius: 50%;
+          background: currentColor;
+        }
+        .rl-badge--concluido {
+          color: var(--done);
+          background: color-mix(in oklch, var(--done) 14%, transparent);
+          border: 1px solid color-mix(in oklch, var(--done) 34%, transparent);
+        }
+        .rl-badge--em_andamento {
+          color: var(--doing);
+          background: color-mix(in oklch, var(--doing) 14%, transparent);
+          border: 1px solid color-mix(in oklch, var(--doing) 34%, transparent);
+        }
+        .rl-badge--em_andamento i { animation: rlBpulse 1.8s infinite; }
+        @keyframes rlBpulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+        .rl-badge--nao_iniciada {
+          color: var(--none);
+          background: color-mix(in oklch, var(--none) 14%, transparent);
+          border: 1px solid color-mix(in oklch, var(--none) 34%, transparent);
+        }
+        .rl-badge--aguardar {
+          color: var(--wait);
+          background: color-mix(in oklch, var(--wait) 14%, transparent);
+          border: 1px solid color-mix(in oklch, var(--wait) 34%, transparent);
+        }
+        .rl-badge--enviado {
+          color: var(--sent);
+          background: color-mix(in oklch, var(--sent) 14%, transparent);
+          border: 1px solid color-mix(in oklch, var(--sent) 34%, transparent);
+        }
+        .rl-task-date {
+          font-size: 10.5px; letter-spacing: .06em;
+          color: var(--faint);
+          display: inline-flex; align-items: center; gap: 5px;
+          white-space: nowrap;
+        }
+        .rl-task-date :global(svg) {
+          width: 11px; height: 11px; opacity: .8;
+        }
+
+        .rl-btn-dashed-block {
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 11px; letter-spacing: .26em; text-transform: uppercase;
+          font-weight: 600;
+          padding: 12px; border-radius: var(--rl-r-sm);
+          border: 1px dashed var(--line);
+          color: var(--muted); background: transparent;
+          cursor: pointer; transition: .2s;
+          width: 100%;
+        }
+        .rl-btn-dashed-block:hover {
+          border-color: var(--accent-bright);
+          color: #fff;
+          background: oklch(0.66 0.13 245 / 0.06);
+        }
+
+        .rl-foot {
+          margin-top: 42px; text-align: center;
+        }
+        .rl-foot-tag {
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: clamp(15px, 3vw, 19px);
+          letter-spacing: .06em;
+          color: var(--muted); font-weight: 400;
+          margin: 0;
+        }
+        .rl-foot-tag b { color: #fff; font-weight: 600; }
+        .rl-foot-sub {
+          margin-top: 9px;
+          font-size: 10px; letter-spacing: .24em; text-transform: uppercase;
+          color: var(--faint); font-weight: 600;
+        }
+
+        @media (max-width: 760px) {
+          .rl-head { align-items: flex-start; }
+          .rl-stats { flex-wrap: wrap; }
+          .rl-board {
+            grid-auto-flow: row;
+            grid-auto-columns: auto;
+            grid-template-columns: 1fr;
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .rl-roadmap,
+          .rl-roadmap :global(*) {
+            animation-duration: .01ms !important;
+            transition-duration: .01ms !important;
+            animation-delay: 0s !important;
+          }
         }
       `}</style>
     </div>
