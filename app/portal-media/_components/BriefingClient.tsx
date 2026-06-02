@@ -18,12 +18,17 @@
    aparece para isAdmin.
    ============================================================ */
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Manrope, Space_Grotesk } from 'next/font/google'
 import type { Projeto, BriefingSessao } from '@/app/portal-media/_data/mockProject'
 import AdminBar from './AdminBar'
 import HeroUploadBlock from './HeroUploadBlock'
+
+/** Link Google Meet partilhado da RL PROD (mesmo do /api/send-reuniao-email) */
+const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
+/** Link Maps p/ a morada do atelier */
+const MAPS_LINK = 'https://www.google.com/maps/place/RL+Photo.Video/@38.7071885,-9.1450227,17z'
 
 const manrope = Manrope({ subsets: ['latin'], weight: ['400','500','600','700'], variable: '--font-manrope', display: 'swap' })
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], weight: ['400','500','600','700'], variable: '--font-space-grotesk', display: 'swap' })
@@ -215,11 +220,11 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
     setNotifying(null)
   }
 
-  /* ── Próxima sessão agendada (ignora pendentes) ────────── */
+  /* ── Próxima sessão (qualquer estado futuro, incluindo pendentes) ── */
   const proximaSessao = useMemo(() => {
     const agora = new Date()
     const futuras = sessoes
-      .filter(s => s.data && s.estado !== 'pendente')
+      .filter(s => s.data)
       .map(s => {
         const [Y, M, D] = s.data.split('-').map(Number)
         const [hh, mm] = (s.hora ?? '00:00').split(':').map(Number)
@@ -227,7 +232,13 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
         return { ...s, _dt }
       })
       .filter(s => s._dt.getTime() >= agora.getTime())
-      .sort((a, b) => a._dt.getTime() - b._dt.getTime())
+      // ordenar: agendadas (confirmadas) primeiro; depois pendentes
+      .sort((a, b) => {
+        const aP = a.estado === 'pendente' ? 1 : 0
+        const bP = b.estado === 'pendente' ? 1 : 0
+        if (aP !== bP) return aP - bP
+        return a._dt.getTime() - b._dt.getTime()
+      })
     return futuras[0] ?? null
   }, [sessoes])
 
@@ -236,6 +247,28 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
     () => sessoes.filter(s => s.estado === 'pendente'),
     [sessoes]
   )
+
+  /* ── Countdown live para a próxima sessão agendada ─────── */
+  const [now, setNow] = useState<number>(() => Date.now())
+  useEffect(() => {
+    if (!proximaSessao) return
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [proximaSessao])
+
+  const countdown = useMemo(() => {
+    if (!proximaSessao) return null
+    const [Y, M, D] = proximaSessao.data.split('-').map(Number)
+    const [hh, mm] = (proximaSessao.hora ?? '00:00').split(':').map(Number)
+    const target = new Date(Y, (M ?? 1) - 1, D ?? 1, hh ?? 0, mm ?? 0).getTime()
+    let diff = Math.max(0, target - now)
+    const dias  = Math.floor(diff / 86400000); diff -= dias * 86400000
+    const horas = Math.floor(diff / 3600000);  diff -= horas * 3600000
+    const mins  = Math.floor(diff / 60000);    diff -= mins * 60000
+    const segs  = Math.floor(diff / 1000)
+    const totalMs = target - now
+    return { dias, horas, mins, segs, isPast: totalMs <= 0 }
+  }, [proximaSessao, now])
 
   /* ── Estado da fase (statusbar) ────────────────────────── */
   const estadoFase = useMemo(() => {
@@ -360,37 +393,96 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
           )
         )}
 
-        {/* Próxima sessão agendada */}
-        {proximaSessao && (
-          <div className="rl-next">
-            <div className="rl-next-ic">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="4" y="5" width="16" height="16" rx="2.5"/>
-                <path d="M4 9h16M8 3v4M16 3v4"/>
-                <circle cx="12" cy="14" r="1.6" fill="currentColor" stroke="none"/>
-              </svg>
-            </div>
-            <div className="rl-next-txt">
-              <p className="rl-next-k">Próxima sessão agendada</p>
-              <p className="rl-next-v">
-                {fmtFullDate(proximaSessao.data)}
-                {proximaSessao.hora && (
-                  <> · {proximaSessao.hora.replace(':', 'h')}</>
-                )}
-                <small>
-                  {proximaSessao.titulo}
-                  {proximaSessao.tipo && (
-                    <>
-                      {' · '}
-                      {proximaSessao.tipo === 'videochamada'
-                        ? 'Videochamada'
-                        : `Presencial${proximaSessao.local ? ` — ${proximaSessao.local}` : ''}`}
-                    </>
+        {/* ── Hero: Próxima sessão agendada c/ countdown live ── */}
+        {proximaSessao && countdown && (
+          <section className="rl-hero">
+            <div className="rl-hero-glow" aria-hidden />
+
+            <div className="rl-hero-head">
+              <span className="rl-hero-eyebrow">
+                <span className="rl-hero-pulse" />
+                Próxima sessão agendada
+              </span>
+              {proximaSessao.tipo && (
+                <span className={`rl-sess-tipo rl-sess-tipo--${proximaSessao.tipo}`}>
+                  {proximaSessao.tipo === 'videochamada' ? (
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="6" width="12" height="12" rx="2" />
+                      <path d="M15 10l6-3v10l-6-3z" />
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13Z" />
+                      <circle cx="12" cy="9" r="2.6" />
+                    </svg>
                   )}
-                </small>
-              </p>
+                  {proximaSessao.tipo === 'videochamada' ? 'Videochamada' : 'Presencial'}
+                </span>
+              )}
             </div>
-          </div>
+
+            <h2 className="rl-hero-title">{proximaSessao.titulo}</h2>
+            <p className="rl-hero-when">
+              {fmtFullDate(proximaSessao.data)}
+              {proximaSessao.hora && (
+                <span className="rl-hero-time"> · {proximaSessao.hora.replace(':', 'h')}</span>
+              )}
+              {proximaSessao.tipo === 'presencial' && proximaSessao.local && (
+                <span className="rl-hero-local"> · {proximaSessao.local}</span>
+              )}
+            </p>
+
+            {/* Countdown live */}
+            <div className="rl-hero-count">
+              <div className="rl-hero-cu">
+                <span className="rl-hero-num">{String(countdown.dias).padStart(2,'0')}</span>
+                <span className="rl-hero-lbl">Dias</span>
+              </div>
+              <div className="rl-hero-cu">
+                <span className="rl-hero-num">{String(countdown.horas).padStart(2,'0')}</span>
+                <span className="rl-hero-lbl">Horas</span>
+              </div>
+              <div className="rl-hero-cu">
+                <span className="rl-hero-num">{String(countdown.mins).padStart(2,'0')}</span>
+                <span className="rl-hero-lbl">Min</span>
+              </div>
+              <div className="rl-hero-cu">
+                <span className="rl-hero-num">{String(countdown.segs).padStart(2,'0')}</span>
+                <span className="rl-hero-lbl">Seg</span>
+              </div>
+            </div>
+
+            {/* CTA — só se já foi confirmada (estado 'agendada') */}
+            {proximaSessao.estado === 'agendada' && proximaSessao.tipo === 'videochamada' && (
+              <a href={MEET_LINK} target="_blank" rel="noopener noreferrer" className="rl-hero-cta">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="6" width="12" height="12" rx="2" />
+                  <path d="M15 10l6-3v10l-6-3z" />
+                </svg>
+                Entrar na Reunião
+                <span className="rl-hero-cta-arrow">→</span>
+              </a>
+            )}
+            {proximaSessao.estado === 'agendada' && proximaSessao.tipo === 'presencial' && (
+              <a href={MAPS_LINK} target="_blank" rel="noopener noreferrer" className="rl-hero-cta">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13Z" />
+                  <circle cx="12" cy="9" r="2.6" />
+                </svg>
+                Ver Localização
+                <span className="rl-hero-cta-arrow">→</span>
+              </a>
+            )}
+            {proximaSessao.estado === 'pendente' && (
+              <p className="rl-hero-pendinfo">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7v5l3 2" />
+                </svg>
+                Pedido a aguardar confirmação — o link da reunião fica disponível assim que for aceite.
+              </p>
+            )}
+          </section>
         )}
 
         {/* Explainer */}
@@ -983,50 +1075,154 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
         }
         .rl-btn-add :global(svg) { width: 15px; height: 15px; }
 
-        .rl-next {
-          margin-top: 24px;
-          display: flex; align-items: center; gap: 18px;
-          padding: 18px 22px;
-          border-radius: var(--rl-r);
-          border: 1px solid oklch(0.66 0.13 245 / .35);
-          background:
-            linear-gradient(120deg, oklch(0.34 0.06 245 / .5), oklch(0.26 0.04 245 / .4));
+        /* ── HERO: próxima sessão c/ countdown live + CTA ──── */
+        .rl-hero {
           position: relative; overflow: hidden;
-          opacity: 0; animation: rlFadeUp .7s .25s forwards;
+          margin-top: 26px;
+          padding: 30px 32px 30px;
+          border-radius: var(--rl-r);
+          border: 1px solid oklch(0.66 0.13 245 / .45);
+          background:
+            linear-gradient(135deg, oklch(0.38 0.10 245 / .60) 0%, oklch(0.28 0.05 245 / .55) 55%, oklch(0.22 0.03 245 / .65) 100%);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          opacity: 0; animation: rlFadeUp .8s .2s forwards;
+          box-shadow:
+            0 0 0 1px oklch(0.66 0.13 245 / 0.10) inset,
+            0 30px 60px -30px oklch(0.66 0.13 245 / 0.40);
         }
-        .rl-next::after {
-          content: ""; position: absolute; right: -30px; top: -30px;
-          width: 120px; height: 120px; border-radius: 50%;
-          background: radial-gradient(circle, var(--accent), transparent 70%);
-          opacity: .18;
+        .rl-hero-glow {
+          position: absolute; inset: 0;
+          background:
+            radial-gradient(60% 90% at 90% -20%, var(--accent) 0%, transparent 55%),
+            radial-gradient(50% 80% at -10% 110%, var(--accent-bright) 0%, transparent 55%);
+          opacity: .22; pointer-events: none;
+          animation: rlBreathe 6s ease-in-out infinite;
         }
-        .rl-next-ic {
-          flex: none; width: 46px; height: 46px;
-          border-radius: 13px;
-          display: flex; align-items: center; justify-content: center;
+        .rl-hero-head {
+          position: relative; z-index: 1;
+          display: flex; align-items: center; gap: 12px;
+          flex-wrap: wrap;
+          margin-bottom: 14px;
+        }
+        .rl-hero-eyebrow {
+          display: inline-flex; align-items: center; gap: 9px;
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 10px; font-weight: 600;
+          letter-spacing: .28em; text-transform: uppercase;
           color: var(--accent-bright);
-          background: oklch(0.66 0.13 245 / .14);
-          border: 1px solid oklch(0.66 0.13 245 / .3);
         }
-        .rl-next-ic :global(svg) { width: 23px; height: 23px; }
-        .rl-next-txt { flex: 1; min-width: 0; position: relative; z-index: 1; }
-        .rl-next-k {
+        .rl-hero-pulse {
+          width: 8px; height: 8px; border-radius: 50%;
+          background: var(--accent-bright);
+          box-shadow: 0 0 0 0 var(--accent-bright);
+          animation: rlHeroPulse 1.8s infinite;
+        }
+        @keyframes rlHeroPulse {
+          0%   { box-shadow: 0 0 0 0 oklch(0.80 0.11 245 / .55); }
+          70%  { box-shadow: 0 0 0 10px oklch(0.80 0.11 245 / 0); }
+          100% { box-shadow: 0 0 0 0 oklch(0.80 0.11 245 / 0); }
+        }
+        .rl-hero-title {
+          position: relative; z-index: 1;
           font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 9.5px; font-weight: 600;
-          letter-spacing: .2em; text-transform: uppercase;
-          color: var(--accent-bright); margin: 0 0 4px;
+          font-size: clamp(20px, 3vw, 28px);
+          font-weight: 600;
+          color: #fff;
+          margin: 0 0 4px;
+          line-height: 1.18;
         }
-        .rl-next-v {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 17px; font-weight: 600; letter-spacing: .02em;
-          color: #fff; margin: 0;
-        }
-        .rl-next-v small {
-          display: block;
+        .rl-hero-when {
+          position: relative; z-index: 1;
           font-family: var(--font-manrope), Manrope, sans-serif;
-          font-size: 12.5px; font-weight: 400; letter-spacing: 0;
-          color: var(--muted); margin-top: 3px;
+          font-size: 14px;
+          color: var(--soft);
+          margin: 0 0 22px;
+          font-weight: 500;
         }
+        .rl-hero-time { color: #fff; font-weight: 600; }
+        .rl-hero-local { color: var(--muted); }
+
+        .rl-hero-count {
+          position: relative; z-index: 1;
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 10px;
+          max-width: 520px;
+          margin: 0 0 20px;
+        }
+        .rl-hero-cu {
+          position: relative;
+          padding: 12px 10px 10px;
+          border-radius: 12px;
+          border: 1px solid oklch(0.50 0.05 245 / 0.35);
+          background:
+            linear-gradient(180deg, oklch(0.22 0.03 245 / 0.55), oklch(0.16 0.02 245 / 0.55));
+          text-align: center;
+        }
+        .rl-hero-num {
+          display: block;
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: clamp(24px, 4vw, 32px);
+          font-weight: 700;
+          color: #fff;
+          line-height: 1;
+          font-variant-numeric: tabular-nums;
+        }
+        .rl-hero-lbl {
+          display: block;
+          margin-top: 6px;
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 9px; font-weight: 600;
+          letter-spacing: .22em; text-transform: uppercase;
+          color: var(--accent-bright);
+        }
+
+        .rl-hero-cta {
+          position: relative; z-index: 1;
+          display: inline-flex; align-items: center; gap: 10px;
+          font-family: var(--font-manrope), Manrope, sans-serif;
+          font-size: 12.5px; font-weight: 700;
+          letter-spacing: .12em; text-transform: uppercase;
+          color: #16293a;
+          background: linear-gradient(135deg, var(--accent-bright), var(--accent));
+          border: 0;
+          border-radius: 12px;
+          padding: 13px 24px;
+          text-decoration: none;
+          cursor: pointer;
+          transition: all .2s;
+          box-shadow:
+            0 12px 28px -10px var(--accent),
+            inset 0 1px 0 rgba(255,255,255,.4);
+        }
+        .rl-hero-cta:hover {
+          transform: translateY(-1px);
+          box-shadow:
+            0 18px 36px -12px var(--accent),
+            inset 0 1px 0 rgba(255,255,255,.5);
+        }
+        .rl-hero-cta-arrow {
+          font-size: 16px;
+          transition: transform .25s;
+        }
+        .rl-hero-cta:hover .rl-hero-cta-arrow {
+          transform: translateX(3px);
+        }
+        .rl-hero-cta :global(svg) { color: inherit; }
+
+        .rl-hero-pendinfo {
+          position: relative; z-index: 1;
+          display: inline-flex; align-items: center; gap: 8px;
+          font-size: 12.5px; line-height: 1.5;
+          color: var(--wait);
+          background: oklch(0.80 0.13 80 / 0.10);
+          border: 1px solid oklch(0.80 0.13 80 / 0.30);
+          border-radius: 10px;
+          padding: 10px 14px;
+          margin: 0;
+        }
+        .rl-hero-pendinfo :global(svg) { flex: none; }
 
         .rl-card {
           background: var(--rl-card-bg);
