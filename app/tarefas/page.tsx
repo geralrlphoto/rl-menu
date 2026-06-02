@@ -3,13 +3,17 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
-type Status = 'NOVA' | 'PENDENTE' | 'CONCLUIDA'
+type Status = 'NOVA' | 'PENDENTE' | 'RESPONDIDA' | 'CONCLUIDA'
 
 type EnvioRegisto = {
   freelancer_id: string
   nome: string
   email: string | null
   enviado_em: string
+  /** Resposta do membro (preenchida via /api/tarefas/[id]/responder) */
+  resposta?: string
+  /** Quando o membro respondeu (ISO) */
+  respondida_em?: string
 }
 
 type Tarefa = {
@@ -32,12 +36,13 @@ type Freelancer = {
 }
 
 const STATUS_CONFIG: Record<Status, { label: string; dot: string; badge: string; border: string }> = {
-  NOVA:     { label: 'NOVA TAREFA', dot: 'bg-blue-400',   badge: 'text-blue-400/80 bg-blue-500/10',   border: 'border-l-blue-500/60' },
-  PENDENTE: { label: 'PENDENTE',    dot: 'bg-orange-400', badge: 'text-orange-400/80 bg-orange-500/10', border: 'border-l-orange-500/60' },
-  CONCLUIDA:{ label: 'CONCLUÍDA',   dot: 'bg-green-400',  badge: 'text-green-400/80 bg-green-500/10',  border: 'border-l-green-500/60' },
+  NOVA:       { label: 'NOVA TAREFA',        dot: 'bg-blue-400',   badge: 'text-blue-400/80 bg-blue-500/10',     border: 'border-l-blue-500/60' },
+  PENDENTE:   { label: 'PENDENTE',           dot: 'bg-orange-400', badge: 'text-orange-400/80 bg-orange-500/10', border: 'border-l-orange-500/60' },
+  RESPONDIDA: { label: 'AGUARDA APROVAÇÃO',  dot: 'bg-amber-400',  badge: 'text-amber-300 bg-amber-500/15',      border: 'border-l-amber-400' },
+  CONCLUIDA:  { label: 'CONCLUÍDA',          dot: 'bg-green-400',  badge: 'text-green-400/80 bg-green-500/10',   border: 'border-l-green-500/60' },
 }
 
-const STATUS_ORDER: Status[] = ['NOVA', 'PENDENTE', 'CONCLUIDA']
+const STATUS_ORDER: Status[] = ['NOVA', 'PENDENTE', 'RESPONDIDA', 'CONCLUIDA']
 
 function fmtDate(d: string | null) {
   if (!d) return null
@@ -73,6 +78,18 @@ function isAtRisk(data_prazo: string | null, status: Status): boolean {
   if (!data_prazo || status === 'CONCLUIDA') return false
   const d = workingDaysUntil(data_prazo)
   return d !== null && d >= 0 && d <= 2
+}
+
+/** Status efectivo: se DB diz CONCLUIDA, é CONCLUIDA. Senão se algum
+ *  membro já respondeu (resposta presente no array assigned_to), é
+ *  RESPONDIDA. Senão segue o status guardado. */
+function effectiveStatus(t: Tarefa): Status {
+  if (t.status === 'CONCLUIDA') return 'CONCLUIDA'
+  const respostas = Array.isArray(t.assigned_to)
+    ? t.assigned_to.filter(e => e.resposta && e.resposta.trim().length > 0)
+    : []
+  if (respostas.length > 0) return 'RESPONDIDA'
+  return t.status
 }
 
 export default function TarefasPage() {
@@ -325,9 +342,9 @@ export default function TarefasPage() {
     await fetch(`/api/tarefas/${id}`, { method: 'DELETE' })
   }
 
-  const visíveis = filtro === 'TODAS' ? tarefas : tarefas.filter(t => t.status === filtro)
+  const visíveis = filtro === 'TODAS' ? tarefas : tarefas.filter(t => effectiveStatus(t) === filtro)
   const counts: Record<string, number> = { TODAS: tarefas.length }
-  STATUS_ORDER.forEach(s => { counts[s] = tarefas.filter(t => t.status === s).length })
+  STATUS_ORDER.forEach(s => { counts[s] = tarefas.filter(t => effectiveStatus(t) === s).length })
 
   return (
     <main className="min-h-screen px-4 py-12 max-w-3xl mx-auto">
@@ -514,11 +531,16 @@ export default function TarefasPage() {
       ) : (
         <div className="flex flex-col gap-px">
           {visíveis.map(t => {
-            const cfg = STATUS_CONFIG[t.status]
-            const overdue = isOverdue(t.data_prazo, t.status)
-            const atRisk  = !overdue && isAtRisk(t.data_prazo, t.status)
+            const effStatus = effectiveStatus(t)
+            const cfg = STATUS_CONFIG[effStatus]
+            const overdue = isOverdue(t.data_prazo, effStatus)
+            const atRisk  = !overdue && isAtRisk(t.data_prazo, effStatus)
             const daysLeft = workingDaysUntil(t.data_prazo)
             const isEditing = editId === t.id
+            const respostas = Array.isArray(t.assigned_to)
+              ? t.assigned_to.filter(e => e.resposta && e.resposta.trim().length > 0)
+              : []
+            const temRespostas = respostas.length > 0
 
             return (
               <div
@@ -635,28 +657,70 @@ export default function TarefasPage() {
                             </svg>
                             Enviada a
                           </span>
-                          {t.assigned_to.map(e => (
-                            <span
-                              key={e.freelancer_id}
-                              title={`${e.nome}${e.email ? ` · ${e.email}` : ''} · ${fmtDate(e.enviado_em.split('T')[0]) ?? ''}`}
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9.5px] tracking-wider text-gold/85 bg-gold/[0.08] border border-gold/25"
-                            >
-                              {e.nome}
+                          {t.assigned_to.map(e => {
+                            const respondeu = !!(e.resposta && e.resposta.trim())
+                            return (
+                              <span
+                                key={e.freelancer_id}
+                                title={`${e.nome}${e.email ? ` · ${e.email}` : ''} · ${fmtDate(e.enviado_em.split('T')[0]) ?? ''}${respondeu ? ' · respondeu' : ''}`}
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9.5px] tracking-wider transition-colors ${
+                                  respondeu
+                                    ? 'text-amber-300 bg-amber-500/[0.12] border border-amber-400/40'
+                                    : 'text-gold/85 bg-gold/[0.08] border border-gold/25'
+                                }`}
+                              >
+                                {respondeu && '✓ '}{e.nome}
+                              </span>
+                            )
+                          })}
+                        </div>
+                      )}
+
+                      {/* Respostas dos membros — visível quando há ao menos uma */}
+                      {temRespostas && effStatus !== 'CONCLUIDA' && (
+                        <div className="mt-3 p-3 border border-amber-400/30 bg-amber-500/[0.04] rounded-lg flex flex-col gap-2">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <span className="text-[10px] tracking-[0.3em] text-amber-300/80 uppercase font-semibold">
+                              ✉ Resposta{respostas.length > 1 ? 's' : ''} do{respostas.length > 1 ? 's' : ''} membro{respostas.length > 1 ? 's' : ''}
                             </span>
+                            <button
+                              onClick={() => handleStatusChange(t, 'CONCLUIDA')}
+                              className="px-3 py-1.5 text-[10px] tracking-widest font-bold uppercase text-black bg-green-400 hover:bg-green-300 rounded transition-all"
+                              title="Aprovar e marcar como Concluída"
+                            >
+                              ✓ Aprovar e Concluir
+                            </button>
+                          </div>
+                          {respostas.map(e => (
+                            <div key={e.freelancer_id} className="border-l-2 border-amber-400/40 pl-3 py-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-[11px] text-amber-300/90 font-semibold">{e.nome}</span>
+                                {e.respondida_em && (
+                                  <span className="text-[10px] text-white/30">· {fmtDate(e.respondida_em.split('T')[0]) ?? ''}</span>
+                                )}
+                              </div>
+                              <p className="text-[13px] text-white/80 leading-relaxed whitespace-pre-wrap">{e.resposta}</p>
+                            </div>
                           ))}
                         </div>
                       )}
 
                       <div className="mt-2.5 flex items-center gap-3 flex-wrap">
-                        {/* Badge de status clicável (roda entre estados) */}
+                        {/* Badge de status clicável (roda entre estados; respeita o
+                            estado derivado para que RESPONDIDA não vire NOVA por engano). */}
                         <button
                           onClick={() => {
-                            const idx = STATUS_ORDER.indexOf(t.status)
+                            // RESPONDIDA → click direto avança para CONCLUIDA
+                            // (aprovar o trabalho do membro num só clique).
+                            if (effStatus === 'RESPONDIDA') {
+                              handleStatusChange(t, 'CONCLUIDA'); return
+                            }
+                            const idx = STATUS_ORDER.indexOf(effStatus)
                             const next = STATUS_ORDER[(idx + 1) % STATUS_ORDER.length]
                             handleStatusChange(t, next)
                           }}
                           className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] tracking-widest uppercase transition-all hover:ring-1 hover:ring-white/20 ${cfg.badge}`}
-                          title="Clique para mudar estado"
+                          title={effStatus === 'RESPONDIDA' ? 'Clica para Aprovar e Concluir' : 'Clique para mudar estado'}
                         >
                           <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
                           {cfg.label}

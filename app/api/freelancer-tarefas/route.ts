@@ -55,15 +55,26 @@ export async function GET(req: NextRequest) {
         const meuEnvio = envios.find((e: any) => e?.freelancer_id === id)
         if (!meuEnvio) return null
         const isDone = t.status === 'CONCLUIDA'
+        // Estado deriva: se admin marcou Concluida -> 'Concluída'.
+        // Se o membro já respondeu (resposta presente no envio) -> 'Aguarda Aprovação'.
+        // Caso contrário -> 'Pendente'.
+        const respondeu = !!(meuEnvio.resposta && String(meuEnvio.resposta).trim().length > 0)
+        const statusOut = isDone
+          ? 'Concluída'
+          : respondeu
+            ? 'Aguarda Aprovação'
+            : 'Pendente'
         return {
           id: `tarefa-supabase:${t.id}`,
           text: String(t.titulo ?? ''),
           description: t.descricao ? String(t.descricao) : '',
           priority: 'Média',
-          status: isDone ? 'Concluída' : 'Pendente',
+          status: statusOut,
           dueDate: t.data_prazo ?? undefined,
           createdAt: meuEnvio.enviado_em ?? t.created_at,
           done: isDone,
+          doneAt: meuEnvio.respondida_em ?? undefined,
+          resultado: meuEnvio.resposta ?? '',
           project: '',
           _source: 'admin-tarefas',
           _supabaseId: t.id,

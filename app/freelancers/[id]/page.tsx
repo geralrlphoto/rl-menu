@@ -3675,7 +3675,7 @@ function EdicaoForm({ form, setForm, saving, onSave, onCancel, onDelete, selecao
 // Persistência: localStorage 'freelancer_{id}_tasks' (compatível com TasksWidget)
 
 type TarefaPriority = 'Alta' | 'Média' | 'Baixa'
-type TarefaStatus   = 'Pendente' | 'Em andamento' | 'Concluída'
+type TarefaStatus   = 'Pendente' | 'Em andamento' | 'Aguarda Aprovação' | 'Concluída'
 type TarefaItem = {
   id: string
   text: string
@@ -3879,10 +3879,57 @@ function TarefasTab({ freelancerId, viewAsFreelancer, freelancer, notificacoes, 
     if (!t) return
     // Concluída → não permitir voltar atrás (regra de negócio premium)
     if (tarefaStatus(t) === 'Concluída') return
+    // Já em Aguarda Aprovação → só o admin é que pode concluir; nada a fazer
+    if (tarefaStatus(t) === 'Aguarda Aprovação') return
     // Para concluir, OBRIGA o membro a escrever resposta — abre modal
     setCompletingTask(t)
   }
   function completeWithResponse(id: string, resposta: string) {
+    const respStr = resposta.trim()
+    // ── Caso 1: tarefa enviada pelo admin (id começa com 'tarefa-supabase:')
+    //    A regra de negócio é "membro responde, admin é que conclui".
+    //    Localmente fica em 'Aguarda Aprovação' (não-revertível) e a
+    //    resposta vai para a DB no array assigned_to[me].resposta.
+    if (id.startsWith('tarefa-supabase:')) {
+      const supabaseId = id.replace(/^tarefa-supabase:/, '')
+      const now = new Date().toISOString()
+      // Fire-and-forget: PATCH para gravar a resposta dentro de assigned_to[me]
+      ;(async () => {
+        try {
+          // Buscar estado atual da tarefa para fazer merge correcto
+          const r = await fetch(`/api/freelancer-tarefas?id=${encodeURIComponent(freelancerId)}`, { cache: 'no-store' })
+          // Não precisamos do GET — mas o PATCH abaixo precisa de saber assigned_to.
+          // O endpoint freelancer-tarefas não devolve o array completo, vamos pedir
+          // o registo cru via /api/tarefas-by-id (next-best-thing): usar o supabase
+          // directamente via PATCH endpoint que aceita "responder" via meta hint.
+          await fetch(`/api/tarefas/${encodeURIComponent(supabaseId)}/responder`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              freelancer_id: freelancerId,
+              freelancer_nome: currentFreelancerName || (freelancer?.nome ?? 'Membro'),
+              resposta: respStr,
+              respondida_em: now,
+            }),
+          })
+        } catch {/* ignore */}
+      })()
+
+      setTasks(prev => prev.map(t => {
+        if (t.id !== id) return t
+        return {
+          ...t,
+          done: false,              // só admin marca como done
+          status: 'Aguarda Aprovação',
+          resultado: respStr,
+          doneAt: now,              // usado para "respondeu em"
+        }
+      }))
+      setCompletingTask(null)
+      return
+    }
+
+    // ── Caso 2: tarefa local — membro conclui normalmente
     setTasks(prev => prev.map(t => {
       if (t.id !== id) return t
       return {
@@ -3890,7 +3937,7 @@ function TarefasTab({ freelancerId, viewAsFreelancer, freelancer, notificacoes, 
         done: true,
         status: 'Concluída',
         doneAt: new Date().toISOString(),
-        resultado: resposta.trim(),
+        resultado: respStr,
       }
     }))
     setCompletingTask(null)
