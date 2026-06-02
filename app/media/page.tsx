@@ -1,6 +1,7 @@
 ﻿import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { LogoutButton } from '@/app/components/LogoutButton'
+import MediaNotificationsBell from '@/app/media/_components/MediaNotificationsBell'
 
 export const dynamic = 'force-dynamic'
 
@@ -91,8 +92,9 @@ export default async function MediaDashboard() {
         <div className="absolute inset-0 pointer-events-none z-[4]"
           style={{ background: 'linear-gradient(180deg, rgba(5,5,7,0.45) 0%, rgba(5,5,7,0.05) 12%, transparent 30%, transparent 50%, rgba(5,5,7,0.35) 68%, rgba(5,5,7,0.72) 82%, rgba(5,5,7,0.95) 95%, #050507 100%)' }} />
 
-        {/* Logout — topo direito */}
-        <div className="absolute top-5 right-6 z-30">
+        {/* Sino + Logout — topo direito */}
+        <div className="absolute top-5 right-6 z-30 flex items-center gap-3">
+          <MediaNotificationsBell />
           <LogoutButton />
         </div>
       </div>
