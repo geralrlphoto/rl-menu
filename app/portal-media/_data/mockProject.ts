@@ -66,6 +66,10 @@ export interface BriefingSessao {
   estado?: 'pendente' | 'agendada' | 'realizada'
   /** Quem pediu (cliente) — registo simples */
   pedidoPor?: 'cliente' | 'admin'
+  /** Formato da reunião */
+  tipo?: 'videochamada' | 'presencial'
+  /** Endereço / local quando tipo === 'presencial' */
+  local?: string
 }
 
 export interface FichaCliente {

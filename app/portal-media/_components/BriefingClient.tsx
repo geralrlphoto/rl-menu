@@ -47,6 +47,8 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
   const [schedDate, setSchedDate]       = useState('')
   const [schedTime, setSchedTime]       = useState('')
   const [schedTitle, setSchedTitle]     = useState('')
+  const [schedTipo, setSchedTipo]       = useState<'videochamada' | 'presencial'>('videochamada')
+  const [schedLocal, setSchedLocal]     = useState('')
   const [schedSaving, setSchedSaving]   = useState(false)
 
   /* ── Persistência ─────────────────────────────────────────── */
@@ -84,6 +86,8 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
     setSchedTitle(isAdmin
       ? `Sessão de briefing #${sessoes.length + 1}`
       : `Pedido de sessão #${sessoes.length + 1}`)
+    setSchedTipo('videochamada')
+    setSchedLocal('')
     setScheduleOpen(true)
   }
 
@@ -111,6 +115,8 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
       notas: '',
       estado,
       pedidoPor: isAdmin ? 'admin' : 'cliente',
+      tipo: schedTipo,
+      local: schedTipo === 'presencial' ? (schedLocal.trim() || undefined) : undefined,
     }
     const updated = [nova, ...sessoes]
     setSessoes(updated)
@@ -119,18 +125,23 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
     // Cliente: dispara notificação ao admin
     if (!isAdmin) {
       const horaTxt = schedTime ? ` · ${schedTime.replace(':', 'h')}` : ''
+      const tipoTxt = schedTipo === 'presencial'
+        ? ` · Presencial${schedLocal.trim() ? ` (${schedLocal.trim()})` : ''}`
+        : ' · Videochamada'
       fetch(`/api/media-portal/${initial.ref}/notify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'briefing-pedido',
           title: 'Pedido de sessão de briefing',
-          body: `${schedTitle.trim()} — ${fmtFullDate(schedDate)}${horaTxt}`,
+          body: `${schedTitle.trim()} — ${fmtFullDate(schedDate)}${horaTxt}${tipoTxt}`,
           meta: {
             sessaoId: nova.id,
             data: schedDate,
             hora: schedTime || null,
             titulo: schedTitle.trim(),
+            tipo: schedTipo,
+            local: schedLocal.trim() || null,
           },
         }),
       }).catch(() => {})
@@ -366,7 +377,17 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
                 {proximaSessao.hora && (
                   <> · {proximaSessao.hora.replace(':', 'h')}</>
                 )}
-                <small>{proximaSessao.titulo}</small>
+                <small>
+                  {proximaSessao.titulo}
+                  {proximaSessao.tipo && (
+                    <>
+                      {' · '}
+                      {proximaSessao.tipo === 'videochamada'
+                        ? 'Videochamada'
+                        : `Presencial${proximaSessao.local ? ` — ${proximaSessao.local}` : ''}`}
+                    </>
+                  )}
+                </small>
               </p>
             </div>
           </div>
@@ -451,6 +472,22 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
                       ) : (
                         <p className="rl-sess-title">{sessao.titulo}</p>
                       )}
+                      {sessao.tipo && (
+                        <span className={`rl-sess-tipo rl-sess-tipo--${sessao.tipo}`} title={sessao.tipo === 'presencial' && sessao.local ? sessao.local : undefined}>
+                          {sessao.tipo === 'videochamada' ? (
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="6" width="12" height="12" rx="2" />
+                              <path d="M15 10l6-3v10l-6-3z" />
+                            </svg>
+                          ) : (
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13Z" />
+                              <circle cx="12" cy="9" r="2.6" />
+                            </svg>
+                          )}
+                          {sessao.tipo === 'videochamada' ? 'Videochamada' : 'Presencial'}
+                        </span>
+                      )}
                       <span className={`rl-sess-tag rl-sess-tag--${estado}`}>
                         {estado === 'pendente'  ? 'Pendente'
                           : estado === 'agendada' ? 'Agendada'
@@ -468,6 +505,15 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
                       />
                     ) : (
                       <p className="rl-sess-desc">{sessao.resumo || 'Sem descrição registada.'}</p>
+                    )}
+                    {sessao.tipo === 'presencial' && sessao.local && (
+                      <p className="rl-sess-local">
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13Z" />
+                          <circle cx="12" cy="9" r="2.6" />
+                        </svg>
+                        {sessao.local}
+                      </p>
                     )}
 
                     {/* Detail expansível */}
@@ -697,6 +743,53 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
                   maxLength={80}
                 />
               </label>
+
+              {/* Tipo: Videochamada / Presencial */}
+              <div className="rl-field rl-field--full">
+                <span>Formato da reunião</span>
+                <div className="rl-segmented" role="radiogroup" aria-label="Formato da reunião">
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={schedTipo === 'videochamada'}
+                    className={`rl-seg-btn${schedTipo === 'videochamada' ? ' is-on' : ''}`}
+                    onClick={() => setSchedTipo('videochamada')}
+                  >
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="6" width="12" height="12" rx="2" />
+                      <path d="M15 10l6-3v10l-6-3z" />
+                    </svg>
+                    Videochamada
+                  </button>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={schedTipo === 'presencial'}
+                    className={`rl-seg-btn${schedTipo === 'presencial' ? ' is-on' : ''}`}
+                    onClick={() => setSchedTipo('presencial')}
+                  >
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13Z" />
+                      <circle cx="12" cy="9" r="2.6" />
+                    </svg>
+                    Presencial
+                  </button>
+                </div>
+              </div>
+
+              {schedTipo === 'presencial' && (
+                <label className="rl-field rl-field--full">
+                  <span>Local</span>
+                  <input
+                    type="text"
+                    value={schedLocal}
+                    onChange={e => setSchedLocal(e.target.value)}
+                    className="rl-input"
+                    placeholder="Ex.: Estúdio RL PROD, Lisboa"
+                    maxLength={120}
+                  />
+                </label>
+              )}
             </div>
 
             <div className="rl-modal-actions">
@@ -1408,6 +1501,82 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
           background: color-mix(in oklch, var(--done) 22%, transparent);
           border-color: var(--done);
           color: #fff;
+        }
+
+        /* ── Segmented control: Videochamada / Presencial ──── */
+        .rl-segmented {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
+          background: oklch(0.20 0.03 245 / 0.4);
+          border: 1px solid var(--line-soft);
+          border-radius: 12px;
+          padding: 4px;
+        }
+        .rl-seg-btn {
+          display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+          font-family: var(--font-manrope), Manrope, sans-serif;
+          font-size: 12px; font-weight: 600;
+          letter-spacing: .06em;
+          color: var(--faint);
+          padding: 10px 12px;
+          border-radius: 8px;
+          border: 0;
+          background: transparent;
+          cursor: pointer;
+          transition: all .18s;
+        }
+        .rl-seg-btn:hover {
+          color: var(--soft);
+          background: oklch(0.30 0.04 245 / 0.4);
+        }
+        .rl-seg-btn.is-on {
+          color: #fff;
+          background: oklch(0.66 0.13 245 / 0.22);
+          box-shadow:
+            inset 0 0 0 1px oklch(0.66 0.13 245 / 0.45),
+            0 0 14px -6px var(--accent);
+        }
+        .rl-seg-btn :global(svg) {
+          color: inherit;
+          flex: none;
+        }
+        .rl-seg-btn.is-on :global(svg) { color: var(--accent-bright); }
+
+        /* ── Pill do tipo (Videochamada / Presencial) na sessão ── */
+        .rl-sess-tipo {
+          display: inline-flex; align-items: center; gap: 5px;
+          font-family: var(--font-manrope), Manrope, sans-serif;
+          font-size: 10px; font-weight: 700;
+          letter-spacing: .08em;
+          padding: 3px 8px;
+          border-radius: 999px;
+          border: 1px solid var(--line-soft);
+          background: oklch(0.30 0.04 245 / 0.4);
+          color: var(--soft);
+          flex: none;
+        }
+        .rl-sess-tipo--videochamada {
+          color: var(--accent-bright);
+          border-color: color-mix(in oklch, var(--accent-bright) 28%, transparent);
+          background: color-mix(in oklch, var(--accent-bright) 10%, transparent);
+        }
+        .rl-sess-tipo--presencial {
+          color: var(--done);
+          border-color: color-mix(in oklch, var(--done) 32%, transparent);
+          background: color-mix(in oklch, var(--done) 12%, transparent);
+        }
+        .rl-sess-tipo :global(svg) { flex: none; }
+
+        /* Linha do local presencial */
+        .rl-sess-local {
+          margin: 6px 0 0;
+          font-size: 12px;
+          color: var(--muted);
+          display: inline-flex; align-items: center; gap: 6px;
+        }
+        .rl-sess-local :global(svg) {
+          color: var(--done); flex: none;
         }
 
         /* Hora lateral na data da sessão (debaixo do mês) */
