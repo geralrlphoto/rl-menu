@@ -1,9 +1,13 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { Manrope, Space_Grotesk } from 'next/font/google'
 import type { Projeto, RoadmapColuna, RoadmapTarefa, TarefaEstado } from '@/app/portal-media/_data/mockProject'
 import AdminBar from './AdminBar'
 import HeroUploadBlock from './HeroUploadBlock'
+
+const manrope = Manrope({ subsets: ['latin'], weight: ['400','500','600','700','800'], variable: '--font-manrope', display: 'swap' })
+const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], weight: ['400','500','600','700'], variable: '--font-space-grotesk', display: 'swap' })
 
 /* ────────────────────────────────────────────────────────── */
 /*  DEFAULT — 7 colunas padrão para qualquer projeto          */
@@ -361,42 +365,40 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
   /*  RENDER                                                    */
   /* ────────────────────────────────────────────────────────── */
   return (
-    <>
+    <div className={`rl-roadmap ${manrope.variable} ${spaceGrotesk.variable}`}>
       <HeroUploadBlock url={heroUrl} isEditing={isEditing} onChange={setHeroUrl} />
 
       <div className="relative z-10 px-6 sm:px-10 py-10">
 
         {/* ── Back link ── */}
-        <Link href={`/portal-media/${initial.ref}`}
-          className="inline-flex items-center gap-2 text-[12px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-10 group">
+        <Link href={`/portal-media/${initial.ref}`} className="rl-back inline-flex items-center gap-2 mb-10 group">
           <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
           Portal {initial.nome}
         </Link>
 
         {/* ── Board header ── */}
-        <div className="border border-white/[0.07] bg-white/[0.015] px-6 py-5 mb-8 flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="rl-header mb-8 flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex-1">
-            <p className="text-[9px] tracking-[0.6em] text-white/20 uppercase mb-1">RL PROD · {initial.nome}</p>
-            <h1 className="text-2xl font-extralight tracking-[0.35em] text-white/80 uppercase">Road Map</h1>
+            <p className="rl-eyebrow mb-2">RL PROD · {initial.nome}</p>
+            <h1 className="rl-title">Road Map</h1>
           </div>
 
           {/* Stats pills */}
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-2 border border-white/[0.07] bg-white/[0.02] px-3 py-1.5">
-              <span className="text-[12px] tracking-[0.2em] uppercase">Fases</span>
-              <span className="text-[14px] font-mono text-white/55">{colunas.length}</span>
+            <div className="rl-stat">
+              <span className="rl-stat-lbl">Fases</span>
+              <span className="rl-stat-val">{colunas.length}</span>
             </div>
-            <div className="flex items-center gap-2 border border-white/[0.07] bg-white/[0.02] px-3 py-1.5">
-              <span className="text-[12px] tracking-[0.2em] uppercase">Tarefas</span>
-              <span className="text-[14px] font-mono text-white/55">{totalConcluidas}/{totalTarefas}</span>
+            <div className="rl-stat">
+              <span className="rl-stat-lbl">Tarefas</span>
+              <span className="rl-stat-val">{totalConcluidas}/{totalTarefas}</span>
             </div>
-            <div className="flex items-center gap-2 border border-emerald-400/20 bg-emerald-400/5 px-3 py-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              <span className="text-[14px] font-mono text-emerald-400/80">{progresso}%</span>
+            <div className="rl-stat rl-stat--accent">
+              <span className="rl-stat-dot" />
+              <span className="rl-stat-val">{progresso}%</span>
             </div>
             {isAdmin && isEditing && (
-              <button onClick={addColuna}
-                className="border border-dashed border-white/20 hover:border-white/40 px-4 py-1.5 text-[12px] tracking-[0.3em] text-white/30 hover:text-white/60 uppercase transition-colors">
+              <button onClick={addColuna} className="rl-btn-dashed">
                 + Coluna
               </button>
             )}
@@ -404,17 +406,14 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
         </div>
 
         {/* ── Barra de progresso global ── */}
-        <div className="h-px w-full bg-white/[0.05] relative mb-8">
-          <div
-            className="absolute left-0 top-0 h-full bg-gradient-to-r from-emerald-400/60 to-emerald-400/20 transition-all duration-700"
-            style={{ width: `${progresso}%` }}
-          />
+        <div className="rl-progress mb-8">
+          <div className="rl-progress-fill" style={{ width: `${progresso}%` }} />
         </div>
 
         {/* ── Explicação para o cliente ── */}
-        <div className="mb-10 border border-white/[0.07] bg-white/[0.02] px-6 py-6 flex flex-col gap-4">
-          <p className="text-[12px] tracking-[0.5em] text-white/20 uppercase">O que é o Road Map?</p>
-          <p className="text-[16px] font-light text-white/65 leading-relaxed tracking-wide">
+        <div className="rl-explainer mb-10">
+          <p className="rl-explainer-eyebrow">O que é o Road Map?</p>
+          <p className="rl-explainer-lede">
             O Road Map é o quadro visual que mostra, em tempo real, o estado de cada fase do seu projeto. Está organizado em colunas que representam as grandes etapas do processo, desde o briefing inicial até à entrega final.
           </p>
           <div className="flex flex-col gap-3">
@@ -424,11 +423,11 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
               { n: '03', t: 'Estados em tempo real',    d: 'As tarefas atualizam o estado à medida que o trabalho avança: Concluído, Em andamento, Aguardar, Enviado ou Não iniciada.' },
               { n: '04', t: 'Transparência total',      d: 'O objetivo é garantir que estás sempre informado sobre o progresso, sem teres de perguntar. Tens acesso ao mesmo quadro que a nossa equipa.' },
             ].map(({ n, t, d }) => (
-              <div key={n} className="flex items-start gap-4 border-t border-white/[0.05] pt-3">
-                <span className="text-[13px] font-mono text-white/15 shrink-0 mt-0.5">{n}</span>
+              <div key={n} className="rl-explainer-row">
+                <span className="rl-explainer-num">{n}</span>
                 <div>
-                  <p className="text-[14px] tracking-[0.2em] text-white/55 font-medium mb-1">{t}</p>
-                  <p className="text-[15px] font-light text-white/30 leading-relaxed">{d}</p>
+                  <p className="rl-explainer-t">{t}</p>
+                  <p className="rl-explainer-d">{d}</p>
                 </div>
               </div>
             ))}
@@ -436,7 +435,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
         </div>
 
         {/* ── Legenda de estados ── */}
-        <div className="flex flex-wrap items-center gap-3 mb-10">
+        <div className="rl-legend mb-10">
           {ESTADO_OPTIONS.map(opt => {
             const cfg = ESTADO_CFG[opt.value]
             return (
@@ -451,9 +450,9 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
 
         {/* ── Board ── */}
         {colunas.length === 0 ? (
-          <div className="border border-dashed border-white/[0.07] px-6 py-20 text-center">
-            <p className="text-[12px] tracking-[0.4em] text-white/20 uppercase mb-2">Road map vazio</p>
-            {isAdmin && <p className="text-[15px] font-light text-white/15">Clica em "Editar" e depois em "+ Coluna" para começar</p>}
+          <div className="rl-empty">
+            <p className="rl-empty-lbl mb-2">Road map vazio</p>
+            {isAdmin && <p className="rl-empty-hint">Clica em &ldquo;Editar&rdquo; e depois em &ldquo;+ Coluna&rdquo; para começar</p>}
           </div>
         ) : (
           <div className="overflow-x-auto -mx-6 px-6 sm:-mx-10 sm:px-10 pb-8">
@@ -489,13 +488,13 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
                         />
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2.5 mb-3 px-0.5">
+                      <div className="rl-col-head">
                         <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${dot}`} />
-                        <span className="text-[13px] tracking-[0.3em] text-white/60 uppercase font-medium flex-1 truncate">{coluna.titulo}</span>
-                        <span className={`text-[13px] font-mono rounded-full px-2.5 py-0.5 shrink-0
+                        <span className="rl-col-name">{coluna.titulo}</span>
+                        <span className={`rl-col-count
                           ${concluidas === coluna.tarefas.length && coluna.tarefas.length > 0
-                            ? 'bg-emerald-400/15 text-emerald-400/80'
-                            : 'bg-white/[0.06] text-white/35'}`}>
+                            ? 'rl-col-count--done'
+                            : ''}`}>
                           {coluna.tarefas.length}
                         </span>
                       </div>
@@ -508,8 +507,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
                       {coluna.tarefas.map(tarefa => {
                         const cfg = ESTADO_CFG[tarefa.estado]
                         return (
-                          <div key={tarefa.id}
-                            className="bg-[#060b15] border border-white/[0.07] hover:border-white/[0.14] transition-all duration-200 px-3 py-3 group/card">
+                          <div key={tarefa.id} className="rl-card group/card">
 
                             {isEditing ? (
                               /* ── Modo edição ── */
@@ -591,7 +589,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
                                   </div>
                                 )}
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-[15px] font-light text-white/65 leading-snug mb-3">{tarefa.titulo}</p>
+                                  <p className="rl-card-title mb-3">{tarefa.titulo}</p>
                                   {isAdmin ? (
                                     <EstadoQuickChanger
                                       cfg={cfg}
@@ -657,7 +655,233 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
         <AdminBar isEditing={isEditing} saving={saving}
           onToggle={() => setIsEditing(true)} onSave={save} onCancel={cancel} />
       )}
-    </>
+
+      {/* ── Tokens navy do handoff design_handoff_portal_cliente ── */}
+      <style jsx>{`
+        .rl-roadmap {
+          --navy-900: #142433;
+          --navy-800: #1f3647;
+          --navy-700: #274458;
+          --navy-600: #33576f;
+          --navy-ink: #16293a;
+          --rl-accent: oklch(0.66 0.13 245);
+          --rl-accent-soft: oklch(0.80 0.11 245);
+          --rl-text: #eaf1f7;
+          --rl-text-muted: oklch(0.78 0.03 245);
+          --rl-text-faint: oklch(0.62 0.03 245);
+          --rl-text-ghost: oklch(0.48 0.03 245);
+          --rl-line: oklch(0.52 0.04 245 / 0.20);
+          --rl-line-soft: oklch(0.52 0.04 245 / 0.10);
+          --rl-surface: oklch(0.24 0.04 245 / 0.32);
+          --rl-surface-2: oklch(0.20 0.04 245 / 0.18);
+          --rl-card: #122230;
+          font-family: var(--font-manrope), Manrope, system-ui, sans-serif;
+          color: var(--rl-text);
+        }
+        .rl-roadmap :global(.rl-back) {
+          font-family: var(--font-manrope), Manrope, sans-serif;
+          font-size: 11.5px;
+          letter-spacing: 0.32em;
+          text-transform: uppercase;
+          color: var(--rl-text-ghost);
+          font-weight: 500;
+          transition: color .25s;
+        }
+        .rl-roadmap :global(.rl-back:hover) { color: var(--rl-text-muted); }
+
+        .rl-header {
+          border: 1px solid var(--rl-line);
+          background:
+            linear-gradient(180deg, oklch(0.30 0.04 245 / 0.32), oklch(0.24 0.04 245 / 0.18));
+          border-radius: 14px;
+          padding: 22px 26px;
+        }
+        .rl-eyebrow {
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 10.5px;
+          letter-spacing: 0.42em;
+          text-transform: uppercase;
+          color: var(--rl-accent-soft);
+          font-weight: 600;
+        }
+        .rl-title {
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-weight: 500;
+          font-size: 28px;
+          line-height: 1.08;
+          letter-spacing: -0.005em;
+          color: var(--rl-text);
+        }
+
+        .rl-stat {
+          display: inline-flex; align-items: center; gap: 8px;
+          border: 1px solid var(--rl-line);
+          background: var(--rl-surface-2);
+          padding: 7px 14px;
+          border-radius: 999px;
+          color: var(--rl-text-muted);
+        }
+        .rl-stat-lbl {
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 10.5px; letter-spacing: 0.22em; text-transform: uppercase;
+          font-weight: 600; color: var(--rl-text-faint);
+        }
+        .rl-stat-val {
+          font-family: var(--font-manrope), Manrope, sans-serif;
+          font-size: 13.5px; font-weight: 600; color: var(--rl-text);
+        }
+        .rl-stat--accent {
+          border-color: oklch(0.70 0.13 245 / 0.30);
+          background: oklch(0.66 0.13 245 / 0.10);
+        }
+        .rl-stat--accent .rl-stat-val { color: var(--rl-accent-soft); }
+        .rl-stat-dot {
+          width: 6px; height: 6px; border-radius: 50%;
+          background: var(--rl-accent-soft);
+          box-shadow: 0 0 8px var(--rl-accent-soft);
+        }
+        .rl-btn-dashed {
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase;
+          font-weight: 600;
+          padding: 7px 16px; border-radius: 999px;
+          border: 1px dashed var(--rl-line);
+          color: var(--rl-text-faint);
+          background: transparent;
+          transition: .2s;
+          cursor: pointer;
+        }
+        .rl-btn-dashed:hover {
+          border-color: var(--rl-accent-soft);
+          color: var(--rl-text);
+          background: oklch(0.66 0.13 245 / 0.06);
+        }
+
+        .rl-progress {
+          height: 2px; width: 100%;
+          background: var(--rl-line-soft);
+          position: relative; overflow: hidden;
+          border-radius: 999px;
+        }
+        .rl-progress-fill {
+          position: absolute; left: 0; top: 0; height: 100%;
+          background: linear-gradient(90deg, var(--rl-accent), var(--rl-accent-soft));
+          transition: width .7s cubic-bezier(.2,.85,.25,1);
+          box-shadow: 0 0 12px var(--rl-accent);
+        }
+
+        .rl-explainer {
+          border: 1px solid var(--rl-line);
+          background: var(--rl-surface-2);
+          padding: 28px 30px;
+          border-radius: 14px;
+          display: flex; flex-direction: column; gap: 16px;
+        }
+        .rl-explainer-eyebrow {
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 10.5px; letter-spacing: 0.38em; text-transform: uppercase;
+          font-weight: 600; color: var(--rl-accent-soft);
+        }
+        .rl-explainer-lede {
+          font-family: var(--font-manrope), Manrope, sans-serif;
+          font-size: 15.5px; font-weight: 400; line-height: 1.7;
+          color: var(--rl-text-muted);
+          letter-spacing: 0.005em;
+        }
+        .rl-explainer-row {
+          display: flex; align-items: flex-start; gap: 18px;
+          border-top: 1px solid var(--rl-line-soft);
+          padding-top: 14px;
+        }
+        .rl-explainer-num {
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 13px; font-weight: 500;
+          color: var(--rl-accent-soft);
+          flex: none;
+          padding-top: 2px;
+          min-width: 24px;
+        }
+        .rl-explainer-t {
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 13.5px; letter-spacing: 0.15em;
+          color: var(--rl-text);
+          font-weight: 600;
+          margin: 0 0 6px;
+        }
+        .rl-explainer-d {
+          font-family: var(--font-manrope), Manrope, sans-serif;
+          font-size: 14.5px; font-weight: 400; line-height: 1.65;
+          color: var(--rl-text-faint);
+        }
+
+        .rl-legend {
+          display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+          font-family: var(--font-manrope), Manrope, sans-serif;
+        }
+
+        .rl-empty {
+          border: 1px dashed var(--rl-line);
+          padding: 60px 24px;
+          text-align: center;
+          border-radius: 14px;
+          background: var(--rl-surface-2);
+        }
+        .rl-empty-lbl {
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 10.5px; letter-spacing: 0.36em; text-transform: uppercase;
+          color: var(--rl-text-faint); font-weight: 600;
+        }
+        .rl-empty-hint {
+          font-family: var(--font-manrope), Manrope, sans-serif;
+          font-size: 15px; color: var(--rl-text-ghost); font-weight: 400;
+        }
+
+        .rl-col-head {
+          display: flex; align-items: center; gap: 10px;
+          padding: 4px 4px 12px;
+        }
+        .rl-col-name {
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 12.5px; letter-spacing: 0.26em; text-transform: uppercase;
+          color: var(--rl-text); font-weight: 600;
+          flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .rl-col-count {
+          font-family: var(--font-manrope), Manrope, sans-serif;
+          font-size: 12px; font-weight: 600;
+          border-radius: 999px;
+          padding: 2px 10px;
+          background: var(--rl-surface-2);
+          color: var(--rl-text-faint);
+          border: 1px solid var(--rl-line-soft);
+          flex: none;
+        }
+        .rl-col-count--done {
+          background: oklch(0.62 0.13 150 / 0.14);
+          color: oklch(0.78 0.11 150);
+          border-color: oklch(0.62 0.13 150 / 0.30);
+        }
+
+        .rl-card {
+          background: var(--rl-card);
+          border: 1px solid var(--rl-line);
+          border-radius: 10px;
+          padding: 14px 14px 14px;
+          transition: border-color .25s, transform .25s, box-shadow .25s;
+        }
+        .rl-card:hover {
+          border-color: oklch(0.55 0.05 245 / 0.45);
+          transform: translateY(-1px);
+          box-shadow: 0 12px 24px -16px rgba(0,0,0,0.6);
+        }
+        .rl-card-title {
+          font-family: var(--font-manrope), Manrope, sans-serif;
+          font-size: 14.5px; font-weight: 500; line-height: 1.45;
+          color: var(--rl-text);
+          letter-spacing: 0.005em;
+        }
+      `}</style>
+    </div>
   )
 }
 
