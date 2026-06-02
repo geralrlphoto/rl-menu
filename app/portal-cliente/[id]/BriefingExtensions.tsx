@@ -1411,8 +1411,6 @@ export default function BriefingExtensions({
       {/* Layout 1 coluna — conteúdo ocupa a largura total (sidebar removida) */}
       <div className="grid grid-cols-1 gap-5 items-start">
         <div ref={contentRef} className="space-y-4 min-w-0">
-          {/* Visão Geral (KPIs) */}
-          <VisaoGeralSection info={info} onJump={scrollTo} />
 
           {/* Operacional */}
           <CronogramaSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
