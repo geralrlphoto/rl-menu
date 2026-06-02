@@ -484,6 +484,22 @@ export default function TarefasPage() {
                             ✉ Responder
                           </button>
                         )}
+
+                        {/* Botão Enviar a Membros — só p/ tarefas reais (não msg
+                            de noivos) e quando o popover ainda não está aberto. */}
+                        {!t.id.startsWith('noivos_msg::') && assignId !== t.id && (
+                          <button
+                            onClick={() => openAssign(t)}
+                            className="ml-auto inline-flex items-center gap-1.5 px-3 py-1 rounded text-[10px] tracking-widest font-bold uppercase text-gold border border-gold/40 bg-gold/10 hover:bg-gold/20 hover:border-gold/70 transition-all"
+                            title="Enviar tarefa por email a membros da equipa"
+                          >
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="5" width="18" height="14" rx="2"/>
+                              <path d="M3 7l9 6 9-6"/>
+                            </svg>
+                            Enviar
+                          </button>
+                        )}
                       </div>
 
                       {/* Painel: Enviar a Membros da Equipa */}
