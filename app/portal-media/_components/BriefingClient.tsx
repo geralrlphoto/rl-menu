@@ -311,24 +311,42 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
           </div>
         </header>
 
-        {/* Aviso admin: pedidos pendentes */}
-        {isAdmin && pedidosPendentes.length > 0 && (
-          <div className="rl-alert">
-            <div className="rl-alert-ic">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 7v5l3 2" />
-              </svg>
+        {/* Aviso admin: pedidos pendentes (amarelo) OU info permanente (azul) */}
+        {isAdmin && (
+          pedidosPendentes.length > 0 ? (
+            <div className="rl-alert rl-alert--warn">
+              <div className="rl-alert-ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7v5l3 2" />
+                </svg>
+              </div>
+              <div className="rl-alert-txt">
+                <p className="rl-alert-k">{pedidosPendentes.length === 1 ? 'Pedido pendente' : 'Pedidos pendentes'}</p>
+                <p className="rl-alert-v">
+                  {pedidosPendentes.length === 1
+                    ? 'O cliente pediu uma sessão. Confirma a disponibilidade na lista abaixo.'
+                    : `${pedidosPendentes.length} pedidos do cliente aguardam confirmação.`}
+                </p>
+              </div>
             </div>
-            <div className="rl-alert-txt">
-              <p className="rl-alert-k">{pedidosPendentes.length === 1 ? 'Pedido pendente' : 'Pedidos pendentes'}</p>
-              <p className="rl-alert-v">
-                {pedidosPendentes.length === 1
-                  ? 'O cliente pediu uma sessão. Confirma a disponibilidade na lista abaixo.'
-                  : `${pedidosPendentes.length} pedidos do cliente aguardam confirmação.`}
-              </p>
+          ) : (
+            <div className="rl-alert rl-alert--info">
+              <div className="rl-alert-ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 8v5" />
+                  <circle cx="12" cy="16" r="0.6" fill="currentColor" />
+                </svg>
+              </div>
+              <div className="rl-alert-txt">
+                <p className="rl-alert-k">Pedidos do cliente</p>
+                <p className="rl-alert-v">
+                  Os clientes podem pedir sessões a partir do botão <b>+ Pedir Sessão</b>. Aparecem aqui como <b>Pendente</b> e podes Confirmar ou Recusar.
+                </p>
+              </div>
             </div>
-          </div>
+          )
         )}
 
         {/* Próxima sessão agendada */}
@@ -1263,32 +1281,51 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
           color: var(--faint); font-weight: 600;
         }
 
-        /* ── Aviso admin: pedidos pendentes ────────────────── */
+        /* ── Aviso admin: pedidos pendentes ou info permanente ── */
         .rl-alert {
           margin-top: 24px;
           display: flex; align-items: center; gap: 14px;
           padding: 16px 20px;
           border-radius: var(--rl-r);
+          position: relative; overflow: hidden;
+          opacity: 0; animation: rlFadeUp .6s .18s forwards;
+        }
+        .rl-alert--warn {
           border: 1px solid oklch(0.80 0.13 80 / 0.4);
           background:
             linear-gradient(120deg, oklch(0.42 0.11 80 / 0.32), oklch(0.30 0.05 245 / 0.35));
-          position: relative; overflow: hidden;
-          opacity: 0; animation: rlFadeUp .6s .18s forwards;
+        }
+        .rl-alert--info {
+          border: 1px solid oklch(0.66 0.13 245 / 0.35);
+          background:
+            linear-gradient(120deg, oklch(0.34 0.06 245 / 0.50), oklch(0.26 0.04 245 / 0.40));
         }
         .rl-alert::after {
           content: ""; position: absolute; right: -30px; top: -30px;
           width: 100px; height: 100px; border-radius: 50%;
-          background: radial-gradient(circle, var(--wait), transparent 70%);
           opacity: .22;
+        }
+        .rl-alert--warn::after {
+          background: radial-gradient(circle, var(--wait), transparent 70%);
+        }
+        .rl-alert--info::after {
+          background: radial-gradient(circle, var(--accent), transparent 70%);
         }
         .rl-alert-ic {
           flex: none; width: 38px; height: 38px;
           border-radius: 11px;
           display: flex; align-items: center; justify-content: center;
+          position: relative; z-index: 1;
+        }
+        .rl-alert--warn .rl-alert-ic {
           color: var(--wait);
           background: oklch(0.80 0.13 80 / 0.14);
           border: 1px solid oklch(0.80 0.13 80 / 0.32);
-          position: relative; z-index: 1;
+        }
+        .rl-alert--info .rl-alert-ic {
+          color: var(--accent-bright);
+          background: oklch(0.66 0.13 245 / 0.14);
+          border: 1px solid oklch(0.66 0.13 245 / 0.32);
         }
         .rl-alert-ic :global(svg) { width: 18px; height: 18px; }
         .rl-alert-txt { flex: 1; min-width: 0; position: relative; z-index: 1; }
@@ -1296,12 +1333,15 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
           font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
           font-size: 9.5px; font-weight: 600;
           letter-spacing: .2em; text-transform: uppercase;
-          color: var(--wait); margin: 0 0 3px;
+          margin: 0 0 3px;
         }
+        .rl-alert--warn .rl-alert-k { color: var(--wait); }
+        .rl-alert--info .rl-alert-k { color: var(--accent-bright); }
         .rl-alert-v {
           font-size: 13.5px; color: var(--soft); margin: 0;
-          font-weight: 400;
+          font-weight: 400; line-height: 1.5;
         }
+        .rl-alert-v b { color: #fff; font-weight: 600; }
 
         /* ── Modal warn (cliente): aviso de pendente ───────── */
         .rl-modal-warn {
