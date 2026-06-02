@@ -3819,15 +3819,56 @@ function TarefasTab({ freelancerId, viewAsFreelancer, freelancer, notificacoes, 
   const [calView, setCalView] = useState({ y: today.getFullYear(), m: today.getMonth() })
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(KEY)
-      if (raw) setTasks(JSON.parse(raw))
-    } catch {}
-    setLoaded(true)
-  }, [KEY])
+    let cancelled = false
+    async function load() {
+      // 1) Carrega tarefas locais (criadas pelo membro ou recebidas
+      //    via thread de tarefas entre membros)
+      let local: TarefaItem[] = []
+      try {
+        const raw = localStorage.getItem(KEY)
+        if (raw) local = JSON.parse(raw)
+      } catch {}
+
+      // 2) Carrega tarefas atribuídas pelo admin via /tarefas
+      //    (tabela `tarefas` no Supabase com assigned_to[])
+      let admin: TarefaItem[] = []
+      try {
+        const r = await fetch(`/api/freelancer-tarefas?id=${encodeURIComponent(freelancerId)}`, { cache: 'no-store' })
+        const d = await r.json()
+        if (Array.isArray(d?.tarefas)) admin = d.tarefas
+      } catch {}
+
+      if (cancelled) return
+
+      // 3) Merge: tarefas admin sobrescrevem locais com o mesmo id
+      //    (caso o membro tenha guardado uma cópia antes). Tarefas
+      //    locais que NÃO começam por 'tarefa-supabase:' são preservadas.
+      const map = new Map<string, TarefaItem>()
+      for (const t of local) {
+        if (!t?.id?.startsWith('tarefa-supabase:')) map.set(t.id, t)
+      }
+      for (const t of admin) map.set(t.id, t)
+
+      const merged = Array.from(map.values()).sort((a, b) => {
+        const ad = a.createdAt ?? ''
+        const bd = b.createdAt ?? ''
+        return bd.localeCompare(ad)
+      })
+      setTasks(merged)
+      setLoaded(true)
+    }
+    load()
+    // Refresh a cada 60s para apanhar novas tarefas enviadas
+    const id = setInterval(load, 60_000)
+    return () => { cancelled = true; clearInterval(id) }
+  }, [KEY, freelancerId])
+
   useEffect(() => {
     if (!loaded) return
-    try { localStorage.setItem(KEY, JSON.stringify(tasks)) } catch {}
+    // Apenas as tarefas locais vão para o localStorage (as do admin
+    // ficam só na BD para evitar drift).
+    const local = tasks.filter(t => !t?.id?.startsWith('tarefa-supabase:'))
+    try { localStorage.setItem(KEY, JSON.stringify(local)) } catch {}
   }, [tasks, KEY, loaded])
 
   function addTask(t: TarefaItem) {
