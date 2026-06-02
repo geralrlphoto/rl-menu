@@ -859,8 +859,16 @@ function PortalSubPageContent() {
   useEffect(() => {
     // Template sub-pages (no refParam) are always admin
     if (!refParam) { setIsAdmin(true); return }
+    // ?admin=1 na URL → activa admin imediatamente E persiste em sessionStorage
+    // para que continue activo nas navegações seguintes sem ter de incluir o
+    // parâmetro em todas as URLs.
+    if (searchParams.get('admin') === '1') {
+      sessionStorage.setItem(`portalAdmin_${refParam}`, 'true')
+      setIsAdmin(true)
+      return
+    }
     if (sessionStorage.getItem(`portalAdmin_${refParam}`) === 'true') setIsAdmin(true)
-  }, [refParam])
+  }, [refParam, searchParams])
 
   const [editingPhotos, setEditingPhotos] = useState(false)
   const [error, setError] = useState('')
@@ -871,9 +879,15 @@ function PortalSubPageContent() {
   useEffect(() => {
     if (portalRef && !refParam) {
       const key = `portalAdmin_${portalRef}`
+      // ?admin=1 também activa quando o portalRef carrega depois
+      if (searchParams.get('admin') === '1') {
+        sessionStorage.setItem(key, 'true')
+        setIsAdmin(true)
+        return
+      }
       if (sessionStorage.getItem(key) === 'true') setIsAdmin(true)
     }
-  }, [portalRef, refParam])
+  }, [portalRef, refParam, searchParams])
   const [portalTotal, setPortalTotal] = useState(0)
   const [portalFoto, setPortalFoto] = useState<number | null>(null)
   const [portalVideo, setPortalVideo] = useState<number | null>(null)
