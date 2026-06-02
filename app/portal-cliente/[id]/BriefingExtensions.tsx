@@ -1356,6 +1356,47 @@ export default function BriefingExtensions({
         enviarBriefingNode={enviarBriefingNode}
       />
 
+      {/* ── Banner: admin a ver como Cliente — explica como editar ── */}
+      {isAdmin && viewMode === 'client' && (
+        <div
+          className="mt-4 mb-4 flex items-start gap-3 px-4 py-3 rounded-xl border border-amber-400/35 transition-all"
+          style={{
+            background: 'linear-gradient(135deg, rgba(251,191,36,0.10), rgba(201,164,92,0.05))',
+            boxShadow: '0 0 24px -8px rgba(251,191,36,0.25)',
+          }}
+          role="status"
+        >
+          <span className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-amber-300 border border-amber-400/35 bg-amber-500/10"
+            style={{ boxShadow: '0 0 14px -4px rgba(251,191,36,0.45)' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 8v5" />
+              <circle cx="12" cy="16" r="0.6" fill="currentColor" />
+            </svg>
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] tracking-[0.3em] uppercase text-amber-300 font-bold mb-0.5">
+              Estás em pré-visualização · Cliente
+            </p>
+            <p className="text-[12.5px] text-white/70 leading-snug">
+              Os controlos de edição (lápis dourado, botões de guardar) <strong className="text-white">estão escondidos</strong>{' '}
+              porque estás a ver como o cliente vê.{' '}
+              <button
+                onClick={() => setViewMode('admin')}
+                className="inline-flex items-center gap-1.5 ml-1 px-2.5 py-0.5 rounded-full text-[10px] tracking-[0.18em] uppercase font-bold text-black bg-gold hover:brightness-110 transition-all"
+                title="Voltar a Modo Admin para editar"
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+                Activar Modo Admin
+              </button>
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Layout 2 colunas — sidebar à esquerda, conteúdo à direita */}
       <div className="grid grid-cols-1 lg:grid-cols-[210px_1fr] gap-5 items-start">
         <BriefingSidebar items={nav} activeId={activeId} onClick={scrollTo} />
