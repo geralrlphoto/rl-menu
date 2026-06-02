@@ -170,8 +170,10 @@ function EditField({ label, value, field, eventId, type = 'text', large = false,
 }
 
 // ─── Multi-select inline editável ─────────────────────────────────────────────
-function EditMultiField({ label, value, field, eventId, onSaved }: {
+function EditMultiField({ label, value, field, eventId, referencia, onSaved }: {
   label: string; value: string[]; field: string; eventId: string
+  /** Referência do evento — usada para fallback persistente em portais.settings */
+  referencia?: string | null
   onSaved: (field: string, val: any) => void
 }) {
   const [editing, setEditing] = useState(false)
@@ -187,12 +189,28 @@ function EditMultiField({ label, value, field, eventId, onSaved }: {
     const newVal = draft.split(',').map(s => s.trim()).filter(Boolean)
     if (JSON.stringify(newVal) === JSON.stringify(value ?? [])) return
     setSaving(true)
+    // Optimistic — actualiza UI já
+    onSaved(field, newVal)
     const payload: any = {}; payload[field] = newVal
-    await fetch(`/api/eventos-notion/${eventId}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
-    onSaved(field, newVal); setSaving(false)
+    // Persistência paralela: tenta o Notion E o Supabase. Mesmo que o
+    // Notion falhe (token, sincronização, etc.), o valor fica gravado
+    // em portais.settings[field] e é lido na próxima vez.
+    await Promise.allSettled([
+      fetch(`/api/eventos-notion/${eventId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }),
+      referencia
+        ? fetch('/api/portais', {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              referencia,
+              updates: { settings: { [field]: newVal } },
+            }),
+          })
+        : Promise.resolve(),
+    ])
+    setSaving(false)
   }
 
   return (
@@ -2491,6 +2509,16 @@ export default function EventoPage() {
               if (s.maquete_enviada)          setMaqueteEnviada(s.maquete_enviada)
               if (s.selecao_enviada)          setSelecaoEnviada(s.selecao_enviada)
               if (s.armazenamento_backup)     setArmazenamentoBackup(s.armazenamento_backup)
+              // Fallback persistente p/ nome_disco e backup_disco — se o Notion
+              // não tiver valor (ou estiver dessincronizado), usar o do settings
+              if (Array.isArray(s.nome_disco) && s.nome_disco.length > 0) {
+                setEvento(prev => prev && (!prev.nome_disco || prev.nome_disco.length === 0)
+                  ? { ...prev, nome_disco: s.nome_disco } : prev)
+              }
+              if (Array.isArray(s.backup_disco) && s.backup_disco.length > 0) {
+                setEvento(prev => prev && (!prev.backup_disco || prev.backup_disco.length === 0)
+                  ? { ...prev, backup_disco: s.backup_disco } : prev)
+              }
               if (s.prewedding_enviada)       setPreWeddingEnviada(s.prewedding_enviada)
               if (s.fotos_finais_enviada)     setFotosFinaisEnviada(s.fotos_finais_enviada)
               if (s.galerias_enviada)         setGaleriasEnviada(s.galerias_enviada)
@@ -3585,8 +3613,8 @@ export default function EventoPage() {
           )}
 
           <div className="grid grid-cols-2 gap-4">
-            <EditMultiField label="Nome do Disco" value={e.nome_disco ?? []} field="nome_disco" eventId={e.id} onSaved={handleSaved} />
-            <EditMultiField label="Backup Disco" value={e.backup_disco ?? []} field="backup_disco" eventId={e.id} onSaved={handleSaved} />
+            <EditMultiField label="Nome do Disco" value={e.nome_disco ?? []} field="nome_disco" eventId={e.id} referencia={e.referencia} onSaved={handleSaved} />
+            <EditMultiField label="Backup Disco" value={e.backup_disco ?? []} field="backup_disco" eventId={e.id} referencia={e.referencia} onSaved={handleSaved} />
           </div>
         </div>
 
