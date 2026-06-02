@@ -55,6 +55,17 @@ export interface BriefingSessao {
   tom?: string[]
   /** Notas finais da sessão */
   notas?: string
+  /**
+   * Estado do pedido / agendamento:
+   *  - 'pendente'   → pedido feito pelo cliente, aguarda confirmação do admin
+   *  - 'agendada'   → confirmada (data+hora válidas no futuro)
+   *  - 'realizada'  → sessão passada, já decorrida
+   * Sessões antigas sem este campo são tratadas como 'realizada' (passada)
+   * ou 'agendada' (futura), conforme a data.
+   */
+  estado?: 'pendente' | 'agendada' | 'realizada'
+  /** Quem pediu (cliente) — registo simples */
+  pedidoPor?: 'cliente' | 'admin'
 }
 
 export interface FichaCliente {

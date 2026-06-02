@@ -81,7 +81,9 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
     const today = new Date().toISOString().split('T')[0]
     setSchedDate(today)
     setSchedTime('15:00')
-    setSchedTitle(`Sessão de briefing #${sessoes.length + 1}`)
+    setSchedTitle(isAdmin
+      ? `Sessão de briefing #${sessoes.length + 1}`
+      : `Pedido de sessão #${sessoes.length + 1}`)
     setScheduleOpen(true)
   }
 
@@ -91,11 +93,13 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
   }
 
   /** Cria a sessão com a data + hora escolhidas e persiste imediatamente
-   *  no Supabase via PATCH. Não entra em modo edit (o detalhe fica vazio
-   *  para ser preenchido depois). */
+   *  no Supabase via PATCH.
+   *  - Admin: cria como 'agendada' (confirmada).
+   *  - Cliente: cria como 'pendente' + dispara notificação ao admin. */
   const confirmSchedule = async () => {
     if (!schedDate || !schedTitle.trim()) return
     setSchedSaving(true)
+    const estado: BriefingSessao['estado'] = isAdmin ? 'agendada' : 'pendente'
     const nova: BriefingSessao = {
       id: Date.now().toString(),
       titulo: schedTitle.trim(),
@@ -105,12 +109,59 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
       objetivos: [],
       tom: [],
       notas: '',
+      estado,
+      pedidoPor: isAdmin ? 'admin' : 'cliente',
     }
     const updated = [nova, ...sessoes]
     setSessoes(updated)
     try { await saveData(updated) } catch {}
+
+    // Cliente: dispara notificação ao admin
+    if (!isAdmin) {
+      const horaTxt = schedTime ? ` · ${schedTime.replace(':', 'h')}` : ''
+      fetch(`/api/media-portal/${initial.ref}/notify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'briefing-pedido',
+          title: 'Pedido de sessão de briefing',
+          body: `${schedTitle.trim()} — ${fmtFullDate(schedDate)}${horaTxt}`,
+          meta: {
+            sessaoId: nova.id,
+            data: schedDate,
+            hora: schedTime || null,
+            titulo: schedTitle.trim(),
+          },
+        }),
+      }).catch(() => {})
+    }
+
     setSchedSaving(false)
     setScheduleOpen(false)
+  }
+
+  /** Admin: confirma um pedido pendente do cliente. */
+  const aprovarPedido = async (id: string) => {
+    const updated = sessoes.map(s => s.id === id ? { ...s, estado: 'agendada' as const } : s)
+    setSessoes(updated)
+    try { await saveData(updated) } catch {}
+  }
+  /** Admin: recusa um pedido pendente (elimina a sessão). */
+  const recusarPedido = async (id: string) => {
+    const updated = sessoes.filter(s => s.id !== id)
+    setSessoes(updated)
+    try { await saveData(updated) } catch {}
+  }
+
+  /** Deriva estado visível: usa o campo se existir, senão deriva
+   *  de data+hora (futura=agendada, passada=realizada). */
+  const estadoSessao = (s: BriefingSessao): 'pendente' | 'agendada' | 'realizada' => {
+    if (s.estado === 'pendente') return 'pendente'
+    if (!s.data) return 'realizada'
+    const [Y, M, D] = s.data.split('-').map(Number)
+    const [hh, mm] = (s.hora ?? '23:59').split(':').map(Number)
+    const dt = new Date(Y, (M ?? 1) - 1, D ?? 1, hh ?? 23, mm ?? 59)
+    return dt.getTime() >= Date.now() ? 'agendada' : 'realizada'
   }
 
   const update = (id: string, field: keyof BriefingSessao, value: any) =>
@@ -153,11 +204,11 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
     setNotifying(null)
   }
 
-  /* ── Próxima sessão agendada ───────────────────────────── */
+  /* ── Próxima sessão agendada (ignora pendentes) ────────── */
   const proximaSessao = useMemo(() => {
     const agora = new Date()
     const futuras = sessoes
-      .filter(s => s.data)
+      .filter(s => s.data && s.estado !== 'pendente')
       .map(s => {
         const [Y, M, D] = s.data.split('-').map(Number)
         const [hh, mm] = (s.hora ?? '00:00').split(':').map(Number)
@@ -168,6 +219,12 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
       .sort((a, b) => a._dt.getTime() - b._dt.getTime())
     return futuras[0] ?? null
   }, [sessoes])
+
+  /* Contagem de pedidos pendentes (mostrar aviso ao admin) */
+  const pedidosPendentes = useMemo(
+    () => sessoes.filter(s => s.estado === 'pendente'),
+    [sessoes]
+  )
 
   /* ── Estado da fase (statusbar) ────────────────────────── */
   const estadoFase = useMemo(() => {
@@ -245,16 +302,34 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
               </svg>
               Resumo
             </button>
-            {isAdmin && (
-              <button onClick={openSchedule} className="rl-btn-add">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <path d="M12 5v14M5 12h14"/>
-                </svg>
-                Agendar Sessão
-              </button>
-            )}
+            <button onClick={openSchedule} className="rl-btn-add">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+              {isAdmin ? 'Agendar Sessão' : 'Pedir Sessão'}
+            </button>
           </div>
         </header>
+
+        {/* Aviso admin: pedidos pendentes */}
+        {isAdmin && pedidosPendentes.length > 0 && (
+          <div className="rl-alert">
+            <div className="rl-alert-ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 2" />
+              </svg>
+            </div>
+            <div className="rl-alert-txt">
+              <p className="rl-alert-k">{pedidosPendentes.length === 1 ? 'Pedido pendente' : 'Pedidos pendentes'}</p>
+              <p className="rl-alert-v">
+                {pedidosPendentes.length === 1
+                  ? 'O cliente pediu uma sessão. Confirma a disponibilidade na lista abaixo.'
+                  : `${pedidosPendentes.length} pedidos do cliente aguardam confirmação.`}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Próxima sessão agendada */}
         {proximaSessao && (
@@ -328,11 +403,12 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
               const objetivos = sessao.objetivos ?? []
               const tom = sessao.tom ?? []
               const notas = sessao.notas ?? ''
+              const estado = estadoSessao(sessao)
 
               return (
                 <div
                   key={sessao.id}
-                  className={`rl-sess${isOpen ? ' rl-sess--open' : ''}${isEditing ? ' rl-sess--edit' : ''}`}
+                  className={`rl-sess rl-sess--${estado}${isOpen ? ' rl-sess--open' : ''}${isEditing ? ' rl-sess--edit' : ''}`}
                   onClick={() => !isEditing && setOpenId(p => p === sessao.id ? null : sessao.id)}
                   role="button"
                   tabIndex={0}
@@ -357,7 +433,11 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
                       ) : (
                         <p className="rl-sess-title">{sessao.titulo}</p>
                       )}
-                      <span className="rl-sess-tag">Registado</span>
+                      <span className={`rl-sess-tag rl-sess-tag--${estado}`}>
+                        {estado === 'pendente'  ? 'Pendente'
+                          : estado === 'agendada' ? 'Agendada'
+                          : 'Registado'}
+                      </span>
                     </div>
                     {isEditing ? (
                       <textarea
@@ -430,8 +510,27 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
                           </div>
                         </div>
 
-                        {/* Linha admin: notificar + eliminar */}
-                        {isAdmin && (
+                        {/* Linha admin: aprovar/recusar pendentes OU notificar + eliminar */}
+                        {isAdmin && estado === 'pendente' && (
+                          <div className="rl-sess-admin rl-sess-admin--pending">
+                            <span className="rl-pending-note">
+                              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="9" />
+                                <path d="M12 7v5l3 2" />
+                              </svg>
+                              Pedido do cliente — aguarda a tua confirmação
+                            </span>
+                            <span className="rl-pending-actions">
+                              <button onClick={e => { e.stopPropagation(); aprovarPedido(sessao.id) }} className="rl-btn-approve">
+                                ✓ Confirmar
+                              </button>
+                              <button onClick={e => { e.stopPropagation(); recusarPedido(sessao.id) }} className="rl-btn-danger">
+                                Recusar
+                              </button>
+                            </span>
+                          </div>
+                        )}
+                        {isAdmin && estado !== 'pendente' && (
                           <div className="rl-sess-admin">
                             <button
                               onClick={e => { e.stopPropagation(); !sessao.notificacaoEnviada && notificar(sessao.id) }}
@@ -455,6 +554,19 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
                                 Eliminar Sessão
                               </button>
                             )}
+                          </div>
+                        )}
+
+                        {/* Aviso para o cliente quando o próprio pedido está pendente */}
+                        {!isAdmin && estado === 'pendente' && (
+                          <div className="rl-sess-admin">
+                            <span className="rl-pending-note rl-pending-note--client">
+                              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="9" />
+                                <path d="M12 7v5l3 2" />
+                              </svg>
+                              O teu pedido está <b>pendente de confirmação</b> pela nossa equipa.
+                            </span>
                           </div>
                         )}
                       </div>
@@ -513,9 +625,27 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
                 <path d="M6 6l12 12M18 6L6 18" />
               </svg>
             </button>
-            <p className="rl-modal-eyebrow">Nova sessão</p>
-            <h3 className="rl-modal-title">Agendar <em>sessão de briefing</em></h3>
-            <p className="rl-modal-sub">Escolhe o dia, a hora e o título da próxima sessão. Fica imediatamente registada no histórico.</p>
+            <p className="rl-modal-eyebrow">{isAdmin ? 'Nova sessão' : 'Pedido de sessão'}</p>
+            <h3 className="rl-modal-title">
+              {isAdmin
+                ? <>Agendar <em>sessão de briefing</em></>
+                : <>Pedir <em>sessão de briefing</em></>}
+            </h3>
+            <p className="rl-modal-sub">
+              {isAdmin
+                ? 'Escolhe o dia, a hora e o título da próxima sessão. Fica imediatamente registada no histórico.'
+                : 'Indica a tua preferência de dia e hora. O pedido fica pendente da disponibilidade da nossa equipa — assim que confirmarmos, recebes uma notificação.'}
+            </p>
+
+            {!isAdmin && (
+              <div className="rl-modal-warn">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 8v5" /><circle cx="12" cy="16" r="0.6" fill="currentColor" />
+                </svg>
+                <span>O pedido fica <b>pendente de confirmação</b>. A nossa equipa valida a disponibilidade e responde com a data final.</span>
+              </div>
+            )}
 
             <div className="rl-modal-grid">
               <label className="rl-field">
@@ -566,7 +696,9 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
                 onClick={confirmSchedule}
                 disabled={schedSaving || !schedDate || !schedTitle.trim()}
               >
-                {schedSaving ? 'A agendar…' : 'Agendar Sessão'}
+                {schedSaving
+                  ? (isAdmin ? 'A agendar…' : 'A enviar pedido…')
+                  : (isAdmin ? 'Agendar Sessão' : 'Enviar Pedido')}
               </button>
             </div>
           </div>
@@ -1129,6 +1261,113 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
           margin-top: 9px;
           font-size: 10px; letter-spacing: .24em; text-transform: uppercase;
           color: var(--faint); font-weight: 600;
+        }
+
+        /* ── Aviso admin: pedidos pendentes ────────────────── */
+        .rl-alert {
+          margin-top: 24px;
+          display: flex; align-items: center; gap: 14px;
+          padding: 16px 20px;
+          border-radius: var(--rl-r);
+          border: 1px solid oklch(0.80 0.13 80 / 0.4);
+          background:
+            linear-gradient(120deg, oklch(0.42 0.11 80 / 0.32), oklch(0.30 0.05 245 / 0.35));
+          position: relative; overflow: hidden;
+          opacity: 0; animation: rlFadeUp .6s .18s forwards;
+        }
+        .rl-alert::after {
+          content: ""; position: absolute; right: -30px; top: -30px;
+          width: 100px; height: 100px; border-radius: 50%;
+          background: radial-gradient(circle, var(--wait), transparent 70%);
+          opacity: .22;
+        }
+        .rl-alert-ic {
+          flex: none; width: 38px; height: 38px;
+          border-radius: 11px;
+          display: flex; align-items: center; justify-content: center;
+          color: var(--wait);
+          background: oklch(0.80 0.13 80 / 0.14);
+          border: 1px solid oklch(0.80 0.13 80 / 0.32);
+          position: relative; z-index: 1;
+        }
+        .rl-alert-ic :global(svg) { width: 18px; height: 18px; }
+        .rl-alert-txt { flex: 1; min-width: 0; position: relative; z-index: 1; }
+        .rl-alert-k {
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 9.5px; font-weight: 600;
+          letter-spacing: .2em; text-transform: uppercase;
+          color: var(--wait); margin: 0 0 3px;
+        }
+        .rl-alert-v {
+          font-size: 13.5px; color: var(--soft); margin: 0;
+          font-weight: 400;
+        }
+
+        /* ── Modal warn (cliente): aviso de pendente ───────── */
+        .rl-modal-warn {
+          display: flex; align-items: flex-start; gap: 10px;
+          padding: 12px 14px;
+          margin: 0 0 18px;
+          border-radius: 10px;
+          border: 1px solid oklch(0.80 0.13 80 / 0.35);
+          background: oklch(0.80 0.13 80 / 0.06);
+          color: var(--soft);
+          font-size: 12.5px; line-height: 1.5;
+        }
+        .rl-modal-warn :global(svg) {
+          flex: none; color: var(--wait); margin-top: 1px;
+        }
+        .rl-modal-warn b { color: var(--wait); font-weight: 700; }
+
+        /* ── Tag de estado da sessão ──────────────────────── */
+        .rl-sess-tag--pendente {
+          color: var(--wait);
+          background: color-mix(in oklch, var(--wait) 14%, transparent);
+          border-color: color-mix(in oklch, var(--wait) 32%, transparent);
+        }
+        .rl-sess-tag--agendada {
+          color: var(--accent-bright);
+          background: color-mix(in oklch, var(--accent-bright) 14%, transparent);
+          border-color: color-mix(in oklch, var(--accent-bright) 32%, transparent);
+        }
+        /* (rl-sess-tag base + cor 'done' permanecem para 'realizada') */
+
+        /* Strip lateral por estado */
+        .rl-sess--pendente::before { background: var(--wait); }
+        .rl-sess--agendada::before { background: var(--accent-bright); }
+        .rl-sess--realizada::before { background: var(--done); }
+
+        /* ── Linha admin de pendente: notinha + 2 botões ──── */
+        .rl-sess-admin--pending {
+          flex-direction: column; align-items: stretch;
+        }
+        .rl-pending-note {
+          display: inline-flex; align-items: center; gap: 8px;
+          font-size: 12.5px; color: var(--wait);
+          line-height: 1.45;
+        }
+        .rl-pending-note--client { color: var(--accent-bright); }
+        .rl-pending-note--client b { color: #fff; font-weight: 700; }
+        .rl-pending-note :global(svg) { flex: none; }
+        .rl-pending-actions {
+          display: inline-flex; gap: 10px; align-items: center;
+        }
+        .rl-btn-approve {
+          font-family: var(--font-manrope), Manrope, sans-serif;
+          font-size: 11px; font-weight: 700;
+          letter-spacing: .18em; text-transform: uppercase;
+          padding: 8px 14px;
+          border-radius: 8px;
+          border: 1px solid color-mix(in oklch, var(--done) 50%, transparent);
+          background: color-mix(in oklch, var(--done) 14%, transparent);
+          color: var(--done);
+          cursor: pointer;
+          transition: all .16s;
+        }
+        .rl-btn-approve:hover {
+          background: color-mix(in oklch, var(--done) 22%, transparent);
+          border-color: var(--done);
+          color: #fff;
         }
 
         /* Hora lateral na data da sessão (debaixo do mês) */
