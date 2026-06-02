@@ -42,6 +42,13 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [openId, setOpenId] = useState<string | null>(null)
 
+  /* Modal de agendamento de nova sessão (admin) */
+  const [scheduleOpen, setScheduleOpen] = useState(false)
+  const [schedDate, setSchedDate]       = useState('')
+  const [schedTime, setSchedTime]       = useState('')
+  const [schedTitle, setSchedTitle]     = useState('')
+  const [schedSaving, setSchedSaving]   = useState(false)
+
   /* ── Persistência ─────────────────────────────────────────── */
   const saveData = async (updated?: BriefingSessao[]) => {
     await fetch(`/api/media-portal/${initial.ref}`, {
@@ -68,19 +75,42 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
   }
 
   /* ── Sessões CRUD ────────────────────────────────────────── */
-  const addSessao = () => {
-    const n = sessoes.length + 1
+  /** Abre o modal de agendamento de uma nova sessão. Default da
+   *  data = hoje; sugere "Sessão de briefing #N" como título. */
+  const openSchedule = () => {
+    const today = new Date().toISOString().split('T')[0]
+    setSchedDate(today)
+    setSchedTime('15:00')
+    setSchedTitle(`Sessão de briefing #${sessoes.length + 1}`)
+    setScheduleOpen(true)
+  }
+
+  const closeSchedule = () => {
+    if (schedSaving) return
+    setScheduleOpen(false)
+  }
+
+  /** Cria a sessão com a data + hora escolhidas e persiste imediatamente
+   *  no Supabase via PATCH. Não entra em modo edit (o detalhe fica vazio
+   *  para ser preenchido depois). */
+  const confirmSchedule = async () => {
+    if (!schedDate || !schedTitle.trim()) return
+    setSchedSaving(true)
     const nova: BriefingSessao = {
       id: Date.now().toString(),
-      titulo: `Sessão de briefing #${n}`,
-      data: new Date().toISOString().split('T')[0],
-      resumo: 'Resumo da reunião: objetivos, referências e próximos passos discutidos com o cliente.',
-      objetivos: ['Definir objetivos da sessão', 'Recolher novas referências'],
-      tom: ['A definir'],
-      notas: 'Adiciona aqui as notas desta sessão.',
+      titulo: schedTitle.trim(),
+      data: schedDate,
+      hora: schedTime || undefined,
+      resumo: '',
+      objetivos: [],
+      tom: [],
+      notas: '',
     }
-    setSessoes(s => [nova, ...s])
-    setIsEditing(true)
+    const updated = [nova, ...sessoes]
+    setSessoes(updated)
+    try { await saveData(updated) } catch {}
+    setSchedSaving(false)
+    setScheduleOpen(false)
   }
 
   const update = (id: string, field: keyof BriefingSessao, value: any) =>
@@ -125,12 +155,16 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
 
   /* ── Próxima sessão agendada ───────────────────────────── */
   const proximaSessao = useMemo(() => {
-    const hoje = new Date()
-    hoje.setHours(0, 0, 0, 0)
+    const agora = new Date()
     const futuras = sessoes
       .filter(s => s.data)
-      .map(s => ({ ...s, _dt: new Date(s.data + 'T00:00:00') }))
-      .filter(s => s._dt.getTime() >= hoje.getTime())
+      .map(s => {
+        const [Y, M, D] = s.data.split('-').map(Number)
+        const [hh, mm] = (s.hora ?? '00:00').split(':').map(Number)
+        const _dt = new Date(Y, (M ?? 1) - 1, D ?? 1, hh ?? 0, mm ?? 0)
+        return { ...s, _dt }
+      })
+      .filter(s => s._dt.getTime() >= agora.getTime())
       .sort((a, b) => a._dt.getTime() - b._dt.getTime())
     return futuras[0] ?? null
   }, [sessoes])
@@ -212,11 +246,11 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
               Resumo
             </button>
             {isAdmin && (
-              <button onClick={addSessao} className="rl-btn-add">
+              <button onClick={openSchedule} className="rl-btn-add">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                   <path d="M12 5v14M5 12h14"/>
                 </svg>
-                Sessão
+                Agendar Sessão
               </button>
             )}
           </div>
@@ -236,6 +270,9 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
               <p className="rl-next-k">Próxima sessão agendada</p>
               <p className="rl-next-v">
                 {fmtFullDate(proximaSessao.data)}
+                {proximaSessao.hora && (
+                  <> · {proximaSessao.hora.replace(':', 'h')}</>
+                )}
                 <small>{proximaSessao.titulo}</small>
               </p>
             </div>
@@ -303,6 +340,9 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
                   <div className="rl-sess-date">
                     <div className="rl-sess-day">{day}</div>
                     <div className="rl-sess-mon">{mon}</div>
+                    {sessao.hora && (
+                      <div className="rl-sess-hora">{sessao.hora.replace(':', 'h')}</div>
+                    )}
                   </div>
                   <div className="rl-sess-body">
                     <div className="rl-sess-top">
@@ -457,6 +497,80 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
       {isAdmin && (
         <AdminBar isEditing={isEditing} saving={saving}
           onToggle={() => setIsEditing(true)} onSave={handleSave} onCancel={cancel} />
+      )}
+
+      {/* ── Modal: Agendar Nova Sessão ─────────────────────── */}
+      {scheduleOpen && (
+        <div className="rl-modal-backdrop" onClick={closeSchedule}>
+          <div className="rl-modal" onClick={e => e.stopPropagation()}>
+            <button
+              className="rl-modal-close"
+              onClick={closeSchedule}
+              aria-label="Fechar"
+              type="button"
+            >
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            </button>
+            <p className="rl-modal-eyebrow">Nova sessão</p>
+            <h3 className="rl-modal-title">Agendar <em>sessão de briefing</em></h3>
+            <p className="rl-modal-sub">Escolhe o dia, a hora e o título da próxima sessão. Fica imediatamente registada no histórico.</p>
+
+            <div className="rl-modal-grid">
+              <label className="rl-field">
+                <span>Data</span>
+                <input
+                  type="date"
+                  value={schedDate}
+                  onChange={e => setSchedDate(e.target.value)}
+                  className="rl-input"
+                  required
+                />
+              </label>
+              <label className="rl-field">
+                <span>Hora</span>
+                <input
+                  type="time"
+                  value={schedTime}
+                  onChange={e => setSchedTime(e.target.value)}
+                  className="rl-input"
+                  step={900}
+                />
+              </label>
+              <label className="rl-field rl-field--full">
+                <span>Título</span>
+                <input
+                  type="text"
+                  value={schedTitle}
+                  onChange={e => setSchedTitle(e.target.value)}
+                  className="rl-input"
+                  placeholder="Ex.: Sessão de afinação"
+                  maxLength={80}
+                />
+              </label>
+            </div>
+
+            <div className="rl-modal-actions">
+              <button
+                type="button"
+                className="rl-btn-text"
+                onClick={closeSchedule}
+                disabled={schedSaving}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="rl-btn-add"
+                onClick={confirmSchedule}
+                disabled={schedSaving || !schedDate || !schedTitle.trim()}
+              >
+                {schedSaving ? 'A agendar…' : 'Agendar Sessão'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ── Tokens + animations 1:1 ao briefing.css do handoff ── */}
@@ -1017,10 +1131,129 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
           color: var(--faint); font-weight: 600;
         }
 
+        /* Hora lateral na data da sessão (debaixo do mês) */
+        .rl-sess-hora {
+          margin-top: 6px;
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 11px; font-weight: 600;
+          letter-spacing: .12em;
+          color: var(--accent-bright);
+          background: oklch(0.66 0.13 245 / .12);
+          border: 1px solid oklch(0.66 0.13 245 / .25);
+          border-radius: 999px;
+          padding: 2px 7px;
+          display: inline-block;
+          line-height: 1.2;
+        }
+
+        /* ── Modal: Agendar Sessão ─────────────────────────── */
+        .rl-modal-backdrop {
+          position: fixed; inset: 0; z-index: 1000;
+          background: oklch(0.10 0.02 245 / 0.72);
+          backdrop-filter: blur(6px);
+          -webkit-backdrop-filter: blur(6px);
+          display: flex; align-items: center; justify-content: center;
+          padding: 20px;
+          animation: rlBackdropIn .2s ease forwards;
+        }
+        @keyframes rlBackdropIn {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        .rl-modal {
+          position: relative;
+          background:
+            linear-gradient(180deg, oklch(0.32 0.04 245 / 0.94), oklch(0.20 0.03 245 / 0.96));
+          border: 1px solid var(--line);
+          border-radius: var(--rl-r);
+          padding: 32px 32px 26px;
+          max-width: 480px; width: 100%;
+          box-shadow:
+            0 30px 80px -20px rgba(0,0,0,.6),
+            0 0 0 1px oklch(0.66 0.13 245 / 0.10) inset;
+          animation: rlModalIn .35s cubic-bezier(.2,.85,.25,1) forwards;
+          opacity: 0;
+        }
+        @keyframes rlModalIn {
+          from { opacity: 0; transform: translateY(14px) scale(0.97); }
+          to   { opacity: 1; transform: none; }
+        }
+        .rl-modal-close {
+          position: absolute; top: 14px; right: 14px;
+          width: 30px; height: 30px;
+          border-radius: 8px;
+          border: 1px solid var(--line-soft);
+          background: oklch(0.30 0.04 245 / 0.5);
+          color: var(--muted);
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer; transition: all .15s;
+        }
+        .rl-modal-close:hover {
+          color: #fff; border-color: var(--accent);
+        }
+        .rl-modal-eyebrow {
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 10px; font-weight: 600;
+          letter-spacing: .28em; text-transform: uppercase;
+          color: var(--accent-bright);
+          margin: 0 0 10px;
+        }
+        .rl-modal-title {
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 22px; font-weight: 600;
+          color: #fff;
+          margin: 0 0 8px;
+          line-height: 1.18;
+        }
+        .rl-modal-title em {
+          font-style: italic;
+          color: var(--accent-bright);
+          font-weight: 500;
+        }
+        .rl-modal-sub {
+          font-size: 13px; line-height: 1.6;
+          color: var(--muted);
+          margin: 0 0 22px;
+        }
+        .rl-modal-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 14px 16px;
+          margin-bottom: 22px;
+        }
+        .rl-field {
+          display: flex; flex-direction: column; gap: 6px;
+        }
+        .rl-field--full { grid-column: 1 / -1; }
+        .rl-field > span {
+          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+          font-size: 9.5px; font-weight: 600;
+          letter-spacing: .2em; text-transform: uppercase;
+          color: var(--faint);
+        }
+        .rl-modal :global(input.rl-input) {
+          background: oklch(0.20 0.03 245 / 0.6);
+          border-color: var(--line);
+        }
+        .rl-modal :global(input[type="date"].rl-input),
+        .rl-modal :global(input[type="time"].rl-input) {
+          color-scheme: dark;
+        }
+        .rl-modal-actions {
+          display: flex; align-items: center; justify-content: flex-end;
+          gap: 10px;
+        }
+        .rl-modal-actions :global(.rl-btn-add:disabled) {
+          opacity: .5; cursor: not-allowed;
+          box-shadow: none;
+        }
+
         @media (max-width: 560px) {
           .rl-head { align-items: flex-start; }
           .rl-btn-add { width: 100%; justify-content: center; }
           .rl-detail-grid { grid-template-columns: 1fr; }
+          .rl-modal { padding: 26px 22px 22px; }
+          .rl-modal-grid { grid-template-columns: 1fr; }
         }
         @media print {
           .rl-bg-fx,
