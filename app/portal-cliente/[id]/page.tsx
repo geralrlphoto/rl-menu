@@ -3051,10 +3051,21 @@ function PortalSubPageContent() {
                                 Fichas <span className="italic text-gold/80">individuais</span>
                               </h3>
                             </div>
-                            <span className="text-[10px] tracking-widest text-white/30 uppercase">{childPages.length} secções</span>
+                            <span className="text-[10px] tracking-widest text-white/30 uppercase">
+                              {childPages.filter(cp => {
+                                const k = (cp.child_page?.title ?? '').toUpperCase().trim()
+                                return k !== 'CERIMÓNIA' && k !== 'CERIMONIA' && k !== 'QUINTA'
+                              }).length} secções
+                            </span>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {childPages.map(cp => {
+                            {childPages
+                              .filter(cp => {
+                                const k = (cp.child_page?.title ?? '').toUpperCase().trim()
+                                // Esconder fichas de Cerimónia / Quinta — restantes (NOIVO, NOIVA, etc.) continuam.
+                                return k !== 'CERIMÓNIA' && k !== 'CERIMONIA' && k !== 'QUINTA'
+                              })
+                              .map(cp => {
                               const pageTitle = cp.child_page?.title ?? ''
                               const key = pageTitle.toUpperCase().trim()
                               const meta = CARD_META[key] ?? { icon: '◆', desc: 'Aceder a esta secção do briefing' }
