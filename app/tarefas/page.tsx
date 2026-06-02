@@ -15,6 +15,13 @@ type Tarefa = {
   updated_at: string
 }
 
+type Freelancer = {
+  id: string
+  nome: string | null
+  email: string | null
+  status: string | null
+}
+
 const STATUS_CONFIG: Record<Status, { label: string; dot: string; badge: string; border: string }> = {
   NOVA:     { label: 'NOVA TAREFA', dot: 'bg-blue-400',   badge: 'text-blue-400/80 bg-blue-500/10',   border: 'border-l-blue-500/60' },
   PENDENTE: { label: 'PENDENTE',    dot: 'bg-orange-400', badge: 'text-orange-400/80 bg-orange-500/10', border: 'border-l-orange-500/60' },
@@ -83,6 +90,13 @@ export default function TarefasPage() {
   const [replyId, setReplyId]       = useState<string | null>(null)
   const [replyText, setReplyText]   = useState('')
   const [replySending, setReplySending] = useState(false)
+
+  // Enviar tarefa a membros da equipa
+  const [freelancers, setFreelancers]   = useState<Freelancer[]>([])
+  const [assignId, setAssignId]         = useState<string | null>(null)
+  const [assignSelection, setAssignSelection] = useState<Set<string>>(new Set())
+  const [assignSending, setAssignSending]     = useState(false)
+  const [assignDone, setAssignDone]           = useState<{ tarefaId: string; nomes: string[] } | null>(null)
   async function handleSendReply(tarefaId: string) {
     if (!replyText.trim()) return
     setReplySending(true)
@@ -99,6 +113,61 @@ export default function TarefasPage() {
   }
 
   useEffect(() => { load() }, [])
+
+  /* Carrega lista de membros para o popover de Enviar tarefa */
+  useEffect(() => {
+    fetch('/api/freelancers')
+      .then(r => r.json())
+      .then(d => {
+        const list: Freelancer[] = Array.isArray(d?.freelancers) ? d.freelancers : []
+        // ordenar por nome (já vem ordenado por order_index + nome no API)
+        setFreelancers(list.filter(f => f?.nome))
+      })
+      .catch(() => setFreelancers([]))
+  }, [])
+
+  /* Abre o popover de envio para uma tarefa */
+  function openAssign(t: Tarefa) {
+    setAssignId(t.id)
+    setAssignSelection(new Set())
+  }
+
+  /* Toggle membro na seleção */
+  function toggleMember(id: string) {
+    setAssignSelection(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+
+  /* Envia o email a todos os selecionados (fan-out paralelo) */
+  async function handleSendToMembers(t: Tarefa) {
+    if (assignSelection.size === 0) return
+    setAssignSending(true)
+    const ids = Array.from(assignSelection)
+    const prazoLabel = t.data_prazo ? fmtDate(t.data_prazo) ?? '' : ''
+    const results = await Promise.all(ids.map(fid =>
+      fetch('/api/send-nova-tarefa-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          freelancer_id: fid,
+          titulo: t.titulo,
+          descricao: t.descricao ?? '',
+          prazo: prazoLabel,
+          prioridade: 'NORMAL',
+        }),
+      }).then(r => r.ok ? fid : null).catch(() => null)
+    ))
+    const okIds = results.filter(Boolean) as string[]
+    const nomes = okIds.map(id => freelancers.find(f => f.id === id)?.nome ?? id)
+    setAssignSending(false)
+    setAssignId(null)
+    setAssignSelection(new Set())
+    setAssignDone({ tarefaId: t.id, nomes })
+    setTimeout(() => setAssignDone(null), 3500)
+  }
 
   function load() {
     setLoading(true)
@@ -350,6 +419,16 @@ export default function TarefasPage() {
                         {/* Actions — aparecem no hover */}
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                           <button
+                            onClick={() => openAssign(t)}
+                            className="p-1 text-white/25 hover:text-gold transition-colors"
+                            title="Enviar a Membro"
+                          >
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="5" width="18" height="14" rx="2"/>
+                              <path d="M3 7l9 6 9-6"/>
+                            </svg>
+                          </button>
+                          <button
                             onClick={() => openEdit(t)}
                             className="p-1 text-white/25 hover:text-gold transition-colors"
                             title="Editar"
@@ -406,6 +485,103 @@ export default function TarefasPage() {
                           </button>
                         )}
                       </div>
+
+                      {/* Painel: Enviar a Membros da Equipa */}
+                      {assignId === t.id && (
+                        <div className="mt-4 p-4 border border-gold/30 rounded-lg bg-gold/[0.03]">
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="text-[10px] tracking-widest uppercase text-gold/70 font-semibold">
+                              ✉ Enviar tarefa a membros
+                            </p>
+                            <button
+                              onClick={() => { setAssignId(null); setAssignSelection(new Set()) }}
+                              className="text-[10px] tracking-widest uppercase text-white/30 hover:text-white/60 transition-colors"
+                            >
+                              ✕ Fechar
+                            </button>
+                          </div>
+
+                          {freelancers.length === 0 ? (
+                            <p className="text-[11px] text-white/40 py-3 text-center">
+                              Ainda não há membros registados.
+                            </p>
+                          ) : (
+                            <>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-56 overflow-y-auto pr-1">
+                                {freelancers.map(f => {
+                                  const checked = assignSelection.has(f.id)
+                                  const noEmail = !f.email
+                                  return (
+                                    <button
+                                      key={f.id}
+                                      type="button"
+                                      disabled={noEmail}
+                                      onClick={() => toggleMember(f.id)}
+                                      className={`flex items-center gap-2.5 px-3 py-2 border text-left transition-all
+                                        ${checked
+                                          ? 'border-gold/50 bg-gold/[0.08]'
+                                          : 'border-white/[0.07] bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]'}
+                                        ${noEmail ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                                      title={noEmail ? 'Membro sem email definido' : ''}
+                                    >
+                                      <span className={`w-3.5 h-3.5 shrink-0 border flex items-center justify-center
+                                        ${checked ? 'border-gold bg-gold' : 'border-white/30 bg-transparent'}`}>
+                                        {checked && (
+                                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                                            <polyline points="20 6 9 17 4 12"/>
+                                          </svg>
+                                        )}
+                                      </span>
+                                      <span className="flex-1 min-w-0">
+                                        <span className="block text-[12.5px] text-white/80 truncate">{f.nome}</span>
+                                        {f.email && (
+                                          <span className="block text-[10px] text-white/35 truncate">{f.email}</span>
+                                        )}
+                                        {!f.email && (
+                                          <span className="block text-[10px] text-red-400/60">sem email</span>
+                                        )}
+                                      </span>
+                                    </button>
+                                  )
+                                })}
+                              </div>
+
+                              <div className="mt-4 flex items-center justify-between gap-2">
+                                <span className="text-[10px] tracking-widest uppercase text-white/30">
+                                  {assignSelection.size} selecionado{assignSelection.size === 1 ? '' : 's'}
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => { setAssignId(null); setAssignSelection(new Set()) }}
+                                    disabled={assignSending}
+                                    className="px-3 py-1.5 text-[10px] tracking-widest uppercase text-white/40 hover:text-white/70 border border-white/10 rounded transition-colors disabled:opacity-30"
+                                  >
+                                    Cancelar
+                                  </button>
+                                  <button
+                                    onClick={() => handleSendToMembers(t)}
+                                    disabled={assignSending || assignSelection.size === 0}
+                                    className="px-4 py-1.5 text-[10px] tracking-widest font-bold uppercase text-black bg-gold hover:brightness-110 rounded transition-all disabled:opacity-40"
+                                  >
+                                    {assignSending
+                                      ? 'A enviar…'
+                                      : `Enviar ${assignSelection.size > 0 ? `(${assignSelection.size})` : ''} →`}
+                                  </button>
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Feedback de envio bem-sucedido */}
+                      {assignDone?.tarefaId === t.id && (
+                        <div className="mt-3 p-2.5 border border-emerald-500/30 bg-emerald-500/[0.06] rounded">
+                          <p className="text-[11px] text-emerald-300/80">
+                            ✓ Tarefa enviada por email a {assignDone.nomes.length > 0 ? assignDone.nomes.join(', ') : '—'}
+                          </p>
+                        </div>
+                      )}
 
                       {/* Painel de resposta inline */}
                       {t.id.startsWith('noivos_msg::') && replyId === t.id && (
