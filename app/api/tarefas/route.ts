@@ -78,24 +78,35 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const body = await req.json()
-  const { titulo, descricao, status, data_prazo, hora, evento_id } = body
+  const { titulo, descricao, status, data_prazo, hora, evento_id, assigned_to } = body
 
   if (!titulo?.trim()) {
     return NextResponse.json({ error: 'titulo obrigatório' }, { status: 400 })
   }
 
-  const { data, error } = await db()
+  const baseInsert: Record<string, any> = {
+    titulo:     titulo.trim(),
+    descricao:  descricao?.trim() || null,
+    status:     status ?? 'NOVA',
+    data_prazo: data_prazo || null,
+    hora:       hora || null,
+    evento_id:  evento_id || null,
+  }
+  if (Array.isArray(assigned_to)) baseInsert.assigned_to = assigned_to
+
+  let { data, error } = await db()
     .from('tarefas')
-    .insert({
-      titulo:     titulo.trim(),
-      descricao:  descricao?.trim() || null,
-      status:     status ?? 'NOVA',
-      data_prazo: data_prazo || null,
-      hora:       hora || null,
-      evento_id:  evento_id || null,
-    })
+    .insert(baseInsert)
     .select()
     .single()
+
+  // Coluna assigned_to ainda por criar? Retry sem ela.
+  if (error && /assigned_to/i.test(error.message ?? '')) {
+    const { assigned_to: _omit, ...rest } = baseInsert
+    const retry = await db().from('tarefas').insert(rest).select().single()
+    data  = retry.data
+    error = retry.error
+  }
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ tarefa: data })

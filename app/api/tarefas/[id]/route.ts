@@ -157,13 +157,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ ok: true })
   }
 
-  const allowed = ['titulo', 'descricao', 'status', 'data_prazo', 'hora', 'evento_id']
+  const allowed = ['titulo', 'descricao', 'status', 'data_prazo', 'hora', 'evento_id', 'assigned_to']
   const updates: Record<string, any> = { updated_at: new Date().toISOString() }
   for (const [k, v] of Object.entries(body)) {
     if (allowed.includes(k)) updates[k] = v
   }
 
-  const { error } = await db().from('tarefas').update(updates).eq('id', id)
+  let { error } = await db().from('tarefas').update(updates).eq('id', id)
+  // Se a coluna assigned_to ainda não existe (migration por correr), tentar
+  // novamente sem esse campo. Os updates ficam guardados na mesma; apenas o
+  // registo de envios não persiste até o user correr o ALTER TABLE.
+  if (error && 'assigned_to' in updates && /assigned_to/i.test(error.message ?? '')) {
+    const { assigned_to: _omitido, ...rest } = updates
+    const retry = await db().from('tarefas').update(rest).eq('id', id)
+    error = retry.error
+  }
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }

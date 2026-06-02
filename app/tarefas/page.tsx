@@ -5,6 +5,13 @@ import Link from 'next/link'
 
 type Status = 'NOVA' | 'PENDENTE' | 'CONCLUIDA'
 
+type EnvioRegisto = {
+  freelancer_id: string
+  nome: string
+  email: string | null
+  enviado_em: string
+}
+
 type Tarefa = {
   id: string
   titulo: string
@@ -13,6 +20,8 @@ type Tarefa = {
   data_prazo: string | null
   created_at: string
   updated_at: string
+  /** Registo de envios da tarefa por email (persiste em coluna JSONB) */
+  assigned_to?: EnvioRegisto[] | null
 }
 
 type Freelancer = {
@@ -143,7 +152,8 @@ export default function TarefasPage() {
     })
   }
 
-  /* Envia o email a todos os selecionados (fan-out paralelo) */
+  /* Envia o email a todos os selecionados (fan-out paralelo) e regista
+     os envios na coluna assigned_to da tarefa. */
   async function handleSendToMembers(t: Tarefa) {
     if (assignSelection.size === 0) return
     setAssignSending(true)
@@ -163,7 +173,36 @@ export default function TarefasPage() {
       }).then(r => r.ok ? fid : null).catch(() => null)
     ))
     const okIds = results.filter(Boolean) as string[]
-    const nomes = okIds.map(id => freelancers.find(f => f.id === id)?.nome ?? id)
+    const agora = new Date().toISOString()
+    const novosEnvios: EnvioRegisto[] = okIds.map(id => {
+      const f = freelancers.find(x => x.id === id)
+      return {
+        freelancer_id: id,
+        nome: f?.nome ?? id,
+        email: f?.email ?? null,
+        enviado_em: agora,
+      }
+    })
+    // Merge com envios anteriores (mesmo freelancer_id = actualiza data)
+    const existentes = Array.isArray(t.assigned_to) ? t.assigned_to : []
+    const map = new Map<string, EnvioRegisto>()
+    existentes.forEach(e => map.set(e.freelancer_id, e))
+    novosEnvios.forEach(e => map.set(e.freelancer_id, e))
+    const merged = Array.from(map.values())
+
+    // Persiste na DB + actualiza local
+    if (!t.id.startsWith('noivos_msg::')) {
+      try {
+        await fetch(`/api/tarefas/${encodeURIComponent(t.id)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ assigned_to: merged }),
+        })
+      } catch { /* ignore */ }
+    }
+    setTarefas(prev => prev.map(x => x.id === t.id ? { ...x, assigned_to: merged } : x))
+
+    const nomes = novosEnvios.map(e => e.nome)
     setAssignSending(false)
     setAssignId(null)
     setAssignSelection(new Set())
@@ -194,6 +233,7 @@ export default function TarefasPage() {
 
       // Se foram seleccionados membros, dispara o email "Nova tarefa
       // atribuída" a cada um (mesmo endpoint usado em /freelancers/[id])
+      // e regista os envios na nova tarefa.
       if (novoAssign.size > 0) {
         const prazoLabel = novoPrazo ? fmtDate(novoPrazo) ?? '' : ''
         const ids = Array.from(novoAssign)
@@ -211,7 +251,24 @@ export default function TarefasPage() {
           }).then(r => r.ok ? fid : null).catch(() => null)
         ))
         const okIds = results.filter(Boolean) as string[]
-        enviadosNomes = okIds.map(id => freelancers.find(f => f.id === id)?.nome ?? id)
+        const agora = new Date().toISOString()
+        const envios: EnvioRegisto[] = okIds.map(id => {
+          const f = freelancers.find(x => x.id === id)
+          return { freelancer_id: id, nome: f?.nome ?? id, email: f?.email ?? null, enviado_em: agora }
+        })
+        enviadosNomes = envios.map(e => e.nome)
+
+        // Persiste registo na tarefa criada (DB) + actualiza local
+        if (envios.length > 0 && d.tarefa.id) {
+          try {
+            await fetch(`/api/tarefas/${encodeURIComponent(d.tarefa.id)}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ assigned_to: envios }),
+            })
+          } catch { /* ignore */ }
+          setTarefas(prev => prev.map(x => x.id === d.tarefa.id ? { ...x, assigned_to: envios } : x))
+        }
       }
 
       const tituloEnviado = novoTitulo
@@ -567,6 +624,27 @@ export default function TarefasPage() {
 
                       {t.descricao && (
                         <p className="mt-1 text-[11px] text-white/30 leading-relaxed whitespace-pre-line">{t.descricao}</p>
+                      )}
+
+                      {/* Registo de envios — quem recebeu por email + quando */}
+                      {Array.isArray(t.assigned_to) && t.assigned_to.length > 0 && (
+                        <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+                          <span className="inline-flex items-center gap-1 text-[9px] tracking-widest text-gold/55 uppercase">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M5 12l4 4L19 7"/>
+                            </svg>
+                            Enviada a
+                          </span>
+                          {t.assigned_to.map(e => (
+                            <span
+                              key={e.freelancer_id}
+                              title={`${e.nome}${e.email ? ` · ${e.email}` : ''} · ${fmtDate(e.enviado_em.split('T')[0]) ?? ''}`}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9.5px] tracking-wider text-gold/85 bg-gold/[0.08] border border-gold/25"
+                            >
+                              {e.nome}
+                            </span>
+                          ))}
+                        </div>
                       )}
 
                       <div className="mt-2.5 flex items-center gap-3 flex-wrap">
