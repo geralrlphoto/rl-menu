@@ -4039,21 +4039,35 @@ function TarefasTab({ freelancerId, viewAsFreelancer, freelancer, notificacoes, 
     const prio = tarefaPriority(t)
     const overdue = isOverdueT(t)
     const done = status === 'Concluída'
+    const isAwaitingApproval = status === 'Aguarda Aprovação'
+    // ⚠ Tarefa enviada pelo admin que ainda precisa de resposta
+    //    obrigatória. Marca com glow vermelho pulsante.
+    const needsResponse = t.id.startsWith('tarefa-supabase:')
+      && !done && !isAwaitingApproval
     return (
-      <div className={`group flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${
-        done ? 'border-white/[0.04] bg-white/[0.01] opacity-70'
-             : overdue ? 'border-red-500/25 bg-red-500/[0.03] hover:bg-red-500/[0.06]'
-                       : 'border-white/[0.07] bg-white/[0.02] hover:border-gold/25 hover:bg-white/[0.04]'
-      }`}>
+      <div
+        className={`group flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${
+          done ? 'border-white/[0.04] bg-white/[0.01] opacity-70'
+               : needsResponse ? 'fl-needs-response border-red-400/45 bg-red-500/[0.04] hover:bg-red-500/[0.07]'
+               : isAwaitingApproval ? 'border-amber-400/35 bg-amber-500/[0.04] hover:bg-amber-500/[0.06]'
+               : overdue ? 'border-red-500/25 bg-red-500/[0.03] hover:bg-red-500/[0.06]'
+                         : 'border-white/[0.07] bg-white/[0.02] hover:border-gold/25 hover:bg-white/[0.04]'
+        }`}
+      >
         <button onClick={() => toggleTask(t.id)}
-          className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-all ${
+          title={needsResponse ? 'Clica para escrever resposta (obrigatório)' : isAwaitingApproval ? 'Aguarda aprovação do admin' : undefined}
+          className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-all relative ${
             done ? 'bg-emerald-500/25 border-emerald-500/55 text-emerald-300'
+                 : needsResponse ? 'border-red-400/70 hover:border-red-400 hover:bg-red-400/15 fl-needs-response-dot'
+                 : isAwaitingApproval ? 'border-amber-400/60 bg-amber-400/15 text-amber-300'
                  : 'border-white/25 hover:border-gold/60 hover:bg-gold/10'
           }`}>
           {done && <span className="text-[10px] leading-none">✓</span>}
+          {isAwaitingApproval && !done && <span className="text-[10px] leading-none">⏳</span>}
+          {needsResponse && <span className="text-[10px] leading-none text-red-400">!</span>}
         </button>
         <div className="flex-1 min-w-0">
-          <p className={`text-[13px] font-medium truncate ${done ? 'line-through text-white/40' : 'text-white/90'}`}>
+          <p className={`text-[13px] font-medium truncate ${done ? 'line-through text-white/40' : needsResponse ? 'text-white' : 'text-white/90'}`}>
             {t.text}
             {t.description && (
               <span title={t.description}
@@ -4071,6 +4085,32 @@ function TarefasTab({ freelancerId, viewAsFreelancer, freelancer, notificacoes, 
             <p className="text-[10px] text-white/30 truncate italic">{t.project}</p>
           )}
         </div>
+
+        {/* Badge "RESPOSTA OBRIGATÓRIA" pulsando — só admin-sent + pendente */}
+        {needsResponse && (
+          <button
+            onClick={() => toggleTask(t.id)}
+            className="fl-needs-response-badge inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] tracking-[0.18em] uppercase font-bold text-red-200 bg-red-500/15 border border-red-400/45 shrink-0 hover:bg-red-500/25 transition-colors"
+            title="Esta tarefa exige uma resposta antes de poder ser concluída"
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 9v4M12 17h.01M10.3 3.86L2 19a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3L13.7 3.86a2 2 0 0 0-3.4 0Z" />
+            </svg>
+            <span className="hidden sm:inline">Resposta Obrigatória</span>
+          </button>
+        )}
+
+        {/* Badge "AGUARDA APROVAÇÃO" — admin-sent + já respondeu */}
+        {isAwaitingApproval && (
+          <span
+            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[9.5px] tracking-widest uppercase font-bold text-amber-200 bg-amber-500/15 border border-amber-400/35 shrink-0"
+            title="A tua resposta foi enviada — aguarda aprovação do admin"
+          >
+            <span>⏳</span>
+            <span className="hidden sm:inline">Aguarda Admin</span>
+          </span>
+        )}
+
         <span className={`text-[10px] px-2 py-0.5 rounded-md border tracking-widest uppercase font-bold shrink-0 ${tarefaPrioCls(prio)}`}>
           {prio}
         </span>
@@ -4125,6 +4165,36 @@ function TarefasTab({ freelancerId, viewAsFreelancer, freelancer, notificacoes, 
 
   return (
     <div className="space-y-5">
+      {/* ── Keyframes do glow vermelho pulsante "Resposta Obrigatória" ── */}
+      <style jsx global>{`
+        @keyframes flNeedsResponseGlow {
+          0%, 100% {
+            box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.40),
+                        0 0 14px -2px rgba(248, 113, 113, 0.25);
+          }
+          50% {
+            box-shadow: 0 0 0 6px rgba(248, 113, 113, 0),
+                        0 0 22px -2px rgba(248, 113, 113, 0.45);
+          }
+        }
+        .fl-needs-response { animation: flNeedsResponseGlow 2.2s ease-in-out infinite; }
+        @keyframes flNeedsResponseDot {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.55); }
+          50%      { box-shadow: 0 0 0 5px rgba(248, 113, 113, 0); }
+        }
+        .fl-needs-response-dot { animation: flNeedsResponseDot 1.8s ease-in-out infinite; }
+        @keyframes flNeedsResponseBadge {
+          0%, 100% { opacity: .85; }
+          50%      { opacity: 1; }
+        }
+        .fl-needs-response-badge { animation: flNeedsResponseBadge 1.6s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) {
+          .fl-needs-response, .fl-needs-response-dot, .fl-needs-response-badge {
+            animation: none !important;
+          }
+        }
+      `}</style>
+
       {/* HERO da página Tarefas */}
       <div className="relative overflow-hidden rounded-3xl border border-white/[0.08]"
         style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.5)' }}>
