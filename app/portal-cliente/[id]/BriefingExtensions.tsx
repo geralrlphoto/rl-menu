@@ -127,17 +127,28 @@ function Section({
 function EditChip({ active, onClick, accent = 'gold' }: { active: boolean; onClick: () => void; accent?: 'gold' | 'emerald' }) {
   if (active) {
     return (
-      <button onClick={onClick}
-        className="px-3 py-1.5 rounded-md text-[9px] tracking-[0.25em] uppercase font-bold border border-emerald-500/40 bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 transition-all">
-        ✓ Concluir
+      <button
+        onClick={onClick}
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-[11px] tracking-[0.28em] uppercase font-bold border border-emerald-500/45 bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 hover:border-emerald-500/65 transition-all"
+        style={{ boxShadow: '0 0 18px -8px rgba(34,197,94,0.40)' }}
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+        Concluir
       </button>
     )
   }
   return (
-    <button onClick={onClick}
-      className="px-3 py-1.5 rounded-md text-[9px] tracking-[0.25em] uppercase font-bold border border-gold/30 bg-gold/[0.06] text-gold/85 hover:bg-gold/15 hover:border-gold/55 transition-all flex items-center gap-1.5">
-      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+    <button
+      onClick={onClick}
+      className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-[11px] tracking-[0.28em] uppercase font-bold border border-gold/45 bg-gold/[0.08] text-gold hover:bg-gold/[0.18] hover:border-gold/75 transition-all"
+      style={{ boxShadow: '0 0 18px -8px rgba(201,164,92,0.45)' }}
+      title="Clica para editar esta secção"
+    >
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
       </svg>
       Editar
     </button>
