@@ -1028,8 +1028,67 @@ function PortalSubPageContent() {
 
       if (refParam) {
         // Ref-based portal: load settings from Supabase
-        const d = await fetch(`/api/portais?ref=${encodeURIComponent(refParam)}`).then(r => r.json())
+        // E em PARALELO os settings do template-mestre (Notion) para usar
+        // como fallback nos campos VISUAIS (fotos, layout, etc.) — assim
+        // alterar o template propaga a todos os portais que não tenham
+        // override pessoal para esse campo. Tudo o que é específico do
+        // casal (referência, noivos, valores, datas, estados das
+        // entregas, mensagens, URLs das galerias, password, etc.)
+        // continua a ser preservado do portal individual.
+        const [d, templateD] = await Promise.all([
+          fetch(`/api/portais?ref=${encodeURIComponent(refParam)}`).then(r => r.json()),
+          fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}&bust=1`).then(r => r.json()).catch(() => null),
+        ])
         ps = d.portal?.settings ?? {}
+
+        // ── Apply template fallback APENAS para campos visuais ──
+        const tmpl: Record<string, any> = templateD?.settings ?? {}
+        const useTemplateIfEmpty = (campo: string) => {
+          const cur = ps[campo]
+          const isEmpty =
+            cur === undefined || cur === null || cur === '' ||
+            (Array.isArray(cur) && cur.length === 0)
+          if (isEmpty && tmpl[campo] !== undefined && tmpl[campo] !== null && tmpl[campo] !== '') {
+            ps[campo] = tmpl[campo]
+          }
+        }
+
+        // Foto-hero global e das sub-páginas (placeholder se template
+        // vazio também)
+        useTemplateIfEmpty('heroImageUrl')
+        useTemplateIfEmpty('subpageHeaderUrl')
+
+        // pageHeaders: merge — overrides do portal vencem sobre template
+        if (tmpl.pageHeaders && typeof tmpl.pageHeaders === 'object') {
+          ps.pageHeaders = { ...(tmpl.pageHeaders ?? {}), ...(ps.pageHeaders ?? {}) }
+        }
+
+        // pwPhotos: merge — override pessoal vence; campos vazios herdam
+        if (tmpl.pwPhotos && typeof tmpl.pwPhotos === 'object') {
+          ps.pwPhotos = { ...(tmpl.pwPhotos ?? {}), ...(ps.pwPhotos ?? {}) }
+        }
+        // pwHeroPhoto (legacy single field) — só usa template se ambos
+        // pwPhotos.hero e o legacy estão vazios
+        if (!ps.pwHeroPhoto && tmpl.pwHeroPhoto) {
+          ps.pwHeroPhoto = tmpl.pwHeroPhoto
+        }
+
+        // pwSections / pwIntro / pwCenarios: editoriais do Pré-Wedding —
+        // só herdam se o portal individual NUNCA tocou neles
+        useTemplateIfEmpty('pwSections')
+        useTemplateIfEmpty('pwIntro')
+        useTemplateIfEmpty('pwCenarios')
+
+        // parceiros: lista global — só herda se o portal não tem própria
+        useTemplateIfEmpty('parceiros')
+
+        // guiaLinks: merge — campos default do template vêm como fallback;
+        // links específicos do casal (já preenchidos no portal) ganham
+        if (tmpl.guiaLinks && typeof tmpl.guiaLinks === 'object') {
+          ps.guiaLinks = { ...(tmpl.guiaLinks ?? {}), ...(ps.guiaLinks ?? {}) }
+        }
+        // designPremiumPages: lista de páginas com design premium ON
+        useTemplateIfEmpty('designPremiumPages')
       } else {
         // Main portal: load settings from Notion
         const d = await fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}&bust=1`).then(r => r.json())
