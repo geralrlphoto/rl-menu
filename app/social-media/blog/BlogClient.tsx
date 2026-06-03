@@ -405,9 +405,7 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
                 <h3 className="ai-article-title">{article.title}</h3>
                 {article.subtitle && <p className="ai-article-subtitle">{article.subtitle}</p>}
                 <div className="ai-article-body">
-                  {article.body.split('\n\n').map((p, i) => (
-                    <p key={i} dangerouslySetInnerHTML={{ __html: inlineBold(p) }} />
-                  ))}
+                  <BodyRenderer body={article.body} />
                 </div>
                 <p className="ai-article-seo"><strong>SEO:</strong> {article.seoKeywords}</p>
                 <button type="button" className="ai-btn-ghost" onClick={() => copy(article.body)}>Copiar texto do artigo</button>
@@ -534,9 +532,7 @@ function SavedArticleCard({ article, idx, onChange }: { article: Article; idx: n
           </div>
 
           <div className="blg-body">
-            {article.body.split('\n\n').map((p, i) => (
-              <p key={i} dangerouslySetInnerHTML={{ __html: inlineBold(p) }} />
-            ))}
+            <BodyRenderer body={article.body} />
           </div>
 
           {(article.instagram_feed?.caption || article.facebook_post) && (
@@ -593,4 +589,44 @@ function inlineBold(text: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
   return escaped.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+}
+
+/* Detecta marcadores de foto: [FOTO — TIPO: descrição]
+ * Aceita também [FOTO - TIPO: descrição] (hífen normal) e [FOTO: descrição]. */
+const PHOTO_RE = /^\[FOTO(?:\s*[—\-:]\s*([^:\]]+?))?\s*:\s*([^\]]+)\]\s*$/i
+
+function parsePhotoMarker(p: string): { kind: string; desc: string } | null {
+  const m = p.trim().match(PHOTO_RE)
+  if (!m) return null
+  const kind = (m[1] ?? 'foto').trim()
+  const desc = m[2].trim()
+  return { kind, desc }
+}
+
+/** Renderer do body — converte parágrafos normais em <p> e marcadores
+ *  de foto em cartões dourados. Partilhado entre o modal e o saved card. */
+function BodyRenderer({ body }: { body: string }) {
+  const paras = body.split('\n\n')
+  return (
+    <>
+      {paras.map((p, i) => {
+        const photo = parsePhotoMarker(p)
+        if (photo) {
+          return (
+            <div key={i} className="blg-photo-card" role="note" aria-label="Sugestão de fotografia">
+              <span className="blg-photo-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                  <circle cx="12" cy="13" r="4" />
+                </svg>
+              </span>
+              <span className="blg-photo-meta">{photo.kind}</span>
+              <span className="blg-photo-desc">{photo.desc}</span>
+            </div>
+          )
+        }
+        return <p key={i} dangerouslySetInnerHTML={{ __html: inlineBold(p) }} />
+      })}
+    </>
+  )
 }

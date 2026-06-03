@@ -66,8 +66,24 @@ Qualquer coisa do universo do casamento:
 - Subtítulos em **bold** entre parágrafos, raramente
 - Lista com bullet só quando faz mesmo sentido (máximo 1 por artigo)
 
+# Direcção de fotos (obrigatório nos artigos)
+
+Cada artigo tem de incluir entre **3 a 5 marcadores de foto** intercalados entre parágrafos, sugerindo a imagem ideal para aquela passagem. Formato exacto, cada um numa linha própria entre parágrafos:
+
+\`[FOTO — TIPO: descrição visual concreta]\`
+
+Onde **TIPO** é uma de: close-up, plano-médio, plano-largo, retrato, candid, detalhe, ambiente, momento.
+
+A descrição tem de ser concreta (não "uma foto bonita"). Exemplos válidos:
+- \`[FOTO — close-up: as alianças sobre o livro de cerimónia, luz natural lateral]\`
+- \`[FOTO — candid: a mãe da noiva a tapar a cara antes da entrada]\`
+- \`[FOTO — plano-largo: o casal de costas a olhar para a quinta ao pôr do sol]\`
+- \`[FOTO — detalhe: o sapato esquecido no chão da sala de preparação]\`
+
+Posiciona-os onde a imagem reforça mesmo a ideia do parágrafo anterior, não a esmo. Distribui ao longo do artigo (não 3 seguidos no topo).
+
 # Importante
-Quando gerares conteúdo para Instagram ou Facebook, escreve em PT-PT, sem hashtags em inglês excessivas, e adapta o tom à plataforma (IG mais visual e curto, FB mais conversacional).`
+Quando gerares conteúdo para Instagram ou Facebook, escreve em PT-PT, sem hashtags em inglês excessivas, e adapta o tom à plataforma (IG mais visual e curto, FB mais conversacional). Os marcadores \`[FOTO — ...]\` são SÓ para o body do artigo, não para Instagram nem Facebook.`
 
 export const TOPICS_USER_PROMPT = `Gera 3 ideias de artigo para o blog. Para cada ideia, devolve:
 
@@ -103,7 +119,7 @@ Devolve APENAS um JSON válido neste formato:
 {
   "title": "Título final (pode ser igual ou afinado)",
   "subtitle": "Subtítulo opcional curto (ou string vazia)",
-  "body": "Corpo do artigo completo em PT-PT, com **bold** quando justifica, parágrafos separados por \\n\\n",
+  "body": "Corpo do artigo completo em PT-PT, com **bold** quando justifica, parágrafos separados por \\n\\n. INCLUI 3-5 marcadores [FOTO — TIPO: descrição] entre parágrafos, distribuídos ao longo do texto.",
   "seoKeywords": "5-7 palavras-chave SEO separadas por vírgulas",
   "instagramFeed": {
     "caption": "Caption pronto a copiar (PT-PT, 4-6 parágrafos curtos, terminado com call-to-action subtil)",
