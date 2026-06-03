@@ -116,6 +116,42 @@
 /* ── Lista de artigos ─────────────────────────────────── */
 .blg-list { display: flex; flex-direction: column; gap: 14px; }
 
+/* ── Empty state (catálogo vazio) ─────────────────────── */
+.blg-empty {
+  text-align: center;
+  padding: 80px 28px;
+  border-radius: 20px;
+  border: 1px dashed var(--gold-line);
+  background: radial-gradient(60% 80% at 50% 0%, rgba(200, 168, 102, 0.06), transparent 70%);
+}
+.blg-empty-icon {
+  width: 72px; height: 72px;
+  margin: 0 auto 24px;
+  border-radius: 18px;
+  border: 1px solid var(--gold-line);
+  background: rgba(200, 168, 102, 0.06);
+  color: var(--gold-soft);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 12px 28px -16px rgba(0, 0, 0, 0.8);
+}
+.blg-empty-icon svg { width: 30px; height: 30px; }
+.blg-empty-tag {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.4em; text-transform: uppercase;
+  color: var(--gold); margin: 0 0 16px;
+}
+.blg-empty-text {
+  max-width: 480px;
+  margin: 0 auto;
+  font-size: 13.5px; line-height: 1.7;
+  color: var(--ink-3);
+}
+.blg-empty-text em {
+  font-style: italic;
+  color: var(--gold-soft);
+  margin: 0 4px;
+}
+
 /* ── Card ─────────────────────────────────────────────── */
 .blg-card {
   border-radius: 14px;

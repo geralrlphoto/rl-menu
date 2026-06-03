@@ -29,28 +29,33 @@ export default function BlogIdeasPage() {
           parágrafos curtos, foco em casamentos · fotografia · vídeo. Click no cartão
           para expandir, depois copia título, texto ou tudo.
         </p>
-        <div className="blg-stats">
-          <div className="blg-stat">
-            <span className="blg-stat-n">{ARTICLES.length}</span>
-            <span className="blg-stat-l">Artigos prontos</span>
-          </div>
-          <div className="blg-stat">
-            <span className="blg-stat-n">{ARTICLES.reduce((s, a) => s + a.readingMin, 0)}</span>
-            <span className="blg-stat-l">Min de leitura</span>
-          </div>
-          <div className="blg-stat">
-            <span className="blg-stat-n">5</span>
-            <span className="blg-stat-l">Categorias</span>
-          </div>
-        </div>
       </header>
 
-      {/* Lista de artigos */}
-      <section className="blg-list">
-        {ARTICLES.map((article, i) => (
-          <ArticleCard key={article.id} article={article} idx={i + 1} />
-        ))}
-      </section>
+      {/* Lista de artigos OU empty state */}
+      {ARTICLES.length > 0 ? (
+        <section className="blg-list">
+          {ARTICLES.map((article, i) => (
+            <ArticleCard key={article.id} article={article} idx={i + 1} />
+          ))}
+        </section>
+      ) : (
+        <section className="blg-empty">
+          <div className="blg-empty-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+              <line x1="9" y1="9" x2="16" y2="9" />
+              <line x1="9" y1="13" x2="16" y2="13" />
+            </svg>
+          </div>
+          <p className="blg-empty-tag">Sem artigos ainda</p>
+          <p className="blg-empty-text">
+            Pede no chat &mdash; <em>"gera 5 artigos sobre fotografia"</em>,
+            <em>"1 artigo sobre pormenores do dia"</em>, <em>"3 artigos curtos sobre vídeo"</em>
+            &mdash; e eu acrescento-os aqui. Cada artigo fica pronto a copiar.
+          </p>
+        </section>
+      )}
 
       {/* Footer — pedido de mais conteúdo */}
       <footer className="blg-foot-cta">
