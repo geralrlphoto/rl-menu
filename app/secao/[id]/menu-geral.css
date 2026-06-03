@@ -1,0 +1,329 @@
+/* ============================================================
+   /secao/[id] — Re-skin "Atmosphère + Atelier"
+   Design tokens directamente da referência:
+     bg #120d08; surfaces #1e1812/#181410
+     --gold #c8a866 / soft #d7bd87 / deep #9c7c47
+     --gold-faint rgba(200,168,102,.16)
+     --gold-line  rgba(200,168,102,.22)
+     --ink #efe7d6 / 2 #c3b8a3 / 3 #8c8170 / 4 #5f574b
+     --line rgba(239,231,214,.10) / 2 rgba(239,231,214,.06)
+     raios 6/12/20px
+   Tipografia (Google Fonts já carregadas no layout):
+     Cormorant Garamond (títulos+numerais)
+     Hanken Grotesk (UI/labels)
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap');
+
+.rl-mg {
+  --bg: #120d08;
+  --surface: #1e1812;
+  --surface-2: #181410;
+  --gold: #c8a866;
+  --gold-soft: #d7bd87;
+  --gold-deep: #9c7c47;
+  --gold-faint: rgba(200, 168, 102, 0.16);
+  --gold-line:  rgba(200, 168, 102, 0.22);
+  --ink: #efe7d6;
+  --ink-2: #c3b8a3;
+  --ink-3: #8c8170;
+  --ink-4: #5f574b;
+  --line: rgba(239, 231, 214, 0.10);
+  --line-2: rgba(239, 231, 214, 0.06);
+  --r-sm: 6px;
+  --r: 12px;
+  --r-lg: 20px;
+
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+  font-weight: 400;
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  padding: 28px clamp(20px, 4vw, 48px) 80px;
+  max-width: 1080px;
+  margin: 0 auto;
+  position: relative;
+}
+.rl-mg * { box-sizing: border-box; }
+.rl-mg ::selection { background: rgba(200, 168, 102, 0.28); color: #fff; }
+
+/* ── Back link ─────────────────────────────────────────── */
+.rl-mg-back-row { margin-bottom: 28px; }
+.rl-mg-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--gold-faint);
+  background: rgba(200, 168, 102, 0.04);
+  transition: 0.25s;
+}
+.rl-mg-back:hover {
+  color: var(--ink);
+  border-color: var(--gold-line);
+  background: rgba(200, 168, 102, 0.08);
+}
+.rl-mg-back .chev {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px;
+  color: var(--gold);
+  line-height: 1;
+}
+
+/* ── Cabeçalho de marca ────────────────────────────────── */
+.rl-mg-head {
+  text-align: center;
+  margin-bottom: 56px;
+  position: relative;
+}
+.rl-mg-mono {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 22px;
+  border-radius: 16px;
+  border: 1px solid var(--gold-line);
+  background:
+    radial-gradient(80% 100% at 50% 0%, rgba(200, 168, 102, 0.18), transparent 70%),
+    linear-gradient(160deg, var(--surface), var(--surface-2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 12px 28px -16px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.rl-mg-mono span {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 400;
+  font-style: italic;
+  font-size: 28px;
+  letter-spacing: 0.02em;
+  color: var(--gold-soft);
+}
+.rl-mg-eyebrow {
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.36em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin: 0 0 14px;
+}
+.rl-mg-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: clamp(40px, 7vw, 64px);
+  line-height: 1.0;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin: 0 0 18px;
+}
+.rl-mg-title em {
+  font-style: italic;
+  color: var(--gold-soft);
+  font-weight: 400;
+}
+.rl-mg-rule {
+  margin: 22px auto 0;
+  width: 96px;
+  height: 1px;
+  border: 0;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+/* ── Grupos ────────────────────────────────────────────── */
+.rl-mg-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 44px;
+}
+.rl-mg-group { display: flex; flex-direction: column; gap: 16px; }
+.rl-mg-group-label {
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin: 0;
+  padding-left: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+.rl-mg-group-label::after {
+  content: '';
+  display: inline-block;
+  width: 56px;
+  height: 1px;
+  background: var(--gold-line);
+}
+
+/* ── Grelha de cartões ─────────────────────────────────── */
+.rl-mg-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+@media (max-width: 760px) {
+  .rl-mg-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Cartão (.tile) ────────────────────────────────────── */
+.rl-mg :global(.tile),
+.rl-mg .tile {
+  position: relative;
+  overflow: hidden;
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  padding: 20px 24px;
+  border-radius: var(--r);
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, var(--surface), var(--surface-2));
+  transition: transform 0.35s cubic-bezier(0.2, 0.85, 0.25, 1),
+              border-color 0.3s, background 0.3s, box-shadow 0.4s;
+  isolation: isolate;
+}
+.rl-mg .tile::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--gold);
+  transform: scaleY(0);
+  transform-origin: center;
+  transition: transform 0.35s cubic-bezier(0.2, 0.85, 0.25, 1);
+}
+.rl-mg .tile:hover {
+  transform: translateY(-3px);
+  border-color: var(--gold-line);
+  background: linear-gradient(180deg, rgba(30, 24, 18, 1), rgba(36, 29, 21, 1));
+  box-shadow: 0 22px 44px -28px rgba(200, 168, 102, 0.45), 0 4px 8px rgba(0, 0, 0, 0.35);
+}
+.rl-mg .tile:hover::before { transform: scaleY(1); }
+
+/* Sweep dourado ao passar */
+.tile-sweep {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    rgba(200, 168, 102, 0.10) 30%,
+    rgba(255, 246, 224, 0.18) 50%,
+    rgba(200, 168, 102, 0.10) 70%,
+    transparent 100%
+  );
+  transform: translateX(-130%);
+  transition: transform 0.7s cubic-bezier(0.3, 0.6, 0.3, 1);
+  opacity: 0.0;
+}
+.rl-mg .tile:hover .tile-sweep {
+  transform: translateX(130%);
+  opacity: 1;
+}
+
+.tile-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.tile-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 400;
+  font-style: italic;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--gold-deep);
+  flex: none;
+  min-width: 28px;
+  transition: color 0.3s;
+}
+.rl-mg .tile:hover .tile-num { color: var(--gold-soft); }
+
+.tile-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--gold-faint);
+  background: rgba(200, 168, 102, 0.06);
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  transition: color 0.3s, border-color 0.3s, background 0.3s;
+}
+.tile-icon svg { width: 18px; height: 18px; }
+.rl-mg .tile:hover .tile-icon {
+  border-color: var(--gold);
+  color: var(--gold-soft);
+  background: rgba(200, 168, 102, 0.12);
+}
+
+.tile-body { flex: 1; min-width: 0; }
+.tile-name {
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin: 0 0 4px;
+}
+.tile-desc {
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-3);
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+.tile-arrow {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--ink-4);
+  flex: none;
+  margin-left: 6px;
+  transition: color 0.3s, transform 0.3s cubic-bezier(0.2, 0.85, 0.25, 1);
+}
+.rl-mg .tile:hover .tile-arrow.is-internal {
+  color: var(--gold);
+  transform: translateX(4px);
+}
+.rl-mg .tile:hover .tile-arrow.is-external {
+  color: var(--gold);
+  transform: translate(3px, -3px);
+}
+
+/* ── Empty ───────────────────────────────────────────── */
+.rl-mg-empty {
+  text-align: center;
+  padding: 80px 24px;
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  border: 1px dashed var(--line);
+  border-radius: var(--r-lg);
+}
