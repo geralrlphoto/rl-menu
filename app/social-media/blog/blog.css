@@ -1,0 +1,305 @@
+/* ============================================================
+   /social-media/blog — estilo Atmosphère, tokens do Menu Geral
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap');
+
+.blg-page {
+  --bg: #120d08;
+  --surface: #1e1812;
+  --surface-2: #181410;
+  --gold: #c8a866;
+  --gold-soft: #d7bd87;
+  --gold-deep: #9c7c47;
+  --gold-faint: rgba(200, 168, 102, 0.16);
+  --gold-line: rgba(200, 168, 102, 0.22);
+  --ink: #efe7d6;
+  --ink-2: #c3b8a3;
+  --ink-3: #8c8170;
+  --ink-4: #5f574b;
+  --line: rgba(239, 231, 214, 0.10);
+  --line-2: rgba(239, 231, 214, 0.06);
+
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+  padding: 28px clamp(20px, 4vw, 48px) 96px;
+  max-width: 980px;
+  margin: 0 auto;
+}
+.blg-page * { box-sizing: border-box; }
+
+/* ── Back ─────────────────────────────────────────────── */
+.blg-back-row { margin-bottom: 32px; }
+.blg-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.32em; text-transform: uppercase;
+  color: var(--ink-4);
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--gold-faint);
+  background: rgba(200, 168, 102, 0.04);
+  transition: 0.25s;
+}
+.blg-back:hover {
+  color: var(--ink);
+  border-color: var(--gold-line);
+  background: rgba(200, 168, 102, 0.08);
+}
+.blg-back .chev {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px; color: var(--gold); line-height: 1;
+}
+
+/* ── Hero ─────────────────────────────────────────────── */
+.blg-hero { text-align: center; margin-bottom: 56px; }
+.blg-eyebrow {
+  font-size: 10.5px; font-weight: 600;
+  letter-spacing: 0.36em; text-transform: uppercase;
+  color: var(--gold); margin: 0 0 14px;
+}
+.blg-h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 400;
+  font-size: clamp(36px, 6vw, 56px);
+  line-height: 1.0;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin: 0 0 18px;
+}
+.blg-h1 em {
+  font-style: italic;
+  color: var(--gold-soft);
+  font-weight: 400;
+}
+.blg-rule {
+  margin: 22px auto;
+  width: 96px; height: 1px; border: 0;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+.blg-lede {
+  max-width: 560px;
+  margin: 0 auto 36px;
+  font-size: 14.5px; line-height: 1.7;
+  color: var(--ink-3);
+}
+.blg-lede em {
+  font-style: italic; color: var(--gold-soft);
+}
+.blg-stats {
+  display: inline-flex; gap: 48px;
+  padding: 16px 32px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: rgba(200, 168, 102, 0.03);
+}
+.blg-stat { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.blg-stat-n {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 400; font-style: italic;
+  font-size: 28px; color: var(--gold-soft); line-height: 1;
+}
+.blg-stat-l {
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.24em; text-transform: uppercase;
+  color: var(--ink-4);
+}
+@media (max-width: 560px) {
+  .blg-stats { gap: 28px; padding: 14px 22px; }
+  .blg-stat-n { font-size: 24px; }
+}
+
+/* ── Lista de artigos ─────────────────────────────────── */
+.blg-list { display: flex; flex-direction: column; gap: 14px; }
+
+/* ── Card ─────────────────────────────────────────────── */
+.blg-card {
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, var(--surface), var(--surface-2));
+  overflow: hidden;
+  transition: border-color 0.3s, background 0.3s;
+}
+.blg-card:hover { border-color: var(--gold-line); }
+
+/* Header clicável */
+.blg-head {
+  width: 100%; text-align: left;
+  display: flex; align-items: flex-start; gap: 20px;
+  padding: 22px 24px;
+  background: transparent; border: 0; color: inherit;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.25s;
+}
+.blg-head:hover { background: rgba(200, 168, 102, 0.04); }
+.blg-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 400; font-style: italic;
+  font-size: 26px;
+  color: var(--gold-deep);
+  flex: none; min-width: 32px; line-height: 1.1;
+}
+.blg-head-body { flex: 1; min-width: 0; }
+.blg-meta {
+  display: flex; align-items: center; gap: 6px;
+  margin: 0 0 8px;
+  font-size: 9.5px; font-weight: 600;
+  letter-spacing: 0.28em; text-transform: uppercase;
+}
+.blg-cat { color: var(--gold); }
+.blg-dot { color: var(--ink-4); }
+.blg-read { color: var(--ink-4); letter-spacing: 0.12em; }
+.blg-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 400;
+  font-size: clamp(18px, 2.6vw, 24px);
+  line-height: 1.25;
+  color: var(--ink);
+  margin: 0;
+}
+.blg-subtitle {
+  margin: 6px 0 0;
+  font-style: italic;
+  font-size: 13.5px;
+  color: var(--ink-3);
+}
+.blg-chev {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  line-height: 1;
+  color: var(--gold-deep);
+  flex: none;
+  transform: rotate(0deg);
+  transition: transform 0.3s, color 0.3s;
+  margin-top: 4px;
+}
+.blg-chev.is-open {
+  transform: rotate(90deg);
+  color: var(--gold-soft);
+}
+
+/* Painel expansível (grid trick) */
+.blg-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s ease;
+}
+.blg-panel.is-open { grid-template-rows: 1fr; }
+.blg-panel-in {
+  overflow: hidden; min-height: 0;
+}
+
+/* Acções */
+.blg-actions {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  padding: 0 24px 18px;
+  border-top: 1px solid var(--line-2);
+  padding-top: 18px;
+}
+.blg-btn {
+  display: inline-flex; align-items: center;
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  padding: 9px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--gold-faint);
+  background: rgba(200, 168, 102, 0.04);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: 0.2s;
+}
+.blg-btn:hover {
+  border-color: var(--gold-line);
+  background: rgba(200, 168, 102, 0.10);
+  color: var(--ink);
+}
+.blg-btn--primary {
+  background: linear-gradient(168deg, #efd6a2, #d4b46f 60%, #c19a52);
+  color: #1c150b;
+  border-color: transparent;
+  font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255, 250, 236, 0.5),
+              0 8px 20px -10px rgba(200, 168, 102, 0.55);
+}
+.blg-btn--primary:hover {
+  background: linear-gradient(168deg, #f3dcaa, #ddbe79 60%, #c8a35a);
+  color: #1c150b;
+}
+
+/* Corpo do artigo */
+.blg-body {
+  padding: 0 24px 22px;
+  max-width: 720px;
+}
+.blg-body p {
+  margin: 0 0 14px;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--ink-2);
+}
+.blg-body p:last-child { margin-bottom: 0; }
+.blg-body strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* Footer SEO */
+.blg-foot {
+  border-top: 1px solid var(--line-2);
+  padding: 14px 24px 18px;
+}
+.blg-keywords {
+  margin: 0;
+  font-size: 11px;
+  color: var(--ink-4);
+  font-style: italic;
+}
+.blg-keywords span {
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-right: 6px;
+}
+
+/* ── Footer CTA ───────────────────────────────────────── */
+.blg-foot-cta {
+  margin-top: 56px;
+  padding: 36px 28px;
+  text-align: center;
+  border-radius: 16px;
+  border: 1px dashed var(--gold-line);
+  background: radial-gradient(60% 80% at 50% 0%, rgba(200, 168, 102, 0.06), transparent 70%);
+}
+.blg-foot-eyebrow {
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.36em; text-transform: uppercase;
+  color: var(--gold); margin: 0 0 10px;
+}
+.blg-foot-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 400;
+  font-size: clamp(22px, 3vw, 30px);
+  color: var(--ink);
+  margin: 0 0 14px;
+}
+.blg-foot-desc {
+  margin: 0 auto;
+  max-width: 520px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--ink-3);
+}
+.blg-foot-desc em {
+  font-style: italic;
+  color: var(--gold-soft);
+  margin: 0 4px;
+}
