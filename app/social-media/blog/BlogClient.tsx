@@ -1,15 +1,22 @@
 'use client'
 
 /* ============================================================
-   BlogClient — UI principal do blog AI
-   - Botão flutuante "agente" (boneco)
-   - Modal com prompt editável + Gerar 3 temas + escolher + gerar artigo
-   - Lista de artigos guardados (drafts + usados)
-   - Marcar como utilizado / eliminar
+   BlogClient — UI principal do blog (modo grátis · copy-paste)
+
+   FLUXO sem custos de API:
+   1. Click no boneco → modal
+   2. Modal mostra um PROMPT pronto a copiar para pedir 3 temas
+      ao Claude no chat
+   3. User cola a resposta JSON num textarea
+   4. Parseia e mostra os 3 temas
+   5. Click num tema → mostra PROMPT pronto a copiar para pedir
+      o artigo completo
+   6. User cola a resposta JSON
+   7. Parseia → guarda como rascunho na DB
    ============================================================ */
 
 import { useEffect, useState } from 'react'
-import { DEFAULT_SYSTEM_PROMPT } from './_data/system-prompt'
+import { DEFAULT_SYSTEM_PROMPT, TOPICS_USER_PROMPT, ARTICLE_USER_PROMPT_TEMPLATE } from './_data/system-prompt'
 
 type Topic = {
   title: string
@@ -36,7 +43,7 @@ type Article = {
 
 type GenArticle = {
   title: string
-  subtitle: string
+  subtitle?: string
   body: string
   seoKeywords: string
   instagramFeed: { caption: string; hashtags: string }
@@ -69,7 +76,7 @@ export default function BlogClient() {
         type="button"
         className="ai-fab"
         onClick={() => setShowAgent(true)}
-        title="Agente IA · Gerar conteúdo para o blog"
+        title="Pedir conteúdo ao Claude (grátis)"
         aria-label="Abrir agente IA"
       >
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
@@ -83,12 +90,7 @@ export default function BlogClient() {
       {articles.length > 0 ? (
         <section className="blg-list">
           {articles.map((a, i) => (
-            <SavedArticleCard
-              key={a.id}
-              article={a}
-              idx={i + 1}
-              onChange={loadArticles}
-            />
+            <SavedArticleCard key={a.id} article={a} idx={i + 1} onChange={loadArticles} />
           ))}
         </section>
       ) : (
@@ -103,9 +105,10 @@ export default function BlogClient() {
           </div>
           <p className="blg-empty-tag">Sem artigos ainda</p>
           <p className="blg-empty-text">
-            Clica no <strong>boneco dourado</strong> no canto inferior direito
-            para chamar o agente IA. Ele dá-te 3 temas, escolhes um, e gera
-            artigo + posts para Instagram e Facebook. Tu copias e usas.
+            Clica no <strong>boneco dourado</strong> no canto inferior direito.
+            O sistema gera-te um prompt para pedires ao Claude no chat
+            &mdash; copias, colas, ele responde, tu colas a resposta de volta
+            e guarda-se aqui. Tudo de graça.
           </p>
           {setupHint && (
             <p className="blg-empty-setup">
@@ -115,37 +118,38 @@ export default function BlogClient() {
         </section>
       )}
 
-      {/* Modal do agente */}
+      {/* Modal */}
       {showAgent && (
-        <AgentModal
-          onClose={() => setShowAgent(false)}
-          onSaved={() => { loadArticles() }}
-        />
+        <AgentModal onClose={() => setShowAgent(false)} onSaved={loadArticles} />
       )}
     </>
   )
 }
 
 /* ============================================================
-   Modal — Agente IA
+   Modal — modo copy-paste com o Claude no chat
    ============================================================ */
 function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
   const [systemPrompt, setSystemPrompt] = useState<string>(DEFAULT_SYSTEM_PROMPT)
   const [showPrompt, setShowPrompt] = useState(false)
+  const [showHowItWorks, setShowHowItWorks] = useState(false)
+
+  type Step = 'idle' | 'topics-ask' | 'topics-paste' | 'topics-list' | 'article-ask' | 'article-paste' | 'article-view'
+  const [step, setStep] = useState<Step>('idle')
 
   const [topics, setTopics] = useState<Topic[]>([])
-  const [loadingTopics, setLoadingTopics] = useState(false)
-  const [chosen, setChosen] = useState<Topic | null>(null)
+  const [topicsPaste, setTopicsPaste] = useState('')
+  const [topicsErr, setTopicsErr] = useState<string | null>(null)
 
+  const [chosen, setChosen] = useState<Topic | null>(null)
   const [article, setArticle] = useState<GenArticle | null>(null)
-  const [loadingArticle, setLoadingArticle] = useState(false)
+  const [articlePaste, setArticlePaste] = useState('')
+  const [articleErr, setArticleErr] = useState<string | null>(null)
 
   const [savedId, setSavedId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [view, setView] = useState<'article' | 'instagram' | 'facebook'>('article')
 
-  // Carrega prompt do localStorage se houver
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_PROMPT_KEY)
@@ -161,51 +165,38 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
     try { localStorage.removeItem(STORAGE_PROMPT_KEY) } catch {}
   }
 
-  async function generateTopics() {
-    setLoadingTopics(true)
-    setError(null)
-    setTopics([])
-    setArticle(null)
-    setChosen(null)
-    try {
-      const r = await fetch('/api/blog-ai/topics', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ systemPrompt }),
-      })
-      const d = await r.json()
-      if (!d.ok) {
-        setError(d.setup ?? d.error ?? 'Erro a gerar temas')
-      } else {
-        setTopics(d.topics ?? [])
-      }
-    } catch (e: any) {
-      setError(e?.message ?? 'Erro de rede')
-    }
-    setLoadingTopics(false)
+  function copy(text: string) {
+    navigator.clipboard?.writeText(text).catch(() => {})
   }
 
-  async function generateArticle(topic: Topic) {
-    setChosen(topic)
-    setLoadingArticle(true)
-    setError(null)
-    setArticle(null)
-    try {
-      const r = await fetch('/api/blog-ai/article', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ systemPrompt, topic }),
-      })
-      const d = await r.json()
-      if (!d.ok) {
-        setError(d.setup ?? d.error ?? 'Erro a gerar artigo')
-      } else {
-        setArticle(d.article)
-      }
-    } catch (e: any) {
-      setError(e?.message ?? 'Erro de rede')
+  // Prompts prontos a copiar
+  const topicsFullPrompt = `${systemPrompt}\n\n---\n\n${TOPICS_USER_PROMPT}`
+  const articleFullPrompt = chosen ? `${systemPrompt}\n\n---\n\n${ARTICLE_USER_PROMPT_TEMPLATE
+    .replace('{{TITLE}}', chosen.title)
+    .replace('{{ANGLE}}', chosen.angle)
+    .replace('{{CATEGORY}}', chosen.category)
+    .replace('{{READING_MIN}}', String(chosen.readingMin))
+    .replace('{{TARGET_WORDS}}', String(chosen.readingMin * 200))}` : ''
+
+  function parseTopics() {
+    setTopicsErr(null)
+    const parsed = extractJson(topicsPaste)
+    if (!parsed?.topics || !Array.isArray(parsed.topics)) {
+      setTopicsErr('Não consegui ler o JSON. Verifica que colaste a resposta completa do Claude.')
+      return
     }
-    setLoadingArticle(false)
+    setTopics(parsed.topics)
+    setStep('topics-list')
+  }
+  function parseArticle() {
+    setArticleErr(null)
+    const parsed = extractJson(articlePaste)
+    if (!parsed?.title || !parsed?.body) {
+      setArticleErr('Não consegui ler o JSON. Verifica que colaste a resposta completa do Claude.')
+      return
+    }
+    setArticle(parsed)
+    setStep('article-view')
   }
 
   async function saveArticle() {
@@ -216,18 +207,11 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          article: {
-            ...article,
-            category: chosen?.category,
-            readingMin: chosen?.readingMin,
-          },
+          article: { ...article, category: chosen?.category, readingMin: chosen?.readingMin },
         }),
       })
       const d = await r.json()
-      if (d.ok) {
-        setSavedId(d.article?.id ?? 'ok')
-        onSaved()
-      }
+      if (d.ok) { setSavedId(d.article?.id ?? 'ok'); onSaved() }
     } catch {/* */}
     setSaving(false)
   }
@@ -246,7 +230,12 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
     navigator.clipboard?.writeText(parts).catch(() => {})
   }
 
-  function copyText(t: string) { navigator.clipboard?.writeText(t).catch(() => {}) }
+  function startOver() {
+    setStep('idle')
+    setTopics([]); setTopicsPaste(''); setTopicsErr(null)
+    setChosen(null); setArticle(null); setArticlePaste(''); setArticleErr(null)
+    setSavedId(null); setView('article')
+  }
 
   return (
     <div className="ai-backdrop" onClick={onClose}>
@@ -254,8 +243,8 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
         {/* Header */}
         <div className="ai-header">
           <div>
-            <p className="ai-eyebrow">Agente IA · Conteúdo Blog</p>
-            <h2 className="ai-title">Gerar conteúdo</h2>
+            <p className="ai-eyebrow">Agente · Conteúdo Blog (grátis)</p>
+            <h2 className="ai-title">Pedir ao Claude</h2>
           </div>
           <button type="button" className="ai-close" onClick={onClose} aria-label="Fechar">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -264,60 +253,89 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
           </button>
         </div>
 
-        {/* Prompt expansível */}
+        {/* Como funciona (sempre visível no topo) */}
         <div className="ai-section">
-          <button
-            type="button"
-            onClick={() => setShowPrompt(p => !p)}
-            className="ai-row-btn"
-          >
-            <span className="ai-row-label">Prompt do agente (system)</span>
+          <button type="button" onClick={() => setShowHowItWorks(s => !s)} className="ai-row-btn">
+            <span className="ai-row-label">💡 Como funciona (modo grátis)</span>
+            <span className="ai-row-meta">{showHowItWorks ? '▾ Esconder' : '▸ Ver'}</span>
+          </button>
+          {showHowItWorks && (
+            <div className="ai-howto">
+              <p><strong>1.</strong> Click em <em>"Gerar prompt para 3 ideias"</em> &mdash; aparece um texto pronto a copiar.</p>
+              <p><strong>2.</strong> Cola esse texto na nossa conversa de chat com o Claude.</p>
+              <p><strong>3.</strong> O Claude responde com 3 ideias em JSON.</p>
+              <p><strong>4.</strong> Copia a resposta dele e cola no campo abaixo. Click "Processar".</p>
+              <p><strong>5.</strong> Aparecem 3 cartões. Escolhes um.</p>
+              <p><strong>6.</strong> Repetes o mesmo para o artigo completo. Click "Guardar" → entra na lista.</p>
+              <p className="ai-howto-note">💰 Zero custos. O Claude do chat é o mesmo que escreve.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Prompt do sistema editável */}
+        <div className="ai-section">
+          <button type="button" onClick={() => setShowPrompt(p => !p)} className="ai-row-btn">
+            <span className="ai-row-label">Prompt do sistema (regras do agente)</span>
             <span className="ai-row-meta">{showPrompt ? '▾ Esconder' : '▸ Ver / Editar'}</span>
           </button>
           {showPrompt && (
             <div className="ai-prompt-edit">
-              <textarea
-                value={systemPrompt}
-                onChange={e => setSystemPrompt(e.target.value)}
-                rows={14}
-                className="ai-textarea"
-              />
+              <textarea value={systemPrompt} onChange={e => setSystemPrompt(e.target.value)} rows={14} className="ai-textarea" />
               <div className="ai-prompt-actions">
                 <button type="button" className="ai-btn-ghost" onClick={resetPrompt}>↻ Reset</button>
-                <button type="button" className="ai-btn-ghost" onClick={savePromptLocally}>✓ Guardar este prompt</button>
+                <button type="button" className="ai-btn-ghost" onClick={savePromptLocally}>✓ Guardar localmente</button>
               </div>
             </div>
           )}
         </div>
 
-        {/* Acção principal — Gerar 3 temas */}
-        <div className="ai-section">
-          <button
-            type="button"
-            onClick={generateTopics}
-            disabled={loadingTopics}
-            className="ai-btn-primary"
-          >
-            {loadingTopics ? '⌛ A gerar 3 ideias…' : '✨ Gerar 3 ideias de artigo'}
-          </button>
-        </div>
-
-        {/* Erro */}
-        {error && <div className="ai-error">⚠ {error}</div>}
-
-        {/* 3 ideias */}
-        {topics.length > 0 && !article && (
+        {/* PASSO INICIAL */}
+        {step === 'idle' && (
           <div className="ai-section">
-            <p className="ai-section-label">Escolhe 1 das 3</p>
+            <button type="button" onClick={() => setStep('topics-ask')} className="ai-btn-primary">
+              ✨ Gerar prompt para 3 ideias
+            </button>
+          </div>
+        )}
+
+        {/* PASSO 1 · prompt dos 3 temas pronto a copiar */}
+        {step === 'topics-ask' && (
+          <div className="ai-section">
+            <p className="ai-section-label">Passo 1 · Copia este prompt e cola no chat</p>
+            <textarea readOnly className="ai-textarea ai-prompt-show" value={topicsFullPrompt} rows={8} onFocus={e => e.currentTarget.select()} />
+            <div className="ai-step-actions">
+              <button type="button" className="ai-btn-ghost" onClick={() => copy(topicsFullPrompt)}>📋 Copiar prompt</button>
+              <button type="button" className="ai-btn-primary" onClick={() => setStep('topics-paste')}>Já pedi → Próximo</button>
+            </div>
+          </div>
+        )}
+
+        {/* PASSO 2 · colar a resposta JSON */}
+        {step === 'topics-paste' && (
+          <div className="ai-section">
+            <p className="ai-section-label">Passo 2 · Cola aqui a resposta JSON do Claude</p>
+            <textarea
+              className="ai-textarea"
+              rows={8}
+              value={topicsPaste}
+              onChange={e => setTopicsPaste(e.target.value)}
+              placeholder={`{\n  "topics": [\n    { "title": "...", "angle": "...", "category": "fotografia", "readingMin": 4 },\n    ...\n  ]\n}`}
+            />
+            {topicsErr && <div className="ai-error">⚠ {topicsErr}</div>}
+            <div className="ai-step-actions">
+              <button type="button" className="ai-btn-ghost" onClick={() => setStep('topics-ask')}>‹ Voltar</button>
+              <button type="button" className="ai-btn-primary" onClick={parseTopics} disabled={!topicsPaste.trim()}>Processar →</button>
+            </div>
+          </div>
+        )}
+
+        {/* PASSO 3 · escolher um dos 3 */}
+        {step === 'topics-list' && topics.length > 0 && (
+          <div className="ai-section">
+            <p className="ai-section-label">Passo 3 · Escolhe 1 das 3</p>
             <div className="ai-topics">
               {topics.map((t, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => generateArticle(t)}
-                  className={`ai-topic ${chosen?.title === t.title ? 'is-active' : ''}`}
-                  disabled={loadingArticle}
-                >
+                <button key={i} type="button" onClick={() => { setChosen(t); setStep('article-ask') }} className="ai-topic">
                   <span className="ai-topic-num">{String(i + 1).padStart(2, '0')}</span>
                   <span className="ai-topic-body">
                     <span className="ai-topic-meta">{t.category} · {t.readingMin} min</span>
@@ -328,14 +346,53 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
                 </button>
               ))}
             </div>
-            {loadingArticle && <p className="ai-loading">⌛ A escrever o artigo… (15-30s)</p>}
+            <div className="ai-step-actions">
+              <button type="button" className="ai-btn-ghost" onClick={() => setStep('topics-paste')}>‹ Voltar a colar</button>
+              <button type="button" className="ai-btn-ghost" onClick={startOver}>↻ Recomeçar</button>
+            </div>
           </div>
         )}
 
-        {/* Artigo gerado */}
-        {article && (
+        {/* PASSO 4 · prompt do artigo pronto a copiar */}
+        {step === 'article-ask' && chosen && (
+          <div className="ai-section">
+            <p className="ai-section-label">Passo 4 · Tema escolhido</p>
+            <div className="ai-chosen">
+              <p className="ai-chosen-meta">{chosen.category} · {chosen.readingMin} min</p>
+              <p className="ai-chosen-title">{chosen.title}</p>
+            </div>
+            <p className="ai-section-label" style={{ marginTop: 18 }}>Copia este prompt e cola no chat</p>
+            <textarea readOnly className="ai-textarea ai-prompt-show" value={articleFullPrompt} rows={8} onFocus={e => e.currentTarget.select()} />
+            <div className="ai-step-actions">
+              <button type="button" className="ai-btn-ghost" onClick={() => setStep('topics-list')}>‹ Outra escolha</button>
+              <button type="button" className="ai-btn-ghost" onClick={() => copy(articleFullPrompt)}>📋 Copiar prompt</button>
+              <button type="button" className="ai-btn-primary" onClick={() => setStep('article-paste')}>Já pedi → Próximo</button>
+            </div>
+          </div>
+        )}
+
+        {/* PASSO 5 · colar resposta do artigo */}
+        {step === 'article-paste' && (
+          <div className="ai-section">
+            <p className="ai-section-label">Passo 5 · Cola aqui a resposta JSON do artigo</p>
+            <textarea
+              className="ai-textarea"
+              rows={12}
+              value={articlePaste}
+              onChange={e => setArticlePaste(e.target.value)}
+              placeholder='{ "title": "...", "body": "...", "seoKeywords": "...", "instagramFeed": { "caption": "...", "hashtags": "..." }, ... }'
+            />
+            {articleErr && <div className="ai-error">⚠ {articleErr}</div>}
+            <div className="ai-step-actions">
+              <button type="button" className="ai-btn-ghost" onClick={() => setStep('article-ask')}>‹ Voltar</button>
+              <button type="button" className="ai-btn-primary" onClick={parseArticle} disabled={!articlePaste.trim()}>Processar →</button>
+            </div>
+          </div>
+        )}
+
+        {/* PASSO 6 · ver artigo + guardar */}
+        {step === 'article-view' && article && (
           <div className="ai-section ai-article">
-            {/* Tabs */}
             <div className="ai-tabs">
               <button type="button" onClick={() => setView('article')} className={`ai-tab ${view === 'article' ? 'is-on' : ''}`}>Artigo</button>
               <button type="button" onClick={() => setView('instagram')} className={`ai-tab ${view === 'instagram' ? 'is-on' : ''}`}>Instagram</button>
@@ -352,12 +409,8 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
                     <p key={i} dangerouslySetInnerHTML={{ __html: inlineBold(p) }} />
                   ))}
                 </div>
-                <p className="ai-article-seo">
-                  <strong>SEO:</strong> {article.seoKeywords}
-                </p>
-                <button type="button" className="ai-btn-ghost" onClick={() => copyText(article.body)}>
-                  Copiar texto do artigo
-                </button>
+                <p className="ai-article-seo"><strong>SEO:</strong> {article.seoKeywords}</p>
+                <button type="button" className="ai-btn-ghost" onClick={() => copy(article.body)}>Copiar texto do artigo</button>
               </div>
             )}
 
@@ -365,18 +418,14 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
               <div className="ai-social-view">
                 <p className="ai-social-label">Caption do Feed</p>
                 <pre className="ai-social-text">{article.instagramFeed?.caption}</pre>
-                <button type="button" className="ai-btn-ghost" onClick={() => copyText(article.instagramFeed?.caption ?? '')}>Copiar caption</button>
-
+                <button type="button" className="ai-btn-ghost" onClick={() => copy(article.instagramFeed?.caption ?? '')}>Copiar caption</button>
                 <p className="ai-social-label">Hashtags</p>
                 <pre className="ai-social-text">{article.instagramFeed?.hashtags}</pre>
-                <button type="button" className="ai-btn-ghost" onClick={() => copyText(article.instagramFeed?.hashtags ?? '')}>Copiar hashtags</button>
-
+                <button type="button" className="ai-btn-ghost" onClick={() => copy(article.instagramFeed?.hashtags ?? '')}>Copiar hashtags</button>
                 <p className="ai-social-label">Stories ({article.instagramStories?.length ?? 0})</p>
                 <ol className="ai-stories">
                   {(article.instagramStories ?? []).map((s, i) => (
-                    <li key={i}>
-                      <span className="ai-story-kind">{s.kind}</span> {s.title}
-                    </li>
+                    <li key={i}><span className="ai-story-kind">{s.kind}</span> {s.title}</li>
                   ))}
                 </ol>
               </div>
@@ -386,17 +435,21 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
               <div className="ai-social-view">
                 <p className="ai-social-label">Post Facebook</p>
                 <pre className="ai-social-text">{article.facebookPost}</pre>
-                <button type="button" className="ai-btn-ghost" onClick={() => copyText(article.facebookPost ?? '')}>Copiar post</button>
+                <button type="button" className="ai-btn-ghost" onClick={() => copy(article.facebookPost ?? '')}>Copiar post</button>
               </div>
             )}
 
-            {/* Footer */}
             <div className="ai-foot">
               <button type="button" className="ai-btn-ghost" onClick={copyAll}>Copiar tudo</button>
               <button type="button" onClick={saveArticle} disabled={saving || !!savedId} className="ai-btn-primary">
                 {savedId ? '✓ Guardado no Blog' : saving ? 'A guardar…' : '✓ Guardar como Rascunho'}
               </button>
             </div>
+            {savedId && (
+              <div className="ai-step-actions" style={{ marginTop: 12 }}>
+                <button type="button" className="ai-btn-ghost" onClick={startOver}>↻ Gerar outro</button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -405,11 +458,9 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
 }
 
 /* ============================================================
-   Card de artigo guardado
+   Card de artigo guardado (mantido igual ao anterior)
    ============================================================ */
-function SavedArticleCard({
-  article, idx, onChange,
-}: { article: Article; idx: number; onChange: () => void }) {
+function SavedArticleCard({ article, idx, onChange }: { article: Article; idx: number; onChange: () => void }) {
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
 
@@ -425,7 +476,6 @@ function SavedArticleCard({
     } catch {/* */}
     setBusy(false)
   }
-
   async function remove() {
     if (!confirm('Eliminar este artigo?')) return
     setBusy(true)
@@ -435,7 +485,6 @@ function SavedArticleCard({
     } catch {/* */}
     setBusy(false)
   }
-
   function copyText(t: string) { navigator.clipboard?.writeText(t).catch(() => {}) }
 
   const isUsed = article.status === 'used'
@@ -461,7 +510,6 @@ function SavedArticleCard({
 
       <div className={`blg-panel ${open ? 'is-open' : ''}`}>
         <div className="blg-panel-in">
-          {/* Acções */}
           <div className="blg-actions">
             <button type="button" className="blg-btn" onClick={(e) => { e.stopPropagation(); copyText(article.title) }}>Copiar título</button>
             <button type="button" className="blg-btn" onClick={(e) => { e.stopPropagation(); copyText(article.body) }}>Copiar texto</button>
@@ -485,14 +533,12 @@ function SavedArticleCard({
             </button>
           </div>
 
-          {/* Body */}
           <div className="blg-body">
             {article.body.split('\n\n').map((p, i) => (
               <p key={i} dangerouslySetInnerHTML={{ __html: inlineBold(p) }} />
             ))}
           </div>
 
-          {/* Social preview */}
           {(article.instagram_feed?.caption || article.facebook_post) && (
             <div className="blg-social">
               {article.instagram_feed?.caption && (
@@ -522,6 +568,23 @@ function SavedArticleCard({
       </div>
     </article>
   )
+}
+
+/* Util — extrair JSON tolerante */
+function extractJson(text: string): any | null {
+  if (!text) return null
+  const t = text.trim()
+  try { return JSON.parse(t) } catch {}
+  const fenced = t.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
+  if (fenced?.[1]) {
+    try { return JSON.parse(fenced[1]) } catch {}
+  }
+  const first = t.indexOf('{')
+  const last = t.lastIndexOf('}')
+  if (first >= 0 && last > first) {
+    try { return JSON.parse(t.slice(first, last + 1)) } catch {}
+  }
+  return null
 }
 
 function inlineBold(text: string): string {

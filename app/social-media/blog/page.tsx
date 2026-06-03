@@ -24,8 +24,9 @@ export default function BlogIdeasPage() {
         <h1 className="blg-h1">CONTEÚDO PARA O <em>blog</em></h1>
         <hr className="blg-rule" />
         <p className="blg-lede">
-          O agente IA gera-te 3 temas. Escolhes 1. Recebes artigo + caption
-          para Instagram + post para Facebook. Tu copias e usas.
+          Modo grátis. O sistema gera-te um prompt pronto a copiar para
+          pedires conteúdo ao Claude no chat. Tu colas a resposta de volta
+          e fica tudo guardado aqui: artigo, caption Instagram, post Facebook.
           Clica no <strong>boneco</strong> em baixo à direita para começar.
         </p>
       </header>
