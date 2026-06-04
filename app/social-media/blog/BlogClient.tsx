@@ -152,6 +152,7 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
 
   // Fotografias do artigo + prompt para o Claude Design (HTML pronto)
   const [photoUrls, setPhotoUrls] = useState<string[]>(['', '', '', '', ''])
+  const [coverIndex, setCoverIndex] = useState<number>(0) // qual das 5 é a CAPA
   const [showHtmlPrompt, setShowHtmlPrompt] = useState(false)
   const [htmlPaste, setHtmlPaste] = useState('')
   const [htmlShowPasted, setHtmlShowPasted] = useState(false)
@@ -242,21 +243,28 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
     setChosen(null); setArticle(null); setArticlePaste(''); setArticleErr(null)
     setSavedId(null); setView('article')
     setPhotoUrls(['', '', '', '', ''])
+    setCoverIndex(0)
     setShowHtmlPrompt(false); setHtmlPaste(''); setHtmlShowPasted(false)
   }
 
   /** Gera o prompt para o Claude Design devolver HTML pronto a colar. */
   function buildHtmlPrompt(): string {
     if (!article || !chosen) return ''
-    const urls = photoUrls
-      .map((u, i) => ({ idx: i + 1, url: u.trim() }))
-      .filter(x => x.url.length > 0)
 
-    const photosBlock = urls.length
-      ? urls.map(u => `${u.idx}. ${u.url}`).join('\n')
-      : '(nenhuma URL fornecida — usa placeholder grey-box e mantém os markers visíveis)'
+    const coverUrl = (photoUrls[coverIndex] ?? '').trim()
+    const bodyUrls = photoUrls
+      .map((u, i) => ({ idx: i + 1, url: u.trim(), isCover: i === coverIndex }))
+      .filter(x => !x.isCover && x.url.length > 0)
 
-    return `És Claude Design. Vou-te dar um artigo de blog do estúdio RL Photo Video e até 5 URLs de fotografias. Quero código HTML pronto a colar no meu site (CMS aceita HTML+CSS inline).
+    const coverLine = coverUrl
+      ? `URL: ${coverUrl}`
+      : '(nenhuma URL de capa fornecida — usa placeholder escuro com gradiente gold subtil)'
+
+    const bodyBlock = bodyUrls.length
+      ? bodyUrls.map((u, i) => `${i + 1}. ${u.url}   (do input #${String(u.idx).padStart(2, '0')})`).join('\n')
+      : '(nenhuma URL fornecida para os markers — usa placeholders grey #2a1f12 com a descrição como alt)'
+
+    return `És Claude Design. Vou-te dar um artigo de blog do estúdio RL Photo Video, 1 fotografia de CAPA e até 4 fotografias para o corpo. Quero código HTML pronto a colar no meu site (CMS aceita HTML+CSS inline).
 
 # Identidade visual obrigatória (Atmosphère)
 - Fundo: #120d08
@@ -268,30 +276,40 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
 - Letterspacing largo em eyebrows (0.32em), tudo MAIÚSCULAS, peso 600, 10-11px
 
 # Estrutura do artigo
-1. Hero
-   - Eyebrow (categoria + tempo de leitura)
-   - Título em Cormorant Garamond light, clamp(28px, 4vw, 48px)
-   - Linha gold de 60px abaixo do título
-   - Subtítulo em italic gold-soft, max-width 600px, centrado
-2. Corpo
-   - Container max-width: 720px
-   - Parágrafos em Hanken Grotesk, 16-17px, line-height 1.75, cor ink
-   - Subtítulos internos (texto em **bold** no corpo) viram <h2> Cormorant Garamond medium, gold, 22-24px, com margem generosa por cima
-   - **bold** inline vira <strong> gold
-3. Fotografias
-   - Cada marker [FOTO — TIPO: descrição] vira <figure> full-width do container
-   - <img> com aspect-ratio 3/2 ou 16/9 (auto), object-fit: cover, border-radius: 4px
-   - <figcaption> abaixo: italic Cormorant 14px, gold-soft, ladeado por uma linha curta
-   - Mantém o TIPO da foto como pequena tag em eyebrow style por cima do <img>
-   - Distribui as URLs PELOS MARKERS pela ordem em que aparecem no texto
-   - Se houver mais markers do que URLs, repete a última ou deixa placeholder grey #2a1f12 com o texto da descrição como alt
-4. Rodapé SEO
-   - Pequena linha discreta com "Palavras-chave:" + keywords em gold-soft, 11px, letterspacing largo
+
+## 1. HERO COM FOTO DE CAPA (obrigatório)
+- A foto de CAPA (URL indicada abaixo) é usada como hero full-bleed no topo, ANTES do título.
+- Aspect-ratio aproximado 21/9 em desktop, 4/3 em mobile.
+- Gradiente escuro de baixo para cima (\`linear-gradient(180deg, transparent 30%, #120d08 95%)\`) sobreposto à imagem para a tipografia ser legível.
+- Por cima do gradiente, alinhado em baixo do hero, com padding generoso:
+  - Eyebrow (categoria + tempo de leitura) em gold uppercase
+  - Título em Cormorant Garamond light, clamp(28px, 4vw, 52px), branco/ink
+  - Linha gold de 60px abaixo do título
+  - Subtítulo em italic gold-soft, max-width 620px
+
+## 2. CORPO
+- Container max-width: 720px, centrado, padding 0 24px no mobile
+- Parágrafos em Hanken Grotesk, 16-17px, line-height 1.75, cor ink
+- Subtítulos internos (texto em **bold** que tu detectes como subtítulo) viram <h2> Cormorant Garamond medium, gold, 22-24px, margem generosa por cima
+- **bold** inline (não-subtítulo) vira <strong> gold-soft
+
+## 3. FOTOGRAFIAS DO CORPO
+- Cada marker [FOTO — TIPO: descrição] do corpo vira <figure> full-width do container
+- <img> com aspect-ratio 3/2 (auto), object-fit: cover, border-radius: 4px
+- <figcaption> abaixo: italic Cormorant 14px, gold-soft, alinhado à esquerda
+- Mantém o TIPO da foto como pequena tag em eyebrow style por cima do <img>
+- A foto de CAPA NÃO entra aqui — só os URLs do corpo listados abaixo
+- Distribui os URLs do corpo pelos markers na ORDEM em que aparecem
+- Se houver mais markers do que URLs, deixa placeholder \`background: #2a1f12\` com a descrição visível como texto centrado em gold-soft
+
+## 4. RODAPÉ SEO
+- Pequena linha discreta com "Palavras-chave:" + keywords em gold-soft, 11px, letterspacing largo, centrado
 
 # Responsive (mobile-first)
 - Padding lateral 24px no mobile, 0 em desktop
+- Hero aspect-ratio: 4/3 mobile, 21/9 desktop
 - Título cai para 28px no mobile
-- Figura mantém aspect-ratio em qualquer ecrã
+- Figuras mantêm aspect-ratio em qualquer ecrã
 
 # Output
 Devolve APENAS um bloco <article class="rl-blog">...</article> com <style scoped></style> no topo dentro do article. Sem markdown fences, sem explicação, sem placeholders TODO. Nada antes nem depois. Pronto a colar.
@@ -308,15 +326,21 @@ Palavras-chave SEO: ${article.seoKeywords}
 
 ---
 
-# CORPO (com markers [FOTO — TIPO: descrição] a substituir pelas URLs)
+# FOTO DE CAPA (hero do topo, antes do título)
+
+${coverLine}
+
+---
+
+# CORPO DO ARTIGO (com markers [FOTO — TIPO: descrição] a substituir pelas URLs do corpo abaixo)
 
 ${article.body}
 
 ---
 
-# FOTOGRAFIAS (na ordem de aparição nos markers)
+# FOTOGRAFIAS DO CORPO (na ordem de aparição nos markers — a capa NÃO entra aqui)
 
-${photosBlock}
+${bodyBlock}
 `
   }
 
@@ -502,27 +526,42 @@ ${photosBlock}
                     URLs das 5 imagens
                   </p>
                   <p className="ai-photos-hint">
-                    Cola até 5 URLs (em ordem: a 1ª substitui o 1º marker <code>[FOTO — …]</code>, a 2ª o 2º, etc.).
-                    Depois gera o prompt para o Claude Design devolver o HTML pronto a colar no site.
+                    Cola até 5 URLs. Marca <strong>1 como CAPA</strong> (★) — essa vai para o hero do topo, antes do título.
+                    As restantes substituem os markers <code>[FOTO — …]</code> do corpo, pela ordem.
                   </p>
                   <div className="ai-photos-grid">
-                    {photoUrls.map((u, i) => (
-                      <div key={i} className="ai-photo-row">
-                        <span className="ai-photo-num">{String(i + 1).padStart(2, '0')}</span>
-                        <input
-                          type="url"
-                          inputMode="url"
-                          placeholder="https://…"
-                          value={u}
-                          onChange={(e) => {
-                            const next = [...photoUrls]
-                            next[i] = e.target.value
-                            setPhotoUrls(next)
-                          }}
-                          className="ai-photo-input"
-                        />
-                      </div>
-                    ))}
+                    {photoUrls.map((u, i) => {
+                      const isCover = i === coverIndex
+                      return (
+                        <div key={i} className={`ai-photo-row ${isCover ? 'is-cover' : ''}`}>
+                          <button
+                            type="button"
+                            className={`ai-photo-star ${isCover ? 'is-on' : ''}`}
+                            onClick={() => setCoverIndex(i)}
+                            title={isCover ? 'Esta é a CAPA' : 'Marcar como CAPA'}
+                            aria-label={isCover ? 'Foto de capa' : 'Marcar como capa'}
+                          >
+                            {isCover ? '★' : '☆'}
+                          </button>
+                          <span className="ai-photo-num">
+                            {String(i + 1).padStart(2, '0')}
+                            {isCover && <span className="ai-photo-cover-tag">CAPA</span>}
+                          </span>
+                          <input
+                            type="url"
+                            inputMode="url"
+                            placeholder={isCover ? 'https://… (URL da foto de capa)' : 'https://…'}
+                            value={u}
+                            onChange={(e) => {
+                              const next = [...photoUrls]
+                              next[i] = e.target.value
+                              setPhotoUrls(next)
+                            }}
+                            className="ai-photo-input"
+                          />
+                        </div>
+                      )
+                    })}
                   </div>
 
                   <div className="ai-step-actions" style={{ marginTop: 14 }}>

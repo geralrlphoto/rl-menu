@@ -890,17 +890,59 @@
 }
 .ai-photo-row {
   display: grid;
-  grid-template-columns: 32px 1fr;
+  grid-template-columns: 28px 56px 1fr;
   gap: 10px;
   align-items: center;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.ai-photo-row.is-cover {
+  background: rgba(200, 168, 102, 0.09);
+  box-shadow: inset 0 0 0 1px rgba(200, 168, 102, 0.32);
+}
+.ai-photo-star {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(200, 168, 102, 0.28);
+  background: transparent;
+  color: rgba(200, 168, 102, 0.45);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  transition: 0.2s;
+}
+.ai-photo-star:hover {
+  color: var(--gold, #c8a866);
+  border-color: rgba(200, 168, 102, 0.55);
+}
+.ai-photo-star.is-on {
+  background: var(--gold, #c8a866);
+  color: var(--bg, #120d08);
+  border-color: var(--gold, #c8a866);
+  text-shadow: 0 0 6px rgba(255, 220, 150, 0.4);
 }
 .ai-photo-num {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-family: 'Hanken Grotesk', sans-serif;
   font-size: 10px;
   letter-spacing: 0.24em;
   font-weight: 600;
   color: var(--gold, #c8a866);
-  text-align: center;
+}
+.ai-photo-cover-tag {
+  font-size: 8.5px;
+  letter-spacing: 0.28em;
+  background: var(--gold, #c8a866);
+  color: var(--bg, #120d08);
+  padding: 1px 5px;
+  border-radius: 2px;
 }
 .ai-photo-input {
   width: 100%;
