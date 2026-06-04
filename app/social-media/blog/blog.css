@@ -1012,3 +1012,33 @@
     letter-spacing: 0.26em;
   }
 }
+
+/* Footer da caixa final com 3 botões (copiar / rascunho / tema usado) */
+.ai-foot-3 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.ai-foot-3 > button {
+  flex: 1 1 auto;
+  min-width: 160px;
+  width: auto !important;
+}
+/* Botão "Tema Usado" — destaque gold com brilho */
+.ai-btn-used {
+  position: relative;
+  background: linear-gradient(135deg, #c8a866 0%, #d7bd87 50%, #c8a866 100%) !important;
+  box-shadow:
+    0 0 0 1px rgba(200, 168, 102, 0.45),
+    0 0 16px rgba(200, 168, 102, 0.28),
+    inset 0 1px 0 rgba(255, 235, 200, 0.35);
+}
+.ai-btn-used:hover:not(:disabled) {
+  box-shadow:
+    0 0 0 1px rgba(200, 168, 102, 0.65),
+    0 0 22px rgba(200, 168, 102, 0.45),
+    inset 0 1px 0 rgba(255, 235, 200, 0.45);
+}
+.ai-btn-used:disabled {
+  opacity: 0.85;
+}

@@ -171,9 +171,12 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
   const [articlePaste, setArticlePaste] = useState('')
   const [articleErr, setArticleErr] = useState<string | null>(null)
 
-  const [savedId, setSavedId] = useState<string | null>(null)
+  const [savedAs, setSavedAs] = useState<'draft' | 'used' | null>(null)
   const [saving, setSaving] = useState(false)
   const [view, setView] = useState<'article' | 'instagram' | 'facebook'>('article')
+
+  // Histórico de títulos já gerados (qualquer status) — para o Claude não repetir
+  const [usedTitles, setUsedTitles] = useState<string[]>([])
 
   // Fotografias do artigo + prompt para o Claude Design (HTML pronto)
   const [photoUrls, setPhotoUrls] = useState<string[]>(['', '', '', '', ''])
@@ -187,6 +190,18 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
       const stored = localStorage.getItem(STORAGE_PROMPT_KEY)
       if (stored && stored.length > 100) setSystemPrompt(stored)
     } catch {/* */}
+  }, [])
+
+  // Carrega títulos já gerados (qualquer status) para o "não repetir"
+  useEffect(() => {
+    fetch('/api/blog-articles', { cache: 'no-store' })
+      .then(r => r.json())
+      .then(d => {
+        if (Array.isArray(d?.articles)) {
+          setUsedTitles(d.articles.map((a: any) => String(a.title ?? '')).filter(Boolean))
+        }
+      })
+      .catch(() => {/* ignora */})
   }, [])
 
   function savePromptLocally() {
@@ -206,7 +221,10 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
   const themeBlock = themeObj
     ? `\n\n# Tema obrigatório das 3 ideias\n\nAs 3 ideias têm de pertencer ao tema "${themeObj.label}".\nDefinição: ${themeObj.desc}\nNão saiam deste âmbito.\n`
     : ''
-  const topicsFullPrompt = `${systemPrompt}${themeBlock}\n\n---\n\n${TOPICS_USER_PROMPT}`
+  const usedBlock = usedTitles.length > 0
+    ? `\n\n# Ideias já geradas (histórico — NUNCA podes repetir nem reformular)\n\nEstes títulos já foram gerados anteriormente. As 3 novas ideias têm de ser TODAS distintas em tema, ângulo e formulação. Não basta mudar palavras: o ângulo central tem de ser diferente.\n\nHistórico:\n${usedTitles.map((t, i) => `${i + 1}. ${t}`).join('\n')}\n\nSe o tema seleccionado já tem ideias no histórico, encontra ângulos NOVOS dentro desse tema (sub-tópicos não cobertos, perspectivas opostas, casos específicos não tratados).`
+    : ''
+  const topicsFullPrompt = `${systemPrompt}${themeBlock}${usedBlock}\n\n---\n\n${TOPICS_USER_PROMPT}`
   const articleFullPrompt = chosen ? `${systemPrompt}\n\n---\n\n${ARTICLE_USER_PROMPT_TEMPLATE
     .replace('{{TITLE}}', chosen.title)
     .replace('{{ANGLE}}', chosen.angle)
@@ -220,6 +238,17 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
     if (!parsed?.topics || !Array.isArray(parsed.topics)) {
       setTopicsErr('Não consegui ler o JSON. Verifica que colaste a resposta completa do Claude.')
       return
+    }
+    // Avisa se algum dos títulos já está no histórico (não bloqueia, só avisa)
+    const usedLower = new Set(usedTitles.map(t => t.toLowerCase().trim()))
+    const repeated = (parsed.topics as Topic[]).filter(
+      t => t?.title && usedLower.has(String(t.title).toLowerCase().trim()),
+    )
+    if (repeated.length) {
+      setTopicsErr(
+        `⚠ ${repeated.length} ${repeated.length === 1 ? 'tema repete' : 'temas repetem'} o histórico. ` +
+        `Tens duas opções: continuar mesmo assim (escolhes um dos outros) ou voltar atrás e pedir novamente ao Claude.`,
+      )
     }
     setTopics(parsed.topics)
     setStep('topics-list')
@@ -235,7 +264,7 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
     setStep('article-view')
   }
 
-  async function saveArticle() {
+  async function saveArticle(asUsed: boolean = false) {
     if (!article) return
     setSaving(true)
     try {
@@ -247,7 +276,21 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
         }),
       })
       const d = await r.json()
-      if (d.ok) { setSavedId(d.article?.id ?? 'ok'); onSaved() }
+      if (d.ok && d.article?.id) {
+        if (asUsed) {
+          await fetch(`/api/blog-articles/${d.article.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'used' }),
+          })
+        }
+        // Acrescenta ao histórico local (para o próximo ciclo já não repetir)
+        setUsedTitles(prev =>
+          prev.includes(article.title) ? prev : [...prev, article.title],
+        )
+        setSavedAs(asUsed ? 'used' : 'draft')
+        onSaved()
+      }
     } catch {/* */}
     setSaving(false)
   }
@@ -270,7 +313,7 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
     setStep('idle')
     setTopics([]); setTopicsPaste(''); setTopicsErr(null)
     setChosen(null); setArticle(null); setArticlePaste(''); setArticleErr(null)
-    setSavedId(null); setView('article')
+    setSavedAs(null); setView('article')
     setPhotoUrls(['', '', '', '', ''])
     setCoverIndex(0)
     setShowHtmlPrompt(false); setHtmlPaste(''); setHtmlShowPasted(false)
@@ -460,6 +503,11 @@ ${bodyBlock}
             {selectedTheme && (
               <p className="ai-photos-hint" style={{ marginTop: 8 }}>
                 As 3 ideias vão focar-se exclusivamente em <strong>{themeObj?.label}</strong>.
+              </p>
+            )}
+            {usedTitles.length > 0 && (
+              <p className="ai-photos-hint" style={{ marginTop: 8 }}>
+                📚 <strong>{usedTitles.length}</strong> {usedTitles.length === 1 ? 'tema' : 'temas'} no histórico — o prompt instrui o Claude a não os repetir nem reformular.
               </p>
             )}
             <button
@@ -733,14 +781,32 @@ ${bodyBlock}
               </div>
             )}
 
-            <div className="ai-foot">
+            <div className="ai-foot ai-foot-3">
               <button type="button" className="ai-btn-ghost" onClick={copyAll}>Copiar tudo</button>
-              <button type="button" onClick={saveArticle} disabled={saving || !!savedId} className="ai-btn-primary">
-                {savedId ? '✓ Guardado no Blog' : saving ? 'A guardar…' : '✓ Guardar como Rascunho'}
+              <button
+                type="button"
+                onClick={() => saveArticle(false)}
+                disabled={saving || !!savedAs}
+                className="ai-btn-ghost"
+              >
+                {savedAs === 'draft' ? '✓ Em Rascunho' : saving && !savedAs ? 'A guardar…' : '✓ Guardar como Rascunho'}
+              </button>
+              <button
+                type="button"
+                onClick={() => saveArticle(true)}
+                disabled={saving || !!savedAs}
+                className="ai-btn-primary ai-btn-used"
+              >
+                {savedAs === 'used' ? '★ Tema no Histórico' : saving && !savedAs ? 'A guardar…' : '★ Tema Usado'}
               </button>
             </div>
-            {savedId && (
-              <div className="ai-step-actions" style={{ marginTop: 12 }}>
+            {savedAs && (
+              <div className="ai-step-actions" style={{ marginTop: 12, justifyContent: 'space-between' }}>
+                <p className="ai-photos-hint" style={{ margin: 0 }}>
+                  {savedAs === 'used'
+                    ? '✓ Este tema entrou no histórico. O Claude não o vai sugerir novamente.'
+                    : '✓ Guardado como rascunho. Já consta no histórico para não ser repetido.'}
+                </p>
                 <button type="button" className="ai-btn-ghost" onClick={startOver}>↻ Gerar outro</button>
               </div>
             )}
