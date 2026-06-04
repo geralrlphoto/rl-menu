@@ -286,32 +286,40 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
       .map((u, i) => ({ idx: i + 1, url: u.trim(), isCover: i === coverIndex }))
       .filter(x => !x.isCover && x.url.length > 0)
 
-    const coverLine = coverUrl
+    const hasCover = coverUrl.length > 0
+    const bodyCount = bodyUrls.length
+
+    const coverLine = hasCover
       ? `URL: ${coverUrl}`
-      : '(nenhuma URL de capa fornecida — usa placeholder escuro com gradiente gold subtil)'
+      : '(SEM capa — não uses hero com imagem. Faz hero só com tipografia sobre fundo escuro #120d08.)'
 
-    const bodyBlock = bodyUrls.length
+    const bodyBlock = bodyCount
       ? bodyUrls.map((u, i) => `${i + 1}. ${u.url}   (do input #${String(u.idx).padStart(2, '0')})`).join('\n')
-      : '(nenhuma URL fornecida para os markers — usa placeholders grey #2a1f12 com a descrição como alt)'
+      : '(NENHUMA fotografia fornecida para o corpo — o artigo é todo texto. Ignora TODOS os markers [FOTO — ...] do corpo.)'
 
-    return `És Claude Design. Vou-te dar um artigo de blog do estúdio RL Photo Video, 1 fotografia de CAPA e até 4 fotografias para o corpo. Quero código HTML pronto a colar no meu site (CMS aceita HTML+CSS inline).
+    return `És Claude Design. Vou-te dar um artigo de blog do estúdio RL Photo Video, opcionalmente uma fotografia de CAPA e um número VARIÁVEL (0 a 4) de fotografias para o corpo. Quero código HTML pronto a colar no meu site (CMS aceita HTML+CSS inline).
+
+# Regras absolutas (não negociáveis)
+
+1. **AS FOTOGRAFIAS NÃO LEVAM LEGENDA NENHUMA.** Nada de <figcaption>. Nada de tag de tipo (close-up/plano-largo/etc). Nada de texto descritivo por baixo ou por cima. Só a imagem.
+2. **USA APENAS AS URLs QUE EU TE DER.** Se eu te der 3 URLs para o corpo, o HTML mostra exactamente 3 fotografias. Se eu te der 0, não mostra nenhuma.
+3. **MARKERS [FOTO — ...] SÃO PISTAS, NÃO OBRIGAÇÕES.** O corpo do artigo tem markers \`[FOTO — TIPO: descrição]\` para te indicar BONS sítios onde inserir as fotos. Distribui as URLs fornecidas pelos PRIMEIROS markers, pela ordem. Se houver mais markers do que URLs, IGNORA os markers em excesso — não aparecem no HTML, não há placeholder, não há mensagem. Limpa-os do output.
+4. **NUNCA inventes URLs.** Nunca uses placeholder.com nem outros stubs. Se não há URL para um sítio, esse sítio não tem imagem.
 
 # Identidade visual obrigatória (Atmosphère)
 - Fundo: #120d08
 - Texto principal (ink): #efe7d6
 - Texto secundário: #b8a98b
 - Acento gold: #c8a866 (suave: #d7bd87)
-- Tipografia: 'Cormorant Garamond' (títulos, italics, legendas), 'Hanken Grotesk' ou system-ui (corpo)
+- Tipografia: 'Cormorant Garamond' (títulos, italics), 'Hanken Grotesk' ou system-ui (corpo)
 - Importa as fontes do Google Fonts no topo do <style>
 - Letterspacing largo em eyebrows (0.32em), tudo MAIÚSCULAS, peso 600, 10-11px
 
 # Estrutura do artigo
 
-## 1. HERO COM FOTO DE CAPA (obrigatório)
-- A foto de CAPA (URL indicada abaixo) é usada como hero full-bleed no topo, ANTES do título.
-- Aspect-ratio aproximado 21/9 em desktop, 4/3 em mobile.
-- Gradiente escuro de baixo para cima (\`linear-gradient(180deg, transparent 30%, #120d08 95%)\`) sobreposto à imagem para a tipografia ser legível.
-- Por cima do gradiente, alinhado em baixo do hero, com padding generoso:
+## 1. HERO
+- ${hasCover ? 'Foto de CAPA full-bleed no topo, ANTES do título. Aspect-ratio aproximado 21/9 em desktop, 4/3 em mobile. Gradiente escuro de baixo para cima (\`linear-gradient(180deg, transparent 30%, #120d08 95%)\`) sobreposto à imagem.' : 'SEM imagem. Hero só com tipografia sobre fundo #120d08, com padding vertical generoso (clamp(80px, 12vw, 140px) topo e fundo).'}
+- ${hasCover ? 'Por cima do gradiente, alinhado em baixo:' : 'Centrado:'}
   - Eyebrow (categoria + tempo de leitura) em gold uppercase
   - Título em Cormorant Garamond light, clamp(28px, 4vw, 52px), branco/ink
   - Linha gold de 60px abaixo do título
@@ -323,21 +331,20 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
 - Subtítulos internos (texto em **bold** que tu detectes como subtítulo) viram <h2> Cormorant Garamond medium, gold, 22-24px, margem generosa por cima
 - **bold** inline (não-subtítulo) vira <strong> gold-soft
 
-## 3. FOTOGRAFIAS DO CORPO
-- Cada marker [FOTO — TIPO: descrição] do corpo vira <figure> full-width do container
-- <img> com aspect-ratio 3/2 (auto), object-fit: cover, border-radius: 4px
-- <figcaption> abaixo: italic Cormorant 14px, gold-soft, alinhado à esquerda
-- Mantém o TIPO da foto como pequena tag em eyebrow style por cima do <img>
-- A foto de CAPA NÃO entra aqui — só os URLs do corpo listados abaixo
-- Distribui os URLs do corpo pelos markers na ORDEM em que aparecem
-- Se houver mais markers do que URLs, deixa placeholder \`background: #2a1f12\` com a descrição visível como texto centrado em gold-soft
+## 3. FOTOGRAFIAS DO CORPO (${bodyCount} no total — usa exactamente este número)
+- Cada URL vira <figure> full-width do container. SEM <figcaption>. SEM tag de tipo. SEM texto descritivo.
+- <img> com aspect-ratio 3/2, object-fit: cover, border-radius: 4px, width: 100%
+- Margem vertical generosa (≈ 40-48px top/bottom)
+- Substitui os PRIMEIROS ${bodyCount} markers \`[FOTO — ...]\` do corpo pelas URLs, na ordem.
+- Os restantes markers (se houver) DESAPARECEM do HTML final.
+- A capa NÃO entra aqui — está no hero.
 
 ## 4. RODAPÉ SEO
 - Pequena linha discreta com "Palavras-chave:" + keywords em gold-soft, 11px, letterspacing largo, centrado
 
 # Responsive (mobile-first)
 - Padding lateral 24px no mobile, 0 em desktop
-- Hero aspect-ratio: 4/3 mobile, 21/9 desktop
+- Hero aspect-ratio: 4/3 mobile, 21/9 desktop ${hasCover ? '' : '(não aplicável — sem imagem)'}
 - Título cai para 28px no mobile
 - Figuras mantêm aspect-ratio em qualquer ecrã
 
@@ -356,19 +363,19 @@ Palavras-chave SEO: ${article.seoKeywords}
 
 ---
 
-# FOTO DE CAPA (hero do topo, antes do título)
+# FOTO DE CAPA
 
 ${coverLine}
 
 ---
 
-# CORPO DO ARTIGO (com markers [FOTO — TIPO: descrição] a substituir pelas URLs do corpo abaixo)
+# CORPO DO ARTIGO (markers [FOTO — ...] são pistas — substitui APENAS os primeiros ${bodyCount} e descarta os restantes)
 
 ${article.body}
 
 ---
 
-# FOTOGRAFIAS DO CORPO (na ordem de aparição nos markers — a capa NÃO entra aqui)
+# FOTOGRAFIAS DO CORPO (${bodyCount} fornecidas — usa exactamente este número, sem legenda)
 
 ${bodyBlock}
 `
@@ -582,11 +589,13 @@ ${bodyBlock}
                 <div className="ai-photos-box">
                   <p className="ai-photos-title">
                     <span className="ai-photos-tag">Fotografias</span>
-                    URLs das 5 imagens
+                    URLs (até 5)
                   </p>
                   <p className="ai-photos-hint">
-                    Cola até 5 URLs. Marca <strong>1 como CAPA</strong> (★) — essa vai para o hero do topo, antes do título.
-                    As restantes substituem os markers <code>[FOTO — …]</code> do corpo, pela ordem.
+                    Cola só as URLs que tens — <strong>não é obrigatório preencher as 5</strong>.
+                    Marca <strong>1 como CAPA</strong> (★) se quiseres hero com imagem.
+                    As restantes URLs vão para o corpo pela ordem. <strong>Linhas vazias não entram no blog</strong> e
+                    as fotografias publicadas não levam legenda.
                   </p>
                   <div className="ai-photos-grid">
                     {photoUrls.map((u, i) => {
