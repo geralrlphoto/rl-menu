@@ -53,6 +53,30 @@ type GenArticle = {
 
 const STORAGE_PROMPT_KEY = 'rl-blog-ai-system-prompt'
 
+/** Temas pré-definidos para filtrar as 3 ideias geradas. */
+const THEMES: Array<{ key: string; label: string; desc: string }> = [
+  {
+    key: 'casamentos',
+    label: 'CASAMENTOS',
+    desc: 'Tudo o que envolve casar: cerimónia, copo-de-água, tradições, organização do dia, fotografia e vídeo de casamento.',
+  },
+  {
+    key: 'dicas',
+    label: 'DICAS',
+    desc: 'Conselhos práticos e accionáveis para os noivos: como escolher fornecedores, etiqueta, gestão de tempo, evitar erros comuns.',
+  },
+  {
+    key: 'bastidores',
+    label: 'BASTIDORES',
+    desc: 'Vida de estúdio, processos de trabalho, decisões de produção, equipamento sem ser nerd, histórias reais (anonimizadas).',
+  },
+  {
+    key: 'inspiracao',
+    label: 'INSPIRAÇÃO',
+    desc: 'Mood, estética, referências visuais, ideias para o vosso dia, paletas, ambientes, exemplos com noivos reais.',
+  },
+]
+
 export default function BlogClient() {
   const [articles, setArticles] = useState<Article[]>([])
   const [showAgent, setShowAgent] = useState(false)
@@ -140,6 +164,7 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
   const [topics, setTopics] = useState<Topic[]>([])
   const [topicsPaste, setTopicsPaste] = useState('')
   const [topicsErr, setTopicsErr] = useState<string | null>(null)
+  const [selectedTheme, setSelectedTheme] = useState<string | null>(null)
 
   const [chosen, setChosen] = useState<Topic | null>(null)
   const [article, setArticle] = useState<GenArticle | null>(null)
@@ -177,7 +202,11 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
   }
 
   // Prompts prontos a copiar
-  const topicsFullPrompt = `${systemPrompt}\n\n---\n\n${TOPICS_USER_PROMPT}`
+  const themeObj = THEMES.find(t => t.key === selectedTheme) ?? null
+  const themeBlock = themeObj
+    ? `\n\n# Tema obrigatório das 3 ideias\n\nAs 3 ideias têm de pertencer ao tema "${themeObj.label}".\nDefinição: ${themeObj.desc}\nNão saiam deste âmbito.\n`
+    : ''
+  const topicsFullPrompt = `${systemPrompt}${themeBlock}\n\n---\n\n${TOPICS_USER_PROMPT}`
   const articleFullPrompt = chosen ? `${systemPrompt}\n\n---\n\n${ARTICLE_USER_PROMPT_TEMPLATE
     .replace('{{TITLE}}', chosen.title)
     .replace('{{ANGLE}}', chosen.angle)
@@ -245,6 +274,7 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
     setPhotoUrls(['', '', '', '', ''])
     setCoverIndex(0)
     setShowHtmlPrompt(false); setHtmlPaste(''); setHtmlShowPasted(false)
+    setSelectedTheme(null)
   }
 
   /** Gera o prompt para o Claude Design devolver HTML pronto a colar. */
@@ -401,7 +431,36 @@ ${bodyBlock}
         {/* PASSO INICIAL */}
         {step === 'idle' && (
           <div className="ai-section">
-            <button type="button" onClick={() => setStep('topics-ask')} className="ai-btn-primary">
+            <p className="ai-section-label" style={{ marginBottom: 12 }}>
+              Tema (opcional — afina as 3 ideias)
+            </p>
+            <div className="ai-themes-row">
+              {THEMES.map((t) => {
+                const on = selectedTheme === t.key
+                return (
+                  <button
+                    key={t.key}
+                    type="button"
+                    className={`ai-theme-pill ${on ? 'is-on' : ''}`}
+                    onClick={() => setSelectedTheme(on ? null : t.key)}
+                    title={t.desc}
+                  >
+                    {t.label}
+                  </button>
+                )
+              })}
+            </div>
+            {selectedTheme && (
+              <p className="ai-photos-hint" style={{ marginTop: 8 }}>
+                As 3 ideias vão focar-se exclusivamente em <strong>{themeObj?.label}</strong>.
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={() => setStep('topics-ask')}
+              className="ai-btn-primary"
+              style={{ marginTop: 14 }}
+            >
               ✨ Gerar prompt para 3 ideias
             </button>
           </div>

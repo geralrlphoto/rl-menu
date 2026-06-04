@@ -967,3 +967,48 @@
 .ai-html-preview {
   margin-top: 16px;
 }
+
+/* ============================================================
+   Pills de tema (CASAMENTOS / DICAS / BASTIDORES / INSPIRAÇÃO)
+   Estilo igual ao mockup: outline cápsula, gold-soft, selected gold.
+   ============================================================ */
+.ai-themes-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.ai-theme-pill {
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: rgba(200, 168, 102, 0.72);
+  background: transparent;
+  border: 1px solid rgba(200, 168, 102, 0.45);
+  padding: 10px 22px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: 0.2s ease;
+  white-space: nowrap;
+}
+.ai-theme-pill:hover {
+  color: var(--gold, #c8a866);
+  border-color: rgba(200, 168, 102, 0.85);
+  box-shadow: 0 0 0 4px rgba(200, 168, 102, 0.06);
+}
+.ai-theme-pill.is-on {
+  color: var(--ink, #efe7d6);
+  border-color: var(--gold, #c8a866);
+  background: rgba(200, 168, 102, 0.12);
+  box-shadow:
+    inset 0 0 0 1px rgba(200, 168, 102, 0.35),
+    0 0 12px rgba(200, 168, 102, 0.18);
+}
+@media (max-width: 480px) {
+  .ai-theme-pill {
+    font-size: 10.5px;
+    padding: 9px 16px;
+    letter-spacing: 0.26em;
+  }
+}
