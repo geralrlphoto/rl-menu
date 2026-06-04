@@ -150,6 +150,12 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
   const [saving, setSaving] = useState(false)
   const [view, setView] = useState<'article' | 'instagram' | 'facebook'>('article')
 
+  // Fotografias do artigo + prompt para o Claude Design (HTML pronto)
+  const [photoUrls, setPhotoUrls] = useState<string[]>(['', '', '', '', ''])
+  const [showHtmlPrompt, setShowHtmlPrompt] = useState(false)
+  const [htmlPaste, setHtmlPaste] = useState('')
+  const [htmlShowPasted, setHtmlShowPasted] = useState(false)
+
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_PROMPT_KEY)
@@ -235,7 +241,86 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
     setTopics([]); setTopicsPaste(''); setTopicsErr(null)
     setChosen(null); setArticle(null); setArticlePaste(''); setArticleErr(null)
     setSavedId(null); setView('article')
+    setPhotoUrls(['', '', '', '', ''])
+    setShowHtmlPrompt(false); setHtmlPaste(''); setHtmlShowPasted(false)
   }
+
+  /** Gera o prompt para o Claude Design devolver HTML pronto a colar. */
+  function buildHtmlPrompt(): string {
+    if (!article || !chosen) return ''
+    const urls = photoUrls
+      .map((u, i) => ({ idx: i + 1, url: u.trim() }))
+      .filter(x => x.url.length > 0)
+
+    const photosBlock = urls.length
+      ? urls.map(u => `${u.idx}. ${u.url}`).join('\n')
+      : '(nenhuma URL fornecida — usa placeholder grey-box e mantém os markers visíveis)'
+
+    return `És Claude Design. Vou-te dar um artigo de blog do estúdio RL Photo Video e até 5 URLs de fotografias. Quero código HTML pronto a colar no meu site (CMS aceita HTML+CSS inline).
+
+# Identidade visual obrigatória (Atmosphère)
+- Fundo: #120d08
+- Texto principal (ink): #efe7d6
+- Texto secundário: #b8a98b
+- Acento gold: #c8a866 (suave: #d7bd87)
+- Tipografia: 'Cormorant Garamond' (títulos, italics, legendas), 'Hanken Grotesk' ou system-ui (corpo)
+- Importa as fontes do Google Fonts no topo do <style>
+- Letterspacing largo em eyebrows (0.32em), tudo MAIÚSCULAS, peso 600, 10-11px
+
+# Estrutura do artigo
+1. Hero
+   - Eyebrow (categoria + tempo de leitura)
+   - Título em Cormorant Garamond light, clamp(28px, 4vw, 48px)
+   - Linha gold de 60px abaixo do título
+   - Subtítulo em italic gold-soft, max-width 600px, centrado
+2. Corpo
+   - Container max-width: 720px
+   - Parágrafos em Hanken Grotesk, 16-17px, line-height 1.75, cor ink
+   - Subtítulos internos (texto em **bold** no corpo) viram <h2> Cormorant Garamond medium, gold, 22-24px, com margem generosa por cima
+   - **bold** inline vira <strong> gold
+3. Fotografias
+   - Cada marker [FOTO — TIPO: descrição] vira <figure> full-width do container
+   - <img> com aspect-ratio 3/2 ou 16/9 (auto), object-fit: cover, border-radius: 4px
+   - <figcaption> abaixo: italic Cormorant 14px, gold-soft, ladeado por uma linha curta
+   - Mantém o TIPO da foto como pequena tag em eyebrow style por cima do <img>
+   - Distribui as URLs PELOS MARKERS pela ordem em que aparecem no texto
+   - Se houver mais markers do que URLs, repete a última ou deixa placeholder grey #2a1f12 com o texto da descrição como alt
+4. Rodapé SEO
+   - Pequena linha discreta com "Palavras-chave:" + keywords em gold-soft, 11px, letterspacing largo
+
+# Responsive (mobile-first)
+- Padding lateral 24px no mobile, 0 em desktop
+- Título cai para 28px no mobile
+- Figura mantém aspect-ratio em qualquer ecrã
+
+# Output
+Devolve APENAS um bloco <article class="rl-blog">...</article> com <style scoped></style> no topo dentro do article. Sem markdown fences, sem explicação, sem placeholders TODO. Nada antes nem depois. Pronto a colar.
+
+---
+
+# ARTIGO
+
+Título: ${article.title}
+${article.subtitle ? `Subtítulo: ${article.subtitle}` : ''}
+Categoria: ${chosen.category}
+Leitura: ${chosen.readingMin} min
+Palavras-chave SEO: ${article.seoKeywords}
+
+---
+
+# CORPO (com markers [FOTO — TIPO: descrição] a substituir pelas URLs)
+
+${article.body}
+
+---
+
+# FOTOGRAFIAS (na ordem de aparição nos markers)
+
+${photosBlock}
+`
+  }
+
+  const htmlPrompt = step === 'article-view' && article && chosen ? buildHtmlPrompt() : ''
 
   return (
     <div className="ai-backdrop" onClick={onClose}>
@@ -409,6 +494,110 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
                 </div>
                 <p className="ai-article-seo"><strong>SEO:</strong> {article.seoKeywords}</p>
                 <button type="button" className="ai-btn-ghost" onClick={() => copy(article.body)}>Copiar texto do artigo</button>
+
+                {/* === FOTOGRAFIAS + PROMPT PARA CLAUDE DESIGN === */}
+                <div className="ai-photos-box">
+                  <p className="ai-photos-title">
+                    <span className="ai-photos-tag">Fotografias</span>
+                    URLs das 5 imagens
+                  </p>
+                  <p className="ai-photos-hint">
+                    Cola até 5 URLs (em ordem: a 1ª substitui o 1º marker <code>[FOTO — …]</code>, a 2ª o 2º, etc.).
+                    Depois gera o prompt para o Claude Design devolver o HTML pronto a colar no site.
+                  </p>
+                  <div className="ai-photos-grid">
+                    {photoUrls.map((u, i) => (
+                      <div key={i} className="ai-photo-row">
+                        <span className="ai-photo-num">{String(i + 1).padStart(2, '0')}</span>
+                        <input
+                          type="url"
+                          inputMode="url"
+                          placeholder="https://…"
+                          value={u}
+                          onChange={(e) => {
+                            const next = [...photoUrls]
+                            next[i] = e.target.value
+                            setPhotoUrls(next)
+                          }}
+                          className="ai-photo-input"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="ai-step-actions" style={{ marginTop: 14 }}>
+                    <button
+                      type="button"
+                      className="ai-btn-primary"
+                      onClick={() => setShowHtmlPrompt(s => !s)}
+                    >
+                      {showHtmlPrompt ? '▾ Esconder prompt HTML' : '✨ Gerar prompt para Claude Design (HTML)'}
+                    </button>
+                  </div>
+
+                  {showHtmlPrompt && (
+                    <div className="ai-html-flow">
+                      <p className="ai-section-label" style={{ marginTop: 18 }}>
+                        Passo 1 · Copia este prompt e cola no chat
+                      </p>
+                      <textarea
+                        readOnly
+                        className="ai-textarea ai-prompt-show"
+                        value={htmlPrompt}
+                        rows={10}
+                        onFocus={e => e.currentTarget.select()}
+                      />
+                      <div className="ai-step-actions">
+                        <button type="button" className="ai-btn-ghost" onClick={() => copy(htmlPrompt)}>
+                          📋 Copiar prompt
+                        </button>
+                      </div>
+
+                      <p className="ai-section-label" style={{ marginTop: 18 }}>
+                        Passo 2 · Cola aqui o HTML que o Claude te devolveu
+                      </p>
+                      <textarea
+                        className="ai-textarea"
+                        rows={8}
+                        value={htmlPaste}
+                        onChange={e => setHtmlPaste(e.target.value)}
+                        placeholder='<article class="rl-blog">…</article>'
+                      />
+                      <div className="ai-step-actions">
+                        <button
+                          type="button"
+                          className="ai-btn-ghost"
+                          onClick={() => copy(htmlPaste)}
+                          disabled={!htmlPaste.trim()}
+                        >
+                          📋 Copiar HTML
+                        </button>
+                        <button
+                          type="button"
+                          className="ai-btn-primary"
+                          onClick={() => setHtmlShowPasted(s => !s)}
+                          disabled={!htmlPaste.trim()}
+                        >
+                          {htmlShowPasted ? '▾ Esconder preview' : '👁 Pré-visualizar no site'}
+                        </button>
+                      </div>
+
+                      {htmlShowPasted && htmlPaste.trim() && (
+                        <div className="ai-html-preview">
+                          <p className="ai-photos-hint" style={{ margin: '8px 0' }}>
+                            Pré-visualização (aproximada — o site real pode renderizar diferente):
+                          </p>
+                          <iframe
+                            title="Preview HTML"
+                            srcDoc={`<html><head><meta charset="utf-8"><style>html,body{margin:0;background:#120d08;color:#efe7d6;font-family:'Hanken Grotesk',system-ui,sans-serif}</style></head><body>${htmlPaste}</body></html>`}
+                            sandbox=""
+                            style={{ width: '100%', minHeight: 480, border: '1px solid rgba(200,168,102,0.25)', borderRadius: 4, background: '#120d08' }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
