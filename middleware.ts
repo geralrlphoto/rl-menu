@@ -6,6 +6,17 @@ import { verifyNvSession, NV_COOKIE_NAME } from '@/lib/noivos-session'
 export async function middleware(request: NextRequest) {
   const { pathname, search, searchParams } = request.nextUrl
 
+  // ── Endpoint público de subscrição ao blog ───────────────────────────────
+  //   POST /api/blog-subscribers (e OPTIONS preflight) é chamado por
+  //   formulários no site público — sem auth.
+  //   GET fica admin-only (lista completa de emails é sensível).
+  if (
+    pathname === '/api/blog-subscribers' &&
+    (request.method === 'POST' || request.method === 'OPTIONS')
+  ) {
+    return NextResponse.next()
+  }
+
   // ── Portal dos Noivos (casamento / batizado) ─────────────────────────────
   //   /portal-cliente/ref/<REF>   e   /portal-batizado/ref/<REF>
   //   exigem sessão `nv_session` válida cuja referencia bate com a URL.

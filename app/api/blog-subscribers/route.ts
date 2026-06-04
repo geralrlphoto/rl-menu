@@ -28,6 +28,19 @@ function db() {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+// CORS — endpoint POST tem de ser acessível de qualquer domínio (site público).
+// GET fica admin (middleware bloqueia tudo o resto).
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Max-Age': '86400',
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS })
+}
+
 export async function GET() {
   try {
     const { data, error } = await db()
@@ -56,7 +69,7 @@ export async function POST(req: NextRequest) {
   if (!emailRaw || !EMAIL_RE.test(emailRaw)) {
     return NextResponse.json(
       { ok: false, error: 'Email inválido' },
-      { status: 400 },
+      { status: 400, headers: CORS_HEADERS },
     )
   }
 
@@ -77,10 +90,19 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (error) {
-      return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
+      return NextResponse.json(
+        { ok: false, error: error.message },
+        { status: 500, headers: CORS_HEADERS },
+      )
     }
-    return NextResponse.json({ ok: true, subscriber: data })
+    return NextResponse.json(
+      { ok: true, subscriber: data },
+      { headers: CORS_HEADERS },
+    )
   } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e?.message }, { status: 500 })
+    return NextResponse.json(
+      { ok: false, error: e?.message },
+      { status: 500, headers: CORS_HEADERS },
+    )
   }
 }
