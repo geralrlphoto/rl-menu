@@ -591,6 +591,18 @@ ${bodyBlock}
             </div>
             <div className="ai-step-actions">
               <button type="button" className="ai-btn-ghost" onClick={() => setStep('topics-paste')}>‹ Voltar a colar</button>
+              <button
+                type="button"
+                className="ai-btn-primary"
+                onClick={() => {
+                  setTopics([])
+                  setTopicsPaste('')
+                  setTopicsErr(null)
+                  setStep('topics-ask')
+                }}
+              >
+                ✨ Outros 3 Temas
+              </button>
               <button type="button" className="ai-btn-ghost" onClick={startOver}>↻ Recomeçar</button>
             </div>
           </div>
