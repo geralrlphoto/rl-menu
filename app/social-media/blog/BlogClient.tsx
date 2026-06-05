@@ -17,6 +17,7 @@
 
 import { useEffect, useState } from 'react'
 import { DEFAULT_SYSTEM_PROMPT, TOPICS_USER_PROMPT, ARTICLE_USER_PROMPT_TEMPLATE } from './_data/system-prompt'
+import { DEFAULT_VIDEO_SYSTEM_PROMPT } from './_data/video-prompt'
 
 type Topic = {
   title: string
@@ -52,6 +53,7 @@ type GenArticle = {
 }
 
 const STORAGE_PROMPT_KEY = 'rl-blog-ai-system-prompt'
+const STORAGE_VIDEO_PROMPT_KEY = 'rl-blog-ai-video-prompt'
 
 /** Temas pré-definidos para filtrar as 3 ideias geradas. */
 const THEMES: Array<{ key: string; label: string; desc: string }> = [
@@ -161,7 +163,9 @@ export default function BlogClient() {
    ============================================================ */
 function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
   const [systemPrompt, setSystemPrompt] = useState<string>(DEFAULT_SYSTEM_PROMPT)
+  const [videoPrompt, setVideoPrompt] = useState<string>(DEFAULT_VIDEO_SYSTEM_PROMPT)
   const [showPrompt, setShowPrompt] = useState(false)
+  const [showVideoPromptUI, setShowVideoPromptUI] = useState(false)
   const [showHowItWorks, setShowHowItWorks] = useState(false)
 
   type Step = 'idle' | 'topics-ask' | 'topics-paste' | 'topics-list' | 'article-ask' | 'article-paste' | 'article-view'
@@ -196,6 +200,8 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
     try {
       const stored = localStorage.getItem(STORAGE_PROMPT_KEY)
       if (stored && stored.length > 100) setSystemPrompt(stored)
+      const storedVideo = localStorage.getItem(STORAGE_VIDEO_PROMPT_KEY)
+      if (storedVideo && storedVideo.length > 100) setVideoPrompt(storedVideo)
     } catch {/* */}
   }, [])
 
@@ -218,6 +224,13 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
     setSystemPrompt(DEFAULT_SYSTEM_PROMPT)
     try { localStorage.removeItem(STORAGE_PROMPT_KEY) } catch {}
   }
+  function saveVideoPromptLocally() {
+    try { localStorage.setItem(STORAGE_VIDEO_PROMPT_KEY, videoPrompt) } catch {}
+  }
+  function resetVideoPrompt() {
+    setVideoPrompt(DEFAULT_VIDEO_SYSTEM_PROMPT)
+    try { localStorage.removeItem(STORAGE_VIDEO_PROMPT_KEY) } catch {}
+  }
 
   function copy(text: string) {
     navigator.clipboard?.writeText(text).catch(() => {})
@@ -225,14 +238,18 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
 
   // Prompts prontos a copiar
   const themeObj = THEMES.find(t => t.key === selectedTheme) ?? null
-  const themeBlock = themeObj
+  // Se o tema seleccionado tem prompt dedicado (ex: VÍDEO), usa-o em vez do base.
+  // O themeBlock também é omitido — o prompt dedicado já define o tema.
+  const usingVideoPrompt = selectedTheme === 'video'
+  const activeSystemPrompt = usingVideoPrompt ? videoPrompt : systemPrompt
+  const themeBlock = !usingVideoPrompt && themeObj
     ? `\n\n# Tema obrigatório das 3 ideias\n\nAs 3 ideias têm de pertencer ao tema "${themeObj.label}".\nDefinição: ${themeObj.desc}\nNão saiam deste âmbito.\n`
     : ''
   const usedBlock = usedTitles.length > 0
     ? `\n\n# Ideias já geradas (histórico — NUNCA podes repetir nem reformular)\n\nEstes títulos já foram gerados anteriormente. As 3 novas ideias têm de ser TODAS distintas em tema, ângulo e formulação. Não basta mudar palavras: o ângulo central tem de ser diferente.\n\nHistórico:\n${usedTitles.map((t, i) => `${i + 1}. ${t}`).join('\n')}\n\nSe o tema seleccionado já tem ideias no histórico, encontra ângulos NOVOS dentro desse tema (sub-tópicos não cobertos, perspectivas opostas, casos específicos não tratados).`
     : ''
-  const topicsFullPrompt = `${systemPrompt}${themeBlock}${usedBlock}\n\n---\n\n${TOPICS_USER_PROMPT}`
-  const articleFullPrompt = chosen ? `${systemPrompt}\n\n---\n\n${ARTICLE_USER_PROMPT_TEMPLATE
+  const topicsFullPrompt = `${activeSystemPrompt}${themeBlock}${usedBlock}\n\n---\n\n${TOPICS_USER_PROMPT}`
+  const articleFullPrompt = chosen ? `${activeSystemPrompt}\n\n---\n\n${ARTICLE_USER_PROMPT_TEMPLATE
     .replace('{{TITLE}}', chosen.title)
     .replace('{{ANGLE}}', chosen.angle)
     .replace('{{CATEGORY}}', chosen.category)
@@ -522,7 +539,11 @@ ${bodyBlock}
             </div>
             {selectedTheme && (
               <p className="ai-photos-hint" style={{ marginTop: 8 }}>
-                As 3 ideias vão focar-se exclusivamente em <strong>{themeObj?.label}</strong>.
+                {usingVideoPrompt ? (
+                  <>🎬 Tema VÍDEO seleccionado — vai usar o <strong>prompt dedicado de vídeo</strong> (regras específicas RL Photo Video).</>
+                ) : (
+                  <>As 3 ideias vão focar-se exclusivamente em <strong>{themeObj?.label}</strong>.</>
+                )}
               </p>
             )}
             {usedTitles.length > 0 && (
@@ -530,6 +551,40 @@ ${bodyBlock}
                 📚 <strong>{usedTitles.length}</strong> {usedTitles.length === 1 ? 'tema' : 'temas'} no histórico — o prompt instrui o Claude a não os repetir nem reformular.
               </p>
             )}
+
+            {/* PROMPT VÍDEO — botão dedicado (só visível na linha porque o prompt
+                é específico do tema VÍDEO) */}
+            <div style={{ marginTop: 16 }}>
+              <button
+                type="button"
+                onClick={() => setShowVideoPromptUI(s => !s)}
+                className={`ai-row-btn ${usingVideoPrompt ? 'ai-row-btn--video-active' : ''}`}
+              >
+                <span className="ai-row-label">
+                  📹 Prompt Vídeo {usingVideoPrompt && <span style={{ color: 'var(--gold, #c8a866)', marginLeft: 6 }}>· ACTIVO</span>}
+                </span>
+                <span className="ai-row-meta">{showVideoPromptUI ? '▾ Esconder' : '▸ Ver / Editar'}</span>
+              </button>
+              {showVideoPromptUI && (
+                <div className="ai-prompt-edit">
+                  <p className="ai-photos-hint" style={{ marginBottom: 8 }}>
+                    Este prompt é usado quando a pill <strong>VÍDEO</strong> está seleccionada.
+                    Editas, guardas localmente, e o agente passa a usar a tua versão.
+                  </p>
+                  <textarea
+                    value={videoPrompt}
+                    onChange={e => setVideoPrompt(e.target.value)}
+                    rows={16}
+                    className="ai-textarea"
+                  />
+                  <div className="ai-prompt-actions">
+                    <button type="button" className="ai-btn-ghost" onClick={resetVideoPrompt}>↻ Reset ao default</button>
+                    <button type="button" className="ai-btn-ghost" onClick={saveVideoPromptLocally}>✓ Guardar localmente</button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button
               type="button"
               onClick={() => setStep('topics-ask')}

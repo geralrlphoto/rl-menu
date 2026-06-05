@@ -341,6 +341,11 @@
   transition: 0.2s;
 }
 .ai-row-btn:hover { border-color: var(--gold-line); background: rgba(200, 168, 102, 0.08); }
+.ai-row-btn--video-active {
+  border-color: var(--gold, #c8a866) !important;
+  background: rgba(200, 168, 102, 0.10);
+  box-shadow: 0 0 12px rgba(200, 168, 102, 0.18);
+}
 .ai-row-label {
   font-size: 12px; font-weight: 600;
   letter-spacing: 0.22em; text-transform: uppercase;
