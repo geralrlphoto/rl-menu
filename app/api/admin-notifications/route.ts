@@ -23,6 +23,7 @@ const TIPO_LABELS: Record<string, string> = {
   nova_tarefa_atribuida:    'Tarefa enviada entre membros',
   album_aprovado:           'Álbum Aprovado pelos Noivos',
   mensagem_noivos:          'Mensagem dos Noivos',
+  blog_subscriber:          'Nova Subscrição do Blog',
 }
 
 const TIPO_ICONS: Record<string, string> = {
@@ -40,6 +41,7 @@ const TIPO_ICONS: Record<string, string> = {
   nova_tarefa_atribuida:    '✈',
   album_aprovado:           '✓',
   mensagem_noivos:          '💬',
+  blog_subscriber:          '✉',
 }
 
 type Notif = {
@@ -421,6 +423,42 @@ export async function GET() {
       }
     } catch (err) {
       console.warn('[admin-notifications] noivos_messages read failed:', err)
+    }
+
+    // ── Notificações de SUBSCRIÇÃO AO BLOG ──
+    //   Cada vez que alguém subscreve (form do site OU import OU manual no admin)
+    //   aparece no sino. Os recém-importados em batch são todos do mesmo dia,
+    //   por isso limitamos a últimos 30 dias para não inundar.
+    try {
+      const { data: subscribers } = await supabase
+        .from('blog_subscribers')
+        .select('id, email, source, status, created_at')
+        .eq('status', 'active')
+        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+        .order('created_at', { ascending: false })
+        .limit(50)
+      for (const s of (subscribers ?? []) as any[]) {
+        if (!s.created_at || !s.email) continue
+        // Não mostra os importados em batch (poluem o sino).
+        // Mostra os que vêm do site público ou adicionados manualmente.
+        const src = String(s.source ?? '').toLowerCase()
+        if (src === 'import') continue
+        notifications.push({
+          id: `blog_subscriber::${s.id}`,
+          tipo: 'blog_subscriber',
+          tipo_label: TIPO_LABELS.blog_subscriber,
+          tipo_icon: TIPO_ICONS.blog_subscriber,
+          casamento_id: '',
+          freelancer_id: '',
+          freelancer_nome: s.email,
+          local: src === 'site' ? 'Formulário do site' : src === 'admin' ? 'Adicionado manualmente' : (s.source ?? '—'),
+          data_casamento: null,
+          url: '/social-media/blog/subscritores',
+          sent_at: s.created_at,
+        })
+      }
+    } catch (err) {
+      console.warn('[admin-notifications] blog_subscribers read failed:', err)
     }
 
     // Ordenar por sent_at DESC
