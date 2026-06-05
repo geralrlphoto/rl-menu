@@ -58,7 +58,7 @@ const THEMES: Array<{ key: string; label: string; desc: string }> = [
   {
     key: 'casamentos',
     label: 'CASAMENTOS',
-    desc: 'Tudo o que envolve casar: cerimónia, copo-de-água, tradições, organização do dia, fotografia e vídeo de casamento.',
+    desc: 'Tudo o que envolve casar: cerimónia, copo-de-água, tradições, organização do dia, momentos chave do casamento.',
   },
   {
     key: 'dicas',
@@ -69,6 +69,16 @@ const THEMES: Array<{ key: string; label: string; desc: string }> = [
     key: 'bastidores',
     label: 'BASTIDORES',
     desc: 'Vida de estúdio, processos de trabalho, decisões de produção, equipamento sem ser nerd, histórias reais (anonimizadas).',
+  },
+  {
+    key: 'fotografia',
+    label: 'FOTOGRAFIA',
+    desc: 'Foco específico em fotografia de casamento: luz, lentes, composição, momentos a captar, retrato dos noivos, álbum final. Sem ser demasiado técnico para os noivos.',
+  },
+  {
+    key: 'video',
+    label: 'VÍDEO',
+    desc: 'Foco específico em vídeo de casamento: narrativa, edição, escolha do videógrafo, diferenças entre registo e filme, som, música, entrega final.',
   },
   {
     key: 'inspiracao',
@@ -134,11 +144,7 @@ export default function BlogClient() {
             &mdash; copias, colas, ele responde, tu colas a resposta de volta
             e guarda-se aqui. Tudo de graça.
           </p>
-          {setupHint && (
-            <p className="blg-empty-setup">
-              <strong>Setup DB:</strong> {setupHint.slice(0, 200)}
-            </p>
-          )}
+          {setupHint && <DbSetupHint hint={setupHint} />}
         </section>
       )}
 
@@ -173,6 +179,7 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
 
   const [savedAs, setSavedAs] = useState<'draft' | 'used' | null>(null)
   const [saving, setSaving] = useState(false)
+  const [saveErr, setSaveErr] = useState<string | null>(null)
   const [view, setView] = useState<'article' | 'instagram' | 'facebook'>('article')
 
   // Histórico de títulos já gerados (qualquer status) — para o Claude não repetir
@@ -267,6 +274,7 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
   async function saveArticle(asUsed: boolean = false) {
     if (!article) return
     setSaving(true)
+    setSaveErr(null)
     try {
       const r = await fetch('/api/blog-articles', {
         method: 'POST',
@@ -275,23 +283,35 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
           article: { ...article, category: chosen?.category, readingMin: chosen?.readingMin },
         }),
       })
-      const d = await r.json()
-      if (d.ok && d.article?.id) {
-        if (asUsed) {
-          await fetch(`/api/blog-articles/${d.article.id}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: 'used' }),
-          })
-        }
-        // Acrescenta ao histórico local (para o próximo ciclo já não repetir)
-        setUsedTitles(prev =>
-          prev.includes(article.title) ? prev : [...prev, article.title],
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok || !d?.ok || !d?.article?.id) {
+        const msg =
+          d?.error ||
+          d?.details ||
+          (r.status === 404 ? 'Endpoint não encontrado' : `Falha (${r.status})`)
+        setSaveErr(
+          /relation .* does not exist|blog_articles/i.test(String(msg))
+            ? 'A tabela blog_articles ainda não existe no Supabase. Vai ao SQL Editor e corre o script (na página inicial, debaixo do empty state).'
+            : `Erro ao guardar: ${msg}`,
         )
-        setSavedAs(asUsed ? 'used' : 'draft')
-        onSaved()
+        setSaving(false)
+        return
       }
-    } catch {/* */}
+      if (asUsed) {
+        await fetch(`/api/blog-articles/${d.article.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'used' }),
+        })
+      }
+      setUsedTitles(prev =>
+        prev.includes(article.title) ? prev : [...prev, article.title],
+      )
+      setSavedAs(asUsed ? 'used' : 'draft')
+      onSaved()
+    } catch (e: any) {
+      setSaveErr(`Erro de rede: ${e?.message ?? 'desconhecido'}`)
+    }
     setSaving(false)
   }
 
