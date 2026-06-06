@@ -4005,11 +4005,11 @@ export default function EventoPage() {
           </div>
         </div>
 
-        {/* ── Dados dos Noivos ── */}
-        <Section title="Dados dos Noivos">
+        {/* ── Dados dos Noivos / Pais ── */}
+        <Section title="Dados dos Noivos / Pais">
           <div className="grid grid-cols-2 gap-6">
             <div className="flex flex-col gap-3">
-              <span className="text-[9px] tracking-[0.4em] text-gold/40 uppercase border-b border-white/5 pb-1">Noiva</span>
+              <span className="text-[9px] tracking-[0.4em] text-gold/40 uppercase border-b border-white/5 pb-1">Noiva / Mãe</span>
               <EditField label="Nome" value={e.nome_noiva} field="nome_noiva" eventId={e.id} onSaved={handleSaved} />
               <EditField label="Email" value={e.email_noiva} field="email_noiva" eventId={e.id} type="email" onSaved={handleSaved} />
               <EditField label="Telemóvel" value={e.tel_noiva} field="tel_noiva" eventId={e.id} type="tel" onSaved={handleSaved} />
@@ -4018,7 +4018,7 @@ export default function EventoPage() {
               <EditField label="NIF" value={e.nif_noiva} field="nif_noiva" eventId={e.id} onSaved={handleSaved} />
             </div>
             <div className="flex flex-col gap-3">
-              <span className="text-[9px] tracking-[0.4em] text-gold/40 uppercase border-b border-white/5 pb-1">Noivo</span>
+              <span className="text-[9px] tracking-[0.4em] text-gold/40 uppercase border-b border-white/5 pb-1">Noivo / Pai</span>
               <EditField label="Nome" value={e.nome_noivo} field="nome_noivo" eventId={e.id} onSaved={handleSaved} />
               <EditField label="Email" value={e.email_noivo} field="email_noivo" eventId={e.id} type="email" onSaved={handleSaved} />
               <EditField label="Telemóvel" value={e.tel_noivo} field="tel_noivo" eventId={e.id} type="tel" onSaved={handleSaved} />
