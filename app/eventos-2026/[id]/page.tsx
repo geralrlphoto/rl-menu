@@ -3301,7 +3301,7 @@ export default function EventoPage() {
               options={optionsFoto}
               onChanged={setEquipaFoto}
               unavailableNames={unavailableNames} />
-            <EditEquipaField label="Videógrafo" field="videografo" multi={false}
+            <EditEquipaField label="Videógrafo" field="videografo" multi={true}
               eventoId={e.id} referencia={e.referencia ?? ''} local={e.local ?? ''} dataCasamento={e.data_evento ?? ''}
               initialValue={e.videografo ?? []}
               options={optionsVideo}
