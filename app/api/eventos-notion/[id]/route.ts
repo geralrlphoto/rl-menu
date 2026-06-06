@@ -602,7 +602,22 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       cliente:          getProp(p, 'CLIENTE', 'text'),
       data_evento:      getProp(p, 'DATA DO EVENTO', 'date') ?? contrato?.data_casamento ?? null,
       local:            getProp(p, 'LOCAL', 'text') ?? contrato?.local_cerimonia ?? '',
-      tipo_evento:      getProp(p, 'TIPO DE EVENTO', 'multi_select'),
+      // tipo_evento: Notion (multi_select) primeiro; se vazio, cai para Supabase
+      // que guarda como string JSON (ex: '["BATIZADO"]') ou array directo.
+      tipo_evento:      (() => {
+        const fromNotion = getProp(p, 'TIPO DE EVENTO', 'multi_select')
+        if (Array.isArray(fromNotion) && fromNotion.length > 0) return fromNotion
+        const sbVal = (sbRow as any)?.tipo_evento
+        if (Array.isArray(sbVal)) return sbVal
+        if (typeof sbVal === 'string' && sbVal.trim()) {
+          try {
+            const parsed = JSON.parse(sbVal)
+            if (Array.isArray(parsed)) return parsed
+          } catch { /* ignora */ }
+          return [sbVal]
+        }
+        return []
+      })(),
       tipo_servico:     getProp(p, 'TIPO DE SERVIÇO', 'multi_select'),
       servicos_dia:     (getProp(p, 'SERVIÇOS DO DIA', 'multi_select') ?? []).length > 0
                           ? getProp(p, 'SERVIÇOS DO DIA', 'multi_select')
