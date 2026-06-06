@@ -382,6 +382,52 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       }
     }
 
+    // ── Sync campos dos noivos/pais para dados_contrato_cps ────────────────
+    //   Garante que mesmo que o PATCH ao Notion falhe (nomes de propriedades
+    //   sensíveis a caracteres especiais), os dados ficam guardados em Supabase
+    //   e ficam disponíveis para o PDF do contrato via fallback.
+    const noivosFields: Record<string, any> = {}
+    const NOIVOS_KEYS = [
+      'nome_noiva', 'nome_noivo',
+      'email_noiva', 'email_noivo',
+      'tel_noiva', 'tel_noivo',
+      'morada_noiva', 'morada_noivo',
+      'cc_noiva', 'cc_noivo',
+      'nif_noiva', 'nif_noivo',
+    ]
+    for (const k of NOIVOS_KEYS) {
+      if (body[k] !== undefined) noivosFields[k] = body[k] ?? null
+    }
+    if (Object.keys(noivosFields).length > 0) {
+      const sb = supabase()
+      // Descobrir a referência do evento: do body, ou de eventos_2026/2027
+      let referencia: string | null = body.referencia ?? null
+      if (!referencia) {
+        for (const t of ['eventos_2026', 'eventos_2027']) {
+          const { data } = await sb.from(t).select('referencia').or(`notion_id.eq.${id},id.eq.${id}`).maybeSingle()
+          if (data?.referencia) { referencia = data.referencia; break }
+        }
+      }
+      if (referencia) {
+        // UPSERT em dados_contrato_cps por referencia_evento
+        const { data: existing } = await sb
+          .from('dados_contrato_cps')
+          .select('id')
+          .eq('referencia_evento', referencia)
+          .order('id', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        if (existing?.id) {
+          await sb.from('dados_contrato_cps').update(noivosFields).eq('id', existing.id)
+        } else {
+          await sb.from('dados_contrato_cps').insert({
+            ...noivosFields,
+            referencia_evento: referencia,
+          })
+        }
+      }
+    }
+
     // Invalida o cache do dashboard /photo (que faz fetch ao Notion com
     // revalidate: 120). Garante que os prazos atualizados aparecem
     // imediatamente em vez de aguardar 2 minutos pelo cache.
