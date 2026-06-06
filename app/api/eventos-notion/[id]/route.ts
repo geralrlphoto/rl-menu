@@ -11,6 +11,17 @@ function supabase() {
   )
 }
 
+/** Devolve o primeiro valor que NÃO seja null/undefined/string vazia.
+ *  Útil para combinar o valor Notion (que pode vir '') com fallbacks Supabase. */
+function firstNonEmpty<T>(...vals: (T | null | undefined)[]): T | null {
+  for (const v of vals) {
+    if (v === null || v === undefined) continue
+    if (typeof v === 'string' && v.trim() === '') continue
+    return v as T
+  }
+  return null
+}
+
 function getProp(props: any, key: string, type: string): any {
   const p = props[key]
   if (!p) return null
@@ -623,19 +634,24 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       alerta_30du:      getProp(p, 'ALERTA 30DU ENVIADO', 'checkbox'),
       agendamento_email:getProp(p, 'AGENDAMENTO EMAIL', 'select'),
       contratos:        getProp(p, 'CONTRATOS', 'url'),
-      // Dados dos noivos / pais — Notion primeiro, dados_contrato_cps como fallback
-      nome_noiva:       getProp(p, 'Nome da Noiva', 'text')         ?? contrato?.nome_noiva   ?? null,
-      nome_noivo:       getProp(p, 'nome do noivo', 'text')         ?? contrato?.nome_noivo   ?? null,
-      email_noiva:      getProp(p, 'E-mail da noiva', 'email')      ?? contrato?.email_noiva  ?? null,
-      email_noivo:      getProp(p, 'E-mail do noivo', 'email')      ?? contrato?.email_noivo  ?? null,
-      tel_noiva:        getProp(p, 'Telefone da noiva', 'phone')    ?? contrato?.tel_noiva    ?? null,
-      tel_noivo:        getProp(p, 'Telefone do noivo', 'phone')    ?? contrato?.tel_noivo    ?? null,
-      morada_noiva:     getProp(p, 'Morada da Noiva', 'text')       ?? contrato?.morada_noiva ?? null,
-      morada_noivo:     getProp(p, 'Morada do noivo', 'text')       ?? contrato?.morada_noivo ?? null,
-      cc_noiva:         getProp(p, 'N.º C.Cidadão da noiva', 'text')?? contrato?.cc_noiva     ?? null,
-      cc_noivo:         getProp(p, 'N.ºC.Cidadao Noivo', 'text')    ?? contrato?.cc_noivo     ?? null,
-      nif_noiva:        getProp(p, 'N.º Iden.Fiscal Noiva', 'text') ?? contrato?.nif_noiva    ?? null,
-      nif_noivo:        getProp(p, 'N.º Iden. Fiscal Noivo', 'text')?? contrato?.nif_noivo    ?? null,
+      // Dados dos noivos / pais — Notion primeiro, dados_contrato_cps como fallback.
+      // IMPORTANTE: getProp('text', ...) devolve '' (string vazia) quando o
+      // Notion tem a propriedade mas sem valor. Por isso fazemos trim() e
+      // tratamos string vazia como ausente, para o fallback `contrato.*` poder
+      // entrar em acção. Para email/phone o getProp já devolve null, mas
+      // mantemos a mesma helper por consistência.
+      nome_noiva:       firstNonEmpty(getProp(p, 'Nome da Noiva', 'text'),         contrato?.nome_noiva),
+      nome_noivo:       firstNonEmpty(getProp(p, 'nome do noivo', 'text'),         contrato?.nome_noivo),
+      email_noiva:      firstNonEmpty(getProp(p, 'E-mail da noiva', 'email'),      contrato?.email_noiva),
+      email_noivo:      firstNonEmpty(getProp(p, 'E-mail do noivo', 'email'),      contrato?.email_noivo),
+      tel_noiva:        firstNonEmpty(getProp(p, 'Telefone da noiva', 'phone'),    contrato?.tel_noiva),
+      tel_noivo:        firstNonEmpty(getProp(p, 'Telefone do noivo', 'phone'),    contrato?.tel_noivo),
+      morada_noiva:     firstNonEmpty(getProp(p, 'Morada da Noiva', 'text'),       contrato?.morada_noiva),
+      morada_noivo:     firstNonEmpty(getProp(p, 'Morada do noivo', 'text'),       contrato?.morada_noivo),
+      cc_noiva:         firstNonEmpty(getProp(p, 'N.º C.Cidadão da noiva', 'text'),contrato?.cc_noiva),
+      cc_noivo:         firstNonEmpty(getProp(p, 'N.ºC.Cidadao Noivo', 'text'),    contrato?.cc_noivo),
+      nif_noiva:        firstNonEmpty(getProp(p, 'N.º Iden.Fiscal Noiva', 'text'), contrato?.nif_noiva),
+      nif_noivo:        firstNonEmpty(getProp(p, 'N.º Iden. Fiscal Noivo', 'text'),contrato?.nif_noivo),
       // Campos extra (batizado)
       nome_crianca:     (sbRow as any)?.nome_crianca  ?? contrato?.nome_crianca  ?? null,
       idade_crianca:    (sbRow as any)?.idade_crianca ?? contrato?.idade_crianca ?? null,
