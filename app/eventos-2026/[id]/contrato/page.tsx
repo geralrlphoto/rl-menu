@@ -248,18 +248,18 @@ function ContratoPageContent() {
             <div>
               <p className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-1">Segunda Outorgante (Contratante)</p>
               <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
-                <div><span className="text-zinc-400 text-xs block mb-0.5">Nome (Noiva)</span><strong><F field="nome_noiva" draft={e} editing={editing} readonlyMode={readonly} onChange={change} placeholder="Nome da noiva" /></strong></div>
-                <div><span className="text-zinc-400 text-xs block mb-0.5">Nome (Noivo)</span><strong><F field="nome_noivo" draft={e} editing={editing} readonlyMode={readonly} onChange={change} placeholder="Nome do noivo" /></strong></div>
-                <div><span className="text-zinc-400 text-xs block mb-0.5">C.C. (Noiva)</span><F field="cc_noiva" draft={e} editing={editing} readonlyMode={readonly} onChange={change} placeholder="N.º Cartão Cidadão" /></div>
-                <div><span className="text-zinc-400 text-xs block mb-0.5">C.C. (Noivo)</span><F field="cc_noivo" draft={e} editing={editing} readonlyMode={readonly} onChange={change} placeholder="N.º Cartão Cidadão" /></div>
-                <div><span className="text-zinc-400 text-xs block mb-0.5">NIF (Noiva)</span><F field="nif_noiva" draft={e} editing={editing} readonlyMode={readonly} onChange={change} placeholder="NIF" /></div>
-                <div><span className="text-zinc-400 text-xs block mb-0.5">NIF (Noivo)</span><F field="nif_noivo" draft={e} editing={editing} readonlyMode={readonly} onChange={change} placeholder="NIF" /></div>
-                <div><span className="text-zinc-400 text-xs block mb-0.5">Morada (Noiva)</span><F field="morada_noiva" draft={e} editing={editing} readonlyMode={readonly} onChange={change} placeholder="Morada da noiva" /></div>
-                <div><span className="text-zinc-400 text-xs block mb-0.5">Morada (Noivo)</span><F field="morada_noivo" draft={e} editing={editing} readonlyMode={readonly} onChange={change} placeholder="Morada do noivo" /></div>
-                <div><span className="text-zinc-400 text-xs block mb-0.5">E-mail (Noiva)</span><F field="email_noiva" draft={e} editing={editing} readonlyMode={readonly} onChange={change} type="email" placeholder="E-mail da noiva" /></div>
-                <div><span className="text-zinc-400 text-xs block mb-0.5">E-mail (Noivo)</span><F field="email_noivo" draft={e} editing={editing} readonlyMode={readonly} onChange={change} type="email" placeholder="E-mail do noivo" /></div>
-                <div><span className="text-zinc-400 text-xs block mb-0.5">Telefone (Noiva)</span><F field="tel_noiva" draft={e} editing={editing} readonlyMode={readonly} onChange={change} type="tel" placeholder="Telefone da noiva" /></div>
-                <div><span className="text-zinc-400 text-xs block mb-0.5">Telefone (Noivo)</span><F field="tel_noivo" draft={e} editing={editing} readonlyMode={readonly} onChange={change} type="tel" placeholder="Telefone do noivo" /></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">Nome (Noiva/Mãe)</span><strong><F field="nome_noiva" draft={e} editing={editing} readonlyMode={readonly} onChange={change} placeholder="Nome da noiva" /></strong></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">Nome (Noivo/Pai)</span><strong><F field="nome_noivo" draft={e} editing={editing} readonlyMode={readonly} onChange={change} placeholder="Nome do noivo" /></strong></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">C.C. (Noiva/Mãe)</span><F field="cc_noiva" draft={e} editing={editing} readonlyMode={readonly} onChange={change} placeholder="N.º Cartão Cidadão" /></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">C.C. (Noivo/Pai)</span><F field="cc_noivo" draft={e} editing={editing} readonlyMode={readonly} onChange={change} placeholder="N.º Cartão Cidadão" /></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">NIF (Noiva/Mãe)</span><F field="nif_noiva" draft={e} editing={editing} readonlyMode={readonly} onChange={change} placeholder="NIF" /></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">NIF (Noivo/Pai)</span><F field="nif_noivo" draft={e} editing={editing} readonlyMode={readonly} onChange={change} placeholder="NIF" /></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">Morada (Noiva/Mãe)</span><F field="morada_noiva" draft={e} editing={editing} readonlyMode={readonly} onChange={change} placeholder="Morada da noiva" /></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">Morada (Noivo/Pai)</span><F field="morada_noivo" draft={e} editing={editing} readonlyMode={readonly} onChange={change} placeholder="Morada do noivo" /></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">E-mail (Noiva/Mãe)</span><F field="email_noiva" draft={e} editing={editing} readonlyMode={readonly} onChange={change} type="email" placeholder="E-mail da noiva" /></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">E-mail (Noivo/Pai)</span><F field="email_noivo" draft={e} editing={editing} readonlyMode={readonly} onChange={change} type="email" placeholder="E-mail do noivo" /></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">Telefone (Noiva/Mãe)</span><F field="tel_noiva" draft={e} editing={editing} readonlyMode={readonly} onChange={change} type="tel" placeholder="Telefone da noiva" /></div>
+                <div><span className="text-zinc-400 text-xs block mb-0.5">Telefone (Noivo/Pai)</span><F field="tel_noivo" draft={e} editing={editing} readonlyMode={readonly} onChange={change} type="tel" placeholder="Telefone do noivo" /></div>
               </div>
               <p className="text-sm mt-3">doravante designados como <strong>CONTRATANTE</strong>.</p>
             </div>
