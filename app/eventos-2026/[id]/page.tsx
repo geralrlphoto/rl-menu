@@ -2229,6 +2229,10 @@ export default function EventoPage() {
   const [videoActionUrls, setVideoActionUrls] = useState<Record<string, string>>({ video_prewedding: '', wedding_film: '', same_day_edit: '', teaser: '' })
   const [notifFotoEnviada, setNotifFotoEnviada] = useState<string | null>(null)
   const [notifVideoEnviada, setNotifVideoEnviada] = useState<string | null>(null)
+  // Per-pessoa: { "PATRICIO FERREIRA": "2026-06-04", ... }
+  const [notifFotoEnviadaBy, setNotifFotoEnviadaBy] = useState<Record<string, string>>({})
+  const [notifVideoEnviadaBy, setNotifVideoEnviadaBy] = useState<Record<string, string>>({})
+  const [sendingNotifPerson, setSendingNotifPerson] = useState<Record<string, boolean>>({})
   const [relatoriosVideo, setRelatoriosVideo] = useState<any[]>([])
   const [copiedVideoIdx, setCopiedVideoIdx] = useState<number | null>(null)
   const [sendingNotifFoto, setSendingNotifFoto] = useState(false)
@@ -2535,6 +2539,22 @@ export default function EventoPage() {
               if (s.portal_enviada)           setPortalEnviada(s.portal_enviada)
               if (s.notif_foto_enviada)       setNotifFotoEnviada(s.notif_foto_enviada)
               if (s.notif_video_enviada)      setNotifVideoEnviada(s.notif_video_enviada)
+              // Notificação por pessoa (novo modelo)
+              if (s.notif_foto_enviada_by && typeof s.notif_foto_enviada_by === 'object') {
+                setNotifFotoEnviadaBy(s.notif_foto_enviada_by as Record<string, string>)
+              } else if (s.notif_foto_enviada && Array.isArray(ev.fotografo)) {
+                // Migração: trata o campo legacy como todos os fotógrafos actuais notificados nessa data
+                const map: Record<string, string> = {}
+                for (const n of ev.fotografo) map[String(n)] = s.notif_foto_enviada
+                setNotifFotoEnviadaBy(map)
+              }
+              if (s.notif_video_enviada_by && typeof s.notif_video_enviada_by === 'object') {
+                setNotifVideoEnviadaBy(s.notif_video_enviada_by as Record<string, string>)
+              } else if (s.notif_video_enviada && Array.isArray(ev.videografo)) {
+                const map: Record<string, string> = {}
+                for (const n of ev.videografo) map[String(n)] = s.notif_video_enviada
+                setNotifVideoEnviadaBy(map)
+              }
               if (s.valor_fotografo  != null) setValorFotografo(s.valor_fotografo)
               if (s.valor_videografo != null) setValorVideografo(s.valor_videografo)
               if (s.valor_editor_video != null) setValorEditorVideo(s.valor_editor_video)
@@ -3308,151 +3328,171 @@ export default function EventoPage() {
             <EditField label="Agendamento Email" value={e.agendamento_email} field="agendamento_email" eventId={e.id} onSaved={handleSaved} />
           </div>
 
-          {/* ── Notificações Equipa ── */}
+          {/* ── Notificações Equipa (1 botão por pessoa) ── */}
           <div className="print:hidden mt-5 pt-5 border-t border-white/[0.05]">
             <p className="text-[9px] tracking-[0.4em] text-purple-400/60 uppercase mb-4">Notificação</p>
             <div className="grid grid-cols-2 gap-4">
-              {/* Notificação Fotógrafo */}
+              {/* Notificação Fotógrafo — 1 linha por nome */}
               {(() => {
                 const nomes = equipaFoto
                 const hasTeam = nomes.length > 0
-                const allUnavailable = hasTeam && nomes.every(n => unavailableNames.includes(n.toUpperCase()))
                 return (
                   <div className="flex flex-col gap-2 rounded-xl p-4" style={{ background: 'rgba(160,100,240,0.04)', border: '1px solid rgba(160,100,240,0.15)' }}>
                     <p className="text-[9px] tracking-[0.3em] uppercase text-white/30">Fotógrafo</p>
-                    {nomes.length > 0 && (
-                      <p className="text-[11px] text-purple-300/60 truncate">{nomes.join(', ')}</p>
+                    {!hasTeam && (
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] text-white/20 flex-1">Pendente</span>
+                        <span className="px-3 py-2 rounded-lg text-[10px] font-semibold tracking-[0.15em] uppercase border bg-white/[0.03] text-white/20 border-white/10">🔒 Sem equipa</span>
+                      </div>
                     )}
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="flex-1">
-                        <p className="text-[10px] font-mono">
-                          {notifFotoEnviada
-                            ? <span className="text-green-400/70">{new Date(notifFotoEnviada).toLocaleDateString('pt-PT')}</span>
-                            : <span className="text-white/20">Pendente</span>
-                          }
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        {notifFotoEnviada && (
-                          <button
-                            onClick={async () => {
-                              if (!evento?.referencia) return
-                              await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { notif_foto_enviada: null } } }) })
-                              setNotifFotoEnviada(null)
-                            }}
-                            className="w-6 h-6 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-all text-xs"
-                            title="Repor como Pendente"
-                          >✕</button>
-                        )}
-                        <button
-                          disabled={!hasTeam || sendingNotifFoto || allUnavailable}
-                          onClick={async () => {
-                            if (!hasTeam || !evento?.referencia || sendingNotifFoto || allUnavailable) return
-                            setSendingNotifFoto(true)
-                            setNotifFotoErro(null)
-                            const today = new Date().toISOString().split('T')[0]
-                            const emailRes = await fetch('/api/send-freelancer-notification', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ nomes, tipo: 'fotografo', referencia: evento.referencia, data_evento: evento.data_evento, local: evento.local, nome_noiva: evento.nome_noiva, nome_noivo: evento.nome_noivo }),
-                            })
-                            const emailData = await emailRes.json()
-                            if (emailRes.ok && emailData.ok) {
-                              await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { notif_foto_enviada: today } } }) })
-                              setNotifFotoEnviada(today)
-                            } else {
-                              setNotifFotoErro(emailData.error ?? 'Erro ao enviar')
-                            }
-                            setSendingNotifFoto(false)
-                          }}
-                          className={`px-3 py-2 rounded-lg text-[10px] font-semibold tracking-[0.15em] uppercase border transition-all ${
-                            notifFotoEnviada ? 'bg-green-500/20 text-green-400 border-green-500/30'
-                            : !hasTeam ? 'bg-white/[0.03] text-white/20 border-white/10 cursor-not-allowed'
-                            : allUnavailable ? 'bg-red-500/10 text-red-400/60 border-red-500/20 cursor-not-allowed'
-                            : sendingNotifFoto ? 'bg-purple-500/10 text-purple-300/50 border-purple-500/20 cursor-not-allowed'
-                            : notifFotoErro ? 'bg-red-500/15 text-red-300 border-red-500/25 hover:bg-red-500/25'
-                            : 'bg-purple-500/15 text-purple-300 border-purple-500/25 hover:bg-purple-500/25'
-                          }`}
-                        >
-                          {sendingNotifFoto ? '...' : notifFotoEnviada ? '✓ Enviado' : !hasTeam ? '🔒 Sem equipa' : allUnavailable ? '🔒 Indisponível' : notifFotoErro ? '⚠ Sem email' : 'Notificar'}
-                        </button>
-                      </div>
-                    </div>
+                    {nomes.map((nome) => {
+                      const isUnavailable = unavailableNames.includes(nome.toUpperCase())
+                      const enviadaEm = notifFotoEnviadaBy[nome] ?? null
+                      const sending = sendingNotifPerson[`foto::${nome}`] ?? false
+                      return (
+                        <div key={nome} className="flex items-center gap-2 py-1.5 border-t border-white/[0.04] first:border-t-0">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[11px] text-purple-300/80 truncate">{nome}</p>
+                            <p className="text-[10px] font-mono mt-0.5">
+                              {enviadaEm
+                                ? <span className="text-green-400/70">{new Date(enviadaEm).toLocaleDateString('pt-PT')}</span>
+                                : <span className="text-white/20">Pendente</span>
+                              }
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            {enviadaEm && (
+                              <button
+                                onClick={async () => {
+                                  if (!evento?.referencia) return
+                                  const next = { ...notifFotoEnviadaBy }
+                                  delete next[nome]
+                                  await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { notif_foto_enviada_by: next } } }) })
+                                  setNotifFotoEnviadaBy(next)
+                                }}
+                                className="w-6 h-6 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-all text-xs"
+                                title="Repor como Pendente"
+                              >✕</button>
+                            )}
+                            <button
+                              disabled={sending || isUnavailable}
+                              onClick={async () => {
+                                if (!evento?.referencia || sending || isUnavailable) return
+                                setSendingNotifPerson(s => ({ ...s, [`foto::${nome}`]: true }))
+                                const today = new Date().toISOString().split('T')[0]
+                                const emailRes = await fetch('/api/send-freelancer-notification', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ nomes: [nome], tipo: 'fotografo', referencia: evento.referencia, data_evento: evento.data_evento, local: evento.local, nome_noiva: evento.nome_noiva, nome_noivo: evento.nome_noivo }),
+                                })
+                                const emailData = await emailRes.json()
+                                if (emailRes.ok && emailData.ok) {
+                                  const next = { ...notifFotoEnviadaBy, [nome]: today }
+                                  await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { notif_foto_enviada_by: next } } }) })
+                                  setNotifFotoEnviadaBy(next)
+                                } else {
+                                  setNotifFotoErro(emailData.error ?? 'Erro ao enviar')
+                                }
+                                setSendingNotifPerson(s => ({ ...s, [`foto::${nome}`]: false }))
+                              }}
+                              className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold tracking-[0.15em] uppercase border transition-all ${
+                                enviadaEm ? 'bg-green-500/15 text-green-400/80 border-green-500/25 hover:bg-green-500/25'
+                                : isUnavailable ? 'bg-red-500/10 text-red-400/60 border-red-500/20 cursor-not-allowed'
+                                : sending ? 'bg-purple-500/10 text-purple-300/50 border-purple-500/20 cursor-not-allowed'
+                                : 'bg-purple-500/15 text-purple-300 border-purple-500/25 hover:bg-purple-500/25'
+                              }`}
+                            >
+                              {sending ? '...' : enviadaEm ? '↻ Reenviar' : isUnavailable ? '🔒' : 'Notificar'}
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
                     {notifFotoErro && (
-                      <p className="text-[9px] text-red-400/70 leading-relaxed">Sem email — adiciona na página Equipas de Trabalho</p>
+                      <p className="text-[9px] text-red-400/70 leading-relaxed mt-1">⚠ {notifFotoErro}. Sem email? Adiciona na página Equipas de Trabalho.</p>
                     )}
                   </div>
                 )
               })()}
 
-              {/* Notificação Videógrafo */}
+              {/* Notificação Videógrafo — 1 linha por nome */}
               {(() => {
                 const nomes = equipaVideo
                 const hasTeam = nomes.length > 0
-                const allUnavailable = hasTeam && nomes.every(n => unavailableNames.includes(n.toUpperCase()))
                 return (
                   <div className="flex flex-col gap-2 rounded-xl p-4" style={{ background: 'rgba(160,100,240,0.04)', border: '1px solid rgba(160,100,240,0.15)' }}>
                     <p className="text-[9px] tracking-[0.3em] uppercase text-white/30">Videógrafo</p>
-                    {nomes.length > 0 && (
-                      <p className="text-[11px] text-purple-300/60 truncate">{nomes.join(', ')}</p>
+                    {!hasTeam && (
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] text-white/20 flex-1">Pendente</span>
+                        <span className="px-3 py-2 rounded-lg text-[10px] font-semibold tracking-[0.15em] uppercase border bg-white/[0.03] text-white/20 border-white/10">🔒 Sem equipa</span>
+                      </div>
                     )}
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="flex-1">
-                        <p className="text-[10px] font-mono">
-                          {notifVideoEnviada
-                            ? <span className="text-green-400/70">{new Date(notifVideoEnviada).toLocaleDateString('pt-PT')}</span>
-                            : <span className="text-white/20">Pendente</span>
-                          }
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        {notifVideoEnviada && (
-                          <button
-                            onClick={async () => {
-                              if (!evento?.referencia) return
-                              await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { notif_video_enviada: null } } }) })
-                              setNotifVideoEnviada(null)
-                            }}
-                            className="w-6 h-6 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-all text-xs"
-                            title="Repor como Pendente"
-                          >✕</button>
-                        )}
-                        <button
-                          disabled={!hasTeam || sendingNotifVideo || allUnavailable}
-                          onClick={async () => {
-                            if (!hasTeam || !evento?.referencia || sendingNotifVideo || allUnavailable) return
-                            setSendingNotifVideo(true)
-                            setNotifVideoErro(null)
-                            const today = new Date().toISOString().split('T')[0]
-                            const emailRes = await fetch('/api/send-freelancer-notification', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ nomes, tipo: 'videografo', referencia: evento.referencia, data_evento: evento.data_evento, local: evento.local, nome_noiva: evento.nome_noiva, nome_noivo: evento.nome_noivo }),
-                            })
-                            const emailData = await emailRes.json()
-                            if (emailRes.ok && emailData.ok) {
-                              await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { notif_video_enviada: today } } }) })
-                              setNotifVideoEnviada(today)
-                            } else {
-                              setNotifVideoErro(emailData.error ?? 'Erro ao enviar')
-                            }
-                            setSendingNotifVideo(false)
-                          }}
-                          className={`px-3 py-2 rounded-lg text-[10px] font-semibold tracking-[0.15em] uppercase border transition-all ${
-                            notifVideoEnviada ? 'bg-green-500/20 text-green-400 border-green-500/30'
-                            : !hasTeam ? 'bg-white/[0.03] text-white/20 border-white/10 cursor-not-allowed'
-                            : allUnavailable ? 'bg-red-500/10 text-red-400/60 border-red-500/20 cursor-not-allowed'
-                            : sendingNotifVideo ? 'bg-purple-500/10 text-purple-300/50 border-purple-500/20 cursor-not-allowed'
-                            : notifVideoErro ? 'bg-red-500/15 text-red-300 border-red-500/25 hover:bg-red-500/25'
-                            : 'bg-purple-500/15 text-purple-300 border-purple-500/25 hover:bg-purple-500/25'
-                          }`}
-                        >
-                          {sendingNotifVideo ? '...' : notifVideoEnviada ? '✓ Enviado' : !hasTeam ? '🔒 Sem equipa' : allUnavailable ? '🔒 Indisponível' : notifVideoErro ? '⚠ Sem email' : 'Notificar'}
-                        </button>
-                      </div>
-                    </div>
+                    {nomes.map((nome) => {
+                      const isUnavailable = unavailableNames.includes(nome.toUpperCase())
+                      const enviadaEm = notifVideoEnviadaBy[nome] ?? null
+                      const sending = sendingNotifPerson[`video::${nome}`] ?? false
+                      return (
+                        <div key={nome} className="flex items-center gap-2 py-1.5 border-t border-white/[0.04] first:border-t-0">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[11px] text-purple-300/80 truncate">{nome}</p>
+                            <p className="text-[10px] font-mono mt-0.5">
+                              {enviadaEm
+                                ? <span className="text-green-400/70">{new Date(enviadaEm).toLocaleDateString('pt-PT')}</span>
+                                : <span className="text-white/20">Pendente</span>
+                              }
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            {enviadaEm && (
+                              <button
+                                onClick={async () => {
+                                  if (!evento?.referencia) return
+                                  const next = { ...notifVideoEnviadaBy }
+                                  delete next[nome]
+                                  await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { notif_video_enviada_by: next } } }) })
+                                  setNotifVideoEnviadaBy(next)
+                                }}
+                                className="w-6 h-6 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-all text-xs"
+                                title="Repor como Pendente"
+                              >✕</button>
+                            )}
+                            <button
+                              disabled={sending || isUnavailable}
+                              onClick={async () => {
+                                if (!evento?.referencia || sending || isUnavailable) return
+                                setSendingNotifPerson(s => ({ ...s, [`video::${nome}`]: true }))
+                                const today = new Date().toISOString().split('T')[0]
+                                const emailRes = await fetch('/api/send-freelancer-notification', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ nomes: [nome], tipo: 'videografo', referencia: evento.referencia, data_evento: evento.data_evento, local: evento.local, nome_noiva: evento.nome_noiva, nome_noivo: evento.nome_noivo }),
+                                })
+                                const emailData = await emailRes.json()
+                                if (emailRes.ok && emailData.ok) {
+                                  const next = { ...notifVideoEnviadaBy, [nome]: today }
+                                  await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { notif_video_enviada_by: next } } }) })
+                                  setNotifVideoEnviadaBy(next)
+                                } else {
+                                  setNotifVideoErro(emailData.error ?? 'Erro ao enviar')
+                                }
+                                setSendingNotifPerson(s => ({ ...s, [`video::${nome}`]: false }))
+                              }}
+                              className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold tracking-[0.15em] uppercase border transition-all ${
+                                enviadaEm ? 'bg-green-500/15 text-green-400/80 border-green-500/25 hover:bg-green-500/25'
+                                : isUnavailable ? 'bg-red-500/10 text-red-400/60 border-red-500/20 cursor-not-allowed'
+                                : sending ? 'bg-purple-500/10 text-purple-300/50 border-purple-500/20 cursor-not-allowed'
+                                : 'bg-purple-500/15 text-purple-300 border-purple-500/25 hover:bg-purple-500/25'
+                              }`}
+                            >
+                              {sending ? '...' : enviadaEm ? '↻ Reenviar' : isUnavailable ? '🔒' : 'Notificar'}
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
                     {notifVideoErro && (
-                      <p className="text-[9px] text-red-400/70 leading-relaxed">Sem email — adiciona na página Equipas de Trabalho</p>
+                      <p className="text-[9px] text-red-400/70 leading-relaxed mt-1">⚠ {notifVideoErro}. Sem email? Adiciona na página Equipas de Trabalho.</p>
                     )}
                   </div>
                 )
