@@ -84,16 +84,18 @@ export function PortalShell({
    Sidebar — Couple + Nav + MiniCountdown
    ============================================================ */
 export function SidebarCouple({
-  noiva, noivo, data,
+  noiva, noivo, data, coupleLabel,
 }: {
   noiva?: string | null
   noivo?: string | null
   data?: string | null
+  coupleLabel?: string  // default 'Os Noivos'; em batizado: 'Os Pais'
 }) {
-  const names = [noiva, noivo].filter(Boolean).join(' & ') || 'Os Noivos'
+  const lbl = coupleLabel ?? 'Os Noivos'
+  const names = [noiva, noivo].filter(Boolean).join(' & ') || lbl
   return (
     <div className="couple">
-      <div className="lbl">Os Noivos</div>
+      <div className="lbl">{lbl}</div>
       <div className="names">{names}</div>
       {data && <div className="date">{data}</div>}
     </div>
@@ -149,9 +151,11 @@ export function SidebarNav({
 export function SidebarMiniCountdown({
   weddingDate,
   coupleCode,
+  coupleLabel,  // (mantido para futura customização do texto "para o grande dia")
 }: {
   weddingDate: Date | null
   coupleCode?: string | null
+  coupleLabel?: string
 }) {
   const [parts, setParts] = useState(() => diffParts(weddingDate))
   useEffect(() => {
@@ -181,12 +185,13 @@ export function SidebarMiniCountdown({
    ============================================================ */
 export function Countdown({
   weddingDate,
-  noiva, noivo, dateLabel,
+  noiva, noivo, dateLabel, coupleLabel,
 }: {
   weddingDate: Date | null
   noiva?: string | null
   noivo?: string | null
   dateLabel?: string | null
+  coupleLabel?: string  // default 'Os Noivos'; em batizado: 'Os Pais'
 }) {
   const [parts, setParts] = useState(() => diffParts(weddingDate))
   useEffect(() => {
@@ -206,7 +211,7 @@ export function Countdown({
         {a}
         {showAmp && <> <em>&amp;</em> </>}
         {b}
-        {!a && !b && 'Os Noivos'}
+        {!a && !b && (coupleLabel ?? 'Os Noivos')}
       </h1>
       {dateLabel && <div className="date">{dateLabel}</div>}
       <div className="hcount">

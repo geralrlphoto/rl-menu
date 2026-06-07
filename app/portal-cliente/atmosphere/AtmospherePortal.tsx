@@ -17,13 +17,21 @@ import {
 } from './PortalShell'
 import { ArrowUpRightIcon, MailIcon } from './icons'
 
+export type PortalTipo = 'casamento' | 'batizado'
+
 export type AtmosphereData = {
-  // identidade do casal
-  noiva?: string | null
-  noivo?: string | null
+  /** Tipo de portal — controla labels (Os Noivos vs Os Pais), filtros de
+   *  sub-páginas e defaults. Default 'casamento' para compatibilidade. */
+  tipo?: PortalTipo
+  /** Label do casal/pais (default conforme tipo). Override raro. */
+  coupleLabel?: string
+
+  // identidade do casal/pais
+  noiva?: string | null            // batizado: mãe
+  noivo?: string | null            // batizado: pai
   dataIso?: string | null         // ex: '2026-09-12' (YYYY-MM-DD)
   dataLabel?: string | null       // ex: '12 · Setembro · 2026'
-  referencia?: string | null      // ex: 'CAS_150_26_RL' — usado para hrefs
+  referencia?: string | null      // ex: 'CAS_150_26_RL' / 'BAT_001_26_RL'
 
   // hero / welcome
   heroImageUrl?: string | null
@@ -123,6 +131,10 @@ export function AtmospherePortal({
   adminBar?: ReactNode
   children?: ReactNode
 }) {
+  const tipo: PortalTipo = data.tipo ?? 'casamento'
+  const isBatizado = tipo === 'batizado'
+  const portalBase = isBatizado ? '/portal-batizado' : '/portal-cliente'
+  const coupleLabel = data.coupleLabel ?? (isBatizado ? 'Os Pais' : 'Os Noivos')
   const weddingDate = data.dataIso ? parseIsoDate(data.dataIso) : null
 
   // Builder de href para sub-página: usa custom, ou builder default
@@ -131,7 +143,7 @@ export function AtmospherePortal({
     const qs = new URLSearchParams()
     qs.set('title', title)
     if (ref) qs.set('portalRef', ref)
-    return `/portal-cliente/${id}?${qs.toString()}`
+    return `${portalBase}/${id}?${qs.toString()}`
   }
   const hrefFor = (id: string, title: string) =>
     data.buildSubpageHref ? data.buildSubpageHref(id, title) : defaultHrefBuilder(id, title)
@@ -139,16 +151,20 @@ export function AtmospherePortal({
   const titleFor = (p: { id: string; title: string }) =>
     (data.pageTitles?.[p.id] ?? p.title).replace(/\s*\(\d+\)\s*$/, '')
 
-  // Ocultar "Guia dos Noivos" da nav (mantém só Guia Pré-Wedding)
+  // Ocultar "Guia dos Noivos/Pais" da nav (mantém só Guia Pré-Wedding)
   const isHiddenByTitle = (p: { id: string; title: string }) => {
     const t = (titleFor(p) || '').toUpperCase()
+    if (isBatizado) {
+      // Em batizado, esconde Pré-Wedding (não existe) e Guia Pré-Wedding
+      return t.includes('GUIA DOS NOIVOS') || t.includes('PRÉ-WEDDING') || t.includes('PRE-WEDDING') || t.includes('GUIA DOS PAIS')
+    }
     return t.includes('GUIA DOS NOIVOS')
   }
 
   // Item "Início" no topo da nav — leva à home do portal
   const homeHref = data.portalRefForLinks
-    ? `/portal-cliente/ref/${encodeURIComponent(data.portalRefForLinks)}`
-    : '/portal-cliente'
+    ? `${portalBase}/ref/${encodeURIComponent(data.portalRefForLinks)}`
+    : portalBase
   const inicioItem: SidebarNavItem = {
     id: '__inicio__',
     label: 'Início',
@@ -188,11 +204,24 @@ export function AtmospherePortal({
 
   const deliveries = data.deliveries ?? DEFAULT_DELIVERIES
 
+  const defaultParagraphs = isBatizado
+    ? [
+        'Este é o vosso espaço dedicado. Aqui podem acompanhar todas as etapas do batizado, desde a sessão fotográfica até à entrega final das memórias.',
+        'Cada secção foi pensada para vos manter informados e tornar o processo claro e tranquilo.',
+      ]
+    : [
+        'Este é o vosso espaço dedicado. Aqui podem acompanhar todas as etapas do vosso casamento, desde a sessão pré-wedding até à entrega final das memórias.',
+        'Cada secção foi pensada para vos manter informados e tornar o processo claro e tranquilo.',
+      ]
+  const defaultPull = isBatizado
+    ? 'O dia do batizado, contado com tempo e detalhe.'
+    : 'A vossa história, contada com tempo e detalhe.'
+
   const sidebar = (
     <>
-      <SidebarCouple noiva={data.noiva} noivo={data.noivo} data={data.dataLabel} />
+      <SidebarCouple noiva={data.noiva} noivo={data.noivo} data={data.dataLabel} coupleLabel={coupleLabel} />
       <SidebarNav items={navItems} />
-      <SidebarMiniCountdown weddingDate={weddingDate} coupleCode={data.referencia} />
+      <SidebarMiniCountdown weddingDate={weddingDate} coupleCode={data.referencia} coupleLabel={coupleLabel} />
     </>
   )
 
@@ -205,16 +234,14 @@ export function AtmospherePortal({
         noiva={data.noiva}
         noivo={data.noivo}
         dateLabel={data.dataLabel}
+        coupleLabel={coupleLabel}
       />
 
       <Welcome
         photoUrl={data.heroImageUrl}
         heading={data.welcomeHeading ?? 'Bem-vindos ao <em>vosso</em> portal'}
-        paragraphs={data.welcomeParagraphs ?? [
-          'Este é o vosso espaço dedicado. Aqui podem acompanhar todas as etapas do vosso casamento, desde a sessão pré-wedding até à entrega final das memórias.',
-          'Cada secção foi pensada para vos manter informados e tornar o processo claro e tranquilo.',
-        ]}
-        pull={data.welcomePull ?? 'A vossa história, contada com tempo e detalhe.'}
+        paragraphs={data.welcomeParagraphs ?? defaultParagraphs}
+        pull={data.welcomePull ?? defaultPull}
         actions={
           <>
             {data.primaryAction && (

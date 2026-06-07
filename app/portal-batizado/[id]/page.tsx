@@ -5,8 +5,17 @@ import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
 import { NotionBlocks, plainText, richText, type Block } from '../NotionRenderer'
 import BlockEditor from '../BlockEditor'
+import BriefingExtensions, { type BriefingExt } from '../../portal-cliente/[id]/BriefingExtensions'
+import '../../portal-cliente/atmosphere/atmosphere.css'
+import { PortalShell, SidebarCouple, SidebarNav, SidebarMiniCountdown, type SidebarNavItem } from '../../portal-cliente/atmosphere/PortalShell'
+import { ContratoView } from '../../portal-cliente/atmosphere/ContratoView'
+import { PreWeddingView, DEFAULT_CENARIOS, DEFAULT_INTRO, type PwSection, type PwIntro, type PwCenario } from '../../portal-cliente/atmosphere/PreWeddingView'
+import { SendMessageButton } from '../../portal-cliente/atmosphere/SendMessageButton'
+import { FotografiasView, type FotografiasCard } from '../../portal-cliente/atmosphere/FotografiasView'
 
 const PORTAL_PAGE_ID = '35b220116d8a811b99b7f6f26648c017'
+const PORTAL_TIPO: 'casamento' | 'batizado' = 'batizado'
+const COUPLE_LABEL = 'Os Pais'
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -431,7 +440,6 @@ function PaymentPhasesSection({ referencia, valorTotal, pagamentos, onRefresh, r
   const tudoLiquidado = (valorTotal || 0) > 0 && totalPagoGeral >= (valorTotal || 0)
 
   // Cascata: ADJ → REFORÇO → FINAL — o totalPagoGeral preenche por ordem
-  // (igual à lógica da ficha em /eventos-2026/[id])
   const cumAdj     = faseValores['ADJUDICAÇÃO']
   const cumReforco = cumAdj + faseValores['REFORÇO']
   const cumFinal   = cumReforco + faseValores['FINAL']
@@ -459,14 +467,11 @@ function PaymentPhasesSection({ referencia, valorTotal, pagamentos, onRefresh, r
           const valorFase  = faseValores[label]
           const cumThresh  = faseCum[label]
           const prevThresh = cumThresh - valorFase
-          // Porção do total pago que pertence a esta fase em cascata
           const totalPago = Math.max(0, Math.min(totalPagoGeral, cumThresh) - prevThresh)
           const falta = Math.max(0, valorFase - totalPago)
-          // Liquidado quando o total pago geral cobre a threshold cumulativa desta fase
           const liquidado = tudoLiquidado || (valorFase > 0 && totalPagoGeral >= cumThresh)
           const parcial = totalPago > 0 && !liquidado
           const pct = valorFase > 0 ? Math.min(100, Math.round((totalPago / valorFase) * 100)) : 0
-          // Pagamentos para mostrar — usa filtro por tag se houver, senão todos os pags (cascata)
           const pagsByTag = pagamentos.filter(p => p.fase_pagamento.includes(label))
           const pags = pagsByTag.length > 0 ? pagsByTag : (totalPago > 0 ? pagamentos : [])
           const lastPag = pags[pags.length - 1]
@@ -707,7 +712,7 @@ function PreWeddingSection({ slots, reservedSlotId, reservingSlotId, showReserve
 
   return (
     <>
-      <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} />
+      {/* NotionBlocks removido — conteúdo da página vem de portais.settings */}
       <div className="mt-8 pt-6 border-t border-white/[0.06]">
         {/* Section header */}
         <div className="flex items-center gap-3 mb-6">
@@ -827,7 +832,7 @@ function PreWeddingSection({ slots, reservedSlotId, reservingSlotId, showReserve
               disabled={sendingNotifNoivos || notifNoivosEnviado}
               className="w-full py-3 rounded-xl border border-white/40 bg-white/5 text-white font-semibold text-xs tracking-widest uppercase hover:bg-white/10 transition-all disabled:opacity-50"
               style={{ boxShadow: '0 0 10px 2px rgba(255,255,255,0.12)' }}>
-              {notifNoivosEnviado ? '✓ CARD ENVIADO' : sendingNotifNoivos ? '...' : 'NOTIFICAR NOIVOS'}
+              {notifNoivosEnviado ? '✓ CARD ENVIADO' : sendingNotifNoivos ? '...' : 'NOTIFICAR PAIS'}
             </button>
           </div>
         )}
@@ -848,27 +853,26 @@ function PortalSubPageContent() {
   const fromId = searchParams.get('from')
   const fromTitle = searchParams.get('fromTitle')
   const refParam = searchParams.get('portalRef')
-  const adminParam = searchParams.get('admin')
-  // Admin when: explicit ?admin=1  OR  no portalRef (only clients have portalRef in URL)
-  const isAdminByUrl = adminParam === '1' || !refParam
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [editing, setEditing] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(isAdminByUrl)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
-    if (isAdminByUrl) { setIsAdmin(true); return }
-    // Client portal: check sessionStorage
-    const key = `portalAdmin_${refParam}`
-    if (sessionStorage.getItem(key) === 'true') setIsAdmin(true)
-  }, [refParam, adminParam, isAdminByUrl])
+    // Template sub-pages (no refParam) are always admin
+    if (!refParam) { setIsAdmin(true); return }
+    // ?admin=1 na URL → activa admin imediatamente E persiste em sessionStorage
+    // para que continue activo nas navegações seguintes sem ter de incluir o
+    // parâmetro em todas as URLs.
+    if (searchParams.get('admin') === '1') {
+      sessionStorage.setItem(`portalAdmin_${refParam}`, 'true')
+      setIsAdmin(true)
+      return
+    }
+    if (sessionStorage.getItem(`portalAdmin_${refParam}`) === 'true') setIsAdmin(true)
+  }, [refParam, searchParams])
 
   const [editingPhotos, setEditingPhotos] = useState(false)
-  // inline text + photo editing for default pages (SOBRE O MENU etc)
-  const [inlineEditText, setInlineEditText] = useState(false)
-  const [inlineDraft, setInlineDraft] = useState('')
-  const [savingInline, setSavingInline] = useState(false)
-  const [imgSwapping, setImgSwapping] = useState<string | null>(null) // block id
   const [error, setError] = useState('')
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
   const [portalRef, setPortalRef] = useState('')
@@ -877,9 +881,15 @@ function PortalSubPageContent() {
   useEffect(() => {
     if (portalRef && !refParam) {
       const key = `portalAdmin_${portalRef}`
+      // ?admin=1 também activa quando o portalRef carrega depois
+      if (searchParams.get('admin') === '1') {
+        sessionStorage.setItem(key, 'true')
+        setIsAdmin(true)
+        return
+      }
       if (sessionStorage.getItem(key) === 'true') setIsAdmin(true)
     }
-  }, [portalRef, refParam])
+  }, [portalRef, refParam, searchParams])
   const [portalTotal, setPortalTotal] = useState(0)
   const [portalFoto, setPortalFoto] = useState<number | null>(null)
   const [portalVideo, setPortalVideo] = useState<number | null>(null)
@@ -900,6 +910,7 @@ function PortalSubPageContent() {
   const [parceirosForm, setParceirosForm] = useState<Array<{imageUrl:string;url?:string}>>([])
   const [savingParceiros, setSavingParceiros] = useState(false)
   const [subpageHeaderUrl, setSubpageHeaderUrl] = useState('')
+  const [portalHeroImageUrl, setPortalHeroImageUrl] = useState('')
   const [designPremiumPages, setDesignPremiumPages] = useState<string[]>([])
   const [preWeddingSlots, setPreWeddingSlots] = useState<Array<{id:string;date:string;time:string;local:string}>>([])
   const [reservedSlotId, setReservedSlotId] = useState<string | null>(null)
@@ -910,12 +921,6 @@ function PortalSubPageContent() {
   const [savingSlots, setSavingSlots] = useState(false)
   const [sendingNotifNoivos, setSendingNotifNoivos] = useState(false)
   const [notifNoivosEnviado, setNotifNoivosEnviado] = useState(false)
-  const [editingGuia, setEditingGuia] = useState(false)
-  const [guiaDraft, setGuiaDraft] = useState('')
-  const [savingGuia, setSavingGuia] = useState(false)
-  const [editingFotoCards, setEditingFotoCards] = useState(false)
-  const [fotoCardsForm, setFotoCardsForm] = useState<Array<{ title: string; url: string; imageUrl: string }>>([])
-  const [savingFotoCards, setSavingFotoCards] = useState(false)
 
   const [eventoData, setEventoData] = useState<any>(null)
   const [contratoDisponivel, setContratoDisponivel] = useState<boolean | null>(null)
@@ -928,6 +933,27 @@ function PortalSubPageContent() {
   const [propostaTokenForm, setPropostaTokenForm] = useState('')
   const [notionServicos, setNotionServicos] = useState<{ proposta: string | null; servico_foto: string[]; servico_video: string[] } | null>(null)
   const [pageTitles, setPageTitles] = useState<Record<string, string>>({})
+  // Lista de sub-páginas do portal pai — para a sidebar Atmosphère
+  const [parentNavPages, setParentNavPages] = useState<Array<{ id: string; title: string }>>([])
+  useEffect(() => {
+    let cancelled = false
+    fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}`)
+      .then(r => r.json())
+      .then(d => {
+        if (cancelled) return
+        const out: Array<{ id: string; title: string }> = []
+        const walk = (bs: any[]) => {
+          for (const b of bs ?? []) {
+            if (b.type === 'child_page') out.push({ id: b.id, title: b.child_page?.title ?? '' })
+            if (b.children) walk(b.children)
+          }
+        }
+        walk(d?.blocks ?? [])
+        setParentNavPages(out)
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleInput, setTitleInput] = useState('')
   const [savingTitle, setSavingTitle] = useState(false)
@@ -939,7 +965,24 @@ function PortalSubPageContent() {
   const [briefingLinks, setBriefingLinks] = useState<Record<string, string>>({})
   const [pageHeaders, setPageHeaders] = useState<Record<string, string>>({})
   const [uploadingPageHeader, setUploadingPageHeader] = useState(false)
-  const [briefingInfo, setBriefingInfo] = useState<Record<string, { fields?: Array<{ label: string; value: string }>; infoGeral?: string; equipa?: Array<{ role: string; name: string }> }>>({})
+  /** Map de fotos da página Pré-Wedding (slot → URL). Gerido 100% no app, sem Notion.
+   *  Slots: 'hero', 'intro', 'tript-0', 'cen-0/1/2', 'custom-<id>' (secções custom). */
+  const [pwPhotos, setPwPhotos] = useState<Record<string, string>>({})
+  const [uploadingPwSlot, setUploadingPwSlot] = useState<string | null>(null)
+  /** Secções personalizadas (texto + foto) adicionadas pelo admin na página. */
+  const [pwSections, setPwSections] = useState<PwSection[]>([])
+  /** Intro editável (substitui leitura do Notion após migração). */
+  const [pwIntro, setPwIntro] = useState<PwIntro | null>(null)
+  /** 3 cenários editáveis (substitui leitura do Notion após migração). */
+  const [pwCenarios, setPwCenarios] = useState<PwCenario[] | null>(null)
+  const [briefingInfo, setBriefingInfo] = useState<Record<string, BriefingExt>>({})
+
+  // Fichas Individuais (NOIVO / NOIVA / etc.) — accordion editável com
+  // caixas de texto label + value que o admin/cliente preenche.
+  type FichaCampo = { id: string; label: string; value: string }
+  const [briefingFichas, setBriefingFichas] = useState<Record<string, FichaCampo[]>>({})
+  const [openFichaKey, setOpenFichaKey] = useState<string | null>(null)
+  const [fichaSaving, setFichaSaving] = useState(false)
   const [editingBriefingInfo, setEditingBriefingInfo] = useState(false)
   const [briefingFieldsForm, setBriefingFieldsForm] = useState<Array<{ label: string; value: string }>>([])
   const [editingInfoGeral, setEditingInfoGeral] = useState(false)
@@ -982,15 +1025,18 @@ function PortalSubPageContent() {
     }
   }, [isSobreViewMode])
 
-  const isDesignPremium   = !isSobrePage && (id ? designPremiumPages.includes(id) : false)
+  // Sobre o Menu → SEMPRE design premium (foto background fullscreen),
+  // como o Pagamentos. Outras páginas podem ser marcadas via admin toggle.
+  const isDesignPremium   = isSobrePage || (id ? designPremiumPages.includes(id) : false)
   const dpEffectivePhoto  = (() => {
     if (!isDesignPremium) return ''
     const perPage = id ? pageHeaders[id as string] : undefined
-    return perPage === 'none' ? '' : (perPage || subpageHeaderUrl)
+    return perPage === 'none' ? '' : (perPage || subpageHeaderUrl || portalHeroImageUrl)
   })()
   const isPaymentsPage    = title.toUpperCase().includes('PAGAMENTO')
   const isGuiaPage        = title.toUpperCase().includes('GUIA') && !title.toUpperCase().includes('WEDDING')
-  const isPreWeddingPage  = title.toUpperCase().includes('WEDDING')
+  // Em batizado não existe sub-página Pré-Wedding — força sempre false.
+  const isPreWeddingPage  = false
   const isContratoPage    = title.toUpperCase().includes('CONTRATO')
   const isBriefingPage    = title.toUpperCase().includes('BRIEFING')
   const isFotografiasPage = title.toUpperCase().includes('FOTOGRAF')
@@ -1006,8 +1052,67 @@ function PortalSubPageContent() {
 
       if (refParam) {
         // Ref-based portal: load settings from Supabase
-        const d = await fetch(`/api/portais?ref=${encodeURIComponent(refParam)}`).then(r => r.json())
+        // E em PARALELO os settings do template-mestre (Notion) para usar
+        // como fallback nos campos VISUAIS (fotos, layout, etc.) — assim
+        // alterar o template propaga a todos os portais que não tenham
+        // override pessoal para esse campo. Tudo o que é específico do
+        // casal (referência, noivos, valores, datas, estados das
+        // entregas, mensagens, URLs das galerias, password, etc.)
+        // continua a ser preservado do portal individual.
+        const [d, templateD] = await Promise.all([
+          fetch(`/api/portais?ref=${encodeURIComponent(refParam)}`).then(r => r.json()),
+          fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}&bust=1`).then(r => r.json()).catch(() => null),
+        ])
         ps = d.portal?.settings ?? {}
+
+        // ── Apply template fallback APENAS para campos visuais ──
+        const tmpl: Record<string, any> = templateD?.settings ?? {}
+        const useTemplateIfEmpty = (campo: string) => {
+          const cur = ps[campo]
+          const isEmpty =
+            cur === undefined || cur === null || cur === '' ||
+            (Array.isArray(cur) && cur.length === 0)
+          if (isEmpty && tmpl[campo] !== undefined && tmpl[campo] !== null && tmpl[campo] !== '') {
+            ps[campo] = tmpl[campo]
+          }
+        }
+
+        // Foto-hero global e das sub-páginas (placeholder se template
+        // vazio também)
+        useTemplateIfEmpty('heroImageUrl')
+        useTemplateIfEmpty('subpageHeaderUrl')
+
+        // pageHeaders: merge — overrides do portal vencem sobre template
+        if (tmpl.pageHeaders && typeof tmpl.pageHeaders === 'object') {
+          ps.pageHeaders = { ...(tmpl.pageHeaders ?? {}), ...(ps.pageHeaders ?? {}) }
+        }
+
+        // pwPhotos: merge — override pessoal vence; campos vazios herdam
+        if (tmpl.pwPhotos && typeof tmpl.pwPhotos === 'object') {
+          ps.pwPhotos = { ...(tmpl.pwPhotos ?? {}), ...(ps.pwPhotos ?? {}) }
+        }
+        // pwHeroPhoto (legacy single field) — só usa template se ambos
+        // pwPhotos.hero e o legacy estão vazios
+        if (!ps.pwHeroPhoto && tmpl.pwHeroPhoto) {
+          ps.pwHeroPhoto = tmpl.pwHeroPhoto
+        }
+
+        // pwSections / pwIntro / pwCenarios: editoriais do Pré-Wedding —
+        // só herdam se o portal individual NUNCA tocou neles
+        useTemplateIfEmpty('pwSections')
+        useTemplateIfEmpty('pwIntro')
+        useTemplateIfEmpty('pwCenarios')
+
+        // parceiros: lista global — só herda se o portal não tem própria
+        useTemplateIfEmpty('parceiros')
+
+        // guiaLinks: merge — campos default do template vêm como fallback;
+        // links específicos do casal (já preenchidos no portal) ganham
+        if (tmpl.guiaLinks && typeof tmpl.guiaLinks === 'object') {
+          ps.guiaLinks = { ...(tmpl.guiaLinks ?? {}), ...(ps.guiaLinks ?? {}) }
+        }
+        // designPremiumPages: lista de páginas com design premium ON
+        useTemplateIfEmpty('designPremiumPages')
       } else {
         // Main portal: load settings from Notion
         const d = await fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}&bust=1`).then(r => r.json())
@@ -1041,6 +1146,7 @@ function PortalSubPageContent() {
       setParceiros(ps.parceiros ?? [])
       setPortalSettingsBlockId(settingsBlockIdVal)
       setSubpageHeaderUrl(ps.subpageHeaderUrl ?? '')
+      setPortalHeroImageUrl(ps.heroImageUrl ?? '')
       setDesignPremiumPages(ps.designPremiumPages ?? [])
       const slots = ps.preWeddingSlots ?? []
       setPreWeddingSlots(slots)
@@ -1056,7 +1162,15 @@ function PortalSubPageContent() {
       setCalloutLinks(ps.calloutLinks ?? {})
       setBriefingLinks(ps.briefingLinks ?? {})
       setPageHeaders(ps.pageHeaders ?? {})
+      // pwPhotos é o novo formato; pwHeroPhoto era o legacy (foto abaixo do hero)
+      const photos = { ...(ps.pwPhotos ?? {}) }
+      if (ps.pwHeroPhoto && !photos.hero) photos.hero = ps.pwHeroPhoto
+      setPwPhotos(photos)
+      setPwSections(Array.isArray(ps.pwSections) ? ps.pwSections : [])
+      setPwIntro(ps.pwIntro && typeof ps.pwIntro === 'object' ? ps.pwIntro : null)
+      setPwCenarios(Array.isArray(ps.pwCenarios) ? ps.pwCenarios : null)
       setBriefingInfo(ps.briefingInfo ?? {})
+      setBriefingFichas(ps.briefingFichas ?? {})
       setCronogramaStatus(ps.cronogramaStatus ?? {})
       setSatisfacao(ps.satisfacao ?? null)
 
@@ -1127,15 +1241,52 @@ function PortalSubPageContent() {
 
   const loadBlocks = useCallback(async (bust = false) => {
     if (!id) return
-    const url = `/api/portais-clientes?id=${id}&bust=1`
-    void bust
+    const url = `/api/portais-clientes?id=${id}${bust ? '&bust=1' : ''}`
     try {
       const d = await fetch(url).then(r => r.json())
       if (d.error) {
         // API error — silently fail, portal renders without Notion blocks
         setBlocks([])
       } else {
-        setBlocks(d.blocks ?? [])
+        // Patch: para portais de batizado (BAT_*), substituir 'casamento' /
+        // 'noivos' por 'batizado' / 'bebé' nos textos vindos do Notion.
+        const ref = portalRef || refParam || ''
+        const isBatizado = /^BAT[_-]/i.test(ref) || true /* always patch in /portal-batizado */
+        const fixText = (text: string): string => isBatizado && text
+          ? text
+              .replace(/grande dia do vosso casamento/gi, 'grande dia do vosso bebé')
+              .replace(/dia do vosso casamento/gi, 'dia do vosso bebé')
+              .replace(/vosso casamento/gi, 'vosso batizado')
+              .replace(/gestão do casamento/gi, 'gestão do batizado')
+              .replace(/dia do casamento/gi, 'dia do batizado')
+              .replace(/do casamento/gi, 'do batizado')
+              .replace(/o casamento/gi, 'o batizado')
+              .replace(/\bCasamento\b/g, 'Batizado')
+              .replace(/\bCASAMENTO\b/g, 'BATIZADO')
+              .replace(/\bcasamento\b/g, 'batizado')
+              .replace(/\bnoivos\b/gi, 'pais')
+              .replace(/\bNoivos\b/g, 'Pais')
+              .replace(/\bNOIVOS\b/g, 'PAIS')
+          : text
+        const patchBlocks = (bks: any[]): any[] => isBatizado
+          ? bks.map(b => {
+              const out: any = { ...b }
+              const types = ['paragraph','heading_1','heading_2','heading_3','bulleted_list_item','numbered_list_item','quote','callout','to_do','toggle','code']
+              for (const t of types) {
+                if (out[t]?.rich_text && Array.isArray(out[t].rich_text)) {
+                  out[t] = { ...out[t], rich_text: out[t].rich_text.map((rt: any) => rt ? {
+                    ...rt,
+                    plain_text: rt.plain_text ? fixText(rt.plain_text) : rt.plain_text,
+                    text: rt.text ? { ...rt.text, content: rt.text.content ? fixText(rt.text.content) : rt.text.content } : rt.text,
+                  } : rt) }
+                }
+              }
+              if (out.child_page?.title) out.child_page = { ...out.child_page, title: fixText(out.child_page.title) }
+              if (Array.isArray(out.children)) out.children = patchBlocks(out.children)
+              return out
+            })
+          : bks
+        setBlocks(patchBlocks(d.blocks ?? []))
         setSettings(d.settings ?? { hiddenNav: [] })
         setSettingsBlockId(d.settingsBlockId ?? null)
       }
@@ -1175,6 +1326,30 @@ function PortalSubPageContent() {
     setTimeout(() => loadBlocks(true), 1500)
   }
 
+  const [publishing, setPublishing] = useState(false)
+  const [published,  setPublished]  = useState(false)
+
+  async function handlePublicar() {
+    setPublishing(true)
+    try {
+      await fetch('/api/portais', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          // Sincroniza fotos + lista de páginas em Design Premium
+          photoSettings: {
+            subpageHeaderUrl,
+            pageHeaders,
+            designPremiumPages,
+          },
+          tipoPortal: 'batizado',
+        }),
+      })
+      setPublished(true)
+      setTimeout(() => setPublished(false), 3000)
+    } finally { setPublishing(false) }
+  }
+
   async function savePortalSettings(newSettings: Record<string, any>) {
     if (refParam) {
       await fetch('/api/portais', {
@@ -1183,7 +1358,7 @@ function PortalSubPageContent() {
         body: JSON.stringify({ referencia: refParam, updates: { settings: newSettings } }),
       })
     } else {
-      // Template sub-page: save to Notion via /api/portal-settings
+      // Template sub-page: save to Notion
       const res = await fetch('/api/portal-settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1191,7 +1366,7 @@ function PortalSubPageContent() {
       })
       const saved = await res.json().catch(() => ({}))
       if (saved.settingsBlockId) setPortalSettingsBlockId(saved.settingsBlockId)
-      // Sync all photo fields to every batizado portal in Supabase
+      // Sync all photo fields to every casamento portal in Supabase
       const photoFields: Record<string, any> = {}
       if (newSettings.heroImageUrl     !== undefined) photoFields.heroImageUrl     = newSettings.heroImageUrl
       if (newSettings.galleryUrls      !== undefined) photoFields.galleryUrls      = newSettings.galleryUrls
@@ -1207,82 +1382,6 @@ function PortalSubPageContent() {
     }
   }
 
-  function guiaToText(content: Array<{ type: string; text: string }>): string {
-    return content.map(b => {
-      if (b.type === 'photo_break') return '[FOTOS]'
-      if (b.type === 'heading_2') return `## ${b.text}`
-      if (b.type === 'bullet') return `- ${b.text}`
-      return b.text
-    }).join('\n')
-  }
-  function parseGuiaText(raw: string): Array<{ type: string; text: string }> {
-    return raw.split('\n').filter(l => l.trim()).map(line => {
-      const t = line.trim()
-      if (t === '[FOTOS]') return { type: 'photo_break', text: '' }
-      if (t.startsWith('## ')) return { type: 'heading_2', text: t.slice(3) }
-      if (t.startsWith('- ')) return { type: 'bullet', text: t.slice(2) }
-      return { type: 'paragraph', text: t }
-    })
-  }
-  async function handleSaveFotoCards() {
-    if (!id) return
-    setSavingFotoCards(true)
-    try {
-      const newSettings = { ...(settings as any), fotoCards: fotoCardsForm }
-      await fetch('/api/portal-settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pageId: id, settings: newSettings }),
-      })
-      setSettings(newSettings as any)
-      setEditingFotoCards(false)
-      fetch(`/api/portais-clientes?id=${id}&bust=1`)
-    } finally {
-      setSavingFotoCards(false)
-    }
-  }
-
-  async function handleHideGuiaCard(titleText: string) {
-    if (!id) return
-    const hidden: string[] = (settings as any).hiddenGuiaCards ?? []
-    const next = [...hidden, titleText]
-    const newSettings = { ...(settings as any), hiddenGuiaCards: next }
-    setSettings(newSettings as any)
-    await fetch('/api/portal-settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pageId: id, settings: newSettings }),
-    })
-  }
-  async function handleRestoreGuiaCards() {
-    if (!id) return
-    const newSettings = { ...(settings as any), hiddenGuiaCards: [] }
-    setSettings(newSettings as any)
-    await fetch('/api/portal-settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pageId: id, settings: newSettings }),
-    })
-  }
-  async function handleSaveGuia() {
-    if (!id) return
-    setSavingGuia(true)
-    try {
-      const parsed = parseGuiaText(guiaDraft)
-      const newSettings = { ...(settings as any), guiaIntroContent: parsed }
-      await fetch('/api/portal-settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pageId: id, settings: newSettings }),
-      })
-      setSettings(newSettings as any)
-      setEditingGuia(false)
-      fetch(`/api/portais-clientes?id=${id}&bust=1`)
-    } finally {
-      setSavingGuia(false)
-    }
-  }
-
   async function handleSaveTitle() {
     if (!id || !titleInput.trim()) return
     setSavingTitle(true)
@@ -1294,39 +1393,11 @@ function PortalSubPageContent() {
     setSavingTitle(false)
   }
 
-  // ── Publicar — sincroniza TUDO do template para todos os portais de batizado ──
-  const [publishing, setPublishing] = useState(false)
-  const [published,  setPublished]  = useState(false)
-
-  async function handlePublicar() {
-    setPublishing(true)
-    try {
-      await fetch('/api/portais', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          // Sincroniza fotos + design premium (lista de páginas que usam o layout) +
-          // links dos callouts (Ver Mais), guia/calloutLinks, briefingInfo template
-          photoSettings: {
-            subpageHeaderUrl,
-            pageHeaders,
-            designPremiumPages,
-          },
-          tipoPortal: 'batizado',
-        }),
-      })
-      setPublished(true)
-      setTimeout(() => setPublished(false), 3000)
-    } finally { setPublishing(false) }
-  }
-
   async function handleUploadPageHeader(file: File) {
     if (!id) return
     setUploadingPageHeader(true)
     try {
       const url = await uploadWithProgress(file, () => {})
-      // Mesma fonte para template admin (sem refParam) e cliente (com refParam):
-      // pageHeaders gravado em portalSettingsObj — refresh lê deste sítio, sem perder a foto.
       const newPH = { ...pageHeaders, [id as string]: url }
       await savePortalSettings({ ...portalSettingsObj, pageHeaders: newPH })
       setPageHeaders(newPH)
@@ -1339,6 +1410,54 @@ function PortalSubPageContent() {
     const newPH = { ...pageHeaders, [id as string]: 'none' }
     await savePortalSettings({ ...portalSettingsObj, pageHeaders: newPH })
     setPageHeaders(newPH)
+  }
+
+  // ── Fotos da página Pré-Wedding — geridas no app por slot, sem Notion ──
+  async function handleUploadPwPhoto(slot: string, file: File) {
+    setUploadingPwSlot(slot)
+    try {
+      const url = await uploadWithProgress(file, () => {})
+      const next = { ...pwPhotos, [slot]: url }
+      await savePortalSettings({ ...portalSettingsObj, pwPhotos: next })
+      setPwPhotos(next)
+    } finally { setUploadingPwSlot(null) }
+  }
+  async function handleRemovePwPhoto(slot: string) {
+    const next = { ...pwPhotos }
+    delete next[slot]
+    await savePortalSettings({ ...portalSettingsObj, pwPhotos: next })
+    setPwPhotos(next)
+  }
+
+  // ── Intro editável (substitui leitura do Notion) ──
+  async function handleSavePwIntro(next: PwIntro) {
+    await savePortalSettings({ ...portalSettingsObj, pwIntro: next })
+    setPwIntro(next)
+  }
+  // ── Cenário editável: grava por índice ──
+  async function handleSavePwCenario(idx: number, next: PwCenario) {
+    const arr = pwCenarios ? [...pwCenarios] : []
+    while (arr.length <= idx) arr.push({ num: String(arr.length + 1).padStart(2, '0'), title: '', paragraphs: [], bullets: [] })
+    arr[idx] = next
+    await savePortalSettings({ ...portalSettingsObj, pwCenarios: arr })
+    setPwCenarios(arr)
+  }
+
+  // ── Secções personalizadas (texto + foto) na página Pré-Wedding ──
+  async function handleChangePwSections(next: PwSection[]) {
+    // Limpa fotos órfãs (slots custom-<id> que já não existem)
+    const validIds = new Set(next.map(s => s.id))
+    const cleanedPhotos: Record<string, string> = {}
+    for (const [k, v] of Object.entries(pwPhotos)) {
+      if (!k.startsWith('custom-')) { cleanedPhotos[k] = v; continue }
+      const sid = k.slice('custom-'.length)
+      if (validIds.has(sid)) cleanedPhotos[k] = v
+    }
+    // Liga as URLs de foto às secções para render directo
+    const withPhotos = next.map(s => ({ ...s, photoUrl: cleanedPhotos[`custom-${s.id}`] || null }))
+    await savePortalSettings({ ...portalSettingsObj, pwSections: withPhotos, pwPhotos: cleanedPhotos })
+    setPwSections(withPhotos)
+    setPwPhotos(cleanedPhotos)
   }
 
   async function handleToggleDesignPremium() {
@@ -1380,6 +1499,16 @@ function PortalSubPageContent() {
     setBriefingInfo(newBI)
     setEditingEquipa(false)
     setSavingEquipa(false)
+  }
+
+  // Save genérico para todas as secções do BriefingExtensions
+  async function handleSaveBriefingExt(patch: Partial<BriefingExt>) {
+    if (!id) return
+    const existing = briefingInfo[id as string] ?? {}
+    const updated = { ...existing, ...patch }
+    const newBI = { ...briefingInfo, [id as string]: updated }
+    setBriefingInfo(newBI) // optimistic
+    await savePortalSettings({ ...portalSettingsObj, briefingInfo: newBI })
   }
 
   async function handleSaveCalloutLinks() {
@@ -1488,53 +1617,685 @@ function PortalSubPageContent() {
     return out
   }
 
-  // ── inline text save ─────────────────────────────────────────────────────────
-  async function saveInlineText(pageId: string) {
-    setSavingInline(true)
-    try {
-      const toDelete = blocks.filter(b => b.type === 'heading_1' || b.type === 'heading_2' || b.type === 'heading_3' || b.type === 'paragraph')
-      await Promise.all(toDelete.map(b =>
-        fetch('/api/notion-block', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: b.id }) })
-      ))
-      const lines = inlineDraft.split('\n')
-      for (const line of lines) {
-        await fetch('/api/notion-block', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parentId: pageId, type: 'paragraph', text: line }) })
-      }
-      await fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}&bust=1`)
-      setBlocks(prev => {
-        const filtered = prev.filter(b => b.type !== 'heading_1' && b.type !== 'heading_2' && b.type !== 'heading_3' && b.type !== 'paragraph')
-        return filtered
-      })
-      handleRefresh()
-      setInlineEditText(false)
-    } catch { /* ignore */ } finally {
-      setSavingInline(false)
-    }
-  }
-
-  // ── inline image swap ─────────────────────────────────────────────────────────
-  async function swapImageInline(blockId: string, file: File, parentId: string | null, prevSiblingId: string | null) {
-    setImgSwapping(blockId)
-    try {
-      const fd = new FormData()
-      fd.append('file', file)
-      const up = await fetch('/api/upload-image', { method: 'POST', body: fd })
-      const { url } = await up.json()
-      if (!url) return
-      // Delete old block
-      await fetch('/api/notion-block', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: blockId }) })
-      // Create new image block in same position
-      await fetch('/api/notion-block', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parentId: parentId ?? id, type: 'image', imageUrl: url, after: prevSiblingId ?? undefined }) })
-      setBlocks(prev => patchBlockUrl(prev, blockId, url))
-    } catch { /* ignore */ } finally {
-      setImgSwapping(null)
-    }
-  }
-
   const hasImages = findImageBlocks(blocks).length > 0
 
+  // ── Sidebar Atmosphère (presentation only) ────────────────────────────
+  const _atmTitleFor = (p: { id: string; title: string }) =>
+    (pageTitles[p.id] ?? p.title).replace(/\s*\(\d+\)\s*$/, '')
+  const _atmHref = (pid: string, t: string) => {
+    const qs = new URLSearchParams()
+    qs.set('title', t)
+    if (portalRef) qs.set('portalRef', portalRef)
+    return `/portal-batizado/${pid}?${qs.toString()}`
+  }
+  // Item "Início" no topo da nav — leva à home do portal
+  const _atmHomeHref = portalRef
+    ? `/portal-batizado/ref/${encodeURIComponent(portalRef)}`
+    : '/portal-batizado'
+  const _atmInicioItem: SidebarNavItem = {
+    id: '__inicio__',
+    label: 'Início',
+    href: _atmHomeHref,
+    active: false,
+  }
+  const _atmNavItems: SidebarNavItem[] = [_atmInicioItem, ...parentNavPages
+    .filter(p => !((portalSettingsObj?.hiddenNav ?? []) as string[]).includes(p.id))
+    .filter(p => {
+      // Em batizado: ocultar tudo o que seja específico de casamento
+      // (Pré-Wedding, Guia dos Noivos, Guia Pré-Wedding).
+      const t = ((portalSettingsObj?.pageTitles?.[p.id] ?? p.title) || '').toUpperCase()
+      if (t.includes('GUIA DOS NOIVOS')) return false
+      if (t.includes('GUIA DOS PAIS')) return false
+      if (t.includes('PRÉ-WEDDING') || t.includes('PRE-WEDDING')) return false
+      return true
+    })
+    .map(p => {
+      const t = _atmTitleFor(p)
+      return {
+        id: p.id,
+        label: t,
+        active: id === p.id,
+        href: _atmHref(p.id, t),
+      }
+    })]
+  const _atmWeddingIso: string | null = portalSettingsObj?.data ?? null
+  const _atmWeddingDate = _atmWeddingIso
+    ? (() => {
+        const m = _atmWeddingIso.match(/^(\d{4})-(\d{2})-(\d{2})/)
+        if (!m) return null
+        return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12, 0, 0)
+      })()
+    : null
+  const _atmSidebar = (
+    <>
+      <SidebarCouple
+        noiva={portalSettingsObj?.noiva ?? portalSettingsObj?.mae ?? null}
+        noivo={portalSettingsObj?.noivo ?? portalSettingsObj?.pai ?? null}
+        data={portalSettingsObj?.dataFormatada ?? null}
+        coupleLabel={COUPLE_LABEL}
+      />
+      <SidebarNav items={_atmNavItems} />
+      <SidebarMiniCountdown
+        weddingDate={_atmWeddingDate}
+        coupleCode={portalSettingsObj?.referencia ?? portalRef ?? null}
+        coupleLabel={COUPLE_LABEL}
+      />
+    </>
+  )
+
+  // ── Atmosphère view (text-only sub-pages: Atendimento, Lista de Presentes, etc.)
+  //    Aplica-se quando NÃO está em edit-mode, NÃO é Sobre (full-screen) e NÃO é design premium.
+  //    Sub-páginas especiais (Pagamentos/Contrato/Pré-Wedding/Briefing/Guia) caem no render
+  //    existente em baixo.
+  const _atmIsSimple = !editing && !editingPhotos && !editingParceiros && !editingBriefing
+    && !editingCalloutLinks && !editingPreWedding && !editingPropostaToken
+    && !isSobreViewMode && !isDesignPremium
+    && !isPaymentsPage && !isContratoPage && !isPreWeddingPage && !isBriefingPage && !isGuiaPage && !isSobrePage
+    && !isFotografiasPage && !isFilmePage && !isSatisfacaoPage && !isCronogramaPage
+    && !error
+  const _atmEffectiveHeader = (() => {
+    const perPage = id ? pageHeaders[id as string] : undefined
+    return perPage === 'none' ? '' : (perPage || subpageHeaderUrl || portalHeroImageUrl)
+  })()
+  const _atmBackHref = fromId
+    ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}`
+    : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : '/portal-batizado'
+
+  if (_atmIsSimple && !loading) {
+    const handleEditTitle = () => {
+      setTitleInput(title)
+      setEditingTitle(true)
+    }
+    return (
+      <PortalShell sidebar={_atmSidebar}>
+        {/* Admin actions bar */}
+        {isAdmin && (
+          <div className="abar">
+            <button type="button" className="abtn" onClick={handleRefresh} disabled={refreshing}>
+              <svg className={refreshing ? 'animate-spin' : ''} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 11a8 8 0 1 0-.6 4" /><path d="M20 5v6h-6" />
+              </svg>
+              {refreshing ? 'A atualizar' : 'Atualizar'}
+            </button>
+            {hasImages && (
+              <button type="button" className="abtn" onClick={() => setEditingPhotos(true)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="8.5" cy="10" r="1.6" /><path d="M5 17l4.5-4 3 2.5L16 11l3 3" />
+                </svg>
+                Fotos
+              </button>
+            )}
+            <button type="button" className="abtn primary" onClick={() => setEditing(true)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 15V4M8 8l4-4 4 4" /><path d="M5 14v5h14v-5" />
+              </svg>
+              Publicar
+            </button>
+            <button type="button" className="abtn accent" onClick={() => setEditing(true)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 3l1.8 5.7L19.5 10l-5.7 1.3L12 17l-1.8-5.7L4.5 10l5.7-1.3Z" />
+              </svg>
+              Premium
+            </button>
+            <button type="button" className="abtn" onClick={() => setEditing(true)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 19l1-4L16 5l3 3L9 18l-4 1Z" /><path d="M14 7l3 3" />
+              </svg>
+              Editar
+            </button>
+          </div>
+        )}
+
+        {/* Hero */}
+        <header className="subhero">
+          {_atmEffectiveHeader ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={_atmEffectiveHeader} alt="" className="img" />
+          ) : (
+            <div className="ph img" data-label={`Fotografia · ${title}`} />
+          )}
+          <div className="scrim" />
+          {/* Voltar — canto superior esquerdo do hero */}
+          <a className="back back-hero" href={_atmBackHref}>
+            <span className="chev">‹</span> Voltar
+          </a>
+          {isAdmin && (
+            <div className="imgctrl">
+              <button type="button" className="gbtn" onClick={() => setEditingPhotos(true)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="8.5" cy="10" r="1.6" /><path d="M5 17l4.5-4 3 2.5L16 11l3 3" />
+                </svg>
+                Trocar
+              </button>
+              {_atmEffectiveHeader && (
+                <button type="button" className="gbtn danger" onClick={handleRemovePageHeader}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+                    <path d="M6 6l12 12M18 6L6 18" />
+                  </svg>
+                  Remover
+                </button>
+              )}
+            </div>
+          )}
+          <div className="cap">
+            <div className="eyebrow e">RL Photo · Video</div>
+            <div className="title">
+              <h1>{title || 'Atendimento'}</h1>
+              {isAdmin && (
+                <span className="pencil" onClick={handleEditTitle}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 19l1-4L16 5l3 3L9 18l-4 1Z" /><path d="M14 7l3 3" />
+                  </svg>
+                </span>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {/* Article */}
+        <article className="subarticle">
+          <div className="body">
+            <NotionBlocks
+              blocks={blocks.filter(b => b.type !== 'image')}
+              hiddenNav={settings.hiddenNav}
+              backUrl={_atmBackHref}
+            />
+
+            {/* Info + Botão Enviar Mensagem (só páginas Atendimento) */}
+            {portalRef && title.toUpperCase().includes('ATEND') && (
+              <div className="msg-info-wrap">
+                <div className="msg-info">
+                  <div className="msg-info-eyebrow">Canal Oficial dos Pais</div>
+                  <h3 className="msg-info-title">
+                    Esta é a forma <em>mais organizada</em> de nos chegarem
+                  </h3>
+                  <p>
+                    Em vez de mensagens que se perdem no WhatsApp,
+                    podem (e devem) enviar todos os vossos pedidos por este canal.
+                    Cada mensagem fica registada no vosso portal e <strong>tem sempre resposta da nossa parte</strong>.
+                  </p>
+                  <p className="msg-info-note">
+                    O tempo de resposta poderá ir <strong>até 8 dias úteis</strong>.
+                    Obrigado pela vossa compreensão e confiança.
+                  </p>
+                </div>
+                <div style={{ textAlign: 'center', marginTop: 4 }}>
+                  <SendMessageButton
+                    referencia={portalRef}
+                    nomeNoivos={[portalSettingsObj?.noiva, portalSettingsObj?.noivo].filter(Boolean).join(' & ') || null}
+                    emailNoiva={portalSettingsObj?.emailNoiva ?? null}
+                  />
+                </div>
+
+                <style jsx>{`
+                  .msg-info-wrap {
+                    margin: 40px 0 10px;
+                  }
+                  .msg-info {
+                    border: 1px solid rgba(200,168,102,.22);
+                    border-left: 2px solid rgba(200,168,102,.6);
+                    background: linear-gradient(180deg, rgba(200,168,102,.04), rgba(200,168,102,.01));
+                    padding: 26px 30px 24px;
+                    border-radius: 4px;
+                    margin-bottom: 18px;
+                  }
+                  .msg-info-eyebrow {
+                    font-family: 'Hanken Grotesk', sans-serif;
+                    font-size: 10px;
+                    letter-spacing: .42em;
+                    text-transform: uppercase;
+                    color: #c8a866;
+                    font-weight: 600;
+                    margin-bottom: 12px;
+                  }
+                  .msg-info-title {
+                    font-family: 'Cormorant Garamond', serif;
+                    font-weight: 400;
+                    font-size: 24px;
+                    line-height: 1.25;
+                    color: #efe7d6;
+                    margin: 0 0 14px;
+                  }
+                  .msg-info-title em {
+                    font-style: italic;
+                    color: #d7bd87;
+                  }
+                  .msg-info p {
+                    font-family: 'Hanken Grotesk', sans-serif !important;
+                    font-size: 14.5px !important;
+                    line-height: 1.75 !important;
+                    color: #c3b8a3 !important;
+                    margin: 0 0 12px !important;
+                    font-weight: 400 !important;
+                  }
+                  .msg-info p strong {
+                    color: #efe7d6;
+                    font-weight: 600;
+                  }
+                  .msg-info-note {
+                    margin: 14px 0 0 !important;
+                    padding-top: 14px;
+                    border-top: 1px solid rgba(239,231,214,.06);
+                    font-size: 13.5px !important;
+                    color: #8c8170 !important;
+                  }
+                `}</style>
+              </div>
+            )}
+          </div>
+
+          {/* Logo card final (mesmo que o template) */}
+          <div className="logocard">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/portal-noivos/logo-ink.png" alt="RL Photo Video" />
+            <div className="url">www.rlphotovideo.pt</div>
+          </div>
+        </article>
+      </PortalShell>
+    )
+  }
+
+  // ── Atmosphère view · CONTRATO · CPS ──────────────────────────────────────
+  const _atmIsContrato = isContratoPage && !editing && !editingPhotos
+    && !editingParceiros && !editingBriefing && !editingCalloutLinks
+    && !editingPreWedding && !editingPropostaToken && !error
+  if (_atmIsContrato && !loading) {
+    const handleEditTitle = () => { setTitleInput(title); setEditingTitle(true) }
+    // Serviços vêm do CRM proposta (propostaData) ou do Notion (notionServicos)
+    const servicosFoto =
+      (propostaData?.servicos_foto && propostaData.servicos_foto.length > 0
+        ? propostaData.servicos_foto
+        : notionServicos?.servico_foto ?? [])
+    const servicosVideo =
+      (propostaData?.servicos_video && propostaData.servicos_video.length > 0
+        ? propostaData.servicos_video
+        : notionServicos?.servico_video ?? [])
+    // Total — usa portalTotal já calculado
+    const totalEur = portalTotal ?? 0
+    // Pagamentos mapped to ContratoView shape
+    const planos = (pagamentos ?? []).map((p: any, i: number) => ({
+      label: p.descricao || p.label || ['Assinatura', 'Entrada', 'Final'][i] || `Fase ${i + 1}`,
+      roman: ['I', 'II', 'III', 'IV', 'V'][i] ?? `${i + 1}`,
+      valor: Number(p.valor ?? p.amount ?? 0),
+      paid: p.pago === true || p.status === 'pago' || p.estado === 'pago' || p.paid === true,
+      when: p.data_pagamento ? new Date(p.data_pagamento).toLocaleDateString('pt-PT') : (p.previsao ?? undefined),
+    }))
+    // Investimento — para mostrar a copy "Mais do que um serviço…" usamos
+    // os parágrafos do Notion (filtra h1/h2 e imagens, fica só texto).
+    const investParagraphs: string[] = []
+    for (const b of blocks) {
+      if (b.type === 'paragraph') {
+        const txt = plainText(b.paragraph?.rich_text ?? [])
+        if (txt.trim()) investParagraphs.push(txt)
+      }
+    }
+
+    return (
+      <PortalShell sidebar={_atmSidebar}>
+        <ContratoView
+          title={title}
+          heroImageUrl={_atmEffectiveHeader}
+          backHref={_atmBackHref}
+          contratoDisponivel={!!contratoDisponivel}
+          contratoUrl={contratoUrl}
+          onPrint={() => window.print()}
+          investParagraphs={investParagraphs.slice(0, 5)}
+          servicosFoto={servicosFoto}
+          servicosVideo={servicosVideo}
+          totalEur={totalEur}
+          pagamentos={planos}
+          isAdmin={isAdmin}
+          onEditTitle={handleEditTitle}
+          paymentPhasesNode={
+            <PaymentPhasesSection
+              referencia={portalRef}
+              valorTotal={portalTotal}
+              pagamentos={pagamentos}
+              onRefresh={loadPagamentos}
+              refreshing={pagRefreshing}
+            />
+          }
+          adminActions={
+            <>
+              <button type="button" className="abtn" onClick={handleRefresh} disabled={refreshing}>
+                <svg className={refreshing ? 'animate-spin' : ''} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 11a8 8 0 1 0-.6 4" /><path d="M20 5v6h-6" />
+                </svg>
+                {refreshing ? 'A atualizar' : 'Atualizar'}
+              </button>
+              {hasImages && (
+                <button type="button" className="abtn" onClick={() => setEditingPhotos(true)}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="8.5" cy="10" r="1.6" /><path d="M5 17l4.5-4 3 2.5L16 11l3 3" />
+                  </svg>
+                  Fotos
+                </button>
+              )}
+              <button type="button" className="abtn primary" onClick={() => setEditing(true)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 15V4M8 8l4-4 4 4" /><path d="M5 14v5h14v-5" />
+                </svg>
+                Publicar
+              </button>
+              <button type="button" className="abtn accent" onClick={() => setEditing(true)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 3l1.8 5.7L19.5 10l-5.7 1.3L12 17l-1.8-5.7L4.5 10l5.7-1.3Z" />
+                </svg>
+                Premium
+              </button>
+              <button type="button" className="abtn" onClick={() => setEditing(true)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 19l1-4L16 5l3 3L9 18l-4 1Z" /><path d="M14 7l3 3" />
+                </svg>
+                Editar
+              </button>
+            </>
+          }
+        />
+      </PortalShell>
+    )
+  }
+
+  // ── Atmosphère view · GUIA PRÉ-WEDDING ────────────────────────────────────
+  const _atmIsPreWedding = isPreWeddingPage && !editing && !editingPhotos
+    && !editingParceiros && !editingBriefing && !editingCalloutLinks
+    && !editingPreWedding && !editingPropostaToken && !error
+  if (_atmIsPreWedding && !loading) {
+    const handleEditTitlePW = () => { setTitleInput(title); setEditingTitle(true) }
+
+    // Os textos vivem 100% em portais.settings. Notion já não é consultado.
+    const introFinal: PwIntro = pwIntro ?? DEFAULT_INTRO
+    const cenariosFinal: PwCenario[] = pwCenarios ?? (DEFAULT_CENARIOS as PwCenario[])
+
+    return (
+      <PortalShell sidebar={_atmSidebar}>
+        <PreWeddingView
+          title={title}
+          heroImageUrl={_atmEffectiveHeader}
+          backHref={_atmBackHref}
+          isAdmin={isAdmin}
+          onEditTitle={handleEditTitlePW}
+          onUploadPhoto={isAdmin ? handleUploadPwPhoto : undefined}
+          onRemovePhoto={isAdmin ? handleRemovePwPhoto : undefined}
+          uploadingSlot={uploadingPwSlot}
+          heroPhotoUrl={pwPhotos.hero || null}
+          introPhotoUrl={pwPhotos.intro || null}
+          introParagraphs={introFinal.paragraphs.slice(0, 4)}
+          triptychUrls={[pwPhotos['tript-0']]}
+          cenarios={cenariosFinal.map((c, i) => ({
+            ...c,
+            photoUrl: pwPhotos[`cen-${i}`] || null,
+          })) as any}
+          intro={introFinal}
+          onSaveIntro={isAdmin ? handleSavePwIntro : undefined}
+          onSaveCenario={isAdmin ? handleSavePwCenario : undefined}
+          customSections={pwSections.map(s => ({ ...s, photoUrl: pwPhotos[`custom-${s.id}`] || null }))}
+          onChangeCustomSections={isAdmin ? handleChangePwSections : undefined}
+          adminActions={
+            <>
+              <button type="button" className="abtn" onClick={handleRefresh} disabled={refreshing}>
+                <svg className={refreshing ? 'animate-spin' : ''} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 11a8 8 0 1 0-.6 4" /><path d="M20 5v6h-6" />
+                </svg>
+                {refreshing ? 'A atualizar' : 'Atualizar'}
+              </button>
+              {hasImages && (
+                <button type="button" className="abtn" onClick={() => setEditingPhotos(true)}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="8.5" cy="10" r="1.6" /><path d="M5 17l4.5-4 3 2.5L16 11l3 3" />
+                  </svg>
+                  Fotos
+                </button>
+              )}
+              <button type="button" className="abtn primary" onClick={() => setEditing(true)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 15V4M8 8l4-4 4 4" /><path d="M5 14v5h14v-5" />
+                </svg>
+                Publicar
+              </button>
+              <button type="button" className="abtn accent" onClick={() => setEditing(true)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 3l1.8 5.7L19.5 10l-5.7 1.3L12 17l-1.8-5.7L4.5 10l5.7-1.3Z" />
+                </svg>
+                Premium
+              </button>
+              <button type="button" className="abtn" onClick={() => setEditing(true)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 19l1-4L16 5l3 3L9 18l-4 1Z" /><path d="M14 7l3 3" />
+                </svg>
+                Editar
+              </button>
+            </>
+          }
+          bookNode={
+            <PreWeddingSection
+              slots={preWeddingSlots}
+              reservedSlotId={reservedSlotId}
+              reservingSlotId={reservingSlotId}
+              showReservedWarning={showReservedWarning}
+              blocks={blocks}
+              settings={settings}
+              onReserve={async (slotId: string) => {
+                setReservingSlotId(slotId)
+                try {
+                  await fetch(`/api/portais?ref=${encodeURIComponent(portalRef)}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      referencia: portalRef,
+                      updates: {
+                        settings: {
+                          ...portalSettingsObj,
+                          preWeddingReservedSlotId: slotId,
+                          preWeddingReservedAt: new Date().toISOString(),
+                        },
+                      },
+                    }),
+                  })
+                  setReservedSlotId(slotId)
+                  setShowReservedWarning(true)
+                } finally { setReservingSlotId(null) }
+              }}
+              onNotificarNoivos={async () => {
+                setSendingNotifNoivos(true)
+                try {
+                  await fetch('/api/portal-notif-prewedding', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ referencia: portalRef }),
+                  })
+                  setNotifNoivosEnviado(true)
+                } finally { setSendingNotifNoivos(false) }
+              }}
+              sendingNotifNoivos={sendingNotifNoivos}
+              notifNoivosEnviado={notifNoivosEnviado}
+            />
+          }
+        />
+      </PortalShell>
+    )
+  }
+
+  // ── Atmosphère view · FOTOGRAFIAS ─────────────────────────────────────────
+  const _atmIsFotografias = isFotografiasPage && !editing && !editingPhotos
+    && !editingParceiros && !editingBriefing && !editingCalloutLinks
+    && !editingPreWedding && !editingPropostaToken && !error
+  if (_atmIsFotografias && !loading) {
+    const handleEditTitleFP = () => { setTitleInput(title); setEditingTitle(true) }
+    const fpEnviarUrl = guiaLinks.fotosSelecaoUrl || 'https://tally.so/r/448PrO'
+    const fpRef = portalRef || refParam || ''
+
+    // Estado das URLs de cada card — vazio = bloqueado, presente = disponível
+    const urlGalerias  = String(portalSettingsObj?.galerias_url     ?? '')
+    const urlSelecao   = String(portalSettingsObj?.selecao_url      ?? '')
+    const urlPrewed    = String(portalSettingsObj?.prewedding_url   ?? '')
+    const urlEditadas  = String(portalSettingsObj?.fotos_finais_url ?? '')
+
+    // Cálculo dos 30 dias para download de Fotos Editadas
+    const fotosFinaisEnviadaIso: string = String(portalSettingsObj?.fotos_finais_enviada ?? '')
+    let editadasFootnote: string | null = urlEditadas ? '30 dias para download' : null
+    if (urlEditadas && fotosFinaisEnviadaIso) {
+      const m = fotosFinaisEnviadaIso.match(/^(\d{4})-(\d{2})-(\d{2})/)
+      if (m) {
+        const enviada = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12)
+        const limite  = new Date(enviada.getTime() + 30 * 86400000)
+        const hoje    = new Date()
+        const ms      = limite.getTime() - hoje.getTime()
+        const dias    = Math.max(0, Math.ceil(ms / 86400000))
+        editadasFootnote = dias > 0
+          ? `Faltam ${dias} dia${dias === 1 ? '' : 's'} para download`
+          : 'Período de download expirado'
+      }
+    }
+
+    const fpCards: FotografiasCard[] = [
+      {
+        key: 'galerias',
+        title: 'GALERIA ONLINE',
+        heading: 'Galeria Online',
+        caption: 'Vista completa para partilharem com família e amigos',
+        mark: 'G',
+        url: urlGalerias,
+      },
+      {
+        key: 'selecao',
+        title: 'GALERIA PARA SELEÇÃO',
+        heading: 'Galeria para Seleção',
+        caption: 'Escolham as fotos preferidas para o vosso álbum',
+        mark: 'S',
+        url: urlSelecao,
+      },
+      {
+        key: 'prewedding',
+        title: 'FOTOS SESSÃO FAMÍLIA',
+        heading: 'Fotos Sessão Família',
+        caption: 'A sessão antes do batizado',
+        mark: 'F',
+        url: urlPrewed,
+      },
+      {
+        key: 'editadas',
+        title: 'FOTOS EDITADAS',
+        heading: 'Fotos Editadas',
+        caption: 'Selecção final, editada, pronta para imprimir',
+        mark: 'E',
+        url: urlEditadas,
+        footnote: editadasFootnote,
+      },
+    ]
+
+    return (
+      <PortalShell sidebar={_atmSidebar}>
+        {/* Admin actions bar */}
+        {isAdmin && (
+          <div className="abar">
+            <button type="button" className="abtn" onClick={handleRefresh} disabled={refreshing}>
+              <svg className={refreshing ? 'animate-spin' : ''} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 11a8 8 0 1 0-.6 4" /><path d="M20 5v6h-6" />
+              </svg>
+              {refreshing ? 'A atualizar' : 'Atualizar'}
+            </button>
+            {hasImages && (
+              <button type="button" className="abtn" onClick={() => setEditingPhotos(true)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="8.5" cy="10" r="1.6" /><path d="M5 17l4.5-4 3 2.5L16 11l3 3" />
+                </svg>
+                Fotos
+              </button>
+            )}
+            <button type="button" className="abtn primary" onClick={() => setEditing(true)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 15V4M8 8l4-4 4 4" /><path d="M5 14v5h14v-5" />
+              </svg>
+              Publicar
+            </button>
+            <button type="button" className="abtn accent" onClick={() => setEditing(true)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 3l1.8 5.7L19.5 10l-5.7 1.3L12 17l-1.8-5.7L4.5 10l5.7-1.3Z" />
+              </svg>
+              Premium
+            </button>
+            <button type="button" className="abtn" onClick={() => setEditing(true)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 19l1-4L16 5l3 3L9 18l-4 1Z" /><path d="M14 7l3 3" />
+              </svg>
+              Editar
+            </button>
+          </div>
+        )}
+
+        {/* Hero */}
+        <header className="subhero">
+          {_atmEffectiveHeader ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={_atmEffectiveHeader} alt="" className="img" />
+          ) : (
+            <div className="ph img" data-label={`Fotografia · ${title}`} />
+          )}
+          <div className="scrim" />
+          <a className="back back-hero" href={_atmBackHref}>
+            <span className="chev">‹</span> Voltar
+          </a>
+          {isAdmin && (
+            <div className="imgctrl">
+              <button type="button" className="gbtn" onClick={() => setEditingPhotos(true)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="8.5" cy="10" r="1.6" /><path d="M5 17l4.5-4 3 2.5L16 11l3 3" />
+                </svg>
+                Trocar
+              </button>
+              {_atmEffectiveHeader && (
+                <button type="button" className="gbtn danger" onClick={handleRemovePageHeader}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+                    <path d="M6 6l12 12M18 6L6 18" />
+                  </svg>
+                  Remover
+                </button>
+              )}
+            </div>
+          )}
+          <div className="cap">
+            <div className="eyebrow e">RL Photo · Video</div>
+            <div className="title">
+              <h1>{title || 'Fotografias'}</h1>
+              {isAdmin && (
+                <span className="pencil" onClick={handleEditTitleFP}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 19l1-4L16 5l3 3L9 18l-4 1Z" /><path d="M14 7l3 3" />
+                  </svg>
+                </span>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {/* Article — body com FotografiasView */}
+        <article className="subarticle">
+          <div className="body">
+            <FotografiasView
+              enviarFotosUrl={fpEnviarUrl}
+              selecaoAvailable={Boolean(urlSelecao)}
+              cards={fpCards}
+              separatorImageUrl={_atmEffectiveHeader || subpageHeaderUrl || portalHeroImageUrl || null}
+              portalRef={fpRef}
+              maqueteUrl={String(portalSettingsObj?.maquete_url ?? '') || null}
+            />
+          </div>
+
+          {/* Logo card final (mesmo template das outras Atmosphère) */}
+          <div className="logocard">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/portal-noivos/logo-ink.png" alt="RL Photo Video" />
+            <div className="url">www.rlphotovideo.pt</div>
+          </div>
+        </article>
+      </PortalShell>
+    )
+  }
+
   return (
-    <main className={isSobreViewMode ? 'relative' : 'min-h-screen relative max-w-[860px] mx-auto px-3 sm:px-6 py-6 sm:py-10'}>
+    <PortalShell sidebar={_atmSidebar}>
+    <main className={isSobreViewMode ? 'relative sobre-view' : 'relative max-w-[860px] mx-auto px-3 sm:px-6 py-6 sm:py-10'}>
       {/* ── Design premium: fundo fixo cobre o viewport inteiro ── */}
       {isDesignPremium && (
         <>
@@ -1602,24 +2363,6 @@ function PortalSubPageContent() {
               Agenda
             </button>
           )}
-          {isAdmin && !editing && !editingPhotos && !loading && !error && (isSobreViewMode || isDesignPremium) && (
-            <>
-              <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-amber-300/80 hover:text-amber-300 border border-amber-300/30 hover:border-amber-300/60 bg-amber-300/5 hover:bg-amber-300/10 transition-all cursor-pointer">
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                {uploadingPageHeader ? 'A carregar...' : (isDesignPremium && dpEffectivePhoto) || (isSobreViewMode && (id ? pageHeaders[id as string] : '')) ? 'Trocar foto' : '+ Foto'}
-                <input type="file" accept="image/*" className="hidden" disabled={uploadingPageHeader}
-                  onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadPageHeader(f) }} />
-              </label>
-              {((isDesignPremium && dpEffectivePhoto) || (isSobreViewMode && (id ? pageHeaders[id as string] : ''))) && (
-                <button onClick={handleRemovePageHeader} disabled={uploadingPageHeader}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs text-red-400/60 hover:text-red-400 border border-red-400/20 hover:border-red-400/40 transition-all disabled:opacity-40">
-                  ✕ Remover
-                </button>
-              )}
-            </>
-          )}
           {isAdmin && !editing && !editingPhotos && !loading && !error && (
             <button onClick={handlePublicar} disabled={publishing}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-emerald-400/70 hover:text-emerald-400 border border-emerald-400/20 hover:border-emerald-400/40 transition-all disabled:opacity-40">
@@ -1641,7 +2384,7 @@ function PortalSubPageContent() {
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              Editar
+              ✎ Editar
             </button>
           )}
         </div>
@@ -1671,7 +2414,10 @@ function PortalSubPageContent() {
             </div>
           </div>
         ) : (() => {
-          // Design Premium: foto fixa em fundo, header reduzido a título + ‹ Voltar
+          // 'none' sentinel = user explicitly cleared the photo
+          const perPage = id ? pageHeaders[id as string] : undefined
+          const effectiveHeader = perPage === 'none' ? '' : (perPage || subpageHeaderUrl || portalHeroImageUrl)
+          // SOBRE O MENU uses the photo in the content area — skip banner here
           if (isDesignPremium) {
             return (
               <>
@@ -1711,16 +2457,15 @@ function PortalSubPageContent() {
               </>
             )
           }
-          const effectiveHeader = settings.subpageOwnHeader || (id && pageHeaders[id as string]) || subpageHeaderUrl
-          return effectiveHeader ? (
-          <div className="relative w-full h-48 sm:h-64 rounded-2xl overflow-hidden mb-6 group/header">
+          return effectiveHeader && !isSobrePage ? (
+          <div className="relative w-full h-48 sm:h-64 rounded-2xl overflow-hidden mb-6">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={effectiveHeader} alt="" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
             <div className="absolute bottom-0 left-0 p-5 flex items-end gap-3">
               <div>
                 <p className="text-[10px] tracking-[0.4em] text-white/50 uppercase mb-1">RL PHOTO.VIDEO</p>
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-widest text-white uppercase drop-shadow-lg">
+                <h1 className="font-cormorant font-light text-2xl sm:text-3xl tracking-[0.2em] text-white uppercase drop-shadow-lg">
                   {title || '...'}
                 </h1>
               </div>
@@ -1733,28 +2478,37 @@ function PortalSubPageContent() {
                 </button>
               )}
             </div>
-            {/* Change photo button — always visible for admin (hover-only fails on mobile) */}
-            {isAdmin && <label className="absolute top-3 right-3 cursor-pointer">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/60 border border-white/20 text-white/70 text-xs hover:text-white transition-colors">
-                {uploadingPageHeader ? 'A carregar...' : (
-                  <>
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    Trocar foto
-                  </>
-                )}
+            {/* Admin photo controls — always visible */}
+            {isAdmin && (
+              <div className="absolute top-3 right-3 flex gap-2">
+                <label className="cursor-pointer">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/70 border border-white/25 text-white/75 text-xs hover:text-white transition-colors">
+                    {uploadingPageHeader ? 'A carregar...' : (
+                      <>
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Trocar
+                      </>
+                    )}
+                  </div>
+                  <input type="file" accept="image/*" className="hidden" disabled={uploadingPageHeader}
+                    onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadPageHeader(f) }} />
+                </label>
+                <button
+                  onClick={handleRemovePageHeader}
+                  disabled={uploadingPageHeader}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-black/70 border border-red-400/30 text-red-400/60 text-xs hover:text-red-400 hover:border-red-400/60 transition-colors disabled:opacity-40">
+                  ✕ Remover
+                </button>
               </div>
-              <input type="file" accept="image/*" className="hidden" disabled={uploadingPageHeader}
-                onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadPageHeader(f) }} />
-            </label>}
+            )}
           </div>
-          ) : null
-        })() || (
+          ) : (
           <>
             <p className="text-xs tracking-[0.4em] text-white/30 uppercase mb-1">RL PHOTO.VIDEO</p>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-bold tracking-widest text-gold uppercase">
+              <h1 className="font-cormorant font-light text-xl sm:text-2xl tracking-[0.2em] text-gold uppercase">
                 {title || '...'}
               </h1>
               {isAdmin && (
@@ -1766,24 +2520,21 @@ function PortalSubPageContent() {
                 </button>
               )}
             </div>
-            {/* Admin: add cover photo when none exists yet */}
+            <div className="mt-3 h-px w-16 bg-gold/40" />
+            {/* Admin: add header photo */}
             {isAdmin && (
-              <label className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 text-white/30 hover:text-white/60 hover:border-white/20 text-xs cursor-pointer transition-all">
-                {uploadingPageHeader ? 'A carregar...' : (
-                  <>
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    Adicionar foto de capa
-                  </>
-                )}
+              <label className="mt-3 inline-flex items-center gap-1.5 cursor-pointer text-[10px] text-white/25 hover:text-white/50 border border-dashed border-white/10 hover:border-white/20 px-3 py-1.5 rounded-lg transition-all">
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                {uploadingPageHeader ? 'A carregar...' : '+ Foto de cabeçalho'}
                 <input type="file" accept="image/*" className="hidden" disabled={uploadingPageHeader}
                   onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadPageHeader(f) }} />
               </label>
             )}
-            <div className="mt-3 h-px w-16 bg-gold/40" />
           </>
-        )}
+          )
+        })()}
       </header>}
 
       {loading && <div className="text-center py-24 text-white/20 text-xs tracking-widest uppercase">A carregar...</div>}
@@ -2029,12 +2780,14 @@ function PortalSubPageContent() {
               ? <BlockEditor blocks={blocks} pageId={id} settings={settings} settingsBlockId={settingsBlockId} onSaved={handleSaved} />
               : (
                 <>
+                  {!isSobrePage && !isDesignPremium && (
                   <div className="mb-6">
                     <Link href={fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : '/portal-batizado'}
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gold/30 bg-gold/10 text-gold hover:bg-gold/20 transition-all text-sm tracking-wide">
                       ‹ Voltar
                     </Link>
                   </div>
+                  )}
                   {(() => {
                     if (isContratoPage && eventoData) {
                       return <ContratoPropostaSection evento={eventoData} blocks={blocks} settings={settings} contratoDisponivel={contratoDisponivel} contratoUrl={contratoUrl} portalRef={portalRef} pagamentos={pagamentos} loadPagamentos={loadPagamentos} pagRefreshing={pagRefreshing} />
@@ -2258,7 +3011,7 @@ function PortalSubPageContent() {
                               const slot = preWeddingSlots.find(s => s.id === slotId)
                               const nomeNoivos = portalSettingsObj.noiva && portalSettingsObj.noivo
                                 ? `${portalSettingsObj.noiva} & ${portalSettingsObj.noivo}`
-                                : portalSettingsObj.noiva ?? portalSettingsObj.noivo ?? refParam ?? 'Noivos'
+                                : portalSettingsObj.noiva ?? portalSettingsObj.noivo ?? refParam ?? 'Pais'
                               fetch('/api/send-admin-notification', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
@@ -2299,26 +3052,181 @@ function PortalSubPageContent() {
                           (col.children ?? []).some((c: Block) => c.type === 'callout' && (c.children ?? []).some((ch: Block) => ch.type === 'image'))
                         ))
                       )
+                      // Mapeia título do card → ícone + descrição (fallback genérico se outro título)
+                      const CARD_META: Record<string, { icon: string; desc: string }> = {
+                        'NOIVO':     { icon: '♂', desc: 'Detalhes do noivo · contactos e logística' },
+                        'NOIVA':     { icon: '♀', desc: 'Detalhes da noiva · contactos e logística' },
+                        'CERIMÓNIA': { icon: '✦', desc: 'Local, horário e detalhes da cerimónia' },
+                        'CERIMONIA': { icon: '✦', desc: 'Local, horário e detalhes da cerimónia' },
+                        'QUINTA':    { icon: '◇', desc: 'Recinto, copo-de-água e espaços' },
+                        'FESTA':     { icon: '◈', desc: 'Música, ambiente e momentos especiais' },
+                      }
                       const cardsGrid = childPages.length > 0 && (
-                        <div className="grid grid-cols-2 gap-3 mt-6">
-                          {childPages.map(cp => {
-                            const pageTitle = cp.child_page?.title ?? ''
-                            const href = `/portal-batizado/${cp.id}?title=${encodeURIComponent(pageTitle)}&from=${id}&fromTitle=${encodeURIComponent(title)}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}`
-                            return (
-                              <Link key={cp.id} href={href}>
-                                <div className="relative flex flex-col items-center justify-center gap-2 px-4 py-8 rounded-2xl border border-white/40 bg-black cursor-pointer group hover:border-white/70 transition-all duration-300 overflow-hidden"
-                                  style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}>
-                                  <span className="absolute inset-0 rounded-2xl pointer-events-none transition-all duration-300 group-hover:opacity-100 opacity-0"
-                                    style={{ boxShadow: '0 0 32px 6px rgba(255,255,255,0.28), inset 0 0 40px 0 rgba(255,255,255,0.08)' }} />
-                                  <span className="text-xs font-bold tracking-[0.3em] uppercase text-white group-hover:text-white transition-all duration-300"
-                                    style={{ textShadow: '0 0 14px rgba(255,255,255,0.9), 0 0 28px rgba(255,255,255,0.5)' }}>
-                                    {pageTitle}
-                                  </span>
-                                  <span className="text-[9px] text-white/50 tracking-widest group-hover:text-white/80 transition-colors">Abrir →</span>
+                        <div className="mt-8">
+                          <div className="flex items-end justify-between mb-4 gap-3 flex-wrap">
+                            <div>
+                              <p className="text-[10px] tracking-[0.4em] text-gold/70 uppercase mb-1.5">Briefing por Área</p>
+                              <h3 className="text-xl text-white font-light tracking-tight" style={{ fontFamily: 'Cormorant Garamond, Georgia, serif' }}>
+                                Fichas <span className="italic text-gold/80">individuais</span>
+                              </h3>
+                            </div>
+                            <span className="text-[10px] tracking-widest text-white/30 uppercase">
+                              {childPages.filter(cp => {
+                                const k = (cp.child_page?.title ?? '').toUpperCase().trim()
+                                return k !== 'CERIMÓNIA' && k !== 'CERIMONIA' && k !== 'QUINTA'
+                              }).length} secções
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-1 gap-3">
+                            {childPages
+                              .filter(cp => {
+                                const k = (cp.child_page?.title ?? '').toUpperCase().trim()
+                                return k !== 'CERIMÓNIA' && k !== 'CERIMONIA' && k !== 'QUINTA'
+                              })
+                              .map(cp => {
+                              const pageTitle = cp.child_page?.title ?? ''
+                              const key = pageTitle.toUpperCase().trim()
+                              const meta = CARD_META[key] ?? { icon: '◆', desc: 'Aceder a esta secção do briefing' }
+                              const isOpen = openFichaKey === key
+                              // Default fields se ainda não houver
+                              const defaultCampos: FichaCampo[] = [
+                                { id: 'nome',    label: 'Nome',     value: '' },
+                                { id: 'contato', label: 'Contacto', value: '' },
+                              ]
+                              const campos = briefingFichas[key] ?? defaultCampos
+
+                              const updateCampo = (idx: number, field: 'label' | 'value', val: string) => {
+                                setBriefingFichas(prev => ({
+                                  ...prev,
+                                  [key]: (prev[key] ?? defaultCampos).map((c, i) =>
+                                    i === idx ? { ...c, [field]: val } : c
+                                  ),
+                                }))
+                              }
+                              const addCampo = () => {
+                                const newCampo: FichaCampo = {
+                                  id: `c-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                                  label: 'Novo campo',
+                                  value: '',
+                                }
+                                setBriefingFichas(prev => ({
+                                  ...prev,
+                                  [key]: [...(prev[key] ?? defaultCampos), newCampo],
+                                }))
+                              }
+                              const removeCampo = (idx: number) => {
+                                setBriefingFichas(prev => ({
+                                  ...prev,
+                                  [key]: (prev[key] ?? defaultCampos).filter((_, i) => i !== idx),
+                                }))
+                              }
+                              const saveFicha = async () => {
+                                setFichaSaving(true)
+                                try {
+                                  const newSettings = { ...portalSettingsObj, briefingFichas }
+                                  await savePortalSettings(newSettings)
+                                  setPortalSettingsObj(newSettings)
+                                } finally { setFichaSaving(false) }
+                              }
+
+                              return (
+                                <div key={cp.id} className="rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.025] to-transparent overflow-hidden transition-all duration-300"
+                                  style={{ boxShadow: '0 12px 30px -16px rgba(0,0,0,0.5)' }}>
+                                  {/* Header da ficha (clicável) */}
+                                  <button
+                                    type="button"
+                                    onClick={() => setOpenFichaKey(prev => prev === key ? null : key)}
+                                    className="w-full text-left relative group px-5 py-5 hover:bg-gold/[0.04] transition-all"
+                                  >
+                                    <span className="absolute -top-12 -right-12 w-32 h-32 rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                                      style={{ background: 'radial-gradient(circle, rgba(201,164,92,0.18), transparent 70%)' }} />
+                                    <div className="relative flex items-center gap-4">
+                                      <div className="w-12 h-12 rounded-xl border border-gold/30 bg-gold/[0.06] flex items-center justify-center text-gold text-lg shrink-0 group-hover:bg-gold/[0.12] group-hover:border-gold/50 transition-all"
+                                        style={{ boxShadow: '0 0 14px -6px rgba(201,164,92,0.5)' }}>
+                                        {meta.icon}
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-[10px] tracking-[0.35em] text-gold/65 uppercase mb-1.5 group-hover:text-gold/85 transition-colors">{pageTitle}</p>
+                                        <p className="text-[12px] text-white/55 leading-relaxed">{meta.desc}</p>
+                                      </div>
+                                      <span className={`text-gold/60 text-xl transition-transform duration-300 shrink-0 ${isOpen ? 'rotate-90' : ''}`}>›</span>
+                                    </div>
+                                  </button>
+
+                                  {/* Painel expansível com formulário */}
+                                  <div className={`grid transition-all duration-300 ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                                    <div className="overflow-hidden">
+                                      <div className="px-5 pb-5 pt-2 border-t border-white/[0.06]">
+                                        <p className="text-[9px] tracking-[0.4em] text-white/30 uppercase mb-4">Caixas de Texto</p>
+                                        <div className="flex flex-col gap-3">
+                                          {campos.map((campo, idx) => (
+                                            <div key={campo.id} className="flex flex-col sm:flex-row gap-2 items-start group/row">
+                                              {/* Label */}
+                                              <input
+                                                value={campo.label}
+                                                onChange={e => updateCampo(idx, 'label', e.target.value)}
+                                                placeholder="Etiqueta"
+                                                className="sm:w-44 shrink-0 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-[11px] tracking-[0.18em] uppercase text-gold/80 placeholder:text-white/20 focus:outline-none focus:border-gold/50 transition-colors font-semibold"
+                                              />
+                                              {/* Value */}
+                                              <input
+                                                value={campo.value}
+                                                onChange={e => updateCampo(idx, 'value', e.target.value)}
+                                                placeholder="Conteúdo"
+                                                className="flex-1 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/85 placeholder:text-white/25 focus:outline-none focus:border-gold/50 transition-colors"
+                                              />
+                                              {/* Remover */}
+                                              {isAdmin && (
+                                                <button
+                                                  type="button"
+                                                  onClick={() => removeCampo(idx)}
+                                                  title="Remover este campo"
+                                                  className="opacity-0 group-hover/row:opacity-100 w-9 h-9 rounded-lg text-white/30 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/30 transition-all flex items-center justify-center"
+                                                >
+                                                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                                  </svg>
+                                                </button>
+                                              )}
+                                            </div>
+                                          ))}
+
+                                          {/* Botão Adicionar */}
+                                          <button
+                                            type="button"
+                                            onClick={addCampo}
+                                            className="mt-1 self-start inline-flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] tracking-[0.25em] uppercase font-bold text-gold/85 border border-dashed border-gold/35 hover:border-gold/65 hover:bg-gold/[0.06] transition-all"
+                                          >
+                                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+                                              <path d="M12 5v14M5 12h14" />
+                                            </svg>
+                                            Adicionar Caixa de Texto
+                                          </button>
+                                        </div>
+
+                                        {/* Footer com Guardar */}
+                                        <div className="mt-5 pt-4 border-t border-white/[0.05] flex items-center justify-between gap-3">
+                                          <span className="text-[10px] text-white/30 italic">
+                                            {campos.length} caixa{campos.length === 1 ? '' : 's'} · guarda para persistir
+                                          </span>
+                                          <button
+                                            type="button"
+                                            onClick={saveFicha}
+                                            disabled={fichaSaving}
+                                            className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-[11px] tracking-[0.22em] uppercase font-bold text-black bg-gold hover:brightness-110 transition-all disabled:opacity-50"
+                                            style={{ boxShadow: '0 0 18px -8px rgba(201,164,92,0.55)' }}
+                                          >
+                                            {fichaSaving ? 'A guardar…' : '✓ Guardar Ficha'}
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
                                 </div>
-                              </Link>
-                            )
-                          })}
+                              )
+                            })}
+                          </div>
                         </div>
                       )
                       return (
@@ -2327,119 +3235,155 @@ function PortalSubPageContent() {
                             const ROLES = ['Fotógrafo', 'Videógrafo', 'Assistente', 'Editor']
                             const equipaBI = briefingInfo[id as string] ?? {}
                             const equipa = equipaBI.equipa ?? []
+                            const ROLE_ICONS: Record<string, string> = {
+                              'Fotógrafo':  '◉',
+                              'Videógrafo': '▶',
+                              'Assistente': '◇',
+                              'Editor':     '✎',
+                            }
                             const equipaBox = (
-                              <div className="mb-6 pb-6 border-b border-white/[0.06]">
-                                <div className="flex items-center justify-between mb-3">
-                                  <span className="text-[10px] tracking-[0.3em] text-white/60 uppercase">Equipa</span>
+                              <div className="mb-6 rounded-2xl border border-white/[0.08] overflow-hidden"
+                                style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.45), rgba(11,11,11,0.55))', boxShadow: '0 20px 40px -20px rgba(0,0,0,0.5)' }}>
+                                <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-white/[0.05]">
+                                  <div className="flex items-center gap-3">
+                                    <span className="w-8 h-8 rounded-lg border border-gold/35 bg-gold/[0.08] flex items-center justify-center text-gold text-sm">⌘</span>
+                                    <div>
+                                      <p className="text-[10px] tracking-[0.4em] text-gold/70 uppercase">Equipa Atribuída</p>
+                                      <p className="text-[11px] text-white/40 mt-0.5">{equipa.length > 0 ? `${equipa.length} profissional${equipa.length === 1 ? '' : 'is'}` : 'Define os profissionais deste evento'}</p>
+                                    </div>
+                                  </div>
                                   {!editingEquipa && (
                                     <button onClick={() => { setEquipaForm(equipa.length ? equipa.map(e => ({ ...e })) : [{ role: 'Fotógrafo', name: '' }]); setEditingEquipa(true) }}
-                                      className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors text-white/30 hover:text-white/70">
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      className="px-2.5 py-1.5 rounded-md text-[9px] tracking-[0.25em] uppercase font-bold border border-gold/30 bg-gold/[0.06] text-gold/85 hover:bg-gold/15 hover:border-gold/55 transition-all flex items-center gap-1.5">
+                                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                                       </svg>
+                                      Editar
                                     </button>
                                   )}
                                 </div>
-                                {editingEquipa ? (
-                                  <div className="space-y-2">
-                                    {equipaForm.map((member, idx) => (
-                                      <div key={idx} className="flex gap-2 items-center">
-                                        <select value={member.role}
-                                          onChange={e => setEquipaForm(f => f.map((x, i) => i === idx ? { ...x, role: e.target.value } : x))}
-                                          className="bg-white/[0.04] border border-white/10 rounded-lg px-2 py-2 text-xs text-white/70 outline-none focus:border-gold/40 transition-colors shrink-0">
-                                          {ROLES.map(r => <option key={r} value={r} className="bg-neutral-900">{r}</option>)}
-                                        </select>
-                                        <input type="text" value={member.name}
-                                          onChange={e => setEquipaForm(f => f.map((x, i) => i === idx ? { ...x, name: e.target.value } : x))}
-                                          placeholder="Nome do profissional"
-                                          className="flex-1 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15" />
-                                        <button onClick={() => setEquipaForm(f => f.filter((_, i) => i !== idx))}
-                                          className="p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-white/[0.04] transition-colors shrink-0">
-                                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                <div className="px-5 py-4">
+                                  {editingEquipa ? (
+                                    <div className="space-y-2">
+                                      {equipaForm.map((member, idx) => (
+                                        <div key={idx} className="flex gap-2 items-center">
+                                          <select value={member.role}
+                                            onChange={e => setEquipaForm(f => f.map((x, i) => i === idx ? { ...x, role: e.target.value } : x))}
+                                            className="bg-black/40 border border-white/10 rounded-lg px-2.5 py-2.5 text-[12px] text-white/85 outline-none focus:border-gold/50 transition-colors shrink-0 [color-scheme:dark]">
+                                            {ROLES.map(r => <option key={r} value={r} className="bg-neutral-900">{r}</option>)}
+                                          </select>
+                                          <input type="text" value={member.name}
+                                            onChange={e => setEquipaForm(f => f.map((x, i) => i === idx ? { ...x, name: e.target.value } : x))}
+                                            placeholder="Nome do profissional"
+                                            className="flex-1 bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-[13px] text-white outline-none focus:border-gold/50 transition-colors placeholder:text-white/20" />
+                                          <button onClick={() => setEquipaForm(f => f.filter((_, i) => i !== idx))}
+                                            className="w-9 h-9 flex items-center justify-center rounded-lg text-white/25 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/30 transition-all shrink-0">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                          </button>
+                                        </div>
+                                      ))}
+                                      <button onClick={() => setEquipaForm(f => [...f, { role: 'Fotógrafo', name: '' }])}
+                                        className="w-full py-2.5 rounded-xl border border-dashed border-gold/25 text-gold/60 hover:text-gold hover:border-gold/50 hover:bg-gold/[0.04] text-[11px] tracking-[0.3em] uppercase font-bold transition-all">
+                                        + Adicionar Membro
+                                      </button>
+                                      <div className="flex gap-2 pt-1.5">
+                                        <button onClick={handleSaveEquipa} disabled={savingEquipa}
+                                          className="flex-1 py-2.5 rounded-xl bg-gold text-black font-bold text-[11px] tracking-[0.25em] uppercase hover:bg-gold/90 transition-all disabled:opacity-50"
+                                          style={!savingEquipa ? { boxShadow: '0 0 14px -4px rgba(201,164,92,0.55)' } : undefined}>
+                                          {savingEquipa ? 'A guardar…' : '✓ Guardar'}
+                                        </button>
+                                        <button onClick={() => setEditingEquipa(false)}
+                                          className="flex-1 py-2.5 rounded-xl border border-white/15 text-white/60 text-[11px] tracking-[0.25em] uppercase font-bold hover:bg-white/[0.04] hover:text-white/85 transition-all">
+                                          Cancelar
                                         </button>
                                       </div>
-                                    ))}
-                                    <button onClick={() => setEquipaForm(f => [...f, { role: 'Fotógrafo', name: '' }])}
-                                      className="w-full py-2 rounded-xl border border-dashed border-white/20 text-white/30 hover:text-white/60 hover:border-white/40 text-xs tracking-widest transition-all">
-                                      + Adicionar Membro
-                                    </button>
-                                    <div className="flex gap-2 pt-1">
-                                      <button onClick={handleSaveEquipa} disabled={savingEquipa}
-                                        className="flex-1 py-2 rounded-xl bg-gold text-black font-semibold text-xs tracking-widest hover:bg-gold/80 transition-all disabled:opacity-50">
-                                        {savingEquipa ? 'A guardar...' : 'Guardar'}
-                                      </button>
-                                      <button onClick={() => setEditingEquipa(false)}
-                                        className="flex-1 py-2 rounded-xl border border-white/10 text-white/50 text-xs tracking-widest hover:bg-white/[0.04] transition-all">
-                                        Cancelar
-                                      </button>
                                     </div>
-                                  </div>
-                                ) : equipa.length > 0 ? (
-                                  <div className="space-y-2">
-                                    {equipa.map((member, idx) => (
-                                      <div key={idx} className="flex items-center justify-between px-4 py-2.5 bg-white/[0.02] border border-white/[0.06] rounded-xl">
-                                        <span className="text-[10px] tracking-widest text-white/35 uppercase">{member.role}</span>
-                                        <span className="text-sm text-white/70 font-medium">{member.name || <span className="text-white/20 text-xs italic">—</span>}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <p className="text-xs text-white/20 italic px-1">Sem equipa definida.</p>
-                                )}
+                                  ) : equipa.length > 0 ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                      {equipa.map((member, idx) => (
+                                        <div key={idx} className="flex items-center gap-3 px-3.5 py-3 rounded-xl bg-white/[0.025] border border-white/[0.06] hover:border-gold/25 hover:bg-gold/[0.03] transition-colors">
+                                          <span className="w-9 h-9 rounded-lg border border-gold/30 bg-gold/[0.06] flex items-center justify-center text-gold text-base shrink-0">
+                                            {ROLE_ICONS[member.role] ?? '◆'}
+                                          </span>
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-[9px] tracking-[0.3em] text-gold/60 uppercase mb-0.5">{member.role}</p>
+                                            <p className="text-[13px] text-white/85 font-medium truncate">{member.name || <span className="text-white/25 italic text-[12px]">Sem nome</span>}</p>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div className="text-center py-6">
+                                      <span className="text-3xl opacity-15 block mb-2">⌘</span>
+                                      <p className="text-[12px] text-white/35 italic">Sem equipa definida.</p>
+                                      <p className="text-[10px] text-white/25 mt-1">Clica em <span className="text-gold/65 font-medium">Editar</span> para adicionar membros.</p>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             )
-                            const enviarBriefingBtn = (portalRef || refParam) ? (
-                              <div className="mb-5 flex justify-end">
-                                <button
-                                  onClick={handleEnviarBriefing}
-                                  disabled={sendingBriefing || briefingSent}
-                                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold tracking-widest uppercase transition-all ${
-                                    briefingSent
-                                      ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 cursor-default'
-                                      : 'bg-white/[0.06] border border-white/20 text-white/70 hover:bg-white/[0.12] hover:border-white/40 hover:text-white disabled:opacity-50'
-                                  }`}
-                                >
-                                  {briefingSent ? (
-                                    <>
-                                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                                      Briefing Enviado
-                                    </>
-                                  ) : sendingBriefing ? (
-                                    <>
-                                      <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                                      A enviar...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                                      Enviar Briefing
-                                    </>
-                                  )}
-                                </button>
-                              </div>
-                            ) : null
+                            // (Hero antigo removido — o BriefingExtensions tem agora um hero próprio mais rico.)
                             const briefingGeralIdx = otherBlocks.findIndex(b =>
                               ['heading_1','heading_2','heading_3'].includes(b.type) &&
                               plainText(b[b.type]?.rich_text ?? []).toUpperCase().includes('BRIEFING GERAL')
                             )
-                            if (briefingGeralIdx === -1) {
-                              return (
-                                <>
-                                  {enviarBriefingBtn}
-                                  {equipaBox}
-                                  <NotionBlocks blocks={otherBlocks} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : undefined} />
-                                  {cardsGrid}
-                                </>
-                              )
-                            }
+                            // Slot do botão Enviar Briefing (versão compacta, sem hero — o hero é gerado pelo BriefingExtensions)
+                            const enviarBtnSlot = (portalRef || refParam) ? (
+                              <button
+                                onClick={handleEnviarBriefing}
+                                disabled={sendingBriefing || briefingSent}
+                                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-bold tracking-[0.25em] uppercase transition-all ${
+                                  briefingSent
+                                    ? 'bg-emerald-500/15 border border-emerald-500/45 text-emerald-300 cursor-default'
+                                    : sendingBriefing
+                                      ? 'bg-white/[0.04] border border-white/15 text-white/50 cursor-wait'
+                                      : 'bg-gold text-black hover:bg-gold/90'
+                                }`}
+                                style={!briefingSent && !sendingBriefing ? { boxShadow: '0 0 18px -4px rgba(201,164,92,0.55)' } : briefingSent ? { boxShadow: '0 0 14px -4px rgba(52,211,153,0.4)' } : undefined}>
+                                {briefingSent ? (
+                                  <>
+                                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                    Briefing Enviado
+                                  </>
+                                ) : sendingBriefing ? (
+                                  <>
+                                    <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                    A enviar…
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                                    Enviar Briefing
+                                  </>
+                                )}
+                              </button>
+                            ) : null
+
+                            const briefingExtBlock = (
+                              <BriefingExtensions
+                                info={equipaBI as BriefingExt}
+                                isAdmin={isAdmin}
+                                onSave={handleSaveBriefingExt}
+                                pageTitle={title}
+                                portalRef={portalRef || refParam || undefined}
+                                dataEvento={eventoData?.data_evento ?? null}
+                                local={eventoData?.local ?? null}
+                                enviarBriefingNode={enviarBtnSlot}
+                                equipaNode={equipaBox}
+                                fichasNode={cardsGrid}
+                              />
+                            )
+                            // Notion content (Briefing Geral) – mostrado entre o hero e o resto do briefing
+                            const notionPre  = briefingGeralIdx === -1 ? otherBlocks : otherBlocks.slice(0, briefingGeralIdx)
+                            const notionMid  = briefingGeralIdx === -1 ? []         : [otherBlocks[briefingGeralIdx]]
+                            const notionPost = briefingGeralIdx === -1 ? []         : otherBlocks.slice(briefingGeralIdx + 1)
+                            const backUrl = fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : undefined
                             return (
                               <>
-                                <NotionBlocks blocks={otherBlocks.slice(0, briefingGeralIdx)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : undefined} />
-                                {enviarBriefingBtn}
-                                {equipaBox}
-                                <NotionBlocks blocks={[otherBlocks[briefingGeralIdx]]} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : undefined} />
-                                {cardsGrid}
-                                <NotionBlocks blocks={otherBlocks.slice(briefingGeralIdx + 1)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : undefined} />
+                                {notionPre.length > 0 && <NotionBlocks blocks={notionPre} hiddenNav={settings.hiddenNav} backUrl={backUrl} />}
+                                {notionMid.length > 0 && <NotionBlocks blocks={notionMid} hiddenNav={settings.hiddenNav} backUrl={backUrl} />}
+                                {briefingExtBlock}
+                                {notionPost.length > 0 && <NotionBlocks blocks={notionPost} hiddenNav={settings.hiddenNav} backUrl={backUrl} />}
                               </>
                             )
                           })()}
@@ -2618,156 +3562,41 @@ function PortalSubPageContent() {
                         if (!imgChild) return null
                         return imgChild.image?.type === 'external' ? imgChild.image.external?.url : imgChild.image?.file?.url
                       }
-
-                      // Extract first 2 images from the image column_list (before the cards section)
-                      const guiaImgs: string[] = []
-                      for (const b of blocks.slice(0, colListIdx)) {
-                        if (b.type === 'column_list') {
-                          for (const col of (b.children ?? []) as Block[]) {
-                            for (const child of (col.children ?? []) as Block[]) {
-                              if (child.type === 'image') {
-                                const u = child.image?.type === 'external' ? child.image.external?.url : child.image?.file?.url
-                                if (u) guiaImgs.push(u)
-                                if (guiaImgs.length >= 2) break
-                              }
-                            }
-                            if (guiaImgs.length >= 2) break
-                          }
-                        }
-                        if (guiaImgs.length >= 2) break
-                      }
-
-                      const guiaContent = Array.isArray((settings as any).guiaIntroContent)
-                        ? (settings as any).guiaIntroContent as Array<{ type: string; text: string }>
-                        : []
-
-                      const renderGuiaBlock = (blk: { type: string; text: string }, idx: number) => {
-                        if (blk.type === 'photo_break') {
-                          return (
-                            <div key={idx} className="grid grid-cols-2 gap-2 my-2">
-                              {guiaImgs.slice(0, 2).map((url, i) => (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img key={i} src={url} alt="" className="w-full object-cover rounded-xl aspect-square" />
-                              ))}
-                            </div>
-                          )
-                        }
-                        if (blk.type === 'heading_2') {
-                          return <h2 key={idx} className="text-base sm:text-[17px] font-bold text-white/95 tracking-widest uppercase pt-5 mt-5 border-t border-white/[0.07]">{blk.text}</h2>
-                        }
-                        if (blk.type === 'bullet') {
-                          return (
-                            <div key={idx} className="flex items-start gap-2.5 text-base sm:text-[17px] text-white/80 leading-[1.75] pl-1 mb-1">
-                              <span className="text-gold/60 mt-2 shrink-0 text-sm">◆</span>
-                              <span>{blk.text}</span>
-                            </div>
-                          )
-                        }
-                        return <p key={idx} className="text-base sm:text-[17px] text-white/90 leading-[1.75] mb-3">{blk.text}</p>
-                      }
-
-                      const guiaBackUrl = fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : undefined
-
                       return (
                         <>
-                          {/* ── Guia text at top ── */}
-                          {guiaContent.length > 0 && (
-                            <div className="relative mt-2 mb-6">
-                              {isAdmin && !editingGuia && (
-                                <button
-                                  onClick={() => { setGuiaDraft(guiaToText(guiaContent)); setEditingGuia(true) }}
-                                  className="absolute top-0 right-0 text-white/25 hover:text-white/60 transition-colors p-1 text-base z-10"
-                                  title="Editar texto"
-                                >✏️</button>
-                              )}
-                              {editingGuia ? (
-                                <div className="space-y-3">
-                                  <p className="text-[9px] text-white/25 tracking-widest uppercase">## Título &nbsp;·&nbsp; - Ponto &nbsp;·&nbsp; [FOTOS] para as fotos</p>
-                                  <textarea
-                                    value={guiaDraft}
-                                    onChange={e => setGuiaDraft(e.target.value)}
-                                    rows={22}
-                                    className="w-full bg-white/[0.04] border border-white/[0.12] rounded-xl p-3 text-sm text-white/70 leading-relaxed resize-y outline-none focus:border-white/25 font-mono"
-                                  />
-                                  <div className="flex gap-2">
-                                    <button onClick={handleSaveGuia} disabled={savingGuia}
-                                      className="flex-1 py-2.5 rounded-xl bg-gold text-black text-xs font-bold tracking-widest uppercase disabled:opacity-50">
-                                      {savingGuia ? 'A guardar...' : 'Guardar'}
-                                    </button>
-                                    <button onClick={() => setEditingGuia(false)}
-                                      className="px-4 py-2.5 rounded-xl border border-white/10 text-white/40 text-xs">
-                                      Cancelar
-                                    </button>
+                          <NotionBlocks blocks={blocks.slice(0, colListIdx)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : undefined} />
+                          <div className="grid grid-cols-2 gap-3 my-4">
+                            {sectionCallouts.map(callout => {
+                              const titleText = plainText(callout.callout?.rich_text ?? []).trim().toUpperCase()
+                              const meta = SECTION_META[titleText]
+                              if (!meta) return null
+                              const imgUrl = getImgUrl(callout)
+                              return (
+                                <div key={titleText} className="flex flex-col rounded-2xl overflow-hidden border border-white/[0.08] bg-white/[0.02]">
+                                  <div className="flex items-center gap-2 px-3 pt-3 pb-2">
+                                    <span className="text-lg">{meta.icon}</span>
+                                    <span className="text-[10px] font-bold tracking-widest text-white/60 uppercase">{titleText}</span>
+                                  </div>
+                                  {imgUrl && (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={imgUrl} alt={titleText} className="w-full object-contain" />
+                                  )}
+                                  <div className="p-3">
+                                    {meta.url ? (
+                                      <a href={meta.url} target="_blank" rel="noopener noreferrer"
+                                        className="block w-full text-center px-4 py-2.5 rounded-xl bg-gold text-black font-semibold text-xs tracking-wide hover:bg-gold/80 transition-all">
+                                        {meta.label}
+                                      </a>
+                                    ) : (
+                                      <div className="block w-full text-center px-4 py-2.5 rounded-xl border border-gold/20 text-gold/40 text-xs tracking-wide">
+                                        {meta.label}
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
-                              ) : (
-                                <div className="space-y-4">
-                                  {guiaContent.map(renderGuiaBlock)}
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {/* ── 4-card grid ── */}
-                          {(() => {
-                            const hiddenCards: string[] = (settings as any).hiddenGuiaCards ?? []
-                            const visible = sectionCallouts.filter(c => {
-                              const t = plainText(c.callout?.rich_text ?? []).trim().toUpperCase()
-                              return !hiddenCards.includes(t)
-                            })
-                            return (
-                              <>
-                                {visible.length > 0 && (
-                                  <div className="grid grid-cols-2 gap-3 my-4">
-                                    {visible.map(callout => {
-                                      const titleText = plainText(callout.callout?.rich_text ?? []).trim().toUpperCase()
-                                      const meta = SECTION_META[titleText]
-                                      if (!meta) return null
-                                      const imgUrl = getImgUrl(callout)
-                                      return (
-                                        <div key={titleText} className="relative flex flex-col rounded-2xl overflow-hidden border border-white/[0.08] bg-white/[0.02]">
-                                          {isAdmin && (
-                                            <button
-                                              onClick={() => handleHideGuiaCard(titleText)}
-                                              className="absolute top-2 right-2 z-10 w-5 h-5 rounded-full bg-black/70 flex items-center justify-center text-white/35 hover:text-red-400 transition-colors text-xs leading-none"
-                                              title="Eliminar card"
-                                            >×</button>
-                                          )}
-                                          <div className="flex items-center gap-2 px-3 pt-3 pb-2 pr-8">
-                                            <span className="text-lg">{meta.icon}</span>
-                                            <span className="text-[10px] font-bold tracking-widest text-white/60 uppercase">{titleText}</span>
-                                          </div>
-                                          {imgUrl && (
-                                            // eslint-disable-next-line @next/next/no-img-element
-                                            <img src={imgUrl} alt={titleText} className="w-full object-contain" />
-                                          )}
-                                          <div className="p-3">
-                                            {meta.url ? (
-                                              <a href={meta.url} target="_blank" rel="noopener noreferrer"
-                                                className="block w-full text-center px-4 py-2.5 rounded-xl bg-gold text-black font-semibold text-xs tracking-wide hover:bg-gold/80 transition-all">
-                                                {meta.label}
-                                              </a>
-                                            ) : (
-                                              <div className="block w-full text-center px-4 py-2.5 rounded-xl border border-gold/20 text-gold/40 text-xs tracking-wide">
-                                                {meta.label}
-                                              </div>
-                                            )}
-                                          </div>
-                                        </div>
-                                      )
-                                    })}
-                                  </div>
-                                )}
-                                {isAdmin && hiddenCards.length > 0 && (
-                                  <button
-                                    onClick={handleRestoreGuiaCards}
-                                    className="w-full text-center text-[9px] text-white/20 hover:text-white/50 tracking-widest uppercase transition-colors mb-3"
-                                  >↩ restaurar {hiddenCards.length} card{hiddenCards.length > 1 ? 's' : ''}</button>
-                                )}
-                              </>
-                            )
-                          })()}
-
+                              )
+                            })}
+                          </div>
                           {(() => {
                             const afterSections = blocks.slice(colListIdx + 1)
                             // find the parceiros column_list (has only image children)
@@ -2793,7 +3622,7 @@ function PortalSubPageContent() {
                             const parcSectionEnd = parceiros.length > 0 ? (parcIdx !== -1 ? parcIdx : afterSections.length - 1) : parcIdx
                             return (
                               <>
-                                <NotionBlocks blocks={afterSections.slice(0, parcSectionEnd !== -1 ? parcSectionEnd : afterSections.length)} hiddenNav={settings.hiddenNav} backUrl={guiaBackUrl} />
+                                <NotionBlocks blocks={afterSections.slice(0, parcSectionEnd !== -1 ? parcSectionEnd : afterSections.length)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : undefined} />
                                 {parcList && parcList.length > 0 && (
                                   <div className="grid grid-cols-2 gap-3 my-4">
                                     {parcList.map((p, idx) => {
@@ -2811,7 +3640,7 @@ function PortalSubPageContent() {
                                     })}
                                   </div>
                                 )}
-                                {parcSectionEnd !== -1 && <NotionBlocks blocks={afterSections.slice(parcSectionEnd + 1)} hiddenNav={settings.hiddenNav} backUrl={guiaBackUrl} />}
+                                {parcSectionEnd !== -1 && <NotionBlocks blocks={afterSections.slice(parcSectionEnd + 1)} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : undefined} />}
                               </>
                             )
                           })()}
@@ -2839,7 +3668,7 @@ function PortalSubPageContent() {
                                 Enviar Fotos
                               </h2>
                               <p className="text-sm text-white/55 leading-relaxed mb-5">
-                                Noivos, este formulário é para vocês nos enviarem a vossa escolha através dele, de outra forma não é considerado entregue.
+                                Pais, este formulário é para vocês nos enviarem a vossa escolha através dele, de outra forma não é considerado entregue.
                               </p>
                               <a href={fotosUrl} target="_blank" rel="noopener noreferrer"
                                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/40 bg-white/5 text-white text-sm font-semibold tracking-wide hover:bg-white/10 transition-all"
@@ -2848,202 +3677,71 @@ function PortalSubPageContent() {
                               </a>
                             </div>
                           </div>
-                          {/* ── FOTO CARDS (Supabase-first) ── */}
+                          {/* ── BLOCKS com cards VER MAIS por card ── */}
                           {(() => {
-                            // Helper: map card title to URL guardada nas "Ações Fotografia" da ficha
-                            const getActionUrl = (title: string): string => {
-                              const t = (title || '').toUpperCase()
-                              // SESSÃO DE FAMÍLIA é a versão batizado do PRÉ-WEDDING
-                              if (t.includes('SESSÃO DE FAMÍLIA') || t.includes('SESSAO DE FAMILIA') || t.includes('FAMÍLIA') || t.includes('FAMILIA')) return portalSettingsObj?.prewedding_url ?? ''
-                              if (t.includes('SELEÇ') || t.includes('SELEC')) return portalSettingsObj?.selecao_url ?? ''
-                              if (t.includes('PRÉ-WEDDING') || t.includes('PRE-WEDDING')) return portalSettingsObj?.prewedding_url ?? ''
-                              if (t.includes('EDITADAS') || t.includes('FOTOS FINAIS')) return portalSettingsObj?.fotos_finais_url ?? ''
-                              if (t.includes('GALERIA ON') || t.includes('ON-LINE') || t.includes('GALERIAS')) return portalSettingsObj?.galerias_url ?? ''
-                              if (t.includes('MAQUETE')) return portalSettingsObj?.maquete_url ?? ''
-                              return ''
-                            }
-
-                            // Build card list: prefer Supabase fotoCards, fall back to Notion callout blocks
-                            const sbCardsRaw: Array<{ title: string; url: string; imageUrl: string }> | undefined =
-                              Array.isArray((settings as any).fotoCards) ? (settings as any).fotoCards : undefined
-                            // Auto-fill URL nos sbCards quando estiver vazia (via Ações Fotografia)
-                            const sbCards = sbCardsRaw?.map(c => ({
-                              ...c,
-                              url: c.url && c.url.trim() ? c.url : getActionUrl(c.title),
-                            }))
-
-                            // Extract notion cards for fallback / initialisation
-                            const notionCards: Array<{ title: string; url: string; imageUrl: string }> = (() => {
-                              if (calloutCards.length === 0) return []
-                              const out: Array<{ title: string; url: string; imageUrl: string }> = []
-                              for (const callout of calloutCards) {
-                                const cardTitle = plainText(callout.callout?.rich_text ?? []).trim()
-                                const imgUrl = getImgUrl(callout) ?? ''
-                                const url = pageCalloutLinks[cardTitle] || getActionUrl(cardTitle) || ''
-                                out.push({ title: cardTitle, url, imageUrl: imgUrl })
-                              }
-                              return out
-                            })()
-
-                            const activeCards = sbCards ?? notionCards
-
-                            const renderCards = (cards: Array<{ title: string; url: string; imageUrl: string }>) => (
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4">
-                                {cards.map((card, idx) => {
-                                  const hasUrl = !!card.url
-                                  const hasImg = !!card.imageUrl
-                                  return (
-                                    <div key={idx} className="group relative aspect-[4/5] overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-zinc-900 via-black to-zinc-900">
-                                      {/* Foto background */}
-                                      {hasImg ? (
-                                        // eslint-disable-next-line @next/next/no-img-element
-                                        <img src={card.imageUrl} alt=""
-                                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1500ms] group-hover:scale-105" />
-                                      ) : (
-                                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_30%,rgba(201,169,110,0.08)_0%,rgba(0,0,0,0.9)_60%)]" />
-                                      )}
-
-                                      {/* Gradiente overlay para legibilidade */}
-                                      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/55 to-black/15" />
-
-                                      {/* Conteúdo */}
-                                      <div className="relative z-10 flex flex-col justify-end h-full p-5 sm:p-6">
-                                        <p className="text-[9px] tracking-[0.5em] text-gold/60 uppercase mb-2">RL PHOTO·VIDEO</p>
-                                        <h3 className="font-cormorant text-2xl sm:text-3xl font-light leading-[1.05] text-white mb-2">
-                                          <span className="italic text-gold">{card.title}</span>
-                                        </h3>
-                                        <div className="h-px w-10 bg-gold/60 mb-4" />
-
-                                        {hasUrl ? (
-                                          <a href={card.url} target="_blank" rel="noopener noreferrer"
-                                            className="inline-flex items-center justify-center w-full
-                                                       border border-gold/40 bg-gold/[0.05] hover:bg-gold/[0.18] hover:border-gold/70
-                                                       px-5 py-3 text-[10px] tracking-[0.4em] text-gold uppercase
-                                                       transition-all duration-500">
-                                            Ver Mais →
-                                          </a>
-                                        ) : (
-                                          <span className="inline-flex items-center justify-center w-full
-                                                           border border-white/10 bg-white/[0.02]
-                                                           px-5 py-3 text-[10px] tracking-[0.4em] text-white/25 uppercase">
-                                            Aguardar
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                            )
-
-                            // Loop through all blocks: text via NotionBlocks, card blocks replaced by Supabase grid
-                            const isCardBlock = (b: Block) => {
+                            if (calloutCards.length === 0) return <NotionBlocks blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={backUrl} />
+                            const renderedSections: React.ReactNode[] = []
+                            let i = 0
+                            while (i < blocks.length) {
+                              const b = blocks[i]
                               const cardsInBlock = b.type === 'column_list'
                                 ? (b.children ?? []).flatMap((col: Block) =>
                                     (col.children ?? []).filter((c: Block) =>
                                       c.type === 'callout' && (c.children ?? []).some((ch: Block) => ch.type === 'image')
-                                    ))
+                                    )
+                                  )
                                 : b.type === 'callout' && (b.children ?? []).some((c: Block) => c.type === 'image')
                                   ? [b] : []
-                              return cardsInBlock.length > 0
-                            }
-
-                            const renderedSections: React.ReactNode[] = []
-                            let cardGridInserted = false
-                            for (let i = 0; i < blocks.length; i++) {
-                              const b = blocks[i]
-                              if (isCardBlock(b)) {
-                                if (!cardGridInserted) {
-                                  // Render edit form OR card grid at the position of the first card block
-                                  renderedSections.push(
-                                    <div key="foto-cards-section">
-                                      {isAdmin && (
-                                        <div className="flex justify-end mb-2">
-                                          {!editingFotoCards && (
-                                            <button
-                                              onClick={() => { setFotoCardsForm(activeCards.map(c => ({ ...c }))); setEditingFotoCards(true) }}
-                                              className="text-[9px] tracking-widest uppercase text-white/25 hover:text-white/60 transition-colors"
-                                            >✏️ editar cards</button>
+                              if (cardsInBlock.length > 0) {
+                                renderedSections.push(
+                                  <div key={`cards-${i}`} className="grid grid-cols-2 gap-3 my-4">
+                                    {cardsInBlock.map((callout: Block) => {
+                                      const cardTitle = plainText(callout.callout?.rich_text ?? []).trim()
+                                      const imgUrl = getImgUrl(callout)
+                                      const _ct = cardTitle.toUpperCase()
+                                      const actionUrlFallback =
+                                        _ct.includes('SELEÇ') ? (portalSettingsObj?.selecao_url ?? '') :
+                                        _ct.includes('PRÉ-WEDDING') || _ct.includes('PRE-WEDDING') ? (portalSettingsObj?.prewedding_url ?? '') :
+                                        _ct.includes('EDITADAS') ? (portalSettingsObj?.fotos_finais_url ?? '') :
+                                        _ct.includes('GALERIA ON') || _ct.includes('ON-LINE') ? (portalSettingsObj?.galerias_url ?? '') :
+                                        _ct.includes('MAQUETE') ? (portalSettingsObj?.maquete_url ?? '') : ''
+                                      const url = pageCalloutLinks[cardTitle] || actionUrlFallback || ''
+                                      return (
+                                        <div key={cardTitle} className="flex flex-col rounded-2xl overflow-hidden border border-white/40 bg-black"
+                                          style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}>
+                                          <div className="px-3 pt-3 pb-2">
+                                            <span className="text-[10px] font-bold tracking-widest text-white/70 uppercase">{cardTitle}</span>
+                                          </div>
+                                          {imgUrl && (
+                                            // eslint-disable-next-line @next/next/no-img-element
+                                            <img src={imgUrl} alt={cardTitle} className="w-full object-contain" />
+                                          )}
+                                          {url ? (
+                                            <div className="p-3">
+                                              <a href={url} target="_blank" rel="noopener noreferrer"
+                                                className="block w-full text-center px-4 py-2.5 rounded-xl border border-white/40 bg-white/5 text-white font-semibold text-xs tracking-widest uppercase hover:bg-white/10 transition-all"
+                                                style={{ boxShadow: '0 0 10px 2px rgba(255,255,255,0.15)' }}>
+                                                VER MAIS →
+                                              </a>
+                                            </div>
+                                          ) : (
+                                            <div className="p-3">
+                                              <span className="block w-full text-center px-4 py-2.5 rounded-xl border border-white/15 bg-white/[0.03] text-white/25 font-semibold text-xs tracking-widest uppercase">
+                                                AGUARDAR
+                                              </span>
+                                            </div>
                                           )}
                                         </div>
-                                      )}
-                                      {isAdmin && editingFotoCards ? (
-                                        <div className="space-y-3 my-4">
-                                          <p className="text-[9px] text-white/25 tracking-widest uppercase">Editar cards de fotografias</p>
-                                          {fotoCardsForm.map((card, idx) => (
-                                            <div key={idx} className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3 space-y-2">
-                                              <div className="flex items-center justify-between">
-                                                <span className="text-[9px] text-white/25 tracking-widest uppercase">Card {idx + 1}</span>
-                                                <button onClick={() => setFotoCardsForm(prev => prev.filter((_, ii) => ii !== idx))}
-                                                  className="text-white/20 hover:text-red-400 transition-colors text-xs">× eliminar</button>
-                                              </div>
-                                              <input type="text" value={card.title}
-                                                onChange={e => setFotoCardsForm(prev => prev.map((c, ii) => ii === idx ? { ...c, title: e.target.value } : c))}
-                                                placeholder="Título do card"
-                                                className="w-full bg-white/[0.04] border border-white/[0.10] rounded-lg px-3 py-2 text-xs text-white/70 outline-none focus:border-white/25 uppercase tracking-widest" />
-                                              <input type="text" value={card.url}
-                                                onChange={e => setFotoCardsForm(prev => prev.map((c, ii) => ii === idx ? { ...c, url: e.target.value } : c))}
-                                                placeholder="URL (deixar vazio = AGUARDAR)"
-                                                className="w-full bg-white/[0.04] border border-white/[0.10] rounded-lg px-3 py-2 text-xs text-white/50 outline-none focus:border-white/25" />
-                                              {/* Upload de foto */}
-                                              <div className="flex items-center gap-2 pt-1">
-                                                {card.imageUrl ? (
-                                                  // eslint-disable-next-line @next/next/no-img-element
-                                                  <img src={card.imageUrl} alt="" className="w-12 h-12 object-cover rounded-lg border border-white/10" />
-                                                ) : (
-                                                  <div className="w-12 h-12 rounded-lg border border-dashed border-white/15 flex items-center justify-center text-white/20 text-xs">—</div>
-                                                )}
-                                                <label className="flex-1 cursor-pointer px-3 py-2 rounded-lg border border-white/10 hover:border-gold/40 bg-white/[0.03] hover:bg-gold/5 text-[10px] tracking-widest uppercase text-white/50 hover:text-gold/80 text-center transition-colors">
-                                                  📷 {card.imageUrl ? 'Trocar foto' : 'Carregar foto'}
-                                                  <input type="file" accept="image/*" className="hidden"
-                                                    onChange={async (ev) => {
-                                                      const f = ev.target.files?.[0]; if (!f) return
-                                                      const fd = new FormData(); fd.append('file', f)
-                                                      try {
-                                                        const r = await fetch('/api/upload-image', { method: 'POST', body: fd })
-                                                        const j = await r.json()
-                                                        if (j.url) setFotoCardsForm(prev => prev.map((c, ii) => ii === idx ? { ...c, imageUrl: j.url } : c))
-                                                      } catch {/* noop */}
-                                                      ev.target.value = ''
-                                                    }} />
-                                                </label>
-                                                {card.imageUrl && (
-                                                  <button onClick={() => setFotoCardsForm(prev => prev.map((c, ii) => ii === idx ? { ...c, imageUrl: '' } : c))}
-                                                    className="px-2 py-2 text-[10px] text-white/25 hover:text-red-400 transition-colors">✕</button>
-                                                )}
-                                              </div>
-                                            </div>
-                                          ))}
-                                          <button onClick={() => setFotoCardsForm(prev => [...prev, { title: 'NOVO CARD', url: '', imageUrl: fotoCardsForm[0]?.imageUrl ?? '' }])}
-                                            className="w-full py-2 rounded-xl border border-dashed border-white/[0.08] text-white/25 text-xs hover:text-white/40 transition-colors">
-                                            + adicionar card
-                                          </button>
-                                          <div className="flex gap-2 pt-1">
-                                            <button onClick={handleSaveFotoCards} disabled={savingFotoCards}
-                                              className="flex-1 py-2.5 rounded-xl bg-gold text-black text-xs font-bold tracking-widest uppercase disabled:opacity-50">
-                                              {savingFotoCards ? 'A guardar...' : 'Guardar'}
-                                            </button>
-                                            <button onClick={() => setEditingFotoCards(false)}
-                                              className="px-4 py-2.5 rounded-xl border border-white/10 text-white/40 text-xs">Cancelar</button>
-                                          </div>
-                                        </div>
-                                      ) : (
-                                        renderCards(activeCards)
-                                      )}
-                                    </div>
-                                  )
-                                  cardGridInserted = true
-                                }
-                                // Skip subsequent card blocks (already rendered above)
+                                      )
+                                    })}
+                                  </div>
+                                )
                               } else {
                                 renderedSections.push(
                                   <NotionBlocks key={`block-${i}`} blocks={[b]} hiddenNav={settings.hiddenNav} backUrl={backUrl} />
                                 )
                               }
-                            }
-                            if (!cardGridInserted) {
-                              // No card blocks found — render everything normally
-                              renderedSections.push(<NotionBlocks key="all" blocks={blocks} hiddenNav={settings.hiddenNav} backUrl={backUrl} />)
+                              i++
                             }
                             return <>{renderedSections}</>
                           })()}
@@ -3059,7 +3757,7 @@ function PortalSubPageContent() {
                     if (isSobrePage) {
                       const _textBlocks = blocks.filter(b => b.type !== 'image')
                       const sobrePer = id ? pageHeaders[id as string] : undefined
-                      const sobrePhoto = sobrePer === 'none' ? '' : (sobrePer || subpageHeaderUrl)
+                      const sobrePhoto = sobrePer === 'none' ? '' : (sobrePer || subpageHeaderUrl || portalHeroImageUrl)
                       return (
                         /* Full-viewport section — true fullscreen, no gap */
                         <div
@@ -3160,325 +3858,29 @@ function PortalSubPageContent() {
                         </div>
                       )
                     }
+
                     if (!isPaymentsPage) {
                       // Check if page has callout cards — render them with URL buttons
                       const pageCalloutLinks = calloutLinks[id as string] ?? {}
                       const calloutCards = findCalloutCards(blocks)
                       if (calloutCards.length === 0) {
-                        // ── DEFAULT: text + images with inline admin editing ──────────────────
-                        const backUrl = fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : undefined
-                        const textBlocks = blocks.filter(b => b.type !== 'image')
-                        const imgBlocks  = findImageBlocks(blocks)
-                        const allText = textBlocks
-                          .filter(b => ['heading_1','heading_2','heading_3','paragraph'].includes(b.type))
-                          .map(b => {
-                            const data = b[b.type] as any
-                            return (data?.rich_text ?? []).map((t: any) => t.plain_text).join('')
-                          }).join('\n')
+                        const _backUrl = fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : undefined
+                        const _textBlocks = blocks.filter(b => b.type !== 'image')
+                        const _imgBlocks  = findImageBlocks(blocks)
                         return (
-                          <div className="space-y-2">
-                            {/* text blocks */}
-                            {inlineEditText ? (
-                              <div className="space-y-3 mb-6">
-                                <p className="text-[10px] tracking-[0.4em] uppercase text-gold/50">Editar texto</p>
-                                <textarea
-                                  value={inlineDraft}
-                                  onChange={e => setInlineDraft(e.target.value)}
-                                  rows={18}
-                                  className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3 text-sm text-white/70 outline-none focus:border-gold/40 transition-colors leading-relaxed resize-y"
-                                />
-                                <div className="flex gap-2 justify-end">
-                                  <button onClick={() => setInlineEditText(false)} disabled={savingInline} className="px-4 py-2 text-xs border border-white/15 rounded-lg text-white/40 hover:text-white/70 disabled:opacity-50 transition-colors">Cancelar</button>
-                                  <button onClick={() => saveInlineText(id as string)} disabled={savingInline} className="px-5 py-2 text-xs bg-gold/20 border border-gold/40 rounded-lg text-gold hover:bg-gold/30 disabled:opacity-50 transition-all">
-                                    {savingInline ? 'A guardar...' : '✓ Guardar'}
-                                  </button>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="relative group/text mb-2">
-                                {isAdmin && (
-                                  <button
-                                    onClick={() => { setInlineDraft(allText); setInlineEditText(true) }}
-                                    className="absolute -top-1 right-0 z-10 opacity-0 group-hover/text:opacity-100 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.05] border border-white/10 text-[10px] text-white/40 hover:text-white/70 transition-all uppercase tracking-wider">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" /></svg>
-                                    Editar Texto
-                                  </button>
-                                )}
-                                <NotionBlocks blocks={textBlocks} hiddenNav={settings.hiddenNav} backUrl={backUrl} />
-                              </div>
-                            )}
-                            {/* image blocks with inline swap */}
-                            {imgBlocks.map(img => (
-                              <div key={img.id} className="relative group/img rounded-2xl overflow-hidden">
+                          <div className="space-y-4">
+                            <NotionBlocks blocks={_textBlocks} hiddenNav={settings.hiddenNav} backUrl={_backUrl} />
+                            {_imgBlocks.map(img => (
+                              <div key={img.id} className="rounded-2xl overflow-hidden">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={img.url} alt="" className="w-full rounded-2xl object-cover max-h-96" />
-                                {isAdmin && (
-                                  <label className={`absolute inset-0 flex flex-col items-center justify-center cursor-pointer rounded-2xl transition-all duration-200 ${imgSwapping === img.id ? 'bg-black/60' : 'bg-black/0 group-hover/img:bg-black/50'}`}>
-                                    <input type="file" accept="image/*" className="hidden" disabled={imgSwapping !== null}
-                                      onChange={e => { const f = e.target.files?.[0]; if (f) swapImageInline(img.id, f, img.parentId, img.prevSiblingId); e.target.value = '' }} />
-                                    {imgSwapping === img.id ? (
-                                      <span className="text-[11px] tracking-[0.3em] uppercase text-white/90">A guardar...</span>
-                                    ) : (
-                                      <span className="text-[11px] tracking-[0.3em] uppercase text-white opacity-0 group-hover/img:opacity-100 transition-opacity duration-200 flex items-center gap-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                                        Trocar Foto
-                                      </span>
-                                    )}
-                                  </label>
-                                )}
                               </div>
                             ))}
                           </div>
                         )
                       }
 
-                      // ── FILME page: Supabase-first cards (same pattern as FOTOGRAFIAS) ──
-                      if (isFilmePage) {
-                        const filmeBackUrl = fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : undefined
-                        const sbFilmeCardsRaw: Array<{ title: string; url: string; imageUrl: string }> | undefined =
-                          Array.isArray((settings as any).fotoCards) ? (settings as any).fotoCards : undefined
-
-                        const getImgUrlF = (b: Block) => {
-                          const imgChild = (b.children ?? []).find((c: Block) => c.type === 'image')
-                          if (!imgChild) return null
-                          return imgChild.image?.type === 'external' ? imgChild.image.external?.url : imgChild.image?.file?.url
-                        }
-
-                        // Helper: mapeia título do card → URL guardada nas Ações Vídeo da ficha
-                        const getVideoActionUrl = (title: string): string => {
-                          const t = (title || '').toUpperCase()
-                          // SESSÃO DE FAMÍLIA é a versão batizado do PRÉ-WEDDING
-                          if (t.includes('SESSÃO DE FAMÍLIA') || t.includes('SESSAO DE FAMILIA') || t.includes('FAMÍLIA') || t.includes('FAMILIA')) return portalSettingsObj?.video_prewedding_url ?? ''
-                          if (t.includes('WEDDING FILM') || t.includes('O NOSSO FILME') || t.includes('VÍDEO FINAL') || t.includes('VIDEO FINAL') || t.includes('FILME FINAL')) return portalSettingsObj?.wedding_film_url ?? ''
-                          if (t.includes('PRÉ-WEDDING') || t.includes('PRE-WEDDING')) return portalSettingsObj?.video_prewedding_url ?? ''
-                          if (t.includes('SAME DAY') || t.includes('SDE')) return portalSettingsObj?.same_day_edit_url ?? ''
-                          if (t.includes('TEASER') || t.includes('TRAILER')) return portalSettingsObj?.teaser_url ?? ''
-                          return ''
-                        }
-
-                        // Auto-fill URL nos sbFilmeCards quando vazia
-                        const sbFilmeCards = sbFilmeCardsRaw?.map(c => ({
-                          ...c,
-                          url: c.url && c.url.trim() ? c.url : getVideoActionUrl(c.title),
-                        }))
-
-                        // Build notion cards as fallback
-                        const notionFilmeCards: Array<{ title: string; url: string; imageUrl: string }> = []
-                        for (const b of blocks) {
-                          const cardsHere = b.type === 'column_list'
-                            ? (b.children ?? []).flatMap((col: Block) =>
-                                (col.children ?? []).filter((c: Block) =>
-                                  c.type === 'callout' && (c.children ?? []).some((ch: Block) => ch.type === 'image')
-                                ))
-                            : b.type === 'callout' && (b.children ?? []).some((c: Block) => c.type === 'image')
-                              ? [b] : []
-                          for (const callout of cardsHere) {
-                            const cardTitle = plainText(callout.callout?.rich_text ?? []).trim()
-                            const imgUrl = getImgUrlF(callout) ?? ''
-                            notionFilmeCards.push({ title: cardTitle, url: pageCalloutLinks[cardTitle] || getVideoActionUrl(cardTitle), imageUrl: imgUrl })
-                          }
-                        }
-
-                        const activeFilmeCards = sbFilmeCards ?? notionFilmeCards
-
-                        const renderFilmeCards = (cards: Array<{ title: string; url: string; imageUrl: string }>) => (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4">
-                            {cards.map((card, idx) => {
-                              const hasUrl = !!card.url
-                              const hasImg = !!card.imageUrl
-                              return (
-                                <div key={idx} className="group relative aspect-[4/5] overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-zinc-900 via-black to-zinc-900">
-                                  {hasImg ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img src={card.imageUrl} alt=""
-                                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1500ms] group-hover:scale-105" />
-                                  ) : (
-                                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_30%,rgba(201,169,110,0.08)_0%,rgba(0,0,0,0.9)_60%)]" />
-                                  )}
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/55 to-black/15" />
-                                  <div className="relative z-10 flex flex-col justify-end h-full p-5 sm:p-6">
-                                    <p className="text-[9px] tracking-[0.5em] text-gold/60 uppercase mb-2">RL PHOTO·VIDEO</p>
-                                    <h3 className="font-cormorant text-2xl sm:text-3xl font-light leading-[1.05] text-white mb-2">
-                                      <span className="italic text-gold">{card.title}</span>
-                                    </h3>
-                                    <div className="h-px w-10 bg-gold/60 mb-4" />
-                                    {hasUrl ? (
-                                      <a href={card.url} target="_blank" rel="noopener noreferrer"
-                                        className="inline-flex items-center justify-center w-full
-                                                   border border-gold/40 bg-gold/[0.05] hover:bg-gold/[0.18] hover:border-gold/70
-                                                   px-5 py-3 text-[10px] tracking-[0.4em] text-gold uppercase
-                                                   transition-all duration-500">
-                                        Ver Mais →
-                                      </a>
-                                    ) : (
-                                      <span className="inline-flex items-center justify-center w-full
-                                                       border border-white/10 bg-white/[0.02]
-                                                       px-5 py-3 text-[10px] tracking-[0.4em] text-white/25 uppercase">
-                                        Aguardar
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              )
-                            })}
-                          </div>
-                        )
-
-                        const isCardBlockF = (b: Block) => {
-                          const c = b.type === 'column_list'
-                            ? (b.children ?? []).flatMap((col: Block) =>
-                                (col.children ?? []).filter((c: Block) =>
-                                  c.type === 'callout' && (c.children ?? []).some((ch: Block) => ch.type === 'image')
-                                ))
-                            : b.type === 'callout' && (b.children ?? []).some((c: Block) => c.type === 'image')
-                              ? [b] : []
-                          return c.length > 0
-                        }
-
-                        const filmeHidden: string[] = (settings as any).filmeHiddenBlocks ?? []
-
-                        async function hideFilmeBlock(blockId: string) {
-                          const next = [...filmeHidden, blockId]
-                          const ns = { ...(settings as any), filmeHiddenBlocks: next }
-                          setSettings(ns as any)
-                          await fetch('/api/portal-settings', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ pageId: id, settings: ns }),
-                          })
-                        }
-                        async function restoreFilmeBlocks() {
-                          const ns = { ...(settings as any), filmeHiddenBlocks: [] }
-                          setSettings(ns as any)
-                          await fetch('/api/portal-settings', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ pageId: id, settings: ns }),
-                          })
-                        }
-
-                        const filmeRendered: React.ReactNode[] = []
-                        let filmeCardInserted = false
-                        for (let fi = 0; fi < blocks.length; fi++) {
-                          const b = blocks[fi]
-                          // Skip hidden blocks
-                          if (filmeHidden.includes(b.id)) continue
-                          if (isCardBlockF(b)) {
-                            if (!filmeCardInserted) {
-                              filmeRendered.push(
-                                <div key="filme-cards">
-                                  {isAdmin && (
-                                    <div className="flex justify-end mb-2">
-                                      {!editingFotoCards && (
-                                        <button
-                                          onClick={() => { setFotoCardsForm(activeFilmeCards.map(c => ({ ...c }))); setEditingFotoCards(true) }}
-                                          className="text-[9px] tracking-widest uppercase text-white/25 hover:text-white/60 transition-colors"
-                                        >✏️ editar cards</button>
-                                      )}
-                                    </div>
-                                  )}
-                                  {isAdmin && editingFotoCards ? (
-                                    <div className="space-y-3 my-4">
-                                      <p className="text-[9px] text-white/25 tracking-widest uppercase">Editar cards de vídeo</p>
-                                      {fotoCardsForm.map((card, idx) => (
-                                        <div key={idx} className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3 space-y-2">
-                                          <div className="flex items-center justify-between">
-                                            <span className="text-[9px] text-white/25 tracking-widest uppercase">Card {idx + 1}</span>
-                                            <button onClick={() => setFotoCardsForm(prev => prev.filter((_, ii) => ii !== idx))}
-                                              className="text-white/20 hover:text-red-400 transition-colors text-xs">× eliminar</button>
-                                          </div>
-                                          <input type="text" value={card.title}
-                                            onChange={e => setFotoCardsForm(prev => prev.map((c, ii) => ii === idx ? { ...c, title: e.target.value } : c))}
-                                            placeholder="Título do card"
-                                            className="w-full bg-white/[0.04] border border-white/[0.10] rounded-lg px-3 py-2 text-xs text-white/70 outline-none focus:border-white/25 uppercase tracking-widest" />
-                                          <input type="text" value={card.url}
-                                            onChange={e => setFotoCardsForm(prev => prev.map((c, ii) => ii === idx ? { ...c, url: e.target.value } : c))}
-                                            placeholder="URL (deixar vazio = AGUARDAR)"
-                                            className="w-full bg-white/[0.04] border border-white/[0.10] rounded-lg px-3 py-2 text-xs text-white/50 outline-none focus:border-white/25" />
-                                          {/* Upload de foto */}
-                                          <div className="flex items-center gap-2 pt-1">
-                                            {card.imageUrl ? (
-                                              // eslint-disable-next-line @next/next/no-img-element
-                                              <img src={card.imageUrl} alt="" className="w-12 h-12 object-cover rounded-lg border border-white/10" />
-                                            ) : (
-                                              <div className="w-12 h-12 rounded-lg border border-dashed border-white/15 flex items-center justify-center text-white/20 text-xs">—</div>
-                                            )}
-                                            <label className="flex-1 cursor-pointer px-3 py-2 rounded-lg border border-white/10 hover:border-gold/40 bg-white/[0.03] hover:bg-gold/5 text-[10px] tracking-widest uppercase text-white/50 hover:text-gold/80 text-center transition-colors">
-                                              📷 {card.imageUrl ? 'Trocar foto' : 'Carregar foto'}
-                                              <input type="file" accept="image/*" className="hidden"
-                                                onChange={async (ev) => {
-                                                  const f = ev.target.files?.[0]; if (!f) return
-                                                  const fd = new FormData(); fd.append('file', f)
-                                                  try {
-                                                    const r = await fetch('/api/upload-image', { method: 'POST', body: fd })
-                                                    const j = await r.json()
-                                                    if (j.url) setFotoCardsForm(prev => prev.map((c, ii) => ii === idx ? { ...c, imageUrl: j.url } : c))
-                                                  } catch {/* noop */}
-                                                  ev.target.value = ''
-                                                }} />
-                                            </label>
-                                            {card.imageUrl && (
-                                              <button onClick={() => setFotoCardsForm(prev => prev.map((c, ii) => ii === idx ? { ...c, imageUrl: '' } : c))}
-                                                className="px-2 py-2 text-[10px] text-white/25 hover:text-red-400 transition-colors">✕</button>
-                                            )}
-                                          </div>
-                                        </div>
-                                      ))}
-                                      <button onClick={() => setFotoCardsForm(prev => [...prev, { title: 'NOVO CARD', url: '', imageUrl: fotoCardsForm[0]?.imageUrl ?? '' }])}
-                                        className="w-full py-2 rounded-xl border border-dashed border-white/[0.08] text-white/25 text-xs hover:text-white/40 transition-colors">
-                                        + adicionar card
-                                      </button>
-                                      <div className="flex gap-2 pt-1">
-                                        <button onClick={handleSaveFotoCards} disabled={savingFotoCards}
-                                          className="flex-1 py-2.5 rounded-xl bg-gold text-black text-xs font-bold tracking-widest uppercase disabled:opacity-50">
-                                          {savingFotoCards ? 'A guardar...' : 'Guardar'}
-                                        </button>
-                                        <button onClick={() => setEditingFotoCards(false)}
-                                          className="px-4 py-2.5 rounded-xl border border-white/10 text-white/40 text-xs">Cancelar</button>
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    renderFilmeCards(activeFilmeCards)
-                                  )}
-                                </div>
-                              )
-                              filmeCardInserted = true
-                            }
-                          } else if (b.type === 'image' && isAdmin) {
-                            // Image block with admin delete overlay
-                            const imgSrc = b.image?.type === 'external' ? b.image.external?.url : b.image?.file?.url
-                            filmeRendered.push(
-                              <div key={`fblock-${fi}`} className="relative my-3 group">
-                                {imgSrc && (
-                                  // eslint-disable-next-line @next/next/no-img-element
-                                  <img src={imgSrc} alt="" className="w-full rounded-xl" />
-                                )}
-                                <button
-                                  onClick={() => hideFilmeBlock(b.id)}
-                                  className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/70 flex items-center justify-center text-white/40 hover:text-red-400 hover:bg-black/90 transition-all text-sm opacity-0 group-hover:opacity-100"
-                                  title="Eliminar imagem"
-                                >×</button>
-                              </div>
-                            )
-                          } else {
-                            filmeRendered.push(
-                              <NotionBlocks key={`fblock-${fi}`} blocks={[b]} hiddenNav={settings.hiddenNav} backUrl={filmeBackUrl} />
-                            )
-                          }
-                        }
-                        // Restore hidden images link
-                        if (isAdmin && filmeHidden.length > 0) {
-                          filmeRendered.push(
-                            <button key="filme-restore" onClick={restoreFilmeBlocks}
-                              className="w-full text-center text-[9px] text-white/20 hover:text-white/50 tracking-widest uppercase transition-colors mt-2">
-                              ↩ restaurar {filmeHidden.length} imagem{filmeHidden.length > 1 ? 'ns' : ''} eliminada{filmeHidden.length > 1 ? 's' : ''}
-                            </button>
-                          )
-                        }
-                        return <>{filmeRendered}</>
-                      }
-
-                      // Build a flat list: non-callout blocks + callout cards (generic fallback)
+                      // Build a flat list: non-callout blocks + callout cards
                       const getImgUrl = (b: Block) => {
                         const imgChild = (b.children ?? []).find((c: Block) => c.type === 'image')
                         if (!imgChild) return null
@@ -3505,7 +3907,14 @@ function PortalSubPageContent() {
                               {cardsInBlock.map((callout: Block) => {
                                 const cardTitle = plainText(callout.callout?.rich_text ?? []).trim()
                                 const imgUrl = getImgUrl(callout)
-                                const url = pageCalloutLinks[cardTitle] || ''
+                                const _ct = cardTitle.toUpperCase()
+                                const videoActionFallback = isFilmePage ? (
+                                  _ct.includes('WEDDING FILM') ? (portalSettingsObj?.wedding_film_url ?? '') :
+                                  _ct.includes('PRÉ-WEDDING') || _ct.includes('PRE-WEDDING') ? (portalSettingsObj?.video_prewedding_url ?? '') :
+                                  _ct.includes('SAME DAY') ? (portalSettingsObj?.same_day_edit_url ?? '') :
+                                  _ct.includes('TEASER') || _ct.includes('TRAILER') ? (portalSettingsObj?.teaser_url ?? '') : ''
+                                ) : ''
+                                const url = pageCalloutLinks[cardTitle] || videoActionFallback || ''
                                 return (
                                   <div key={cardTitle} className="flex flex-col rounded-2xl overflow-hidden border border-white/40 bg-black"
                                     style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}>
@@ -3649,6 +4058,7 @@ function PortalSubPageContent() {
         </div>
       )}
     </main>
+    </PortalShell>
   )
 }
 
