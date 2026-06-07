@@ -116,6 +116,10 @@ async function criarPortalCasamento(ref: string, dados: any, password: string) {
       local: dados.local_cerimonia ?? '',
       tipoPortal: 'casamento',
       portalPassword: password,
+      // O contrato foi aprovado pelo admin antes deste passo (botão
+      // "Criar Portal" só aparece depois do contrato estar aprovado).
+      // Marca como disponível para o cliente ver imediatamente.
+      contratoDisponivel: true,
       // Valores da ficha do cliente (eventos_YYYY) — para o portal mostrar
       // TOTAL DO SERVIÇO correctamente em vez de €0.
       ...valores,
@@ -158,6 +162,9 @@ async function criarPortalBatizado(ref: string, dados: any, password: string) {
       nomeCrianca:  dados.nome_crianca  ?? '',
       idadeCrianca: dados.idade_crianca ?? '',
       portalPassword: password,
+      // O contrato foi aprovado pelo admin antes deste passo. Marca como
+      // disponível para os pais verem imediatamente.
+      contratoDisponivel: true,
       // Valores da ficha do cliente (eventos_YYYY) — para o portal mostrar
       // TOTAL DO SERVIÇO correctamente em vez de €0.
       ...valores,
