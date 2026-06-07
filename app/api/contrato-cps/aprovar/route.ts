@@ -170,9 +170,12 @@ function buildPortalEmail(opts: {
   password: string
   emailCliente?: string | null
 }): string {
-  // Botão CTA aponta para a página de login (não para o link directo do
-  // portal). Assim os noivos sempre autenticam com email + password.
-  const loginUrl = `${SITE_BASE}/login-noivos`
+  // Botão CTA aponta para a página de login específica do tipo de evento
+  // (não para o link directo do portal). Assim os clientes sempre autenticam
+  // com email + password no design certo (casamento vs batizado).
+  const loginUrl = opts.tipo === 'batizado'
+    ? `${SITE_BASE}/login-batizado`
+    : `${SITE_BASE}/login-noivos`
   const primeiroNome = (opts.nome_noivos || '').split(/[\s&]/)[0] || 'Olá'
   const tituloTipo = opts.tipo === 'batizado' ? 'O vosso espaço para o batizado' : 'O vosso espaço'
   return `<!DOCTYPE html>
