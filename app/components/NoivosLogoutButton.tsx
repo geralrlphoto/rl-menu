@@ -15,10 +15,13 @@ export function NoivosLogoutButton({
   referencia,
   isAdmin = false,
   variant = 'default',
+  tipo,
 }: {
   referencia: string
   isAdmin?: boolean
   variant?: 'default' | 'minimal'
+  /** 'casamento' (default) ou 'batizado' — controla o redirect do logout. */
+  tipo?: 'casamento' | 'batizado'
 }) {
   const [signingOut, setSigningOut] = useState(false)
 
@@ -33,7 +36,10 @@ export function NoivosLogoutButton({
         sessionStorage.removeItem('nv_active')
         sessionStorage.removeItem(`portalAuth_${referencia}`)
       } catch {}
-      window.location.href = '/login-noivos'
+      // Detecção automática se não vier explícito: olha para a URL actual.
+      const isBat = tipo === 'batizado'
+        || (typeof window !== 'undefined' && window.location.pathname.startsWith('/portal-batizado'))
+      window.location.href = isBat ? '/login-batizado' : '/login-noivos'
     } catch {
       setSigningOut(false)
     }

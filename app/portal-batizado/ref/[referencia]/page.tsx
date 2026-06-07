@@ -512,7 +512,7 @@ export default function PortalRefPage() {
       fetch('/api/noivos-auth', { method: 'DELETE', credentials: 'include' })
         .catch(() => {})
         .finally(() => {
-          window.location.href = `/login-noivos?next=${encodeURIComponent(window.location.pathname)}`
+          window.location.href = `/login-batizado?next=${encodeURIComponent(window.location.pathname)}`
         })
     }
   }, [isAdmin, referencia, searchParamsHook])
@@ -532,7 +532,7 @@ export default function PortalRefPage() {
         const j = await r.json().catch(() => ({}))
         if (!j?.ok) {
           if (redirectOnFail && initialized) {
-            window.location.href = `/login-noivos?next=${encodeURIComponent(window.location.pathname)}`
+            window.location.href = `/login-batizado?next=${encodeURIComponent(window.location.pathname)}`
           }
           return
         }

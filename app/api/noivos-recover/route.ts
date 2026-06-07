@@ -379,7 +379,12 @@ export async function POST(req: NextRequest) {
     [matched.row.nome_noiva, matched.row.nome_noivo].filter(Boolean).join(' & ') ||
     'Olá'
 
-  const loginUrl = `${SITE_BASE}/login-noivos`
+  // Login URL apropriado ao tipo de evento (casamento/batizado)
+  const tipoEvento = (matched.row.tipo_evento ?? '').toLowerCase()
+  const isBatizado = /batizado/.test(tipoEvento)
+  const loginUrl = isBatizado
+    ? `${SITE_BASE}/login-batizado`
+    : `${SITE_BASE}/login-noivos`
   const sent = await sendEmail(
     destEmail,
     '🔑 A vossa palavra-passe do portal',

@@ -25,7 +25,7 @@ export async function middleware(request: NextRequest) {
   //     · admin (rl_auth válido)
   //     · ?admin=1 na URL
   //
-  //   Sem sessão → redirect /login-noivos?next=<url>
+  //   Sem sessão → redirect /login-noivos OU /login-batizado consoante o portal
   //   Sessão de outro casal → redirect para o portal próprio (não permite
   //     ver portais alheios).
   const noivosMatch = pathname.match(/^\/(portal-cliente|portal-batizado)\/ref\/([^/?]+)/)
@@ -35,10 +35,12 @@ export async function middleware(request: NextRequest) {
       searchParams.get('admin') === '1'
     if (!isAdmin) {
       const refUrl = decodeURIComponent(noivosMatch[2])
+      const isBatizado = noivosMatch[1] === 'portal-batizado'
       const nvCookie = request.cookies.get(NV_COOKIE_NAME)?.value
       const session = await verifyNvSession(nvCookie)
       if (!session) {
-        const loginUrl = new URL('/login-noivos', request.url)
+        const loginPath = isBatizado ? '/login-batizado' : '/login-noivos'
+        const loginUrl = new URL(loginPath, request.url)
         loginUrl.searchParams.set('next', `${pathname}${search}`)
         return NextResponse.redirect(loginUrl)
       }
@@ -104,6 +106,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/noivos-presence') ||
     pathname.startsWith('/api/noivos-message') ||
     pathname === '/login-noivos' ||
+    pathname === '/login-batizado' ||
     pathname.startsWith('/api/portais') ||
     pathname.startsWith('/api/pagamentos-by-ref') ||
     pathname.startsWith('/api/pagamentos-noivos') ||
