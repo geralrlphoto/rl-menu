@@ -1,11 +1,15 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { plainText, type Block } from './NotionRenderer'
 import BlockEditor from './BlockEditor'
+import { AtmospherePortal, buildDeliveriesFromSettings } from '../portal-cliente/atmosphere/AtmospherePortal'
 
 const PAGE_ID = '35b220116d8a811b99b7f6f26648c017'
+const PORTAL_TIPO: 'casamento' | 'batizado' = 'batizado'
+const COUPLE_LABEL = 'Os Pais'
 
 type Task = { id: string; text: string; done: boolean }
 
@@ -91,219 +95,6 @@ function findWelcomeText(blocks: Block[]): { heading: string; paragraphs: string
     paragraphs: lines,
     reference,
   }
-}
-
-// ─── icons ───────────────────────────────────────────────────────────────────
-
-function getNavIcon(title: string) {
-  const t = title.toUpperCase()
-  if (t.includes('ATEND'))      return <CalendarIcon />
-  if (t.includes('PROPOST'))    return <DocumentIcon />
-  if (t.includes('REUNIÃO') || t.includes('REUNIAO')) return <PeopleIcon />
-  if (t.includes('CONFIRMAR'))  return <CheckCircleIcon />
-  if (t.includes('GUIA'))       return <BookIcon />
-  if (t.includes('CONTRAT'))    return <ContractIcon />
-  if (t.includes('PAGAMENT'))   return <PaymentIcon />
-  if (t.includes('FOTOGRAF'))   return <CameraIcon />
-  if (t.includes('FILME') || t.includes('VIDEO')) return <VideoIcon />
-  if (t.includes('BRIEFING'))   return <ClipboardIcon />
-  if (t.includes('CRONOGRAMA')) return <ScheduleIcon />
-  if (t.includes('SAT') || t.includes('ÁREA')) return <HeartIcon />
-  if (t.includes('MENSAG'))     return <MessageIcon />
-  if (t.includes('CHECKLIST'))  return <ChecklistIcon />
-  if (t.includes('DOCUMENT'))   return <FolderIcon />
-  if (t.includes('PRÉ-WEDDING') || t.includes('PRE-WEDDING')) return <CameraIcon />
-  if (t.includes('ASC'))        return <CheckCircleIcon />
-  if (t.includes('SOBRE'))      return <InfoIcon />
-  return <DocumentIcon />
-}
-
-// SVG icons
-const ico = (d: string) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
-    <path d={d} />
-  </svg>
-)
-const CalendarIcon    = () => ico('M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z')
-const DocumentIcon    = () => ico('M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z')
-const PeopleIcon      = () => ico('M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z')
-const CheckCircleIcon = () => ico('M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z')
-const BookIcon        = () => ico('M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253')
-const ContractIcon    = () => ico('M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01')
-const PaymentIcon     = () => ico('M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z')
-const CameraIcon      = () => ico('M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z')
-const VideoIcon       = () => ico('M15 10l4.553-2.069A1 1 0 0121 8.868v6.264a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z')
-const ClipboardIcon   = () => ico('M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2')
-const ScheduleIcon    = () => ico('M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z')
-const HeartIcon       = () => (<svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>)
-const MessageIcon     = () => ico('M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z')
-const ChecklistIcon   = () => ico('M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4')
-const FolderIcon      = () => ico('M3 7a2 2 0 012-2h4l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z')
-const InfoIcon        = () => ico('M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z')
-
-// ─── date helpers ────────────────────────────────────────────────────────────
-
-const MESES_PC = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
-function formatDatePC(dateStr: string) {
-  try { const dt = new Date(dateStr + 'T00:00:00'); return `${String(dt.getDate()).padStart(2,'0')} ${MESES_PC[dt.getMonth()]} ${dt.getFullYear()}` } catch { return dateStr }
-}
-function addCalendarDaysPC(dateStr: string, days: number) {
-  const d = new Date(dateStr + 'T00:00:00'); d.setDate(d.getDate() + days); return d.toISOString().split('T')[0]
-}
-function addWorkingDaysPC(dateStr: string, days: number) {
-  const d = new Date(dateStr + 'T00:00:00'); let c = 0
-  while (c < days) { d.setDate(d.getDate() + 1); if (d.getDay() !== 0 && d.getDay() !== 6) c++ }
-  return d.toISOString().split('T')[0]
-}
-function estadoCfgPC(val: string) {
-  const blue   = ['Em Edição','Enviado'], green = ['Entregue','Aprovado'], purple = ['Concluído']
-  if (green.includes(val))  return { box: 'bg-green-500/10 border-green-500/25',   dot: 'bg-green-400',  lbl: 'text-green-300/70',  date: 'text-green-200/80',  badge: 'bg-green-500/15 border-green-500/30 text-green-100/90'   }
-  if (blue.includes(val))   return { box: 'bg-blue-500/10 border-blue-500/25',     dot: 'bg-blue-400',   lbl: 'text-blue-300/70',   date: 'text-blue-200/80',   badge: 'bg-blue-500/15 border-blue-500/30 text-blue-100/90'     }
-  if (purple.includes(val)) return { box: 'bg-purple-500/10 border-purple-500/25', dot: 'bg-purple-400', lbl: 'text-purple-300/70', date: 'text-purple-200/80', badge: 'bg-purple-500/15 border-purple-500/30 text-purple-100/90' }
-  return                           { box: 'bg-yellow-500/10 border-yellow-500/25', dot: 'bg-yellow-400', lbl: 'text-yellow-300/70', date: 'text-yellow-200/80', badge: 'bg-yellow-500/15 border-yellow-500/30 text-yellow-100/90' }
-}
-
-const SELECAO_ESTADOS_PC = ['Aguardar', 'Em Edição', 'Concluído', 'Entregue']
-
-function EntregasSectionPC({ referencia }: { referencia: string }) {
-  const [data, setData] = useState<null | { data_evento: string | null; sel_fotos_estado: string | null; video_estado: string | null; fotos_edicao_estado: string | null; album_estado: string | null; fotosDataEntrada: string | null; albumDataPrevista: string | null; selecao_fotos_noivos_estado: string | null; prazo_fotos_noivos_estado: string | null }>(null)
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [savingSelecao, setSavingSelecao] = useState(false)
-
-  useEffect(() => {
-    setIsAdmin(sessionStorage.getItem(`portalAdmin_${referencia}`) === 'true')
-  }, [referencia])
-
-  useEffect(() => {
-    if (!referencia) return
-    Promise.all([
-      fetch(`/api/evento-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()).catch(() => ({})),
-      fetch(`/api/fotos-selecao-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()).catch(() => ({})),
-      fetch(`/api/albuns-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()).catch(() => ({})),
-      fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`).then(r => r.json()).catch(() => ({})),
-    ]).then(([ev, fs, al, pt]) => {
-      const e = ev.evento ?? {}
-      setData({ data_evento: e.data_evento ?? null, sel_fotos_estado: e.sel_fotos_estado ?? null, video_estado: e.video_estado ?? null, fotos_edicao_estado: e.fotos_edicao_estado ?? null, album_estado: e.album_estado ?? null, fotosDataEntrada: fs.row?.data_entrada ?? null, albumDataPrevista: al.data_prevista_entrega ?? null, selecao_fotos_noivos_estado: pt.portal?.settings?.selecao_fotos_noivos_estado ?? 'Aguardar', prazo_fotos_noivos_estado: pt.portal?.settings?.prazo_fotos_noivos_estado ?? 'Aguardar' })
-    })
-  }, [referencia])
-
-  async function handleEstado(key: string, val: string) {
-    if (!data) return
-    setSavingSelecao(true)
-    await fetch('/api/portais', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ referencia, updates: { settings: { [key]: val } } }),
-    })
-    setData(d => d ? { ...d, [key]: val } : d)
-    setSavingSelecao(false)
-  }
-
-  if (!data) return null
-  const prazoSel  = data.data_evento ? addCalendarDaysPC(data.data_evento, 30) : null
-  const prazoVid  = data.data_evento ? addWorkingDaysPC(data.data_evento, 180) : null
-  const fotosDate = data.fotosDataEntrada ? addWorkingDaysPC(data.fotosDataEntrada, 30) : null
-  const rows = [
-    prazoSel ? { label: 'Prazo Selecção de Fotos (30 dias)', estado: data.sel_fotos_estado, dateStr: prazoSel, editable: false, stateKey: '' } : null,
-    prazoVid  ? { label: 'Prazo Entrega Vídeo (180 dias úteis)', estado: data.video_estado, dateStr: prazoVid, editable: false, stateKey: '' } : null,
-    { label: 'Fotos para Edição', estado: data.fotos_edicao_estado, dateStr: fotosDate, editable: false, stateKey: '' },
-    { label: 'Álbum', estado: data.album_estado, dateStr: data.albumDataPrevista, editable: false, stateKey: '' },
-    { label: 'Seleção Fotos Noivos', estado: data.selecao_fotos_noivos_estado, dateStr: data.fotosDataEntrada ? addCalendarDaysPC(data.fotosDataEntrada, 40) : null, editable: true, stateKey: 'selecao_fotos_noivos_estado' },
-  ].filter(Boolean) as Array<{ label: string; estado: string | null; dateStr: string | null; editable: boolean; stateKey: string }>
-  if (rows.length === 0) return null
-  return (
-    <section className="px-4 pb-10 sm:pb-14">
-      <div className="max-w-2xl mx-auto rounded-2xl overflow-hidden border border-white/40 bg-black"
-        style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08]">
-          <div className="flex items-center gap-2.5">
-            <span className="w-2 h-2 rounded-full bg-white/50 animate-pulse shrink-0" />
-            <h2 className="font-playfair font-black text-xl sm:text-2xl tracking-wide text-white"
-              style={{ textShadow: '0 0 14px rgba(255,255,255,0.9), 0 0 28px rgba(255,255,255,0.5)' }}>Estado das Entregas</h2>
-          </div>
-          <span className="text-[9px] tracking-[0.3em] text-white/30 uppercase">Data de Entrega</span>
-        </div>
-        <div className="p-5 flex flex-col gap-2">
-          {rows.map(({ label, estado, dateStr, editable, stateKey }) => {
-            const val = estado ?? 'Aguardar'
-            const cfg = estadoCfgPC(val)
-            return (
-              <div key={label} className={`grid grid-cols-[1.2rem_1fr_auto] items-center gap-3 px-4 py-3 rounded-xl border ${cfg.box}`}>
-                <div className={`w-2 h-2 rounded-full justify-self-center ${cfg.dot}`} />
-                <span className={`text-[10px] tracking-widest uppercase leading-tight ${cfg.lbl}`}>{label}</span>
-                <div className="flex flex-col items-end gap-0.5">
-                  {editable && isAdmin ? (
-                    <select
-                      value={val}
-                      onChange={e => handleEstado(stateKey, e.target.value)}
-                      disabled={savingSelecao}
-                      className={`text-[10px] px-2 py-0.5 rounded border outline-none cursor-pointer disabled:opacity-50 [color-scheme:dark] ${cfg.badge}`}
-                    >
-                      {SELECAO_ESTADOS_PC.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  ) : (
-                    <span className={`text-[10px] px-2 py-0.5 rounded border ${cfg.badge}`}>{val}</span>
-                  )}
-                  {dateStr && <span className={`text-[9px] ${cfg.date}`}>{formatDatePC(dateStr)}</span>}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// ─── countdown ───────────────────────────────────────────────────────────────
-
-function Countdown({ targetDate }: { targetDate: string }) {
-  const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0 })
-
-  useEffect(() => {
-    function tick() {
-      const diff = new Date(targetDate).getTime() - Date.now()
-      if (diff <= 0) return setT({ d: 0, h: 0, m: 0, s: 0 })
-      setT({
-        d: Math.floor(diff / 86400000),
-        h: Math.floor((diff % 86400000) / 3600000),
-        m: Math.floor((diff % 3600000) / 60000),
-        s: Math.floor((diff % 60000) / 1000),
-      })
-    }
-    tick()
-    const id = setInterval(tick, 1000)
-    return () => clearInterval(id)
-  }, [targetDate])
-
-  const Unit = ({ v, label }: { v: number; label: string }) => (
-    <div className="flex flex-col items-center">
-      <span className="font-playfair text-4xl sm:text-5xl font-bold text-white tabular-nums">{String(v).padStart(2, '0')}</span>
-      <span className="text-[10px] tracking-[0.25em] text-white/40 uppercase mt-1">{label}</span>
-    </div>
-  )
-  const Sep = () => <span className="font-playfair text-3xl text-gold/40 self-start mt-2">|</span>
-
-  return (
-    <div className="flex items-center justify-center gap-4 sm:gap-8">
-      <Unit v={t.d} label="Dias" />
-      <Sep /><Unit v={t.h} label="Horas" />
-      <Sep /><Unit v={t.m} label="Min" />
-      <Sep /><Unit v={t.s} label="Seg" />
-    </div>
-  )
-}
-
-// ─── decorative leaf SVG ─────────────────────────────────────────────────────
-
-function Leaf({ flip }: { flip?: boolean }) {
-  return (
-    <svg viewBox="0 0 80 30" className={`w-16 sm:w-20 h-auto text-gold/50 ${flip ? 'scale-x-[-1]' : ''}`} fill="currentColor">
-      <path d="M5 15 Q20 5 40 15 Q20 25 5 15Z" opacity="0.6"/>
-      <path d="M30 15 Q50 3 75 15 Q50 27 30 15Z" opacity="0.4"/>
-      <line x1="5" y1="15" x2="75" y2="15" stroke="currentColor" strokeWidth="0.5" opacity="0.3"/>
-    </svg>
-  )
 }
 
 // ─── settings edit panel ─────────────────────────────────────────────────────
@@ -494,17 +285,17 @@ function SettingsPanel({
           <input
             value={form.referencia ?? ''}
             onChange={e => setForm(prev => ({ ...prev, referencia: e.target.value }))}
-            placeholder="ex: CAS_026_26_RL"
+            placeholder="ex: BAT_001_26_RL"
             className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
           />
         </div>
         <div>
-          <label className="block text-[10px] text-white/40 tracking-widest uppercase mb-1">Email da Noiva</label>
+          <label className="block text-[10px] text-white/40 tracking-widest uppercase mb-1">Email da Família</label>
           <input
             type="email"
             value={form.emailNoiva ?? ''}
             onChange={e => setForm(prev => ({ ...prev, emailNoiva: e.target.value }))}
-            placeholder="ex: noiva@email.com"
+            placeholder="ex: familia@email.com"
             className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
           />
         </div>
@@ -682,133 +473,10 @@ function SettingsPanel({
 }
 
 
-// ─── tasks section ───────────────────────────────────────────────────────────
-
-function TasksSection({
-  tasks, pageId, settingsBlockId, settings, onSettingsChange,
-}: {
-  tasks: Task[]
-  pageId: string
-  settingsBlockId: string | null
-  settings: PortalSettings
-  onSettingsChange: (s: PortalSettings) => void
-}) {
-  const [editing, setEditing] = useState(false)
-  const [newTask, setNewTask] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [localTasks, setLocalTasks] = useState<Task[]>(tasks)
-
-  // Sync if parent tasks change (e.g. after reload)
-  useEffect(() => { setLocalTasks(tasks) }, [tasks])
-
-  async function persist(nextTasks: Task[]) {
-    const newSettings = { ...settings, tasks: nextTasks }
-    onSettingsChange(newSettings)
-    setSaving(true)
-    await fetch('/api/portal-settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pageId, settings: newSettings, settingsBlockId }),
-    })
-    setSaving(false)
-  }
-
-  function toggleDone(id: string) {
-    const next = localTasks.map(t => t.id === id ? { ...t, done: !t.done } : t)
-    setLocalTasks(next)
-    persist(next)
-  }
-
-  function addTask() {
-    if (!newTask.trim()) return
-    const next = [...localTasks, { id: Date.now().toString(), text: newTask.trim(), done: false }]
-    setLocalTasks(next)
-    setNewTask('')
-    persist(next)
-  }
-
-  function deleteTask(id: string) {
-    const next = localTasks.filter(t => t.id !== id)
-    setLocalTasks(next)
-    persist(next)
-  }
-
-  return (
-    <section className="px-4 pb-10 sm:pb-14">
-      <div className="max-w-2xl mx-auto rounded-2xl overflow-hidden border border-white/40 bg-black"
-        style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}>
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08]">
-          <div className="flex items-center gap-2.5">
-            <span className="w-2 h-2 rounded-full bg-white/50 animate-pulse shrink-0" />
-            <h2 className="font-playfair font-black text-xl sm:text-2xl tracking-wide text-white"
-              style={{ textShadow: '0 0 14px rgba(255,255,255,0.9), 0 0 28px rgba(255,255,255,0.5)' }}>Gestão de Tarefas</h2>
-          </div>
-          <div className="flex items-center gap-2">
-            {saving && <span className="text-[10px] text-gold/40 animate-pulse">A guardar...</span>}
-            <button
-              onClick={() => setEditing(e => !e)}
-              className="text-[11px] text-gold/60 hover:text-gold transition-colors border border-gold/30 hover:border-gold/50 px-3 py-1 rounded-lg"
-            >
-              {editing ? '✓ Concluído' : '✎ Editar'}
-            </button>
-          </div>
-        </div>
-
-        {/* Task list */}
-        <div className="p-5 space-y-2.5">
-          {localTasks.length === 0 && !editing && (
-            <p className="text-sm text-gold/25 text-center py-6 italic">Sem tarefas de momento.</p>
-          )}
-
-          {localTasks.map(task => (
-            <div key={task.id} className="flex items-center gap-3 group">
-              <button
-                onClick={() => toggleDone(task.id)}
-                className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all
-                  ${task.done ? 'border-gold bg-gold/25' : 'border-gold/40 hover:border-gold/70'}`}
-              >
-                {task.done && <span className="text-gold text-[10px] font-bold">✓</span>}
-              </button>
-              <span className={`flex-1 text-sm leading-relaxed transition-all ${task.done ? 'line-through text-gold/30' : 'text-white/80'}`}>
-                {task.text}
-              </span>
-              {editing && (
-                <button onClick={() => deleteTask(task.id)} className="text-gold/30 hover:text-red-400 transition-colors text-xl leading-none opacity-0 group-hover:opacity-100">
-                  ×
-                </button>
-              )}
-            </div>
-          ))}
-
-          {/* Add new task */}
-          {editing && (
-            <div className="flex gap-2 pt-4 mt-2 border-t border-gold/20">
-              <input
-                value={newTask}
-                onChange={e => setNewTask(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') addTask() }}
-                placeholder="Escreve uma nova tarefa..."
-                className="flex-1 bg-gold/5 border border-gold/20 rounded-xl px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/50 transition-colors placeholder:text-gold/20"
-              />
-              <button
-                onClick={addTask}
-                disabled={!newTask.trim()}
-                className="px-4 py-2 bg-gold/20 border border-gold/40 rounded-xl text-gold text-lg hover:bg-gold/30 transition-all disabled:opacity-30"
-              >
-                +
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </section>
-  )
-}
-
 // ─── main page ────────────────────────────────────────────────────────────────
 
-export default function PortalClientePage() {
+export default function PortalBatizadoPage() {
+  const searchParams = useSearchParams()
   const [blocks, setBlocks] = useState<Block[]>([])
   const [settings, setSettings] = useState<PortalSettings>({ hiddenNav: [] })
   const [settingsBlockId, setSettingsBlockId] = useState<string | null>(null)
@@ -816,43 +484,44 @@ export default function PortalClientePage() {
   const [editing, setEditing] = useState(false)
   const [editingContent, setEditingContent] = useState(false)
   const [error, setError] = useState('')
-  // welcome text editor
-  const [editingWelcome, setEditingWelcome] = useState(false)
-  const [welcomeDraft, setWelcomeDraft] = useState({ heading: '', body: '' })
-  const [savingWelcome, setSavingWelcome] = useState(false)
-  // inline hero editing
-  const [heroEdit, setHeroEdit] = useState<{ field: 'nomeCrianca' | 'noiva' | 'noivo' | 'hero' | null; value: string }>({ field: null, value: '' })
-  const [heroSaving, setHeroSaving] = useState(false)
-  const [heroUploadProgress, setHeroUploadProgress] = useState<number | null>(null)
-  const [galleryUploading, setGalleryUploading] = useState<number | null>(null)
-  const isAdmin = true // page always accessed by admin (middleware-protected)
   // password gate
   const [hasPassword, setHasPassword] = useState(false)
   const [authenticated, setAuthenticated] = useState(false)
+  const [isAdminUser, setIsAdminUser] = useState(false)
   const [passwordInput, setPasswordInput] = useState('')
   const [passwordError, setPasswordError] = useState(false)
   const [checkingPassword, setCheckingPassword] = useState(false)
 
   const loadBlocks = useCallback(async (bust = false) => {
     // Always bust on the admin template page — avoids stale cache across Vercel instances
-    const url = `/api/portais-clientes?id=${PAGE_ID}&bust=1`
-    void bust
+    const url = `/api/portais-clientes?id=${PAGE_ID}${bust ? '&bust=1' : ''}`
     const d = await fetch(url).then(r => r.json())
     if (d.error) setError(d.error)
     else {
       setBlocks(d.blocks ?? [])
       setSettings(d.settings ?? { hiddenNav: [] })
       setSettingsBlockId(d.settingsBlockId ?? null)
+      // ?admin=1 na URL OU cookie rl_auth válido → activa modo admin.
+      // Também persiste em sessionStorage para que navegar entre
+      // sub-páginas mantenha o modo admin.
+      const urlAdmin = searchParams?.get('admin') === '1'
+      const storedAdmin = typeof window !== 'undefined' && sessionStorage.getItem('portalAdminMain') === 'true'
+      if (d.isAdmin || urlAdmin || storedAdmin) {
+        setIsAdminUser(true)
+        if (urlAdmin) {
+          try { sessionStorage.setItem('portalAdminMain', 'true') } catch {}
+        }
+      }
       const hp = d.hasPassword ?? false
       setHasPassword(hp)
       if (hp) {
-        const stored = sessionStorage.getItem('portalAuth_MAIN')
+        const stored = sessionStorage.getItem('portalAuth_MAIN_BATIZADO')
         if (stored === 'true') setAuthenticated(true)
       } else {
         setAuthenticated(true)
       }
     }
-  }, [])
+  }, [searchParams])
 
   async function handlePasswordSubmit() {
     if (!passwordInput.trim()) return
@@ -866,7 +535,7 @@ export default function PortalClientePage() {
       })
       const d = await res.json()
       if (d.ok) {
-        sessionStorage.setItem('portalAuth_MAIN', 'true')
+        sessionStorage.setItem('portalAuth_MAIN_BATIZADO', 'true')
         setAuthenticated(true)
       } else {
         setPasswordError(true)
@@ -880,19 +549,31 @@ export default function PortalClientePage() {
 
   useEffect(() => { loadBlocks().finally(() => setLoading(false)) }, [loadBlocks])
 
-
-  /** Sincroniza todas as fotos do template para TODOS os portais de batizado */
+  /**
+   * Sincroniza TODAS as definições de template para TODOS os portais de batizado.
+   * Preserva sempre os dados pessoais de cada família:
+   * noiva, noivo, nomeCrianca, emailNoiva, data, dataFormatada, local, referencia,
+   * valorTotal/Foto/Video/Extras, tasks, activeNavId, portalPassword,
+   * preWeddingReservedSlotId/At, guiaLinks, calloutLinks, briefingLinks,
+   * briefingInfo, parceiros.
+   */
   async function syncPhotosToAllPortals(updatedSettings: PortalSettings) {
-    const photoSettings: Record<string, any> = {}
-    if (updatedSettings.heroImageUrl     !== undefined) photoSettings.heroImageUrl     = updatedSettings.heroImageUrl
-    if (updatedSettings.galleryUrls      !== undefined) photoSettings.galleryUrls      = updatedSettings.galleryUrls
-    if (updatedSettings.subpageHeaderUrl !== undefined) photoSettings.subpageHeaderUrl = updatedSettings.subpageHeaderUrl
-    if (updatedSettings.pageHeaders      !== undefined) photoSettings.pageHeaders      = updatedSettings.pageHeaders
-    if (Object.keys(photoSettings).length === 0) return
+    // Campos de template a sincronizar (excluir dados pessoais)
+    const PERSONAL_KEYS = new Set([
+      'noiva','noivo','nomeCrianca','emailNoiva','data','dataFormatada','local','referencia',
+      'valorTotal','valorFoto','valorVideo','valorExtras','tasks','activeNavId',
+      'portalPassword','preWeddingReservedSlotId','preWeddingReservedAt',
+      'guiaLinks','calloutLinks','briefingLinks','briefingInfo','parceiros',
+    ])
+    const templateSettings: Record<string, any> = {}
+    for (const [k, v] of Object.entries(updatedSettings)) {
+      if (!PERSONAL_KEYS.has(k) && v !== undefined) templateSettings[k] = v
+    }
+    if (Object.keys(templateSettings).length === 0) return
     await fetch('/api/portais', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ photoSettings, tipoPortal: 'batizado' }),
+      body: JSON.stringify({ photoSettings: templateSettings, tipoPortal: 'batizado' }),
     })
   }
 
@@ -903,97 +584,12 @@ export default function PortalClientePage() {
       if (newSettingsBlockId) setSettingsBlockId(newSettingsBlockId)
       setEditing(false)
       fetch(`/api/portais-clientes?id=${PAGE_ID}&bust=1`) // background, no await
-      // Sync photos to all baptism portals
+      // Sync photos to all baptism portals whenever settings are saved
       syncPhotosToAllPortals(newSettings)
     } else {
       // Block editor: need fresh blocks from Notion
       setEditingContent(false)
       await loadBlocks(true)
-    }
-  }
-
-  async function saveHeroField() {
-    if (!heroEdit.field) return
-    setHeroSaving(true)
-    const patch: Partial<PortalSettings> =
-      heroEdit.field === 'nomeCrianca' ? { nomeCrianca: heroEdit.value } :
-      heroEdit.field === 'noiva' ? { noiva: heroEdit.value } :
-      heroEdit.field === 'noivo' ? { noivo: heroEdit.value } :
-      { heroImageUrl: heroEdit.value }
-    const newSettings = { ...settings, ...patch }
-    const res = await fetch('/api/portal-settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pageId: PAGE_ID, settings: newSettings, settingsBlockId }),
-    })
-    const saved = await res.json()
-    if (saved.settingsBlockId) setSettingsBlockId(saved.settingsBlockId)
-    setSettings(newSettings)
-    setHeroEdit({ field: null, value: '' })
-    setHeroSaving(false)
-    await fetch(`/api/portais-clientes?id=${PAGE_ID}&bust=1`) // await so cache is warm before next reload
-    // Sync photos to all baptism portals
-    syncPhotosToAllPortals(newSettings)
-  }
-
-  function startEditWelcome() {
-    const { heading, paragraphs } = findWelcomeText(blocks)
-    setWelcomeDraft({
-      heading,
-      body: paragraphs.filter(p => p.trim()).join('\n\n'),
-    })
-    setEditingWelcome(true)
-  }
-
-  async function saveWelcomeText() {
-    setSavingWelcome(true)
-    try {
-      // Delete all heading_2 and paragraph blocks on the page
-      const toDelete = blocks.filter(b => b.type === 'heading_2' || b.type === 'paragraph')
-      await Promise.all(toDelete.map(b =>
-        fetch('/api/notion-block', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: b.id }) })
-      ))
-      // Create heading
-      if (welcomeDraft.heading.trim()) {
-        await fetch('/api/notion-block', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parentId: PAGE_ID, type: 'heading_2', text: welcomeDraft.heading.trim() }) })
-      }
-      // Create paragraphs (split by line, each non-empty line = paragraph)
-      const lines = welcomeDraft.body.split('\n')
-      for (const line of lines) {
-        await fetch('/api/notion-block', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parentId: PAGE_ID, type: 'paragraph', text: line }) })
-      }
-      // Bust cache and reload
-      await fetch(`/api/portais-clientes?id=${PAGE_ID}&bust=1`)
-      await loadBlocks(true)
-      setEditingWelcome(false)
-    } catch { /* ignore */ } finally {
-      setSavingWelcome(false)
-    }
-  }
-
-  async function swapGalleryPhoto(idx: number, file: File) {
-    setGalleryUploading(idx)
-    try {
-      const fd = new FormData()
-      fd.append('file', file)
-      const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
-      const data = await res.json()
-      if (!data.url) return
-      const currentUrls = settings.galleryUrls ?? ['', '', '']
-      const newUrls = [...currentUrls]
-      while (newUrls.length < 3) newUrls.push('')
-      newUrls[idx] = data.url
-      const newSettings = { ...settings, galleryUrls: newUrls }
-      const saveRes = await fetch('/api/portal-settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pageId: PAGE_ID, settings: newSettings, settingsBlockId }),
-      })
-      const saved = await saveRes.json()
-      if (saved.settingsBlockId) setSettingsBlockId(saved.settingsBlockId)
-      setSettings(newSettings)
-    } finally {
-      setGalleryUploading(null)
     }
   }
 
@@ -1012,12 +608,12 @@ export default function PortalClientePage() {
     </div>
   )
 
-  if (hasPassword && !authenticated) return (
+  if (hasPassword && !authenticated && !isAdminUser) return (
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-8 text-center">
         <div>
           <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase mb-3">RL PHOTO.VIDEO</p>
-          <h1 className="font-playfair font-black text-4xl text-white mb-2">Portal Privado</h1>
+          <h1 className="font-cormorant font-light text-4xl text-white mb-2 tracking-[0.15em] uppercase">Portal Privado</h1>
           <p className="font-cormorant italic text-white/30 text-base">Introduz a password para continuar</p>
         </div>
         <div className="space-y-3">
@@ -1043,24 +639,6 @@ export default function PortalClientePage() {
       </div>
     </div>
   )
-
-  const images = findImages(blocks)
-  const DEFAULT_HERO_IMAGE = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/1776042124014-05s55nxzmc4v.png'
-  const heroImage = settings.heroImageUrl || DEFAULT_HERO_IMAGE
-  const DEFAULT_GALLERY_IMAGES = [
-    'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/default-gallery-1.jpg',
-    'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/default-gallery-2.jpg',
-    'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/default-gallery-3.jpg',
-  ]
-  const galleryImages = (() => {
-    const saved = settings.galleryUrls ?? []
-    // merge: use saved value per slot if set, otherwise use default
-    const merged = DEFAULT_GALLERY_IMAGES.map((def, i) => saved[i] || def)
-    const notionFallback = images.slice(0, 3)
-    return merged.some(Boolean) ? merged.filter(Boolean) : notionFallback
-  })()
-  const navPages = findAllChildPages(blocks).filter(p => !(settings.hiddenNav ?? []).includes(p.id))
-  const { heading: welcomeHeading, paragraphs: welcomeParas, reference: welcomeRef } = findWelcomeText(blocks)
 
   // ── edit modes ──────────────────────────────────────────────────────────────
   if (editing) return (
@@ -1088,12 +666,15 @@ export default function PortalClientePage() {
     </main>
   )
 
-  // ── portal view ─────────────────────────────────────────────────────────────
-  return (
-    <div className="min-h-screen bg-[#0a0a0a]">
 
+  // ── portal view (Atmosphère + Atelier reskin — maquete) ───────────────────
+  const subPagesListM = findAllChildPages(blocks)
+  const welcomeTextM = findWelcomeText(blocks)
+
+  return (
+    <>
       {/* Admin bar */}
-      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-2 bg-black/80 backdrop-blur-sm border-b border-white/5">
+      <div className="fixed top-0 left-0 right-0 z-[80] flex items-center justify-between px-4 py-2 bg-black/80 backdrop-blur-sm border-b border-white/5">
         <Link href="/" className="text-[10px] tracking-widest text-white/25 hover:text-white/50 transition-colors uppercase">
           ‹ Menu
         </Link>
@@ -1107,361 +688,31 @@ export default function PortalClientePage() {
         </div>
       </div>
 
-      {/* ── HERO ── */}
-      <section className="relative min-h-[70vh] sm:min-h-[80vh] flex items-end justify-center pb-12 overflow-hidden">
-        {/* Background */}
-        {heroImage ? (
-          <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${heroImage})` }}>
-            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-black/90" />
-          </div>
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-b from-[#1a1408] to-[#0a0a0a]" />
-        )}
-
-        {/* Trocar foto button */}
-        {heroEdit.field === 'hero' ? (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-            <div className="w-full max-w-md px-4">
-              <p className="text-[10px] text-gold/60 tracking-widest uppercase mb-3 text-center">Trocar fotografia de fundo</p>
-              {/* Upload */}
-              <label className={`relative flex items-center justify-center w-full py-3 rounded-xl border border-dashed cursor-pointer transition-all mb-3 overflow-hidden
-                ${heroUploadProgress !== null ? 'border-gold/40 bg-gold/5 text-gold/70' : 'border-white/20 hover:border-gold/50 hover:bg-gold/5 text-white/40 hover:text-gold/80'}`}>
-                <input type="file" accept="image/*" className="hidden" disabled={heroUploadProgress !== null}
-                  onChange={async e => {
-                    const f = e.target.files?.[0]; if (!f) return
-                    setHeroUploadProgress(0)
-                    try {
-                      const url = await uploadWithProgress(f, setHeroUploadProgress)
-                      if (url) setHeroEdit(prev => ({ ...prev, value: url }))
-                    } finally {
-                      setHeroUploadProgress(null)
-                    }
-                    e.target.value = ''
-                  }} />
-                {heroUploadProgress !== null ? (
-                  <>
-                    <div className="absolute inset-0 bg-gold/10 transition-all duration-200" style={{ width: `${heroUploadProgress}%` }} />
-                    <div className="relative flex items-center gap-2">
-                      <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                      </svg>
-                      <span className="text-sm font-medium">{heroUploadProgress}%</span>
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                    </svg>
-                    <span className="text-sm">Carregar do dispositivo</span>
-                  </div>
-                )}
-              </label>
-              {/* URL */}
-              <input
-                value={heroEdit.value}
-                onChange={e => setHeroEdit(prev => ({ ...prev, value: e.target.value }))}
-                placeholder="ou cola um URL..."
-                className="w-full bg-white/[0.08] border border-white/20 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-gold/50 mb-3 placeholder:text-white/25"
-              />
-              {heroEdit.value && (
-                <div className="w-full h-28 rounded-lg bg-cover bg-center mb-3 border border-white/10"
-                  style={{ backgroundImage: `url(${heroEdit.value})` }} />
-              )}
-              <div className="flex gap-2 justify-center">
-                <button onClick={() => setHeroEdit({ field: null, value: '' })}
-                  className="px-4 py-2 text-xs border border-white/15 rounded-lg text-white/50 hover:text-white/80">Cancelar</button>
-                <button onClick={saveHeroField} disabled={heroSaving || heroUploadProgress !== null}
-                  className="px-5 py-2 text-xs bg-gold/20 border border-gold/40 rounded-lg text-gold hover:bg-gold/30 disabled:opacity-50">
-                  {heroSaving ? 'A guardar...' : '✓ Guardar'}
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => setHeroEdit({ field: 'hero', value: heroImage ?? '' })}
-            className="absolute bottom-4 right-4 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/50 border border-white/15 text-[10px] text-white/50 hover:text-white hover:border-white/30 transition-all backdrop-blur-sm"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            Trocar foto
-          </button>
-        )}
-
-        <div className="relative z-10 text-center px-4 pt-20">
-          {/* Portal label */}
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Leaf />
-            <p className="font-cormorant text-gold text-sm sm:text-base tracking-[0.4em] uppercase italic">Portal de Batizado</p>
-            <Leaf flip />
-          </div>
-
-          {/* Nome da criança — inline editable */}
-          <h1 className="font-playfair text-5xl sm:text-7xl lg:text-8xl font-black text-white leading-none tracking-tight mb-4 flex items-center justify-center">
-            {heroEdit.field === 'nomeCrianca' ? (
-              <span className="flex items-center gap-2">
-                <input
-                  autoFocus
-                  value={heroEdit.value}
-                  onChange={e => setHeroEdit(prev => ({ ...prev, value: e.target.value }))}
-                  onKeyDown={e => { if (e.key === 'Enter') saveHeroField(); if (e.key === 'Escape') setHeroEdit({ field: null, value: '' }) }}
-                  className="bg-white/10 border-b-2 border-gold outline-none text-white font-playfair text-5xl sm:text-7xl lg:text-8xl font-black text-center w-48 sm:w-64"
-                />
-                <span className="flex flex-col gap-1">
-                  <button onClick={saveHeroField} disabled={heroSaving} className="text-[10px] bg-gold/30 border border-gold/50 text-gold px-2 py-0.5 rounded hover:bg-gold/50 disabled:opacity-50">✓</button>
-                  <button onClick={() => setHeroEdit({ field: null, value: '' })} className="text-[10px] border border-white/20 text-white/40 px-2 py-0.5 rounded hover:text-white/70">✕</button>
-                </span>
-              </span>
-            ) : (
-              <button onClick={() => setHeroEdit({ field: 'nomeCrianca', value: settings.nomeCrianca || settings.noiva || '' })}
-                className="group relative hover:opacity-80 transition-opacity cursor-text">
-                {settings.nomeCrianca || settings.noiva || 'NOME DA CRIANÇA'}
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] text-gold/0 group-hover:text-gold/80 transition-colors tracking-widest uppercase whitespace-nowrap">✎ editar</span>
-              </button>
-            )}
-          </h1>
-
-          {/* Date & venue */}
-          <div className="flex flex-col items-center gap-1 mt-1">
-            {settings.local && (
-              <p className="font-cormorant text-white/60 text-base sm:text-lg italic tracking-wide">
-                {settings.local}
-              </p>
-            )}
-            <p className="font-cormorant text-white/50 text-sm sm:text-base italic tracking-wide">
-              ♡ {settings.dataFormatada || '—'}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ── COUNTDOWN ── */}
-      {settings.data && (
-        <section className="py-10 sm:py-14 border-y border-white/[0.05] bg-[#0d0d0d]">
-          <p className="font-playfair font-black text-gold text-xl sm:text-2xl text-center mb-6 tracking-tight">Contagem Regressiva</p>
-          <div className="flex items-center justify-center gap-4">
-            <Leaf />
-            <Countdown targetDate={settings.data} />
-            <Leaf flip />
-          </div>
-          <div className="flex justify-center mt-4">
-            <span className="text-gold/20 text-lg">♡</span>
-          </div>
-        </section>
-      )}
-
-      {/* ── REFERENCE BADGE ── */}
-      {welcomeRef && (
-        <div className="flex justify-center px-4 pb-6 pt-2">
-          <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full border border-gold/40 bg-gold/10 backdrop-blur-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse shrink-0" />
-            <span className="font-playfair text-gold text-base sm:text-lg tracking-wide">{welcomeRef}</span>
-          </div>
-        </div>
-      )}
-
-      {/* ── QUICK ACCESS ── */}
-      {navPages.length > 0 && (
-        <section className="py-6 sm:py-10 px-4">
-          <p className="font-playfair font-black text-white/50 text-lg sm:text-xl text-center mb-8 tracking-tight">Acesso Rápido</p>
-          <div className="flex gap-3 overflow-x-auto pb-2 justify-start sm:justify-center snap-x snap-mandatory scrollbar-none">
-            {navPages.map(page => {
-              const isActive = settings.activeNavId === page.id
-              const displayTitle = settings.pageTitles?.[page.id] ?? page.title
-              return (
-                <Link key={page.id} href={`/portal-batizado/${page.id}?title=${encodeURIComponent(displayTitle)}&admin=1`}
-                  className={`snap-start shrink-0 flex flex-col items-center gap-2 px-4 py-4 rounded-2xl border transition-all duration-300 min-w-[80px] group
-                    ${isActive ? 'bg-gold/15 border-gold/50 text-gold' : 'bg-black border-white/40 text-white/60 hover:border-white/70'}`}
-                  style={isActive
-                    ? { boxShadow: '0 0 14px 2px rgba(212,175,55,0.25)' }
-                    : { boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }
-                  }
-                >
-                  <span className={isActive ? 'text-gold' : 'text-white/80 group-hover:text-white transition-colors'}
-                    style={isActive ? undefined : { filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.9)) drop-shadow(0 0 12px rgba(255,255,255,0.5))' }}>
-                    {getNavIcon(displayTitle)}
-                  </span>
-                  <span className="text-[9px] tracking-widest uppercase text-center leading-tight max-w-[70px]"
-                    style={isActive ? undefined : { textShadow: '0 0 8px rgba(255,255,255,0.9), 0 0 16px rgba(255,255,255,0.5)' }}>
-                    {displayTitle.replace(/\s*\(\d+\)\s*$/, '')}
-                  </span>
-                  {isActive && <span className="w-1 h-1 rounded-full bg-gold" />}
-                </Link>
-              )
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* ── GALLERY ── */}
-      {galleryImages.length > 1 && (
-        <section className="px-4 pb-10 sm:pb-14">
-          <div className="grid grid-cols-3 gap-2 sm:gap-3 max-w-3xl mx-auto rounded-2xl overflow-hidden">
-            {galleryImages.map((url, i) => (
-              <div key={i} className="relative group aspect-[3/4] sm:aspect-[2/3] bg-cover bg-center" style={{ backgroundImage: `url(${url})` }}>
-                {isAdmin && (
-                  <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer
-                    bg-black/0 group-hover:bg-black/50 transition-all duration-200">
-                    <input
-                      type="file" accept="image/*" className="hidden"
-                      disabled={galleryUploading !== null}
-                      onChange={e => { const f = e.target.files?.[0]; if (f) swapGalleryPhoto(i, f); e.target.value = '' }}
-                    />
-                    {galleryUploading === i ? (
-                      <span className="text-[10px] tracking-[0.3em] uppercase text-white/80 opacity-100">
-                        A guardar...
-                      </span>
-                    ) : (
-                      <span className="text-[10px] tracking-[0.3em] uppercase text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-1.5">
-                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
-                        Trocar Foto
-                      </span>
-                    )}
-                  </label>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ── TASKS ── */}
-      <TasksSection
-        tasks={settings.tasks ?? []}
-        pageId={PAGE_ID}
-        settingsBlockId={settingsBlockId}
-        settings={settings}
-        onSettingsChange={s => { setSettings(s); if (settingsBlockId) setSettingsBlockId(settingsBlockId) }}
+      <AtmospherePortal
+        data={{
+          tipo:        PORTAL_TIPO,
+          coupleLabel: COUPLE_LABEL,
+          noiva:     settings.nomeCrianca || settings.noiva,
+          noivo:     settings.noivo,
+          dataIso:   settings.data ?? null,
+          dataLabel: settings.dataFormatada ?? null,
+          referencia: settings.referencia ?? null,
+          heroImageUrl: settings.heroImageUrl ?? null,
+          welcomeHeading:    welcomeTextM.heading
+            ? welcomeTextM.heading.replace(/\bvosso\b/i, m => `<em>${m}</em>`)
+            : undefined,
+          welcomeParagraphs: welcomeTextM.paragraphs,
+          galleryUrls: settings.galleryUrls,
+          subPages:    subPagesListM,
+          hiddenNav:   settings.hiddenNav,
+          activeNavId: settings.activeNavId ?? null,
+          pageTitles:  settings.pageTitles,
+          portalRefForLinks: settings.referencia ?? null,
+          hasTasks:    (settings.tasks ?? []).length > 0,
+          deliveries:  buildDeliveriesFromSettings(settings),
+        }}
+        callbacks={{}}
       />
-
-      {/* ── ENTREGAS ── */}
-      {settings.referencia && <EntregasSectionPC referencia={settings.referencia} />}
-
-      {/* ── WELCOME ── */}
-      <section className="py-12 sm:py-16 px-4 max-w-2xl mx-auto relative">
-
-        {editingWelcome ? (
-          /* ── EDIT MODE ── */
-          <div className="space-y-4">
-            <p className="text-[10px] tracking-[0.4em] uppercase text-gold/50 mb-2">Editar texto do portal</p>
-            <div>
-              <label className="block text-[10px] text-white/30 tracking-widest uppercase mb-1.5">Título</label>
-              <input
-                value={welcomeDraft.heading}
-                onChange={e => setWelcomeDraft(prev => ({ ...prev, heading: e.target.value }))}
-                placeholder="ex: Bem-vindos ao vosso portal!"
-                className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] text-white/30 tracking-widest uppercase mb-1.5">Texto (cada linha = parágrafo)</label>
-              <textarea
-                value={welcomeDraft.body}
-                onChange={e => setWelcomeDraft(prev => ({ ...prev, body: e.target.value }))}
-                rows={20}
-                className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-3 text-sm text-white/70 outline-none focus:border-gold/40 transition-colors leading-relaxed resize-y"
-              />
-            </div>
-            <div className="flex gap-2 justify-end pt-1">
-              <button
-                onClick={() => setEditingWelcome(false)}
-                disabled={savingWelcome}
-                className="px-4 py-2 text-xs border border-white/15 rounded-lg text-white/40 hover:text-white/70 disabled:opacity-50 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={saveWelcomeText}
-                disabled={savingWelcome}
-                className="px-5 py-2 text-xs bg-gold/20 border border-gold/40 rounded-lg text-gold hover:bg-gold/30 disabled:opacity-50 transition-all"
-              >
-                {savingWelcome ? 'A guardar...' : '✓ Guardar'}
-              </button>
-            </div>
-          </div>
-        ) : (
-          /* ── VIEW MODE ── */
-          <>
-            {isAdmin && (
-              <button
-                onClick={startEditWelcome}
-                className="absolute top-10 right-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/10 text-[10px] text-white/30 hover:text-white/60 hover:border-white/20 transition-all uppercase tracking-wider"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
-                </svg>
-                Editar Texto
-              </button>
-            )}
-            {welcomeHeading && (
-              <h2 className="font-playfair font-black text-2xl sm:text-3xl text-gold mb-3 leading-tight tracking-tight text-center">
-                {welcomeHeading}
-              </h2>
-            )}
-            <div className="flex justify-center mb-6">
-              <span className="text-gold/40 text-xl">♡</span>
-            </div>
-            {welcomeParas.map((p, i) =>
-              p.trim() === '' ? (
-                <div key={i} className="h-3" />
-              ) : (
-                <p key={i} className="text-sm sm:text-base text-white/50 leading-relaxed mb-3 text-justify">{p}</p>
-              )
-            )}
-
-            {/* Feature bullets */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8">
-              {['Acompanhamento de todo o processo', 'Prazos e entregas organizados', 'Comunicação transparente', 'Acesso rápido a documentos'].map((f, i) => (
-                <div key={i} className="flex flex-col items-center gap-2 p-3">
-                  <div className="w-6 h-6 rounded-full border border-gold/30 flex items-center justify-center">
-                    <span className="text-gold text-xs">✓</span>
-                  </div>
-                  <span className="text-xs text-white/40 text-center leading-tight">{f}</span>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-      </section>
-
-      {/* ── CARDS ── */}
-      {navPages.length > 0 && (
-        <section className="py-10 sm:py-14 px-4 bg-[#0d0d0d] border-t border-white/[0.04]">
-          <p className="font-playfair font-black text-white/50 text-lg sm:text-xl text-center mb-8 tracking-tight">O que encontram aqui</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-2xl mx-auto">
-            {navPages.slice(0, 6).map(page => {
-              const displayTitle = settings.pageTitles?.[page.id] ?? page.title
-              return (
-                <Link key={page.id} href={`/portal-batizado/${page.id}?title=${encodeURIComponent(displayTitle)}&admin=1`}
-                  className="group flex flex-col gap-3 p-4 rounded-xl border border-white/[0.07] bg-white/[0.02] hover:border-gold/30 hover:bg-gold/5 transition-all">
-                  <span className="text-gold/40 group-hover:text-gold/70 transition-colors">
-                    {getNavIcon(displayTitle)}
-                  </span>
-                  <div>
-                    <p className="text-xs font-semibold text-white/70 tracking-wide uppercase leading-tight mb-1">
-                      {displayTitle.replace(/\s*\(\d+\)\s*$/, '')}
-                    </p>
-                    <p className="text-[10px] text-white/25">Ver detalhes →</p>
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* ── FOOTER ── */}
-      <footer className="py-10 text-center border-t border-white/[0.04]">
-        <p className="font-cormorant text-gold/50 text-lg sm:text-xl italic">
-          ♡ Mal podemos esperar pelo vosso grande dia!
-        </p>
-        <p className="text-[10px] text-white/15 tracking-widest mt-3 uppercase">RL Photo.Video</p>
-      </footer>
-
-    </div>
+    </>
   )
 }
