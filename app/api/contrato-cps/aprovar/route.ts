@@ -396,7 +396,7 @@ export async function POST(req: NextRequest) {
         emailSent = await sendEmail(
           clienteEmail,
           tipo === 'batizado' ? '👶 O portal do batizado está pronto' : '💍 O portal do casamento está pronto',
-          buildPortalEmail({ nome_noivos: contrato.nome_noivos, url: portalUrlExisting, tipo, data: contrato.data_casamento, password: pwd, emailCliente }),
+          buildPortalEmail({ nome_noivos: contrato.nome_noivos, url: portalUrlExisting, tipo, data: contrato.data_casamento, password: pwd, emailCliente: clienteEmail }),
         )
         if (!emailSent) emailError = 'Resend rejeitou o envio'
       } else {
@@ -437,7 +437,7 @@ export async function POST(req: NextRequest) {
           tipo,
           data: contrato.data_casamento,
           password,
-          emailCliente,
+          emailCliente: clienteEmail,
         })
       )
     }
