@@ -278,37 +278,49 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: fetchErr.message }, { status: 500 })
     }
 
-    // Se não há row em CPS OU faltam dados-chave, vai buscar à ficha do evento
-    // (apenas Supabase: eventos_2026/2027 + dados_contrato_cps existente).
-    // Notion REMOVIDO desta lógica — a ficha do cliente é a fonte autoritativa.
+    // A ficha do cliente (eventos_YYYY) é a fonte autoritativa para tipo_evento.
+    // Por isso buscamos SEMPRE a row, mesmo quando o CPS já tem nome/email/data.
+    // (Antes, só carregávamos quando faltava algo — e isso permitia que um valor
+    // antigo de 'casamento' no CPS sobrevivesse mesmo depois de o admin ter
+    // mudado para batizado na ficha.)
     let contrato: any = contratoOrig ?? { referencia_evento: referencia, id: null }
     const semNome = !contrato.nome_noivos && !contrato.nome_noiva && !contrato.nome_noivo && !contrato.nome_crianca
     const semEmail = !contrato.email_noiva && !contrato.email_noivo
     const semData = !contrato.data_casamento
 
-    if (semNome || semEmail || semData) {
-      let eventoRow: any = null
-      for (const t of ['eventos_2026', 'eventos_2027']) {
-        const { data } = await sb.from(t).select('*').eq('referencia', referencia).maybeSingle()
-        if (data) { eventoRow = data; break }
-      }
+    let eventoRow: any = null
+    for (const t of ['eventos_2026', 'eventos_2027']) {
+      const { data } = await sb.from(t).select('*').eq('referencia', referencia).maybeSingle()
+      if (data) { eventoRow = data; break }
+    }
 
-      // Preenche o que faltar a partir de eventos_YYYY (Supabase apenas)
+    // Resolve tipo_evento a partir da ficha (Supabase). Aceita: array directo,
+    // string JSON ('["BATIZADO"]') ou string simples.
+    let tipoFromEvento: 'casamento' | 'batizado' | null = null
+    {
+      const teRaw: any = eventoRow?.tipo_evento
+      let arr: string[] = []
+      if (Array.isArray(teRaw)) arr = teRaw
+      else if (typeof teRaw === 'string' && teRaw.trim()) {
+        try { arr = JSON.parse(teRaw) } catch { arr = [teRaw] }
+      }
+      if (arr.some(t => /batizado/i.test(String(t)))) tipoFromEvento = 'batizado'
+      else if (arr.length > 0) tipoFromEvento = 'casamento'
+    }
+
+    // tipo_evento da ficha SOBREPÕE o do CPS (que pode estar com valor antigo).
+    // Só usa o do CPS se a ficha não tiver nada.
+    if (tipoFromEvento) {
+      contrato.tipo_evento = tipoFromEvento
+    } else if (!contrato.tipo_evento) {
+      contrato.tipo_evento = 'casamento'
+    }
+
+    // Preenche os outros campos só quando faltarem (mantém comportamento antigo).
+    if (semNome || semEmail || semData) {
       const nNoiva = contrato.nome_noiva || eventoRow?.nome_noiva || null
       const nNoivo = contrato.nome_noivo || eventoRow?.nome_noivo || null
       const clienteFicha = eventoRow?.cliente || null
-      // tipo_evento em Supabase pode ser string JSON ('["BATIZADO"]') ou array
-      let tipoFromEvento: string | null = null
-      const teRaw: any = eventoRow?.tipo_evento
-      try {
-        let arr: string[] = []
-        if (Array.isArray(teRaw)) arr = teRaw
-        else if (typeof teRaw === 'string' && teRaw.trim()) {
-          try { arr = JSON.parse(teRaw) } catch { arr = [teRaw] }
-        }
-        if (arr.some(t => /batizado/i.test(String(t)))) tipoFromEvento = 'batizado'
-        else if (arr.length > 0) tipoFromEvento = 'casamento'
-      } catch { /* ignora */ }
 
       contrato = {
         ...contrato,
@@ -322,7 +334,6 @@ export async function POST(req: NextRequest) {
         email_noivo:    contrato.email_noivo  || eventoRow?.email_noivo  || null,
         data_casamento: contrato.data_casamento  || eventoRow?.data_evento || null,
         local_cerimonia:contrato.local_cerimonia || eventoRow?.local      || null,
-        tipo_evento:    contrato.tipo_evento || tipoFromEvento || 'casamento',
       }
     }
 
