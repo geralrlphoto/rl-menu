@@ -1153,7 +1153,7 @@ function ContratoCPSAprovacaoSection({ referencia }: { referencia?: string }) {
       return
     }
     const nomeMostra = data?.contrato?.nome_noivos || referencia
-    if (!confirm(`Aprovar contrato e criar portal para ${nomeMostra}?\n\nA password (${pwd}) será enviada por email ao cliente.\n\n(Se o nome/email não estiver no CPS, o sistema vai buscar à ficha + Notion.)`)) return
+    if (!confirm(`Aprovar contrato e criar portal para ${nomeMostra}?\n\nA password (${pwd}) será enviada por email ao cliente.\n\n(Se o nome/email não estiver no CPS, o sistema vai buscar à ficha do cliente.)`)) return
     setSubmitting(true)
     setError(null)
     try {

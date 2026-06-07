@@ -19,11 +19,10 @@ const ADMIN_EMAIL = 'geral.rlphoto@gmail.com'
 const BATIZADO_MASTER_TOKEN = 'batizado-maquete'
 const SITE_BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://rl-menu-lake.vercel.app'
 
-// PAGE_ID da maquete batizado em Notion (a mesma usada por /portal-batizado/page.tsx)
+// PAGE_ID da maquete batizado em portal_template_settings
 // e ID da maquete casamento (para herdar pageTitles/hiddenNav nos novos portais)
 const BATIZADO_TEMPLATE_PAGE_ID = '35b220116d8a811b99b7f6f26648c017'
 const CASAMENTO_TEMPLATE_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
-const NOTION_TOKEN = process.env.NOTION_TOKEN!
 
 // Lê settings completas da maquete a partir de portal_template_settings
 // (fonte autoritativa, igual ao /api/portais-clientes).
@@ -280,7 +279,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Se não há row em CPS OU faltam dados-chave, vai buscar à ficha do evento
-    // (eventos_2026 + Notion) para preencher como fallback.
+    // (apenas Supabase: eventos_2026/2027 + dados_contrato_cps existente).
+    // Notion REMOVIDO desta lógica — a ficha do cliente é a fonte autoritativa.
     let contrato: any = contratoOrig ?? { referencia_evento: referencia, id: null }
     const semNome = !contrato.nome_noivos && !contrato.nome_noiva && !contrato.nome_noivo && !contrato.nome_crianca
     const semEmail = !contrato.email_noiva && !contrato.email_noivo
@@ -292,49 +292,37 @@ export async function POST(req: NextRequest) {
         const { data } = await sb.from(t).select('*').eq('referencia', referencia).maybeSingle()
         if (data) { eventoRow = data; break }
       }
-      // Tenta também via Notion para email_noiva/noivo
-      let notionProps: any = null
+
+      // Preenche o que faltar a partir de eventos_YYYY (Supabase apenas)
+      const nNoiva = contrato.nome_noiva || eventoRow?.nome_noiva || null
+      const nNoivo = contrato.nome_noivo || eventoRow?.nome_noivo || null
+      const clienteFicha = eventoRow?.cliente || null
+      // tipo_evento em Supabase pode ser string JSON ('["BATIZADO"]') ou array
+      let tipoFromEvento: string | null = null
+      const teRaw: any = eventoRow?.tipo_evento
       try {
-        const NOTION_TOKEN = process.env.NOTION_TOKEN
-        const EVENTOS_DB = '1ad220116d8a804b839ddc36f1e7ecf1'
-        if (NOTION_TOKEN) {
-          const res = await fetch(`https://api.notion.com/v1/databases/${EVENTOS_DB}/query`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${NOTION_TOKEN}`, 'Notion-Version': '2022-06-28', 'Content-Type': 'application/json' },
-            body: JSON.stringify({ filter: { property: 'REFERÊNCIA DO EVENTO', title: { equals: referencia } }, page_size: 1 }),
-            cache: 'no-store',
-          })
-          if (res.ok) {
-            const d = await res.json()
-            notionProps = d.results?.[0]?.properties ?? null
-          }
+        let arr: string[] = []
+        if (Array.isArray(teRaw)) arr = teRaw
+        else if (typeof teRaw === 'string' && teRaw.trim()) {
+          try { arr = JSON.parse(teRaw) } catch { arr = [teRaw] }
         }
-      } catch {/* silencioso */}
+        if (arr.some(t => /batizado/i.test(String(t)))) tipoFromEvento = 'batizado'
+        else if (arr.length > 0) tipoFromEvento = 'casamento'
+      } catch { /* ignora */ }
 
-      const getNotionEmail = (k: string) => notionProps?.[k]?.email ?? null
-      const getNotionText  = (k: string) => notionProps?.[k]?.rich_text?.map((t: any) => t.plain_text).join('') ?? null
-      const getNotionTitle = (k: string) => notionProps?.[k]?.title?.map((t: any) => t.plain_text).join('') ?? null
-
-      // Preenche o que faltar
-      const nNoiva = contrato.nome_noiva || eventoRow?.nome_noiva || getNotionText('Nome da Noiva')
-      const nNoivo = contrato.nome_noivo || eventoRow?.nome_noivo || getNotionText('nome do noivo')
-      // Cliente (campo "RUI E LILIANA" da ficha) — tanto Supabase como Notion
-      const clienteFicha = eventoRow?.cliente || getNotionText('CLIENTE') || getNotionTitle('CLIENTE')
       contrato = {
         ...contrato,
-        nome_noiva:    nNoiva,
-        nome_noivo:    nNoivo,
-        nome_noivos:   contrato.nome_noivos
-                       || [nNoiva, nNoivo].filter(Boolean).join(' & ')
-                       || clienteFicha           // ← fallback: campo CLIENTE da ficha
-                       || referencia,
-        email_noiva:   contrato.email_noiva  || getNotionEmail('E-mail da noiva'),
-        email_noivo:   contrato.email_noivo  || getNotionEmail('E-mail do noivo'),
-        data_casamento:contrato.data_casamento || eventoRow?.data_evento || null,
-        local_cerimonia:contrato.local_cerimonia || eventoRow?.local || null,
-        tipo_evento:   contrato.tipo_evento || (
-          Array.isArray(eventoRow?.tipo_evento) && eventoRow.tipo_evento.find((t: string) => /batizado/i.test(t)) ? 'batizado' : 'casamento'
-        ),
+        nome_noiva:     nNoiva,
+        nome_noivo:     nNoivo,
+        nome_noivos:    contrato.nome_noivos
+                        || [nNoiva, nNoivo].filter(Boolean).join(' & ')
+                        || clienteFicha             // ← fallback: campo CLIENTE da ficha
+                        || referencia,
+        email_noiva:    contrato.email_noiva  || eventoRow?.email_noiva  || null,
+        email_noivo:    contrato.email_noivo  || eventoRow?.email_noivo  || null,
+        data_casamento: contrato.data_casamento  || eventoRow?.data_evento || null,
+        local_cerimonia:contrato.local_cerimonia || eventoRow?.local      || null,
+        tipo_evento:    contrato.tipo_evento || tipoFromEvento || 'casamento',
       }
     }
 
@@ -412,7 +400,7 @@ export async function POST(req: NextRequest) {
         )
         if (!emailSent) emailError = 'Resend rejeitou o envio'
       } else {
-        emailError = 'Email do cliente não foi encontrado (CPS / ficha / Notion)'
+        emailError = 'Email do cliente não foi encontrado (CPS / ficha do cliente)'
       }
       return NextResponse.json({
         ok: emailSent,
