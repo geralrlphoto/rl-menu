@@ -19,7 +19,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
  *  "Acesso temporariamente indisponível".
  * ─────────────────────────────────────────────────────────────────────────── */
 
-const HERO_BG = '/batizados-2026.jpg'
+const HERO_BG = '/batizado-hero.png'
 
 export default function PaisLoginPage() {
   return (
