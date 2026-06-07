@@ -96,6 +96,7 @@ function fmtData(d: string | null | undefined): string {
 async function criarPortalCasamento(ref: string, dados: any, password: string) {
   const sb = db()
   const maquete = await fetchMaqueteSettings(CASAMENTO_TEMPLATE_PAGE_ID)
+  const valores = await fetchValoresEvento(sb, ref)
   const row = {
     referencia: ref,
     noiva: dados.nome_noiva ?? null,
@@ -115,6 +116,9 @@ async function criarPortalCasamento(ref: string, dados: any, password: string) {
       local: dados.local_cerimonia ?? '',
       tipoPortal: 'casamento',
       portalPassword: password,
+      // Valores da ficha do cliente (eventos_YYYY) — para o portal mostrar
+      // TOTAL DO SERVIÇO correctamente em vez de €0.
+      ...valores,
     },
     updated_at: new Date().toISOString(),
   }
@@ -132,6 +136,7 @@ async function criarPortalCasamento(ref: string, dados: any, password: string) {
 async function criarPortalBatizado(ref: string, dados: any, password: string) {
   const sb = db()
   const maquete = await fetchMaqueteSettings(BATIZADO_TEMPLATE_PAGE_ID)
+  const valores = await fetchValoresEvento(sb, ref)
   const row = {
     referencia: ref,
     noiva: dados.nome_noiva ?? null,  // mãe — reutiliza campo "noiva"
@@ -153,12 +158,43 @@ async function criarPortalBatizado(ref: string, dados: any, password: string) {
       nomeCrianca:  dados.nome_crianca  ?? '',
       idadeCrianca: dados.idade_crianca ?? '',
       portalPassword: password,
+      // Valores da ficha do cliente (eventos_YYYY) — para o portal mostrar
+      // TOTAL DO SERVIÇO correctamente em vez de €0.
+      ...valores,
     },
     updated_at: new Date().toISOString(),
   }
   const { error } = await sb.from('portais').upsert(row, { onConflict: 'referencia' })
   if (error) throw new Error(`portal batizado: ${error.message}`)
   return `${SITE_BASE}/portal-batizado/ref/${encodeURIComponent(ref)}`
+}
+
+/** Lê os valores do serviço (foto, vídeo, extras, total) da ficha do cliente
+ *  em eventos_YYYY (Supabase). Devolve um objecto para fazer ...spread nos
+ *  settings do portal. Se o evento não existir ou não tiver valores, devolve
+ *  objecto vazio (sem propriedades) — assim não sobrescreve maquete com nulls. */
+async function fetchValoresEvento(sb: any, referencia: string): Promise<Record<string, number>> {
+  const out: Record<string, number> = {}
+  for (const t of ['eventos_2026', 'eventos_2027']) {
+    try {
+      const { data } = await sb.from(t)
+        .select('valor_foto, valor_video, valor_liquido, valor_real_foto')
+        .eq('referencia', referencia)
+        .maybeSingle()
+      if (data) {
+        const vf = Number(data.valor_foto ?? 0)
+        const vv = Number(data.valor_video ?? 0)
+        // valor_liquido pode ser o total combinado ou só vídeo (depende do mapeamento)
+        // — usamos como fallback se foto+vídeo não dão total
+        const vt = vf + vv > 0 ? vf + vv : Number(data.valor_liquido ?? 0)
+        if (vf > 0) out.valorFoto = vf
+        if (vv > 0) out.valorVideo = vv
+        if (vt > 0) out.valorTotal = vt
+        return out
+      }
+    } catch { /* tabela pode não existir */ }
+  }
+  return out
 }
 
 // ─── Email ao cliente com link do portal ──────────────────────────────────────
