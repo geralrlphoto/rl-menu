@@ -218,6 +218,7 @@ export default function SplashPage() {
         .sp-logo-wrap--lg {
           max-width: 660px;
           height: 380px;
+          margin-top: 2.5rem;
         }
         .sp-col-link:hover .sp-logo-wrap { transform: scale(1.04); }
 
