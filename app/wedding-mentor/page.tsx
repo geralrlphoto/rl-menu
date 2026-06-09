@@ -284,16 +284,13 @@ export default function WeddingMentorPage() {
         {/* ── HERO ────────────────────────────────────────────────── */}
         <section className="relative z-10 min-h-[90vh] flex flex-col items-center justify-center text-center px-6 py-24">
 
-          {/* Logo placeholder — troca por <Image src="/assets/logo-mentor.png" … /> */}
-          <div data-reveal className="mb-10 flex flex-col items-center gap-3">
-            <div className="w-[4.5rem] h-[5.5rem] flex items-center justify-center"
-              style={{ border: '1.5px solid rgba(154,131,88,.5)', borderRadius: '50%' }}>
-              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: 'italic', fontSize: '1.5rem', color: '#9a8358' }}>RL</span>
-            </div>
-            <div className="text-center" style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300 }}>
-              <p style={{ fontSize: '1.1rem', letterSpacing: '.25em', textTransform: 'uppercase', color: '#23262d' }}>Wedding</p>
-              <p style={{ fontSize: '1.1rem', letterSpacing: '.25em', textTransform: 'uppercase', color: '#9a8358' }}>Mentor</p>
-            </div>
+          {/* Logo HD transparente */}
+          <div data-reveal className="mb-10 flex items-center justify-center" style={{ width: '100%', maxWidth: '320px', height: '180px' }}>
+            <img
+              src="/logo-mentor-hd.png"
+              alt="RL Wedding Mentor"
+              style={{ objectFit: 'contain', width: '100%', height: '100%' }}
+            />
           </div>
 
           <p data-reveal className="wm-label mb-6" style={{ transitionDelay: '.1s' }}>

@@ -27,7 +27,7 @@ const BRANDS = [
   {
     badge:   'Formação',
     name:    'RL Wedding Mentor',
-    logo:    '/logo mentor.webp',
+    logo:    '/logo-mentor-hd.png',
     href:    '/wedding-mentor',
     label:   'Mentoria para\nprofissionais',
     ariaLabel: 'Entrar em RL Wedding Mentor — Formação',
