@@ -1,120 +1,361 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useEffect, useState } from 'react'
 
-const IMG_W = 1983
-const IMG_H = 793
-const LINE_X_PX = 978
+/* ═══════════════════════════════════════════════════════
+   DADOS — edita aqui: textos, links e logos
+═══════════════════════════════════════════════════════ */
+const BRANDS = [
+  {
+    badge:   'Casamentos',
+    name:    'RL Photo.Video',
+    logo:    '/assets/logo-photovideo.png',
+    href:    '/photo',
+    label:   'Fotografia e vídeo\nde casamento',
+    ariaLabel: 'Entrar em RL Photo.Video — Casamentos',
+  },
+  {
+    badge:   'Marcas',
+    name:    'RL Prod',
+    logo:    '/assets/logo-prod.png',
+    href:    '/media',
+    label:   'Fotografia e vídeo\npara marcas',
+    ariaLabel: 'Entrar em RL Prod — Marcas',
+  },
+  {
+    badge:   'Formação',
+    name:    'RL Wedding Mentor',
+    logo:    '/assets/logo-mentor.png',
+    href:    '/wedding-mentor',
+    label:   'Mentoria para\nprofissionais',
+    ariaLabel: 'Entrar em RL Wedding Mentor — Formação',
+  },
+]
 
-export default function BrandSelector() {
-  const [leftPct, setLeftPct] = useState(49.32)
+const TAGLINE  = 'RL · Universo de Marcas'
+const FOOTER   = 'Três olhares, a mesma essência: contar histórias.'
+const ORNAMENT = '✦  ❦  ✦'
+
+/* ═══════════════════════════════════════════════════════
+   LOGO COM FALLBACK TEXTO
+═══════════════════════════════════════════════════════ */
+function LogoWithFallback({ src, alt, priority }: { src: string; alt: string; priority?: boolean }) {
+  const [errored, setErrored] = useState(false)
+  if (errored) {
+    return (
+      <span style={{
+        fontFamily: "'Cormorant Garamond', serif",
+        fontWeight: 300,
+        fontSize: '1.4rem',
+        letterSpacing: '.12em',
+        color: '#23262d',
+        textAlign: 'center',
+        lineHeight: 1.2,
+      }}>
+        {alt}
+      </span>
+    )
+  }
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      width={220}
+      height={120}
+      style={{ objectFit: 'contain', width: '100%', height: '100%' }}
+      priority={priority}
+      onError={() => setErrored(true)}
+    />
+  )
+}
+
+/* ═══════════════════════════════════════════════════════
+   COMPONENTE
+═══════════════════════════════════════════════════════ */
+export default function SplashPage() {
+  const [visible, setVisible] = useState(false)
 
   useEffect(() => {
-    function recompute() {
-      const vw = window.innerWidth
-      const vh = window.innerHeight
-      const imgAspect = IMG_W / IMG_H
-      const vAspect   = vw / vh
-      let scale: number
-      if (imgAspect > vAspect) scale = vh / IMG_H
-      else                     scale = vw / IMG_W
-      const scaledW  = IMG_W * scale
-      const overflow = scaledW - vw
-      const lineViewportX = -overflow / 2 + LINE_X_PX * scale
-      const pct = Math.max(20, Math.min(80, (lineViewportX / vw) * 100))
-      setLeftPct(pct)
-    }
-    recompute()
-    window.addEventListener('resize', recompute)
-    return () => window.removeEventListener('resize', recompute)
+    // Pequeno delay para activar as animações de entrada
+    const t = setTimeout(() => setVisible(true), 60)
+    return () => clearTimeout(t)
   }, [])
 
-  // Photo Video mantém alinhamento com a linha do fundo
-  // RL Prod: ocupa o espaço onde está o seu logo na imagem (~25% fixo)
-  // Wedding Mentor: o restante à direita (área escura vazia da imagem)
-  const prodPct = 25
-  const mentorPct = 100 - leftPct - prodPct
-
   return (
-    <main
-      className="relative min-h-screen w-screen overflow-hidden bg-[#1a1410] bg-no-repeat bg-cover bg-center"
-      style={{ backgroundImage: "url('/home-bg.png')" }}
-    >
-      <div className="absolute inset-0 flex flex-col sm:flex-row">
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Space+Mono:wght@400;700&family=Jost:wght@300;400&display=swap');
 
-        {/* ─── RL PHOTO.VIDEO ─────────────────────────────────────── */}
-        <Link
-          href="/photo"
-          aria-label="RL Photo.Video"
-          className="relative group cursor-pointer min-h-[33vh] sm:min-h-screen sm:flex-none flex-1"
-          style={{ flexBasis: `${leftPct}%` }}
+        /* ── Reset para esta página ── */
+        .sp-root, .sp-root * { box-sizing: border-box; }
+        .sp-root {
+          min-height: 100vh;
+          background: #efe7d6;
+          color: #23262d;
+          font-family: 'Jost', sans-serif;
+          position: relative;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+        }
+
+        /* ── Textura de papel ── */
+        .sp-root::before {
+          content: '';
+          position: fixed;
+          inset: 0;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+          opacity: .045;
+          mix-blend-mode: multiply;
+          pointer-events: none;
+          z-index: 0;
+        }
+
+        /* ── Vinheta ── */
+        .sp-root::after {
+          content: '';
+          position: fixed;
+          inset: 0;
+          background: radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(20,15,8,.12) 100%);
+          pointer-events: none;
+          z-index: 0;
+        }
+
+        /* ── Animações de entrada ── */
+        .sp-reveal {
+          opacity: 0;
+          transform: translateY(24px);
+          transition: opacity .7s cubic-bezier(.22,1,.36,1),
+                      transform .7s cubic-bezier(.22,1,.36,1);
+        }
+        .sp-reveal.visible { opacity: 1; transform: translateY(0); }
+
+        @media (prefers-reduced-motion: reduce) {
+          .sp-reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+        }
+
+        /* ── Etiqueta / badge ── */
+        .sp-badge {
+          display: inline-block;
+          padding: .25rem .9rem;
+          border: 1px solid rgba(35,38,45,.18);
+          border-radius: 99px;
+          font-family: 'Space Mono', monospace;
+          font-size: .52rem;
+          letter-spacing: .3em;
+          text-transform: uppercase;
+          color: rgba(35,38,45,.55);
+        }
+
+        /* ── Botão Entrar ── */
+        .sp-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: .5rem;
+          padding: .6rem 1.6rem;
+          border-radius: 99px;
+          border: 1.5px solid #23262d;
+          font-family: 'Space Mono', monospace;
+          font-size: .55rem;
+          letter-spacing: .25em;
+          text-transform: uppercase;
+          color: #23262d;
+          background: transparent;
+          transition: background .28s ease, color .28s ease, gap .28s ease;
+          cursor: pointer;
+          text-decoration: none;
+          white-space: nowrap;
+        }
+        .sp-btn .sp-arrow {
+          display: inline-block;
+          transition: transform .28s ease;
+          font-size: .75rem;
+          line-height: 1;
+        }
+        .sp-col-link:hover .sp-btn,
+        .sp-btn:hover {
+          background: #23262d;
+          color: #efe7d6;
+        }
+        .sp-col-link:hover .sp-btn .sp-arrow,
+        .sp-btn:hover .sp-arrow {
+          transform: translateX(4px);
+        }
+
+        /* ── Coluna ── */
+        .sp-col-link {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 1.8rem;
+          padding: 3.5rem 2rem;
+          cursor: pointer;
+          text-decoration: none;
+          color: inherit;
+          transition: background .3s;
+          position: relative;
+          flex: 1;
+        }
+        .sp-col-link:focus-visible {
+          outline: 2px solid #9a8358;
+          outline-offset: -2px;
+        }
+        .sp-col-link:hover { background: rgba(255,255,255,.22); }
+
+        /* Logo hover scale */
+        .sp-logo-wrap {
+          width: 100%;
+          max-width: 220px;
+          height: 120px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: transform .4s cubic-bezier(.22,1,.36,1);
+        }
+        .sp-col-link:hover .sp-logo-wrap { transform: scale(1.04); }
+
+        /* Divisória vertical entre colunas */
+        .sp-vdivider {
+          width: 1px;
+          background: rgba(35,38,45,.1);
+          align-self: stretch;
+        }
+
+        /* ── Label sob logo ── */
+        .sp-col-label {
+          font-family: 'Cormorant Garamond', serif;
+          font-weight: 300;
+          font-size: 1rem;
+          line-height: 1.5;
+          text-align: center;
+          color: rgba(35,38,45,.5);
+          font-style: italic;
+        }
+
+        /* ── Linha decorativa topo/fundo ── */
+        .sp-rule {
+          display: flex;
+          align-items: center;
+          gap: .75rem;
+          justify-content: center;
+        }
+        .sp-rule::before,
+        .sp-rule::after {
+          content: '';
+          display: block;
+          width: 3rem;
+          height: 1px;
+          background: rgba(35,38,45,.2);
+        }
+
+        /* ── Mobile ── */
+        @media (max-width: 899px) {
+          .sp-grid { flex-direction: column !important; }
+          .sp-vdivider { width: 100% !important; height: 1px !important; align-self: auto !important; }
+          .sp-col-link { padding: 3rem 2rem; }
+        }
+      `}</style>
+
+      <div className="sp-root">
+
+        {/* ── TOPO ─────────────────────────────────────────────── */}
+        <header className="relative z-10 flex justify-center pt-10 pb-4 px-6">
+          <p
+            className={`sp-reveal${visible ? ' visible' : ''}`}
+            style={{
+              fontFamily: "'Space Mono', monospace",
+              fontSize: '.58rem',
+              letterSpacing: '.4em',
+              textTransform: 'uppercase',
+              color: 'rgba(35,38,45,.4)',
+              transitionDelay: '0ms',
+            }}
+          >
+            {TAGLINE}
+          </p>
+        </header>
+
+        {/* ── GRID DE 3 COLUNAS ────────────────────────────────── */}
+        <main
+          className="sp-grid relative z-10 flex"
+          style={{ flex: 1 }}
+          aria-label="Seleciona uma marca"
         >
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-500" />
-          <div className="absolute bottom-8 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-500">
-            <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-black/55 backdrop-blur-sm border border-white/15">
-              <span className="text-[9px] tracking-[0.5em] text-white/90 uppercase">RL Photo.Video</span>
-              <span className="text-white/70 text-sm">→</span>
-            </div>
-          </div>
-        </Link>
+          {BRANDS.map((brand, i) => (
+            <>
+              {i > 0 && <div key={`div-${i}`} className="sp-vdivider" />}
 
-        {/* divisor */}
-        <div className="hidden sm:block w-px bg-white/15 self-stretch" />
+              <Link
+                key={brand.href}
+                href={brand.href}
+                aria-label={brand.ariaLabel}
+                className={`sp-col-link sp-reveal${visible ? ' visible' : ''}`}
+                style={{ transitionDelay: `${80 + i * 120}ms` }}
+              >
+                {/* Badge */}
+                <span className="sp-badge">{brand.badge}</span>
 
-        {/* ─── RL PROD ────────────────────────────────────────────── */}
-        <Link
-          href="/media"
-          aria-label="RL Prod"
-          className="relative group cursor-pointer min-h-[33vh] sm:min-h-screen sm:flex-none flex-1"
-          style={{ flexBasis: `${prodPct}%` }}
+                {/* Logo — coloca o PNG em /public/assets/ para aparecer */}
+                <div className="sp-logo-wrap">
+                  <LogoWithFallback
+                    src={brand.logo}
+                    alt={brand.name}
+                    priority={i === 0}
+                  />
+                </div>
+
+                {/* Label descritivo */}
+                <p className="sp-col-label">
+                  {brand.label.split('\n').map((l, j) => (
+                    <span key={j}>{j > 0 ? <><br />{l}</> : l}</span>
+                  ))}
+                </p>
+
+                {/* Botão */}
+                <div className="sp-btn" role="presentation">
+                  Entrar
+                  <span className="sp-arrow" aria-hidden="true">→</span>
+                </div>
+              </Link>
+            </>
+          ))}
+        </main>
+
+        {/* ── RODAPÉ ───────────────────────────────────────────── */}
+        <footer
+          className={`relative z-10 flex flex-col items-center gap-3 py-10 px-6 sp-reveal${visible ? ' visible' : ''}`}
+          style={{ transitionDelay: '480ms' }}
         >
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-500" />
-          <div className="absolute bottom-8 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-500">
-            <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-black/55 backdrop-blur-sm border border-white/15">
-              <span className="text-[9px] tracking-[0.5em] text-white/90 uppercase">RL Prod</span>
-              <span className="text-white/70 text-sm">→</span>
-            </div>
-          </div>
-        </Link>
-
-        {/* divisor */}
-        <div className="hidden sm:block w-px bg-white/15 self-stretch" />
-
-        {/* ─── RL WEDDING MENTOR ──────────────────────────────────── */}
-        <Link
-          href="/wedding-mentor"
-          aria-label="RL Wedding Mentor"
-          className="relative group cursor-pointer min-h-[33vh] sm:min-h-screen flex-1"
-          style={{ flexBasis: `${mentorPct}%` }}
-        >
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-500" />
-
-          {/* Logo sobreposto — mesmo estilo da imagem de fundo */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none select-none">
-            <div className="w-[4.5rem] h-[5.5rem] flex items-center justify-center border border-[#3d3530]/70 rounded-[50%]">
-              <span className="font-serif text-[1.6rem] text-[#3d3530] leading-none tracking-wider">RL</span>
-            </div>
-            <div className="text-center mt-1">
-              <p className="font-serif text-[#3d3530] text-[2rem] tracking-[0.18em] uppercase leading-tight">WEDDING</p>
-              <p className="font-serif text-[#3d3530]/70 text-[2rem] tracking-[0.18em] uppercase leading-tight">MENTOR</p>
-            </div>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="w-8 h-px bg-[#3d3530]/40" />
-              <span className="text-[#3d3530]/60 text-[0.5rem] tracking-[0.45em] uppercase">Educate · Inspire · Elevate</span>
-              <span className="w-8 h-px bg-[#3d3530]/40" />
-            </div>
+          {/* Duas riscas + frase */}
+          <div className="sp-rule">
+            <p style={{
+              fontFamily: "'Space Mono', monospace",
+              fontSize: '.52rem',
+              letterSpacing: '.28em',
+              textTransform: 'uppercase',
+              color: 'rgba(35,38,45,.35)',
+              textAlign: 'center',
+            }}>
+              {FOOTER}
+            </p>
           </div>
 
-          <div className="absolute bottom-8 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-500">
-            <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-black/55 backdrop-blur-sm border border-white/15">
-              <span className="text-[9px] tracking-[0.5em] text-white/90 uppercase">RL Wedding Mentor</span>
-              <span className="text-white/70 text-sm">→</span>
-            </div>
-          </div>
-        </Link>
+          {/* Ornamento */}
+          <p style={{
+            fontFamily: "'Cormorant Garamond', serif",
+            fontSize: '.85rem',
+            color: '#9a8358',
+            letterSpacing: '.3em',
+            opacity: .7,
+          }}>
+            {ORNAMENT}
+          </p>
+        </footer>
 
       </div>
-    </main>
+    </>
   )
 }
