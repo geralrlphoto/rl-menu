@@ -11,7 +11,7 @@ const BRANDS = [
   {
     badge:   'Casamentos',
     name:    'RL Photo.Video',
-    logo:    '/logo-photo.png',
+    logo:    '/logo-photovideo-hd.png',
     href:    '/photo',
     label:   'Fotografia e vídeo\nde casamento',
     ariaLabel: 'Entrar em RL Photo.Video — Casamentos',
@@ -64,7 +64,7 @@ function LogoWithFallback({ src, alt, priority }: { src: string; alt: string; pr
       alt={alt}
       width={220}
       height={120}
-      style={{ objectFit: 'contain', width: '100%', height: '100%', mixBlendMode: 'multiply' }}
+      style={{ objectFit: 'contain', width: '100%', height: '100%' }}
       priority={priority}
       onError={() => setErrored(true)}
     />
