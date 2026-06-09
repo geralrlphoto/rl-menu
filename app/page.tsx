@@ -62,8 +62,8 @@ function LogoWithFallback({ src, alt, priority }: { src: string; alt: string; pr
     <Image
       src={src}
       alt={alt}
-      width={320}
-      height={180}
+      width={220}
+      height={120}
       style={{ objectFit: 'contain', width: '100%', height: '100%' }}
       priority={priority}
       onError={() => setErrored(true)}
@@ -208,12 +208,16 @@ export default function SplashPage() {
         /* Logo hover scale */
         .sp-logo-wrap {
           width: 100%;
-          max-width: 320px;
-          height: 180px;
+          max-width: 220px;
+          height: 120px;
           display: flex;
           align-items: center;
           justify-content: center;
           transition: transform .4s cubic-bezier(.22,1,.36,1);
+        }
+        .sp-logo-wrap--lg {
+          max-width: 320px;
+          height: 180px;
         }
         .sp-col-link:hover .sp-logo-wrap { transform: scale(1.04); }
 
@@ -299,7 +303,7 @@ export default function SplashPage() {
                 <span className="sp-badge">{brand.badge}</span>
 
                 {/* Logo — coloca o PNG em /public/assets/ para aparecer */}
-                <div className="sp-logo-wrap">
+                <div className={`sp-logo-wrap${i === 0 ? ' sp-logo-wrap--lg' : ''}`}>
                   <LogoWithFallback
                     src={brand.logo}
                     alt={brand.name}
