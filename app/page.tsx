@@ -189,15 +189,35 @@ export default function SplashPage() {
           display: flex;
           flex-direction: column;
           align-items: center;
-          justify-content: center;
-          gap: 1.8rem;
-          padding: 3.5rem 2rem;
+          justify-content: space-between;
+          gap: 0;
+          padding: 3.5rem 2rem 3.5rem;
           cursor: pointer;
           text-decoration: none;
           color: inherit;
           transition: background .3s;
           position: relative;
           flex: 1;
+        }
+
+        /* Área do logo ocupa o espaço disponível, empurra o fundo para baixo */
+        .sp-col-mid {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 1.8rem;
+          width: 100%;
+        }
+
+        /* Área do botão — sempre no fundo, alinhada entre colunas */
+        .sp-col-bottom {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1rem;
+          padding-top: 2rem;
         }
         .sp-col-link:focus-visible {
           outline: 2px solid #9a8358;
@@ -300,29 +320,29 @@ export default function SplashPage() {
                 className={`sp-col-link sp-reveal${visible ? ' visible' : ''}`}
                 style={{ transitionDelay: `${80 + i * 120}ms` }}
               >
-                {/* Badge */}
-                <span className="sp-badge">{brand.badge}</span>
-
-                {/* Logo — coloca o PNG em /public/assets/ para aparecer */}
-                <div className={`sp-logo-wrap${i === 0 ? ' sp-logo-wrap--lg' : ''}`}>
-                  <LogoWithFallback
-                    src={brand.logo}
-                    alt={brand.name}
-                    priority={i === 0}
-                  />
+                {/* Topo: badge + logo — não mexe */}
+                <div className="sp-col-mid">
+                  <span className="sp-badge">{brand.badge}</span>
+                  <div className={`sp-logo-wrap${i === 0 ? ' sp-logo-wrap--lg' : ''}`}>
+                    <LogoWithFallback
+                      src={brand.logo}
+                      alt={brand.name}
+                      priority={i === 0}
+                    />
+                  </div>
                 </div>
 
-                {/* Label descritivo */}
-                <p className="sp-col-label">
-                  {brand.label.split('\n').map((l, j) => (
-                    <span key={j}>{j > 0 ? <><br />{l}</> : l}</span>
-                  ))}
-                </p>
-
-                {/* Botão */}
-                <div className="sp-btn" role="presentation">
-                  Entrar
-                  <span className="sp-arrow" aria-hidden="true">→</span>
+                {/* Fundo: label + botão — alinhados entre colunas */}
+                <div className="sp-col-bottom">
+                  <p className="sp-col-label">
+                    {brand.label.split('\n').map((l, j) => (
+                      <span key={j}>{j > 0 ? <><br />{l}</> : l}</span>
+                    ))}
+                  </p>
+                  <div className="sp-btn" role="presentation">
+                    Entrar
+                    <span className="sp-arrow" aria-hidden="true">→</span>
+                  </div>
                 </div>
               </Link>
             </>
