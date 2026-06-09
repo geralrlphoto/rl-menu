@@ -62,8 +62,8 @@ function LogoWithFallback({ src, alt, priority }: { src: string; alt: string; pr
     <Image
       src={src}
       alt={alt}
-      width={220}
-      height={120}
+      width={320}
+      height={180}
       style={{ objectFit: 'contain', width: '100%', height: '100%' }}
       priority={priority}
       onError={() => setErrored(true)}
@@ -208,8 +208,8 @@ export default function SplashPage() {
         /* Logo hover scale */
         .sp-logo-wrap {
           width: 100%;
-          max-width: 220px;
-          height: 120px;
+          max-width: 320px;
+          height: 180px;
           display: flex;
           align-items: center;
           justify-content: center;
