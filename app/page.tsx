@@ -216,8 +216,8 @@ export default function SplashPage() {
           transition: transform .4s cubic-bezier(.22,1,.36,1);
         }
         .sp-logo-wrap--lg {
-          max-width: 420px;
-          height: 240px;
+          max-width: 560px;
+          height: 320px;
         }
         .sp-col-link:hover .sp-logo-wrap { transform: scale(1.04); }
 
