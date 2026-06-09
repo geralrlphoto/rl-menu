@@ -11,7 +11,7 @@ const BRANDS = [
   {
     badge:   'Casamentos',
     name:    'RL Photo.Video',
-    logo:    '/logo photo.png',
+    logo:    '/logo-photo.png',
     href:    '/photo',
     label:   'Fotografia e vídeo\nde casamento',
     ariaLabel: 'Entrar em RL Photo.Video — Casamentos',
