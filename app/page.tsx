@@ -64,7 +64,7 @@ function LogoWithFallback({ src, alt, priority }: { src: string; alt: string; pr
       alt={alt}
       width={220}
       height={120}
-      style={{ objectFit: 'contain', width: '100%', height: '100%' }}
+      style={{ objectFit: 'contain', width: '100%', height: '100%', mixBlendMode: 'multiply' }}
       priority={priority}
       onError={() => setErrored(true)}
     />
