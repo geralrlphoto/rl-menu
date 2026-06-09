@@ -145,6 +145,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/send-booking-reservation') ||
     pathname.startsWith('/api/send-task-email') ||
     pathname.startsWith('/api/calendar/ics') ||
+    pathname === '/' ||
+    pathname.startsWith('/wedding-mentor') ||
     pathname === '/newsletter' ||
     pathname.startsWith('/newsletter/') ||
     pathname.startsWith('/api/newsletter-subscribe') ||
