@@ -11,7 +11,7 @@ const BRANDS = [
   {
     badge:   'Casamentos',
     name:    'RL Photo.Video',
-    logo:    '/assets/logo-photovideo.png',
+    logo:    '/logo photo.png',
     href:    '/photo',
     label:   'Fotografia e vídeo\nde casamento',
     ariaLabel: 'Entrar em RL Photo.Video — Casamentos',
@@ -19,7 +19,7 @@ const BRANDS = [
   {
     badge:   'Marcas',
     name:    'RL Prod',
-    logo:    '/assets/logo-prod.png',
+    logo:    '/logo-rl-prod-black.png',
     href:    '/media',
     label:   'Fotografia e vídeo\npara marcas',
     ariaLabel: 'Entrar em RL Prod — Marcas',
@@ -27,7 +27,7 @@ const BRANDS = [
   {
     badge:   'Formação',
     name:    'RL Wedding Mentor',
-    logo:    '/assets/logo-mentor.png',
+    logo:    '/logo mentor.webp',
     href:    '/wedding-mentor',
     label:   'Mentoria para\nprofissionais',
     ariaLabel: 'Entrar em RL Wedding Mentor — Formação',
