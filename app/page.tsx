@@ -320,9 +320,11 @@ export default function SplashPage() {
                 className={`sp-col-link sp-reveal${visible ? ' visible' : ''}`}
                 style={{ transitionDelay: `${80 + i * 120}ms` }}
               >
-                {/* Topo: badge + logo — não mexe */}
+                {/* Badge — sempre no topo */}
+                <span className="sp-badge">{brand.badge}</span>
+
+                {/* Logo centrado no espaço disponível */}
                 <div className="sp-col-mid">
-                  <span className="sp-badge">{brand.badge}</span>
                   <div className={`sp-logo-wrap${i === 0 ? ' sp-logo-wrap--lg' : ''}`}>
                     <LogoWithFallback
                       src={brand.logo}
