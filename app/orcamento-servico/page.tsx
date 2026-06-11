@@ -1,7 +1,29 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
+
+type Historico = {
+  id: string
+  data: string
+  referencia: string
+  nomeNoivos: string
+  dataCasamento: string
+  local: string
+  fotoAtivos: string[]
+  videoAtivos: string[]
+  valorTotal: number
+  observacoes: string
+}
+
+const STORAGE_KEY = 'orcamento_servico_historico'
+
+function loadHistorico(): Historico[] {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]') } catch { return [] }
+}
+function saveHistorico(h: Historico[]) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(h))
+}
 
 type ServicoItem = { label: string; ativo: boolean }
 
@@ -61,7 +83,34 @@ export default function OrcamentoServico() {
     set(tipo, arr as Form['foto'])
   }
 
-  const handlePrint = () => window.print()
+  const [historico, setHistorico] = useState<Historico[]>([])
+  useEffect(() => { setHistorico(loadHistorico()) }, [])
+
+  const handlePrint = () => {
+    const entrada: Historico = {
+      id: Date.now().toString(),
+      data: new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      referencia: f.referencia,
+      nomeNoivos: f.nomeNoivos,
+      dataCasamento: f.dataCasamento,
+      local: f.local,
+      fotoAtivos: f.foto.filter(i => i.ativo).map(i => i.label),
+      videoAtivos: f.video.filter(i => i.ativo).map(i => i.label),
+      valorTotal: f.valorTotal,
+      observacoes: f.observacoes,
+    }
+    const novo = [entrada, ...historico]
+    setHistorico(novo)
+    saveHistorico(novo)
+    window.print()
+  }
+
+  const removerHistorico = (id: string) => {
+    const novo = historico.filter(h => h.id !== id)
+    setHistorico(novo)
+    saveHistorico(novo)
+  }
+
   const handleReset = () => { if (confirm('Limpar todos os campos?')) setF(DEFAULTS) }
 
   const inputCls = 'w-full bg-white/[0.03] border border-white/10 rounded-lg px-3 py-2.5 text-[15px] text-white/85 outline-none focus:border-gold/50 transition-colors placeholder:text-white/20'
@@ -247,6 +296,44 @@ export default function OrcamentoServico() {
             </div>
           </aside>
         </div>
+
+        {/* ── HISTÓRICO ──────────────────────────────────────────── */}
+        {historico.length > 0 && (
+          <div className="no-print mt-10">
+            <div className="flex items-center gap-3 mb-4">
+              <p className="text-[10px] tracking-[0.4em] text-white/30 uppercase">Histórico de Orçamentos</p>
+              <div className="h-px flex-1 bg-white/[0.05]" />
+              <span className="text-[10px] text-white/20">{historico.length} {historico.length === 1 ? 'entrada' : 'entradas'}</span>
+            </div>
+            <div className="flex flex-col gap-2">
+              {historico.map(h => (
+                <div key={h.id}
+                  className="flex items-center gap-4 bg-white/[0.02] border border-white/[0.06] rounded-xl px-4 py-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      {h.nomeNoivos && <span className="text-sm text-white/80 font-medium truncate">{h.nomeNoivos}</span>}
+                      {h.referencia && <span className="text-[10px] tracking-widest text-white/30 uppercase">{h.referencia}</span>}
+                    </div>
+                    <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                      <span className="text-[11px] text-white/35">{h.data}</span>
+                      {h.dataCasamento && <span className="text-[11px] text-white/25">{new Date(h.dataCasamento + 'T12:00:00').toLocaleDateString('pt-PT')}</span>}
+                      {h.local && <span className="text-[11px] text-white/25 truncate max-w-[200px]">{h.local}</span>}
+                    </div>
+                  </div>
+                  <span className="text-base font-semibold text-gold shrink-0">
+                    {h.valorTotal.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                  </span>
+                  <button onClick={() => removerHistorico(h.id)}
+                    className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg border border-white/10 text-white/25 hover:text-rose-400 hover:border-rose-400/40 transition-all">
+                    <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-3.5 h-3.5">
+                      <line x1="2" y1="2" x2="12" y2="12" /><line x1="12" y1="2" x2="2" y2="12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ── PRINT VIEW ─────────────────────────────────────────── */}
         <div className="print-only max-w-[800px] mx-auto px-10 py-10 text-zinc-900">
