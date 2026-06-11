@@ -329,12 +329,13 @@ export default function OrcamentoServico() {
           {/* 4. Valor */}
           <section className="mb-10">
             <h3 className="text-[10px] font-black tracking-[0.3em] uppercase border-b border-zinc-200 pb-2 mb-4">4. Valor Total do Serviço</h3>
-            <div className="bg-black text-white rounded-lg px-6 py-5 flex items-center justify-between">
+            <div className="rounded-lg px-6 py-5 flex items-center justify-between"
+              style={{ background: '#000', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
               <div>
                 <p className="text-[10px] tracking-[0.4em] uppercase mb-1" style={{ color: '#C9A84C' }}>Total</p>
-                <p className="text-[11px] text-zinc-400">Valores em euros, com IVA quando aplicável.</p>
+                <p className="text-[11px]" style={{ color: '#888' }}>Valores em euros, com IVA quando aplicável.</p>
               </div>
-              <p className="text-3xl font-black tracking-tight" style={{ color: '#C9A84C' }}>{fmt(f.valorTotal)}</p>
+              <p className="text-4xl font-black tracking-tight" style={{ color: '#C9A84C' }}>{fmt(f.valorTotal)}</p>
             </div>
           </section>
 
