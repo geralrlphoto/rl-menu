@@ -226,6 +226,7 @@ export default async function SecaoPage({ params }: Props) {
       { href: '/financas',                label: 'Pagamentos Noivos',       internal: true },
       { href: '/financas-gerais',         label: 'Finanças Gerais',          internal: true },
       { href: '/orcamento-deslocacao',    label: 'Orçamento de Deslocação',  internal: true },
+      { href: '/orcamento-servico',       label: 'Orçamento Serviço',        internal: true },
     )
   }
 
