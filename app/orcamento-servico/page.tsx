@@ -91,13 +91,13 @@ export default function OrcamentoServico() {
             print-color-adjust: exact !important;
           }
           .total-valor {
-            color: #C9A84C !important;
+            color: #fff !important;
           }
           .total-label {
-            color: #C9A84C !important;
+            color: #fff !important;
           }
           .total-sub {
-            color: #888 !important;
+            color: #aaa !important;
           }
         }
         .print-only { display: none; }
