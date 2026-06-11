@@ -14,6 +14,7 @@ type Historico = {
   videoAtivos: string[]
   valorTotal: number
   observacoes: string
+  snapshot?: Form
 }
 
 const STORAGE_KEY = 'orcamento_servico_historico'
@@ -98,11 +99,18 @@ export default function OrcamentoServico() {
       videoAtivos: f.video.filter(i => i.ativo).map(i => i.label),
       valorTotal: f.valorTotal,
       observacoes: f.observacoes,
+      snapshot: f,
     }
     const novo = [entrada, ...historico]
     setHistorico(novo)
     saveHistorico(novo)
     window.print()
+  }
+
+  const abrirHistorico = (h: Historico) => {
+    if (!h.snapshot) return
+    setF(h.snapshot)
+    setTimeout(() => window.print(), 300)
   }
 
   const removerHistorico = (id: string) => {
@@ -308,7 +316,8 @@ export default function OrcamentoServico() {
             <div className="flex flex-col gap-2">
               {historico.map(h => (
                 <div key={h.id}
-                  className="flex items-center gap-4 bg-white/[0.02] border border-white/[0.06] rounded-xl px-4 py-3">
+                  className="flex items-center gap-4 bg-white/[0.02] border border-white/[0.06] rounded-xl px-4 py-3 cursor-pointer hover:border-gold/30 hover:bg-white/[0.04] transition-all"
+                  onClick={() => abrirHistorico(h)}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 flex-wrap">
                       {h.nomeNoivos && <span className="text-sm text-white/80 font-medium truncate">{h.nomeNoivos}</span>}
@@ -323,7 +332,7 @@ export default function OrcamentoServico() {
                   <span className="text-base font-semibold text-gold shrink-0">
                     {h.valorTotal.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                   </span>
-                  <button onClick={() => removerHistorico(h.id)}
+                  <button onClick={e => { e.stopPropagation(); removerHistorico(h.id) }}
                     className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg border border-white/10 text-white/25 hover:text-rose-400 hover:border-rose-400/40 transition-all">
                     <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-3.5 h-3.5">
                       <line x1="2" y1="2" x2="12" y2="12" /><line x1="12" y1="2" x2="2" y2="12" />
