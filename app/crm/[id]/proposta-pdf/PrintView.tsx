@@ -15,7 +15,7 @@ const EMPRESA = {
   telefone:  '+351 912 932 768',
   whatsapp:  'https://wa.me/351912932768',
   instagram: '@rlphotovideo',
-  website:   'www.www.rlprod.pt',
+  website:   'www.rlphotovideo.pt',
   morada:    'Portugal',
   nif:       '',
 }
