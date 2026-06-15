@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
       nome: proposta.nome,
       servicos_foto: proposta.servicos_foto || [],
       servicos_video: proposta.servicos_video || [],
+      valor: proposta.valor ?? null,
     },
     // Only extras names (no prices — client-facing)
     extras: extras.map(e => ({ nome: e.nome })),

@@ -924,7 +924,7 @@ function PortalSubPageContent() {
   const [contratoDisponivel, setContratoDisponivel] = useState<boolean | null>(null)
   const [contratoUrl, setContratoUrl] = useState<string | null>(null)
   const [portalSettingsObj, setPortalSettingsObj] = useState<any>({})
-  const [propostaData, setPropostaData] = useState<{ nome: string; servicos_foto: string[]; servicos_video: string[] } | null>(null)
+  const [propostaData, setPropostaData] = useState<{ nome: string; servicos_foto: string[]; servicos_video: string[]; valor?: string | null } | null>(null)
   const [propostaToken, setPropostaToken] = useState('')
   const [savingPropostaToken, setSavingPropostaToken] = useState(false)
   const [editingPropostaToken, setEditingPropostaToken] = useState(false)
@@ -1199,7 +1199,14 @@ function PortalSubPageContent() {
             servico_video: ed.evento.servico_video ?? [],
           })
         }
-        if (propd?.found) setPropostaData(propd.proposta)
+        if (propd?.found) {
+          setPropostaData(propd.proposta)
+          // Se o portal não tem valorTotal definido, usa o valor da proposta CRM
+          if (!total && propd.proposta?.valor) {
+            const v = parseFloat(String(propd.proposta.valor).replace(',', '.'))
+            if (!isNaN(v) && v > 0) setPortalTotal(v)
+          }
+        }
       }
     } catch {
       // Silently fail — portal still renders with available data
@@ -1899,8 +1906,10 @@ function PortalSubPageContent() {
       (propostaData?.servicos_video && propostaData.servicos_video.length > 0
         ? propostaData.servicos_video
         : notionServicos?.servico_video ?? [])
-    // Total — usa portalTotal já calculado
-    const totalEur = portalTotal ?? 0
+    // Total — porta settings > evento (valor_foto + valor_video + valor_extras)
+    const totalEur = (portalTotal && portalTotal > 0)
+      ? portalTotal
+      : (eventoData ? (eventoData.valor_foto ?? 0) + (eventoData.valor_video ?? 0) + (eventoData.valor_extras ?? 0) : 0)
     // Pagamentos mapped to ContratoView shape
     const planos = (pagamentos ?? []).map((p: any, i: number) => ({
       label: p.descricao || p.label || ['Assinatura', 'Entrada', 'Final'][i] || `Fase ${i + 1}`,
