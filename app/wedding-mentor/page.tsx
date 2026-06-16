@@ -72,7 +72,8 @@ export default function WeddingMentorPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Poppins:wght@400;500;600&display=swap');
         *, *::before, *::after { box-sizing: border-box; }
-        body { margin: 0; background: ${CREAM}; color: ${INK}; font-family: 'Poppins', -apple-system, sans-serif; line-height: 1.55; }
+        body { margin: 0; background: ${CREAM}; color: ${INK} !important; font-family: 'Poppins', -apple-system, sans-serif; line-height: 1.55; }
+        h1, h2, h3, p, div, span { color: ${INK} !important; }
         .wm-wrap { max-width: 1080px; margin: 0 auto; padding: 0 22px 80px; }
         .wm-header { text-align: center; padding: 54px 22px 14px; }
         .wm-header img { width: 150px; height: auto; }
