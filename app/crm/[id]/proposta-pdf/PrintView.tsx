@@ -52,7 +52,7 @@ const CONDICOES = [
   },
   {
     titulo: '8. Fotografia por Convidados com Equipamento Profissional',
-    texto: 'É expressamente proibida a captação fotográfica do evento por parte dos convidados com recurso a câmaras fotográficas DSLR ou Full Frame. Caso tal situação ocorra, a equipa RL Photo · Video alertará o(s) convidado(s) para a presente cláusula, solicitando a interrupção imediata. Caso o convidado persista na utilização do equipamento para esse fim após o aviso, o(s) contratante(s) ficará(ão) sujeito(s) à aplicação de uma taxa adicional no valor de 400 €, a liquidar de acordo com as condições de pagamento estabelecidas no presente contrato.',
+    texto: 'É expressamente proibida a captação fotográfica do evento por parte dos convidados com recurso a câmaras fotográficas DSLR ou Full Frame. Caso tal situação ocorra, a equipa RL Photo · Video alertará o(s) convidado(s) para a presente cláusula, solicitando a interrupção imediata. A taxa de 400 € é aplicada ao(s) contratante(s) única e exclusivamente após ter sido emitido o aviso formal pela equipa e o convidado tiver continuado a utilizar o equipamento para esse fim. Ao assinar este contrato, o(s) contratante(s) reconhece(m) e aceita(m) esta condição.',
   },
 ]
 
