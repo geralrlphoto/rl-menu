@@ -50,6 +50,10 @@ const CONDICOES = [
     titulo: '7. Contrato',
     texto: 'Todos os serviços ficam formalizados através de contrato escrito assinado por ambas as partes. O contrato é enviado digitalmente para assinatura após confirmação da proposta e pagamento da adjudicação. A proposta tem validade de 15 dias a partir da data de emissão.',
   },
+  {
+    titulo: '8. Fotografia por Convidados com Equipamento Profissional',
+    texto: 'É expressamente proibida a captação fotográfica do evento por parte dos convidados com recurso a câmaras fotográficas DSLR ou Full Frame. Caso tal situação ocorra, a equipa RL Photo · Video alertará o(s) convidado(s) para a presente cláusula, solicitando a interrupção imediata. Caso o convidado persista na utilização do equipamento para esse fim após o aviso, o(s) contratante(s) ficará(ão) sujeito(s) à aplicação de uma taxa adicional no valor de 400 €, a liquidar de acordo com as condições de pagamento estabelecidas no presente contrato.',
+  },
 ]
 
 function parseVal(v: string): number {
