@@ -200,6 +200,8 @@ export function Countdown({
     return () => clearInterval(id)
   }, [weddingDate])
 
+  if (parts.past) return null
+
   const a = noiva ?? ''
   const b = noivo ?? ''
   const showAmp = a && b
