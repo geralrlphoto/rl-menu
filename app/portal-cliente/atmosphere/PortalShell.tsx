@@ -30,15 +30,14 @@ import {
 function diffParts(target: Date | null) {
   if (!target) return { d: 0, h: 0, m: 0, s: 0, totalDays: 0, past: false }
   const now = new Date()
-  let ms = target.getTime() - now.getTime()
-  const past = ms < 0
-  ms = Math.abs(ms)
+  const ms = target.getTime() - now.getTime()
+  if (ms < 0) return { d: 0, h: 0, m: 0, s: 0, totalDays: 0, past: true }
   const day = 86400000
   const d = Math.floor(ms / day)
   const h = Math.floor((ms % day) / 3600000)
   const m = Math.floor((ms % 3600000) / 60000)
   const s = Math.floor((ms % 60000) / 1000)
-  return { d, h, m, s, totalDays: d, past }
+  return { d, h, m, s, totalDays: d, past: false }
 }
 
 /* ============================================================
