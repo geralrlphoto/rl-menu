@@ -432,13 +432,24 @@ export default function PortalRefPage() {
     // FALLBACK nos campos visuais. Tudo o que é específico da família
     // (identidade, valores, estado das entregas, mensagens, URLs das
     // galerias, password) continua a vir só do portal individual.
-    const [d, templateD] = await Promise.all([
+    const [d, templateD, evD] = await Promise.all([
       fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`).then(r => r.json()),
       fetch(`/api/portais-clientes?id=${PAGE_ID}&bust=1`).then(r => r.json()).catch(() => null),
+      fetch(`/api/evento-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()).catch(() => null),
     ])
     if (d.portal?.settings) {
       const ps: any = { ...d.portal.settings }
       const tmpl: any = templateD?.settings ?? {}
+
+      // Estado das Entregas — fonte de verdade é o EVENTO (admin edita em
+      // /eventos-2026). Sobrepõe os estados do evento às definições do portal
+      // para manter o card de entregas sempre sincronizado (inclui portais
+      // já ativos, sem precisar de re-guardar no admin).
+      const ev: any = evD?.evento ?? {}
+      if (ev.sel_fotos_estado != null)    ps.sel_fotos_estado    = ev.sel_fotos_estado
+      if (ev.video_estado != null)        ps.video_estado        = ev.video_estado
+      if (ev.fotos_edicao_estado != null) ps.fotos_edicao_estado = ev.fotos_edicao_estado
+      if (ev.album_estado != null)        ps.album_estado        = ev.album_estado
 
       const useTemplateIfEmpty = (campo: string) => {
         const cur = ps[campo]
