@@ -169,10 +169,18 @@ function NoivosNotificationsBell({
 
   return (
     <div style={{ position: 'fixed', top: 18, right: 18, zIndex: 60 }}>
+      <style>{`
+        @keyframes noivosBellGlow {
+          0%, 100% { box-shadow: 0 8px 24px -6px rgba(0,0,0,0.6), 0 0 10px -4px rgba(201,164,92,0.45); border-color: rgba(201,164,92,0.45); }
+          50%      { box-shadow: 0 8px 24px -6px rgba(0,0,0,0.6), 0 0 28px 3px rgba(201,164,92,0.9);  border-color: rgba(232,199,109,0.95); }
+        }
+        .noivos-bell-glow { animation: noivosBellGlow 1.7s ease-in-out infinite; }
+      `}</style>
       {/* Botão sino */}
       <button
         onClick={toggle}
         aria-label="Notificações"
+        className={unread > 0 ? 'noivos-bell-glow' : ''}
         style={{
           position: 'relative', width: 46, height: 46, borderRadius: 14,
           border: '1px solid rgba(201,164,92,0.45)',
