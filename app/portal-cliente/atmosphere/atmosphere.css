@@ -91,6 +91,8 @@
 .portal-atmosphere .atm-status.info .pip  { background: var(--info); }
 .portal-atmosphere .atm-status.done  { color: var(--done); }
 .portal-atmosphere .atm-status.done .pip  { background: var(--done); }
+.portal-atmosphere .atm-status.select { color: #d9b25e; }
+.portal-atmosphere .atm-status.select .pip { background: #d9b25e; box-shadow: 0 0 0 3px rgba(217,178,94,.16); }
 
 /* ── image placeholder ── */
 .portal-atmosphere .ph {
@@ -452,6 +454,7 @@
 .portal-atmosphere .dcard.wait::before { background: var(--wait); }
 .portal-atmosphere .dcard.info::before { background: var(--info); }
 .portal-atmosphere .dcard.done::before { background: var(--done); }
+.portal-atmosphere .dcard.select::before { background: #d9b25e; }
 .portal-atmosphere .dcard .roman {
   font-family: 'Cormorant Garamond', serif; font-size: 20px;
   color: var(--gold-deep); margin-bottom: 4px;

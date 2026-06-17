@@ -99,7 +99,8 @@ const DEFAULT_DELIVERIES: NonNullable<AtmosphereData['deliveries']> = [
  *  para o DeliveryState do design Atmosphère. */
 function mapEstadoToDeliveryState(s: string | null | undefined): import('./PortalShell').DeliveryState {
   const v = String(s ?? '').trim().toLowerCase()
-  if (!v || v === 'aguardar' || v === 'aguarda' || v.startsWith('em ediç') || v.startsWith('em selec')) return 'wait'
+  if (v.startsWith('em selec')) return 'select'
+  if (!v || v === 'aguardar' || v === 'aguarda' || v.startsWith('em ediç')) return 'wait'
   if (v === 'entregue') return 'ok'
   if (v.startsWith('aprov') || v.startsWith('em aprov')) return 'info'
   if (v.startsWith('conclu') || v === 'selecionadas' || v === 'editadas') return 'done'

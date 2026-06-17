@@ -320,12 +320,13 @@ export function Gallery({
 /* ============================================================
    Deliveries
    ============================================================ */
-export type DeliveryState = 'ok' | 'wait' | 'info' | 'done'
+export type DeliveryState = 'ok' | 'wait' | 'info' | 'done' | 'select'
 const STATE_LABEL: Record<DeliveryState, string> = {
-  ok:   'Entregue',
-  wait: 'Aguarda',
-  info: 'Aprovado',
-  done: 'Concluído',
+  ok:     'Entregue',
+  wait:   'Aguarda',
+  info:   'Aprovado',
+  done:   'Concluído',
+  select: 'Em Seleção',
 }
 
 export function DeliveryCard({
