@@ -2408,7 +2408,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                     estado={fotosConvidadosMap[c.referencia] ?? { email: null, ctt: null, emailLista: [], cttLista: [], emailWorkflow: '', cttWorkflow: '' }}
                     onChange={(next) => setFotosConvidadosMap(prev => ({ ...prev, [c.referencia!]: next }))}
                     dataCasamento={c.data_casamento}
-                    isFotografo={isFotografo}
+                    isFotografo={freelancerStatus === 'FOTOGRAFO'}
                   />
                 )}
 
