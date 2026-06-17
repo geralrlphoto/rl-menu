@@ -378,10 +378,20 @@ function LoginPageInner() {
           )}
 
           {/* Mobile branding (visível só em mobile, já que o aside esquerdo está hidden) */}
-          <div className="lg:hidden mt-10 pt-6 border-t border-white/[0.06] flex items-center justify-center gap-3 text-white/30 text-[9px] tracking-[0.5em] uppercase">
-            <span>RL Photo.Video</span>
-            <span>·</span>
-            <span>Portal Privado</span>
+          <div className="lg:hidden mt-10 pt-6 border-t border-white/[0.06] flex flex-col items-center gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl border border-gold/40 overflow-hidden flex items-center justify-center"
+                style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.20), rgba(201,164,92,0.04))', boxShadow: '0 0 20px -4px rgba(201,164,92,0.45)' }}>
+                <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png" alt="RL" className="w-8 h-8 object-contain" />
+              </div>
+              <div>
+                <p className="text-[9px] tracking-[0.5em] uppercase text-white/40">Photography &amp; Video</p>
+                <p className="text-[13px] tracking-[0.3em] uppercase text-white/80 font-light mt-0.5">
+                  RL <span className="text-gold">PHOTO</span>.VIDEO
+                </p>
+              </div>
+            </div>
+            <p className="text-[9px] tracking-[0.45em] uppercase text-white/25">Portal Privado</p>
           </div>
         </div>
 
