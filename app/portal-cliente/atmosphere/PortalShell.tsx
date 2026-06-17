@@ -46,9 +46,11 @@ function diffParts(target: Date | null) {
 export function PortalShell({
   sidebar,
   children,
+  headerRight,
 }: {
   sidebar: ReactNode
   children: ReactNode
+  headerRight?: ReactNode
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -63,6 +65,7 @@ export function PortalShell({
               RL Photo Video
               <small>WEDDING MOMENTS</small>
             </div>
+            {headerRight}
             <button
               className="menu-toggle"
               onClick={() => setMenuOpen(o => !o)}

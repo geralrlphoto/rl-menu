@@ -168,7 +168,7 @@ function NoivosNotificationsBell({
   }
 
   return (
-    <div style={{ position: 'fixed', top: 18, right: 18, zIndex: 60 }}>
+    <div style={{ position: 'relative', display: 'inline-flex', marginLeft: 'auto', zIndex: 60 }}>
       <style>{`
         @keyframes noivosBellGlow {
           0%, 100% { box-shadow: 0 8px 24px -6px rgba(0,0,0,0.6), 0 0 10px -4px rgba(201,164,92,0.45); border-color: rgba(201,164,92,0.45); }
@@ -204,9 +204,9 @@ function NoivosNotificationsBell({
       {/* Painel */}
       {open && (
         <>
-          <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: -1 }} />
+          <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 59 }} />
           <div style={{
-            position: 'absolute', top: 56, right: 0, width: 320, maxHeight: '70vh', overflowY: 'auto',
+            position: 'fixed', top: 84, left: 16, zIndex: 61, width: 'min(340px, calc(100vw - 32px))', maxHeight: '70vh', overflowY: 'auto',
             borderRadius: 18, border: '1px solid rgba(201,164,92,0.35)',
             background: 'linear-gradient(180deg, rgba(20,16,10,0.98), rgba(10,8,5,0.98))',
             boxShadow: '0 30px 60px -20px rgba(0,0,0,0.8), 0 0 24px -8px rgba(201,164,92,0.35)',
@@ -347,13 +347,16 @@ export function AtmospherePortal({
   )
 
   return (
-    <PortalShell sidebar={sidebar}>
+    <PortalShell
+      sidebar={sidebar}
+      headerRight={
+        <NoivosNotificationsBell
+          notifs={data.noivosNotifications ?? []}
+          refKey={data.referencia ?? data.portalRefForLinks ?? 'portal'}
+        />
+      }
+    >
       {adminBar}
-
-      <NoivosNotificationsBell
-        notifs={data.noivosNotifications ?? []}
-        refKey={data.referencia ?? data.portalRefForLinks ?? 'portal'}
-      />
 
       <Countdown
         weddingDate={weddingDate}
