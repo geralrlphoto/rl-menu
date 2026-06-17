@@ -451,6 +451,20 @@ export default function PortalRefPage() {
       if (ev.fotos_edicao_estado != null) ps.fotos_edicao_estado = ev.fotos_edicao_estado
       if (ev.album_estado != null)        ps.album_estado        = ev.album_estado
 
+      // Regra: assim que o dia do evento passa, a Seleção de Fotos passa
+      // automaticamente para "Em Seleção" (a menos que já tenha um estado
+      // definido pelo admin — Em Edição, Entregue, etc.).
+      if (ev.data_evento) {
+        const evDate = new Date(ev.data_evento)
+        const today = new Date(); today.setHours(0, 0, 0, 0)
+        evDate.setHours(0, 0, 0, 0)
+        const passou = !isNaN(evDate.getTime()) && evDate.getTime() < today.getTime()
+        const cur = String(ps.sel_fotos_estado ?? '').trim().toLowerCase()
+        if (passou && (cur === '' || cur === 'aguardar' || cur === 'aguarda')) {
+          ps.sel_fotos_estado = 'Em Seleção'
+        }
+      }
+
       const useTemplateIfEmpty = (campo: string) => {
         const cur = ps[campo]
         const isEmpty =
