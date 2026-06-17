@@ -683,13 +683,23 @@ function FreelancerDetailInner() {
             {tabs.map((t, i) => (
               <button key={t.key}
                 onClick={() => { setTab(t.key); setMobileMenuOpen(false) }}
-                className={`w-full flex items-center justify-between gap-3 px-5 py-4 text-left transition-colors ${i < tabs.length - 1 ? 'border-b border-white/[0.06]' : ''} ${tab === t.key ? 'text-white bg-white/10' : 'text-white/50 hover:text-white hover:bg-white/5'}`}>
+                className={`w-full flex items-center justify-between gap-3 px-5 py-4 text-left transition-colors border-b border-white/[0.06] ${tab === t.key ? 'text-white bg-white/10' : 'text-white/50 hover:text-white hover:bg-white/5'}`}>
                 <span className="text-[13px] tracking-[0.3em] uppercase font-semibold">{t.label}</span>
                 {t.count != null && t.count > 0 && (
                   <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/10 text-white/60 font-bold">{t.count}</span>
                 )}
               </button>
             ))}
+            {/* Sair */}
+            <button
+              onClick={async () => {
+                await fetch('/api/freelancer-auth', { method: 'DELETE' })
+                window.location.href = '/login'
+              }}
+              className="w-full flex items-center gap-3 px-5 py-4 text-left transition-colors text-red-400/70 hover:text-red-400 hover:bg-red-500/5">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              <span className="text-[13px] tracking-[0.3em] uppercase font-semibold">Sair</span>
+            </button>
           </div>
         )}
       </div>
