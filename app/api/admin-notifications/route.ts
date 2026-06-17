@@ -515,7 +515,9 @@ export async function GET() {
             data_casamento: null,
             referencia: ev.referencia ?? null,
             url: ev.referencia ? `/eventos-2026?ref=${encodeURIComponent(ev.referencia)}` : '/casamentos',
-            sent_at: new Date().toISOString(),
+            // sent_at estável = momento em que o alerta abriu (prazo − 30 dias),
+            // para não contar sempre como "novo" e o "Marcar lidas" funcionar.
+            sent_at: new Date(prazo.getTime() - 30 * 86400000).toISOString(),
             mensagem: `${tagDias} para a entrega do vídeo (prazo: ${prazoLabel}).`,
           })
         }
@@ -572,7 +574,8 @@ export async function GET() {
           data_casamento: null,
           referencia: s.referencia ?? null,
           url: `/eventos-2026?ref=${encodeURIComponent(s.referencia)}`,
-          sent_at: new Date().toISOString(),
+          // sent_at estável = momento em que o alerta abriu (prazo − 7 dias).
+          sent_at: new Date(prazo.getTime() - 7 * 86400000).toISOString(),
           mensagem: `${tagDias} para a entrega das fotos em edição (prazo: ${prazoLabel}).`,
         })
       }
@@ -615,7 +618,8 @@ export async function GET() {
           data_casamento: null,
           referencia: p.referencia ?? null,
           url: p.referencia ? `/eventos-2026?ref=${encodeURIComponent(p.referencia)}` : '/eventos-2026',
-          sent_at: new Date().toISOString(),
+          // sent_at estável = momento em que o alerta abriu (entregue + 30 dias).
+          sent_at: new Date(d.getTime() + 30 * 86400000).toISOString(),
           mensagem: `Já passaram ${diasDesde} dias desde a entrega da seleção e os noivos ainda não escolheram as fotos.`,
         })
       }
