@@ -192,16 +192,14 @@ function fmtData(d: string) {
 
 function Countdown({ targetDate }: { targetDate: string }) {
   const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0 })
-  const [isPast, setIsPast] = useState(false)
   useEffect(() => {
     function tick() {
       const diff = new Date(targetDate).getTime() - Date.now()
-      if (diff <= 0) { setIsPast(true); return }
+      if (diff <= 0) return setT({ d: 0, h: 0, m: 0, s: 0 })
       setT({ d: Math.floor(diff/86400000), h: Math.floor((diff%86400000)/3600000), m: Math.floor((diff%3600000)/60000), s: Math.floor((diff%60000)/1000) })
     }
     tick(); const id = setInterval(tick, 1000); return () => clearInterval(id)
   }, [targetDate])
-  if (isPast) return null
   const Unit = ({ v, label }: { v: number; label: string }) => (
     <div className="flex flex-col items-center">
       <span className="font-playfair text-4xl sm:text-5xl font-bold text-white tabular-nums">{String(v).padStart(2,'0')}</span>
@@ -685,8 +683,8 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
       </section>
       )}
 
-      {/* ── CONTAGEM REGRESSIVA — oculta se a data já passou ── */}
-      {targetDate && new Date(targetDate).getTime() > Date.now() && (
+      {/* ── CONTAGEM REGRESSIVA ── */}
+      {targetDate && (
         <section className="py-10 sm:py-14 border-y border-white/[0.05] bg-[#0d0d0d]">
           <FadeIn>
             <p className="font-playfair font-black text-xl sm:text-2xl text-center mb-6 tracking-tight" style={{ color: '#C9A84C' }}>
