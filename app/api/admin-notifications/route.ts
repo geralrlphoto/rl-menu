@@ -580,9 +580,9 @@ export async function GET() {
       console.warn('[admin-notifications] fotos edicao prazo read failed:', err)
     }
 
-    // ── Notificação: NOIVOS EM FALTA — ESCOLHER FOTOS (20 dias) ──
+    // ── Notificação: NOIVOS EM FALTA — ESCOLHER FOTOS (30 dias) ──
     //    Quando a Seleção de Fotos é marcada "Entregue", regista-se a data em
-    //    settings.sel_fotos_entregue_em. Se passarem 20 dias e os noivos ainda
+    //    settings.sel_fotos_entregue_em. Se passarem 30 dias e os noivos ainda
     //    não tiverem submetido a seleção (sem row em fotos_selecao para a ref e
     //    selecao_fotos_noivos_estado ainda não Concluído/Entregue) → alerta.
     try {
@@ -601,7 +601,7 @@ export async function GET() {
         const d = new Date(String(entregueEm).slice(0, 10) + 'T00:00:00'); d.setHours(0, 0, 0, 0)
         if (isNaN(d.getTime())) continue
         const diasDesde = Math.floor((hoje.getTime() - d.getTime()) / 86400000)
-        if (diasDesde < 20) continue
+        if (diasDesde < 30) continue
         const nomeNoivos = [s.noiva, s.noivo].filter(Boolean).join(' & ') || p.referencia || '—'
         notifications.push({
           id: `noivos_selecao_falta::${p.referencia}`,

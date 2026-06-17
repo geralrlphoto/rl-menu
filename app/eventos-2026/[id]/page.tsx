@@ -723,7 +723,7 @@ function RegrasEntregasDrop() {
             <strong>Prazo de Entrega do Vídeo (180 dias úteis):</strong> a <strong>30 dias</strong> do fim do prazo recebes um <strong>alerta no sino</strong> e o vídeo aparece no card <strong>«VÍDEOS PRAZO»</strong> do painel. Só enquanto não estiver «Entregue».
           </p>
           <p>
-            <strong>Seleção Fotos Noivos:</strong> ao marcar a Seleção de Fotos como «Entregue», fica registado o dia. Se passarem <strong>20 dias</strong> e os noivos ainda não tiverem escolhido as fotos, recebes um <strong>alerta no sino</strong> («Noivos em Falta — Escolher Fotos»).
+            <strong>Seleção Fotos Noivos:</strong> ao marcar a Seleção de Fotos como «Entregue», fica registado o dia. Se passarem <strong>30 dias</strong> e os noivos ainda não tiverem escolhido as fotos, recebes um <strong>alerta no sino</strong> («Noivos em Falta — Escolher Fotos»).
           </p>
           <p>
             <strong>Sincronização:</strong> todos os estados editados aqui refletem automaticamente no portal dos noivos.
