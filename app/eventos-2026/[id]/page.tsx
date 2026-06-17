@@ -717,6 +717,9 @@ function RegrasEntregasDrop() {
             <strong>Seleção de Fotos:</strong> assim que o dia do evento passa, aparece no portal dos noivos como <strong>«Em Seleção»</strong> (se ainda estiver em «Aguardar»).
           </p>
           <p>
+            <strong>Fotos em Edição (data de entrada + 30 dias úteis):</strong> a <strong>7 dias</strong> do fim do prazo recebes um <strong>alerta no sino</strong> e aparece no card <strong>«PRAZOS FOTOS»</strong> do painel. Só enquanto não estiver «Entregue».
+          </p>
+          <p>
             <strong>Prazo de Entrega do Vídeo (180 dias úteis):</strong> a <strong>30 dias</strong> do fim do prazo recebes um <strong>alerta no sino</strong> e o vídeo aparece no card <strong>«VÍDEOS PRAZO»</strong> do painel. Só enquanto não estiver «Entregue».
           </p>
           <p>
@@ -3292,7 +3295,7 @@ export default function EventoPage() {
                 estado={e.video_estado} options={['Aguardar','Em Edição','Entregue','S/SERVIÇO']}
                 field="video_estado" eventId={e.id} onSaved={handleSaved} referencia={e.referencia} />
             )}
-            <EstadoRow label="Fotos para Edição"
+            <EstadoRow label="Fotos em Edição"
               dateStr={fotosDataEntrada ? addWorkingDays(fotosDataEntrada, 30) : null}
               estado={e.fotos_edicao_estado} options={['Aguardar','Enviado','Em Edição','Entregue','S/SERVIÇO']}
               field="fotos_edicao_estado" eventId={e.id} onSaved={handleSaved} referencia={e.referencia} />

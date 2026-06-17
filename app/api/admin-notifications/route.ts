@@ -25,6 +25,7 @@ const TIPO_LABELS: Record<string, string> = {
   mensagem_noivos:          'Mensagem dos Noivos',
   blog_subscriber:          'Nova Subscrição do Blog',
   video_prazo:              'Prazo de Entrega do Vídeo',
+  fotos_edicao_prazo:       'Prazo das Fotos em Edição',
 }
 
 const TIPO_ICONS: Record<string, string> = {
@@ -44,6 +45,7 @@ const TIPO_ICONS: Record<string, string> = {
   mensagem_noivos:          '💬',
   blog_subscriber:          '✉',
   video_prazo:              '🎬',
+  fotos_edicao_prazo:       '✎',
 }
 
 // Soma dias úteis a uma data (igual ao cálculo da ficha do evento).
@@ -518,6 +520,62 @@ export async function GET() {
       }
     } catch (err) {
       console.warn('[admin-notifications] video prazo read failed:', err)
+    }
+
+    // ── Notificações de PRAZO DAS FOTOS EM EDIÇÃO (≤ 7 dias) ──
+    //    Prazo = data de entrada (fotos_selecao) + 30 dias úteis. Alerta quando
+    //    faltam 7 dias ou menos (e ainda não está Entregue / S-SERVIÇO).
+    try {
+      const hoje = new Date(); hoje.setHours(0, 0, 0, 0)
+      // Map referencia → { cliente, fotos_edicao_estado }
+      const eventoByRef = new Map<string, { cliente: string | null; fotos_edicao_estado: string | null }>()
+      for (const tabela of ['eventos_2026', 'eventos_2027']) {
+        const { data: eventos } = await supabase
+          .from(tabela)
+          .select('referencia, cliente, fotos_edicao_estado')
+          .limit(500)
+        for (const ev of (eventos ?? []) as any[]) {
+          if (ev.referencia) eventoByRef.set(ev.referencia, { cliente: ev.cliente ?? null, fotos_edicao_estado: ev.fotos_edicao_estado ?? null })
+        }
+      }
+      const { data: selecoesPrazo } = await supabase
+        .from('fotos_selecao')
+        .select('referencia, data_entrada')
+        .not('data_entrada', 'is', null)
+        .limit(500)
+      for (const s of (selecoesPrazo ?? []) as any[]) {
+        if (!s.referencia) continue
+        const ev = eventoByRef.get(s.referencia)
+        const estado = String(ev?.fotos_edicao_estado ?? '').trim().toLowerCase()
+        if (estado === 'entregue' || estado === 's/serviço' || estado === 's-serviço') continue
+        const dataEntrada = String(s.data_entrada).slice(0, 10)
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dataEntrada)) continue
+        const prazo = addWorkingDays(dataEntrada, 30); prazo.setHours(0, 0, 0, 0)
+        const diasRestantes = Math.ceil((prazo.getTime() - hoje.getTime()) / 86400000)
+        if (diasRestantes > 7) continue // ainda não entrou na janela de alerta
+        const prazoLabel = prazo.toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })
+        const tagDias = diasRestantes < 0
+          ? `${Math.abs(diasRestantes)} dia(s) de atraso`
+          : diasRestantes === 0 ? 'Termina hoje'
+          : `Faltam ${diasRestantes} dia(s)`
+        notifications.push({
+          id: `fotos_edicao_prazo::${s.referencia}`,
+          tipo: 'fotos_edicao_prazo',
+          tipo_label: TIPO_LABELS.fotos_edicao_prazo,
+          tipo_icon: TIPO_ICONS.fotos_edicao_prazo,
+          casamento_id: '',
+          freelancer_id: '',
+          freelancer_nome: ev?.cliente ?? s.referencia ?? '—',
+          local: s.referencia ?? '—',
+          data_casamento: null,
+          referencia: s.referencia ?? null,
+          url: `/eventos-2026?ref=${encodeURIComponent(s.referencia)}`,
+          sent_at: new Date().toISOString(),
+          mensagem: `${tagDias} para a entrega das fotos em edição (prazo: ${prazoLabel}).`,
+        })
+      }
+    } catch (err) {
+      console.warn('[admin-notifications] fotos edicao prazo read failed:', err)
     }
 
     // Ordenar por sent_at DESC
