@@ -843,8 +843,8 @@ function FreelancerDetailInner() {
             </div>
             <div className="absolute inset-0 z-[1]"
               style={{ background: 'linear-gradient(90deg, rgba(11,11,11,0.97) 0%, rgba(11,11,11,0.88) 35%, rgba(11,11,11,0.5) 65%, rgba(11,11,11,0.12) 100%)' }} />
-            <div className="relative z-10 flex items-start justify-between gap-6 px-8 sm:px-12 py-12 sm:py-16">
-              <div className="max-w-xl flex items-center gap-5">
+            <div className="relative z-10 flex items-start justify-between gap-6 px-4 sm:px-12 py-8 sm:py-16">
+              <div className="max-w-xl flex items-center gap-5 pr-[120px] sm:pr-0">
                 <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gold/50 shrink-0"
                   style={{ boxShadow: '0 0 28px -4px rgba(201,164,92,0.4)' }}>
                   {freelancer?.foto_url ? (
@@ -868,12 +868,12 @@ function FreelancerDetailInner() {
               </div>
 
               {/* Top-right: alerta prazos + notif + messages + profile chip */}
-              <div className="flex items-center gap-3 shrink-0">
+              <div className="flex items-center gap-2 sm:gap-3 shrink-0 absolute top-3 right-3 sm:static"  style={{zIndex:20}}>
                 {/* Alerta de prazos críticos (Seleção de Fotos a expirar) */}
                 {prazosCriticos.length > 0 && (
                   <button title={`${prazosCriticos.length} prazo${prazosCriticos.length === 1 ? '' : 's'} a terminar — Seleção de Fotos`}
                     onClick={() => setTab('casamentos')}
-                    className="relative w-10 h-10 rounded-full border bg-black/40 backdrop-blur-md transition-all flex items-center justify-center bell-red-glow border-red-500/60 text-red-300 hover:text-red-200 hover:border-red-400/80">
+                    className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-full border bg-black/40 backdrop-blur-md transition-all flex items-center justify-center bell-red-glow border-red-500/60 text-red-300 hover:text-red-200 hover:border-red-400/80">
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
                       <line x1="12" y1="9" x2="12" y2="13"/>
@@ -891,7 +891,7 @@ function FreelancerDetailInner() {
                   return (
                     <button title={hasUnread ? `${notifNaoLidas} notificação${notifNaoLidas === 1 ? '' : 'ões'} por ler` : 'Notificações'}
                       onClick={() => setTab('notificacoes')}
-                      className={`relative w-10 h-10 rounded-full border bg-black/40 backdrop-blur-md transition-all flex items-center justify-center ${
+                      className={`relative w-8 h-8 sm:w-10 sm:h-10 rounded-full border bg-black/40 backdrop-blur-md transition-all flex items-center justify-center ${
                         hasUnread
                           ? 'bell-red-glow border-red-500/55 text-red-300 hover:text-red-200 hover:border-red-400/70'
                           : 'border-white/15 text-white/70 hover:text-gold hover:border-gold/40'
@@ -907,7 +907,7 @@ function FreelancerDetailInner() {
                   )
                 })()}
                 <button title="Mensagens"
-                  className="w-10 h-10 rounded-full border border-white/15 bg-black/40 backdrop-blur-md text-white/70 hover:text-gold hover:border-gold/40 transition-all flex items-center justify-center relative">
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-white/15 bg-black/40 backdrop-blur-md text-white/70 hover:text-gold hover:border-gold/40 transition-all flex items-center justify-center relative">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
                   {mensagensNaoLidas > 0 && (
                     <span className="absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full bg-gold text-black text-[10px] font-bold flex items-center justify-center px-1">
@@ -922,9 +922,9 @@ function FreelancerDetailInner() {
                       : <div className="w-full h-full bg-gradient-to-br from-gold/30 to-gold/10 flex items-center justify-center text-gold text-sm font-bold">{primeiroNome.charAt(0).toUpperCase()}</div>
                     }
                   </div>
-                  <div className="hidden sm:block min-w-0">
-                    <p className="text-[13px] font-semibold text-white truncate max-w-[140px]">{primeiroNome}</p>
-                    <p className="text-[10px] text-white/40 tracking-wide truncate max-w-[140px]">{isFotografo ? 'Fotógrafo' : 'Editor de Vídeo'}</p>
+                  <div className="block min-w-0">
+                    <p className="text-[11px] sm:text-[13px] font-semibold text-white truncate max-w-[80px] sm:max-w-[140px]">{primeiroNome}</p>
+                    <p className="hidden sm:block text-[10px] text-white/40 tracking-wide truncate max-w-[140px]">{isFotografo ? 'Fotógrafo' : 'Editor de Vídeo'}</p>
                   </div>
                 </div>
               </div>
