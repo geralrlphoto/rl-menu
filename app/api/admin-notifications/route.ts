@@ -24,6 +24,7 @@ const TIPO_LABELS: Record<string, string> = {
   album_aprovado:           'Álbum Aprovado pelos Noivos',
   mensagem_noivos:          'Mensagem dos Noivos',
   blog_subscriber:          'Nova Subscrição do Blog',
+  video_prazo:              'Prazo de Entrega do Vídeo',
 }
 
 const TIPO_ICONS: Record<string, string> = {
@@ -42,6 +43,19 @@ const TIPO_ICONS: Record<string, string> = {
   album_aprovado:           '✓',
   mensagem_noivos:          '💬',
   blog_subscriber:          '✉',
+  video_prazo:              '🎬',
+}
+
+// Soma dias úteis a uma data (igual ao cálculo da ficha do evento).
+function addWorkingDays(dateStr: string, days: number): Date {
+  const d = new Date(dateStr + 'T00:00:00')
+  let count = 0
+  while (count < days) {
+    d.setDate(d.getDate() + 1)
+    const day = d.getDay()
+    if (day !== 0 && day !== 6) count++
+  }
+  return d
 }
 
 type Notif = {
@@ -459,6 +473,51 @@ export async function GET() {
       }
     } catch (err) {
       console.warn('[admin-notifications] blog_subscribers read failed:', err)
+    }
+
+    // ── Notificações de PRAZO DE ENTREGA DO VÍDEO (≤ 30 dias) ──
+    //    Prazo = data do evento + 180 dias úteis. Alerta quando faltam 30 dias
+    //    ou menos (e ainda não está Entregue / S-SERVIÇO).
+    try {
+      const hoje = new Date(); hoje.setHours(0, 0, 0, 0)
+      for (const tabela of ['eventos_2026', 'eventos_2027']) {
+        const { data: eventos } = await supabase
+          .from(tabela)
+          .select('referencia, cliente, data_evento, video_estado')
+          .not('data_evento', 'is', null)
+          .limit(500)
+        for (const ev of (eventos ?? []) as any[]) {
+          const estado = String(ev.video_estado ?? '').trim().toLowerCase()
+          if (estado === 'entregue' || estado === 's/serviço' || estado === 's-serviço') continue
+          const dataEvento = String(ev.data_evento).slice(0, 10)
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(dataEvento)) continue
+          const prazo = addWorkingDays(dataEvento, 180); prazo.setHours(0, 0, 0, 0)
+          const diasRestantes = Math.ceil((prazo.getTime() - hoje.getTime()) / 86400000)
+          if (diasRestantes > 30) continue // ainda não entrou na janela de alerta
+          const prazoLabel = prazo.toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })
+          const tagDias = diasRestantes < 0
+            ? `${Math.abs(diasRestantes)} dia(s) de atraso`
+            : diasRestantes === 0 ? 'Termina hoje'
+            : `Faltam ${diasRestantes} dia(s)`
+          notifications.push({
+            id: `video_prazo::${ev.referencia ?? ev.cliente}`,
+            tipo: 'video_prazo',
+            tipo_label: TIPO_LABELS.video_prazo,
+            tipo_icon: TIPO_ICONS.video_prazo,
+            casamento_id: '',
+            freelancer_id: '',
+            freelancer_nome: ev.cliente ?? ev.referencia ?? '—',
+            local: ev.referencia ?? '—',
+            data_casamento: null,
+            referencia: ev.referencia ?? null,
+            url: ev.referencia ? `/eventos-2026?ref=${encodeURIComponent(ev.referencia)}` : '/casamentos',
+            sent_at: new Date().toISOString(),
+            mensagem: `${tagDias} para a entrega do vídeo (prazo: ${prazoLabel}).`,
+          })
+        }
+      }
+    } catch (err) {
+      console.warn('[admin-notifications] video prazo read failed:', err)
     }
 
     // Ordenar por sent_at DESC

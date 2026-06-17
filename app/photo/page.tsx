@@ -314,12 +314,12 @@ export default async function PhotoDashboard() {
       const diasRestantes = parseVideoFormula(formula)
       return { cliente, referencia, diasRestantes }
     })
-    .filter((v: any) => v.diasRestantes <= 15)
+    .filter((v: any) => v.diasRestantes <= 30)
     .sort((a: any, b: any) => a.diasRestantes - b.diasRestantes)
 
   const videosAtrasados = videosAlerta.filter((v: any) => v.diasRestantes < 0).length
   const videosCriticos  = videosAlerta.filter((v: any) => v.diasRestantes >= 0 && v.diasRestantes <= 3).length
-  const videosUrgentes  = videosAlerta.filter((v: any) => v.diasRestantes > 3 && v.diasRestantes <= 7).length
+  const videosUrgentes  = videosAlerta.filter((v: any) => v.diasRestantes > 3 && v.diasRestantes <= 30).length
 
   // ── Pré-wedding reservas ──────────────────────────────────────────────────
   const ps = parsePortalSettings(portalRes.results ?? [])
