@@ -830,7 +830,7 @@ function NotificacaoNoivosSection({ referencia }: { referencia: string }) {
   const [titulo, setTitulo] = useState('')
   const [texto, setTexto] = useState('')
   const [enviando, setEnviando] = useState(false)
-  const [okMsg, setOkMsg] = useState(false)
+  const [okMsg, setOkMsg] = useState<false | 'email' | 'portal'>(false)
   const [lista, setLista] = useState<Array<{ id: string; titulo: string; texto: string; ts: string }>>([])
 
   useEffect(() => {
@@ -851,14 +851,17 @@ function NotificacaoNoivosSection({ referencia }: { referencia: string }) {
     if (!titulo.trim() || !texto.trim()) { alert('Preenche o título e o texto.'); return }
     setEnviando(true)
     try {
-      // Relê as atuais para não sobrepor edições concorrentes
+      // Endpoint guarda em settings.noivos_notifications E envia email à noiva
+      const res = await fetch('/api/notificacao-noivos', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referencia, titulo: titulo.trim(), texto: texto.trim() }),
+      }).then(r => r.json()).catch(() => ({}))
+      // Relê a lista atualizada
       const d = await fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`).then(r => r.json())
-      const atuais = d.portal?.settings?.noivos_notifications ?? []
-      const nova = { id: `n_${Date.now()}`, titulo: titulo.trim(), texto: texto.trim(), ts: new Date().toISOString() }
-      const next = [nova, ...atuais]
-      await guardar(next)
-      setLista(next); setTitulo(''); setTexto('')
-      setOkMsg(true); setTimeout(() => setOkMsg(false), 2800)
+      setLista(d.portal?.settings?.noivos_notifications ?? [])
+      setTitulo(''); setTexto('')
+      setOkMsg(res?.emailEnviado ? 'email' : 'portal')
+      setTimeout(() => setOkMsg(false), 3500)
     } finally { setEnviando(false) }
   }
 
@@ -900,7 +903,8 @@ function NotificacaoNoivosSection({ referencia }: { referencia: string }) {
             style={{ boxShadow: '0 0 14px -4px rgba(201,164,92,0.55)' }}>
             {enviando ? 'A enviar…' : 'Enviar notificação'}
           </button>
-          {okMsg && <span className="text-[11px] text-emerald-400 tracking-wide">✓ Enviada para o portal</span>}
+          {okMsg === 'email' && <span className="text-[11px] text-emerald-400 tracking-wide">✓ Enviada para o portal + email à noiva</span>}
+          {okMsg === 'portal' && <span className="text-[11px] text-amber-400 tracking-wide">✓ Enviada para o portal (sem email — noiva sem email registado)</span>}
         </div>
 
         {lista.length > 0 && (
