@@ -238,6 +238,7 @@ function FreelancerDetailInner() {
     }
   }, [viewAsFreelancer, id])
   const [tab, setTab] = useState<'casamentos'|'edicao'|'album'|'tarefas'|'calendario'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'|null>(null)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   // ID de casamento a abrir expandido quando o utilizador entra na tab Casamentos
   // — usado pelas notificações para abrir directamente o casamento associado.
   const [pendingExpandCasamentoId, setPendingExpandCasamentoId] = useState<string | null>(null)
@@ -651,41 +652,46 @@ function FreelancerDetailInner() {
         : (['casamentos', 'edicao', 'album', 'pagamentos', 'tarefas', 'calendario', 'definicoes', 'notificacoes'] as Array<string | null>).includes(tab) ? 'max-w-[1500px]'
         : 'max-w-3xl'
     }`}>
-      {/* Tabs — horizontal apenas em mobile (desktop usa sidebar) */}
-      <div className="mb-6 relative flex items-center gap-1 lg:hidden">
-        <button onClick={() => { const el = document.getElementById('admin-tab-scroll'); if (el) el.scrollBy({ left: -160, behavior: 'smooth' }) }}
-          className="flex-shrink-0 w-7 h-8 flex items-center justify-center text-white/30 hover:text-white/70 transition-colors text-base">‹</button>
-        <div id="admin-tab-scroll" className="flex-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-        <div className="flex items-center gap-1.5 p-1.5 rounded-2xl border border-white/30 bg-black w-max min-w-full"
-          style={{ boxShadow: '0 0 18px 3px rgba(255,255,255,0.10), 0 0 6px 1px rgba(255,255,255,0.15), inset 0 0 18px 0 rgba(255,255,255,0.03)' }}>
-          {/* Botão casa */}
-          <button onClick={() => { setTab(null); setEditForm(null) }}
-            className={`flex-shrink-0 flex items-center justify-center px-4 py-2.5 rounded-xl text-xl transition-all ${
-              tab === null
-                ? 'bg-white/10 text-white border border-white/20'
-                : 'text-white/40 hover:text-white/70 border border-transparent'
-            }`}>
-            ⌂
+      {/* Hamburguer menu — apenas mobile (desktop usa sidebar) */}
+      <div className="mb-6 lg:hidden">
+        {/* Barra fixa com botão hamburguer + tab activa */}
+        <div className="flex items-center justify-between px-1">
+          <span className="text-[13px] tracking-[0.3em] uppercase text-white/40 font-light">
+            {tab === null ? 'Início' : (tabs.find(t => t.key === tab)?.label ?? tab)}
+          </span>
+          <button
+            onClick={() => setMobileMenuOpen(v => !v)}
+            className="flex flex-col items-center justify-center gap-[5px] w-10 h-10 rounded-xl border border-white/15 bg-black/40 backdrop-blur-md"
+          >
+            <span className={`block h-[1.5px] bg-white transition-all duration-300 origin-center ${mobileMenuOpen ? 'w-5 rotate-45 translate-y-[6.5px]' : 'w-5'}`} />
+            <span className={`block h-[1.5px] bg-white transition-all duration-300 ${mobileMenuOpen ? 'w-0 opacity-0' : 'w-5'}`} />
+            <span className={`block h-[1.5px] bg-white transition-all duration-300 origin-center ${mobileMenuOpen ? 'w-5 -rotate-45 -translate-y-[6.5px]' : 'w-5'}`} />
           </button>
-          {tabs.map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)}
-              className={`flex-shrink-0 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[14px] tracking-[0.25em] uppercase font-semibold transition-all ${
-                tab === t.key
-                  ? 'bg-white/10 text-white border border-white/20'
-                  : 'text-white/30 hover:text-white/55 border border-transparent'
-              }`}>
-              {t.label}
-              {t.count != null && t.count > 0 && (
-                <span className={`text-[14px] px-1.5 py-0.5 rounded-full font-bold transition-all ${
-                  tab === t.key ? 'bg-white/15 text-white/80' : 'bg-white/[0.06] text-white/25'
-                }`}>{t.count}</span>
-              )}
+        </div>
+
+        {/* Dropdown overlay */}
+        {mobileMenuOpen && (
+          <div className="mt-2 rounded-2xl border border-white/15 bg-black/90 backdrop-blur-xl overflow-hidden"
+            style={{ boxShadow: '0 20px 40px -10px rgba(0,0,0,0.7)' }}>
+            {/* Início */}
+            <button
+              onClick={() => { setTab(null); setEditForm(null); setMobileMenuOpen(false) }}
+              className={`w-full flex items-center gap-3 px-5 py-4 text-left transition-colors border-b border-white/[0.06] ${tab === null ? 'text-white bg-white/10' : 'text-white/50 hover:text-white hover:bg-white/5'}`}>
+              <span className="text-lg">⌂</span>
+              <span className="text-[13px] tracking-[0.3em] uppercase font-semibold">Início</span>
             </button>
-          ))}
-        </div>
-        </div>
-        <button onClick={() => { const el = document.getElementById('admin-tab-scroll'); if (el) el.scrollBy({ left: 160, behavior: 'smooth' }) }}
-          className="flex-shrink-0 w-7 h-8 flex items-center justify-center text-white/30 hover:text-white/70 transition-colors text-base">›</button>
+            {tabs.map((t, i) => (
+              <button key={t.key}
+                onClick={() => { setTab(t.key); setMobileMenuOpen(false) }}
+                className={`w-full flex items-center justify-between gap-3 px-5 py-4 text-left transition-colors ${i < tabs.length - 1 ? 'border-b border-white/[0.06]' : ''} ${tab === t.key ? 'text-white bg-white/10' : 'text-white/50 hover:text-white hover:bg-white/5'}`}>
+                <span className="text-[13px] tracking-[0.3em] uppercase font-semibold">{t.label}</span>
+                {t.count != null && t.count > 0 && (
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/10 text-white/60 font-bold">{t.count}</span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Home — Dashboard (cópia do portal do freelancer) */}
