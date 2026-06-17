@@ -7,7 +7,7 @@
    layout. Não muda lógica de negócio.
    ============================================================ */
 
-import { type ReactNode } from 'react'
+import { type ReactNode, useState, useEffect } from 'react'
 import {
   PortalShell, SidebarCouple, SidebarNav, SidebarMiniCountdown,
   Countdown, Welcome, Gallery, DeliveriesGrid, DeliveryCard,
@@ -69,6 +69,9 @@ export type AtmosphereData = {
     when?: string
   }>
 
+  // notificações enviadas pelo admin para os noivos/pais
+  noivosNotifications?: Array<{ id: string; titulo: string; texto: string; ts: string }>
+
   // tarefas (apenas para detectar empty state)
   hasTasks?: boolean
   tasksMessage?: string
@@ -119,6 +122,115 @@ export function buildDeliveriesFromSettings(settings: Record<string, any> | null
     { roman: 'IV',  title: 'Álbum',             meta: 'Em aprovação',              state: mapEstadoToDeliveryState(s.album_estado) },
     { roman: 'V',   title: 'Seleção · Acordos', meta: 'Galeria privada partilhada', state: mapEstadoToDeliveryState(s.selecao_noivos_estado) },
   ]
+}
+
+/** Sino de notificações dos noivos — estilo card premium (gold/dark).
+ *  Mostra as notificações enviadas pelo admin. "Lidas" guardadas em
+ *  localStorage por referência do portal. */
+function NoivosNotificationsBell({
+  notifs,
+  refKey,
+}: {
+  notifs: Array<{ id: string; titulo: string; texto: string; ts: string }>
+  refKey: string
+}) {
+  const [open, setOpen] = useState(false)
+  const [seen, setSeen] = useState<Set<string>>(new Set())
+  const LS = `noivos_notif_seen_${refKey}`
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(LS)
+      if (raw) setSeen(new Set(JSON.parse(raw)))
+    } catch { /* ignore */ }
+  }, [LS])
+
+  const ordered = [...notifs].sort((a, b) => (b.ts || '').localeCompare(a.ts || ''))
+  const unread = ordered.filter(n => !seen.has(n.id)).length
+
+  function markAllSeen() {
+    const next = new Set(ordered.map(n => n.id))
+    setSeen(next)
+    try { localStorage.setItem(LS, JSON.stringify(Array.from(next))) } catch { /* ignore */ }
+  }
+
+  function toggle() {
+    const willOpen = !open
+    setOpen(willOpen)
+    if (willOpen) markAllSeen()
+  }
+
+  if (notifs.length === 0) return null
+
+  const fmtData = (ts: string) => {
+    try { return new Date(ts).toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' }) }
+    catch { return '' }
+  }
+
+  return (
+    <div style={{ position: 'fixed', top: 18, right: 18, zIndex: 60 }}>
+      {/* Botão sino */}
+      <button
+        onClick={toggle}
+        aria-label="Notificações"
+        style={{
+          position: 'relative', width: 46, height: 46, borderRadius: 14,
+          border: '1px solid rgba(201,164,92,0.45)',
+          background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.18), rgba(15,12,8,0.92))',
+          boxShadow: '0 8px 24px -6px rgba(0,0,0,0.6), 0 0 18px -6px rgba(201,164,92,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+        }}
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d9b25e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 01-3.46 0" />
+        </svg>
+        {unread > 0 && (
+          <span style={{
+            position: 'absolute', top: -6, right: -6, minWidth: 18, height: 18, padding: '0 5px',
+            borderRadius: 9, background: '#c9a45c', color: '#1a1306', fontSize: 11, fontWeight: 700,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.25)',
+          }}>{unread}</span>
+        )}
+      </button>
+
+      {/* Painel */}
+      {open && (
+        <>
+          <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: -1 }} />
+          <div style={{
+            position: 'absolute', top: 56, right: 0, width: 320, maxHeight: '70vh', overflowY: 'auto',
+            borderRadius: 18, border: '1px solid rgba(201,164,92,0.35)',
+            background: 'linear-gradient(180deg, rgba(20,16,10,0.98), rgba(10,8,5,0.98))',
+            boxShadow: '0 30px 60px -20px rgba(0,0,0,0.8), 0 0 24px -8px rgba(201,164,92,0.35)',
+            backdropFilter: 'blur(10px)',
+          }}>
+            <div style={{
+              padding: '14px 16px', borderBottom: '1px solid rgba(201,164,92,0.18)',
+              display: 'flex', alignItems: 'center', gap: 8,
+            }}>
+              <span style={{ fontSize: 9, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'rgba(201,164,92,0.8)', fontWeight: 700 }}>
+                Notificações
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {ordered.map(n => (
+                <div key={n.id} style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d9b25e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 01-3.46 0" />
+                    </svg>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: '#f2e6cf', fontFamily: 'Cormorant Garamond, Georgia, serif' }}>{n.titulo}</span>
+                  </div>
+                  <p style={{ fontSize: 12.5, lineHeight: 1.55, color: 'rgba(255,255,255,0.7)', margin: 0 }}>{n.texto}</p>
+                  {n.ts && <p style={{ fontSize: 10, color: 'rgba(201,164,92,0.55)', marginTop: 6, letterSpacing: '0.05em' }}>{fmtData(n.ts)}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
 }
 
 export function AtmospherePortal({
@@ -229,6 +341,11 @@ export function AtmospherePortal({
   return (
     <PortalShell sidebar={sidebar}>
       {adminBar}
+
+      <NoivosNotificationsBell
+        notifs={data.noivosNotifications ?? []}
+        refKey={data.referencia ?? data.portalRefForLinks ?? 'portal'}
+      />
 
       <Countdown
         weddingDate={weddingDate}

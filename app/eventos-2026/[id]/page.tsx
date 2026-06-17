@@ -825,6 +825,106 @@ function EstadoRow({ label, dateStr, estado, options, field, eventId, onSaved, h
   )
 }
 
+// ─── Notificação aos Noivos — envia título + texto para o portal ──────────────
+function NotificacaoNoivosSection({ referencia }: { referencia: string }) {
+  const [titulo, setTitulo] = useState('')
+  const [texto, setTexto] = useState('')
+  const [enviando, setEnviando] = useState(false)
+  const [okMsg, setOkMsg] = useState(false)
+  const [lista, setLista] = useState<Array<{ id: string; titulo: string; texto: string; ts: string }>>([])
+
+  useEffect(() => {
+    fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`)
+      .then(r => r.json())
+      .then(d => setLista(d.portal?.settings?.noivos_notifications ?? []))
+      .catch(() => {})
+  }, [referencia])
+
+  async function guardar(next: Array<{ id: string; titulo: string; texto: string; ts: string }>) {
+    await fetch('/api/portais', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referencia, updates: { settings: { noivos_notifications: next } } }),
+    })
+  }
+
+  async function enviar() {
+    if (!titulo.trim() || !texto.trim()) { alert('Preenche o título e o texto.'); return }
+    setEnviando(true)
+    try {
+      // Relê as atuais para não sobrepor edições concorrentes
+      const d = await fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`).then(r => r.json())
+      const atuais = d.portal?.settings?.noivos_notifications ?? []
+      const nova = { id: `n_${Date.now()}`, titulo: titulo.trim(), texto: texto.trim(), ts: new Date().toISOString() }
+      const next = [nova, ...atuais]
+      await guardar(next)
+      setLista(next); setTitulo(''); setTexto('')
+      setOkMsg(true); setTimeout(() => setOkMsg(false), 2800)
+    } finally { setEnviando(false) }
+  }
+
+  async function apagar(id: string) {
+    const next = lista.filter(n => n.id !== id)
+    setLista(next)
+    await guardar(next)
+  }
+
+  return (
+    <Section title="Notificação aos Noivos" right={
+      <span className="text-[9px] tracking-[0.3em] text-gold uppercase">Vai para o portal dos noivos</span>
+    }>
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[10px] tracking-[0.3em] uppercase text-white/40">Título</span>
+          <input
+            value={titulo}
+            onChange={e => setTitulo(e.target.value)}
+            placeholder="Ex: Fotos prontas para selecionar"
+            className="w-full bg-white/[0.03] border border-white/12 focus:border-gold/50 rounded-lg px-3 py-2 text-sm text-white outline-none placeholder:text-white/20 transition-colors"
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[10px] tracking-[0.3em] uppercase text-white/40">Texto</span>
+          <textarea
+            value={texto}
+            onChange={e => setTexto(e.target.value)}
+            rows={3}
+            placeholder="Pequeno texto a mostrar aos noivos no portal…"
+            className="w-full bg-white/[0.03] border border-white/12 focus:border-gold/50 rounded-lg px-3 py-2 text-sm text-white outline-none placeholder:text-white/20 transition-colors resize-y"
+          />
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={enviar}
+            disabled={enviando}
+            className="px-4 py-2 rounded-lg bg-gold text-black text-[11px] font-bold tracking-[0.2em] uppercase hover:bg-gold/90 disabled:opacity-50 transition-all"
+            style={{ boxShadow: '0 0 14px -4px rgba(201,164,92,0.55)' }}>
+            {enviando ? 'A enviar…' : 'Enviar notificação'}
+          </button>
+          {okMsg && <span className="text-[11px] text-emerald-400 tracking-wide">✓ Enviada para o portal</span>}
+        </div>
+
+        {lista.length > 0 && (
+          <div className="flex flex-col gap-2 pt-2 border-t border-white/[0.05]">
+            <span className="text-[9px] tracking-[0.3em] uppercase text-white/30">Enviadas ({lista.length})</span>
+            {lista.map(n => (
+              <div key={n.id} className="flex items-start justify-between gap-3 px-3 py-2 rounded-lg border border-white/[0.06] bg-black/20">
+                <div className="min-w-0">
+                  <p className="text-[13px] text-gold/90 font-semibold truncate">{n.titulo}</p>
+                  <p className="text-[11px] text-white/50 leading-relaxed">{n.texto}</p>
+                  <p className="text-[9px] text-white/25 mt-1">{new Date(n.ts).toLocaleString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                </div>
+                <button onClick={() => apagar(n.id)}
+                  className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-red-400 hover:border-red-400/40 transition-all text-xs"
+                  title="Apagar notificação">✕</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </Section>
+  )
+}
+
 // ─── Fotos Seleção associadas ao evento ───────────────────────────────────────
 function FotosSelecaoRef({ referencia }: { referencia: string }) {
   const [data, setData] = useState<any | null>(null)
@@ -3343,6 +3443,9 @@ export default function EventoPage() {
             <EditCheck label="Alerta 30 dias úteis enviado" checked={e.alerta_30du} field="alerta_30du" eventId={e.id} onSaved={handleSaved} />
           </div>
         </Section>
+
+        {/* ── Notificação aos Noivos ── */}
+        {e.referencia && <NotificacaoNoivosSection referencia={e.referencia} />}
 
         {/* ── Tarefas deste casamento ── */}
         <EventoTarefas eventoId={e.id} />

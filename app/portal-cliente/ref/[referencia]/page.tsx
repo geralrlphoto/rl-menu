@@ -1421,6 +1421,7 @@ export default function PortalRefPage() {
           portalRefForLinks: referencia,
           hasTasks:    (settings.tasks ?? []).length > 0,
           deliveries:  buildDeliveriesFromSettings(settings),
+          noivosNotifications: settings.noivos_notifications ?? [],
         }}
         callbacks={{}}
       />
