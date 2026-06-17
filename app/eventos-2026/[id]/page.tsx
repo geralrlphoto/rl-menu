@@ -3250,7 +3250,7 @@ export default function EventoPage() {
           <div className="flex flex-col gap-2">
             {prazoSelFotos && (
               <EstadoRow label="Prazo Selecção de Fotos (30 dias)" dateStr={prazoSelFotos}
-                estado={e.sel_fotos_estado} options={['Aguardar','Em Edição','Entregue','S/SERVIÇO']}
+                estado={e.sel_fotos_estado} options={['Aguardar','Em Seleção','Em Edição','Entregue','S/SERVIÇO']}
                 field="sel_fotos_estado" eventId={e.id} onSaved={handleSaved} referencia={e.referencia} />
             )}
             {prazoVideo && (
