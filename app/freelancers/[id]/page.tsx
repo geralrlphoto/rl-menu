@@ -921,7 +921,7 @@ function FreelancerDetailInner() {
                     </span>
                   )}
                 </button>
-                <div className="flex items-center gap-3 px-3 py-2 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md">
+                <div className="hidden sm:flex items-center gap-3 px-3 py-2 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md">
                   <div className="w-9 h-9 rounded-full overflow-hidden border border-gold/40 shrink-0">
                     {freelancer?.foto_url
                       ? <img src={freelancer.foto_url} alt={freelancer.nome} className="w-full h-full object-cover" />
