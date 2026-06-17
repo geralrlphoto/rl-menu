@@ -3246,6 +3246,13 @@ export default function EventoPage() {
             Data de Entrega{e.data_entrega ? `: ${formatDate(e.data_entrega)}` : ''}
           </span>
         }>
+          {/* Nota da regra automática */}
+          <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-500/[0.06] border border-amber-500/20 mb-1">
+            <span className="text-amber-300/90 text-[12px] leading-none mt-0.5">ℹ</span>
+            <p className="text-[11px] text-amber-200/80 leading-relaxed">
+              <strong>Regra automática:</strong> assim que o dia do evento passa, a <strong>Seleção de Fotos</strong> aparece no portal dos noivos como <strong>"Em Seleção"</strong> (se ainda estiver em "Aguardar"). Os estados aqui editados sincronizam automaticamente com o portal.
+            </p>
+          </div>
           {/* Linhas de estado */}
           <div className="flex flex-col gap-2">
             {prazoSelFotos && (
