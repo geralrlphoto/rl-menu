@@ -209,14 +209,16 @@ function FadeIn({ children, delay = 0, className = '' }: {
 // ─── Countdown ───────────────────────────────────────────────────────────────
 function Countdown({ targetDate }: { targetDate: string }) {
   const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0 })
+  const [isPast, setIsPast] = useState(false)
   useEffect(() => {
     function tick() {
       const diff = new Date(targetDate).getTime() - Date.now()
-      if (diff <= 0) return setT({ d: 0, h: 0, m: 0, s: 0 })
+      if (diff <= 0) { setIsPast(true); return }
       setT({ d: Math.floor(diff/86400000), h: Math.floor((diff%86400000)/3600000), m: Math.floor((diff%3600000)/60000), s: Math.floor((diff%60000)/1000) })
     }
     tick(); const id = setInterval(tick, 1000); return () => clearInterval(id)
   }, [targetDate])
+  if (isPast) return null
   const U = ({ v, label }: { v: number; label: string }) => (
     <div className="flex flex-col items-center gap-1">
       <span className="text-4xl sm:text-5xl font-extralight text-white/85 tabular-nums tracking-tight">{String(v).padStart(2,'0')}</span>
@@ -549,8 +551,8 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
 
         <div className="w-full h-px bg-white/[0.04]" />
 
-        {/* ── COUNTDOWN ── */}
-        {targetDate && (
+        {/* ── COUNTDOWN — oculta se a data já passou ── */}
+        {targetDate && new Date(targetDate).getTime() > Date.now() && (
           <section className="py-16 flex flex-col items-center px-6">
             <FadeIn>
               <p className={`${labelCls} text-center mb-10`}>Falta</p>
