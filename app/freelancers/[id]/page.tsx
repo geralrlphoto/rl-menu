@@ -8804,10 +8804,13 @@ function FotosConvidadosBox({
             href="https://accounts.google.com/v3/signin/accountchooser?continue=https%3A%2F%2Fdrive.google.com%2Fdrive%2Ffolders%2F1cvuMBZHxeA9nA6xC1vb3JjMdXUbevwU1&dsh=S319276986%3A1781711922233136&followup=https%3A%2F%2Fdrive.google.com%2Fdrive%2Ffolders%2F1cvuMBZHxeA9nA6xC1vb3JjMdXUbevwU1&osid=1&passive=1209600&service=wise&flowName=GlifWebSignIn&flowEntry=ServiceLogin&ifkv=AcDsRvzN8h_rmyuhYz1HzfEV5n5NF3Ontyj2K0fORlp7gypQrFtyybatpA-D5g6pnaBc7k5Mv2c3sg"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold tracking-[0.2em] uppercase border border-blue-500/30 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 transition-all"
+            className="flex flex-col items-end gap-1 group"
           >
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            Colocar Fotos 70%
+            <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold tracking-[0.2em] uppercase border border-blue-500/30 bg-blue-500/10 text-blue-300 group-hover:bg-blue-500/20 transition-all">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              Google Drive
+            </span>
+            <span className="text-[9px] text-white/30 italic text-right leading-tight max-w-[160px]">Coloca aqui as fotos escolhidas pelos convidados a 70% da qualidade sem marca de água.</span>
           </a>
         )}
       </div>
