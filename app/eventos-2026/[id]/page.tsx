@@ -723,6 +723,9 @@ function RegrasEntregasDrop() {
             <strong>Prazo de Entrega do Vídeo (180 dias úteis):</strong> a <strong>30 dias</strong> do fim do prazo recebes um <strong>alerta no sino</strong> e o vídeo aparece no card <strong>«VÍDEOS PRAZO»</strong> do painel. Só enquanto não estiver «Entregue».
           </p>
           <p>
+            <strong>Seleção Fotos Noivos:</strong> ao marcar a Seleção de Fotos como «Entregue», fica registado o dia. Se passarem <strong>20 dias</strong> e os noivos ainda não tiverem escolhido as fotos, recebes um <strong>alerta no sino</strong> («Noivos em Falta — Escolher Fotos»).
+          </p>
+          <p>
             <strong>Sincronização:</strong> todos os estados editados aqui refletem automaticamente no portal dos noivos.
           </p>
         </div>
@@ -787,9 +790,15 @@ function EstadoRow({ label, dateStr, estado, options, field, eventId, onSaved, h
     // Sincroniza também com as definições do portal dos noivos, que lê
     // estes estados (sel_fotos_estado, video_estado, etc.) de /api/portais.
     if (referencia) {
+      const settingsUpdate: Record<string, any> = { [field]: v }
+      // Regra: ao marcar Seleção de Fotos como "Entregue", regista o dia.
+      // Serve para o alerta de "noivos em falta escolher fotos" (20 dias).
+      if (field === 'sel_fotos_estado') {
+        settingsUpdate.sel_fotos_entregue_em = v === 'Entregue' ? new Date().toISOString().slice(0, 10) : null
+      }
       await fetch('/api/portais', {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ referencia, updates: { settings: { [field]: v } } }),
+        body: JSON.stringify({ referencia, updates: { settings: settingsUpdate } }),
       })
     }
   }

@@ -26,6 +26,7 @@ const TIPO_LABELS: Record<string, string> = {
   blog_subscriber:          'Nova Subscrição do Blog',
   video_prazo:              'Prazo de Entrega do Vídeo',
   fotos_edicao_prazo:       'Prazo das Fotos em Edição',
+  noivos_selecao_falta:     'Noivos em Falta — Escolher Fotos',
 }
 
 const TIPO_ICONS: Record<string, string> = {
@@ -46,6 +47,7 @@ const TIPO_ICONS: Record<string, string> = {
   blog_subscriber:          '✉',
   video_prazo:              '🎬',
   fotos_edicao_prazo:       '✎',
+  noivos_selecao_falta:     '⏰',
 }
 
 // Soma dias úteis a uma data (igual ao cálculo da ficha do evento).
@@ -576,6 +578,49 @@ export async function GET() {
       }
     } catch (err) {
       console.warn('[admin-notifications] fotos edicao prazo read failed:', err)
+    }
+
+    // ── Notificação: NOIVOS EM FALTA — ESCOLHER FOTOS (20 dias) ──
+    //    Quando a Seleção de Fotos é marcada "Entregue", regista-se a data em
+    //    settings.sel_fotos_entregue_em. Se passarem 20 dias e os noivos ainda
+    //    não tiverem submetido a seleção (sem row em fotos_selecao para a ref e
+    //    selecao_fotos_noivos_estado ainda não Concluído/Entregue) → alerta.
+    try {
+      const hoje = new Date(); hoje.setHours(0, 0, 0, 0)
+      // Referências cuja seleção dos noivos já foi submetida (form Tally → fotos_selecao)
+      const { data: selFeitas } = await supabase.from('fotos_selecao').select('referencia')
+      const refsSubmetidas = new Set((selFeitas ?? []).map((s: any) => s.referencia).filter(Boolean))
+      const { data: portaisSel } = await supabase.from('portais').select('referencia, settings').limit(500)
+      for (const p of (portaisSel ?? []) as any[]) {
+        const s = p.settings ?? {}
+        const entregueEm = s.sel_fotos_entregue_em
+        if (!entregueEm) continue
+        if (refsSubmetidas.has(p.referencia)) continue // noivos já escolheram
+        const estadoNoivos = String(s.selecao_fotos_noivos_estado ?? '').trim().toLowerCase()
+        if (estadoNoivos === 'concluído' || estadoNoivos === 'concluido' || estadoNoivos === 'entregue') continue
+        const d = new Date(String(entregueEm).slice(0, 10) + 'T00:00:00'); d.setHours(0, 0, 0, 0)
+        if (isNaN(d.getTime())) continue
+        const diasDesde = Math.floor((hoje.getTime() - d.getTime()) / 86400000)
+        if (diasDesde < 20) continue
+        const nomeNoivos = [s.noiva, s.noivo].filter(Boolean).join(' & ') || p.referencia || '—'
+        notifications.push({
+          id: `noivos_selecao_falta::${p.referencia}`,
+          tipo: 'noivos_selecao_falta',
+          tipo_label: TIPO_LABELS.noivos_selecao_falta,
+          tipo_icon: TIPO_ICONS.noivos_selecao_falta,
+          casamento_id: '',
+          freelancer_id: '',
+          freelancer_nome: nomeNoivos,
+          local: p.referencia ?? '—',
+          data_casamento: null,
+          referencia: p.referencia ?? null,
+          url: p.referencia ? `/eventos-2026?ref=${encodeURIComponent(p.referencia)}` : '/eventos-2026',
+          sent_at: new Date().toISOString(),
+          mensagem: `Já passaram ${diasDesde} dias desde a entrega da seleção e os noivos ainda não escolheram as fotos.`,
+        })
+      }
+    } catch (err) {
+      console.warn('[admin-notifications] noivos selecao falta read failed:', err)
     }
 
     // Ordenar por sent_at DESC
