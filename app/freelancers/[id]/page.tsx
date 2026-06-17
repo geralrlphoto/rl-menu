@@ -2408,6 +2408,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                     estado={fotosConvidadosMap[c.referencia] ?? { email: null, ctt: null, emailLista: [], cttLista: [], emailWorkflow: '', cttWorkflow: '' }}
                     onChange={(next) => setFotosConvidadosMap(prev => ({ ...prev, [c.referencia!]: next }))}
                     dataCasamento={c.data_casamento}
+                    isFotografo={isFotografo}
                   />
                 )}
 
@@ -8768,11 +8769,13 @@ function FotosConvidadosBox({
   estado,
   onChange,
   dataCasamento,
+  isFotografo,
 }: {
   referencia: string
   estado: { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }
   onChange: (next: { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }) => void
   dataCasamento: string | null
+  isFotografo?: boolean
 }) {
   const fmt = (d: string | null) => d ? new Date(d).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' }) : null
 
@@ -8794,7 +8797,20 @@ function FotosConvidadosBox({
 
   return (
     <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.03] p-4 flex flex-col gap-3">
-      <h3 className="text-[11px] tracking-[0.3em] uppercase text-blue-300/80">Fotos Convidados</h3>
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-[11px] tracking-[0.3em] uppercase text-blue-300/80">Fotos Convidados</h3>
+        {isFotografo && (
+          <a
+            href="https://accounts.google.com/v3/signin/accountchooser?continue=https%3A%2F%2Fdrive.google.com%2Fdrive%2Ffolders%2F1cvuMBZHxeA9nA6xC1vb3JjMdXUbevwU1&dsh=S319276986%3A1781711922233136&followup=https%3A%2F%2Fdrive.google.com%2Fdrive%2Ffolders%2F1cvuMBZHxeA9nA6xC1vb3JjMdXUbevwU1&osid=1&passive=1209600&service=wise&flowName=GlifWebSignIn&flowEntry=ServiceLogin&ifkv=AcDsRvzN8h_rmyuhYz1HzfEV5n5NF3Ontyj2K0fORlp7gypQrFtyybatpA-D5g6pnaBc7k5Mv2c3sg"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold tracking-[0.2em] uppercase border border-blue-500/30 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 transition-all"
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Colocar Fotos 70%
+          </a>
+        )}
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <FotosConvidadosSub
           referencia={referencia}
