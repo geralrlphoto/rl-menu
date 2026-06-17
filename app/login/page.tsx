@@ -250,6 +250,10 @@ function LoginPageInner() {
 
       {/* ── DIREITA — Formulário ────────────────────────────────────────── */}
       <section className="relative flex flex-col items-center justify-center px-6 sm:px-12 py-12">
+        {/* Logo topo — apenas mobile */}
+        <div className="lg:hidden mb-8 flex flex-col items-center gap-2">
+          <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png" alt="RL Photo.Video" className="w-16 h-16 object-contain" />
+        </div>
         <div className="w-full max-w-[420px]">
           {/* Mode toggle */}
           <div className="mb-8 flex items-center justify-between">
