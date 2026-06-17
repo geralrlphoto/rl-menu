@@ -92,27 +92,16 @@ export async function POST(req: NextRequest) {
 }
 
 function buildEmail(opts: { titulo: string; texto: string; nomeNoivos: string | null; portalUrl: string }): string {
-  const safe = (s: string) => s
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
+  // Email = apenas o card "Notificação Noivos", clicável para o portal.
+  const cardUrl = `${SITE_URL}/notificacao-noivos.png`
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;background:#0e0b07;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0e0b07;padding:40px 16px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0e0b07;padding:24px 16px;">
     <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#120e09;border:0.5px solid #4a3a1e;">
-        <tr><td style="padding:48px 56px;font-family:Georgia,'Times New Roman',serif;color:#efe7d6;">
-          <p style="margin:0 0 10px;font-size:10px;letter-spacing:.5em;color:#c9a96e;text-transform:uppercase;">Nova Notificação</p>
-          ${opts.nomeNoivos ? `<h1 style="margin:0 0 18px;font-size:26px;font-weight:400;color:#f0e8d8;line-height:1.2;">${safe(opts.nomeNoivos)}</h1>` : ''}
-          <p style="margin:0 0 6px;font-size:19px;font-style:italic;color:#d7bd87;line-height:1.3;">${safe(opts.titulo)}</p>
-          <div style="border-top:0.5px solid #4a3a1e;margin-top:18px;padding-top:20px;font-size:15px;line-height:1.75;color:#c3b8a3;">
-            ${safe(opts.texto)}
-          </div>
-          <table cellpadding="0" cellspacing="0" style="margin-top:28px;"><tr><td style="background:#c9a45c;border-radius:8px;">
-            <a href="${opts.portalUrl}" style="display:inline-block;padding:13px 28px;font-family:Georgia,serif;font-size:12px;letter-spacing:.25em;text-transform:uppercase;color:#1a1306;text-decoration:none;font-weight:bold;">Consultar Portal</a>
-          </td></tr></table>
-          <p style="margin:26px 0 0;font-size:11px;color:#8c8170;letter-spacing:.05em;">RL Photo.Video · Wedding Moments</p>
-        </td></tr>
-      </table>
+      <a href="${opts.portalUrl}" style="text-decoration:none;">
+        <img src="${cardUrl}" alt="Nova Notificação — Consultar Portal" width="360" style="display:block;width:100%;max-width:360px;height:auto;border:0;" />
+      </a>
     </td></tr>
   </table>
 </body></html>`
