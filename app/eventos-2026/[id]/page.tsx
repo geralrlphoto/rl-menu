@@ -733,11 +733,12 @@ function PortalEstadoRow({ label, dateStr, estado, referencia, stateKey, onSaved
   )
 }
 
-function EstadoRow({ label, dateStr, estado, options, field, eventId, onSaved, href }: {
+function EstadoRow({ label, dateStr, estado, options, field, eventId, onSaved, href, referencia }: {
   label: string; dateStr?: string | null
   estado: string | null; options: string[]; field: string; eventId: string
   onSaved: (field: string, val: any) => void
   href?: string
+  referencia?: string | null
 }) {
   const val = estado ?? options[0]
   const cfg = estadoCfg(val)
@@ -748,6 +749,14 @@ function EstadoRow({ label, dateStr, estado, options, field, eventId, onSaved, h
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ [field]: v }),
     })
+    // Sincroniza também com as definições do portal dos noivos, que lê
+    // estes estados (sel_fotos_estado, video_estado, etc.) de /api/portais.
+    if (referencia) {
+      await fetch('/api/portais', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referencia, updates: { settings: { [field]: v } } }),
+      })
+    }
   }
 
   return (
@@ -3242,21 +3251,21 @@ export default function EventoPage() {
             {prazoSelFotos && (
               <EstadoRow label="Prazo Selecção de Fotos (30 dias)" dateStr={prazoSelFotos}
                 estado={e.sel_fotos_estado} options={['Aguardar','Em Edição','Entregue','S/SERVIÇO']}
-                field="sel_fotos_estado" eventId={e.id} onSaved={handleSaved} />
+                field="sel_fotos_estado" eventId={e.id} onSaved={handleSaved} referencia={e.referencia} />
             )}
             {prazoVideo && (
               <EstadoRow label="Prazo Entrega Vídeo (180 dias úteis)" dateStr={prazoVideo}
                 estado={e.video_estado} options={['Aguardar','Em Edição','Entregue','S/SERVIÇO']}
-                field="video_estado" eventId={e.id} onSaved={handleSaved} />
+                field="video_estado" eventId={e.id} onSaved={handleSaved} referencia={e.referencia} />
             )}
             <EstadoRow label="Fotos para Edição"
               dateStr={fotosDataEntrada ? addWorkingDays(fotosDataEntrada, 30) : null}
               estado={e.fotos_edicao_estado} options={['Aguardar','Enviado','Em Edição','Entregue','S/SERVIÇO']}
-              field="fotos_edicao_estado" eventId={e.id} onSaved={handleSaved} />
+              field="fotos_edicao_estado" eventId={e.id} onSaved={handleSaved} referencia={e.referencia} />
             <EstadoRow label="Álbum"
               dateStr={albumDataPrevista}
               estado={e.album_estado} options={['Aguardar','Em Edição','Em Aprovação','Aprovado','Entregue','S/SERVIÇO']}
-              field="album_estado" eventId={e.id} onSaved={handleSaved}
+              field="album_estado" eventId={e.id} onSaved={handleSaved} referencia={e.referencia}
               href={`/albuns-casamento?ref=${encodeURIComponent(e.referencia)}`} />
             {e.referencia && <>
               <PortalEstadoRow label="Seleção Fotos Noivos"
