@@ -696,6 +696,38 @@ function estadoCfg(val: string) {
   return       { box: 'bg-yellow-500/10 border-yellow-500/25', dot: 'bg-yellow-400', lbl: 'text-yellow-300/70', date: 'text-yellow-200/80', sel: 'bg-yellow-500/15 border-yellow-500/30 hover:border-yellow-400/50 text-yellow-100/90', arr: 'text-yellow-400/60' }
 }
 
+// ─── Dropdown de regras do Estado das Entregas (abrir/fechar) ──────────────────
+function RegrasEntregasDrop() {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="rounded-lg bg-amber-500/[0.06] border border-amber-500/20 mb-1 overflow-hidden">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between gap-2 px-3 py-2 text-left hover:bg-amber-500/[0.04] transition-colors"
+      >
+        <span className="flex items-center gap-2 text-[11px] tracking-wide text-amber-200/90 font-semibold uppercase">
+          <span className="text-amber-300/90 text-[12px] leading-none">ℹ</span>
+          Regras automáticas das entregas
+        </span>
+        <span className={`text-amber-300/70 text-[11px] transition-transform ${open ? 'rotate-180' : ''}`}>▾</span>
+      </button>
+      {open && (
+        <div className="px-3 pb-3 pt-1 flex flex-col gap-2 text-[11px] text-amber-200/75 leading-relaxed border-t border-amber-500/15">
+          <p>
+            <strong>Seleção de Fotos:</strong> assim que o dia do evento passa, aparece no portal dos noivos como <strong>«Em Seleção»</strong> (se ainda estiver em «Aguardar»).
+          </p>
+          <p>
+            <strong>Prazo de Entrega do Vídeo (180 dias úteis):</strong> a <strong>30 dias</strong> do fim do prazo recebes um <strong>alerta no sino</strong> e o vídeo aparece no card <strong>«VÍDEOS PRAZO»</strong> do painel. Só enquanto não estiver «Entregue».
+          </p>
+          <p>
+            <strong>Sincronização:</strong> todos os estados editados aqui refletem automaticamente no portal dos noivos.
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Linha de estado com dropdown e prazo opcional ─────────────────────────────
 // ─── Linha de estado ligada ao portal (Supabase) ──────────────────────────────
 function PortalEstadoRow({ label, dateStr, estado, referencia, stateKey, onSaved }: {
@@ -3246,13 +3278,8 @@ export default function EventoPage() {
             Data de Entrega{e.data_entrega ? `: ${formatDate(e.data_entrega)}` : ''}
           </span>
         }>
-          {/* Nota da regra automática */}
-          <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-500/[0.06] border border-amber-500/20 mb-1">
-            <span className="text-amber-300/90 text-[12px] leading-none mt-0.5">ℹ</span>
-            <p className="text-[11px] text-amber-200/80 leading-relaxed">
-              <strong>Regra automática:</strong> assim que o dia do evento passa, a <strong>Seleção de Fotos</strong> aparece no portal dos noivos como <strong>«Em Seleção»</strong> (se ainda estiver em «Aguardar»). Os estados aqui editados sincronizam automaticamente com o portal.
-            </p>
-          </div>
+          {/* Dropdown de regras (abrir/fechar) */}
+          <RegrasEntregasDrop />
           {/* Linhas de estado */}
           <div className="flex flex-col gap-2">
             {prazoSelFotos && (
