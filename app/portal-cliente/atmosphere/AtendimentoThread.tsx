@@ -84,6 +84,7 @@ export function AtendimentoThread({ referencia }: { referencia: string }) {
         body: JSON.stringify({ referencia, titulo: tema, mensagem: replyText.trim() }),
       })
       setReplyText(''); setReplyTema(null)
+      marcarTemaVisto(tema, new Date().toISOString())
       await carregar()
     } finally { setSending(false) }
   }
@@ -106,6 +107,21 @@ export function AtendimentoThread({ referencia }: { referencia: string }) {
     out.sort((a, b) => (b.lastTs || '').localeCompare(a.lastTs || ''))
     return out
   }, [msgs])
+
+  // Baseline na 1ª visita: marca todos os temas atuais como vistos, para não
+  // brilharem todos. A partir daí só brilha o que for NOVO (ou o tema a que o
+  // outro lado respondeu).
+  useEffect(() => {
+    if (temas.length === 0) return
+    try {
+      if (localStorage.getItem(`${LS_SEEN}_init`)) return
+      const base: Record<string, string> = {}
+      for (const t of temas) base[t.tema] = t.lastTs
+      localStorage.setItem(LS_SEEN, JSON.stringify(base))
+      localStorage.setItem(`${LS_SEEN}_init`, '1')
+      setSeenMap(base)
+    } catch { /* ignore */ }
+  }, [temas, LS_SEEN])
 
   // Filtro por pesquisa: mostra temas cujo assunto ou alguma mensagem contém o termo.
   const q = query.trim().toLowerCase()

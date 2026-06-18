@@ -955,6 +955,22 @@ function MensagensNoivosSection({ referencia }: { referencia: string }) {
   function marcarTemaVisto(tema: string, lastTs: string) {
     setSeenMap(prev => { const next = { ...prev, [tema]: lastTs }; try { localStorage.setItem(LS_SEEN, JSON.stringify(next)) } catch {/* */} ; return next })
   }
+  // Baseline na 1ª visita: marca todos os temas atuais como vistos (não brilham).
+  useEffect(() => {
+    if (msgs.length === 0) return
+    try {
+      if (localStorage.getItem(`${LS_SEEN}_init`)) return
+      const base: Record<string, string> = {}
+      for (const m of msgs) {
+        const tema = (m.titulo || 'Sem assunto').trim()
+        const ts = [m.ts ?? '', ...((m.respostas ?? []).map(r => r.ts))].sort().pop() ?? ''
+        if (ts > (base[tema] ?? '')) base[tema] = ts
+      }
+      localStorage.setItem(LS_SEEN, JSON.stringify(base))
+      localStorage.setItem(`${LS_SEEN}_init`, '1')
+      setSeenMap(base)
+    } catch { /* ignore */ }
+  }, [msgs, LS_SEEN])
 
   async function carregar() {
     try {
@@ -974,6 +990,8 @@ function MensagensNoivosSection({ referencia }: { referencia: string }) {
         body: JSON.stringify({ referencia, messageId, texto: texto.trim() }),
       })
       setTexto(''); setRespostaDe(null)
+      const tema = (msgs.find(m => m.id === messageId)?.titulo || 'Sem assunto').trim()
+      marcarTemaVisto(tema, new Date().toISOString())
       await carregar()
     } finally { setEnviando(false) }
   }
