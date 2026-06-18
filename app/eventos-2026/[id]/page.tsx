@@ -1538,7 +1538,11 @@ function BriefingNaFicha({ referencia, eventoId, local, dataCasamento }: { refer
       })
       const d = await res.json().catch(() => ({}))
       if (!res.ok) { alert(d?.error ?? 'Falha ao enviar o briefing.'); return }
-      setSentMsg(`Enviado a ${d.sent} membro(s)${d.emailsSent ? ` · ${d.emailsSent} email(s)` : ''}.`)
+      if (d.sent === 0) {
+        setSentMsg('Todos os selecionados já tinham recebido — nada reenviado.')
+      } else {
+        setSentMsg(`Enviado a ${d.sent} novo(s)${d.emailsSent ? ` · ${d.emailsSent} email(s)` : ''}${d.alreadySent ? ` · ${d.alreadySent} já tinham` : ''}.`)
+      }
       setTimeout(() => setSentMsg(null), 6000)
       loadData()
     } finally { setSending(false) }

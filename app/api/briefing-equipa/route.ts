@@ -87,10 +87,23 @@ export async function POST(req: NextRequest) {
   const dataCas  = data_casamento ?? eq?.data_casamento ?? null
   const dateLabel = dateLabelFrom(dataCas)
 
-  // 1) Desbloquear "Ver Briefing" no portal de cada membro selecionado.
+  // Evitar duplicados: só se envia a quem AINDA NÃO recebeu o briefing neste
+  // evento (quem já tem briefing_url no seu registo é ignorado). Assim, voltar
+  // a clicar "Enviar" depois de acrescentar membros só envia aos novos.
+  let exQ = supabase.from('freelancer_casamentos').select('freelancer_id, briefing_url').in('freelancer_id', freelancerIds)
+  exQ = referencia ? exQ.eq('referencia', referencia) : exQ.eq('evento_id', evento_id)
+  const { data: exRows } = await exQ
+  const alreadySent = new Set((exRows ?? []).filter((r: any) => r.briefing_url).map((r: any) => r.freelancer_id))
+  const newIds: string[] = (freelancerIds as string[]).filter((id) => !alreadySent.has(id))
+
+  if (newIds.length === 0) {
+    return NextResponse.json({ ok: true, sent: 0, alreadySent: alreadySent.size, emailsSent: 0 })
+  }
+
+  // 1) Desbloquear "Ver Briefing" no portal de cada membro novo.
   //    Se ainda não estiver atribuído a este evento, cria-se o registo
   //    (passa a ver o evento + briefing no portal dele).
-  for (const fid of freelancerIds) {
+  for (const fid of newIds) {
     let q = supabase.from('freelancer_casamentos').select('id').eq('freelancer_id', fid).limit(1)
     q = referencia ? q.eq('referencia', referencia) : q.eq('evento_id', evento_id)
     const { data: existRows } = await q
@@ -117,7 +130,7 @@ export async function POST(req: NextRequest) {
     : `O briefing do teu próximo evento${dateLabel ? ` de ${dateLabel}` : ''} está disponível.`
   const mensagem = `__META__${meta}__/META__\n${corpo}`
 
-  for (const fid of freelancerIds) {
+  for (const fid of newIds) {
     const { data: existing } = await supabase
       .from('freelancer_notificacoes')
       .select('id')
@@ -141,7 +154,7 @@ export async function POST(req: NextRequest) {
   if (process.env.RESEND_API_KEY) {
     const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://rl-menu-lake.vercel.app'
     const CARD_URL = `${SITE}/card-novo-briefing.png`
-    const { data: members } = await supabase.from('freelancers').select('id, nome, email').in('id', freelancerIds)
+    const { data: members } = await supabase.from('freelancers').select('id, nome, email').in('id', newIds)
     const subject = localStr
       ? `Briefing disponível — ${localStr}${dateLabel ? ` · ${dateLabel}` : ''}`
       : 'Novo Briefing disponível'
@@ -185,5 +198,5 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true, sent: freelancerIds.length, emailsSent })
+  return NextResponse.json({ ok: true, sent: newIds.length, alreadySent: alreadySent.size, emailsSent })
 }
