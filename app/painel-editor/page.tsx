@@ -211,7 +211,16 @@ export default function PainelEditor() {
   const displayName  = effectiveNome.split(' ')[0]
   const displayFull  = effectiveNome
   const displayEmail = freelancer?.email ?? 'editorpro@mail.com'
-  const displayRole  = freelancer?.status ?? 'Editor de Vídeo'
+  // Cargo a partir do status REAL da BD (mapeado); só usa o profileFuncao do
+  // localStorage como fallback quando não há freelancer carregado.
+  const STATUS_FUNCAO: Record<string, string> = {
+    FOTOGRAFO: 'Fotógrafo', VIDEOGRAFO: 'Videógrafo', EDITORES: 'Editor de Vídeo',
+    EDITOR: 'Editor de Vídeo', ASSISTENTE: 'Assistente', OUTRO: 'Equipa',
+  }
+  const displayFuncao = freelancer?.status
+    ? (STATUS_FUNCAO[freelancer.status] ?? freelancer.status)
+    : (profileFuncao || 'Editor de Vídeo')
+  const displayRole  = displayFuncao
   const displayPhoto = freelancer?.foto_url || profileFoto.trim() || DEFAULT_AVATAR
 
   const [active, setActive] = useState('dashboard')
@@ -849,7 +858,7 @@ export default function PainelEditor() {
           </div>
           <div className="flex items-center gap-2">
             <div className="h-px w-3" style={{ background: 'linear-gradient(90deg, transparent, rgba(201,164,92,0.45))' }} />
-            <p className="text-[9px] tracking-[0.5em] uppercase font-light italic" style={{ color: '#c9a96e', opacity: 0.85 }}>{profileFuncao}</p>
+            <p className="text-[9px] tracking-[0.5em] uppercase font-light italic" style={{ color: '#c9a96e', opacity: 0.85 }}>{displayFuncao}</p>
             <div className="h-px w-3" style={{ background: 'linear-gradient(90deg, rgba(201,164,92,0.45), transparent)' }} />
           </div>
         </div>
