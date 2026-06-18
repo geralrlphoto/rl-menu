@@ -2856,7 +2856,9 @@ function DrawerBloco({ label, sub, children, width = 820 }: { label: string; sub
         width: `min(${width}px, 100vw)`, maxWidth: '100vw',
         background: 'linear-gradient(180deg, #15110b, #0d0a06)',
         borderLeft: '1px solid rgba(201,164,92,0.25)',
-        boxShadow: '-30px 0 80px -20px rgba(0,0,0,0.7)',
+        // Só com a gaveta aberta — senão a sombra "sangra" para a borda
+        // direita do ecrã mesmo com o painel fora de vista (mancha preta).
+        boxShadow: open ? '-30px 0 80px -20px rgba(0,0,0,0.7)' : 'none',
         transform: open ? 'translateX(0)' : 'translateX(100%)',
         transition: 'transform .42s cubic-bezier(.2,.7,.2,1)',
         overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch',
@@ -2916,7 +2918,9 @@ function AgendamentoNotasDrawer({ referencia }: { referencia?: string }) {
         width: 'min(820px, 100vw)', maxWidth: '100vw',
         background: 'linear-gradient(180deg, #15110b, #0d0a06)',
         borderLeft: '1px solid rgba(201,164,92,0.25)',
-        boxShadow: '-30px 0 80px -20px rgba(0,0,0,0.7)',
+        // Só com a gaveta aberta — senão a sombra "sangra" para a borda
+        // direita do ecrã mesmo com o painel fora de vista (mancha preta).
+        boxShadow: open ? '-30px 0 80px -20px rgba(0,0,0,0.7)' : 'none',
         transform: open ? 'translateX(0)' : 'translateX(100%)',
         transition: 'transform .42s cubic-bezier(.2,.7,.2,1)',
         overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch',
@@ -3450,7 +3454,7 @@ export default function EventoPage() {
   const prazoVideo    = e.data_evento ? addWorkingDays(e.data_evento, 180) : null
 
   return (
-    <main id="evento-page" className="min-h-screen px-4 sm:px-8 lg:px-12 xl:px-16 py-10 print:max-w-full print:py-6 print:px-8">
+    <main id="evento-page" className="min-h-screen px-4 py-10 max-w-3xl mx-auto print:max-w-full print:py-6 print:px-8">
       <style>{`
         @keyframes fichaReveal { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
         .ficha-reveal { animation: fichaReveal .55s cubic-bezier(.2,.7,.2,1) both; }
