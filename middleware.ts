@@ -100,8 +100,10 @@ export async function middleware(request: NextRequest) {
     const flCookie = request.cookies.get('fl_session')?.value
     const session = await verifyFlSession(flCookie)
     if (session) {
+      // Força sempre ?freelancer=<id da sessão>: garante que o editor vê o SEU
+      // painel (com a identidade real) e nunca o painel sem id (dados demo).
       const wanted = searchParams.get('freelancer')
-      if (wanted && wanted !== session.id) {
+      if (wanted !== session.id) {
         return NextResponse.redirect(new URL(`/painel-editor?freelancer=${session.id}`, request.url))
       }
       return NextResponse.next()
