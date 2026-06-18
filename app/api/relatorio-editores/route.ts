@@ -41,7 +41,9 @@ export async function POST(req: NextRequest) {
       ? `\nLink(s) de download:\n${downloads.join('\n')}`
       : '\n(Ainda sem link de download — será adicionado.)',
   ].filter(Boolean)
-  const mensagem = linhas.join('\n')
+  // Meta estruturada para o painel do editor listar os trabalhos (parse __META__…__/META__).
+  const meta = JSON.stringify({ referencia: referencia ?? null, evento_id: evento_id ?? null, local: localStr || null, data_casamento: data_casamento ?? null, downloads })
+  const mensagem = `__META__${meta}__/META__\n${linhas.join('\n')}`
 
   for (const eid of editorIds) {
     await supabase.from('freelancer_notificacoes').insert({

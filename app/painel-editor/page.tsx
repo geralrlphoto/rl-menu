@@ -103,6 +103,60 @@ function fmtDate(d: string) {
 // Foto fallback para o caso de o freelancer não ter foto
 const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=200&h=200&fit=crop&crop=face'
 
+// ── Trabalhos reais enviados pela RL a este editor (Fase 2) ──────────────────
+function TrabalhosRLSection({ freelancerId }: { freelancerId: string | null }) {
+  const [jobs, setJobs] = useState<any[]>([])
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    if (!freelancerId) { setLoaded(true); return }
+    let cancelled = false
+    fetch(`/api/painel-editor/projetos?freelancer=${freelancerId}`)
+      .then(r => r.json())
+      .then(d => { if (!cancelled) { setJobs(Array.isArray(d?.jobs) ? d.jobs : []); setLoaded(true) } })
+      .catch(() => { if (!cancelled) setLoaded(true) })
+    return () => { cancelled = true }
+  }, [freelancerId])
+
+  if (!loaded || jobs.length === 0) return null
+
+  return (
+    <div className="rounded-2xl border border-gold/25 p-5 mb-5"
+      style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.5), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-gold text-lg">🎬</span>
+        <h3 className="text-[15px] font-semibold text-white">Trabalhos da RL para Editar</h3>
+        <span className="text-[10px] text-white/35 tracking-widest uppercase">{jobs.length}</span>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {jobs.map((j, i) => {
+          const dia = j.data_casamento ? new Date(j.data_casamento).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' }) : null
+          const downloads: string[] = Array.isArray(j.downloads) ? j.downloads : []
+          return (
+            <div key={j.notifId ?? i} className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <p className="text-[14px] text-white font-medium">{j.noivos || j.local || 'Evento'}</p>
+                {!j.lida && <span className="text-[9px] px-2 py-0.5 rounded-full bg-gold text-black uppercase tracking-widest font-bold">Novo</span>}
+              </div>
+              {(j.local || dia) && <p className="text-[11px] text-white/45">{[j.local, dia].filter(Boolean).join(' · ')}</p>}
+              <div className="flex flex-wrap gap-2 mt-3">
+                {downloads.length > 0
+                  ? downloads.map((u, k) => (
+                      <a key={k} href={u} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg bg-gold/15 border border-gold/35 text-gold font-semibold tracking-wider uppercase hover:bg-gold/25 transition-all">
+                        ↓ Download{downloads.length > 1 ? ` ${k + 1}` : ''}
+                      </a>
+                    ))
+                  : <span className="text-[11px] text-white/30 italic">Sem link de download ainda.</span>}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export default function PainelEditor() {
   const params = useSearchParams()
   const freelancerId = params?.get('freelancer') ?? null
@@ -933,6 +987,9 @@ export default function PainelEditor() {
               </Link>
             ))}
           </div>
+
+          {/* ── Trabalhos reais enviados pela RL (Fase 2) ── */}
+          <TrabalhosRLSection freelancerId={freelancerId} />
 
           {/* ── GRID 3-col: Projetos | Calendário | Tarefas/Financeiro ── */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
