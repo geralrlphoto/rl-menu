@@ -56,6 +56,9 @@ type Casamento = {
     equipaAnimacao?: string[]
     equipaAnimacaoOutra?: string
     maquina?: string
+    audiosNuvem?: string
+    vaisFazerBackup?: string
+    problemaTecnico?: string
     infoRelevante?: string
   } | null
 }
@@ -1908,12 +1911,26 @@ function RelatorioDiarioSecoes({ casamento }: { casamento: Casamento }) {
   const [equipa, setEquipa] = useState<string[]>(rd.equipaAnimacao ?? [])
   const [outra, setOutra] = useState<string>(rd.equipaAnimacaoOutra ?? '')
   const [maquina, setMaquina] = useState<string>(rd.maquina ?? '')
+  const [audiosNuvem, setAudiosNuvem] = useState<string>(rd.audiosNuvem ?? '')
+  const [vaisBackup, setVaisBackup] = useState<string>(rd.vaisFazerBackup ?? '')
+  const [problema, setProblema] = useState<string>(rd.problemaTecnico ?? '')
   const [info, setInfo] = useState<string>(rd.infoRelevante ?? '')
   const [saving, setSaving] = useState(false)
 
   function snapshot(over: Record<string, any> = {}) {
-    return { gravado, tipoCerimonia: tipo, audio, drone, equipaAnimacao: equipa, equipaAnimacaoOutra: outra, maquina, infoRelevante: info, ...over }
+    return { gravado, tipoCerimonia: tipo, audio, drone, equipaAnimacao: equipa, equipaAnimacaoOutra: outra, maquina, audiosNuvem, vaisFazerBackup: vaisBackup, problemaTecnico: problema, infoRelevante: info, ...over }
   }
+  function setSimNao(key: string, val: string, current: string, setter: (v: string) => void) {
+    const next = current === val ? '' : val
+    setter(next)
+    persist(snapshot({ [key]: next }))
+  }
+  const simCls = (active: boolean, kind: 'sim' | 'nao') =>
+    `px-6 py-2.5 rounded-xl border text-[12px] tracking-wide uppercase font-semibold transition-all ${
+      active
+        ? (kind === 'sim' ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300' : 'bg-red-500/20 border-red-500/50 text-red-300')
+        : 'bg-white/[0.03] border-white/10 text-white/55 hover:border-white/25 hover:text-white/80'
+    }`
   async function persist(payload: Record<string, any>) {
     setSaving(true)
     try {
@@ -1978,6 +1995,33 @@ function RelatorioDiarioSecoes({ casamento }: { casamento: Casamento }) {
         <p className="text-[10px] tracking-[0.3em] uppercase text-gold/70 mb-3">Máquina Utilizada</p>
         <input value={maquina} onChange={e => setMaquina(e.target.value)} onBlur={() => persist(snapshot())}
           placeholder="Escreve a máquina utilizada…" className={inputCls} />
+      </div>
+
+      <div>
+        <p className="text-[10px] tracking-[0.3em] uppercase text-gold/70 mb-3">Backup</p>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <span className="text-[12px] text-white/70">Áudios na Nuvem</span>
+            <div className="flex gap-2">
+              <button onClick={() => setSimNao('audiosNuvem', 'sim', audiosNuvem, setAudiosNuvem)} className={simCls(audiosNuvem === 'sim', 'sim')}>Sim</button>
+              <button onClick={() => setSimNao('audiosNuvem', 'nao', audiosNuvem, setAudiosNuvem)} className={simCls(audiosNuvem === 'nao', 'nao')}>Não</button>
+            </div>
+          </div>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <span className="text-[12px] text-white/70">Vais fazer Backup</span>
+            <div className="flex gap-2">
+              <button onClick={() => setSimNao('vaisFazerBackup', 'sim', vaisBackup, setVaisBackup)} className={simCls(vaisBackup === 'sim', 'sim')}>Sim</button>
+              <button onClick={() => setSimNao('vaisFazerBackup', 'nao', vaisBackup, setVaisBackup)} className={simCls(vaisBackup === 'nao', 'nao')}>Não</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p className="text-[10px] tracking-[0.3em] uppercase text-gold/70 mb-3">Problema Técnico</p>
+        <textarea value={problema} onChange={e => setProblema(e.target.value)} onBlur={() => persist(snapshot())}
+          rows={3} placeholder="Descreve algum problema técnico (cartão, bateria, áudio…)…"
+          className={`${inputCls} resize-y leading-relaxed`} />
       </div>
 
       <div>
