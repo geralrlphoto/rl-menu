@@ -3080,7 +3080,12 @@ function PortalSubPageContent() {
                             return i
                           })()
                         : -1
-                      const aceHidden = new Set(aceIdx !== -1 ? allOther.slice(aceIdx, aceEnd).map(b => b.id) : [])
+                      // Em modo equipa (freelancer, ?freelancer=1) mostra-se TUDO,
+                      // incluindo a secção "ACESSO" que normalmente é escondida do
+                      // portal dos noivos — é a informação que só a equipa deve ver.
+                      const aceHidden = new Set(
+                        isFreelancerView ? [] : (aceIdx !== -1 ? allOther.slice(aceIdx, aceEnd).map(b => b.id) : [])
+                      )
                       const otherBlocks = allOther.filter(b =>
                         !aceHidden.has(b.id) &&
                         !(b.type === 'callout' && (b.children ?? []).some((c: Block) => c.type === 'image')) &&
