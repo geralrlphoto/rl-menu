@@ -1678,6 +1678,7 @@ function PortalSubPageContent() {
         noivo={portalSettingsObj?.noivo ?? portalSettingsObj?.pai ?? null}
         data={portalSettingsObj?.dataFormatada ?? null}
         coupleLabel={COUPLE_LABEL}
+        fotoUrl={portalSettingsObj?.casalFotoUrl ?? null}
       />
       <SidebarNav items={_atmNavItems} />
       <SidebarMiniCountdown
