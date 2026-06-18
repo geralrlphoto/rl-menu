@@ -558,10 +558,24 @@ function EdicaoModal({ e, onClose }: { e: Edicao; onClose: () => void }) {
   )
 }
 
+// Acrescenta ?freelancer=1 ao URL do briefing → portal dos noivos abre em modo
+// bloqueado (só o briefing, sem navegação para o resto do portal).
+function withBriefingLock(url: string): string {
+  if (!url) return ''
+  try {
+    const u = new URL(url)
+    u.searchParams.set('freelancer', '1')
+    return u.toString()
+  } catch {
+    return url + (url.includes('?') ? '&' : '?') + 'freelancer=1'
+  }
+}
+
 // ── Briefing Modal ────────────────────────────────────────────────────────────
 function BriefingModal({ url, onClose }: { url: string; onClose: () => void }) {
   const [loaded, setLoaded] = useState(false)
   const [error, setError]   = useState(false)
+  const lockedUrl = withBriefingLock(url)
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col" onClick={onClose}>
@@ -570,7 +584,7 @@ function BriefingModal({ url, onClose }: { url: string; onClose: () => void }) {
       <div className="relative z-10 flex items-center justify-between px-4 py-3 bg-[#0e0e0e] border-b border-white/[0.07] flex-shrink-0" onClick={e => e.stopPropagation()}>
         <p className="text-[14px] tracking-[0.4em] text-white/30 uppercase">Briefing</p>
         <div className="flex items-center gap-2">
-          <a href={url} target="_blank" rel="noopener noreferrer"
+          <a href={lockedUrl} target="_blank" rel="noopener noreferrer"
             className="text-[14px] px-3 py-1.5 rounded-lg border border-white/10 text-white/30 hover:text-white/60 hover:border-white/25 transition-all tracking-widest uppercase">
             Abrir no Browser ↗
           </a>
@@ -590,14 +604,14 @@ function BriefingModal({ url, onClose }: { url: string; onClose: () => void }) {
         {error && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-4 text-center">
             <p className="text-white/30 text-[14px] tracking-widest">Não foi possível carregar o briefing aqui.</p>
-            <a href={url} target="_blank" rel="noopener noreferrer"
+            <a href={lockedUrl} target="_blank" rel="noopener noreferrer"
               className="px-5 py-2.5 rounded-xl bg-gold/10 border border-gold/30 text-gold text-[14px] font-semibold tracking-widest uppercase hover:bg-gold/20 transition-all">
               Abrir no Browser ↗
             </a>
           </div>
         )}
         <iframe
-          src={url}
+          src={lockedUrl}
           className={`w-full h-full border-none transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
           onLoad={() => setLoaded(true)}
           onError={() => setError(true)}

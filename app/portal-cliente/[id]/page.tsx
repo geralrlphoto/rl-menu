@@ -1039,6 +1039,11 @@ function PortalSubPageContent() {
   const isContratoPage    = title.toUpperCase().includes('CONTRATO')
   const isBriefingPage    = title.toUpperCase().includes('BRIEFING')
   const isFotografiasPage = title.toUpperCase().includes('FOTOGRAF')
+  // Vista bloqueada para freelancers: abrem o briefing via "Ver Briefing" no
+  // seu portal e só podem ver MESMO o briefing — escondemos toda a navegação
+  // (sidebar, menu, Voltar, sino de notificações) para não acederem ao portal
+  // completo dos noivos. Ativada com ?freelancer=1 no URL do iframe.
+  const isFreelancerView  = searchParams.get('freelancer') === '1'
   const isFilmePage       = title.toUpperCase().includes('FILME') || title.toUpperCase().includes('NOSSO FILME')
   const isSatisfacaoPage   = title.toUpperCase().includes('SAT.') || title.toUpperCase().includes('SATISF')
   const isCronogramaPage   = title.toUpperCase().includes('CRONOGRAMA')
@@ -2313,7 +2318,19 @@ function PortalSubPageContent() {
   }
 
   return (
-    <PortalShell sidebar={_atmSidebar} headerRight={<NoivosNotificationsBell notifs={portalSettingsObj?.noivos_notifications ?? []} refKey={portalRef || refParam || 'portal'} />}>
+    <PortalShell sidebar={_atmSidebar} headerRight={isFreelancerView ? undefined : <NoivosNotificationsBell notifs={portalSettingsObj?.noivos_notifications ?? []} refKey={portalRef || refParam || 'portal'} />}>
+    {/* Vista freelancer: esconde toda a navegação para só se ver o briefing */}
+    {isFreelancerView && (
+      <style dangerouslySetInnerHTML={{ __html: `
+        .portal-atmosphere .sidebar nav,
+        .portal-atmosphere .sidebar .nav-label,
+        .portal-atmosphere .sidebar .mini,
+        .portal-atmosphere .menu-toggle,
+        .portal-atmosphere .atm-back,
+        .portal-atmosphere .cards-head,
+        .portal-atmosphere .cards-grid { display: none !important; }
+      ` }} />
+    )}
     <main className={isSobreViewMode ? 'relative sobre-view' : 'relative max-w-[860px] mx-auto px-3 sm:px-6 py-6 sm:py-10'}>
       {/* ── Design premium: fundo fixo cobre o viewport inteiro ── */}
       {isDesignPremium && (

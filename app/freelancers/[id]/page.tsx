@@ -91,6 +91,19 @@ function totalValor(v: Valor) {
   return (v.total_unidade * v.valor_servico) + (v.kms * v.valor_ao_km)
 }
 
+// Acrescenta ?freelancer=1 ao URL do briefing para o portal dos noivos abrir
+// em modo bloqueado (só o briefing, sem navegação para o resto do portal).
+function withBriefingLock(url: string | null): string {
+  if (!url) return ''
+  try {
+    const u = new URL(url)
+    u.searchParams.set('freelancer', '1')
+    return u.toString()
+  } catch {
+    return url + (url.includes('?') ? '&' : '?') + 'freelancer=1'
+  }
+}
+
 const STATUS_EDICAO = ['NOVO TRABALHO', 'EM EDIÇÃO', 'CONCLUÍDO']
 const STATUS_STYLE: Record<string, string> = {
   'NOVO TRABALHO': 'bg-blue-500/15 text-blue-400 border-blue-500/30',
@@ -2586,7 +2599,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <a href={previewBriefingUrl} target="_blank" rel="noopener noreferrer"
+                <a href={withBriefingLock(previewBriefingUrl)} target="_blank" rel="noopener noreferrer"
                   className="px-3 py-1.5 rounded-lg text-[10px] tracking-[0.25em] uppercase font-bold border border-gold/30 bg-gold/[0.06] text-gold hover:bg-gold/15 hover:border-gold/55 transition-all">
                   Abrir em separador ↗
                 </a>
@@ -2599,7 +2612,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
             </div>
             {/* Iframe do briefing */}
             <div className="flex-1 overflow-hidden bg-black/40">
-              <iframe src={previewBriefingUrl} title="Briefing preview"
+              <iframe src={withBriefingLock(previewBriefingUrl)} title="Briefing preview"
                 className="w-full h-full border-0" />
             </div>
           </div>
