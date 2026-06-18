@@ -33,6 +33,7 @@ export type AtmosphereData = {
   dataIso?: string | null         // ex: '2026-09-12' (YYYY-MM-DD)
   dataLabel?: string | null       // ex: '12 · Setembro · 2026'
   referencia?: string | null      // ex: 'CAS_150_26_RL' / 'BAT_001_26_RL'
+  casalFotoUrl?: string | null    // foto redonda do casal na barra lateral
 
   // hero / welcome
   heroImageUrl?: string | null
@@ -224,7 +225,7 @@ export function AtmospherePortal({
 
   const sidebar = (
     <>
-      <SidebarCouple noiva={data.noiva} noivo={data.noivo} data={data.dataLabel} coupleLabel={coupleLabel} />
+      <SidebarCouple noiva={data.noiva} noivo={data.noivo} data={data.dataLabel} coupleLabel={coupleLabel} fotoUrl={data.casalFotoUrl} />
       <SidebarNav items={navItems} />
       <SidebarMiniCountdown weddingDate={weddingDate} coupleCode={data.referencia} coupleLabel={coupleLabel} />
     </>

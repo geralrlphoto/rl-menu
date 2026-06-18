@@ -86,17 +86,22 @@ export function PortalShell({
    Sidebar — Couple + Nav + MiniCountdown
    ============================================================ */
 export function SidebarCouple({
-  noiva, noivo, data, coupleLabel,
+  noiva, noivo, data, coupleLabel, fotoUrl,
 }: {
   noiva?: string | null
   noivo?: string | null
   data?: string | null
   coupleLabel?: string  // default 'Os Noivos'; em batizado: 'Os Pais'
+  fotoUrl?: string | null
 }) {
   const lbl = coupleLabel ?? 'Os Noivos'
   const names = [noiva, noivo].filter(Boolean).join(' & ') || lbl
+  const inicial = (noiva || noivo || lbl).trim().charAt(0).toUpperCase()
   return (
     <div className="couple">
+      <div className="couple-foto" aria-hidden>
+        {fotoUrl ? <img src={fotoUrl} alt="" /> : <span>{inicial}</span>}
+      </div>
       <div className="lbl">{lbl}</div>
       <div className="names">{names}</div>
       {data && <div className="date">{data}</div>}

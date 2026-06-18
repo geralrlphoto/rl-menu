@@ -22,6 +22,7 @@ type PortalSettings = {
   local?: string
   activeNavId?: string
   heroImageUrl?: string
+  casalFotoUrl?: string
   galleryUrls?: string[]
   tasks?: Task[]
   referencia?: string
@@ -606,6 +607,9 @@ function SettingsPanel({ settings, referencia, blocks, onSaved, onCancel }: {
           <PhotoField label="Imagem de Fundo (Hero)" value={form.heroImageUrl ?? ''}
             onChange={url => setForm(prev => ({ ...prev, heroImageUrl: url }))}
             onClear={() => setForm(prev => ({ ...prev, heroImageUrl: '' }))} />
+          <PhotoField label="Foto dos Noivos (redonda · barra lateral)" value={form.casalFotoUrl ?? ''}
+            onChange={url => setForm(prev => ({ ...prev, casalFotoUrl: url }))}
+            onClear={() => setForm(prev => ({ ...prev, casalFotoUrl: '' }))} />
           {[0, 1, 2].map(i => (
             <PhotoField key={i} label={`Galeria — Foto ${i + 1}`} value={form.galleryUrls?.[i] ?? ''}
               onChange={url => { const urls = [...(form.galleryUrls ?? ['', '', ''])]; urls[i] = url; setForm(prev => ({ ...prev, galleryUrls: urls })) }}
@@ -1425,6 +1429,7 @@ export default function PortalRefPage() {
           hasTasks:    (settings.tasks ?? []).length > 0,
           deliveries:  buildDeliveriesFromSettings(settings),
           noivosNotifications: settings.noivos_notifications ?? [],
+          casalFotoUrl: settings.casalFotoUrl ?? null,
         }}
         callbacks={{}}
       />

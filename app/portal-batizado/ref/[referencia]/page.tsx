@@ -768,6 +768,7 @@ export default function PortalRefPage() {
           hasTasks:    (settings.tasks ?? []).length > 0,
           deliveries:  buildDeliveriesFromSettings(settings),
           noivosNotifications: settings.noivos_notifications ?? [],
+          casalFotoUrl: settings.casalFotoUrl ?? null,
         }}
         callbacks={{}}
       />
