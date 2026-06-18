@@ -12,6 +12,7 @@ import { ContratoView } from '../atmosphere/ContratoView'
 import { PreWeddingView, DEFAULT_CENARIOS, DEFAULT_INTRO, type PwSection, type PwIntro, type PwCenario } from '../atmosphere/PreWeddingView'
 import { SendMessageButton } from '../atmosphere/SendMessageButton'
 import { AtendimentoThread } from '../atmosphere/AtendimentoThread'
+import { NoivosNotificationsBell } from '../atmosphere/NoivosNotificationsBell'
 import { FotografiasView, type FotografiasCard } from '../atmosphere/FotografiasView'
 
 const PORTAL_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
@@ -1708,7 +1709,7 @@ function PortalSubPageContent() {
       setEditingTitle(true)
     }
     return (
-      <PortalShell sidebar={_atmSidebar}>
+      <PortalShell sidebar={_atmSidebar} headerRight={<NoivosNotificationsBell notifs={portalSettingsObj?.noivos_notifications ?? []} refKey={portalRef || refParam || 'portal'} />}>
         {/* Admin actions bar */}
         {isAdmin && (
           <div className="abar">
@@ -1937,7 +1938,7 @@ function PortalSubPageContent() {
     }
 
     return (
-      <PortalShell sidebar={_atmSidebar}>
+      <PortalShell sidebar={_atmSidebar} headerRight={<NoivosNotificationsBell notifs={portalSettingsObj?.noivos_notifications ?? []} refKey={portalRef || refParam || 'portal'} />}>
         <ContratoView
           title={title}
           heroImageUrl={_atmEffectiveHeader}
@@ -2014,7 +2015,7 @@ function PortalSubPageContent() {
     const cenariosFinal: PwCenario[] = pwCenarios ?? (DEFAULT_CENARIOS as PwCenario[])
 
     return (
-      <PortalShell sidebar={_atmSidebar}>
+      <PortalShell sidebar={_atmSidebar} headerRight={<NoivosNotificationsBell notifs={portalSettingsObj?.noivos_notifications ?? []} refKey={portalRef || refParam || 'portal'} />}>
         <PreWeddingView
           title={title}
           heroImageUrl={_atmEffectiveHeader}
@@ -2202,7 +2203,7 @@ function PortalSubPageContent() {
     ]
 
     return (
-      <PortalShell sidebar={_atmSidebar}>
+      <PortalShell sidebar={_atmSidebar} headerRight={<NoivosNotificationsBell notifs={portalSettingsObj?.noivos_notifications ?? []} refKey={portalRef || refParam || 'portal'} />}>
         {/* Admin actions bar */}
         {isAdmin && (
           <div className="abar">
@@ -2311,7 +2312,7 @@ function PortalSubPageContent() {
   }
 
   return (
-    <PortalShell sidebar={_atmSidebar}>
+    <PortalShell sidebar={_atmSidebar} headerRight={<NoivosNotificationsBell notifs={portalSettingsObj?.noivos_notifications ?? []} refKey={portalRef || refParam || 'portal'} />}>
     <main className={isSobreViewMode ? 'relative sobre-view' : 'relative max-w-[860px] mx-auto px-3 sm:px-6 py-6 sm:py-10'}>
       {/* ── Design premium: fundo fixo cobre o viewport inteiro ── */}
       {isDesignPremium && (
