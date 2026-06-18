@@ -91,6 +91,22 @@ export function AdminNotificationsBell() {
     setDismissed(loadDismissed())
   }, [])
 
+  // Abre a ficha específica do evento (/eventos-2026/<id>) a partir da referência.
+  async function abrirFicha(ref: string) {
+    const win = window.open('', '_blank')
+    try {
+      const d = await fetch(`/api/evento-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json())
+      const id = d?.evento?.id
+      const url = id ? `/eventos-2026/${id}` : `/eventos-2026?ref=${encodeURIComponent(ref)}`
+      if (win) win.location.href = url
+      else window.location.href = url
+    } catch {
+      const url = `/eventos-2026?ref=${encodeURIComponent(ref)}`
+      if (win) win.location.href = url
+      else window.location.href = url
+    }
+  }
+
   function dismissOne(id: string) {
     setDismissed(prev => {
       const next = new Set(prev); next.add(id); saveDismissed(next); return next
@@ -406,15 +422,12 @@ export function AdminNotificationsBell() {
                             {/* Chip referência + botão Ver Mais */}
                             <div className="flex items-center justify-between gap-2 mt-1.5">
                               {n.referencia ? (
-                                <a
-                                  href={`/eventos-2026?ref=${encodeURIComponent(n.referencia)}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); abrirFicha(n.referencia!) }}
                                   title="Abrir ficha do cliente"
                                   className="text-[9px] tracking-[0.15em] uppercase px-1.5 py-0.5 rounded font-bold bg-gold/10 text-gold/85 border border-gold/30 hover:bg-gold/25 hover:text-gold transition-all cursor-pointer">
                                   {n.referencia} ↗
-                                </a>
+                                </button>
                               ) : (
                                 <span className="text-[10px] text-white/30">{fmtRel(n.sent_at)}</span>
                               )}
