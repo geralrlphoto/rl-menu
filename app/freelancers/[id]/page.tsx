@@ -2526,7 +2526,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
         <div className="fixed inset-0 z-[200] flex justify-end"
           onClick={() => setReportCasamento(null)}>
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-          <div className="relative z-10 h-full w-full max-w-2xl flex flex-col border-l border-gold/30 animate-in slide-in-from-right duration-300"
+          <div className="relative z-10 h-full w-full max-w-5xl flex flex-col border-l border-gold/30 animate-in slide-in-from-right duration-300"
             style={{ background: 'linear-gradient(180deg, #100c08, #0b0905)', boxShadow: '-30px 0 70px -10px rgba(0,0,0,0.85)' }}
             onClick={e => e.stopPropagation()}>
             <div className="h-0.5 w-full bg-gold/65 shrink-0" />
