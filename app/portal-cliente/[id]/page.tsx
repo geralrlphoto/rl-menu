@@ -2113,7 +2113,7 @@ function PortalSubPageContent() {
                   setShowReservedWarning(true)
                 } finally { setReservingSlotId(null) }
               }}
-              onNotificarNoivos={async () => {
+              onNotificarNoivos={isAdmin ? async () => {
                 setSendingNotifNoivos(true)
                 try {
                   await fetch('/api/portal-notif-prewedding', {
@@ -2123,7 +2123,7 @@ function PortalSubPageContent() {
                   })
                   setNotifNoivosEnviado(true)
                 } finally { setSendingNotifNoivos(false) }
-              }}
+              } : undefined}
               sendingNotifNoivos={sendingNotifNoivos}
               notifNoivosEnviado={notifNoivosEnviado}
             />
