@@ -46,8 +46,17 @@ type Casamento = {
   nome_noivo?: string | null
   // Toggle admin: false ⇒ casamento NÃO gera alertas/prazos de fotografia
   alertas_fotografia_ativos?: boolean | null
-  // Relatório Diário do videógrafo (o que gravou + tipo de cerimónia)
-  relatorio_diario?: { gravado?: string[]; tipoCerimonia?: string[] } | null
+  // Relatório Diário do videógrafo (o que gravou + tipo de cerimónia + áudio,
+  // drone, equipa de animação e máquina utilizada)
+  relatorio_diario?: {
+    gravado?: string[]
+    tipoCerimonia?: string[]
+    audio?: string[]
+    drone?: string[]
+    equipaAnimacao?: string[]
+    equipaAnimacaoOutra?: string
+    maquina?: string
+  } | null
 }
 type Edicao = {
   id: string; freelancer_id: string; nome: string; status: string; local: string | null
@@ -1882,32 +1891,40 @@ function SidebarNavAdmin({
   )
 }
 
-// ─── Relatório Diário — secções (o que gravou + tipo de cerimónia) ───────────
+// ─── Relatório Diário — secções (gravado, cerimónia, áudio, drone, equipa, máquina) ───
 const RD_GRAVADO_OPCOES = ['Making Off Noivo', 'Making Off Noiva', 'Cerimónia', 'Votos dos Noivos', 'Discursos Convidados', 'Dança dos Noivos', 'Corte do Bolo']
 const RD_TIPO_CERIMONIA_OPCOES = ['Religiosa', 'Civil', 'Conservador', 'Celebrante']
+const RD_AUDIO_OPCOES = ['Lapela no Noivo', 'Áudio da Mesa']
+const RD_DRONE_OPCOES = ['Casa do Noivo', 'Casa da Noiva', 'Igreja', 'Quinta']
+const RD_EQUIPA_OPCOES = ['MCEventos', 'Elite', 'Paiva Som', 'CrazyDay']
 
 function RelatorioDiarioSecoes({ casamento }: { casamento: Casamento }) {
-  const [gravado, setGravado] = useState<string[]>(casamento.relatorio_diario?.gravado ?? [])
-  const [tipo, setTipo] = useState<string[]>(casamento.relatorio_diario?.tipoCerimonia ?? [])
+  const rd = casamento.relatorio_diario ?? {}
+  const [gravado, setGravado] = useState<string[]>(rd.gravado ?? [])
+  const [tipo, setTipo] = useState<string[]>(rd.tipoCerimonia ?? [])
+  const [audio, setAudio] = useState<string[]>(rd.audio ?? [])
+  const [drone, setDrone] = useState<string[]>(rd.drone ?? [])
+  const [equipa, setEquipa] = useState<string[]>(rd.equipaAnimacao ?? [])
+  const [outra, setOutra] = useState<string>(rd.equipaAnimacaoOutra ?? '')
+  const [maquina, setMaquina] = useState<string>(rd.maquina ?? '')
   const [saving, setSaving] = useState(false)
 
-  async function persist(next: { gravado: string[]; tipoCerimonia: string[] }) {
+  function snapshot(over: Record<string, any> = {}) {
+    return { gravado, tipoCerimonia: tipo, audio, drone, equipaAnimacao: equipa, equipaAnimacaoOutra: outra, maquina, ...over }
+  }
+  async function persist(payload: Record<string, any>) {
     setSaving(true)
     try {
       await fetch('/api/freelancer-casamentos', {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: casamento.id, relatorio_diario: next }),
+        body: JSON.stringify({ id: casamento.id, relatorio_diario: payload }),
       })
     } finally { setSaving(false) }
   }
-
-  function toggleGravado(opt: string) {
-    const next = gravado.includes(opt) ? gravado.filter(x => x !== opt) : [...gravado, opt]
-    setGravado(next); persist({ gravado: next, tipoCerimonia: tipo })
-  }
-  function toggleTipo(opt: string) {
-    const next = tipo.includes(opt) ? tipo.filter(x => x !== opt) : [...tipo, opt]
-    setTipo(next); persist({ gravado, tipoCerimonia: next })
+  function toggle(list: string[], setList: (v: string[]) => void, key: string, opt: string) {
+    const next = list.includes(opt) ? list.filter(x => x !== opt) : [...list, opt]
+    setList(next)
+    persist(snapshot({ [key]: next }))
   }
 
   const chipCls = (active: boolean) =>
@@ -1919,28 +1936,48 @@ function RelatorioDiarioSecoes({ casamento }: { casamento: Casamento }) {
   const box = (active: boolean) =>
     `w-3.5 h-3.5 rounded border flex items-center justify-center text-[9px] shrink-0 ${active ? 'border-gold bg-gold/30 text-gold' : 'border-white/25 text-transparent'}`
 
+  const Chips = ({ titulo, opcoes, list, setList, dataKey }: { titulo: string; opcoes: string[]; list: string[]; setList: (v: string[]) => void; dataKey: string }) => (
+    <div>
+      <p className="text-[10px] tracking-[0.3em] uppercase text-gold/70 mb-3">{titulo}</p>
+      <div className="flex flex-wrap gap-2">
+        {opcoes.map(o => (
+          <button key={o} onClick={() => toggle(list, setList, dataKey, o)} className={chipCls(list.includes(o))}>
+            <span className={box(list.includes(o))}>✓</span>{o}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+
+  const inputCls = 'w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-2.5 text-[13px] text-white/90 placeholder:text-white/25 outline-none focus:border-gold/40 transition-all'
+
   return (
     <div className="space-y-6 pt-2">
+      <Chips titulo="O que gravaste durante o dia" opcoes={RD_GRAVADO_OPCOES} list={gravado} setList={setGravado} dataKey="gravado" />
+      <Chips titulo="Tipo de Cerimónia" opcoes={RD_TIPO_CERIMONIA_OPCOES} list={tipo} setList={setTipo} dataKey="tipoCerimonia" />
+      <Chips titulo="Áudio" opcoes={RD_AUDIO_OPCOES} list={audio} setList={setAudio} dataKey="audio" />
+      <Chips titulo="Drone" opcoes={RD_DRONE_OPCOES} list={drone} setList={setDrone} dataKey="drone" />
+
       <div>
-        <p className="text-[10px] tracking-[0.3em] uppercase text-gold/70 mb-3">O que gravaste durante o dia</p>
-        <div className="flex flex-wrap gap-2">
-          {RD_GRAVADO_OPCOES.map(o => (
-            <button key={o} onClick={() => toggleGravado(o)} className={chipCls(gravado.includes(o))}>
-              <span className={box(gravado.includes(o))}>✓</span>{o}
+        <p className="text-[10px] tracking-[0.3em] uppercase text-gold/70 mb-3">Equipa de Animação</p>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {RD_EQUIPA_OPCOES.map(o => (
+            <button key={o} onClick={() => toggle(equipa, setEquipa, 'equipaAnimacao', o)} className={chipCls(equipa.includes(o))}>
+              <span className={box(equipa.includes(o))}>✓</span>{o}
             </button>
           ))}
         </div>
+        <p className="text-[10px] tracking-[0.25em] uppercase text-white/35 mb-1.5">Outra</p>
+        <input value={outra} onChange={e => setOutra(e.target.value)} onBlur={() => persist(snapshot())}
+          placeholder="Escreve outra equipa de animação…" className={inputCls} />
       </div>
+
       <div>
-        <p className="text-[10px] tracking-[0.3em] uppercase text-gold/70 mb-3">Tipo de Cerimónia</p>
-        <div className="flex flex-wrap gap-2">
-          {RD_TIPO_CERIMONIA_OPCOES.map(o => (
-            <button key={o} onClick={() => toggleTipo(o)} className={chipCls(tipo.includes(o))}>
-              <span className={box(tipo.includes(o))}>✓</span>{o}
-            </button>
-          ))}
-        </div>
+        <p className="text-[10px] tracking-[0.3em] uppercase text-gold/70 mb-3">Máquina Utilizada</p>
+        <input value={maquina} onChange={e => setMaquina(e.target.value)} onBlur={() => persist(snapshot())}
+          placeholder="Escreve a máquina utilizada…" className={inputCls} />
       </div>
+
       <p className="text-[10px] text-gold/40 h-3">{saving ? 'A guardar…' : ''}</p>
     </div>
   )
