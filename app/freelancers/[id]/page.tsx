@@ -517,14 +517,16 @@ function FreelancerDetailInner() {
     })
   }, [prazosCriticos.length, freelancer?.id])
 
-  // Editores têm o seu próprio portal (/painel-editor). Quando um editor acede
-  // ao portal de freelancer (via login, email ou link antigo), reencaminha-se.
+  // Editores têm o seu próprio portal (/painel-editor). Sempre que se acede ao
+  // portal de freelancer de um editor (com ou sem ?view), reencaminha-se — exceto
+  // com ?admin=1 (escape para gestão pelo admin).
   // (Tem de estar ANTES dos early returns abaixo — regra dos hooks.)
+  const adminOverride = searchParams?.get('admin') === '1'
   useEffect(() => {
-    if (viewAsFreelancer && freelancer?.status === 'EDITORES' && typeof window !== 'undefined') {
+    if (!adminOverride && freelancer?.status === 'EDITORES' && typeof window !== 'undefined') {
       window.location.replace(`/painel-editor?freelancer=${id}`)
     }
-  }, [viewAsFreelancer, freelancer?.status, id])
+  }, [adminOverride, freelancer?.status, id])
 
   if (loading) return (
     <main className="min-h-screen flex items-center justify-center">
