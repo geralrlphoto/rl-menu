@@ -70,7 +70,7 @@ export function AtendimentoThread({ referencia }: { referencia: string }) {
 
       <style jsx>{`
         .atend-chat {
-          margin: 22px 0 6px; max-width: 560px;
+          margin: 22px 0 6px; max-width: 100%; width: 100%;
           border: 1px solid rgba(200,168,102,.18); border-radius: 16px;
           background: rgba(0,0,0,.22); overflow: hidden;
         }
