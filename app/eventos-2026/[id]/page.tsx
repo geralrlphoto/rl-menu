@@ -99,12 +99,30 @@ type Evento = {
 // ─── Section wrapper ───────────────────────────────────────────────────────────
 function Section({ title, right, children }: { title: string; right?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-[10px] tracking-[0.35em] text-gold uppercase">{title}</h2>
+    <section className="ficha-reveal relative overflow-hidden rounded-2xl border border-white/[0.07] p-6 pl-7 flex flex-col gap-4 transition-all duration-300 hover:border-gold/20"
+      style={{ background: 'linear-gradient(158deg, rgba(255,255,255,0.028) 0%, rgba(255,255,255,0.006) 60%, rgba(201,164,92,0.015) 100%)' }}>
+      {/* barra dourada lateral */}
+      <span className="pointer-events-none absolute left-0 top-6 bottom-6 w-[2px] rounded-full"
+        style={{ background: 'linear-gradient(to bottom, rgba(201,164,92,0.7), rgba(201,164,92,0))' }} />
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="flex items-center gap-2.5 text-[10px] tracking-[0.38em] text-gold uppercase font-semibold">
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-gold" style={{ boxShadow: '0 0 9px rgba(201,164,92,0.7)' }} />
+          {title}
+        </h2>
         {right && <div>{right}</div>}
       </div>
       {children}
+    </section>
+  )
+}
+
+// ─── Cabeçalho de bloco (divisória premium entre grupos de secções) ──────────
+function BlocoHeader({ num, children }: { num: string; children: React.ReactNode }) {
+  return (
+    <div className="ficha-bloco ficha-reveal print:hidden">
+      <span className="num">{num}</span>
+      <span className="txt">{children}</span>
+      <span className="line" />
     </div>
   )
 }
@@ -3146,6 +3164,16 @@ export default function EventoPage() {
 
   return (
     <main id="evento-page" className="min-h-screen px-4 py-10 max-w-3xl mx-auto print:max-w-full print:py-6 print:px-8">
+      <style>{`
+        @keyframes fichaReveal { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+        .ficha-reveal { animation: fichaReveal .55s cubic-bezier(.2,.7,.2,1) both; }
+        @media print { .ficha-reveal { animation: none !important; } }
+        /* Cabeçalho de bloco — divisória premium */
+        .ficha-bloco { display:flex; align-items:center; gap:14px; margin: 30px 0 4px; }
+        .ficha-bloco .num { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 22px; color: #c9a45c; line-height:1; opacity:.85; }
+        .ficha-bloco .txt { font-size: 10px; letter-spacing: .45em; text-transform: uppercase; color: rgba(201,164,92,.75); font-weight: 600; white-space: nowrap; }
+        .ficha-bloco .line { flex:1; height:1px; background: linear-gradient(to right, rgba(201,164,92,.35), rgba(201,164,92,0)); }
+      `}</style>
       <Link href={`/eventos-2026?ano=${anoEvento}`} className="print:hidden text-xs tracking-widest text-white/30 hover:text-gold transition-colors">
         ‹ VOLTAR AOS CASAMENTOS
       </Link>
@@ -3266,10 +3294,10 @@ export default function EventoPage() {
         <p className="print:hidden text-[10px] text-white/15 mt-3 tracking-wider">Clica em qualquer campo para editar · guarda automaticamente no Notion</p>
       </div>
 
-      <div className="h-px bg-gold/15 my-7" />
+      <BlocoHeader num="I">Evento & Serviços</BlocoHeader>
 
       {/* ── Serviços do Dia (secção própria) ───────────────────────────── */}
-      <div className="print:hidden bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
+      <div className="ficha-reveal print:hidden bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
         <div className="flex items-center justify-between mb-3">
           <div>
             <h2 className="text-[11px] tracking-[0.4em] text-gold uppercase font-light">Serviços do Dia</h2>
@@ -3283,10 +3311,10 @@ export default function EventoPage() {
         />
       </div>
 
-      <div className="h-px bg-gold/15 my-7" />
+      <BlocoHeader num="II">Contrato & Portal</BlocoHeader>
 
       {/* ── Aprovação do Contrato CPS + Criar Portal ── */}
-      <div className="print:hidden">
+      <div className="ficha-reveal print:hidden">
         <ContratoCPSAprovacaoSection referencia={e.referencia ?? undefined} />
       </div>
 
@@ -3304,15 +3332,19 @@ export default function EventoPage() {
         <ContratoUpload eventId={e.id} contratoUrl={e.contratos} onSaved={handleSaved} />
       </div>
 
+      <BlocoHeader num="III">Agendamento & Notas</BlocoHeader>
+
       {/* ── Marcação (sincroniza com portal do cliente) ── */}
-      <div className="print:hidden mt-5">
+      <div className="ficha-reveal print:hidden mt-5">
         <BookingSectionFicha referencia={e.referencia ?? undefined} />
       </div>
 
       {/* ── Notas privadas do admin ── */}
-      <div className="print:hidden mt-5">
+      <div className="ficha-reveal print:hidden mt-5">
         <NotasSection referencia={e.referencia ?? undefined} />
       </div>
+
+      <BlocoHeader num="IV">Comercial</BlocoHeader>
 
       <div className="flex flex-col gap-5">
 
@@ -3708,6 +3740,8 @@ export default function EventoPage() {
           {/* Contratos foi movido para o topo da ficha (junto do Portal do Cliente) */}
         </Section>
 
+        <BlocoHeader num="V">Produção & Entregas</BlocoHeader>
+
         {/* ── Estado das Entregas ── */}
         <Section title="Estado das Entregas" right={
           <span className="text-[9px] tracking-[0.3em] text-gold uppercase">
@@ -3768,11 +3802,15 @@ export default function EventoPage() {
           </div>
         </Section>
 
+        <BlocoHeader num="VI">Comunicação com os Noivos</BlocoHeader>
+
         {/* ── Notificação aos Noivos ── */}
         {e.referencia && <NotificacaoNoivosSection referencia={e.referencia} />}
 
         {/* ── Mensagens dos Noivos ── */}
         {e.referencia && <MensagensNoivosSection referencia={e.referencia} />}
+
+        <BlocoHeader num="VII">Equipa & Tarefas</BlocoHeader>
 
         {/* ── Tarefas deste casamento ── */}
         <EventoTarefas eventoId={e.id} />
@@ -4500,6 +4538,8 @@ export default function EventoPage() {
             </div>
           </div>
         </div>
+
+        <BlocoHeader num="VIII">Dados do Casal</BlocoHeader>
 
         {/* ── Dados dos Noivos / Pais ── */}
         <Section title="Dados dos Noivos / Pais">
