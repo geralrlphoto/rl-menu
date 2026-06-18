@@ -56,6 +56,7 @@ type Casamento = {
     equipaAnimacao?: string[]
     equipaAnimacaoOutra?: string
     maquina?: string
+    infoRelevante?: string
   } | null
 }
 type Edicao = {
@@ -1907,10 +1908,11 @@ function RelatorioDiarioSecoes({ casamento }: { casamento: Casamento }) {
   const [equipa, setEquipa] = useState<string[]>(rd.equipaAnimacao ?? [])
   const [outra, setOutra] = useState<string>(rd.equipaAnimacaoOutra ?? '')
   const [maquina, setMaquina] = useState<string>(rd.maquina ?? '')
+  const [info, setInfo] = useState<string>(rd.infoRelevante ?? '')
   const [saving, setSaving] = useState(false)
 
   function snapshot(over: Record<string, any> = {}) {
-    return { gravado, tipoCerimonia: tipo, audio, drone, equipaAnimacao: equipa, equipaAnimacaoOutra: outra, maquina, ...over }
+    return { gravado, tipoCerimonia: tipo, audio, drone, equipaAnimacao: equipa, equipaAnimacaoOutra: outra, maquina, infoRelevante: info, ...over }
   }
   async function persist(payload: Record<string, any>) {
     setSaving(true)
@@ -1976,6 +1978,13 @@ function RelatorioDiarioSecoes({ casamento }: { casamento: Casamento }) {
         <p className="text-[10px] tracking-[0.3em] uppercase text-gold/70 mb-3">Máquina Utilizada</p>
         <input value={maquina} onChange={e => setMaquina(e.target.value)} onBlur={() => persist(snapshot())}
           placeholder="Escreve a máquina utilizada…" className={inputCls} />
+      </div>
+
+      <div>
+        <p className="text-[10px] tracking-[0.3em] uppercase text-gold/70 mb-3">Informação Relevante</p>
+        <textarea value={info} onChange={e => setInfo(e.target.value)} onBlur={() => persist(snapshot())}
+          rows={4} placeholder="Escreve aqui alguma informação relevante…"
+          className={`${inputCls} resize-y leading-relaxed`} />
       </div>
 
       <p className="text-[10px] text-gold/40 h-3">{saving ? 'A guardar…' : ''}</p>
