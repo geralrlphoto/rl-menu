@@ -1469,6 +1469,43 @@ function ServicosDiaEditor({ value, eventId, onSaved }: {
   )
 }
 
+// ─── Briefing enviado — aparece na ficha (Bloco I · Evento & Serviços) ──────────
+// O briefing é enviado a partir do portal dos noivos (botão "Enviar Briefing"),
+// que guarda o link em evento_equipa.briefing_url. Aqui mostramos esse link na
+// ficha do evento, para além de continuar a ir para o portal dos noivos.
+function BriefingNaFicha({ referencia, eventoId }: { referencia?: string | null; eventoId: string }) {
+  const [url, setUrl] = useState<string | null>(null)
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    const qs = referencia ? `ref=${encodeURIComponent(referencia)}` : `evento_id=${eventoId}`
+    fetch(`/api/evento-equipa?${qs}`)
+      .then(r => r.json())
+      .then(d => { setUrl(d?.equipa?.briefing_url ?? null); setLoaded(true) })
+      .catch(() => setLoaded(true))
+  }, [referencia, eventoId])
+
+  return (
+    <div className="ficha-reveal print:hidden bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 mt-4">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <h2 className="text-[11px] tracking-[0.4em] text-gold uppercase font-light">Briefing</h2>
+          <p className="text-[10px] text-white/30 mt-1 italic">Enviado a partir do portal dos noivos — disponível aqui na ficha.</p>
+        </div>
+        {url ? (
+          <a href={url} target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-[11px] font-semibold tracking-widest uppercase hover:bg-gold/20 transition-all">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            Ver Briefing
+          </a>
+        ) : (
+          <span className="text-[11px] text-white/25 italic">{loaded ? 'Ainda não enviado' : '…'}</span>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── Upload de contrato PDF ────────────────────────────────────────────────────
 function ContratoUpload({ eventId, contratoUrl, onSaved }: {
   eventId: string; contratoUrl: string | null
@@ -3490,6 +3527,9 @@ export default function EventoPage() {
           onSaved={(arr) => handleSaved('servicos_dia', arr)}
         />
       </div>
+
+      {/* ── Briefing enviado (a partir do portal dos noivos) ───────────── */}
+      <BriefingNaFicha referencia={e.referencia ?? undefined} eventoId={e.id} />
 
       </DrawerBloco>
 
