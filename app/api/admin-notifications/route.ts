@@ -29,6 +29,7 @@ const TIPO_LABELS: Record<string, string> = {
   noivos_selecao_falta:     'Noivos em Falta — Escolher Fotos',
   booking_reservado:        'Marcação Reservada pelos Noivos',
   prewedding_alerta:        'Alerta — Marcar Pré-Wedding',
+  relatorio_diario_enviado: 'Relatório Diário enviado',
 }
 
 const TIPO_ICONS: Record<string, string> = {
@@ -52,6 +53,7 @@ const TIPO_ICONS: Record<string, string> = {
   noivos_selecao_falta:     '⏰',
   booking_reservado:        '📅',
   prewedding_alerta:        '💍',
+  relatorio_diario_enviado: '🎥',
 }
 
 // Soma dias úteis a uma data (igual ao cálculo da ficha do evento).
@@ -312,6 +314,41 @@ export async function GET() {
       }
     } catch (err) {
       console.warn('[admin-notifications] nova_tarefa_atribuida read failed:', err)
+    }
+
+    // ── Relatório Diário enviado pela equipa (freelancer_casamentos.relatorio_diario) ──
+    try {
+      const { data: rels } = await supabase
+        .from('freelancer_casamentos')
+        .select('id, freelancer_id, local, data_casamento, referencia, relatorio_diario')
+        .not('relatorio_diario', 'is', null)
+        .limit(200)
+      const relRecipIds = Array.from(new Set((rels ?? []).map((r: any) => r.freelancer_id).filter(Boolean)))
+      const relNomes = new Map<string, string>(nomesById)
+      const relMissing = relRecipIds.filter(id => !relNomes.has(id))
+      if (relMissing.length > 0) {
+        const { data: flsR } = await supabase.from('freelancers').select('id, nome').in('id', relMissing)
+        for (const f of (flsR ?? []) as any[]) relNomes.set(f.id, f.nome)
+      }
+      for (const r of (rels ?? []) as any[]) {
+        const rd = r.relatorio_diario ?? {}
+        if (!rd.enviado || !rd.enviadoEm) continue
+        notifications.push({
+          id: `relatorio_diario::${r.id}`,
+          tipo: 'relatorio_diario_enviado',
+          tipo_label: TIPO_LABELS.relatorio_diario_enviado,
+          tipo_icon: TIPO_ICONS.relatorio_diario_enviado,
+          casamento_id: r.id,
+          freelancer_id: r.freelancer_id,
+          freelancer_nome: relNomes.get(r.freelancer_id) ?? '—',
+          local: r.local ?? '—',
+          data_casamento: r.data_casamento ?? null,
+          url: r.referencia ? `/eventos-2026?ref=${encodeURIComponent(r.referencia)}` : `/freelancers/${r.freelancer_id}`,
+          sent_at: rd.enviadoEm,
+        })
+      }
+    } catch (err) {
+      console.warn('[admin-notifications] relatorio_diario read failed:', err)
     }
 
     // ── Notificações de NOVA SELEÇÃO DOS NOIVOS (tabela fotos_selecao) ──
