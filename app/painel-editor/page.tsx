@@ -204,13 +204,15 @@ export default function PainelEditor() {
     }
   }, [])
 
-  // Hierarquia: 1) Profile em Dados Pessoais  2) Freelancer da API  3) fallback
-  const effectiveNome = (profileNome.trim() || freelancer?.nome || 'Editor Pro').trim()
+  // Hierarquia: 1) Freelancer real da BD (por ?freelancer=<id>) — fonte de verdade
+  //   2) Profile do localStorage (só como fallback; é partilhado no browser, por
+  //      isso NÃO pode sobrepor-se ao membro carregado) 3) fallback genérico.
+  const effectiveNome = (freelancer?.nome || profileNome.trim() || 'Editor Pro').trim()
   const displayName  = effectiveNome.split(' ')[0]
   const displayFull  = effectiveNome
   const displayEmail = freelancer?.email ?? 'editorpro@mail.com'
   const displayRole  = freelancer?.status ?? 'Editor de Vídeo'
-  const displayPhoto = profileFoto.trim() || freelancer?.foto_url || DEFAULT_AVATAR
+  const displayPhoto = freelancer?.foto_url || profileFoto.trim() || DEFAULT_AVATAR
 
   const [active, setActive] = useState('dashboard')
 

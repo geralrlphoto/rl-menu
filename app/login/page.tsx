@@ -86,12 +86,17 @@ function LoginPageInner() {
         if (canceled) return
         const j = await r.json().catch(() => ({}))
         if (j?.ok && j?.session?.id) {
-          router.replace(`/freelancers/${j.session.id}?view=freelancer`)
+          // Respeita ?next= (ex.: admin a abrir "Ver como Freelancer" doutro membro);
+          // só usa o portal da própria sessão se não houver next válido.
+          const target = (nextFromUrl && (nextFromUrl.startsWith('/freelancers/') || nextFromUrl.startsWith('/painel-editor') || nextFromUrl.startsWith('/freelancer-view/')))
+            ? nextFromUrl
+            : `/freelancers/${j.session.id}?view=freelancer`
+          router.replace(target)
         }
       } catch { /* offline / erro — fica em login */ }
     })()
     return () => { canceled = true }
-  }, [router])
+  }, [router, nextFromUrl])
 
   async function handleFreelancerSubmit(e: React.FormEvent) {
     e.preventDefault()
