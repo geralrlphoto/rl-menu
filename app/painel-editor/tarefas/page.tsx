@@ -3,8 +3,54 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { PROJECTS, TASKS, TODAY, comparePtDate, eventsFromProjects, type Task, type Priority, type TaskStatus, type Project } from '../_data/projects'
-import { loadFreelancerProfile, type FreelancerProfile, DEFAULT_FREELANCER_PROFILE } from '../_data/freelancer-profile'
+import { loadFreelancerProfile, getEditorId, type FreelancerProfile, DEFAULT_FREELANCER_PROFILE } from '../_data/freelancer-profile'
 import { NotificationBell } from '../_components/NotificationBell'
+
+// ── Notificações reais da RL para o editor (freelancer_notificacoes) ─────────
+function stripMeta(msg: string): string {
+  return (msg ?? '').replace(/^__META__.*?__\/META__\s*/, '').trim()
+}
+function NotificacoesRLSection() {
+  const [notifs, setNotifs] = useState<any[]>([])
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    const id = getEditorId()
+    if (!id) { setLoaded(true); return }
+    let cancelled = false
+    fetch(`/api/freelancer-notificacoes?freelancer_id=${id}`)
+      .then(r => r.json())
+      .then(d => { if (!cancelled) { setNotifs(Array.isArray(d?.notificacoes) ? d.notificacoes : (Array.isArray(d) ? d : [])); setLoaded(true) } })
+      .catch(() => { if (!cancelled) setLoaded(true) })
+    return () => { cancelled = true }
+  }, [])
+
+  if (!loaded || notifs.length === 0) return null
+
+  const fmt = (d: string | null) => d ? new Date(d).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' }) : ''
+
+  return (
+    <div className="rounded-2xl border border-gold/25 p-5 mt-5"
+      style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.5), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-gold text-lg">◷</span>
+        <h3 className="text-[15px] font-semibold text-white">Notificações da RL</h3>
+        <span className="text-[10px] text-white/35 tracking-widest uppercase">{notifs.length}</span>
+      </div>
+      <div className="flex flex-col gap-2">
+        {notifs.map((n, i) => (
+          <div key={n.id ?? i} className={`px-4 py-3 rounded-xl border ${n.lida ? 'border-white/[0.06] bg-white/[0.02]' : 'border-gold/30 bg-gold/[0.05]'}`}>
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <p className="text-[13px] text-white/90 font-medium">{n.titulo || 'Notificação'}</p>
+              <span className="text-[10px] text-white/35 shrink-0">{fmt(n.created_at)}</span>
+            </div>
+            <p className="text-[12px] text-white/60 whitespace-pre-wrap leading-relaxed">{stripMeta(n.mensagem)}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 import { MessagesBell } from '../_components/MessagesBell'
 import { BrandLogo } from '../_components/BrandLogo'
 
@@ -371,6 +417,9 @@ export default function TarefasPage() {
 
           {/* HERO */}
           <Hero onNovaTarefa={() => setShowNewTaskModal(true)} />
+
+          {/* Notificações reais da RL ao editor */}
+          <NotificacoesRLSection />
 
           {/* GRID */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-5">
