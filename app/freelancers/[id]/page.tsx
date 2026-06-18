@@ -547,7 +547,6 @@ function FreelancerDetailInner() {
 
   const isVideografo = freelancer?.status === 'VIDEOGRAFO'
   const isFotografo  = freelancer?.status === 'FOTOGRAFO'
-  const isEditor     = freelancer?.status === 'EDITORES'
 
   function handleIntroHomeChange(val: string) {
     setIntroHome(val)
