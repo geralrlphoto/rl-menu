@@ -48,19 +48,31 @@ export function AtendimentoThread({ referencia }: { referencia: string }) {
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [openTemas, setOpenTemas] = useState<Set<string>>(new Set())
+  const [replyTema, setReplyTema] = useState<string | null>(null)
+  const [replyText, setReplyText] = useState('')
+  const [sending, setSending] = useState(false)
 
-  useEffect(() => {
-    let cancel = false
-    fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`)
-      .then(r => r.json())
-      .then(d => {
-        if (cancel) return
-        setMsgs((d.portal?.settings?.noivos_messages ?? []) as Msg[])
+  async function carregar() {
+    try {
+      const d = await fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`).then(r => r.json())
+      setMsgs((d.portal?.settings?.noivos_messages ?? []) as Msg[])
+    } catch { /* ignore */ } finally { setLoading(false) }
+  }
+  useEffect(() => { carregar() }, [referencia])
+
+  // Responder dentro de um tema → cria mensagem com o mesmo assunto (junta-se à conversa).
+  async function responderTema(tema: string) {
+    if (!replyText.trim()) return
+    setSending(true)
+    try {
+      await fetch('/api/noivos-message', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referencia, titulo: tema, mensagem: replyText.trim() }),
       })
-      .catch(() => {})
-      .finally(() => { if (!cancel) setLoading(false) })
-    return () => { cancel = true }
-  }, [referencia])
+      setReplyText(''); setReplyTema(null)
+      await carregar()
+    } finally { setSending(false) }
+  }
 
   // Agrupa por TEMA (titulo). Cada tema reúne as suas mensagens + respostas.
   const temas: Tema[] = useMemo(() => {
@@ -152,6 +164,24 @@ export function AtendimentoThread({ referencia }: { referencia: string }) {
                       </div>
                     )
                   })}
+
+                  {/* Responder dentro deste tema (sem abrir nova conversa) */}
+                  {replyTema === t.tema ? (
+                    <div className="reply-box">
+                      <textarea value={replyText} onChange={e => setReplyText(e.target.value)} rows={2} autoFocus
+                        placeholder="Escrever resposta…" />
+                      <div className="reply-actions">
+                        <button className="send" onClick={() => responderTema(t.tema)} disabled={sending || !replyText.trim()}>
+                          {sending ? 'A enviar…' : 'Enviar'}
+                        </button>
+                        <button className="cancel" onClick={() => { setReplyTema(null); setReplyText('') }}>Cancelar</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button className="reply-btn" onClick={() => { setReplyTema(t.tema); setReplyText('') }}>
+                      ↩ Responder nesta conversa
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -215,6 +245,34 @@ export function AtendimentoThread({ referencia }: { referencia: string }) {
         .txt :global(mark) { background: rgba(232,199,109,.5); color: #fff; border-radius: 2px; padding: 0 1px; }
         .tema-nome :global(mark) { background: rgba(232,199,109,.5); color: #fff; border-radius: 2px; padding: 0 1px; }
         .when { font-size: 7px; color: #7a6f5e; margin-top: 2px; text-align: right; }
+        .reply-btn {
+          align-self: flex-start; margin-top: 4px;
+          background: rgba(200,168,102,.1); border: 1px solid rgba(200,168,102,.3);
+          color: #c8a866; font-family: 'Hanken Grotesk', sans-serif; font-size: 9px;
+          letter-spacing: .12em; text-transform: uppercase; font-weight: 700;
+          padding: 5px 10px; border-radius: 8px; cursor: pointer;
+        }
+        .reply-btn:hover { background: rgba(200,168,102,.2); }
+        .reply-box { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+        .reply-box textarea {
+          width: 100%; background: rgba(0,0,0,.35); border: 1px solid rgba(200,168,102,.25);
+          border-radius: 8px; padding: 8px 10px; color: #e9dcc2;
+          font-family: 'Hanken Grotesk', sans-serif; font-size: 12px; line-height: 1.5;
+          resize: vertical; outline: none;
+        }
+        .reply-box textarea:focus { border-color: #c8a866; }
+        .reply-actions { display: flex; gap: 8px; }
+        .reply-box .send {
+          background: linear-gradient(168deg, #efd6a2, #c19a52); color: #1c150b; border: 0;
+          font-size: 9px; letter-spacing: .15em; text-transform: uppercase; font-weight: 700;
+          padding: 6px 14px; border-radius: 999px; cursor: pointer;
+        }
+        .reply-box .send:disabled { opacity: .4; cursor: not-allowed; }
+        .reply-box .cancel {
+          background: transparent; border: 1px solid rgba(239,231,214,.12); color: #8c8170;
+          font-size: 9px; letter-spacing: .15em; text-transform: uppercase;
+          padding: 6px 12px; border-radius: 999px; cursor: pointer;
+        }
       `}</style>
     </div>
   )
